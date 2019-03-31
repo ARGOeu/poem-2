@@ -214,7 +214,7 @@ TOKEN_HEADER = 'HTTP_X_API_KEY'
 # STATIC_URL = '/static/'
 DEFAULT_FILE_STORAGE = 'tenant_schemas.storage.TenantFileSystemStorage'
 
-STATICFILES_DIRS = [os.path.join(APP_PATH, 'frontend')]
+STATICFILES_DIRS = [os.path.join(APP_PATH, 'frontend/bundles/')]
 
 # Apache settings
 STATIC_URL = '/static/'
@@ -229,7 +229,7 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
 WEBPACK_LOADER = {
     'DEFAULT': {
-        'BUNDLE_DIR_NAME': 'bundles/',
+        'BUNDLE_DIR_NAME': 'reactbundle/',
         'STATS_FILE': os.path.join(APP_PATH, 'webpack-stats.json')
     }
 }

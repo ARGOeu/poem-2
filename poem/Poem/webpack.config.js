@@ -6,7 +6,7 @@ module.exports = {
   context: __dirname,
   entry: "./frontend/react/index.js",
   output: {
-      path: path.resolve("./frontend/bundles/"),
+      path: path.resolve("./frontend/bundles/reactbundle/"),
       filename: "[name]-[hash].js",
       chunkFilename: "[name]-[hash].js"
   },
