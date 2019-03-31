@@ -151,7 +151,7 @@ MIDDLEWARE = [
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': ['{}/poem/templates/'.format(APP_PATH)],
+        'DIRS': ['{}/templates/'.format(APP_PATH)],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
