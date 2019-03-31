@@ -1,0 +1,15 @@
+{% load render_bundle from webpack_loader %}
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>ARGO ADMIN UI</title>
+  </head>
+  <body>
+    <div id="popupContainer"></div>
+    <div id="react"></div>
+    {% render_bundle 'main' %}
+  </body>
+</html>

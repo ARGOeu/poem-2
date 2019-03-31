@@ -214,7 +214,7 @@ TOKEN_HEADER = 'HTTP_X_API_KEY'
 # STATIC_URL = '/static/'
 DEFAULT_FILE_STORAGE = 'tenant_schemas.storage.TenantFileSystemStorage'
 
-STATICFILES_DIRS = [os.path.join(APP_PATH, 'assets')]
+STATICFILES_DIRS = [os.path.join(APP_PATH, 'frontend')]
 
 # Apache settings
 STATIC_URL = '/static/'

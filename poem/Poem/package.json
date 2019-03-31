@@ -28,14 +28,14 @@
     "webpack-cli": "^3.2.3"
   },
   "dependencies": {
-    "@fortawesome/fontawesome-svg-core": "^1.2.15",
-    "@fortawesome/free-solid-svg-icons": "^5.7.2",
+    "@fortawesome/fontawesome-svg-core": "^1.2.17",
+    "@fortawesome/free-solid-svg-icons": "^5.8.1",
     "@fortawesome/react-fontawesome": "^0.1.4",
     "formik": "^1.5.1",
-    "react": "^16.8.3",
-    "react-dom": "^16.8.3",
+    "react": "^16.8.6",
+    "react-dom": "^16.8.6",
     "react-popup": "^0.10.0",
-    "universal-cookie": "^3.0.7"
+    "universal-cookie": "^3.1.0"
   },
   "bugs": {
     "url": "https://github.com/ARGOeu/poem/issues"
