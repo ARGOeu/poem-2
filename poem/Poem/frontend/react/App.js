@@ -9,8 +9,8 @@ import {
   CardBody,
   Label,
   CardFooter,
-  FormGroup} from 'reactstrap';
-import {Formik, Field, Form, ErrorMessage} from 'formik';
+  FormGroup } from 'reactstrap';
+import {Formik, Field, Form} from 'formik';
 import ArgoLogo from './argologo_color.svg';
 
 import './App.css';
@@ -23,8 +23,9 @@ class App extends Component {
         <Row className="login-first-row">
           <Col sm={{size: 4, offset: 4}}>
             <Card>
-              <CardHeader className="mt-2">
-                <img alt="logo" src={ArgoLogo}/>
+              <CardHeader className="d-sm-inline-flex align-items-center justify-content-around">
+                  <img src={ArgoLogo} id="argologo" alt="ARGO logo"/>
+                  <h4>ARGO Admin UI</h4>
               </CardHeader>
               <CardBody>
                 <Formik
@@ -40,7 +41,8 @@ class App extends Component {
                         <Label for="password">Password: </Label>
                         <Field name="password" className="form-control"/>
                       </FormGroup>
-                      <Button className="btn-block" color="primary">Login using username and password</Button>
+                      <Button outline color="primary" block>Login using username and password</Button>
+                      <a className="btn btn-outline-primary btn-block" role="button" href="/saml2/login">Login using EGI CHECK-IN</a>
                     </Form>
                   )}
                 >

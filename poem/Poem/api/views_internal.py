@@ -6,9 +6,19 @@ from rest_framework import status
 from rest_framework_api_key import models as api_models
 
 from Poem.poem import models as poem_models
+from Poem.poem.saml2.config import tenant_from_request, service_name_conf
 
 from .views import NotFound
 from . import serializers
+
+
+class GetSamlIdpString(APIView):
+    authentication_classes = ()
+    permission_classes = ()
+
+    def get(self, request):
+        tenant = tenant_from_request(request)
+        return Response(service_name_conf(tenant))
 
 
 class ListMetricsInGroup(APIView):
