@@ -26,6 +26,13 @@ def service_name_conf(tenant):
     return config.get('GENERAL_' + tenant.upper(), 'samlservicename')
 
 
+def saml_login_string(tenant):
+    config = ConfigParser()
+    config.read(settings.CONFIG_FILE)
+
+    return config.get('GENERAL_' + tenant.upper(), 'samlloginstring')
+
+
 def get_saml_config(request):
     tenant = tenant_from_request(request)
     hostname = get_hostname(request)

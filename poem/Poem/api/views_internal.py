@@ -6,7 +6,7 @@ from rest_framework import status
 from rest_framework_api_key import models as api_models
 
 from Poem.poem import models as poem_models
-from Poem.poem.saml2.config import tenant_from_request, service_name_conf
+from Poem.poem.saml2.config import tenant_from_request, saml_login_string
 
 from .views import NotFound
 from . import serializers
@@ -18,7 +18,7 @@ class GetSamlIdpString(APIView):
 
     def get(self, request):
         tenant = tenant_from_request(request)
-        return Response(service_name_conf(tenant))
+        return Response({'result': saml_login_string(tenant)})
 
 
 class ListMetricsInGroup(APIView):
