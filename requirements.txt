@@ -1,4 +1,5 @@
 django-ajax-selects
+django-rest-auth
 django-reversion
 django-tenant-schemas
 django-webpack-loader

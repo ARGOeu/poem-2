@@ -15,6 +15,7 @@ urlpatterns = [
     url(r'^api/0.2/', include('Poem.poem.urls')),
     url(r'^api/v2/', include('Poem.api.urls', namespace='poemapi')),
     url(r'^saml2/', include(('djangosaml2.urls', 'poem'), namespace='saml2')),
+    url(r'^rest-auth/', include('rest_auth.urls')),
 ]
 
 # Django development server settings

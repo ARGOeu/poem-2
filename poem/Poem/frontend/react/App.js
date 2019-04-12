@@ -32,6 +32,24 @@ class App extends Component {
       .catch(err => console.log('Something went wrong: ' + err));
   }
 
+  doLogin(username, password) {
+    return fetch('/rest-auth/login/', {
+      method: 'POST',
+      mode: 'cors',
+      cache: 'no-cache',
+      credentials: 'same-origin',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Referer': 'same-origin'
+      },
+      body: JSON.stringify({
+        'username': username, 
+        'password': password
+      })
+    });
+  }
+
   render() {
     if (this.state.samlIdpString) {
       return (
@@ -46,22 +64,24 @@ class App extends Component {
                 <CardBody>
                   <Formik
                     initialValues = {{ username: '', password: ''}}
-                    onSubmit = {(values) => alert(JSON.stringify(values, null, 2))}
-                    render = {props => (
-                      <Form>
-                        <FormGroup>
-                          <Label for="username">Username: </Label>
-                          <Field name="username" className="form-control"/>
-                        </FormGroup>
-                        <FormGroup>
-                          <Label for="password">Password: </Label>
-                          <Field name="password" className="form-control"/>
-                        </FormGroup>
-                        <Button outline color="primary" block>Login using username and password</Button>
-                        <a className="btn btn-outline-primary btn-block" role="button" href="/saml2/login">{this.state.samlIdpString}</a>
-                      </Form>
-                    )}
-                  >
+                    onSubmit = {
+                      (values) => this.doLogin(values.username, values.password)
+                        .then(response => response.ok ? 
+                          alert('Login success') 
+                          : alert('Login wrong')) 
+                    }>
+                    <Form>
+                      <FormGroup>
+                        <Label for="username">Username: </Label>
+                        <Field name="username" className="form-control"/>
+                      </FormGroup>
+                      <FormGroup>
+                        <Label for="password">Password: </Label>
+                        <Field name="password" className="form-control" type="password"/>
+                      </FormGroup>
+                      <Button outline color="secondary" type="submit" block>Login using username and password</Button>
+                      <a className="btn btn-outline-secondary btn-block" role="button" href="/saml2/login">{this.state.samlIdpString}</a>
+                    </Form>
                   </Formik>
                 </CardBody> 
                 <CardFooter>
