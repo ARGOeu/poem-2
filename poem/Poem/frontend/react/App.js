@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import {
+  Alert,
   Container,
   Button, 
   Row, 
@@ -22,7 +23,10 @@ class App extends Component {
 
     this.state = {
       samlIdpString: null,
+      loginFailedVisible: false,
     };
+
+    this.dismissLoginAlert = this.dismissLoginAlert.bind(this);
   }
 
   componentDidMount() {
@@ -30,6 +34,10 @@ class App extends Component {
       .then(response => response.json())
       .then(json => this.setState({samlIdpString: json.result}))
       .catch(err => console.log('Something went wrong: ' + err));
+  }
+
+  dismissLoginAlert() {
+    this.setState({loginFailedVisible: false});
   }
 
   doLogin(username, password) {
@@ -68,7 +76,7 @@ class App extends Component {
                       (values) => this.doLogin(values.username, values.password)
                         .then(response => response.ok ? 
                           alert('Login success') 
-                          : alert('Login wrong')) 
+                          : this.setState({loginFailedVisible: true}))
                     }>
                     <Form>
                       <FormGroup>
@@ -79,8 +87,17 @@ class App extends Component {
                         <Label for="password">Password: </Label>
                         <Field name="password" className="form-control" type="password"/>
                       </FormGroup>
-                      <Button outline color="secondary" type="submit" block>Login using username and password</Button>
-                      <a className="btn btn-outline-secondary btn-block" role="button" href="/saml2/login">{this.state.samlIdpString}</a>
+                      <FormGroup>
+                        <Alert color="danger" isOpen={this.state.loginFailedVisible} toggle={this.dismissLoginAlert} fade={false}>
+                          <p class="text-center">
+                            Login failed, invalid username and password provided
+                          </p>
+                        </Alert>
+                      </FormGroup>
+                      <FormGroup>
+                        <Button outline color="secondary" type="submit" block>Login using username and password</Button>
+                        <a className="btn btn-outline-secondary btn-block" role="button" href="/saml2/login">{this.state.samlIdpString}</a>
+                      </FormGroup>
                     </Form>
                   </Formik>
                 </CardBody> 
