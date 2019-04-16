@@ -13,7 +13,6 @@ import {
   FormGroup } from 'reactstrap';
 import {Formik, Field, Form} from 'formik';
 import ArgoLogo from './argologo_color.svg';
-import {Route, Link, BrowserRouter} from 'react-router-dom';
 
 import './Login.css';
 
