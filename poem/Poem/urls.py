@@ -1,7 +1,8 @@
 import os
 
 from django.conf import settings
-from django.conf.urls import include, url
+from django.conf.urls import include
+from django.urls import path, re_path
 from django.conf.urls.static import static
 from django.views.generic import TemplateView
 
@@ -11,11 +12,10 @@ django_logging()
 
 # Apache settings
 urlpatterns = [
-    url(r'^$', TemplateView.as_view(template_name='index.html')),
-    url(r'^api/0.2/', include('Poem.poem.urls')),
-    url(r'^api/v2/', include('Poem.api.urls', namespace='poemapi')),
-    url(r'^saml2/', include(('djangosaml2.urls', 'poem'), namespace='saml2')),
-    url(r'^rest-auth/', include('rest_auth.urls')),
+    re_path(r'^ui', TemplateView.as_view(template_name='index.html')),
+    re_path(r'^api/v2/', include('Poem.api.urls', namespace='poemapi')),
+    re_path(r'^saml2/', include(('djangosaml2.urls', 'poem'), namespace='saml2')),
+    re_path(r'^rest-auth/', include('rest_auth.urls')),
 ]
 
 # Django development server settings
