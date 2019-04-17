@@ -73,8 +73,8 @@ class Login extends Component {
                     initialValues = {{ username: '', password: ''}}
                     onSubmit = {
                       (values) => this.doLogin(values.username, values.password)
-                        .then(response => response.ok ? 
-                          alert('Login success') 
+                        .then(response => response.ok 
+                          ? this.props.history.push('/ui/home') 
                           : this.setState({loginFailedVisible: true}))
                     }>
                     <Form>
@@ -88,7 +88,7 @@ class Login extends Component {
                       </FormGroup>
                       <FormGroup>
                         <Alert color="danger" isOpen={this.state.loginFailedVisible} toggle={this.dismissLoginAlert} fade={false}>
-                          <p class="text-center">
+                          <p className="text-center">
                             Login failed, invalid username and password provided
                           </p>
                         </Alert>
