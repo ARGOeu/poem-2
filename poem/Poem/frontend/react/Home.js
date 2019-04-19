@@ -11,11 +11,14 @@ import {
   Label,
   CardFooter,
   FormGroup } from 'reactstrap';
-import Cookies from 'universal-cookie'
+import Cookies from 'universal-cookie';
 
 const doLogout = () =>
 {
   let cookies = new Cookies();
+
+  localStorage.removeItem('auth_username');
+  localStorage.removeItem('auth_logged');
 
   return fetch('/rest-auth/logout/', {
     method: 'POST',

@@ -73,9 +73,17 @@ class Login extends Component {
                     initialValues = {{ username: '', password: ''}}
                     onSubmit = {
                       (values) => this.doLogin(values.username, values.password)
-                        .then(response => response.ok 
-                          ? this.props.history.push('/ui/home') 
-                          : this.setState({loginFailedVisible: true}))
+                        .then(response => 
+                          {
+                            if (response.ok) {
+                              this.props.history.push('/ui/home');
+                              localStorage.setItem('auth_username', values.username);
+                              localStorage.setItem('auth_logged', true);
+                            } 
+                            else {
+                              this.setState({loginFailedVisible: true});
+                            }
+                          })
                     }>
                     <Form>
                       <FormGroup>
