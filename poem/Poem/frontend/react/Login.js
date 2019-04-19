@@ -76,9 +76,9 @@ class Login extends Component {
                         .then(response => 
                           {
                             if (response.ok) {
-                              this.props.history.push('/ui/home');
                               localStorage.setItem('auth_username', values.username);
                               localStorage.setItem('auth_logged', true);
+                              this.props.history.push('/ui/home');
                             } 
                             else {
                               this.setState({loginFailedVisible: true});

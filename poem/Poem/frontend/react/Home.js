@@ -13,7 +13,7 @@ import {
   FormGroup } from 'reactstrap';
 import Cookies from 'universal-cookie';
 
-const doLogout = () =>
+const doLogout = (props) =>
 {
   let cookies = new Cookies();
 
@@ -30,7 +30,7 @@ const doLogout = () =>
       'Content-Type': 'application/json',
       'X-CSRFToken': cookies.get('csrftoken'),
       'Referer': 'same-origin'
-    }});
+    }}).then(response => props.history.push('/ui/login'));
 }
 
 const Home = props =>
@@ -41,7 +41,11 @@ const Home = props =>
       </Col>
     </Row>
     <Row>
-      <Button color="danger" onClick={doLogout}>Logout</Button>
+      <Button 
+        color="danger" 
+        onClick={() => doLogout(props)}>
+        Logout
+      </Button>
     </Row>
   </Container>
 

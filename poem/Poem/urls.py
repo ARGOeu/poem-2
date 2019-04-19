@@ -13,7 +13,7 @@ django_logging()
 
 # Apache settings
 urlpatterns = [
-    re_path(r'^$', lambda x: HttpResponseRedirect('/ui')),
+    re_path(r'^$', lambda x: HttpResponseRedirect('/ui/login')),
     re_path(r'^ui', TemplateView.as_view(template_name='index.html')),
     re_path(r'^api/v2/', include('Poem.api.urls', namespace='poemapi')),
     re_path(r'^saml2/', include(('djangosaml2.urls', 'poem'), namespace='saml2')),
