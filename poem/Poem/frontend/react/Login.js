@@ -66,11 +66,11 @@ class Login extends Component {
               <Card>
                 <CardHeader className="d-sm-inline-flex align-items-center justify-content-around">
                     <img src={ArgoLogo} id="argologo" alt="ARGO logo"/>
-                    <h4>ARGO Admin UI</h4>
+                    <h4>ARGO POEM</h4>
                 </CardHeader>
                 <CardBody>
                   <Formik
-                    initialValues = {{ username: '', password: ''}}
+                    initialValues = {{username: '', password: ''}}
                     onSubmit = {
                       (values) => this.doLogin(values.username, values.password)
                         .then(response => 

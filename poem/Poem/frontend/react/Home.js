@@ -5,15 +5,15 @@ import {
   Button, 
   Row, 
   Col, 
-  Card, 
-  CardHeader, 
-  CardBody,
-  Label,
-  CardFooter,
-  FormGroup } from 'reactstrap';
+  Nav,
+  NavbarBrand,
+  Navbar,
+  NavbarToggler,
+  Collapse,
+  NavItem} from 'reactstrap';
 import Cookies from 'universal-cookie';
 
-const doLogout = (props) =>
+const doLogout = ({history}) =>
 {
   let cookies = new Cookies();
 
@@ -30,24 +30,43 @@ const doLogout = (props) =>
       'Content-Type': 'application/json',
       'X-CSRFToken': cookies.get('csrftoken'),
       'Referer': 'same-origin'
-    }}).then(response => props.history.push('/ui/login'));
+    }}).then(response => history.push('/ui/login'));
 }
 
-const Home = props =>
-  <Container>
-    <Row>
-      <Col>
-      <h1>Home</h1>
-      </Col>
-    </Row>
-    <Row>
-      <Button 
-        color="danger" 
-        onClick={() => doLogout(props)}>
-        Logout
-      </Button>
-    </Row>
-  </Container>
+class Home extends Component {
+  constructor(props) {
+    super(props);
+
+    this.props = props;
+  }
+
+  render() {
+    return (
+      <Container>
+        <Row>
+          <Col md="12">
+            <Navbar color="light" dark expand="lg">
+              <NavbarBrand>ARGO POEM</NavbarBrand>
+              <NavbarToggler/>
+              <Collapse navbar>
+                <Nav className='ml-auto' navbar>
+                  <NavItem>
+                    <Button 
+                      color="danger" 
+                      size="sm"
+                      outline
+                      onClick={() => doLogout(this.props)}>
+                      Logout
+                    </Button>
+                  </NavItem>
+                </Nav>
+              </Collapse>
+            </Navbar>
+          </Col>
+        </Row>
+      </Container>
+    )
+  }
+}
 
 export default Home;
-
