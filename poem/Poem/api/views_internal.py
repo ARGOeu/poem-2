@@ -64,11 +64,22 @@ class ListTokenForTenant(APIView):
 class ListUsers(APIView):
     authentication_classes = (SessionAuthentication,)
 
-    def get(self, request):
-        users = poem_models.CustUser.objects.all().values_list('username',
-                                                               flat=True)
-        results = sorted(users)
-        return Response({'result': results})
+    def get(self, request, username=None):
+        if username:
+            try:
+                user = poem_models.CustUser.objects.get(username=username)
+                serializer = serializers.UsersSerializer(user)
+                return Response(serializer.data)
+
+            except poem_models.CustUser.DoesNotExist:
+                raise NotFound(status=404,
+                            detail='User not found')
+
+        else:
+            users = poem_models.CustUser.objects.all()
+            serializer = serializers.UsersSerializer(users, many=True)
+
+            return Response(serializer.data)
 
 
 class ListGroupsForUser(APIView):
