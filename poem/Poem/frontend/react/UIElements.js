@@ -1,0 +1,104 @@
+import React, { Component } from 'react';
+import Cookies from 'universal-cookie';
+import {
+  Alert,
+  Container,
+  Button, 
+  Row, 
+  Col, 
+  Nav,
+  NavItem,
+  NavLink,
+  NavbarBrand,
+  Navbar,
+  NavbarToggler,
+  Collapse} from 'reactstrap';
+
+
+export function setAuthData(json) {
+  localStorage.setItem('authUsername', json['username']);
+  localStorage.setItem('authIsLogged', true);
+  localStorage.setItem('authFirstName', json['first_name']);
+  localStorage.setItem('authLastName', json['last_name']);
+  localStorage.setItem('authIsSuperuser', json['is_superuser']);
+}
+
+function fetchUserDetails(username) {
+  return fetch('/api/v2/internal/users/' + username, {
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+    },
+  });
+}
+
+
+export function doLogin(username, password)
+{
+  return fetch('/rest-auth/login/', {
+    method: 'POST',
+    mode: 'cors',
+    cache: 'no-cache',
+    credentials: 'same-origin',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'Referer': 'same-origin'
+    },
+    body: JSON.stringify({
+      'username': username, 
+      'password': password
+    })
+  }).then(response => fetchUserDetails(username));
+}
+
+function removeAuthData()
+{
+  localStorage.removeItem('authUsername');
+  localStorage.removeItem('authIsLogged');
+  localStorage.removeItem('authFirstName');
+  localStorage.removeItem('authLastName');
+  localStorage.removeItem('authIsSuperuser');
+}
+
+
+const doLogout = ({history}) =>
+{
+  let cookies = new Cookies();
+
+  removeAuthData();
+
+  return fetch('/rest-auth/logout/', {
+    method: 'POST',
+    mode: 'cors',
+    cache: 'no-cache',
+    credentials: 'same-origin',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'X-CSRFToken': cookies.get('csrftoken'),
+      'Referer': 'same-origin'
+    }}).then(response => history.push('/ui/login'));
+}
+
+export const NavigationBar = ({props}) =>
+  <Navbar color="light" dark expand="lg">
+    <NavbarBrand>ARGO POEM</NavbarBrand>
+    <NavbarToggler/>
+    <Collapse navbar className='justify-content-end'>
+      <Nav navbar >
+        <NavItem className='m-2'>
+          Welcome, {localStorage.getItem('authUsername')}
+        </NavItem>
+        <NavItem className='m-2'>
+          <Button 
+            color="secondary" 
+            size="sm"
+            outline
+            onClick={() => doLogout(props)}>
+            Logout
+          </Button>
+        </NavItem>
+      </Nav>
+    </Collapse>
+  </Navbar>

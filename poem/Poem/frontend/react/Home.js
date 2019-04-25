@@ -6,32 +6,13 @@ import {
   Row, 
   Col, 
   Nav,
+  NavItem,
+  NavLink,
   NavbarBrand,
   Navbar,
   NavbarToggler,
-  Collapse,
-  NavItem} from 'reactstrap';
-import Cookies from 'universal-cookie';
-
-const doLogout = ({history}) =>
-{
-  let cookies = new Cookies();
-
-  localStorage.removeItem('auth_username');
-  localStorage.removeItem('auth_logged');
-
-  return fetch('/rest-auth/logout/', {
-    method: 'POST',
-    mode: 'cors',
-    cache: 'no-cache',
-    credentials: 'same-origin',
-    headers: {
-      'Accept': 'application/json',
-      'Content-Type': 'application/json',
-      'X-CSRFToken': cookies.get('csrftoken'),
-      'Referer': 'same-origin'
-    }}).then(response => history.push('/ui/login'));
-}
+  Collapse} from 'reactstrap';
+import {NavigationBar} from './UIElements';
 
 class Home extends Component {
   constructor(props) {
@@ -45,23 +26,29 @@ class Home extends Component {
       <Container>
         <Row>
           <Col md="12">
-            <Navbar color="light" dark expand="lg">
-              <NavbarBrand>ARGO POEM</NavbarBrand>
-              <NavbarToggler/>
-              <Collapse navbar>
-                <Nav className='ml-auto' navbar>
+            <NavigationBar props={this.props} />
+          </Col>
+        </Row>
+        <Row>
+          <Col sm={{size: 4, order: 0}}>
+            <Nav vertical>
+              {
+                localStorage.getItem('authIsSuperuser') ?
                   <NavItem>
-                    <Button 
-                      color="danger" 
-                      size="sm"
-                      outline
-                      onClick={() => doLogout(this.props)}>
-                      Logout
-                    </Button>
+                    <NavLink href='/ui/administration'>Administration</NavLink>
                   </NavItem>
-                </Nav>
-              </Collapse>
-            </Navbar>
+                  : '' 
+              }
+              <NavItem>
+                <NavLink href='/ui/reports'>Reports</NavLink>
+              </NavItem>
+              <NavItem>
+                <NavLink href='/ui/metricprofiles' active={true}>Metric profiles</NavLink>
+              </NavItem>
+              <NavItem>
+                <NavLink href='/ui/aggregationprofiles'>Aggregation profiles</NavLink>
+              </NavItem>
+            </Nav>
           </Col>
         </Row>
       </Container>

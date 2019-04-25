@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import Login from './Login';
+import MetricProfiles from './MetricProfiles';
 import Home from './Home';
+import Administration from './Administration';
 import NotFound from './NotFound';
 import {Route, Switch, BrowserRouter, Redirect} from 'react-router-dom';
 
@@ -10,7 +12,7 @@ const PrivateRoute = ({component: Component}, ...rest) => (
   <Route
     {...rest}
     render={props =>
-        localStorage.getItem('auth_logged') ? (
+        localStorage.getItem('authIsLogged') ? (
           <Component {...props}/>
         )
           : (
@@ -26,13 +28,15 @@ const PrivateRoute = ({component: Component}, ...rest) => (
 class App extends Component {
   render() {
     return ( 
-    <BrowserRouter>
-      <Switch>
-        <Route exact path="/ui/login" component={Login} />
-        <PrivateRoute exact path="/ui/home" component={Home} />
-        <Route component={NotFound} />
-      </Switch>
-    </BrowserRouter>
+      <BrowserRouter>
+        <Switch>
+          <Route exact path="/ui/login" component={Login} />
+          <PrivateRoute exact path="/ui/home" component={Home} />
+          <PrivateRoute exact path="/ui/metricprofiles" component={MetricProfiles} />
+          <PrivateRoute exact path="/ui/administration" component={Administration} />
+          <Route component={NotFound} />
+        </Switch>
+      </BrowserRouter>
     )
   }
 }

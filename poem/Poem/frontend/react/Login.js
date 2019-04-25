@@ -13,7 +13,7 @@ import {
   FormGroup } from 'reactstrap';
 import {Formik, Field, Form} from 'formik';
 import ArgoLogo from './argologo_color.svg';
-
+import {doLogin, setAuthData} from './UIElements';
 import './Login.css';
 
 class Login extends Component {
@@ -39,23 +39,6 @@ class Login extends Component {
     this.setState({loginFailedVisible: false});
   }
 
-  doLogin(username, password) {
-    return fetch('/rest-auth/login/', {
-      method: 'POST',
-      mode: 'cors',
-      cache: 'no-cache',
-      credentials: 'same-origin',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Referer': 'same-origin'
-      },
-      body: JSON.stringify({
-        'username': username, 
-        'password': password
-      })
-    });
-  }
 
   render() {
     if (this.state.samlIdpString) {
@@ -65,20 +48,23 @@ class Login extends Component {
             <Col sm={{size: 4, offset: 4}}>
               <Card>
                 <CardHeader className="d-sm-inline-flex align-items-center justify-content-around">
-                    <img src={ArgoLogo} id="argologo" alt="ARGO logo"/>
-                    <h4>ARGO POEM</h4>
+                  <img src={ArgoLogo} id="argologo" alt="ARGO logo"/>
+                  <h4>ARGO POEM</h4>
                 </CardHeader>
                 <CardBody>
                   <Formik
                     initialValues = {{username: '', password: ''}}
                     onSubmit = {
-                      (values) => this.doLogin(values.username, values.password)
+                      (values) => doLogin(values.username, values.password)
                         .then(response => 
                           {
                             if (response.ok) {
-                              localStorage.setItem('auth_username', values.username);
-                              localStorage.setItem('auth_logged', true);
-                              this.props.history.push('/ui/home');
+                              response.json().then(
+                                json => {
+                                  setAuthData(json);
+                                  this.props.history.push('/ui/home');
+                                }
+                              )
                             } 
                             else {
                               this.setState({loginFailedVisible: true});
@@ -109,7 +95,7 @@ class Login extends Component {
                   </Formik>
                 </CardBody> 
                 <CardFooter>
-                  <p className="text-center">
+                  <p className="text-center text-muted">
                     <small>
                       ARGO Admin is a service jointly developed and maintained by CNRS,
                       GRNET and SRCE co-funded by EOSC-Hub and EGI Foundation
