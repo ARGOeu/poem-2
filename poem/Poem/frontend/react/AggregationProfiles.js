@@ -14,7 +14,7 @@ import {
   Collapse} from 'reactstrap';
 import {NavigationBar, NavigationLinks} from './UIElements';
 
-class Home extends Component {
+class AggregationProfiles extends Component {
   constructor(props) {
     super(props);
 
@@ -31,7 +31,7 @@ class Home extends Component {
         </Row>
         <Row>
           <Col sm={{size: 3, order: 0}}>
-            <NavigationLinks active={null} />
+            <NavigationLinks active='aggregationprofiles' />
           </Col>
         </Row>
       </Container>
@@ -39,4 +39,4 @@ class Home extends Component {
   }
 }
 
-export default Home;
+export default AggregationProfiles;

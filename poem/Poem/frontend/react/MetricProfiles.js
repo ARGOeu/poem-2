@@ -13,6 +13,7 @@ import {
   NavbarToggler,
   Collapse} from 'reactstrap';
 import Cookies from 'universal-cookie';
+import {NavigationBar, NavigationLinks} from './UIElements';
 
 
 class MetricProfiles extends Component {
@@ -25,7 +26,16 @@ class MetricProfiles extends Component {
   render() {
     return (
       <Container>
-        FooBar
+        <Row>
+          <Col md="12">
+            <NavigationBar props={this.props} />
+          </Col>
+        </Row>
+        <Row>
+          <Col sm={{size: 3, order: 0}}>
+            <NavigationLinks active='metricprofiles' />
+          </Col>
+        </Row>
       </Container>
     )
   }

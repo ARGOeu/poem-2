@@ -23,6 +23,7 @@ export function setAuthData(json) {
   localStorage.setItem('authIsSuperuser', json['is_superuser']);
 }
 
+
 function fetchUserDetails(username) {
   return fetch('/api/v2/internal/users/' + username, {
     headers: {
@@ -51,6 +52,7 @@ export function doLogin(username, password)
     })
   }).then(response => fetchUserDetails(username));
 }
+
 
 function removeAuthData()
 {
@@ -81,6 +83,7 @@ const doLogout = ({history}) =>
     }}).then(response => history.push('/ui/login'));
 }
 
+
 export const NavigationBar = ({props}) =>
   <Navbar color="light" dark expand="lg">
     <NavbarBrand>ARGO POEM</NavbarBrand>
@@ -102,3 +105,39 @@ export const NavigationBar = ({props}) =>
       </Nav>
     </Collapse>
   </Navbar>
+
+export const NavigationLinks = ({active}) =>
+  {
+    var list_pages = ['administration', 'reports', 'metricprofiles',
+      'aggregationprofiles'];
+    var page_title = new Map();
+
+    page_title.set('administration', 'Administration');
+    page_title.set('reports', 'Reports');
+    page_title.set('metricprofiles', 'Metric profiles');
+    page_title.set('aggregationprofiles', 'Aggregation profiles');
+
+    return (
+      <Nav vertical pills>
+        {
+          list_pages.map((item, i) =>  
+            item === 'administration' && localStorage.getItem('authIsSuperuser') 
+              ?
+                <NavItem key={i}>
+                  <NavLink 
+                    active={active === item ? true : false} 
+                    href={'/ui/' + item}>{page_title.get(item)}
+                  </NavLink>
+                </NavItem>
+              :
+                <NavItem key={i}>
+                  <NavLink 
+                    active={active === item ? true : false} 
+                    href={'/ui/' + item}>{page_title.get(item)}
+                  </NavLink>
+                </NavItem>
+          )
+        }
+      </Nav>
+    )
+  }

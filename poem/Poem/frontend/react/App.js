@@ -3,6 +3,8 @@ import Login from './Login';
 import MetricProfiles from './MetricProfiles';
 import Home from './Home';
 import Administration from './Administration';
+import AggregationProfiles from './AggregationProfiles';
+import Reports from './Reports';
 import NotFound from './NotFound';
 import {Route, Switch, BrowserRouter, Redirect} from 'react-router-dom';
 
@@ -32,7 +34,9 @@ class App extends Component {
         <Switch>
           <Route exact path="/ui/login" component={Login} />
           <PrivateRoute exact path="/ui/home" component={Home} />
+          <PrivateRoute exact path="/ui/reports" component={Reports} />
           <PrivateRoute exact path="/ui/metricprofiles" component={MetricProfiles} />
+          <PrivateRoute exact path="/ui/aggregationprofiles" component={AggregationProfiles} />
           <PrivateRoute exact path="/ui/administration" component={Administration} />
           <Route component={NotFound} />
         </Switch>

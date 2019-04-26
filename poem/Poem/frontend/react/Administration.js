@@ -13,7 +13,7 @@ import {
   NavbarToggler,
   Collapse} from 'reactstrap';
 import Cookies from 'universal-cookie';
-import {NavigationBar} from './UIElements';
+import {NavigationBar, NavigationLinks} from './UIElements';
 
 
 class Administration extends Component {
@@ -29,6 +29,11 @@ class Administration extends Component {
         <Row>
           <Col md="12">
             <NavigationBar props={this.props} />
+          </Col>
+        </Row>
+        <Row>
+          <Col sm={{size: 3, order: 0}}>
+            <NavigationLinks active='administration' />
           </Col>
         </Row>
       </Container>
