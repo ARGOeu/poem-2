@@ -25,7 +25,7 @@ class MetricProfiles extends Component {
 
   render() {
     return (
-      <Container>
+      <Container fluid>
         <Row>
           <Col md="12">
             <NavigationBar props={this.props} />
@@ -33,7 +33,7 @@ class MetricProfiles extends Component {
         </Row>
         <Row>
           <Col sm={{size: 3, order: 0}}>
-            <NavigationLinks active='metricprofiles' />
+            <NavigationLinks props={this.props}/>
           </Col>
         </Row>
       </Container>

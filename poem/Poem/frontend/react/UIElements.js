@@ -106,16 +106,17 @@ export const NavigationBar = ({props}) =>
     </Collapse>
   </Navbar>
 
-export const NavigationLinks = ({active}) =>
+export const NavigationLinks = ({props}) =>
   {
     var list_pages = ['administration', 'reports', 'metricprofiles',
       'aggregationprofiles'];
-    var page_title = new Map();
+    var link_title = new Map();
+    var {location} = props;
 
-    page_title.set('administration', 'Administration');
-    page_title.set('reports', 'Reports');
-    page_title.set('metricprofiles', 'Metric profiles');
-    page_title.set('aggregationprofiles', 'Aggregation profiles');
+    link_title.set('administration', 'Administration');
+    link_title.set('reports', 'Reports');
+    link_title.set('metricprofiles', 'Metric profiles');
+    link_title.set('aggregationprofiles', 'Aggregation profiles');
 
     return (
       <Nav vertical pills>
@@ -125,15 +126,15 @@ export const NavigationLinks = ({active}) =>
               ?
                 <NavItem key={i}>
                   <NavLink 
-                    active={active === item ? true : false} 
-                    href={'/ui/' + item}>{page_title.get(item)}
+                    active={location.pathname.includes(item) ? true : false} 
+                    href={'/ui/' + item}>{link_title.get(item)}
                   </NavLink>
                 </NavItem>
               :
                 <NavItem key={i}>
                   <NavLink 
-                    active={active === item ? true : false} 
-                    href={'/ui/' + item}>{page_title.get(item)}
+                    active={location.pathname.includes(item) ? true : false} 
+                    href={'/ui/' + item}>{link_title.get(item)}
                   </NavLink>
                 </NavItem>
           )
