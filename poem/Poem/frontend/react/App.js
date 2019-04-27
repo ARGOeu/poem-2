@@ -6,6 +6,7 @@ import Administration from './Administration';
 import AggregationProfiles from './AggregationProfiles';
 import Reports from './Reports';
 import NotFound from './NotFound';
+import WrapContent from './WrapContent';
 import {Route, Switch, BrowserRouter, Redirect} from 'react-router-dom';
 
 // import './App.css';
@@ -33,11 +34,11 @@ class App extends Component {
       <BrowserRouter>
         <Switch>
           <Route exact path="/ui/login" component={Login} />
-          <PrivateRoute exact path="/ui/home" component={Home} />
-          <PrivateRoute exact path="/ui/reports" component={Reports} />
-          <PrivateRoute exact path="/ui/metricprofiles" component={MetricProfiles} />
-          <PrivateRoute exact path="/ui/aggregationprofiles" component={AggregationProfiles} />
-          <PrivateRoute exact path="/ui/administration" component={Administration} />
+          <PrivateRoute exact path="/ui/home" component={WrapContent(Home)} />
+          <PrivateRoute exact path="/ui/reports" component={WrapContent(Reports)} />
+          <PrivateRoute exact path="/ui/metricprofiles" component={WrapContent(MetricProfiles)} />
+          <PrivateRoute exact path="/ui/aggregationprofiles" component={WrapContent(AggregationProfiles)} />
+          <PrivateRoute exact path="/ui/administration" component={WrapContent(Administration)} />
           <Route component={NotFound} />
         </Switch>
       </BrowserRouter>
