@@ -1,18 +1,15 @@
-import React, { Component } from 'react';
+import React from 'react';
 import Cookies from 'universal-cookie';
 import {
-  Alert,
-  Container,
   Button, 
-  Row, 
-  Col, 
   Nav,
-  NavItem,
   NavLink,
+  NavItem,
   NavbarBrand,
   Navbar,
   NavbarToggler,
   Collapse} from 'reactstrap';
+import {Link} from 'react-router-dom';
 
 
 export function setAuthData(json) {
@@ -64,11 +61,12 @@ function removeAuthData()
 }
 
 
-const doLogout = ({history}) =>
+const doLogout = (history, onLogout) =>
 {
   let cookies = new Cookies();
 
   removeAuthData();
+  onLogout();
 
   return fetch('/rest-auth/logout/', {
     method: 'POST',
@@ -80,11 +78,11 @@ const doLogout = ({history}) =>
       'Content-Type': 'application/json',
       'X-CSRFToken': cookies.get('csrftoken'),
       'Referer': 'same-origin'
-    }}).then(response => history.push('/ui/login'));
+    }}).then((response) => history.push('/ui/login'));
 }
 
 
-export const NavigationBar = ({props}) =>
+export const NavigationBar = ({history, onLogout}) =>
   <Navbar color="light" dark expand="lg">
     <NavbarBrand>ARGO POEM</NavbarBrand>
     <NavbarToggler/>
@@ -98,7 +96,7 @@ export const NavigationBar = ({props}) =>
             color="secondary" 
             size="sm"
             outline
-            onClick={() => doLogout(props)}>
+            onClick={() => doLogout(history, onLogout)}>
             Logout
           </Button>
         </NavItem>
@@ -106,12 +104,12 @@ export const NavigationBar = ({props}) =>
     </Collapse>
   </Navbar>
 
-export const NavigationLinks = ({props}) =>
+
+export const NavigationLinks = ({location}) =>
   {
     var list_pages = ['administration', 'reports', 'metricprofiles',
       'aggregationprofiles'];
     var link_title = new Map();
-    var {location} = props;
 
     link_title.set('administration', 'Administration');
     link_title.set('reports', 'Reports');
@@ -125,16 +123,18 @@ export const NavigationLinks = ({props}) =>
             item === 'administration' && localStorage.getItem('authIsSuperuser') 
               ?
                 <NavItem key={i}>
-                  <NavLink 
+                  <NavLink
+                    tag={Link}
                     active={location.pathname.includes(item) ? true : false} 
-                    href={'/ui/' + item}>{link_title.get(item)}
+                    to={'/ui/' + item}>{link_title.get(item)}
                   </NavLink>
                 </NavItem>
               :
                 <NavItem key={i}>
                   <NavLink 
+                    tag={Link}
                     active={location.pathname.includes(item) ? true : false} 
-                    href={'/ui/' + item}>{link_title.get(item)}
+                    to={'/ui/' + item}>{link_title.get(item)}
                   </NavLink>
                 </NavItem>
           )

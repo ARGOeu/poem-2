@@ -62,7 +62,8 @@ class Login extends Component {
                               response.json().then(
                                 json => {
                                   setAuthData(json);
-                                  this.props.history.push('/ui/home');
+                                  this.props.onLogin();
+                                  this.props.history.push('/ui/reports');
                                 }
                               )
                             } 
