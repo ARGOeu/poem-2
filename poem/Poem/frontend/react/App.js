@@ -7,51 +7,8 @@ import AggregationProfiles from './AggregationProfiles';
 import Reports from './Reports';
 import NotFound from './NotFound';
 import {Route, Switch, BrowserRouter, Redirect, withRouter} from 'react-router-dom';
-import {
-  Container,
-  Row, 
-  Col} from 'reactstrap';
+import {Container, Row, Col} from 'reactstrap';
 import {NavigationBar, NavigationLinks} from './UIElements';
-
-
-// import './App.css';
-
-const PrivateRoute = ({component: Component}, ...rest) => (
-  !localStorage.getItem('authIsLogged') && 
-  (
-    <Route
-      {...rest}
-      render={props =>
-        (
-          <Redirect to={{
-            pathname: '/ui/login',
-            state: {from: props.location}
-          }}/>
-        )
-      }
-    />
-  )
-)
-
-
-const LoginRoute = ({component: Component, onLogin}, ...rest) => (
-  <Route
-    {...rest}
-    render={props =>
-        <Component onLogin={onLogin} {...props} />
-    }
-  />
-)
-
-
-const LoggedRoute = ({component: Component, onLogout}, ...rest) => (
-  <Route
-    {...rest}
-    render={props =>
-      <Component onLogout={onLogout} {...props} />
-    }
-  />
-)
 
 
 const NavigationBarWithHistory = withRouter(NavigationBar);
@@ -65,6 +22,7 @@ class App extends Component {
     this.state = {
       isLogged: false 
     }
+
     this.onLogin = this.onLogin.bind(this);
     this.onLogout = this.onLogout.bind(this);
   }
@@ -83,12 +41,22 @@ class App extends Component {
       ?
         <BrowserRouter>
           <Switch>
-            <LoginRoute exact path="/ui/login" component={Login} onLogin={this.onLogin}/>
-            <PrivateRoute exact path="/ui/home" />
-            <PrivateRoute exact path="/ui/reports" />
-            <PrivateRoute exact path="/ui/metricprofiles" />
-            <PrivateRoute exact path="/ui/aggregationprofiles" />
-            <PrivateRoute exact path="/ui/administration" />
+            <Route 
+              exact 
+              path="/ui/login"
+              render={props =>
+                  <Login onLogin={this.onLogin} {...props} />
+              }
+            />
+            <Route
+              exact 
+              path="/ui/(home|reports|metricprofiles|aggregationprofiles|administration)"
+              render={props => (
+                <Redirect to={{
+                  pathname: '/ui/login',
+                  state: {from: props.location}
+                }}/>
+              )}/>
             <Route component={NotFound} />
           </Switch>
         </BrowserRouter>
@@ -106,11 +74,11 @@ class App extends Component {
               </Col>
               <Col>
                 <Switch>
-                  <LoggedRoute exact path="/ui/home" component={Home} />
-                  <LoggedRoute exact path="/ui/reports" component={Reports} />
-                  <LoggedRoute exact path="/ui/metricprofiles" component={MetricProfiles} />
-                  <LoggedRoute exact path="/ui/aggregationprofiles" component={AggregationProfiles} />
-                  <LoggedRoute exact path="/ui/administration" component={Administration} />
+                  <Route exact path="/ui/home" component={Home} />
+                  <Route exact path="/ui/reports" component={Reports} />
+                  <Route exact path="/ui/metricprofiles" component={MetricProfiles} />
+                  <Route exact path="/ui/aggregationprofiles" component={AggregationProfiles} />
+                  <Route exact path="/ui/administration" component={Administration} />
                   <Route component={NotFound} />
                 </Switch>
               </Col>
