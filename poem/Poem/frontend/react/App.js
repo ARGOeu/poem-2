@@ -21,18 +21,18 @@ class App extends Component {
 
     this.state = {
       isLogged: false 
-    }
+    };
 
     this.onLogin = this.onLogin.bind(this);
     this.onLogout = this.onLogout.bind(this);
   }
 
   onLogin() {
-    this.setState({isLogged: true})
+    this.setState({isLogged: true});
   } 
 
   onLogout() {
-    this.setState({isLogged: false})
+    this.setState({isLogged: false});
   } 
 
   render() {

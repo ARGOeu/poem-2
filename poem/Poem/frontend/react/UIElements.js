@@ -13,11 +13,11 @@ import {Link} from 'react-router-dom';
 
 
 export function setAuthData(json) {
-  localStorage.setItem('authUsername', json['username']);
+  localStorage.setItem('authUsername', json.username);
   localStorage.setItem('authIsLogged', true);
-  localStorage.setItem('authFirstName', json['first_name']);
-  localStorage.setItem('authLastName', json['last_name']);
-  localStorage.setItem('authIsSuperuser', json['is_superuser']);
+  localStorage.setItem('authFirstName', json.first_name);
+  localStorage.setItem('authLastName', json.last_name);
+  localStorage.setItem('authIsSuperuser', json.is_superuser);
 }
 
 
@@ -83,6 +83,7 @@ const doLogout = (history, onLogout) =>
 
 
 export const NavigationBar = ({history, onLogout}) =>
+(
   <Navbar color="light" dark expand="lg">
     <NavbarBrand>ARGO POEM</NavbarBrand>
     <NavbarToggler/>
@@ -103,42 +104,43 @@ export const NavigationBar = ({history, onLogout}) =>
       </Nav>
     </Collapse>
   </Navbar>
+)
 
 
 export const NavigationLinks = ({location}) =>
-  {
-    var list_pages = ['administration', 'reports', 'metricprofiles',
-      'aggregationprofiles'];
-    var link_title = new Map();
+{
+  var list_pages = ['administration', 'reports', 'metricprofiles',
+    'aggregationprofiles'];
+  var link_title = new Map();
 
-    link_title.set('administration', 'Administration');
-    link_title.set('reports', 'Reports');
-    link_title.set('metricprofiles', 'Metric profiles');
-    link_title.set('aggregationprofiles', 'Aggregation profiles');
+  link_title.set('administration', 'Administration');
+  link_title.set('reports', 'Reports');
+  link_title.set('metricprofiles', 'Metric profiles');
+  link_title.set('aggregationprofiles', 'Aggregation profiles');
 
-    return (
-      <Nav vertical pills>
-        {
-          list_pages.map((item, i) =>  
-            item === 'administration' && localStorage.getItem('authIsSuperuser') 
-              ?
-                <NavItem key={i}>
-                  <NavLink
-                    tag={Link}
-                    active={location.pathname.includes(item) ? true : false} 
-                    to={'/ui/' + item}>{link_title.get(item)}
-                  </NavLink>
-                </NavItem>
-              :
-                <NavItem key={i}>
-                  <NavLink 
-                    tag={Link}
-                    active={location.pathname.includes(item) ? true : false} 
-                    to={'/ui/' + item}>{link_title.get(item)}
-                  </NavLink>
-                </NavItem>
-          )
-        }
-      </Nav>
-    )
-  }
+  return (
+    <Nav vertical pills>
+      {
+        list_pages.map((item, i) =>  
+          item === 'administration' && localStorage.getItem('authIsSuperuser') 
+            ?
+              <NavItem key={i}>
+                <NavLink
+                  tag={Link}
+                  active={location.pathname.includes(item) ? true : false} 
+                  to={'/ui/' + item}>{link_title.get(item)}
+                </NavLink>
+              </NavItem>
+            :
+              <NavItem key={i}>
+                <NavLink 
+                  tag={Link}
+                  active={location.pathname.includes(item) ? true : false} 
+                  to={'/ui/' + item}>{link_title.get(item)}
+                </NavLink>
+              </NavItem>
+        )
+      }
+    </Nav>
+  )
+}

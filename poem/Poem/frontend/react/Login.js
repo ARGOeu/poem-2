@@ -39,7 +39,6 @@ class Login extends Component {
     this.setState({loginFailedVisible: false});
   }
 
-
   render() {
     if (this.state.samlIdpString) {
       return (
