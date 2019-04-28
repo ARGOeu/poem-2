@@ -13,6 +13,8 @@ import {
   FormGroup } from 'reactstrap';
 import {Formik, Field, Form} from 'formik';
 import ArgoLogo from './argologo_color.svg';
+import EULogo from './eu.png';
+import EOSCLogo from './eosc.png';
 import {doLogin, setAuthData} from './UIElements';
 import './Login.css';
 
@@ -46,9 +48,11 @@ class Login extends Component {
           <Row className="login-first-row">
             <Col sm={{size: 4, offset: 4}}>
               <Card>
-                <CardHeader className="d-sm-inline-flex align-items-center justify-content-around">
+                <CardHeader 
+                  id='argo-loginheader' 
+                  className="d-sm-inline-flex align-items-center justify-content-around">
                   <img src={ArgoLogo} id="argologo" alt="ARGO logo"/>
-                  <h4>ARGO POEM</h4>
+                  <h4 className="text-light"><strong>ARGO</strong> POEM</h4>
                 </CardHeader>
                 <CardBody>
                   <Formik
@@ -87,18 +91,28 @@ class Login extends Component {
                           </p>
                         </Alert>
                       </FormGroup>
+                      <div className="pt-3">
+                      </div>
                       <FormGroup>
-                        <Button outline color="secondary" type="submit" block>Login using username and password</Button>
-                        <a className="btn btn-outline-secondary btn-block" role="button" href="/saml2/login">{this.state.samlIdpString}</a>
+                        <Button color="success" type="submit" block>Login using username and password</Button>
+                        <a className="btn btn-success btn-block" role="button" href="/saml2/login">{this.state.samlIdpString}</a>
                       </FormGroup>
                     </Form>
                   </Formik>
                 </CardBody> 
-                <CardFooter>
-                  <p className="text-center text-muted">
+                <CardFooter id="argo-loginfooter">
+                  <div className="text-center pt-1">
+                    <img src={EULogo} id="eulogo" alt="EU logo"/>
+                    <img src={EOSCLogo} id="eosclogo" alt="EOSC logo" className="pl-1"/>
+                  </div>
+                  <p className="text-center">
                     <small>
-                      ARGO Admin is a service jointly developed and maintained by CNRS,
-                      GRNET and SRCE co-funded by EOSC-Hub and EGI Foundation
+                      <strong>ARGO POEM</strong> is a service jointly developed and maintained by 
+                      <a href="http://www.cnrs.fr/" title="Centre national de la recherche scientifique"> CNRS</a>,
+                      <a href="https://grnet.gr/" title="Greek Research and Technology Network"> GRNET</a> and 
+                      <a href="http://www.srce.unizg.hr/" title="University computing centre"> SRCE </a>
+                      co-funded by <a href="https://www.eosc-hub.eu" title="EOSC-Hub"> EOSC-Hub</a> and 
+                      <a href="http://www.egi.eu/" title="EGI.eu"> EGI.eu</a>
                     </small>
                   </p>
                 </CardFooter>

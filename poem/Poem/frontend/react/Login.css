@@ -1,6 +1,12 @@
-.login-first-row {
-    margin-top: 10%;
+.bodyreact {
+  background-color: #ecf0f5;
 }
-#argologo {
-  height: 80%;
+.login-first-row {
+  margin-top: 10%;
+}
+#argo-loginheader {
+  background-color:#416090;
+}
+#argo-loginfooter {
+  background-color:#ffffff;
 }
