@@ -10,6 +10,7 @@ import {
   NavbarToggler,
   Collapse} from 'reactstrap';
 import {Link} from 'react-router-dom';
+import ArgoLogo from './argologo_color.svg';
 
 
 export function setAuthData(json) {
@@ -84,12 +85,17 @@ const doLogout = (history, onLogout) =>
 
 export const NavigationBar = ({history, onLogout}) =>
 (
-  <Navbar color="light" dark expand="lg">
-    <NavbarBrand>ARGO POEM</NavbarBrand>
+  <Navbar expand="md" id="argo-nav">
+    <NavbarBrand className="text-light">
+      <img src={ArgoLogo} alt="ARGO logo" className="img-responsive"/>
+      <span className="pl-3">
+        <strong>ARGO</strong> POEM
+      </span>
+    </NavbarBrand>
     <NavbarToggler/>
     <Collapse navbar className='justify-content-end'>
       <Nav navbar >
-        <NavItem className='m-2'>
+        <NavItem className='m-2 text-light'>
           Welcome, {localStorage.getItem('authUsername')}
         </NavItem>
         <NavItem className='m-2'>
@@ -119,7 +125,7 @@ export const NavigationLinks = ({location}) =>
   link_title.set('aggregationprofiles', 'Aggregation profiles');
 
   return (
-    <Nav vertical pills>
+    <Nav vertical className='bg-light'>
       {
         list_pages.map((item, i) =>  
           item === 'administration' && localStorage.getItem('authIsSuperuser') 

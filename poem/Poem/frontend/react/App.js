@@ -10,6 +10,8 @@ import {Route, Switch, BrowserRouter, Redirect, withRouter} from 'react-router-d
 import {Container, Row, Col} from 'reactstrap';
 import {NavigationBar, NavigationLinks} from './UIElements';
 
+import './App.css';
+
 
 const NavigationBarWithHistory = withRouter(NavigationBar);
 const NavigationLinksWithLocation = withRouter(NavigationLinks);
@@ -64,12 +66,12 @@ class App extends Component {
         <BrowserRouter>
           <Container fluid>
             <Row>
-              <Col md="12">
+              <Col>
                 <NavigationBarWithHistory onLogout={this.onLogout} />
               </Col>
             </Row>
             <Row>
-              <Col sm={{size: 3, order: 0}}>
+              <Col sm={{size: 2, order: 0}}>
                 <NavigationLinksWithLocation />
               </Col>
               <Col>
