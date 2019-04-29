@@ -15,8 +15,10 @@ import {
 import {NavigationBar, NavigationLinks} from './UIElements';
 
 const AggregationProfiles = (props) =>
+(
   <div>
     "I'm AggregationProfiles"
   </div>
+)
 
 export default AggregationProfiles;

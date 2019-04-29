@@ -12,15 +12,13 @@ import {
   Navbar,
   NavbarToggler,
   Collapse} from 'reactstrap';
-import Cookies from 'universal-cookie';
 import {NavigationBar, NavigationLinks} from './UIElements';
 
-
-const Administration = (props) =>
+const Services = (props) =>
 (
   <div>
-    "I'm Administration"
+    "I'm Services"
   </div>
 )
 
-export default Administration;
+export default Services;

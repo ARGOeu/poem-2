@@ -17,8 +17,10 @@ import {NavigationBar, NavigationLinks} from './UIElements';
 
 
 const MetricProfiles = (props) =>
+(
   <div>
     "I'm MetricProfiles"
   </div>
+)
 
 export default MetricProfiles;

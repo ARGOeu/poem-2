@@ -14,6 +14,8 @@ import ArgoLogo from './argologo_color.svg';
 import EULogo from './eu.png';
 import EOSCLogo from './eosc.png';
 import './UIElements.css';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faSignOutAlt } from '@fortawesome/free-solid-svg-icons';
 
 export function setAuthData(json) {
   localStorage.setItem('authUsername', json.username);
@@ -102,11 +104,10 @@ export const NavigationBar = ({history, onLogout}) =>
         </NavItem>
         <NavItem className='m-2'>
           <Button 
-            color="secondary" 
+            id="argo-navbar-logout"
             size="sm"
-            outline
             onClick={() => doLogout(history, onLogout)}>
-            Logout
+            <FontAwesomeIcon icon={faSignOutAlt} />
           </Button>
         </NavItem>
       </Nav>
@@ -117,11 +118,12 @@ export const NavigationBar = ({history, onLogout}) =>
 
 export const NavigationLinks = ({location}) =>
 {
-  var list_pages = ['administration', 'reports', 'metricprofiles',
+  var list_pages = ['administration','services', 'reports', 'metricprofiles',
     'aggregationprofiles'];
   var link_title = new Map();
 
   link_title.set('administration', 'Administration');
+  link_title.set('services', 'Services');
   link_title.set('reports', 'Reports');
   link_title.set('metricprofiles', 'Metric profiles');
   link_title.set('aggregationprofiles', 'Aggregation profiles');

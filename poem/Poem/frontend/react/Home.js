@@ -15,8 +15,10 @@ import {
 import {NavigationBar, NavigationLinks} from './UIElements';
 
 const Home = (props) =>
+(
   <div>
     "I'm Home"
   </div>
+)
 
 export default Home;

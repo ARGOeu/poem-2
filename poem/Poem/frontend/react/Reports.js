@@ -15,8 +15,10 @@ import {
 import {NavigationBar, NavigationLinks} from './UIElements';
 
 const Reports = (props) =>
+(
   <div>
     "I'm Reports"
   </div>
+)
 
 export default Reports;

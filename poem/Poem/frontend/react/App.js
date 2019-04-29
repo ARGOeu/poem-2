@@ -5,6 +5,7 @@ import Home from './Home';
 import Administration from './Administration';
 import AggregationProfiles from './AggregationProfiles';
 import Reports from './Reports';
+import Services from './Services';
 import NotFound from './NotFound';
 import {Route, Switch, BrowserRouter, Redirect, withRouter} from 'react-router-dom';
 import {Container, Row, Col} from 'reactstrap';
@@ -53,7 +54,7 @@ class App extends Component {
             />
             <Route
               exact 
-              path="/ui/(home|reports|metricprofiles|aggregationprofiles|administration)"
+              path="/ui/(home|services|reports|metricprofiles|aggregationprofiles|administration)"
               render={props => (
                 <Redirect to={{
                   pathname: '/ui/login',
@@ -78,6 +79,7 @@ class App extends Component {
               <Col>
                 <Switch>
                   <Route exact path="/ui/home" component={Home} />
+                  <Route exact path="/ui/services" component={Services} />
                   <Route exact path="/ui/reports" component={Reports} />
                   <Route exact path="/ui/metricprofiles" component={MetricProfiles} />
                   <Route exact path="/ui/aggregationprofiles" component={AggregationProfiles} />
