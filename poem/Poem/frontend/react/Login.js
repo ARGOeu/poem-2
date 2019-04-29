@@ -13,10 +13,9 @@ import {
   FormGroup } from 'reactstrap';
 import {Formik, Field, Form} from 'formik';
 import ArgoLogo from './argologo_color.svg';
-import EULogo from './eu.png';
-import EOSCLogo from './eosc.png';
 import {doLogin, setAuthData} from './UIElements';
 import './Login.css';
+import {Footer} from './UIElements.js';
 
 class Login extends Component {
   constructor(props) {
@@ -101,20 +100,7 @@ class Login extends Component {
                   </Formik>
                 </CardBody> 
                 <CardFooter id="argo-loginfooter">
-                  <div className="text-center pt-1">
-                    <img src={EULogo} id="eulogo" alt="EU logo"/>
-                    <img src={EOSCLogo} id="eosclogo" alt="EOSC logo" className="pl-1"/>
-                  </div>
-                  <p className="text-center">
-                    <small>
-                      <strong>ARGO POEM</strong> is a service jointly developed and maintained by 
-                      <a href="http://www.cnrs.fr/" title="Centre national de la recherche scientifique"> CNRS</a>,
-                      <a href="https://grnet.gr/" title="Greek Research and Technology Network"> GRNET</a> and 
-                      <a href="http://www.srce.unizg.hr/" title="University computing centre"> SRCE </a>
-                      co-funded by <a href="https://www.eosc-hub.eu" title="EOSC-Hub"> EOSC-Hub</a> and 
-                      <a href="http://www.egi.eu/" title="EGI.eu"> EGI.eu</a>
-                    </small>
-                  </p>
+                  <Footer />
                 </CardFooter>
               </Card>
             </Col>

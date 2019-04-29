@@ -11,7 +11,9 @@ import {
   Collapse} from 'reactstrap';
 import {Link} from 'react-router-dom';
 import ArgoLogo from './argologo_color.svg';
-
+import EULogo from './eu.png';
+import EOSCLogo from './eosc.png';
+import './UIElements.css';
 
 export function setAuthData(json) {
   localStorage.setItem('authUsername', json.username);
@@ -85,7 +87,7 @@ const doLogout = (history, onLogout) =>
 
 export const NavigationBar = ({history, onLogout}) =>
 (
-  <Navbar expand="md" id="argo-nav">
+  <Navbar expand="md" id="argo-nav" className="border rounded">
     <NavbarBrand className="text-light">
       <img src={ArgoLogo} alt="ARGO logo" className="img-responsive"/>
       <span className="pl-3">
@@ -125,7 +127,7 @@ export const NavigationLinks = ({location}) =>
   link_title.set('aggregationprofiles', 'Aggregation profiles');
 
   return (
-    <Nav vertical className='bg-light'>
+    <Nav vertical id="argo-navlinks" className="border rounded">
       {
         list_pages.map((item, i) =>  
           item === 'administration' && localStorage.getItem('authIsSuperuser') 
@@ -149,4 +151,51 @@ export const NavigationLinks = ({location}) =>
       }
     </Nav>
   )
+}
+
+
+const InnerFooter = ({border=false}) =>
+(
+  <React.Fragment>
+    {
+      border && <div className="pt-3"/>
+    }
+    <div className="text-center pt-1">
+      <img src={EULogo} id="eulogo" alt="EU logo"/>
+      <img src={EOSCLogo} id="eosclogo" alt="EOSC logo" className="pl-1"/>
+    </div>
+    <p className="text-center">
+      <small>
+        <strong>ARGO POEM</strong> is a service jointly developed and maintained by &nbsp; 
+        <a href="http://www.cnrs.fr/" title="Centre national de la recherche scientifique">CNRS</a>, &nbsp; 
+        <a href="https://grnet.gr/" title="Greek Research and Technology Network">GRNET</a> and &nbsp;
+        <a href="http://www.srce.unizg.hr/" title="University computing centre">SRCE</a>&nbsp;
+        co-funded by <a href="https://www.eosc-hub.eu" title="EOSC-Hub">EOSC-Hub</a> and &nbsp;
+        <a href="http://www.egi.eu/" title="EGI.eu">EGI.eu</a>
+        <br/>
+        <a href="http://argo.egi.eu/lavoisier/TermsofUse" title="Terms of use">Terms of use</a>
+        ,&nbsp; 
+        <a href="http://www.apache.org/licenses/LICENSE-2.0" title="License">License</a>
+      </small>
+    </p>
+  </React.Fragment>
+)
+
+
+export const Footer = ({addBorder=false}) =>
+{
+  if (addBorder) {
+    return (
+      <div id="argo-footer" className="border rounded">
+        <InnerFooter border={addBorder}/>
+      </div>
+    )
+  }
+  else {
+    return (
+      <div id="argo-footer">
+        <InnerFooter />
+      </div>
+    )
+  }
 }

@@ -9,6 +9,7 @@ import NotFound from './NotFound';
 import {Route, Switch, BrowserRouter, Redirect, withRouter} from 'react-router-dom';
 import {Container, Row, Col} from 'reactstrap';
 import {NavigationBar, NavigationLinks} from './UIElements';
+import {Footer} from './UIElements.js';
 
 import './App.css';
 
@@ -83,6 +84,11 @@ class App extends Component {
                   <Route exact path="/ui/administration" component={Administration} />
                   <Route component={NotFound} />
                 </Switch>
+              </Col>
+            </Row>
+            <Row>
+              <Col>
+                <Footer addBorder={true}/>
               </Col>
             </Row>
           </Container>
