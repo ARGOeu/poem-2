@@ -17,13 +17,6 @@ import './UIElements.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSignOutAlt } from '@fortawesome/free-solid-svg-icons';
 
-export function setAuthData(json) {
-  localStorage.setItem('authUsername', json.username);
-  localStorage.setItem('authIsLogged', true);
-  localStorage.setItem('authFirstName', json.first_name);
-  localStorage.setItem('authLastName', json.last_name);
-  localStorage.setItem('authIsSuperuser', json.is_superuser);
-}
 
 
 function fetchUserDetails(username) {
@@ -56,21 +49,10 @@ export function doLogin(username, password)
 }
 
 
-function removeAuthData()
-{
-  localStorage.removeItem('authUsername');
-  localStorage.removeItem('authIsLogged');
-  localStorage.removeItem('authFirstName');
-  localStorage.removeItem('authLastName');
-  localStorage.removeItem('authIsSuperuser');
-}
-
-
 const doLogout = (history, onLogout) =>
 {
   let cookies = new Cookies();
 
-  removeAuthData();
   onLogout();
 
   return fetch('/rest-auth/logout/', {

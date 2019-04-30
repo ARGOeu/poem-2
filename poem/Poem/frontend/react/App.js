@@ -24,18 +24,28 @@ class App extends Component {
     super(props);
 
     this.state = {
-      isLogged: false 
+      isLogged: localStorage.getItem('authIsLogged') ? true : false
     };
 
     this.onLogin = this.onLogin.bind(this);
     this.onLogout = this.onLogout.bind(this);
   }
 
-  onLogin() {
+  onLogin(json) {
     this.setState({isLogged: true});
+    localStorage.setItem('authUsername', json.username);
+    localStorage.setItem('authIsLogged', true);
+    localStorage.setItem('authFirstName', json.first_name);
+    localStorage.setItem('authLastName', json.last_name);
+    localStorage.setItem('authIsSuperuser', json.is_superuser);
   } 
 
   onLogout() {
+    localStorage.removeItem('authUsername');
+    localStorage.removeItem('authIsLogged');
+    localStorage.removeItem('authFirstName');
+    localStorage.removeItem('authLastName');
+    localStorage.removeItem('authIsSuperuser');
     this.setState({isLogged: false});
   } 
 
