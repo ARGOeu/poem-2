@@ -42,7 +42,7 @@ const doLogout = (history, onLogout) =>
 }
 
 
-export const ModalAreYouSure = ({isOpen, toggle, title, msg, onYes, history}) => 
+export const ModalAreYouSure = ({isOpen, toggle, title, msg, onYes}) => 
 (
   <Modal isOpen={isOpen} toggle={toggle}>
     <ModalHeader toggle={toggle}>{title}</ModalHeader>
@@ -51,7 +51,7 @@ export const ModalAreYouSure = ({isOpen, toggle, title, msg, onYes, history}) =>
     </ModalBody>
     <ModalFooter>
       <Button color="primary" onClick={() => {
-        doLogout(history, onYes);
+        onYes();
         toggle();
       }}>Yes</Button>{' '}
       <Button color="secondary" onClick={toggle}>No</Button>
@@ -68,8 +68,7 @@ export const NavigationBar = ({history, onLogout, isOpenModal, toggle, titleModa
       toggle={toggle}
       title={titleModal}
       msg={msgModal}
-      onYes={onLogout}
-      history={history}/>
+      onYes={() => doLogout(history, onLogout)} />
     <Navbar expand="md" id="argo-nav" className="border rounded">
       <NavbarBrand className="text-light">
         <img src={ArgoLogo} alt="ARGO logo" className="img-responsive"/>
