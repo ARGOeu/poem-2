@@ -8,6 +8,10 @@ import {
   NavbarBrand,
   Navbar,
   NavbarToggler,
+  Modal,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
   Collapse} from 'reactstrap';
 import {Link} from 'react-router-dom';
 import ArgoLogo from './argologo_color.svg';
@@ -16,37 +20,6 @@ import EOSCLogo from './eosc.png';
 import './UIElements.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSignOutAlt } from '@fortawesome/free-solid-svg-icons';
-
-
-
-function fetchUserDetails(username) {
-  return fetch('/api/v2/internal/users/' + username, {
-    headers: {
-      'Accept': 'application/json',
-      'Content-Type': 'application/json',
-    },
-  });
-}
-
-
-export function doLogin(username, password)
-{
-  return fetch('/rest-auth/login/', {
-    method: 'POST',
-    mode: 'cors',
-    cache: 'no-cache',
-    credentials: 'same-origin',
-    headers: {
-      'Accept': 'application/json',
-      'Content-Type': 'application/json',
-      'Referer': 'same-origin'
-    },
-    body: JSON.stringify({
-      'username': username, 
-      'password': password
-    })
-  }).then(response => fetchUserDetails(username));
-}
 
 
 const doLogout = (history, onLogout) =>
@@ -69,32 +42,59 @@ const doLogout = (history, onLogout) =>
 }
 
 
-export const NavigationBar = ({history, onLogout}) =>
+export const ModalAreYouSure = ({isOpen, toggle, title, msg, onYes, history}) => 
 (
-  <Navbar expand="md" id="argo-nav" className="border rounded">
-    <NavbarBrand className="text-light">
-      <img src={ArgoLogo} alt="ARGO logo" className="img-responsive"/>
-      <span className="pl-3">
-        <strong>ARGO</strong> POEM
-      </span>
-    </NavbarBrand>
-    <NavbarToggler/>
-    <Collapse navbar className='justify-content-end'>
-      <Nav navbar >
-        <NavItem className='m-2 text-light'>
-          Welcome, {localStorage.getItem('authUsername')}
-        </NavItem>
-        <NavItem className='m-2'>
-          <Button 
-            id="argo-navbar-logout"
-            size="sm"
-            onClick={() => doLogout(history, onLogout)}>
-            <FontAwesomeIcon icon={faSignOutAlt} />
-          </Button>
-        </NavItem>
-      </Nav>
-    </Collapse>
-  </Navbar>
+  <Modal isOpen={isOpen} toggle={toggle}>
+    <ModalHeader toggle={toggle}>{title}</ModalHeader>
+    <ModalBody>
+      {msg}
+    </ModalBody>
+    <ModalFooter>
+      <Button color="primary" onClick={() => {
+        doLogout(history, onYes);
+        toggle();
+      }}>Yes</Button>{' '}
+      <Button color="secondary" onClick={toggle}>No</Button>
+    </ModalFooter>
+  </Modal>
+)
+
+
+export const NavigationBar = ({history, onLogout, isOpenModal, toggle, titleModal, msgModal}) =>
+(
+  <React.Fragment>
+    <ModalAreYouSure 
+      isOpen={isOpenModal}
+      toggle={toggle}
+      title={titleModal}
+      msg={msgModal}
+      onYes={onLogout}
+      history={history}/>
+    <Navbar expand="md" id="argo-nav" className="border rounded">
+      <NavbarBrand className="text-light">
+        <img src={ArgoLogo} alt="ARGO logo" className="img-responsive"/>
+        <span className="pl-3">
+          <strong>ARGO</strong> POEM
+        </span>
+      </NavbarBrand>
+      <NavbarToggler/>
+      <Collapse navbar className='justify-content-end'>
+        <Nav navbar >
+          <NavItem className='m-2 text-light'>
+            Welcome, {localStorage.getItem('authUsername')}
+          </NavItem>
+          <NavItem className='m-2'>
+            <Button 
+              id="argo-navbar-logout"
+              size="sm"
+              onClick={() => toggle()}>
+              <FontAwesomeIcon icon={faSignOutAlt} />
+            </Button>
+          </NavItem>
+        </Nav>
+      </Collapse>
+    </Navbar>
+  </React.Fragment>
 )
 
 
@@ -183,3 +183,5 @@ export const Footer = ({addBorder=false}) =>
     )
   }
 }
+
+

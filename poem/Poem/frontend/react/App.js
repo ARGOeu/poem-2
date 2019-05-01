@@ -24,11 +24,13 @@ class App extends Component {
     super(props);
 
     this.state = {
-      isLogged: localStorage.getItem('authIsLogged') ? true : false
+      isLogged: localStorage.getItem('authIsLogged') ? true : false,
+      areYouSureModal: false,
     };
 
     this.onLogin = this.onLogin.bind(this);
     this.onLogout = this.onLogout.bind(this);
+    this.toggleAreYouSure = this.toggleAreYouSure.bind(this);
   }
 
   onLogin(json) {
@@ -48,6 +50,11 @@ class App extends Component {
     localStorage.removeItem('authIsSuperuser');
     this.setState({isLogged: false});
   } 
+
+  toggleAreYouSure() {
+    this.setState(prevState => 
+      ({areYouSureModal: !prevState.areYouSureModal}));
+  }
 
   render() {
     return ( 
@@ -79,7 +86,12 @@ class App extends Component {
           <Container fluid>
             <Row>
               <Col>
-                <NavigationBarWithHistory onLogout={this.onLogout} />
+                <NavigationBarWithHistory 
+                  onLogout={this.onLogout}
+                  isOpenModal={this.state.areYouSureModal}
+                  toggle={this.toggleAreYouSure}
+                  titleModal='Log out'
+                  msgModal='Are you sure you want to log out?'/>
               </Col>
             </Row>
             <Row>
