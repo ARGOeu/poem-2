@@ -13,9 +13,10 @@ import {
   FormGroup } from 'reactstrap';
 import {Formik, Field, Form} from 'formik';
 import ArgoLogo from './argologo_color.svg';
-import {doLogin, setAuthData} from './UIElements';
+import {doLogin} from './UIElements';
 import './Login.css';
 import {Footer} from './UIElements.js';
+
 
 class Login extends Component {
   constructor(props) {
@@ -34,6 +35,34 @@ class Login extends Component {
       .then(response => response.json())
       .then(json => this.setState({samlIdpString: json.result}))
       .catch(err => console.log('Something went wrong: ' + err));
+  }
+
+  fetchUserDetails(username) {
+    return fetch('/api/v2/internal/users/' + username, {
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+    });
+  }
+
+  doLogin(username, password)
+  {
+    return fetch('/rest-auth/login/', {
+      method: 'POST',
+      mode: 'cors',
+      cache: 'no-cache',
+      credentials: 'same-origin',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Referer': 'same-origin'
+      },
+      body: JSON.stringify({
+        'username': username, 
+        'password': password
+      })
+    }).then(response => this.fetchUserDetails(username));
   }
 
   dismissLoginAlert() {
@@ -57,7 +86,7 @@ class Login extends Component {
                   <Formik
                     initialValues = {{username: '', password: ''}}
                     onSubmit = {
-                      (values) => doLogin(values.username, values.password)
+                      (values) => this.doLogin(values.username, values.password)
                         .then(response => 
                           {
                             if (response.ok) {
@@ -92,7 +121,7 @@ class Login extends Component {
                       <div className="pt-3">
                       </div>
                       <FormGroup>
-                        <Button color="success" type="submit" block>Login using username and password</Button>
+                        <Button color="success" type="submit" block>Log in using username and password</Button>
                         <a className="btn btn-success btn-block" role="button" href="/saml2/login">{this.state.samlIdpString}</a>
                       </FormGroup>
                     </Form>
