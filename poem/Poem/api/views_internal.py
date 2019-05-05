@@ -284,6 +284,10 @@ class ListProbes(APIView):
 class ListServices(APIView):
     authentication_classes = (SessionAuthentication,)
 
+    def __init__(self):
+        super().__init__()
+        self.tree = Tree()
+
     def _is_one_probe_found(self, metrics):
         found_metrics = poem_models.Metric.objects.filter(name__in=metrics)
 
@@ -293,17 +297,17 @@ class ListServices(APIView):
 
         return False
 
-    def _get_or_create(self, tree, root, node):
+    def _get_or_create(self, root, node):
         fn = root.find(node)
         if fn > -1:
             return root.child(fn)
         else:
-            return tree.addchild(node, root)
+            return self.tree.addchild(node, root)
 
-    def _count_leaves(self, tree, root):
+    def _count_leaves(self, root):
         count = 0
 
-        for node in tree.postorder(root):
+        for node in self.tree.postorder(root):
             if node.is_leaf():
                 count += 1
 
@@ -311,8 +315,7 @@ class ListServices(APIView):
 
     def get(self, request):
         servicetype_spmt = dict()
-        tree = Tree()
-        r = tree.addroot('root')
+        r = self.tree.addroot('root')
 
         for (service_area, service_name, service_type) in \
                 poem_models.Service.objects.all().values_list('service_area', 'service_name', 'service_type'):
@@ -322,29 +325,27 @@ class ListServices(APIView):
             if unique_metrics and self._is_one_probe_found(unique_metrics):
                 found_metrics = poem_models.Metric.objects.filter(name__in=unique_metrics)
 
-                sat = self._get_or_create(tree, r, service_area)
-                snt = self._get_or_create(tree, sat, service_name)
-                stt = self._get_or_create(tree, snt, service_type)
+                sat = self._get_or_create(r, service_area)
+                snt = self._get_or_create(sat, service_name)
+                stt = self._get_or_create(snt, service_type)
 
                 for metric in found_metrics:
                     if metric.probeversion:
-                        mt = tree.addchild(metric.name, stt)
-                        tree.addchild(metric.probeversion, mt)
+                        mt = self.tree.addchild(metric.name, stt)
+                        self.tree.addchild(metric.probeversion, mt)
 
         data = list()
         for sa in r.childs():
             data.append({sa.name(): list(),
-                         'rowspan': self._count_leaves(tree, sa)})
+                         'rowspan': self._count_leaves(sa)})
             for sn in sa.childs():
                 data[-1][sa.name()].append({sn.name(): list(),
-                                            'rowspan': self._count_leaves(tree, sn)})
+                                            'rowspan': self._count_leaves(sn)})
                 for st in sn.childs():
                     data[-1][sa.name()][-1][sn.name()].append({st.name(): list(),
-                                                               'rowspan': self._count_leaves(tree, st)})
+                                                               'rowspan': self._count_leaves(st)})
                     for metric in st.childs():
                         data[-1][sa.name()][-1][sn.name()][-1][st.name()].append({metric.name(): metric.childs()[0].name()})
-                        # for probe in metric.childs():
-                            # data[-1][sa.name()][-1][sn.name()][-1][st.name()][-1][metric.name()].append(probe.name())
 
         return Response({'tree': data,
-                         'rowspan': self._count_leaves(tree, r)})
+                         'rowspan': self._count_leaves(r)})
