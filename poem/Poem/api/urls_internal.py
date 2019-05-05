@@ -12,6 +12,7 @@ urlpatterns = [
     path('users/', views_internal.ListUsers.as_view(), name='users'),
     path('users/<str:username>', views_internal.ListUsers.as_view(), name='users'),
     path('groups/', views_internal.ListGroupsForUser.as_view(), name='groups'),
+    path('services/', views_internal.ListServices.as_view(), name='services'),
     path('groups/<str:group>', views_internal.ListGroupsForUser.as_view(), name='groups'),
     path('probes/<str:probe_name>', views_internal.ListProbes.as_view(), name='probes'),
     path('aggregations/', views_internal.ListAggregations.as_view(), name='aggregations'),

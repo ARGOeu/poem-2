@@ -265,3 +265,40 @@ class ListProbes(APIView):
                           description=probes.description,
                           comment=probes.comment)
         return Response(result)
+
+
+class ListServices(APIView):
+    authentication_classes = (SessionAuthentication,)
+
+    def _is_one_probe_found(self, metrics):
+        found_metrics = poem_models.Metric.objects.filter(name__in=metrics)
+
+        for metric in found_metrics:
+            if metric.probeversion:
+                return True
+
+        return False
+
+    def get(self, request):
+        servicetype_spmt = dict()
+        tree = Tree()
+        r = tree.addroot('root')
+
+        for (service_area, service_name, service_type) in \
+                poem_models.Service.objects.all().values_list('service_area', 'service_name', 'service_type'):
+            metricinstances = poem_models.MetricInstance.objects.filter(service_flavour=service_type)
+            unique_metrics = sorted(list(set(m.metric for m in metricinstances)))
+
+            if unique_metrics and self._is_one_probe_found(unique_metrics):
+                found_metrics = poem_models.Metric.objects.filter(name__in=unique_metrics)
+
+                sat = tree.addchild(service_area, r)
+                snt = tree.addchild(service_name, sat)
+                stt = tree.addchild(service_type, snt)
+
+                for metric in found_metrics:
+                    if metric.probeversion:
+                        mt = tree.addchild(metric.name, stt)
+                        tree.addchild(metric.probeversion, mt)
+
+        return Response(servicetype_spmt)
