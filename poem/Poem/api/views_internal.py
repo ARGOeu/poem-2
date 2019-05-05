@@ -300,6 +300,15 @@ class ListServices(APIView):
         else:
             return tree.addchild(node, root)
 
+    def _count_leaves(self, tree, root):
+        count = 0
+
+        for node in tree.postorder(root):
+            if node.is_leaf():
+                count += 1
+
+        return count
+
     def get(self, request):
         servicetype_spmt = dict()
         tree = Tree()
@@ -324,14 +333,18 @@ class ListServices(APIView):
 
         data = list()
         for sa in r.childs():
-            data.append({sa.name(): list()})
+            data.append({sa.name(): list(),
+                         'rowspan': self._count_leaves(tree, sa)})
             for sn in sa.childs():
-                data[-1][sa.name()].append({sn.name(): list()})
+                data[-1][sa.name()].append({sn.name(): list(),
+                                            'rowspan': self._count_leaves(tree, sn)})
                 for st in sn.childs():
-                    data[-1][sa.name()][-1][sn.name()].append({st.name(): list()})
+                    data[-1][sa.name()][-1][sn.name()].append({st.name(): list(),
+                                                               'rowspan': self._count_leaves(tree, st)})
                     for metric in st.childs():
                         data[-1][sa.name()][-1][sn.name()][-1][st.name()].append({metric.name(): metric.childs()[0].name()})
                         # for probe in metric.childs():
                             # data[-1][sa.name()][-1][sn.name()][-1][st.name()][-1][metric.name()].append(probe.name())
 
-        return Response(data)
+        return Response({'tree': data,
+                         'rowspan': self._count_leaves(tree, r)})
