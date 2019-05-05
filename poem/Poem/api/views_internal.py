@@ -5,11 +5,98 @@ from rest_framework import status
 
 from rest_framework_api_key import models as api_models
 
+from queue import Queue
+
 from Poem.poem import models as poem_models
 from Poem.poem.saml2.config import tenant_from_request, saml_login_string
 
 from .views import NotFound
 from . import serializers
+
+
+class Tree:
+    class Node:
+        def __init__(self, nodename):
+            self._nodename = nodename
+            self._child = []
+
+        def parent(self):
+            return self._parent
+
+        def childs(self):
+            return self._child
+
+        def numchilds(self):
+            return len(self._child)
+
+        def is_leaf(self):
+            if self.numchilds() == 0:
+                return True
+            else:
+                return False
+
+        def __str__(self):
+            return self._nodename
+
+    def __init__(self):
+        self.root = None
+        self._size = 0
+
+    def __len__(self):
+        return self._size
+
+    def addroot(self, e):
+        self.root = self.Node(e)
+        return self.root
+
+    def breadthfirst(self):
+        fringe = Queue()
+        fringe.put(self.root)
+        while not fringe.empty():
+            p = fringe.get()
+            yield p
+            for c in p.childs():
+                fringe.put(c)
+
+    def addchild(self, e, p):
+        c = self.Node(e)
+        c._parent = p
+        p._child.append(c)
+        self._size += 1
+        return c
+
+    def is_empty(self):
+        return len(self) == 0
+
+    def preorder(self, n=None):
+        if n is None:
+            n = self.root
+        for p in self._subtree_preorder(n):
+            yield p
+
+    def _subtree_preorder(self, p):
+        yield p
+        for c in p.childs():
+            if c.is_leaf():
+                yield c
+            else:
+                for other in self._subtree_preorder(c):
+                    yield other
+
+    def postorder(self, n=None):
+        if n is None:
+            n = self.root
+        for p in self._subtree_postorder(n):
+            yield p
+
+    def _subtree_postorder(self, p):
+        for c in p.childs():
+            if c.is_leaf():
+                yield c
+            else:
+                for other in self._subtree_postorder(c):
+                    yield other
+        yield p
 
 
 class GetSamlIdpString(APIView):
