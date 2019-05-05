@@ -23,11 +23,25 @@ class Tree:
         def parent(self):
             return self._parent
 
+        def child(self, i):
+            return self._child[i]
+
         def childs(self):
             return self._child
 
         def numchilds(self):
             return len(self._child)
+
+        def find(self, nodename):
+            length = len(self._child)
+            if length > 0:
+                for i in range(length):
+                    if self._child[i].name() == nodename:
+                        return i
+            return -1
+
+        def name(self):
+            return self._nodename
 
         def is_leaf(self):
             if self.numchilds() == 0:
@@ -292,13 +306,39 @@ class ListServices(APIView):
             if unique_metrics and self._is_one_probe_found(unique_metrics):
                 found_metrics = poem_models.Metric.objects.filter(name__in=unique_metrics)
 
-                sat = tree.addchild(service_area, r)
-                snt = tree.addchild(service_name, sat)
-                stt = tree.addchild(service_type, snt)
+                fsa = r.find(service_area)
+                if fsa > -1:
+                    sat = r.child(fsa)
+                else:
+                    sat = tree.addchild(service_area, r)
+
+                fsn = sat.find(service_name)
+                if fsn > -1:
+                    snt = sat.child(fsn)
+                else:
+                    snt = tree.addchild(service_name, sat)
+
+                fst = snt.find(service_type)
+                if fsn > -1:
+                    stt = snt.child(fst)
+                else:
+                    stt = tree.addchild(service_type, snt)
 
                 for metric in found_metrics:
                     if metric.probeversion:
                         mt = tree.addchild(metric.name, stt)
                         tree.addchild(metric.probeversion, mt)
 
-        return Response(servicetype_spmt)
+        data = list()
+        for sa in r.childs():
+            data.append({sa.name(): list()})
+            for sn in sa.childs():
+                data[-1][sa.name()].append({sn.name(): list()})
+                for st in sn.childs():
+                    data[-1][sa.name()][-1][sn.name()].append({st.name(): list()})
+                    for metric in st.childs():
+                        data[-1][sa.name()][-1][sn.name()][-1][st.name()].append({metric.name(): metric.childs()[0].name()})
+                        # for probe in metric.childs():
+                            # data[-1][sa.name()][-1][sn.name()][-1][st.name()][-1][metric.name()].append(probe.name())
+
+        return Response(data)
