@@ -293,6 +293,13 @@ class ListServices(APIView):
 
         return False
 
+    def _get_or_create(self, tree, root, node):
+        fn = root.find(node)
+        if fn > -1:
+            return root.child(fn)
+        else:
+            return tree.addchild(node, root)
+
     def get(self, request):
         servicetype_spmt = dict()
         tree = Tree()
@@ -306,23 +313,9 @@ class ListServices(APIView):
             if unique_metrics and self._is_one_probe_found(unique_metrics):
                 found_metrics = poem_models.Metric.objects.filter(name__in=unique_metrics)
 
-                fsa = r.find(service_area)
-                if fsa > -1:
-                    sat = r.child(fsa)
-                else:
-                    sat = tree.addchild(service_area, r)
-
-                fsn = sat.find(service_name)
-                if fsn > -1:
-                    snt = sat.child(fsn)
-                else:
-                    snt = tree.addchild(service_name, sat)
-
-                fst = snt.find(service_type)
-                if fsn > -1:
-                    stt = snt.child(fst)
-                else:
-                    stt = tree.addchild(service_type, snt)
+                sat = self._get_or_create(tree, r, service_area)
+                snt = self._get_or_create(tree, sat, service_name)
+                stt = self._get_or_create(tree, snt, service_type)
 
                 for metric in found_metrics:
                     if metric.probeversion:
