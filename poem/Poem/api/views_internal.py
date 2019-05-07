@@ -334,18 +334,52 @@ class ListServices(APIView):
                         mt = self.tree.addchild(metric.name, stt)
                         self.tree.addchild(metric.probeversion, mt)
 
-        data = list()
-        for sa in r.childs():
-            data.append({sa.name(): list(),
-                         'rowspan': self._count_leaves(sa)})
-            for sn in sa.childs():
-                data[-1][sa.name()].append({sn.name(): list(),
-                                            'rowspan': self._count_leaves(sn)})
-                for st in sn.childs():
-                    data[-1][sa.name()][-1][sn.name()].append({st.name(): list(),
-                                                               'rowspan': self._count_leaves(st)})
-                    for metric in st.childs():
-                        data[-1][sa.name()][-1][sn.name()][-1][st.name()].append({metric.name(): metric.childs()[0].name()})
+        nleaves = self._count_leaves(r)
+        nleaves_perelem = {
+            'service_area': list(),
+            'service_name': list(),
+            'service_type': list(),
+            'metric': list(),
+            'probe': list(),
+        }
 
-        return Response({'tree': data,
-                         'rowspan': self._count_leaves(r)})
+        for sa in r.childs():
+            nleaves_perelem['service_area'].append((sa.name(), self._count_leaves(sa)))
+            for sn in sa.childs():
+                nleaves_perelem['service_name'].append((sn.name(), self._count_leaves(sn)))
+                for st in sn.childs():
+                    nleaves_perelem['service_type'].append((st.name(), self._count_leaves(st)))
+                    for m in st.childs():
+                        nleaves_perelem['metric'].append((m.name(), 1))
+                        nleaves_perelem['probe'].append((m.childs()[0].name(), 1))
+
+        data = [{
+            'service_area': None,
+            'service_name': None,
+            'service_type': None,
+            'metric': None,
+            'probe': None
+        } for i in range(nleaves)]
+
+        for type in data[0].keys():
+            next, n, p, skip = 0, 0, 1, False
+            for i in range(nleaves):
+                elem = nleaves_perelem[type][next]
+                if elem[1] > 1:
+                    if not skip:
+                        data[i][type] = elem[0]
+                        skip = True
+                    else:
+                        data[i][type] = ''
+                    if p < elem[1]:
+                        p += 1
+                    else:
+                        next += 1
+                        p = 1
+                        skip = False
+                elif elem[1] == 1:
+                    data[i][type] = elem[0]
+                    next += 1
+                    skip = False
+
+        return Response({'result': data})
