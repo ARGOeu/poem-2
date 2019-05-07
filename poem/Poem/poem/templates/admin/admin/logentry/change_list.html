@@ -1,0 +1,39 @@
+{% extends "admin/change_list.html" %}
+{% load i18n admin_urls admin_static admin_modify %}
+
+{% block extrahead %}
+{{ block.super }}
+{{ media.js }}
+<script type="text/javascript">
+  $(document).ready(function() {
+    var field = $('#searchbar');
+    field.autofocus = false;
+    field.on('click', function() {
+      var json_users_list = '/poem/api/v2/internal/users/';
+      $.getJSON(json_users_list).done(function(json) {
+        field.autocomplete();
+        field.autocomplete({minLength: 0, source: json['result']});
+        field.autocomplete("search", "");
+      });
+    });
+  });
+</script>
+{% endblock %}
+
+{% block content_title %}
+  <h1>Select log entry to see details</h1>
+{% endblock %}
+
+{% if not is_popup %}
+  {% block breadcrumbs %}
+    <div class="breadcrumbs">
+      <a href="{% url 'admin:app_list' app_label=opts.app_label %}">Admin</a>
+      &rsaquo; {% if has_change_permission %}<a href="{% url opts|admin_urlname:'changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a>{% else %}{{ opts.verbose_name_plural|capfirst }}{% endif %}
+      &nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;<a href="{% url 'admin:poem_profile_changelist' %}">Profiles</a>&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;
+      <a href="{% url 'admin:poem_service_changelist' %}">Services</a>&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;
+      <a href="{% url 'admin:poem_probe_changelist' %}">Probes</a>&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;
+      <a href="{% url 'admin:poem_metric_changelist' %}">Metrics</a>&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;
+      <a href="{% url 'admin:poem_aggregation_changelist' %}">Aggregations</a>
+    </div>
+  {% endblock %}
+{% endif %}

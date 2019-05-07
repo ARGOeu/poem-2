@@ -1,0 +1,103 @@
+{% extends "admin/change_form.html" %}
+{% load i18n admin_urls admin_static admin_list admin_modify %}
+{% load json_filters %}
+{% load render_bundle from webpack_loader %}
+
+{% block usertools %}
+  <div id="user-tools">
+      {% trans 'Welcome,' %}
+      <strong>{% firstof user.get_short_name user.get_username %}
+        {% if user.groupsofaggregations.count %}
+          ({% for group in user.groupsofaggregations.all %}{{ group.name }}{% if not forloop.last %},{% endif %}{% if forloop.last %}){% endif %}
+          {% endfor %}
+        {% endif %}
+      </strong>.
+      {% block userlinks %}
+        <a href="{% url 'admin:logout' %}">
+        {% trans 'Log out' %}</a>
+      {% endblock %}
+  </div>
+{% endblock %}
+
+{% block extrahead %}
+  {{ block.super }}
+  <script>
+    window.props = {{ props|jsonify }}
+  </script>
+{% endblock %}
+
+{% if not is_popup %}
+  {% block breadcrumbs %}
+  <div class="breadcrumbs">
+    {% if request.user.is_superuser %}
+        <a href="{% url 'admin:app_list' app_label=opts.app_label %}">Admin</a>&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;
+    {% endif %}
+    <a href="{% url 'admin:poem_profile_changelist' %}">Profiles</a>&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;
+    <a href="{% url 'admin:poem_service_changelist' %}">Services</a>&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;
+    <a href="{% url 'admin:poem_probe_changelist' %}">Probes</a>&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;
+    <a href="{% url 'admin:poem_metric_changelist' %}">Metrics</a>
+    &nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;
+    {% if has_change_permission %}
+      <a href="{% url opts|admin_urlname:'changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a>
+    {% else %}
+      {{ opts.verbose_name_plural|capfirst }}
+    {% endif %}
+    &rsaquo;
+    {% if add %}
+      {% trans 'Add' %} {{ opts.verbose_name }}
+    {% else %}
+      {{ original|truncatewords:"18" }}
+    {% endif %}
+  </div>
+  {% endblock %}
+{% endif %}
+
+{% block content %}<div id="content-main">
+{% block object-tools %}
+{% if change %}{% if not is_popup %}
+  <ul class="object-tools">
+    {% block object-tools-items %}
+    {% if user.is_superuser or perms.poem.groupown_aggregation %}
+      {% if include_clone_link %}
+        <li><a href="clone/">{{ clone_verbose_name }}</a></li>
+      {% endif %}
+    {% endif %}
+    {% if user.is_authenticated %} 
+      <li>
+        {% url opts|admin_urlname:'history' original.pk|admin_urlquote as history_url %}
+        <a href="{% add_preserved_filters history_url %}" class="historylink">{% trans "History" %}</a>
+      </li>
+    {% endif %}
+    {% if has_absolute_url %}<li><a href="{% url 'admin:view_on_site' content_type_id original.pk %}" class="viewsitelink">{% trans "View on site" %}</a></li>{% endif%}
+    {% endblock %}
+  </ul>
+{% endif %}{% endif %}
+{% endblock %}
+<form {% if has_file_field %}enctype="multipart/form-data" {% endif %}action="{{ form_url }}" method="post" id="{{ opts.model_name }}_form">{% csrf_token %}{% block form_top %}{% endblock %}
+<div>
+{% if is_popup %}<input type="hidden" name="_popup" value="1" />{% endif %}
+{% if save_on_top %}{% block submit_buttons_top %}{% submit_row %}{% endblock %}{% endif %}
+{% if errors %}
+  <p class="errornote">
+  {% if errors|length == 1 %}{% trans "Please correct the error below." %}{% else %}{% trans "Please correct the errors below." %}{% endif %}
+  </p>
+  {{ adminform.form.non_field_errors }}
+{% endif %}
+
+
+{% block after_related_objects %}
+  <div id="popupContainer"></div>
+  <div id="react"></div>
+  {% render_bundle 'main' %}
+{% endblock %}
+
+{% if adminform and add %}
+   <script type="text/javascript">document.getElementById("{{ adminform.first_field.id_for_label }}").focus();</script>
+{% endif %}
+
+{# JavaScript for prepopulated fields #}
+{% prepopulated_fields_js %}
+
+</div>
+</form></div>
+{% endblock %}

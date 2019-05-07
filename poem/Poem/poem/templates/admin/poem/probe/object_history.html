@@ -1,0 +1,103 @@
+{% extends "admin/object_history.html" %}
+{% load i18n admin_urls staticfiles %}
+{% load plaintext_comments %}
+
+{% block usertools %}
+  <div id="user-tools">
+      {% trans 'Welcome,' %}
+      <strong>{% firstof user.get_short_name user.get_username %}
+        {% if user.groupsofprobes.count %}
+          ({% for group in user.groupsofprobes.all %}{{ group.name }}{% if not forloop.last %},{% endif %}{% if forloop.last %}){% endif %}
+          {% endfor %}
+        {% endif %}
+      </strong>.
+      {% block userlinks %}
+          <a href="{% url 'admin:logout' %}">
+          {% trans 'Log out' %}</a>
+      {% endblock %}
+  </div>
+{% endblock %}
+
+
+{% if not is_popup %}
+  {% block breadcrumbs %}
+  <div class="breadcrumbs">
+    {% if request.user.is_superuser %}
+        <a href="{% url 'admin:app_list' app_label=opts.app_label %}">Admin</a>&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;
+    {% endif %}
+    <a href="{% url 'admin:poem_profile_changelist' %}">Profiles</a>&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;
+      <a href="{% url 'admin:poem_service_changelist' %}">Services</a>&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;
+    <a href="{% url 'admin:poem_probe_changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a>
+    &rsaquo;
+    <a href="{% url opts|admin_urlname:'change' object.pk|admin_urlquote %}">{{ object|truncatewords:"18" }}</a>
+    &rsaquo;
+    History
+    &nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;
+    <a href="{% url 'admin:poem_metric_changelist' %}">Metrics</a>
+    &nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;
+    <a href="{% url 'admin:poem_aggregation_changelist' %}">Aggregations</a>
+  </div>
+  {% endblock %}
+{% endif %}
+
+
+{% block content %}
+    <link rel="stylesheet" type="text/css" href="/poem_media/css/siteprobes.css">
+    <div id="content-main">
+    
+        <p>{% blocktrans %}Choose a version from the list below to see a previous version of this probe.{% endblocktrans %}</p>
+    
+        <div class="module">
+            {% if action_list %}
+                {% if compare_view %}<form method="GET" action="../history/compare/">{% endif %}
+                <table id="change-history">
+                    <thead>
+                        <tr>
+                            {% if compare_view %}
+                                <th scope="col">
+                                    {% if comparable %}
+                                        <input type="submit" value="{% trans 'compare' %}">
+                                    {% else %}
+                                       <i>{% trans 'compare' %}</i>
+                                    {% endif %}
+                                </th>
+                            {% endif %}
+                            <th scope="col">{% trans 'Version' %}</th>
+                            <th scope="col">{% trans 'Date/time' %}</th>
+                            <th scope="col">{% trans 'User' %}</th>
+                            <th scope="col">{% trans 'Comment' %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for action in action_list %}
+                            <tr>
+                                {% if compare_view %}
+                                <td scope="row">
+                                    {% if comparable %}
+                                       <input type="radio" name="version_id1" value="{{ action.version.pk }}" {% if action.first %}style="visibility:hidden" {% endif %}{% if action.second %}checked="checked" {% endif %}/>
+                                       <input type="radio" name="version_id2" value="{{ action.version.pk }}" {% if action.first == 1 %}checked="checked" {% endif %}/>
+                                    {% else %}
+                                       <i>-</i>
+                                    {% endif %}
+                                </td>
+                                {% endif %}
+                                <th scope="row"><a href="{{ action.url }}">{{ action.revision.extrevision.version }}</a></th>
+                                <th scope="row">{{action.revision.date_created|date:_("DATETIME_FORMAT")}}</th>
+                                <td>
+                                    {% if action.revision.user %}
+                                        {{action.revision.user.username}}
+                                    {% endif %}
+                                </td>
+                                <td>{% get_new_comment action.revision.comment action.version.object_id action.version.id %}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% if compare_view %}</form>{% endif %}
+            {% else %}
+                <p>{% trans "This object doesn't have a change history. It probably wasn't added via this admin site." %}</p>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}
+

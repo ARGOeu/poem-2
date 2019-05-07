@@ -1,0 +1,22 @@
+th {
+  font-size: 14px;
+  width: 100%;
+}
+
+.dashboard #content {
+  margin: 0 auto;
+  position: relative;
+  width: 1000px;
+}
+
+.dashboard #content-main {
+  width: 700px;
+  float: left;
+}
+
+.dashboard #content-related {
+  width: 200px;
+  /*margin-right: -250px;*/
+  float: left;
+  margin-left: 50px;
+}

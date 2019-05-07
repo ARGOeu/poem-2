@@ -1,0 +1,126 @@
+{% extends "admin/change_form.html" %}
+{% load i18n admin_urls admin_static admin_list admin_modify %}
+
+{% block usertools %}
+  <div id="user-tools">
+      {% trans 'Welcome,' %}
+      <strong>{% firstof user.get_short_name user.get_username %}
+        {% if user.groupsofprobes.count %}
+          ({% for group in user.groupsofprobes.all %}{{ group.name }}{% if not forloop.last %},{% endif %}{% if forloop.last %}){% endif %}
+          {% endfor %}
+        {% endif %}
+      </strong>.
+      {% block userlinks %}
+          <a href="{% url 'admin:logout' %}">{% trans 'Log out' %}</a>
+      {% endblock %}
+  </div>
+{% endblock %}
+
+{% block breadcrumbs %}
+    <div class="breadcrumbs">
+        {% if request.user.is_superuser %}
+            <a href="{% url 'admin:app_list' app_label=opts.app_label %}">Admin</a>&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;
+        {% endif %}
+        <a href="{% url 'admin:poem_profile_changelist' %}">Profiles</a>&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;
+			  <a href="{% url 'admin:poem_service_changelist' %}">Services</a>&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;
+
+				<a href="{% url 'admin:poem_probe_changelist' %}">Probes</a>&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;
+        <a href="{% url opts|admin_urlname:'changelist' %}">{{opts.verbose_name_plural|capfirst}}</a> &rsaquo;
+        <a href="{% url opts|admin_urlname:'change' object_id %}">{{ original }}</a> &rsaquo;
+        <a href="{% url opts|admin_urlname:'history' object_id %}">{% trans "History" %}</a> &rsaquo;
+        {% blocktrans with opts.verbose_name as verbose_name %}{{ cursel }}{% endblocktrans %}
+    </div>
+{% endblock %}
+
+{% block content %}<div id="content-main">
+<form {% if has_file_field %}enctype="multipart/form-data" {% endif %}action="{{ form_url }}" method="post" id="{{ opts.model_name }}_form">{% csrf_token %}{% block form_top %}{% endblock %}
+<div>
+{% if is_popup %}<input type="hidden" name="_popup" value="1" />{% endif %}
+
+{% block field_sets %}
+<fieldset class="module aligned tagging">
+    <div class="form-row {% if field.field.name %} field-{{ field.field.name }}{% endif %}">
+      {% for field in custom_adminform %}
+          {% if forloop.counter == 1 or forloop.counter <= 3 %}
+              <div class="field-box{% if field.field.name %} field-{{ field.field.name }}{% endif %}">
+                <label class="required" for={{ field.id_for_label }}>{{ field.label }}: </label> {{ field }} 
+                <p class="help"> {{ field.field.help_text }}</p>
+              </div>
+          {% endif %}
+      {% endfor %}
+    </div>
+    <div class="form-row {% if field.field.name %} field-{{ field.field.name }}{% endif %}">
+      {% for field in custom_adminform %}
+          {% if forloop.counter > 3 or forloop.counter == 4 %}
+              <div class="field-box{% if field.field.name %} field-{{ field.field.name }}{% endif %}">
+                <label class="required" for={{ field.id_for_label }}>{{ field.label }}: </label> {{ field }} 
+                <p class="help"> {{ field.field.help_text }}</p>
+              </div>
+          {% endif %}
+      {% endfor %}
+    </div>
+</fieldset>
+{% endblock %}
+
+{% block after_field_sets %}
+<h2 style="font-weight: 400; padding:8px; color:white; font-size:12px; letter-spacing:0.5px; text-transform:uppercase; background:#79AEC8;">Metric configuration</h2>
+</br>
+{% endblock %}
+
+{% block inline_field_sets %}
+{% for formset in custom_formsets %}
+  <div class="inline-group" id="{{ formset.prefix }}-group">
+    <div class="tabular inline-related {% if forloop.last %}last-related{% endif %}">
+      <h2 style="font-weight:600; color:#202020; background:#FFFFFF;">{{ formset.verbose_name|capfirst }}</h2>
+      {{ formset.management_form }}
+      <fieldset class="module">
+        <table>
+          {% for form in formset %}
+            {% if formset.prefix != 'probeexecutable' and formset.prefix != 'parent' %}
+              <thead><tr>
+              {% if forloop.first %}
+                {% for f in form.declared_fields %}
+                  <th class="required">{{ f }}</th>
+                {% endfor %}
+              {% endif %}
+              </tr></thead>
+            {% endif %}
+            <tbody>
+              <tr class="form-row {% cycle "row1" "row2" %} {% if forloop.last and formset|length != 1 %} empty-form{% endif %}" id="{{ formset.prefix }}-{% if not forloop.last %}{{ forloop.counter0 }}{% else %}empty{% endif %}">
+                {% if formset.prefix != 'probeexecutable' and formset.prefix != 'parent' %}
+                  {% for field in form %}
+                    {{ field.errors }}
+                    {% if not forloop.last %}
+                      <td{% if field.name %} class="field-{{ field.name }}"{% endif %}{% if forloop.first %} style="padding-left:6px" {% endif %}>
+                        {{ field }}
+                      </td>
+                    {% endif %}
+                  {% endfor %}
+                {% else %}
+                  {% for field in form %}
+                    <td class="field-{{ field.name }}">{{ field }}</td>
+                  {% endfor %}
+                {% endif %}
+              </tr>
+            </tbody>
+          {% endfor %}
+
+        </table>
+      </fieldset>
+    </div>
+  </div>
+{% endfor %}
+{% endblock %}
+
+{% block after_related_objects %}{% endblock %}
+
+{% if adminform and add %}
+   <script type="text/javascript">document.getElementById("{{ adminform.first_field.id_for_label }}").focus();</script>
+{% endif %}
+
+{# JavaScript for prepopulated fields #}
+{% prepopulated_fields_js %}
+
+</div>
+</form></div>
+{% endblock %}
