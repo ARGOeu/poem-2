@@ -313,8 +313,62 @@ class ListServices(APIView):
 
         return count
 
+    def _count_leaves_per_element(self, root):
+        data = {
+            'service_area': list(),
+            'service_name': list(),
+            'service_type': list(),
+            'metric': list(),
+            'probe': list(),
+        }
+
+        for sa in root.childs():
+            data['service_area'].append((sa.name(), self._count_leaves(sa)))
+            for sn in sa.childs():
+                data['service_name'].append((sn.name(), self._count_leaves(sn)))
+                for st in sn.childs():
+                    data['service_type'].append((st.name(), self._count_leaves(st)))
+                    for m in st.childs():
+                        data['metric'].append((m.name(), 1))
+                        data['probe'].append((m.childs()[0].name(), 1))
+
+        return data
+
+    def _create_empty_table_rows(self, nleaves):
+        data = [{
+            'service_area': None,
+            'service_name': None,
+            'service_type': None,
+            'metric': None,
+            'probe': None
+        } for i in range(nleaves)]
+
+        return data
+
+    def _fill_rows(self, table_rows, nleaves_perelem, nleaves):
+        for type in table_rows[0].keys():
+            next, s, skip = 0, 1, False
+            for i in range(nleaves):
+                name = nleaves_perelem[type][next][0]
+                rowspan = nleaves_perelem[type][next][1]
+                if rowspan > 1:
+                    if not skip:
+                        table_rows[i][type] = name
+                        skip = True
+                    else:
+                        table_rows[i][type] = ''
+                    if s < rowspan:
+                        s += 1
+                    else:
+                        next += 1
+                        s = 1
+                        skip = False
+                elif rowspan == 1:
+                    table_rows[i][type] = name
+                    next += 1
+                    skip = False
+
     def get(self, request):
-        servicetype_spmt = dict()
         r = self.tree.addroot('root')
 
         for (service_area, service_name, service_type) in \
@@ -335,51 +389,8 @@ class ListServices(APIView):
                         self.tree.addchild(metric.probeversion, mt)
 
         nleaves = self._count_leaves(r)
-        nleaves_perelem = {
-            'service_area': list(),
-            'service_name': list(),
-            'service_type': list(),
-            'metric': list(),
-            'probe': list(),
-        }
+        nleaves_perelem = self._count_leaves_per_element(r)
+        table_rows = self._create_empty_table_rows(nleaves)
+        self._fill_rows(table_rows, nleaves_perelem, nleaves)
 
-        for sa in r.childs():
-            nleaves_perelem['service_area'].append((sa.name(), self._count_leaves(sa)))
-            for sn in sa.childs():
-                nleaves_perelem['service_name'].append((sn.name(), self._count_leaves(sn)))
-                for st in sn.childs():
-                    nleaves_perelem['service_type'].append((st.name(), self._count_leaves(st)))
-                    for m in st.childs():
-                        nleaves_perelem['metric'].append((m.name(), 1))
-                        nleaves_perelem['probe'].append((m.childs()[0].name(), 1))
-
-        data = [{
-            'service_area': None,
-            'service_name': None,
-            'service_type': None,
-            'metric': None,
-            'probe': None
-        } for i in range(nleaves)]
-
-        for type in data[0].keys():
-            next, n, p, skip = 0, 0, 1, False
-            for i in range(nleaves):
-                elem = nleaves_perelem[type][next]
-                if elem[1] > 1:
-                    if not skip:
-                        data[i][type] = elem[0]
-                        skip = True
-                    else:
-                        data[i][type] = ''
-                    if p < elem[1]:
-                        p += 1
-                    else:
-                        next += 1
-                        p = 1
-                        skip = False
-                elif elem[1] == 1:
-                    data[i][type] = elem[0]
-                    next += 1
-                    skip = False
-
-        return Response({'result': data})
+        return Response({'result': table_rows})
