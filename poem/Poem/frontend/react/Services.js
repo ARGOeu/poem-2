@@ -21,7 +21,8 @@ class Services extends Component {
 
     this.state = {
       loading: false,
-      services: null
+      rows: null,
+      rowspan: null,
     }
   }
 
@@ -30,19 +31,55 @@ class Services extends Component {
     fetch('/api/v2/internal/services')
       .then(response => response.json())
       .then(json =>
-          this.setState({services: json.tree, loading: false})
+        this.setState({
+          rows: json.result.rows, 
+          rowspan: json.result.rowspan, 
+          loading: false})
       )
   }
 
   render() {
-    const {loading, services} = this.state
+    const {loading, rows, rowspan} = this.state
 
     return (
       (loading)
       ?
         <div>Loading...</div>
       :
-        <div>I'm services</div>
+        <table className="table table-bordered table-sm">
+          <thead className="table-info">
+            <tr>
+              <th scope="col">Service area</th>
+              <th scope="col">Service name</th>
+              <th scope="col">Service type</th>
+              <th scope="col">Metric</th>
+              <th scope="col">Probe</th>
+            </tr>
+          </thead>
+          <tbody>
+            {
+              rows && rows.map((e, i) =>
+                <tr key={i}>
+                  <td className="table-light">
+                    {e.service_area}
+                  </td>
+                  <td className="table-light">
+                    {e.service_name}
+                  </td>
+                  <td className="table-light">
+                    {e.service_type}
+                  </td>
+                  <td className="table-light">
+                    {e.metric}
+                  </td>
+                  <td className="table-light">
+                    {e.probe}
+                  </td>
+                </tr>
+              )
+            }
+          </tbody>
+        </table>
     )
 
   }

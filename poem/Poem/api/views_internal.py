@@ -393,4 +393,7 @@ class ListServices(APIView):
         table_rows = self._create_empty_table_rows(nleaves)
         self._fill_rows(table_rows, nleaves_perelem, nleaves)
 
-        return Response({'result': table_rows})
+        return Response({'result': {
+            'rows': table_rows,
+            'rowspan': nleaves_perelem
+        }})
