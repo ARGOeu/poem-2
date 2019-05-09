@@ -28,7 +28,7 @@ logger = logging.getLogger('POEM')
 
 
 def main():
-    """Parses service areas, services and service types from eosc-hub api."""
+    """Parses service category, services and service types from eosc-hub api."""
 
     schemas = list(Tenant.objects.all().values_list('schema_name', flat=True))
     schemas.remove(get_public_schema_name())
@@ -50,7 +50,7 @@ def main():
             feedset = set()
             for f in feed:
                 feedset.add((f['id'], f['service_id'], f['service_name'],
-                            f['service_area'], f['service_version'],
+                            f['service_category'], f['service_version'],
                             f['service_type'], f['component_version'],
                             f['component_name'],
                             f['visible_to_marketplace'], f['in_catalogue'],
@@ -60,7 +60,7 @@ def main():
             servindbset = set()
             for serv in servindb:
                 servindbset.add((serv.id, serv.service_id,
-                                serv.service_name, serv.service_area,
+                                serv.service_name, serv.service_category,
                                 serv.service_version, serv.service_type,
                                 serv.component_version,
                                 serv.component_name,
@@ -76,7 +76,7 @@ def main():
                                 id=serv[0],
                                 service_id=serv[1],
                                 service_name=serv[2],
-                                service_area=serv[3],
+                                service_category=serv[3],
                                 service_version=serv[4],
                                 service_type=serv[5],
                                 component_version=serv[6],
@@ -98,7 +98,7 @@ def main():
                                 id=serv[0],
                                 service_id=serv[1],
                                 service_name=serv[2],
-                                service_area=serv[3],
+                                service_category=serv[3],
                                 service_version=serv[4],
                                 service_type=serv[5],
                                 component_version=serv[6],

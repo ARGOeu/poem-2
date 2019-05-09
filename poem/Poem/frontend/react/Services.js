@@ -46,7 +46,7 @@ class Services extends Component {
         <table className="table table-bordered table-sm">
           <thead className="table-active">
             <tr>
-              <th id='argo-th' scope="col">Service area</th>
+              <th id='argo-th' scope="col">Service category</th>
               <th id='argo-th' scope="col">Service name</th>
               <th id='argo-th' scope="col">Service type</th>
               <th id='argo-th' scope="col">Metric</th>
@@ -58,9 +58,9 @@ class Services extends Component {
               rows && rows.map((e, i) =>
                 <tr key={i}>
                   {
-                    e.service_area && 
-                      <td id='argo-td' className="table-light" rowSpan={this.getRowSpan(rowspan.service_area, e.service_area)}>
-                        {e.service_area}
+                    e.service_category && 
+                      <td id='argo-td' className="table-light" rowSpan={this.getRowSpan(rowspan.service_category, e.service_category)}>
+                        {e.service_category}
                       </td>
                   }
                   {

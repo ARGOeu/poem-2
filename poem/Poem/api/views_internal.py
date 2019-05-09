@@ -315,7 +315,7 @@ class ListServices(APIView):
 
     def _count_leaves_per_element(self, root):
         data = {
-            'service_area': list(),
+            'service_category': list(),
             'service_name': list(),
             'service_type': list(),
             'metric': list(),
@@ -323,7 +323,7 @@ class ListServices(APIView):
         }
 
         for sa in root.childs():
-            data['service_area'].append((sa.name(), self._count_leaves(sa)))
+            data['service_category'].append((sa.name(), self._count_leaves(sa)))
             for sn in sa.childs():
                 data['service_name'].append((sn.name(), self._count_leaves(sn)))
                 for st in sn.childs():
@@ -336,7 +336,7 @@ class ListServices(APIView):
 
     def _create_empty_table_rows(self, nleaves):
         data = [{
-            'service_area': None,
+            'service_category': None,
             'service_name': None,
             'service_type': None,
             'metric': None,
@@ -371,15 +371,15 @@ class ListServices(APIView):
     def get(self, request):
         r = self.tree.addroot('root')
 
-        for (service_area, service_name, service_type) in \
-                poem_models.Service.objects.all().values_list('service_area', 'service_name', 'service_type'):
+        for (service_category, service_name, service_type) in \
+                poem_models.Service.objects.all().values_list('service_category', 'service_name', 'service_type'):
             metricinstances = poem_models.MetricInstance.objects.filter(service_flavour=service_type)
             unique_metrics = sorted(list(set(m.metric for m in metricinstances)))
 
             if unique_metrics and self._is_one_probe_found(unique_metrics):
                 found_metrics = poem_models.Metric.objects.filter(name__in=unique_metrics)
 
-                sat = self._get_or_create(r, service_area)
+                sat = self._get_or_create(r, service_category)
                 snt = self._get_or_create(sat, service_name)
                 stt = self._get_or_create(snt, service_type)
 
