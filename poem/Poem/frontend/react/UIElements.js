@@ -110,7 +110,7 @@ export const NavigationLinks = ({location}) =>
   link_title.set('aggregationprofiles', 'Aggregation profiles');
 
   return (
-    <Nav vertical id="argo-navlinks" className="border rounded">
+    <Nav vertical id="argo-navlinks" className="border-left border-right border-top rounded-top sticky-top">
       {
         list_pages.map((item, i) =>  
           item === 'administration' && localStorage.getItem('authIsSuperuser') 

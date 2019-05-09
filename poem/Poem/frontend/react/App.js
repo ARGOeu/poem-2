@@ -9,8 +9,7 @@ import Services from './Services';
 import NotFound from './NotFound';
 import {Route, Switch, BrowserRouter, Redirect, withRouter} from 'react-router-dom';
 import {Container, Row, Col} from 'reactstrap';
-import {NavigationBar, NavigationLinks} from './UIElements';
-import {Footer} from './UIElements.js';
+import {NavigationBar, NavigationLinks, Footer} from './UIElements';
 
 import './App.css';
 
@@ -95,8 +94,9 @@ class App extends Component {
               </Col>
             </Row>
             <Row>
-              <Col sm={{size: 2, order: 0}}>
+              <Col sm={{size: 2}} className="d-flex flex-column">
                 <NavigationLinksWithLocation />
+                <div id="sidebar-grow" className="flex-grow-1 border-left border-right rounded-bottom"/>
               </Col>
               <Col>
                 <Switch>
