@@ -10,6 +10,8 @@ class Services extends Component {
       loading: false,
       rows: null,
       rowspan: null,
+      id_probes: null, 
+      id_metrics: null, 
     }
   }
 
@@ -21,6 +23,8 @@ class Services extends Component {
         this.setState({
           rows: json.result.rows, 
           rowspan: json.result.rowspan, 
+          id_probes: json.result.id_probes, 
+          id_metrics: json.result.id_metrics, 
           loading: false})
       )
   }
@@ -36,7 +40,7 @@ class Services extends Component {
   }
 
   render() {
-    const {loading, rows, rowspan} = this.state
+    const {loading, rows, rowspan, id_metrics, id_probes} = this.state
 
     return (
       (loading)
@@ -78,13 +82,13 @@ class Services extends Component {
                   {
                     e.metric && 
                       <td id='argo-td' className="table-light" rowSpan={this.getRowSpan(rowspan.metric, e.metric)}>
-                        {e.metric}
+                        <a href={'/ui/metrics/' + id_metrics[e.metric]}>{e.metric}</a>
                       </td>
                   }
                   {
                     e.probe && 
                       <td id='argo-td' className="table-light" rowSpan={this.getRowSpan(rowspan.probe, e.probe)}>
-                        {e.probe}
+                        <a href={'/ui/probes/' + id_probes[e.probe]}>{e.probe}</a>
                       </td>
                   }
                 </tr>

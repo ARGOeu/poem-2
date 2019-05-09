@@ -370,6 +370,7 @@ class ListServices(APIView):
 
     def get(self, request):
         r = self.tree.addroot('root')
+        id_metrics, id_probes = dict(), dict()
 
         for (service_category, service_name, service_type) in \
                 poem_models.Service.objects.all().values_list('service_category', 'service_name', 'service_type'):
@@ -387,6 +388,9 @@ class ListServices(APIView):
                     if metric.probeversion:
                         mt = self.tree.addchild(metric.name, stt)
                         self.tree.addchild(metric.probeversion, mt)
+                        id_metrics.update({metric.name: metric.id})
+                        probe_id = poem_models.Probe.objects.get(nameversion=metric.probeversion).id
+                        id_probes.update({metric.probeversion: probe_id})
 
         nleaves = self._count_leaves(r)
         nleaves_perelem = self._count_leaves_per_element(r)
@@ -395,5 +399,7 @@ class ListServices(APIView):
 
         return Response({'result': {
             'rows': table_rows,
-            'rowspan': nleaves_perelem
+            'rowspan': nleaves_perelem,
+            'id_metrics': id_metrics,
+            'id_probes': id_probes
         }})
