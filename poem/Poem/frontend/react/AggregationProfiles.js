@@ -14,11 +14,19 @@ import {
   Collapse} from 'reactstrap';
 import {NavigationBar, NavigationLinks} from './UIElements';
 
-const AggregationProfiles = (props) =>
-(
-  <div>
-    "I'm AggregationProfiles"
-  </div>
-)
+
+class AggregationProfiles extends Component {
+  constructor(props) {
+    super(props);
+  }
+
+  render() {
+    return (
+      <div>
+        "I'm AggregationProfiles"
+      </div>
+    )
+  }
+}
 
 export default AggregationProfiles;
