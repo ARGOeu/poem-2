@@ -30,11 +30,16 @@ class AggregationProfiles extends Component {
     const columns = [
       {
         Header: 'Name',
-        accessor: 'name'
+        id: 'name',
+        accessor: e => 
+        <a href={'/ui/aggregationprofiles/' + e.apiid}>
+          {e.name}
+        </a>
       },
       {
         Header: 'Group',
-        accessor: 'groupname'
+        accessor: 'groupname',
+        maxWidth: 150,
       }
     ]
 
