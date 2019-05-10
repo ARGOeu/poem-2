@@ -2,6 +2,9 @@ import React from 'react';
 import Cookies from 'universal-cookie';
 import {
   Button, 
+  Card,
+  CardHeader,
+  CardBody,
   Nav,
   NavLink,
   NavItem,
@@ -15,6 +18,7 @@ import {
   Collapse} from 'reactstrap';
 import {Link} from 'react-router-dom';
 import ArgoLogo from './argologo_color.svg';
+import ArgoLogoAnim from './argologo_anim.svg';
 import EULogo from './eu.png';
 import EOSCLogo from './eosc.png';
 import './UIElements.css';
@@ -188,3 +192,12 @@ export const Footer = ({addBorder=false}) =>
 }
 
 
+export const LoadingAnim = () =>
+  <Card className="text-center">
+    <CardHeader className="bg-light">
+      <h4 className="text-dark">Loading data...</h4>
+    </CardHeader>
+    <CardBody>
+      <img src={ArgoLogoAnim} alt="ARGO logo anim" className="img-responsive" height="300px"/>
+    </CardBody>
+  </Card>

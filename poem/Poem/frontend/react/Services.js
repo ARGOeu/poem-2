@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { LoadingAnim } from './UIElements';
 
 import './Services.css';
 
@@ -45,7 +46,7 @@ class Services extends Component {
     return (
       (loading)
       ?
-        <div>Loading...</div>
+        <LoadingAnim />
       :
         <table className="table table-bordered table-sm">
           <thead className="table-active">
