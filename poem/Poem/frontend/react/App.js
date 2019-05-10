@@ -93,21 +93,23 @@ class App extends Component {
                   msgModal='Are you sure you want to log out?'/>
               </Col>
             </Row>
-            <Row>
+            <Row className="no-gutters">
               <Col sm={{size: 2}} className="d-flex flex-column">
                 <NavigationLinksWithLocation />
                 <div id="sidebar-grow" className="flex-grow-1 border-left border-right rounded-bottom"/>
               </Col>
               <Col>
-                <Switch>
-                  <Route exact path="/ui/home" component={Home} />
-                  <Route exact path="/ui/services" component={Services} />
-                  <Route exact path="/ui/reports" component={Reports} />
-                  <Route exact path="/ui/metricprofiles" component={MetricProfiles} />
-                  <Route exact path="/ui/aggregationprofiles" component={AggregationProfiles} />
-                  <Route exact path="/ui/administration" component={Administration} />
-                  <Route component={NotFound} />
-                </Switch>
+                <div id="argo-contentwrap" className="m-2">
+                  <Switch>
+                    <Route exact path="/ui/home" component={Home} />
+                    <Route exact path="/ui/services" component={Services} />
+                    <Route exact path="/ui/reports" component={Reports} />
+                    <Route exact path="/ui/metricprofiles" component={MetricProfiles} />
+                    <Route exact path="/ui/aggregationprofiles" component={AggregationProfiles} />
+                    <Route exact path="/ui/administration" component={Administration} />
+                    <Route component={NotFound} />
+                  </Switch>
+                </div>
               </Col>
             </Row>
             <Row>

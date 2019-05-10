@@ -99,18 +99,20 @@ export const NavigationBar = ({history, onLogout, isOpenModal, toggle, titleModa
 
 export const NavigationLinks = ({location}) =>
 {
-  var list_pages = ['administration','services', 'reports', 'metricprofiles',
-    'aggregationprofiles'];
+  var list_pages = ['administration','services', 'reports', 'probes',
+                     'metrics', 'metricprofiles', 'aggregationprofiles'];
   var link_title = new Map();
 
   link_title.set('administration', 'Administration');
   link_title.set('services', 'Services');
   link_title.set('reports', 'Reports');
+  link_title.set('probes', 'Probes');
+  link_title.set('metrics', 'Metrics');
   link_title.set('metricprofiles', 'Metric profiles');
   link_title.set('aggregationprofiles', 'Aggregation profiles');
 
   return (
-    <Nav vertical id="argo-navlinks" className="border-left border-right border-top rounded-top sticky-top">
+    <Nav vertical pills id="argo-navlinks" className="border-left border-right border-top rounded-top sticky-top">
       {
         list_pages.map((item, i) =>  
           item === 'administration' && localStorage.getItem('authIsSuperuser') 
@@ -119,6 +121,7 @@ export const NavigationLinks = ({location}) =>
                 <NavLink
                   tag={Link}
                   active={location.pathname.includes(item) ? true : false} 
+                  className={location.pathname.includes(item) ? "text-white bg-info" : "text-dark"}
                   to={'/ui/' + item}>{link_title.get(item)}
                 </NavLink>
               </NavItem>
@@ -127,6 +130,7 @@ export const NavigationLinks = ({location}) =>
                 <NavLink 
                   tag={Link}
                   active={location.pathname.includes(item) ? true : false} 
+                  className={location.pathname.includes(item) ? "text-white bg-info" : "text-dark"}
                   to={'/ui/' + item}>{link_title.get(item)}
                 </NavLink>
               </NavItem>
