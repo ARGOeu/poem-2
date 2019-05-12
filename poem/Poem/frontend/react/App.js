@@ -105,7 +105,13 @@ class App extends Component {
                     <Route exact path="/ui/services" component={Services} />
                     <Route exact path="/ui/reports" component={Reports} />
                     <Route exact path="/ui/metricprofiles" component={MetricProfiles} />
-                    <Route exact path="/ui/aggregationprofiles" component={AggregationProfiles} />
+                    <Route exact path={[
+                      "/ui/aggregationprofiles", 
+                      "/ui/aggregationprofiles/:change/:id",
+                      "/ui/aggregationprofiles/:add/:id",
+                      "/ui/aggregationprofiles/:history/:id",
+                      ]} component={AggregationProfiles} 
+                    />
                     <Route exact path="/ui/administration" component={Administration} />
                     <Route component={NotFound} />
                   </Switch>
