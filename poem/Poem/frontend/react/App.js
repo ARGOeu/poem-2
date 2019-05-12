@@ -3,7 +3,7 @@ import Login from './Login';
 import MetricProfiles from './MetricProfiles';
 import Home from './Home';
 import Administration from './Administration';
-import AggregationProfiles from './AggregationProfiles';
+import {AggregationProfilesChange, AggregationProfilesList} from './AggregationProfiles';
 import Reports from './Reports';
 import Services from './Services';
 import NotFound from './NotFound';
@@ -105,13 +105,8 @@ class App extends Component {
                     <Route exact path="/ui/services" component={Services} />
                     <Route exact path="/ui/reports" component={Reports} />
                     <Route exact path="/ui/metricprofiles" component={MetricProfiles} />
-                    <Route exact path={[
-                      "/ui/aggregationprofiles", 
-                      "/ui/aggregationprofiles/:change/:id",
-                      "/ui/aggregationprofiles/:add/:id",
-                      "/ui/aggregationprofiles/:history/:id",
-                      ]} component={AggregationProfiles} 
-                    />
+                    <Route exact path="/ui/aggregationprofiles" component={AggregationProfilesList} />
+                    <Route exact path="/ui/aggregationprofiles/change/:id" component={AggregationProfilesChange} />
                     <Route exact path="/ui/administration" component={Administration} />
                     <Route component={NotFound} />
                   </Switch>
