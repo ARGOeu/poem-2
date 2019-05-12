@@ -529,32 +529,3 @@ export class AggregationProfilesList extends Component
     )
   }
 }
-
-
-export const AggregationProfiles = (props) =>
-{
-  const {params} = props.match;
-  let view = '';
-
-  if (params.change) {
-    view = 'change';
-  }
-  else if (params.history) {
-    view = 'history';
-  }
-  else if (params.add) {
-    view = 'add';
-  }
-  else {
-    view = 'list';
-  }
-
-  return (
-    view === 'list' && 
-      <AggregationProfilesList /> 
-    || 
-    view === 'change' && 
-      <AggregationProfilesChange apiid={params.id}/>
-  )
-}
-
