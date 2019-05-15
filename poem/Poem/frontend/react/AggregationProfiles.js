@@ -95,67 +95,67 @@ const GroupList = ({name, form, list_services, list_operations, last_service_ope
 
 
 const Group = ({name, operation, services, list_operations, list_services, last_service_operation, write_perm, form, groupindex, remove, insert, last}) =>
-    (!last) ?
-      <React.Fragment key={groupindex}>
-        <Col md={5} className="mt-4 mb-2">
-          <Card>
-            <CardHeader className="p-1" color="primary">
-              <Row className="d-flex align-items-center">
-                <Col md={11}>
-                  <Field
-                    name={`groups.${groupindex}.name`}
-                    placeholder="Name of service group"
-                    required={true}
-                    className="form-control"
-                  />
-                </Col>
-                <Col md={1} className="pl-0 pr-0">
-                  <ButtonRemove
-                    label="X"
-                    index={groupindex}
-                    operation={(write_perm) ? remove: null}/>
-                </Col>
-              </Row>
-            </CardHeader>
-            <CardBody className="p-1">
-              <FieldArray
-                name={`groups.${groupindex}`}
-                render={props => (
-                  <ServiceList
-                      list_services={list_services}
-                      list_operations={list_operations}
-                      last_service_operation={last_service_operation}
-                      services={services}
-                      groupindex={groupindex}
-                      groupoperation={operation}
-                      form={form}
-                  />)}
-              />
-            </CardBody>
-          </Card>
-        </Col>
-        <Col md={1} className="mt-5">
-          <div className="group-operation" key={groupindex}>
-            <DropDown
-              field={{name: 'profile_operation', value: form.values.profile_operation}}
-              data={list_operations}/>
-          </div>
-        </Col>
-      </React.Fragment>
-    :
-        <div className="wrap-group-add">
-            <div className="group-add"
-                onClick={() => {
-                        (write_perm) ?
-                            insert(groupindex, {name: '', operation: '',
-                                services: [{name: '', operation: ''}]})
-                        :
-                        null
-                }}>
-                <FontAwesomeIcon icon={faPlus} color="#70bf2b"/>
-                &nbsp;&nbsp;&nbsp;&nbsp;Add new Service Flavour Group
-            </div>
-        </div> 
+  (!last) ?
+    <React.Fragment key={groupindex}>
+      <Col md={5} className="mt-4 mb-2">
+        <Card>
+          <CardHeader className="p-1" color="primary">
+            <Row className="d-flex align-items-center">
+              <Col md={11}>
+                <Field
+                  name={`groups.${groupindex}.name`}
+                  placeholder="Name of service group"
+                  required={true}
+                  className="form-control"
+                />
+              </Col>
+              <Col md={1} className="pl-0 pr-0">
+                <ButtonRemove
+                  label="X"
+                  index={groupindex}
+                  operation={(write_perm) ? remove: null}/>
+              </Col>
+            </Row>
+          </CardHeader>
+          <CardBody className="p-1">
+            <FieldArray
+              name={`groups.${groupindex}`}
+              render={props => (
+                <ServiceList
+                    list_services={list_services}
+                    list_operations={list_operations}
+                    last_service_operation={last_service_operation}
+                    services={services}
+                    groupindex={groupindex}
+                    groupoperation={operation}
+                    form={form}
+                />)}
+            />
+          </CardBody>
+        </Card>
+      </Col>
+      <Col md={1} className="mt-5">
+        <div className="group-operation" key={groupindex}>
+          <DropDown
+            field={{name: 'profile_operation', value: form.values.profile_operation}}
+            data={list_operations}/>
+        </div>
+      </Col>
+    </React.Fragment>
+  :
+    <div className="wrap-group-add">
+      <div className="group-add"
+        onClick={() => {
+          (write_perm) ?
+              insert(groupindex, {name: '', operation: '',
+                  services: [{name: '', operation: ''}]})
+          :
+          null
+        }}>
+        <FontAwesomeIcon icon={faPlus} color="#70bf2b"/>
+        &nbsp;&nbsp;&nbsp;&nbsp;Add new Service Flavour Group
+      </div>
+    </div> 
 
 
 const ServiceList = ({services, list_services=[], list_operations=[], last_service_operation, groupindex, groupoperation, form, push}) =>
@@ -270,7 +270,7 @@ export class AggregationProfilesChange extends Component
   }
 
   fetchAggregationGroup(aggregation_name) {
-    return fetch('https://web-api-devel.argo.grnet.gr/api/v2/aggregation_profiles' + '/' + aggregation_name)
+    return fetch('/api/v2/internal/aggregations' + '/' + aggregation_name)
       .then(response => response.json())
       .then(json => json['groupname'])
       .catch(err => console.log('Something went wrong: ' + err))
