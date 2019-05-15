@@ -14,6 +14,7 @@ import {
   Col, 
   Card, 
   CardHeader, 
+  CardTitle,
   CardBody,
   Label,
   CardFooter,
@@ -22,31 +23,31 @@ import {
 
 
 const SubmitRow = ({readonly=false, ondelete, id}) =>
-    (readonly) ?
-        <div className="submit-row">
-            <center>
-                This is a read-only instance, please
-                request the corresponding permissions
-                to perform any changes in this form. 
-            </center>
-        </div>
-    :
+  (readonly) ?
     <div className="submit-row">
-        <button id="submit-button" type="submit">Save</button>
-        <div className="wrap-delete-button">
-            <div className="delete-button"
-                onClick={() => ondelete(id)}>
-                Delete
-            </div>
-        </div>
+        <center>
+            This is a read-only instance, please
+            request the corresponding permissions
+            to perform any changes in this form. 
+        </center>
     </div>
+  :
+  <div className="submit-row">
+    <button id="submit-button" type="submit">Save</button>
+    <div className="wrap-delete-button">
+      <div className="delete-button"
+        onClick={() => ondelete(id)}>
+        Delete
+      </div>
+    </div>
+  </div>
 
 
-const DropDown = ({field, data=[], prefix=""}) => 
+const DropDown = ({field, data=[], prefix="", class_name=""}) => 
   <Field component="select"
     name={prefix ? `${prefix}.${field.name}` : field.name}
     required={true}
-    className="form-control"
+    className={`form-control custom-select ${class_name}`}
   >
     {
       data.map((name, i) => 
@@ -59,75 +60,88 @@ const DropDown = ({field, data=[], prefix=""}) =>
 
 
 const ButtonRemove = ({label, index=0, operation=f=>f}) => 
-    <button
-        type="button"
-        onClick={() => operation(index)}>
-        {label}
-    </button>
+  <Button size="sm" color="danger"
+    type="button"
+    onClick={() => operation(index)}>
+    {label}
+  </Button>
 
 
 const GroupList = ({name, form, list_services, list_operations, last_service_operation, write_perm, insert}) =>
-    <div className="groups"> 
-    {
-        form.values[name].map((group, i) =>
-            <FieldArray
-                key={i}
-                name="groups"
-                render={props => (
-                    <Group
-                        {...props}
-                        key={i}
-                        operation={group.operation}
-                        services={group.services}
-                        list_services={list_services}
-                        list_operations={list_operations}
-                        last_service_operation={last_service_operation}
-                        write_perm={write_perm}
-                        groupindex={i}
-                        last={i === form.values[name].length - 1}
-                    />
-                )}
-            />
-        )
-    }
-    </div>
+  <Row className="groups"> 
+  {
+    form.values[name].map((group, i) =>
+      <FieldArray
+        key={i}
+        name="groups"
+        render={props => (
+          <Group
+            {...props}
+            key={i}
+            operation={group.operation}
+            services={group.services}
+            list_services={list_services}
+            list_operations={list_operations}
+            last_service_operation={last_service_operation}
+            write_perm={write_perm}
+            groupindex={i}
+            last={i === form.values[name].length - 1}
+          />
+        )}
+      />
+    )
+  }
+  </Row>
 
 
 const Group = ({name, operation, services, list_operations, list_services, last_service_operation, write_perm, form, groupindex, remove, insert, last}) =>
     (!last) ?
-        <div className="group" key={groupindex}>
-            <fieldset className="groups-fieldset">
-                <legend>
-                    <Field
-                        name={`groups.${groupindex}.name`}
-                        placeholder="Name of service group"
-                        required={true}>
-                    </Field>
-                    <ButtonRemove
-                        label="X"
-                        index={groupindex}
-                        operation={(write_perm) ? remove: null}/>
-                </legend>
-                <FieldArray
-                    name={`groups.${groupindex}`}
-                    render={props => (
-                        <ServiceList
-                            list_services={list_services}
-                            list_operations={list_operations}
-                            last_service_operation={last_service_operation}
-                            services={services}
-                            groupindex={groupindex}
-                            groupoperation={operation}
-                            form={form}
-                        />)}
-                />
-            </fieldset>
-            <div className="group-operation" key={groupindex}>
-                <DropDown
-                    field={{name: 'profile_operation', value: form.values.profile_operation}}
-                    data={list_operations}/>
-            </div>
-        </div>
+      <React.Fragment key={groupindex}>
+        <Col md={5} className="mt-4 mb-2">
+          <Card>
+            <CardHeader className="p-1" color="primary">
+              <Row className="d-flex align-items-center">
+                <Col md={11}>
+                  <Field
+                    name={`groups.${groupindex}.name`}
+                    placeholder="Name of service group"
+                    required={true}
+                    className="form-control"
+                  />
+                </Col>
+                <Col md={1} className="pl-0 pr-0">
+                  <ButtonRemove
+                    label="X"
+                    index={groupindex}
+                    operation={(write_perm) ? remove: null}/>
+                </Col>
+              </Row>
+            </CardHeader>
+            <CardBody className="p-1">
+              <FieldArray
+                name={`groups.${groupindex}`}
+                render={props => (
+                  <ServiceList
+                      list_services={list_services}
+                      list_operations={list_operations}
+                      last_service_operation={last_service_operation}
+                      services={services}
+                      groupindex={groupindex}
+                      groupoperation={operation}
+                      form={form}
+                  />)}
+              />
+            </CardBody>
+          </Card>
+        </Col>
+        <Col md={1} className="mt-5">
+          <div className="group-operation" key={groupindex}>
+            <DropDown
+              field={{name: 'profile_operation', value: form.values.profile_operation}}
+              data={list_operations}/>
+          </div>
+        </Col>
+      </React.Fragment>
     :
         <div className="wrap-group-add">
             <div className="group-add"
@@ -145,63 +159,74 @@ const Group = ({name, operation, services, list_operations, list_services, last_
 
 
 const ServiceList = ({services, list_services=[], list_operations=[], last_service_operation, groupindex, groupoperation, form, push}) =>
-    <fieldset className="services-fieldset">
-        <legend align="center">
-            <DropDown 
-                field={{name: "operation", value: groupoperation}}
-                data={list_operations}
-                prefix={`groups.${groupindex}`}
+  <Card className="services-fieldset">
+    <CardBody className="p-1">
+    { 
+      services.map((service, i) =>
+        <FieldArray
+          key={i}
+          name={`groups.${groupindex}.services`}
+          render={props => (
+            <Service
+              {...props}
+              key={i}
+              operation={service.operation} 
+              list_services={list_services} 
+              list_operations={list_operations} 
+              last_service_operation={last_service_operation}
+              groupindex={groupindex}
+              index={i}
+              last={i === services.length - 1}
+              form={form}
             />
-        </legend>
-        { 
-            services.map((service, i) =>
-                <FieldArray
-                    key={i}
-                    name={`groups.${groupindex}.services`}
-                    render={props => (
-                        <Service
-                            {...props}
-                            key={i}
-                            operation={service.operation} 
-                            list_services={list_services} 
-                            list_operations={list_operations} 
-                            last_service_operation={last_service_operation}
-                            groupindex={groupindex}
-                            index={i}
-                            last={i === services.length - 1}
-                            form={form}
-                        />
-                    )}
-                />
-            )
-        }
-    </fieldset>
+          )}
+        />
+      )
+    }
+    </CardBody>
+    <CardFooter className="p-1 d-flex justify-content-center">
+      <DropDown 
+        field={{name: "operation", value: groupoperation}}
+        data={list_operations}
+        prefix={`groups.${groupindex}`}
+        class_name="col-3"
+      />
+    </CardFooter>
+  </Card>
 
 
 const Service = ({name, operation, list_services, list_operations, last_service_operation, groupindex, index, remove, insert, last, form}) => 
-    <div className="service" key={index}>
-        <DropDown 
-            field={{name: "name", value: name}}
-            data={list_services} 
-            prefix={`groups.${groupindex}.services.${index}`}
-        />
-        <DropDown 
-            field={{name: "operation", value: operation}}
-            data={list_operations}
-            prefix={`groups.${groupindex}.services.${index}`}
-        />
-        <button
-            type="button"
-            onClick={() => remove(index)}>
-            <FontAwesomeIcon icon={faTimes} color="#dd4646"/>
-        </button>
-        <button
-            type="button"
-            onClick={() => insert(index + 1, {name: '', operation: 
-                last_service_operation(index, form.values.groups[groupindex].services)})}>
-            <FontAwesomeIcon icon={faPlus} color="#70bf2b"/>
-        </button>
-    </div>
+  <Row className="d-flex align-items-center service pt-1" key={index}>
+    <Col md={8} className="pr-0">
+      <DropDown 
+        field={{name: "name", value: name}}
+        data={list_services} 
+        prefix={`groups.${groupindex}.services.${index}`}
+      />
+    </Col>
+    <Col md={2} className="pl-0 pr-0">
+      <DropDown 
+        field={{name: "operation", value: operation}}
+        data={list_operations}
+        prefix={`groups.${groupindex}.services.${index}`}
+      />
+    </Col>
+    <Col md={1} className="pr-0">
+      <Button size="sm" color="danger"
+        type="button"
+        onClick={() => remove(index)}>
+        -
+      </Button>
+    </Col>
+    <Col md={1} className="pl-0">
+      <Button size="sm" color="success"
+        type="button"
+        onClick={() => insert(index + 1, {name: '', operation: 
+          last_service_operation(index, form.values.groups[groupindex].services)})}>
+        +
+      </Button>
+    </Col>
+  </Row>
 
 
 export class AggregationProfilesChange extends Component

@@ -99,7 +99,7 @@ class App extends Component {
                 <div id="sidebar-grow" className="flex-grow-1 border-left border-right rounded-bottom"/>
               </Col>
               <Col>
-                <div id="argo-contentwrap" className="m-2">
+                <div id="argo-contentwrap" className="m-2 p-2">
                   <Switch>
                     <Route exact path="/ui/home" component={Home} />
                     <Route exact path="/ui/services" component={Services} />
