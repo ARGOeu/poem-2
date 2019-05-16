@@ -102,9 +102,7 @@ TENANT_APPS = (
     'django.contrib.staticfiles',
     'django.contrib.messages',
     'django.contrib.sessions',
-    'ajax_select',
     'djangosaml2',
-    'modelclone',
     'reversion',
     'reversion_compare',
     'rest_framework',
@@ -125,9 +123,7 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'django.contrib.messages',
     'django.contrib.sessions',
-    'ajax_select',
     'djangosaml2',
-    'modelclone',
     'reversion',
     'reversion_compare',
     'rest_framework',
@@ -169,16 +165,6 @@ TEMPLATES = [
 ]
 
 TEMPLATE_CONTEXT_PROCESSORS = ('django.core.context_processors.request',)
-
-AJAX_LOOKUP_CHANNELS = {
-    'hintsvo' : ('Poem.poem.lookups', 'VOLookup'),
-    'hintstags' : ('Poem.poem.lookups', 'TagsLookup'),
-    'hintsprobes' : ('Poem.poem.lookups', 'ProbeLookup'),
-    'hintsmetricsfilt' : ('Poem.poem.lookups', 'MetricsFilteredLookup'),
-    'hintsmetricsall' : ('Poem.poem.lookups', 'MetricsAllLookup'),
-    'hintsmetricinstances' : ('Poem.poem.lookups', 'MetricsInstancesLookup'),
-    'hintsserviceflavours' : ('Poem.poem.lookups', 'ServiceFlavoursLookup'),
-}
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -225,8 +211,8 @@ STATIC_URL = '/static/'
 STATIC_ROOT = '{}/usr/share/poem/static/'.format(VENV)
 
 # load SAML settings
-LOGIN_REDIRECT_URL = '/poem/admin/poem/profile'
-LOGOUT_REDIRECT_URL = '/poem/admin'
+LOGIN_REDIRECT_URL = '/ui/home'
+LOGOUT_REDIRECT_URL = '/ui/login'
 SAML_CONFIG_LOADER = 'Poem.poem.saml2.config.get_saml_config'
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
