@@ -94,7 +94,7 @@ class App extends Component {
               </Col>
             </Row>
             <Row className="no-gutters">
-              <Col sm={{size: 2}} className="d-flex flex-column">
+              <Col sm={{size: 2}} md={{size: 2}} className="d-flex flex-column">
                 <NavigationLinksWithLocation />
                 <div id="sidebar-grow" className="flex-grow-1 border-left border-right rounded-bottom"/>
               </Col>

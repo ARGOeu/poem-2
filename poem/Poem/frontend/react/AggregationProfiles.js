@@ -59,11 +59,11 @@ const DropDown = ({field, data=[], prefix="", class_name=""}) =>
   </Field>
 
 
-const ButtonRemove = ({label, index=0, operation=f=>f}) => 
+const ButtonRemove = ({index=0, operation=f=>f}) => 
   <Button size="sm" color="danger"
     type="button"
     onClick={() => operation(index)}>
-    {label}
+    <FontAwesomeIcon icon={faTimes}/>
   </Button>
 
 
@@ -97,11 +97,11 @@ const GroupList = ({name, form, list_services, list_operations, last_service_ope
 const Group = ({name, operation, services, list_operations, list_services, last_service_operation, write_perm, form, groupindex, remove, insert, last}) =>
   (!last) ?
     <React.Fragment key={groupindex}>
-      <Col md={5} className="mt-4 mb-2">
+      <Col sm={{size: 8}} md={{size: 5}} className="mt-4 mb-2">
         <Card>
           <CardHeader className="p-1" color="primary">
-            <Row className="d-flex align-items-center">
-              <Col md={11}>
+            <Row className="d-flex align-items-center no-gutters">
+              <Col sm={{size: 10}} md={{size: 11}}>
                 <Field
                   name={`groups.${groupindex}.name`}
                   placeholder="Name of service group"
@@ -109,9 +109,8 @@ const Group = ({name, operation, services, list_operations, list_services, last_
                   className="form-control"
                 />
               </Col>
-              <Col md={1} className="pl-0 pr-0">
+              <Col sm={{size: 2}} md={{size: 1}} className="pl-1">
                 <ButtonRemove
-                  label="X"
                   index={groupindex}
                   operation={(write_perm) ? remove: null}/>
               </Col>
@@ -132,9 +131,17 @@ const Group = ({name, operation, services, list_operations, list_services, last_
                 />)}
             />
           </CardBody>
+          <CardFooter className="p-1 d-flex justify-content-center">
+            <DropDown 
+              field={{name: "operation", value: operation}}
+              data={list_operations}
+              prefix={`groups.${groupindex}`}
+              class_name="col-3"
+            />
+          </CardFooter>
         </Card>
       </Col>
-      <Col md={1} className="mt-5">
+      <Col sm={{size: 4}} md={{size: 1}} className="mt-5">
         <div className="group-operation" key={groupindex}>
           <DropDown
             field={{name: 'profile_operation', value: form.values.profile_operation}}
@@ -159,8 +166,7 @@ const Group = ({name, operation, services, list_operations, list_services, last_
 
 
 const ServiceList = ({services, list_services=[], list_operations=[], last_service_operation, groupindex, groupoperation, form, push}) =>
-  <Card className="services-fieldset">
-    <CardBody className="p-1">
+  <React.Fragment>
     { 
       services.map((service, i) =>
         <FieldArray
@@ -183,47 +189,35 @@ const ServiceList = ({services, list_services=[], list_operations=[], last_servi
         />
       )
     }
-    </CardBody>
-    <CardFooter className="p-1 d-flex justify-content-center">
-      <DropDown 
-        field={{name: "operation", value: groupoperation}}
-        data={list_operations}
-        prefix={`groups.${groupindex}`}
-        class_name="col-3"
-      />
-    </CardFooter>
-  </Card>
-
+  </React.Fragment>
 
 const Service = ({name, operation, list_services, list_operations, last_service_operation, groupindex, index, remove, insert, last, form}) => 
-  <Row className="d-flex align-items-center service pt-1" key={index}>
-    <Col md={8} className="pr-0">
+  <Row className="d-flex align-items-center service pt-1 pb-1 no-gutters" key={index}>
+    <Col md={8}>
       <DropDown 
         field={{name: "name", value: name}}
         data={list_services} 
         prefix={`groups.${groupindex}.services.${index}`}
       />
     </Col>
-    <Col md={2} className="pl-0 pr-0">
+    <Col md={2}>
       <DropDown 
         field={{name: "operation", value: operation}}
         data={list_operations}
         prefix={`groups.${groupindex}.services.${index}`}
       />
     </Col>
-    <Col md={1} className="pr-0">
-      <Button size="sm" color="danger"
+    <Col md={2} className="pl-1">
+      <Button size="sm" color="light"
         type="button"
         onClick={() => remove(index)}>
-        -
+        <FontAwesomeIcon icon={faTimes}/>
       </Button>
-    </Col>
-    <Col md={1} className="pl-0">
-      <Button size="sm" color="success"
+      <Button size="sm" color="light"
         type="button"
         onClick={() => insert(index + 1, {name: '', operation: 
           last_service_operation(index, form.values.groups[groupindex].services)})}>
-        +
+        <FontAwesomeIcon icon={faPlus}/>
       </Button>
     </Col>
   </Row>
