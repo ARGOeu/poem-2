@@ -14,7 +14,7 @@ from .views import NotFound
 from . import serializers
 
 
-class Tree:
+class Tree(object):
     class Node:
         def __init__(self, nodename):
             self._nodename = nodename
@@ -403,3 +403,31 @@ class ListServices(APIView):
             'id_metrics': id_metrics,
             'id_probes': id_probes
         }})
+
+
+class Saml2Login(APIView):
+    authentication_classes = (SessionAuthentication,)
+
+    def post(self, request):
+        serializer = serializers.Saml2LoginCacheSerializer(data=request.data)
+
+        if serializer.is_valid():
+            serializer.save()
+
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def get(self, request):
+        entries = poem_models.Saml2LoginCache.objects.all()
+        serializer = serializers.Saml2LoginCacheSerializer(entries, many=True)
+
+        return Response(serializer.data)
+
+    def delete(self, request, username):
+        try:
+            entry = poem_models.Saml2LoginCache.get(username=username)
+            entry.delete()
+        except poem_models.Saml2LoginCache.DoesNotExist:
+            raise NotFound(status=404,
+                        detail='Username not found')
