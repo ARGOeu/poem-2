@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 
 from unidecode import unidecode
 
-from Poem.poem.models import UserProfile
+from Poem.poem.models import UserProfile, Saml2LoginCache
 
 
 class SAML2Backend(Saml2Backend):
@@ -15,7 +15,6 @@ class SAML2Backend(Saml2Backend):
             return '_'.join(name)
         else:
             return ascii_displayname
-
 
     def username_from_givename_sn(self, firstname, lastname):
         ascii_firstname = unidecode(firstname)
@@ -29,7 +28,6 @@ class SAML2Backend(Saml2Backend):
 
         return ascii_firstname + '_' + ascii_lastname
 
-
     def certsub_rev(self, certsubject, retlist=False):
         attrs = certsubject.split('/')
         attrs.reverse()
@@ -39,13 +37,11 @@ class SAML2Backend(Saml2Backend):
         else:
             return ','.join(attrs[:-1])
 
-
     def joinval(self, attr):
         if len(attr) > 1:
             return ' '.join(attr)
         elif len(attr) == 1:
             return attr[0]
-
 
     def extractby_keyoid(self, attr, attrs):
         NAME_TO_OID = {'distinguishedName': 'urn:oid:2.5.4.49',
@@ -54,7 +50,6 @@ class SAML2Backend(Saml2Backend):
             return attrs[attr]
         else:
             return attrs[NAME_TO_OID[attr]]
-
 
     def authenticate(self, session_info=None, attribute_mapping=None,
                      create_unknown_user=True):
@@ -107,6 +102,11 @@ class SAML2Backend(Saml2Backend):
             userpro.egiid = egiid
             userpro.save()
 
+            Saml2LoginCache.objects.create(username=user.username,
+                                           first_name=user.first_name,
+                                           last_name=user.last_name,
+                                           is_superuser=user.is_superuser)
+
             return user
 
         elif userfound:
@@ -120,6 +120,11 @@ class SAML2Backend(Saml2Backend):
             userpro.egiid = egiid
             userpro.subject = certsub
             userpro.save()
+
+            Saml2LoginCache.objects.create(username=userfound.username,
+                                           first_name=userfound.first_name,
+                                           last_name=userfound.last_name,
+                                           is_superuser=userfound.is_superuser)
 
             return userfound
 
