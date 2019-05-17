@@ -32,6 +32,27 @@ class App extends Component {
     this.toggleAreYouSure = this.toggleAreYouSure.bind(this);
   }
 
+  isSaml2Logged() {
+    return fetch('/api/v2/internal/saml2login', {
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+    });
+  }
+
+  componentDidMount() {
+    this.isSaml2Logged()
+      .then(response => {
+        if (response.ok) {
+          response.json().then(
+            json => json.length > 0 && this.onLogin(json[0])
+          )
+        }
+      })
+      .catch(err => console.log('Something went wrong: ' + err));
+  }
+
   onLogin(json) {
     this.setState({isLogged: true});
     localStorage.setItem('authUsername', json.username);

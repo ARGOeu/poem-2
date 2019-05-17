@@ -93,7 +93,7 @@ class Login extends Component {
                               response.json().then(
                                 json => {
                                   this.props.onLogin(json);
-                                  this.props.history.push('/ui/reports');
+                                  this.props.history.push('/ui/home');
                                 }
                               )
                             } 
