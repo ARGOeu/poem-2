@@ -10,7 +10,6 @@ import NotFound from './NotFound';
 import {Route, Switch, BrowserRouter, Redirect, withRouter} from 'react-router-dom';
 import {Container, Row, Col} from 'reactstrap';
 import {NavigationBar, NavigationLinks, Footer} from './UIElements';
-import Cookies from 'universal-cookie';
 
 import './App.css';
 
@@ -33,51 +32,6 @@ class App extends Component {
     this.toggleAreYouSure = this.toggleAreYouSure.bind(this);
   }
 
-  isSaml2Logged() {
-    return fetch('/api/v2/internal/saml2login', {
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-      },
-    });
-  }
-
-  flushSaml2Cache(json) {
-    let cookies = new Cookies();
-
-    return fetch('/api/v2/internal/saml2login/' + json.username, {
-      method: 'DELETE',
-      mode: 'cors',
-      cache: 'no-cache',
-      credentials: 'same-origin',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'X-CSRFToken': cookies.get('csrftoken'),
-        'Referer': 'same-origin'
-      }});
-  }
-
-  goToHome() {
-    window.location = '/ui/home'
-  }
-
-  componentDidMount() {
-    this.isSaml2Logged()
-      .then(response => {
-        response.ok && response.json().then(
-          json => {
-            if (json.length > 0) {
-              this.onLogin(json[0]) 
-              this.flushSaml2Cache(json[0]).then(
-                response => response.ok && this.goToHome() 
-              )
-            }
-          }  
-        )
-      })
-      .catch(err => console.log('Something went wrong: ' + err));
-  }
 
   onLogin(json) {
     localStorage.setItem('authUsername', json.username);
@@ -86,8 +40,6 @@ class App extends Component {
     localStorage.setItem('authLastName', json.last_name);
     localStorage.setItem('authIsSuperuser', json.is_superuser);
     this.setState({isLogged: true});
-
-    return true
   } 
 
   onLogout() {
@@ -97,8 +49,6 @@ class App extends Component {
     localStorage.removeItem('authLastName');
     localStorage.removeItem('authIsSuperuser');
     this.setState({isLogged: false});
-
-    return true
   } 
 
   toggleAreYouSure() {
