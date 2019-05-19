@@ -426,8 +426,10 @@ class Saml2Login(APIView):
 
     def delete(self, request, username):
         try:
-            entry = poem_models.Saml2LoginCache.get(username=username)
+            entry = poem_models.Saml2LoginCache.objects.get(username=username)
             entry.delete()
+
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
         except poem_models.Saml2LoginCache.DoesNotExist:
-            raise NotFound(status=404,
-                        detail='Username not found')
+            raise NotFound(status=404, detail='Username not found')

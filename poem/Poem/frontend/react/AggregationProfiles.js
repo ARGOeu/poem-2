@@ -544,13 +544,13 @@ export class AggregationProfilesChange extends Component
               <FieldArray
                 name="groups"
                 render={props => (
-                    <GroupList
-                        {...props}
-                        list_services={this.insertSelectPlaceholder(list_services, '')}
-                        list_operations={this.insertSelectPlaceholder(this.logic_operations, '')}
-                        last_service_operation={this.insertOperationFromPrevious}
-                        write_perm={write_perm}
-                    />)}
+                  <GroupList
+                    {...props}
+                    list_services={this.insertSelectPlaceholder(list_services, '')}
+                    list_operations={this.insertSelectPlaceholder(this.logic_operations, '')}
+                    last_service_operation={this.insertOperationFromPrevious}
+                    write_perm={write_perm}
+                  />)}
               />
               {
                 (write_perm) ?
