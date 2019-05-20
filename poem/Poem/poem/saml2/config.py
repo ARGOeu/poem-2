@@ -16,8 +16,10 @@ def tenant_from_request(request):
     tenant = model.objects.get(domain_url=hostname)
     return tenant.name.lower()
 
+
 def get_schemaname():
     return connection.schema_name
+
 
 def get_hostname(request):
     return remove_www(request.get_host().split(':')[0]).lower()

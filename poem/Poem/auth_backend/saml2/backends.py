@@ -5,7 +5,7 @@ from django.contrib.auth import get_user_model
 
 from unidecode import unidecode
 
-from Poem.poem.models import UserProfile, Saml2LoginCache
+from Poem.poem.models import UserProfile
 from Poem.poem.saml2.config import get_schemaname
 
 

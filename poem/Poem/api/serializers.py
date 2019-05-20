@@ -9,12 +9,6 @@ class AggregationProfileSerializer(serializers.ModelSerializer):
         model = models.Aggregation
 
 
-class Saml2LoginCacheSerializer(serializers.ModelSerializer):
-    class Meta:
-        fields = ('username', 'first_name', 'last_name', 'is_superuser')
-        model = models.Saml2LoginCache
-
-
 class UsersSerializer(serializers.ModelSerializer):
     class Meta:
         fields = ('first_name', 'last_name', 'username', 'is_active',

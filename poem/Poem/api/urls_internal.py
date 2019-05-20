@@ -7,7 +7,6 @@ app_name = 'poem'
 urlpatterns = [
     path('saml_idp_string/', views_internal.GetSamlIdpString.as_view(), name='saml_idp_string'),
     path('saml2login', views_internal.Saml2Login.as_view(), name='saml2login'),
-    path('saml2login/<str:username>', views_internal.Saml2Login.as_view(), name='saml2login'),
     path('metrics/<str:group>', views_internal.ListMetricsInGroup.as_view(), name='metrics'),
     path('tokens/', views_internal.ListTokens.as_view(), name='tokens'),
     path('tokens/<str:name>', views_internal.ListTokenForTenant.as_view(), name='tokens'),
