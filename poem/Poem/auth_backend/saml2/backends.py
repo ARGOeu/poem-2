@@ -6,6 +6,7 @@ from django.contrib.auth import get_user_model
 from unidecode import unidecode
 
 from Poem.poem.models import UserProfile, Saml2LoginCache
+from Poem.poem.saml2.config import get_schemaname
 
 
 class SAML2Backend(Saml2Backend):
@@ -104,10 +105,10 @@ class SAML2Backend(Saml2Backend):
             userpro.egiid = egiid
             userpro.save()
 
-            cache.set_many({'saml2username': user.username,
-                            'saml2firstname': user.first_name,
-                            'saml2lastname': user.last_name,
-                            'saml2issuperuser': user.is_superuser})
+            cache.set_many({'{}_saml2_username'.format(get_schemaname()): user.username,
+                            '{}_saml2_first_name'.format(get_schemaname()): user.first_name,
+                            '{}_saml2_last_name'.format(get_schemaname()): user.last_name,
+                            '{}_saml2_is_superuser'.format(get_schemaname()): user.is_superuser})
 
             return user
 
@@ -123,10 +124,10 @@ class SAML2Backend(Saml2Backend):
             userpro.subject = certsub
             userpro.save()
 
-            cache.set_many({'saml2_username': userfound.username,
-                            'saml2_first_name': userfound.first_name,
-                            'saml2_last_name': userfound.last_name,
-                            'saml2_is_superuser': userfound.is_superuser})
+            cache.set_many({'{}_saml2_username'.format(get_schemaname()): userfound.username,
+                            '{}_saml2_first_name'.format(get_schemaname()): userfound.first_name,
+                            '{}_saml2_last_name'.format(get_schemaname()): userfound.last_name,
+                            '{}_saml2_is_superuser'.format(get_schemaname()): userfound.is_superuser})
 
             return userfound
 

@@ -10,7 +10,7 @@ from rest_framework_api_key import models as api_models
 from queue import Queue
 
 from Poem.poem import models as poem_models
-from Poem.poem.saml2.config import tenant_from_request, saml_login_string
+from Poem.poem.saml2.config import tenant_from_request, saml_login_string, get_schemaname
 
 from .views import NotFound
 from . import serializers
@@ -412,13 +412,13 @@ class Saml2Login(APIView):
     keys = ['username', 'first_name', 'last_name', 'is_superuser']
 
     def _prefix(self, keys):
-        return ['saml2_' + key for key in keys]
+        return ['{}_saml2_'.format(get_schemaname()) + key for key in keys]
 
     def _remove_prefix(self, keys):
         new_keys = dict()
 
         for k, v in keys.items():
-            new_keys[k.split('saml2_')[1]] = v
+            new_keys[k.split('{}_saml2_'.format(get_schemaname()))[1]] = v
 
         return new_keys
 

@@ -33,7 +33,6 @@ class App extends Component {
   }
 
   onLogin(json) {
-    console.log(json);
     localStorage.setItem('authUsername', json.username);
     localStorage.setItem('authIsLogged', true);
     localStorage.setItem('authFirstName', json.first_name);
