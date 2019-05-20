@@ -39,10 +39,10 @@ class Login extends Component {
     });
   }
 
-  flushSaml2Cache(json) {
+  flushSaml2Cache() {
     let cookies = new Cookies();
 
-    return fetch('/api/v2/internal/saml2login/' + json.username, {
+    return fetch('/api/v2/internal/saml2login', {
       method: 'DELETE',
       mode: 'cors',
       cache: 'no-cache',
@@ -67,11 +67,11 @@ class Login extends Component {
       this.isSaml2Logged().then(response => {
         response.ok && response.json().then(
           json => {
-            if (json.length > 0) {
-              this.flushSaml2Cache(json[0]).then(
+            if (Object.keys(json).length > 0) {
+              this.flushSaml2Cache().then(
                 response => {
                   if (response.ok) {
-                    this.props.onLogin(json[0]); 
+                    this.props.onLogin(json); 
                     this.props.history.push('/ui/home');
                   }
                 }

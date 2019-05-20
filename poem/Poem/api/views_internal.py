@@ -1,3 +1,5 @@
+from django.core.cache import cache
+
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.authentication import SessionAuthentication
@@ -407,29 +409,25 @@ class ListServices(APIView):
 
 class Saml2Login(APIView):
     authentication_classes = (SessionAuthentication,)
+    keys = ['username', 'first_name', 'last_name', 'is_superuser']
 
-    def post(self, request):
-        serializer = serializers.Saml2LoginCacheSerializer(data=request.data)
+    def _prefix(self, keys):
+        return ['saml2_' + key for key in keys]
 
-        if serializer.is_valid():
-            serializer.save()
+    def _remove_prefix(self, keys):
+        new_keys = dict()
 
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        for k, v in keys.items():
+            new_keys[k.split('saml2_')[1]] = v
 
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return new_keys
 
     def get(self, request):
-        entries = poem_models.Saml2LoginCache.objects.all()
-        serializer = serializers.Saml2LoginCacheSerializer(entries, many=True)
+        result = cache.get_many(self._prefix(self.keys))
 
-        return Response(serializer.data)
+        return Response(self._remove_prefix(result))
 
-    def delete(self, request, username):
-        try:
-            entry = poem_models.Saml2LoginCache.objects.get(username=username)
-            entry.delete()
+    def delete(self, request):
+        cache.delete_many(self._prefix(self.keys))
 
-            return Response(status=status.HTTP_204_NO_CONTENT)
-
-        except poem_models.Saml2LoginCache.DoesNotExist:
-            raise NotFound(status=404, detail='Username not found')
+        return Response(status=status.HTTP_204_NO_CONTENT)

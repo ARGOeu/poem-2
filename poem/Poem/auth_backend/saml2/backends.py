@@ -1,3 +1,5 @@
+from django.core.cache import cache
+
 from djangosaml2.backends import Saml2Backend
 from django.contrib.auth import get_user_model
 
@@ -102,10 +104,10 @@ class SAML2Backend(Saml2Backend):
             userpro.egiid = egiid
             userpro.save()
 
-            Saml2LoginCache.objects.create(username=user.username,
-                                           first_name=user.first_name,
-                                           last_name=user.last_name,
-                                           is_superuser=user.is_superuser)
+            cache.set_many({'saml2username': user.username,
+                            'saml2firstname': user.first_name,
+                            'saml2lastname': user.last_name,
+                            'saml2issuperuser': user.is_superuser})
 
             return user
 
@@ -121,10 +123,10 @@ class SAML2Backend(Saml2Backend):
             userpro.subject = certsub
             userpro.save()
 
-            Saml2LoginCache.objects.create(username=userfound.username,
-                                           first_name=userfound.first_name,
-                                           last_name=userfound.last_name,
-                                           is_superuser=userfound.is_superuser)
+            cache.set_many({'saml2_username': userfound.username,
+                            'saml2_first_name': userfound.first_name,
+                            'saml2_last_name': userfound.last_name,
+                            'saml2_is_superuser': userfound.is_superuser})
 
             return userfound
 
