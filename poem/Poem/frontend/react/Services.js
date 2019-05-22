@@ -48,55 +48,62 @@ class Services extends Component {
       ?
         <LoadingAnim />
       :
-        <table className="table table-bordered table-sm">
-          <thead className="table-active">
-            <tr>
-              <th id='argo-th' scope="col">Service category</th>
-              <th id='argo-th' scope="col">Service name</th>
-              <th id='argo-th' scope="col">Service type</th>
-              <th id='argo-th' scope="col">Metric</th>
-              <th id='argo-th' scope="col">Probe</th>
-            </tr>
-          </thead>
-          <tbody>
-            {
-              rows && rows.map((e, i) =>
-                <tr key={i}>
-                  {
-                    e.service_category && 
-                      <td id='argo-td' className="table-light" rowSpan={this.getRowSpan(rowspan.service_category, e.service_category)}>
-                        {e.service_category}
-                      </td>
-                  }
-                  {
-                    e.service_name && 
-                      <td id='argo-td' className="table-light" rowSpan={this.getRowSpan(rowspan.service_name, e.service_name)}>
-                        {e.service_name}
-                      </td>
-                  }
-                  {
-                    e.service_type && 
-                      <td id='argo-td' className="table-light" rowSpan={this.getRowSpan(rowspan.service_type, e.service_type)}>
-                        {e.service_type}
-                      </td>
-                  }
-                  {
-                    e.metric && 
-                      <td id='argo-td' className="table-light" rowSpan={this.getRowSpan(rowspan.metric, e.metric)}>
-                        <a href={'/ui/metrics/' + id_metrics[e.metric]}>{e.metric}</a>
-                      </td>
-                  }
-                  {
-                    e.probe && 
-                      <td id='argo-td' className="table-light" rowSpan={this.getRowSpan(rowspan.probe, e.probe)}>
-                        <a href={'/ui/probes/' + id_probes[e.probe]}>{e.probe}</a>
-                      </td>
-                  }
+        <React.Fragment>
+          <div className="d-flex align-items-center justify-content-between">
+            <h2 className="m-2">Services and probes</h2> 
+          </div>
+          <div id="argo-contentwrap" className="ml-2 mb-2 mt-2 p-2 border rounded">
+            <table className="table table-bordered table-sm">
+              <thead className="table-active">
+                <tr>
+                  <th id='argo-th' scope="col">Service category</th>
+                  <th id='argo-th' scope="col">Service name</th>
+                  <th id='argo-th' scope="col">Service type</th>
+                  <th id='argo-th' scope="col">Metric</th>
+                  <th id='argo-th' scope="col">Probe</th>
                 </tr>
-              )
-            }
-          </tbody>
-        </table>
+              </thead>
+              <tbody>
+                {
+                  rows && rows.map((e, i) =>
+                    <tr key={i}>
+                      {
+                        e.service_category && 
+                          <td id='argo-td' className="table-light" rowSpan={this.getRowSpan(rowspan.service_category, e.service_category)}>
+                            {e.service_category}
+                          </td>
+                      }
+                      {
+                        e.service_name && 
+                          <td id='argo-td' className="table-light" rowSpan={this.getRowSpan(rowspan.service_name, e.service_name)}>
+                            {e.service_name}
+                          </td>
+                      }
+                      {
+                        e.service_type && 
+                          <td id='argo-td' className="table-light" rowSpan={this.getRowSpan(rowspan.service_type, e.service_type)}>
+                            {e.service_type}
+                          </td>
+                      }
+                      {
+                        e.metric && 
+                          <td id='argo-td' className="table-light" rowSpan={this.getRowSpan(rowspan.metric, e.metric)}>
+                            <a href={'/ui/metrics/' + id_metrics[e.metric]}>{e.metric}</a>
+                          </td>
+                      }
+                      {
+                        e.probe && 
+                          <td id='argo-td' className="table-light" rowSpan={this.getRowSpan(rowspan.probe, e.probe)}>
+                            <a href={'/ui/probes/' + id_probes[e.probe]}>{e.probe}</a>
+                          </td>
+                      }
+                    </tr>
+                  )
+                }
+              </tbody>
+            </table>
+          </div>
+        </React.Fragment>
     )
 
   }

@@ -8,7 +8,7 @@ import Reports from './Reports';
 import Services from './Services';
 import NotFound from './NotFound';
 import {Route, Switch, BrowserRouter, Redirect, withRouter} from 'react-router-dom';
-import {Container, Row, Col} from 'reactstrap';
+import {Container, Button, Row, Col} from 'reactstrap';
 import {NavigationBar, NavigationLinks, Footer} from './UIElements';
 
 import './App.css';
@@ -99,18 +99,16 @@ class App extends Component {
                 <div id="sidebar-grow" className="flex-grow-1 border-left border-right rounded-bottom"/>
               </Col>
               <Col>
-                <div id="argo-contentwrap" className="m-2 p-2">
-                  <Switch>
-                    <Route exact path="/ui/home" component={Home} />
-                    <Route exact path="/ui/services" component={Services} />
-                    <Route exact path="/ui/reports" component={Reports} />
-                    <Route exact path="/ui/metricprofiles" component={MetricProfiles} />
-                    <Route exact path="/ui/aggregationprofiles" component={AggregationProfilesList} />
-                    <Route exact path="/ui/aggregationprofiles/change/:id" component={AggregationProfilesChange} />
-                    <Route exact path="/ui/administration" component={Administration} />
-                    <Route component={NotFound} />
-                  </Switch>
-                </div>
+                <Switch>
+                  <Route exact path="/ui/home" component={Home} />
+                  <Route exact path="/ui/services" component={Services} />
+                  <Route exact path="/ui/reports" component={Reports} />
+                  <Route exact path="/ui/metricprofiles" component={MetricProfiles} />
+                  <Route exact path="/ui/aggregationprofiles" component={AggregationProfilesList} />
+                  <Route exact path="/ui/aggregationprofiles/change/:id" component={AggregationProfilesChange} />
+                  <Route exact path="/ui/administration" component={Administration} />
+                  <Route component={NotFound} />
+                </Switch>
               </Col>
             </Row>
             <Row>

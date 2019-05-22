@@ -1,0 +1,11 @@
+.group-operation {
+  -webkit-appearance: none;
+  appearance: none;
+  text-align: center;
+}
+
+.group-operation > select {
+  -webkit-appearance: none;
+  appearance: none;
+  text-align: center;
+}
