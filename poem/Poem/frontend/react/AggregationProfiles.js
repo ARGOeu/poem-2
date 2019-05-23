@@ -389,10 +389,10 @@ export class AggregationProfilesChange extends Component
       :
         <React.Fragment>
           <div className="d-flex align-items-center justify-content-between">
-            <h2 className="m-2">Change aggregation profile</h2> 
+            <h2 className="ml-3 mt-4 mb-4">Change aggregation profile</h2> 
             <a class="btn btn-secondary" href="history" role="button">History</a>
           </div>
-          <div id="argo-contentwrap" className="ml-2 mb-2 mt-2 p-2 border rounded">
+          <div id="argo-contentwrap" className="ml-2 mb-2 mt-2 p-3 border rounded">
             <Formik
               initialValues={{
                 id: aggregation_profile.id,
@@ -562,7 +562,7 @@ export class AggregationProfilesChange extends Component
                       </FormGroup>
                     </Col>
                   </Row>
-                  <h4 class="mt-2 alert-info p-1 pl-3 text-dark text-uppercase rounded">Service flavour groups</h4>
+                  <h4 className="mt-2 alert-info p-1 pl-3 text-light text-uppercase rounded" style={{'background-color': "#416090"}}>Service flavour groups</h4>
                   <FieldArray
                     name="groups"
                     render={props => (
@@ -639,10 +639,10 @@ export class AggregationProfilesList extends Component
       :
         <React.Fragment>
           <div className="d-flex align-items-center justify-content-between">
-            <h2 className="m-2">Select aggregation profile to change</h2> 
+            <h2 className="ml-3 mt-4 mb-4">Select aggregation profile to change</h2> 
             <a class="btn btn-secondary" href="add" role="button">Add</a>
           </div>
-          <div id="argo-contentwrap" className="ml-2 mb-2 mt-2 p-2 border rounded">
+          <div id="argo-contentwrap" className="ml-2 mb-2 mt-2 p-3 border rounded">
             {
               list_aggregations &&
               <ReactTable
