@@ -1,5 +1,6 @@
+import Cookies from 'universal-cookie';
 import React, { Component } from 'react';
-import { LoadingAnim } from './UIElements';
+import { LoadingAnim, ModalAreYouSure } from './UIElements';
 import ReactTable from 'react-table';
 import 'react-table/react-table.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -238,7 +239,11 @@ export class AggregationProfilesChange extends Component
   constructor(props) {
     super(props);
 
-    const {params} = props.match
+    const {params} = props.match;
+    const {webapimetric, webapiaggregation, tenant_name} = props;
+    this.webapimetric = webapimetric;
+    this.webapiaggregation = webapiaggregation;
+    this.tenant_name = tenant_name;
 
     this.profile_id = params.id;
 
@@ -250,6 +255,10 @@ export class AggregationProfilesChange extends Component
       list_id_metric_profiles: [],
       list_services: [],
       list_complete_metric_profiles: {},
+      areYouSureModal: false,
+      modalMsg: '',
+      modalTitle: '',
+      modalFunc: undefined,
       loading: false,
     }
 
@@ -259,6 +268,14 @@ export class AggregationProfilesChange extends Component
 
     this.logic_operations = ["OR", "AND"] 
     this.endpoint_groups = ["servicegroups", "sites"]
+  }
+
+  toggleAreYouSure(msg, title, onyes) {
+    this.setState(prevState => 
+      ({areYouSureModal: !prevState.areYouSureModal,
+        modalMsg: msg,
+        modalFunc: onyes
+      }));
   }
 
   fetchToken() {
@@ -347,6 +364,82 @@ export class AggregationProfilesChange extends Component
       }
   }
 
+  sendToDjango(url, method, values=null) {
+    const cookies = new Cookies()
+
+    return fetch(url, {
+      method: method,
+      mode: 'cors',
+      cache: 'no-cache',
+      credentials: 'same-origin',
+      headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'X-CSRFToken': cookies.get('csrftoken'),
+          'Referer': 'same-origin'
+      },
+      body: values ? JSON.stringify(values) : null 
+    })
+  }
+
+  sendToWebApi(token, url, method, values=null) {
+      return fetch(url, {
+          method: method,
+          mode: 'cors',
+          cache: 'no-cache',
+          credentials: 'same-origin',
+          headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json',
+              'x-api-key': token
+          },
+          body: values ? JSON.stringify(values) : null 
+          
+      })
+  }
+
+  onSubmitHandle(values, actions) {
+    let last_group_element = values.groups[values.groups.length - 1]
+
+    if (last_group_element['name'] == 'dummy' && 
+      last_group_element.services[0]['name'] == 'dummy') {
+      values.groups.pop()
+    }
+
+    values.namespace = this.tenant_name
+
+    let match_profile = this.state.list_id_metric_profiles.filter((e) => 
+      values.metric_profile === e.name)
+
+    values.metric_profile = match_profile[0]
+
+    this.fetchToken()
+    .then(token => 
+      this.sendToWebApi(token, this.webapiaggregation + '/' + values.id, 'PUT', values)
+      .then(response => {
+        if (!response.ok) {
+          this.toggleAreYouSure(`Error: ${response.status}, ${response.statusText}`, 
+            'Change aggregation profile', 
+            null)
+        }
+        else {
+          response.json()
+            .then(r => {
+              this.sendToDjango(this.webapiaggregationsapi, 'PUT', 
+                {
+                  apiid: values.id, 
+                  name: values.name, 
+                  groupname: values.groups_field
+                })
+                .then(() => window.location = '/ui/aggregationprofiles')
+                .catch(err => alert('Something went wrong: ' + err))
+            })
+          .catch(err => alert('Something went wrong: ' + err))
+        }
+      }).catch(err => alert('Something went wrong: ' + err))
+    .catch(err => alert('Something went wrong: ' + err)))
+  }
+
   insertDummyGroup(groups) {
     return  [...groups, {name: 'dummy', operation: 'OR', services: [{name: 'dummy', operation: 'OR'}]}] 
   }
@@ -388,6 +481,12 @@ export class AggregationProfilesChange extends Component
         <LoadingAnim />
       :
         <React.Fragment>
+          <ModalAreYouSure 
+            isOpen={this.state.areYouSureModal}
+            toggle={this.toggleAreYouSure}
+            title={this.state.modalTitle}
+            msg={this.state.modalMsg}
+            onYes={() => this.state.modalFunc} />
           <div className="d-flex align-items-center justify-content-between">
             <h2 className="ml-3 mt-4 mb-4">Change aggregation profile</h2> 
             <a class="btn btn-secondary" href="history" role="button">History</a>

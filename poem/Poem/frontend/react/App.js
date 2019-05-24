@@ -25,6 +25,9 @@ class App extends Component {
     this.state = {
       isLogged: localStorage.getItem('authIsLogged') ? true : false,
       areYouSureModal: false,
+      webApiAggregation: undefined,
+      webApiMetric: undefined,
+      tenantName: undefined,
     };
 
     this.onLogin = this.onLogin.bind(this);
@@ -53,6 +56,21 @@ class App extends Component {
   toggleAreYouSure() {
     this.setState(prevState => 
       ({areYouSureModal: !prevState.areYouSureModal}));
+  }
+
+  fetchConfigOptions() {
+    return fetch('/api/v2/internal/config_options')
+      .then(response => response.json())
+      .then(json => this.setState({
+        webApiMetric: json.result.webapimetric, 
+        webApiAggregation: json.result.webapiaggregation,
+        tenantName: json.result.tenant_name
+      }))
+      .catch(err => console.log('Something went wrong: ' + err));
+  }
+
+  componentDidMount() {
+    this.fetchConfigOptions();
   }
 
   render() {
@@ -105,7 +123,12 @@ class App extends Component {
                   <Route exact path="/ui/reports" component={Reports} />
                   <Route exact path="/ui/metricprofiles" component={MetricProfiles} />
                   <Route exact path="/ui/aggregationprofiles" component={AggregationProfilesList} />
-                  <Route exact path="/ui/aggregationprofiles/change/:id" component={AggregationProfilesChange} />
+                  <Route exact path="/ui/aggregationprofiles/change/:id" 
+                    render={props => <AggregationProfilesChange 
+                      {...props} 
+                      webapiaggregation={this.state.webApiAggregation} 
+                      webapimetric={this.state.webApiMetric}/>} 
+                    />
                   <Route exact path="/ui/administration" component={Administration} />
                   <Route component={NotFound} />
                 </Switch>

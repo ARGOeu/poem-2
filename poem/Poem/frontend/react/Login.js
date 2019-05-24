@@ -56,9 +56,9 @@ class Login extends Component {
   }
 
   fetchSamlButtonString() {
-    return fetch('/api/v2/internal/saml_idp_string')
+    return fetch('/api/v2/internal/config_options')
       .then(response => response.json())
-      .then(json => this.setState({samlIdpString: json.result}))
+      .then(json => this.setState({samlIdpString: json.result.saml_login_string}))
       .catch(err => console.log('Something went wrong: ' + err));
   }
 
