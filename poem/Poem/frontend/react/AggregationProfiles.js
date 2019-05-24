@@ -199,7 +199,7 @@ const ServiceList = ({services, list_services=[], list_operations=[], last_servi
 const Service = ({name, operation, list_services, list_operations, last_service_operation, groupindex, index, remove, insert, last, form}) => 
   <Row className="d-flex align-items-center service pt-1 pb-1 no-gutters" key={index}>
     <Col md={8}>
-      <div class="input-group input-group-sm">
+      <div className="input-group input-group-sm">
         <DropDown 
           field={{name: "name", value: name}}
           data={list_services} 
@@ -209,7 +209,7 @@ const Service = ({name, operation, list_services, list_operations, last_service_
       </div>
     </Col>
     <Col md={2}>
-      <div class="input-group input-group-sm">
+      <div className="input-group input-group-sm">
         <DropDown 
           field={{name: "operation", value: operation}}
           data={list_operations}
@@ -256,26 +256,36 @@ export class AggregationProfilesChange extends Component
       list_services: [],
       list_complete_metric_profiles: {},
       areYouSureModal: false,
-      modalMsg: '',
-      modalTitle: '',
-      modalFunc: undefined,
       loading: false,
     }
 
-    this.fetchMetricProfiles = this.fetchMetricProfiles.bind(this)
-    this.fetchAggregationProfile = this.fetchAggregationProfile.bind(this)
-    this.extractListOfMetricsProfiles = this.extractListOfMetricsProfiles.bind(this)
+    this.fetchMetricProfiles = this.fetchMetricProfiles.bind(this);
+    this.fetchAggregationProfile = this.fetchAggregationProfile.bind(this);
+    this.extractListOfMetricsProfiles = this.extractListOfMetricsProfiles.bind(this);
+    this.toggleAreYouSure = this.toggleAreYouSure.bind(this);
+    this.sendToDjango = this.sendToDjango.bind(this);
+    this.sendToWebApi= this.sendToWebApi.bind(this);
+    this.doChange = this.doChange.bind(this);
+    this.setModalOptions = this.setModalOptions.bind(this);
 
-    this.logic_operations = ["OR", "AND"] 
-    this.endpoint_groups = ["servicegroups", "sites"]
+    this.modalFunc = undefined;
+    this.modalTitle = undefined;
+    this.modalMsg = undefined;
+
+
+    this.logic_operations = ["OR", "AND"]; 
+    this.endpoint_groups = ["servicegroups", "sites"];
   }
 
-  toggleAreYouSure(msg, title, onyes) {
+  toggleAreYouSure() {
     this.setState(prevState => 
-      ({areYouSureModal: !prevState.areYouSureModal,
-        modalMsg: msg,
-        modalFunc: onyes
-      }));
+      ({areYouSureModal: !prevState.areYouSureModal}));
+  }
+
+  setModalOptions(msg, title, onyes) {
+    this.modalFunc = onyes;
+    this.modalTitle = title;
+    this.modalMsg = msg;
   }
 
   fetchToken() {
@@ -398,7 +408,16 @@ export class AggregationProfilesChange extends Component
       })
   }
 
-  onSubmitHandle(values, actions) {
+  onSubmitHandle(values, action) {
+    console.log(values);
+
+    this.setModalOptions('Are you sure you want to change Aggregation profile?', 
+     'Change aggregation profile',
+      this.doChange(values, action));
+    this.toggleAreYouSure();
+  }
+
+  doChange(values, actions) {
     let last_group_element = values.groups[values.groups.length - 1]
 
     if (last_group_element['name'] == 'dummy' && 
@@ -425,7 +444,7 @@ export class AggregationProfilesChange extends Component
         else {
           response.json()
             .then(r => {
-              this.sendToDjango(this.webapiaggregationsapi, 'PUT', 
+              this.sendToDjango('/api/v2/internal/aggregations', 'PUT', 
                 {
                   apiid: values.id, 
                   name: values.name, 
@@ -484,12 +503,12 @@ export class AggregationProfilesChange extends Component
           <ModalAreYouSure 
             isOpen={this.state.areYouSureModal}
             toggle={this.toggleAreYouSure}
-            title={this.state.modalTitle}
-            msg={this.state.modalMsg}
-            onYes={() => this.state.modalFunc} />
+            title={this.modalTitle}
+            msg={this.modalMsg}
+            onYes={() => this.modalFunc} />
           <div className="d-flex align-items-center justify-content-between">
             <h2 className="ml-3 mt-4 mb-4">Change aggregation profile</h2> 
-            <a class="btn btn-secondary" href="history" role="button">History</a>
+            <a className="btn btn-secondary" href="history" role="button">History</a>
           </div>
           <div id="argo-contentwrap" className="ml-2 mb-2 mt-2 p-3 border rounded">
             <Formik
@@ -661,7 +680,7 @@ export class AggregationProfilesChange extends Component
                       </FormGroup>
                     </Col>
                   </Row>
-                  <h4 className="mt-2 alert-info p-1 pl-3 text-light text-uppercase rounded" style={{'background-color': "#416090"}}>Service flavour groups</h4>
+                  <h4 className="mt-2 alert-info p-1 pl-3 text-light text-uppercase rounded" style={{'backgroundColor': "#416090"}}>Service flavour groups</h4>
                   <FieldArray
                     name="groups"
                     render={props => (
@@ -739,7 +758,7 @@ export class AggregationProfilesList extends Component
         <React.Fragment>
           <div className="d-flex align-items-center justify-content-between">
             <h2 className="ml-3 mt-4 mb-4">Select aggregation profile to change</h2> 
-            <a class="btn btn-secondary" href="add" role="button">Add</a>
+            <a className="btn btn-secondary" href="add" role="button">Add</a>
           </div>
           <div id="argo-contentwrap" className="ml-2 mb-2 mt-2 p-3 border rounded">
             {
