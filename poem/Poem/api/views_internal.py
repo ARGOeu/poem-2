@@ -1,4 +1,5 @@
 from django.core.cache import cache
+from configparser import ConfigParser
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -14,6 +15,8 @@ from Poem.poem.saml2.config import tenant_from_request, saml_login_string, get_s
 
 from .views import NotFound
 from . import serializers
+
+from Poem import settings
 
 
 class Tree(object):
@@ -115,13 +118,20 @@ class Tree(object):
         yield p
 
 
-class GetSamlIdpString(APIView):
+class GetConfigOptions(APIView):
     authentication_classes = ()
     permission_classes = ()
 
     def get(self, request):
+        options = dict()
+
         tenant = tenant_from_request(request)
-        return Response({'result': saml_login_string(tenant)})
+        options.update(saml_login_string=saml_login_string(tenant))
+
+        options.update(webapimetric=settings.WEBAPI_METRIC)
+        options.update(webapiaggregation=settings.WEBAPI_AGGREGATION)
+
+        return Response({'result': options})
 
 
 class ListMetricsInGroup(APIView):
