@@ -239,13 +239,9 @@ export class AggregationProfilesChange extends Component
   constructor(props) {
     super(props);
 
-    const {params} = props.match;
-    const {webapimetric, webapiaggregation, tenant_name} = props;
-    this.webapimetric = webapimetric;
-    this.webapiaggregation = webapiaggregation;
-    this.tenant_name = tenant_name;
+    this.props = props;
 
-    this.profile_id = params.id;
+    this.profile_id = props.match.params.id;
 
     this.state = {
       aggregation_profile: {},
@@ -257,6 +253,9 @@ export class AggregationProfilesChange extends Component
       list_complete_metric_profiles: {},
       areYouSureModal: false,
       loading: false,
+      modalFunc: undefined,
+      modalTitle: undefined,
+      modalMsg: undefined,
     }
 
     this.fetchMetricProfiles = this.fetchMetricProfiles.bind(this);
@@ -266,11 +265,7 @@ export class AggregationProfilesChange extends Component
     this.sendToDjango = this.sendToDjango.bind(this);
     this.sendToWebApi= this.sendToWebApi.bind(this);
     this.doChange = this.doChange.bind(this);
-    this.setModalOptions = this.setModalOptions.bind(this);
-
-    this.modalFunc = undefined;
-    this.modalTitle = undefined;
-    this.modalMsg = undefined;
+    this.toggleAreYouSureSetModal = this.toggleAreYouSureSetModal.bind(this);
 
 
     this.logic_operations = ["OR", "AND"]; 
@@ -282,10 +277,13 @@ export class AggregationProfilesChange extends Component
       ({areYouSureModal: !prevState.areYouSureModal}));
   }
 
-  setModalOptions(msg, title, onyes) {
-    this.modalFunc = onyes;
-    this.modalTitle = title;
-    this.modalMsg = msg;
+  toggleAreYouSureSetModal(msg, title, onyes) {
+    this.setState(prevState => 
+      ({areYouSureModal: !prevState.areYouSureModal,
+        modalFunc: onyes,
+        modalMsg: msg,
+        modalTitle: title,
+      }));
   }
 
   fetchToken() {
@@ -393,28 +391,24 @@ export class AggregationProfilesChange extends Component
   }
 
   sendToWebApi(token, url, method, values=null) {
-      return fetch(url, {
-          method: method,
-          mode: 'cors',
-          cache: 'no-cache',
-          credentials: 'same-origin',
-          headers: {
-              'Accept': 'application/json',
-              'Content-Type': 'application/json',
-              'x-api-key': token
-          },
-          body: values ? JSON.stringify(values) : null 
-          
-      })
+    return fetch(url, {
+      method: method,
+      mode: 'cors',
+      cache: 'no-cache',
+      credentials: 'same-origin',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'x-api-key': token
+      },
+      body: values && JSON.stringify(values) 
+    })
   }
 
   onSubmitHandle(values, action) {
-    console.log(values);
-
-    this.setModalOptions('Are you sure you want to change Aggregation profile?', 
+    this.toggleAreYouSureSetModal('Are you sure you want to change Aggregation profile?', 
      'Change aggregation profile',
-      this.doChange(values, action));
-    this.toggleAreYouSure();
+      () => this.doChange(values, action));
   }
 
   doChange(values, actions) {
@@ -437,8 +431,8 @@ export class AggregationProfilesChange extends Component
       this.sendToWebApi(token, this.webapiaggregation + '/' + values.id, 'PUT', values)
       .then(response => {
         if (!response.ok) {
-          this.toggleAreYouSure(`Error: ${response.status}, ${response.statusText}`, 
-            'Change aggregation profile', 
+          this.toggleAreYouSureSetModal(`Error: ${response.status}, ${response.statusText}`, 
+            'Error changing aggregation profile', 
             null)
         }
         else {
@@ -494,6 +488,10 @@ export class AggregationProfilesChange extends Component
         list_complete_metric_profiles, list_user_groups, groups_field,
         list_services, write_perm, loading} = this.state
 
+    this.webapimetric = this.props.webapimetric;
+    this.webapiaggregation = this.props.webapiaggregation;
+    this.tenant_name = this.props.tenant_name;
+
     return (
       (loading)
       ?
@@ -503,9 +501,9 @@ export class AggregationProfilesChange extends Component
           <ModalAreYouSure 
             isOpen={this.state.areYouSureModal}
             toggle={this.toggleAreYouSure}
-            title={this.modalTitle}
-            msg={this.modalMsg}
-            onYes={() => this.modalFunc} />
+            title={this.state.modalTitle}
+            msg={this.state.modalMsg}
+            onYes={this.state.modalFunc} />
           <div className="d-flex align-items-center justify-content-between">
             <h2 className="ml-3 mt-4 mb-4">Change aggregation profile</h2> 
             <a className="btn btn-secondary" href="history" role="button">History</a>
@@ -521,7 +519,7 @@ export class AggregationProfilesChange extends Component
                 metric_profile: aggregation_profile.metric_profile.name,
                 endpoint_group: aggregation_profile.endpoint_group,
                 groups: this.insertDummyGroup(
-                    this.insertEmptyServiceForNoServices(aggregation_profile.groups)
+                  this.insertEmptyServiceForNoServices(aggregation_profile.groups)
                 )
               }}  
               onSubmit = {(values, actions) => this.onSubmitHandle(values, actions)}

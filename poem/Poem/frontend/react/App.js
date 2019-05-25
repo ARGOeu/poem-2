@@ -127,7 +127,8 @@ class App extends Component {
                     render={props => <AggregationProfilesChange 
                       {...props} 
                       webapiaggregation={this.state.webApiAggregation} 
-                      webapimetric={this.state.webApiMetric}/>} 
+                      webapimetric={this.state.webApiMetric}
+                      tenantname={this.state.tenantName}/>} 
                     />
                   <Route exact path="/ui/administration" component={Administration} />
                   <Route component={NotFound} />
