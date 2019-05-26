@@ -13,11 +13,11 @@ class Services extends Component {
       rowspan: null,
       id_probes: null, 
       id_metrics: null, 
-    }
+    };
   }
 
   componentDidMount() {
-    this.setState({loading: true})
+    this.setState({loading: true});
     fetch('/api/v2/internal/services')
       .then(response => response.json())
       .then(json =>
@@ -27,25 +27,21 @@ class Services extends Component {
           id_probes: json.result.id_probes, 
           id_metrics: json.result.id_metrics, 
           loading: false})
-      )
+      );
   }
 
   getRowSpan(re, match) {
     var m = re.filter(r => r[0] === match);
-    if (m.length) {
-      return m[0][1]
-    }
-    else {
-      return 1 
-    }
+    return m.length ? m[0][1] : 1;
   }
 
   render() {
-    const {loading, rows, rowspan, id_metrics, id_probes} = this.state
+    const {loading, rows, rowspan, id_metrics, id_probes} = this.state;
 
-    if (loading) 
+    if (loading) {
       return (<LoadingAnim />)
 
+    } 
     else if (!loading && rows) {
       return (
         <React.Fragment>

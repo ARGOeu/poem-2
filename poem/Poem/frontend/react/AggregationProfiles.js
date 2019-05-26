@@ -140,7 +140,7 @@ const Group = ({name, operation, services, list_operations, list_services, last_
               field={{name: "operation", value: operation}}
               data={list_operations}
               prefix={`groups.${groupindex}`}
-              class_name="custom-select col-3"
+              class_name="custom-select col-2"
             />
           </CardFooter>
         </Card>
@@ -154,19 +154,13 @@ const Group = ({name, operation, services, list_operations, list_services, last_
       </Col>
     </React.Fragment>
   :
-    <div className="wrap-group-add">
-      <div className="group-add"
-        onClick={() => {
-          (write_perm) ?
-              insert(groupindex, {name: '', operation: '',
-                  services: [{name: '', operation: ''}]})
-          :
-          null
-        }}>
-        <FontAwesomeIcon icon={faPlus} color="#70bf2b"/>
-        &nbsp;&nbsp;&nbsp;&nbsp;Add new Service Flavour Group
-      </div>
-    </div> 
+    <Col sm={{size: 12}} md={{size: 6}} className="mt-4 mb-2 d-flex justify-content-center align-items-center">
+      <Button outline color="secondary" size='lg' disabled={!write_perm ? true : false} onClick={
+        () => write_perm &&
+          insert(groupindex, {name: '', operation: '',
+              services: [{name: '', operation: ''}]})
+      }>Add new group</Button>
+    </Col>
 
 
 const ServiceList = ({services, list_services=[], list_operations=[], last_service_operation, groupindex, groupoperation, form, push}) =>
@@ -538,7 +532,7 @@ export class AggregationProfilesChange extends Component
                         name="name" 
                         placeholder="Name of aggregation profile"
                         required={true}
-                        className="form-control"
+                        className="form-control form-control-lg"
                         id="aggregationName"
                       />
                     </Col>
