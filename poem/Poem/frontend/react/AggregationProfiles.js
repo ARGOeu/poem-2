@@ -484,229 +484,224 @@ export class AggregationProfilesChange extends Component
         list_complete_metric_profiles, list_user_groups, groups_field,
         list_services, write_perm, loading} = this.state
 
+    if (loading)
+      return (<LoadingAnim />)
 
-    return (
-      (loading)
-      ?
-        <LoadingAnim />
-      :
-        !loading &&
-        aggregation_profile &&
-        aggregation_profile.metric_profile &&
-        list_id_metric_profiles &&
-        list_complete_metric_profiles &&
-        list_user_groups &&
-        groups_field &&
-        list_services ? 
-          <React.Fragment>
-            <ModalAreYouSure 
-              isOpen={this.state.areYouSureModal}
-              toggle={this.toggleAreYouSure}
-              title={this.state.modalTitle}
-              msg={this.state.modalMsg}
-              onYes={this.state.modalFunc} />
-            <div className="d-flex align-items-center justify-content-between">
-              <h2 className="ml-3 mt-4 mb-4">Change aggregation profile</h2> 
-              <a className="btn btn-secondary" href="history" role="button">History</a>
-            </div>
-            <div id="argo-contentwrap" className="ml-2 mb-2 mt-2 p-3 border rounded">
-              <Formik
-                initialValues={{
-                  id: aggregation_profile.id,
-                  name: aggregation_profile.name,
-                  groups_field: groups_field, 
-                  metric_operation: aggregation_profile.metric_operation,
-                  profile_operation: aggregation_profile.profile_operation,
-                  metric_profile: aggregation_profile.metric_profile.name,
-                  endpoint_group: aggregation_profile.endpoint_group,
-                  groups: this.insertDummyGroup(
-                    this.insertEmptyServiceForNoServices(aggregation_profile.groups)
-                  )
-                }}  
-                onSubmit = {(values, actions) => this.onSubmitHandle(values, actions)}
-                render = {props => (
-                  <Form>
-                    <FormikEffect onChange={(current, prev) => {
-                      if (current.values.metric_profile !== prev.values.metric_profile) {
-                        let selected_profile = {name: current.values.metric_profile}
-                        this.setState({list_services:
-                          this.extractListOfServices(selected_profile,
-                          list_complete_metric_profiles)})
-                      }
-                    }}
-                    />
+    else if (!loading && aggregation_profile &&
+      list_id_metric_profiles && list_complete_metric_profiles &&
+      list_user_groups && groups_field && list_services) {
+
+      return (
+      <React.Fragment>
+        <ModalAreYouSure 
+          isOpen={this.state.areYouSureModal}
+          toggle={this.toggleAreYouSure}
+          title={this.state.modalTitle}
+          msg={this.state.modalMsg}
+          onYes={this.state.modalFunc} />
+        <div className="d-flex align-items-center justify-content-between">
+          <h2 className="ml-3 mt-4 mb-4">Change aggregation profile</h2> 
+          <a className="btn btn-secondary" href="history" role="button">History</a>
+        </div>
+        <div id="argo-contentwrap" className="ml-2 mb-2 mt-2 p-3 border rounded">
+          <Formik
+            initialValues={{
+              id: aggregation_profile.id,
+              name: aggregation_profile.name,
+              groups_field: groups_field, 
+              metric_operation: aggregation_profile.metric_operation,
+              profile_operation: aggregation_profile.profile_operation,
+              metric_profile: aggregation_profile.metric_profile.name,
+              endpoint_group: aggregation_profile.endpoint_group,
+              groups: this.insertDummyGroup(
+                this.insertEmptyServiceForNoServices(aggregation_profile.groups)
+              )
+            }}  
+            onSubmit = {(values, actions) => this.onSubmitHandle(values, actions)}
+            render = {props => (
+              <Form>
+                <FormikEffect onChange={(current, prev) => {
+                  if (current.values.metric_profile !== prev.values.metric_profile) {
+                    let selected_profile = {name: current.values.metric_profile}
+                    this.setState({list_services:
+                      this.extractListOfServices(selected_profile,
+                      list_complete_metric_profiles)})
+                  }
+                }}
+                />
+                <FormGroup>
+                  <Row>
+                    <Col md={4}>
+                      <Label for="aggregationName">Aggregation name:</Label>
+                      <Field 
+                        type="text" 
+                        name="name" 
+                        placeholder="Name of aggregation profile"
+                        required={true}
+                        className="form-control"
+                        id="aggregationName"
+                      />
+                    </Col>
+                  </Row>
+                </FormGroup>
+                <Row>
+                  <Col md={4}>
                     <FormGroup>
                       <Row>
-                        <Col md={4}>
-                          <Label for="aggregationName">Aggregation name:</Label>
+                        <Col md={12}>
+                          <Label for="aggregationMetric">Metric operation:</Label>
+                        </Col>
+                      </Row>
+                      <Row>
+                        <Col md={5}>
                           <Field 
-                            type="text" 
-                            name="name" 
-                            placeholder="Name of aggregation profile"
+                            name="metric_operation" 
+                            component={DropDown} 
+                            data={this.insertSelectPlaceholder(this.logic_operations, '')}
                             required={true}
-                            className="form-control"
-                            id="aggregationName"
-                          />
+                            id="aggregationMetric"
+                            class_name='custom-select'
+                          /> 
+                        </Col>
+                      </Row>
+                      <Row>
+                        <Col md={12}>
+                          <FormText>
+                            Logical operation that will be applied between metrics of each service flavour 
+                          </FormText>
                         </Col>
                       </Row>
                     </FormGroup>
-                    <Row>
-                      <Col md={4}>
-                        <FormGroup>
-                          <Row>
-                            <Col md={12}>
-                              <Label for="aggregationMetric">Metric operation:</Label>
-                            </Col>
-                          </Row>
-                          <Row>
-                            <Col md={5}>
-                              <Field 
-                                name="metric_operation" 
-                                component={DropDown} 
-                                data={this.insertSelectPlaceholder(this.logic_operations, '')}
-                                required={true}
-                                id="aggregationMetric"
-                                class_name='custom-select'
-                              /> 
-                            </Col>
-                          </Row>
-                          <Row>
-                            <Col md={12}>
-                              <FormText>
-                                Logical operation that will be applied between metrics of each service flavour 
-                              </FormText>
-                            </Col>
-                          </Row>
-                        </FormGroup>
-                      </Col>
-                      <Col md={4}>
-                        <FormGroup>
-                          <Row>
-                            <Col md={12}>
-                              <Label for="aggregationOperation">Aggregation operation: </Label>
-                            </Col>
-                          </Row>
-                          <Row>
-                            <Col md={5}>
-                              <Field 
-                                name="profile_operation" 
-                                component={DropDown} 
-                                data={this.insertSelectPlaceholder(this.logic_operations, '')}
-                                required={true}
-                                id="aggregationOperation"
-                                class_name='custom-select'
-                              /> 
-                            </Col>
-                          </Row>
-                          <Row>
-                            <Col md={12}>
-                              <FormText>
-                                Logical operation that will be applied between defined service flavour groups
-                              </FormText>
-                            </Col>
-                          </Row>
-                        </FormGroup>
-                      </Col>
-                      <Col md={4}>
-                        <FormGroup>
-                          <Row>
-                            <Col md={12}>
-                              <Label>Endpoint group: </Label>
-                            </Col>
-                          </Row>
-                          <Row>
-                            <Col md={6}>
-                              <Field 
-                                name="endpoint_group" 
-                                component={DropDown} 
-                                data={this.insertSelectPlaceholder(this.endpoint_groups, '')}
-                                required={true}
-                                class_name='custom-select'
-                              /> 
-                            </Col>
-                          </Row>
-                        </FormGroup>
-                      </Col>
-                    </Row>
-                    <Row>
-                      <Col md={6}>
-                        <FormGroup>
-                          <Label>Metric profile: </Label>
+                  </Col>
+                  <Col md={4}>
+                    <FormGroup>
+                      <Row>
+                        <Col md={12}>
+                          <Label for="aggregationOperation">Aggregation operation: </Label>
+                        </Col>
+                      </Row>
+                      <Row>
+                        <Col md={5}>
                           <Field 
-                            name="metric_profile" 
+                            name="profile_operation" 
                             component={DropDown} 
-                            data={this.insertSelectPlaceholder(list_id_metric_profiles.map(e => e.name), '')}
+                            data={this.insertSelectPlaceholder(this.logic_operations, '')}
                             required={true}
-                            id="metricProfile" 
+                            id="aggregationOperation"
                             class_name='custom-select'
-                          />
+                          /> 
+                        </Col>
+                      </Row>
+                      <Row>
+                        <Col md={12}>
                           <FormText>
-                            Metric profile associated to Aggregation profile. Service flavours defined in service flavour groups originate from selected metric profile. 
+                            Logical operation that will be applied between defined service flavour groups
                           </FormText>
-                        </FormGroup>
-                      </Col>
-                    </Row>
-                    <Row>
-                      <Col md={6}>
-                        <FormGroup>
-                          <Row>
-                            <Col md={6}>
-                              <Label>Group: </Label>
-                            </Col>
-                          </Row>
-                          <Row>
-                            <Col md={4}>
-                              <Field 
-                                name="groups_field"
-                                component={DropDown} 
-                                data={this.insertSelectPlaceholder(
-                                  (write_perm) ?
-                                    list_user_groups :
-                                    [groups_field, ...list_user_groups]
-                                )}
-                                required={true}
-                                class_name='custom-select'
-                              /> 
-                            </Col>
-                          </Row>
-                          <Row>
-                            <Col md={12}>
-                              <FormText>
-                                Aggregation profile is a member of a given group. 
-                              </FormText>
-                            </Col>
-                          </Row>
-                        </FormGroup>
-                      </Col>
-                    </Row>
-                    <h4 className="mt-2 alert-info p-1 pl-3 text-light text-uppercase rounded" style={{'backgroundColor': "#416090"}}>Service flavour groups</h4>
-                    <FieldArray
-                      name="groups"
-                      render={props => (
-                        <GroupList
-                          {...props}
-                          list_services={this.insertSelectPlaceholder(list_services, '')}
-                          list_operations={this.insertSelectPlaceholder(this.logic_operations, '')}
-                          last_service_operation={this.insertOperationFromPrevious}
-                          write_perm={write_perm}
-                        />)}
-                    />
-                    {
-                      (write_perm) ?
-                        <SubmitRow 
-                          ondelete={this.onDeleteHandle}
-                          id={props.values.id}/>
-                        :
-                        <SubmitRow readonly={true}/>
-                    }
-                  </Form>
-                )}
-              />
-            </div>
-          </React.Fragment>
-        : 
-          null
-    )
+                        </Col>
+                      </Row>
+                    </FormGroup>
+                  </Col>
+                  <Col md={4}>
+                    <FormGroup>
+                      <Row>
+                        <Col md={12}>
+                          <Label>Endpoint group: </Label>
+                        </Col>
+                      </Row>
+                      <Row>
+                        <Col md={6}>
+                          <Field 
+                            name="endpoint_group" 
+                            component={DropDown} 
+                            data={this.insertSelectPlaceholder(this.endpoint_groups, '')}
+                            required={true}
+                            class_name='custom-select'
+                          /> 
+                        </Col>
+                      </Row>
+                    </FormGroup>
+                  </Col>
+                </Row>
+                <Row>
+                  <Col md={6}>
+                    <FormGroup>
+                      <Label>Metric profile: </Label>
+                      <Field 
+                        name="metric_profile" 
+                        component={DropDown} 
+                        data={this.insertSelectPlaceholder(list_id_metric_profiles.map(e => e.name), '')}
+                        required={true}
+                        id="metricProfile" 
+                        class_name='custom-select'
+                      />
+                      <FormText>
+                        Metric profile associated to Aggregation profile. Service flavours defined in service flavour groups originate from selected metric profile. 
+                      </FormText>
+                    </FormGroup>
+                  </Col>
+                </Row>
+                <Row>
+                  <Col md={6}>
+                    <FormGroup>
+                      <Row>
+                        <Col md={6}>
+                          <Label>Group: </Label>
+                        </Col>
+                      </Row>
+                      <Row>
+                        <Col md={4}>
+                          <Field 
+                            name="groups_field"
+                            component={DropDown} 
+                            data={this.insertSelectPlaceholder(
+                              (write_perm) ?
+                                list_user_groups :
+                                [groups_field, ...list_user_groups]
+                            )}
+                            required={true}
+                            class_name='custom-select'
+                          /> 
+                        </Col>
+                      </Row>
+                      <Row>
+                        <Col md={12}>
+                          <FormText>
+                            Aggregation profile is a member of a given group. 
+                          </FormText>
+                        </Col>
+                      </Row>
+                    </FormGroup>
+                  </Col>
+                </Row>
+                <h4 className="mt-2 alert-info p-1 pl-3 text-light text-uppercase rounded" style={{'backgroundColor': "#416090"}}>Service flavour groups</h4>
+                <FieldArray
+                  name="groups"
+                  render={props => (
+                    <GroupList
+                      {...props}
+                      list_services={this.insertSelectPlaceholder(list_services, '')}
+                      list_operations={this.insertSelectPlaceholder(this.logic_operations, '')}
+                      last_service_operation={this.insertOperationFromPrevious}
+                      write_perm={write_perm}
+                    />)}
+                />
+                {
+                  (write_perm) ?
+                    <SubmitRow 
+                      ondelete={this.onDeleteHandle}
+                      id={props.values.id}/>
+                    :
+                    <SubmitRow readonly={true}/>
+                }
+              </Form>
+            )}
+          />
+        </div>
+      </React.Fragment>
+      )
+    }
+    else
+      return null
   }
 }
 
@@ -751,28 +746,28 @@ export class AggregationProfilesList extends Component
     ]
     const {loading, list_aggregations} = this.state
 
-    return (
-      (loading)
-      ?
-        <LoadingAnim />
-      :
+    if (loading) 
+      return (<LoadingAnim />)
+
+    else if (!loading && list_aggregations) {
+      return (
         <React.Fragment>
           <div className="d-flex align-items-center justify-content-between">
             <h2 className="ml-3 mt-4 mb-4">Select aggregation profile to change</h2> 
             <a className="btn btn-secondary" href="add" role="button">Add</a>
           </div>
           <div id="argo-contentwrap" className="ml-2 mb-2 mt-2 p-3 border rounded">
-            {
-              list_aggregations &&
-              <ReactTable
-                data={list_aggregations}
-                columns={columns}
-                className="-striped -highlight"
-                defaultPageSize={10}
-              />
-            }
+            <ReactTable
+              data={list_aggregations}
+              columns={columns}
+              className="-striped -highlight"
+              defaultPageSize={10}
+            />
           </div>
         </React.Fragment>
-    )
+      )
+    }
+    else 
+      return null
   }
 }

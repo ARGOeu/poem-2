@@ -43,11 +43,11 @@ class Services extends Component {
   render() {
     const {loading, rows, rowspan, id_metrics, id_probes} = this.state
 
-    return (
-      (loading)
-      ?
-        <LoadingAnim />
-      :
+    if (loading) 
+      return (<LoadingAnim />)
+
+    else if (!loading && rows) {
+      return (
         <React.Fragment>
           <div className="d-flex align-items-center justify-content-between">
             <h2 className="ml-3 mt-4 mb-4">Services and probes</h2> 
@@ -65,7 +65,7 @@ class Services extends Component {
               </thead>
               <tbody>
                 {
-                  rows && rows.map((e, i) =>
+                  rows.map((e, i) =>
                     <tr key={i}>
                       {
                         e.service_category && 
@@ -104,8 +104,10 @@ class Services extends Component {
             </table>
           </div>
         </React.Fragment>
-    )
-
+      )
+    }
+    else 
+      return null
   }
 }
 
