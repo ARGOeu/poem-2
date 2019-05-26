@@ -21,9 +21,10 @@ import {
   CardFooter,
   FormGroup,
   FormText} from 'reactstrap';
+import {NotificationManager} from 'react-notifications';
+import "react-notifications/lib/notifications.css";
 
 import './AggregationProfiles.css';
-
 
 const SubmitRow = ({readonly=false, ondelete, id}) =>
   (readonly) ?
@@ -422,13 +423,19 @@ export class AggregationProfilesChange extends Component
       else {
         response.json()
           .then(r => {
-            this.sendToDjango('/api/v2/internal/aggregations', 'PUT', 
+            this.sendToDjango('/api/v2/internal/aggregations/', 'PUT', 
               {
                 apiid: values_send.id, 
                 name: values_send.name, 
                 groupname: values_send.groups_field
               })
-              .then(() => window.location = '/ui/aggregationprofiles')
+              .then(() => {
+                NotificationManager.success(
+                  'Aggregation profile successfully changed', 
+                  'Success', 
+                  3000, 
+                  () => window.location = '/ui/aggregationprofiles'); 
+              })
               .catch(err => alert('Something went wrong: ' + err))
           })
         .catch(err => alert('Something went wrong: ' + err))

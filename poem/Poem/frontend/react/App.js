@@ -10,6 +10,7 @@ import NotFound from './NotFound';
 import {Route, Switch, BrowserRouter, Redirect, withRouter} from 'react-router-dom';
 import {Container, Button, Row, Col} from 'reactstrap';
 import {NavigationBar, NavigationLinks, Footer} from './UIElements';
+import {NotificationContainer, NotificationManager} from 'react-notifications';
 
 import './App.css';
 
@@ -62,13 +63,13 @@ class App extends Component {
   fetchConfigOptions() {
     return fetch('/api/v2/internal/config_options')
       .then(response => response.json())
-      .catch(err => console.log('Something went wrong: ' + err));
+      .catch(err => alert('Something went wrong: ' + err));
   }
 
   fetchToken() {
     return fetch('/api/v2/internal/tokens/WEB-API')
       .then(response => response.json())
-      .catch(err => console.log('Something went wrong: ' + err))
+      .catch(err => alert('Something went wrong: ' + err))
   }
 
   componentDidMount() {
@@ -117,6 +118,7 @@ class App extends Component {
         <BrowserRouter>
           <Container fluid>
             <Row>
+              <NotificationContainer />
               <Col>
                 <NavigationBarWithHistory 
                   onLogout={this.onLogout}
