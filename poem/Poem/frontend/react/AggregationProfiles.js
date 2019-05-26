@@ -408,21 +408,17 @@ export class AggregationProfilesChange extends Component
   }
 
   doChange(values, actions) {
-    let last_group_element = values.groups[values.groups.length - 1]
+    let values_send = JSON.parse(JSON.stringify(values));
+    this.removeDummyGroup(values_send)
 
-    if (last_group_element['name'] == 'dummy' && 
-      last_group_element.services[0]['name'] == 'dummy') {
-      values.groups.pop()
-    }
-
-    values.namespace = this.tenant_name
+    values_send.namespace = this.tenant_name
 
     let match_profile = this.state.list_id_metric_profiles.filter((e) => 
-      values.metric_profile === e.name)
+      values_send.metric_profile === e.name)
 
-    values.metric_profile = match_profile[0]
+    values_send.metric_profile = match_profile[0]
 
-    this.sendToWebApi(this.token, this.webapiaggregation + '/' + values.id, 'PUT', values)
+    this.sendToWebApi(this.token, this.webapiaggregation + '/' + values_send.id, 'PUT', values_send)
     .then(response => {
       if (!response.ok) {
         this.toggleAreYouSureSetModal(`Error: ${response.status}, ${response.statusText}`, 
@@ -434,9 +430,9 @@ export class AggregationProfilesChange extends Component
           .then(r => {
             this.sendToDjango('/api/v2/internal/aggregations', 'PUT', 
               {
-                apiid: values.id, 
-                name: values.name, 
-                groupname: values.groups_field
+                apiid: values_send.id, 
+                name: values_send.name, 
+                groupname: values_send.groups_field
               })
               .then(() => window.location = '/ui/aggregationprofiles')
               .catch(err => alert('Something went wrong: ' + err))
@@ -448,6 +444,15 @@ export class AggregationProfilesChange extends Component
 
   insertDummyGroup(groups) {
     return  [...groups, {name: 'dummy', operation: 'OR', services: [{name: 'dummy', operation: 'OR'}]}] 
+  }
+
+  removeDummyGroup(values) {
+    let last_group_element = values.groups[values.groups.length - 1]
+
+    if (last_group_element['name'] == 'dummy' && 
+      last_group_element.services[0]['name'] == 'dummy') {
+      values.groups.pop()
+    }
   }
 
   componentDidMount() {
@@ -485,7 +490,14 @@ export class AggregationProfilesChange extends Component
       ?
         <LoadingAnim />
       :
-        aggregation_profile && aggregation_profile.metric_profile ? 
+        !loading &&
+        aggregation_profile &&
+        aggregation_profile.metric_profile &&
+        list_id_metric_profiles &&
+        list_complete_metric_profiles &&
+        list_user_groups &&
+        groups_field &&
+        list_services ? 
           <React.Fragment>
             <ModalAreYouSure 
               isOpen={this.state.areYouSureModal}
