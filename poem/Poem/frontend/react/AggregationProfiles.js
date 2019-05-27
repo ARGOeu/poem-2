@@ -433,8 +433,8 @@ export class AggregationProfilesChange extends Component
                 NotificationManager.success(
                   'Aggregation profile successfully changed', 
                   'Success', 
-                  3000, 
-                  () => window.location = '/ui/aggregationprofiles'); 
+                  2000); 
+                setTimeout(() => window.location = '/ui/aggregationprofiles', 2000);
               })
               .catch(err => alert('Something went wrong: ' + err))
           })
