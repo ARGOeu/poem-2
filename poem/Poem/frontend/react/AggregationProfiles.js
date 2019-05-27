@@ -263,7 +263,10 @@ export class AggregationProfilesChange extends Component
     this.sendToDjango = this.sendToDjango.bind(this);
     this.sendToWebApi= this.sendToWebApi.bind(this);
     this.doChange = this.doChange.bind(this);
+    this.doDelete = this.doDelete.bind(this);
     this.toggleAreYouSureSetModal = this.toggleAreYouSureSetModal.bind(this);
+    this.onSubmitHandle = this.onSubmitHandle.bind(this);
+    this.onDeleteHandle = this.onDeleteHandle.bind(this);
 
 
     this.logic_operations = ["OR", "AND"]; 
@@ -373,10 +376,10 @@ export class AggregationProfilesChange extends Component
       cache: 'no-cache',
       credentials: 'same-origin',
       headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          'X-CSRFToken': cookies.get('csrftoken'),
-          'Referer': 'same-origin'
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'X-CSRFToken': cookies.get('csrftoken'),
+        'Referer': 'same-origin'
       },
       body: values ? JSON.stringify(values) : null 
     })
@@ -398,8 +401,18 @@ export class AggregationProfilesChange extends Component
   }
 
   onSubmitHandle(values, action) {
-    this.toggleAreYouSureSetModal('Are you sure you want to change Aggregation profile?', 
-     'Change aggregation profile',
+    let msg = undefined;
+    let title = undefined;
+
+    if (this.add_view) {
+      msg = 'Are you sure you want to add Aggregation profile?'
+      title = 'Add aggregation profile'
+    }
+    else {
+      msg = 'Are you sure you want to change Aggregation profile?'
+      title = 'Change aggregation profile'
+    }
+    this.toggleAreYouSureSetModal(msg, title,
       () => this.doChange(values, action));
   }
 
@@ -473,6 +486,31 @@ export class AggregationProfilesChange extends Component
         }
       }).catch(err => alert('Something went wrong: ' + err))
     }
+  }
+
+  onDeleteHandle(id) {
+    this.toggleAreYouSureSetModal('Are you sure you want to delete Aggregation profile?', 
+     'Delete aggregation profile',
+      this.doDelete(id));
+  }
+
+  doDelete(idProfile) {
+    this.sendToWebApi(this.webapiaggregation + '/' + idProfile, 'DELETE')
+    .then(response => {
+        if (!response.ok) {
+          alert(`Error: ${response.status}, ${response.statusText}`)
+        } else {
+          response.json()
+            .then(this.sendToDjango('/api/v2/internal/aggregations/' + idProfile, 'DELETE'))
+            .then(
+              () => {
+              NotificationManager.success('Aggregation profile successfully deleted',
+                'Deleted',
+                2000);
+              setTimeout(() => window.location = '/ui/aggregationprofiles', 2000)
+            })
+        }
+    }).catch(err => alert('Something went wrong: ' + err))
   }
 
   insertDummyGroup(groups) {

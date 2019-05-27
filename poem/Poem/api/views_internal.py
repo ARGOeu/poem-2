@@ -277,6 +277,20 @@ class ListAggregations(APIView):
             serializer = serializers.AggregationProfileSerializer(aggregations, many=True)
             return Response(serializer.data)
 
+    def delete(self, request, aggregation_name):
+        if aggregation_name:
+            try:
+                aggregation = poem_models.Aggregation.objects.get(apiid=aggregation_name)
+                aggregation.delete()
+                return Response(status=status.HTTP_204_NO_CONTENT)
+
+            except poem_models.Aggregation.DoesNotExist:
+                raise NotFound(status=404,
+                            detail='Aggregation not found')
+
+        else:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
 
 class ListProbes(APIView):
     authentication_classes = (SessionAuthentication,)
