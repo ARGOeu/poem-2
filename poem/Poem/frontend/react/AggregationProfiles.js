@@ -3,19 +3,17 @@ import React, { Component } from 'react';
 import { LoadingAnim, ModalAreYouSure } from './UIElements';
 import ReactTable from 'react-table';
 import 'react-table/react-table.css';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { Formik, Field, FieldArray, Form } from 'formik'
-import { faPlus, faTimes } from '@fortawesome/free-solid-svg-icons'
-import FormikEffect from './FormikEffect.js'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { Formik, Field, FieldArray, Form } from 'formik';
+import { faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
+import FormikEffect from './FormikEffect.js';
 import {
   Alert,
-  Container,
   Button, 
   Row, 
   Col, 
   Card, 
   CardHeader, 
-  CardTitle,
   CardBody,
   Label,
   CardFooter,
@@ -51,7 +49,7 @@ const ButtonRemove = ({index=0, operation=f=>f}) =>
   </Button>
 
 
-const GroupList = ({name, form, list_services, list_operations, last_service_operation, write_perm, insert}) =>
+const GroupList = ({name, form, list_services, list_operations, last_service_operation, write_perm}) =>
   <Row className="groups"> 
   {
     form.values[name].map((group, i) =>
@@ -78,7 +76,7 @@ const GroupList = ({name, form, list_services, list_operations, last_service_ope
   </Row>
 
 
-const Group = ({name, operation, services, list_operations, list_services, last_service_operation, write_perm, form, groupindex, remove, insert, last}) =>
+const Group = ({operation, services, list_operations, list_services, last_service_operation, write_perm, form, groupindex, remove, insert, last}) =>
   (!last) ?
     <React.Fragment key={groupindex}>
       <Col sm={{size: 8}} md={{size: 5}} className="mt-4 mb-2">
@@ -143,7 +141,7 @@ const Group = ({name, operation, services, list_operations, list_services, last_
     </Col>
 
 
-const ServiceList = ({services, list_services=[], list_operations=[], last_service_operation, groupindex, groupoperation, form, push}) =>
+const ServiceList = ({services, list_services=[], list_operations=[], last_service_operation, groupindex, form}) =>
   <React.Fragment>
     { 
       services.map((service, i) =>
@@ -170,7 +168,7 @@ const ServiceList = ({services, list_services=[], list_operations=[], last_servi
   </React.Fragment>
 
 
-const Service = ({name, operation, list_services, list_operations, last_service_operation, groupindex, index, remove, insert, last, form}) => 
+const Service = ({name, operation, list_services, list_operations, last_service_operation, groupindex, index, remove, insert, form}) => 
   <Row className="d-flex align-items-center service pt-1 pb-1 no-gutters" key={index}>
     <Col md={8}>
       <div className="input-group input-group-sm">
