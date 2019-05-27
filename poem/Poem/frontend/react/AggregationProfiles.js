@@ -766,7 +766,7 @@ export class AggregationProfilesChange extends Component
                       <Button color="success" id="submit-button" type="submit">Save</Button>
                     </div>
                   :
-                    <div className="submit-row">
+                    <div className="submit-row bg-danger text-white p-3 mt-5 rounded">
                       <center>
                         This is a read-only instance, please
                         request the corresponding permissions
