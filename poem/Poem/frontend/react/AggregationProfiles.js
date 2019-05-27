@@ -239,6 +239,7 @@ export class AggregationProfilesChange extends Component
     this.webapiaggregation = props.webapiaggregation;
     this.webapimetric = props.webapimetric;
     this.profile_id = props.match.params.id;
+    this.add_view = props.add_view
 
     this.state = {
       aggregation_profile: {},
@@ -413,34 +414,65 @@ export class AggregationProfilesChange extends Component
 
     values_send.metric_profile = match_profile[0]
 
-    this.sendToWebApi(this.token, this.webapiaggregation + '/' + values_send.id, 'PUT', values_send)
-    .then(response => {
-      if (!response.ok) {
-        this.toggleAreYouSureSetModal(`Error: ${response.status}, ${response.statusText}`, 
-          'Error changing aggregation profile', 
-          null)
-      }
-      else {
-        response.json()
-          .then(r => {
-            this.sendToDjango('/api/v2/internal/aggregations/', 'PUT', 
-              {
-                apiid: values_send.id, 
-                name: values_send.name, 
-                groupname: values_send.groups_field
-              })
-              .then(() => {
-                NotificationManager.success(
-                  'Aggregation profile successfully changed', 
-                  'Success', 
-                  2000); 
-                setTimeout(() => window.location = '/ui/aggregationprofiles', 2000);
-              })
-              .catch(err => alert('Something went wrong: ' + err))
-          })
-        .catch(err => alert('Something went wrong: ' + err))
-      }
-    }).catch(err => alert('Something went wrong: ' + err))
+    if (!this.add_view) {
+      this.sendToWebApi(this.token, this.webapiaggregation + '/' + values_send.id, 'PUT', values_send)
+      .then(response => {
+        if (!response.ok) {
+          this.toggleAreYouSureSetModal(`Error: ${response.status}, ${response.statusText}`, 
+            'Error changing aggregation profile', 
+            null)
+        }
+        else {
+          response.json()
+            .then(r => {
+              this.sendToDjango('/api/v2/internal/aggregations/', 'PUT', 
+                {
+                  apiid: values_send.id, 
+                  name: values_send.name, 
+                  groupname: values_send.groups_field
+                })
+                .then(() => {
+                  NotificationManager.success(
+                    'Aggregation profile successfully changed', 
+                    'Changed', 
+                    2000); 
+                  setTimeout(() => window.location = '/ui/aggregationprofiles', 2000);
+                })
+                .catch(err => alert('Something went wrong: ' + err))
+            })
+          .catch(err => alert('Something went wrong: ' + err))
+        }
+      }).catch(err => alert('Something went wrong: ' + err))
+    }
+    else {
+      this.sendToWebApi(this.token, this.webapiaggregation, 'POST', values_send)
+      .then(response => {
+        if (!response.ok) {
+          this.toggleAreYouSureSetModal(`Error: ${response.status}, ${response.statusText}`,
+            'Error adding aggregation profile',
+            null)
+        } 
+        else {
+          response.json()
+            .then(r => { 
+              this.sendToDjango('/api/v2/internal/aggregations/', 'POST', 
+                {
+                  apiid: r.data.id, 
+                  name: values_send.name, 
+                  groupname: values_send.groups_field
+                })
+                .then(() => {
+                  NotificationManager.success('Aggregation profile successfully added',
+                    'Added',
+                    2000);
+                  setTimeout(() => window.location = '/ui/aggregationprofiles', 2000)
+                })
+                .catch(err => alert('Something went wrong: ' + err))
+            })
+            .catch(err => alert('Something went wrong: ' + err))
+        }
+      }).catch(err => alert('Something went wrong: ' + err))
+    }
   }
 
   insertDummyGroup(groups) {
@@ -459,25 +491,52 @@ export class AggregationProfilesChange extends Component
   componentDidMount() {
     this.setState({loading: true})
 
-    Promise.all([this.fetchAggregationProfile(this.token, this.profile_id), 
-      this.fetchMetricProfiles(this.token),
-      this.fetchUserGroups()])
-    .then(([aggregp, metricp, usergroups]) => {
-      this.fetchAggregationGroup(aggregp.name)
-      .then(group =>
-        this.setState(
-        {
-          aggregation_profile: aggregp,
-          groups_field: group,
-          list_user_groups: usergroups,
-          write_perm: usergroups.indexOf(group) >= 0,
-          list_id_metric_profiles: this.extractListOfMetricsProfiles(metricp),
-          list_services: this.extractListOfServices(aggregp.metric_profile, metricp),
-          list_complete_metric_profiles: metricp,
-          loading: false
-        })
-      )
-    })
+    if (!this.add_view) {
+      Promise.all([this.fetchAggregationProfile(this.token, this.profile_id), 
+        this.fetchMetricProfiles(this.token),
+        this.fetchUserGroups()])
+      .then(([aggregp, metricp, usergroups]) => {
+        this.fetchAggregationGroup(aggregp.name)
+        .then(group =>
+          this.setState(
+          {
+            aggregation_profile: aggregp,
+            groups_field: group,
+            list_user_groups: usergroups,
+            write_perm: usergroups.indexOf(group) >= 0,
+            list_id_metric_profiles: this.extractListOfMetricsProfiles(metricp),
+            list_services: this.extractListOfServices(aggregp.metric_profile, metricp),
+            list_complete_metric_profiles: metricp,
+            loading: false
+          })
+        )
+      })
+    }
+    else {
+      let empty_aggregation_profile = {
+          id: '',
+          name: '',
+          metric_operation: '',
+          profile_operation: '',
+          endpoint_group: '',
+          metric_profile: {
+              name: ''
+          },
+          groups: []
+      }
+      Promise.all([this.fetchMetricProfiles(this.token), this.fetchUserGroups()])
+        .then(([metricp, usergroups]) => this.setState(
+      {
+        aggregation_profile: empty_aggregation_profile,
+        groups_field: '',
+        list_user_groups: usergroups,
+        write_perm: true,
+        list_id_metric_profiles: this.extractListOfMetricsProfiles(metricp),
+        list_complete_metric_profiles: metricp,
+        list_services: [],
+        loading: false
+      }))
+    }
   }
 
   render() {
@@ -488,9 +547,8 @@ export class AggregationProfilesChange extends Component
     if (loading)
       return (<LoadingAnim />)
 
-    else if (!loading && aggregation_profile &&
-      list_id_metric_profiles && list_complete_metric_profiles &&
-      list_user_groups && groups_field && list_services) {
+    else if (!loading && aggregation_profile && 
+      aggregation_profile.metric_profile && list_user_groups) {
 
       return (
       <React.Fragment>
@@ -715,7 +773,6 @@ export class AggregationProfilesList extends Component
       loading: false,
       list_aggregations: null
     }
-
   }
 
   componentDidMount() {
@@ -755,7 +812,7 @@ export class AggregationProfilesList extends Component
         <React.Fragment>
           <div className="d-flex align-items-center justify-content-between">
             <h2 className="ml-3 mt-4 mb-4">Select aggregation profile to change</h2> 
-            <a className="btn btn-secondary" href="add" role="button">Add</a>
+            <a className="btn btn-secondary" href="/ui/aggregationprofiles/add" role="button">Add</a>
           </div>
           <div id="argo-contentwrap" className="ml-2 mb-2 mt-2 p-3 border rounded">
             <ReactTable

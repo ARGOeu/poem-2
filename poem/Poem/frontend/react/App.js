@@ -140,6 +140,15 @@ class App extends Component {
                   <Route exact path="/ui/reports" component={Reports} />
                   <Route exact path="/ui/metricprofiles" component={MetricProfiles} />
                   <Route exact path="/ui/aggregationprofiles" component={AggregationProfilesList} />
+                  <Route exact path="/ui/aggregationprofiles/add"
+                    render={props => <AggregationProfilesChange 
+                      {...props} 
+                      webapiaggregation={this.state.webApiAggregation} 
+                      webapimetric={this.state.webApiMetric}
+                      webapitoken={this.state.token}
+                      tenantname={this.state.tenantName}
+                      add_view={true}/>} 
+                    />
                   <Route exact path="/ui/aggregationprofiles/change/:id" 
                     render={props => <AggregationProfilesChange 
                       {...props} 
