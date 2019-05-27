@@ -297,23 +297,23 @@ export class AggregationProfilesChange extends Component
       .catch(err => console.log('Something went wrong: ' + err))
   }
 
-  fetchMetricProfiles(token) {
+  fetchMetricProfiles() {
     return fetch('https://web-api-devel.argo.grnet.gr/api/v2/metric_profiles',
       {headers: {"Accept": "application/json",
-          "x-api-key": token}})
+          "x-api-key": this.token}})
       .then(response => response.json())
       .then(json => json['data']) 
-      .catch(err => console.log('Something went wrong: ' + err))
+      .catch(err => alert('Something went wrong: ' + err))
   }
 
-  fetchAggregationProfile(token, idProfile) {
+  fetchAggregationProfile(idProfile) {
     return fetch('https://web-api-devel.argo.grnet.gr/api/v2/aggregation_profiles' + '/' + idProfile, 
       {headers: {"Accept": "application/json",
-            "x-api-key": token}})
+            "x-api-key": this.token}})
       .then(response => response.json())
       .then(json => json['data'])
       .then(array => array[0])
-      .catch(err => console.log('Something went wrong: ' + err))
+      .catch(err => alert('Something went wrong: ' + err))
   }
 
   extractListOfServices(profileFromAggregation, listMetricProfiles) {
@@ -382,7 +382,7 @@ export class AggregationProfilesChange extends Component
     })
   }
 
-  sendToWebApi(token, url, method, values=null) {
+  sendToWebApi(url, method, values=null) {
     return fetch(url, {
       method: method,
       mode: 'cors',
@@ -391,7 +391,7 @@ export class AggregationProfilesChange extends Component
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
-        'x-api-key': token
+        'x-api-key': this.token
       },
       body: values && JSON.stringify(values) 
     })
@@ -415,7 +415,7 @@ export class AggregationProfilesChange extends Component
     values_send.metric_profile = match_profile[0]
 
     if (!this.add_view) {
-      this.sendToWebApi(this.token, this.webapiaggregation + '/' + values_send.id, 'PUT', values_send)
+      this.sendToWebApi(this.webapiaggregation + '/' + values_send.id, 'PUT', values_send)
       .then(response => {
         if (!response.ok) {
           this.toggleAreYouSureSetModal(`Error: ${response.status}, ${response.statusText}`, 
@@ -445,7 +445,7 @@ export class AggregationProfilesChange extends Component
       }).catch(err => alert('Something went wrong: ' + err))
     }
     else {
-      this.sendToWebApi(this.token, this.webapiaggregation, 'POST', values_send)
+      this.sendToWebApi(this.webapiaggregation, 'POST', values_send)
       .then(response => {
         if (!response.ok) {
           this.toggleAreYouSureSetModal(`Error: ${response.status}, ${response.statusText}`,
@@ -492,8 +492,8 @@ export class AggregationProfilesChange extends Component
     this.setState({loading: true})
 
     if (!this.add_view) {
-      Promise.all([this.fetchAggregationProfile(this.token, this.profile_id), 
-        this.fetchMetricProfiles(this.token),
+      Promise.all([this.fetchAggregationProfile(this.profile_id), 
+        this.fetchMetricProfiles(),
         this.fetchUserGroups()])
       .then(([aggregp, metricp, usergroups]) => {
         this.fetchAggregationGroup(aggregp.name)
@@ -524,7 +524,7 @@ export class AggregationProfilesChange extends Component
           },
           groups: []
       }
-      Promise.all([this.fetchMetricProfiles(this.token), this.fetchUserGroups()])
+      Promise.all([this.fetchMetricProfiles(), this.fetchUserGroups()])
         .then(([metricp, usergroups]) => this.setState(
       {
         aggregation_profile: empty_aggregation_profile,
