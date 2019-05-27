@@ -26,27 +26,6 @@ import "react-notifications/lib/notifications.css";
 
 import './AggregationProfiles.css';
 
-const SubmitRow = ({readonly=false, ondelete, id}) =>
-  (readonly) ?
-    <div className="submit-row">
-      <center>
-        This is a read-only instance, please
-        request the corresponding permissions
-        to perform any changes in this form. 
-      </center>
-    </div>
-  :
-  <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
-    <Button
-      color="danger"
-      id="id-button" 
-      type="delete"
-      onClick={() => ondelete(id)}>
-      Delete
-    </Button>
-    <Button color="success" id="submit-button" type="submit">Save</Button>
-  </div>
-
 
 const DropDown = ({field, data=[], prefix="", class_name=""}) => 
   <Field component="select"
@@ -266,8 +245,6 @@ export class AggregationProfilesChange extends Component
     this.doDelete = this.doDelete.bind(this);
     this.toggleAreYouSureSetModal = this.toggleAreYouSureSetModal.bind(this);
     this.onSubmitHandle = this.onSubmitHandle.bind(this);
-    this.onDeleteHandle = this.onDeleteHandle.bind(this);
-
 
     this.logic_operations = ["OR", "AND"]; 
     this.endpoint_groups = ["servicegroups", "sites"];
@@ -433,7 +410,7 @@ export class AggregationProfilesChange extends Component
         if (!response.ok) {
           this.toggleAreYouSureSetModal(`Error: ${response.status}, ${response.statusText}`, 
             'Error changing aggregation profile', 
-            null)
+            undefined)
         }
         else {
           response.json()
@@ -463,7 +440,7 @@ export class AggregationProfilesChange extends Component
         if (!response.ok) {
           this.toggleAreYouSureSetModal(`Error: ${response.status}, ${response.statusText}`,
             'Error adding aggregation profile',
-            null)
+            undefined)
         } 
         else {
           response.json()
@@ -486,12 +463,6 @@ export class AggregationProfilesChange extends Component
         }
       }).catch(err => alert('Something went wrong: ' + err))
     }
-  }
-
-  onDeleteHandle(id) {
-    this.toggleAreYouSureSetModal('Are you sure you want to delete Aggregation profile?', 
-     'Delete aggregation profile',
-      this.doDelete(id));
   }
 
   doDelete(idProfile) {
@@ -784,11 +755,26 @@ export class AggregationProfilesChange extends Component
                 />
                 {
                   (write_perm) ?
-                    <SubmitRow 
-                      ondelete={this.onDeleteHandle}
-                      id={props.values.id}/>
-                    :
-                    <SubmitRow readonly={true}/>
+                    <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
+                      <Button
+                        color="danger"
+                        onClick={() => {
+                          this.toggleAreYouSureSetModal('Are you sure you want to delete Aggregation profile?', 
+                            'Delete aggregation profile',
+                            () => this.doDelete(props.values.id))
+                        }}>
+                        Delete
+                      </Button>
+                      <Button color="success" id="submit-button" type="submit">Save</Button>
+                    </div>
+                  :
+                    <div className="submit-row">
+                      <center>
+                        This is a read-only instance, please
+                        request the corresponding permissions
+                        to perform any changes in this form. 
+                      </center>
+                    </div>
                 }
               </Form>
             )}
