@@ -25,7 +25,7 @@ module.exports = {
         use: ['style-loader','css-loader', {
             loader: 'postcss-loader',
             options: {
-            plugins: () => [require('autoprefixer')]
+              plugins: () => [require('autoprefixer')]
             }}]
       },
       {
@@ -35,6 +35,17 @@ module.exports = {
             loader: 'url-loader',
             options: {
               limit: 10000
+            }
+          }
+        ]
+      },
+      {
+        test: /\.(woff(2)?|ttf|eot)(\?v=\d+\.\d+\.\d+)?$/,
+        use: [
+          {
+            loader: "url-loader",
+            options: {
+              name: "/static/reactbundle/fonts/[name].[ext]"
             }
           }
         ]

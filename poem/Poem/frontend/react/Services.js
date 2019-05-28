@@ -13,11 +13,11 @@ class Services extends Component {
       rowspan: null,
       id_probes: null, 
       id_metrics: null, 
-    }
+    };
   }
 
   componentDidMount() {
-    this.setState({loading: true})
+    this.setState({loading: true});
     fetch('/api/v2/internal/services')
       .then(response => response.json())
       .then(json =>
@@ -27,78 +27,83 @@ class Services extends Component {
           id_probes: json.result.id_probes, 
           id_metrics: json.result.id_metrics, 
           loading: false})
-      )
+      );
   }
 
   getRowSpan(re, match) {
     var m = re.filter(r => r[0] === match);
-    if (m.length) {
-      return m[0][1]
-    }
-    else {
-      return 1 
-    }
+    return m.length ? m[0][1] : 1;
   }
 
   render() {
-    const {loading, rows, rowspan, id_metrics, id_probes} = this.state
+    const {loading, rows, rowspan, id_metrics, id_probes} = this.state;
 
-    return (
-      (loading)
-      ?
-        <LoadingAnim />
-      :
-        <table className="table table-bordered table-sm">
-          <thead className="table-active">
-            <tr>
-              <th id='argo-th' scope="col">Service category</th>
-              <th id='argo-th' scope="col">Service name</th>
-              <th id='argo-th' scope="col">Service type</th>
-              <th id='argo-th' scope="col">Metric</th>
-              <th id='argo-th' scope="col">Probe</th>
-            </tr>
-          </thead>
-          <tbody>
-            {
-              rows && rows.map((e, i) =>
-                <tr key={i}>
-                  {
-                    e.service_category && 
-                      <td id='argo-td' className="table-light" rowSpan={this.getRowSpan(rowspan.service_category, e.service_category)}>
-                        {e.service_category}
-                      </td>
-                  }
-                  {
-                    e.service_name && 
-                      <td id='argo-td' className="table-light" rowSpan={this.getRowSpan(rowspan.service_name, e.service_name)}>
-                        {e.service_name}
-                      </td>
-                  }
-                  {
-                    e.service_type && 
-                      <td id='argo-td' className="table-light" rowSpan={this.getRowSpan(rowspan.service_type, e.service_type)}>
-                        {e.service_type}
-                      </td>
-                  }
-                  {
-                    e.metric && 
-                      <td id='argo-td' className="table-light" rowSpan={this.getRowSpan(rowspan.metric, e.metric)}>
-                        <a href={'/ui/metrics/' + id_metrics[e.metric]}>{e.metric}</a>
-                      </td>
-                  }
-                  {
-                    e.probe && 
-                      <td id='argo-td' className="table-light" rowSpan={this.getRowSpan(rowspan.probe, e.probe)}>
-                        <a href={'/ui/probes/' + id_probes[e.probe]}>{e.probe}</a>
-                      </td>
-                  }
+    if (loading) {
+      return (<LoadingAnim />)
+
+    } 
+    else if (!loading && rows) {
+      return (
+        <React.Fragment>
+          <div className="d-flex align-items-center justify-content-between">
+            <h2 className="ml-3 mt-4 mb-4">Services and probes</h2> 
+          </div>
+          <div id="argo-contentwrap" className="ml-2 mb-2 mt-2 p-3 border rounded">
+            <table className="table table-bordered table-sm">
+              <thead className="table-active">
+                <tr>
+                  <th id='argo-th' scope="col">Service category</th>
+                  <th id='argo-th' scope="col">Service name</th>
+                  <th id='argo-th' scope="col">Service type</th>
+                  <th id='argo-th' scope="col">Metric</th>
+                  <th id='argo-th' scope="col">Probe</th>
                 </tr>
-              )
-            }
-          </tbody>
-        </table>
-    )
-
+              </thead>
+              <tbody>
+                {
+                  rows.map((e, i) =>
+                    <tr key={i}>
+                      {
+                        e.service_category && 
+                          <td id='argo-td' className="table-light" rowSpan={this.getRowSpan(rowspan.service_category, e.service_category)}>
+                            {e.service_category}
+                          </td>
+                      }
+                      {
+                        e.service_name && 
+                          <td id='argo-td' className="table-light" rowSpan={this.getRowSpan(rowspan.service_name, e.service_name)}>
+                            {e.service_name}
+                          </td>
+                      }
+                      {
+                        e.service_type && 
+                          <td id='argo-td' className="table-light" rowSpan={this.getRowSpan(rowspan.service_type, e.service_type)}>
+                            {e.service_type}
+                          </td>
+                      }
+                      {
+                        e.metric && 
+                          <td id='argo-td' className="table-light" rowSpan={this.getRowSpan(rowspan.metric, e.metric)}>
+                            <a href={'/ui/metrics/' + id_metrics[e.metric]}>{e.metric}</a>
+                          </td>
+                      }
+                      {
+                        e.probe && 
+                          <td id='argo-td' className="table-light" rowSpan={this.getRowSpan(rowspan.probe, e.probe)}>
+                            <a href={'/ui/probes/' + id_probes[e.probe]}>{e.probe}</a>
+                          </td>
+                      }
+                    </tr>
+                  )
+                }
+              </tbody>
+            </table>
+          </div>
+        </React.Fragment>
+      )
+    }
+    else 
+      return null
   }
 }
 

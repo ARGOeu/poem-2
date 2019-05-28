@@ -3,13 +3,14 @@ import Login from './Login';
 import MetricProfiles from './MetricProfiles';
 import Home from './Home';
 import Administration from './Administration';
-import AggregationProfiles from './AggregationProfiles';
+import {AggregationProfilesChange, AggregationProfilesList} from './AggregationProfiles';
 import Reports from './Reports';
 import Services from './Services';
 import NotFound from './NotFound';
 import {Route, Switch, BrowserRouter, Redirect, withRouter} from 'react-router-dom';
-import {Container, Row, Col} from 'reactstrap';
+import {Container, Button, Row, Col} from 'reactstrap';
 import {NavigationBar, NavigationLinks, Footer} from './UIElements';
+import {NotificationContainer, NotificationManager} from 'react-notifications';
 
 import './App.css';
 
@@ -25,6 +26,10 @@ class App extends Component {
     this.state = {
       isLogged: localStorage.getItem('authIsLogged') ? true : false,
       areYouSureModal: false,
+      webApiAggregation: undefined,
+      webApiMetric: undefined,
+      tenantName: undefined,
+      token: undefined,
     };
 
     this.onLogin = this.onLogin.bind(this);
@@ -33,12 +38,12 @@ class App extends Component {
   }
 
   onLogin(json) {
-    this.setState({isLogged: true});
     localStorage.setItem('authUsername', json.username);
     localStorage.setItem('authIsLogged', true);
     localStorage.setItem('authFirstName', json.first_name);
     localStorage.setItem('authLastName', json.last_name);
     localStorage.setItem('authIsSuperuser', json.is_superuser);
+    this.setState({isLogged: true});
   } 
 
   onLogout() {
@@ -55,10 +60,33 @@ class App extends Component {
       ({areYouSureModal: !prevState.areYouSureModal}));
   }
 
+  fetchConfigOptions() {
+    return fetch('/api/v2/internal/config_options')
+      .then(response => response.json())
+      .catch(err => alert('Something went wrong: ' + err));
+  }
+
+  fetchToken() {
+    return fetch('/api/v2/internal/tokens/WEB-API')
+      .then(response => response.json())
+      .catch(err => alert('Something went wrong: ' + err))
+  }
+
+  componentDidMount() {
+    Promise.all([this.fetchToken(), this.fetchConfigOptions()])
+      .then(([token, options]) => {
+        this.setState({
+          token: token,
+          webApiMetric: options.result.webapimetric,
+          webApiAggregation: options.result.webapiaggregation,
+          tenantName: options.result.tenant_name
+        })
+      })
+  }
+
   render() {
-    return ( 
-      !this.state.isLogged
-      ?
+    if (!this.state.isLogged) {
+      return (
         <BrowserRouter>
           <Switch>
             <Route 
@@ -80,10 +108,17 @@ class App extends Component {
             <Route component={NotFound} />
           </Switch>
         </BrowserRouter>
-      :
+      )
+    }
+    else if (this.state.isLogged && this.state.token &&
+      this.state.tenantName && this.state.webApiMetric && 
+      this.state.webApiAggregation) {
+
+      return ( 
         <BrowserRouter>
           <Container fluid>
             <Row>
+              <NotificationContainer />
               <Col>
                 <NavigationBarWithHistory 
                   onLogout={this.onLogout}
@@ -94,22 +129,37 @@ class App extends Component {
               </Col>
             </Row>
             <Row className="no-gutters">
-              <Col sm={{size: 2}} className="d-flex flex-column">
+              <Col sm={{size: 2}} md={{size: 2}} className="d-flex flex-column">
                 <NavigationLinksWithLocation />
                 <div id="sidebar-grow" className="flex-grow-1 border-left border-right rounded-bottom"/>
               </Col>
               <Col>
-                <div id="argo-contentwrap" className="m-2">
-                  <Switch>
-                    <Route exact path="/ui/home" component={Home} />
-                    <Route exact path="/ui/services" component={Services} />
-                    <Route exact path="/ui/reports" component={Reports} />
-                    <Route exact path="/ui/metricprofiles" component={MetricProfiles} />
-                    <Route exact path="/ui/aggregationprofiles" component={AggregationProfiles} />
-                    <Route exact path="/ui/administration" component={Administration} />
-                    <Route component={NotFound} />
-                  </Switch>
-                </div>
+                <Switch>
+                  <Route exact path="/ui/home" component={Home} />
+                  <Route exact path="/ui/services" component={Services} />
+                  <Route exact path="/ui/reports" component={Reports} />
+                  <Route exact path="/ui/metricprofiles" component={MetricProfiles} />
+                  <Route exact path="/ui/aggregationprofiles" component={AggregationProfilesList} />
+                  <Route exact path="/ui/aggregationprofiles/add"
+                    render={props => <AggregationProfilesChange 
+                      {...props} 
+                      webapiaggregation={this.state.webApiAggregation} 
+                      webapimetric={this.state.webApiMetric}
+                      webapitoken={this.state.token}
+                      tenantname={this.state.tenantName}
+                      add_view={true}/>} 
+                    />
+                  <Route exact path="/ui/aggregationprofiles/change/:id" 
+                    render={props => <AggregationProfilesChange 
+                      {...props} 
+                      webapiaggregation={this.state.webApiAggregation} 
+                      webapimetric={this.state.webApiMetric}
+                      webapitoken={this.state.token}
+                      tenantname={this.state.tenantName}/>} 
+                    />
+                  <Route exact path="/ui/administration" component={Administration} />
+                  <Route component={NotFound} />
+                </Switch>
               </Col>
             </Row>
             <Row>
@@ -119,7 +169,10 @@ class App extends Component {
             </Row>
           </Container>
         </BrowserRouter>
-    )
+      )
+    }
+    else 
+      return null
   }
 }
 

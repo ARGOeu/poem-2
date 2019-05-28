@@ -1,6 +1,10 @@
+from django.core.cache import cache
+from configparser import ConfigParser
+
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.authentication import SessionAuthentication
+from rest_framework_api_key.models import APIKey
 from rest_framework import status
 
 from rest_framework_api_key import models as api_models
@@ -8,13 +12,18 @@ from rest_framework_api_key import models as api_models
 from queue import Queue
 
 from Poem.poem import models as poem_models
-from Poem.poem.saml2.config import tenant_from_request, saml_login_string
+from Poem.poem.saml2.config import tenant_from_request, saml_login_string, get_schemaname
 
 from .views import NotFound
 from . import serializers
 
+from Poem import settings
 
-class Tree:
+import requests
+
+
+
+class Tree(object):
     class Node:
         def __init__(self, nodename):
             self._nodename = nodename
@@ -113,13 +122,21 @@ class Tree:
         yield p
 
 
-class GetSamlIdpString(APIView):
+class GetConfigOptions(APIView):
     authentication_classes = ()
     permission_classes = ()
 
     def get(self, request):
+        options = dict()
+
         tenant = tenant_from_request(request)
-        return Response({'result': saml_login_string(tenant)})
+        options.update(saml_login_string=saml_login_string(tenant))
+
+        options.update(webapimetric=settings.WEBAPI_METRIC)
+        options.update(webapiaggregation=settings.WEBAPI_AGGREGATION)
+        options.update(tenant_name=tenant)
+
+        return Response({'result': options})
 
 
 class ListMetricsInGroup(APIView):
@@ -248,7 +265,35 @@ class ListAggregations(APIView):
 
         return Response(status=status.HTTP_201_CREATED)
 
+    def _refresh_profiles(self):
+        token = APIKey.objects.get(client_id="WEB-API")
+
+        headers, payload = dict(), dict()
+        headers = {'Accept': 'application/json', 'x-api-key': token.token}
+        response = requests.get(settings.WEBAPI_AGGREGATION,
+                                headers=headers,
+                                timeout=180)
+        response.raise_for_status()
+        profiles = response.json()['data']
+
+        profiles_api = set([p['id'] for p in profiles])
+        profiles_db = set(poem_models.Aggregation.objects.all().values_list('apiid', flat=True))
+        aggregations_not_indb = profiles_api.difference(profiles_db)
+
+        new_aggregations = []
+        for p in profiles:
+            if p['id'] in aggregations_not_indb:
+                new_aggregations.append(poem_models.Aggregation(name=p['name'], apiid=p['id'], groupname=''))
+        if new_aggregations:
+            poem_models.Aggregation.objects.bulk_create(new_aggregations)
+
+        aggregations_deleted_onapi = profiles_db.difference(profiles_api)
+        for p in aggregations_deleted_onapi:
+            poem_models.Aggregation.objects.get(apiid=p).delete()
+
     def get(self, request, aggregation_name=None):
+        self._refresh_profiles()
+
         if aggregation_name:
             try:
                 aggregation = poem_models.Aggregation.objects.get(name=aggregation_name)
@@ -263,6 +308,20 @@ class ListAggregations(APIView):
             aggregations = poem_models.Aggregation.objects.all()
             serializer = serializers.AggregationProfileSerializer(aggregations, many=True)
             return Response(serializer.data)
+
+    def delete(self, request, aggregation_name):
+        if aggregation_name:
+            try:
+                aggregation = poem_models.Aggregation.objects.get(apiid=aggregation_name)
+                aggregation.delete()
+                return Response(status=status.HTTP_204_NO_CONTENT)
+
+            except poem_models.Aggregation.DoesNotExist:
+                raise NotFound(status=404,
+                            detail='Aggregation not found')
+
+        else:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
 class ListProbes(APIView):
@@ -403,3 +462,29 @@ class ListServices(APIView):
             'id_metrics': id_metrics,
             'id_probes': id_probes
         }})
+
+
+class Saml2Login(APIView):
+    authentication_classes = (SessionAuthentication,)
+    keys = ['username', 'first_name', 'last_name', 'is_superuser']
+
+    def _prefix(self, keys):
+        return ['{}_saml2_'.format(get_schemaname()) + key for key in keys]
+
+    def _remove_prefix(self, keys):
+        new_keys = dict()
+
+        for k, v in keys.items():
+            new_keys[k.split('{}_saml2_'.format(get_schemaname()))[1]] = v
+
+        return new_keys
+
+    def get(self, request):
+        result = cache.get_many(self._prefix(self.keys))
+
+        return Response(self._remove_prefix(result))
+
+    def delete(self, request):
+        cache.delete_many(self._prefix(self.keys))
+
+        return Response(status=status.HTTP_204_NO_CONTENT)

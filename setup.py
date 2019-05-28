@@ -45,5 +45,5 @@ setup(name=NAME,
     ] + poem_media_files,
     include_package_data=True,
     package_dir = {'Poem': 'poem/Poem'},
-    packages=find_packages('poem/')
+    packages=find_packages('poem/'),
 )

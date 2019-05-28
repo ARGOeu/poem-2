@@ -1,9 +1,12 @@
+from django.core.cache import cache
+
 from djangosaml2.backends import Saml2Backend
 from django.contrib.auth import get_user_model
 
 from unidecode import unidecode
 
 from Poem.poem.models import UserProfile
+from Poem.poem.saml2.config import get_schemaname
 
 
 class SAML2Backend(Saml2Backend):
@@ -15,7 +18,6 @@ class SAML2Backend(Saml2Backend):
             return '_'.join(name)
         else:
             return ascii_displayname
-
 
     def username_from_givename_sn(self, firstname, lastname):
         ascii_firstname = unidecode(firstname)
@@ -29,7 +31,6 @@ class SAML2Backend(Saml2Backend):
 
         return ascii_firstname + '_' + ascii_lastname
 
-
     def certsub_rev(self, certsubject, retlist=False):
         attrs = certsubject.split('/')
         attrs.reverse()
@@ -39,13 +40,11 @@ class SAML2Backend(Saml2Backend):
         else:
             return ','.join(attrs[:-1])
 
-
     def joinval(self, attr):
         if len(attr) > 1:
             return ' '.join(attr)
         elif len(attr) == 1:
             return attr[0]
-
 
     def extractby_keyoid(self, attr, attrs):
         NAME_TO_OID = {'distinguishedName': 'urn:oid:2.5.4.49',
@@ -54,7 +53,6 @@ class SAML2Backend(Saml2Backend):
             return attrs[attr]
         else:
             return attrs[NAME_TO_OID[attr]]
-
 
     def authenticate(self, session_info=None, attribute_mapping=None,
                      create_unknown_user=True):
@@ -107,6 +105,11 @@ class SAML2Backend(Saml2Backend):
             userpro.egiid = egiid
             userpro.save()
 
+            cache.set_many({'{}_saml2_username'.format(get_schemaname()): user.username,
+                            '{}_saml2_first_name'.format(get_schemaname()): user.first_name,
+                            '{}_saml2_last_name'.format(get_schemaname()): user.last_name,
+                            '{}_saml2_is_superuser'.format(get_schemaname()): user.is_superuser})
+
             return user
 
         elif userfound:
@@ -120,6 +123,11 @@ class SAML2Backend(Saml2Backend):
             userpro.egiid = egiid
             userpro.subject = certsub
             userpro.save()
+
+            cache.set_many({'{}_saml2_username'.format(get_schemaname()): userfound.username,
+                            '{}_saml2_first_name'.format(get_schemaname()): userfound.first_name,
+                            '{}_saml2_last_name'.format(get_schemaname()): userfound.last_name,
+                            '{}_saml2_is_superuser'.format(get_schemaname()): userfound.is_superuser})
 
             return userfound
 

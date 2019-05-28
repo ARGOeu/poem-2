@@ -13,9 +13,9 @@ import {
   FormGroup } from 'reactstrap';
 import {Formik, Field, Form} from 'formik';
 import ArgoLogo from './argologo_color.svg';
-import {doLogin} from './UIElements';
 import './Login.css';
 import {Footer} from './UIElements.js';
+import Cookies from 'universal-cookie';
 
 
 class Login extends Component {
@@ -30,11 +30,57 @@ class Login extends Component {
     this.dismissLoginAlert = this.dismissLoginAlert.bind(this);
   }
 
-  componentDidMount() {
-    fetch('/api/v2/internal/saml_idp_string')
+  isSaml2Logged() {
+    return fetch('/api/v2/internal/saml2login', {
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+    });
+  }
+
+  flushSaml2Cache() {
+    let cookies = new Cookies();
+
+    return fetch('/api/v2/internal/saml2login', {
+      method: 'DELETE',
+      mode: 'cors',
+      cache: 'no-cache',
+      credentials: 'same-origin',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'X-CSRFToken': cookies.get('csrftoken'),
+        'Referer': 'same-origin'
+      }});
+  }
+
+  fetchSamlButtonString() {
+    return fetch('/api/v2/internal/config_options')
       .then(response => response.json())
-      .then(json => this.setState({samlIdpString: json.result}))
+      .then(json => this.setState({samlIdpString: json.result.saml_login_string}))
       .catch(err => console.log('Something went wrong: ' + err));
+  }
+
+  componentDidMount() {
+    this.fetchSamlButtonString().then(
+      this.isSaml2Logged().then(response => {
+        response.ok && response.json().then(
+          json => {
+            if (Object.keys(json).length > 0) {
+              this.flushSaml2Cache().then(
+                response => {
+                  if (response.ok) {
+                    this.props.onLogin(json); 
+                    this.props.history.push('/ui/home');
+                  }
+                }
+              )
+            }
+          })
+      })
+      .catch(err => console.log('Something went wrong: ' + err))
+    )
   }
 
   fetchUserDetails(username) {
@@ -46,7 +92,7 @@ class Login extends Component {
     });
   }
 
-  doLogin(username, password)
+  doUserPassLogin(username, password)
   {
     return fetch('/rest-auth/login/', {
       method: 'POST',
@@ -86,14 +132,14 @@ class Login extends Component {
                   <Formik
                     initialValues = {{username: '', password: ''}}
                     onSubmit = {
-                      (values) => this.doLogin(values.username, values.password)
+                      (values) => this.doUserPassLogin(values.username, values.password)
                         .then(response => 
                           {
                             if (response.ok) {
                               response.json().then(
                                 json => {
                                   this.props.onLogin(json);
-                                  this.props.history.push('/ui/reports');
+                                  this.props.history.push('/ui/home');
                                 }
                               )
                             } 
