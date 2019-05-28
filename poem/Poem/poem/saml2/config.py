@@ -39,7 +39,7 @@ def get_saml_config(request):
 
     config = {
         'xmlsec_binary': '/usr/bin/xmlsec1',
-        'entityid': 'https://%s/poem/saml2/metadata/' % hostname,
+        'entityid': 'https://%s/saml2/metadata/' % hostname,
         'allow_unknown_attributes': 'true',
         'debug': 1,
         'service': {
@@ -48,11 +48,11 @@ def get_saml_config(request):
                 'want_assertions_signed': 'true',
                 'endpoints': {
                     'assertion_consumer_service': [
-                        ('https://%s/poem/saml2/acs/' % hostname,
+                        ('https://%s/saml2/acs/' % hostname,
                          saml2.BINDING_HTTP_POST),
                     ],
                     'single_logout_service': [
-                        ('https://%s/poem/saml2/ls/' % hostname,
+                        ('https://%s/saml2/ls/' % hostname,
                          saml2.BINDING_HTTP_REDIRECT),
                     ],
                 },
