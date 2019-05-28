@@ -1,0 +1,127 @@
+#!/bin/sh
+
+RUNASUSER="apache"
+SITEPACK=$(python -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")
+
+usage()
+{
+	printf "Usage: %s [argument]\n" $(basename $0) >&2
+	printf "       [-a]                                  - apply new migration\n" >&2
+	printf "       [-c]                                  - create database\n" >&2
+	printf "       [-f]                                  - mark migrations as run without running them\n" >&2
+	printf "       [-h]                                  - usage\n" >&2
+	printf "       [-l]                                  - list migrations\n" >&2
+	printf "       [-m]                                  - create new migration\n" >&2
+	printf "       [-o]                                  - apply migrations from other apps\n" >&2
+	printf "       [-s] -n <schema name>                 - clear stale login sessions\n" >&2
+	printf "       [-x] -n <schema name>                 - just load fixtures\n" >&2
+	printf "       [-u] -n <schema name>                 - create superuser\n" >&2
+	printf "       [-d] -n <schema name> -f <file path>  - load data from file\n" >&2
+    exit 2
+}
+
+if [[ $# == 0 ]]
+then
+    usage
+fi
+
+while getopts 'cafmlhsoxun:d' OPTION
+do
+    case $OPTION in
+        n)
+            schema=$OPTARG ;;
+        c)
+            su -m -s /bin/sh $RUNASUSER -c \
+            "export DJANGO_SETTINGS_MODULE=Poem.settings && \
+            python $SITEPACK/Poem/manage.py migrate_schemas --shared"
+            su -m -s /bin/sh $RUNASUSER -c \
+            "export DJANGO_SETTINGS_MODULE=Poem.settings && \
+            python $SITEPACK/Poem/manage.py create_tenant --name all"
+            ;;
+        u)
+            while getopts 'n:' OPTION2
+            do
+                case $OPTION2 in
+                    n) schema=$OPTARG ;;
+                esac
+            done
+            su -m -s /bin/sh $RUNASUSER -c \
+            "export DJANGO_SETTINGS_MODULE=Poem.settings && \
+            python $SITEPACK/Poem/manage.py tenant_command poem_superuser --schema=$schema"
+             ;;
+        m)
+            export DJANGO_SETTINGS_MODULE=Poem.settings && \
+            python $SITEPACK/Poem/manage.py makemigrations poem 
+            ;;
+        f)
+            su -m -s /bin/sh $RUNASUSER -c \
+            "export DJANGO_SETTINGS_MODULE=Poem.settings && \
+            python $SITEPACK/Poem/manage.py migrate_schemas --tenant --fake"
+            ;;
+        a)
+            su -m -s /bin/sh $RUNASUSER -c \
+            "export DJANGO_SETTINGS_MODULE=Poem.settings && \
+            python $SITEPACK/Poem/manage.py migrate_schemas --shared"
+            su -m -s /bin/sh $RUNASUSER -c \
+            "export DJANGO_SETTINGS_MODULE=Poem.settings && \
+            python $SITEPACK/Poem/manage.py migrate_schemas poem --tenant"
+            ;;
+        l)
+            su -m -s /bin/sh $RUNASUSER -c \
+            "export DJANGO_SETTINGS_MODULE=Poem.settings && \
+            python $SITEPACK/Poem/manage.py showmigrations poem"
+            ;;
+        s)
+            while getopts 'n:' OPTION2
+            do
+                case $OPTION2 in
+                    n)
+                        schema=$OPTARG ;;
+                esac
+            done
+            su -m -s /bin/sh $RUNASUSER -c \
+            "export DJANGO_SETTINGS_MODULE=Poem.settings && \
+            python $SITEPACK/Poem/manage.py tenant_command clearsessions --schema=$schema"
+            ;;
+        o)
+            su -m -s /bin/sh $RUNASUSER -c \
+            "export DJANGO_SETTINGS_MODULE=Poem.settings && \
+            python $SITEPACK/Poem/manage.py makemigrations" 
+            su -m -s /bin/sh $RUNASUSER -c \
+            "export DJANGO_SETTINGS_MODULE=Poem.settings && \
+            python $SITEPACK/Poem/manage.py migrate_schemas --tenant"
+            ;;
+        x)
+            while getopts 'n:' OPTION2
+            do
+                case $OPTION2 in
+                    n)
+                        schema=$OPTARG ;;
+                esac
+            done
+            su -m -s /bin/sh $RUNASUSER -c \
+            "export DJANGO_SETTINGS_MODULE=Poem.settings && \
+            python $SITEPACK/Poem/manage.py tenant_command loaddata initial_data.json --schema=$schema"
+            ;;
+        d)
+            while getopts 'n:f:' OPTION2
+            do
+                case $OPTION2 in
+                    n)
+                        schema=$OPTARG ;;
+                    f)
+                        filename=$OPTARG ;;
+                esac
+            done
+            su -m -s /bin/sh $RUNASUSER -c \
+            "export DJANGO_SETTINGS_MODULE=Poem.settings && \
+            python $SITEPACK/Poem/manage.py tenant_command loaddata $filename --schema=$schema"
+            ;;
+        h)
+            usage
+            ;;
+        ?)
+            usage
+            ;;
+    esac
+done

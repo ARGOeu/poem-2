@@ -1,0 +1,31 @@
+.row_red {
+    background: none repeat scroll 0 0 #ffa0a0;
+}
+
+th, td {
+  font-size: 14px;
+}
+
+#content {
+    margin: 0 auto;
+    position: relative;
+    width: 1000px;
+}
+
+#content-main {
+  float: left;
+  width: 1000px;
+}
+
+.change-list .filtered .results, .change-list .filtered .paginator, .filtered #toolbar, .filtered div.xfull {
+  margin-right: 180px;
+}
+
+select {
+  width: 200px;
+}
+
+#changelist-filter {
+  width: 150px;
+  text-align: left;
+}

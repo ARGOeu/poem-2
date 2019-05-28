@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# load virtual environment
+source /etc/profile.d/venv_poem.sh
+workon poem
+
+# run tests
+SITEPACK=$(python -c 'from distutils.sysconfig import get_python_lib; print(get_python_lib())')
+cd $SITEPACK/Poem
+coverage run --source='.' ./manage.py test -v 2 && coverage xml -o $1/coverage.xml

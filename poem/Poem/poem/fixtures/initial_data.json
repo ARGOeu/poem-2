@@ -1,0 +1,37 @@
+[
+  {
+    "model": "poem.Tags",
+    "pk": 1,
+    "fields": {
+      "name": "Production"
+     }
+  },
+  {
+    "model": "poem.Tags",
+    "pk": 2,
+    "fields": {
+      "name": "Devel"
+     }
+  },
+  {
+    "model": "poem.Tags",
+    "pk": 3,
+    "fields": {
+      "name": "Test"
+     }
+  },
+  {
+    "model": "poem.MetricType",
+    "pk": 1,
+    "fields": {
+      "name": "Active"
+     }
+  },
+  {
+    "model": "poem.MetricType",
+    "pk": 2,
+    "fields": {
+      "name": "Passive"
+     }
+  }
+]

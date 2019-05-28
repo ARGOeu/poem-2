@@ -1,0 +1,29 @@
+#!/bin/sh
+
+declare -a args
+
+usage()
+{
+	printf "Usage: %s filename schema [PROFILE1 PROFILE2 ...]\n" $(basename $0) >&2
+	printf "       filename - filename created in /tmp with exported profiles\n" >&2
+	printf "       schema - tenant schema from which the profiles will be exported\n" >&2
+	printf "       [PROFILE1 PROFILE2] - Space separated list of profiles. If not specified,\n" >&2
+	printf "                             all profiles will be exported\n" >&2
+	exit 2
+}
+
+if [[ $# > 0 && "x$1" != "x-h" ]]
+then
+	for a in $*
+	do
+		args[${#args[@]}]=${a}
+	done
+
+	profiles="${args[@]:2:$#}"
+
+	su -m -s /bin/sh  -c \
+	"export DJANGO_SETTINGS_MODULE=Poem.settings && \
+	django-admin tenant_command export_profiles --export /tmp/$(basename $1) $profiles --schema $(basename $2)"
+else
+	usage
+fi

@@ -1,0 +1,15 @@
+django-ajax-selects
+django-rest-auth
+django-reversion
+django-tenant-schemas
+django-webpack-loader
+django>=2.0,<2.1
+djangorestframework
+djangorestframework-api-key
+djangosaml2
+git+https://github.com/vrdel/django-modelclone
+git+https://github.com/vrdel/django-reversion-compare
+ndg-httpsclient
+psycopg2<2.8
+requests
+unidecode

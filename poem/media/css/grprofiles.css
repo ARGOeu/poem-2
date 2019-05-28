@@ -1,0 +1,14 @@
+#content {
+  margin: 0 auto;
+  position: relative;
+  width: 1000px;
+}
+
+#content-main {
+  float: left;
+  width: 1000px;
+}
+
+th, td {
+  font-size: 14px;
+}

@@ -1,0 +1,17 @@
+#argo-footer {
+  background-color: #ffffff;
+}
+
+#argo-navbar-logout {
+  color: #ffffff;
+  border-color: #ffffff;
+  background-color: #416090;
+}
+#argo-navbar-logout:hover {
+  color: #ffffff;
+  background-color: #31496d;
+}
+
+#argo-navlinks {
+  background-color: #ffffff;
+}
