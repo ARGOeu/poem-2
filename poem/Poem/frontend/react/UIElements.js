@@ -89,15 +89,19 @@ export const CustomBreadcrumb = ({location, history}) => {
   bread_array.push(second);
 
   if (surl.length > 3) {
-    let third = new Object({'url': surl[3]});
+    var third = new Object({'url': second['url'] + '/' + surl[3]});
     third['title'] = surl[3];
     bread_array.push(third)
   }
 
-  console.log(bread_array);
+  if (surl.length > 4) {
+    var fourth = new Object({'url': third['url'] + '/history'});
+    fourth['title'] = surl[4];
+    bread_array.push(fourth)
+  }
 
   return (
-    <Breadcrumb >
+    <Breadcrumb id='argo-breadcrumb' className="border-top rounded">
       {
         bread_array.map((item, i) =>
           i !== bread_array.length - 1 

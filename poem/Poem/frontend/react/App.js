@@ -150,7 +150,7 @@ class App extends Component {
                       tenantname={this.state.tenantName}
                       addview={true}/>} 
                     />
-                  <Route exact path="/ui/aggregationprofiles/:id" 
+                  <Route exact path="/ui/aggregationprofiles/:name" 
                     render={props => <AggregationProfilesChange 
                       {...props} 
                       webapiaggregation={this.state.webApiAggregation} 
