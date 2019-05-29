@@ -97,23 +97,21 @@ export const CustomBreadcrumb = ({location, history}) => {
   console.log(bread_array);
 
   return (
-    <div>
-      <Breadcrumb>
-        {
-          bread_array.map((item, i) =>
-            i !== bread_array.length - 1 
-            ?
-              <BreadcrumbItem key={i}>
-                <Link to={item['url']}>{item['title']}</Link>
-              </BreadcrumbItem>
-            :
-              <BreadcrumbItem key={i} active>
-                {item['title']}
-              </BreadcrumbItem>
-          )
-        }
-      </Breadcrumb>
-    </div>
+    <Breadcrumb >
+      {
+        bread_array.map((item, i) =>
+          i !== bread_array.length - 1 
+          ?
+            <BreadcrumbItem key={i}>
+              <Link to={item['url']}>{item['title']}</Link>
+            </BreadcrumbItem>
+          :
+            <BreadcrumbItem key={i} active>
+              {item['title']}
+            </BreadcrumbItem>
+        )
+      }
+    </Breadcrumb>
   );
 }
 

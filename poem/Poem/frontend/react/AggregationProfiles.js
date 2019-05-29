@@ -568,7 +568,7 @@ export class AggregationProfilesChange extends Component
           msg={this.state.modalMsg}
           onYes={this.state.modalFunc} />
         <div className="d-flex align-items-center justify-content-between">
-          <h2 className="ml-3 mt-4 mb-4">Change aggregation profile</h2> 
+          <h2 className="ml-3 mt-1 mb-4">Change aggregation profile</h2> 
           <a className="btn btn-secondary" href="history" role="button">History</a>
         </div>
         <div id="argo-contentwrap" className="ml-2 mb-2 mt-2 p-3 border rounded">
@@ -835,7 +835,7 @@ export class AggregationProfilesList extends Component
       return (
         <React.Fragment>
           <div className="d-flex align-items-center justify-content-between">
-            <h2 className="ml-3 mt-4 mb-4">Select aggregation profile to change</h2> 
+            <h2 className="ml-3 mt-1 mb-4">Select aggregation profile to change</h2> 
             <Link className="btn btn-secondary" to="/ui/aggregationprofiles/add" role="button">Add</Link>
           </div>
           <div id="argo-contentwrap" className="ml-2 mb-2 mt-2 p-3 border rounded">
