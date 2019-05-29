@@ -31,7 +31,6 @@ import { faSignOutAlt } from '@fortawesome/free-solid-svg-icons';
 var list_pages = ['administration','services', 'reports', 'probes',
                   'metrics', 'metricprofiles', 'aggregationprofiles'];
 var link_title = new Map();
-
 link_title.set('administration', 'Administration');
 link_title.set('services', 'Services');
 link_title.set('reports', 'Reports');
@@ -79,15 +78,44 @@ export const ModalAreYouSure = ({isOpen, toggle, title, msg, onYes}) =>
 )
 
 
-export const CustomBreadcrumb = (props) => {
+export const CustomBreadcrumb = ({location, history}) => {
+
+  let surl = location.pathname.split('/');
+  let bread_array = new Array();
+
+  bread_array.push({'url': '/ui/home', 'title': 'Home'});
+  let second = new Object({'url': '/ui/' + surl[2]});
+  second['title'] = link_title.get(surl[2]);
+  bread_array.push(second);
+
+  if (surl.length > 3) {
+    let third = new Object({'url': surl[3]});
+    third['title'] = surl[3];
+    bread_array.push(third)
+  }
+
+  console.log(bread_array);
+
   return (
-    <Breadcrumb>
-      <BreadcrumbItem active>
-        <Link to="/ui/home">Home</Link>
-      </BreadcrumbItem>
-    </Breadcrumb>
+    <div>
+      <Breadcrumb>
+        {
+          bread_array.map((item, i) =>
+            i !== bread_array.length - 1 
+            ?
+              <BreadcrumbItem key={i}>
+                <Link to={item['url']}>{item['title']}</Link>
+              </BreadcrumbItem>
+            :
+              <BreadcrumbItem key={i} active>
+                {item['title']}
+              </BreadcrumbItem>
+          )
+        }
+      </Breadcrumb>
+    </div>
   );
-};
+}
 
 
 export const NavigationBar = ({history, onLogout, isOpenModal, toggle, titleModal, msgModal}) =>

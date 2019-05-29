@@ -15,9 +15,9 @@ import {NotificationContainer, NotificationManager} from 'react-notifications';
 import './App.css';
 
 
-const NavigationBarWithHistory = withRouter(NavigationBar);
-const NavigationLinksWithLocation = withRouter(NavigationLinks);
-
+const NavigationBarWithRouter = withRouter(NavigationBar);
+const NavigationLinksWithRouter = withRouter(NavigationLinks);
+const CustomBreadcrumbWithRouter = withRouter(CustomBreadcrumb);
 
 class App extends Component {
   constructor(props) {
@@ -120,7 +120,7 @@ class App extends Component {
             <Row>
               <NotificationContainer />
               <Col>
-                <NavigationBarWithHistory 
+                <NavigationBarWithRouter 
                   onLogout={this.onLogout}
                   isOpenModal={this.state.areYouSureModal}
                   toggle={this.toggleAreYouSure}
@@ -130,11 +130,11 @@ class App extends Component {
             </Row>
             <Row className="no-gutters">
               <Col sm={{size: 2}} md={{size: 2}} className="d-flex flex-column">
-                <NavigationLinksWithLocation />
+                <NavigationLinksWithRouter />
                 <div id="sidebar-grow" className="flex-grow-1 border-left border-right rounded-bottom"/>
               </Col>
               <Col>
-                <CustomBreadcrumb />
+                <CustomBreadcrumbWithRouter />
                 <Switch>
                   <Route exact path="/ui/home" component={Home} />
                   <Route exact path="/ui/services" component={Services} />
