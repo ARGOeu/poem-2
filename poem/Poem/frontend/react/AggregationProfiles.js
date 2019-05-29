@@ -218,6 +218,7 @@ export class AggregationProfilesChange extends Component
     this.webapimetric = props.webapimetric;
     this.profile_id = props.match.params.id;
     this.add_view = props.add_view
+    this.history = props.history;
 
     this.state = {
       aggregation_profile: {},
@@ -425,7 +426,7 @@ export class AggregationProfilesChange extends Component
                     'Aggregation profile successfully changed', 
                     'Changed', 
                     2000); 
-                  setTimeout(() => window.location = '/ui/aggregationprofiles', 2000);
+                  setTimeout(() => this.history.push('/ui/aggregationprofiles'), 2000);
                 })
                 .catch(err => alert('Something went wrong: ' + err))
             })
@@ -454,7 +455,7 @@ export class AggregationProfilesChange extends Component
                   NotificationManager.success('Aggregation profile successfully added',
                     'Added',
                     2000);
-                  setTimeout(() => window.location = '/ui/aggregationprofiles', 2000)
+                  setTimeout(() => this.history.push('/ui/aggregationprofiles'), 2000)
                 })
                 .catch(err => alert('Something went wrong: ' + err))
             })
@@ -477,7 +478,7 @@ export class AggregationProfilesChange extends Component
               NotificationManager.success('Aggregation profile successfully deleted',
                 'Deleted',
                 2000);
-              setTimeout(() => window.location = '/ui/aggregationprofiles', 2000)
+              setTimeout(() => this.history.push('/ui/aggregationprofiles'), 2000);
             })
         }
     }).catch(err => alert('Something went wrong: ' + err))
