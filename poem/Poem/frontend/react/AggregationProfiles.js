@@ -1,5 +1,6 @@
 import Cookies from 'universal-cookie';
 import React, { Component } from 'react';
+import {Link} from 'react-router-dom';
 import { LoadingAnim, ModalAreYouSure } from './UIElements';
 import ReactTable from 'react-table';
 import 'react-table/react-table.css';
@@ -814,9 +815,9 @@ export class AggregationProfilesList extends Component
         Header: 'Name',
         id: 'name',
         accessor: e => 
-        <a href={'/ui/aggregationprofiles/change/' + e.apiid}>
+        <Link to={'/ui/aggregationprofiles/change/' + e.apiid}>
           {e.name}
-        </a>
+        </Link>
       },
       {
         Header: 'Group',
@@ -834,7 +835,7 @@ export class AggregationProfilesList extends Component
         <React.Fragment>
           <div className="d-flex align-items-center justify-content-between">
             <h2 className="ml-3 mt-4 mb-4">Select aggregation profile to change</h2> 
-            <a className="btn btn-secondary" href="/ui/aggregationprofiles/add" role="button">Add</a>
+            <Link className="btn btn-secondary" to="/ui/aggregationprofiles/add" role="button">Add</Link>
           </div>
           <div id="argo-contentwrap" className="ml-2 mb-2 mt-2 p-3 border rounded">
             <ReactTable
