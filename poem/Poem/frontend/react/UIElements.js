@@ -2,6 +2,8 @@ import React from 'react';
 import Cookies from 'universal-cookie';
 import {
   Button, 
+  Breadcrumb,
+  BreadcrumbItem,
   Card,
   CardHeader,
   CardBody,
@@ -24,6 +26,19 @@ import EOSCLogo from './eosc.png';
 import './UIElements.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSignOutAlt } from '@fortawesome/free-solid-svg-icons';
+
+
+var list_pages = ['administration','services', 'reports', 'probes',
+                  'metrics', 'metricprofiles', 'aggregationprofiles'];
+var link_title = new Map();
+
+link_title.set('administration', 'Administration');
+link_title.set('services', 'Services');
+link_title.set('reports', 'Reports');
+link_title.set('probes', 'Probes');
+link_title.set('metrics', 'Metrics');
+link_title.set('metricprofiles', 'Metric profiles');
+link_title.set('aggregationprofiles', 'Aggregation profiles');
 
 
 const doLogout = (history, onLogout) =>
@@ -62,6 +77,17 @@ export const ModalAreYouSure = ({isOpen, toggle, title, msg, onYes}) =>
     </ModalFooter>
   </Modal>
 )
+
+
+export const CustomBreadcrumb = (props) => {
+  return (
+    <Breadcrumb>
+      <BreadcrumbItem active>
+        <Link to="/ui/home">Home</Link>
+      </BreadcrumbItem>
+    </Breadcrumb>
+  );
+};
 
 
 export const NavigationBar = ({history, onLogout, isOpenModal, toggle, titleModal, msgModal}) =>
@@ -103,17 +129,6 @@ export const NavigationBar = ({history, onLogout, isOpenModal, toggle, titleModa
 
 export const NavigationLinks = ({location}) =>
 {
-  var list_pages = ['administration','services', 'reports', 'probes',
-                     'metrics', 'metricprofiles', 'aggregationprofiles'];
-  var link_title = new Map();
-
-  link_title.set('administration', 'Administration');
-  link_title.set('services', 'Services');
-  link_title.set('reports', 'Reports');
-  link_title.set('probes', 'Probes');
-  link_title.set('metrics', 'Metrics');
-  link_title.set('metricprofiles', 'Metric profiles');
-  link_title.set('aggregationprofiles', 'Aggregation profiles');
 
   return (
     <Nav vertical pills id="argo-navlinks" className="border-left border-right border-top rounded-top sticky-top">

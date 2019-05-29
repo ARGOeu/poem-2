@@ -217,7 +217,7 @@ export class AggregationProfilesChange extends Component
     this.webapiaggregation = props.webapiaggregation;
     this.webapimetric = props.webapimetric;
     this.profile_id = props.match.params.id;
-    this.add_view = props.add_view
+    this.addview = props.addview
     this.history = props.history;
 
     this.state = {
@@ -381,7 +381,7 @@ export class AggregationProfilesChange extends Component
     let msg = undefined;
     let title = undefined;
 
-    if (this.add_view) {
+    if (this.addview) {
       msg = 'Are you sure you want to add Aggregation profile?'
       title = 'Add aggregation profile'
     }
@@ -404,7 +404,7 @@ export class AggregationProfilesChange extends Component
 
     values_send.metric_profile = match_profile[0]
 
-    if (!this.add_view) {
+    if (!this.addview) {
       this.sendToWebApi(this.webapiaggregation + '/' + values_send.id, 'PUT', values_send)
       .then(response => {
         if (!response.ok) {
@@ -500,7 +500,7 @@ export class AggregationProfilesChange extends Component
   componentDidMount() {
     this.setState({loading: true})
 
-    if (!this.add_view) {
+    if (!this.addview) {
       Promise.all([this.fetchAggregationProfile(this.profile_id), 
         this.fetchMetricProfiles(),
         this.fetchUserGroups()])
@@ -816,7 +816,7 @@ export class AggregationProfilesList extends Component
         Header: 'Name',
         id: 'name',
         accessor: e => 
-        <Link to={'/ui/aggregationprofiles/change/' + e.apiid}>
+        <Link to={'/ui/aggregationprofiles/' + e.apiid}>
           {e.name}
         </Link>
       },
