@@ -8,3 +8,11 @@
 #argo-nav {
   background-color: #416090;
 }
+
+#argo-breadcrumb {
+  background-color: #ecf0f5;
+}
+
+#argo-breadcrumb > ol {
+  background-color: #ecf0f5;
+}

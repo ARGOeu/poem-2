@@ -46,7 +46,7 @@ class Services extends Component {
       return (
         <React.Fragment>
           <div className="d-flex align-items-center justify-content-between">
-            <h2 className="ml-3 mt-4 mb-4">Services and probes</h2> 
+            <h2 className="ml-3 mt-1 mb-4">Services and probes</h2> 
           </div>
           <div id="argo-contentwrap" className="ml-2 mb-2 mt-2 p-3 border rounded">
             <table className="table table-bordered table-sm">

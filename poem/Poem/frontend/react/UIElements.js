@@ -2,6 +2,8 @@ import React from 'react';
 import Cookies from 'universal-cookie';
 import {
   Button, 
+  Breadcrumb,
+  BreadcrumbItem,
   Card,
   CardHeader,
   CardBody,
@@ -24,6 +26,18 @@ import EOSCLogo from './eosc.png';
 import './UIElements.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSignOutAlt } from '@fortawesome/free-solid-svg-icons';
+
+
+var list_pages = ['administration','services', 'reports', 'probes',
+                  'metrics', 'metricprofiles', 'aggregationprofiles'];
+var link_title = new Map();
+link_title.set('administration', 'Administration');
+link_title.set('services', 'Services');
+link_title.set('reports', 'Reports');
+link_title.set('probes', 'Probes');
+link_title.set('metrics', 'Metrics');
+link_title.set('metricprofiles', 'Metric profiles');
+link_title.set('aggregationprofiles', 'Aggregation profiles');
 
 
 const doLogout = (history, onLogout) =>
@@ -62,6 +76,48 @@ export const ModalAreYouSure = ({isOpen, toggle, title, msg, onYes}) =>
     </ModalFooter>
   </Modal>
 )
+
+
+export const CustomBreadcrumb = ({location, history}) => {
+
+  let spliturl = location.pathname.split('/');
+  let breadcrumb_elements = new Array();
+
+  breadcrumb_elements.push({'url': '/ui/home', 'title': 'Home'});
+  let two_level = new Object({'url': '/ui/' + spliturl[2]});
+  two_level['title'] = link_title.get(spliturl[2]);
+  breadcrumb_elements.push(two_level);
+
+  if (spliturl.length > 3) {
+    var three_level = new Object({'url': two_level['url'] + '/' + spliturl[3]});
+    three_level['title'] = spliturl[3];
+    breadcrumb_elements.push(three_level)
+  }
+
+  if (spliturl.length > 4) {
+    var four_level = new Object({'url': three_level['url'] + '/history'});
+    four_level['title'] = spliturl[4];
+    breadcrumb_elements.push(four_level)
+  }
+
+  return (
+    <Breadcrumb id='argo-breadcrumb' className="border-top rounded">
+      {
+        breadcrumb_elements.map((item, i) =>
+          i !== breadcrumb_elements.length - 1 
+          ?
+            <BreadcrumbItem key={i}>
+              <Link to={item['url']}>{item['title']}</Link>
+            </BreadcrumbItem>
+          :
+            <BreadcrumbItem key={i} active>
+              {item['title']}
+            </BreadcrumbItem>
+        )
+      }
+    </Breadcrumb>
+  );
+}
 
 
 export const NavigationBar = ({history, onLogout, isOpenModal, toggle, titleModal, msgModal}) =>
@@ -103,17 +159,6 @@ export const NavigationBar = ({history, onLogout, isOpenModal, toggle, titleModa
 
 export const NavigationLinks = ({location}) =>
 {
-  var list_pages = ['administration','services', 'reports', 'probes',
-                     'metrics', 'metricprofiles', 'aggregationprofiles'];
-  var link_title = new Map();
-
-  link_title.set('administration', 'Administration');
-  link_title.set('services', 'Services');
-  link_title.set('reports', 'Reports');
-  link_title.set('probes', 'Probes');
-  link_title.set('metrics', 'Metrics');
-  link_title.set('metricprofiles', 'Metric profiles');
-  link_title.set('aggregationprofiles', 'Aggregation profiles');
 
   return (
     <Nav vertical pills id="argo-navlinks" className="border-left border-right border-top rounded-top sticky-top">

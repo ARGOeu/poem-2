@@ -216,9 +216,10 @@ export class AggregationProfilesChange extends Component
     this.token = props.webapitoken;
     this.webapiaggregation = props.webapiaggregation;
     this.webapimetric = props.webapimetric;
-    this.profile_id = props.match.params.id;
-    this.add_view = props.add_view
+    this.profile_name = props.match.params.name;
+    this.addview = props.addview
     this.history = props.history;
+    this.location = props.location;
 
     this.state = {
       aggregation_profile: {},
@@ -237,6 +238,7 @@ export class AggregationProfilesChange extends Component
 
     this.fetchMetricProfiles = this.fetchMetricProfiles.bind(this);
     this.fetchAggregationProfile = this.fetchAggregationProfile.bind(this);
+    this.profileIdFromName = this.profileIdFromName.bind(this);
     this.extractListOfMetricsProfiles = this.extractListOfMetricsProfiles.bind(this);
     this.toggleAreYouSure = this.toggleAreYouSure.bind(this);
     this.sendToDjango = this.sendToDjango.bind(this);
@@ -284,6 +286,15 @@ export class AggregationProfilesChange extends Component
       .then(response => response.json())
       .then(json => json['data']) 
       .catch(err => alert('Something went wrong: ' + err))
+  }
+
+  profileIdFromName() {
+    return fetch('/api/v2/internal/aggregations')
+      .then(response => response.json())
+      .then(json => json.filter((item, i) => item.name === this.profile_name))
+      .then(list_item => list_item[0])
+      .then(profile => profile.apiid)
+      .catch(err => console.log('Something went wrong: ' + err))
   }
 
   fetchAggregationProfile(idProfile) {
@@ -381,7 +392,7 @@ export class AggregationProfilesChange extends Component
     let msg = undefined;
     let title = undefined;
 
-    if (this.add_view) {
+    if (this.addview) {
       msg = 'Are you sure you want to add Aggregation profile?'
       title = 'Add aggregation profile'
     }
@@ -404,7 +415,7 @@ export class AggregationProfilesChange extends Component
 
     values_send.metric_profile = match_profile[0]
 
-    if (!this.add_view) {
+    if (!this.addview) {
       this.sendToWebApi(this.webapiaggregation + '/' + values_send.id, 'PUT', values_send)
       .then(response => {
         if (!response.ok) {
@@ -500,26 +511,28 @@ export class AggregationProfilesChange extends Component
   componentDidMount() {
     this.setState({loading: true})
 
-    if (!this.add_view) {
-      Promise.all([this.fetchAggregationProfile(this.profile_id), 
-        this.fetchMetricProfiles(),
-        this.fetchUserGroups()])
-      .then(([aggregp, metricp, usergroups]) => {
-        this.fetchAggregationGroup(aggregp.name)
-        .then(group =>
-          this.setState(
-          {
-            aggregation_profile: aggregp,
-            groups_field: group,
-            list_user_groups: usergroups,
-            write_perm: usergroups.indexOf(group) >= 0,
-            list_id_metric_profiles: this.extractListOfMetricsProfiles(metricp),
-            list_services: this.extractListOfServices(aggregp.metric_profile, metricp),
-            list_complete_metric_profiles: metricp,
-            loading: false
-          })
-        )
-      })
+    if (!this.addview) {
+      this.profileIdFromName().then(id =>
+        Promise.all([this.fetchAggregationProfile(id), 
+          this.fetchMetricProfiles(),
+          this.fetchUserGroups()])
+        .then(([aggregp, metricp, usergroups]) => {
+          this.fetchAggregationGroup(aggregp.name)
+          .then(group =>
+            this.setState(
+            {
+              aggregation_profile: aggregp,
+              groups_field: group,
+              list_user_groups: usergroups,
+              write_perm: usergroups.indexOf(group) >= 0,
+              list_id_metric_profiles: this.extractListOfMetricsProfiles(metricp),
+              list_services: this.extractListOfServices(aggregp.metric_profile, metricp),
+              list_complete_metric_profiles: metricp,
+              loading: false
+            })
+          )
+        })
+      )
     }
     else {
       let empty_aggregation_profile = {
@@ -557,7 +570,8 @@ export class AggregationProfilesChange extends Component
       return (<LoadingAnim />)
 
     else if (!loading && aggregation_profile && 
-      aggregation_profile.metric_profile && list_user_groups) {
+      aggregation_profile.metric_profile && list_user_groups 
+      && this.token) {
 
       return (
       <React.Fragment>
@@ -568,8 +582,15 @@ export class AggregationProfilesChange extends Component
           msg={this.state.modalMsg}
           onYes={this.state.modalFunc} />
         <div className="d-flex align-items-center justify-content-between">
-          <h2 className="ml-3 mt-4 mb-4">Change aggregation profile</h2> 
-          <a className="btn btn-secondary" href="history" role="button">History</a>
+          {
+            this.addview ? 
+              <h2 className="ml-3 mt-1 mb-4">Add aggregation profile</h2>
+            :
+              <React.Fragment>
+                <h2 className="ml-3 mt-1 mb-4">Change aggregation profile</h2>
+                <Link className="btn btn-secondary" to={this.location.pathname + "/history"} role="button">History</Link>
+              </React.Fragment>
+          }
         </div>
         <div id="argo-contentwrap" className="ml-2 mb-2 mt-2 p-3 border rounded">
           <Formik
@@ -816,7 +837,7 @@ export class AggregationProfilesList extends Component
         Header: 'Name',
         id: 'name',
         accessor: e => 
-        <Link to={'/ui/aggregationprofiles/change/' + e.apiid}>
+        <Link to={'/ui/aggregationprofiles/' + e.name}>
           {e.name}
         </Link>
       },
@@ -835,7 +856,7 @@ export class AggregationProfilesList extends Component
       return (
         <React.Fragment>
           <div className="d-flex align-items-center justify-content-between">
-            <h2 className="ml-3 mt-4 mb-4">Select aggregation profile to change</h2> 
+            <h2 className="ml-3 mt-1 mb-4">Select aggregation profile to change</h2> 
             <Link className="btn btn-secondary" to="/ui/aggregationprofiles/add" role="button">Add</Link>
           </div>
           <div id="argo-contentwrap" className="ml-2 mb-2 mt-2 p-3 border rounded">
