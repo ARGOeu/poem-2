@@ -80,30 +80,30 @@ export const ModalAreYouSure = ({isOpen, toggle, title, msg, onYes}) =>
 
 export const CustomBreadcrumb = ({location, history}) => {
 
-  let surl = location.pathname.split('/');
-  let bread_array = new Array();
+  let spliturl = location.pathname.split('/');
+  let breadcrumb_elements = new Array();
 
-  bread_array.push({'url': '/ui/home', 'title': 'Home'});
-  let second = new Object({'url': '/ui/' + surl[2]});
-  second['title'] = link_title.get(surl[2]);
-  bread_array.push(second);
+  breadcrumb_elements.push({'url': '/ui/home', 'title': 'Home'});
+  let two_level = new Object({'url': '/ui/' + spliturl[2]});
+  two_level['title'] = link_title.get(spliturl[2]);
+  breadcrumb_elements.push(two_level);
 
-  if (surl.length > 3) {
-    var third = new Object({'url': second['url'] + '/' + surl[3]});
-    third['title'] = surl[3];
-    bread_array.push(third)
+  if (spliturl.length > 3) {
+    var three_level = new Object({'url': two_level['url'] + '/' + spliturl[3]});
+    three_level['title'] = spliturl[3];
+    breadcrumb_elements.push(three_level)
   }
 
-  if (surl.length > 4) {
-    var fourth = new Object({'url': third['url'] + '/history'});
-    fourth['title'] = surl[4];
-    bread_array.push(fourth)
+  if (spliturl.length > 4) {
+    var four_level = new Object({'url': three_level['url'] + '/history'});
+    four_level['title'] = spliturl[4];
+    breadcrumb_elements.push(four_level)
   }
 
   return (
     <Breadcrumb id='argo-breadcrumb' className="border-top rounded">
       {
-        bread_array.map((item, i) =>
+        breadcrumb_elements.map((item, i) =>
           i !== bread_array.length - 1 
           ?
             <BreadcrumbItem key={i}>
