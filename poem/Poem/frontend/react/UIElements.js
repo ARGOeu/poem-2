@@ -104,7 +104,7 @@ export const CustomBreadcrumb = ({location, history}) => {
     <Breadcrumb id='argo-breadcrumb' className="border-top rounded">
       {
         breadcrumb_elements.map((item, i) =>
-          i !== bread_array.length - 1 
+          i !== breadcrumb_elements.length - 1 
           ?
             <BreadcrumbItem key={i}>
               <Link to={item['url']}>{item['title']}</Link>
