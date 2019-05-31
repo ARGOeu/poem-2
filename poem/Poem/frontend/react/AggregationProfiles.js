@@ -1,7 +1,7 @@
 import Cookies from 'universal-cookie';
 import React, { Component } from 'react';
 import {Link} from 'react-router-dom';
-import { LoadingAnim, ModalAreYouSure, BaseArgoView } from './UIElements';
+import { LoadingAnim, BaseArgoView } from './UIElements';
 import ReactTable from 'react-table';
 import 'react-table/react-table.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -21,8 +21,8 @@ import {
   FormGroup,
   FormText} from 'reactstrap';
 import {NotificationManager} from 'react-notifications';
-import "react-notifications/lib/notifications.css";
 
+import "react-notifications/lib/notifications.css";
 import './AggregationProfiles.css';
 
 
@@ -40,14 +40,6 @@ const DropDown = ({field, data=[], prefix="", class_name=""}) =>
       )
     }
   </Field>
-
-
-const ButtonRemove = ({index=0, operation=f=>f}) => 
-  <Button size="sm" color="danger"
-    type="button"
-    onClick={() => operation(index)}>
-    <FontAwesomeIcon icon={faTimes}/>
-  </Button>
 
 
 const GroupList = ({name, form, list_services, list_operations, last_service_operation, write_perm}) =>
@@ -93,9 +85,11 @@ const Group = ({operation, services, list_operations, list_services, last_servic
                 />
               </Col>
               <Col sm={{size: 2}} md={{size: 1}} className="pl-1">
-                <ButtonRemove
-                  index={groupindex}
-                  operation={(write_perm) ? remove: null}/>
+                <Button size="sm" color="danger"
+                  type="button"
+                  onClick={() => (write_perm) && remove(groupindex)}>
+                  <FontAwesomeIcon icon={faTimes}/>
+                </Button>
               </Col>
             </Row>
           </CardHeader>

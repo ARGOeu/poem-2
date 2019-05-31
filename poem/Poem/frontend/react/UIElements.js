@@ -247,7 +247,7 @@ export const LoadingAnim = () =>
 )
 
 
-export const BaseArgoView = ({resourcename='', location=undefined, addview=false, listview=false, modal=false, state=undefined, toggle=undefined, children}) => 
+export const BaseArgoView = ({resourcename='', location=undefined, infoview=false, addview=false, listview=false, modal=false, state=undefined, toggle=undefined, children}) => 
 (
   <React.Fragment>
     {
@@ -261,19 +261,22 @@ export const BaseArgoView = ({resourcename='', location=undefined, addview=false
     }
     <div className="d-flex align-items-center justify-content-between">
       {
-        addview ? 
-          <h2 className="ml-3 mt-1 mb-4">{`Add ${resourcename}`}</h2>
+        infoview ?
+          <h2 className="ml-3 mt-1 mb-4">{resourcename}</h2>
         :
-          listview ?
-            <React.Fragment>
-              <h2 className="ml-3 mt-1 mb-4">{`Select ${resourcename} to change`}</h2>
-              <Link className="btn btn-secondary" to={location.pathname + "/add"} role="button">Add</Link>
-            </React.Fragment>
+          addview ? 
+            <h2 className="ml-3 mt-1 mb-4">{`Add ${resourcename}`}</h2>
           :
-            <React.Fragment>
-              <h2 className="ml-3 mt-1 mb-4">{`Change ${resourcename}`}</h2>
-              <Link className="btn btn-secondary" to={location.pathname + "/history"} role="button">History</Link>
-            </React.Fragment>
+            listview ?
+              <React.Fragment>
+                <h2 className="ml-3 mt-1 mb-4">{`Select ${resourcename} to change`}</h2>
+                <Link className="btn btn-secondary" to={location.pathname + "/add"} role="button">Add</Link>
+              </React.Fragment>
+            :
+              <React.Fragment>
+                <h2 className="ml-3 mt-1 mb-4">{`Change ${resourcename}`}</h2>
+                <Link className="btn btn-secondary" to={location.pathname + "/history"} role="button">History</Link>
+              </React.Fragment>
       }
     </div>
     <div id="argo-contentwrap" className="ml-2 mb-2 mt-2 p-3 border rounded">
