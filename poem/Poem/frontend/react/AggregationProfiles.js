@@ -577,13 +577,10 @@ export class AggregationProfilesChange extends Component
         <BaseArgoView
           resourcename='aggregation profile'
           location={this.location}
-          addview={this.addview}>
-          <ModalAreYouSure 
-            isOpen={this.state.areYouSureModal}
-            toggle={this.toggleAreYouSure}
-            title={this.state.modalTitle}
-            msg={this.state.modalMsg}
-            onYes={this.state.modalFunc} />
+          addview={this.addview}
+          modal={true}
+          state={this.state}
+          toggle={this.toggleAreYouSure}>
           <Formik
             initialValues={{
               id: aggregation_profile.id,

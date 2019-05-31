@@ -247,9 +247,18 @@ export const LoadingAnim = () =>
 )
 
 
-export const BaseArgoView = ({resourcename='', location=undefined, addview=false, listview=false, children}) => 
+export const BaseArgoView = ({resourcename='', location=undefined, addview=false, listview=false, modal=false, state=undefined, toggle=undefined, children}) => 
 (
   <React.Fragment>
+    {
+      modal && 
+      <ModalAreYouSure 
+        isOpen={state.areYouSureModal}
+        toggle={toggle}
+        title={state.modalTitle}
+        msg={state.modalMsg}
+        onYes={state.modalFunc} />
+    }
     <div className="d-flex align-items-center justify-content-between">
       {
         addview ? 
