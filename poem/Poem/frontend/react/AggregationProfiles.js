@@ -1,7 +1,7 @@
 import Cookies from 'universal-cookie';
 import React, { Component } from 'react';
 import {Link} from 'react-router-dom';
-import { LoadingAnim, ModalAreYouSure } from './UIElements';
+import { LoadingAnim, ModalAreYouSure, BaseArgoView } from './UIElements';
 import ReactTable from 'react-table';
 import 'react-table/react-table.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -574,25 +574,16 @@ export class AggregationProfilesChange extends Component
       && this.token) {
 
       return (
-      <React.Fragment>
-        <ModalAreYouSure 
-          isOpen={this.state.areYouSureModal}
-          toggle={this.toggleAreYouSure}
-          title={this.state.modalTitle}
-          msg={this.state.modalMsg}
-          onYes={this.state.modalFunc} />
-        <div className="d-flex align-items-center justify-content-between">
-          {
-            this.addview ? 
-              <h2 className="ml-3 mt-1 mb-4">Add aggregation profile</h2>
-            :
-              <React.Fragment>
-                <h2 className="ml-3 mt-1 mb-4">Change aggregation profile</h2>
-                <Link className="btn btn-secondary" to={this.location.pathname + "/history"} role="button">History</Link>
-              </React.Fragment>
-          }
-        </div>
-        <div id="argo-contentwrap" className="ml-2 mb-2 mt-2 p-3 border rounded">
+        <BaseArgoView
+          resourcename='aggregation profile'
+          location={this.location}
+          addview={this.addview}>
+          <ModalAreYouSure 
+            isOpen={this.state.areYouSureModal}
+            toggle={this.toggleAreYouSure}
+            title={this.state.modalTitle}
+            msg={this.state.modalMsg}
+            onYes={this.state.modalFunc} />
           <Formik
             initialValues={{
               id: aggregation_profile.id,
@@ -800,8 +791,7 @@ export class AggregationProfilesChange extends Component
               </Form>
             )}
           />
-        </div>
-      </React.Fragment>
+        </BaseArgoView>
       )
     }
     else
@@ -818,6 +808,8 @@ export class AggregationProfilesList extends Component
       loading: false,
       list_aggregations: null
     }
+
+    this.location = props.location;
   }
 
   componentDidMount() {
@@ -854,20 +846,17 @@ export class AggregationProfilesList extends Component
 
     else if (!loading && list_aggregations) {
       return (
-        <React.Fragment>
-          <div className="d-flex align-items-center justify-content-between">
-            <h2 className="ml-3 mt-1 mb-4">Select aggregation profile to change</h2> 
-            <Link className="btn btn-secondary" to="/ui/aggregationprofiles/add" role="button">Add</Link>
-          </div>
-          <div id="argo-contentwrap" className="ml-2 mb-2 mt-2 p-3 border rounded">
-            <ReactTable
-              data={list_aggregations}
-              columns={columns}
-              className="-striped -highlight"
-              defaultPageSize={10}
-            />
-          </div>
-        </React.Fragment>
+        <BaseArgoView 
+          resourcename='aggregation profile'
+          location={this.location}
+          listview={true}>
+          <ReactTable
+            data={list_aggregations}
+            columns={columns}
+            className="-striped -highlight"
+            defaultPageSize={10}
+          />
+        </BaseArgoView>
       )
     }
     else 
