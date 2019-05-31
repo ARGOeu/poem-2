@@ -1,6 +1,7 @@
 import React from 'react';
 import Cookies from 'universal-cookie';
 import {
+  Alert,
   Button, 
   Breadcrumb,
   BreadcrumbItem,
@@ -247,7 +248,9 @@ export const LoadingAnim = () =>
 )
 
 
-export const BaseArgoView = ({resourcename='', location=undefined, infoview=false, addview=false, listview=false, modal=false, state=undefined, toggle=undefined, children}) => 
+export const BaseArgoView = ({resourcename='', location=undefined, 
+    infoview=false, addview=false, listview=false, modal=false, 
+    state=undefined, toggle=undefined, submitperm=true, children}) => 
 (
   <React.Fragment>
     {
@@ -280,6 +283,15 @@ export const BaseArgoView = ({resourcename='', location=undefined, infoview=fals
       }
     </div>
     <div id="argo-contentwrap" className="ml-2 mb-2 mt-2 p-3 border rounded">
+      {
+        !submitperm && !infoview && !listview &&
+          <Alert color='danger'>
+            <center>
+              This is a read-only instance, please request the corresponding
+              permissions to perform any changes in this form. 
+            </center>
+          </Alert>
+      }
       {children}
     </div>
   </React.Fragment>

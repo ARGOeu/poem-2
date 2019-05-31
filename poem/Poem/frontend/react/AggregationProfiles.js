@@ -574,7 +574,8 @@ export class AggregationProfilesChange extends Component
           addview={this.addview}
           modal={true}
           state={this.state}
-          toggle={this.toggleAreYouSure}>
+          toggle={this.toggleAreYouSure}
+          submitperm={write_perm}>
           <Formik
             initialValues={{
               id: aggregation_profile.id,
@@ -757,7 +758,7 @@ export class AggregationProfilesChange extends Component
                     />)}
                 />
                 {
-                  (write_perm) ?
+                  (write_perm) &&
                     <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
                       <Button
                         color="danger"
@@ -769,14 +770,6 @@ export class AggregationProfilesChange extends Component
                         Delete
                       </Button>
                       <Button color="success" id="submit-button" type="submit">Save</Button>
-                    </div>
-                  :
-                    <div className="submit-row bg-danger text-white p-3 mt-5 rounded">
-                      <center>
-                        This is a read-only instance, please
-                        request the corresponding permissions
-                        to perform any changes in this form. 
-                      </center>
                     </div>
                 }
               </Form>
