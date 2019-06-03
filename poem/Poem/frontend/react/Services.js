@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import { BaseArgoView, LoadingAnim } from './UIElements';
 import {Link} from 'react-router-dom';
+import {Backend} from './DataManager';
 
 import './Services.css';
 
@@ -15,12 +16,13 @@ class Services extends Component {
       id_probes: null, 
       id_metrics: null, 
     };
+
+    this.backend = new Backend();
   }
 
   componentDidMount() {
     this.setState({loading: true});
-    fetch('/api/v2/internal/services')
-      .then(response => response.json())
+    this.backend.fetchServices()
       .then(json =>
         this.setState({
           rows: json.result.rows, 
