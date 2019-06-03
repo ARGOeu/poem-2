@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import { BaseArgoView, LoadingAnim } from './UIElements';
+import {Link} from 'react-router-dom';
 
 import './Services.css';
 
@@ -82,13 +83,13 @@ class Services extends Component {
                     {
                       e.metric && 
                         <td id='argo-td' className="table-light" rowSpan={this.getRowSpan(rowspan.metric, e.metric)}>
-                          <a href={'/ui/metrics/' + id_metrics[e.metric]}>{e.metric}</a>
+                          <Link to={'/ui/metrics/' + id_metrics[e.metric]}>{e.metric}</Link>
                         </td>
                     }
                     {
                       e.probe && 
                         <td id='argo-td' className="table-light" rowSpan={this.getRowSpan(rowspan.probe, e.probe)}>
-                          <a href={'/ui/probes/' + id_probes[e.probe]}>{e.probe}</a>
+                          <Link href={'/ui/probes/' + id_probes[e.probe]}>{e.probe}</Link>
                         </td>
                     }
                   </tr>
