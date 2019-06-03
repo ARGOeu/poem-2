@@ -8,6 +8,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Formik, Field, FieldArray, Form } from 'formik';
 import { faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
 import FormikEffect from './FormikEffect.js';
+import {Backend} from './DataManager';
 import {
   Alert,
   Button, 
@@ -230,9 +231,10 @@ export class AggregationProfilesChange extends Component
       modalMsg: undefined,
     }
 
+    this.backend = new Backend();
+
     this.fetchMetricProfiles = this.fetchMetricProfiles.bind(this);
     this.fetchAggregationProfile = this.fetchAggregationProfile.bind(this);
-    this.profileIdFromName = this.profileIdFromName.bind(this);
     this.extractListOfMetricsProfiles = this.extractListOfMetricsProfiles.bind(this);
     this.toggleAreYouSure = this.toggleAreYouSure.bind(this);
     this.sendToDjango = this.sendToDjango.bind(this);
@@ -260,19 +262,6 @@ export class AggregationProfilesChange extends Component
       }));
   }
 
-  fetchUserGroups() {
-    return fetch('/api/v2/internal/groups/aggregations')
-      .then(response => response.json())
-      .catch(err => console.log('Something went wrong: ' + err))
-  }
-
-  fetchAggregationGroup(aggregation_name) {
-    return fetch('/api/v2/internal/aggregations' + '/' + aggregation_name)
-      .then(response => response.json())
-      .then(json => json['groupname'])
-      .catch(err => console.log('Something went wrong: ' + err))
-  }
-
   fetchMetricProfiles() {
     return fetch('https://web-api-devel.argo.grnet.gr/api/v2/metric_profiles',
       {headers: {"Accept": "application/json",
@@ -282,14 +271,6 @@ export class AggregationProfilesChange extends Component
       .catch(err => alert('Something went wrong: ' + err))
   }
 
-  profileIdFromName() {
-    return fetch('/api/v2/internal/aggregations')
-      .then(response => response.json())
-      .then(json => json.filter((item, i) => item.name === this.profile_name))
-      .then(list_item => list_item[0])
-      .then(profile => profile.apiid)
-      .catch(err => console.log('Something went wrong: ' + err))
-  }
 
   fetchAggregationProfile(idProfile) {
     return fetch('https://web-api-devel.argo.grnet.gr/api/v2/aggregation_profiles' + '/' + idProfile, 
@@ -506,12 +487,12 @@ export class AggregationProfilesChange extends Component
     this.setState({loading: true})
 
     if (!this.addview) {
-      this.profileIdFromName().then(id =>
+      this.backend.fetchAggregationProfileIdFromName(this.profile_name).then(id =>
         Promise.all([this.fetchAggregationProfile(id), 
           this.fetchMetricProfiles(),
-          this.fetchUserGroups()])
+          this.backend.fetchAggregationUserGroups()])
         .then(([aggregp, metricp, usergroups]) => {
-          this.fetchAggregationGroup(aggregp.name)
+          this.backend.fetchAggregationGroup(aggregp.name)
           .then(group =>
             this.setState(
             {
@@ -540,7 +521,7 @@ export class AggregationProfilesChange extends Component
           },
           groups: []
       }
-      Promise.all([this.fetchMetricProfiles(), this.fetchUserGroups()])
+      Promise.all([this.fetchMetricProfiles(), this.backend.fetchAggregationUserGroups()])
         .then(([metricp, usergroups]) => this.setState(
       {
         aggregation_profile: empty_aggregation_profile,
