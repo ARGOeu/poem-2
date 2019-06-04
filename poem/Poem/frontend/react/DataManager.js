@@ -1,3 +1,5 @@
+import Cookies from 'universal-cookie';
+
 export class Backend {
   fetchServices() {
     return fetch('/api/v2/internal/services')
@@ -25,6 +27,24 @@ export class Backend {
       .then(list_item => list_item[0])
       .then(profile => profile.apiid)
       .catch(err => alert('Something went wrong: ' + err))
+  }
+
+  send(url, method, values=undefined) {
+    const cookies = new Cookies();
+
+    return fetch(url, {
+      method: method,
+      mode: 'cors',
+      cache: 'no-cache',
+      credentials: 'same-origin',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'X-CSRFToken': cookies.get('csrftoken'),
+        'Referer': 'same-origin'
+      },
+      body: values && JSON.stringify(values)
+    })
   }
 
 }

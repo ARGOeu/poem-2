@@ -1,4 +1,3 @@
-import Cookies from 'universal-cookie';
 import React, { Component } from 'react';
 import {Link} from 'react-router-dom';
 import { LoadingAnim, BaseArgoView } from './UIElements';
@@ -237,7 +236,6 @@ export class AggregationProfilesChange extends Component
     this.fetchAggregationProfile = this.fetchAggregationProfile.bind(this);
     this.extractListOfMetricsProfiles = this.extractListOfMetricsProfiles.bind(this);
     this.toggleAreYouSure = this.toggleAreYouSure.bind(this);
-    this.sendToDjango = this.sendToDjango.bind(this);
     this.sendToWebApi= this.sendToWebApi.bind(this);
     this.doChange = this.doChange.bind(this);
     this.doDelete = this.doDelete.bind(this);
@@ -330,24 +328,6 @@ export class AggregationProfilesChange extends Component
       }
   }
 
-  sendToDjango(url, method, values=null) {
-    const cookies = new Cookies()
-
-    return fetch(url, {
-      method: method,
-      mode: 'cors',
-      cache: 'no-cache',
-      credentials: 'same-origin',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'X-CSRFToken': cookies.get('csrftoken'),
-        'Referer': 'same-origin'
-      },
-      body: values ? JSON.stringify(values) : null 
-    })
-  }
-
   sendToWebApi(url, method, values=null) {
     return fetch(url, {
       method: method,
@@ -401,7 +381,7 @@ export class AggregationProfilesChange extends Component
         else {
           response.json()
             .then(r => {
-              this.sendToDjango('/api/v2/internal/aggregations/', 'PUT', 
+              this.backend.send('/api/v2/internal/aggregations/', 'PUT', 
                 {
                   apiid: values_send.id, 
                   name: values_send.name, 
@@ -431,7 +411,7 @@ export class AggregationProfilesChange extends Component
         else {
           response.json()
             .then(r => { 
-              this.sendToDjango('/api/v2/internal/aggregations/', 'POST', 
+              this.backend.send('/api/v2/internal/aggregations/', 'POST', 
                 {
                   apiid: r.data.id, 
                   name: values_send.name, 
@@ -458,7 +438,7 @@ export class AggregationProfilesChange extends Component
           alert(`Error: ${response.status}, ${response.statusText}`)
         } else {
           response.json()
-            .then(this.sendToDjango('/api/v2/internal/aggregations/' + idProfile, 'DELETE'))
+            .then(this.backend.send('/api/v2/internal/aggregations/' + idProfile, 'DELETE'))
             .then(
               () => {
               NotificationManager.success('Aggregation profile successfully deleted',
