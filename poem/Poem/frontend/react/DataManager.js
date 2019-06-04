@@ -78,6 +78,82 @@ export class Backend {
 
 }
 
-class WebApi {
+export class WebApi {
+  constructor(
+    {
+      token=undefined, 
+      metricProfiles=undefined,
+      aggregationProfiles=undefined,
+      reportsConfigurations=undefined
+    }) {
+    this.token = token;
+    this.metricprofiles = metricProfiles;
+    this.aggregationprofiles = aggregationProfiles; 
+  }
+
+  fetchMetricProfiles() {
+    return fetch(this.metricprofiles,
+      {headers: 
+        {
+          "Accept": "application/json",
+          "x-api-key": this.token
+        }
+      })
+      .then(response => response.json())
+      .then(json => json['data']) 
+      .catch(err => alert('Something went wrong: ' + err));
+  }
+
+  fetchAggregationProfile(id) {
+    return fetch(this.aggregationprofiles + '/' + id, 
+      {headers: 
+        {
+          "Accept": "application/json",
+          "x-api-key": this.token
+        }
+      })
+      .then(response => response.json())
+      .then(json => json['data'])
+      .then(array => array[0])
+      .catch(err => alert('Something went wrong: ' + err));
+  }
+
+  send(url, method, values=null) {
+    return fetch(url, {
+      method: method,
+      mode: 'cors',
+      cache: 'no-cache',
+      credentials: 'same-origin',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'x-api-key': this.token
+      },
+      body: values && JSON.stringify(values) 
+    });
+  }
+
+  changeAggregation(profile) {
+    return this.send(
+      this.aggregationprofiles + '/' + profile.id,
+      'PUT',
+      profile
+    );
+  }
+
+  addAggregation(profile) {
+    return this.send(
+      this.aggregationprofiles,
+      'POST',
+      profile
+    );
+  }
+
+  deleteAggregation(id) {
+    return this.send(
+      this.aggregationprofiles + '/' + id,
+      'DELETE'
+    );
+  }
 
 }

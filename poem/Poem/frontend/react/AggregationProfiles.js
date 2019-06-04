@@ -7,7 +7,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Formik, Field, FieldArray, Form } from 'formik';
 import { faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
 import FormikEffect from './FormikEffect.js';
-import {Backend} from './DataManager';
+import {Backend, WebApi} from './DataManager';
 import {
   Alert,
   Button, 
@@ -231,12 +231,14 @@ export class AggregationProfilesChange extends Component
     }
 
     this.backend = new Backend();
+    this.webapi = new WebApi({
+      token: props.webapitoken,
+      metricProfiles: props.webapimetric,
+      aggregationProfiles: props.webapiaggregation}
+    )
 
-    this.fetchMetricProfiles = this.fetchMetricProfiles.bind(this);
-    this.fetchAggregationProfile = this.fetchAggregationProfile.bind(this);
     this.extractListOfMetricsProfiles = this.extractListOfMetricsProfiles.bind(this);
     this.toggleAreYouSure = this.toggleAreYouSure.bind(this);
-    this.sendToWebApi= this.sendToWebApi.bind(this);
     this.doChange = this.doChange.bind(this);
     this.doDelete = this.doDelete.bind(this);
     this.toggleAreYouSureSetModal = this.toggleAreYouSureSetModal.bind(this);
@@ -258,26 +260,6 @@ export class AggregationProfilesChange extends Component
         modalMsg: msg,
         modalTitle: title,
       }));
-  }
-
-  fetchMetricProfiles() {
-    return fetch('https://web-api-devel.argo.grnet.gr/api/v2/metric_profiles',
-      {headers: {"Accept": "application/json",
-          "x-api-key": this.token}})
-      .then(response => response.json())
-      .then(json => json['data']) 
-      .catch(err => alert('Something went wrong: ' + err))
-  }
-
-
-  fetchAggregationProfile(idProfile) {
-    return fetch('https://web-api-devel.argo.grnet.gr/api/v2/aggregation_profiles' + '/' + idProfile, 
-      {headers: {"Accept": "application/json",
-            "x-api-key": this.token}})
-      .then(response => response.json())
-      .then(json => json['data'])
-      .then(array => array[0])
-      .catch(err => alert('Something went wrong: ' + err))
   }
 
   extractListOfServices(profileFromAggregation, listMetricProfiles) {
@@ -328,21 +310,6 @@ export class AggregationProfilesChange extends Component
     }
   }
 
-  sendToWebApi(url, method, values=null) {
-    return fetch(url, {
-      method: method,
-      mode: 'cors',
-      cache: 'no-cache',
-      credentials: 'same-origin',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'x-api-key': this.token
-      },
-      body: values && JSON.stringify(values) 
-    })
-  }
-
   onSubmitHandle(values, action) {
     let msg = undefined;
     let title = undefined;
@@ -371,7 +338,7 @@ export class AggregationProfilesChange extends Component
     values_send.metric_profile = match_profile[0]
 
     if (!this.addview) {
-      this.sendToWebApi(this.webapiaggregation + '/' + values_send.id, 'PUT', values_send)
+      this.webapi.changeAggregation(values_send)
       .then(response => {
         if (!response.ok) {
           this.toggleAreYouSureSetModal(`Error: ${response.status}, ${response.statusText}`, 
@@ -400,7 +367,7 @@ export class AggregationProfilesChange extends Component
       }).catch(err => alert('Something went wrong: ' + err))
     }
     else {
-      this.sendToWebApi(this.webapiaggregation, 'POST', values_send)
+      this.webapi.addAggregation(values_send)
       .then(response => {
         if (!response.ok) {
           this.toggleAreYouSureSetModal(`Error: ${response.status}, ${response.statusText}`,
@@ -430,7 +397,7 @@ export class AggregationProfilesChange extends Component
   }
 
   doDelete(idProfile) {
-    this.sendToWebApi(this.webapiaggregation + '/' + idProfile, 'DELETE')
+    this.webapi.deleteAggregation(idProfile)
     .then(response => {
         if (!response.ok) {
           alert(`Error: ${response.status}, ${response.statusText}`)
@@ -466,8 +433,8 @@ export class AggregationProfilesChange extends Component
 
     if (!this.addview) {
       this.backend.fetchAggregationProfileIdFromName(this.profile_name).then(id =>
-        Promise.all([this.fetchAggregationProfile(id), 
-          this.fetchMetricProfiles(),
+        Promise.all([this.webapi.fetchAggregationProfile(id), 
+          this.webapi.fetchMetricProfiles(),
           this.backend.fetchAggregationUserGroups()])
         .then(([aggregp, metricp, usergroups]) => {
           this.backend.fetchAggregationGroup(aggregp.name)
@@ -499,7 +466,7 @@ export class AggregationProfilesChange extends Component
           },
           groups: []
       }
-      Promise.all([this.fetchMetricProfiles(), this.backend.fetchAggregationUserGroups()])
+      Promise.all([this.webapi.fetchMetricProfiles(), this.backend.fetchAggregationUserGroups()])
         .then(([metricp, usergroups]) => this.setState(
       {
         aggregation_profile: empty_aggregation_profile,
