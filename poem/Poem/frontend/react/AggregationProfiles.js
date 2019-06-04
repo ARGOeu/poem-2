@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import {Link} from 'react-router-dom';
-import { LoadingAnim, BaseArgoView } from './UIElements';
+import { LoadingAnim, BaseArgoView, NotifyOk } from './UIElements';
 import ReactTable from 'react-table';
 import 'react-table/react-table.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -20,7 +20,6 @@ import {
   CardFooter,
   FormGroup,
   FormText} from 'reactstrap';
-import {NotificationManager} from 'react-notifications';
 
 import "react-notifications/lib/notifications.css";
 import './AggregationProfiles.css';
@@ -293,10 +292,9 @@ export class AggregationProfilesChange extends Component
 
   insertSelectPlaceholder(data, text) {
     if (data) {
-        return [text, ...data]
-    } else {
-        return [text] 
-    }
+      return [text, ...data]
+    } else
+      return [text] 
   }
 
   insertOperationFromPrevious(index, array) {
@@ -305,9 +303,8 @@ export class AggregationProfilesChange extends Component
 
       return array[last]['operation']
     }
-    else {
+    else 
       return ''
-    }
   }
 
   onSubmitHandle(values, action) {
@@ -353,13 +350,10 @@ export class AggregationProfilesChange extends Component
                 name: values_send.name, 
                 groupname: values_send.groups_field
               })
-                .then(() => {
-                  NotificationManager.success(
-                    'Aggregation profile successfully changed', 
-                    'Changed', 
-                    2000); 
-                  setTimeout(() => this.history.push('/ui/aggregationprofiles'), 2000);
-                })
+                .then(() => NotifyOk('Aggregation profile succesfully changed',
+                  'Changed',
+                  this.history.push('/ui/aggregationprofiles')
+                ))
                 .catch(err => alert('Something went wrong: ' + err))
             })
           .catch(err => alert('Something went wrong: ' + err))
@@ -382,12 +376,10 @@ export class AggregationProfilesChange extends Component
                 name: values_send.name, 
                 groupname: values_send.groups_field
               })
-                .then(() => {
-                  NotificationManager.success('Aggregation profile successfully added',
-                    'Added',
-                    2000);
-                  setTimeout(() => this.history.push('/ui/aggregationprofiles'), 2000)
-                })
+                .then(() => NotifyOk('Aggregation profile successfully added',
+                  'Added',
+                  this.history.push('/ui/aggregationprofiles')
+                ))
                 .catch(err => alert('Something went wrong: ' + err))
             })
             .catch(err => alert('Something went wrong: ' + err))
@@ -405,12 +397,10 @@ export class AggregationProfilesChange extends Component
           response.json()
             .then(this.backend.deleteAggregation(idProfile))
             .then(
-              () => {
-              NotificationManager.success('Aggregation profile successfully deleted',
+              () => NotifyOk('Aggregation profile sucessfully deleted',
                 'Deleted',
-                2000);
-              setTimeout(() => this.history.push('/ui/aggregationprofiles'), 2000);
-            })
+                this.history.push('/ui/aggregationprofiles')
+              ))
         }
     }).catch(err => alert('Something went wrong: ' + err))
   }

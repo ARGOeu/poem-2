@@ -27,6 +27,7 @@ import EOSCLogo from './eosc.png';
 import './UIElements.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSignOutAlt } from '@fortawesome/free-solid-svg-icons';
+import { NotificationManager } from 'react-notifications';
 
 
 var list_pages = ['administration','services', 'reports', 'probes',
@@ -246,6 +247,14 @@ export const LoadingAnim = () =>
     </CardBody>
   </Card>
 )
+
+
+export const NotifyOk = ({msg='', title='', callback=undefined}) => {
+  NotificationManager.success(msg,
+    title,
+    2000);
+  callback && setTimeout(() => callback, 2000);
+} 
 
 
 export const BaseArgoView = ({resourcename='', location=undefined, 
