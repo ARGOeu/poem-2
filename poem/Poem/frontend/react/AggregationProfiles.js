@@ -350,9 +350,11 @@ export class AggregationProfilesChange extends Component
                 name: values_send.name, 
                 groupname: values_send.groups_field
               })
-                .then(() => NotifyOk('Aggregation profile succesfully changed',
-                  'Changed',
-                  this.history.push('/ui/aggregationprofiles')
+                .then(() => NotifyOk({
+                  msg: 'Aggregation profile succesfully changed',
+                  title: 'Changed',
+                  callback: () => this.history.push('/ui/aggregationprofiles')
+                },
                 ))
                 .catch(err => alert('Something went wrong: ' + err))
             })
@@ -376,10 +378,11 @@ export class AggregationProfilesChange extends Component
                 name: values_send.name, 
                 groupname: values_send.groups_field
               })
-                .then(() => NotifyOk('Aggregation profile successfully added',
-                  'Added',
-                  this.history.push('/ui/aggregationprofiles')
-                ))
+                .then(() => NotifyOk({
+                  msg: 'Aggregation profile successfully added',
+                  title: 'Added',
+                  callback: () => this.history.push('/ui/aggregationprofiles')
+                }))
                 .catch(err => alert('Something went wrong: ' + err))
             })
             .catch(err => alert('Something went wrong: ' + err))
@@ -397,10 +400,11 @@ export class AggregationProfilesChange extends Component
           response.json()
             .then(this.backend.deleteAggregation(idProfile))
             .then(
-              () => NotifyOk('Aggregation profile sucessfully deleted',
-                'Deleted',
-                this.history.push('/ui/aggregationprofiles')
-              ))
+              () => NotifyOk({
+                msg: 'Aggregation profile sucessfully deleted',
+                title: 'Deleted',
+                callback: () => this.history.push('/ui/aggregationprofiles')
+              }))
         }
     }).catch(err => alert('Something went wrong: ' + err))
   }

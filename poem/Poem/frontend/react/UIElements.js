@@ -253,7 +253,7 @@ export const NotifyOk = ({msg='', title='', callback=undefined}) => {
   NotificationManager.success(msg,
     title,
     2000);
-  callback && setTimeout(() => callback, 2000);
+  setTimeout(callback, 2000);
 } 
 
 
