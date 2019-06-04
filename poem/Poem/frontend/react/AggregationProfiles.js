@@ -302,9 +302,9 @@ export class AggregationProfilesChange extends Component
 
   insertEmptyServiceForNoServices(groups) {
     groups.forEach(group => {
-        if (group.services.length === 0) {
-            group.services.push({name: '', operation: ''})
-        }
+      if (group.services.length === 0) {
+          group.services.push({name: '', operation: ''})
+      }
     })
     return groups
   }
@@ -318,14 +318,14 @@ export class AggregationProfilesChange extends Component
   }
 
   insertOperationFromPrevious(index, array) {
-      if (array.length) {
-          let last = array.length - 1
+    if (array.length) {
+      let last = array.length - 1
 
-          return array[last]['operation']
-      }
-      else {
-          return ''
-      }
+      return array[last]['operation']
+    }
+    else {
+      return ''
+    }
   }
 
   sendToWebApi(url, method, values=null) {
@@ -381,12 +381,11 @@ export class AggregationProfilesChange extends Component
         else {
           response.json()
             .then(r => {
-              this.backend.send('/api/v2/internal/aggregations/', 'PUT', 
-                {
-                  apiid: values_send.id, 
-                  name: values_send.name, 
-                  groupname: values_send.groups_field
-                })
+              this.backend.changeAggregation({ 
+                apiid: values_send.id, 
+                name: values_send.name, 
+                groupname: values_send.groups_field
+              })
                 .then(() => {
                   NotificationManager.success(
                     'Aggregation profile successfully changed', 
@@ -411,12 +410,11 @@ export class AggregationProfilesChange extends Component
         else {
           response.json()
             .then(r => { 
-              this.backend.send('/api/v2/internal/aggregations/', 'POST', 
-                {
-                  apiid: r.data.id, 
-                  name: values_send.name, 
-                  groupname: values_send.groups_field
-                })
+              this.backend.addAggregation({
+                apiid: r.data.id, 
+                name: values_send.name, 
+                groupname: values_send.groups_field
+              })
                 .then(() => {
                   NotificationManager.success('Aggregation profile successfully added',
                     'Added',
@@ -438,7 +436,7 @@ export class AggregationProfilesChange extends Component
           alert(`Error: ${response.status}, ${response.statusText}`)
         } else {
           response.json()
-            .then(this.backend.send('/api/v2/internal/aggregations/' + idProfile, 'DELETE'))
+            .then(this.backend.deleteAggregation(idProfile))
             .then(
               () => {
               NotificationManager.success('Aggregation profile successfully deleted',
@@ -755,12 +753,12 @@ export class AggregationProfilesList extends Component
     }
 
     this.location = props.location;
+    this.backend = new Backend();
   }
 
   componentDidMount() {
     this.setState({loading: true})
-    fetch('/api/v2/internal/aggregations')
-      .then(response => response.json())
+    this.backend.fetchAggregation()
       .then(json =>
         this.setState({
           list_aggregations: json, 

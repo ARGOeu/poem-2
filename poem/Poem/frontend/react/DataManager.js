@@ -4,20 +4,20 @@ export class Backend {
   fetchServices() {
     return fetch('/api/v2/internal/services')
       .then(response => response.json())
-      .catch(err => alert('Something went wrong: ' + err))
+      .catch(err => alert('Something went wrong: ' + err));
   }
 
   fetchAggregationUserGroups() {
     return fetch('/api/v2/internal/groups/aggregations')
       .then(response => response.json())
-      .catch(err => alert('Something went wrong: ' + err))
+      .catch(err => alert('Something went wrong: ' + err));
   }
 
   fetchAggregationGroup(aggregation_name) {
     return fetch('/api/v2/internal/aggregations' + '/' + aggregation_name)
       .then(response => response.json())
       .then(json => json['groupname'])
-      .catch(err => alert('Something went wrong: ' + err))
+      .catch(err => alert('Something went wrong: ' + err));
   }
 
   fetchAggregationProfileIdFromName(name) {
@@ -26,7 +26,36 @@ export class Backend {
       .then(json => json.filter((item, i) => item.name === name))
       .then(list_item => list_item[0])
       .then(profile => profile.apiid)
-      .catch(err => alert('Something went wrong: ' + err))
+      .catch(err => alert('Something went wrong: ' + err));
+  }
+
+  fetchAggregation() {
+    return fetch('/api/v2/internal/aggregations')
+      .then(response => response.json())
+      .catch(err => alert('Something went wrong: ' + err));
+  }
+
+  changeAggregation(profile) {
+    return this.send(
+      '/api/v2/internal/aggregations/',
+      'PUT',
+      profile
+    );
+  }
+
+  addAggregation(profile) {
+    return this.send(
+      '/api/v2/internal/aggregations/',
+      'POST',
+      profile
+    );
+  }
+
+  deleteAggregation(id) {
+    return this.send(
+      '/api/v2/internal/aggregations/' + id,
+      'DELETE'
+    );
   }
 
   send(url, method, values=undefined) {
@@ -44,7 +73,7 @@ export class Backend {
         'Referer': 'same-origin'
       },
       body: values && JSON.stringify(values)
-    })
+    });
   }
 
 }
