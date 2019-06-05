@@ -1,6 +1,7 @@
 import React from 'react';
 import Cookies from 'universal-cookie';
 import {
+  Alert,
   Button, 
   Breadcrumb,
   BreadcrumbItem,
@@ -26,6 +27,7 @@ import EOSCLogo from './eosc.png';
 import './UIElements.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSignOutAlt } from '@fortawesome/free-solid-svg-icons';
+import { NotificationManager } from 'react-notifications';
 
 
 var list_pages = ['administration','services', 'reports', 'probes',
@@ -78,8 +80,8 @@ export const ModalAreYouSure = ({isOpen, toggle, title, msg, onYes}) =>
 )
 
 
-export const CustomBreadcrumb = ({location, history}) => {
-
+export const CustomBreadcrumb = ({location, history}) => 
+{
   let spliturl = location.pathname.split('/');
   let breadcrumb_elements = new Array();
 
@@ -158,36 +160,33 @@ export const NavigationBar = ({history, onLogout, isOpenModal, toggle, titleModa
 
 
 export const NavigationLinks = ({location}) =>
-{
-
-  return (
-    <Nav vertical pills id="argo-navlinks" className="border-left border-right border-top rounded-top sticky-top">
-      {
-        list_pages.map((item, i) =>  
-          item === 'administration' && localStorage.getItem('authIsSuperuser') 
-            ?
-              <NavItem key={i}>
-                <NavLink
-                  tag={Link}
-                  active={location.pathname.includes(item) ? true : false} 
-                  className={location.pathname.includes(item) ? "text-white bg-info" : "text-dark"}
-                  to={'/ui/' + item}>{link_title.get(item)}
-                </NavLink>
-              </NavItem>
-            :
-              <NavItem key={i}>
-                <NavLink 
-                  tag={Link}
-                  active={location.pathname.includes(item) ? true : false} 
-                  className={location.pathname.includes(item) ? "text-white bg-info" : "text-dark"}
-                  to={'/ui/' + item}>{link_title.get(item)}
-                </NavLink>
-              </NavItem>
-        )
-      }
-    </Nav>
-  )
-}
+(
+  <Nav vertical pills id="argo-navlinks" className="border-left border-right border-top rounded-top sticky-top">
+    {
+      list_pages.map((item, i) =>  
+        item === 'administration' && localStorage.getItem('authIsSuperuser') 
+          ?
+            <NavItem key={i}>
+              <NavLink
+                tag={Link}
+                active={location.pathname.includes(item) ? true : false} 
+                className={location.pathname.includes(item) ? "text-white bg-info" : "text-dark"}
+                to={'/ui/' + item}>{link_title.get(item)}
+              </NavLink>
+            </NavItem>
+          :
+            <NavItem key={i}>
+              <NavLink 
+                tag={Link}
+                active={location.pathname.includes(item) ? true : false} 
+                className={location.pathname.includes(item) ? "text-white bg-info" : "text-dark"}
+                to={'/ui/' + item}>{link_title.get(item)}
+              </NavLink>
+            </NavItem>
+      )
+    }
+  </Nav>
+)
 
 
 const InnerFooter = ({border=false}) =>
@@ -238,6 +237,7 @@ export const Footer = ({addBorder=false}) =>
 
 
 export const LoadingAnim = () =>
+(
   <Card className="text-center">
     <CardHeader className="bg-light">
       <h4 className="text-dark">Loading data...</h4>
@@ -246,3 +246,62 @@ export const LoadingAnim = () =>
       <img src={ArgoLogoAnim} alt="ARGO logo anim" className="img-responsive" height="300px"/>
     </CardBody>
   </Card>
+)
+
+
+export const NotifyOk = ({msg='', title='', callback=undefined}) => {
+  NotificationManager.success(msg,
+    title,
+    2000);
+  setTimeout(callback, 2000);
+} 
+
+
+export const BaseArgoView = ({resourcename='', location=undefined, 
+    infoview=false, addview=false, listview=false, modal=false, 
+    state=undefined, toggle=undefined, submitperm=true, children}) => 
+(
+  <React.Fragment>
+    {
+      modal && 
+      <ModalAreYouSure 
+        isOpen={state.areYouSureModal}
+        toggle={toggle}
+        title={state.modalTitle}
+        msg={state.modalMsg}
+        onYes={state.modalFunc} />
+    }
+    <div className="d-flex align-items-center justify-content-between">
+      {
+        infoview ?
+          <h2 className="ml-3 mt-1 mb-4">{resourcename}</h2>
+        :
+          addview ? 
+            <h2 className="ml-3 mt-1 mb-4">{`Add ${resourcename}`}</h2>
+          :
+            listview ?
+              <React.Fragment>
+                <h2 className="ml-3 mt-1 mb-4">{`Select ${resourcename} to change`}</h2>
+                <Link className="btn btn-secondary" to={location.pathname + "/add"} role="button">Add</Link>
+              </React.Fragment>
+            :
+              <React.Fragment>
+                <h2 className="ml-3 mt-1 mb-4">{`Change ${resourcename}`}</h2>
+                <Link className="btn btn-secondary" to={location.pathname + "/history"} role="button">History</Link>
+              </React.Fragment>
+      }
+    </div>
+    <div id="argo-contentwrap" className="ml-2 mb-2 mt-2 p-3 border rounded">
+      {
+        !submitperm && !infoview && !listview &&
+          <Alert color='danger'>
+            <center>
+              This is a read-only instance, please request the corresponding
+              permissions to perform any changes in this form. 
+            </center>
+          </Alert>
+      }
+      {children}
+    </div>
+  </React.Fragment>
+)

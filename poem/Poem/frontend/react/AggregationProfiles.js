@@ -1,13 +1,13 @@
-import Cookies from 'universal-cookie';
 import React, { Component } from 'react';
 import {Link} from 'react-router-dom';
-import { LoadingAnim, ModalAreYouSure } from './UIElements';
+import { LoadingAnim, BaseArgoView, NotifyOk } from './UIElements';
 import ReactTable from 'react-table';
 import 'react-table/react-table.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Formik, Field, FieldArray, Form } from 'formik';
 import { faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
 import FormikEffect from './FormikEffect.js';
+import {Backend, WebApi} from './DataManager';
 import {
   Alert,
   Button, 
@@ -20,9 +20,8 @@ import {
   CardFooter,
   FormGroup,
   FormText} from 'reactstrap';
-import {NotificationManager} from 'react-notifications';
-import "react-notifications/lib/notifications.css";
 
+import "react-notifications/lib/notifications.css";
 import './AggregationProfiles.css';
 
 
@@ -40,14 +39,6 @@ const DropDown = ({field, data=[], prefix="", class_name=""}) =>
       )
     }
   </Field>
-
-
-const ButtonRemove = ({index=0, operation=f=>f}) => 
-  <Button size="sm" color="danger"
-    type="button"
-    onClick={() => operation(index)}>
-    <FontAwesomeIcon icon={faTimes}/>
-  </Button>
 
 
 const GroupList = ({name, form, list_services, list_operations, last_service_operation, write_perm}) =>
@@ -93,9 +84,11 @@ const Group = ({operation, services, list_operations, list_services, last_servic
                 />
               </Col>
               <Col sm={{size: 2}} md={{size: 1}} className="pl-1">
-                <ButtonRemove
-                  index={groupindex}
-                  operation={(write_perm) ? remove: null}/>
+                <Button size="sm" color="danger"
+                  type="button"
+                  onClick={() => (write_perm) && remove(groupindex)}>
+                  <FontAwesomeIcon icon={faTimes}/>
+                </Button>
               </Col>
             </Row>
           </CardHeader>
@@ -236,13 +229,15 @@ export class AggregationProfilesChange extends Component
       modalMsg: undefined,
     }
 
-    this.fetchMetricProfiles = this.fetchMetricProfiles.bind(this);
-    this.fetchAggregationProfile = this.fetchAggregationProfile.bind(this);
-    this.profileIdFromName = this.profileIdFromName.bind(this);
+    this.backend = new Backend();
+    this.webapi = new WebApi({
+      token: props.webapitoken,
+      metricProfiles: props.webapimetric,
+      aggregationProfiles: props.webapiaggregation}
+    )
+
     this.extractListOfMetricsProfiles = this.extractListOfMetricsProfiles.bind(this);
     this.toggleAreYouSure = this.toggleAreYouSure.bind(this);
-    this.sendToDjango = this.sendToDjango.bind(this);
-    this.sendToWebApi= this.sendToWebApi.bind(this);
     this.doChange = this.doChange.bind(this);
     this.doDelete = this.doDelete.bind(this);
     this.toggleAreYouSureSetModal = this.toggleAreYouSureSetModal.bind(this);
@@ -264,47 +259,6 @@ export class AggregationProfilesChange extends Component
         modalMsg: msg,
         modalTitle: title,
       }));
-  }
-
-  fetchUserGroups() {
-    return fetch('/api/v2/internal/groups/aggregations')
-      .then(response => response.json())
-      .catch(err => console.log('Something went wrong: ' + err))
-  }
-
-  fetchAggregationGroup(aggregation_name) {
-    return fetch('/api/v2/internal/aggregations' + '/' + aggregation_name)
-      .then(response => response.json())
-      .then(json => json['groupname'])
-      .catch(err => console.log('Something went wrong: ' + err))
-  }
-
-  fetchMetricProfiles() {
-    return fetch('https://web-api-devel.argo.grnet.gr/api/v2/metric_profiles',
-      {headers: {"Accept": "application/json",
-          "x-api-key": this.token}})
-      .then(response => response.json())
-      .then(json => json['data']) 
-      .catch(err => alert('Something went wrong: ' + err))
-  }
-
-  profileIdFromName() {
-    return fetch('/api/v2/internal/aggregations')
-      .then(response => response.json())
-      .then(json => json.filter((item, i) => item.name === this.profile_name))
-      .then(list_item => list_item[0])
-      .then(profile => profile.apiid)
-      .catch(err => console.log('Something went wrong: ' + err))
-  }
-
-  fetchAggregationProfile(idProfile) {
-    return fetch('https://web-api-devel.argo.grnet.gr/api/v2/aggregation_profiles' + '/' + idProfile, 
-      {headers: {"Accept": "application/json",
-            "x-api-key": this.token}})
-      .then(response => response.json())
-      .then(json => json['data'])
-      .then(array => array[0])
-      .catch(err => alert('Something went wrong: ' + err))
   }
 
   extractListOfServices(profileFromAggregation, listMetricProfiles) {
@@ -329,63 +283,28 @@ export class AggregationProfilesChange extends Component
 
   insertEmptyServiceForNoServices(groups) {
     groups.forEach(group => {
-        if (group.services.length === 0) {
-            group.services.push({name: '', operation: ''})
-        }
+      if (group.services.length === 0) {
+          group.services.push({name: '', operation: ''})
+      }
     })
     return groups
   }
 
   insertSelectPlaceholder(data, text) {
     if (data) {
-        return [text, ...data]
-    } else {
-        return [text] 
-    }
+      return [text, ...data]
+    } else
+      return [text] 
   }
 
   insertOperationFromPrevious(index, array) {
-      if (array.length) {
-          let last = array.length - 1
+    if (array.length) {
+      let last = array.length - 1
 
-          return array[last]['operation']
-      }
-      else {
-          return ''
-      }
-  }
-
-  sendToDjango(url, method, values=null) {
-    const cookies = new Cookies()
-
-    return fetch(url, {
-      method: method,
-      mode: 'cors',
-      cache: 'no-cache',
-      credentials: 'same-origin',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'X-CSRFToken': cookies.get('csrftoken'),
-        'Referer': 'same-origin'
-      },
-      body: values ? JSON.stringify(values) : null 
-    })
-  }
-
-  sendToWebApi(url, method, values=null) {
-    return fetch(url, {
-      method: method,
-      mode: 'cors',
-      cache: 'no-cache',
-      credentials: 'same-origin',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'x-api-key': this.token
-      },
-      body: values && JSON.stringify(values) 
-    })
+      return array[last]['operation']
+    }
+    else 
+      return ''
   }
 
   onSubmitHandle(values, action) {
@@ -416,7 +335,7 @@ export class AggregationProfilesChange extends Component
     values_send.metric_profile = match_profile[0]
 
     if (!this.addview) {
-      this.sendToWebApi(this.webapiaggregation + '/' + values_send.id, 'PUT', values_send)
+      this.webapi.changeAggregation(values_send)
       .then(response => {
         if (!response.ok) {
           this.toggleAreYouSureSetModal(`Error: ${response.status}, ${response.statusText}`, 
@@ -426,19 +345,17 @@ export class AggregationProfilesChange extends Component
         else {
           response.json()
             .then(r => {
-              this.sendToDjango('/api/v2/internal/aggregations/', 'PUT', 
-                {
-                  apiid: values_send.id, 
-                  name: values_send.name, 
-                  groupname: values_send.groups_field
-                })
-                .then(() => {
-                  NotificationManager.success(
-                    'Aggregation profile successfully changed', 
-                    'Changed', 
-                    2000); 
-                  setTimeout(() => this.history.push('/ui/aggregationprofiles'), 2000);
-                })
+              this.backend.changeAggregation({ 
+                apiid: values_send.id, 
+                name: values_send.name, 
+                groupname: values_send.groups_field
+              })
+                .then(() => NotifyOk({
+                  msg: 'Aggregation profile succesfully changed',
+                  title: 'Changed',
+                  callback: () => this.history.push('/ui/aggregationprofiles')
+                },
+                ))
                 .catch(err => alert('Something went wrong: ' + err))
             })
           .catch(err => alert('Something went wrong: ' + err))
@@ -446,7 +363,7 @@ export class AggregationProfilesChange extends Component
       }).catch(err => alert('Something went wrong: ' + err))
     }
     else {
-      this.sendToWebApi(this.webapiaggregation, 'POST', values_send)
+      this.webapi.addAggregation(values_send)
       .then(response => {
         if (!response.ok) {
           this.toggleAreYouSureSetModal(`Error: ${response.status}, ${response.statusText}`,
@@ -456,18 +373,16 @@ export class AggregationProfilesChange extends Component
         else {
           response.json()
             .then(r => { 
-              this.sendToDjango('/api/v2/internal/aggregations/', 'POST', 
-                {
-                  apiid: r.data.id, 
-                  name: values_send.name, 
-                  groupname: values_send.groups_field
-                })
-                .then(() => {
-                  NotificationManager.success('Aggregation profile successfully added',
-                    'Added',
-                    2000);
-                  setTimeout(() => this.history.push('/ui/aggregationprofiles'), 2000)
-                })
+              this.backend.addAggregation({
+                apiid: r.data.id, 
+                name: values_send.name, 
+                groupname: values_send.groups_field
+              })
+                .then(() => NotifyOk({
+                  msg: 'Aggregation profile successfully added',
+                  title: 'Added',
+                  callback: () => this.history.push('/ui/aggregationprofiles')
+                }))
                 .catch(err => alert('Something went wrong: ' + err))
             })
             .catch(err => alert('Something went wrong: ' + err))
@@ -477,20 +392,19 @@ export class AggregationProfilesChange extends Component
   }
 
   doDelete(idProfile) {
-    this.sendToWebApi(this.webapiaggregation + '/' + idProfile, 'DELETE')
+    this.webapi.deleteAggregation(idProfile)
     .then(response => {
         if (!response.ok) {
           alert(`Error: ${response.status}, ${response.statusText}`)
         } else {
           response.json()
-            .then(this.sendToDjango('/api/v2/internal/aggregations/' + idProfile, 'DELETE'))
+            .then(this.backend.deleteAggregation(idProfile))
             .then(
-              () => {
-              NotificationManager.success('Aggregation profile successfully deleted',
-                'Deleted',
-                2000);
-              setTimeout(() => this.history.push('/ui/aggregationprofiles'), 2000);
-            })
+              () => NotifyOk({
+                msg: 'Aggregation profile sucessfully deleted',
+                title: 'Deleted',
+                callback: () => this.history.push('/ui/aggregationprofiles')
+              }))
         }
     }).catch(err => alert('Something went wrong: ' + err))
   }
@@ -512,12 +426,12 @@ export class AggregationProfilesChange extends Component
     this.setState({loading: true})
 
     if (!this.addview) {
-      this.profileIdFromName().then(id =>
-        Promise.all([this.fetchAggregationProfile(id), 
-          this.fetchMetricProfiles(),
-          this.fetchUserGroups()])
+      this.backend.fetchAggregationProfileIdFromName(this.profile_name).then(id =>
+        Promise.all([this.webapi.fetchAggregationProfile(id), 
+          this.webapi.fetchMetricProfiles(),
+          this.backend.fetchAggregationUserGroups()])
         .then(([aggregp, metricp, usergroups]) => {
-          this.fetchAggregationGroup(aggregp.name)
+          this.backend.fetchAggregationGroup(aggregp.name)
           .then(group =>
             this.setState(
             {
@@ -546,7 +460,7 @@ export class AggregationProfilesChange extends Component
           },
           groups: []
       }
-      Promise.all([this.fetchMetricProfiles(), this.fetchUserGroups()])
+      Promise.all([this.webapi.fetchMetricProfiles(), this.backend.fetchAggregationUserGroups()])
         .then(([metricp, usergroups]) => this.setState(
       {
         aggregation_profile: empty_aggregation_profile,
@@ -574,25 +488,14 @@ export class AggregationProfilesChange extends Component
       && this.token) {
 
       return (
-      <React.Fragment>
-        <ModalAreYouSure 
-          isOpen={this.state.areYouSureModal}
+        <BaseArgoView
+          resourcename='aggregation profile'
+          location={this.location}
+          addview={this.addview}
+          modal={true}
+          state={this.state}
           toggle={this.toggleAreYouSure}
-          title={this.state.modalTitle}
-          msg={this.state.modalMsg}
-          onYes={this.state.modalFunc} />
-        <div className="d-flex align-items-center justify-content-between">
-          {
-            this.addview ? 
-              <h2 className="ml-3 mt-1 mb-4">Add aggregation profile</h2>
-            :
-              <React.Fragment>
-                <h2 className="ml-3 mt-1 mb-4">Change aggregation profile</h2>
-                <Link className="btn btn-secondary" to={this.location.pathname + "/history"} role="button">History</Link>
-              </React.Fragment>
-          }
-        </div>
-        <div id="argo-contentwrap" className="ml-2 mb-2 mt-2 p-3 border rounded">
+          submitperm={write_perm}>
           <Formik
             initialValues={{
               id: aggregation_profile.id,
@@ -775,7 +678,7 @@ export class AggregationProfilesChange extends Component
                     />)}
                 />
                 {
-                  (write_perm) ?
+                  (write_perm) &&
                     <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
                       <Button
                         color="danger"
@@ -788,20 +691,11 @@ export class AggregationProfilesChange extends Component
                       </Button>
                       <Button color="success" id="submit-button" type="submit">Save</Button>
                     </div>
-                  :
-                    <div className="submit-row bg-danger text-white p-3 mt-5 rounded">
-                      <center>
-                        This is a read-only instance, please
-                        request the corresponding permissions
-                        to perform any changes in this form. 
-                      </center>
-                    </div>
                 }
               </Form>
             )}
           />
-        </div>
-      </React.Fragment>
+        </BaseArgoView>
       )
     }
     else
@@ -818,12 +712,14 @@ export class AggregationProfilesList extends Component
       loading: false,
       list_aggregations: null
     }
+
+    this.location = props.location;
+    this.backend = new Backend();
   }
 
   componentDidMount() {
     this.setState({loading: true})
-    fetch('/api/v2/internal/aggregations')
-      .then(response => response.json())
+    this.backend.fetchAggregation()
       .then(json =>
         this.setState({
           list_aggregations: json, 
@@ -854,20 +750,17 @@ export class AggregationProfilesList extends Component
 
     else if (!loading && list_aggregations) {
       return (
-        <React.Fragment>
-          <div className="d-flex align-items-center justify-content-between">
-            <h2 className="ml-3 mt-1 mb-4">Select aggregation profile to change</h2> 
-            <Link className="btn btn-secondary" to="/ui/aggregationprofiles/add" role="button">Add</Link>
-          </div>
-          <div id="argo-contentwrap" className="ml-2 mb-2 mt-2 p-3 border rounded">
-            <ReactTable
-              data={list_aggregations}
-              columns={columns}
-              className="-striped -highlight"
-              defaultPageSize={10}
-            />
-          </div>
-        </React.Fragment>
+        <BaseArgoView 
+          resourcename='aggregation profile'
+          location={this.location}
+          listview={true}>
+          <ReactTable
+            data={list_aggregations}
+            columns={columns}
+            className="-striped -highlight"
+            defaultPageSize={10}
+          />
+        </BaseArgoView>
       )
     }
     else 
