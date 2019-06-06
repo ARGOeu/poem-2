@@ -62,18 +62,22 @@ class App extends Component {
 
   fetchConfigOptions() {
     return fetch('/api/v2/internal/config_options')
-      .then(response => response.json())
-      .catch(err => alert('Something went wrong: ' + err));
+      .then(response => {
+        if (response.ok)
+          return response.json();
+      })
   }
 
   fetchToken() {
     return fetch('/api/v2/internal/tokens/WEB-API')
-      .then(response => response.json())
-      .catch(err => alert('Something went wrong: ' + err))
+      .then(response => {
+        if (response.ok)
+          return response.json();
+      })
   }
 
   componentDidMount() {
-    Promise.all([this.fetchToken(), this.fetchConfigOptions()])
+    this.state.isLogged && Promise.all([this.fetchToken(), this.fetchConfigOptions()])
       .then(([token, options]) => {
         this.setState({
           token: token,
