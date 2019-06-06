@@ -88,6 +88,14 @@ class App extends Component {
       })
   }
 
+  componentDidUpdate(prevProps, prevState) {
+    // Intentional push to /ui/home route again if history.push 
+    // from Login does not trigger rendering of Home 
+    if (this.state.isLogged !== prevState.isLogged && 
+      this.state.token === undefined)
+      window.location = '/ui/home';
+  }
+
   render() {
     if (!this.state.isLogged) {
       return (
