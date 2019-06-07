@@ -9,7 +9,6 @@ import { faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
 import FormikEffect from './FormikEffect.js';
 import {Backend, WebApi} from './DataManager';
 import {
-  Alert,
   Button, 
   Row, 
   Col, 
