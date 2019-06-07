@@ -62,18 +62,22 @@ class App extends Component {
 
   fetchConfigOptions() {
     return fetch('/api/v2/internal/config_options')
-      .then(response => response.json())
-      .catch(err => alert('Something went wrong: ' + err));
+      .then(response => {
+        if (response.ok)
+          return response.json();
+      })
   }
 
   fetchToken() {
     return fetch('/api/v2/internal/tokens/WEB-API')
-      .then(response => response.json())
-      .catch(err => alert('Something went wrong: ' + err))
+      .then(response => {
+        if (response.ok)
+          return response.json();
+      })
   }
 
   componentDidMount() {
-    Promise.all([this.fetchToken(), this.fetchConfigOptions()])
+    this.state.isLogged && Promise.all([this.fetchToken(), this.fetchConfigOptions()])
       .then(([token, options]) => {
         this.setState({
           token: token,
@@ -82,6 +86,14 @@ class App extends Component {
           tenantName: options.result.tenant_name
         })
       })
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    // Intentional push to /ui/home route again if history.push 
+    // from Login does not trigger rendering of Home 
+    if (this.state.isLogged !== prevState.isLogged && 
+      this.state.token === undefined)
+      window.location = '/ui/home';
   }
 
   render() {
