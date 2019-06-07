@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import Login from './Login';
-import { MetricProfiles, MetricProfilesList } from './MetricProfiles';
+import { MetricProfilesChange, MetricProfilesList } from './MetricProfiles';
 import Home from './Home';
 import Probes from './Probes';
 import Metrics from './Metrics';
@@ -156,6 +156,13 @@ class App extends Component {
                   <Route exact path="/ui/probes" component={Probes} />
                   <Route exact path="/ui/metrics" component={Metrics} />
                   <Route exact path="/ui/metricprofiles" component={MetricProfilesList} />
+                  <Route exact path="/ui/metricprofiles/:name" 
+                    render={props => <MetricProfilesChange 
+                      {...props}
+                      webapimetric={this.state.webApiMetric}
+                      webapitoken={this.state.token}
+                      tenantname={this.state.tenantName}/>}
+                    />
                   <Route exact path="/ui/aggregationprofiles" component={AggregationProfilesList} />
                   <Route exact path="/ui/aggregationprofiles/add"
                     render={props => <AggregationProfilesChange 

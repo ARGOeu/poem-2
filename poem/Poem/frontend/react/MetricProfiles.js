@@ -6,12 +6,55 @@ import ReactTable from 'react-table';
 import 'react-table/react-table.css';
 
 
-const MetricProfiles = (props) =>
-(
-  <div>
-    "I'm MetricProfiles"
-  </div>
-)
+export class MetricProfilesChange extends Component 
+{
+  constructor(props) {
+    super(props);
+
+    this.tenant_name = props.tenant_name;
+    this.token = props.webapitoken;
+    this.webapimetric = props.webapimetric;
+    this.profile_name = props.match.params.name;
+    this.addview = props.addview
+    this.history = props.history;
+    this.location = props.location;
+
+    this.state = {
+      metric_profiles: {},
+      write_perm: false,
+      areYouSureModal: false,
+      loading: false,
+      modalFunc: undefined,
+      modalTitle: undefined,
+      modalMsg: undefined,
+    }
+
+  }
+
+  toggleAreYouSure() {
+    this.setState(prevState => 
+      ({areYouSureModal: !prevState.areYouSureModal}));
+  }
+
+  render() {
+    const {write_perm, loading} = this.state;
+
+    return (
+      <BaseArgoView
+        resourcename='Metric profile'
+        location={this.location}
+        addview={this.addview}
+        modal={true}
+        state={this.state}
+        toggle={this.toggleAreYouSure}
+        submitperm={write_perm}>
+        <div>
+          "I'm MetricProfiles"
+        </div>
+      </BaseArgoView>
+    )
+  }
+}
 
 
 export class MetricProfilesList extends Component
@@ -78,5 +121,3 @@ export class MetricProfilesList extends Component
       return null
   }
 }
-
-export default MetricProfiles;
