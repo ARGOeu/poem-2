@@ -328,7 +328,22 @@ class ListMetricProfiles(APIView):
     authentication_classes= (SessionAuthentication,)
 
     def get(self, request, profile_name=None):
-        pass
+        sync_webapi(settings.WEBAPI_METRIC, poem_models.MetricProfiles)
+
+        if profile_name:
+            try:
+                profile = poem_models.MetricProfiles.objects.get(name=profile_name)
+                serializer = serializers.MetricProfileSerializer(profile)
+                return Response(serializer.data)
+
+            except poem_models.MetricProfiles.DoesNotExist:
+                raise NotFound(status=404,
+                            detail='Metric profile not found')
+
+        else:
+            profiles = poem_models.MetricProfiles.objects.all()
+            serializer = serializers.MetricProfileSerializer(profiles, many=True)
+            return Response(serializer.data)
 
 
 class ListProbes(APIView):

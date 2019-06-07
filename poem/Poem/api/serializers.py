@@ -9,6 +9,12 @@ class AggregationProfileSerializer(serializers.ModelSerializer):
         model = models.Aggregation
 
 
+class MetricProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        fields = ('name', 'apiid', 'groupname')
+        model = models.MetricProfiles
+
+
 class UsersSerializer(serializers.ModelSerializer):
     class Meta:
         fields = ('first_name', 'last_name', 'username', 'is_active',
