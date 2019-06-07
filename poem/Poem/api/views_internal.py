@@ -22,6 +22,32 @@ from Poem import settings
 import requests
 
 
+def sync_webapi(api, model):
+    token = APIKey.objects.get(client_id="WEB-API")
+
+    headers, payload = dict(), dict()
+    headers = {'Accept': 'application/json', 'x-api-key': token.token}
+    response = requests.get(api,
+                            headers=headers,
+                            timeout=180)
+    response.raise_for_status()
+    data = response.json()['data']
+
+    data_api = set([p['id'] for p in data])
+    data_db = set(model.objects.all().values_list('apiid', flat=True))
+    entries_not_indb = data_api.difference(data_db)
+
+    new_entries = []
+    for p in data:
+        if p['id'] in entries_not_indb:
+            new_entries.append(model(name=p['name'], apiid=p['id'], groupname=''))
+    if new_entries:
+        model.objects.bulk_create(new_entries)
+
+    entries_deleted_onapi = data_db.difference(data_api)
+    for p in entries_deleted_onapi:
+        model.objects.get(apiid=p).delete()
+
 
 class Tree(object):
     class Node:
@@ -265,34 +291,8 @@ class ListAggregations(APIView):
 
         return Response(status=status.HTTP_201_CREATED)
 
-    def _refresh_profiles(self):
-        token = APIKey.objects.get(client_id="WEB-API")
-
-        headers, payload = dict(), dict()
-        headers = {'Accept': 'application/json', 'x-api-key': token.token}
-        response = requests.get(settings.WEBAPI_AGGREGATION,
-                                headers=headers,
-                                timeout=180)
-        response.raise_for_status()
-        profiles = response.json()['data']
-
-        profiles_api = set([p['id'] for p in profiles])
-        profiles_db = set(poem_models.Aggregation.objects.all().values_list('apiid', flat=True))
-        aggregations_not_indb = profiles_api.difference(profiles_db)
-
-        new_aggregations = []
-        for p in profiles:
-            if p['id'] in aggregations_not_indb:
-                new_aggregations.append(poem_models.Aggregation(name=p['name'], apiid=p['id'], groupname=''))
-        if new_aggregations:
-            poem_models.Aggregation.objects.bulk_create(new_aggregations)
-
-        aggregations_deleted_onapi = profiles_db.difference(profiles_api)
-        for p in aggregations_deleted_onapi:
-            poem_models.Aggregation.objects.get(apiid=p).delete()
-
     def get(self, request, aggregation_name=None):
-        self._refresh_profiles()
+        sync_webapi(settings.WEBAPI_AGGREGATION, poem_models.Aggregation)
 
         if aggregation_name:
             try:
@@ -326,7 +326,9 @@ class ListAggregations(APIView):
 
 class ListMetricProfiles(APIView):
     authentication_classes= (SessionAuthentication,)
-    pass
+
+    def get(self, request, profile_name=None):
+        pass
 
 
 class ListProbes(APIView):
