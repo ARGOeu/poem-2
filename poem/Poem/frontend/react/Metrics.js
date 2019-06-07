@@ -12,15 +12,13 @@ import {
   Navbar,
   NavbarToggler,
   Collapse} from 'reactstrap';
-import Cookies from 'universal-cookie';
-import { NavigationBar, NavigationLinks } from './UIElements'
+import {NavigationBar, NavigationLinks} from './UIElements';
 
-
-const MetricProfiles = (props) =>
+const Metrics = (props) =>
 (
   <div>
-    "I'm MetricProfiles"
+    I'm Metrics 
   </div>
 )
 
-export default MetricProfiles;
+export default Metrics;

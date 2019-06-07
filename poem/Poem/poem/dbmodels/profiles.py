@@ -31,6 +31,7 @@ class Profile(models.Model):
     def __str__(self):
         return u'%s' % (self.name)
 
+
 class GroupOfProfiles(models.Model):
     name = models.CharField(_('name'), max_length=80, unique=True)
     permissions = models.ManyToManyField(Permission,

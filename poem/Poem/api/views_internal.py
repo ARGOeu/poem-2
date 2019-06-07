@@ -324,6 +324,11 @@ class ListAggregations(APIView):
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
+class ListMetricProfiles(APIView):
+    authentication_classes= (SessionAuthentication,)
+    pass
+
+
 class ListProbes(APIView):
     authentication_classes = (SessionAuthentication,)
 

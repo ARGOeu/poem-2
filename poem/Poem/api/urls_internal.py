@@ -18,4 +18,6 @@ urlpatterns = [
     path('probes/<str:probe_name>', views_internal.ListProbes.as_view(), name='probes'),
     path('aggregations/', views_internal.ListAggregations.as_view(), name='aggregations'),
     path('aggregations/<str:aggregation_name>', views_internal.ListAggregations.as_view(), name='aggregations'),
+    path('metricprofiles/', views_internal.ListMetricProfiles.as_view(), name='metricprofiles'),
+    path('metricprofiles/<str:profile_name>', views_internal.ListMetricProfiles.as_view(), name='metricprofiles'),
 ]
