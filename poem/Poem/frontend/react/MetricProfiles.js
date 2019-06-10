@@ -3,7 +3,35 @@ import {Link} from 'react-router-dom';
 import {Backend, WebApi} from './DataManager';
 import { LoadingAnim, BaseArgoView } from './UIElements';
 import ReactTable from 'react-table';
+import { Formik, Field, FieldArray, Form } from 'formik';
 import 'react-table/react-table.css';
+import {
+  Button, 
+  Row, 
+  Col, 
+  Card, 
+  CardHeader, 
+  CardBody,
+  Label,
+  CardFooter,
+  FormGroup,
+  FormText} from 'reactstrap';
+
+
+const DropDown = ({field, data=[], prefix="", class_name=""}) => 
+  <Field component="select"
+    name={prefix ? `${prefix}.${field.name}` : field.name}
+    required={true}
+    className={`form-control ${class_name}`}
+  >
+    {
+      data.map((name, i) => 
+        i === 0 ?
+        <option key={i} hidden>{name}</option> :
+        <option key={i} value={name}>{name}</option>
+      )
+    }
+  </Field>
 
 
 export class MetricProfilesChange extends Component 
@@ -53,6 +81,7 @@ export class MetricProfilesChange extends Component
                 {
                   metric_profile: metricp,
                   groups_field: group,
+                  list_user_groups: usergroups,
                   write_perm: usergroups.indexOf(group) >= 0,
                   list_services: metricp.services,
                   loading: false
@@ -62,13 +91,21 @@ export class MetricProfilesChange extends Component
     }
   }
 
+  insertSelectPlaceholder(data, text) {
+    if (data) {
+      return [text, ...data]
+    } else
+      return [text] 
+  }
+
   toggleAreYouSure() {
     this.setState(prevState => 
       ({areYouSureModal: !prevState.areYouSureModal}));
   }
 
   render() {
-    const {write_perm, loading, metric_profile, list_services} = this.state;
+    const {write_perm, loading, metric_profile, 
+      list_services, groups_field, list_user_groups} = this.state;
 
     if (loading)
       return (<LoadingAnim />) 
@@ -83,9 +120,66 @@ export class MetricProfilesChange extends Component
           state={this.state}
           toggle={this.toggleAreYouSure}
           submitperm={write_perm}>
-          <div>
-            "I'm MetricProfiles"
-          </div>
+          <Formik
+            initialValues = {{
+              id: metric_profile.id,
+              name: metric_profile.name,
+              groups_field: groups_field
+            }}
+            onSubmit = {(values, actions) => alert(JSON.stringify(values))}
+            render = {props => (
+              <Form>
+                <FormGroup>
+                  <Row>
+                    <Col md={4}>
+                      <Label for="metricProfileName">Metric profile name:</Label>
+                      <Field 
+                        type="text" 
+                        name="name" 
+                        placeholder="Name of metric profile"
+                        required={true}
+                        className="form-control form-control-lg"
+                        id="metricProfileName"
+                      />
+                    </Col>
+                  </Row>
+                </FormGroup>
+                <Row>
+                  <Col md={6}>
+                    <FormGroup>
+                      <Row>
+                        <Col md={6}>
+                          <Label>Group: </Label>
+                        </Col>
+                      </Row>
+                      <Row>
+                        <Col md={4}>
+                          <Field 
+                            name="groups_field"
+                            component={DropDown} 
+                            data={this.insertSelectPlaceholder(
+                              (write_perm) ?
+                                list_user_groups :
+                                [groups_field, ...list_user_groups]
+                            )}
+                            required={true}
+                            class_name='custom-select'
+                          /> 
+                        </Col>
+                      </Row>
+                      <Row>
+                        <Col md={12}>
+                          <FormText>
+                            Metric profile is a member of a given group. 
+                          </FormText>
+                        </Col>
+                      </Row>
+                    </FormGroup>
+                  </Col>
+                </Row>
+              </Form>
+            )} 
+          />
         </BaseArgoView>
       )
     }

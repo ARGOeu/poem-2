@@ -496,7 +496,7 @@ export class AggregationProfilesChange extends Component
           toggle={this.toggleAreYouSure}
           submitperm={write_perm}>
           <Formik
-            initialValues={{
+            initialValues = {{
               id: aggregation_profile.id,
               name: aggregation_profile.name,
               groups_field: groups_field, 
