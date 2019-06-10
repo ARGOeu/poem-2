@@ -20,12 +20,10 @@ export class Backend {
       .catch(err => alert('Something went wrong: ' + err));
   }
 
-  fetchAggregationProfileIdFromName(name) {
-    return fetch('/api/v2/internal/aggregations')
+  fetchAggregationProfileIdFromName(aggregation_name) {
+    return fetch('/api/v2/internal/aggregations' + '/' + aggregation_name)
       .then(response => response.json())
-      .then(json => json.filter((item, i) => item.name === name))
-      .then(list_item => list_item[0])
-      .then(profile => profile.apiid)
+      .then(json => json.apiid)
       .catch(err => alert('Something went wrong: ' + err));
   }
 
@@ -37,6 +35,26 @@ export class Backend {
 
   fetchMetricProfiles() {
     return fetch('/api/v2/internal/metricprofiles')
+      .then(response => response.json())
+      .catch(err => alert('Something went wrong: ' + err));
+  }
+
+  fetchMetricProfileGroup(metricprofile_name) {
+    return fetch('/api/v2/internal/metricprofiles' + '/' + metricprofile_name)
+      .then(response => response.json())
+      .then(json => json['groupname'])
+      .catch(err => alert('Something went wrong: ' + err));
+  }
+
+  fetchMetricProfileIdFromName(metricprofile_name) {
+    return fetch('/api/v2/internal/metricprofiles' + '/' + metricprofile_name)
+      .then(response => response.json())
+      .then(json => json.apiid)
+      .catch(err => alert('Something went wrong: ' + err));
+  }
+
+  fetchMetricProfileUserGroups() {
+    return fetch('/api/v2/internal/groups/metricprofiles')
       .then(response => response.json())
       .catch(err => alert('Something went wrong: ' + err));
   }
@@ -110,8 +128,8 @@ export class WebApi {
       .catch(err => alert('Something went wrong: ' + err));
   }
 
-  fetchAggregationProfile(id) {
-    return fetch(this.aggregationprofiles + '/' + id, 
+  fetchMetricProfile(id) {
+    return fetch(this.metricprofiles + '/' + id, 
       {headers: 
         {
           "Accept": "application/json",
@@ -124,19 +142,18 @@ export class WebApi {
       .catch(err => alert('Something went wrong: ' + err));
   }
 
-  send(url, method, values=null) {
-    return fetch(url, {
-      method: method,
-      mode: 'cors',
-      cache: 'no-cache',
-      credentials: 'same-origin',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'x-api-key': this.token
-      },
-      body: values && JSON.stringify(values) 
-    });
+  fetchAggregationProfile(id) {
+    return fetch(this.aggregationprofiles + '/' + id, 
+      {headers: 
+        {
+          "Accept": "application/json",
+          "x-api-key": this.token
+        }
+      })
+      .then(response => response.json())
+      .then(json => json['data'])
+      .then(array => array[0])
+      .catch(err => alert('Something went wrong: ' + err));
   }
 
   changeAggregation(profile) {
@@ -160,6 +177,21 @@ export class WebApi {
       this.aggregationprofiles + '/' + id,
       'DELETE'
     );
+  }
+
+  send(url, method, values=null) {
+    return fetch(url, {
+      method: method,
+      mode: 'cors',
+      cache: 'no-cache',
+      credentials: 'same-origin',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'x-api-key': this.token
+      },
+      body: values && JSON.stringify(values) 
+    });
   }
 
 }

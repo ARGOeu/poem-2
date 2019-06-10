@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import {Link} from 'react-router-dom';
-import {Backend} from './DataManager';
+import {Backend, WebApi} from './DataManager';
 import { LoadingAnim, BaseArgoView } from './UIElements';
 import ReactTable from 'react-table';
 import 'react-table/react-table.css';
@@ -20,8 +20,10 @@ export class MetricProfilesChange extends Component
     this.location = props.location;
 
     this.state = {
-      metric_profiles: {},
+      metric_profile: {},
+      groups_field: undefined,
       write_perm: false,
+      list_services: undefined,
       areYouSureModal: false,
       loading: false,
       modalFunc: undefined,
@@ -29,6 +31,35 @@ export class MetricProfilesChange extends Component
       modalMsg: undefined,
     }
 
+    this.backend = new Backend();
+    this.webapi = new WebApi({
+      token: props.webapitoken,
+      metricProfiles: props.webapimetric}
+    )
+
+  }
+  
+  componentDidMount() {
+    this.setState({loading: true})
+
+    if (!this.addview) {
+      this.backend.fetchMetricProfileIdFromName(this.profile_name).then(id =>
+        Promise.all([this.webapi.fetchMetricProfile(id),
+          this.backend.fetchMetricProfileUserGroups()])
+        .then(([metricp, usergroups]) => {
+          this.backend.fetchMetricProfileGroup(metricp.name)
+            .then(group => 
+              this.setState(
+                {
+                  metric_profile: metricp,
+                  groups_field: group,
+                  write_perm: usergroups.indexOf(group) >= 0,
+                  list_services: metricp.services,
+                  loading: false
+                }
+              ))
+        }))
+    }
   }
 
   toggleAreYouSure() {
@@ -37,22 +68,29 @@ export class MetricProfilesChange extends Component
   }
 
   render() {
-    const {write_perm, loading} = this.state;
+    const {write_perm, loading, metric_profile, list_services} = this.state;
 
-    return (
-      <BaseArgoView
-        resourcename='Metric profile'
-        location={this.location}
-        addview={this.addview}
-        modal={true}
-        state={this.state}
-        toggle={this.toggleAreYouSure}
-        submitperm={write_perm}>
-        <div>
-          "I'm MetricProfiles"
-        </div>
-      </BaseArgoView>
-    )
+    if (loading)
+      return (<LoadingAnim />) 
+
+    else if (!loading && metric_profile && list_services) {
+      return (
+        <BaseArgoView
+          resourcename='Metric profile'
+          location={this.location}
+          addview={this.addview}
+          modal={true}
+          state={this.state}
+          toggle={this.toggleAreYouSure}
+          submitperm={write_perm}>
+          <div>
+            "I'm MetricProfiles"
+          </div>
+        </BaseArgoView>
+      )
+    }
+    else 
+      return null
   }
 }
 
