@@ -245,6 +245,9 @@ class ListGroupsForUser(APIView):
             groupsofmetrics = poem_models.GroupOfMetrics.objects.all().values_list('name', flat=True)
             results.update({'metrics': groupsofmetrics})
 
+            groupsofmetricprofiles = poem_models.GroupOfMetricProfiles.objects.all().values_list('name', flat=True)
+            results.update({'metricprofiles': groupsofmetricprofiles})
+
         else:
             groupsofaggregations = user.groupsofaggregations.all().values_list('name', flat=True)
             results = {'aggregations': groupsofaggregations}
@@ -257,6 +260,9 @@ class ListGroupsForUser(APIView):
 
             groupsofmetrics = user.groupsofmetrics.all().values_list('name', flat=True)
             results.update({'metrics': groupsofmetrics})
+
+            groupsofmetricprofiles = user.groupofmetricprofiles.objects.all().values_list('name', flat=True)
+            results.update({'metricprofiles': groupsofmetricprofiles})
 
         if group:
             return Response(results[group.lower()])
