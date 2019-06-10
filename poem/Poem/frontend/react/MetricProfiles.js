@@ -64,9 +64,8 @@ export class MetricProfilesChange extends Component
       token: props.webapitoken,
       metricProfiles: props.webapimetric}
     )
-
   }
-  
+
   componentDidMount() {
     this.setState({loading: true})
 
@@ -82,7 +81,7 @@ export class MetricProfilesChange extends Component
                   metric_profile: metricp,
                   groups_field: group,
                   list_user_groups: usergroups,
-                  write_perm: usergroups.indexOf(group) >= 0,
+                  write_perm: localStorage.getItem('authIsSuperuser') === 'true' || usergroups.indexOf(group) >= 0,
                   list_services: metricp.services,
                   loading: false
                 }
