@@ -58,14 +58,14 @@ const ServicesList = ({services, serviceflavours_all, metrics_all, form, remove,
           />
         </Col>
         <Col md={{size: 2}}>
-          <Button size="sm" color="light"
+          <Button color="light"
             type="button"
             onClick={() => remove(index)}>
             <FontAwesomeIcon icon={faTimes}/>
           </Button>
         </Col>
         <Col md={{size: 2}}>
-          <Button size="sm" color="light"
+          <Button color="light"
             type="button"
             onClick={() => insert(index + 1, {service: '', metric: ''})}>
             <FontAwesomeIcon icon={faPlus}/>
@@ -109,6 +109,9 @@ export class MetricProfilesChange extends Component
       token: props.webapitoken,
       metricProfiles: props.webapimetric}
     )
+
+    this.toggleAreYouSure = this.toggleAreYouSure.bind(this);
+    this.toggleAreYouSureSetModal = this.toggleAreYouSureSetModal.bind(this);
   }
 
   flattenServices(services) {
@@ -160,6 +163,15 @@ export class MetricProfilesChange extends Component
       return [text] 
   }
 
+  toggleAreYouSureSetModal(msg, title, onyes) {
+    this.setState(prevState => 
+      ({areYouSureModal: !prevState.areYouSureModal,
+        modalFunc: onyes,
+        modalMsg: msg,
+        modalTitle: title,
+      }));
+  }
+
   toggleAreYouSure() {
     this.setState(prevState => 
       ({areYouSureModal: !prevState.areYouSureModal}));
@@ -190,7 +202,7 @@ export class MetricProfilesChange extends Component
               groups_field: groups_field,
               services: list_services,
             }}
-            onSubmit = {(values, actions) => alert(JSON.stringify(values))}
+            onSubmit = {(values, actions) => alert(JSON.stringify(values, null, 4))}
             render = {props => (
               <Form>
                 <FormGroup>
@@ -252,6 +264,21 @@ export class MetricProfilesChange extends Component
                       metrics_all={this.insertSelectPlaceholder(metrics_all, '')}
                     />)}
                 />
+                {
+                  (write_perm) &&
+                    <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
+                      <Button
+                        color="danger"
+                        onClick={() => {
+                          this.toggleAreYouSureSetModal('Are you sure you want to delete Metric profile?', 
+                            'Delete metric profile',
+                            () => this.doDelete(props.values.id))
+                        }}>
+                        Delete
+                      </Button>
+                      <Button color="success" id="submit-button" type="submit">Save</Button>
+                    </div>
+                }
               </Form>
             )} 
           />
