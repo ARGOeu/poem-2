@@ -182,6 +182,24 @@ class ListMetricsInGroup(APIView):
                            detail='Group not found')
 
 
+class ListAllMetrics(APIView):
+    authentication_classes = (SessionAuthentication,)
+
+    def get(self, request):
+        metrics = poem_models.Metrics.objects.all()
+        serializer = serializers.MetricsSerializer(metrics, many=True)
+        return Response(serializer.data)
+
+
+class ListAllServiceFlavours(APIView):
+    authentication_classes = (SessionAuthentication,)
+
+    def get(self, request):
+        service_flavours = poem_models.ServiceFlavour.objects.all()
+        serializer = serializers.ServiceFlavourSerializer(service_flavours, many=True)
+        return Response(serializer.data)
+
+
 class ListTokens(APIView):
     authentication_classes = (SessionAuthentication,)
 
