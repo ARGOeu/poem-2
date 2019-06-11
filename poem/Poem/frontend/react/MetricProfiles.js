@@ -66,6 +66,19 @@ export class MetricProfilesChange extends Component
     )
   }
 
+  flattenServices(services) {
+    let flat_services = [];
+
+    services.forEach((service_element) => {
+      let service = service_element.service;
+      service_element.metrics.forEach((metric) => {
+        flat_services.push({service, metric})
+      })
+    })
+
+    return flat_services
+  }
+
   componentDidMount() {
     this.setState({loading: true})
 
@@ -82,7 +95,7 @@ export class MetricProfilesChange extends Component
                   groups_field: group,
                   list_user_groups: usergroups,
                   write_perm: localStorage.getItem('authIsSuperuser') === 'true' || usergroups.indexOf(group) >= 0,
-                  list_services: metricp.services,
+                  list_services: this.flattenServices(metricp.services),
                   loading: false
                 }
               ))
