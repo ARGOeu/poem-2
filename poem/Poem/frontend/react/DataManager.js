@@ -53,6 +53,28 @@ export class Backend {
       .catch(err => alert('Something went wrong: ' + err));
   }
 
+  fetchMetricsAll() {
+    return fetch('/api/v2/internal/metricsall')
+      .then(response => response.json())
+      .then(json => {
+        let metrics = [];
+        json.forEach((e) => metrics.push(e.name));
+        return metrics;
+      })
+      .catch(err => alert('Something went wrong: ' + err));
+  }
+
+  fetchServiceFlavoursAll() {
+    return fetch('/api/v2/internal/serviceflavoursall')
+      .then(response => response.json())
+      .then(json => {
+        let service_flavours = [];
+        json.forEach((e) => service_flavours.push(e.name));
+        return service_flavours;
+      })
+      .catch(err => alert('Something went wrong: ' + err));
+  }
+
   fetchMetricProfileUserGroups() {
     return fetch('/api/v2/internal/groups/metricprofiles')
       .then(response => response.json())

@@ -16,6 +16,8 @@ import {
   CardFooter,
   FormGroup,
   FormText} from 'reactstrap';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 
 const DropDown = ({field, data=[], prefix="", class_name=""}) => 
@@ -32,6 +34,47 @@ const DropDown = ({field, data=[], prefix="", class_name=""}) =>
       )
     }
   </Field>
+
+
+const ServicesList = ({services, serviceflavours_all, metrics_all, form, remove, insert}) =>
+  <Row>
+  {
+    services.map((service, index) =>
+      <React.Fragment key={index}>
+        <Col md={{size: 4}}>
+          <DropDown 
+            field={{name: "service", value: service.service}}
+            data={serviceflavours_all} 
+            prefix={`services.${index}`}
+            class_name="custom-select serviceflavour-name"
+          />
+        </Col>
+        <Col md={{size: 4}}>
+          <DropDown 
+            field={{name: "metric", value: service.metric}}
+            data={metrics_all} 
+            prefix={`services.${index}`}
+            class_name="custom-select metric-name"
+          />
+        </Col>
+        <Col md={{size: 2}}>
+          <Button size="sm" color="light"
+            type="button"
+            onClick={() => remove(index)}>
+            <FontAwesomeIcon icon={faTimes}/>
+          </Button>
+        </Col>
+        <Col md={{size: 2}}>
+          <Button size="sm" color="light"
+            type="button"
+            onClick={() => insert(index + 1, {service: '', metric: ''})}>
+            <FontAwesomeIcon icon={faPlus}/>
+          </Button>
+        </Col>
+      </React.Fragment>
+    )
+  }
+  </Row>
 
 
 export class MetricProfilesChange extends Component 
@@ -52,6 +95,8 @@ export class MetricProfilesChange extends Component
       groups_field: undefined,
       write_perm: false,
       list_services: undefined,
+      serviceflavours_all: undefined,
+      metrics_all: undefined,
       areYouSureModal: false,
       loading: false,
       modalFunc: undefined,
@@ -85,8 +130,11 @@ export class MetricProfilesChange extends Component
     if (!this.addview) {
       this.backend.fetchMetricProfileIdFromName(this.profile_name).then(id =>
         Promise.all([this.webapi.fetchMetricProfile(id),
-          this.backend.fetchMetricProfileUserGroups()])
-        .then(([metricp, usergroups]) => {
+          this.backend.fetchMetricProfileUserGroups(),
+          this.backend.fetchServiceFlavoursAll(),
+          this.backend.fetchMetricsAll()
+        ])
+        .then(([metricp, usergroups, serviceflavoursall, metricsall]) => {
           this.backend.fetchMetricProfileGroup(metricp.name)
             .then(group => 
               this.setState(
@@ -96,6 +144,8 @@ export class MetricProfilesChange extends Component
                   list_user_groups: usergroups,
                   write_perm: localStorage.getItem('authIsSuperuser') === 'true' || usergroups.indexOf(group) >= 0,
                   list_services: this.flattenServices(metricp.services),
+                  serviceflavours_all: serviceflavoursall,
+                  metrics_all: metricsall,
                   loading: false
                 }
               ))
@@ -117,7 +167,8 @@ export class MetricProfilesChange extends Component
 
   render() {
     const {write_perm, loading, metric_profile, 
-      list_services, groups_field, list_user_groups} = this.state;
+      list_services, groups_field, list_user_groups,
+      serviceflavours_all, metrics_all} = this.state;
 
     if (loading)
       return (<LoadingAnim />) 
@@ -136,7 +187,8 @@ export class MetricProfilesChange extends Component
             initialValues = {{
               id: metric_profile.id,
               name: metric_profile.name,
-              groups_field: groups_field
+              groups_field: groups_field,
+              services: list_services,
             }}
             onSubmit = {(values, actions) => alert(JSON.stringify(values))}
             render = {props => (
@@ -189,6 +241,17 @@ export class MetricProfilesChange extends Component
                     </FormGroup>
                   </Col>
                 </Row>
+                <h4 className="mt-2 alert-info p-1 pl-3 text-light text-uppercase rounded" style={{'backgroundColor': "#416090"}}>Services and metrics</h4>
+                <FieldArray
+                  name="services"
+                  render={props => (
+                    <ServicesList
+                      {...props}
+                      services={list_services}
+                      serviceflavours_all={this.insertSelectPlaceholder(serviceflavours_all, '')}
+                      metrics_all={this.insertSelectPlaceholder(metrics_all, '')}
+                    />)}
+                />
               </Form>
             )} 
           />
