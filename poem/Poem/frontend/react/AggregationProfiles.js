@@ -135,30 +135,26 @@ const Group = ({operation, services, list_operations, list_services, last_servic
 
 
 const ServiceList = ({services, list_services=[], list_operations=[], last_service_operation, groupindex, form}) =>
-  <React.Fragment>
-    { 
-      services.map((service, i) =>
-        <FieldArray
+  services.map((service, i) =>
+    <FieldArray
+      key={i}
+      name={`groups.${groupindex}.services`}
+      render={props => (
+        <Service
+          {...props}
           key={i}
-          name={`groups.${groupindex}.services`}
-          render={props => (
-            <Service
-              {...props}
-              key={i}
-              operation={service.operation} 
-              list_services={list_services} 
-              list_operations={list_operations} 
-              last_service_operation={last_service_operation}
-              groupindex={groupindex}
-              index={i}
-              last={i === services.length - 1}
-              form={form}
-            />
-          )}
+          operation={service.operation} 
+          list_services={list_services} 
+          list_operations={list_operations} 
+          last_service_operation={last_service_operation}
+          groupindex={groupindex}
+          index={i}
+          last={i === services.length - 1}
+          form={form}
         />
-      )
-    }
-  </React.Fragment>
+      )}
+    />
+  )
 
 
 const Service = ({name, operation, list_services, list_operations, last_service_operation, groupindex, index, remove, insert, form}) => 

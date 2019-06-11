@@ -36,45 +36,41 @@ const DropDown = ({field, data=[], prefix="", class_name=""}) =>
   </Field>
 
 
-const ServicesList = ({services, serviceflavours_all, metrics_all, form, remove, insert}) =>
-  <Row>
-  {
-    services.map((service, index) =>
-      <React.Fragment key={index}>
-        <Col md={{size: 4}}>
-          <DropDown 
-            field={{name: "service", value: service.service}}
-            data={serviceflavours_all} 
-            prefix={`services.${index}`}
-            class_name="custom-select serviceflavour-name"
-          />
-        </Col>
-        <Col md={{size: 4}}>
-          <DropDown 
-            field={{name: "metric", value: service.metric}}
-            data={metrics_all} 
-            prefix={`services.${index}`}
-            class_name="custom-select metric-name"
-          />
-        </Col>
-        <Col md={{size: 2}}>
-          <Button color="light"
-            type="button"
-            onClick={() => remove(index)}>
-            <FontAwesomeIcon icon={faTimes}/>
-          </Button>
-        </Col>
-        <Col md={{size: 2}}>
-          <Button color="light"
-            type="button"
-            onClick={() => insert(index + 1, {service: '', metric: ''})}>
-            <FontAwesomeIcon icon={faPlus}/>
-          </Button>
-        </Col>
-      </React.Fragment>
-    )
-  }
-  </Row>
+const ServicesList = ({serviceflavours_all, metrics_all, form, remove, insert}) =>
+  form.values.services.map((service, index) =>
+    <Row key={index}>
+      <Col md={{size: 4}}>
+        <DropDown 
+          field={{name: "service", value: service}}
+          data={serviceflavours_all} 
+          prefix={`services.${index}`}
+          class_name="custom-select serviceflavour-name"
+        />
+      </Col>
+      <Col md={{size: 4}}>
+        <DropDown 
+          field={{name: "metric", value: service}}
+          data={metrics_all} 
+          prefix={`services.${index}`}
+          class_name="custom-select metric-name"
+        />
+      </Col>
+      <Col md={{size: 2}}>
+        <Button color="light"
+          type="button"
+          onClick={() => remove(index)}>
+          <FontAwesomeIcon icon={faTimes}/>
+        </Button>
+      </Col>
+      <Col md={{size: 2}}>
+        <Button color="light"
+          type="button"
+          onClick={() => insert(index + 1, {service: '', metric: ''})}>
+          <FontAwesomeIcon icon={faPlus}/>
+        </Button>
+      </Col>
+    </Row>
+  )
 
 
 export class MetricProfilesChange extends Component 
@@ -259,7 +255,6 @@ export class MetricProfilesChange extends Component
                   render={props => (
                     <ServicesList
                       {...props}
-                      services={list_services}
                       serviceflavours_all={this.insertSelectPlaceholder(serviceflavours_all, '')}
                       metrics_all={this.insertSelectPlaceholder(metrics_all, '')}
                     />)}
