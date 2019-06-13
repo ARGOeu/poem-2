@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import {Link} from 'react-router-dom';
 import {Backend, WebApi} from './DataManager';
+import Autocomplete from 'react-autocomplete';
 import { LoadingAnim, BaseArgoView } from './UIElements';
 import ReactTable from 'react-table';
 import { Formik, Field, FieldArray, Form } from 'formik';
@@ -40,19 +41,39 @@ const ServicesList = ({serviceflavours_all, metrics_all, form, remove, insert}) 
   form.values.services.map((service, index) =>
     <Row key={index}>
       <Col md={{size: 4}}>
-        <DropDown 
-          field={{name: "service", value: service}}
-          data={serviceflavours_all} 
-          prefix={`services.${index}`}
-          class_name="custom-select serviceflavour-name"
+        <Autocomplete
+          inputProps={{
+            className: "form-control custom-select"
+          }}
+          getItemValue={(item) => item}
+          items={serviceflavours_all}
+          value={service.service}
+          renderItem={(item, isHighlighted) => 
+            <div style={{ background: isHighlighted ? 'lightgray' : 'white' } }>
+              {item}
+            </div>
+          }
+          onChange={(e) => form.setFieldValue(`services.${index}.service`, e.target.value)}
+          onSelect={(val) => form.setFieldValue(`services.${index}.service`, val)}
+          wrapperStyle={{}}
         />
       </Col>
       <Col md={{size: 4}}>
-        <DropDown 
-          field={{name: "metric", value: service}}
-          data={metrics_all} 
-          prefix={`services.${index}`}
-          class_name="custom-select metric-name"
+        <Autocomplete
+          inputProps={{
+            className: "form-control custom-select"
+          }}
+          getItemValue={(item) => item}
+          items={metrics_all}
+          value={service.metric}
+          renderItem={(item, isHighlighted) => 
+            <div style={{ background: isHighlighted ? 'lightgray' : 'white' } }>
+              {item}
+            </div>
+          }
+          onChange={(e) => form.setFieldValue(`services.${index}.metric`, e.target.value)}
+          onSelect={(val) => form.setFieldValue(`services.${index}.metric`, val)}
+          wrapperStyle={{}}
         />
       </Col>
       <Col md={{size: 2}}>
