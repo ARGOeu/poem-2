@@ -37,6 +37,11 @@ const DropDown = ({field, data=[], prefix="", class_name=""}) =>
   </Field>
 
 
+function matchItem(item, value) {
+  return item.toLowerCase().indexOf(value.toLowerCase()) !== -1;
+}
+
+
 const ServicesList = ({serviceflavours_all, metrics_all, form, remove, insert}) =>
   form.values.services.map((service, index) =>
     <Row key={index}>
@@ -49,13 +54,14 @@ const ServicesList = ({serviceflavours_all, metrics_all, form, remove, insert}) 
           items={serviceflavours_all}
           value={service.service}
           renderItem={(item, isHighlighted) => 
-            <div style={{ background: isHighlighted ? 'lightgray' : 'white' } }>
+            <div key={serviceflavours_all.indexOf(item)} style={{ background: isHighlighted ? 'lightgray' : 'white' } }>
               {item}
             </div>
           }
           onChange={(e) => form.setFieldValue(`services.${index}.service`, e.target.value)}
           onSelect={(val) => form.setFieldValue(`services.${index}.service`, val)}
           wrapperStyle={{}}
+          shouldItemRender={matchItem}
         />
       </Col>
       <Col md={{size: 4}}>
@@ -67,13 +73,14 @@ const ServicesList = ({serviceflavours_all, metrics_all, form, remove, insert}) 
           items={metrics_all}
           value={service.metric}
           renderItem={(item, isHighlighted) => 
-            <div style={{ background: isHighlighted ? 'lightgray' : 'white' } }>
+            <div key={metrics_all.indexOf(item)} style={{ background: isHighlighted ? 'lightgray' : 'white' } }>
               {item}
             </div>
           }
           onChange={(e) => form.setFieldValue(`services.${index}.metric`, e.target.value)}
           onSelect={(val) => form.setFieldValue(`services.${index}.metric`, val)}
           wrapperStyle={{}}
+          shouldItemRender={matchItem}
         />
       </Col>
       <Col md={{size: 2}}>
