@@ -44,11 +44,11 @@ function matchItem(item, value) {
 
 
 const ServicesList = ({serviceflavours_all, metrics_all, form, remove, insert}) =>
-  <Row> 
+  <Row className="no-gutters"> 
     {
       form.values.services.map((service, index) =>
         <React.Fragment>
-          <Col md={{size: 4}}>
+          <Col md={{size: 5}}>
             <Autocomplete
               inputProps={{
                 className: "form-control custom-select"
@@ -73,7 +73,7 @@ const ServicesList = ({serviceflavours_all, metrics_all, form, remove, insert}) 
                   <div className='autocomplete-menu' children={items}/>}
             />
           </Col>
-          <Col md={{size: 4}}>
+          <Col md={{size: 5}}>
             <Autocomplete
               inputProps={{
                 className: "form-control custom-select"
@@ -104,8 +104,6 @@ const ServicesList = ({serviceflavours_all, metrics_all, form, remove, insert}) 
               onClick={() => remove(index)}>
               <FontAwesomeIcon icon={faTimes}/>
             </Button>
-          </Col>
-          <Col md={{size: 2}}>
             <Button color="light"
               type="button"
               onClick={() => insert(index + 1, {service: '', metric: ''})}>
