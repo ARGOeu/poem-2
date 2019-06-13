@@ -20,6 +20,7 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
 
+import './MetricProfiles.css'; 
 
 const DropDown = ({field, data=[], prefix="", class_name=""}) => 
   <Field component="select"
@@ -43,62 +44,78 @@ function matchItem(item, value) {
 
 
 const ServicesList = ({serviceflavours_all, metrics_all, form, remove, insert}) =>
-  form.values.services.map((service, index) =>
-    <Row key={index}>
-      <Col md={{size: 4}}>
-        <Autocomplete
-          inputProps={{
-            className: "form-control custom-select"
-          }}
-          getItemValue={(item) => item}
-          items={serviceflavours_all}
-          value={service.service}
-          renderItem={(item, isHighlighted) => 
-            <div key={serviceflavours_all.indexOf(item)} style={{ background: isHighlighted ? 'lightgray' : 'white' } }>
-              {item}
-            </div>
-          }
-          onChange={(e) => form.setFieldValue(`services.${index}.service`, e.target.value)}
-          onSelect={(val) => form.setFieldValue(`services.${index}.service`, val)}
-          wrapperStyle={{}}
-          shouldItemRender={matchItem}
-        />
-      </Col>
-      <Col md={{size: 4}}>
-        <Autocomplete
-          inputProps={{
-            className: "form-control custom-select"
-          }}
-          getItemValue={(item) => item}
-          items={metrics_all}
-          value={service.metric}
-          renderItem={(item, isHighlighted) => 
-            <div key={metrics_all.indexOf(item)} style={{ background: isHighlighted ? 'lightgray' : 'white' } }>
-              {item}
-            </div>
-          }
-          onChange={(e) => form.setFieldValue(`services.${index}.metric`, e.target.value)}
-          onSelect={(val) => form.setFieldValue(`services.${index}.metric`, val)}
-          wrapperStyle={{}}
-          shouldItemRender={matchItem}
-        />
-      </Col>
-      <Col md={{size: 2}}>
-        <Button color="light"
-          type="button"
-          onClick={() => remove(index)}>
-          <FontAwesomeIcon icon={faTimes}/>
-        </Button>
-      </Col>
-      <Col md={{size: 2}}>
-        <Button color="light"
-          type="button"
-          onClick={() => insert(index + 1, {service: '', metric: ''})}>
-          <FontAwesomeIcon icon={faPlus}/>
-        </Button>
-      </Col>
-    </Row>
-  )
+  <Row> 
+    {
+      form.values.services.map((service, index) =>
+        <React.Fragment>
+          <Col md={{size: 4}}>
+            <Autocomplete
+              inputProps={{
+                className: "form-control custom-select"
+              }}
+              getItemValue={(item) => item}
+              items={serviceflavours_all}
+              value={service.service}
+              renderItem={(item, isHighlighted) => 
+                <div 
+                  key={serviceflavours_all.indexOf(item)} 
+                  className={`autocomplete-entries ${isHighlighted ? 
+                      "autocomplete-entries-highlighted" 
+                      : ""}`
+                  }>
+                  {item}
+                </div>}
+              onChange={(e) => form.setFieldValue(`services.${index}.service`, e.target.value)}
+              onSelect={(val) => form.setFieldValue(`services.${index}.service`, val)}
+              wrapperStyle={{}}
+              shouldItemRender={matchItem}
+              renderMenu={(items) => 
+                  <div className='autocomplete-menu' children={items}/>}
+            />
+          </Col>
+          <Col md={{size: 4}}>
+            <Autocomplete
+              inputProps={{
+                className: "form-control custom-select"
+              }}
+              getItemValue={(item) => item}
+              items={metrics_all}
+              value={service.metric}
+              renderItem={(item, isHighlighted) => 
+                <div 
+                  key={metrics_all.indexOf(item)} 
+                  className={`autocomplete-entries ${isHighlighted ? 
+                      "autocomplete-entries-highlighted" 
+                      : ""}`
+                  }>
+                  {item}
+                </div>}
+              onChange={(e) => form.setFieldValue(`services.${index}.metric`, e.target.value)}
+              onSelect={(val) => form.setFieldValue(`services.${index}.metric`, val)}
+              wrapperStyle={{}}
+              shouldItemRender={matchItem}
+              renderMenu={(items) => 
+                  <div className='autocomplete-menu' children={items}/>}
+            />
+          </Col>
+          <Col md={{size: 2}}>
+            <Button color="light"
+              type="button"
+              onClick={() => remove(index)}>
+              <FontAwesomeIcon icon={faTimes}/>
+            </Button>
+          </Col>
+          <Col md={{size: 2}}>
+            <Button color="light"
+              type="button"
+              onClick={() => insert(index + 1, {service: '', metric: ''})}>
+              <FontAwesomeIcon icon={faPlus}/>
+            </Button>
+          </Col>
+        </React.Fragment>
+      )
+    }
+  </Row>
 
 
 export class MetricProfilesChange extends Component 
