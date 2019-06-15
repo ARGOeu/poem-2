@@ -153,6 +153,7 @@ export class MetricProfilesChange extends Component
 
     this.toggleAreYouSure = this.toggleAreYouSure.bind(this);
     this.toggleAreYouSureSetModal = this.toggleAreYouSureSetModal.bind(this);
+    this.handleSearchServiceFlavour = this.handleSearchServiceFlavour.bind(this);
   }
 
   flattenServices(services) {
@@ -222,7 +223,12 @@ export class MetricProfilesChange extends Component
   handleSearchServiceFlavour(e) {
     let filtered = this.state.static_list_services
 
-    if (e.target.value !== '') {
+    if (this.state.searchServiceFlavour.length > e.target.value.length) {
+      // handle remove of characters of search term
+      filtered = this.state.static_list_services.filter((elem) => 
+        elem.service.toLowerCase().indexOf(e.target.value.toLowerCase()) !== -1)
+    }
+    else if (e.target.value !== '') {
       filtered = this.state.list_services.filter((elem) => 
         elem.service.toLowerCase().indexOf(e.target.value.toLowerCase()) !== -1)
     }
