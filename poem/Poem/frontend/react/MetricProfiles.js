@@ -65,7 +65,8 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler, form, r
             required={false}
             className="form-control"
             id="searchServiceFlavour"
-            onChange={(e) => search_handler(e, 'list_services', 'searchServiceFlavour', 'service')}
+            onChange={(e) => search_handler(e, 'list_services',
+              'searchServiceFlavour', 'service', 'searchMetric', 'metric')}
             component={SearchField}
           />
         </td>
@@ -76,7 +77,8 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler, form, r
             required={false}
             className="form-control"
             id="searchMetric"
-            onChange={(e) => search_handler(e, 'list_services', 'searchMetric', 'metric')}
+            onChange={(e) => search_handler(e, 'list_services', 'searchMetric',
+              'metric', 'searchServiceFlavour', 'service')}
             component={SearchField}
           />
         </td>
@@ -263,7 +265,9 @@ export class MetricProfilesChange extends Component
       ({areYouSureModal: !prevState.areYouSureModal}));
   }
 
-  handleSearch(e, statefieldlist, statefieldsearch, formikfield) {
+  handleSearch(e, statefieldlist, statefieldsearch, formikfield,
+    alternatestatefield, alternateformikfield) 
+  {
     let filtered = this.state[`static_${statefieldlist}`]
 
     if (this.state[statefieldsearch].length > e.target.value.length) {
@@ -274,6 +278,13 @@ export class MetricProfilesChange extends Component
     else if (e.target.value !== '') {
       filtered = this.state[statefieldlist].filter((elem) => 
         elem[formikfield].toLowerCase().indexOf(e.target.value.toLowerCase()) !== -1)
+    }
+
+    // handle multi search 
+    if (this.state[alternatestatefield].length) {
+      filtered = filtered.filter((elem) => 
+        elem[alternateformikfield].toLowerCase().
+        indexOf(this.state[alternatestatefield].toLowerCase()) !== -1)
     }
 
     this.setState({
