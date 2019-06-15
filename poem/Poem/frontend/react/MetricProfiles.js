@@ -141,6 +141,8 @@ export class MetricProfilesChange extends Component
       modalFunc: undefined,
       modalTitle: undefined,
       modalMsg: undefined,
+      searchServiceFlavour: "",
+      searchMetric: ""
     }
 
     this.backend = new Backend();
@@ -186,6 +188,7 @@ export class MetricProfilesChange extends Component
                   list_user_groups: usergroups,
                   write_perm: localStorage.getItem('authIsSuperuser') === 'true' || usergroups.indexOf(group) >= 0,
                   list_services: this.flattenServices(metricp.services),
+                  static_list_services: this.flattenServices(metricp.services),
                   serviceflavours_all: serviceflavoursall,
                   metrics_all: metricsall,
                   loading: false
@@ -216,10 +219,33 @@ export class MetricProfilesChange extends Component
       ({areYouSureModal: !prevState.areYouSureModal}));
   }
 
+  handleSearchServiceFlavour(e) {
+    let filtered = this.state.static_list_services
+
+    if (e.target.value !== '') {
+      filtered = this.state.list_services.filter((elem) => 
+        elem.service.toLowerCase().indexOf(e.target.value.toLowerCase()) !== -1)
+    }
+
+    this.setState({searchServiceFlavour: e.target.value, list_services: filtered})
+  }
+
+  handleSearchMetrics(e) {
+    let filtered = this.state.static_list_services
+
+    if (e.target.value !== '') {
+      filtered = this.state.list_services.filter((elem) => 
+        elem.metric.toLowerCase().indexOf(e.target.value.toLowerCase()) !== -1)
+    }
+
+    this.setState({searchMetric: e.target.value, list_services: filtered})
+  }
+
   render() {
     const {write_perm, loading, metric_profile, 
       list_services, groups_field, list_user_groups,
-      serviceflavours_all, metrics_all} = this.state;
+      serviceflavours_all, metrics_all, 
+      searchMetric, searchServiceFlavour} = this.state;
 
     if (loading)
       return (<LoadingAnim />) 
@@ -240,8 +266,11 @@ export class MetricProfilesChange extends Component
               name: metric_profile.name,
               groups_field: groups_field,
               services: list_services,
+              search_metric: searchMetric,
+              search_serviceflavour: searchServiceFlavour
             }}
             onSubmit = {(values, actions) => alert(JSON.stringify(values, null, 4))}
+            enableReinitialize={true}
             render = {props => (
               <Form>
                 <FormGroup>
@@ -293,6 +322,32 @@ export class MetricProfilesChange extends Component
                   </Col>
                 </Row>
                 <h4 className="mt-2 alert-info p-1 pl-3 text-light text-uppercase rounded" style={{'backgroundColor': "#416090"}}>Services and metrics</h4>
+                <FormGroup>
+                  <Row>
+                    <Col md={{size: 5}}>
+                      <Field 
+                        type="text" 
+                        name="search_serviceflavour" 
+                        placeholder="Search service flavour"
+                        required={false}
+                        className="form-control"
+                        id="searchServiceFlavour"
+                        onChange={(e) => this.handleSearchServiceFlavour(e)}
+                      />
+                    </Col>
+                    <Col md={{size: 5}}>
+                      <Field 
+                        type="text" 
+                        name="search_metric" 
+                        placeholder="Search metrics"
+                        required={false}
+                        className="form-control"
+                        id="searchMetric"
+                        onChange={(e) => this.handleSearchMetrics(e)}
+                      />
+                    </Col>
+                  </Row>
+                </FormGroup>
                 <FieldArray
                   name="services"
                   render={props => (
