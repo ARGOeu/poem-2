@@ -153,7 +153,7 @@ export class MetricProfilesChange extends Component
 
     this.toggleAreYouSure = this.toggleAreYouSure.bind(this);
     this.toggleAreYouSureSetModal = this.toggleAreYouSureSetModal.bind(this);
-    this.handleSearchServiceFlavour = this.handleSearchServiceFlavour.bind(this);
+    this.handleSearch = this.handleSearch.bind(this);
   }
 
   flattenServices(services) {
@@ -220,31 +220,23 @@ export class MetricProfilesChange extends Component
       ({areYouSureModal: !prevState.areYouSureModal}));
   }
 
-  handleSearchServiceFlavour(e) {
-    let filtered = this.state.static_list_services
+  handleSearch(e, statefieldlist, statefieldsearch, formikfield) {
+    let filtered = this.state[`static_${statefieldlist}`]
 
-    if (this.state.searchServiceFlavour.length > e.target.value.length) {
+    if (this.state[statefieldsearch].length > e.target.value.length) {
       // handle remove of characters of search term
-      filtered = this.state.static_list_services.filter((elem) => 
-        elem.service.toLowerCase().indexOf(e.target.value.toLowerCase()) !== -1)
+      filtered = this.state[`static_${statefieldlist}`].filter((elem) => 
+        elem[formikfield].toLowerCase().indexOf(e.target.value.toLowerCase()) !== -1)
     }
     else if (e.target.value !== '') {
-      filtered = this.state.list_services.filter((elem) => 
-        elem.service.toLowerCase().indexOf(e.target.value.toLowerCase()) !== -1)
+      filtered = this.state[statefieldlist].filter((elem) => 
+        elem[formikfield].toLowerCase().indexOf(e.target.value.toLowerCase()) !== -1)
     }
 
-    this.setState({searchServiceFlavour: e.target.value, list_services: filtered})
-  }
-
-  handleSearchMetrics(e) {
-    let filtered = this.state.static_list_services
-
-    if (e.target.value !== '') {
-      filtered = this.state.list_services.filter((elem) => 
-        elem.metric.toLowerCase().indexOf(e.target.value.toLowerCase()) !== -1)
-    }
-
-    this.setState({searchMetric: e.target.value, list_services: filtered})
+    this.setState({
+      [`${statefieldsearch}`]: e.target.value, 
+      [`${statefieldlist}`]: filtered
+    })
   }
 
   render() {
@@ -327,7 +319,7 @@ export class MetricProfilesChange extends Component
                     </FormGroup>
                   </Col>
                 </Row>
-                <h4 className="mt-2 alert-info p-1 pl-3 text-light text-uppercase rounded" style={{'backgroundColor': "#416090"}}>Services and metrics</h4>
+                <h4 className="mt-2 alert-info p-1 pl-3 text-light text-uppercase rounded" style={{'backgroundColor': "#416090"}}>Metric instances</h4>
                 <FormGroup>
                   <Row>
                     <Col md={{size: 5}}>
@@ -338,7 +330,7 @@ export class MetricProfilesChange extends Component
                         required={false}
                         className="form-control"
                         id="searchServiceFlavour"
-                        onChange={(e) => this.handleSearchServiceFlavour(e)}
+                        onChange={(e) => this.handleSearch(e, 'list_services', 'searchServiceFlavour', 'service')}
                       />
                     </Col>
                     <Col md={{size: 5}}>
@@ -349,7 +341,7 @@ export class MetricProfilesChange extends Component
                         required={false}
                         className="form-control"
                         id="searchMetric"
-                        onChange={(e) => this.handleSearchMetrics(e)}
+                        onChange={(e) => this.handleSearch(e, 'list_services', 'searchMetric', 'metric')}
                       />
                     </Col>
                   </Row>
