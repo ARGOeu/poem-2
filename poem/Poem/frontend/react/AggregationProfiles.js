@@ -753,7 +753,7 @@ export class AggregationProfilesList extends Component
             data={list_aggregations}
             columns={columns}
             className="-striped -highlight"
-            defaultPageSize={10}
+            defaultPageSize={20}
           />
         </BaseArgoView>
       )

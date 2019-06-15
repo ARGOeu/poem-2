@@ -43,77 +43,120 @@ function matchItem(item, value) {
 }
 
 
-const ServicesList = ({serviceflavours_all, metrics_all, form, remove, insert}) =>
-  <Row className="no-gutters"> 
-    {
-      form.values.services.map((service, index) =>
-        <React.Fragment>
-          <Col md={{size: 5}}>
-            <Autocomplete
-              inputProps={{
-                className: "form-control custom-select"
-              }}
-              getItemValue={(item) => item}
-              items={serviceflavours_all}
-              value={service.service}
-              renderItem={(item, isHighlighted) => 
-                <div 
-                  key={serviceflavours_all.indexOf(item)} 
-                  className={`autocomplete-entries ${isHighlighted ? 
-                      "autocomplete-entries-highlighted" 
-                      : ""}`
-                  }>
-                  {item}
-                </div>}
-              onChange={(e) => form.setFieldValue(`services.${index}.service`, e.target.value)}
-              onSelect={(val) => form.setFieldValue(`services.${index}.service`, val)}
-              wrapperStyle={{}}
-              shouldItemRender={matchItem}
-              renderMenu={(items) => 
-                  <div className='autocomplete-menu' children={items}/>}
-            />
-          </Col>
-          <Col md={{size: 5}}>
-            <Autocomplete
-              inputProps={{
-                className: "form-control custom-select"
-              }}
-              getItemValue={(item) => item}
-              items={metrics_all}
-              value={service.metric}
-              renderItem={(item, isHighlighted) => 
-                <div 
-                  key={metrics_all.indexOf(item)} 
-                  className={`autocomplete-entries ${isHighlighted ? 
-                      "autocomplete-entries-highlighted" 
-                      : ""}`
-                  }>
-                  {item}
-                </div>}
-              onChange={(e) => form.setFieldValue(`services.${index}.metric`, e.target.value)}
-              onSelect={(val) => form.setFieldValue(`services.${index}.metric`, val)}
-              wrapperStyle={{}}
-              shouldItemRender={matchItem}
-              renderMenu={(items) => 
-                  <div className='autocomplete-menu' children={items}/>}
-            />
-          </Col>
-          <Col md={{size: 2}}>
-            <Button color="light"
-              type="button"
-              onClick={() => remove(index)}>
-              <FontAwesomeIcon icon={faTimes}/>
-            </Button>
-            <Button color="light"
-              type="button"
-              onClick={() => insert(index + 1, {service: '', metric: ''})}>
-              <FontAwesomeIcon icon={faPlus}/>
-            </Button>
-          </Col>
-        </React.Fragment>
-      )
-    }
-  </Row>
+const ServicesList = ({serviceflavours_all, metrics_all, search_handler, form, remove, insert}) =>
+  <table className="table table-bordered table-hover table-sm">
+    <thead className="table-active">
+      <tr>
+        <th style={{width: "5%"}}>#</th>
+        <th style={{width: "42.5%"}}>Service flavour name</th>
+        <th style={{width: "42.5%"}}>Metric name</th>
+        <th style={{width: "10%"}}>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>
+          {''}
+        </td>
+        <td>
+          <Field 
+            type="text" 
+            name="search_serviceflavour" 
+            placeholder="Search service flavour"
+            required={false}
+            className="form-control"
+            id="searchServiceFlavour"
+            onChange={(e) => search_handler(e, 'list_services', 'searchServiceFlavour', 'service')}
+          />
+        </td>
+        <td>
+          <Field 
+            type="text" 
+            name="search_metric" 
+            placeholder="Search metrics"
+            required={false}
+            className="form-control"
+            id="searchMetric"
+            onChange={(e) => search_handler(e, 'list_services', 'searchMetric', 'metric')}
+          />
+        </td>
+        <td>
+          {''}
+        </td>
+      </tr>
+      {
+        form.values.services.map((service, index) =>
+          <tr>
+            <td>
+              {index + 1}
+            </td>
+            <td>
+              <Autocomplete
+                inputProps={{
+                  className: "form-control custom-select"
+                }}
+                getItemValue={(item) => item}
+                items={serviceflavours_all}
+                value={service.service}
+                renderItem={(item, isHighlighted) => 
+                  <div 
+                    key={serviceflavours_all.indexOf(item)} 
+                    className={`autocomplete-entries ${isHighlighted ? 
+                        "autocomplete-entries-highlighted" 
+                        : ""}`
+                    }>
+                    {item}
+                  </div>}
+                onChange={(e) => form.setFieldValue(`services.${index}.service`, e.target.value)}
+                onSelect={(val) => form.setFieldValue(`services.${index}.service`, val)}
+                wrapperStyle={{}}
+                shouldItemRender={matchItem}
+                renderMenu={(items) => 
+                    <div className='autocomplete-menu' children={items}/>}
+              />
+            </td>
+            <td>
+              <Autocomplete
+                inputProps={{
+                  className: "form-control custom-select"
+                }}
+                getItemValue={(item) => item}
+                items={metrics_all}
+                value={service.metric}
+                renderItem={(item, isHighlighted) => 
+                  <div 
+                    key={metrics_all.indexOf(item)} 
+                    className={`autocomplete-entries ${isHighlighted ? 
+                        "autocomplete-entries-highlighted" 
+                        : ""}`
+                    }>
+                    {item}
+                  </div>}
+                onChange={(e) => form.setFieldValue(`services.${index}.metric`, e.target.value)}
+                onSelect={(val) => form.setFieldValue(`services.${index}.metric`, val)}
+                wrapperStyle={{}}
+                shouldItemRender={matchItem}
+                renderMenu={(items) => 
+                    <div className='autocomplete-menu' children={items}/>}
+              />
+            </td>
+            <td>
+              <Button color="light"
+                type="button"
+                onClick={() => remove(index)}>
+                <FontAwesomeIcon icon={faTimes}/>
+              </Button>
+              <Button color="light"
+                type="button"
+                onClick={() => insert(index + 1, {service: '', metric: ''})}>
+                <FontAwesomeIcon icon={faPlus}/>
+              </Button>
+            </td>
+          </tr>
+        )
+      }
+    </tbody>
+  </table>
 
 
 export class MetricProfilesChange extends Component 
@@ -320,32 +363,6 @@ export class MetricProfilesChange extends Component
                   </Col>
                 </Row>
                 <h4 className="mt-2 alert-info p-1 pl-3 text-light text-uppercase rounded" style={{'backgroundColor': "#416090"}}>Metric instances</h4>
-                <FormGroup>
-                  <Row>
-                    <Col md={{size: 5}}>
-                      <Field 
-                        type="text" 
-                        name="search_serviceflavour" 
-                        placeholder="Search service flavour"
-                        required={false}
-                        className="form-control"
-                        id="searchServiceFlavour"
-                        onChange={(e) => this.handleSearch(e, 'list_services', 'searchServiceFlavour', 'service')}
-                      />
-                    </Col>
-                    <Col md={{size: 5}}>
-                      <Field 
-                        type="text" 
-                        name="search_metric" 
-                        placeholder="Search metrics"
-                        required={false}
-                        className="form-control"
-                        id="searchMetric"
-                        onChange={(e) => this.handleSearch(e, 'list_services', 'searchMetric', 'metric')}
-                      />
-                    </Col>
-                  </Row>
-                </FormGroup>
                 <FieldArray
                   name="services"
                   render={props => (
@@ -353,6 +370,7 @@ export class MetricProfilesChange extends Component
                       {...props}
                       serviceflavours_all={this.insertSelectPlaceholder(serviceflavours_all, '')}
                       metrics_all={this.insertSelectPlaceholder(metrics_all, '')}
+                      search_handler={this.handleSearch}
                     />)}
                 />
                 {
@@ -437,7 +455,7 @@ export class MetricProfilesList extends Component
             data={list_metricprofiles}
             columns={columns}
             className="-striped -highlight"
-            defaultPageSize={10}
+            defaultPageSize={20}
           />
         </BaseArgoView>
       )
