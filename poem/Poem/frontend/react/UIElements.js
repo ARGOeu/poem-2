@@ -26,7 +26,7 @@ import EULogo from './eu.png';
 import EOSCLogo from './eosc.png';
 import './UIElements.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSignOutAlt } from '@fortawesome/free-solid-svg-icons';
+import { faSignOutAlt, faSearch } from '@fortawesome/free-solid-svg-icons';
 import { NotificationManager } from 'react-notifications';
 
 
@@ -41,6 +41,15 @@ link_title.set('metrics', 'Metrics');
 link_title.set('metricprofiles', 'Metric profiles');
 link_title.set('aggregationprofiles', 'Aggregation profiles');
 
+export const SearchField = ({form, field, ...rest}) => 
+  <div className="input-group">
+    <input type="text" {...field} {...rest}/>
+    <div className="input-group-append">
+      <span class="input-group-text" id="basic-addon">
+        <FontAwesomeIcon icon={faSearch}/>
+      </span>
+    </div>
+  </div>
 
 const doLogout = (history, onLogout) =>
 {

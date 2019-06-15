@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import {Link} from 'react-router-dom';
 import {Backend, WebApi} from './DataManager';
 import Autocomplete from 'react-autocomplete';
-import { LoadingAnim, BaseArgoView } from './UIElements';
+import { LoadingAnim, BaseArgoView, SearchField } from './UIElements';
 import ReactTable from 'react-table';
 import { Formik, Field, FieldArray, Form } from 'formik';
 import 'react-table/react-table.css';
@@ -18,7 +18,7 @@ import {
   FormGroup,
   FormText} from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faTimes} from '@fortawesome/free-solid-svg-icons';
 
 import './MetricProfiles.css'; 
 
@@ -44,7 +44,7 @@ function matchItem(item, value) {
 
 
 const ServicesList = ({serviceflavours_all, metrics_all, search_handler, form, remove, insert}) =>
-  <table className="table table-bordered table-hover table-sm">
+  <table className="table table-bordered table-sm">
     <thead className="table-active">
       <tr>
         <th style={{width: "5%"}}>#</th>
@@ -62,22 +62,22 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler, form, r
           <Field 
             type="text" 
             name="search_serviceflavour" 
-            placeholder="Search service flavour"
             required={false}
             className="form-control"
             id="searchServiceFlavour"
             onChange={(e) => search_handler(e, 'list_services', 'searchServiceFlavour', 'service')}
+            component={SearchField}
           />
         </td>
         <td>
           <Field 
             type="text" 
             name="search_metric" 
-            placeholder="Search metrics"
             required={false}
             className="form-control"
             id="searchMetric"
             onChange={(e) => search_handler(e, 'list_services', 'searchMetric', 'metric')}
+            component={SearchField}
           />
         </td>
         <td>
