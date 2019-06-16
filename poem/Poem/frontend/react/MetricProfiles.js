@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import {Link} from 'react-router-dom';
 import {Backend, WebApi} from './DataManager';
 import Autocomplete from 'react-autocomplete';
-import { LoadingAnim, BaseArgoView, SearchField } from './UIElements';
+import { LoadingAnim, BaseArgoView, SearchField, DropDown } from './UIElements';
 import ReactTable from 'react-table';
 import { Formik, Field, FieldArray, Form } from 'formik';
 import 'react-table/react-table.css';
@@ -21,21 +21,6 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faTimes} from '@fortawesome/free-solid-svg-icons';
 
 import './MetricProfiles.css'; 
-
-const DropDown = ({field, data=[], prefix="", class_name=""}) => 
-  <Field component="select"
-    name={prefix ? `${prefix}.${field.name}` : field.name}
-    required={true}
-    className={`form-control ${class_name}`}
-  >
-    {
-      data.map((name, i) => 
-        i === 0 ?
-        <option key={i} hidden>{name}</option> :
-        <option key={i} value={name}>{name}</option>
-      )
-    }
-  </Field>
 
 
 function matchItem(item, value) {

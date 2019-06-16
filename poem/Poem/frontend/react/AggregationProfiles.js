@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import {Link} from 'react-router-dom';
-import { LoadingAnim, BaseArgoView, NotifyOk } from './UIElements';
+import { LoadingAnim, BaseArgoView, NotifyOk, DropDown } from './UIElements';
 import ReactTable from 'react-table';
 import 'react-table/react-table.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -22,22 +22,6 @@ import {
 
 import "react-notifications/lib/notifications.css";
 import './AggregationProfiles.css';
-
-
-const DropDown = ({field, data=[], prefix="", class_name=""}) => 
-  <Field component="select"
-    name={prefix ? `${prefix}.${field.name}` : field.name}
-    required={true}
-    className={`form-control ${class_name}`}
-  >
-    {
-      data.map((name, i) => 
-        i === 0 ?
-        <option key={i} hidden>{name}</option> :
-        <option key={i} value={name}>{name}</option>
-      )
-    }
-  </Field>
 
 
 const GroupList = ({name, form, list_services, list_operations, last_service_operation, write_perm}) =>
