@@ -43,7 +43,7 @@ link_title.set('aggregationprofiles', 'Aggregation profiles');
 
 export const SearchField = ({form, field, ...rest}) => 
   <div className="input-group">
-    <input type="text" {...field} {...rest}/>
+    <input type="text" placeholder="Search" {...field} {...rest}/>
     <div className="input-group-append">
       <span class="input-group-text" id="basic-addon">
         <FontAwesomeIcon icon={faSearch}/>

@@ -89,7 +89,7 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler, form, r
       {
         form.values.services.map((service, index) =>
           <tr>
-            <td>
+            <td className="align-middle text-center">
               {index + 1}
             </td>
             <td>
