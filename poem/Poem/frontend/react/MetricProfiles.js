@@ -28,7 +28,8 @@ function matchItem(item, value) {
 }
 
 
-const ServicesList = ({serviceflavours_all, metrics_all, search_handler, form, remove, insert}) =>
+const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
+  remove_handler, insert_handler, form, remove, insert}) =>
   <table className="table table-bordered table-sm">
     <thead className="table-active">
       <tr>
@@ -72,7 +73,7 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler, form, r
         </td>
       </tr>
       {
-        form.values.formview_services.map((service, index) =>
+        form.values.view_services.map((service, index) =>
           <tr>
             <td className="align-middle text-center">
               {index + 1}
@@ -94,8 +95,8 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler, form, r
                     }>
                     {item}
                   </div>}
-                onChange={(e) => form.setFieldValue(`services.${index}.service`, e.target.value)}
-                onSelect={(val) => form.setFieldValue(`services.${index}.service`, val)}
+                onChange={(e) => form.setFieldValue(`view_services.${index}.service`, e.target.value)}
+                onSelect={(val) => form.setFieldValue(`view_services.${index}.service`, val)}
                 wrapperStyle={{}}
                 shouldItemRender={matchItem}
                 renderMenu={(items) => 
@@ -119,8 +120,8 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler, form, r
                     }>
                     {item}
                   </div>}
-                onChange={(e) => form.setFieldValue(`services.${index}.metric`, e.target.value)}
-                onSelect={(val) => form.setFieldValue(`services.${index}.metric`, val)}
+                onChange={(e) => form.setFieldValue(`view_services.${index}.metric`, e.target.value)}
+                onSelect={(val) => form.setFieldValue(`view_services.${index}.metric`, val)}
                 wrapperStyle={{}}
                 shouldItemRender={matchItem}
                 renderMenu={(items) => 
@@ -130,12 +131,19 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler, form, r
             <td>
               <Button color="light"
                 type="button"
-                onClick={() => remove(index)}>
+                onClick={() => {
+                  remove_handler(form.values.view_services[index]); 
+                  return remove(index)
+                }}>
                 <FontAwesomeIcon icon={faTimes}/>
               </Button>
               <Button color="light"
                 type="button"
-                onClick={() => insert(index + 1, {service: '', metric: ''})}>
+                onClick={() => {
+                  let new_element = {index: index + 1, service: '', metric: ''}
+                  insert_handler(new_element)
+                  return insert(index + 1, new_element)
+                }}>
                 <FontAwesomeIcon icon={faPlus}/>
               </Button>
             </td>
@@ -184,6 +192,8 @@ export class MetricProfilesChange extends Component
     this.toggleAreYouSure = this.toggleAreYouSure.bind(this);
     this.toggleAreYouSureSetModal = this.toggleAreYouSureSetModal.bind(this);
     this.handleSearch = this.handleSearch.bind(this);
+    this.onRemove = this.onRemove.bind(this);
+    this.onInsert = this.onInsert.bind(this);
   }
 
   flattenServices(services) {
@@ -279,6 +289,20 @@ export class MetricProfilesChange extends Component
     })
   }
 
+  onInsert(element) {
+    let service = element.service;
+    let metric = element.metric;
+    let index = this.list_services.length
+
+    this.list_services.push({index, service, metric})
+  }
+
+  onRemove(element) {
+    let index = element.index;
+
+    this.list_services.remove(index);
+  }
+
   render() {
     const {write_perm, loading, metric_profile, 
       view_services, groups_field, list_user_groups,
@@ -307,7 +331,7 @@ export class MetricProfilesChange extends Component
               search_metric: searchMetric,
               search_serviceflavour: searchServiceFlavour
             }}
-            onSubmit = {(values, actions) => alert(JSON.stringify(values, null, 4))}
+            onSubmit = {(values, actions) => alert(JSON.stringify(this.list_services, null, 4))}
             enableReinitialize={true}
             render = {props => (
               <Form>
@@ -361,13 +385,15 @@ export class MetricProfilesChange extends Component
                 </Row>
                 <h4 className="mt-2 alert-info p-1 pl-3 text-light text-uppercase rounded" style={{'backgroundColor': "#416090"}}>Metric instances</h4>
                 <FieldArray
-                  name="services"
+                  name="view_services"
                   render={props => (
                     <ServicesList
                       {...props}
                       serviceflavours_all={this.insertSelectPlaceholder(serviceflavours_all, '')}
                       metrics_all={this.insertSelectPlaceholder(metrics_all, '')}
                       search_handler={this.handleSearch}
+                      remove_handler={this.onRemove}
+                      insert_handler={this.onInsert}
                     />)}
                 />
                 {
