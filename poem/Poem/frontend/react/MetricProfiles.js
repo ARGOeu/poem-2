@@ -50,7 +50,7 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler, form, r
             required={false}
             className="form-control"
             id="searchServiceFlavour"
-            onChange={(e) => search_handler(e, 'list_services',
+            onChange={(e) => search_handler(e, 'view_services',
               'searchServiceFlavour', 'service', 'searchMetric', 'metric')}
             component={SearchField}
           />
@@ -62,7 +62,7 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler, form, r
             required={false}
             className="form-control"
             id="searchMetric"
-            onChange={(e) => search_handler(e, 'list_services', 'searchMetric',
+            onChange={(e) => search_handler(e, 'view_services', 'searchMetric',
               'metric', 'searchServiceFlavour', 'service')}
             component={SearchField}
           />
@@ -72,7 +72,7 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler, form, r
         </td>
       </tr>
       {
-        form.values.services.map((service, index) =>
+        form.values.view_services.map((service, index) =>
           <tr>
             <td className="align-middle text-center">
               {index + 1}
@@ -218,8 +218,8 @@ export class MetricProfilesChange extends Component
                   groups_field: group,
                   list_user_groups: usergroups,
                   write_perm: localStorage.getItem('authIsSuperuser') === 'true' || usergroups.indexOf(group) >= 0,
+                  view_services: this.flattenServices(metricp.services),
                   list_services: this.flattenServices(metricp.services),
-                  static_list_services: this.flattenServices(metricp.services),
                   serviceflavours_all: serviceflavoursall,
                   metrics_all: metricsall,
                   loading: false
@@ -253,12 +253,12 @@ export class MetricProfilesChange extends Component
   handleSearch(e, statefieldlist, statefieldsearch, formikfield,
     alternatestatefield, alternateformikfield) 
   {
-    let filtered = this.state[`static_${statefieldlist}`]
+    let filtered = this.state[statefieldlist.replace('view_', 'list_')]
 
     if (this.state[statefieldsearch].length > e.target.value.length) {
       // handle remove of characters of search term
-      filtered = this.state[`static_${statefieldlist}`].filter((elem) => 
-        matchItem(elem[formikfield], e.target.value))
+      filtered = this.state[statefieldlist.replace('view_', 'list_')].
+        filter((elem) => matchItem(elem[formikfield], e.target.value))
     }
     else if (e.target.value !== '') {
       filtered = this.state[statefieldlist].filter((elem) => 
@@ -279,14 +279,14 @@ export class MetricProfilesChange extends Component
 
   render() {
     const {write_perm, loading, metric_profile, 
-      list_services, groups_field, list_user_groups,
+      view_services, groups_field, list_user_groups,
       serviceflavours_all, metrics_all, 
       searchMetric, searchServiceFlavour} = this.state;
 
     if (loading)
       return (<LoadingAnim />) 
 
-    else if (!loading && metric_profile && list_services) {
+    else if (!loading && metric_profile && view_services) {
       return (
         <BaseArgoView
           resourcename='Metric profile'
@@ -301,7 +301,7 @@ export class MetricProfilesChange extends Component
               id: metric_profile.id,
               name: metric_profile.name,
               groups_field: groups_field,
-              services: list_services,
+              view_services: view_services,
               search_metric: searchMetric,
               search_serviceflavour: searchServiceFlavour
             }}
