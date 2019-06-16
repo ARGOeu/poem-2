@@ -258,18 +258,17 @@ export class MetricProfilesChange extends Component
     if (this.state[statefieldsearch].length > e.target.value.length) {
       // handle remove of characters of search term
       filtered = this.state[`static_${statefieldlist}`].filter((elem) => 
-        elem[formikfield].toLowerCase().indexOf(e.target.value.toLowerCase()) !== -1)
+        matchItem(elem[formikfield], e.target.value))
     }
     else if (e.target.value !== '') {
       filtered = this.state[statefieldlist].filter((elem) => 
-        elem[formikfield].toLowerCase().indexOf(e.target.value.toLowerCase()) !== -1)
+        matchItem(elem[formikfield], e.target.value))
     }
 
     // handle multi search 
     if (this.state[alternatestatefield].length) {
       filtered = filtered.filter((elem) => 
-        elem[alternateformikfield].toLowerCase().
-        indexOf(this.state[alternatestatefield].toLowerCase()) !== -1)
+        matchItem(elem[alternateformikfield], this.state[alternatestatefield]))
     }
 
     this.setState({
