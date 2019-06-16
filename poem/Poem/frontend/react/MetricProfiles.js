@@ -158,12 +158,12 @@ export class MetricProfilesChange extends Component
     this.addview = props.addview
     this.history = props.history;
     this.location = props.location;
+    this.list_services = [],
 
     this.state = {
       metric_profile: {},
       groups_field: undefined,
       write_perm: false,
-      list_services: undefined,
       serviceflavours_all: undefined,
       metrics_all: undefined,
       areYouSureModal: false,
@@ -211,7 +211,7 @@ export class MetricProfilesChange extends Component
         ])
         .then(([metricp, usergroups, serviceflavoursall, metricsall]) => {
           this.backend.fetchMetricProfileGroup(metricp.name)
-            .then(group => 
+            .then(group => {
               this.setState(
                 {
                   metric_profile: metricp,
@@ -219,12 +219,12 @@ export class MetricProfilesChange extends Component
                   list_user_groups: usergroups,
                   write_perm: localStorage.getItem('authIsSuperuser') === 'true' || usergroups.indexOf(group) >= 0,
                   view_services: this.flattenServices(metricp.services),
-                  list_services: this.flattenServices(metricp.services),
                   serviceflavours_all: serviceflavoursall,
                   metrics_all: metricsall,
                   loading: false
-                }
-              ))
+                });
+              this.list_services = this.flattenServices(metricp.services);
+            }) 
         }))
     }
   }
@@ -253,11 +253,11 @@ export class MetricProfilesChange extends Component
   handleSearch(e, statefieldlist, statefieldsearch, formikfield,
     alternatestatefield, alternateformikfield) 
   {
-    let filtered = this.state[statefieldlist.replace('view_', 'list_')]
+    let filtered = this[statefieldlist.replace('view_', 'list_')]
 
     if (this.state[statefieldsearch].length > e.target.value.length) {
       // handle remove of characters of search term
-      filtered = this.state[statefieldlist.replace('view_', 'list_')].
+      filtered = this[statefieldlist.replace('view_', 'list_')].
         filter((elem) => matchItem(elem[formikfield], e.target.value))
     }
     else if (e.target.value !== '') {
