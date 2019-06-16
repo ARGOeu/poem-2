@@ -72,7 +72,7 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler, form, r
         </td>
       </tr>
       {
-        form.values.view_services.map((service, index) =>
+        form.values.formview_services.map((service, index) =>
           <tr>
             <td className="align-middle text-center">
               {index + 1}
@@ -188,11 +188,13 @@ export class MetricProfilesChange extends Component
 
   flattenServices(services) {
     let flat_services = [];
+    let index = 0;
 
     services.forEach((service_element) => {
       let service = service_element.service;
       service_element.metrics.forEach((metric) => {
-        flat_services.push({service, metric})
+        flat_services.push({index, service, metric})
+        index += 1;
       })
     })
 
