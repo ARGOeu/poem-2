@@ -321,7 +321,7 @@ export class MetricProfilesChange extends Component
   }
 
   onRemove(element) {
-    let index = element.index;
+    let index = this.list_services.indexOf(element);
 
     this.list_services.splice(index, 1);
   }
