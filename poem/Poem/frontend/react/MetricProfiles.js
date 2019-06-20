@@ -98,7 +98,9 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
                   onChange={(e) => form.setFieldValue(`view_services.${index}.service`, e.target.value)}
                   onSelect={(val) => {
                     form.setFieldValue(`view_services.${index}.service`, val)
-                    onselect_handler(form.values.view_services[index], 'service', val)
+                    onselect_handler(form.values.view_services[index], 
+                      'service', 
+                      val)
                   }}
                 wrapperStyle={{}}
                 shouldItemRender={matchItem}
@@ -126,7 +128,9 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
                   onChange={(e) => form.setFieldValue(`view_services.${index}.metric`, e.target.value)}
                   onSelect={(val) => {
                     form.setFieldValue(`view_services.${index}.metric`, val)
-                    onselect_handler(form.values.view_services[index], 'metric', val)
+                    onselect_handler(form.values.view_services[index],
+                      'metric', 
+                      val)
                   }}
                 wrapperStyle={{}}
                 shouldItemRender={matchItem}
@@ -311,19 +315,37 @@ export class MetricProfilesChange extends Component
 
   onSelect(element, field, value) {
     let index = element.index
-    let list_services_index = this.n_list_services;
 
-    if (index >= this.state.n_viewed) {
-      let n_added = index + 1 - this.state.n_viewed;
-      list_services_index = this.n_list_services - 1 + n_added; 
+    // pushed new element on searched matched items
+    if (this.state.searchMetric !== '' || this.state.searchServiceFlavour !== '' 
+      && this.list_services.length > this.n_list_services 
+      && index >= this.state.n_viewed) {
+      let list_services_index = this.n_list_services + index - this.state.n_viewed; 
+      this.list_services[list_services_index][field] = value;
     }
-    this.list_services[list_services_index][field] = value;
+    else {
+      this.list_services[index][field] = value;
+    }
   }
 
   onRemove(element) {
-    let index = this.list_services.indexOf(element);
+    let index = this.list_services.findIndex(service => 
+      element.index === service.index &&
+      element.service === service.service &&
+      element.metric === service.metric
+    );
 
-    this.list_services.splice(index, 1);
+    if (index >= 0) {
+      this.list_services.splice(index, 1);
+
+      // reindex rest of list
+      for (var i = index; i < this.list_services.length; i++) {
+        if (this.list_services[i]) {
+          let element_index = this.list_services[i].index
+          this.list_services[i].index = element_index - 1;
+        }
+      }
+    }
   }
 
   render() {
