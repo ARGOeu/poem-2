@@ -29,7 +29,7 @@ function matchItem(item, value) {
 
 
 const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
-  remove_handler, insert_handler, form, remove, insert}) =>
+  remove_handler, insert_handler, onselect_handler, form, remove, insert}) =>
   <table className="table table-bordered table-sm">
     <thead className="table-active">
       <tr>
@@ -95,8 +95,11 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
                     }>
                     {item}
                   </div>}
-                onChange={(e) => form.setFieldValue(`view_services.${index}.service`, e.target.value)}
-                onSelect={(val) => form.setFieldValue(`view_services.${index}.service`, val)}
+                  onChange={(e) => form.setFieldValue(`view_services.${index}.service`, e.target.value)}
+                  onSelect={(val) => {
+                    form.setFieldValue(`view_services.${index}.service`, val)
+                    onselect_handler(form.values.view_services[index], 'service', val)
+                  }}
                 wrapperStyle={{}}
                 shouldItemRender={matchItem}
                 renderMenu={(items) => 
@@ -120,8 +123,11 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
                     }>
                     {item}
                   </div>}
-                onChange={(e) => form.setFieldValue(`view_services.${index}.metric`, e.target.value)}
-                onSelect={(val) => form.setFieldValue(`view_services.${index}.metric`, val)}
+                  onChange={(e) => form.setFieldValue(`view_services.${index}.metric`, e.target.value)}
+                  onSelect={(val) => {
+                    form.setFieldValue(`view_services.${index}.metric`, val)
+                    onselect_handler(form.values.view_services[index], 'metric', val)
+                  }}
                 wrapperStyle={{}}
                 shouldItemRender={matchItem}
                 renderMenu={(items) => 
@@ -171,6 +177,9 @@ export class MetricProfilesChange extends Component
     this.state = {
       metric_profile: {},
       groups_field: undefined,
+      list_user_groups: undefined,
+      view_services: undefined,
+      n_viewed: 0,
       write_perm: false,
       serviceflavours_all: undefined,
       metrics_all: undefined,
@@ -194,6 +203,7 @@ export class MetricProfilesChange extends Component
     this.handleSearch = this.handleSearch.bind(this);
     this.onRemove = this.onRemove.bind(this);
     this.onInsert = this.onInsert.bind(this);
+    this.onSelect = this.onSelect.bind(this);
   }
 
   flattenServices(services) {
@@ -236,6 +246,7 @@ export class MetricProfilesChange extends Component
                   loading: false
                 });
               this.list_services = this.flattenServices(metricp.services);
+              this.n_list_services = this.list_services.length;
             }) 
         }))
     }
@@ -266,7 +277,6 @@ export class MetricProfilesChange extends Component
     alternatestatefield, alternateformikfield) 
   {
     let filtered = this[statefieldlist.replace('view_', 'list_')]
-
     if (this.state[statefieldsearch].length > e.target.value.length) {
       // handle remove of characters of search term
       filtered = this[statefieldlist.replace('view_', 'list_')].
@@ -285,22 +295,35 @@ export class MetricProfilesChange extends Component
 
     this.setState({
       [`${statefieldsearch}`]: e.target.value, 
-      [`${statefieldlist}`]: filtered
+      [`${statefieldlist}`]: filtered,
+      n_viewed: filtered.length
     })
+    this.n_list_services = this.list_services.length;
   }
 
   onInsert(element) {
     let service = element.service;
     let metric = element.metric;
-    let index = this.list_services.length
+    let index = this.list_services.length;
 
-    this.list_services.push({index, service, metric})
+    this.list_services.push({index, service, metric});
+  }
+
+  onSelect(element, field, value) {
+    let index = element.index
+    let list_services_index = this.n_list_services;
+
+    if (index >= this.state.n_viewed) {
+      let n_added = index + 1 - this.state.n_viewed;
+      list_services_index = this.n_list_services - 1 + n_added; 
+    }
+    this.list_services[list_services_index][field] = value;
   }
 
   onRemove(element) {
     let index = element.index;
 
-    this.list_services.remove(index);
+    this.list_services.splice(index, 1);
   }
 
   render() {
@@ -394,6 +417,7 @@ export class MetricProfilesChange extends Component
                       search_handler={this.handleSearch}
                       remove_handler={this.onRemove}
                       insert_handler={this.onInsert}
+                      onselect_handler={this.onSelect}
                     />)}
                 />
                 {
