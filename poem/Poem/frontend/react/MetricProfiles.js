@@ -176,13 +176,14 @@ export class MetricProfilesChange extends Component
     this.addview = props.addview
     this.history = props.history;
     this.location = props.location;
-    this.list_services = [],
 
     this.state = {
       metric_profile: {},
       groups_field: undefined,
       list_user_groups: undefined,
       view_services: undefined,
+      list_services: undefined,
+      n_list_services: undefined,
       n_viewed: 0,
       write_perm: false,
       serviceflavours_all: undefined,
@@ -247,10 +248,10 @@ export class MetricProfilesChange extends Component
                   view_services: this.flattenServices(metricp.services),
                   serviceflavours_all: serviceflavoursall,
                   metrics_all: metricsall,
+                  list_services: this.flattenServices(metricp.services),
+                  n_list_services: this.flattenServices(metricp.services).length,
                   loading: false
                 });
-              this.list_services = this.flattenServices(metricp.services);
-              this.n_list_services = this.list_services.length;
             }) 
         }))
     }
@@ -280,10 +281,11 @@ export class MetricProfilesChange extends Component
   handleSearch(e, statefieldlist, statefieldsearch, formikfield,
     alternatestatefield, alternateformikfield) 
   {
-    let filtered = this[statefieldlist.replace('view_', 'list_')]
+    let filtered = this.state[statefieldlist.replace('view_', 'list_')]
+
     if (this.state[statefieldsearch].length > e.target.value.length) {
       // handle remove of characters of search term
-      filtered = this[statefieldlist.replace('view_', 'list_')].
+      filtered = this.state[statefieldlist.replace('view_', 'list_')].
         filter((elem) => matchItem(elem[formikfield], e.target.value))
     }
     else if (e.target.value !== '') {
@@ -300,17 +302,19 @@ export class MetricProfilesChange extends Component
     this.setState({
       [`${statefieldsearch}`]: e.target.value, 
       [`${statefieldlist}`]: filtered,
-      n_viewed: filtered.length
+      n_viewed: filtered.length,
+      n_list_services: this.state.list_services.length
     })
-    this.n_list_services = this.list_services.length;
   }
 
   onInsert(element) {
     let service = element.service;
     let metric = element.metric;
-    let index = this.list_services.length;
+    let index = this.state.list_services.length;
 
-    this.list_services.push({index, service, metric});
+    let tmp_list_services = [...this.state.list_services]
+    tmp_list_services.push({index, service, metric});
+    this.setState({list_services: tmp_list_services});
   }
 
   onSelect(element, field, value) {
@@ -318,33 +322,37 @@ export class MetricProfilesChange extends Component
 
     // pushed new element on searched matched items
     if (this.state.searchMetric !== '' || this.state.searchServiceFlavour !== '' 
-      && this.list_services.length > this.n_list_services 
+      && this.state.list_services.length > this.state.n_list_services 
       && index >= this.state.n_viewed) {
-      let list_services_index = this.n_list_services + index - this.state.n_viewed; 
-      this.list_services[list_services_index][field] = value;
+      let list_services_index = this.state.n_list_services + index - this.state.n_viewed; 
+      let tmp_list_services = [...this.state.list_services]
+      tmp_list_services[list_services_index][field] = value
+      this.setState({list_services: tmp_list_services});
     }
     else {
-      this.list_services[index][field] = value;
+      let tmp_list_services = [...this.state.list_services]
+      tmp_list_services[index][field] = value
+      this.setState({list_services: tmp_list_services});
     }
   }
 
   onRemove(element) {
-    let index = this.list_services.findIndex(service => 
+    let index = this.state.list_services.findIndex(service => 
       element.index === service.index &&
       element.service === service.service &&
       element.metric === service.metric
     );
 
     if (index >= 0) {
-      this.list_services.splice(index, 1);
+      let tmp_list_services = [...this.state.list_services]
+      tmp_list_services.splice(index, 1)
 
       // reindex rest of list
-      for (var i = index; i < this.list_services.length; i++) {
-        if (this.list_services[i]) {
-          let element_index = this.list_services[i].index
-          this.list_services[i].index = element_index - 1;
-        }
+      for (var i = index; i < tmp_list_services.length; i++) {
+        let element_index = tmp_list_services[i].index
+        tmp_list_services[i].index = element_index - 1;
       }
+      this.setState({list_services: tmp_list_services});
     }
   }
 
