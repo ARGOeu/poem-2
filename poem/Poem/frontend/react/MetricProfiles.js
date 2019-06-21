@@ -150,7 +150,7 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
               <Button color="light"
                 type="button"
                 onClick={() => {
-                  let new_element = {index: index + 1, service: '', metric: ''}
+                  let new_element = {index: index + 1, service: '', metric: '', isNew: true}
                   insert_handler(new_element, index + 1)
                   return insert(index + 1, new_element)
                 }}>
@@ -279,11 +279,19 @@ export class MetricProfilesChange extends Component
     alternatestatefield, alternateformikfield) 
   {
     let filtered = this.state[statefieldlist.replace('view_', 'list_')]
+    let tmp_list_services = [...this.state.list_services];
 
     if (this.state[statefieldsearch].length > e.target.value.length) {
       // handle remove of characters of search term
       filtered = this.state[statefieldlist.replace('view_', 'list_')].
         filter((elem) => matchItem(elem[formikfield], e.target.value))
+
+      // reindex after back to full list view
+      let index_update = 0
+      tmp_list_services.forEach((element) => {
+        element.index = index_update;
+        index_update += 1;
+      })
     }
     else if (e.target.value !== '') {
       filtered = this.state[statefieldlist].filter((elem) => 
@@ -299,10 +307,12 @@ export class MetricProfilesChange extends Component
     this.setState({
       [`${statefieldsearch}`]: e.target.value, 
       [`${statefieldlist}`]: filtered,
+      list_services: tmp_list_services
     })
   }
 
   onInsert(element, i) {
+    // full list of services
     if (this.state.searchServiceFlavour === '' 
       && this.state.searchMetric === '') {
       let service = element.service;
@@ -329,27 +339,34 @@ export class MetricProfilesChange extends Component
         view_services: tmp_list_services 
       });
     } 
+    // subset of matched elements of list of services
     else {
-      let last = this.state.view_services[this.state.view_services.length - 1];
-      let index_list_services = this.state.list_services.findIndex(service => 
-        last.index === service.index &&
-        last.service === service.service &&
-        last.metric === service.metric
-      );
       let tmp_view_services = [...this.state.view_services];
+      let tmp_list_services = [...this.state.list_services];
 
-      for (var n = 0; n < i; n++ ) 
-        tmp_view_services[n].index = n;
+      let slice_left_view_services = [...tmp_view_services].slice(0, i)
+      let slice_right_view_services = [...tmp_view_services].slice(i)
 
-      tmp_view_services[i] = {...element, isNew: true};
+      slice_left_view_services.push({...element, isNew: true});
 
-      for (var n = index; n < tmp_view_services.length; n++) 
-        tmp_view_services[n].index = index;
+      let index_update = 0;
+      slice_left_view_services.forEach((element) => {
+        element.index = index_update;
+        index_update += 1;
+      })
+      
+      index_update = i + 1;
+      slice_right_view_services.forEach((element) => {
+        element.index = index_update;
+        index_update += 1;
+      })
+
+      tmp_list_services.push({...element, isNew: true})
 
       this.setState({
-        view_services: tmp_view_services 
+        view_services: [...slice_left_view_services, ...slice_right_view_services],
+        list_services: tmp_list_services, 
       });
-
     }
   }
 
@@ -357,8 +374,13 @@ export class MetricProfilesChange extends Component
     let index = element.index;
     let tmp_list_services = [...this.state.list_services];
     let tmp_view_services = [...this.state.view_services];
+    let new_element = tmp_list_services.findIndex(service => 
+      service.index === index && service.isNew === true)
 
-    tmp_list_services[index][field] = value;
+    if (new_element >= 0 ) 
+      tmp_list_services[new_element][field] = value;
+    else
+      tmp_list_services[index][field] = value;
 
     for (var i = 0; i < tmp_view_services.length; i++) {
       if (tmp_view_services[i].index === element.index)
