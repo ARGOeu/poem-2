@@ -75,13 +75,13 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
       {
         form.values.view_services.map((service, index) =>
           <tr>
-            <td className="align-middle text-center">
+            <td  className={service.isNew ? "table-success align-middle text-center" : "align-middle text-center"}>
               {index + 1}
             </td>
-            <td className={service.isNew && "table-active"}>
+            <td>
               <Autocomplete
                 inputProps={{
-                  className: "form-control custom-select"
+                  className: service.isNew ? "form-control custom-select border border-success" : "from-control custom-select"
                 }}
                 getItemValue={(item) => item}
                 items={serviceflavours_all}
@@ -108,10 +108,10 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
                     <div className='autocomplete-menu' children={items}/>}
               />
             </td>
-            <td className={service.isNew && "table-active"}>
+            <td>
               <Autocomplete
                 inputProps={{
-                  className: "form-control custom-select"
+                  className: service.isNew ? "form-control custom-select border border-success" : "from-control custom-select"
                 }}
                 getItemValue={(item) => item}
                 items={metrics_all}
