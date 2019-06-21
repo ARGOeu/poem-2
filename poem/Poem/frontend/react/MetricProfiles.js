@@ -183,8 +183,6 @@ export class MetricProfilesChange extends Component
       list_user_groups: undefined,
       view_services: undefined,
       list_services: undefined,
-      n_list_services: undefined,
-      n_viewed: 0,
       write_perm: false,
       serviceflavours_all: undefined,
       metrics_all: undefined,
@@ -249,7 +247,6 @@ export class MetricProfilesChange extends Component
                   serviceflavours_all: serviceflavoursall,
                   metrics_all: metricsall,
                   list_services: this.flattenServices(metricp.services),
-                  n_list_services: this.flattenServices(metricp.services).length,
                   loading: false
                 });
             }) 
@@ -302,8 +299,6 @@ export class MetricProfilesChange extends Component
     this.setState({
       [`${statefieldsearch}`]: e.target.value, 
       [`${statefieldlist}`]: filtered,
-      n_viewed: filtered.length,
-      n_list_services: this.state.list_services.length
     })
   }
 
@@ -342,6 +337,7 @@ export class MetricProfilesChange extends Component
   }
 
   onRemove(element) {
+    // XXX: this means no duplicate elements allowed
     let index = this.state.list_services.findIndex(service => 
       element.index === service.index &&
       element.service === service.service &&
