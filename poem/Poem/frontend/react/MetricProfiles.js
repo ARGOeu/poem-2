@@ -151,7 +151,7 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
                 type="button"
                 onClick={() => {
                   let new_element = {index: index + 1, service: '', metric: ''}
-                  insert_handler(new_element)
+                  insert_handler(new_element, index + 1)
                   return insert(index + 1, new_element)
                 }}>
                 <FontAwesomeIcon icon={faPlus}/>
@@ -302,21 +302,55 @@ export class MetricProfilesChange extends Component
     })
   }
 
-  onInsert(element) {
-    let service = element.service;
-    let metric = element.metric;
-    let index = this.state.list_services.length;
-    let tmp_view_services = [...this.state.view_services];
-    let tmp_list_services = [...this.state.list_services];
-    let isNew = true;
+  onInsert(element, i) {
+    if (this.state.searchServiceFlavour === '' 
+      && this.state.searchMetric === '') {
+      let service = element.service;
+      let metric = element.metric;
 
-    tmp_list_services.push({index, service, metric, isNew});
-    tmp_view_services.push({index, service, metric, isNew});
+      let tmp_list_services = [...this.state.list_services];
+      // split list into two preserving original
+      let slice_left_tmp_list_services = [...tmp_list_services].slice(0, i);
+      let slice_right_tmp_list_services = [...tmp_list_services].slice(i);
 
-    this.setState({
-      list_services: tmp_list_services,
-      view_services: tmp_view_services
-    });
+      slice_left_tmp_list_services.push({index: i, service, metric, isNew: true});
+
+      // reindex rest of list
+      for (var index = 0; index < slice_right_tmp_list_services.length; index++) {
+        let element_index = slice_right_tmp_list_services[index].index;
+        slice_right_tmp_list_services[index].index = element_index + 1;
+      }
+
+      // concatenate two slices
+      tmp_list_services = [...slice_left_tmp_list_services, ...slice_right_tmp_list_services];
+
+      this.setState({
+        list_services: tmp_list_services,
+        view_services: tmp_list_services 
+      });
+    } 
+    else {
+      let last = this.state.view_services[this.state.view_services.length - 1];
+      let index_list_services = this.state.list_services.findIndex(service => 
+        last.index === service.index &&
+        last.service === service.service &&
+        last.metric === service.metric
+      );
+      let tmp_view_services = [...this.state.view_services];
+
+      for (var n = 0; n < i; n++ ) 
+        tmp_view_services[n].index = n;
+
+      tmp_view_services[i] = {...element, isNew: true};
+
+      for (var n = index; n < tmp_view_services.length; n++) 
+        tmp_view_services[n].index = index;
+
+      this.setState({
+        view_services: tmp_view_services 
+      });
+
+    }
   }
 
   onSelect(element, field, value) {
