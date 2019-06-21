@@ -78,7 +78,7 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
             <td className="align-middle text-center">
               {index + 1}
             </td>
-            <td>
+            <td className={service.isNew && "table-active"}>
               <Autocomplete
                 inputProps={{
                   className: "form-control custom-select"
@@ -108,7 +108,7 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
                     <div className='autocomplete-menu' children={items}/>}
               />
             </td>
-            <td>
+            <td className={service.isNew && "table-active"}>
               <Autocomplete
                 inputProps={{
                   className: "form-control custom-select"
@@ -306,11 +306,12 @@ export class MetricProfilesChange extends Component
     let service = element.service;
     let metric = element.metric;
     let index = this.state.list_services.length;
-    let tmp_view_services = [...this.state.view_services]
-    let tmp_list_services = [...this.state.list_services]
+    let tmp_view_services = [...this.state.view_services];
+    let tmp_list_services = [...this.state.list_services];
+    let isNew = true;
 
-    tmp_list_services.push({index, service, metric});
-    tmp_view_services.push({index, service, metric});
+    tmp_list_services.push({index, service, metric, isNew});
+    tmp_view_services.push({index, service, metric, isNew});
 
     this.setState({
       list_services: tmp_list_services,
