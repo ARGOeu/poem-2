@@ -75,10 +75,10 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
       {
         form.values.view_services.map((service, index) =>
           <tr>
-            <td  className={service.isNew ? "table-success align-middle text-center" : "align-middle text-center"}>
+            <td className={service.isNew ? "bg-light align-middle text-center" : "align-middle text-center"}>
               {index + 1}
             </td>
-            <td>
+            <td className={service.isNew ? "bg-light" : ""}>
               <Autocomplete
                 inputProps={{
                   className: service.isNew ? "form-control custom-select border border-success" : "from-control custom-select"
@@ -108,7 +108,7 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
                     <div className='autocomplete-menu' children={items}/>}
               />
             </td>
-            <td>
+            <td className={service.isNew ? "bg-light" : ""}>
               <Autocomplete
                 inputProps={{
                   className: service.isNew ? "form-control custom-select border border-success" : "from-control custom-select"
@@ -243,10 +243,10 @@ export class MetricProfilesChange extends Component
                   groups_field: group,
                   list_user_groups: usergroups,
                   write_perm: localStorage.getItem('authIsSuperuser') === 'true' || usergroups.indexOf(group) >= 0,
-                  view_services: this.flattenServices(metricp.services),
+                  view_services: this.flattenServices(metricp.services).sort(this.sortServices),
                   serviceflavours_all: serviceflavoursall,
                   metrics_all: metricsall,
-                  list_services: this.flattenServices(metricp.services),
+                  list_services: this.flattenServices(metricp.services).sort(this.sortServices),
                   loading: false
                 });
             }) 
@@ -275,9 +275,18 @@ export class MetricProfilesChange extends Component
       ({areYouSureModal: !prevState.areYouSureModal}));
   }
 
+  sortServices(a, b) {
+    if (a.service.toLowerCase() < b.service.toLowerCase()) return -1;
+    if (a.service.toLowerCase() > b.service.toLowerCase()) return 1;
+    if (a.service.toLowerCase() === b.service.toLowerCase()) {
+      if (a.metric.toLowerCase() < b.metric.toLowerCase()) return -1;
+      if (a.metric.toLowerCase() > b.metric.toLowerCase()) return 1;
+      if (a.metric.toLowerCase() === b.metric.toLowerCase()) return 0;
+    }
+  }
+
   handleSearch(e, statefieldlist, statefieldsearch, formikfield,
-    alternatestatefield, alternateformikfield) 
-  {
+    alternatestatefield, alternateformikfield) {
     let filtered = this.state[statefieldlist.replace('view_', 'list_')]
     let tmp_list_services = [...this.state.list_services];
 
@@ -292,6 +301,7 @@ export class MetricProfilesChange extends Component
         element.index = index_update;
         index_update += 1;
       })
+      tmp_list_services.sort(this.sortServices);
     }
     else if (e.target.value !== '') {
       filtered = this.state[statefieldlist].filter((elem) => 
@@ -303,6 +313,8 @@ export class MetricProfilesChange extends Component
       filtered = filtered.filter((elem) => 
         matchItem(elem[alternateformikfield], this.state[alternatestatefield]))
     }
+
+    filtered.sort(this.sortServices);
 
     this.setState({
       [`${statefieldsearch}`]: e.target.value, 
