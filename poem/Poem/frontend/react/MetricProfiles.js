@@ -382,6 +382,30 @@ export class MetricProfilesChange extends Component
     }
   }
 
+  onSubmitHandle(values, action) {
+    let msg = undefined;
+    let title = undefined;
+
+    if (this.addview) {
+      msg = 'Are you sure you want to add Metric profile?'
+      title = 'Add metric profile'
+    }
+    else {
+      msg = 'Are you sure you want to change Metric profile?'
+      title = 'Change metric profile'
+    }
+    this.toggleAreYouSureSetModal(msg, title,
+      () => this.doChange(values, action));
+  }
+
+  doChange(values, actions) {
+    let values_send = JSON.parse(JSON.stringify(values));
+
+    values_send.id = this.state.metric_profile.id;
+    alert(JSON.stringify(values_send, null, 4))
+  }
+
+
   onSelect(element, field, value) {
     let index = element.index;
     let tmp_list_services = [...this.state.list_services];
@@ -464,7 +488,7 @@ export class MetricProfilesChange extends Component
               search_metric: searchMetric,
               search_serviceflavour: searchServiceFlavour
             }}
-            onSubmit = {(values, actions) => alert(JSON.stringify(this.list_services, null, 4))}
+            onSubmit = {(values, actions) => this.onSubmitHandle(this.state.list_services, actions)}
             enableReinitialize={true}
             render = {props => (
               <Form>
