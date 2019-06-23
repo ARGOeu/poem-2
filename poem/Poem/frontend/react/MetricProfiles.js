@@ -301,6 +301,7 @@ export class MetricProfilesChange extends Component
         element.index = index_update;
         index_update += 1;
       })
+
       tmp_list_services.sort(this.sortServices);
     }
     else if (e.target.value !== '') {
@@ -337,11 +338,19 @@ export class MetricProfilesChange extends Component
 
       slice_left_tmp_list_services.push({index: i, service, metric, isNew: true});
 
+      // reindex first slice 
+      let index_update = 0;
+      slice_left_tmp_list_services.forEach((element) => {
+        element.index = index_update;
+        index_update += 1;
+      })
+
       // reindex rest of list
-      for (var index = 0; index < slice_right_tmp_list_services.length; index++) {
-        let element_index = slice_right_tmp_list_services[index].index;
-        slice_right_tmp_list_services[index].index = element_index + 1;
-      }
+      index_update = slice_left_tmp_list_services.length;
+      slice_right_tmp_list_services.forEach((element) => {
+        element.index = index_update;
+        index_update += 1;
+      })
 
       // concatenate two slices
       tmp_list_services = [...slice_left_tmp_list_services, ...slice_right_tmp_list_services];
