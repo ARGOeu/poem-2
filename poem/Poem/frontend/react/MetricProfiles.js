@@ -407,13 +407,30 @@ export class MetricProfilesChange extends Component
       () => this.doChange(values, action));
   }
 
-  doChange(values, actions) {
-    let values_send = JSON.parse(JSON.stringify(values));
+  groupMetricsByServices(servicesFlat) {
+    let services = [];
 
-    values_send.id = this.state.metric_profile.id;
-    alert(JSON.stringify(values_send, null, 4))
+    servicesFlat.forEach(element => {
+      let service = services.filter(e => e.service === element.service);
+      if (!service.length)
+        services.push({
+          'service': element.service,
+          'metric': [element.metric]
+        })
+      else
+        service[0].metric.push(element.metric)
+       
+    })
+    return services
   }
 
+  doChange(values, actions) {
+    const {id, name} = this.state.metric_profile
+    let services = this.groupMetricsByServices(values);
+    let dataToSend = {id, name, services};
+
+    alert(JSON.stringify(dataToSend, null, 4))
+  }
 
   onSelect(element, field, value) {
     let index = element.index;
@@ -427,10 +444,9 @@ export class MetricProfilesChange extends Component
     else
       tmp_list_services[index][field] = value;
 
-    for (var i = 0; i < tmp_view_services.length; i++) {
-      if (tmp_view_services[i].index === element.index)
+    for (var i = 0; i < tmp_view_services.length; i++)
+      if (tmp_view_services[i].index === index)
         tmp_view_services[i][field] = value
-    }
 
     this.setState({
       list_services: tmp_list_services,

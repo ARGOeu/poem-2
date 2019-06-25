@@ -63,7 +63,7 @@ export const SearchField = ({form, field, ...rest}) =>
   <div className="input-group">
     <input type="text" placeholder="Search" {...field} {...rest}/>
     <div className="input-group-append">
-      <span class="input-group-text" id="basic-addon">
+      <span className="input-group-text" id="basic-addon">
         <FontAwesomeIcon icon={faSearch}/>
       </span>
     </div>
