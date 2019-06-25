@@ -18,7 +18,7 @@ import {
   FormGroup,
   FormText} from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus, faTimes} from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faTimes, faSearch} from '@fortawesome/free-solid-svg-icons';
 
 import './MetricProfiles.css'; 
 
@@ -33,16 +33,16 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
   <table className="table table-bordered table-sm">
     <thead className="table-active">
       <tr>
-        <th style={{width: "5%"}}>#</th>
-        <th style={{width: "42.5%"}}>Service flavour name</th>
-        <th style={{width: "42.5%"}}>Metric name</th>
+        <th className="align-middle text-center" style={{width: "5%"}}>#</th>
+        <th style={{width: "42.5%"}}>Service flavour</th>
+        <th style={{width: "42.5%"}}>Metric</th>
         <th style={{width: "10%"}}>Actions</th>
       </tr>
     </thead>
     <tbody>
-      <tr>
-        <td>
-          {''}
+      <tr style={{background: "#ECECEC"}}>
+        <td className="align-middle text-center">
+          <FontAwesomeIcon icon={faSearch}/>
         </td>
         <td>
           <Field 
