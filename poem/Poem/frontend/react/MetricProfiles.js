@@ -151,7 +151,7 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
                 type="button"
                 onClick={() => {
                   let new_element = {index: index + 1, service: '', metric: '', isNew: true}
-                  insert_handler(new_element, index + 1)
+                  insert_handler(new_element, index + 1, form.values.groups_field, form.values.name )
                   return insert(index + 1, new_element)
                 }}>
                 <FontAwesomeIcon icon={faPlus}/>
@@ -179,6 +179,7 @@ export class MetricProfilesChange extends Component
 
     this.state = {
       metric_profile: {},
+      metric_profile_name: undefined,
       groups_field: undefined,
       list_user_groups: undefined,
       view_services: undefined,
@@ -240,6 +241,7 @@ export class MetricProfilesChange extends Component
               this.setState(
                 {
                   metric_profile: metricp,
+                  metric_profile_name: metricp.name,
                   groups_field: group,
                   list_user_groups: usergroups,
                   write_perm: localStorage.getItem('authIsSuperuser') === 'true' || usergroups.indexOf(group) >= 0,
@@ -266,6 +268,7 @@ export class MetricProfilesChange extends Component
         this.setState(
           {
             metric_profile: empty_metric_profile,
+            metric_profile_name: '',
             groups_field: '',
             list_user_groups: usergroups,
             write_perm: true,
@@ -349,7 +352,7 @@ export class MetricProfilesChange extends Component
     })
   }
 
-  onInsert(element, i) {
+  onInsert(element, i, group, name) {
     // full list of services
     if (this.state.searchServiceFlavour === '' 
       && this.state.searchMetric === '') {
@@ -382,7 +385,9 @@ export class MetricProfilesChange extends Component
 
       this.setState({
         list_services: tmp_list_services,
-        view_services: tmp_list_services 
+        view_services: tmp_list_services,
+        groups_field: group,
+        metric_profile_name: name
       });
     } 
     // subset of matched elements of list of services
@@ -416,7 +421,7 @@ export class MetricProfilesChange extends Component
     }
   }
 
-  onSubmitHandle(values, action) {
+  onSubmitHandle({formValues, servicesList}, action) {
     let msg = undefined;
     let title = undefined;
 
@@ -429,7 +434,7 @@ export class MetricProfilesChange extends Component
       title = 'Change metric profile'
     }
     this.toggleAreYouSureSetModal(msg, title,
-      () => this.doChange(values, action));
+      () => this.doChange({formValues, servicesList}, action));
   }
 
   groupMetricsByServices(servicesFlat) {
@@ -449,18 +454,17 @@ export class MetricProfilesChange extends Component
     return services
   }
 
-  doChange(values, actions) {
+  doChange({formValues, servicesList}, actions) {
     let services = [];
     let dataToSend = [];
 
     if (this.addview) {
-      console.log(values)
-      services = this.groupMetricsByServices(values);
-      dataToSend = {id: '', name: values.name, services};
+      services = this.groupMetricsByServices(servicesList);
+      dataToSend = {name: formValues.name, services};
     } 
     else {
       const {id, name} = this.state.metric_profile
-      services = this.groupMetricsByServices(values);
+      services = this.groupMetricsByServices(servicesList);
       dataToSend = {id, name, services};
     }
 
@@ -521,7 +525,7 @@ export class MetricProfilesChange extends Component
   }
 
   render() {
-    const {write_perm, loading, metric_profile, 
+    const {write_perm, loading, metric_profile, metric_profile_name,
       view_services, groups_field, list_user_groups,
       serviceflavours_all, metrics_all, 
       searchMetric, searchServiceFlavour} = this.state;
@@ -542,13 +546,16 @@ export class MetricProfilesChange extends Component
           <Formik
             initialValues = {{
               id: metric_profile.id,
-              name: metric_profile.name,
+              name: metric_profile_name,
               groups_field: groups_field,
               view_services: view_services,
               search_metric: searchMetric,
               search_serviceflavour: searchServiceFlavour
             }}
-            onSubmit = {(values, actions) => this.onSubmitHandle(this.state.list_services, actions)}
+            onSubmit = {(values, actions) => this.onSubmitHandle({
+              formValues: values,
+              servicesList: this.state.list_services 
+            }, actions)}
             enableReinitialize={true}
             render = {props => (
               <Form>
