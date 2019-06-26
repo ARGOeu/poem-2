@@ -251,6 +251,31 @@ export class MetricProfilesChange extends Component
                 });
             }) 
         }))
+    } 
+    else if (this.addview) {
+      let empty_metric_profile = {
+        id: '',
+        name: '',
+        services: [],
+      }
+      Promise.all([this.backend.fetchMetricProfileUserGroups(),
+        this.backend.fetchServiceFlavoursAll(),
+        this.backend.fetchMetricsAll()
+      ])
+      .then(([usergroups, serviceflavoursall, metricsall]) => {
+        this.setState(
+          {
+            metric_profile: empty_metric_profile,
+            groups_field: '',
+            list_user_groups: usergroups,
+            write_perm: true,
+            view_services: [{service: '', metric: '', index: 0, isNew: true}],
+            serviceflavours_all: serviceflavoursall,
+            metrics_all: metricsall,
+            list_services: [{service: '', metric: '', index: 0, isNew: true}],
+            loading: false
+          })
+        })
     }
   }
 
@@ -425,9 +450,19 @@ export class MetricProfilesChange extends Component
   }
 
   doChange(values, actions) {
-    const {id, name} = this.state.metric_profile
-    let services = this.groupMetricsByServices(values);
-    let dataToSend = {id, name, services};
+    let services = [];
+    let dataToSend = [];
+
+    if (this.addview) {
+      console.log(values)
+      services = this.groupMetricsByServices(values);
+      dataToSend = {id: '', name: values.name, services};
+    } 
+    else {
+      const {id, name} = this.state.metric_profile
+      services = this.groupMetricsByServices(values);
+      dataToSend = {id, name, services};
+    }
 
     alert(JSON.stringify(dataToSend, null, 4))
   }
@@ -661,7 +696,7 @@ export class MetricProfilesList extends Component
             data={list_metricprofiles}
             columns={columns}
             className="-striped -highlight"
-            defaultPageSize={20}
+            defaultPageSize={12}
           />
         </BaseArgoView>
       )

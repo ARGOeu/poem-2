@@ -156,6 +156,14 @@ class App extends Component {
                   <Route exact path="/ui/probes" component={Probes} />
                   <Route exact path="/ui/metrics" component={Metrics} />
                   <Route exact path="/ui/metricprofiles" component={MetricProfilesList} />
+                  <Route exact path="/ui/metricprofiles/add" 
+                    render={props => <MetricProfilesChange 
+                      {...props}
+                      webapimetric={this.state.webApiMetric}
+                      webapitoken={this.state.token}
+                      tenantname={this.state.tenantName}
+                      addview={true}/>}
+                    />
                   <Route exact path="/ui/metricprofiles/:name" 
                     render={props => <MetricProfilesChange 
                       {...props}

@@ -429,15 +429,15 @@ export class AggregationProfilesChange extends Component
     }
     else {
       let empty_aggregation_profile = {
-          id: '',
-          name: '',
-          metric_operation: '',
-          profile_operation: '',
-          endpoint_group: '',
-          metric_profile: {
-              name: ''
-          },
-          groups: []
+        id: '',
+        name: '',
+        metric_operation: '',
+        profile_operation: '',
+        endpoint_group: '',
+        metric_profile: {
+            name: ''
+        },
+        groups: []
       }
       Promise.all([this.webapi.fetchMetricProfiles(), this.backend.fetchAggregationUserGroups()])
         .then(([metricp, usergroups]) => this.setState(
@@ -737,7 +737,7 @@ export class AggregationProfilesList extends Component
             data={list_aggregations}
             columns={columns}
             className="-striped -highlight"
-            defaultPageSize={20}
+            defaultPageSize={12}
           />
         </BaseArgoView>
       )
