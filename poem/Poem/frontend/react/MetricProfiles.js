@@ -10,11 +10,7 @@ import {
   Button, 
   Row, 
   Col, 
-  Card, 
-  CardHeader, 
-  CardBody,
   Label,
-  CardFooter,
   FormGroup,
   FormText} from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
