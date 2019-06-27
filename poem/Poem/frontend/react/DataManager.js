@@ -81,6 +81,14 @@ export class Backend {
       .catch(err => alert('Something went wrong: ' + err));
   }
 
+  changeMetricProfile(profile) {
+    return this.send(
+      '/api/v2/internal/metricprofiles/',
+      'PUT',
+      profile
+    );
+  }
+
   changeAggregation(profile) {
     return this.send(
       '/api/v2/internal/aggregations/',
@@ -94,6 +102,21 @@ export class Backend {
       '/api/v2/internal/aggregations/',
       'POST',
       profile
+    );
+  }
+
+  addMetricProfile(profile) {
+    return this.send(
+      '/api/v2/internal/metricprofiles/',
+      'POST',
+      profile
+    );
+  }
+
+  deleteMetricProfile(id) {
+    return this.send(
+      '/api/v2/internal/metricprofiles/' + id,
+      'DELETE',
     );
   }
 
@@ -186,11 +209,34 @@ export class WebApi {
     );
   }
 
+  changeMetricProfile(profile) {
+    return this.send(
+      this.metricprofiles + '/' + profile.id,
+      'PUT',
+      profile
+    );
+  }
+
+  addMetricProfile(profile) {
+    return this.send(
+      this.metricprofiles,
+      'POST',
+      profile
+    );
+  }
+
   addAggregation(profile) {
     return this.send(
       this.aggregationprofiles,
       'POST',
       profile
+    );
+  }
+
+  deleteMetricProfile(id) {
+    return this.send(
+      this.metricprofiles + '/' + id,
+      'DELETE'
     );
   }
 
