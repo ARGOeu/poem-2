@@ -1,5 +1,4 @@
 from django.core.cache import cache
-from configparser import ConfigParser
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -25,7 +24,7 @@ import requests
 def sync_webapi(api, model):
     token = APIKey.objects.get(client_id="WEB-API")
 
-    headers, payload = dict(), dict()
+    headers = dict()
     headers = {'Accept': 'application/json', 'x-api-key': token.token}
     response = requests.get(api,
                             headers=headers,
@@ -351,6 +350,20 @@ class ListAggregations(APIView):
 class ListMetricProfiles(APIView):
     authentication_classes= (SessionAuthentication,)
 
+    def post(self, request):
+        serializer = serializers.MetricProfileSerializer(data=request.data)
+
+        if serializer.is_valid():
+            serializer.save()
+
+            groupprofile = poem_models.GroupOfMetricProfiles.objects.get(name=request.data['groupname'])
+            profile = poem_models.MetricProfiles.objects.get(apiid=request.data['apiid'])
+            groupprofile.metricprofiles.add(profile)
+
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
     def get(self, request, profile_name=None):
         sync_webapi(settings.WEBAPI_METRIC, poem_models.MetricProfiles)
 
@@ -368,6 +381,30 @@ class ListMetricProfiles(APIView):
             profiles = poem_models.MetricProfiles.objects.all()
             serializer = serializers.MetricProfileSerializer(profiles, many=True)
             return Response(serializer.data)
+
+    def put(self, request):
+        profile = poem_models.MetricProfiles.objects.get(apiid=request.data['apiid'])
+        profile.groupname = request.data['groupname']
+        profile.save()
+
+        groupprofile = poem_models.GroupOfMetricProfiles.objects.get(name=request.data['groupname'])
+        groupprofile.metricprofiles.add(profile)
+
+        return Response(status=status.HTTP_201_CREATED)
+
+    def delete(self, request, profile_name=None):
+        if profile_name:
+            try:
+                profile = poem_models.MetricProfiles.objects.get(name=profile_name)
+                profile.delete()
+                return Response(status=status.HTTP_204_NO_CONTENT)
+
+            except poem_models.MetricProfiles.DoesNotExist:
+                raise NotFound(status=404,
+                            detail='Metric profile not found')
+
+        else:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
 class ListProbes(APIView):
