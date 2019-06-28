@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import {Link} from 'react-router-dom';
 import {Backend, WebApi} from './DataManager';
 import Autocomplete from 'react-autocomplete';
-import { LoadingAnim, BaseArgoView, SearchField, DropDown } from './UIElements';
+import { LoadingAnim, BaseArgoView, SearchField, DropDown, NotifyOk } from './UIElements';
 import ReactTable from 'react-table';
 import { Formik, Field, FieldArray, Form } from 'formik';
 import 'react-table/react-table.css';
@@ -454,17 +454,84 @@ export class MetricProfilesChange extends Component
     let services = [];
     let dataToSend = [];
 
-    if (this.addview) {
-      services = this.groupMetricsByServices(servicesList);
-      dataToSend = {name: formValues.name, services};
-    } 
-    else {
+    if (!this.addview) {
       const {id, name} = this.state.metric_profile
       services = this.groupMetricsByServices(servicesList);
       dataToSend = {id, name, services};
+      this.webapi.changeMetricProfile(dataToSend)
+      .then(response => {
+        if (!response.ok) {
+          this.toggleAreYouSureSetModal(`Error: ${response.status}, ${response.statusText}`, 
+            'Error changing metric profile', 
+            undefined)
+        }
+        else {
+          response.json()
+          .then(r => {
+            this.backend.changeMetricProfile({ 
+              apiid: dataToSend.id, 
+              name: dataToSend.name, 
+              groupname: formValues.groups_field
+            })
+              .then(() => NotifyOk({
+                msg: 'Metric profile succesfully changed',
+                title: 'Changed',
+                callback: () => this.history.push('/ui/metricprofiles')
+              },
+              ))
+              .catch(err => alert('Something went wrong: ' + err))
+          })
+          .catch(err => alert('Something went wrong: ' + err))
+        }
+      }).catch(err => alert('Something went wrong: ' + err))
+    } 
+    else {
+      services = this.groupMetricsByServices(servicesList);
+      dataToSend = {name: formValues.name, services};
+      this.webapi.addMetricProfile(dataToSend)
+      .then(response => {
+        if (!response.ok) {
+          this.toggleAreYouSureSetModal(`Error: ${response.status}, ${response.statusText}`,
+            'Error adding metric profile',
+            undefined)
+        } 
+        else {
+          response.json()
+          .then(r => { 
+            this.backend.addMetricProfile({
+              apiid: r.data.id, 
+              name: dataToSend.name, 
+              groupname: formValues.groups_field 
+            })
+              .then(() => NotifyOk({
+                msg: 'Metric profile successfully added',
+                title: 'Added',
+                callback: () => this.history.push('/ui/metricprofiles')
+              }))
+              .catch(err => alert('Something went wrong: ' + err))
+          })
+          .catch(err => alert('Something went wrong: ' + err))
+        }
+      }).catch(err => alert('Something went wrong: ' + err))
     }
+  }
 
-    alert(JSON.stringify(dataToSend, null, 4))
+  doDelete(idProfile) {
+    this.webapi.deleteMetricProfile(idProfile)
+    .then(response => {
+      if (!response.ok) {
+        alert(`Error: ${response.status}, ${response.statusText}`)
+      } else {
+        response.json()
+        .then(this.backend.deleteMetricProfile(idProfile))
+        .then(
+          () => NotifyOk({
+            msg: 'Metric profile sucessfully deleted',
+            title: 'Deleted',
+            callback: () => this.history.push('/ui/metricprofiles')
+          }))
+      }
+    }).catch(err => alert('Something went wrong: ' + err))
   }
 
   onSelect(element, field, value) {

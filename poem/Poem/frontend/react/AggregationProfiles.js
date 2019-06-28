@@ -373,18 +373,18 @@ export class AggregationProfilesChange extends Component
   doDelete(idProfile) {
     this.webapi.deleteAggregation(idProfile)
     .then(response => {
-        if (!response.ok) {
-          alert(`Error: ${response.status}, ${response.statusText}`)
-        } else {
-          response.json()
-            .then(this.backend.deleteAggregation(idProfile))
-            .then(
-              () => NotifyOk({
-                msg: 'Aggregation profile sucessfully deleted',
-                title: 'Deleted',
-                callback: () => this.history.push('/ui/aggregationprofiles')
-              }))
-        }
+      if (!response.ok) {
+        alert(`Error: ${response.status}, ${response.statusText}`)
+      } else {
+        response.json()
+        .then(this.backend.deleteAggregation(idProfile))
+        .then(
+          () => NotifyOk({
+            msg: 'Aggregation profile sucessfully deleted',
+            title: 'Deleted',
+            callback: () => this.history.push('/ui/aggregationprofiles')
+          }))
+      }
     }).catch(err => alert('Something went wrong: ' + err))
   }
 
