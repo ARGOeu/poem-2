@@ -441,10 +441,10 @@ export class MetricProfilesChange extends Component
       if (!service.length)
         services.push({
           'service': element.service,
-          'metric': [element.metric]
+          'metrics': [element.metric]
         })
       else
-        service[0].metric.push(element.metric)
+        service[0].metrics.push(element.metric)
        
     })
     return services
