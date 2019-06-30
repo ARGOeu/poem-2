@@ -77,7 +77,7 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
             <td className={service.isNew ? "bg-light" : ""}>
               <Autocomplete
                 inputProps={{
-                  className: service.isNew ? "form-control custom-select border border-success" : "from-control custom-select"
+                  className: service.isNew ? "form-control custom-select border border-success" : "form-control custom-select"
                 }}
                 getItemValue={(item) => item}
                 items={serviceflavours_all}
@@ -91,13 +91,13 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
                     }>
                     {item}
                   </div>}
-                  onChange={(e) => form.setFieldValue(`view_services.${index}.service`, e.target.value)}
-                  onSelect={(val) => {
-                    form.setFieldValue(`view_services.${index}.service`, val)
-                    onselect_handler(form.values.view_services[index], 
-                      'service', 
-                      val)
-                  }}
+                onChange={(e) => form.setFieldValue(`view_services.${index}.service`, e.target.value)}
+                onSelect={(val) => {
+                  form.setFieldValue(`view_services.${index}.service`, val)
+                  onselect_handler(form.values.view_services[index], 
+                    'service', 
+                    val)
+                }}
                 wrapperStyle={{}}
                 shouldItemRender={matchItem}
                 renderMenu={(items) => 
@@ -107,7 +107,7 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
             <td className={service.isNew ? "bg-light" : ""}>
               <Autocomplete
                 inputProps={{
-                  className: service.isNew ? "form-control custom-select border border-success" : "from-control custom-select"
+                  className: service.isNew ? "form-control custom-select border border-success" : "form-control custom-select"
                 }}
                 getItemValue={(item) => item}
                 items={metrics_all}
@@ -121,13 +121,13 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
                     }>
                     {item}
                   </div>}
-                  onChange={(e) => form.setFieldValue(`view_services.${index}.metric`, e.target.value)}
-                  onSelect={(val) => {
-                    form.setFieldValue(`view_services.${index}.metric`, val)
-                    onselect_handler(form.values.view_services[index],
-                      'metric', 
-                      val)
-                  }}
+                onChange={(e) => form.setFieldValue(`view_services.${index}.metric`, e.target.value)}
+                onSelect={(val) => {
+                  form.setFieldValue(`view_services.${index}.metric`, val)
+                  onselect_handler(form.values.view_services[index],
+                    'metric', 
+                    val)
+                }}
                 wrapperStyle={{}}
                 shouldItemRender={matchItem}
                 renderMenu={(items) => 
