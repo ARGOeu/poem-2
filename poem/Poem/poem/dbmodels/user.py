@@ -1,6 +1,6 @@
 from Poem import settings
 from Poem.poem.dbmodels.probes import GroupOfProbes
-from Poem.poem.dbmodels.profiles import GroupOfProfiles
+from Poem.poem.dbmodels.metricprofiles import GroupOfMetricProfiles
 from Poem.poem.dbmodels.metricstags import GroupOfMetrics
 from Poem.poem.dbmodels.aggregations import GroupOfAggregations
 from django.contrib import auth
@@ -22,9 +22,13 @@ class CustPermissionsMixin(models.Model):
         verbose_name=_('user permissions'), blank=True,
         help_text=_('Specific permissions for this user.'),
         related_name="user_set", related_query_name="user")
-    groupsofprofiles = models.ManyToManyField(GroupOfProfiles, verbose_name=('groups of profiles'),
-        blank=True, help_text=_('The groups of profiles that user will control'),
-        related_name='user_set', related_query_name='user')
+    groupsofmetricprofiles = models.ManyToManyField(
+        GroupOfMetricProfiles,
+        verbose_name=('groups of profiles'),
+        blank=True,
+        help_text=_('The groups of metric profiles that user will control'),
+        related_name='user_set',
+        related_query_name='user')
     groupsofmetrics = models.ManyToManyField(GroupOfMetrics, verbose_name=('groups of metrics'),
         blank=True, help_text=_('The groups of metrics that user will control'),
         related_name='user_set', related_query_name='user')
