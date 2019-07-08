@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import {Link} from 'react-router-dom';
 import { LoadingAnim, BaseArgoView, NotifyOk, DropDown } from './UIElements';
+import Autocomplete from 'react-autocomplete';
 import ReactTable from 'react-table';
 import 'react-table/react-table.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -22,6 +23,11 @@ import {
 
 import "react-notifications/lib/notifications.css";
 import './AggregationProfiles.css';
+
+
+function matchItem(item, value) {
+  return item.toLowerCase().indexOf(value.toLowerCase()) !== -1;
+}
 
 
 const GroupList = ({name, form, list_services, list_operations, last_service_operation, write_perm}) =>
@@ -127,6 +133,7 @@ const ServiceList = ({services, list_services=[], list_operations=[], last_servi
         <Service
           {...props}
           key={i}
+          service={service} 
           operation={service.operation} 
           list_services={list_services} 
           list_operations={list_operations} 
@@ -141,17 +148,34 @@ const ServiceList = ({services, list_services=[], list_operations=[], last_servi
   )
 
 
-const Service = ({name, operation, list_services, list_operations, last_service_operation, groupindex, index, remove, insert, form}) => 
+const Service = ({name, service, operation, list_services, list_operations, last_service_operation, groupindex, index, remove, insert, form}) => 
   <Row className="d-flex align-items-center service pt-1 pb-1 no-gutters" key={index}>
     <Col md={8}>
-      <div className="input-group input-group-sm">
-        <DropDown 
-          field={{name: "name", value: name}}
-          data={list_services} 
-          prefix={`groups.${groupindex}.services.${index}`}
-          class_name="custom-select service-name"
+        <Autocomplete
+          inputProps={{
+            className: "form-control custom-select input-group input-group-sm"
+          }}
+          getItemValue={(item) => item}
+          items={list_services}
+          value={service.name}
+          renderItem={(item, isHighlighted) => 
+            <div 
+              key={list_services.indexOf(item)} 
+              className={`autocomplete-entries ${isHighlighted ? 
+                  "autocomplete-entries-highlighted" 
+                  : ""}`
+              }>
+              {item}
+            </div>}
+          onChange={(e) => form.setFieldValue(`groups.${groupindex}.services.${index}.name`, e.target.value)}
+          onSelect={(val) => {
+            form.setFieldValue(`groups.${groupindex}.services.${index}.name`, val)
+          }}
+          wrapperStyle={{}}
+          shouldItemRender={matchItem}
+          renderMenu={(items) => 
+              <div className='autocomplete-menu' children={items}/>}
         />
-      </div>
     </Col>
     <Col md={2}>
       <div className="input-group input-group-sm">
