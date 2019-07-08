@@ -1,7 +1,5 @@
 import json
 
-from django.shortcuts import render
-from rest_framework import generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.exceptions import APIException
@@ -9,7 +7,6 @@ from rest_framework.exceptions import APIException
 from Poem.api.permissions import MyHasAPIKey
 
 from Poem.poem import models
-from . import serializers
 
 
 def none_to_emptystr(val):
@@ -24,19 +21,6 @@ class NotFound(APIException):
         self.status_code = status
         self.detail = detail
         self.code = code if code else detail
-
-
-class ListProfile(generics.ListAPIView):
-    queryset = models.Profile.objects.all()
-    serializer_class = serializers.ProfileSerializer
-    permission_classes = (MyHasAPIKey,)
-
-
-class DetailProfile(generics.RetrieveAPIView):
-    lookup_field = 'name'
-    queryset = models.Profile.objects.all()
-    serializer_class = serializers.ProfileSerializer
-    permission_classes = (MyHasAPIKey,)
 
 
 def build_metricconfigs(tag=None):
