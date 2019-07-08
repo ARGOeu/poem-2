@@ -151,34 +151,34 @@ const ServiceList = ({services, list_services=[], list_operations=[], last_servi
 const Service = ({name, service, operation, list_services, list_operations, last_service_operation, groupindex, index, remove, insert, form}) => 
   <Row className="d-flex align-items-center service pt-1 pb-1 no-gutters" key={index}>
     <Col md={8}>
-        <Autocomplete
-          inputProps={{
-            className: "form-control custom-select"
-          }}
-          getItemValue={(item) => item}
-          items={list_services}
-          value={service.name}
-          renderItem={(item, isHighlighted) => 
-            <div 
-              key={list_services.indexOf(item)} 
-              className={`autocomplete-entries ${isHighlighted ? 
-                  "autocomplete-entries-highlighted" 
-                  : ""}`
-              }>
-              {item}
-            </div>}
-          onChange={(e) => form.setFieldValue(`groups.${groupindex}.services.${index}.name`, e.target.value)}
-          onSelect={(val) => {
-            form.setFieldValue(`groups.${groupindex}.services.${index}.name`, val)
-          }}
-          wrapperStyle={{}}
-          shouldItemRender={matchItem}
-          renderMenu={(items) => 
-              <div className='autocomplete-menu' children={items}/>}
-        />
+      <Autocomplete
+        inputProps={{
+          className: "form-control custom-select"
+        }}
+        getItemValue={(item) => item}
+        items={list_services}
+        value={service.name}
+        renderItem={(item, isHighlighted) => 
+          <div 
+            key={list_services.indexOf(item)} 
+            className={`aggregation-autocomplete-entries ${isHighlighted ? 
+                "aggregation-autocomplete-entries-highlighted" 
+                : ""}`
+            }>
+            {item}
+          </div>}
+        onChange={(e) => form.setFieldValue(`groups.${groupindex}.services.${index}.name`, e.target.value)}
+        onSelect={(val) => {
+          form.setFieldValue(`groups.${groupindex}.services.${index}.name`, val)
+        }}
+        wrapperStyle={{}}
+        shouldItemRender={matchItem}
+        renderMenu={(items) => 
+            <div className='aggregation-autocomplete-menu' children={items}/>}
+      />
     </Col>
     <Col md={2}>
-      <div className="input-group input-group-sm">
+      <div className="input-group">
         <DropDown 
           field={{name: "operation", value: operation}}
           data={list_operations}
@@ -187,7 +187,7 @@ const Service = ({name, service, operation, list_services, list_operations, last
         />
       </div>
     </Col>
-    <Col md={2} className="pl-1">
+    <Col md={2} className="pl-2">
       <Button size="sm" color="light"
         type="button"
         onClick={() => remove(index)}>
