@@ -153,7 +153,7 @@ const Service = ({name, service, operation, list_services, list_operations, last
     <Col md={8}>
         <Autocomplete
           inputProps={{
-            className: "form-control custom-select input-group input-group-sm"
+            className: "form-control custom-select"
           }}
           getItemValue={(item) => item}
           items={list_services}
