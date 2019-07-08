@@ -253,9 +253,6 @@ class ListGroupsForUser(APIView):
             groupsofaggregations = poem_models.GroupOfAggregations.objects.all().values_list('name', flat=True)
             results = {'aggregations': groupsofaggregations}
 
-            groupsofprofiles = poem_models.GroupOfProfiles.objects.all().values_list('name', flat=True)
-            results.update({'profiles': groupsofprofiles})
-
             groupsofprobes = poem_models.GroupOfProbes.objects.all().values_list('name', flat=True)
             results.update({'probes': groupsofprobes})
 
@@ -268,9 +265,6 @@ class ListGroupsForUser(APIView):
         else:
             groupsofaggregations = user.groupsofaggregations.all().values_list('name', flat=True)
             results = {'aggregations': groupsofaggregations}
-
-            groupsofprofiles = user.groupsofprofiles.all().values_list('name', flat=True)
-            results.update({'profiles': groupsofprofiles})
 
             groupsofprobes = user.groupsofprobes.all().values_list('name', flat=True)
             results.update({'probes': groupsofprobes})
