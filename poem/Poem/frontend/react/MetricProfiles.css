@@ -1,4 +1,4 @@
-.autocomplete-menu {
+.metricprofiles-autocomplete-menu {
   display: block;
   width: 40%;
   color: #495057;
@@ -14,7 +14,7 @@
   max-height: 400px;
 }
 
-.autocomplete-entries {
+.metricprofiles-autocomplete-entries {
   font-size: 1rem;
   font-weight: 400;
   line-height: 1.5;
@@ -22,7 +22,7 @@
   padding: 0.375rem 1.75rem 0.375rem 0.75rem;
 }
 
-.autocomplete-entries-highlighted {
+.metricprofiles-autocomplete-entries-highlighted {
   font-size: 1rem;
   font-weight: 400;
   line-height: 1.5;

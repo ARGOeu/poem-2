@@ -77,7 +77,7 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
             <td className={service.isNew ? "bg-light" : ""}>
               <Autocomplete
                 inputProps={{
-                  className: service.isNew ? "form-control custom-select border border-success" : "from-control custom-select"
+                  className: service.isNew ? "form-control custom-select border border-success" : "form-control custom-select"
                 }}
                 getItemValue={(item) => item}
                 items={serviceflavours_all}
@@ -85,29 +85,29 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
                 renderItem={(item, isHighlighted) => 
                   <div 
                     key={serviceflavours_all.indexOf(item)} 
-                    className={`autocomplete-entries ${isHighlighted ? 
-                        "autocomplete-entries-highlighted" 
+                    className={`metricprofiles-autocomplete-entries ${isHighlighted ? 
+                        "metricprofiles-autocomplete-entries-highlighted" 
                         : ""}`
                     }>
                     {item}
                   </div>}
-                  onChange={(e) => form.setFieldValue(`view_services.${index}.service`, e.target.value)}
-                  onSelect={(val) => {
-                    form.setFieldValue(`view_services.${index}.service`, val)
-                    onselect_handler(form.values.view_services[index], 
-                      'service', 
-                      val)
-                  }}
+                onChange={(e) => form.setFieldValue(`view_services.${index}.service`, e.target.value)}
+                onSelect={(val) => {
+                  form.setFieldValue(`view_services.${index}.service`, val)
+                  onselect_handler(form.values.view_services[index], 
+                    'service', 
+                    val)
+                }}
                 wrapperStyle={{}}
                 shouldItemRender={matchItem}
                 renderMenu={(items) => 
-                    <div className='autocomplete-menu' children={items}/>}
+                    <div className='metricprofiles-autocomplete-menu' children={items}/>}
               />
             </td>
             <td className={service.isNew ? "bg-light" : ""}>
               <Autocomplete
                 inputProps={{
-                  className: service.isNew ? "form-control custom-select border border-success" : "from-control custom-select"
+                  className: service.isNew ? "form-control custom-select border border-success" : "form-control custom-select"
                 }}
                 getItemValue={(item) => item}
                 items={metrics_all}
@@ -115,27 +115,27 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
                 renderItem={(item, isHighlighted) => 
                   <div 
                     key={metrics_all.indexOf(item)} 
-                    className={`autocomplete-entries ${isHighlighted ? 
-                        "autocomplete-entries-highlighted" 
+                    className={`metricprofiles-autocomplete-entries ${isHighlighted ? 
+                        "metricprofiles-autocomplete-entries-highlighted" 
                         : ""}`
                     }>
                     {item}
                   </div>}
-                  onChange={(e) => form.setFieldValue(`view_services.${index}.metric`, e.target.value)}
-                  onSelect={(val) => {
-                    form.setFieldValue(`view_services.${index}.metric`, val)
-                    onselect_handler(form.values.view_services[index],
-                      'metric', 
-                      val)
-                  }}
+                onChange={(e) => form.setFieldValue(`view_services.${index}.metric`, e.target.value)}
+                onSelect={(val) => {
+                  form.setFieldValue(`view_services.${index}.metric`, val)
+                  onselect_handler(form.values.view_services[index],
+                    'metric', 
+                    val)
+                }}
                 wrapperStyle={{}}
                 shouldItemRender={matchItem}
                 renderMenu={(items) => 
-                    <div className='autocomplete-menu' children={items}/>}
+                    <div className='metricprofiles-autocomplete-menu' children={items}/>}
               />
             </td>
-            <td>
-              <Button color="light"
+            <td className="align-middle pl-3">
+              <Button size="sm" color="light"
                 type="button"
                 onClick={() => {
                   remove_handler(form.values.view_services[index]); 
@@ -143,7 +143,7 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
                 }}>
                 <FontAwesomeIcon icon={faTimes}/>
               </Button>
-              <Button color="light"
+              <Button size="sm" color="light"
                 type="button"
                 onClick={() => {
                   let new_element = {index: index + 1, service: '', metric: '', isNew: true}
