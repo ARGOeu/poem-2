@@ -11,4 +11,4 @@ fi
 
 su -m -s /bin/sh $RUNASUSER -c \
 "export DJANGO_SETTINGS_MODULE=Poem.settings && \
-python $SITEPACK/Poem/sync/poem-syncvo.py"
+python $SITEPACK/Poem/sync/poem-syncmetricinstances.py"

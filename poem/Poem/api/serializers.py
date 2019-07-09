@@ -9,6 +9,24 @@ class AggregationProfileSerializer(serializers.ModelSerializer):
         model = models.Aggregation
 
 
+class MetricProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        fields = ('name', 'apiid', 'groupname', )
+        model = models.MetricProfiles
+
+
+class ServiceFlavourSerializer(serializers.ModelSerializer):
+    class Meta:
+        fields = ('name', 'description', )
+        model = models.ServiceFlavour
+
+
+class MetricsSerializer(serializers.ModelSerializer):
+    class Meta:
+        fields = ('name', )
+        model = models.Metrics
+
+
 class UsersSerializer(serializers.ModelSerializer):
     class Meta:
         fields = ('first_name', 'last_name', 'username', 'is_active',
@@ -20,16 +38,3 @@ class MetricInstanceSerializer(serializers.ModelSerializer):
     class Meta:
         fields = ('service_flavour', 'metric')
         model = models.MetricInstance
-
-
-class ProfileSerializer(serializers.ModelSerializer):
-    metric_instances = MetricInstanceSerializer(many=True, read_only=True)
-
-    class Meta:
-        fields = (
-            'name',
-            'vo',
-            'description',
-            'metric_instances'
-        )
-        model = models.Profile

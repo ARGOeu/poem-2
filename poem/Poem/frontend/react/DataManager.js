@@ -20,12 +20,10 @@ export class Backend {
       .catch(err => alert('Something went wrong: ' + err));
   }
 
-  fetchAggregationProfileIdFromName(name) {
-    return fetch('/api/v2/internal/aggregations')
+  fetchAggregationProfileIdFromName(aggregation_name) {
+    return fetch('/api/v2/internal/aggregations' + '/' + aggregation_name)
       .then(response => response.json())
-      .then(json => json.filter((item, i) => item.name === name))
-      .then(list_item => list_item[0])
-      .then(profile => profile.apiid)
+      .then(json => json.apiid)
       .catch(err => alert('Something went wrong: ' + err));
   }
 
@@ -33,6 +31,62 @@ export class Backend {
     return fetch('/api/v2/internal/aggregations')
       .then(response => response.json())
       .catch(err => alert('Something went wrong: ' + err));
+  }
+
+  fetchMetricProfiles() {
+    return fetch('/api/v2/internal/metricprofiles')
+      .then(response => response.json())
+      .catch(err => alert('Something went wrong: ' + err));
+  }
+
+  fetchMetricProfileGroup(metricprofile_name) {
+    return fetch('/api/v2/internal/metricprofiles' + '/' + metricprofile_name)
+      .then(response => response.json())
+      .then(json => json['groupname'])
+      .catch(err => alert('Something went wrong: ' + err));
+  }
+
+  fetchMetricProfileIdFromName(metricprofile_name) {
+    return fetch('/api/v2/internal/metricprofiles' + '/' + metricprofile_name)
+      .then(response => response.json())
+      .then(json => json.apiid)
+      .catch(err => alert('Something went wrong: ' + err));
+  }
+
+  fetchMetricsAll() {
+    return fetch('/api/v2/internal/metricsall')
+      .then(response => response.json())
+      .then(json => {
+        let metrics = [];
+        json.forEach((e) => metrics.push(e.name));
+        return metrics;
+      })
+      .catch(err => alert('Something went wrong: ' + err));
+  }
+
+  fetchServiceFlavoursAll() {
+    return fetch('/api/v2/internal/serviceflavoursall')
+      .then(response => response.json())
+      .then(json => {
+        let service_flavours = [];
+        json.forEach((e) => service_flavours.push(e.name));
+        return service_flavours;
+      })
+      .catch(err => alert('Something went wrong: ' + err));
+  }
+
+  fetchMetricProfileUserGroups() {
+    return fetch('/api/v2/internal/groups/metricprofiles')
+      .then(response => response.json())
+      .catch(err => alert('Something went wrong: ' + err));
+  }
+
+  changeMetricProfile(profile) {
+    return this.send(
+      '/api/v2/internal/metricprofiles/',
+      'PUT',
+      profile
+    );
   }
 
   changeAggregation(profile) {
@@ -48,6 +102,21 @@ export class Backend {
       '/api/v2/internal/aggregations/',
       'POST',
       profile
+    );
+  }
+
+  addMetricProfile(profile) {
+    return this.send(
+      '/api/v2/internal/metricprofiles/',
+      'POST',
+      profile
+    );
+  }
+
+  deleteMetricProfile(id) {
+    return this.send(
+      '/api/v2/internal/metricprofiles/' + id,
+      'DELETE',
     );
   }
 
@@ -104,6 +173,20 @@ export class WebApi {
       .catch(err => alert('Something went wrong: ' + err));
   }
 
+  fetchMetricProfile(id) {
+    return fetch(this.metricprofiles + '/' + id, 
+      {headers: 
+        {
+          "Accept": "application/json",
+          "x-api-key": this.token
+        }
+      })
+      .then(response => response.json())
+      .then(json => json['data'])
+      .then(array => array[0])
+      .catch(err => alert('Something went wrong: ' + err));
+  }
+
   fetchAggregationProfile(id) {
     return fetch(this.aggregationprofiles + '/' + id, 
       {headers: 
@@ -116,6 +199,52 @@ export class WebApi {
       .then(json => json['data'])
       .then(array => array[0])
       .catch(err => alert('Something went wrong: ' + err));
+  }
+
+  changeAggregation(profile) {
+    return this.send(
+      this.aggregationprofiles + '/' + profile.id,
+      'PUT',
+      profile
+    );
+  }
+
+  changeMetricProfile(profile) {
+    return this.send(
+      this.metricprofiles + '/' + profile.id,
+      'PUT',
+      profile
+    );
+  }
+
+  addMetricProfile(profile) {
+    return this.send(
+      this.metricprofiles,
+      'POST',
+      profile
+    );
+  }
+
+  addAggregation(profile) {
+    return this.send(
+      this.aggregationprofiles,
+      'POST',
+      profile
+    );
+  }
+
+  deleteMetricProfile(id) {
+    return this.send(
+      this.metricprofiles + '/' + id,
+      'DELETE'
+    );
+  }
+
+  deleteAggregation(id) {
+    return this.send(
+      this.aggregationprofiles + '/' + id,
+      'DELETE'
+    );
   }
 
   send(url, method, values=null) {
@@ -131,29 +260,6 @@ export class WebApi {
       },
       body: values && JSON.stringify(values) 
     });
-  }
-
-  changeAggregation(profile) {
-    return this.send(
-      this.aggregationprofiles + '/' + profile.id,
-      'PUT',
-      profile
-    );
-  }
-
-  addAggregation(profile) {
-    return this.send(
-      this.aggregationprofiles,
-      'POST',
-      profile
-    );
-  }
-
-  deleteAggregation(id) {
-    return this.send(
-      this.aggregationprofiles + '/' + id,
-      'DELETE'
-    );
   }
 
 }

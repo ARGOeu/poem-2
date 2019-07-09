@@ -1,16 +1,18 @@
 import React, { Component } from 'react';
 import Login from './Login';
-import MetricProfiles from './MetricProfiles';
+import { MetricProfilesChange, MetricProfilesList } from './MetricProfiles';
 import Home from './Home';
+import Probes from './Probes';
+import Metrics from './Metrics';
 import Administration from './Administration';
-import {AggregationProfilesChange, AggregationProfilesList} from './AggregationProfiles';
+import { AggregationProfilesChange, AggregationProfilesList } from './AggregationProfiles';
 import Reports from './Reports';
 import Services from './Services';
 import NotFound from './NotFound';
-import {Route, Switch, BrowserRouter, Redirect, withRouter} from 'react-router-dom';
-import {Container, Button, Row, Col} from 'reactstrap';
-import {NavigationBar, CustomBreadcrumb, NavigationLinks, Footer} from './UIElements';
-import {NotificationContainer, NotificationManager} from 'react-notifications';
+import { Route, Switch, BrowserRouter, Redirect, withRouter } from 'react-router-dom';
+import { Container, Button, Row, Col } from 'reactstrap';
+import { NavigationBar, CustomBreadcrumb, NavigationLinks, Footer } from './UIElements';
+import { NotificationContainer, NotificationManager } from 'react-notifications';
 
 import './App.css';
 
@@ -151,7 +153,24 @@ class App extends Component {
                   <Route exact path="/ui/home" component={Home} />
                   <Route exact path="/ui/services" component={Services} />
                   <Route exact path="/ui/reports" component={Reports} />
-                  <Route exact path="/ui/metricprofiles" component={MetricProfiles} />
+                  <Route exact path="/ui/probes" component={Probes} />
+                  <Route exact path="/ui/metrics" component={Metrics} />
+                  <Route exact path="/ui/metricprofiles" component={MetricProfilesList} />
+                  <Route exact path="/ui/metricprofiles/add" 
+                    render={props => <MetricProfilesChange 
+                      {...props}
+                      webapimetric={this.state.webApiMetric}
+                      webapitoken={this.state.token}
+                      tenantname={this.state.tenantName}
+                      addview={true}/>}
+                    />
+                  <Route exact path="/ui/metricprofiles/:name" 
+                    render={props => <MetricProfilesChange 
+                      {...props}
+                      webapimetric={this.state.webApiMetric}
+                      webapitoken={this.state.token}
+                      tenantname={this.state.tenantName}/>}
+                    />
                   <Route exact path="/ui/aggregationprofiles" component={AggregationProfilesList} />
                   <Route exact path="/ui/aggregationprofiles/add"
                     render={props => <AggregationProfilesChange 

@@ -1,5 +1,4 @@
 from django.core.cache import cache
-from configparser import ConfigParser
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -21,6 +20,32 @@ from Poem import settings
 
 import requests
 
+
+def sync_webapi(api, model):
+    token = APIKey.objects.get(client_id="WEB-API")
+
+    headers = dict()
+    headers = {'Accept': 'application/json', 'x-api-key': token.token}
+    response = requests.get(api,
+                            headers=headers,
+                            timeout=180)
+    response.raise_for_status()
+    data = response.json()['data']
+
+    data_api = set([p['id'] for p in data])
+    data_db = set(model.objects.all().values_list('apiid', flat=True))
+    entries_not_indb = data_api.difference(data_db)
+
+    new_entries = []
+    for p in data:
+        if p['id'] in entries_not_indb:
+            new_entries.append(model(name=p['name'], apiid=p['id'], groupname=''))
+    if new_entries:
+        model.objects.bulk_create(new_entries)
+
+    entries_deleted_onapi = data_db.difference(data_api)
+    for p in entries_deleted_onapi:
+        model.objects.get(apiid=p).delete()
 
 
 class Tree(object):
@@ -156,6 +181,24 @@ class ListMetricsInGroup(APIView):
                            detail='Group not found')
 
 
+class ListAllMetrics(APIView):
+    authentication_classes = (SessionAuthentication,)
+
+    def get(self, request):
+        metrics = poem_models.Metrics.objects.all()
+        serializer = serializers.MetricsSerializer(metrics, many=True)
+        return Response(serializer.data)
+
+
+class ListAllServiceFlavours(APIView):
+    authentication_classes = (SessionAuthentication,)
+
+    def get(self, request):
+        service_flavours = poem_models.ServiceFlavour.objects.all()
+        serializer = serializers.ServiceFlavourSerializer(service_flavours, many=True)
+        return Response(serializer.data)
+
+
 class ListTokens(APIView):
     authentication_classes = (SessionAuthentication,)
 
@@ -210,27 +253,27 @@ class ListGroupsForUser(APIView):
             groupsofaggregations = poem_models.GroupOfAggregations.objects.all().values_list('name', flat=True)
             results = {'aggregations': groupsofaggregations}
 
-            groupsofprofiles = poem_models.GroupOfProfiles.objects.all().values_list('name', flat=True)
-            results.update({'profiles': groupsofprofiles})
-
             groupsofprobes = poem_models.GroupOfProbes.objects.all().values_list('name', flat=True)
             results.update({'probes': groupsofprobes})
 
             groupsofmetrics = poem_models.GroupOfMetrics.objects.all().values_list('name', flat=True)
             results.update({'metrics': groupsofmetrics})
 
+            groupsofmetricprofiles = poem_models.GroupOfMetricProfiles.objects.all().values_list('name', flat=True)
+            results.update({'metricprofiles': groupsofmetricprofiles})
+
         else:
             groupsofaggregations = user.groupsofaggregations.all().values_list('name', flat=True)
             results = {'aggregations': groupsofaggregations}
-
-            groupsofprofiles = user.groupsofprofiles.all().values_list('name', flat=True)
-            results.update({'profiles': groupsofprofiles})
 
             groupsofprobes = user.groupsofprobes.all().values_list('name', flat=True)
             results.update({'probes': groupsofprobes})
 
             groupsofmetrics = user.groupsofmetrics.all().values_list('name', flat=True)
             results.update({'metrics': groupsofmetrics})
+
+            groupsofmetricprofiles = user.groupofmetricprofiles.objects.all().values_list('name', flat=True)
+            results.update({'metricprofiles': groupsofmetricprofiles})
 
         if group:
             return Response(results[group.lower()])
@@ -265,34 +308,8 @@ class ListAggregations(APIView):
 
         return Response(status=status.HTTP_201_CREATED)
 
-    def _refresh_profiles(self):
-        token = APIKey.objects.get(client_id="WEB-API")
-
-        headers, payload = dict(), dict()
-        headers = {'Accept': 'application/json', 'x-api-key': token.token}
-        response = requests.get(settings.WEBAPI_AGGREGATION,
-                                headers=headers,
-                                timeout=180)
-        response.raise_for_status()
-        profiles = response.json()['data']
-
-        profiles_api = set([p['id'] for p in profiles])
-        profiles_db = set(poem_models.Aggregation.objects.all().values_list('apiid', flat=True))
-        aggregations_not_indb = profiles_api.difference(profiles_db)
-
-        new_aggregations = []
-        for p in profiles:
-            if p['id'] in aggregations_not_indb:
-                new_aggregations.append(poem_models.Aggregation(name=p['name'], apiid=p['id'], groupname=''))
-        if new_aggregations:
-            poem_models.Aggregation.objects.bulk_create(new_aggregations)
-
-        aggregations_deleted_onapi = profiles_db.difference(profiles_api)
-        for p in aggregations_deleted_onapi:
-            poem_models.Aggregation.objects.get(apiid=p).delete()
-
     def get(self, request, aggregation_name=None):
-        self._refresh_profiles()
+        sync_webapi(settings.WEBAPI_AGGREGATION, poem_models.Aggregation)
 
         if aggregation_name:
             try:
@@ -319,6 +336,66 @@ class ListAggregations(APIView):
             except poem_models.Aggregation.DoesNotExist:
                 raise NotFound(status=404,
                             detail='Aggregation not found')
+
+        else:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+class ListMetricProfiles(APIView):
+    authentication_classes= (SessionAuthentication,)
+
+    def post(self, request):
+        serializer = serializers.MetricProfileSerializer(data=request.data)
+
+        if serializer.is_valid():
+            serializer.save()
+
+            groupprofile = poem_models.GroupOfMetricProfiles.objects.get(name=request.data['groupname'])
+            profile = poem_models.MetricProfiles.objects.get(apiid=request.data['apiid'])
+            groupprofile.metricprofiles.add(profile)
+
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def get(self, request, profile_name=None):
+        sync_webapi(settings.WEBAPI_METRIC, poem_models.MetricProfiles)
+
+        if profile_name:
+            try:
+                profile = poem_models.MetricProfiles.objects.get(name=profile_name)
+                serializer = serializers.MetricProfileSerializer(profile)
+                return Response(serializer.data)
+
+            except poem_models.MetricProfiles.DoesNotExist:
+                raise NotFound(status=404,
+                            detail='Metric profile not found')
+
+        else:
+            profiles = poem_models.MetricProfiles.objects.all()
+            serializer = serializers.MetricProfileSerializer(profiles, many=True)
+            return Response(serializer.data)
+
+    def put(self, request):
+        profile = poem_models.MetricProfiles.objects.get(apiid=request.data['apiid'])
+        profile.groupname = request.data['groupname']
+        profile.save()
+
+        groupprofile = poem_models.GroupOfMetricProfiles.objects.get(name=request.data['groupname'])
+        groupprofile.metricprofiles.add(profile)
+
+        return Response(status=status.HTTP_201_CREATED)
+
+    def delete(self, request, profile_name=None):
+        if profile_name:
+            try:
+                profile = poem_models.MetricProfiles.objects.get(name=profile_name)
+                profile.delete()
+                return Response(status=status.HTTP_204_NO_CONTENT)
+
+            except poem_models.MetricProfiles.DoesNotExist:
+                raise NotFound(status=404,
+                            detail='Metric profile not found')
 
         else:
             return Response(status=status.HTTP_400_BAD_REQUEST)

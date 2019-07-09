@@ -26,8 +26,9 @@ import EULogo from './eu.png';
 import EOSCLogo from './eosc.png';
 import './UIElements.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSignOutAlt } from '@fortawesome/free-solid-svg-icons';
+import { faSignOutAlt, faSearch } from '@fortawesome/free-solid-svg-icons';
 import { NotificationManager } from 'react-notifications';
+import { Field } from 'formik';
 
 
 var list_pages = ['administration','services', 'reports', 'probes',
@@ -40,6 +41,33 @@ link_title.set('probes', 'Probes');
 link_title.set('metrics', 'Metrics');
 link_title.set('metricprofiles', 'Metric profiles');
 link_title.set('aggregationprofiles', 'Aggregation profiles');
+
+
+export const DropDown = ({field, data=[], prefix="", class_name=""}) => 
+  <Field component="select"
+    name={prefix ? `${prefix}.${field.name}` : field.name}
+    required={true}
+    className={`form-control ${class_name}`}
+  >
+    {
+      data.map((name, i) => 
+        i === 0 ?
+        <option key={i} hidden>{name}</option> :
+        <option key={i} value={name}>{name}</option>
+      )
+    }
+  </Field>
+
+
+export const SearchField = ({form, field, ...rest}) => 
+  <div className="input-group">
+    <input type="text" placeholder="Search" {...field} {...rest}/>
+    <div className="input-group-append">
+      <span className="input-group-text" id="basic-addon">
+        <FontAwesomeIcon icon={faSearch}/>
+      </span>
+    </div>
+  </div>
 
 
 const doLogout = (history, onLogout) =>

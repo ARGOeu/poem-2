@@ -1,3 +1,5 @@
+from collections import OrderedDict
+import datetime
 from rest_framework.test import force_authenticate
 from rest_framework import status
 
@@ -134,22 +136,43 @@ class ListUsersAPIViewTests(TenantTestCase):
             username='testuser',
             first_name='Test',
             last_name='User',
-            email='testuser@example.com'
+            email='testuser@example.com',
+            date_joined=datetime.datetime(2015, 1, 1, 0, 0, 0)
         )
 
         CustUser.objects.create_user(
             username='another_user',
             first_name='Another',
             last_name='User',
-            email='otheruser@example.com'
+            email='otheruser@example.com',
+            date_joined=datetime.datetime(2015, 1, 2, 0, 0, 0)
         )
 
     def test_get_users(self):
         request = self.factory.get(self.url)
         force_authenticate(request, user=self.user)
         response = self.view(request)
-        self.assertEqual(response.data, {'result': ['another_user',
-                                                    'testuser']})
+        self.assertEqual(
+            response.data,
+            [
+                OrderedDict([('first_name', 'Test'),
+                             ('last_name', 'User'),
+                             ('username', 'testuser'),
+                             ('is_active', True),
+                             ('is_superuser', False),
+                             ('is_staff', False),
+                             ('email', 'testuser@example.com'),
+                             ('date_joined', '2015-01-01T00:00:00')]),
+                OrderedDict([('first_name', 'Another'),
+                             ('last_name', 'User'),
+                             ('username', 'another_user'),
+                             ('is_active', True),
+                             ('is_superuser', False),
+                             ('is_staff', False),
+                             ('email', 'otheruser@example.com'),
+                             ('date_joined', '2015-01-02T00:00:00')])
+            ]
+        )
 
     def test_get_users_permission_denied_in_case_no_authorization(self):
         request = self.factory.get(self.url)

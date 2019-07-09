@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import {Link} from 'react-router-dom';
-import { LoadingAnim, BaseArgoView, NotifyOk } from './UIElements';
+import { LoadingAnim, BaseArgoView, NotifyOk, DropDown } from './UIElements';
 import ReactTable from 'react-table';
 import 'react-table/react-table.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -9,7 +9,6 @@ import { faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
 import FormikEffect from './FormikEffect.js';
 import {Backend, WebApi} from './DataManager';
 import {
-  Alert,
   Button, 
   Row, 
   Col, 
@@ -23,22 +22,6 @@ import {
 
 import "react-notifications/lib/notifications.css";
 import './AggregationProfiles.css';
-
-
-const DropDown = ({field, data=[], prefix="", class_name=""}) => 
-  <Field component="select"
-    name={prefix ? `${prefix}.${field.name}` : field.name}
-    required={true}
-    className={`form-control ${class_name}`}
-  >
-    {
-      data.map((name, i) => 
-        i === 0 ?
-        <option key={i} hidden>{name}</option> :
-        <option key={i} value={name}>{name}</option>
-      )
-    }
-  </Field>
 
 
 const GroupList = ({name, form, list_services, list_operations, last_service_operation, write_perm}) =>
@@ -136,30 +119,26 @@ const Group = ({operation, services, list_operations, list_services, last_servic
 
 
 const ServiceList = ({services, list_services=[], list_operations=[], last_service_operation, groupindex, form}) =>
-  <React.Fragment>
-    { 
-      services.map((service, i) =>
-        <FieldArray
+  services.map((service, i) =>
+    <FieldArray
+      key={i}
+      name={`groups.${groupindex}.services`}
+      render={props => (
+        <Service
+          {...props}
           key={i}
-          name={`groups.${groupindex}.services`}
-          render={props => (
-            <Service
-              {...props}
-              key={i}
-              operation={service.operation} 
-              list_services={list_services} 
-              list_operations={list_operations} 
-              last_service_operation={last_service_operation}
-              groupindex={groupindex}
-              index={i}
-              last={i === services.length - 1}
-              form={form}
-            />
-          )}
+          operation={service.operation} 
+          list_services={list_services} 
+          list_operations={list_operations} 
+          last_service_operation={last_service_operation}
+          groupindex={groupindex}
+          index={i}
+          last={i === services.length - 1}
+          form={form}
         />
-      )
-    }
-  </React.Fragment>
+      )}
+    />
+  )
 
 
 const Service = ({name, operation, list_services, list_operations, last_service_operation, groupindex, index, remove, insert, form}) => 
@@ -394,18 +373,18 @@ export class AggregationProfilesChange extends Component
   doDelete(idProfile) {
     this.webapi.deleteAggregation(idProfile)
     .then(response => {
-        if (!response.ok) {
-          alert(`Error: ${response.status}, ${response.statusText}`)
-        } else {
-          response.json()
-            .then(this.backend.deleteAggregation(idProfile))
-            .then(
-              () => NotifyOk({
-                msg: 'Aggregation profile sucessfully deleted',
-                title: 'Deleted',
-                callback: () => this.history.push('/ui/aggregationprofiles')
-              }))
-        }
+      if (!response.ok) {
+        alert(`Error: ${response.status}, ${response.statusText}`)
+      } else {
+        response.json()
+        .then(this.backend.deleteAggregation(idProfile))
+        .then(
+          () => NotifyOk({
+            msg: 'Aggregation profile sucessfully deleted',
+            title: 'Deleted',
+            callback: () => this.history.push('/ui/aggregationprofiles')
+          }))
+      }
     }).catch(err => alert('Something went wrong: ' + err))
   }
 
@@ -438,7 +417,7 @@ export class AggregationProfilesChange extends Component
               aggregation_profile: aggregp,
               groups_field: group,
               list_user_groups: usergroups,
-              write_perm: usergroups.indexOf(group) >= 0,
+              write_perm: localStorage.getItem('authIsSuperuser') === 'true' || usergroups.indexOf(group) >= 0,
               list_id_metric_profiles: this.extractListOfMetricsProfiles(metricp),
               list_services: this.extractListOfServices(aggregp.metric_profile, metricp),
               list_complete_metric_profiles: metricp,
@@ -450,15 +429,15 @@ export class AggregationProfilesChange extends Component
     }
     else {
       let empty_aggregation_profile = {
-          id: '',
-          name: '',
-          metric_operation: '',
-          profile_operation: '',
-          endpoint_group: '',
-          metric_profile: {
-              name: ''
-          },
-          groups: []
+        id: '',
+        name: '',
+        metric_operation: '',
+        profile_operation: '',
+        endpoint_group: '',
+        metric_profile: {
+            name: ''
+        },
+        groups: []
       }
       Promise.all([this.webapi.fetchMetricProfiles(), this.backend.fetchAggregationUserGroups()])
         .then(([metricp, usergroups]) => this.setState(
@@ -497,7 +476,7 @@ export class AggregationProfilesChange extends Component
           toggle={this.toggleAreYouSure}
           submitperm={write_perm}>
           <Formik
-            initialValues={{
+            initialValues = {{
               id: aggregation_profile.id,
               name: aggregation_profile.name,
               groups_field: groups_field, 
@@ -758,7 +737,7 @@ export class AggregationProfilesList extends Component
             data={list_aggregations}
             columns={columns}
             className="-striped -highlight"
-            defaultPageSize={10}
+            defaultPageSize={12}
           />
         </BaseArgoView>
       )
