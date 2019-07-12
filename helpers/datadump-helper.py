@@ -178,18 +178,6 @@ def create_public_data(d1, d2, d3):
             item['fields']['revision'] = \
                 revisionpks[item['fields']['revision']]
 
-    probe_dict = {}
-    for item in data1:
-        if item['model'] == 'reversion.version' and \
-            item['fields']['content_type'] == ['poem_super_admin', 'probe']:
-            probe_dict.update({item['fields']['object_repr']: item['pk']})
-
-    for item in data1:
-        if item['model'] == 'poem_super_admin.metrictemplate':
-            if item['fields']['probeversion'] != '':
-                item['fields']['probekey'] = \
-                probe_dict[item['fields']['probeversion']]
-
     # create versions and reversions for metric templates
     revlist = []
     for item in data1:
@@ -444,6 +432,14 @@ def create_public_data(d1, d2, d3):
         if item['model'] == 'reversion.version' and \
             item['fields']['content_type'] == ['poem_super_admin', 'probe']:
             probe_dict.update({item['fields']['object_repr']: item['pk']})
+
+    for item in data:
+        if item['model'] == 'poem_super_admin.metrictemplate':
+            if item['fields']['probeversion'] != '':
+                item['fields']['probekey'] = \
+                    probe_dict[item['fields']['probeversion']]
+
+
 
     # order revisions by date and return resulting data
     return order_revisions(data)
