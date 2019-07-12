@@ -38,6 +38,9 @@ do
             su -m -s /bin/sh $RUNASUSER -c \
             "export DJANGO_SETTINGS_MODULE=Poem.settings && \
             python $SITEPACK/Poem/manage.py create_tenant --name all"
+            su -m -s /bin/sh $RUNASUSER -c \
+            "export DJANGO_SETTINGS_MODULE=Poem.settings && \
+            python $SITEPACK/Poem/manage.py tenant_command loaddata initial_data_public.json --schema=public"
             ;;
         u)
             while getopts 'n:' OPTION2
