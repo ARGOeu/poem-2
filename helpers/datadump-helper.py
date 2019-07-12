@@ -520,6 +520,9 @@ def adapt_tenant_data(data):
                 item['model'] == 'poem.groupofprobes' or \
                 item['model'] == 'reversion.revision':
             pass
+        elif item['model'] == 'poem.metric':
+            del item['fields']['cloned']
+            new_data.append(item)
         elif item['model'] == 'reversion.version':
             if item['fields']['content_type'] == ['poem', 'probe']:
                 item['fields']['content_type'] = ['poem_super_admin', 'probe']
