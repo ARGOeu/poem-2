@@ -17,6 +17,7 @@ usage()
 	printf "       [-x] -n <schema name>                 - just load fixtures\n" >&2
 	printf "       [-u] -n <schema name>                 - create superuser\n" >&2
 	printf "       [-d] -n <schema name> -f <file path>  - load data from file\n" >&2
+	printf "       [-p] -n <schema name> -f <file path>  - dump data to file\n" >&2
     exit 2
 }
 
@@ -25,7 +26,7 @@ then
     usage
 fi
 
-while getopts 'cafmlhsoxun:d' OPTION
+while getopts 'cafmlhsoxun:dp' OPTION
 do
     case $OPTION in
         n)
@@ -116,6 +117,19 @@ do
             su -m -s /bin/sh $RUNASUSER -c \
             "export DJANGO_SETTINGS_MODULE=Poem.settings && \
             python $SITEPACK/Poem/manage.py tenant_command loaddata $filename --schema=$schema"
+            ;;
+        p)
+            while getopts 'n:f:' OPTION2
+            do
+                case $OPTION2 in
+                    n)
+                        schema=$OPTARG ;;
+                    f)
+                        filename=$OPTARG ;;
+                esac
+            done
+            export DJANGO_SETTINGS_MODULE=Poem.settings && \
+            python $SITEPACK/Poem/manage.py tenant_command dumpdata --indent 2 --natural-foreign --natural-primary --schema=$schema > $filename
             ;;
         h)
             usage
