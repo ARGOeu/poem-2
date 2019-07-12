@@ -11,6 +11,7 @@ from rest_framework_api_key import models as api_models
 from queue import Queue
 
 from Poem.poem import models as poem_models
+from Poem.users.models import CustUser
 from Poem.poem.saml2.config import tenant_from_request, saml_login_string, get_schemaname
 
 from .views import NotFound
@@ -228,16 +229,16 @@ class ListUsers(APIView):
     def get(self, request, username=None):
         if username:
             try:
-                user = poem_models.CustUser.objects.get(username=username)
+                user = CustUser.objects.get(username=username)
                 serializer = serializers.UsersSerializer(user)
                 return Response(serializer.data)
 
-            except poem_models.CustUser.DoesNotExist:
+            except CustUser.DoesNotExist:
                 raise NotFound(status=404,
                             detail='User not found')
 
         else:
-            users = poem_models.CustUser.objects.all()
+            users = CustUser.objects.all()
             serializer = serializers.UsersSerializer(users, many=True)
 
             return Response(serializer.data)

@@ -12,6 +12,7 @@ from tenant_schemas.test.cases import TenantTestCase
 from tenant_schemas.test.client import TenantRequestFactory
 
 from Poem.poem.models import *
+from Poem.users.models import CustUser
 from Poem.api import views
 
 from reversion.models import Version, Revision
