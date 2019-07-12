@@ -5,7 +5,6 @@ from django.utils.translation import ugettext_lazy as _
 
 from Poem.poem.dbmodels.aggregations import GroupOfAggregations
 from Poem.poem.dbmodels.metricstags import GroupOfMetrics
-from Poem.poem.dbmodels.probes import GroupOfProbes
 from Poem.poem.dbmodels.metricprofiles import GroupOfMetricProfiles
 
 
@@ -55,13 +54,6 @@ class UserProfile(models.Model):
         related_name='user_set',
         related_query_name='user'
     )
-    groupsofprobes = models.ManyToManyField(
-        GroupOfProbes,
-        verbose_name=('groups of probes'),
-        blank=True,
-        help_text=_('The groups of probes that user will control'),
-        related_name='user_set',
-        related_query_name='user')
     groupsofaggregations = models.ManyToManyField(
         GroupOfAggregations,
         verbose_name=_('groups of aggregations'),
