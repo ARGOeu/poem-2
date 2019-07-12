@@ -1,13 +1,8 @@
-import json
-
 from django.contrib.auth.models import GroupManager, Permission
-from django.db import models, transaction
-from django.db.models.signals import post_delete
+from django.db import models
 from django.utils.translation import ugettext_lazy as _
-from django.contrib.contenttypes.models import ContentType
 
-from reversion.models import Version, Revision
-from reversion.signals import post_revision_commit, pre_revision_commit
+from reversion.models import Version
 
 
 class Metrics(models.Model):
@@ -167,27 +162,3 @@ class MetricProbeExecutable(models.Model):
                             help_text='Probe executable')
     class Meta:
         app_label = 'poem'
-
-
-def delete_entryfield(*args, **kwargs):
-    i = kwargs['instance']
-    deletedentry = '{0} {1}'.format(i.key, i.value)
-    field = i.__class__.__name__.split('Metric')[1].lower()
-    try:
-        fielddata = json.loads(eval('i.metric.%s' % field))
-        if deletedentry in fielddata:
-            fielddata.remove(deletedentry)
-            codestr = """i.metric.%s = json.dumps(fielddata)""" % field
-            exec(codestr)
-            i.metric.save()
-    except Metric.DoesNotExist as e:
-        pass
-
-post_delete.connect(delete_entryfield, sender=MetricAttribute)
-post_delete.connect(delete_entryfield, sender=MetricConfig)
-post_delete.connect(delete_entryfield, sender=MetricDependancy)
-post_delete.connect(delete_entryfield, sender=MetricFlags)
-post_delete.connect(delete_entryfield, sender=MetricParameter)
-post_delete.connect(delete_entryfield, sender=MetricFiles)
-post_delete.connect(delete_entryfield, sender=MetricFileParameter)
-
