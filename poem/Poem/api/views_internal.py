@@ -11,6 +11,7 @@ from rest_framework_api_key import models as api_models
 from queue import Queue
 
 from Poem.poem import models as poem_models
+from Poem.poem_super_admin.models import Probe
 from Poem.users.models import CustUser
 from Poem.poem.saml2.config import tenant_from_request, saml_login_string, get_schemaname
 
@@ -254,9 +255,6 @@ class ListGroupsForUser(APIView):
             groupsofaggregations = poem_models.GroupOfAggregations.objects.all().values_list('name', flat=True)
             results = {'aggregations': groupsofaggregations}
 
-            groupsofprobes = poem_models.GroupOfProbes.objects.all().values_list('name', flat=True)
-            results.update({'probes': groupsofprobes})
-
             groupsofmetrics = poem_models.GroupOfMetrics.objects.all().values_list('name', flat=True)
             results.update({'metrics': groupsofmetrics})
 
@@ -266,9 +264,6 @@ class ListGroupsForUser(APIView):
         else:
             groupsofaggregations = user.groupsofaggregations.all().values_list('name', flat=True)
             results = {'aggregations': groupsofaggregations}
-
-            groupsofprobes = user.groupsofprobes.all().values_list('name', flat=True)
-            results.update({'probes': groupsofprobes})
 
             groupsofmetrics = user.groupsofmetrics.all().values_list('name', flat=True)
             results.update({'metrics': groupsofmetrics})
@@ -407,8 +402,8 @@ class ListProbes(APIView):
 
     def get(self, request, probe_name):
         try:
-            probes = poem_models.Probe.objects.get(name=probe_name)
-        except poem_models.Probe.DoesNotExist:
+            probes = Probe.objects.get(name=probe_name)
+        except Probe.DoesNotExist:
             result = dict()
         else:
             result = dict(id=probes.id,
@@ -526,7 +521,7 @@ class ListServices(APIView):
                         mt = self.tree.addchild(metric.name, stt)
                         self.tree.addchild(metric.probeversion, mt)
                         id_metrics.update({metric.name: metric.id})
-                        probe_id = poem_models.Probe.objects.get(nameversion=metric.probeversion).id
+                        probe_id = Probe.objects.get(nameversion=metric.probeversion).id
                         id_probes.update({metric.probeversion: probe_id})
 
         nleaves = self._count_leaves(r)
