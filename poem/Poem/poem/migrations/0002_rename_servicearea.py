@@ -6,7 +6,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('poem', '0017_remove_probe_update_metric'),
+        ('poem', '0001_initial'),
     ]
 
     operations = [
