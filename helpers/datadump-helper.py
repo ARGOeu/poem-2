@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import argparse
+import datetime
 import json
 
 
@@ -12,6 +13,50 @@ def extract_data(data):
         if item['model'] == 'poem.probe':
             del item['fields']['group']
             item['model'] = 'poem_super_admin.probe'
+            extracted_data.append(item)
+
+        elif item['model'] == 'poem.metric':
+            del item['fields']['tag']
+            del item['fields']['group']
+            item['fields']['dependency'] = item['fields']['dependancy']
+            del item['fields']['dependancy']
+            item['model'] = 'poem_super_admin.metrictemplate'
+            extracted_data.append(item)
+
+        elif item['model'] == 'poem.metricdependancy':
+            item['model'] = 'poem_super_admin.metrictemplatedependency'
+            extracted_data.append(item)
+
+        elif item['model'] == 'poem.metricflags':
+            item['model'] = 'poem_super_admin.metrictemplateflags'
+            extracted_data.append(item)
+
+        elif item['model'] == 'poem.metricfiles':
+            item['model'] = 'poem_super_admin.metrictemplatefiles'
+            extracted_data.append(item)
+
+        elif item['model'] == 'poem.metricparameter':
+            item['model'] = 'poem_super_admin.metrictemplateparameter'
+            extracted_data.append(item)
+
+        elif item['model'] == 'poem.metricfileparameter':
+            item['model'] = 'poem_super_admin.metrictemplatefileparameter'
+            extracted_data.append(item)
+
+        elif item['model'] == 'poem.metricattribute':
+            item['model'] = 'poem_super_admin.metrictemplateattribute'
+            extracted_data.append(item)
+
+        elif item['model'] == 'poem.metricconfig':
+            item['model'] = 'poem_super_admin.metrictemplateconfig'
+            extracted_data.append(item)
+
+        elif item['model'] == 'poem.metricparent':
+            item['model'] = 'poem_super_admin.metrictemplateparent'
+            extracted_data.append(item)
+
+        elif item['model'] == 'poem.metricprobeexecutable':
+            item['model'] = 'poem_super_admin.metrictemplateprobeexecutable'
             extracted_data.append(item)
 
         elif item['model'] == 'reversion.version':
@@ -54,12 +99,25 @@ def create_public_data(d1, d2, d3):
     data2 = extract_data(d2.copy())
     data3 = extract_data(d3.copy())
 
+    inline_models = ['poem_super_admin.metrictemplatedependency',
+                     'poem_super_admin.metrictemplateflags',
+                     'poem_super_admin.metrictemplatefiles',
+                     'poem_super_admin.metrictemplateparameter',
+                     'poem_super_admin.metrictemplatefileparameter',
+                     'poem_super_admin.metrictemplateattribute',
+                     'poem_super_admin.metrictemplateconfig',
+                     'poem_super_admin.metrictemplateparent',
+                     'poem_super_admin.metrictemplateprobeexecutable']
+
     names = set()
+    mnames = set()
     probe_pk = 0
+    metric_pk = 0
     extrev_pk = 0
     revision_pk = 0
     probepks = {}
     revisionpks = {}
+    metricpks = {}
     for item in data1:
         if item['model'] == 'poem_super_admin.probe':
             probe_pk += 1
@@ -71,6 +129,28 @@ def create_public_data(d1, d2, d3):
             revision_pk += 1
             revisionpks.update({item['pk']: revision_pk})
             item['pk'] = revision_pk
+
+        if item['model'] == 'poem_super_admin.metrictemplate':
+            metric_pk += 1
+            metricpks.update({item['pk']: metric_pk})
+            item['pk'] = metric_pk
+            mnames.add(item['fields']['name'])
+
+    inlinepkmax = [0] * len(inline_models)
+    for item in data1:
+        if item['model'] == 'poem_super_admin.metrictemplate':
+            if item['fields']['cloned']:
+                item['fields']['cloned'] = \
+                    str(metricpks[int(item['fields']['cloned'])])
+
+        if item['model'] in inline_models:
+            item['fields']['metrictemplate'] = \
+            metricpks[int(item['fields']['metric'])]
+            del item['fields']['metric']
+
+            for i in range(len(inline_models)):
+                if item['model'] == inline_models[i]:
+                    inlinepkmax[i] = item['pk']
 
     version_pk = 0
     versionpks = {}
@@ -98,6 +178,73 @@ def create_public_data(d1, d2, d3):
             item['fields']['revision'] = \
                 revisionpks[item['fields']['revision']]
 
+    probe_dict = {}
+    for item in data1:
+        if item['model'] == 'reversion.version' and \
+            item['fields']['content_type'] == ['poem_super_admin', 'probe']:
+            probe_dict.update({item['fields']['object_repr']: item['pk']})
+
+    for item in data1:
+        if item['model'] == 'poem_super_admin.metrictemplate':
+            if item['fields']['probeversion'] != '':
+                item['fields']['probekey'] = \
+                probe_dict[item['fields']['probeversion']]
+
+    # create versions and reversions for metric templates
+    revlist = []
+    for item in data1:
+        if item['model'] == 'poem_super_admin.metrictemplate':
+            version_pk += 1
+            revision_pk += 1
+            ser_data = json.dumps(
+                [
+                    {
+                        'model': 'poem_super_admin.metrictemplate',
+                        'pk': item['pk'],
+                        'fields': {
+                            'name': item['fields']['name'],
+                            'mtype': item['fields']['mtype'],
+                            'probeversion': item['fields']['probeversion'],
+                            'probekey': item['fields']['probekey'],
+                            'parent': item['fields']['parent'],
+                            'probeexecutable': item['fields']['probeexecutable'],
+                            'config': item['fields']['config'],
+                            'attribute': item['fields']['attribute'],
+                            'dependency': item['fields']['dependency'],
+                            'flags': item['fields']['flags'],
+                            'files': item['fields']['files'],
+                            'parameter': item['fields']['parameter'],
+                            'fileparameter': item['fields']['fileparameter']
+                        }
+                    }
+                ]
+            )
+            ver = {
+                    'model': 'reversion.version',
+                    'pk': version_pk,
+                    'fields': {
+                        'revision': revision_pk,
+                        'object_id': item['pk'],
+                        'content_type': ['poem_super_admin', 'metrictemplate'],
+                        'db': 'default',
+                        'format': 'json',
+                        'serialized_data': ser_data,
+                        'object_repr': item['fields']['name']
+                    }
+            }
+
+            rev = {
+                'model': 'reversion.revision',
+                'pk': revision_pk,
+                'fields': {
+                    'date_created': datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3],
+                    'user': ['poem'],
+                    'comment': 'Initial version.'
+                }
+            }
+            revlist.append(rev)
+            revlist.append(ver)
+
     # update extrevision table
     for item in data1:
         if item['model'] == 'poem_super_admin.extrevision':
@@ -106,15 +253,21 @@ def create_public_data(d1, d2, d3):
             item['fields']['revision'] = revisionpks[item['fields']['revision']]
             item['pk'] = extrev_pk
 
+    for item in revlist:
+        data1.append(item)
+
     data = data1
 
     for dat in [data2, data3]:
         # reset dicts
         probepks = {}
+        metricpks = {}
         versionpks = {}
         revisionpks = {}
         new_names = set()
+        new_mnames = set()
         new_vers = {}
+        inlinepks = set()
 
         for item in dat:
             if item['model'] == 'poem_super_admin.probe' and \
@@ -125,6 +278,19 @@ def create_public_data(d1, d2, d3):
                 new_names.add(item['fields']['name'])
                 data.append(item)
 
+            if item['model'] == 'poem_super_admin.metrictemplate':
+                if item['fields']['name'] not in mnames:
+                    metric_pk += 1
+                    metricpks.update({item['pk']: metric_pk})
+                    inlinepks.add(item['pk'])
+                    item['pk'] = metric_pk
+                    new_mnames.add(item['fields']['name'])
+                else:
+                    for i in data:
+                        if i['model'] == 'poem_super_admin.metrictemplate' and \
+                                i['fields']['name'] == item['fields']['name']:
+                            metricpks.update({item['pk']: i['pk']})
+
             if item['model'] == 'poem_super_admin.probe' and \
                 item['fields']['name'] in names and \
                 item['fields']['version'] not in \
@@ -134,6 +300,24 @@ def create_public_data(d1, d2, d3):
                         i['fields']['name'] == item['fields']['name']:
                         i['fields'].update(item['fields'])
                         probepks.update({item['pk']: i['pk']})
+
+        for item in dat:
+            if item['model'] == 'poem_super_admin.metrictemplate':
+                if item['fields']['cloned']:
+                    item['fields']['cloned'] = \
+                    str(metricpks[int(item['fields']['cloned'])])
+
+                if item['fields']['name'] not in mnames:
+                    data.append(item)
+
+            if item['model'] in inline_models:
+                if item['fields']['metric'] in inlinepks:
+                    item['fields']['metrictemplate'] = \
+                    metricpks[int(item['fields']['metric'])]
+                    del item['fields']['metric']
+                    inlinepkmax[inline_models.index(item['model'])] += 1
+                    item['pk'] = inlinepkmax[inline_models.index(item['model'])]
+                    data.append(item)
 
         used_revisions = []
         for item in dat:
@@ -189,7 +373,66 @@ def create_public_data(d1, d2, d3):
                 item['pk'] = extrev_pk
                 data.append(item)
 
+        revlist = []
+        for item in data:
+            if item['model'] == 'poem_super_admin.metrictemplate' and \
+                    item['fields']['name'] not in mnames:
+                version_pk += 1
+                revision_pk += 1
+                ser_data = json.dumps(
+                    [
+                        {
+                            'model': 'poem_super_admin.metrictemplate',
+                            'pk': item['pk'],
+                            'fields': {
+                                'name': item['fields']['name'],
+                                'mtype': item['fields']['mtype'],
+                                'probeversion': item['fields']['probeversion'],
+                                'probekey': item['fields']['probekey'],
+                                'parent': item['fields']['parent'],
+                                'probeexecutable': item['fields']['probeexecutable'],
+                                'config': item['fields']['config'],
+                                'attribute': item['fields']['attribute'],
+                                'dependency': item['fields']['dependency'],
+                                'flags': item['fields']['flags'],
+                                'files': item['fields']['files'],
+                                'parameter': item['fields']['parameter'],
+                                'fileparameter': item['fields']['fileparameter']
+                            }
+                        }
+                    ]
+                )
+                ver = {
+                        'model': 'reversion.version',
+                        'pk': version_pk,
+                        'fields': {
+                            'revision': revision_pk,
+                            'object_id': item['pk'],
+                            'content_type': ['poem_super_admin', 'metrictemplate'],
+                            'db': 'default',
+                            'format': 'json',
+                            'serialized_data': ser_data,
+                            'object_repr': item['fields']['name']
+                        }
+                }
+
+                rev = {
+                    'model': 'reversion.revision',
+                    'pk': revision_pk,
+                    'fields': {
+                        'date_created': datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3],
+                        'user': ['poem'],
+                        'comment': 'Initial version.'
+                    }
+                }
+                revlist.append(rev)
+                revlist.append(ver)
+
+        for item in revlist:
+            data.append(item)
+
         names = names.union(new_names)
+        mnames = mnames.union(new_mnames)
         for k, v in new_vers.items():
             if k in namevers:
                 namevers[k].append(v)
@@ -270,10 +513,12 @@ def adapt_tenant_data(data):
     tenant_data = data.copy()
     new_data = []
 
+    metric_revisions = []
     for item in tenant_data:
         if item['model'] == 'poem.probe' or \
                 item['model'] == 'poem.extrevision' or \
-                item['model'] == 'poem.groupofprobes':
+                item['model'] == 'poem.groupofprobes' or \
+                item['model'] == 'reversion.revision':
             pass
         elif item['model'] == 'reversion.version':
             if item['fields']['content_type'] == ['poem', 'probe']:
@@ -285,6 +530,10 @@ def adapt_tenant_data(data):
                         d['fields']['user'] = 'poem'
                         del d['fields']['group']
                 item['fields']['serialized_data'] = json.dumps(ser_data)
+
+            if item['fields']['content_type'] == ['poem', 'metric']:
+                metric_revisions.append(item['fields']['revision'])
+                continue
             new_data.append(item)
 
         elif item['model'] == 'poem.service':
@@ -302,6 +551,20 @@ def create_tenant_data(tenant_data, public_data):
     data = adapt_tenant_data(tenant_data.copy())
     new_data = []
 
+    # check GroupOfMetrics to see which tenant is used:
+    grps = []
+    for item in tenant_data:
+        if item['model'] == 'poem.groupofmetrics':
+            grps.append(item['fields']['name'])
+
+    if len(grps) == 3:
+        gr = {'ARGOTEST': 1, 'EGI': 2, 'EUDAT': 3}
+    else:
+        if grps[0] == 'EUDAT':
+            gr = {'EUDAT': 1}
+        else:
+            gr = {'all': 1}
+
     revision_ids = []
     probe_dict = {}
     for item in pub_data:
@@ -318,7 +581,8 @@ def create_tenant_data(tenant_data, public_data):
             new_data.append(item)
 
         elif item['model'] == 'admin.logentry':
-            if item['fields']['content_type'] == ['poem', 'probe']:
+            if item['fields']['content_type'] == ['poem', 'probe'] or \
+                item['fields']['content_type'] == ['poem', 'metric']:
                 pass
             else:
                 new_data.append(item)
@@ -355,6 +619,74 @@ def create_tenant_data(tenant_data, public_data):
                 item['pk'] = max(revs) + item['pk']
                 new_data.append(item)
 
+    # create new Version and Revision entries for Metric
+    version = []
+    revision = []
+    for item in new_data:
+        if item['model'] == 'reversion.version':
+            version.append(item['pk'])
+        if item['model'] == 'reversion.revision':
+            revision.append(item['pk'])
+
+    verpk = max(version)
+    revpk = max(revision)
+    for item in new_data:
+        if item['model'] == 'poem.metric':
+            verpk += 1
+            revpk += 1
+            ser_data = json.dumps(
+                [
+                    {
+                        'model': 'poem.metric',
+                        'pk': item['pk'],
+                        'fields': {
+                            'name': item['fields']['name'],
+                            'tag': item['fields']['tag'],
+                            'group': gr[item['fields']['group'][0]],
+                            'mtype': item['fields']['mtype'],
+                            'probeversion': item['fields']['probeversion'],
+                            'probekey': item['fields']['probekey'],
+                            'parent': item['fields']['parent'],
+                            'probeexecutable': item['fields']['probeexecutable'],
+                            'config': item['fields']['config'],
+                            'attribute': item['fields']['attribute'],
+                            'dependancy': item['fields']['dependancy'],
+                            'flags': item['fields']['flags'],
+                            'files': item['fields']['files'],
+                            'parameter': item['fields']['parameter'],
+                            'fileparameter': item['fields']['fileparameter']
+                        }
+                    }
+                ]
+            )
+
+            ver = {
+                'model': 'reversion.version',
+                'pk': verpk,
+                'fields': {
+                    'revision': revpk,
+                    'object_id': item['pk'],
+                    'content_type': ['poem', 'metric'],
+                    'db': 'default',
+                    'format': 'json',
+                    'serialized_data': ser_data,
+                    'object_repr': u'%s (%s)' % (item['fields']['name'],
+                                                 item['fields']['tag'])
+                }
+            }
+
+            rev = {
+                'model': 'reversion.revision',
+                'pk': revpk,
+                'fields': {
+                    'date_created': datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3],
+                    'user': ['poem'],
+                    'comment': 'Derived from {}.'.format(item['fields']['name'])
+                }
+            }
+            new_data.append(rev)
+            new_data.append(ver)
+
     return new_data
 
 
@@ -369,15 +701,20 @@ def order_revisions(d):
 
     sorted_dates = sorted(dates)
 
+    for item in data:
+        if item['model'] != 'reversion.revision' and \
+            item['model'] != 'reversion.version':
+            new_data.append(item)
+
     multiple_pks = {}
     for dat in sorted_dates:
         for item in data:
             if item['model'] == 'reversion.revision':
                 if item['fields']['date_created'] == dat:
                     if dat in multiple_pks:
-                        multiple_pks[dat].append(item['pk'])
+                        multiple_pks[dat].add(item['pk'])
                     else:
-                        multiple_pks[dat] = [item['pk']]
+                        multiple_pks[dat] = {item['pk']}
 
     new_rev_pk = 0
     new_revpks = {}
