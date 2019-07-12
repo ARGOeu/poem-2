@@ -109,6 +109,7 @@ TENANT_APPS = (
     'django.contrib.messages',
     'django.contrib.sessions',
     'djangosaml2',
+    'reversion',
     'reversion_compare',
     'rest_framework',
     'rest_framework.authtoken',
