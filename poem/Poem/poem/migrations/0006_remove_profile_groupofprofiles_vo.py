@@ -6,7 +6,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('poem', '0021_refactor_metricinstance'),
+        ('poem', '0005_refactor_metricinstance'),
     ]
 
     operations = [
