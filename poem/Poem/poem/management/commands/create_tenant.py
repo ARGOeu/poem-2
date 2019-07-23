@@ -1,3 +1,5 @@
+from configparser import ConfigParser
+from django.conf import settings
 from django.core.management.base import BaseCommand
 
 from Poem.tenants.models import Tenant
@@ -14,6 +16,15 @@ def create_tenant(name, hostname):
     tenant.save()
 
 
+def get_public_schema_hostname():
+    config = ConfigParser()
+    config.read(settings.CONFIG_FILE)
+
+    hostname = config.get('GENERAL_ALL', 'publicpage')
+
+    return hostname
+
+
 class Command(BaseCommand):
     help = """Create a new tenant with given name"""
 
@@ -28,5 +39,5 @@ class Command(BaseCommand):
         if kwargs['hostname']:
             hostname = kwargs['hostname']
         else:
-            hostname = 'tenant.com'
+            hostname = get_public_schema_hostname()
         create_tenant(name, hostname)

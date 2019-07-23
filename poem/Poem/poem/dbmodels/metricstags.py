@@ -1,13 +1,8 @@
-import json
-
 from django.contrib.auth.models import GroupManager, Permission
-from django.db import models, transaction
-from django.db.models.signals import post_delete
+from django.db import models
 from django.utils.translation import ugettext_lazy as _
-from django.contrib.contenttypes.models import ContentType
 
-from reversion.models import Version, Revision
-from reversion.signals import post_revision_commit, pre_revision_commit
+from reversion.models import Version
 
 
 class Metrics(models.Model):
@@ -80,7 +75,6 @@ class Metric(models.Model):
     files = models.CharField(max_length=1024)
     parameter = models.CharField(max_length=1024)
     fileparameter = models.CharField(max_length=1024)
-    cloned = models.CharField(max_length=128, null=True)
 
     class Meta:
         app_label = 'poem'
@@ -168,73 +162,3 @@ class MetricProbeExecutable(models.Model):
                             help_text='Probe executable')
     class Meta:
         app_label = 'poem'
-
-
-def delete_entryfield(*args, **kwargs):
-    i = kwargs['instance']
-    deletedentry = '{0} {1}'.format(i.key, i.value)
-    field = i.__class__.__name__.split('Metric')[1].lower()
-    try:
-        fielddata = json.loads(eval('i.metric.%s' % field))
-        if deletedentry in fielddata:
-            fielddata.remove(deletedentry)
-            codestr = """i.metric.%s = json.dumps(fielddata)""" % field
-            exec(codestr)
-            i.metric.save()
-    except Metric.DoesNotExist as e:
-        pass
-
-post_delete.connect(delete_entryfield, sender=MetricAttribute)
-post_delete.connect(delete_entryfield, sender=MetricConfig)
-post_delete.connect(delete_entryfield, sender=MetricDependancy)
-post_delete.connect(delete_entryfield, sender=MetricFlags)
-post_delete.connect(delete_entryfield, sender=MetricParameter)
-post_delete.connect(delete_entryfield, sender=MetricFiles)
-post_delete.connect(delete_entryfield, sender=MetricFileParameter)
-
-
-def copy_derived_metric(revision, sender, signal, versions, **kwargs):
-    """Realize copying of metric configuration changes from derived metric
-       configuration
-
-    """
-    if len(versions) == 1:
-        version = versions[0]
-    ct = ContentType.objects.get_for_id(version.content_type_id)
-    metric_ct = ContentType.objects.get_for_model(Metric)
-    if ct.pk == metric_ct.pk:
-        instance = ct.get_object_for_this_type(id=int(version.object_id))
-        if instance.cloned:
-            vers = list()
-            derived_id = int(instance.cloned)
-            ct = ContentType.objects.get_for_model(Metric)
-            # Although get_for_object() VersionQuerySet should return date ordered
-            # version, it does not so we sort manually
-            # derived_vers = Version.objects.get_for_object(Metric.objects.get(pk=derived_id))
-            derived_vers = Version.objects.filter(object_id=derived_id,
-                                                  content_type_id=ct.id).order_by('revision__date_created')
-            for v in derived_vers:
-                rev = Revision.objects.get(pk=v.revision_id)
-                copy_rev = Revision(date_created=rev.date_created,
-                                    user_id=rev.user_id, comment=rev.comment)
-                ver = Version(object_id=str(instance.id),
-                              content_type_id=ct.id,
-                              format=v.format,
-                              serialized_data=v.serialized_data,
-                              object_repr=v.object_repr,
-                              db='default')
-
-                copy_rev.save()
-                # date_created is auto_now_add field which will contain the
-                # timestamp when the model record is created. overwrite that
-                # with the timestamp of copied revision.
-                Revision.objects.filter(pk=copy_rev.id).update(date_created=rev.date_created)
-                ver.revision = copy_rev
-                data = json.loads(ver.serialized_data)[0]
-                data['pk'] = instance.id
-                ver.serialized_data = json.dumps([data])
-                vers.append(ver)
-
-            Version.objects.bulk_create(vers)
-
-pre_revision_commit.connect(copy_derived_metric)

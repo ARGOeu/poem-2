@@ -6,16 +6,16 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('poem', '0019_metricprofiles_groupofmetricprofiles'),
+        ('poem', '0003_metricprofiles_groupofmetricprofiles'),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='custuser',
+            model_name='userprofile',
             name='groupsofprofiles',
         ),
         migrations.AddField(
-            model_name='custuser',
+            model_name='userprofile',
             name='groupsofmetricprofiles',
             field=models.ManyToManyField(blank=True, help_text='The groups of metric profiles that user will control', related_name='user_set', related_query_name='user', to='poem.GroupOfMetricProfiles', verbose_name='groups of profiles'),
         ),

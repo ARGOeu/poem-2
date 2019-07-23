@@ -1,0 +1,16 @@
+[
+  {
+    "model": "poem_super_admin.MetricTemplateType",
+    "pk": 1,
+    "fields": {
+      "name": "Active"
+     }
+  },
+  {
+    "model": "poem_super_admin.MetricTemplateType",
+    "pk": 2,
+    "fields": {
+      "name": "Passive"
+     }
+  }
+]

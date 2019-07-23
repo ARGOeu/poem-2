@@ -8,7 +8,9 @@ from rest_framework_api_key.models import APIKey
 from tenant_schemas.test.cases import TenantTestCase
 from tenant_schemas.test.client import TenantRequestFactory
 
-from Poem.poem.models import *
+from Poem.poem.models import GroupOfMetrics, Metrics
+from Poem.poem_super_admin.models import Probe
+from Poem.users.models import CustUser
 from Poem.api import views_internal as views
 
 
@@ -195,8 +197,7 @@ class ListProbesAPIViewTests(TenantTestCase):
             comment='Initial version.',
             repository='https://github.com/ARGOeu/nagios-plugins-argo',
             docurl='https://github.com/ARGOeu/nagios-plugins-argo/blob/master/'
-                   'README.md',
-            group='ARGOTEST'
+                   'README.md'
         )
 
     def test_get_probe(self):

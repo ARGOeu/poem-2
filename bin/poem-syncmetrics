@@ -1,0 +1,14 @@
+#!/bin/sh
+
+RUNASUSER="apache"
+SITEPACK=$(python -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")
+
+if (( $# > 0 ))
+then
+  echo -e "\nScript does not take any argument and should be called without any\n"
+  exit 1
+fi
+
+su -m -s /bin/sh $RUNASUSER -c \
+"export DJANGO_SETTINGS_MODULE=Poem.settings && \
+python $SITEPACK/Poem/sync/poem-syncmetrics.py"
