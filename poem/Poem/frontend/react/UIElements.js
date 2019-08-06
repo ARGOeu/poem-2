@@ -26,7 +26,17 @@ import EULogo from './eu.png';
 import EOSCLogo from './eosc.png';
 import './UIElements.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSignOutAlt, faSearch } from '@fortawesome/free-solid-svg-icons';
+import {
+  faSignOutAlt, 
+  faSearch, 
+  faWrench, 
+  faFileAlt, 
+  faSitemap, 
+  faCog, 
+  faServer,
+  faCogs,
+  faHighlighter,
+  faTasks} from '@fortawesome/free-solid-svg-icons';
 import { NotificationManager } from 'react-notifications';
 import { Field } from 'formik';
 
@@ -42,6 +52,15 @@ link_title.set('metrics', 'Metrics');
 link_title.set('metricprofiles', 'Metric profiles');
 link_title.set('aggregationprofiles', 'Aggregation profiles');
 
+export const link_icon = new Map();
+link_icon.set('administration', <FontAwesomeIcon icon={faWrench} fixedWidth/>);
+link_icon.set('services', <FontAwesomeIcon icon={faSitemap} fixedWidth/>);
+link_icon.set('serviceflavour', <FontAwesomeIcon icon={faHighlighter} fixedWidth/>);
+link_icon.set('reports', <FontAwesomeIcon icon={faFileAlt} fixedWidth/>);
+link_icon.set('probes', <FontAwesomeIcon icon={faServer} fixedWidth/>);
+link_icon.set('metrics', <FontAwesomeIcon icon={faCog} fixedWidth/>);
+link_icon.set('metricprofiles', <FontAwesomeIcon icon={faCogs} fixedWidth/>);
+link_icon.set('aggregationprofiles', <FontAwesomeIcon icon={faTasks} fixedWidth/>);
 
 export const DropDown = ({field, data=[], prefix="", class_name=""}) => 
   <Field component="select"
@@ -199,7 +218,7 @@ export const NavigationLinks = ({location}) =>
                 tag={Link}
                 active={location.pathname.includes(item) ? true : false} 
                 className={location.pathname.includes(item) ? "text-white bg-info" : "text-dark"}
-                to={'/ui/' + item}>{link_title.get(item)}
+                to={'/ui/' + item}>{link_icon.get(item)} {link_title.get(item)}
               </NavLink>
             </NavItem>
           :
@@ -208,7 +227,7 @@ export const NavigationLinks = ({location}) =>
                 tag={Link}
                 active={location.pathname.includes(item) ? true : false} 
                 className={location.pathname.includes(item) ? "text-white bg-info" : "text-dark"}
-                to={'/ui/' + item}>{link_title.get(item)}
+                to={'/ui/' + item}>{link_icon.get(item)} {link_title.get(item)}
               </NavLink>
             </NavItem>
       )
