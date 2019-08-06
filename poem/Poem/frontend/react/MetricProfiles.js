@@ -2,7 +2,13 @@ import React, { Component } from 'react';
 import {Link} from 'react-router-dom';
 import {Backend, WebApi} from './DataManager';
 import Autocomplete from 'react-autocomplete';
-import { LoadingAnim, BaseArgoView, SearchField, DropDown, NotifyOk } from './UIElements';
+import {
+  LoadingAnim, 
+  BaseArgoView, 
+  SearchField, 
+  DropDown, 
+  NotifyOk,
+  link_icon } from './UIElements';
 import ReactTable from 'react-table';
 import { Formik, Field, FieldArray, Form } from 'formik';
 import 'react-table/react-table.css';
@@ -14,7 +20,7 @@ import {
   FormGroup,
   FormText} from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus, faTimes, faSearch} from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faTimes, faSearch, faHippo} from '@fortawesome/free-solid-svg-icons';
 
 import './MetricProfiles.css'; 
 
@@ -89,7 +95,7 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
                         "metricprofiles-autocomplete-entries-highlighted" 
                         : ""}`
                     }>
-                    {item}
+                    {item ? link_icon.get('serviceflavour') : ''} {item}
                   </div>}
                 onChange={(e) => form.setFieldValue(`view_services.${index}.service`, e.target.value)}
                 onSelect={(val) => {
@@ -119,7 +125,7 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
                         "metricprofiles-autocomplete-entries-highlighted" 
                         : ""}`
                     }>
-                    {item}
+                    {item ? link_icon.get('metrics') : ''} {item}
                   </div>}
                 onChange={(e) => form.setFieldValue(`view_services.${index}.metric`, e.target.value)}
                 onSelect={(val) => {
