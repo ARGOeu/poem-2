@@ -3,8 +3,11 @@ from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
 from django.db import DEFAULT_DB_ALIAS, connection
 from django.db.utils import IntegrityError
+from tenant_schemas.utils import get_public_schema_name
 
 from configparser import ConfigParser
+
+from Poem.poem.models import UserProfile
 
 # based on django/contrib/auth/management/commands/createsuperuser.py
 
@@ -39,7 +42,9 @@ class Command(BaseCommand):
         user_data['email'] = data['SUPERUSER_EMAIL']
 
         try:
-            self.UserModel._default_manager.db_manager(DEFAULT_DB_ALIAS).create_superuser(**user_data)
+            user = self.UserModel._default_manager.db_manager(DEFAULT_DB_ALIAS).create_superuser(**user_data)
+            if connection.tenant.schema_name != get_public_schema_name():
+                UserProfile.objects.create(user=user)
             self.stdout.write("Superuser created successfully.")
         except IntegrityError:
             self.stderr.write("Superuser already created.")
