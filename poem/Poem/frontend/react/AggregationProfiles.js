@@ -5,7 +5,7 @@ import {
   BaseArgoView, 
   NotifyOk, 
   DropDown,
-  link_icon } from './UIElements';
+  Icon } from './UIElements';
 import Autocomplete from 'react-autocomplete';
 import ReactTable from 'react-table';
 import 'react-table/react-table.css';
@@ -170,7 +170,7 @@ const Service = ({name, service, operation, list_services, list_operations, last
                 "aggregation-autocomplete-entries-highlighted" 
                 : ""}`
             }>
-            {item ? link_icon.get('serviceflavour') : ''} {item}
+            {item ? <Icon i='serviceflavour'/> : ''} {item}
           </div>}
         onChange={(e) => form.setFieldValue(`groups.${groupindex}.services.${index}.name`, e.target.value)}
         onSelect={(val) => {

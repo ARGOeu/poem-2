@@ -8,7 +8,7 @@ import {
   SearchField, 
   DropDown, 
   NotifyOk,
-  link_icon } from './UIElements';
+  Icon } from './UIElements';
 import ReactTable from 'react-table';
 import { Formik, Field, FieldArray, Form } from 'formik';
 import 'react-table/react-table.css';
@@ -36,8 +36,8 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
     <thead className="table-active">
       <tr>
         <th className="align-middle text-center" style={{width: "5%"}}>#</th>
-        <th style={{width: "42.5%"}}>{link_icon.get('serviceflavour')} Service flavour</th>
-        <th style={{width: "42.5%"}}>{link_icon.get('metrics')} Metric</th>
+        <th style={{width: "42.5%"}}><Icon i="serviceflavour"/> Service flavour</th>
+        <th style={{width: "42.5%"}}><Icon i='metrics'/> Metric</th>
         <th style={{width: "10%"}}>Actions</th>
       </tr>
     </thead>
@@ -95,7 +95,7 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
                         "metricprofiles-autocomplete-entries-highlighted" 
                         : ""}`
                     }>
-                    {item ? link_icon.get('serviceflavour') : ''} {item}
+                    {item ? <Icon i='serviceflavour'/> : ''} {item}
                   </div>}
                 onChange={(e) => form.setFieldValue(`view_services.${index}.service`, e.target.value)}
                 onSelect={(val) => {
@@ -125,7 +125,7 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
                         "metricprofiles-autocomplete-entries-highlighted" 
                         : ""}`
                     }>
-                    {item ? link_icon.get('metrics') : ''} {item}
+                    {item ? <Icon i='metrics'/> : ''} {item}
                   </div>}
                 onChange={(e) => form.setFieldValue(`view_services.${index}.metric`, e.target.value)}
                 onSelect={(val) => {

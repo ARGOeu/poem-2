@@ -52,15 +52,20 @@ link_title.set('metrics', 'Metrics');
 link_title.set('metricprofiles', 'Metric profiles');
 link_title.set('aggregationprofiles', 'Aggregation profiles');
 
-export const link_icon = new Map();
-link_icon.set('administration', <FontAwesomeIcon icon={faWrench} fixedWidth/>);
-link_icon.set('services', <FontAwesomeIcon icon={faSitemap} fixedWidth/>);
-link_icon.set('serviceflavour', <FontAwesomeIcon icon={faHighlighter} fixedWidth/>);
-link_icon.set('reports', <FontAwesomeIcon icon={faFileAlt} fixedWidth/>);
-link_icon.set('probes', <FontAwesomeIcon icon={faServer} fixedWidth/>);
-link_icon.set('metrics', <FontAwesomeIcon icon={faCog} fixedWidth/>);
-link_icon.set('metricprofiles', <FontAwesomeIcon icon={faCogs} fixedWidth/>);
-link_icon.set('aggregationprofiles', <FontAwesomeIcon icon={faTasks} fixedWidth/>);
+export const Icon = props =>
+{
+  let link_icon = new Map();
+  link_icon.set('administration', faWrench);
+  link_icon.set('services', faSitemap);
+  link_icon.set('serviceflavour', faHighlighter);
+  link_icon.set('reports', faFileAlt);
+  link_icon.set('probes', faServer);
+  link_icon.set('metrics', faCog);
+  link_icon.set('metricprofiles', faCogs);
+  link_icon.set('aggregationprofiles', faTasks);
+
+  return <FontAwesomeIcon icon={link_icon.get(props.i)} fixedWidth/>
+}
 
 export const DropDown = ({field, data=[], prefix="", class_name=""}) => 
   <Field component="select"
@@ -218,7 +223,7 @@ export const NavigationLinks = ({location}) =>
                 tag={Link}
                 active={location.pathname.includes(item) ? true : false} 
                 className={location.pathname.includes(item) ? "text-white bg-info" : "text-dark"}
-                to={'/ui/' + item}>{link_icon.get(item)} {link_title.get(item)}
+                to={'/ui/' + item}><Icon i={item}/> {link_title.get(item)}
               </NavLink>
             </NavItem>
           :
@@ -227,7 +232,7 @@ export const NavigationLinks = ({location}) =>
                 tag={Link}
                 active={location.pathname.includes(item) ? true : false} 
                 className={location.pathname.includes(item) ? "text-white bg-info" : "text-dark"}
-                to={'/ui/' + item}>{link_icon.get(item)} {link_title.get(item)}
+                to={'/ui/' + item}><Icon i={item}/> {link_title.get(item)}
               </NavLink>
             </NavItem>
       )
