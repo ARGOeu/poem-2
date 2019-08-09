@@ -8,6 +8,7 @@ import Administration from './Administration';
 import { AggregationProfilesChange, AggregationProfilesList } from './AggregationProfiles';
 import Reports from './Reports';
 import Services from './Services';
+import { UsersList } from './Users';
 import NotFound from './NotFound';
 import { Route, Switch, BrowserRouter, Redirect, withRouter } from 'react-router-dom';
 import { Container, Button, Row, Col } from 'reactstrap';
@@ -190,6 +191,7 @@ class App extends Component {
                       tenantname={this.state.tenantName}/>} 
                     />
                   <Route exact path="/ui/administration" component={Administration} />
+                  <Route exact path="/ui/administration/users" component={UsersList} />
                   <Route component={NotFound} />
                 </Switch>
               </Col>
