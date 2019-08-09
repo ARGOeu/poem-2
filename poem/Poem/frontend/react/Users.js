@@ -56,6 +56,9 @@ export class UsersList extends Component
       {
         id: 'is_superuser',
         Header: 'Superuser status',
+        Cell: row =>
+          <div style={{textAlign: "center"}}
+          >{row.value}</div>,
         accessor: d => 
         d.is_superuser ? 
           <FontAwesomeIcon icon={faCheckCircle} style={{color: "#339900"}}/> : 
@@ -64,6 +67,9 @@ export class UsersList extends Component
       {
         Header: 'Staff status',
         id: 'is_staff',
+        Cell: row =>
+          <div style={{textAlign: "center"}}
+          >{row.value}</div>,
         accessor: d => 
           d.is_staff ?
             <FontAwesomeIcon icon={faCheckCircle} style={{color: "#339900"}}/> :
