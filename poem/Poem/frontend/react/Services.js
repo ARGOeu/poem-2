@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { BaseArgoView, LoadingAnim } from './UIElements';
+import { BaseArgoView, LoadingAnim, Icon } from './UIElements';
 import {Link} from 'react-router-dom';
 import {Backend} from './DataManager';
 
@@ -55,9 +55,9 @@ class Services extends Component {
               <tr>
                 <th id='argo-th' scope="col">Service category</th>
                 <th id='argo-th' scope="col">Service name</th>
-                <th id='argo-th' scope="col">Service type</th>
-                <th id='argo-th' scope="col">Metric</th>
-                <th id='argo-th' scope="col">Probe</th>
+                <th id='argo-th' scope="col"><Icon i='serviceflavour'/> Service type</th>
+                <th id='argo-th' scope="col"><Icon i='metrics'/> Metric</th>
+                <th id='argo-th' scope="col"><Icon i='probes'/> Probe</th>
               </tr>
             </thead>
             <tbody>
@@ -79,19 +79,19 @@ class Services extends Component {
                     {
                       e.service_type && 
                         <td id='argo-td' className="table-light" rowSpan={this.getRowSpan(rowspan.service_type, e.service_type)}>
-                          {e.service_type}
+                          <Icon i='serviceflavour'/> {e.service_type}
                         </td>
                     }
                     {
                       e.metric && 
                         <td id='argo-td' className="table-light" rowSpan={this.getRowSpan(rowspan.metric, e.metric)}>
-                          <Link to={'/ui/metrics/' + id_metrics[e.metric]}>{e.metric}</Link>
+                          <Icon i='metrics'/> <Link to={'/ui/metrics/' + id_metrics[e.metric]}>{e.metric}</Link>
                         </td>
                     }
                     {
                       e.probe && 
                         <td id='argo-td' className="table-light" rowSpan={this.getRowSpan(rowspan.probe, e.probe)}>
-                          <Link href={'/ui/probes/' + id_probes[e.probe]}>{e.probe}</Link>
+                          <Icon i='probes'/> <Link href={'/ui/probes/' + id_probes[e.probe]}>{e.probe}</Link>
                         </td>
                     }
                   </tr>

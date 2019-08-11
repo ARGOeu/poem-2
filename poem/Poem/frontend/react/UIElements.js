@@ -26,7 +26,17 @@ import EULogo from './eu.png';
 import EOSCLogo from './eosc.png';
 import './UIElements.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSignOutAlt, faSearch } from '@fortawesome/free-solid-svg-icons';
+import {
+  faSignOutAlt, 
+  faSearch, 
+  faWrench, 
+  faFileAlt, 
+  faSitemap, 
+  faCog, 
+  faServer,
+  faCogs,
+  faHighlighter,
+  faTasks} from '@fortawesome/free-solid-svg-icons';
 import { NotificationManager } from 'react-notifications';
 import { Field } from 'formik';
 
@@ -42,6 +52,20 @@ link_title.set('metrics', 'Metrics');
 link_title.set('metricprofiles', 'Metric profiles');
 link_title.set('aggregationprofiles', 'Aggregation profiles');
 
+export const Icon = props =>
+{
+  let link_icon = new Map();
+  link_icon.set('administration', faWrench);
+  link_icon.set('services', faSitemap);
+  link_icon.set('serviceflavour', faHighlighter);
+  link_icon.set('reports', faFileAlt);
+  link_icon.set('probes', faServer);
+  link_icon.set('metrics', faCog);
+  link_icon.set('metricprofiles', faCogs);
+  link_icon.set('aggregationprofiles', faTasks);
+
+  return <FontAwesomeIcon icon={link_icon.get(props.i)} fixedWidth/>
+}
 
 export const DropDown = ({field, data=[], prefix="", class_name=""}) => 
   <Field component="select"
@@ -199,7 +223,7 @@ export const NavigationLinks = ({location}) =>
                 tag={Link}
                 active={location.pathname.includes(item) ? true : false} 
                 className={location.pathname.includes(item) ? "text-white bg-info" : "text-dark"}
-                to={'/ui/' + item}>{link_title.get(item)}
+                to={'/ui/' + item}><Icon i={item}/> {link_title.get(item)}
               </NavLink>
             </NavItem>
           :
@@ -208,7 +232,7 @@ export const NavigationLinks = ({location}) =>
                 tag={Link}
                 active={location.pathname.includes(item) ? true : false} 
                 className={location.pathname.includes(item) ? "text-white bg-info" : "text-dark"}
-                to={'/ui/' + item}>{link_title.get(item)}
+                to={'/ui/' + item}><Icon i={item}/> {link_title.get(item)}
               </NavLink>
             </NavItem>
       )
