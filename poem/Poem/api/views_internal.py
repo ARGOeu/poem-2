@@ -561,3 +561,21 @@ class Saml2Login(APIView):
         cache.delete_many(self._prefix(self.keys))
 
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class GetUserprofileForUsername(APIView):
+    authentication_classes = (SessionAuthentication,)
+
+    def get(self, request, username):
+        try:
+            user = CustUser.objects.get(username=username)
+        except CustUser.DoesNotExist:
+            raise NotFound(status=404, detail='User not found')
+        else:
+            try:
+                user_profile = poem_models.UserProfile.objects.get(user=user)
+                serializer = serializers.UserProfileSerializer(user_profile)
+                return Response(serializer.data)
+
+            except poem_models.UserProfile.DoesNotExist:
+                raise NotFound(status=404, detail='User profile not found')
