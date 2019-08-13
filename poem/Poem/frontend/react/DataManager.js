@@ -93,6 +93,26 @@ export class Backend {
       .catch(err => alert('Something went wrong: ' + err));
   }
 
+  fetchUserprofile(username) {
+    return fetch('/api/v2/internal/userprofile/' + username)
+      .then(response => response.json())
+      .catch(err => alert('Something went wrong: ' + err));
+  }
+
+  fetchGroupsForUser(username) {
+    return fetch('/api/v2/internal/usergroups/' + username)
+      .then(response => response.json())
+      .then(json => json['result'])
+      .catch(err => alert('Something went wrong: ' + err));
+  }
+
+  fetchAllGroups() {
+    return fetch('/api/v2/internal/usergroups/')
+      .then(response => response.json())
+      .then(json => json['result'])
+      .catch(err => alert('Something went wrong: ' + err));
+  }
+
   changeMetricProfile(profile) {
     return this.send(
       '/api/v2/internal/metricprofiles/',
