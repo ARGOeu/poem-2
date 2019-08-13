@@ -357,3 +357,27 @@ export const BaseArgoView = ({resourcename='', location=undefined,
     </div>
   </React.Fragment>
 )
+
+export const Checkbox = ({
+  field: { name, value, onChange, onBlur },
+  form: { errors, touched },
+  id,
+  label,
+  ...props
+}) => {
+  return (
+    <div>
+      <input
+        name={name}
+        id={id}
+        type='checkbox'
+        value={value}
+        checked={value}
+        onChange={onChange}
+        onBlur={onBlur}
+      />
+      <label htmlFor={id}>{label}</label>
+      {touched[name] && errors[name] && <div className="error">{errors[name]}</div>}
+    </div>
+  );
+};
