@@ -192,6 +192,11 @@ class App extends Component {
                     />
                   <Route exact path="/ui/administration" component={Administration} />
                   <Route exact path="/ui/administration/users" component={UsersList} />
+                  <Route exact path="/ui/administration/users/add"
+                    render={props => <UserChange
+                      {...props}
+                      addview={true}/>}
+                  />
                   <Route exact path="/ui/administration/users/:user_name"
                     render={props => <UserChange {...props}/>}
                   />
