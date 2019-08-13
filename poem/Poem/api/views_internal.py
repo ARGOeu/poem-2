@@ -50,6 +50,32 @@ def sync_webapi(api, model):
         model.objects.get(apiid=p).delete()
 
 
+def get_groups_for_user(user):
+    groupsofaggregations = user.userprofile.groupsofaggregations.all().values_list('name', flat=True)
+    results = {'aggregations': groupsofaggregations}
+
+    groupsofmetrics = user.userprofile.groupsofmetrics.all().values_list('name', flat=True)
+    results.update({'metrics': groupsofmetrics})
+
+    groupsofmetricprofiles = user.userprofile.groupsofmetricprofiles.all().values_list('name', flat=True)
+    results.update({'metricprofiles': groupsofmetricprofiles})
+
+    return results
+
+
+def get_all_groups():
+    groupsofaggregations = poem_models.GroupOfAggregations.objects.all().values_list('name', flat=True)
+    results = {'aggregations': groupsofaggregations}
+
+    groupsofmetrics = poem_models.GroupOfMetrics.objects.all().values_list('name', flat=True)
+    results.update({'metrics': groupsofmetrics})
+
+    groupsofmetricprofiles = poem_models.GroupOfMetricProfiles.objects.all().values_list('name', flat=True)
+    results.update({'metricprofiles': groupsofmetricprofiles})
+
+    return results
+
+
 class Tree(object):
     class Node:
         def __init__(self, nodename):
@@ -252,24 +278,10 @@ class ListGroupsForUser(APIView):
         user = request.user
 
         if user.is_superuser:
-            groupsofaggregations = poem_models.GroupOfAggregations.objects.all().values_list('name', flat=True)
-            results = {'aggregations': groupsofaggregations}
-
-            groupsofmetrics = poem_models.GroupOfMetrics.objects.all().values_list('name', flat=True)
-            results.update({'metrics': groupsofmetrics})
-
-            groupsofmetricprofiles = poem_models.GroupOfMetricProfiles.objects.all().values_list('name', flat=True)
-            results.update({'metricprofiles': groupsofmetricprofiles})
+            results = get_all_groups()
 
         else:
-            groupsofaggregations = user.userprofile.groupsofaggregations.all().values_list('name', flat=True)
-            results = {'aggregations': groupsofaggregations}
-
-            groupsofmetrics = user.userprofile.groupsofmetrics.all().values_list('name', flat=True)
-            results.update({'metrics': groupsofmetrics})
-
-            groupsofmetricprofiles = user.userprofile.groupofmetricprofiles.objects.all().values_list('name', flat=True)
-            results.update({'metricprofiles': groupsofmetricprofiles})
+            results = get_groups_for_user(user)
 
         if group:
             return Response(results[group.lower()])
@@ -579,3 +591,23 @@ class GetUserprofileForUsername(APIView):
 
             except poem_models.UserProfile.DoesNotExist:
                 raise NotFound(status=404, detail='User profile not found')
+
+
+class ListGroupsForGivenUser(APIView):
+    authentication_classes = (SessionAuthentication,)
+
+    def get(self, request, username=None):
+        if username:
+            try:
+                user = CustUser.objects.get(username=username)
+
+            except CustUser.DoesNotExist:
+                raise NotFound(status=404, detail='User not found')
+
+            else:
+                results = get_groups_for_user(user)
+
+        else:
+            results = get_all_groups()
+
+        return Response({'result': results})

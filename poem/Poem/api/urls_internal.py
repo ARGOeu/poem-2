@@ -22,5 +22,7 @@ urlpatterns = [
     path('aggregations/<str:aggregation_name>', views_internal.ListAggregations.as_view(), name='aggregations'),
     path('metricprofiles/', views_internal.ListMetricProfiles.as_view(), name='metricprofiles'),
     path('metricprofiles/<str:profile_name>', views_internal.ListMetricProfiles.as_view(), name='metricprofiles'),
-    path('userprofile/<str:username>', views_internal.GetUserprofileForUsername.as_view(), name='userprofile')
+    path('userprofile/<str:username>', views_internal.GetUserprofileForUsername.as_view(), name='userprofile'),
+    path('usergroups/<str:username>', views_internal.ListGroupsForGivenUser.as_view(), name='usergroups'),
+    path('usergroups/', views_internal.ListGroupsForGivenUser.as_view(), name='usergroups'),
 ]
