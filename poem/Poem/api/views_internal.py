@@ -262,13 +262,13 @@ class ListGroupsForUser(APIView):
             results.update({'metricprofiles': groupsofmetricprofiles})
 
         else:
-            groupsofaggregations = user.groupsofaggregations.all().values_list('name', flat=True)
+            groupsofaggregations = user.userprofile.groupsofaggregations.all().values_list('name', flat=True)
             results = {'aggregations': groupsofaggregations}
 
-            groupsofmetrics = user.groupsofmetrics.all().values_list('name', flat=True)
+            groupsofmetrics = user.userprofile.groupsofmetrics.all().values_list('name', flat=True)
             results.update({'metrics': groupsofmetrics})
 
-            groupsofmetricprofiles = user.groupofmetricprofiles.objects.all().values_list('name', flat=True)
+            groupsofmetricprofiles = user.userprofile.groupofmetricprofiles.objects.all().values_list('name', flat=True)
             results.update({'metricprofiles': groupsofmetricprofiles})
 
         if group:
