@@ -144,6 +144,36 @@ export class UserChange extends Component {
       });
     });
     }
+
+    else {
+      this.backend.fetchAllGroups().then(groups => 
+        this.setState(
+          {
+            custuser: {
+              'first_name': '', 
+              'last_name': '', 
+              'username': '',
+              'is_active': true,
+              'is_superuser': false,
+              'is_staff': true,
+              'email': ''
+          },
+            userprofile: {
+              'displayname': '',
+              'subject': '',
+              'egiid': ''
+            },
+            usergroups: {
+              'aggregations': [],
+              'metrics': [],
+              'metricprofiles': []
+            },
+            allgroups: groups,
+            write_perm: true,
+            loading: false
+          }
+        ))
+    }
   }
 
   render() {
