@@ -6,7 +6,13 @@ import ReactTable from 'react-table';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
 import { Formik, Form, Field } from 'formik';
-import { FormGroup, Row, Col, Label, FormText } from "reactstrap";
+import { 
+  FormGroup, 
+  Row, 
+  Col, 
+  Label, 
+  FormText, 
+  Button} from "reactstrap";
 
 import './Users.css';
 
@@ -140,6 +146,7 @@ export class UserChange extends Component {
         userprofile: userprofile,
         usergroups: usergroups,
         allgroups: allgroups,
+        write_perm: localStorage.getItem('authIsSuperuser') === 'true',
         loading: false
       });
     });
@@ -183,7 +190,6 @@ export class UserChange extends Component {
       return(<LoadingAnim />)
 
     else if (!loading) {
-      console.log(this.state)
       return (
         <BaseArgoView
           resourcename="Users"
@@ -442,6 +448,17 @@ export class UserChange extends Component {
                     </Col>
                   </Row>
                 </FormGroup>
+                {
+                  (write_perm) &&
+                    <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
+                      <Button
+                        color="danger"
+                      >
+                        Delete
+                      </Button>
+                      <Button color="success" id="submit-button" type="submit">Save</Button>
+                    </div>
+                }
               </Form>
             )}
           />
