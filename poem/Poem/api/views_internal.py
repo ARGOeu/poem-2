@@ -270,6 +270,18 @@ class ListUsers(APIView):
 
             return Response(serializer.data)
 
+    def put(self, request):
+        user = CustUser.objects.get(username=request.data['username'])
+        user.first_name = request.data['first_name']
+        user.last_name = request.data['last_name']
+        user.email = request.data['email']
+        user.is_superuser = request.data['is_superuser']
+        user.is_staff = request.data['is_staff']
+        user.is_active = request.data['is_active']
+        user.save()
+
+        return Response(status=status.HTTP_201_CREATED)
+
 
 class ListGroupsForUser(APIView):
     authentication_classes = (SessionAuthentication,)
