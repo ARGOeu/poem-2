@@ -25,4 +25,5 @@ urlpatterns = [
     path('userprofile/<str:username>', views_internal.GetUserprofileForUsername.as_view(), name='userprofile'),
     path('usergroups/<str:username>', views_internal.ListGroupsForGivenUser.as_view(), name='usergroups'),
     path('usergroups/', views_internal.ListGroupsForGivenUser.as_view(), name='usergroups'),
+    path('userprofile/', views_internal.GetUserprofileForUsername.as_view(), name='userprofile'),
 ]

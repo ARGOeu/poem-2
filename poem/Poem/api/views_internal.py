@@ -604,6 +604,38 @@ class GetUserprofileForUsername(APIView):
             except poem_models.UserProfile.DoesNotExist:
                 raise NotFound(status=404, detail='User profile not found')
 
+    def put(self, request):
+        user = CustUser.objects.get(username=request.data['username'])
+        userprofile = poem_models.UserProfile.objects.get(user=user)
+        userprofile.displayname = request.data['displayname']
+        userprofile.subject = request.data['subject']
+        userprofile.egiid = request.data['egiid']
+        userprofile.save()
+
+        for group in request.data['groupsofaggregations']:
+            userprofile.groupsofaggregations.add(poem_models.GroupOfAggregations.objects.get(name=group))
+
+        for group in request.data['groupsofmetrics']:
+            userprofile.groupsofmetrics.add(poem_models.GroupOfMetrics.objects.get(name=group))
+
+        for group in request.data['groupsofmetricprofiles']:
+            userprofile.groupsofmetricprofiles.add(poem_models.GroupOfMetricProfiles.objects.get(name=group))
+
+        # remove the groups that existed before, and now were removed:
+        for group in userprofile.groupsofaggregations.all():
+            if group.name not in request.data['groupsofaggregations']:
+                userprofile.groupsofaggregations.remove(poem_models.GroupOfAggregations.objects.get(name=group))
+
+        for group in userprofile.groupsofmetrics.all():
+            if group.name not in request.data['groupsofmetrics']:
+                userprofile.groupsofmetrics.remove(poem_models.GroupOfMetrics.objects.get(name=group))
+
+        for group in userprofile.groupsofmetricprofiles.all():
+            if group.name not in request.data['groupsofmetricprofiles']:
+                userprofile.groupsofmetricprofiles.remove(poem_models.GroupOfMetricProfiles.objects.get(name=group))
+
+        return Response(status.HTTP_201_CREATED)
+
 
 class ListGroupsForGivenUser(APIView):
     authentication_classes = (SessionAuthentication,)
