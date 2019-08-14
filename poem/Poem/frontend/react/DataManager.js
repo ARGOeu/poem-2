@@ -129,6 +129,14 @@ export class Backend {
     );
   }
 
+  changeUser(user) {
+    return this.send(
+      '/api/v2/internal/users/',
+      'PUT',
+      user
+    );
+  }
+
   addAggregation(profile) {
     return this.send(
       '/api/v2/internal/aggregations/',
