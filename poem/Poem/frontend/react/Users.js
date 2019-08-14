@@ -16,6 +16,50 @@ import {
 
 import './Users.css';
 
+const UsernamePassword = ({add} ) => 
+  (add) ?
+   <FormGroup>
+    <Row>
+      <Col md={6}>
+        <Label for="userUsername">Username</Label>
+        <Field
+          type="text"
+          name="username"
+          required={true}
+          className="form-control"
+          id="userUsername"
+        />
+      </Col>
+    </Row>
+    <Row>
+      <Col md={6}>
+        <Label for="password">Password</Label>
+        <Field
+         type="password"
+         name="password"
+         required={true}
+         className="form-control"
+         id="password"
+       />
+      </Col>
+    </Row>
+   </FormGroup>
+  :
+    <FormGroup>
+      <Row>
+        <Col md={6}>
+          <Label for='userUsername'>Username</Label>
+          <Field
+            type="text"
+            name='username'
+            required={true}
+            className="form-control"
+            id='userUsername'
+          />
+        </Col>
+      </Row>
+    </FormGroup>
+
 
 export class UsersList extends Component
 {
@@ -118,19 +162,21 @@ export class UserChange extends Component {
 
     this.user_name = props.match.params.user_name;
     this.addview = props.addview;
+    this.location = props.location;
+    this.history = props.history;
 
     this.state = {
       custuser: {},
       userprofile: {},
       usergroups: {},
+      password: '',
       allgroups: {'metrics': [], 'aggregations': [], 'metricprofiles': []},
       write_perm: false,
       loading: false,
     }
 
     this.backend = new Backend();
-    this.location = props.location;
-  }
+    }
 
   componentDidMount() {
     this.setState({loading: true})
@@ -182,7 +228,7 @@ export class UserChange extends Component {
         ))
     }
   }
-
+  
   render() {
     const {custuser, userprofile, usergroups, allgroups, loading, write_perm} = this.state;
 
@@ -204,6 +250,7 @@ export class UserChange extends Component {
               first_name: custuser.first_name,
               last_name: custuser.last_name,
               username: custuser.username,
+              password: '',
               is_active: custuser.is_active,
               is_superuser: custuser.is_superuser,
               is_staff: custuser.is_staff,
@@ -217,20 +264,10 @@ export class UserChange extends Component {
             }}
             render = {props => (
               <Form> 
-                <FormGroup>
-                  <Row>
-                    <Col md={6}>
-                      <Label for="userUsername">Username</Label>
-                      <Field
-                        type="text"
-                        name="username"
-                        required={true}
-                        className="form-control"
-                        id="userUsername"
-                      />
-                    </Col>
-                  </Row>
-                </FormGroup>
+                <UsernamePassword
+                  {...props}
+                  add={this.addview}
+                />
                 <FormGroup>
                   <h4 className="mt-2 p-1 pl-3 text-light text-uppercase rounded" style={{"backgroundColor": "#416090"}}>Personal info</h4>
                   <Row>
