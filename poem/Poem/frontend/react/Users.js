@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
 import { Backend } from './DataManager';
-import { LoadingAnim, BaseArgoView, Checkbox } from './UIElements';
+import { LoadingAnim, BaseArgoView, Checkbox, NotifyOk } from './UIElements';
 import ReactTable from 'react-table';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
@@ -176,7 +176,75 @@ export class UserChange extends Component {
     }
 
     this.backend = new Backend();
+
+    this.toggleAreYouSure = this.toggleAreYouSure.bind(this);
+    this.toggleAreYouSureSetModal = this.toggleAreYouSureSetModal.bind(this);
+    this.onSubmitHandle = this.onSubmitHandle.bind(this);
+
+  }
+
+  toggleAreYouSure() {
+    this.setState(prevState => 
+      ({areYouSureModal: !prevState.areYouSureModal}));
+  }
+
+  toggleAreYouSureSetModal(msg, title, onyes) {
+    this.setState(prevState => 
+      ({areYouSureModal: !prevState.areYouSureModal,
+        modalFunc: onyes,
+        modalMsg: msg,
+        modalTitle: title,
+      }));
+  }
+
+  onSubmitHandle(values, action) {
+    let msg = undefined;
+    let title = undefined;
+
+    if (this.addview) {
+      msg = 'Are you sure you want to add User?';
+      title = 'Add user';
     }
+    else {
+      msg = 'Are you sure you want to change User?';
+      title = 'Change user';
+    }
+    this.toggleAreYouSureSetModal(msg, title,
+      () => this.doChange(values, action))
+  }
+
+  doChange(values, action) {
+    if (!this.addview) {
+      this.backend.changeUser({
+        username: values.username,
+        first_name: values.first_name,
+        last_name: values.last_name,
+        email: values.email,
+        is_superuser: values.is_superuser,
+        is_staff: values.is_staff,
+        is_active: values.is_active
+      })
+      .then(r => {
+        this.backend.changeUserProfile({
+          username: values.username,
+          displayname: values.displayname,
+          subject: values.subject,
+          egiid: values.egiid,
+          groupsofaggregations: values.groupsofaggregations,
+          groupsofmetrics: values.groupsofmetrics,
+          groupsofmetricprofiles: values.groupsofmetricprofiles
+        })
+          .then(() => NotifyOk({
+            msg: 'User successfully changed',
+            title: 'Changed',
+            callback: () => this.history.push('/ui/administration/users')
+          },
+          ))
+          .catch(err => alert('Something went wrong: ' + err))
+      })
+      .catch(err => alert('Something went wrong: ' + err))
+    }
+  }
 
   componentDidMount() {
     this.setState({loading: true})
@@ -262,6 +330,7 @@ export class UserChange extends Component {
               subject: userprofile.subject,
               egiid: userprofile.egiid
             }}
+            onSubmit = {(values, actions) => this.onSubmitHandle(values, actions)}
             render = {props => (
               <Form> 
                 <UsernamePassword
