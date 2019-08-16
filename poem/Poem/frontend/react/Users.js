@@ -180,7 +180,8 @@ export class UserChange extends Component {
     this.toggleAreYouSure = this.toggleAreYouSure.bind(this);
     this.toggleAreYouSureSetModal = this.toggleAreYouSureSetModal.bind(this);
     this.onSubmitHandle = this.onSubmitHandle.bind(this);
-
+    this.doChange = this.doChange.bind(this);
+    this.doDelete = this.doDelete.bind(this);
   }
 
   toggleAreYouSure() {
@@ -254,6 +255,16 @@ export class UserChange extends Component {
         ))
         .catch(err => alert('Something went wrong: ' + err))
     }
+  }
+
+  doDelete(username) {
+    this.backend.deleteUser(username)
+      .then(() => NotifyOk({
+        msg: 'User successfully deleted',
+        title: 'Deleted',
+        callback: () => this.history.push('/ui/administration/users')
+      }))
+      .catch(err => alert('Something went wrong: ' + err))
   }
 
   componentDidMount() {
@@ -569,6 +580,11 @@ export class UserChange extends Component {
                     <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
                       <Button
                         color="danger"
+                        onClick={() => {
+                          this.toggleAreYouSureSetModal('Are you sure you want to delete User?',
+                          'Delete user',
+                          () => this.doDelete(props.values.username))
+                        }}
                       >
                         Delete
                       </Button>
