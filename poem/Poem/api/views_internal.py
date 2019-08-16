@@ -317,6 +317,18 @@ class ListUsers(APIView):
         except Exception:
             return Response(status.HTTP_400_BAD_REQUEST)
 
+    def delete(self, request, username=None):
+        if username:
+            try:
+                user = CustUser.objects.get(username=username)
+                user.delete()
+                return Response(status=status.HTTP_204_NO_CONTENT)
+
+            except CustUser.DoesNotExist:
+                raise(NotFound(status=404, detail='User not found'))
+
+        else:
+            Response(status=status.HTTP_400_BAD_REQUEST)
 
 
 class ListGroupsForUser(APIView):
