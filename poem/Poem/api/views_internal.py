@@ -282,6 +282,42 @@ class ListUsers(APIView):
 
         return Response(status=status.HTTP_201_CREATED)
 
+    def post(self, request):
+        try:
+            CustUser.objects.create_user(
+                username=request.data['username'],
+                password=request.data['password'],
+                email=request.data['password'],
+                first_name=request.data['first_name'],
+                last_name=request.data['last_name'],
+                is_superuser=request.data['is_superuser'],
+                is_staff=request.data['is_staff'],
+                is_active=request.data['is_active']
+            )
+            user = CustUser.objects.get(username=request.data['username'])
+
+            userprofile = poem_models.UserProfile(
+                user=user,
+                displayname=request.data['displayname'],
+                subject=request.data['subject'],
+                egiid=request.data['egiid']
+            )
+            userprofile.save()
+
+            for group in request.data['groupsofaggregations']:
+                userprofile.groupsofaggregations.add(poem_models.GroupOfAggregations.objects.get(name=group))
+
+            for group in request.data['groupsofmetrics']:
+                userprofile.groupsofmetrics.add(poem_models.GroupOfMetrics.objects.get(name=group))
+
+            for group in request.data['groupsofmetricprofiles']:
+                userprofile.groupsofmetricprofiles.add(poem_models.GroupOfMetricProfiles.objects.get(name=group))
+
+            return Response(status.HTTP_201_CREATED)
+        except Exception:
+            return Response(status.HTTP_400_BAD_REQUEST)
+
+
 
 class ListGroupsForUser(APIView):
     authentication_classes = (SessionAuthentication,)
