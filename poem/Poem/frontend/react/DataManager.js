@@ -161,6 +161,14 @@ export class Backend {
     );
   }
 
+  addUser(user) {
+    return this.send(
+      '/api/v2/internal/users/',
+      'POST',
+      user
+    );
+  }
+
   deleteMetricProfile(id) {
     return this.send(
       '/api/v2/internal/metricprofiles/' + id,
