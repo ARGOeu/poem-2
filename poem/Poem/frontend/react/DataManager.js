@@ -183,6 +183,13 @@ export class Backend {
     );
   }
 
+  deleteUser(id) {
+    return this.send(
+      '/api/v2/internal/users/' + id,
+      'DELETE'
+    );
+  }
+
   send(url, method, values=undefined) {
     const cookies = new Cookies();
 
