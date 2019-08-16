@@ -244,6 +244,16 @@ export class UserChange extends Component {
       })
       .catch(err => alert('Something went wrong: ' + err))
     }
+    else {
+      this.backend.addUser(values)
+        .then(() => NotifyOk({
+          msg: 'User successfully added',
+          title: 'Added',
+          callback: () => this.history.push('/ui/administration/users')
+        },
+        ))
+        .catch(err => alert('Something went wrong: ' + err))
+    }
   }
 
   componentDidMount() {
