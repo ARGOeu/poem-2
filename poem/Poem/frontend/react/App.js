@@ -9,6 +9,7 @@ import { AggregationProfilesChange, AggregationProfilesList } from './Aggregatio
 import Reports from './Reports';
 import Services from './Services';
 import { UsersList, UserChange } from './Users';
+import { GroupOfMetricsList } from './GroupOfMetrics';
 import NotFound from './NotFound';
 import { Route, Switch, BrowserRouter, Redirect, withRouter } from 'react-router-dom';
 import { Container, Button, Row, Col } from 'reactstrap';
@@ -200,6 +201,7 @@ class App extends Component {
                   <Route exact path="/ui/administration/users/:user_name"
                     render={props => <UserChange {...props}/>}
                   />
+                  <Route exact path="/ui/administration/groupofmetrics" component={GroupOfMetricsList} />
                   <Route component={NotFound} />
                 </Switch>
               </Col>
