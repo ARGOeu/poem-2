@@ -12,8 +12,11 @@ import {
   Button} from 'reactstrap';
 import FilteredMultiSelect from 'react-filtered-multiselect';
 
+export const GroupOfMetricsList = GroupList('metrics', 'groupofmetrics');
+export const GroupOfMetricsChange = GroupChange('metrics', 'groupofmetrics');
 
-export function GroupList(group, id) {
+
+function GroupList(group, id) {
   return class extends Component {
     constructor(props) {
       super(props);
@@ -75,7 +78,7 @@ export function GroupList(group, id) {
 }
 
 
-export function GroupChange(gr, id) {
+function GroupChange(gr, id) {
   return class extends Component {
     constructor(props) {
       super(props);

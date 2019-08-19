@@ -9,7 +9,7 @@ import { AggregationProfilesChange, AggregationProfilesList } from './Aggregatio
 import Reports from './Reports';
 import Services from './Services';
 import { UsersList, UserChange } from './Users';
-import { GroupOfMetricsList, GroupOfMetricsChange } from './GroupOfMetrics';
+import { GroupOfMetricsList, GroupOfMetricsChange } from './GroupElements';
 import NotFound from './NotFound';
 import { Route, Switch, BrowserRouter, Redirect, withRouter } from 'react-router-dom';
 import { Container, Button, Row, Col } from 'reactstrap';
