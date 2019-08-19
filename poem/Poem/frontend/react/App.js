@@ -9,7 +9,7 @@ import { AggregationProfilesChange, AggregationProfilesList } from './Aggregatio
 import Reports from './Reports';
 import Services from './Services';
 import { UsersList, UserChange } from './Users';
-import { GroupOfMetricsList } from './GroupOfMetrics';
+import { GroupOfMetricsList, GroupOfMetricsChange } from './GroupOfMetrics';
 import NotFound from './NotFound';
 import { Route, Switch, BrowserRouter, Redirect, withRouter } from 'react-router-dom';
 import { Container, Button, Row, Col } from 'reactstrap';
@@ -202,6 +202,14 @@ class App extends Component {
                     render={props => <UserChange {...props}/>}
                   />
                   <Route exact path="/ui/administration/groupofmetrics" component={GroupOfMetricsList} />
+                  <Route exact path="/ui/administration/groupofmetrics/add"
+                    render={props => <GroupOfMetricsChange
+                      {...props}
+                      addview={true}/>}
+                  />
+                  <Route exact path="/ui/administration/groupofmetrics/:group"
+                    render={props => <GroupOfMetricsChange {...props}/>}
+                  />
                   <Route component={NotFound} />
                 </Switch>
               </Col>
