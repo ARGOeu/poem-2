@@ -235,6 +235,21 @@ class ListMetricsInGroup(APIView):
 
         return Response(status.HTTP_201_CREATED)
 
+    def post(self, request):
+        try:
+            group = poem_models.GroupOfMetrics.objects.create(
+                name=request.data['name']
+            )
+
+            for metric in request.data['metrics']:
+                group.metrics.add(poem_models.Metrics.objects.get(name=metric))
+
+        except Exception:
+            return Response(status.HTTP_400_BAD_REQUEST)
+
+        else:
+            return Response(status.HTTP_201_CREATED)
+
 
 class ListAllMetrics(APIView):
     authentication_classes = (SessionAuthentication,)
