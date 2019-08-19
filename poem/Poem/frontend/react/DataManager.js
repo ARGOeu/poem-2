@@ -220,6 +220,13 @@ export class Backend {
     );
   }
 
+  deleteGroupOfMetrics(name) {
+    return this.send(
+      '/api/v2/internal/metrics/' + name,
+      'DELETE'
+    );
+  }
+
   send(url, method, values=undefined) {
     const cookies = new Cookies();
 
