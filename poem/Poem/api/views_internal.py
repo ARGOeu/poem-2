@@ -195,11 +195,21 @@ class GetConfigOptions(APIView):
 class ListMetricsInGroup(APIView):
     authentication_classes = (SessionAuthentication,)
 
-    def get(self, request, group):
-        metrics = poem_models.Metrics.objects.\
-            filter(groupofmetrics__name__exact=group).\
-            values_list('name', flat=True)
-        results = sorted(metrics, key=lambda m: m.lower())
+    def get(self, request, group=None):
+        if group:
+            metrics = poem_models.Metrics.objects.filter(
+                groupofmetrics__name__exact=group
+            )
+        else:
+            metrics = poem_models.Metrics.objects.filter(
+                groupofmetrics__exact=None
+            )
+        results = []
+        for item in metrics:
+            results.append({'id': item.id, 'name': item.name})
+
+        results = sorted(results, key=lambda k: k['name'])
+
         if results or (not results and
                        poem_models.GroupOfMetrics.objects.filter(
                            name__exact=group)):
