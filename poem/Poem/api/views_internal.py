@@ -223,12 +223,12 @@ class ListMetricsInGroup(APIView):
             name=request.data['name']
         )
 
-        for metric in request.data['metrics']:
+        for metric in request.data['items']:
             group.metrics.add(poem_models.Metrics.objects.get(name=metric))
 
         # remove the metrics that existed before, and now were removed
         for metric in group.metrics.all():
-            if metric.name not in request.data['metrics']:
+            if metric.name not in request.data['items']:
                 group.metrics.remove(
                     poem_models.Metrics.objects.get(name=metric)
                 )
@@ -241,7 +241,7 @@ class ListMetricsInGroup(APIView):
                 name=request.data['name']
             )
 
-            for metric in request.data['metrics']:
+            for metric in request.data['items']:
                 group.metrics.add(poem_models.Metrics.objects.get(name=metric))
 
         except Exception:
