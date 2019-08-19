@@ -173,6 +173,10 @@ export class UserChange extends Component {
       allgroups: {'metrics': [], 'aggregations': [], 'metricprofiles': []},
       write_perm: false,
       loading: false,
+      areYouSureModal: false,
+      modalFunc: undefined,
+      modalTitle: undefined,
+      modalMsg: undefined
     }
 
     this.backend = new Backend();
