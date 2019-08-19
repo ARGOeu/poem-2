@@ -64,15 +64,15 @@ export class Backend {
       .catch(err => alert('Something went wrong: ' + err));
   }
 
-  fetchMetricInGroup(group) {
-    return fetch('/api/v2/internal/metrics/' + group)
+  fetchItemsInGroup(group, name) {
+    return fetch('/api/v2/internal/' + group + '/' + name)
       .then(response => response.json())
       .then(json => json['result'])
       .catch(err => alert('Something went wrong: ' + err))
   }
   
-  fetchMetricNoGroup() {
-    return fetch('/api/v2/internal/metrics')
+  fetchItemsNoGroup(group) {
+    return fetch('/api/v2/internal/' + group)
       .then(response => response.json())
       .then(json => json['result'])
       .catch(err => alert('Something went wrong: ' + err))
@@ -159,11 +159,11 @@ export class Backend {
     );
   }
 
-  changeGroupOfMetrics(group) {
+  changeGroup(group, data) {
     return this.send(
-      '/api/v2/internal/metrics/',
+      '/api/v2/internal/' + group + '/',
       'PUT',
-      group
+      data
     );
   }
 
@@ -191,11 +191,11 @@ export class Backend {
     );
   }
 
-  addGroupOfMetrics(group) {
+  addGroup(group, name) {
     return this.send(
-      '/api/v2/internal/metrics/',
+      '/api/v2/internal/' + group + '/',
       'POST',
-      group
+      name
     );
   }
 
@@ -220,9 +220,9 @@ export class Backend {
     );
   }
 
-  deleteGroupOfMetrics(name) {
+  deleteGroup(group, name) {
     return this.send(
-      '/api/v2/internal/metrics/' + name,
+      '/api/v2/internal/' + group + '/' + name,
       'DELETE'
     );
   }
