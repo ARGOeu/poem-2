@@ -159,6 +159,14 @@ export class Backend {
     );
   }
 
+  changeGroupOfMetrics(group) {
+    return this.send(
+      '/api/v2/internal/metrics/',
+      'PUT',
+      group
+    );
+  }
+
   addAggregation(profile) {
     return this.send(
       '/api/v2/internal/aggregations/',
