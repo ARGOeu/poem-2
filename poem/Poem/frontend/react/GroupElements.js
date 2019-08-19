@@ -18,6 +18,9 @@ export const GroupOfMetricsChange = GroupChange('metrics', 'groupofmetrics');
 export const GroupOfAggregationsList = GroupList('aggregations', 'groupofaggregations');
 export const GroupOfAggregationsChange = GroupChange('aggregations', 'groupofaggregations');
 
+export const GroupOfMetricProfilesList = GroupList('metricprofiles', 'groupofmetricprofiles');
+export const GroupOfMetricProfilesChange = GroupChange('metricprofiles', 'groupofmetricprofiles');
+
 
 function GroupList(group, id) {
   return class extends Component {
