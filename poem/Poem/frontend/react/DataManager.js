@@ -65,14 +65,14 @@ export class Backend {
   }
 
   fetchItemsInGroup(group, name) {
-    return fetch('/api/v2/internal/' + group + '/' + name)
+    return fetch('/api/v2/internal/' + group + 'group/' + name)
       .then(response => response.json())
       .then(json => json['result'])
       .catch(err => alert('Something went wrong: ' + err))
   }
   
   fetchItemsNoGroup(group) {
-    return fetch('/api/v2/internal/' + group)
+    return fetch('/api/v2/internal/' + group + 'group/')
       .then(response => response.json())
       .then(json => json['result'])
       .catch(err => alert('Something went wrong: ' + err))
@@ -161,7 +161,7 @@ export class Backend {
 
   changeGroup(group, data) {
     return this.send(
-      '/api/v2/internal/' + group + '/',
+      '/api/v2/internal/' + group + 'group/',
       'PUT',
       data
     );
@@ -193,7 +193,7 @@ export class Backend {
 
   addGroup(group, name) {
     return this.send(
-      '/api/v2/internal/' + group + '/',
+      '/api/v2/internal/' + group + 'group/',
       'POST',
       name
     );
@@ -222,7 +222,7 @@ export class Backend {
 
   deleteGroup(group, name) {
     return this.send(
-      '/api/v2/internal/' + group + '/' + name,
+      '/api/v2/internal/' + group + 'group/' + name,
       'DELETE'
     );
   }
