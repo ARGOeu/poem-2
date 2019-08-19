@@ -250,6 +250,19 @@ class ListMetricsInGroup(APIView):
         else:
             return Response(status.HTTP_201_CREATED)
 
+    def delete(self, request, group=None):
+        if group:
+            try:
+                group = poem_models.GroupOfMetrics.objects.get(name=group)
+                group.delete()
+                return Response(status=status.HTTP_204_NO_CONTENT)
+
+            except poem_models.GroupOfMetrics.DoesNotExist:
+                raise(NotFound(status=404, detail='Group of metrics not found'))
+
+        else:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
 
 class ListAllMetrics(APIView):
     authentication_classes = (SessionAuthentication,)
