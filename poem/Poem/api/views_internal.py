@@ -218,6 +218,23 @@ class ListMetricsInGroup(APIView):
             raise NotFound(status=404,
                            detail='Group not found')
 
+    def put(self, request):
+        group = poem_models.GroupOfMetrics.objects.get(
+            name=request.data['name']
+        )
+
+        for metric in request.data['metrics']:
+            group.metrics.add(poem_models.Metrics.objects.get(name=metric))
+
+        # remove the metrics that existed before, and now were removed
+        for metric in group.metrics.all():
+            if metric.name not in request.data['metrics']:
+                group.metrics.remove(
+                    poem_models.Metrics.objects.get(name=metric)
+                )
+
+        return Response(status.HTTP_201_CREATED)
+
 
 class ListAllMetrics(APIView):
     authentication_classes = (SessionAuthentication,)
