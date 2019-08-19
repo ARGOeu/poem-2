@@ -169,6 +169,17 @@ export class GroupOfMetricsChange extends Component {
         callback: () => this.history.push('/ui/administration/groupofmetrics')
       }))
       .catch(err => alert('Something went wrong: ' + err))
+    } else {
+      this.backend.addGroupOfMetrics({
+        name: values.name,
+        metrics: metrics
+      })
+      .then(() => NotifyOk({
+        msg: 'Group of metrics successfully added',
+        title: 'Added',
+        callback: () => this.history.push('/ui/administration/groupofmetrics')
+      }))
+      .catch(err => alert('Something went wrong: ' + err))
     }
   }
 
@@ -187,6 +198,17 @@ export class GroupOfMetricsChange extends Component {
             loading: false
           });
         });
+    } else {
+      this.backend.fetchMetricNoGroup().then(metrics =>
+        this.setState(
+          {
+            name: '',
+            metrics: [],
+            nogroupmetrics: metrics,
+            write_perm: true,
+            loading: false
+          }
+        ))
     }
   }
 
