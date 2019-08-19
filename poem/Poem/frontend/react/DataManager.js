@@ -64,6 +64,20 @@ export class Backend {
       .catch(err => alert('Something went wrong: ' + err));
   }
 
+  fetchMetricInGroup(group) {
+    return fetch('/api/v2/internal/metrics/' + group)
+      .then(response => response.json())
+      .then(json => json['result'])
+      .catch(err => alert('Something went wrong: ' + err))
+  }
+  
+  fetchMetricNoGroup() {
+    return fetch('/api/v2/internal/metrics')
+      .then(response => response.json())
+      .then(json => json['result'])
+      .catch(err => alert('Something went wrong: ' + err))
+  }
+
   fetchServiceFlavoursAll() {
     return fetch('/api/v2/internal/serviceflavoursall')
       .then(response => response.json())
