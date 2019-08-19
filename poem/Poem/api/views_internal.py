@@ -802,10 +802,9 @@ class ListAggregationsInGroup(APIView):
         # remove removed aggregations:
         for aggr in group.aggregations.all():
             if aggr.name not in request.data['items']:
-                ag = poem_models.Aggregation.objects.get(name=aggr)
-                group.aggregations.remove(ag)
-                ag.groupname = ''
-                ag.save()
+                group.aggregations.remove(aggr)
+                aggr.groupname = ''
+                aggr.save()
 
         return Response(status=status.HTTP_201_CREATED)
 
@@ -830,8 +829,8 @@ class ListAggregationsInGroup(APIView):
     def delete(self, request, group=None):
         if group:
             try:
-                group = poem_models.GroupOfAggregations.objects.get(name=group)
-                group.delete()
+                gr = poem_models.GroupOfAggregations.objects.get(name=group)
+                gr.delete()
 
                 for aggr in poem_models.Aggregation.objects.filter(
                         groupname=group
@@ -847,3 +846,93 @@ class ListAggregationsInGroup(APIView):
 
         else:
             return Response(status.HTTP_400_BAD_REQUEST)
+
+
+class ListMetricProfilesInGroup(APIView):
+    authentication_classes = (SessionAuthentication,)
+
+    def get(self, request, group=None):
+        if group:
+            mp = poem_models.MetricProfiles.objects.filter(
+                groupofmetricprofiles__name__exact=group
+            )
+        else:
+            mp = poem_models.MetricProfiles.objects.filter(
+                groupofmetricprofiles__exact=None
+            )
+
+        results = []
+        for item in mp:
+            results.append({'id': item.id, 'name': item.name})
+
+        results = sorted(results, key=lambda k: k['name'])
+
+        if results or (not results and
+                       poem_models.GroupOfMetricProfiles.objects.filter(
+                           name__exact=group
+                       )):
+            return Response({'result': results})
+        else:
+            raise NotFound(status=404,
+                           detail='Group of metric profiles not found')
+
+    def put(self, request):
+        group = poem_models.GroupOfMetricProfiles.objects.get(
+            name=request.data['name']
+        )
+
+        for item in request.data['items']:
+            mp = poem_models.MetricProfiles.objects.get(name=item)
+            group.metricprofiles.add(mp)
+            mp.groupname = group.name
+            mp.save()
+
+        # remove removed metric profiles
+        for mp in group.metricprofiles.all():
+            if mp.name not in request.data['items']:
+                group.metricprofiles.remove(mp)
+                mp.groupname = ''
+                mp.save()
+
+        return Response(status.HTTP_201_CREATED)
+
+    def post(self, request):
+        try:
+            group = poem_models.GroupOfMetricProfiles.objects.create(
+                name=request.data['name']
+            )
+
+            for item in request.data['items']:
+                mp = poem_models.MetricProfiles.objects.get(name=item)
+                group.metricprofiles.add(mp)
+                mp.groupname = group.name
+                mp.save()
+
+        except Exception:
+            return Response(status.HTTP_400_BAD_REQUEST)
+
+        else:
+            return Response(status.HTTP_201_CREATED)
+
+    def delete(self, request, group=None):
+        if group:
+            try:
+                gr = poem_models.GroupOfMetricProfiles.objects.get(
+                    name=group
+                )
+                gr.delete()
+
+                for mp in poem_models.MetricProfiles.objects.filter(
+                    groupname=group
+                ):
+                    mp.groupname = ''
+                    mp.save()
+
+                return Response(status.HTTP_204_NO_CONTENT)
+
+            except poem_models.GroupOfMetricProfiles.DoesNotExist:
+                raise NotFound(status=404,
+                               detail='Group of metric profiles not found')
+
+            else:
+                return Response(status.HTTP_400_BAD_REQUEST)
