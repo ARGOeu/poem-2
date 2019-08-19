@@ -191,6 +191,14 @@ export class Backend {
     );
   }
 
+  addGroupOfMetrics(group) {
+    return this.send(
+      '/api/v2/internal/metrics/',
+      'POST',
+      group
+    );
+  }
+
   deleteMetricProfile(id) {
     return this.send(
       '/api/v2/internal/metricprofiles/' + id,
