@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { Backend } from './DataManager';
-import { LoadingAnim, BaseArgoView } from './UIElements';
+import { LoadingAnim, BaseArgoView, NotifyOk } from './UIElements';
 import ReactTable from 'react-table';
 import { Link } from 'react-router-dom';
 import { Formik, Form, Field } from 'formik';
@@ -9,7 +9,7 @@ import {
   Row,
   Col,
   Label,
-  FormText} from 'reactstrap';
+  Button} from 'reactstrap';
 import FilteredMultiSelect from 'react-filtered-multiselect';
 
 
@@ -82,19 +82,28 @@ export class GroupOfMetricsChange extends Component {
     this.group = props.match.params.group;
     this.addview = props.addview;
     this.location = props.location;
+    this.history = props.history;
 
     this.state = {
       name: '',
       metrics: [],
       nogroupmetrics: [],
       write_perm: false,
-      loading: false
+      loading: false,
+      areYouSureModal: false,
+      modalFunc: undefined,
+      modalTitle: undefined,
+      modalMsg: undefined
     }
 
     this.backend = new Backend();
 
     this.handleDeselect = this.handleDeselect.bind(this);
     this.handleSelect = this.handleSelect.bind(this);
+    this.toggleAreYouSure = this.toggleAreYouSure.bind(this);
+    this.toggleAreYouSureSetModal = this.toggleAreYouSureSetModal.bind(this);
+    this.onSubmitHandle = this.onSubmitHandle.bind(this);
+    this.doChange = this.doChange.bind(this);
   }
 
   handleDeselect(deSelectedMetrics) {
@@ -114,6 +123,53 @@ export class GroupOfMetricsChange extends Component {
   handleSelect(metrics) {
     metrics.sort((a, b) => a.id - b.id)
     this.setState({metrics})
+  }
+
+  toggleAreYouSure() {
+    this.setState(prevState => 
+      ({areYouSureModal: !prevState.areYouSureModal}));
+  }
+
+  toggleAreYouSureSetModal(msg, title, onyes) {
+    this.setState(prevState => 
+      ({areYouSureModal: !prevState.areYouSureModal,
+        modalFunc: onyes,
+        modalMsg: msg,
+        modalTitle: title,
+      }));
+  }
+
+  onSubmitHandle(values, action) {
+    let msg = undefined;
+    let title = undefined;
+
+    if (this.addview) {
+      msg = 'Are you sure you want to add group of metrics?';
+      title = 'Add group of metrics';
+    } else {
+      msg = 'Are you sure you want to change group of metrics?';
+      title = 'Change group of metrics';
+    }
+    this.toggleAreYouSureSetModal(msg, title, 
+      () => this.doChange(values, action))
+  }
+
+  doChange(values, action) {
+    let metrics = [];
+    this.state.metrics.forEach((m) => metrics.push(m.name));
+
+    if (!this.addview) {
+      this.backend.changeGroupOfMetrics({
+        name: values.name,
+        metrics: metrics
+      })
+      .then(() => NotifyOk({
+        msg: 'Group of metrics successfully changed',
+        title: 'Changed',
+        callback: () => this.history.push('/ui/administration/groupofmetrics')
+      }))
+      .catch(err => alert('Something went wrong: ' + err))
+    }
   }
 
   componentDidMount() {
@@ -155,12 +211,14 @@ export class GroupOfMetricsChange extends Component {
           addview={this.addview}
           modal={true}
           state={this.state}
+          toggle={this.toggleAreYouSure}
           submitperm={write_perm}>
             <Formik
               initialValues={{
                 name: name,
                 metrics: metrics
               }}
+              onSubmit = {(values, action) => this.onSubmitHandle(values, action)}
               render = {props => (
                 <Form>
                   <FormGroup>
@@ -168,11 +226,12 @@ export class GroupOfMetricsChange extends Component {
                       <Col md={6}>
                         <Label for='groupname'>Name</Label>
                         <Field
-                          type='text'
+                          type='readonly'
                           name='name'
                           required={true}
                           className='form-control'
                           id='groupname'
+                          disabled={!this.addview}
                         />
                       </Col>
                     </Row>
@@ -210,6 +269,15 @@ export class GroupOfMetricsChange extends Component {
                       </Col>
                     </Row>
                   </FormGroup>
+                  {
+                  (write_perm) &&
+                    <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
+                      <Button color="danger">
+                        Delete
+                      </Button>
+                      <Button color="success" id="submit-button" type="submit">Save</Button>
+                    </div>
+                }
                 </Form>
               )}
             />
