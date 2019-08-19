@@ -758,3 +758,92 @@ class ListGroupsForGivenUser(APIView):
             results = get_all_groups()
 
         return Response({'result': results})
+
+
+class ListAggregationsInGroup(APIView):
+    authentication_classes = (SessionAuthentication,)
+
+    def get(self, request, group=None):
+        if group:
+            aggr = poem_models.Aggregation.objects.filter(
+                groupofaggregations__name__exact=group
+            )
+        else:
+            aggr = poem_models.Aggregation.objects.filter(
+                groupofaggregations__exact=None
+            )
+
+        results = []
+        for item in aggr:
+            results.append({'id': item.id, 'name': item.name})
+
+        results = sorted(results, key=lambda k: k['name'])
+
+        if results or (not results and
+                       poem_models.GroupOfAggregations.objects.filter(
+                           name__exact=group
+                       )):
+            return Response({'result': results})
+        else:
+            raise NotFound(status=404,
+                           detail='Group not found')
+
+    def put(self, request):
+        group = poem_models.GroupOfAggregations.objects.get(
+            name=request.data['name']
+        )
+
+        for aggr in request.data['items']:
+            ag = poem_models.Aggregation.objects.get(name=aggr)
+            group.aggregations.add(ag)
+            ag.groupname = group.name
+            ag.save()
+
+        # remove removed aggregations:
+        for aggr in group.aggregations.all():
+            if aggr.name not in request.data['items']:
+                ag = poem_models.Aggregation.objects.get(name=aggr)
+                group.aggregations.remove(ag)
+                ag.groupname = ''
+                ag.save()
+
+        return Response(status=status.HTTP_201_CREATED)
+
+    def post(self, request):
+        try:
+            group = poem_models.GroupOfAggregations.objects.create(
+                name=request.data['name']
+            )
+
+            for aggr in request.data['items']:
+                ag = poem_models.Aggregation.objects.get(name=aggr)
+                group.aggregations.add(ag)
+                ag.groupname = group.name
+                ag.save()
+
+        except Exception:
+            return Response(status.HTTP_400_BAD_REQUEST)
+
+        else:
+            return Response(status.HTTP_201_CREATED)
+
+    def delete(self, request, group=None):
+        if group:
+            try:
+                group = poem_models.GroupOfAggregations.objects.get(name=group)
+                group.delete()
+
+                for aggr in poem_models.Aggregation.objects.filter(
+                        groupname=group
+                ):
+                    aggr.groupname = ''
+                    aggr.save()
+
+                return Response(status.HTTP_204_NO_CONTENT)
+
+            except poem_models.GroupOfAggregations.DoesNotExist:
+                raise NotFound(status=404,
+                               detail='Group of aggregations not found')
+
+        else:
+            return Response(status.HTTP_400_BAD_REQUEST)

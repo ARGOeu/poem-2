@@ -27,4 +27,6 @@ urlpatterns = [
     path('usergroups/<str:username>', views_internal.ListGroupsForGivenUser.as_view(), name='usergroups'),
     path('usergroups/', views_internal.ListGroupsForGivenUser.as_view(), name='usergroups'),
     path('userprofile/', views_internal.GetUserprofileForUsername.as_view(), name='userprofile'),
+    path('aggregationsgroup/', views_internal.ListAggregationsInGroup.as_view(), name='aggregationprofiles'),
+    path('aggregationsgroup/<str:group>', views_internal.ListAggregationsInGroup.as_view(), name='aggregationprofiles'),
 ]
