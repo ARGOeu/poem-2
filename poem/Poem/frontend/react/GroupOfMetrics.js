@@ -104,6 +104,7 @@ export class GroupOfMetricsChange extends Component {
     this.toggleAreYouSureSetModal = this.toggleAreYouSureSetModal.bind(this);
     this.onSubmitHandle = this.onSubmitHandle.bind(this);
     this.doChange = this.doChange.bind(this);
+    this.doDelete = this.doDelete.bind(this);
   }
 
   handleDeselect(deSelectedMetrics) {
@@ -181,6 +182,16 @@ export class GroupOfMetricsChange extends Component {
       }))
       .catch(err => alert('Something went wrong: ' + err))
     }
+  }
+
+  doDelete(name) {
+    this.backend.deleteGroupOfMetrics(name)
+      .then(() => NotifyOk({
+        msg: 'Group of metrics successfully deleted',
+        title: 'Deleted',
+        callback: () => this.history.push('/ui/administration/groupofmetrics')
+      }))
+      .catch(err => alert('Something went wrong: ' + err))
   }
 
   componentDidMount() {
@@ -294,7 +305,14 @@ export class GroupOfMetricsChange extends Component {
                   {
                   (write_perm) &&
                     <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
-                      <Button color="danger">
+                      <Button 
+                        color="danger"
+                        onClick={() => {
+                          this.toggleAreYouSureSetModal('Are you sure you want to delete group of metrics?',
+                          'Delete group of metrics',
+                          () => this.doDelete(props.values.name))
+                        }}
+                      >
                         Delete
                       </Button>
                       <Button color="success" id="submit-button" type="submit">Save</Button>
