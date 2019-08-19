@@ -15,6 +15,9 @@ import FilteredMultiSelect from 'react-filtered-multiselect';
 export const GroupOfMetricsList = GroupList('metrics', 'groupofmetrics');
 export const GroupOfMetricsChange = GroupChange('metrics', 'groupofmetrics');
 
+export const GroupOfAggregationsList = GroupList('aggregations', 'groupofaggregations');
+export const GroupOfAggregationsChange = GroupChange('aggregations', 'groupofaggregations');
+
 
 function GroupList(group, id) {
   return class extends Component {
