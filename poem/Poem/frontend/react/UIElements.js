@@ -51,6 +51,10 @@ link_title.set('probes', 'Probes');
 link_title.set('metrics', 'Metrics');
 link_title.set('metricprofiles', 'Metric profiles');
 link_title.set('aggregationprofiles', 'Aggregation profiles');
+link_title.set('groupofaggregations', 'Groups of aggregations');
+link_title.set('groupofmetrics', 'Groups of metrics');
+link_title.set('groupofmetricprofiles', 'Groups of metric profiles');
+link_title.set('users', 'Users');
 
 export const Icon = props =>
 {
@@ -144,7 +148,7 @@ export const CustomBreadcrumb = ({location, history}) =>
 
   if (spliturl.length > 3) {
     var three_level = new Object({'url': two_level['url'] + '/' + spliturl[3]});
-    three_level['title'] = spliturl[3];
+    three_level['title'] = two_level['title'] === 'Administration' ? link_title.get(spliturl[3]) : spliturl[3];
     breadcrumb_elements.push(three_level)
   }
 
@@ -230,8 +234,8 @@ export const NavigationLinks = ({location}) =>
             <NavItem key={i}>
               <NavLink 
                 tag={Link}
-                active={location.pathname.includes(item) ? true : false} 
-                className={location.pathname.includes(item) ? "text-white bg-info" : "text-dark"}
+                active={location.pathname.split('/')[2] === item ? true : false} 
+                className={location.pathname.split('/')[2] === item ? "text-white bg-info" : "text-dark"}
                 to={'/ui/' + item}><Icon i={item}/> {link_title.get(item)}
               </NavLink>
             </NavItem>
@@ -357,3 +361,27 @@ export const BaseArgoView = ({resourcename='', location=undefined,
     </div>
   </React.Fragment>
 )
+
+export const Checkbox = ({
+  field: { name, value, onChange, onBlur },
+  form: { errors, touched },
+  id,
+  label,
+  ...props
+}) => {
+  return (
+    <div>
+      <input
+        name={name}
+        id={id}
+        type='checkbox'
+        value={value}
+        checked={value}
+        onChange={onChange}
+        onBlur={onBlur}
+      />
+      <label htmlFor={id}>{label}</label>
+      {touched[name] && errors[name] && <div className="error">{errors[name]}</div>}
+    </div>
+  );
+};

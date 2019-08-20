@@ -39,3 +39,9 @@ class MetricInstanceSerializer(serializers.ModelSerializer):
     class Meta:
         fields = ('service_flavour', 'metric')
         model = models.MetricInstance
+
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        fields = ('subject', 'egiid', 'displayname')
+        model = models.UserProfile

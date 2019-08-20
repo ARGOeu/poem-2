@@ -38,6 +38,7 @@
     "jshint": "^2.10.2",
     "postcss-loader": "^3.0.0",
     "react-autocomplete": "^1.8.1",
+    "react-filtered-multiselect": "^0.5.1",
     "react-notifications": "^1.4.3",
     "react-router-dom": "^5.0.1",
     "react-table": "^6.10.0",
