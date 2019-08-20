@@ -12,17 +12,17 @@ import {
   Button} from 'reactstrap';
 import FilteredMultiSelect from 'react-filtered-multiselect';
 
-export const GroupOfMetricsList = GroupList('metrics', 'groupofmetrics');
-export const GroupOfMetricsChange = GroupChange('metrics', 'groupofmetrics');
+export const GroupOfMetricsList = GroupList('metrics', 'groupofmetrics', 'group of metrics');
+export const GroupOfMetricsChange = GroupChange('metrics', 'groupofmetrics', 'metrics');
 
-export const GroupOfAggregationsList = GroupList('aggregations', 'groupofaggregations');
-export const GroupOfAggregationsChange = GroupChange('aggregations', 'groupofaggregations');
+export const GroupOfAggregationsList = GroupList('aggregations', 'groupofaggregations', 'group of aggregations');
+export const GroupOfAggregationsChange = GroupChange('aggregations', 'groupofaggregations', 'aggregations');
 
-export const GroupOfMetricProfilesList = GroupList('metricprofiles', 'groupofmetricprofiles');
-export const GroupOfMetricProfilesChange = GroupChange('metricprofiles', 'groupofmetricprofiles');
+export const GroupOfMetricProfilesList = GroupList('metricprofiles', 'groupofmetricprofiles', 'group of metric profiles');
+export const GroupOfMetricProfilesChange = GroupChange('metricprofiles', 'groupofmetricprofiles', 'metric profiles');
 
 
-function GroupList(group, id) {
+function GroupList(group, id, name) {
   return class extends Component {
     constructor(props) {
       super(props);
@@ -48,7 +48,7 @@ function GroupList(group, id) {
   render() {
     const columns = [
       {
-        Header: 'Group of ' + group,
+        Header: name.charAt(0).toUpperCase() + name.slice(1),
         id: id,
         accessor: e =>
           <Link to={'/ui/administration/' + id + '/' + e}>
@@ -65,7 +65,7 @@ function GroupList(group, id) {
     else if (!loading && list_groups) {
       return (
         <BaseArgoView
-          resourcename={'group of ' + group}
+          resourcename={name}
           location={this.location}
           listview={true}>
             <ReactTable
@@ -84,7 +84,7 @@ function GroupList(group, id) {
 }
 
 
-function GroupChange(gr, id) {
+function GroupChange(gr, id, ttl) {
   return class extends Component {
     constructor(props) {
       super(props);
@@ -155,11 +155,11 @@ function GroupChange(gr, id) {
       let title = undefined;
   
       if (this.addview) {
-        msg = 'Are you sure you want to add group of ' + gr + '?';
-        title = 'Add group of ' + gr;
+        msg = 'Are you sure you want to add group of ' + ttl + '?';
+        title = 'Add group of ' + ttl;
       } else {
-        msg = 'Are you sure you want to change group of ' + gr + '?';
-        title = 'Change group of ' + gr;
+        msg = 'Are you sure you want to change group of ' + ttl + '?';
+        title = 'Change group of ' + ttl;
       }
       this.toggleAreYouSureSetModal(msg, title, 
         () => this.doChange(values, action))
@@ -177,7 +177,7 @@ function GroupChange(gr, id) {
           }
         )
         .then(() => NotifyOk({
-          msg: 'Group of ' + gr + ' successfully changed',
+          msg: 'Group of ' + ttl + ' successfully changed',
           title: 'Changed',
           callback: () => this.history.push('/ui/administration/' + id)
         }))
@@ -190,7 +190,7 @@ function GroupChange(gr, id) {
           }
         )
         .then(() => NotifyOk({
-          msg: 'Group of ' + gr + ' successfully added',
+          msg:  'Group of ' + ttl + ' successfully added',
           title: 'Added',
           callback: () => this.history.push('/ui/administration/' + id)
         }))
@@ -201,7 +201,7 @@ function GroupChange(gr, id) {
     doDelete(name) {
       this.backend.deleteGroup(gr, name)
         .then(() => NotifyOk({
-          msg: 'Group of ' + gr + ' successfully deleted',
+          msg:  'Group of ' + ttl + ' successfully deleted',
           title: 'Deleted',
           callback: () => this.history.push('/ui/administration/' + id)
         }))
@@ -253,7 +253,7 @@ function GroupChange(gr, id) {
       else if (!loading) {
         return(
           <BaseArgoView
-            resourcename={'group of ' + gr}
+            resourcename={'group of ' + ttl}
             location={this.location}
             addview={this.addview}
             modal={true}
@@ -284,7 +284,7 @@ function GroupChange(gr, id) {
                       </Row>
                     </FormGroup>
                     <FormGroup>
-                    <h4 className="mt-2 p-1 pl-3 text-light text-uppercase rounded" style={{"backgroundColor": "#416090"}}>{gr}</h4>
+                    <h4 className="mt-2 p-1 pl-3 text-light text-uppercase rounded" style={{"backgroundColor": "#416090"}}>{ttl}</h4>
                       <Row>
                         <Col md={5}>
                           <FilteredMultiSelect
