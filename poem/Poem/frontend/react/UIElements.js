@@ -234,8 +234,8 @@ export const NavigationLinks = ({location}) =>
             <NavItem key={i}>
               <NavLink 
                 tag={Link}
-                active={location.pathname.includes(item) ? true : false} 
-                className={location.pathname.includes(item) ? "text-white bg-info" : "text-dark"}
+                active={location.pathname.split('/')[2] === item ? true : false} 
+                className={location.pathname.split('/')[2] === item ? "text-white bg-info" : "text-dark"}
                 to={'/ui/' + item}><Icon i={item}/> {link_title.get(item)}
               </NavLink>
             </NavItem>
