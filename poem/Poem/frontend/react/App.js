@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import Login from './Login';
 import { MetricProfilesChange, MetricProfilesList } from './MetricProfiles';
 import Home from './Home';
-import Probes from './Probes';
+import { ProbeList } from './Probes';
 import Metrics from './Metrics';
 import Administration from './Administration';
 import { AggregationProfilesChange, AggregationProfilesList } from './AggregationProfiles';
@@ -155,7 +155,7 @@ class App extends Component {
                   <Route exact path="/ui/home" component={Home} />
                   <Route exact path="/ui/services" component={Services} />
                   <Route exact path="/ui/reports" component={Reports} />
-                  <Route exact path="/ui/probes" component={Probes} />
+                  <Route exact path="/ui/probes" component={ProbeList} />
                   <Route exact path="/ui/metrics" component={Metrics} />
                   <Route exact path="/ui/metricprofiles" component={MetricProfilesList} />
                   <Route exact path="/ui/metricprofiles/add" 
