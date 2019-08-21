@@ -21,6 +21,7 @@ from . import serializers
 from Poem import settings
 
 import requests
+import json
 
 
 def sync_webapi(api, model):
@@ -72,6 +73,26 @@ def get_all_groups():
 
     groupsofmetricprofiles = poem_models.GroupOfMetricProfiles.objects.all().values_list('name', flat=True)
     results.update({'metricprofiles': groupsofmetricprofiles})
+
+    return results
+
+
+def one_value_inline(input):
+    if input:
+        return json.loads(input)[0]
+    else:
+        return ''
+
+
+def two_value_inline(input):
+    results = []
+
+    if input:
+        data = json.loads(input)
+
+        for item in data:
+            results.append(({'key': item.split(' ')[0],
+                             'value': item.split(' ')[1]}))
 
     return results
 
@@ -956,3 +977,44 @@ class ListMetricProfilesInGroup(APIView):
 
             else:
                 return Response(status.HTTP_400_BAD_REQUEST)
+
+
+class ListMetric(APIView):
+    authentication_classes = (SessionAuthentication,)
+
+    def get(self, request):
+        metrics = poem_models.Metric.objects.all()
+
+
+        results = []
+        for metric in metrics:
+            config = two_value_inline(metric.config)
+            parent = one_value_inline(metric.parent)
+            probeexecutable = one_value_inline(metric.probeexecutable)
+            attribute = two_value_inline(metric.attribute)
+            dependancy = two_value_inline(metric.dependancy)
+            flags = two_value_inline(metric.flags)
+            files = two_value_inline(metric.files)
+            parameter = two_value_inline(metric.parameter)
+            fileparameter = two_value_inline(metric.fileparameter)
+
+            results.append(dict(
+                id=metric.id,
+                name=metric.name,
+                tag=metric.tag.name,
+                mtype=metric.mtype.name,
+                probeversion=metric.probeversion,
+                group=metric.group.name,
+                parent=parent,
+                probeexecutable=probeexecutable,
+                config=config,
+                attribute=attribute,
+                dependancy=dependancy,
+                flags=flags,
+                files=files,
+                parameter=parameter,
+                fileparameter=fileparameter
+            ))
+
+        return Response(results)
+
