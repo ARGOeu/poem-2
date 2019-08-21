@@ -163,7 +163,7 @@ export class ProbeDetails extends Component {
             {
               <Alert color='info'>
                 <center>
-                  This is a read-only instance. Probes can be changed only by super user.
+                  This is a read-only instance. Probes can be changed only by super admin.
                 </center>
               </Alert>
             }
@@ -208,7 +208,7 @@ export class ProbeDetails extends Component {
                   </FormGroup>
                   <FormGroup>
                     <h4 className="mt-2 p-1 pl-3 text-light text-uppercase rounded" style={{"backgroundColor": "#416090"}}>Probe metadata</h4>
-                    <Row className='mb-3 align-items-top'>
+                    <Row className='mt-4 mb-3 align-items-top'>
                       <Col md={1}>
                         <Label for='repository'>Repository</Label>
                       </Col>
