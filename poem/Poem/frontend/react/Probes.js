@@ -13,7 +13,8 @@ export class ProbeList extends Component {
 
     this.state = {
       loading: false,
-      list_probe: null
+      list_probe: null,
+      search: ''
     };
 
     this.backend = new Backend();
@@ -26,7 +27,8 @@ export class ProbeList extends Component {
       .then(json =>
         this.setState({
           list_probe: json,
-          loading: false
+          loading: false,
+          search: ''
         }))
   }
 
@@ -36,10 +38,19 @@ export class ProbeList extends Component {
         Header: 'Name',
         id: 'name', 
         minWidth: 80,
-        accessor: e =>
+        accessor: e => 
           <Link to={'/ui/probes/' + e.name}>
             {e.name}
-          </Link>
+          </Link>,
+        filterable: true,
+        Filter: (
+          <input 
+            value={this.state.search}
+            onChange={e => this.setState({search: e.target.value})}
+            placeholder='Search probes by name'
+            style={{width: "100%"}}
+          />
+        )
       },
       {
         Header: '#versions',
@@ -53,11 +64,31 @@ export class ProbeList extends Component {
       {
         Header: 'Description',
         minWidth: 300,
-        accessor: 'description'
+        accessor: 'description',
+        filterable: true,
+        Filter: ({filter, onChange}) => (
+          <input 
+            type='text'
+            placeholder='Search probes by description'
+            value={filter ? filter.value : ''}
+            onChange={event => onChange(event.target.value)}
+            style={{width: '100%'}}
+          />
+        ),
+        filterMethod: 
+          (filter, row) =>
+            row[filter.id] !== undefined ? String(row[filter.id]).includes(filter.value) : true
       }
     ];
 
-    const { loading, list_probe } = this.state;
+    const { loading } = this.state;
+    var { list_probe } = this.state;
+
+    if (this.state.search) {
+      list_probe = list_probe.filter(row => 
+        row.name.includes(this.state.search)
+      )
+    }
 
     if (loading)
       return (<LoadingAnim />)
@@ -67,7 +98,7 @@ export class ProbeList extends Component {
         <React.Fragment>
           <div className="d-flex align-items-center justify-content-between">
             <React.Fragment>
-              <h2 className="ml-3 mt-1 mb-4">{'Select probe to see'}</h2>
+              <h2 className="ml-3 mt-1 mb-4">{'Select probe to see details'}</h2>
             </React.Fragment>
           </div>
           <div id="argo-contentwrap" className="ml-2 mb-2 mt-2 p-3 border rounded">
