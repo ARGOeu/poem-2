@@ -77,7 +77,7 @@ export class ProbeList extends Component {
         ),
         filterMethod: 
           (filter, row) =>
-            row[filter.id] !== undefined ? String(row[filter.id]).includes(filter.value) : true
+            row[filter.id] !== undefined ? String(row[filter.id]).toLowerCase().includes(filter.value.toLowerCase()) : true
       }
     ];
 
@@ -86,7 +86,7 @@ export class ProbeList extends Component {
 
     if (this.state.search) {
       list_probe = list_probe.filter(row => 
-        row.name.includes(this.state.search)
+        row.name.toLowerCase().includes(this.state.search.toLowerCase())
       )
     }
 
