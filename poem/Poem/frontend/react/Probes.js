@@ -14,7 +14,8 @@ export class ProbeList extends Component {
     this.state = {
       loading: false,
       list_probe: null,
-      search: ''
+      search_name: '',
+      search_description: ''
     };
 
     this.backend = new Backend();
@@ -28,7 +29,7 @@ export class ProbeList extends Component {
         this.setState({
           list_probe: json,
           loading: false,
-          search: ''
+          search_name: ''
         }))
   }
 
@@ -54,8 +55,8 @@ export class ProbeList extends Component {
         filterable: true,
         Filter: (
           <input 
-            value={this.state.search}
-            onChange={e => this.setState({search: e.target.value})}
+            value={this.state.search_name}
+            onChange={e => this.setState({search_name: e.target.value})}
             placeholder='Search probes by name'
             style={{width: "100%"}}
           />
@@ -75,12 +76,12 @@ export class ProbeList extends Component {
         minWidth: 300,
         accessor: 'description',
         filterable: true,
-        Filter: ({filter, onChange}) => (
+        Filter: (
           <input 
             type='text'
             placeholder='Search probes by description'
-            value={filter ? filter.value : ''}
-            onChange={event => onChange(event.target.value)}
+            value={this.state.search_description}
+            onChange={e=> this.setState({search_description: e.target.value})}
             style={{width: '100%'}}
           />
         ),
@@ -93,9 +94,15 @@ export class ProbeList extends Component {
     const { loading } = this.state;
     var { list_probe } = this.state;
 
-    if (this.state.search) {
+    if (this.state.search_name) {
       list_probe = list_probe.filter(row => 
-        row.name.toLowerCase().includes(this.state.search.toLowerCase())
+        row.name.toLowerCase().includes(this.state.search_name.toLowerCase())
+      )
+    }
+
+    if (this.state.search_description) {
+      list_probe = list_probe.filter(row =>
+        row.description.toLowerCase().includes(this.state.search_description.toLowerCase())  
       )
     }
 
