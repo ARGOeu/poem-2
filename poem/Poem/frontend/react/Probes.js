@@ -35,6 +35,15 @@ export class ProbeList extends Component {
   render() {
     const columns = [
       {
+        Header: '#',
+        id: 'row',
+        minWidth: 10,
+        Cell: (row) =>
+          <div style={{textAlign: 'center'}}>
+            {row.index + 1}
+          </div>
+      },
+      {
         Header: 'Name',
         id: 'name', 
         minWidth: 80,
