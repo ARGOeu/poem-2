@@ -152,6 +152,18 @@ export class Backend {
 
   }
 
+  fetchMetricByName(name) {
+    return fetch('/api/v2/internal/metric/' + name)
+      .then(response => response.json())
+      .catch(err => alert('Something went wrong: ' + err))
+  }
+
+  fetchMetricUserGroups() {
+    return fetch('/api/v2/internal/groups/metrics')
+      .then(response => response.json())
+      .catch(err => alert('Something went wrong: ' + err))
+  }
+
   changeMetricProfile(profile) {
     return this.send(
       '/api/v2/internal/metricprofiles/',
