@@ -982,8 +982,15 @@ class ListMetricProfilesInGroup(APIView):
 class ListMetric(APIView):
     authentication_classes = (SessionAuthentication,)
 
-    def get(self, request):
-        metrics = poem_models.Metric.objects.all()
+    def get(self, request, name=None):
+        if name:
+            try:
+                metrics = poem_models.Metric.objects.filter(name=name)
+            except poem_models.Metric.DoesNotExist:
+                raise NotFound(status=404,
+                               detail='Metric not found')
+        else:
+            metrics = poem_models.Metric.objects.all()
 
         results = []
         for metric in metrics:
@@ -1015,7 +1022,10 @@ class ListMetric(APIView):
                 fileparameter=fileparameter
             ))
 
-        return Response(results)
+        if name:
+            return Response(results[0])
+        else:
+            return Response(results)
 
 
 class ListTags(APIView):

@@ -33,5 +33,6 @@ urlpatterns = [
     path('metricprofilesgroup/', views_internal.ListMetricProfilesInGroup.as_view(), name='metricprofilesgroup'),
     path('metricprofilesgroup/<str:group>', views_internal.ListMetricProfilesInGroup.as_view(), name='metricprofilesgroup'),
     path('metric/', views_internal.ListMetric.as_view(), name='metric'),
+    path('metric/<str:name>', views_internal.ListMetric.as_view(), name='metric'),
     path('tags/', views_internal.ListTags.as_view(), name='tags'),
 ]
