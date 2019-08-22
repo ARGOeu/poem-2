@@ -985,7 +985,6 @@ class ListMetric(APIView):
     def get(self, request):
         metrics = poem_models.Metric.objects.all()
 
-
         results = []
         for metric in metrics:
             config = two_value_inline(metric.config)
@@ -1017,4 +1016,12 @@ class ListMetric(APIView):
             ))
 
         return Response(results)
+
+
+class ListTags(APIView):
+    authentication_classes = (SessionAuthentication,)
+
+    def get(self, request):
+        tags = poem_models.Tags.objects.all().values_list('name', flat=True)
+        return Response(tags)
 
