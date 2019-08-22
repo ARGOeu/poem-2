@@ -139,6 +139,19 @@ export class Backend {
       .catch(err => alert('Something went wrong: ' + err))
   }
 
+  fetchAllMetric() {
+    return fetch('/api/v2/internal/metric/')
+      .then(response => response.json())
+      .catch(err => alert('Something went wrong: ' + err))
+  }
+
+  fetchTags() {
+    return fetch('/api/v2/internal/tags/')
+      .then(response => response.json())
+      .catch(err => alert('Something went wrong: ' + err))
+
+  }
+
   changeMetricProfile(profile) {
     return this.send(
       '/api/v2/internal/metricprofiles/',
