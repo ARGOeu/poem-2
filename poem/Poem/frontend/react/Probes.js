@@ -187,6 +187,7 @@ export class ProbeDetails extends Component {
                           name='name'
                           className='form-control'
                           id='name'
+                          disabled={true}
                         />
                         <FormText color="muted">
                           Name of this probe.
@@ -199,6 +200,7 @@ export class ProbeDetails extends Component {
                           name='version'
                           className='form-control'
                           id='version'
+                          disabled={true}
                         />
                         <FormText color="muted">
                           Version of the probe.
@@ -218,6 +220,7 @@ export class ProbeDetails extends Component {
                           name='repository'
                           className='form-control'
                           id='repository'
+                          disabled={true}
                         />
                         <FormText color='muted'>
                           Probe repository URL.
@@ -234,6 +237,7 @@ export class ProbeDetails extends Component {
                           name='docurl'
                           className='form-control'
                           id='docurl'
+                          disabled={true}
                         />
                         <FormText color='muted'>
                           Documentation URL.
@@ -250,6 +254,7 @@ export class ProbeDetails extends Component {
                           name='description'
                           className='form-control'
                           id='description'
+                          disabled={true}
                         />
                         <FormText color='muted'>
                           Free text description outlining the purpose of this probe.
@@ -266,6 +271,7 @@ export class ProbeDetails extends Component {
                           name='comment'
                           className='form-control'
                           id='comment'
+                          disabled={true}
                         />
                         <FormText color='muted'>
                           Short comment about this version.
