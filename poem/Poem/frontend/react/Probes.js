@@ -107,7 +107,7 @@ export class ProbeList extends Component {
         <React.Fragment>
           <div className="d-flex align-items-center justify-content-between">
             <React.Fragment>
-              <h2 className="ml-3 mt-1 mb-4">{'Select probe to see details'}</h2>
+              <h2 className="ml-3 mt-1 mb-4">{'Select probe for details'}</h2>
             </React.Fragment>
           </div>
           <div id="argo-contentwrap" className="ml-2 mb-2 mt-2 p-3 border rounded">
