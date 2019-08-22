@@ -11,7 +11,7 @@ from rest_framework_api_key import models as api_models
 from queue import Queue
 
 from Poem.poem import models as poem_models
-from Poem.poem_super_admin.models import Probe
+from Poem.poem_super_admin.models import Probe, ExtRevision
 from Poem.users.models import CustUser
 from Poem.poem.saml2.config import tenant_from_request, saml_login_string, get_schemaname
 
@@ -527,17 +527,37 @@ class ListMetricProfiles(APIView):
 class ListProbes(APIView):
     authentication_classes = (SessionAuthentication,)
 
-    def get(self, request, probe_name):
-        try:
-            probes = Probe.objects.get(name=probe_name)
-        except Probe.DoesNotExist:
-            result = dict()
+    def get(self, request, name=None):
+        if name:
+            try:
+                probe = Probe.objects.get(name=name)
+                serializer = serializers.ProbeSerializer(probe)
+
+                return Response(serializer.data)
+
+            except Probe.DoesNotExist:
+                raise NotFound(status=404, detail='Probe not found')
+
         else:
-            result = dict(id=probes.id,
-                          name=probes.name,
-                          description=probes.description,
-                          comment=probes.comment)
-        return Response(result)
+            probes = Probe.objects.all()
+
+            results = []
+            for probe in probes:
+                # number of probe revisions
+                nv = ExtRevision.objects.filter(probeid=probe.id).count()
+                results.append(
+                    dict(
+                        name=probe.name,
+                        version=probe.version,
+                        docurl=probe.docurl,
+                        description=probe.description,
+                        comment=probe.comment,
+                        repository=probe.repository,
+                        nv=nv
+                    )
+                )
+
+            return Response(results)
 
 
 class ListServices(APIView):
