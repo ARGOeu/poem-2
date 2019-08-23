@@ -204,6 +204,14 @@ export class Backend {
     );
   }
 
+  changeMetric(metric) {
+    return this.send(
+      '/api/v2/internal/metric/',
+      'PUT',
+      metric
+    )
+  }
+
   addAggregation(profile) {
     return this.send(
       '/api/v2/internal/aggregations/',
