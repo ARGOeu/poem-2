@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { Backend } from './DataManager';
 import { Link } from 'react-router-dom';
-import { LoadingAnim, BaseArgoView } from './UIElements';
+import { LoadingAnim, BaseArgoView, NotifyOk } from './UIElements';
 import ReactTable from 'react-table';
 import { Formik, Form, Field, FieldArray } from 'formik';
 import {
@@ -265,6 +265,8 @@ export class MetricChange extends Component {
 
     this.toggleAreYouSure = this.toggleAreYouSure.bind(this);
     this.toggleAreYouSureSetModal = this.toggleAreYouSureSetModal.bind(this);
+    this.onSubmitHandle = this.onSubmitHandle.bind(this);
+    this.doChange = this.doChange.bind(this);
   }
 
   toggleAreYouSure() {
@@ -279,6 +281,29 @@ export class MetricChange extends Component {
         modalMsg: msg,
         modalTitle: title,
       }));
+  }
+
+  onSubmitHandle(values, actions) {
+    let msg = 'Are you sure you want to change Metric?';
+    let title = 'Change metric';
+
+    this.toggleAreYouSureSetModal(msg, title, 
+      () => this.doChange(values, actions))
+  }
+
+  doChange(values, actions) {
+    this.backend.changeMetric({
+      name: values.name,
+      group: values.group,
+      tag: values.tag,
+      config: values.config
+    })
+      .then(() => NotifyOk({
+        msg: 'Metric successfully changed',
+        title: 'Changed',
+        callback: () => this.history.push('/ui/metrics')
+      }))
+      .catch(err => alert('Something went wrong: ' + err))
   }
 
   componentDidMount() {
@@ -334,6 +359,7 @@ export class MetricChange extends Component {
               file_attributes: metric.files,
               file_parameters: metric.fileparameter
             }}
+            onSubmit = {(values, actions) => this.onSubmitHandle(values, actions)}
             render = {props => (
               <Form>
                 <FormGroup>
