@@ -448,6 +448,17 @@ export class MetricChange extends Component {
                   </Col>
                 </Row>
                 </FormGroup>
+                {
+                  (write_perm) &&
+                    <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
+                      <Button
+                        color="danger"
+                      >
+                        Delete
+                      </Button>
+                      <Button color="success" id="submit-button" type="submit">Save</Button>
+                    </div>
+                }
               </Form>
             )}
           />
