@@ -1059,6 +1059,19 @@ class ListMetric(APIView):
 
         return Response(status=status.HTTP_201_CREATED)
 
+    def delete(self, request, name):
+        if name:
+            try:
+                metric = poem_models.Metric.objects.get(name=name)
+                metric.delete()
+                return Response(status=status.HTTP_204_NO_CONTENT)
+
+            except poem_models.Metric.DoesNotExist:
+                raise NotFound(status=404, detail='Metric not found')
+
+        else:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
 
 class ListTags(APIView):
     authentication_classes = (SessionAuthentication,)
