@@ -14,7 +14,6 @@ class Services extends Component {
       rows: null,
       rowspan: null,
       id_probes: null, 
-      id_metrics: null, 
     };
 
     this.backend = new Backend();
@@ -28,7 +27,6 @@ class Services extends Component {
           rows: json.result.rows, 
           rowspan: json.result.rowspan, 
           id_probes: json.result.id_probes, 
-          id_metrics: json.result.id_metrics, 
           loading: false})
       );
   }
@@ -39,7 +37,7 @@ class Services extends Component {
   }
 
   render() {
-    const {loading, rows, rowspan, id_metrics, id_probes} = this.state;
+    const {loading, rows, rowspan, id_probes} = this.state;
 
     if (loading) {
       return (<LoadingAnim />)
@@ -85,7 +83,7 @@ class Services extends Component {
                     {
                       e.metric && 
                         <td id='argo-td' className="table-light" rowSpan={this.getRowSpan(rowspan.metric, e.metric)}>
-                          <Icon i='metrics'/> <Link to={'/ui/metrics/' + id_metrics[e.metric]}>{e.metric}</Link>
+                          <Icon i='metrics'/> <Link to={'/ui/metrics/' + e.metric}>{e.metric}</Link>
                         </td>
                     }
                     {
