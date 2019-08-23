@@ -3,7 +3,7 @@ import { Backend } from './DataManager';
 import { Link } from 'react-router-dom';
 import { LoadingAnim, BaseArgoView } from './UIElements';
 import ReactTable from 'react-table';
-import { Formik, Form, Field } from 'formik';
+import { Formik, Form, Field, FieldArray } from 'formik';
 import {
   FormGroup,
   Row,
@@ -36,6 +36,67 @@ const DropdownFilterComponent = ({filter, onChange, data}) => (
       )
     }
   </select>
+)
+
+
+const InlineFields = ({values, field}) => (
+  <div>
+  <h6 className='mt-4 font-weight-bold text-uppercase'>{field.replace('_', ' ')}</h6>
+  <FieldArray
+    name={field}
+    render={arrayHelpers => (
+      (eval(`values.${field}`) && eval(`values.${field}`).length > 0) ? (
+        eval(`values.${field}`).map((item, index) => (
+          <Row key={'row-' + index}>
+            <Col md={5}>
+              {(index === 0) ? <Label for={`${field}.0.key`}>Key</Label> : null}
+              <Field 
+                type='text'
+                name={`${field}.${index}.key`} 
+                id={`${field}.${index}.key`}
+                className='form-control'
+                disabled={true}
+              />
+            </Col>
+            <Col md={5}>
+              {(index === 0) ? <Label for={`${field}.0.value`}>Value</Label> : null}
+              <Field 
+                type='text'
+                name={`${field}.${index}.value`} 
+                id={`${field}.${index}.value`} 
+                className='form-control'
+                disabled={field !== 'config'}
+              />
+            </Col>
+          </Row>
+        ))
+      ) : (
+        <Row>
+          <Col md={5}>
+            <Label to={'emtpty-key'}>Key</Label>
+            <Field 
+              type='text'
+              className='form-control'
+              value=''
+              id='empty-key'
+              disabled={true}
+            />
+          </Col>
+          <Col md={5}>
+            <Label to={'emtpty-value'}>Value</Label>
+            <Field 
+              type='text'
+              value=''
+              className='form-control'
+              id='empty-value'
+              disabled={true}
+            />
+          </Col>
+        </Row>
+      )
+    )}
+  />
+  </div>
 )
 
 
@@ -264,12 +325,12 @@ export class MetricChange extends Component {
               probeexecutable: metric.probeexecutable,
               parent: metric.parent,
               config: metric.config,
-              attributes: metric.attributes,
+              attributes: metric.attribute,
               dependency: metric.dependancy,
               parameter: metric.parameter,
               flags: metric.flags,
-              file_attributes: metric.fileattributes,
-              file_parameters: metric.fileparameters
+              file_attributes: metric.files,
+              file_parameters: metric.fileparameter
             }}
             render = {props => (
               <Form>
@@ -350,6 +411,40 @@ export class MetricChange extends Component {
                     </Col>
                   </Row>
                 </FormGroup>
+                <FormGroup>
+                <h4 className="mt-2 p-1 pl-3 text-light text-uppercase rounded" style={{"backgroundColor": "#416090"}}>Metric configuration</h4>
+                <h6 className='mt-4 font-weight-bold text-uppercase'>probe executable</h6>
+                <Row>
+                  <Col md={5}>
+                    <Field
+                      type='text'
+                      name='probeexecutable'
+                      id='probeexecutable'
+                      className='form-control'
+                      disabled={true}
+                    />
+                  </Col>
+                </Row>
+                <InlineFields {...props} field='config'/>
+                <InlineFields {...props} field='attributes'/>
+                <InlineFields {...props} field='dependency'/>
+                <InlineFields {...props} field='parameter'/>
+                <InlineFields {...props} field='flags'/>
+                <InlineFields {...props} field='file_attributes'/>
+                <InlineFields {...props} field='file_parameters'/>
+                <h6 className='mt-4 font-weight-bold text-uppercase'>parent</h6>
+                <Row>
+                  <Col md={5}>
+                    <Field
+                      type='text'
+                      name='parent'
+                      id='parent'
+                      className='form-control'
+                      disabled={true}
+                    />
+                  </Col>
+                </Row>
+                </FormGroup>
               </Form>
             )}
           />
@@ -357,5 +452,4 @@ export class MetricChange extends Component {
       )
     }
   }
-
 }
