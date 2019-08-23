@@ -97,6 +97,15 @@ def two_value_inline(input):
     return results
 
 
+def inline_metric_for_db(input):
+    result = []
+
+    for item in input:
+        result.append('{} {}'.format(item['key'], item['value']))
+
+    return result
+
+
 class Tree(object):
     class Node:
         def __init__(self, nodename):
@@ -1026,6 +1035,29 @@ class ListMetric(APIView):
             return Response(results[0])
         else:
             return Response(results)
+
+    def put(self, request):
+        metric = poem_models.Metric.objects.get(name=request.data['name'])
+        config = inline_metric_for_db(request.data['config'])
+
+        if request.data['group'] != metric.group.name:
+            metric.group = poem_models.GroupOfMetrics.objects.get(
+                name=request.data['group']
+            )
+
+        if request.data['tag'] != metric.tag.name:
+            metric.tag = poem_models.Tags.objects.get(
+                name=request.data['tag']
+            )
+
+        if set(config) != set(json.loads(metric.config)):
+            metric.config = json.dumps(config)
+
+        metric.save()
+
+        return Response(status=status.HTTP_201_CREATED)
+
+
 
 
 class ListTags(APIView):
