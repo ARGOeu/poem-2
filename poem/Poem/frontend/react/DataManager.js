@@ -152,6 +152,12 @@ export class Backend {
 
   }
 
+  fetchMetricTypes() {
+    return fetch('/api/v2/internal/mtypes/')
+      .then(response => response.json())
+      .catch(err => alert("Something went wrong: " + err))
+  }
+
   fetchMetricByName(name) {
     return fetch('/api/v2/internal/metric/' + name)
       .then(response => response.json())
