@@ -65,7 +65,7 @@ const InlineFields = ({values, field}) => (
                 name={`${field}.${index}.value`} 
                 id={`${field}.${index}.value`} 
                 className='form-control'
-                disabled={field !== 'config'}
+                disabled={field !== 'config' || field === 'config' && item.key === 'path'}
               />
             </Col>
           </Row>
