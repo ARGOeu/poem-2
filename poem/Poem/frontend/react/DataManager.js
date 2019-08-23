@@ -278,6 +278,13 @@ export class Backend {
     );
   }
 
+  deleteMetric(name) {
+    return this.send(
+      '/api/v2/internal/metric/' + name,
+      'DELETE'
+    );
+  }
+
   send(url, method, values=undefined) {
     const cookies = new Cookies();
 
