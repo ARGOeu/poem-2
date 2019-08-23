@@ -1060,12 +1060,20 @@ class ListMetric(APIView):
         return Response(status=status.HTTP_201_CREATED)
 
 
-
-
 class ListTags(APIView):
     authentication_classes = (SessionAuthentication,)
 
     def get(self, request):
         tags = poem_models.Tags.objects.all().values_list('name', flat=True)
         return Response(tags)
+
+
+class ListMetricTypes(APIView):
+    authentication_classes = (SessionAuthentication,)
+
+    def get(self, request):
+        types = poem_models.MetricType.objects.all().values_list(
+            'name', flat=True
+        )
+        return Response(types)
 
