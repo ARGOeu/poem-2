@@ -110,7 +110,8 @@ export class MetricList extends Component {
       loading: false,
       list_metric: null,
       list_tags: null,
-      list_groups:null
+      list_groups: null,
+      list_types: null
     }
 
     this.location = props.location;
@@ -122,12 +123,14 @@ export class MetricList extends Component {
 
     Promise.all([this.backend.fetchAllMetric(),
       this.backend.fetchAllGroups(),
-      this.backend.fetchTags()
-    ]).then(([metrics, groups, tags]) =>
+      this.backend.fetchTags(),
+      this.backend.fetchMetricTypes()
+    ]).then(([metrics, groups, tags, types]) =>
           this.setState({
             list_metric: metrics,
             list_tags: tags,
             list_groups: groups['metrics'],
+            list_types: types,
             loading: false, 
             search: ''
           }));
@@ -154,23 +157,6 @@ export class MetricList extends Component {
         )
       },
       {
-        Header: 'Tag',
-        accessor: 'tag',
-        minWidth: 30,
-        Cell: row =>
-          <div style={{textAlign: 'center'}}>
-            {row.value}
-          </div>,
-        filterable: true,
-        Filter: ({filter, onChange}) => (
-        <DropdownFilterComponent
-          filter={filter}
-          onChange={onChange}
-          data={this.state.list_tags}
-        />
-        )
-      },
-      {
         Header: 'Probe version',
         minWidth: 80,
         accessor: 'probeversion',
@@ -185,6 +171,23 @@ export class MetricList extends Component {
             onChange={onChange}
             field='probe version'
           />
+        )
+      },
+      {
+        Header: 'Tag',
+        accessor: 'tag',
+        minWidth: 30,
+        Cell: row =>
+          <div style={{textAlign: 'center'}}>
+            {row.value}
+          </div>,
+        filterable: true,
+        Filter: ({filter, onChange}) => (
+        <DropdownFilterComponent
+          filter={filter}
+          onChange={onChange}
+          data={this.state.list_tags}
+        />
         )
       },
       {
@@ -204,6 +207,23 @@ export class MetricList extends Component {
           />
         )
       },
+      {
+        Header: 'Type',
+        minWidth: 30,
+        accessor: 'mtype',
+        Cell: row =>
+          <div style={{textAlign: 'center'}}>
+            {row.value}
+          </div>,
+        filterable:true,
+        Filter: ({filter, onChange}) => (
+          <DropdownFilterComponent
+            filter={filter}
+            onChange={onChange}
+            data={this.state.list_types}
+          />
+        )
+      }
     ];
 
     var { loading, list_metric } = this.state;
