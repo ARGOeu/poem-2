@@ -41,7 +41,7 @@ const DropdownFilterComponent = ({filter, onChange, data}) => (
 
 const InlineFields = ({values, field}) => (
   <div>
-  <h6 className='mt-4 font-weight-bold text-uppercase'>{field.replace('_', ' ')}</h6>
+  <h6 className='mt-4 font-weight-bold text-uppercase' hidden={values.type === 'Passive' && field !== 'flags'}>{field.replace('_', ' ')}</h6>
   <FieldArray
     name={field}
     render={arrayHelpers => (
@@ -73,23 +73,25 @@ const InlineFields = ({values, field}) => (
       ) : (
         <Row>
           <Col md={5}>
-            <Label to={'emtpty-key'}>Key</Label>
+            <Label to={'emtpty-key'} hidden={values.type === 'Passive' && field !== 'flags'}>Key</Label>
             <Field 
               type='text'
               className='form-control'
               value=''
               id='empty-key'
               disabled={true}
+              hidden={values.type === 'Passive' && field !== 'flags'}
             />
           </Col>
           <Col md={5}>
-            <Label to={'emtpty-value'}>Value</Label>
+            <Label to={'emtpty-value'} hidden={values.type === 'Passive' && field !== 'flags'}>Value</Label>
             <Field 
               type='text'
               value=''
               className='form-control'
               id='empty-value'
               disabled={true}
+              hidden={values.type === 'Passive' && field !== 'flags'}
             />
           </Col>
         </Row>
@@ -413,7 +415,7 @@ export class MetricChange extends Component {
                 </FormGroup>
                 <FormGroup>
                 <h4 className="mt-2 p-1 pl-3 text-light text-uppercase rounded" style={{"backgroundColor": "#416090"}}>Metric configuration</h4>
-                <h6 className='mt-4 font-weight-bold text-uppercase'>probe executable</h6>
+                <h6 className='mt-4 font-weight-bold text-uppercase' hidden={props.values.type === 'Passive'}>probe executable</h6>
                 <Row>
                   <Col md={5}>
                     <Field
@@ -422,6 +424,7 @@ export class MetricChange extends Component {
                       id='probeexecutable'
                       className='form-control'
                       disabled={true}
+                      hidden={props.values.type === 'Passive'}
                     />
                   </Col>
                 </Row>
