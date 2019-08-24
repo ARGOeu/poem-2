@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from Poem.poem import models
+from Poem.poem_super_admin.models import Probe
 from Poem.users.models import CustUser
 
 
@@ -39,3 +40,16 @@ class MetricInstanceSerializer(serializers.ModelSerializer):
     class Meta:
         fields = ('service_flavour', 'metric')
         model = models.MetricInstance
+
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        fields = ('subject', 'egiid', 'displayname')
+        model = models.UserProfile
+
+
+class ProbeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Probe
+        fields = ('name', 'version', 'docurl', 'description', 'comment',
+                  'repository')

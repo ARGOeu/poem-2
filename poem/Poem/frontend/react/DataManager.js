@@ -64,6 +64,20 @@ export class Backend {
       .catch(err => alert('Something went wrong: ' + err));
   }
 
+  fetchItemsInGroup(group, name) {
+    return fetch('/api/v2/internal/' + group + 'group/' + name)
+      .then(response => response.json())
+      .then(json => json['result'])
+      .catch(err => alert('Something went wrong: ' + err))
+  }
+  
+  fetchItemsNoGroup(group) {
+    return fetch('/api/v2/internal/' + group + 'group/')
+      .then(response => response.json())
+      .then(json => json['result'])
+      .catch(err => alert('Something went wrong: ' + err))
+  }
+
   fetchServiceFlavoursAll() {
     return fetch('/api/v2/internal/serviceflavoursall')
       .then(response => response.json())
@@ -81,6 +95,50 @@ export class Backend {
       .catch(err => alert('Something went wrong: ' + err));
   }
 
+  fetchUsers() {
+    return fetch('/api/v2/internal/users')
+      .then(response => response.json())
+      .catch(err => alert('Something went wrong: ' + err));
+  }
+
+  fetchUserByUsername(username) {
+    return fetch('/api/v2/internal/users' + '/' + username)
+      .then(response => response.json())
+      .catch(err => alert('Something went wrong: ' + err));
+  }
+
+  fetchUserprofile(username) {
+    return fetch('/api/v2/internal/userprofile/' + username)
+      .then(response => response.json())
+      .catch(err => alert('Something went wrong: ' + err));
+  }
+
+  fetchGroupsForUser(username) {
+    return fetch('/api/v2/internal/usergroups/' + username)
+      .then(response => response.json())
+      .then(json => json['result'])
+      .catch(err => alert('Something went wrong: ' + err));
+  }
+
+  fetchAllGroups() {
+    return fetch('/api/v2/internal/usergroups/')
+      .then(response => response.json())
+      .then(json => json['result'])
+      .catch(err => alert('Something went wrong: ' + err));
+  }
+
+  fetchAllProbes() {
+    return fetch('/api/v2/internal/probes/')
+      .then(response => response.json())
+      .catch(err => alert('Something went wrong: ' + err))
+  }
+
+  fetchProbeByName(name) {
+    return fetch('/api/v2/internal/probes/' + name)
+      .then(response => response.json())
+      .catch(err => alert('Something went wrong: ' + err))
+  }
+
   changeMetricProfile(profile) {
     return this.send(
       '/api/v2/internal/metricprofiles/',
@@ -94,6 +152,30 @@ export class Backend {
       '/api/v2/internal/aggregations/',
       'PUT',
       profile
+    );
+  }
+
+  changeUser(user) {
+    return this.send(
+      '/api/v2/internal/users/',
+      'PUT',
+      user
+    );
+  }
+
+  changeUserProfile(user) {
+    return this.send(
+      '/api/v2/internal/userprofile/',
+      'PUT',
+      user
+    );
+  }
+
+  changeGroup(group, data) {
+    return this.send(
+      '/api/v2/internal/' + group + 'group/',
+      'PUT',
+      data
     );
   }
 
@@ -113,6 +195,22 @@ export class Backend {
     );
   }
 
+  addUser(user) {
+    return this.send(
+      '/api/v2/internal/users/',
+      'POST',
+      user
+    );
+  }
+
+  addGroup(group, name) {
+    return this.send(
+      '/api/v2/internal/' + group + 'group/',
+      'POST',
+      name
+    );
+  }
+
   deleteMetricProfile(id) {
     return this.send(
       '/api/v2/internal/metricprofiles/' + id,
@@ -123,6 +221,20 @@ export class Backend {
   deleteAggregation(id) {
     return this.send(
       '/api/v2/internal/aggregations/' + id,
+      'DELETE'
+    );
+  }
+
+  deleteUser(id) {
+    return this.send(
+      '/api/v2/internal/users/' + id,
+      'DELETE'
+    );
+  }
+
+  deleteGroup(group, name) {
+    return this.send(
+      '/api/v2/internal/' + group + 'group/' + name,
       'DELETE'
     );
   }

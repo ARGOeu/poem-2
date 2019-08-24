@@ -2,12 +2,14 @@ import React, { Component } from 'react';
 import Login from './Login';
 import { MetricProfilesChange, MetricProfilesList } from './MetricProfiles';
 import Home from './Home';
-import Probes from './Probes';
+import { ProbeList, ProbeDetails } from './Probes';
 import Metrics from './Metrics';
 import Administration from './Administration';
 import { AggregationProfilesChange, AggregationProfilesList } from './AggregationProfiles';
 import Reports from './Reports';
 import Services from './Services';
+import { UsersList, UserChange } from './Users';
+import { GroupOfMetricsList, GroupOfMetricsChange, GroupOfAggregationsList, GroupOfAggregationsChange, GroupOfMetricProfilesList, GroupOfMetricProfilesChange } from './GroupElements';
 import NotFound from './NotFound';
 import { Route, Switch, BrowserRouter, Redirect, withRouter } from 'react-router-dom';
 import { Container, Button, Row, Col } from 'reactstrap';
@@ -153,8 +155,8 @@ class App extends Component {
                   <Route exact path="/ui/home" component={Home} />
                   <Route exact path="/ui/services" component={Services} />
                   <Route exact path="/ui/reports" component={Reports} />
-                  <Route exact path="/ui/probes" component={Probes} />
-                  <Route exact path="/ui/metrics" component={Metrics} />
+                  <Route exact path="/ui/probes" component={ProbeList} />
+                  <Route exact path="/ui/probes/:name" render={props => <ProbeDetails {...props}/>}/>            <Route exact path="/ui/metrics" component={Metrics} />
                   <Route exact path="/ui/metricprofiles" component={MetricProfilesList} />
                   <Route exact path="/ui/metricprofiles/add" 
                     render={props => <MetricProfilesChange 
@@ -190,6 +192,42 @@ class App extends Component {
                       tenantname={this.state.tenantName}/>} 
                     />
                   <Route exact path="/ui/administration" component={Administration} />
+                  <Route exact path="/ui/administration/users" component={UsersList} />
+                  <Route exact path="/ui/administration/users/add"
+                    render={props => <UserChange
+                      {...props}
+                      addview={true}/>}
+                  />
+                  <Route exact path="/ui/administration/users/:user_name"
+                    render={props => <UserChange {...props}/>}
+                  />
+                  <Route exact path="/ui/administration/groupofmetrics" component={GroupOfMetricsList} />
+                  <Route exact path="/ui/administration/groupofmetrics/add"
+                    render={props => <GroupOfMetricsChange
+                      {...props}
+                      addview={true}/>}
+                  />
+                  <Route exact path="/ui/administration/groupofmetrics/:group"
+                    render={props => <GroupOfMetricsChange {...props}/>}
+                  />
+                  <Route exact path="/ui/administration/groupofaggregations" component={GroupOfAggregationsList} />
+                  <Route exact path="/ui/administration/groupofaggregations/add"
+                    render={props => <GroupOfAggregationsChange
+                      {...props}
+                      addview={true}/>}
+                  />
+                  <Route exact path="/ui/administration/groupofaggregations/:group"
+                    render={props => <GroupOfAggregationsChange {...props}/>}
+                  />
+                  <Route exact path="/ui/administration/groupofmetricprofiles" component={GroupOfMetricProfilesList} />
+                  <Route exact path="/ui/administration/groupofmetricprofiles/add"
+                    render={props => <GroupOfMetricProfilesChange
+                      {...props}
+                      addview={true}/>}
+                  />
+                  <Route exact path="/ui/administration/groupofmetricprofiles/:group"
+                    render={props => <GroupOfMetricProfilesChange {...props}/>}
+                  />
                   <Route component={NotFound} />
                 </Switch>
               </Col>

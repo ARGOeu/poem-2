@@ -11,7 +11,7 @@ from rest_framework_api_key import models as api_models
 from queue import Queue
 
 from Poem.poem import models as poem_models
-from Poem.poem_super_admin.models import Probe
+from Poem.poem_super_admin.models import Probe, ExtRevision
 from Poem.users.models import CustUser
 from Poem.poem.saml2.config import tenant_from_request, saml_login_string, get_schemaname
 
@@ -48,6 +48,32 @@ def sync_webapi(api, model):
     entries_deleted_onapi = data_db.difference(data_api)
     for p in entries_deleted_onapi:
         model.objects.get(apiid=p).delete()
+
+
+def get_groups_for_user(user):
+    groupsofaggregations = user.userprofile.groupsofaggregations.all().values_list('name', flat=True)
+    results = {'aggregations': groupsofaggregations}
+
+    groupsofmetrics = user.userprofile.groupsofmetrics.all().values_list('name', flat=True)
+    results.update({'metrics': groupsofmetrics})
+
+    groupsofmetricprofiles = user.userprofile.groupsofmetricprofiles.all().values_list('name', flat=True)
+    results.update({'metricprofiles': groupsofmetricprofiles})
+
+    return results
+
+
+def get_all_groups():
+    groupsofaggregations = poem_models.GroupOfAggregations.objects.all().values_list('name', flat=True)
+    results = {'aggregations': groupsofaggregations}
+
+    groupsofmetrics = poem_models.GroupOfMetrics.objects.all().values_list('name', flat=True)
+    results.update({'metrics': groupsofmetrics})
+
+    groupsofmetricprofiles = poem_models.GroupOfMetricProfiles.objects.all().values_list('name', flat=True)
+    results.update({'metricprofiles': groupsofmetricprofiles})
+
+    return results
 
 
 class Tree(object):
@@ -169,11 +195,21 @@ class GetConfigOptions(APIView):
 class ListMetricsInGroup(APIView):
     authentication_classes = (SessionAuthentication,)
 
-    def get(self, request, group):
-        metrics = poem_models.Metrics.objects.\
-            filter(groupofmetrics__name__exact=group).\
-            values_list('name', flat=True)
-        results = sorted(metrics, key=lambda m: m.lower())
+    def get(self, request, group=None):
+        if group:
+            metrics = poem_models.Metrics.objects.filter(
+                groupofmetrics__name__exact=group
+            )
+        else:
+            metrics = poem_models.Metrics.objects.filter(
+                groupofmetrics__exact=None
+            )
+        results = []
+        for item in metrics:
+            results.append({'id': item.id, 'name': item.name})
+
+        results = sorted(results, key=lambda k: k['name'])
+
         if results or (not results and
                        poem_models.GroupOfMetrics.objects.filter(
                            name__exact=group)):
@@ -181,6 +217,51 @@ class ListMetricsInGroup(APIView):
         else:
             raise NotFound(status=404,
                            detail='Group not found')
+
+    def put(self, request):
+        group = poem_models.GroupOfMetrics.objects.get(
+            name=request.data['name']
+        )
+
+        for metric in request.data['items']:
+            group.metrics.add(poem_models.Metrics.objects.get(name=metric))
+
+        # remove the metrics that existed before, and now were removed
+        for metric in group.metrics.all():
+            if metric.name not in request.data['items']:
+                group.metrics.remove(
+                    poem_models.Metrics.objects.get(name=metric)
+                )
+
+        return Response(status.HTTP_201_CREATED)
+
+    def post(self, request):
+        try:
+            group = poem_models.GroupOfMetrics.objects.create(
+                name=request.data['name']
+            )
+
+            for metric in request.data['items']:
+                group.metrics.add(poem_models.Metrics.objects.get(name=metric))
+
+        except Exception:
+            return Response(status.HTTP_400_BAD_REQUEST)
+
+        else:
+            return Response(status.HTTP_201_CREATED)
+
+    def delete(self, request, group=None):
+        if group:
+            try:
+                group = poem_models.GroupOfMetrics.objects.get(name=group)
+                group.delete()
+                return Response(status=status.HTTP_204_NO_CONTENT)
+
+            except poem_models.GroupOfMetrics.DoesNotExist:
+                raise(NotFound(status=404, detail='Group of metrics not found'))
+
+        else:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
 class ListAllMetrics(APIView):
@@ -244,6 +325,66 @@ class ListUsers(APIView):
 
             return Response(serializer.data)
 
+    def put(self, request):
+        user = CustUser.objects.get(username=request.data['username'])
+        user.first_name = request.data['first_name']
+        user.last_name = request.data['last_name']
+        user.email = request.data['email']
+        user.is_superuser = request.data['is_superuser']
+        user.is_staff = request.data['is_staff']
+        user.is_active = request.data['is_active']
+        user.save()
+
+        return Response(status=status.HTTP_201_CREATED)
+
+    def post(self, request):
+        try:
+            CustUser.objects.create_user(
+                username=request.data['username'],
+                password=request.data['password'],
+                email=request.data['password'],
+                first_name=request.data['first_name'],
+                last_name=request.data['last_name'],
+                is_superuser=request.data['is_superuser'],
+                is_staff=request.data['is_staff'],
+                is_active=request.data['is_active']
+            )
+            user = CustUser.objects.get(username=request.data['username'])
+
+            userprofile = poem_models.UserProfile(
+                user=user,
+                displayname=request.data['displayname'],
+                subject=request.data['subject'],
+                egiid=request.data['egiid']
+            )
+            userprofile.save()
+
+            for group in request.data['groupsofaggregations']:
+                userprofile.groupsofaggregations.add(poem_models.GroupOfAggregations.objects.get(name=group))
+
+            for group in request.data['groupsofmetrics']:
+                userprofile.groupsofmetrics.add(poem_models.GroupOfMetrics.objects.get(name=group))
+
+            for group in request.data['groupsofmetricprofiles']:
+                userprofile.groupsofmetricprofiles.add(poem_models.GroupOfMetricProfiles.objects.get(name=group))
+
+            return Response(status.HTTP_201_CREATED)
+        except Exception:
+            return Response(status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, username=None):
+        if username:
+            try:
+                user = CustUser.objects.get(username=username)
+                user.delete()
+                return Response(status=status.HTTP_204_NO_CONTENT)
+
+            except CustUser.DoesNotExist:
+                raise(NotFound(status=404, detail='User not found'))
+
+        else:
+            Response(status=status.HTTP_400_BAD_REQUEST)
+
 
 class ListGroupsForUser(APIView):
     authentication_classes = (SessionAuthentication,)
@@ -252,24 +393,10 @@ class ListGroupsForUser(APIView):
         user = request.user
 
         if user.is_superuser:
-            groupsofaggregations = poem_models.GroupOfAggregations.objects.all().values_list('name', flat=True)
-            results = {'aggregations': groupsofaggregations}
-
-            groupsofmetrics = poem_models.GroupOfMetrics.objects.all().values_list('name', flat=True)
-            results.update({'metrics': groupsofmetrics})
-
-            groupsofmetricprofiles = poem_models.GroupOfMetricProfiles.objects.all().values_list('name', flat=True)
-            results.update({'metricprofiles': groupsofmetricprofiles})
+            results = get_all_groups()
 
         else:
-            groupsofaggregations = user.groupsofaggregations.all().values_list('name', flat=True)
-            results = {'aggregations': groupsofaggregations}
-
-            groupsofmetrics = user.groupsofmetrics.all().values_list('name', flat=True)
-            results.update({'metrics': groupsofmetrics})
-
-            groupsofmetricprofiles = user.groupofmetricprofiles.objects.all().values_list('name', flat=True)
-            results.update({'metricprofiles': groupsofmetricprofiles})
+            results = get_groups_for_user(user)
 
         if group:
             return Response(results[group.lower()])
@@ -400,17 +527,37 @@ class ListMetricProfiles(APIView):
 class ListProbes(APIView):
     authentication_classes = (SessionAuthentication,)
 
-    def get(self, request, probe_name):
-        try:
-            probes = Probe.objects.get(name=probe_name)
-        except Probe.DoesNotExist:
-            result = dict()
+    def get(self, request, name=None):
+        if name:
+            try:
+                probe = Probe.objects.get(name=name)
+                serializer = serializers.ProbeSerializer(probe)
+
+                return Response(serializer.data)
+
+            except Probe.DoesNotExist:
+                raise NotFound(status=404, detail='Probe not found')
+
         else:
-            result = dict(id=probes.id,
-                          name=probes.name,
-                          description=probes.description,
-                          comment=probes.comment)
-        return Response(result)
+            probes = Probe.objects.all()
+
+            results = []
+            for probe in probes:
+                # number of probe revisions
+                nv = ExtRevision.objects.filter(probeid=probe.id).count()
+                results.append(
+                    dict(
+                        name=probe.name,
+                        version=probe.version,
+                        docurl=probe.docurl,
+                        description=probe.description,
+                        comment=probe.comment,
+                        repository=probe.repository,
+                        nv=nv
+                    )
+                )
+
+            return Response(results)
 
 
 class ListServices(APIView):
@@ -561,3 +708,251 @@ class Saml2Login(APIView):
         cache.delete_many(self._prefix(self.keys))
 
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class GetUserprofileForUsername(APIView):
+    authentication_classes = (SessionAuthentication,)
+
+    def get(self, request, username):
+        try:
+            user = CustUser.objects.get(username=username)
+        except CustUser.DoesNotExist:
+            raise NotFound(status=404, detail='User not found')
+        else:
+            try:
+                user_profile = poem_models.UserProfile.objects.get(user=user)
+                serializer = serializers.UserProfileSerializer(user_profile)
+                return Response(serializer.data)
+
+            except poem_models.UserProfile.DoesNotExist:
+                raise NotFound(status=404, detail='User profile not found')
+
+    def put(self, request):
+        user = CustUser.objects.get(username=request.data['username'])
+        userprofile = poem_models.UserProfile.objects.get(user=user)
+        userprofile.displayname = request.data['displayname']
+        userprofile.subject = request.data['subject']
+        userprofile.egiid = request.data['egiid']
+        userprofile.save()
+
+        for group in request.data['groupsofaggregations']:
+            userprofile.groupsofaggregations.add(poem_models.GroupOfAggregations.objects.get(name=group))
+
+        for group in request.data['groupsofmetrics']:
+            userprofile.groupsofmetrics.add(poem_models.GroupOfMetrics.objects.get(name=group))
+
+        for group in request.data['groupsofmetricprofiles']:
+            userprofile.groupsofmetricprofiles.add(poem_models.GroupOfMetricProfiles.objects.get(name=group))
+
+        # remove the groups that existed before, and now were removed:
+        for group in userprofile.groupsofaggregations.all():
+            if group.name not in request.data['groupsofaggregations']:
+                userprofile.groupsofaggregations.remove(poem_models.GroupOfAggregations.objects.get(name=group))
+
+        for group in userprofile.groupsofmetrics.all():
+            if group.name not in request.data['groupsofmetrics']:
+                userprofile.groupsofmetrics.remove(poem_models.GroupOfMetrics.objects.get(name=group))
+
+        for group in userprofile.groupsofmetricprofiles.all():
+            if group.name not in request.data['groupsofmetricprofiles']:
+                userprofile.groupsofmetricprofiles.remove(poem_models.GroupOfMetricProfiles.objects.get(name=group))
+
+        return Response(status.HTTP_201_CREATED)
+
+
+class ListGroupsForGivenUser(APIView):
+    authentication_classes = (SessionAuthentication,)
+
+    def get(self, request, username=None):
+        if username:
+            try:
+                user = CustUser.objects.get(username=username)
+
+            except CustUser.DoesNotExist:
+                raise NotFound(status=404, detail='User not found')
+
+            else:
+                results = get_groups_for_user(user)
+
+        else:
+            results = get_all_groups()
+
+        return Response({'result': results})
+
+
+class ListAggregationsInGroup(APIView):
+    authentication_classes = (SessionAuthentication,)
+
+    def get(self, request, group=None):
+        if group:
+            aggr = poem_models.Aggregation.objects.filter(
+                groupofaggregations__name__exact=group
+            )
+        else:
+            aggr = poem_models.Aggregation.objects.filter(
+                groupofaggregations__exact=None
+            )
+
+        results = []
+        for item in aggr:
+            results.append({'id': item.id, 'name': item.name})
+
+        results = sorted(results, key=lambda k: k['name'])
+
+        if results or (not results and
+                       poem_models.GroupOfAggregations.objects.filter(
+                           name__exact=group
+                       )):
+            return Response({'result': results})
+        else:
+            raise NotFound(status=404,
+                           detail='Group not found')
+
+    def put(self, request):
+        group = poem_models.GroupOfAggregations.objects.get(
+            name=request.data['name']
+        )
+
+        for aggr in request.data['items']:
+            ag = poem_models.Aggregation.objects.get(name=aggr)
+            group.aggregations.add(ag)
+            ag.groupname = group.name
+            ag.save()
+
+        # remove removed aggregations:
+        for aggr in group.aggregations.all():
+            if aggr.name not in request.data['items']:
+                group.aggregations.remove(aggr)
+                aggr.groupname = ''
+                aggr.save()
+
+        return Response(status=status.HTTP_201_CREATED)
+
+    def post(self, request):
+        try:
+            group = poem_models.GroupOfAggregations.objects.create(
+                name=request.data['name']
+            )
+
+            for aggr in request.data['items']:
+                ag = poem_models.Aggregation.objects.get(name=aggr)
+                group.aggregations.add(ag)
+                ag.groupname = group.name
+                ag.save()
+
+        except Exception:
+            return Response(status.HTTP_400_BAD_REQUEST)
+
+        else:
+            return Response(status.HTTP_201_CREATED)
+
+    def delete(self, request, group=None):
+        if group:
+            try:
+                gr = poem_models.GroupOfAggregations.objects.get(name=group)
+                gr.delete()
+
+                for aggr in poem_models.Aggregation.objects.filter(
+                        groupname=group
+                ):
+                    aggr.groupname = ''
+                    aggr.save()
+
+                return Response(status.HTTP_204_NO_CONTENT)
+
+            except poem_models.GroupOfAggregations.DoesNotExist:
+                raise NotFound(status=404,
+                               detail='Group of aggregations not found')
+
+        else:
+            return Response(status.HTTP_400_BAD_REQUEST)
+
+
+class ListMetricProfilesInGroup(APIView):
+    authentication_classes = (SessionAuthentication,)
+
+    def get(self, request, group=None):
+        if group:
+            mp = poem_models.MetricProfiles.objects.filter(
+                groupofmetricprofiles__name__exact=group
+            )
+        else:
+            mp = poem_models.MetricProfiles.objects.filter(
+                groupofmetricprofiles__exact=None
+            )
+
+        results = []
+        for item in mp:
+            results.append({'id': item.id, 'name': item.name})
+
+        results = sorted(results, key=lambda k: k['name'])
+
+        if results or (not results and
+                       poem_models.GroupOfMetricProfiles.objects.filter(
+                           name__exact=group
+                       )):
+            return Response({'result': results})
+        else:
+            raise NotFound(status=404,
+                           detail='Group of metric profiles not found')
+
+    def put(self, request):
+        group = poem_models.GroupOfMetricProfiles.objects.get(
+            name=request.data['name']
+        )
+
+        for item in request.data['items']:
+            mp = poem_models.MetricProfiles.objects.get(name=item)
+            group.metricprofiles.add(mp)
+            mp.groupname = group.name
+            mp.save()
+
+        # remove removed metric profiles
+        for mp in group.metricprofiles.all():
+            if mp.name not in request.data['items']:
+                group.metricprofiles.remove(mp)
+                mp.groupname = ''
+                mp.save()
+
+        return Response(status.HTTP_201_CREATED)
+
+    def post(self, request):
+        try:
+            group = poem_models.GroupOfMetricProfiles.objects.create(
+                name=request.data['name']
+            )
+
+            for item in request.data['items']:
+                mp = poem_models.MetricProfiles.objects.get(name=item)
+                group.metricprofiles.add(mp)
+                mp.groupname = group.name
+                mp.save()
+
+        except Exception:
+            return Response(status.HTTP_400_BAD_REQUEST)
+
+        else:
+            return Response(status.HTTP_201_CREATED)
+
+    def delete(self, request, group=None):
+        if group:
+            try:
+                gr = poem_models.GroupOfMetricProfiles.objects.get(
+                    name=group
+                )
+                gr.delete()
+
+                for mp in poem_models.MetricProfiles.objects.filter(
+                    groupname=group
+                ):
+                    mp.groupname = ''
+                    mp.save()
+
+                return Response(status.HTTP_204_NO_CONTENT)
+
+            except poem_models.GroupOfMetricProfiles.DoesNotExist:
+                raise NotFound(status=404,
+                               detail='Group of metric profiles not found')
+
+            else:
+                return Response(status.HTTP_400_BAD_REQUEST)
