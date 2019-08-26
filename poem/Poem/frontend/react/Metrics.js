@@ -114,7 +114,6 @@ export class MetricList extends Component {
       list_types: null
     }
 
-    this.location = props.location;
     this.backend = new Backend();
   }
 
@@ -239,20 +238,21 @@ export class MetricList extends Component {
 
     else if (!loading && list_metric) {
       return (
-        <BaseArgoView
-          resourcename='metric'
-          location={this.location}
-          listview={true}>
+        <React.Fragment>
+          <div className="d-flex align-items-center justify-content-between">
+            <React.Fragment>
+              <h2 className="ml-3 mt-1 mb-4">{'Select metric to change'}</h2>
+            </React.Fragment>
+          </div>
+          <div id="argo-contentwrap" className="ml-2 mb-2 mt-2 p-3 border rounded">
             <ReactTable
               data={list_metric}
               columns={columns}
               className='-striped -highlight'
-              defaultPageSize={20}
-              defaultFilterMethod={(filter, row) =>
-                row[filter.id] !== undefined ? String(row[filter.id]).toLowerCase().includes(filter.value.toLowerCase()) : true
-              }
+              defaultPageSize={50}
             />
-          </BaseArgoView>
+          </div>
+        </React.Fragment>
       )
     }
     else
