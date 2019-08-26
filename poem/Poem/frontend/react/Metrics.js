@@ -10,7 +10,12 @@ import {
   Col,
   Label,
   FormText,
-  Button} from 'reactstrap';
+  Button,
+  Popover,
+  PopoverBody,
+  PopoverHeader} from 'reactstrap';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 
 
 const DefaultFilterComponent = ({value, onChange, field}) => (
@@ -312,9 +317,11 @@ export class MetricChange extends Component {
 
     this.state = {
       metric: {},
+      probe: {},
       tags: [],
       groups: [],
       loading: false,
+      popoverOpen: false,
       write_perm: false,
       areYouSureModal: false,
       modalFunc: undefined,
@@ -327,6 +334,13 @@ export class MetricChange extends Component {
     this.onSubmitHandle = this.onSubmitHandle.bind(this);
     this.doChange = this.doChange.bind(this);
     this.doDelete = this.doDelete.bind(this);
+    this.togglePopOver = this.togglePopOver.bind(this);
+  }
+
+  togglePopOver() {
+    this.setState({
+      popoverOpen: !this.state.popoverOpen
+    })
   }
 
   toggleAreYouSure() {
@@ -384,15 +398,19 @@ export class MetricChange extends Component {
         this.backend.fetchMetricUserGroups(),
         this.backend.fetchTags(),
         this.backend.fetchAllGroups()
-      ]).then(([metrics, usergroups, tags, groups]) =>
-        this.setState({
-          metric: metrics,
-          tags: tags,
-          groups: groups['metrics'],
-          loading: false,
-          write_perm: localStorage.getItem('authIsSuperuser') === 'true' || usergroups.indexOf(metrics.group) >= 0,
-        })
-      )
+      ]).then(([metrics, usergroups, tags, groups]) => {
+        this.backend.fetchProbeVersionInfo(metrics.probekey)
+          .then(probe => {
+            this.setState({
+              metric: metrics,
+              probe: probe,
+              tags: tags,
+              groups: groups['metrics'],
+              loading: false,
+              write_perm: localStorage.getItem('authIsSuperuser') === 'true' || usergroups.indexOf(metrics.group) >= 0,
+            })
+          })
+      })
     }
   }
 
@@ -457,7 +475,11 @@ export class MetricChange extends Component {
                         disabled={true}
                       />
                       <FormText color='muted'>
-                        Probe name and version
+                        Probe name and version <FontAwesomeIcon id='probe-popover' icon={faInfoCircle} style={{color: '#416090'}}/>
+                        <Popover placement='bottom' isOpen={this.state.popoverOpen} target='probe-popover' toggle={this.togglePopOver} trigger='hover'>
+                          <PopoverHeader>{this.state.metric.probeversion}</PopoverHeader>
+                          <PopoverBody>{this.state.probe.description}</PopoverBody>
+                        </Popover>
                       </FormText>
                     </Col>
                     <Col md={2}>
