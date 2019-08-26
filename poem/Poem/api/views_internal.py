@@ -15,6 +15,8 @@ from Poem.poem_super_admin.models import Probe, ExtRevision
 from Poem.users.models import CustUser
 from Poem.poem.saml2.config import tenant_from_request, saml_login_string, get_schemaname
 
+from reversion.models import Version
+
 from .views import NotFound
 from . import serializers
 
@@ -1013,12 +1015,18 @@ class ListMetric(APIView):
             parameter = two_value_inline(metric.parameter)
             fileparameter = two_value_inline(metric.fileparameter)
 
+            if metric.probekey:
+                probekey = metric.probekey.id
+            else:
+                probekey = ''
+
             results.append(dict(
                 id=metric.id,
                 name=metric.name,
                 tag=metric.tag.name,
                 mtype=metric.mtype.name,
                 probeversion=metric.probeversion,
+                probekey=probekey,
                 group=metric.group.name,
                 parent=parent,
                 probeexecutable=probeexecutable,
@@ -1090,3 +1098,16 @@ class ListMetricTypes(APIView):
         )
         return Response(types)
 
+
+class ListProbeVersionInfo(APIView):
+    authentication_classes = (SessionAuthentication,)
+
+    def get(self, request, probekey):
+        try:
+            version = Version.objects.get(id=probekey)
+            data = json.loads(version.serialized_data)[0]['fields']
+
+            return Response(data)
+
+        except Version.DoesNotExist:
+            raise NotFound(status=404, detail='Probe version not found')
