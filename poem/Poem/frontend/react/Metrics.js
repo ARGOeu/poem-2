@@ -13,12 +13,12 @@ import {
   Button} from 'reactstrap';
 
 
-const DefaultFilterComponent = ({filter, onChange, field}) => (
+const DefaultFilterComponent = ({value, onChange, field}) => (
   <input 
     type='text'
     placeholder={'Search by ' + field}
-    value={filter ? filter.value : ''}
-    onChange={event => onChange(event.target.value)}
+    value={value}
+    onChange={onChange}
     style={{width: '100%'}}
   />
 )
@@ -111,10 +111,23 @@ export class MetricList extends Component {
       list_metric: null,
       list_tags: null,
       list_groups: null,
-      list_types: null
+      list_types: null,
+      search_name: '',
+      search_probeversion: '',
+      search_tag: '',
+      search_type: '',
+      search_group: ''
     }
 
     this.backend = new Backend();
+    this.doFilter = this.doFilter.bind(this);
+  }
+
+  doFilter(list_metric, field, filter) {
+    return (
+      list_metric.filter(row => 
+        eval(`row.${field}`).toLowerCase().includes(filter.toLowerCase()))
+    )
   }
 
   componentDidMount() {
@@ -131,7 +144,11 @@ export class MetricList extends Component {
             list_groups: groups['metrics'],
             list_types: types,
             loading: false, 
-            search: ''
+            search_name: '',
+            search_probeversion: '',
+            search_tag: '',
+            search_group: '',
+            search_type: ''
           }));
   }
 
@@ -156,11 +173,10 @@ export class MetricList extends Component {
         </Link>,
         filterable: true,
         Filter: (
-          <input 
-            value={this.state.search}
-            onChange={e => this.setState({search: e.target.value})}
-            placeholder='Search by name'
-            style={{width: '100%'}}
+          <DefaultFilterComponent
+            field='name'
+            value={this.state.search_name}
+            onChange={e => this.setState({search_name: e.target.value})}
           />
         )
       },
@@ -173,11 +189,11 @@ export class MetricList extends Component {
             {row.value}
           </div>,
         filterable: true,
-        Filter: ({filter, onChange}) => (
+        Filter: (
           <DefaultFilterComponent 
-            filter={filter}
-            onChange={onChange}
             field='probe version'
+            value={this.state.search_probeversion}
+            onChange={e => this.setState({search_probeversion: e.target.value})}
           />
         )
       },
@@ -236,10 +252,12 @@ export class MetricList extends Component {
 
     var { loading, list_metric } = this.state;
 
-    if (this.state.search) {
-      list_metric = list_metric.filter(row =>
-        row.name.toLowerCase().includes(this.state.search.toLowerCase())
-      )
+    if (this.state.search_name) {
+      list_metric = this.doFilter(list_metric, 'name', this.state.search_name)
+    }
+
+    if (this.state.search_probeversion) {
+      list_metric = this.doFilter(list_metric, 'probeversion', this.state.search_probeversion)
     }
 
     if (loading)
