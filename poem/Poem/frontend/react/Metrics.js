@@ -399,6 +399,7 @@ export class MetricChange extends Component {
         this.backend.fetchTags(),
         this.backend.fetchAllGroups()
       ]).then(([metrics, usergroups, tags, groups]) => {
+        metrics.probekey ? 
         this.backend.fetchProbeVersionInfo(metrics.probekey)
           .then(probe => {
             this.setState({
@@ -409,6 +410,14 @@ export class MetricChange extends Component {
               loading: false,
               write_perm: localStorage.getItem('authIsSuperuser') === 'true' || usergroups.indexOf(metrics.group) >= 0,
             })
+          })
+          :
+          this.setState({
+            metric: metrics,
+            tags:tags,
+            groups: groups['metrics'],
+            loading: false,
+            write_perm: localStorage.getItem('authIsSuperuser') === 'true' || usergroups.indexOf(metrics.group) >= 0,
           })
       })
     }
@@ -475,7 +484,7 @@ export class MetricChange extends Component {
                         disabled={true}
                       />
                       <FormText color='muted'>
-                        Probe name and version <FontAwesomeIcon id='probe-popover' icon={faInfoCircle} style={{color: '#416090'}}/>
+                        Probe name and version <FontAwesomeIcon id='probe-popover' hidden={this.state.metric.mtype === 'Passive'} icon={faInfoCircle} style={{color: '#416090'}}/>
                         <Popover placement='bottom' isOpen={this.state.popoverOpen} target='probe-popover' toggle={this.togglePopOver} trigger='hover'>
                           <PopoverHeader>{this.state.metric.probeversion}</PopoverHeader>
                           <PopoverBody>{this.state.probe.description}</PopoverBody>
