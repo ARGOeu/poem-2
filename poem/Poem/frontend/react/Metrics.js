@@ -23,11 +23,11 @@ const DefaultFilterComponent = ({value, onChange, field}) => (
   />
 )
 
-const DropdownFilterComponent = ({filter, onChange, data}) => (
+const DropdownFilterComponent = ({value, onChange, data}) => (
   <select
-    onChange={event => onChange(event.target.value)}
+    onChange={onChange}
     style={{width: '100%'}}
-    value={filter ? filter.value : 'all'}
+    value={value}
   >
     <option key={0} value=''>Show all</option>
     {
@@ -206,10 +206,10 @@ export class MetricList extends Component {
             {row.value}
           </div>,
         filterable: true,
-        Filter: ({filter, onChange}) => (
+        Filter: (
         <DropdownFilterComponent
-          filter={filter}
-          onChange={onChange}
+          value={this.state.search_tag}
+          onChange={e => this.setState({search_tag: e.target.value})}
           data={this.state.list_tags}
         />
         )
@@ -223,10 +223,10 @@ export class MetricList extends Component {
             {row.value}
           </div>,
         filterable: true,
-        Filter: ({filter, onChange}) => (
+        Filter: (
           <DropdownFilterComponent 
-            filter={filter}
-            onChange={onChange}
+            value={this.state.search_group}
+            onChange={e => this.setState({search_group: e.target.value})}
             data={this.state.list_groups}
           />
         )
@@ -240,10 +240,10 @@ export class MetricList extends Component {
             {row.value}
           </div>,
         filterable:true,
-        Filter: ({filter, onChange}) => (
+        Filter: (
           <DropdownFilterComponent
-            filter={filter}
-            onChange={onChange}
+            value={this.state.mtype}
+            onChange={e => this.setState({search_type: e.target.value})}
             data={this.state.list_types}
           />
         )
@@ -258,6 +258,18 @@ export class MetricList extends Component {
 
     if (this.state.search_probeversion) {
       list_metric = this.doFilter(list_metric, 'probeversion', this.state.search_probeversion)
+    }
+
+    if (this.state.search_tag) {
+      list_metric = this.doFilter(list_metric, 'tag', this.state.search_tag)
+    }
+
+    if (this.state.search_type) {
+      list_metric = this.doFilter(list_metric, 'mtype', this.state.search_type)
+    }
+
+    if (this.state.search_group) {
+      list_metric = this.doFilter(list_metric, 'group', this.state.search_group)
     }
 
     if (loading)
