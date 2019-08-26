@@ -138,6 +138,15 @@ export class MetricList extends Component {
   render() {
     const columns = [
       {
+        Header: '#',
+        id: 'row',
+        minWidth: 12,
+        Cell: (row) =>
+          <div style={{textAlign: 'center'}}>
+            {row.index + 1}
+          </div>
+      },
+      {
         Header: 'Name',
         id: 'name',
         minWidth: 100,
