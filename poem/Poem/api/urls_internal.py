@@ -37,4 +37,5 @@ urlpatterns = [
     path('tags/', views_internal.ListTags.as_view(), name='tags'),
     path('mtypes/', views_internal.ListMetricTypes.as_view(), name='mtypes'),
     path('probeversion/<str:probekey>', views_internal.ListProbeVersionInfo.as_view(), name='probeversion'),
+    path('version/<str:obj>/<str:name>', views_internal.ListVersions.as_view(), name='version'),
 ]

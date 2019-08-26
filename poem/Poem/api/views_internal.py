@@ -1,4 +1,5 @@
 from django.core.cache import cache
+from django.contrib.contenttypes.models import ContentType
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -10,18 +11,20 @@ from rest_framework_api_key import models as api_models
 
 from queue import Queue
 
+from Poem.helpers.versioned_comments import new_comment
 from Poem.poem import models as poem_models
 from Poem.poem_super_admin.models import Probe, ExtRevision
 from Poem.users.models import CustUser
 from Poem.poem.saml2.config import tenant_from_request, saml_login_string, get_schemaname
 
-from reversion.models import Version
+from reversion.models import Version, Revision
 
 from .views import NotFound
 from . import serializers
 
 from Poem import settings
 
+import datetime
 import requests
 import json
 
@@ -1111,3 +1114,40 @@ class ListProbeVersionInfo(APIView):
 
         except Version.DoesNotExist:
             raise NotFound(status=404, detail='Probe version not found')
+
+
+class ListVersions(APIView):
+    authentication_classes = (SessionAuthentication,)
+
+    def get(self, request, obj, name):
+        models = {'probe': Probe}
+
+        try:
+            obj = models[obj].objects.get(name=name)
+            ct = ContentType.objects.get_for_model(obj)
+            vers = Version.objects.filter(object_id=obj.id,
+                                          content_type_id=ct.id)
+
+            results = []
+            for ver in vers:
+                rev = Revision.objects.get(id=ver.revision_id)
+                comment = new_comment(rev.comment, obj_id=obj.id,
+                                      version_id=ver.id, ctt_id=ct.id)
+
+                results.append(dict(
+                    id=ver.id,
+                    object_repr=ver.object_repr,
+                    fields=json.loads(ver.serialized_data)[0]['fields'],
+                    user=json.loads(ver.serialized_data)[0]['fields']['user'],
+                    date_created=datetime.datetime.strftime(
+                        rev.date_created, '%Y-%m-%d %H:%M:%S'
+                    ),
+                    comment=comment,
+                    version=json.loads(ver.serialized_data)[0]['fields']['version']
+                ))
+
+            results = sorted(results, key=lambda k: k['id'], reverse=True)
+            return Response(results)
+
+        except Version.DoesNotExist:
+            raise NotFound(status=404, detail='Version not found')
