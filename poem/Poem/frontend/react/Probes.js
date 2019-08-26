@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { Backend } from './DataManager';
 import { Link } from 'react-router-dom';
-import { LoadingAnim } from './UIElements';
+import { LoadingAnim, BaseArgoView } from './UIElements';
 import ReactTable from 'react-table';
 import { Alert, FormGroup, Label, FormText, Row, Col } from 'reactstrap';
 import { Formik, Form, Field } from 'formik';
@@ -302,5 +302,92 @@ export class ProbeDetails extends Component {
         </React.Fragment>
       )
     }
+  }
+}
+
+
+export class ProbeHistory extends Component {
+  constructor(props) {
+    super(props);
+
+    this.name = props.match.params.name;
+
+    this.state = {
+      loading: false,
+      list_versions: null,
+    };
+
+    this.backend = new Backend();
+  }
+
+  componentDidMount() {
+    this.setState({loading: true});
+
+    this.backend.fetchVersions('probe', this.name)
+      .then((json) => 
+        this.setState({
+          list_versions: json,
+          loading: false
+        }))
+  }
+
+  render() {
+    const { loading, list_versions } = this.state; 
+
+    if (loading)
+      return (<LoadingAnim />);
+
+    else if (!loading && list_versions) {
+      return (
+        <BaseArgoView
+          resourcename='Change history'
+          infoview={true}>
+            <table className='table table-sm'>
+              <thead className='table-active'>
+                <tr>
+                  <th id='argo-th' scope='col'></th>
+                  <th id='argo-th' scope='col'>Version</th>
+                  <th id='argo-th' scope='col'>Date/time</th>
+                  <th id='argo-th' scope='col'>User</th>
+                  <th id='argo-th' scope='col'>Comment</th>
+                </tr>
+              </thead>
+              <tbody>
+                {
+                  list_versions.map((e, i) =>
+                    <tr key={i}>
+                      {
+                        <td id='argo-td'></td>
+                      }
+                      {e.version && 
+                        <td id='argo-td'>
+                          {e.version}
+                        </td>
+                      }
+                      {e.date_created && 
+                        <td id='argo-td'>
+                          {e.date_created}
+                        </td>
+                      }
+                      {e.user && 
+                        <td id='argo-td'>
+                          {e.user}
+                        </td>
+                      }
+                      {e.comment && 
+                        <td id='argo-td'>
+                          {e.comment}
+                        </td>
+                      }
+                    </tr>
+                  )
+                }
+              </tbody>
+            </table>
+          </BaseArgoView>
+      )
+    }
+    else
+      return null
   }
 }
