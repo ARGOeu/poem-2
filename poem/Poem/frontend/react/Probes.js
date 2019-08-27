@@ -1,10 +1,26 @@
-import React, { Component } from 'react';
+import React, { Component, PureComponent } from 'react';
 import { Backend } from './DataManager';
 import { Link } from 'react-router-dom';
 import { LoadingAnim, BaseArgoView } from './UIElements';
 import ReactTable from 'react-table';
 import { Alert, FormGroup, Label, FormText, Row, Col, Button } from 'reactstrap';
 import { Formik, Form, Field } from 'formik';
+import ReactDiffViewer from 'react-diff-viewer';
+
+
+const DiffElement = ({title, item1, item2}) => (
+  <div id='argo-contentwrap' className='ml-2 mb-2 mt-2 p-3 border rounded'>
+    <h6 className='mt-4 font-weight-bold text-uppercase'>{title}</h6>
+    <ReactDiffViewer
+      oldValue={item2}
+      newValue={item1}
+      showDiffOnly={true}
+      splitView={true}
+      hideLineNumbers={true}
+      disableWordDiff={true}
+    />
+  </div>
+)
 
 
 export class ProbeList extends Component {
@@ -311,10 +327,13 @@ export class ProbeHistory extends Component {
     super(props);
 
     this.name = props.match.params.name;
+    this.history = props.history;
 
     this.state = {
       loading: false,
       list_versions: null,
+      compare1: '',
+      compare2: ''
     };
 
     this.backend = new Backend();
@@ -324,11 +343,22 @@ export class ProbeHistory extends Component {
     this.setState({loading: true});
 
     this.backend.fetchVersions('probe', this.name)
-      .then((json) => 
-        this.setState({
-          list_versions: json,
-          loading: false
-        }))
+      .then((json) => {
+        if (json.length > 1) {
+          this.setState({
+            list_versions: json,
+            loading: false,
+            compare1: json[0].version,
+            compare2: json[1].version
+          })
+        } else {
+          this.setState({
+            list_versions: json,
+            loading: false
+          })
+        }
+      }
+    )
   }
 
   render() {
@@ -336,7 +366,7 @@ export class ProbeHistory extends Component {
 
     if (loading)
       return (<LoadingAnim />);
-
+    
     else if (!loading && list_versions) {
       return (
         <BaseArgoView
@@ -351,6 +381,11 @@ export class ProbeHistory extends Component {
                     <th scope='col'>
                       <Button
                         color='info'
+                        onClick={() => 
+                          this.history.push(
+                            '/ui/probes/' + this.name + '/history/compare/' + this.state.compare1 + '/' + this.state.compare2,
+                          )
+                        }
                       >
                         Compare
                       </Button>
@@ -375,8 +410,9 @@ export class ProbeHistory extends Component {
                             <input
                               type='radio'
                               name='radio-1'
-                              value={i}
-                              defaultChecked={true}
+                              value={e.version}
+                              checked={true}
+                              onChange={e => this.setState({compare1: e.target.value})}
                             />
                           </td>
                           :
@@ -384,14 +420,16 @@ export class ProbeHistory extends Component {
                             <input
                               type='radio'
                               name='radio-1'
-                              value={i}
+                              value={e.version}
+                              onChange={e => this.setState({compare1: e.target.value})}
                             /> 
                             {' '}
                             <input
                               type='radio'
                               name='radio-2'
-                              value={i}
-                              defaultChecked={i===1}
+                              value={e.version}
+                              checked={i===1}
+                              onChange={e => this.setState({compare2: e.target.value})}
                             />
                           </td>
                       }
@@ -421,6 +459,138 @@ export class ProbeHistory extends Component {
               </tbody>
             </table>
           </BaseArgoView>
+      )
+    }
+    else
+      return null
+  }
+}
+
+
+export class ProbeVersionCompare extends Component{
+  constructor(props) {
+    super(props);
+
+    this.version1 = props.match.params.id1;
+    this.version2 = props.match.params.id2;
+    this.name = props.match.params.name;
+
+    this.state = {
+      loading: false,
+      name1: '',
+      version1: '',
+      description1: '',
+      repository1: '',
+      docurl1: '',
+      comment1: '',
+      name2: '',
+      version2: '',
+      description2: '',
+      repository2: '',
+      docurl2: '',
+      comment2: ''
+    };
+
+    this.backend = new Backend();
+  }
+
+  componentDidMount() {
+    this.setState({loading: true});
+
+    this.backend.fetchVersions('probe', this.name)
+      .then((json) => {
+        let name1 = '';
+        let version1 = '';
+        let description1 = '';
+        let repository1 = '';
+        let docurl1 = '';
+        let comment1 = '';
+        let name2 = ''
+        let version2 = '';
+        let description2 = '';
+        let repository2 = '';
+        let docurl2 = '';
+        let comment2 = '';
+
+        json.forEach((e) => {
+          if (e.version == this.version1) {
+            name1 = e.fields.name;
+            version1 = e.fields.version;
+            description1 = e.fields.description;
+            repository1 = e.fields.repository;
+            docurl1 = e.fields.docurl;
+            comment1 = e.fields.comment;
+          } else if (e.version === this.version2) {
+            name2 = e.fields.name;
+            version2 = e.fields.version;
+            description2 = e.fields.description;
+            repository2 = e.fields.repository;
+            docurl2 = e.fields.docurl;
+            comment2 = e.fields.comment;
+          }
+        })
+
+        this.setState({
+          name1: name1,
+          version1: version1,
+          description1: description1,
+          repository1: repository1,
+          docurl1: docurl1,
+          comment1: comment1,
+          name2: name2,
+          version2: version2,
+          description2: description2,
+          repository2: repository2,
+          docurl2: docurl2,
+          comment2: comment2,
+          loading: false
+        })
+      }
+    )
+  }
+
+  render() {
+    var { name1, name2, version1, version2, description1, description2,
+    repository1, repository2, docurl1, docurl2, comment1, comment2, loading } = this.state;
+
+    if (loading)
+      return (<LoadingAnim/>);
+
+    else if (!loading && name1 && name2) {
+      return (
+        <React.Fragment>
+          <div className="d-flex align-items-center justify-content-between">
+            <h2 className='ml-3 mt-1 mb-4'>{'Compare ' + this.name}</h2>
+          </div>
+          {
+            (name1 !== name2) && 
+              <DiffElement title='name' item1={name1} item2={name2}/>
+          }
+
+          {
+            (version1 !== version2) &&
+              <DiffElement title='version' item1={version1} item2={version2}/>
+          }
+
+          {
+            (description1 !== description2) &&
+              <DiffElement title='description' item1={description1} item2={description2}/>
+          }
+
+          {
+            (repository1 !== repository2) &&
+              <DiffElement title='repository' item1={repository1} item2={repository2}/>
+          }
+
+          {
+            (docurl1 !== docurl2) &&
+              <DiffElement title={'documentation'} item1={docurl1} item2={docurl2}/>
+          }
+          {
+            (comment1 !== comment2) &&
+              <DiffElement title={'comment'} item1={comment1} item2={comment2}/>
+          }
+        </React.Fragment>
       )
     }
     else
