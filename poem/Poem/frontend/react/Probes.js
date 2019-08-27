@@ -3,7 +3,7 @@ import { Backend } from './DataManager';
 import { Link } from 'react-router-dom';
 import { LoadingAnim, BaseArgoView } from './UIElements';
 import ReactTable from 'react-table';
-import { Alert, FormGroup, Label, FormText, Row, Col } from 'reactstrap';
+import { Alert, FormGroup, Label, FormText, Row, Col, Button } from 'reactstrap';
 import { Formik, Form, Field } from 'formik';
 
 
@@ -345,11 +345,21 @@ export class ProbeHistory extends Component {
             <table className='table table-sm'>
               <thead className='table-active'>
                 <tr>
-                  <th id='argo-th' scope='col'></th>
-                  <th id='argo-th' scope='col'>Version</th>
-                  <th id='argo-th' scope='col'>Date/time</th>
-                  <th id='argo-th' scope='col'>User</th>
-                  <th id='argo-th' scope='col'>Comment</th>
+                  { list_versions.length === 1 ?
+                    <th scope='col'>Compare</th>
+                  :
+                    <th scope='col'>
+                      <Button
+                        color='info'
+                      >
+                        Compare
+                      </Button>
+                    </th>
+                  }
+                  <th scope='col'>Version</th>
+                  <th scope='col'>Date/time</th>
+                  <th scope='col'>User</th>
+                  <th scope='col'>Comment</th>
                 </tr>
               </thead>
               <tbody>
@@ -357,25 +367,51 @@ export class ProbeHistory extends Component {
                   list_versions.map((e, i) =>
                     <tr key={i}>
                       {
-                        <td id='argo-td'></td>
+                        list_versions.length === 1 ?
+                          <td>-</td>
+                        :
+                          i === 0 ?
+                          <td>
+                            <input
+                              type='radio'
+                              name='radio-1'
+                              value={i}
+                              defaultChecked={true}
+                            />
+                          </td>
+                          :
+                          <td>
+                            <input
+                              type='radio'
+                              name='radio-1'
+                              value={i}
+                            /> 
+                            {' '}
+                            <input
+                              type='radio'
+                              name='radio-2'
+                              value={i}
+                              defaultChecked={i===1}
+                            />
+                          </td>
                       }
                       {e.version && 
-                        <td id='argo-td'>
+                        <td>
                           {e.version}
                         </td>
                       }
                       {e.date_created && 
-                        <td id='argo-td'>
+                        <td>
                           {e.date_created}
                         </td>
                       }
                       {e.user && 
-                        <td id='argo-td'>
+                        <td>
                           {e.user}
                         </td>
                       }
                       {e.comment && 
-                        <td id='argo-td'>
+                        <td>
                           {e.comment}
                         </td>
                       }
