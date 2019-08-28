@@ -417,7 +417,7 @@ export class ProbeHistory extends Component {
                               type='radio'
                               name='radio-1'
                               value={e.version}
-                              checked={true}
+                              defaultChecked={true}
                               onChange={e => this.setState({compare1: e.target.value})}
                             />
                           </td>
@@ -434,7 +434,7 @@ export class ProbeHistory extends Component {
                               type='radio'
                               name='radio-2'
                               value={e.version}
-                              checked={i===1}
+                              defaultChecked={i===1}
                               onChange={e => this.setState({compare2: e.target.value})}
                             />
                           </td>
