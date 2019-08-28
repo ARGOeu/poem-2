@@ -98,6 +98,7 @@ const ProbeForm = ({props}) => (
           <Field
             component='textarea'
             name='description'
+            rows='15'
             className='form-control'
             id='description'
             disabled={true}
@@ -115,6 +116,7 @@ const ProbeForm = ({props}) => (
           <Field 
             component='textarea'
             name='comment'
+            rows='5'
             className='form-control'
             id='comment'
             disabled={true}
