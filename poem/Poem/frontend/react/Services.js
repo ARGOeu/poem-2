@@ -89,7 +89,7 @@ class Services extends Component {
                     {
                       e.probe && 
                         <td id='argo-td' className="table-light" rowSpan={this.getRowSpan(rowspan.probe, e.probe)}>
-                          <Icon i='probes'/> <Link href={'/ui/probes/' + id_probes[e.probe]}>{e.probe}</Link>
+                          <Icon i='probes'/> <Link to={'/ui/probes/' + e.probe.split(' ')[0] + '/history/' + e.probe.split(' ')[1].substring(1, e.probe.split(' ')[1].length - 1)}>{e.probe}</Link>
                         </td>
                     }
                   </tr>
