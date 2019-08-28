@@ -1,4 +1,4 @@
-import React, { Component, PureComponent } from 'react';
+import React, { Component } from 'react';
 import { Backend } from './DataManager';
 import { Link } from 'react-router-dom';
 import { LoadingAnim, BaseArgoView } from './UIElements';
@@ -20,6 +20,112 @@ const DiffElement = ({title, item1, item2}) => (
       disableWordDiff={true}
     />
   </div>
+)
+
+const ProbeForm = ({props}) => (
+  <Form>
+    <FormGroup>
+      <Row>
+        <Col md={6}>
+          <Label for='name'>Name</Label>
+          <Field
+            type='text'
+            name='name'
+            className='form-control'
+            id='name'
+            disabled={true}
+          />
+          <FormText color="muted">
+            Name of this probe.
+          </FormText>
+        </Col>
+        <Col md={2}>
+          <Label for='version'>Version</Label>
+          <Field
+            type='text'
+            name='version'
+            className='form-control'
+            id='version'
+            disabled={true}
+          />
+          <FormText color="muted">
+            Version of the probe.
+          </FormText>
+        </Col>
+      </Row>
+    </FormGroup>
+    <FormGroup>
+      <h4 className="mt-2 p-1 pl-3 text-light text-uppercase rounded" style={{"backgroundColor": "#416090"}}>Probe metadata</h4>
+      <Row className='mt-4 mb-3 align-items-top'>
+        <Col md={1}>
+          <Label for='repository'>Repository</Label>
+        </Col>
+        <Col md={7}>
+          <Field
+            type='text'
+            name='repository'
+            className='form-control'
+            id='repository'
+            disabled={true}
+          />
+          <FormText color='muted'>
+            Probe repository URL.
+          </FormText>
+        </Col>
+      </Row>
+      <Row className='mb-3 align-items-top'>
+        <Col md={1}>
+          <Label for='docurl'>Documentation</Label>
+        </Col>
+        <Col md={7}>
+          <Field
+            type='text'
+            name='docurl'
+            className='form-control'
+            id='docurl'
+            disabled={true}
+          />
+          <FormText color='muted'>
+            Documentation URL.
+          </FormText>
+        </Col>
+      </Row>
+      <Row className='mb-3 align-items-top'>
+        <Col md={1}>
+          <Label for='description'>Description</Label>
+        </Col>
+        <Col md={7}>
+          <Field
+            component='textarea'
+            name='description'
+            className='form-control'
+            id='description'
+            disabled={true}
+          />
+          <FormText color='muted'>
+            Free text description outlining the purpose of this probe.
+          </FormText>
+        </Col>
+      </Row>
+      <Row className='mb-3 align-items-top'>
+        <Col md={1}>
+          <Label for='comment'>Comment</Label>
+        </Col>
+        <Col md={7}>
+          <Field 
+            component='textarea'
+            name='comment'
+            className='form-control'
+            id='comment'
+            disabled={true}
+          />
+          <FormText color='muted'>
+            Short comment about this version.
+          </FormText>
+        </Col>
+      </Row>
+    </FormGroup>
+  </Form>
 )
 
 
@@ -209,109 +315,7 @@ export class ProbeDetails extends Component {
                 comment: probe.comment
               }}
               render = {props => (
-                <Form>
-                  <FormGroup>
-                    <Row>
-                      <Col md={6}>
-                        <Label for='name'>Name</Label>
-                        <Field
-                          type='text'
-                          name='name'
-                          className='form-control'
-                          id='name'
-                          disabled={true}
-                        />
-                        <FormText color="muted">
-                          Name of this probe.
-                        </FormText>
-                      </Col>
-                      <Col md={2}>
-                        <Label for='version'>Version</Label>
-                        <Field
-                          type='text'
-                          name='version'
-                          className='form-control'
-                          id='version'
-                          disabled={true}
-                        />
-                        <FormText color="muted">
-                          Version of the probe.
-                        </FormText>
-                      </Col>
-                    </Row>
-                  </FormGroup>
-                  <FormGroup>
-                    <h4 className="mt-2 p-1 pl-3 text-light text-uppercase rounded" style={{"backgroundColor": "#416090"}}>Probe metadata</h4>
-                    <Row className='mt-4 mb-3 align-items-top'>
-                      <Col md={1}>
-                        <Label for='repository'>Repository</Label>
-                      </Col>
-                      <Col md={7}>
-                        <Field
-                          type='text'
-                          name='repository'
-                          className='form-control'
-                          id='repository'
-                          disabled={true}
-                        />
-                        <FormText color='muted'>
-                          Probe repository URL.
-                        </FormText>
-                      </Col>
-                    </Row>
-                    <Row className='mb-3 align-items-top'>
-                      <Col md={1}>
-                        <Label for='docurl'>Documentation</Label>
-                      </Col>
-                      <Col md={7}>
-                        <Field
-                          type='text'
-                          name='docurl'
-                          className='form-control'
-                          id='docurl'
-                          disabled={true}
-                        />
-                        <FormText color='muted'>
-                          Documentation URL.
-                        </FormText>
-                      </Col>
-                    </Row>
-                    <Row className='mb-3 align-items-top'>
-                      <Col md={1}>
-                        <Label for='description'>Description</Label>
-                      </Col>
-                      <Col md={7}>
-                        <Field
-                          component='textarea'
-                          name='description'
-                          className='form-control'
-                          id='description'
-                          disabled={true}
-                        />
-                        <FormText color='muted'>
-                          Free text description outlining the purpose of this probe.
-                        </FormText>
-                      </Col>
-                    </Row>
-                    <Row className='mb-3 align-items-top'>
-                      <Col md={1}>
-                        <Label for='comment'>Comment</Label>
-                      </Col>
-                      <Col md={7}>
-                        <Field 
-                          component='textarea'
-                          name='comment'
-                          className='form-control'
-                          id='comment'
-                          disabled={true}
-                        />
-                        <FormText color='muted'>
-                          Short comment about this version.
-                        </FormText>
-                      </Col>
-                    </Row>
-                  </FormGroup>
-                </Form>
+                <ProbeForm {...props}/>
               )}
             />
           </div>
@@ -435,7 +439,7 @@ export class ProbeHistory extends Component {
                       }
                       {e.version && 
                         <td>
-                          {e.version}
+                          <Link to={'/ui/probes/' + e.fields.name + '/history/' + e.version}>{e.version}</Link>
                         </td>
                       }
                       {e.date_created && 
@@ -590,6 +594,85 @@ export class ProbeVersionCompare extends Component{
             (comment1 !== comment2) &&
               <DiffElement title={'comment'} item1={comment1} item2={comment2}/>
           }
+        </React.Fragment>
+      )
+    }
+    else
+      return null
+  }
+}
+
+
+export class ProbeVersionDetails extends Component {
+  constructor(props) {
+    super(props);
+
+    this.name = props.match.params.name;
+    this.version = props.match.params.version;
+
+    this.backend = new Backend();
+
+    this.state = {
+      name: '',
+      version: '',
+      description: '',
+      repository: '',
+      docurl: '',
+      comment: '',
+      loading: false
+    };
+  }
+
+  componentDidMount() {
+    this.setState({loading: true});
+
+    this.backend.fetchVersions('probe', this.name)
+      .then((json) => {
+        json.forEach((e) => {
+          if (e.version === this.version) 
+            this.setState({
+              name: e.fields.name,
+              version: e.fields.version,
+              description: e.fields.description,
+              repository: e.fields.repository,
+              docurl: e.fields.docurl,
+              comment: e.fields.comment,
+              loading: false
+            });
+        });
+      }
+    )
+  }
+
+  render() {
+    const { name, version, description, repository, docurl, comment, loading} = this.state;
+
+    if (loading)
+      return (<LoadingAnim/>);
+
+    else if (!loading && name) {
+      return (
+        <React.Fragment>
+          <div className='d-flex align-items-center justify-content-between'>
+            <React.Fragment>
+              <h2 className='ml-3 mt-1 mb-4'>{name + ' (' + version + ')'}</h2>
+            </React.Fragment>
+          </div>
+          <div id='argo-contentwrap' className='ml-2 mb-2 mt-2 p-3 border rounded'>
+            <Formik
+              initialValues = {{
+                name: name,
+                version: version,
+                repository: repository,
+                docurl: docurl,
+                description: description,
+                comment: comment
+              }}
+              render = {props => (
+                <ProbeForm {...props}/>
+              )}
+              />
+          </div>
         </React.Fragment>
       )
     }
