@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import { BaseArgoView, LoadingAnim, Icon } from './UIElements';
 import {Link} from 'react-router-dom';
 import {Backend} from './DataManager';
+import { ProbeVersionLink } from './Metrics';
 
 import './Services.css';
 
@@ -89,7 +90,7 @@ class Services extends Component {
                     {
                       e.probe && 
                         <td id='argo-td' className="table-light" rowSpan={this.getRowSpan(rowspan.probe, e.probe)}>
-                          <Icon i='probes'/> <Link to={'/ui/probes/' + e.probe.split(' ')[0] + '/history/' + e.probe.split(' ')[1].substring(1, e.probe.split(' ')[1].length - 1)}>{e.probe}</Link>
+                          <Icon i='probes'/> <ProbeVersionLink probeversion={e.probe}/>
                         </td>
                     }
                   </tr>

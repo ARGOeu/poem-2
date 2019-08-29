@@ -106,6 +106,12 @@ const InlineFields = ({values, field}) => (
   </div>
 )
 
+export const ProbeVersionLink = ({probeversion}) => (
+  <Link to={'/ui/probes/' + probeversion.split(' ')[0] + '/history/' + probeversion.split(' ')[1].substring(1, probeversion.split(' ')[1].length - 1)}>
+    {probeversion}
+  </Link>
+)
+
 
 export class MetricList extends Component {
   constructor(props) {
@@ -190,9 +196,7 @@ export class MetricList extends Component {
         id: 'probeversion',
         minWidth: 80,
         accessor: e => (e.probeversion ?
-          <Link to={'/ui/probes/' + e.probeversion.split(' ')[0] + '/history/' + e.probeversion.split(' ')[1].substring(1, e.probeversion.split(' ')[1].length - 1)}>
-            {e.probeversion}
-          </Link>
+          <ProbeVersionLink probeversion={e.probeversion}/>
           :
           ""
         ),
@@ -493,7 +497,7 @@ export class MetricChange extends Component {
                       <FormText color='muted'>
                         Probe name and version <FontAwesomeIcon id='probe-popover' hidden={this.state.metric.mtype === 'Passive'} icon={faInfoCircle} style={{color: '#416090'}}/>
                         <Popover placement='bottom' isOpen={this.state.popoverOpen} target='probe-popover' toggle={this.togglePopOver} trigger='hover'>
-                          <PopoverHeader>{this.state.metric.probeversion}</PopoverHeader>
+                          <PopoverHeader><ProbeVersionLink probeversion={this.state.metric.probeversion}/></PopoverHeader>
                           <PopoverBody>{this.state.probe.description}</PopoverBody>
                         </Popover>
                       </FormText>
