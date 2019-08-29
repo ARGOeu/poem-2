@@ -8,19 +8,44 @@ import { Formik, Form, Field } from 'formik';
 import ReactDiffViewer from 'react-diff-viewer';
 
 
-const DiffElement = ({title, item1, item2}) => (
-  <div id='argo-contentwrap' className='ml-2 mb-2 mt-2 p-3 border rounded'>
-    <h6 className='mt-4 font-weight-bold text-uppercase'>{title}</h6>
-    <ReactDiffViewer
-      oldValue={item2}
-      newValue={item1}
+const DiffElement = ({title, item1, item2}) => {
+  item1 = item1.split('\r\n')
+  item2 = item2.split('\r\n')
+
+  let n = Math.max(item1.length, item2.length)
+
+  if (item1.length > item2.length) {
+    for (let i=item2.length; i < item1.length; i++) {
+      item2.push(' ');
+    }
+  } else if (item2.length > item1.length) {
+    for (let i=item1.length; i < item2.length; i++) {
+      item1.push(' ');
+    }
+  }
+
+  const elements = [];
+  for (let i = 0; i < n; i++) {
+    elements.push(
+    <ReactDiffViewer 
+      oldValue={item2[i]}   
+      newValue={item1[i]}
       showDiffOnly={true}
-      splitView={true}
+      splitView={false}
       hideLineNumbers={true}
       disableWordDiff={true}
+      key={'diff-' + i}
     />
+    )
+  }
+
+  return (
+  <div id='argo-contentwrap' className='ml-2 mb-2 mt-2 p-3 border rounded'>
+    <h6 className='mt-4 font-weight-bold text-uppercase'>{title}</h6>
+    {elements}
   </div>
-)
+  )
+}
 
 const ProbeForm = ({props}) => (
   <Form>
