@@ -182,6 +182,12 @@ export class Backend {
       .catch(err => alert('Something went wrong: ' + err))
   }
 
+  fetchTokens() {
+    return fetch('/api/v2/internal/tokens/')
+      .then(response => response.json())
+      .catch(err => alert('Something went wrong: ' + err))
+  }
+
   changeMetricProfile(profile) {
     return this.send(
       '/api/v2/internal/metricprofiles/',
