@@ -55,6 +55,7 @@ link_title.set('groupofaggregations', 'Groups of aggregations');
 link_title.set('groupofmetrics', 'Groups of metrics');
 link_title.set('groupofmetricprofiles', 'Groups of metric profiles');
 link_title.set('users', 'Users');
+link_title.set('apikey', 'API key');
 
 export const Icon = props =>
 {
