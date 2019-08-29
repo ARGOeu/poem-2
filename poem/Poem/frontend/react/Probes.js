@@ -38,7 +38,7 @@ export class ProbeList extends Component {
       {
         Header: '#',
         id: 'row',
-        minWidth: 10,
+        minWidth: 12,
         Cell: (row) =>
           <div style={{textAlign: 'center'}}>
             {row.index + 1}
@@ -122,7 +122,7 @@ export class ProbeList extends Component {
               data={list_probe}
               columns={columns}
               className='-striped -highlight'
-              defaultPageSize={20}
+              defaultPageSize={50}
             />
           </div>
         </React.Fragment>

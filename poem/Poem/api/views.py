@@ -9,11 +9,23 @@ from Poem.api.permissions import MyHasAPIKey
 from Poem.poem import models
 
 
-def none_to_emptystr(val):
-    if val is None:
-        return ''
+def one_value_inline(input):
+    if input:
+        return json.loads(input)[0]
     else:
-        return val
+        return ''
+
+
+def two_value_inline(input):
+    results = dict()
+
+    if input:
+        data = json.loads(input)
+
+        for item in data:
+            results.update(({item.split(' ')[0]: item.split(' ')[1]}))
+
+    return results
 
 
 class NotFound(APIException):
@@ -24,7 +36,7 @@ class NotFound(APIException):
 
 
 def build_metricconfigs(tag=None):
-    ret = list()
+    ret = []
 
     try:
         if tag:
@@ -41,57 +53,66 @@ def build_metricconfigs(tag=None):
         mdict = dict()
         mdict.update({m.name: dict()})
 
-        try:
-            exe = models.MetricProbeExecutable.objects.get(metric=m)
-            mdict[m.name].update({'probe': none_to_emptystr(exe.value)})
-        except models.MetricProbeExecutable.DoesNotExist:
+        config = two_value_inline(m.config)
+        parent = one_value_inline(m.parent)
+        probeexecutable = one_value_inline(m.probeexecutable)
+        attribute = two_value_inline(m.attribute)
+        dependancy = two_value_inline(m.dependancy)
+        flags = two_value_inline(m.flags)
+        files = two_value_inline(m.files)
+        parameter = two_value_inline(m.parameter)
+        fileparameter = two_value_inline(m.fileparameter)
+
+        if probeexecutable:
+            mdict[m.name].update({'probe': probeexecutable})
+        else:
             mdict[m.name].update({'probe': ''})
 
-        mc = models.MetricConfig.objects.filter(metric=m)
-        mdict[m.name].update({'config': dict()})
-        for config in mc:
-            if config.key and config.value:
-                mdict[m.name]['config'].update({config.key: config.value})
+        if config:
+            mdict[m.name].update({'config': config})
+        else:
+            mdict[m.name].update({'config': dict()})
 
-        f = models.MetricFlags.objects.filter(metric=m)
-        mdict[m.name].update({'flags': dict()})
-        for flag in f:
-            mdict[m.name]['flags'].update({flag.key: flag.value})
+        if flags:
+            mdict[m.name].update({'flags': flags})
+        else:
+            mdict[m.name].update({'flags': dict()})
 
-        md = models.MetricDependancy.objects.filter(metric=m)
-        mdict[m.name].update({'dependency': dict()})
-        for dependancy in md:
-            mdict[m.name]['dependency'].update({dependancy.key: dependancy.value})
+        if dependancy:
+            mdict[m.name].update({'dependency': dependancy})
+        else:
+            mdict[m.name].update({'dependency': dict()})
 
-        ma = models.MetricAttribute.objects.filter(metric=m)
-        mdict[m.name].update({'attribute': dict()})
-        for attribute in ma:
-            mdict[m.name]['attribute'].update({attribute.key: attribute.value})
+        if attribute:
+            mdict[m.name].update({'attribute': attribute})
+        else:
+            mdict[m.name].update({'attribute': dict()})
 
-        mp = models.MetricParameter.objects.filter(metric=m)
-        mdict[m.name].update({'parameter': dict()})
-        for parameter in mp:
-            mdict[m.name]['parameter'].update({parameter.key: parameter.value})
+        if parameter:
+            mdict[m.name].update({'parameter': parameter})
+        else:
+            mdict[m.name].update({'parameter': dict()})
 
-        mfp = models.MetricFileParameter.objects.filter(metric=m)
-        mdict[m.name].update({'file_parameter': dict()})
-        for parameter in mfp:
-            mdict[m.name]['file_parameter'].update({parameter.key: parameter.value})
+        if fileparameter:
+            mdict[m.name].update({'file_parameter': fileparameter})
+        else:
+            mdict[m.name].update({'file_parameter': dict()})
 
-        mfa = models.MetricFiles.objects.filter(metric=m)
-        mdict[m.name].update({'file_attribute': dict()})
-        for parameter in mfa:
-            mdict[m.name]['file_attribute'].update({parameter.key: parameter.value})
+        if files:
+            mdict[m.name].update({'file_attribute': files})
+        else:
+            mdict[m.name].update({'file_attribute': dict()})
 
-        try:
-            parent = models.MetricParent.objects.get(metric=m)
-            mdict[m.name].update({'parent': none_to_emptystr(parent.value)})
-        except models.MetricParent.DoesNotExist:
+        if parent:
+            mdict[m.name].update({'parent': parent})
+        else:
             mdict[m.name].update({'parent': ''})
 
         if m.probekey:
             version_fields = json.loads(m.probekey.serialized_data)
-            mdict[m.name].update({'docurl': version_fields[0]['fields']['docurl']})
+            mdict[m.name].update(
+                {'docurl': version_fields[0]['fields']['docurl']}
+            )
         else:
             mdict[m.name].update({'docurl': ''})
 

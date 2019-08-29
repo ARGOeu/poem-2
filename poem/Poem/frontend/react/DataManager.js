@@ -139,6 +139,43 @@ export class Backend {
       .catch(err => alert('Something went wrong: ' + err))
   }
 
+  fetchAllMetric() {
+    return fetch('/api/v2/internal/metric/')
+      .then(response => response.json())
+      .catch(err => alert('Something went wrong: ' + err))
+  }
+
+  fetchTags() {
+    return fetch('/api/v2/internal/tags/')
+      .then(response => response.json())
+      .catch(err => alert('Something went wrong: ' + err))
+
+  }
+
+  fetchMetricTypes() {
+    return fetch('/api/v2/internal/mtypes/')
+      .then(response => response.json())
+      .catch(err => alert("Something went wrong: " + err))
+  }
+
+  fetchMetricByName(name) {
+    return fetch('/api/v2/internal/metric/' + name)
+      .then(response => response.json())
+      .catch(err => alert('Something went wrong: ' + err))
+  }
+
+  fetchMetricUserGroups() {
+    return fetch('/api/v2/internal/groups/metrics')
+      .then(response => response.json())
+      .catch(err => alert('Something went wrong: ' + err))
+  }
+
+  fetchProbeVersionInfo(id) {
+    return fetch('/api/v2/internal/probeversion/' + id)
+      .then(response => response.json())
+      .catch(err => alert('Something went wrong: ' + err))
+  }
+
   changeMetricProfile(profile) {
     return this.send(
       '/api/v2/internal/metricprofiles/',
@@ -177,6 +214,14 @@ export class Backend {
       'PUT',
       data
     );
+  }
+
+  changeMetric(metric) {
+    return this.send(
+      '/api/v2/internal/metric/',
+      'PUT',
+      metric
+    )
   }
 
   addAggregation(profile) {
@@ -235,6 +280,13 @@ export class Backend {
   deleteGroup(group, name) {
     return this.send(
       '/api/v2/internal/' + group + 'group/' + name,
+      'DELETE'
+    );
+  }
+
+  deleteMetric(name) {
+    return this.send(
+      '/api/v2/internal/metric/' + name,
       'DELETE'
     );
   }
