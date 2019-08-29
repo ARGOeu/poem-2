@@ -10,6 +10,7 @@ import Reports from './Reports';
 import Services from './Services';
 import { UsersList, UserChange } from './Users';
 import { GroupOfMetricsList, GroupOfMetricsChange, GroupOfAggregationsList, GroupOfAggregationsChange, GroupOfMetricProfilesList, GroupOfMetricProfilesChange } from './GroupElements';
+import { APIKeyList } from './APIKey';
 import NotFound from './NotFound';
 import { Route, Switch, BrowserRouter, Redirect, withRouter } from 'react-router-dom';
 import { Container, Button, Row, Col } from 'reactstrap';
@@ -233,6 +234,7 @@ class App extends Component {
                   <Route exact path="/ui/administration/groupofmetricprofiles/:group"
                     render={props => <GroupOfMetricProfilesChange {...props}/>}
                   />
+                  <Route exact path="/ui/administration/apikey" component={APIKeyList} />
                   <Route component={NotFound} />
                 </Switch>
               </Col>
