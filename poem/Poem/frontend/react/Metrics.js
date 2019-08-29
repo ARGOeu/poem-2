@@ -187,8 +187,15 @@ export class MetricList extends Component {
       },
       {
         Header: 'Probe version',
+        id: 'probeversion',
         minWidth: 80,
-        accessor: 'probeversion',
+        accessor: e => (e.probeversion ?
+          <Link to={'/ui/probes/' + e.probeversion.split(' ')[0] + '/history/' + e.probeversion.split(' ')[1].substring(1, e.probeversion.split(' ')[1].length - 1)}>
+            {e.probeversion}
+          </Link>
+          :
+          ""
+        ),
         Cell: row =>
           <div style={{textAlign: 'center'}}>
             {row.value}
