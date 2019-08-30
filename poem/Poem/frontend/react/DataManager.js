@@ -325,6 +325,13 @@ export class Backend {
     );
   }
 
+  deleteToken(name) {
+    return this.send(
+      '/api/v2/internal/tokens/' + name,
+      'DELETE'
+    );
+  }
+
   send(url, method, values=undefined) {
     const cookies = new Cookies();
 
