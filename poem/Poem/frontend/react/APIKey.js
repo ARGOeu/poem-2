@@ -123,6 +123,7 @@ export class APIKeyChange extends Component {
     this.toggleAreYouSureSetModal = this.toggleAreYouSureSetModal.bind(this);
     this.onSubmitHandle = this.onSubmitHandle.bind(this);
     this.doChange = this.doChange.bind(this);
+    this.doDelete = this.doDelete.bind(this);
   }
 
   toggleAreYouSure() {
@@ -178,6 +179,20 @@ export class APIKeyChange extends Component {
         : 
         alert('Something went wrong: ' + response.statusText))
     }
+  }
+
+  doDelete(name) {
+    this.backend.deleteToken(name)
+      .then(response => response.ok
+        ?
+          NotifyOk({
+            msg: 'API key successfully deleted',
+            title: 'Deleted',
+            callback: () => this.history.push('/ui/administration/apikey')
+          })  
+        :
+          alert('Something went wrong: ' + response.statusText)
+      )
   }
 
   componentDidMount() {
@@ -279,11 +294,24 @@ export class APIKeyChange extends Component {
                       <div className={!this.addview ? "submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5" : "submit-row d-flex align-items-center justify-content-end bg-light p-3 mt-5"}>
                         {
                           (!this.addview) &&
-                          <Button color='danger'>
+                          <Button 
+                            color='danger'
+                            onClick={() => {
+                              this.toggleAreYouSureSetModal(
+                                'Are you sure you want to delete API key?',
+                                'Delete API key',
+                                () => this.doDelete(props.values.name)
+                              )
+                            }}
+                          >
                             Delete
                           </Button>
                         }
-                        <Button color='success' id='submit-button' type='submit'>
+                        <Button 
+                          color='success' 
+                          id='submit-button' 
+                          type='submit'
+                        >
                           Save
                         </Button>
                       </div>
