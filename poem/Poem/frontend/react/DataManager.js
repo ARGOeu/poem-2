@@ -188,6 +188,12 @@ export class Backend {
       .catch(err => alert('Something went wrong: ' + err))
   }
 
+  fetchTokenByName(name) {
+    return fetch('/api/v2/internal/tokens/' + name)
+      .then(response => response.json())
+      .catch(err => alert('Something went wrong: ' + err))
+  }
+
   changeMetricProfile(profile) {
     return this.send(
       '/api/v2/internal/metricprofiles/',
