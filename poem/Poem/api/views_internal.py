@@ -5,6 +5,7 @@ from django.db.utils import IntegrityError
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.authentication import SessionAuthentication
+from rest_framework_api_key.crypto import _generate_token, hash_token
 from rest_framework_api_key.models import APIKey
 from rest_framework import status
 
@@ -363,6 +364,23 @@ class ListTokens(APIView):
 
         except api_models.APIKey.DoesNotExist:
             raise NotFound(status=404, detail='API key not found')
+
+    def post(self, request):
+        token = _generate_token()
+        hashed_token = hash_token(token, settings.SECRET_KEY)
+        obj = api_models.APIKey(
+            client_id=request.data['name'],
+            token=token,
+            hashed_token=hashed_token
+        )
+
+        try:
+            obj.save()
+            return Response(status=status.HTTP_201_CREATED)
+
+        except IntegrityError:
+            return Response(status=status.HTTP_403_FORBIDDEN)
+
 
 
 class ListUsers(APIView):
