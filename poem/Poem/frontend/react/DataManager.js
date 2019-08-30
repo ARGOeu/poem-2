@@ -242,6 +242,14 @@ export class Backend {
     )
   }
 
+  changeToken(token) {
+    return this.send(
+      '/api/v2/internal/tokens/',
+      'PUT',
+      token
+    )
+  }
+
   addAggregation(profile) {
     return this.send(
       '/api/v2/internal/aggregations/',
