@@ -282,6 +282,14 @@ export class Backend {
     );
   }
 
+  addToken(token) {
+    return this.send(
+      '/api/v2/internal/tokens/',
+      'POST',
+      token
+    );
+  }
+
   deleteMetricProfile(id) {
     return this.send(
       '/api/v2/internal/metricprofiles/' + id,
