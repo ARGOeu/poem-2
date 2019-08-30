@@ -3,7 +3,7 @@ import { Backend } from './DataManager';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
-import { LoadingAnim, BaseArgoView } from './UIElements';
+import { LoadingAnim, BaseArgoView, NotifyOk } from './UIElements';
 import ReactTable from 'react-table';
 import { Formik, Form, Field } from 'formik';
 import {
@@ -106,6 +106,7 @@ export class APIKeyChange extends Component {
     this.name = props.match.params.name;
     this.location = props.location;
     this.addview = props.addview;
+    this.history = props.history;
 
     this.state = {
       key: {},
@@ -120,6 +121,8 @@ export class APIKeyChange extends Component {
     this.backend = new Backend();
     this.toggleAreYouSure = this.toggleAreYouSure.bind(this);
     this.toggleAreYouSureSetModal = this.toggleAreYouSureSetModal.bind(this);
+    this.onSubmitHandle = this.onSubmitHandle.bind(this);
+    this.doChange = this.doChange.bind(this);
   }
 
   toggleAreYouSure() {
@@ -134,6 +137,36 @@ export class APIKeyChange extends Component {
         modalMsg: msg,
         modalTitle: title,
       }));
+  }
+
+  onSubmitHandle(values, actions) {
+    let msg = undefined;
+    let title = undefined;
+
+    if (this.addview) {
+      msg = 'Are you sure you want to add API key?';
+      title = 'Add API key';
+    } else {
+      msg = 'Are you sure you want to change API key?';
+      title = 'Change API key';
+    }
+    this.toggleAreYouSureSetModal(msg, title,
+      () => this.doChange(values, actions))
+  }
+
+  doChange(values, actions) {
+    if (!this.addview) {
+      this.backend.changeToken({
+        id: this.state.key.id,
+        name: values.name,
+      }).then(response => response.ok ? 
+        NotifyOk({
+          msg: 'API key successfully changed',
+          title: 'Changed',
+          callback: () => this.history.push('/ui/administration/apikey')
+        }) 
+        : alert('Something went wrong: ' + response.statusText))
+    }
   }
 
   componentDidMount() {
@@ -183,6 +216,7 @@ export class APIKeyChange extends Component {
                 name: key.name,
                 token: key.token
               }}
+              onSubmit = {(values, actions) => this.onSubmitHandle(values, actions)}
               render = {props => (
                 <Form>
                   <FormGroup>
