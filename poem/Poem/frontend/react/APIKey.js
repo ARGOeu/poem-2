@@ -166,6 +166,17 @@ export class APIKeyChange extends Component {
           callback: () => this.history.push('/ui/administration/apikey')
         }) 
         : alert('Something went wrong: ' + response.statusText))
+    } else {
+      this.backend.addToken({
+        name: values.name
+      }).then(response => response.ok ?
+        NotifyOk({
+          msg: 'API key successfully added',
+          title: 'Added',
+          callback: () => this.history.push('/ui/administration/apikey')
+        })
+        : 
+        alert('Something went wrong: ' + response.statusText))
     }
   }
 
