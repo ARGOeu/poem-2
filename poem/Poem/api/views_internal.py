@@ -381,6 +381,18 @@ class ListTokens(APIView):
         except IntegrityError:
             return Response(status=status.HTTP_403_FORBIDDEN)
 
+    def delete(self, request, name=None):
+        if name:
+            try:
+                token = api_models.APIKey.objects.get(client_id=name)
+                token.delete()
+                return Response(status=status.HTTP_204_NO_CONTENT)
+
+            except api_models.APIKey.DoesNotExist:
+                raise NotFound(status=404, detail='API key not found')
+
+        else:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
 class ListUsers(APIView):
