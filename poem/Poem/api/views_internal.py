@@ -1,5 +1,6 @@
 from django.core.cache import cache
 from django.contrib.contenttypes.models import ContentType
+from django.db.utils import IntegrityError
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -325,6 +326,7 @@ class ListTokens(APIView):
             try:
                 token = api_models.APIKey.objects.get(client_id=name)
                 api_format = dict(
+                    id=token.id,
                     name=token.client_id,
                     token=token.token,
                     created=datetime.datetime.strftime(token.created,
@@ -338,7 +340,8 @@ class ListTokens(APIView):
         else:
             tokens = api_models.APIKey.objects.all()
             api_format = [
-                dict(name=e.client_id,
+                dict(id=e.id,
+                     name=e.client_id,
                      token=e.token,
                      created=datetime.datetime.strftime(e.created,
                                                         '%Y-%m-%d %H:%M:%S'),
@@ -346,19 +349,20 @@ class ListTokens(APIView):
 
         return Response(api_format)
 
-
-class ListTokenForTenant(APIView):
-    authentication_classes = (SessionAuthentication,)
-
-    def get(self, request, name):
+    def put(self, request):
         try:
-            e = api_models.APIKey.objects.get(client_id=name)
+            obj = api_models.APIKey.objects.get(id=request.data['id'])
+            obj.client_id = request.data['name']
+            try:
+                obj.save()
 
-            return Response(e.token)
+            except IntegrityError:
+                return Response(status=status.HTTP_403_FORBIDDEN)
+
+            return Response(status=status.HTTP_201_CREATED)
 
         except api_models.APIKey.DoesNotExist:
-            raise NotFound(status=404,
-                           detail='Tenant not found')
+            raise NotFound(status=404, detail='API key not found')
 
 
 class ListUsers(APIView):
