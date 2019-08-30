@@ -320,9 +320,30 @@ class ListAllServiceFlavours(APIView):
 class ListTokens(APIView):
     authentication_classes = (SessionAuthentication,)
 
-    def get(self, request):
-        tokens = api_models.APIKey.objects.all().values_list('client_id', 'token')
-        api_format = [dict(name=e[0], token=e[1]) for e in tokens]
+    def get(self, request, name=None):
+        if name:
+            try:
+                token = api_models.APIKey.objects.get(client_id=name)
+                api_format = dict(
+                    name=token.client_id,
+                    token=token.token,
+                    created=datetime.datetime.strftime(token.created,
+                                                       '%Y-%m-%d %H:%M:%S'),
+                    revoked=token.revoked
+                )
+
+            except api_models.APIKey.DoesNotExist:
+                raise NotFound(status=404, detail='API key not found')
+
+        else:
+            tokens = api_models.APIKey.objects.all()
+            api_format = [
+                dict(name=e.client_id,
+                     token=e.token,
+                     created=datetime.datetime.strftime(e.created,
+                                                        '%Y-%m-%d %H:%M:%S'),
+                     revoked=e.revoked) for e in tokens]
+
         return Response(api_format)
 
 
