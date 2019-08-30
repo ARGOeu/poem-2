@@ -3,7 +3,7 @@ import { Backend } from './DataManager';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
-import { LoadingAnim, BaseArgoView, Checkbox } from './UIElements';
+import { LoadingAnim, BaseArgoView } from './UIElements';
 import ReactTable from 'react-table';
 import { Formik, Form, Field } from 'formik';
 import {
@@ -181,7 +181,6 @@ export class APIKeyChange extends Component {
             <Formik
               initialValues = {{
                 name: key.name,
-                revoked: key.revoked,
                 token: key.token
               }}
               render = {props => (
@@ -200,17 +199,6 @@ export class APIKeyChange extends Component {
                         <FormText color='muted'>
                           A free-form unique identifier of the client. 50 characters max.
                         </FormText>
-                      </Col>
-                    </Row>
-                    <Row>
-                      <Col md={6}>
-                        <Field
-                          component={Checkbox}
-                          name='revoked'
-                          className='form-control'
-                          id='checkbox'
-                          label='Revoked'
-                        />
                       </Col>
                     </Row>
                   </FormGroup>
