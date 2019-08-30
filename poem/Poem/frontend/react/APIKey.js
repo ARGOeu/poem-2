@@ -11,7 +11,8 @@ import {
   Row,
   Col,
   Label,
-  FormText
+  FormText,
+  Button
 } from 'reactstrap';
 import './APIKey.css';
 
@@ -104,6 +105,7 @@ export class APIKeyChange extends Component {
 
     this.name = props.match.params.name;
     this.location = props.location;
+    this.addview = props.addview;
 
     this.state = {
       key: {},
@@ -137,14 +139,26 @@ export class APIKeyChange extends Component {
   componentDidMount() {
     this.setState({ loading: true });
 
-    this.backend.fetchTokenByName(this.name)
-      .then((json) =>
-        this.setState({
-          key: json,
-          loading: false,
-          write_perm: localStorage.getItem('authIsSuperuser') === 'true'
-        })
-      );
+    if (!this.addview) {
+      this.backend.fetchTokenByName(this.name)
+        .then((json) =>
+          this.setState({
+            key: json,
+            loading: false,
+            write_perm: localStorage.getItem('authIsSuperuser') === 'true'
+          })
+        );
+    } else {
+      this.setState({
+        key: {
+          name: '',
+          revoked: false,
+          token: ''
+        },
+        loading: false,
+        write_perm: localStorage.getItem('authIsSuperuser') === 'true'
+      })
+    }
   }
 
   render() {
@@ -158,7 +172,8 @@ export class APIKeyChange extends Component {
         <BaseArgoView
           resourcename='API key'
           location={this.location}
-          infoview={true}
+          addview={this.addview}
+          history={false}
           modal={true}
           state={this.state}
           toggle={this.toggleAreYouSure}
@@ -208,6 +223,7 @@ export class APIKeyChange extends Component {
                         type='text'
                         name='token'
                         id='token'
+                        disabled={true}
                         className='form-control'
                       />
                       <FormText className='pl-3' color='muted'>
@@ -215,7 +231,30 @@ export class APIKeyChange extends Component {
                       </FormText>
                     </Col>
                   </Row>
+                  {
+                    this.addview &&
+                      <Row className='mt-4'>
+                        <Col sm={1}></Col>
+                        <Col sm={10}>
+                          Token will be generated when clicking save.
+                        </Col>
+                      </Row>
+                  }
                   </FormGroup>
+                  {
+                    (write_perm) &&
+                      <div className={!this.addview ? "submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5" : "submit-row d-flex align-items-center justify-content-end bg-light p-3 mt-5"}>
+                        {
+                          (!this.addview) &&
+                          <Button color='danger'>
+                            Delete
+                          </Button>
+                        }
+                        <Button color='success' id='submit-button' type='submit'>
+                          Save
+                        </Button>
+                      </div>
+                  }
                 </Form>
               )}
             />
