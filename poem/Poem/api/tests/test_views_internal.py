@@ -194,41 +194,6 @@ class ListTokensAPIViewTests(TenantTestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
 
-class ListTokenForTenantAPIViewTests(TenantTestCase):
-    def setUp(self):
-        self.factory = TenantRequestFactory(self.tenant)
-        self.view = views.ListTokenForTenant.as_view()
-        self.url_base = '/api/v2/internal/tokens/'
-        self.user = CustUser.objects.create(username='testuser')
-
-        tenant1 = APIKey.objects.create(client_id='EGI')
-        self.token1 = tenant1.token
-        tenant2 = APIKey.objects.create(client_id='EUDAT')
-        self.token2 = tenant2.token
-
-    def test_permission_denied_in_case_no_authorization(self):
-        request = self.factory.get(self.url_base + 'EGI')
-        response = self.view(request, 'EGI')
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-
-    def test_get_token_for_a_given_tenant(self):
-        request1 = self.factory.get(self.url_base + 'EGI')
-        request2 = self.factory.get(self.url_base + 'EUDAT')
-        force_authenticate(request1, user=self.user)
-        force_authenticate(request2, user=self.user)
-        response1 = self.view(request1, 'EGI')
-        response2 = self.view(request2, 'EUDAT')
-        self.assertEqual(response1.data, self.token1)
-        self.assertEqual(response2.data, self.token2)
-
-    def test_get_token_in_case_tenant_is_nonexistent(self):
-        request = self.factory.get(self.url_base + 'nonexisting')
-        force_authenticate(request, user=self.user)
-        response = self.view(request, 'nonexisting')
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertEqual(response.data, {'detail': 'Tenant not found'})
-
-
 class ListUsersAPIViewTests(TenantTestCase):
     def setUp(self):
         self.factory = TenantRequestFactory(self.tenant)
