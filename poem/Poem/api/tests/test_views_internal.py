@@ -1,5 +1,7 @@
 from collections import OrderedDict
 import datetime
+from django.test.client import encode_multipart
+import json
 from rest_framework.test import force_authenticate
 from rest_framework import status
 
@@ -69,32 +71,127 @@ class ListTokensAPIViewTests(TenantTestCase):
         self.factory = TenantRequestFactory(self.tenant)
         self.view = views.ListTokens.as_view()
         self.url = '/api/v2/internal/tokens/'
-        self.user = CustUser.objects.create(username='testuser')
+        self.user = CustUser.objects.create_user(username='testuser')
 
         key1 = APIKey.objects.create(client_id='EGI')
+        self.id1 = key1.id
         self.token1 = key1.token
+        self.created1 = datetime.datetime.strftime(key1.created,
+                                                   '%Y-%m-%d %H:%M:%S')
         key2 = APIKey.objects.create(client_id='EUDAT')
+        self.id2 = key2.id
         self.token2 = key2.token
+        self.created2 = datetime.datetime.strftime(key2.created,
+                                                   '%Y-%m-%d %H:%M:%S')
+        key3 = APIKey.objects.create(client_id='DELETABLE')
+        self.id3 = key3.id
+        self.token3 = key3.token
+        self.created3 = datetime.datetime.strftime(key3.created,
+                                                   '%Y-%m-%d %H:%M:%S')
 
     def test_permission_denied_in_case_no_authorization(self):
         request = self.factory.get(self.url)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
-    def test_get_get_list_of_tokens(self):
+    def test_get_list_of_tokens(self):
         request = self.factory.get(self.url)
         force_authenticate(request, user=self.user)
         response = self.view(request)
-        # Those created later are listed first
+        # those created later are listed first
         self.assertEqual(
             response.data,
             [
-                {'name': 'EUDAT',
-                 'token': self.token2},
-                {'name': 'EGI',
-                 'token': self.token1}
+                {
+                    'id': self.id3,
+                    'name': 'DELETABLE',
+                    'token': self.token3,
+                    'created': self.created3,
+                    'revoked': False
+                },
+                {
+                    'id': self.id2,
+                    'name': 'EUDAT',
+                    'token': self.token2,
+                    'created': self.created2,
+                    'revoked': False
+                },
+                {
+                    'id': self.id1,
+                    'name': 'EGI',
+                    'token': self.token1,
+                    'created': self.created1,
+                    'revoked': False
+                }
             ]
         )
+
+    def test_get_token_for_given_client_id(self):
+        request = self.factory.get(self.url + 'EGI')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'EGI')
+        self.assertEqual(
+            response.data,
+            {
+                'id': self.id1,
+                'name': 'EGI',
+                'token': self.token1,
+                'created': self.created1,
+                'revoked': False
+            }
+        )
+
+    def test_put_token(self):
+        data = {'id': self.id1, 'name': 'EGI2'}
+        content = encode_multipart('BoUnDaRyStRiNg', data)
+        content_type = 'multipart/form-data; boundary=BoUnDaRyStRiNg'
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        changed_entry = APIKey.objects.get(id=self.id1)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual('EGI2', changed_entry.client_id)
+
+    def test_put_token_with_name_that_already_exists(self):
+        data = {'id': self.id1, 'name': 'EUDAT'}
+        content = encode_multipart('BoUnDaRyStRiNg', data)
+        content_type = 'multipart/form-data; boundary=BoUnDaRyStRiNg'
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_post_token(self):
+        data = {'name': 'test'}
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_post_token_name_already_exists(self):
+        data = {'name': 'EUDAT'}
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_delete_token(self):
+        request = self.factory.delete(self.url + 'DELETABLE')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'DELETABLE')
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+    def test_delete_nonexisting_token(self):
+        request = self.factory.delete(self.url + 'nonexisting')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'nonexisting')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_delete_no_token_name(self):
+        request = self.factory.delete(self.url)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
 
 class ListTokenForTenantAPIViewTests(TenantTestCase):
