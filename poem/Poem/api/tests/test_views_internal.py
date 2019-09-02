@@ -18,15 +18,15 @@ class ListMetricsInGroupAPIViewTests(TenantTestCase):
     def setUp(self):
         self.factory = TenantRequestFactory(self.tenant)
         self.view = views.ListMetricsInGroup.as_view()
-        self.url = '/api/v2/internal/metrics/EOSC'
+        self.url = '/api/v2/internal/metricsgroup/EOSC'
         self.user = CustUser.objects.create(username='testuser')
 
-        metric1 = Metrics.objects.create(name='org.apel.APEL-Pub')
-        metric2 = Metrics.objects.create(name='org.apel.APEL-Sync')
+        metric1 = Metrics.objects.create(name='org.apel.APEL-Pub', id=1)
+        metric2 = Metrics.objects.create(name='org.apel.APEL-Sync', id=2)
 
         group1 = GroupOfMetrics.objects.create(name='EOSC')
-        group1.metrics.create(name=metric1.name)
-        group1.metrics.create(name=metric2.name)
+        group1.metrics.add(metric1)
+        group1.metrics.add(metric2)
 
         GroupOfMetrics.objects.create(name='Empty_group')
 
@@ -36,7 +36,7 @@ class ListMetricsInGroupAPIViewTests(TenantTestCase):
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_status_code_in_case_nonexisting_site(self):
-        url = '/api/v2/internal/metrics/fake_group'
+        url = '/api/v2/internal/metricsgroup/fake_group'
         request = self.factory.get(url)
         force_authenticate(request, user=self.user)
         response = self.view(request, 'fake_group')
@@ -49,12 +49,15 @@ class ListMetricsInGroupAPIViewTests(TenantTestCase):
         self.assertEqual(
             response.data,
             {
-                'result': ['org.apel.APEL-Pub', 'org.apel.APEL-Sync']
+                'result': [
+                    {'id': 1, 'name': 'org.apel.APEL-Pub'},
+                    {'id': 2, 'name': 'org.apel.APEL-Sync'}
+                ]
             }
         )
 
     def test_get_metrics_in_group_if_empty_group(self):
-        url = '/api/v2/internal/metrics/Empty_group'
+        url = '/api/v2/internal/metricsgroup/Empty_group'
         request = self.factory.get(url)
         force_authenticate(request, user=self.user)
         response = self.view(request, 'Empty_group')
