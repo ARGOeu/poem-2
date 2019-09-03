@@ -973,3 +973,115 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
         response = self.view(request, 'wrong_id')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
+
+class GetUserProfileForUsernameAPIViewTests(TenantTestCase):
+    def setUp(self):
+        self.factory = TenantRequestFactory(self.tenant)
+        self.view = views.GetUserprofileForUsername.as_view()
+        self.url = '/api/v2/internal/userprofile/'
+        self.user = CustUser.objects.create(username='testuser')
+
+        user1 = CustUser.objects.create_user(
+            username='username1',
+            first_name='First',
+            last_name='User',
+            email='fuser@example.com',
+            is_staff=True,
+            is_active=True,
+            is_superuser=False
+        )
+
+        self.gm = poem_models.GroupOfMetrics.objects.create(name='EGI')
+        self.ga = poem_models.GroupOfAggregations.objects.create(name='EUDAT')
+        self.gmp = poem_models.GroupOfMetricProfiles.objects.create(name='SDC')
+
+        userprofile = poem_models.UserProfile.objects.create(
+            user=user1,
+            subject='bla',
+            displayname='First_User',
+            egiid='blablabla'
+        )
+        userprofile.groupsofmetrics.add(self.gm)
+        userprofile.groupsofaggregations.add(self.ga)
+        userprofile.groupsofmetricprofiles.add(self.gmp)
+
+
+    def test_get_user_profile_for_given_username(self):
+        request = self.factory.get(self.url + 'username1')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'username1')
+        self.assertEqual(
+            response.data,
+            OrderedDict([
+                ('subject', 'bla'),
+                ('egiid', 'blablabla'),
+                ('displayname', 'First_User')
+            ])
+        )
+
+    def test_get_user_profile_if_username_does_not_exist(self):
+        request = self.factory.get(self.url + 'nonexisting')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'nonexisting')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data, {'detail': 'User not found'})
+
+    def test_get_user_profile_if_user_profile_does_not_exist(self):
+        request = self.factory.get(self.url + 'testuser')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'testuser')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data, {'detail': 'User profile not found'})
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+
+class ListGroupsForGivenUserAPIViewTests(TenantTestCase):
+    def setUp(self):
+        self.factory = TenantRequestFactory(self.tenant)
+        self.view = views.ListGroupsForGivenUser.as_view()
+        self.url = '/api/v2/internal/usergroups/'
+        self.user = CustUser.objects.create(username='testuser')
+
+        user1 = CustUser.objects.create_user(
+            username='username1',
+            first_name='First',
+            last_name='User',
+            email='fuser@example.com',
+            is_staff=True,
+            is_active=True,
+            is_superuser=False
+        )
+
+        gm = poem_models.GroupOfMetrics.objects.create(name='EGI')
+        poem_models.GroupOfMetrics.objects.create(name='EUDAT')
+        ga = poem_models.GroupOfAggregations.objects.create(name='EUDAT')
+        gmp = poem_models.GroupOfMetricProfiles.objects.create(name='SDC')
+
+        userprofile = poem_models.UserProfile.objects.create(
+            user=user1
+        )
+        userprofile.groupsofmetrics.add(gm)
+        userprofile.groupsofaggregations.add(ga)
+        userprofile.groupsofmetricprofiles.add(gmp)
+
+    def test_get_groups_for_given_user(self):
+        request = self.factory.get(self.url + 'username1')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'username1')
+        aggr = [r for r in response.data['result']['aggregations']]
+        met = [r for r in response.data['result']['metrics']]
+        mp = [r for r in response.data['result']['metricprofiles']]
+        self.assertEqual(aggr, ['EUDAT'])
+        self.assertEqual(met, ['EGI'])
+        self.assertEqual(mp, ['SDC'])
+
+    def test_get_all_groups(self):
+        request = self.factory.get(self.url)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        aggr = [r for r in response.data['result']['aggregations']]
+        met = [r for r in response.data['result']['metrics']]
+        mp = [r for r in response.data['result']['metricprofiles']]
+        self.assertEqual(aggr, ['EUDAT'])
+        self.assertEqual(met, ['EGI', 'EUDAT'])
+        self.assertEqual(mp, ['SDC'])
