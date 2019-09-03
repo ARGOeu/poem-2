@@ -1,20 +1,21 @@
 from collections import OrderedDict
 import datetime
-from django.db import transaction
 from django.test.client import encode_multipart
 from rest_framework.test import force_authenticate
 from rest_framework import status
+from reversion.models import Revision
 
 from rest_framework_api_key.models import APIKey
 
 from tenant_schemas.test.cases import TenantTestCase
 from tenant_schemas.test.client import TenantRequestFactory
+from tenant_schemas.utils import schema_context, get_public_schema_name
 
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 from Poem.poem.models import GroupOfMetrics, Metrics, UserProfile, \
     GroupOfAggregations, GroupOfMetricProfiles
-from Poem.poem_super_admin.models import Probe
+from Poem.poem_super_admin.models import Probe, ExtRevision
 from Poem.users.models import CustUser
 from Poem.api import views_internal as views
 
@@ -307,11 +308,10 @@ class ListUsersAPIViewTests(TenantTestCase):
     @patch('Poem.poem.models.GroupOfMetricProfiles.objects.get')
     @patch('Poem.poem.models.GroupOfMetrics.objects.get')
     @patch('Poem.poem.models.GroupOfAggregations.objects.get')
-    def test_post_user(self, aggr, metr, mp, upga):
+    def test_post_user(self, aggr, metr, mp):
         aggr.return_value = self.groupofaggregations
         metr.return_value = self.groupofmetrics
         mp.return_value = self.groupofmetricprofiles
-        upga.return_value = self.groupofaggregations
         data = {
             'username': 'newuser',
             'first_name': 'New',
@@ -372,7 +372,7 @@ class ListProbesAPIViewTests(TenantTestCase):
         self.url_base = '/api/v2/internal/probes/'
         self.user = CustUser.objects.create(username='testuser')
 
-        Probe.objects.create(
+        probe1 = Probe.objects.create(
             name='ams-probe',
             version='0.1.7',
             description='Probe is inspecting AMS service by trying to publish '
@@ -383,19 +383,97 @@ class ListProbesAPIViewTests(TenantTestCase):
                    'README.md'
         )
 
-    def test_get_probe(self):
+        probe2 = Probe.objects.create(
+            name='argo-web-api',
+            version='0.1.7',
+            description='This is a probe for checking AR and status reports are'
+                        ' properly working.',
+            comment='Initial version.',
+            repository='https://github.com/ARGOeu/nagios-plugins-argo',
+            docurl='https://github.com/ARGOeu/nagios-plugins-argo/blob/master/'
+                   'README.md'
+        )
+
+        with schema_context(get_public_schema_name()):
+            user = CustUser.objects.create_user('superadmin')
+            revision1 = Revision.objects.create(
+                date_created=datetime.datetime.now(),
+                comment='Initial version.',
+                user=user
+            )
+
+            revision2 = Revision.objects.create(
+                date_created=datetime.datetime.now(),
+                comment='Initial version',
+                user=user
+            )
+
+        ExtRevision.objects.create(
+            probeid=probe1.id,
+            version=probe1.version,
+            revision=revision1
+        )
+
+        ExtRevision.objects.create(
+            probeid=probe2.id,
+            version=probe2.version,
+            revision=revision2
+        )
+
+
+    def test_get_list_of_all_probes(self):
+        request = self.factory.get(self.url_base)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(
+            response.data,
+            [
+                {
+                    'name': 'ams-probe',
+                    'version': '0.1.7',
+                    'docurl':
+                        'https://github.com/ARGOeu/nagios-plugins-argo/blob/'
+                        'master/README.md',
+                    'description': 'Probe is inspecting AMS service by trying '
+                                   'to publish and consume randomly generated '
+                                   'messages.',
+                    'comment': 'Initial version.',
+                    'repository': 'https://github.com/ARGOeu/nagios-plugins-'
+                                  'argo',
+                    'nv': 1
+                },
+                {
+                    'name': 'argo-web-api',
+                    'version': '0.1.7',
+                    'description': 'This is a probe for checking AR and status '
+                                   'reports are properly working.',
+                    'comment': 'Initial version.',
+                    'repository': 'https://github.com/ARGOeu/nagios-plugins-'
+                                  'argo',
+                    'docurl': 'https://github.com/ARGOeu/nagios-plugins-argo/'
+                              'blob/master/README.md',
+                    'nv': 1
+                }
+            ]
+        )
+
+    def test_get_probe_by_name(self):
         request = self.factory.get(self.url_base + 'ams-probe')
         force_authenticate(request, user=self.user)
         response = self.view(request, 'ams-probe')
         self.assertEqual(
             response.data,
             {
-                'id': 1,
                 'name': 'ams-probe',
+                'version': '0.1.7',
+                'docurl':
+                    'https://github.com/ARGOeu/nagios-plugins-argo/blob/master/'
+                    'README.md',
                 'description': 'Probe is inspecting AMS service by trying to '
                                'publish and consume randomly generated '
                                'messages.',
-                'comment': 'Initial version.'
+                'comment': 'Initial version.',
+                'repository': 'https://github.com/ARGOeu/nagios-plugins-argo'
             }
         )
 
@@ -408,4 +486,4 @@ class ListProbesAPIViewTests(TenantTestCase):
         request = self.factory.get(self.url_base + 'nonexisting_probe')
         force_authenticate(request, user=self.user)
         response = self.view(request, 'nonexisting_probe')
-        self.assertEqual(response.data, {})
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
