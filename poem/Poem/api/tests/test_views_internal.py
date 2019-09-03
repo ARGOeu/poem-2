@@ -1,7 +1,7 @@
 from collections import OrderedDict
 import datetime
+from django.db import transaction
 from django.test.client import encode_multipart
-import json
 from rest_framework.test import force_authenticate
 from rest_framework import status
 
@@ -10,10 +10,20 @@ from rest_framework_api_key.models import APIKey
 from tenant_schemas.test.cases import TenantTestCase
 from tenant_schemas.test.client import TenantRequestFactory
 
-from Poem.poem.models import GroupOfMetrics, Metrics
+from unittest.mock import patch, MagicMock
+
+from Poem.poem.models import GroupOfMetrics, Metrics, UserProfile, \
+    GroupOfAggregations, GroupOfMetricProfiles
 from Poem.poem_super_admin.models import Probe
 from Poem.users.models import CustUser
 from Poem.api import views_internal as views
+
+
+def encode_data(data):
+    content = encode_multipart('BoUnDaRyStRiNg', data)
+    content_type = 'multipart/form-data; boundary=BoUnDaRyStRiNg'
+
+    return content, content_type
 
 
 class ListMetricsInGroupAPIViewTests(TenantTestCase):
@@ -143,8 +153,7 @@ class ListTokensAPIViewTests(TenantTestCase):
 
     def test_put_token(self):
         data = {'id': self.id1, 'name': 'EGI2'}
-        content = encode_multipart('BoUnDaRyStRiNg', data)
-        content_type = 'multipart/form-data; boundary=BoUnDaRyStRiNg'
+        content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
         force_authenticate(request, user=self.user)
         response = self.view(request)
@@ -215,6 +224,10 @@ class ListUsersAPIViewTests(TenantTestCase):
             date_joined=datetime.datetime(2015, 1, 2, 0, 0, 0)
         )
 
+        self.groupofmetrics = GroupOfMetrics.objects.create(name='Metric1')
+        self.groupofmetricprofiles = GroupOfMetricProfiles.objects.create(name='MP1')
+        self.groupofaggregations = GroupOfAggregations.objects.create(name='Aggr1')
+
     def test_get_users(self):
         request = self.factory.get(self.url)
         force_authenticate(request, user=self.user)
@@ -245,6 +258,111 @@ class ListUsersAPIViewTests(TenantTestCase):
         request = self.factory.get(self.url)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_get_user_by_username(self):
+        request = self.factory.get(self.url + 'testuser')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'testuser')
+        self.assertEqual(
+            response.data,
+            OrderedDict([('first_name', 'Test'),
+                         ('last_name', 'User'),
+                         ('username', 'testuser'),
+                         ('is_active', True),
+                         ('is_superuser', False),
+                         ('is_staff', False),
+                         ('email', 'testuser@example.com'),
+                         ('date_joined', '2015-01-01T00:00:00')])
+        )
+
+    def test_get_user_by_username_if_username_does_not_exist(self):
+        request = self.factory.get(self.url + 'nonexisting')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'nonexisting')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_put_user(self):
+        data = {
+            'username': 'testuser',
+            'first_name': 'Test',
+            'last_name': 'Newuser',
+            'email': 'testuser@example.com',
+            'is_superuser': False,
+            'is_staff': False,
+            'is_active': True
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        user = CustUser.objects.get(username='testuser')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(user.username, 'testuser')
+        self.assertEqual(user.first_name, 'Test')
+        self.assertEqual(user.last_name, 'Newuser')
+        self.assertFalse(user.is_superuser)
+        self.assertFalse(user.is_staff)
+        self.assertTrue(user.is_active)
+
+    @patch('Poem.poem.models.GroupOfMetricProfiles.objects.get')
+    @patch('Poem.poem.models.GroupOfMetrics.objects.get')
+    @patch('Poem.poem.models.GroupOfAggregations.objects.get')
+    def test_post_user(self, aggr, metr, mp, upga):
+        aggr.return_value = self.groupofaggregations
+        metr.return_value = self.groupofmetrics
+        mp.return_value = self.groupofmetricprofiles
+        upga.return_value = self.groupofaggregations
+        data = {
+            'username': 'newuser',
+            'first_name': 'New',
+            'last_name': 'User',
+            'email': 'newuser@example.com',
+            'is_superuser': True,
+            'is_staff': True,
+            'is_active': True,
+            'password': 'blablabla',
+            'groupsofaggregations': ['Aggr1'],
+            'groupsofmetrics': ['Metric1'],
+            'groupsofmetricprofiles': ['MP1'],
+            'displayname': '',
+            'subject': '',
+            'egiid': ''
+        }
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        user = CustUser.objects.get(username='newuser')
+        userprof = UserProfile.objects.get(user=user)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(user.username, 'newuser')
+        self.assertEqual(user.first_name, 'New')
+        self.assertEqual(user.last_name, 'User')
+        self.assertEqual(user.email, 'newuser@example.com')
+        self.assertTrue(user.is_superuser)
+        self.assertTrue(user.is_staff)
+        self.assertTrue(user.is_active)
+        self.assertEqual(userprof.user, user)
+        self.assertEqual(userprof.displayname, '')
+        self.assertEqual(userprof.subject, '')
+        self.assertEqual(userprof.egiid, '')
+
+    def test_delete_user(self):
+        request = self.factory.delete(self.url + 'another_user')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'another_user')
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+    def test_delete_nonexisting_user(self):
+        request = self.factory.delete(self.url + 'nonexisting')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'nonexisting')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_delete_user_without_specifying_username(self):
+        request = self.factory.delete(self.url)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
 
 class ListProbesAPIViewTests(TenantTestCase):

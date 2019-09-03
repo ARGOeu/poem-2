@@ -434,7 +434,7 @@ class ListUsers(APIView):
             CustUser.objects.create_user(
                 username=request.data['username'],
                 password=request.data['password'],
-                email=request.data['password'],
+                email=request.data['email'],
                 first_name=request.data['first_name'],
                 last_name=request.data['last_name'],
                 is_superuser=request.data['is_superuser'],
@@ -460,9 +460,10 @@ class ListUsers(APIView):
             for group in request.data['groupsofmetricprofiles']:
                 userprofile.groupsofmetricprofiles.add(poem_models.GroupOfMetricProfiles.objects.get(name=group))
 
-            return Response(status.HTTP_201_CREATED)
+            return Response(status=status.HTTP_201_CREATED)
+
         except Exception:
-            return Response(status.HTTP_400_BAD_REQUEST)
+            return Response(status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, username=None):
         if username:
@@ -475,7 +476,7 @@ class ListUsers(APIView):
                 raise(NotFound(status=404, detail='User not found'))
 
         else:
-            Response(status=status.HTTP_400_BAD_REQUEST)
+            return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
 class ListGroupsForUser(APIView):
