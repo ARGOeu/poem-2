@@ -27,6 +27,7 @@ import datetime
 import json
 
 from Poem.api.internal_views.aggregationprofiles import *
+from Poem.api.internal_views.metricprofiles import *
 from Poem.api.internal_views.services import *
 
 
@@ -172,24 +173,6 @@ class ListMetricsInGroup(APIView):
 
         else:
             return Response(status=status.HTTP_400_BAD_REQUEST)
-
-
-class ListAllMetrics(APIView):
-    authentication_classes = (SessionAuthentication,)
-
-    def get(self, request):
-        metrics = poem_models.Metrics.objects.all()
-        serializer = serializers.MetricsSerializer(metrics, many=True)
-        return Response(serializer.data)
-
-
-class ListAllServiceFlavours(APIView):
-    authentication_classes = (SessionAuthentication,)
-
-    def get(self, request):
-        service_flavours = poem_models.ServiceFlavour.objects.all()
-        serializer = serializers.ServiceFlavourSerializer(service_flavours, many=True)
-        return Response(serializer.data)
 
 
 class ListTokens(APIView):
@@ -368,66 +351,6 @@ class ListGroupsForUser(APIView):
             return Response(results[group.lower()])
         else:
             return Response({'result': results})
-
-
-class ListMetricProfiles(APIView):
-    authentication_classes= (SessionAuthentication,)
-
-    def post(self, request):
-        serializer = serializers.MetricProfileSerializer(data=request.data)
-
-        if serializer.is_valid():
-            serializer.save()
-
-            groupprofile = poem_models.GroupOfMetricProfiles.objects.get(name=request.data['groupname'])
-            profile = poem_models.MetricProfiles.objects.get(apiid=request.data['apiid'])
-            groupprofile.metricprofiles.add(profile)
-
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def get(self, request, profile_name=None):
-        sync_webapi(settings.WEBAPI_METRIC, poem_models.MetricProfiles)
-
-        if profile_name:
-            try:
-                profile = poem_models.MetricProfiles.objects.get(name=profile_name)
-                serializer = serializers.MetricProfileSerializer(profile)
-                return Response(serializer.data)
-
-            except poem_models.MetricProfiles.DoesNotExist:
-                raise NotFound(status=404,
-                            detail='Metric profile not found')
-
-        else:
-            profiles = poem_models.MetricProfiles.objects.all()
-            serializer = serializers.MetricProfileSerializer(profiles, many=True)
-            return Response(serializer.data)
-
-    def put(self, request):
-        profile = poem_models.MetricProfiles.objects.get(apiid=request.data['apiid'])
-        profile.groupname = request.data['groupname']
-        profile.save()
-
-        groupprofile = poem_models.GroupOfMetricProfiles.objects.get(name=request.data['groupname'])
-        groupprofile.metricprofiles.add(profile)
-
-        return Response(status=status.HTTP_201_CREATED)
-
-    def delete(self, request, profile_name=None):
-        if profile_name:
-            try:
-                profile = poem_models.MetricProfiles.objects.get(name=profile_name)
-                profile.delete()
-                return Response(status=status.HTTP_204_NO_CONTENT)
-
-            except poem_models.MetricProfiles.DoesNotExist:
-                raise NotFound(status=404,
-                            detail='Metric profile not found')
-
-        else:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
 class ListProbes(APIView):
