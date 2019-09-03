@@ -793,3 +793,66 @@ class ListAggregationsAPIViewTests(TenantTestCase):
         force_authenticate(request, user=self.user)
         response = self.view(request, 'wrong_id')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+
+class ListServiceFlavoursAPIViewTests(TenantTestCase):
+    def setUp(self):
+        self.factory = TenantRequestFactory(self.tenant)
+        self.view = views.ListAllServiceFlavours.as_view()
+        self.url = '/api/v2/internal/serviceflavoursall/'
+        self.user = CustUser.objects.create(username='testuser')
+
+        poem_models.ServiceFlavour.objects.create(
+            name='org.onedata.oneprovider',
+            description='Oneprovider is a Onedata component...'
+        )
+
+        poem_models.ServiceFlavour.objects.create(
+            name='SRM',
+            description='Storage Resource Manager.'
+        )
+
+    def test_get_service_flavours(self):
+        request = self.factory.get(self.url)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(
+            response.data,
+            [
+                OrderedDict([
+                    ('name', 'org.onedata.oneprovider'),
+                    ('description', 'Oneprovider is a Onedata component...')
+                ]),
+                OrderedDict([
+                    ('name', 'SRM'),
+                    ('description', 'Storage Resource Manager.')
+                ])
+            ]
+        )
+
+
+class ListAllMetricsAPIViewTests(TenantTestCase):
+    def setUp(self):
+        self.factory = TenantRequestFactory(self.tenant)
+        self.view = views.ListAllMetrics.as_view()
+        self.url = '/api/v2/internal/metricsall/'
+        self.user = CustUser.objects.create(username='testuser')
+
+        poem_models.Metrics.objects.create(name='hr.srce.GRAM-Auth')
+        poem_models.Metrics.objects.create(name='org.apel.APEL-Pub')
+
+    def test_get_all_metrics(self):
+        request = self.factory.get(self.url)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(
+            response.data,
+            [
+                OrderedDict([
+                    ('name', 'hr.srce.GRAM-Auth')
+                ]),
+                OrderedDict([
+                    ('name', 'org.apel.APEL-Pub')
+                ])
+            ]
+        )
