@@ -13,9 +13,8 @@ from tenant_schemas.utils import schema_context, get_public_schema_name
 
 from unittest.mock import patch
 
-from Poem.poem.models import GroupOfMetrics, Metrics, UserProfile, \
-    GroupOfAggregations, GroupOfMetricProfiles
-from Poem.poem_super_admin.models import Probe, ExtRevision
+from Poem.poem import models as poem_models
+from Poem.poem_super_admin import models as admin_models
 from Poem.users.models import CustUser
 from Poem.api import views_internal as views
 
@@ -34,14 +33,14 @@ class ListMetricsInGroupAPIViewTests(TenantTestCase):
         self.url = '/api/v2/internal/metricsgroup/EOSC'
         self.user = CustUser.objects.create(username='testuser')
 
-        metric1 = Metrics.objects.create(name='org.apel.APEL-Pub', id=1)
-        metric2 = Metrics.objects.create(name='org.apel.APEL-Sync', id=2)
+        metric1 = poem_models.Metrics.objects.create(name='org.apel.APEL-Pub', id=1)
+        metric2 = poem_models.Metrics.objects.create(name='org.apel.APEL-Sync', id=2)
 
-        group1 = GroupOfMetrics.objects.create(name='EOSC')
+        group1 = poem_models.GroupOfMetrics.objects.create(name='EOSC')
         group1.metrics.add(metric1)
         group1.metrics.add(metric2)
 
-        GroupOfMetrics.objects.create(name='Empty_group')
+        poem_models.GroupOfMetrics.objects.create(name='Empty_group')
 
     def test_permission_denied_in_case_no_authorization(self):
         request = self.factory.get(self.url)
@@ -225,9 +224,9 @@ class ListUsersAPIViewTests(TenantTestCase):
             date_joined=datetime.datetime(2015, 1, 2, 0, 0, 0)
         )
 
-        self.groupofmetrics = GroupOfMetrics.objects.create(name='Metric1')
-        self.groupofmetricprofiles = GroupOfMetricProfiles.objects.create(name='MP1')
-        self.groupofaggregations = GroupOfAggregations.objects.create(name='Aggr1')
+        self.groupofmetrics = poem_models.GroupOfMetrics.objects.create(name='Metric1')
+        self.groupofmetricprofiles = poem_models.GroupOfMetricProfiles.objects.create(name='MP1')
+        self.groupofaggregations = poem_models.GroupOfAggregations.objects.create(name='Aggr1')
 
     def test_get_users(self):
         request = self.factory.get(self.url)
@@ -332,7 +331,7 @@ class ListUsersAPIViewTests(TenantTestCase):
         force_authenticate(request, user=self.user)
         response = self.view(request)
         user = CustUser.objects.get(username='newuser')
-        userprof = UserProfile.objects.get(user=user)
+        userprof = poem_models.UserProfile.objects.get(user=user)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(user.username, 'newuser')
         self.assertEqual(user.first_name, 'New')
@@ -372,7 +371,7 @@ class ListProbesAPIViewTests(TenantTestCase):
         self.url_base = '/api/v2/internal/probes/'
         self.user = CustUser.objects.create(username='testuser')
 
-        probe1 = Probe.objects.create(
+        probe1 = admin_models.Probe.objects.create(
             name='ams-probe',
             version='0.1.7',
             description='Probe is inspecting AMS service by trying to publish '
@@ -383,7 +382,7 @@ class ListProbesAPIViewTests(TenantTestCase):
                    'README.md'
         )
 
-        probe2 = Probe.objects.create(
+        probe2 = admin_models.Probe.objects.create(
             name='argo-web-api',
             version='0.1.7',
             description='This is a probe for checking AR and status reports are'
@@ -408,13 +407,13 @@ class ListProbesAPIViewTests(TenantTestCase):
                 user=user
             )
 
-        ExtRevision.objects.create(
+        admin_models.ExtRevision.objects.create(
             probeid=probe1.id,
             version=probe1.version,
             revision=revision1
         )
 
-        ExtRevision.objects.create(
+        admin_models.ExtRevision.objects.create(
             probeid=probe2.id,
             version=probe2.version,
             revision=revision2
@@ -487,3 +486,189 @@ class ListProbesAPIViewTests(TenantTestCase):
         force_authenticate(request, user=self.user)
         response = self.view(request, 'nonexisting_probe')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+
+class ListServicesAPIViewTests(TenantTestCase):
+    def setUp(self):
+        self.factory = TenantRequestFactory(self.tenant)
+        self.view = views.ListServices.as_view()
+        self.url = '/api/v2/internal/services/'
+        self.user = CustUser.objects.create(username='testuser')
+
+        poem_models.Service.objects.create(
+            id='2838b1ae-af25-4719-89c5-5484181d6201',
+            service_id='7dc97be9-bcd9-46af-8bca-aa976bc8e207',
+            service_name='B2SAFE',
+            service_category='Storage & Data',
+            service_version='1',
+            service_type='b2safe.dsi',
+            component_version='1.11.13',
+            component_name='Storage',
+            visible_to_marketplace=False,
+            in_catalogue=True,
+            external_service=False,
+            internal_service=False
+        )
+
+        poem_models.Service.objects.create(
+            id='31024d6a-9dd4-44d9-996e-599108ed23a7',
+            service_id='39917801-850e-4378-9ca3-ea2d2bfc5860',
+            service_name='EGI DataHub',
+            service_category='Storage & Data',
+            service_version='1',
+            service_type='org.onedata.oneprovider',
+            component_version='stable',
+            component_name='OpenData',
+            visible_to_marketplace=False,
+            in_catalogue=True,
+            external_service=False,
+            internal_service=False
+        )
+
+        poem_models.Service.objects.create(
+            id='4d297cea-5bf7-434a-b428-b52d35dfcac1',
+            service_id='9689afb1-f5d6-4716-ae5e-9de347803884',
+            service_name='EGI Online Storage',
+            service_category='Storage & Data',
+            service_version='1',
+            service_type='SRM',
+            component_version='1.11.13',
+            component_name='Storage',
+            visible_to_marketplace=False,
+            in_catalogue=True,
+            external_service=False,
+            internal_service=False
+        )
+
+        poem_models.ServiceFlavour.objects.create(
+            name='org.onedata.oneprovider',
+            description='Oneprovider is a Onedata component...'
+        )
+
+        poem_models.ServiceFlavour.objects.create(
+            name='SRM',
+            description='Storage Resource Manager.'
+        )
+
+        poem_models.MetricInstance.objects.create(
+            service_flavour='org.onedata.oneprovider',
+            metric='org.onedata.Oneprovider-Health'
+        )
+
+        poem_models.MetricInstance.objects.create(
+            service_flavour='org.onedata.oneprovider',
+            metric='eu.egi.CertValidity'
+        )
+
+        poem_models.MetricInstance.objects.create(
+            service_flavour='SRM',
+            metric='hr.srce.SRM2-CertLifetime'
+        )
+
+        poem_models.MetricInstance.objects.create(
+            service_flavour='SRM',
+            metric='org.sam.SRM-All'
+        )
+
+        tag = poem_models.Tags.objects.create(
+            name='Production'
+        )
+
+        mtype = poem_models.MetricType.objects.create(
+            name='Active'
+        )
+
+        poem_models.Metric.objects.create(
+            name='org.onedata.Oneprovider-Health',
+            probeversion='check_oneprovider (3.2.0)',
+            tag=tag,
+            mtype=mtype
+        )
+
+        poem_models.Metric.objects.create(
+            name='eu.egi.CertValidity',
+            probeversion='check_ssl_cert (1.84.0)',
+            tag=tag,
+            mtype=mtype
+        )
+
+        poem_models.Metric.objects.create(
+            name='hr.srce.SRM2-CertLifetime',
+            probeversion='CertLifetime-probe (1.0.0)',
+            tag=tag,
+            mtype=mtype
+        )
+
+        poem_models.Metric.objects.create(
+            name='org.sam.SRM-All',
+            probeversion='SRM-probe (1.0.1)',
+            tag=tag,
+            mtype=mtype
+        )
+
+    def test_get_services(self):
+        request = self.factory.get(self.url)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(
+            response.data,
+            {'result':
+                {
+                    'rows': [
+                        {
+                            'service_category': 'Storage & Data',
+                            'service_name': 'EGI DataHub',
+                            'service_type': 'org.onedata.oneprovider',
+                            'metric': 'org.onedata.Oneprovider-Health',
+                            'probe': 'check_oneprovider (3.2.0)'
+                        },
+                        {
+                            'service_category': '',
+                            'service_name': '',
+                            'service_type': '',
+                            'metric': 'eu.egi.CertValidity',
+                            'probe': 'check_ssl_cert (1.84.0)'
+                        },
+                        {
+                            'service_category': '',
+                            'service_name': 'EGI Online Storage',
+                            'service_type': 'SRM',
+                            'metric': 'hr.srce.SRM2-CertLifetime',
+                            'probe': 'CertLifetime-probe (1.0.0)'
+                        },
+                        {
+                            'service_category': '',
+                            'service_name': '',
+                            'service_type': '',
+                            'metric': 'org.sam.SRM-All',
+                            'probe': 'SRM-probe (1.0.1)'
+                        }
+                    ],
+                    'rowspan': {
+                        'service_category': [
+                            ('Storage & Data', 4 )
+                        ],
+                        'service_name': [
+                            ('EGI DataHub', 2),
+                            ('EGI Online Storage', 2)
+                        ],
+                        'service_type': [
+                            ('org.onedata.oneprovider', 2),
+                            ('SRM', 2)
+                        ],
+                        'metric': [
+                            ('org.onedata.Oneprovider-Health', 1),
+                            ('eu.egi.CertValidity', 1),
+                            ('hr.srce.SRM2-CertLifetime', 1),
+                            ('org.sam.SRM-All', 1)
+                        ],
+                        'probe': [
+                            ('check_oneprovider (3.2.0)', 1),
+                            ('check_ssl_cert (1.84.0)', 1),
+                            ('CertLifetime-probe (1.0.0)', 1),
+                            ('SRM-probe (1.0.1)', 1)
+                        ]
+                    }
+                }
+            }
+        )
