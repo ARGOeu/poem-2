@@ -856,3 +856,120 @@ class ListAllMetricsAPIViewTests(TenantTestCase):
                 ])
             ]
         )
+
+
+class ListMetricProfilesAPIViewTests(TenantTestCase):
+    def setUp(self):
+        self.factory = TenantRequestFactory(self.tenant)
+        self.view = views.ListMetricProfiles.as_view()
+        self.url = '/api/v2/internal/metricprofiles/'
+        self.user = CustUser.objects.create(username='testuser')
+
+        poem_models.MetricProfiles.objects.create(
+            name='TEST_PROFILE',
+            apiid='00000000-oooo-kkkk-aaaa-aaeekkccnnee',
+            groupname='EGI'
+        )
+
+        poem_models.MetricProfiles.objects.create(
+            name='ANOTHER-PROFILE',
+            apiid='12341234-oooo-kkkk-aaaa-aaeekkccnnee'
+        )
+
+        poem_models.GroupOfMetricProfiles.objects.create(name='EGI')
+        poem_models.GroupOfMetricProfiles.objects.create(name='new-group')
+
+    @patch('Poem.api.internal_views.metricprofiles.sync_webapi',
+           side_effect=mocked_func)
+    def test_get_all_metric_profiles(self, func):
+        request = self.factory.get(self.url)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(
+            response.data,
+            [
+                OrderedDict([
+                    ('name', 'TEST_PROFILE'),
+                    ('apiid', '00000000-oooo-kkkk-aaaa-aaeekkccnnee'),
+                    ('groupname', 'EGI')
+                ]),
+                OrderedDict([
+                    ('name', 'ANOTHER-PROFILE'),
+                    ('apiid', '12341234-oooo-kkkk-aaaa-aaeekkccnnee'),
+                    ('groupname', '')
+                ])
+            ]
+        )
+
+    @patch('Poem.api.internal_views.metricprofiles.sync_webapi',
+           side_effect=mocked_func)
+    def test_get_metric_profile_by_name(self, func):
+        request = self.factory.get(self.url + 'TEST_PROFILE')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'TEST_PROFILE')
+        self.assertEqual(
+            response.data,
+            OrderedDict([
+                ('name', 'TEST_PROFILE'),
+                ('apiid', '00000000-oooo-kkkk-aaaa-aaeekkccnnee'),
+                ('groupname', 'EGI')
+            ])
+        )
+
+    @patch('Poem.api.internal_views.metricprofiles.sync_webapi',
+           side_effect=mocked_func)
+    def test_get_metric_profile_if_wrong_name(self, func):
+        request = self.factory.get(self.url + 'nonexisting')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'nonexisting')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_post_metric_profile(self):
+        data = {'apiid': '12341234-aaaa-kkkk-aaaa-aaeekkccnnee',
+                'name': 'new-profile',
+                'groupname': 'EGI'}
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        profile = poem_models.MetricProfiles.objects.get(name='new-profile')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(profile.name, 'new-profile')
+        self.assertEqual(profile.apiid, '12341234-aaaa-kkkk-aaaa-aaeekkccnnee')
+        self.assertEqual(profile.groupname, 'EGI')
+
+    def test_post_metric_profile_invalid_data(self):
+        data = {'name': 'new-profile'}
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_put_metric_profile(self):
+        data = {'apiid': '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
+                'groupname': 'new-group'}
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        profile = poem_models.MetricProfiles.objects.get(name='TEST_PROFILE')
+        self.assertEqual(profile.name, 'TEST_PROFILE')
+        self.assertEqual(profile.apiid, '00000000-oooo-kkkk-aaaa-aaeekkccnnee')
+        self.assertEqual(profile.groupname, 'new-group')
+
+    def test_delete_metric_profile(self):
+        request = self.factory.delete(self.url + 'ANOTHER-PROFILE')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'ANOTHER-PROFILE')
+        all = poem_models.MetricProfiles.objects.all().values_list(
+            'name', flat=True
+        )
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse('ANOTHER-PROFILE' in all)
+
+    def test_delete_metric_profile_with_wrong_id(self):
+        request = self.factory.delete(self.url + 'wrong_id')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'wrong_id')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
