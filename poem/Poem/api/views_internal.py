@@ -18,7 +18,6 @@ from Poem.poem.saml2.config import tenant_from_request, saml_login_string, get_s
 from reversion.models import Version, Revision
 
 from .views import NotFound
-from . import serializers
 
 from Poem import settings
 
@@ -28,6 +27,7 @@ import json
 from Poem.api.internal_views.aggregationprofiles import *
 from Poem.api.internal_views.groupelements import *
 from Poem.api.internal_views.metricprofiles import *
+from Poem.api.internal_views.probes import *
 from Poem.api.internal_views.services import *
 from Poem.api.internal_views.users import *
 
@@ -198,42 +198,6 @@ class ListGroupsForUser(APIView):
             return Response(results[group.lower()])
         else:
             return Response({'result': results})
-
-
-class ListProbes(APIView):
-    authentication_classes = (SessionAuthentication,)
-
-    def get(self, request, name=None):
-        if name:
-            try:
-                probe = Probe.objects.get(name=name)
-                serializer = serializers.ProbeSerializer(probe)
-
-                return Response(serializer.data)
-
-            except Probe.DoesNotExist:
-                raise NotFound(status=404, detail='Probe not found')
-
-        else:
-            probes = Probe.objects.all()
-
-            results = []
-            for probe in probes:
-                # number of probe revisions
-                nv = ExtRevision.objects.filter(probeid=probe.id).count()
-                results.append(
-                    dict(
-                        name=probe.name,
-                        version=probe.version,
-                        docurl=probe.docurl,
-                        description=probe.description,
-                        comment=probe.comment,
-                        repository=probe.repository,
-                        nv=nv
-                    )
-                )
-
-            return Response(results)
 
 
 class Saml2Login(APIView):
