@@ -3,7 +3,15 @@ import { Backend } from './DataManager';
 import { Link } from 'react-router-dom';
 import { LoadingAnim, BaseArgoView } from './UIElements';
 import ReactTable from 'react-table';
-import { Alert, FormGroup, Label, FormText, Row, Col, Button } from 'reactstrap';
+import { Alert, 
+  FormGroup, 
+  Label, 
+  FormText, 
+  Row, 
+  Col, 
+  Button, 
+  InputGroup, 
+  InputGroupAddon } from 'reactstrap';
 import { Formik, Form, Field } from 'formik';
 import ReactDiffViewer from 'react-diff-viewer';
 
@@ -82,44 +90,42 @@ const ProbeForm = ({props}) => (
     <FormGroup>
       <h4 className="mt-2 p-1 pl-3 text-light text-uppercase rounded" style={{"backgroundColor": "#416090"}}>Probe metadata</h4>
       <Row className='mt-4 mb-3 align-items-top'>
-        <Col md={1}>
-          <Label for='repository'>Repository</Label>
-        </Col>
-        <Col md={7}>
-          <Field
-            type='text'
-            name='repository'
-            className='form-control'
-            id='repository'
-            disabled={true}
-          />
+        <Col md={8}>
+          <InputGroup>
+            <InputGroupAddon addonType='prepend'>Repository</InputGroupAddon>
+            <Field
+              type='text'
+              name='repository'
+              className='form-control'
+              id='repository'
+              disabled={true}
+            />
+          </InputGroup>
           <FormText color='muted'>
             Probe repository URL.
           </FormText>
         </Col>
       </Row>
       <Row className='mb-3 align-items-top'>
-        <Col md={1}>
-          <Label for='docurl'>Documentation</Label>
-        </Col>
-        <Col md={7}>
-          <Field
-            type='text'
-            name='docurl'
-            className='form-control'
-            id='docurl'
-            disabled={true}
-          />
+        <Col md={8}>
+          <InputGroup>
+            <InputGroupAddon addonType='prepend'>Documentation</InputGroupAddon>
+            <Field
+              type='text'
+              name='docurl'
+              className='form-control'
+              id='docurl'
+              disabled={true}
+            />
+          </InputGroup>
           <FormText color='muted'>
             Documentation URL.
           </FormText>
         </Col>
       </Row>
       <Row className='mb-3 align-items-top'>
-        <Col md={1}>
+        <Col md={8}>
           <Label for='description'>Description</Label>
-        </Col>
-        <Col md={7}>
           <Field
             component='textarea'
             name='description'
@@ -134,10 +140,8 @@ const ProbeForm = ({props}) => (
         </Col>
       </Row>
       <Row className='mb-3 align-items-top'>
-        <Col md={1}>
+        <Col md={8}>
           <Label for='comment'>Comment</Label>
-        </Col>
-        <Col md={7}>
           <Field 
             component='textarea'
             name='comment'
