@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import Login from './Login';
 import { MetricProfilesChange, MetricProfilesList } from './MetricProfiles';
 import Home from './Home';
-import { ProbeList, ProbeDetails } from './Probes';
+import { ProbeList, ProbeDetails, ProbeHistory, ProbeVersionCompare, ProbeVersionDetails } from './Probes';
 import { MetricList, MetricChange } from './Metrics';
 import Administration from './Administration';
 import { AggregationProfilesChange, AggregationProfilesList } from './AggregationProfiles';
@@ -156,6 +156,9 @@ class App extends Component {
                   <Route exact path="/ui/services" component={Services} />
                   <Route exact path="/ui/reports" component={Reports} />
                   <Route exact path="/ui/probes" component={ProbeList} />
+                  <Route exact path="/ui/probes/:name/history" render={props => <ProbeHistory {...props}/>}/>
+                  <Route exact path="/ui/probes/:name/history/compare/:id1/:id2" render={props => <ProbeVersionCompare {...props}/>}/>
+                  <Route exact path="/ui/probes/:name/history/:version" render={props => <ProbeVersionDetails {...props}/>}/>
                   <Route exact path="/ui/probes/:name" render={props => <ProbeDetails {...props}/>}/>
                   <Route exact path="/ui/metrics" component={MetricList} />
                   <Route exact path="/ui/metrics/:name" render={props => <MetricChange {...props}/>}/>
