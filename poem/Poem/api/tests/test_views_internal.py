@@ -1085,3 +1085,106 @@ class ListGroupsForGivenUserAPIViewTests(TenantTestCase):
         self.assertEqual(aggr, ['EUDAT'])
         self.assertEqual(met, ['EGI', 'EUDAT'])
         self.assertEqual(mp, ['SDC'])
+
+
+class ListMetricsInGroupAPIViewTests(TenantTestCase):
+    def setUp(self):
+        self.factory = TenantRequestFactory(self.tenant)
+        self.view = views.ListMetricsInGroup.as_view()
+        self.url = '/api/v2/internal/metricsgroup/'
+        self.user = CustUser.objects.create(username='testuser')
+
+        self.metric1 = poem_models.Metrics.objects.create(name='hr.srce.GRAM-Auth')
+        self.metric2 = poem_models.Metrics.objects.create(name='eu.egi.CREAM-IGTF')
+        self.metric3 = poem_models.Metrics.objects.create(name='pl.plgrid.QCG-Broker')
+
+        self.id1 = self.metric1.id
+        self.id2 = self.metric2.id
+        self.id3 = self.metric3.id
+
+        group = poem_models.GroupOfMetrics.objects.create(name='EGI')
+        poem_models.GroupOfMetrics.objects.create(name='delete')
+        group.metrics.add(self.metric1)
+        group.metrics.add(self.metric2)
+
+    def test_get_metrics_in_group(self):
+        request = self.factory.get(self.url + 'EGI')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'EGI')
+        self.assertEqual(
+            response.data,
+            {
+                'result': [
+                    {'id': self.id2, 'name': 'eu.egi.CREAM-IGTF'},
+                    {'id': self.id1, 'name': 'hr.srce.GRAM-Auth'}
+                ]
+            }
+        )
+
+    def test_get_metric_without_group(self):
+        request = self.factory.get(self.url)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(
+            response.data,
+            {
+                'result': [
+                    {'id': self.id3, 'name': 'pl.plgrid.QCG-Broker'}
+                ]
+            }
+        )
+
+    def test_get_metrics_with_wrong_group(self):
+        request = self.factory.get(self.url + 'bla')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'bla')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    @patch('Poem.poem.models.Metrics.objects.get')
+    def test_put_metrics(self, metrics):
+        metrics.return_value = self.metric1
+        data = {'name': 'EGI',
+                'items': ['hr.srce.GRAM-Auth', 'pl.plgrid.QCG-Broker']}
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    @patch('Poem.poem.models.Metrics.objects.get')
+    def test_post_metrics(self, metrics):
+        metrics.return_value = self.metric1
+        data = {'name': 'new_name',
+                'items': ['pl.plgrid.QCG-Broker']}
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_post_metrics_group_with_name_that_already_exists(self):
+        data = {'name': 'EGI',
+                'items': [self.metric1.name]}
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_delete_metric_group(self):
+        self.assertEqual(poem_models.GroupOfMetrics.objects.all().count(), 2)
+        request = self.factory.delete(self.url + 'delete')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'delete')
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(poem_models.GroupOfMetrics.objects.all().count(), 1)
+
+    def test_delete_nonexisting_metric_group(self):
+        request = self.factory.delete(self.url + 'nonexisting')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'nonexisting')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_delete_metric_group_without_specifying_name(self):
+        request = self.factory.delete(self.url)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
