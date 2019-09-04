@@ -213,7 +213,7 @@ class ListMetricProfilesInGroup(APIView):
                 mp.groupname = ''
                 mp.save()
 
-        return Response(status.HTTP_201_CREATED)
+        return Response(status=status.HTTP_201_CREATED)
 
     def post(self, request):
         try:
@@ -228,10 +228,10 @@ class ListMetricProfilesInGroup(APIView):
                 mp.save()
 
         except Exception:
-            return Response(status.HTTP_400_BAD_REQUEST)
+            return Response(status=status.HTTP_400_BAD_REQUEST)
 
         else:
-            return Response(status.HTTP_201_CREATED)
+            return Response(status=status.HTTP_201_CREATED)
 
     def delete(self, request, group=None):
         if group:

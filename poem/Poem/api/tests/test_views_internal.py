@@ -1296,3 +1296,114 @@ class ListAggregationsInGroupAPIViewTests(TenantTestCase):
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+class ListMetricProfilesInGroupAPIViewTests(TenantTestCase):
+    def setUp(self):
+        self.factory = TenantRequestFactory(self.tenant)
+        self.view = views.ListMetricProfilesInGroup.as_view()
+        self.url = '/api/v2/internal/metricprofilesgroup/'
+        self.user = CustUser.objects.create(username='testuser')
+
+        self.mp1 = poem_models.MetricProfiles.objects.create(
+            name='TEST_PROFILE',
+            apiid='00000000-oooo-kkkk-aaaa-aaeekkccnnee',
+            groupname='EGI'
+        )
+
+        mp2 = poem_models.MetricProfiles.objects.create(
+            name='ANOTHER-PROFILE',
+            apiid='12341234-oooo-kkkk-aaaa-aaeekkccnnee'
+        )
+
+        self.id1 = self.mp1.id
+        self.id2 = mp2.id
+
+        group = poem_models.GroupOfMetricProfiles.objects.create(name='EGI')
+        poem_models.GroupOfMetricProfiles.objects.create(name='delete')
+
+        group.metricprofiles.add(self.mp1)
+
+    def test_get_metric_profiles_in_group(self):
+        request = self.factory.get(self.url + 'EGI')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'EGI')
+        self.assertEqual(
+            response.data,
+            {
+                'result': [
+                    {'id': self.id1, 'name': 'TEST_PROFILE'}
+                ]
+            }
+        )
+
+    def test_get_metric_profiles_without_group(self):
+        request = self.factory.get(self.url)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(
+            response.data,
+            {
+                'result': [
+                    {'id': self.id2, 'name': 'ANOTHER-PROFILE'}
+                ]
+            }
+        )
+
+    def test_get_metric_profiles_with_wrong_group(self):
+        request = self.factory.get(self.url + 'bla')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'bla')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    @patch('Poem.poem.models.MetricProfiles.objects.get')
+    def test_put_metric_profile_group(self, mp):
+        mp.return_value = self.mp1
+        data = {'name': 'EGI',
+                'items': ['TEST_PROFILE', 'ANOTHER-PROFILE']}
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    @patch('Poem.poem.models.MetricProfiles.objects.get')
+    def test_post_metric_profile_group(self, mp):
+        mp.return_value = self.mp1
+        data = {'name': 'new_name',
+                'items': ['ANOTHER-PROFILE']}
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_post_metric_profile_group_with_name_that_already_exists(self):
+        data = {'name': 'EGI',
+                'items': [self.mp1.name]}
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_delete_metric_profile_group(self):
+        self.assertEqual(
+            poem_models.GroupOfMetricProfiles.objects.all().count(), 2
+        )
+        request = self.factory.delete(self.url + 'delete')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'delete')
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(
+            poem_models.GroupOfMetricProfiles.objects.all().count(), 1
+        )
+
+    def test_delete_nonexisting_metric_profile_group(self):
+        request = self.factory.delete(self.url + 'nonexisting')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'nonexisting')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_delete_metric_profile_group_without_specifying_name(self):
+        request = self.factory.delete(self.url)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
