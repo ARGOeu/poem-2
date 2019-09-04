@@ -1726,3 +1726,28 @@ class ListMetricAPIViewTests(TenantTestCase):
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+class ListTagsAPIViewTests(TenantTestCase):
+    def setUp(self):
+        self.factory = TenantRequestFactory(self.tenant)
+        self.view = views.ListTags.as_view()
+        self.url = '/api/v2/internal/tags/'
+        self.user = CustUser.objects.create(username='testuser')
+
+        poem_models.Tags.objects.create(name='Production')
+        poem_models.Tags.objects.create(name='Devel')
+        poem_models.Tags.objects.create(name='Test')
+
+    def test_get_tags(self):
+        request = self.factory.get(self.url)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(
+            [r for r in response.data],
+            [
+                'Production',
+                'Devel',
+                'Test'
+            ]
+        )
