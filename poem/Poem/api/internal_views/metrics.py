@@ -43,9 +43,8 @@ class ListMetric(APIView):
 
     def get(self, request, name=None):
         if name:
-            try:
-                metrics = poem_models.Metric.objects.filter(name=name)
-            except poem_models.Metric.DoesNotExist:
+            metrics = poem_models.Metric.objects.filter(name=name)
+            if metrics.count() == 0:
                 raise NotFound(status=404,
                                detail='Metric not found')
         else:
@@ -115,7 +114,7 @@ class ListMetric(APIView):
 
         return Response(status=status.HTTP_201_CREATED)
 
-    def delete(self, request, name):
+    def delete(self, request, name=None):
         if name:
             try:
                 metric = poem_models.Metric.objects.get(name=name)
