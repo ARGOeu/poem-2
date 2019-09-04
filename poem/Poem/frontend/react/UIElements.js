@@ -36,7 +36,8 @@ import {
   faServer,
   faCogs,
   faHighlighter,
-  faTasks} from '@fortawesome/free-solid-svg-icons';
+  faTasks,
+  faKey} from '@fortawesome/free-solid-svg-icons';
 import { NotificationManager } from 'react-notifications';
 import { Field } from 'formik';
 
@@ -68,6 +69,7 @@ export const Icon = props =>
   link_icon.set('metrics', faCog);
   link_icon.set('metricprofiles', faCogs);
   link_icon.set('aggregationprofiles', faTasks);
+  link_icon.set('apikey', faKey)
 
   return <FontAwesomeIcon icon={link_icon.get(props.i)} fixedWidth/>
 }

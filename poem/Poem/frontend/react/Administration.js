@@ -69,7 +69,7 @@ const Administration = (props) =>
       </CardHeader>
       <CardBody> 
         <Row className="p-1 align-items-center">
-          <Link to={'/ui/administration/apikey'}>API keys</Link>
+          <Icon i='apikey'/> <Link to={'/ui/administration/apikey'}>API keys</Link>
         </Row>
       </CardBody>
     </Card>
