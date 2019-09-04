@@ -11,10 +11,7 @@ from rest_framework_api_key.crypto import _generate_token, hash_token
 from tenant_schemas.test.cases import TenantTestCase
 from tenant_schemas.test.client import TenantRequestFactory
 
-from Poem.poem.models import GroupOfMetrics, Metric, MetricAttribute, \
-    MetricConfig, MetricDependancy, MetricFileParameter, MetricFiles, \
-    MetricFlags, MetricInstance, MetricParameter, MetricParent, \
-    MetricProbeExecutable, MetricType, Tags
+from Poem.poem.models import GroupOfMetrics, Metric, MetricType, Tags
 from Poem.users.models import CustUser
 from Poem.api import views
 
@@ -63,8 +60,20 @@ def mock_db_for_tagged_metrics_tests():
         tag=tag1,
         mtype=metrictype,
         probekey=probekey,
+        parent='["org.nagios.CDMI-TCP"]',
+        probeexecutable='["ams-probe"]',
+        config='["maxCheckAttempts 3", "timeout 60", '
+               '"path /usr/libexec/argo-monitoring/probes/argo", "interval 5", '
+               '"retryInterval 3"]',
+        attribute='["argo.ams_TOKEN --token"]',
+        dependancy='["argo.AMS-Check 1"]',
+        flags='["OBSESS 1"]',
+        files='["UCC_CONFIG UCC_CONFIG"]',
+        parameter='["--project EGI"]',
+        fileparameter='["FILE_SIZE_KBS 1000"]'
     )
-    metric2 = Metric.objects.create(
+
+    Metric.objects.create(
         name='argo.AMSPublisher-Check',
         tag=tag2,
         mtype=metrictype,
@@ -72,91 +81,6 @@ def mock_db_for_tagged_metrics_tests():
 
     group = GroupOfMetrics.objects.create(name='EOSC')
     group.metrics.create(name=metric1.name)
-
-    MetricParent.objects.create(
-        metric=metric1,
-        value='org.nagios.CDMI-TCP'
-    )
-    MetricParent.objects.create(
-        metric=metric2,
-        value=None
-    )
-
-    MetricProbeExecutable.objects.create(
-        metric=metric1,
-        value='ams-probe'
-    )
-    MetricProbeExecutable.objects.create(
-        metric=metric2,
-        value=None
-    )
-
-    MetricConfig.objects.create(
-        key='maxCheckAttempts',
-        value='3',
-        metric=metric1
-    )
-    MetricConfig.objects.create(
-        key='timeout',
-        value='60',
-        metric=metric1
-    )
-    MetricConfig.objects.create(
-        key='path',
-        value='/usr/libexec/argo-monitoring/probes/argo',
-        metric=metric1
-    )
-    MetricConfig.objects.create(
-        key='interval',
-        value='5',
-        metric=metric1
-    )
-    MetricConfig.objects.create(
-        key='retryInterval',
-        value='3',
-        metric=metric1
-    )
-    MetricConfig.objects.create(
-        key=None,
-        value=None,
-        metric=metric2
-    )
-
-    MetricAttribute.objects.create(
-        key='argo.ams_TOKEN',
-        value='--token',
-        metric=metric1
-    )
-
-    MetricDependancy.objects.create(
-        key='argo.AMS-Check',
-        value='1',
-        metric=metric1
-    )
-
-    MetricFlags.objects.create(
-        key='OBSESS',
-        value='1',
-        metric=metric1
-    )
-
-    MetricFiles.objects.create(
-        key='UCC_CONFIG',
-        value='UCC_CONFIG',
-        metric=metric1
-    )
-
-    MetricParameter.objects.create(
-        key='--project',
-        value='EGI',
-        metric=metric1
-    )
-
-    MetricFileParameter.objects.create(
-        key='FILE_SIZE_KBS',
-        value='1000',
-        metric=metric1
-    )
 
 
 def create_credentials():

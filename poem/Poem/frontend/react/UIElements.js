@@ -158,6 +158,12 @@ export const CustomBreadcrumb = ({location, history}) =>
     breadcrumb_elements.push(four_level)
   }
 
+  if (spliturl.length > 5) {
+    var five_level = new Object({'url': four_level['url'] + spliturl[5]});
+    five_level['title'] = spliturl[5];
+    breadcrumb_elements.push(five_level);
+  }
+
   return (
     <Breadcrumb id='argo-breadcrumb' className="border-top rounded">
       {
