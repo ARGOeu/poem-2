@@ -3,7 +3,7 @@ import { Backend } from './DataManager';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
-import { LoadingAnim, BaseArgoView, NotifyOk } from './UIElements';
+import { LoadingAnim, BaseArgoView, NotifyOk, Checkbox } from './UIElements';
 import ReactTable from 'react-table';
 import { Formik, Form, Field } from 'formik';
 import {
@@ -159,6 +159,7 @@ export class APIKeyChange extends Component {
     if (!this.addview) {
       this.backend.changeToken({
         id: this.state.key.id,
+        revoked: values.revoked,
         name: values.name,
       }).then(response => response.ok ? 
         NotifyOk({
@@ -169,7 +170,8 @@ export class APIKeyChange extends Component {
         : alert('Something went wrong: ' + response.statusText))
     } else {
       this.backend.addToken({
-        name: values.name
+        name: values.name,
+        revoked: values.revoked
       }).then(response => response.ok ?
         NotifyOk({
           msg: 'API key successfully added',
@@ -240,6 +242,7 @@ export class APIKeyChange extends Component {
             <Formik
               initialValues = {{
                 name: key.name,
+                revoked: key.revoked,
                 token: key.token
               }}
               onSubmit = {(values, actions) => this.onSubmitHandle(values, actions)}
@@ -259,6 +262,17 @@ export class APIKeyChange extends Component {
                         <FormText color='muted'>
                           A free-form unique identifier of the client. 50 characters max.
                         </FormText>
+                      </Col>
+                    </Row>
+                    <Row>
+                      <Col md={6}>
+                        <Field
+                          component={Checkbox}
+                          name='revoked'
+                          className='form-control'
+                          id='checkbox'
+                          label='Revoked'
+                        />
                       </Col>
                     </Row>
                   </FormGroup>
