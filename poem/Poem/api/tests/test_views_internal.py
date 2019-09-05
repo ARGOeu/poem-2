@@ -1890,3 +1890,32 @@ class ListGroupsForUserAPIViewTests(TenantTestCase):
             [d for d in response.data],
             ['metricprofilegroup2']
         )
+
+
+class GetConfigOptionsAPIViewTests(TenantTestCase):
+    def setUp(self):
+        self.factory = TenantRequestFactory(self.tenant)
+        self.view = views.GetConfigOptions.as_view()
+        self.url = '/api/v2/internal/config_options/'
+        self.user = CustUser.objects.create(username='testuser')
+
+    @patch('Poem.api.internal_views.app.saml_login_string',
+           return_value='Log in using B2ACCESS')
+    @patch('Poem.api.internal_views.app.tenant_from_request',
+           return_value='Tenant')
+    def test_get_config_options(self, *args):
+        with self.settings(WEBAPI_METRIC='https://metric.profile.com',
+                           WEBAPI_AGGREGATION='https://aggregations.com'):
+            request = self.factory.get(self.url)
+            response = self.view(request)
+            self.assertEqual(
+                response.data,
+                {
+                    'result': {
+                        'saml_login_string': 'Log in using B2ACCESS',
+                        'webapimetric': 'https://metric.profile.com',
+                        'webapiaggregation': 'https://aggregations.com',
+                        'tenant_name': 'Tenant'
+                    }
+                }
+            )
