@@ -354,6 +354,7 @@ class ListTokens(APIView):
         try:
             obj = api_models.APIKey.objects.get(id=request.data['id'])
             obj.client_id = request.data['name']
+            obj.revoked = request.data['revoked']
             try:
                 obj.save()
 
@@ -370,6 +371,7 @@ class ListTokens(APIView):
         hashed_token = hash_token(token, settings.SECRET_KEY)
         obj = api_models.APIKey(
             client_id=request.data['name'],
+            revoked=request.data['revoked'],
             token=token,
             hashed_token=hashed_token
         )
