@@ -170,12 +170,6 @@ export class Backend {
       .catch(err => alert('Something went wrong: ' + err))
   }
 
-  fetchProbeVersionInfo(id) {
-    return fetch('/api/v2/internal/probeversion/' + id)
-      .then(response => response.json())
-      .catch(err => alert('Something went wrong: ' + err))
-  }
-
   fetchVersions(obj, name) {
     return fetch('/api/v2/internal/version/' + obj + '/' + name)
       .then(response => response.json())

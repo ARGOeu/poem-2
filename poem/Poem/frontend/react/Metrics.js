@@ -411,11 +411,17 @@ export class MetricChange extends Component {
         this.backend.fetchAllGroups()
       ]).then(([metrics, usergroups, tags, groups]) => {
         metrics.probekey ? 
-        this.backend.fetchProbeVersionInfo(metrics.probekey)
+        this.backend.fetchVersions('probe', metrics.probeversion.split(' ')[0])
           .then(probe => {
+            let fields = {};
+            probe.forEach((e) => {
+              if (e.id === metrics.probekey) {
+                fields = e.fields;
+              }
+            })
             this.setState({
               metric: metrics,
-              probe: probe,
+              probe: fields,
               tags: tags,
               groups: groups['metrics'],
               loading: false,
