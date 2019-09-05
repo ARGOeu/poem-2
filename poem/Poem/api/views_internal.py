@@ -7,7 +7,6 @@ from rest_framework import status
 
 
 from Poem.helpers.versioned_comments import new_comment
-from Poem.poem import models as poem_models
 from Poem.poem_super_admin.models import Probe, ExtRevision
 from Poem.poem.saml2.config import tenant_from_request, saml_login_string, get_schemaname
 
@@ -21,6 +20,7 @@ import datetime
 import json
 
 from Poem.api.internal_views.aggregationprofiles import *
+from Poem.api.internal_views.app import *
 from Poem.api.internal_views.apikey import *
 from Poem.api.internal_views.groupelements import *
 from Poem.api.internal_views.metricprofiles import *
@@ -28,32 +28,6 @@ from Poem.api.internal_views.metrics import *
 from Poem.api.internal_views.probes import *
 from Poem.api.internal_views.services import *
 from Poem.api.internal_views.users import *
-
-
-def get_groups_for_user(user):
-    groupsofaggregations = user.userprofile.groupsofaggregations.all().values_list('name', flat=True)
-    results = {'aggregations': groupsofaggregations}
-
-    groupsofmetrics = user.userprofile.groupsofmetrics.all().values_list('name', flat=True)
-    results.update({'metrics': groupsofmetrics})
-
-    groupsofmetricprofiles = user.userprofile.groupsofmetricprofiles.all().values_list('name', flat=True)
-    results.update({'metricprofiles': groupsofmetricprofiles})
-
-    return results
-
-
-def get_all_groups():
-    groupsofaggregations = poem_models.GroupOfAggregations.objects.all().values_list('name', flat=True)
-    results = {'aggregations': groupsofaggregations}
-
-    groupsofmetrics = poem_models.GroupOfMetrics.objects.all().values_list('name', flat=True)
-    results.update({'metrics': groupsofmetrics})
-
-    groupsofmetricprofiles = poem_models.GroupOfMetricProfiles.objects.all().values_list('name', flat=True)
-    results.update({'metricprofiles': groupsofmetricprofiles})
-
-    return results
 
 
 class GetConfigOptions(APIView):
@@ -71,24 +45,6 @@ class GetConfigOptions(APIView):
         options.update(tenant_name=tenant)
 
         return Response({'result': options})
-
-
-class ListGroupsForUser(APIView):
-    authentication_classes = (SessionAuthentication,)
-
-    def get(self, request, group=None):
-        user = request.user
-
-        if user.is_superuser:
-            results = get_all_groups()
-
-        else:
-            results = get_groups_for_user(user)
-
-        if group:
-            return Response(results[group.lower()])
-        else:
-            return Response({'result': results})
 
 
 class Saml2Login(APIView):
