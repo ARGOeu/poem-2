@@ -182,6 +182,18 @@ export class Backend {
       .catch(err => alert('Something went wrong: ' + err))
   }
 
+  fetchTokens() {
+    return fetch('/api/v2/internal/tokens/')
+      .then(response => response.json())
+      .catch(err => alert('Something went wrong: ' + err))
+  }
+
+  fetchTokenByName(name) {
+    return fetch('/api/v2/internal/tokens/' + name)
+      .then(response => response.json())
+      .catch(err => alert('Something went wrong: ' + err))
+  }
+
   changeMetricProfile(profile) {
     return this.send(
       '/api/v2/internal/metricprofiles/',
@@ -230,6 +242,14 @@ export class Backend {
     )
   }
 
+  changeToken(token) {
+    return this.send(
+      '/api/v2/internal/tokens/',
+      'PUT',
+      token
+    )
+  }
+
   addAggregation(profile) {
     return this.send(
       '/api/v2/internal/aggregations/',
@@ -259,6 +279,14 @@ export class Backend {
       '/api/v2/internal/' + group + 'group/',
       'POST',
       name
+    );
+  }
+
+  addToken(token) {
+    return this.send(
+      '/api/v2/internal/tokens/',
+      'POST',
+      token
     );
   }
 
@@ -293,6 +321,13 @@ export class Backend {
   deleteMetric(name) {
     return this.send(
       '/api/v2/internal/metric/' + name,
+      'DELETE'
+    );
+  }
+
+  deleteToken(name) {
+    return this.send(
+      '/api/v2/internal/tokens/' + name,
       'DELETE'
     );
   }

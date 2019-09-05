@@ -36,7 +36,8 @@ import {
   faServer,
   faCogs,
   faHighlighter,
-  faTasks} from '@fortawesome/free-solid-svg-icons';
+  faTasks,
+  faKey} from '@fortawesome/free-solid-svg-icons';
 import { NotificationManager } from 'react-notifications';
 import { Field } from 'formik';
 
@@ -55,6 +56,7 @@ link_title.set('groupofaggregations', 'Groups of aggregations');
 link_title.set('groupofmetrics', 'Groups of metrics');
 link_title.set('groupofmetricprofiles', 'Groups of metric profiles');
 link_title.set('users', 'Users');
+link_title.set('apikey', 'API key');
 
 export const Icon = props =>
 {
@@ -67,6 +69,7 @@ export const Icon = props =>
   link_icon.set('metrics', faCog);
   link_icon.set('metricprofiles', faCogs);
   link_icon.set('aggregationprofiles', faTasks);
+  link_icon.set('apikey', faKey)
 
   return <FontAwesomeIcon icon={link_icon.get(props.i)} fixedWidth/>
 }
@@ -321,7 +324,7 @@ export const NotifyOk = ({msg='', title='', callback=undefined}) => {
 
 export const BaseArgoView = ({resourcename='', location=undefined, 
     infoview=false, addview=false, listview=false, modal=false, 
-    state=undefined, toggle=undefined, submitperm=true, children}) => 
+    state=undefined, toggle=undefined, submitperm=true, history=true, children}) => 
 (
   <React.Fragment>
     {
@@ -349,7 +352,10 @@ export const BaseArgoView = ({resourcename='', location=undefined,
             :
               <React.Fragment>
                 <h2 className="ml-3 mt-1 mb-4">{`Change ${resourcename}`}</h2>
-                <Link className="btn btn-secondary" to={location.pathname + "/history"} role="button">History</Link>
+                {
+                  history &&
+                    <Link className="btn btn-secondary" to={location.pathname + "/history"} role="button">History</Link>
+                }
               </React.Fragment>
       }
     </div>

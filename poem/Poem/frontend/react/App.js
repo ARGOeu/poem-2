@@ -10,6 +10,7 @@ import Reports from './Reports';
 import Services from './Services';
 import { UsersList, UserChange } from './Users';
 import { GroupOfMetricsList, GroupOfMetricsChange, GroupOfAggregationsList, GroupOfAggregationsChange, GroupOfMetricProfilesList, GroupOfMetricProfilesChange } from './GroupElements';
+import { APIKeyList, APIKeyChange } from './APIKey';
 import NotFound from './NotFound';
 import { Route, Switch, BrowserRouter, Redirect, withRouter } from 'react-router-dom';
 import { Container, Button, Row, Col } from 'reactstrap';
@@ -74,10 +75,9 @@ class App extends Component {
 
   fetchToken() {
     return fetch('/api/v2/internal/tokens/WEB-API')
-      .then(response => {
-        if (response.ok)
-          return response.json();
-      })
+      .then(response => response.ok ? response.json() : null)
+      .then(json => json['token'])
+      .catch(err => alert('Something went wrong: ' + err))
   }
 
   componentDidMount() {
@@ -232,6 +232,13 @@ class App extends Component {
                   />
                   <Route exact path="/ui/administration/groupofmetricprofiles/:group"
                     render={props => <GroupOfMetricProfilesChange {...props}/>}
+                  />
+                  <Route exact path="/ui/administration/apikey" component={APIKeyList} />
+                  <Route exact path="/ui/administration/apikey/add"  
+                    render={props => <APIKeyChange {...props} addview={true}/>}
+                  />
+                  <Route exact path="/ui/administration/apikey/:name"  
+                    render={props => <APIKeyChange {...props} />}
                   />
                   <Route component={NotFound} />
                 </Switch>
