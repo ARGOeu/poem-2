@@ -160,7 +160,7 @@ class ListTokensAPIViewTests(TenantTestCase):
         )
 
     def test_put_token(self):
-        data = {'id': self.id1, 'name': 'EGI2'}
+        data = {'id': self.id1, 'name': 'EGI2', 'revoked': False}
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
         force_authenticate(request, user=self.user)
@@ -170,7 +170,7 @@ class ListTokensAPIViewTests(TenantTestCase):
         self.assertEqual('EGI2', changed_entry.client_id)
 
     def test_put_token_with_name_that_already_exists(self):
-        data = {'id': self.id1, 'name': 'EUDAT'}
+        data = {'id': self.id1, 'name': 'EUDAT', 'revoked': False}
         content = encode_multipart('BoUnDaRyStRiNg', data)
         content_type = 'multipart/form-data; boundary=BoUnDaRyStRiNg'
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -179,14 +179,14 @@ class ListTokensAPIViewTests(TenantTestCase):
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_post_token(self):
-        data = {'name': 'test'}
+        data = {'name': 'test', 'revoked': False}
         request = self.factory.post(self.url, data, format='json')
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
     def test_post_token_name_already_exists(self):
-        data = {'name': 'EUDAT'}
+        data = {'name': 'EUDAT', 'revoked': False}
         request = self.factory.post(self.url, data, format='json')
         force_authenticate(request, user=self.user)
         response = self.view(request)
