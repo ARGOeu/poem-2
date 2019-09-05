@@ -14,7 +14,10 @@ import {
   FormText,
   Button,
   InputGroup,
-  InputGroupAddon
+  InputGroupAddon,
+  Toast,
+  ToastBody,
+  ToastHeader
 } from 'reactstrap';
 
 
@@ -298,12 +301,14 @@ export class APIKeyChange extends Component {
                   </Row>
                   {
                     this.addview &&
-                      <Row className='mt-4'>
-                        <Col sm={1}></Col>
-                        <Col sm={10}>
-                          Token will be generated when clicking save.
-                        </Col>
-                      </Row>
+                    <Toast className='mt-3'>
+                      <ToastHeader icon='info'>
+                        Info
+                      </ToastHeader>
+                      <ToastBody>
+                        Token will be generated when clicking save.
+                      </ToastBody>
+                    </Toast>
                   }
                   </FormGroup>
                   {
