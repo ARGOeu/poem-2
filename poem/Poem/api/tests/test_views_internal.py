@@ -1774,3 +1774,119 @@ class ListMetricTypesAPIViewTests(TenantTestCase):
                 'Passive',
             ]
         )
+
+
+class ListGroupsForUserAPIViewTests(TenantTestCase):
+    def setUp(self):
+        self.factory = TenantRequestFactory(self.tenant)
+        self.view = views.ListGroupsForUser.as_view()
+        self.url = '/api/v2/internal/groups/'
+        self.user = CustUser.objects.create(username='testuser')
+        self.superuser = CustUser.objects.create(username='superuser',
+                                                 is_superuser=True)
+
+        gm1 = poem_models.GroupOfMetrics.objects.create(name='metricgroup1')
+        gm2 = poem_models.GroupOfMetrics.objects.create(name='metricgroup2')
+
+        gmp1 = poem_models.GroupOfMetricProfiles.objects.create(
+            name='metricprofilegroup1'
+        )
+        gmp2 = poem_models.GroupOfMetricProfiles.objects.create(
+            name='metricprofilegroup2'
+        )
+
+        ga1 = poem_models.GroupOfAggregations.objects.create(name='aggrgroup1')
+        ga2 = poem_models.GroupOfAggregations.objects.create(name='aggrgroup2')
+
+        userprofile = poem_models.UserProfile.objects.create(user=self.user)
+        userprofile.groupsofmetrics.add(gm2)
+        userprofile.groupsofmetricprofiles.add(gmp2)
+        userprofile.groupsofaggregations.add(ga2)
+
+    def test_list_all_groups(self):
+        request = self.factory.get(self.url)
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(
+            [d for d in response.data['result']['aggregations']],
+            ['aggrgroup1', 'aggrgroup2']
+        )
+        self.assertEqual(
+            [d for d in response.data['result']['metrics']],
+            ['metricgroup1', 'metricgroup2']
+        )
+        self.assertEqual(
+            [d for d in response.data['result']['metricprofiles']],
+            ['metricprofilegroup1', 'metricprofilegroup2']
+        )
+
+    def test_list_groups_for_user_that_is_not_superuser(self):
+        request = self.factory.get(self.url)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(
+            [d for d in response.data['result']['aggregations']],
+            ['aggrgroup2']
+        )
+        self.assertEqual(
+            [d for d in response.data['result']['metrics']],
+            ['metricgroup2']
+        )
+        self.assertEqual(
+            [d for d in response.data['result']['metricprofiles']],
+            ['metricprofilegroup2']
+        )
+
+    def test_get_aggregation_groups_for_superuser(self):
+        request = self.factory.get(self.url + 'aggregations')
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request, 'aggregations')
+        self.assertEqual(
+            [d for d in response.data],
+            ['aggrgroup1', 'aggrgroup2']
+        )
+
+    def test_get_metric_groups_for_superuser(self):
+        request = self.factory.get(self.url + 'metrics')
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request, 'metrics')
+        self.assertEqual(
+            [d for d in response.data],
+            ['metricgroup1', 'metricgroup2']
+        )
+
+    def test_get_metric_profile_groups_for_superuser(self):
+        request = self.factory.get(self.url + 'metricprofiles')
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request, 'metricprofiles')
+        self.assertEqual(
+            [d for d in response.data],
+            ['metricprofilegroup1', 'metricprofilegroup2']
+        )
+
+    def test_get_aggregation_groups_for_basic_user(self):
+        request = self.factory.get(self.url + 'aggregations')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'aggregations')
+        self.assertEqual(
+            [d for d in response.data],
+            ['aggrgroup2']
+        )
+
+    def test_get_metric_groups_for_basic_user(self):
+        request = self.factory.get(self.url + 'metrics')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'metrics')
+        self.assertEqual(
+            [d for d in response.data],
+            ['metricgroup2']
+        )
+
+    def test_get_metric_profile_groups_for_basic_user(self):
+        request = self.factory.get(self.url + 'metricprofiles')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'metricprofiles')
+        self.assertEqual(
+            [d for d in response.data],
+            ['metricprofilegroup2']
+        )
