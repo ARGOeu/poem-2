@@ -1036,7 +1036,6 @@ class GetUserProfileForUsernameAPIViewTests(TenantTestCase):
         response = self.view(request, 'testuser')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(response.data, {'detail': 'User profile not found'})
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
 
 class ListGroupsForGivenUserAPIViewTests(TenantTestCase):
@@ -1919,3 +1918,142 @@ class GetConfigOptionsAPIViewTests(TenantTestCase):
                     }
                 }
             )
+
+
+class ListVersionsAPIViewTests(TenantTestCase):
+    def setUp(self):
+        self.factory = TenantRequestFactory(self.tenant)
+        self.view = views.ListVersions.as_view()
+        self.url = '/api/v2/internal/version/'
+        self.user = CustUser.objects.create(username='testuser')
+
+        probe = admin_models.Probe.objects.create(
+            name='poem-probe',
+            version='0.1.11',
+            description='Probe inspects POEM service.',
+            comment='This version added: Check POEM metric configuration API',
+            repository='https://github.com/ARGOeu/nagios-plugins-argo',
+            docurl='https://github.com/ARGOeu/nagios-plugins-argo/blob/master/'
+                   'README.md'
+        )
+
+        admin_models.Probe.objects.create(
+            name='ams-probe',
+            version='0.1.7',
+            description='Probe is inspecting AMS service by trying to publish '
+                        'and consume randomly generated messages.',
+            comment='Initial version.',
+            repository='https://github.com/ARGOeu/nagios-plugins-argo',
+            docurl='https://github.com/ARGOeu/nagios-plugins-argo/blob/master/'
+                   'README.md'
+        )
+
+        self.rev1 = Revision.objects.create(
+            date_created=datetime.datetime.now(),
+            comment='Initial version.',
+            user=self.user
+        )
+
+        self.rev2 = Revision.objects.create(
+            date_created=datetime.datetime.now(),
+            comment='[{"changed": {"fields": ["version", "comment"]}}]',
+            user=self.user
+        )
+
+        ct = ContentType.objects.get_for_model(admin_models.Probe)
+
+        self.ver1 = Version.objects.create(
+            object_id=probe.id,
+            serialized_data='[{"pk": 1, "model": "poem_super_admin.probe",'
+                            ' "fields": {"name": "poem-probe", "version": '
+                            '"0.1.7", "description": "Probe inspects POEM '
+                            'service.", "comment": "Initial version.", '
+                            '"repository": "https://github.com/ARGOeu/nagios-'
+                            'plugins-argo", "docurl": "https://github.com/'
+                            'ARGOeu/nagios-plugins-argo/blob/master/README.md",'
+                            ' "user": "poem"}}]',
+            object_repr='poem-probe (0.1.7)',
+            content_type_id=ct.id,
+            revision_id=self.rev1.id
+        )
+
+        self.ver2 = Version.objects.create(
+            object_id=probe.id,
+            serialized_data='[{"pk": 1, "model": "poem_super_admin.probe",'
+                            ' "fields": {"name": "poem-probe", "version": '
+                            '"0.1.11", "description": "Probe inspects POEM '
+                            'service.", "comment": "This version added: Check '
+                            'POEM metric configuration API", '
+                            '"repository": "https://github.com/ARGOeu/nagios-'
+                            'plugins-argo", "docurl": "https://github.com/'
+                            'ARGOeu/nagios-plugins-argo/blob/master/README.md",'
+                            ' "user": "poem"}}]',
+            object_repr='poem-probe (0.1.11)',
+            content_type_id=ct.id,
+            revision_id=self.rev2.id
+        )
+
+    def test_get_versions_of_probes(self):
+        request = self.factory.get(self.url + 'probe/poem-probe')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'probe', 'poem-probe')
+        self.assertEqual(
+            response.data,
+            [
+                {
+                    'id': self.ver2.id,
+                    'object_repr': 'poem-probe (0.1.11)',
+                    'fields': {
+                        'name': 'poem-probe',
+                        'version': '0.1.11',
+                        'description': 'Probe inspects POEM service.',
+                        'comment': 'This version added: Check POEM metric '
+                                   'configuration API',
+                        'repository': 'https://github.com/ARGOeu/nagios-plugins'
+                                      '-argo',
+                        'docurl': 'https://github.com/ARGOeu/nagios-plugins-'
+                                  'argo/blob/master/README.md',
+                        'user': 'poem'
+                    },
+                    'user': 'poem',
+                    'date_created': datetime.datetime.strftime(
+                        self.rev1.date_created, '%Y-%m-%d %H:%M:%S'),
+                    'comment': 'Changed version and comment.',
+                    'version': '0.1.11'
+                },
+                {
+                    'id': self.ver1.id,
+                    'object_repr': 'poem-probe (0.1.7)',
+                    'fields': {
+                        'name': 'poem-probe',
+                        'version': '0.1.7',
+                        'description': 'Probe inspects POEM service.',
+                        'comment': 'Initial version.',
+                        'repository': 'https://github.com/ARGOeu/nagios-plugins'
+                                      '-argo',
+                        'docurl': 'https://github.com/ARGOeu/nagios-plugins-'
+                                  'argo/blob/master/README.md',
+                        'user': 'poem'
+                    },
+                    'user': 'poem',
+                    'date_created': datetime.datetime.strftime(
+                        self.rev1.date_created, '%Y-%m-%d %H:%M:%S'),
+                    'comment': 'No fields changed.',
+                    'version': '0.1.7'
+                },
+            ]
+        )
+
+    def test_get_nonexisting_probe_version(self):
+        request = self.factory.get(self.url + 'probe/ams-probe')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'probe', 'ams-probe')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data, {'detail': 'Version not found'})
+
+    def test_get_nonexisting_probe(self):
+        request = self.factory.get(self.url + 'probe/nonexisting')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'probe', 'nonexisting')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data, {'detail': 'Probe not found'})

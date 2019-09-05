@@ -21,10 +21,18 @@ class ListVersions(APIView):
 
         try:
             obj = models[obj].objects.get(name=name)
-            ct = ContentType.objects.get_for_model(obj)
-            vers = Version.objects.filter(object_id=obj.id,
-                                          content_type_id=ct.id)
+        except models[obj].DoesNotExist:
+            raise NotFound(status=404,
+                           detail='{} not found'.format(obj.capitalize()))
 
+        ct = ContentType.objects.get_for_model(obj)
+        vers = Version.objects.filter(object_id=obj.id,
+                                      content_type_id=ct.id)
+
+        if vers.count() == 0:
+            raise NotFound(status=404, detail='Version not found')
+
+        else:
             results = []
             for ver in vers:
                 rev = Revision.objects.get(id=ver.revision_id)
@@ -47,6 +55,3 @@ class ListVersions(APIView):
 
             results = sorted(results, key=lambda k: k['id'], reverse=True)
             return Response(results)
-
-        except Version.DoesNotExist:
-            raise NotFound(status=404, detail='Version not found')
