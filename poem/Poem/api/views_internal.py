@@ -1,14 +1,10 @@
-from django.core.cache import cache
 from django.contrib.contenttypes.models import ContentType
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.authentication import SessionAuthentication
-from rest_framework import status
-
 
 from Poem.helpers.versioned_comments import new_comment
 from Poem.poem_super_admin.models import Probe, ExtRevision
-from Poem.poem.saml2.config import get_schemaname
 
 from reversion.models import Version, Revision
 
@@ -21,37 +17,12 @@ from Poem.api.internal_views.aggregationprofiles import *
 from Poem.api.internal_views.app import *
 from Poem.api.internal_views.apikey import *
 from Poem.api.internal_views.groupelements import *
+from Poem.api.internal_views.login import *
 from Poem.api.internal_views.metricprofiles import *
 from Poem.api.internal_views.metrics import *
 from Poem.api.internal_views.probes import *
 from Poem.api.internal_views.services import *
 from Poem.api.internal_views.users import *
-
-
-class Saml2Login(APIView):
-    authentication_classes = (SessionAuthentication,)
-    keys = ['username', 'first_name', 'last_name', 'is_superuser']
-
-    def _prefix(self, keys):
-        return ['{}_saml2_'.format(get_schemaname()) + key for key in keys]
-
-    def _remove_prefix(self, keys):
-        new_keys = dict()
-
-        for k, v in keys.items():
-            new_keys[k.split('{}_saml2_'.format(get_schemaname()))[1]] = v
-
-        return new_keys
-
-    def get(self, request):
-        result = cache.get_many(self._prefix(self.keys))
-
-        return Response(self._remove_prefix(result))
-
-    def delete(self, request):
-        cache.delete_many(self._prefix(self.keys))
-
-        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class ListProbeVersionInfo(APIView):
