@@ -8,13 +8,11 @@ from rest_framework import status
 
 from Poem.helpers.versioned_comments import new_comment
 from Poem.poem_super_admin.models import Probe, ExtRevision
-from Poem.poem.saml2.config import tenant_from_request, saml_login_string, get_schemaname
+from Poem.poem.saml2.config import get_schemaname
 
 from reversion.models import Version, Revision
 
 from .views import NotFound
-
-from Poem import settings
 
 import datetime
 import json
@@ -28,23 +26,6 @@ from Poem.api.internal_views.metrics import *
 from Poem.api.internal_views.probes import *
 from Poem.api.internal_views.services import *
 from Poem.api.internal_views.users import *
-
-
-class GetConfigOptions(APIView):
-    authentication_classes = ()
-    permission_classes = ()
-
-    def get(self, request):
-        options = dict()
-
-        tenant = tenant_from_request(request)
-        options.update(saml_login_string=saml_login_string(tenant))
-
-        options.update(webapimetric=settings.WEBAPI_METRIC)
-        options.update(webapiaggregation=settings.WEBAPI_AGGREGATION)
-        options.update(tenant_name=tenant)
-
-        return Response({'result': options})
 
 
 class Saml2Login(APIView):
