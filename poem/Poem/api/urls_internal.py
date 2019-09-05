@@ -14,7 +14,6 @@ urlpatterns = [
     path('groups/<str:group>', views_internal.ListGroupsForUser.as_view(), name='groups'),
     path('probes/', views_internal.ListProbes.as_view(), name='probes'),
     path('probes/<str:name>', views_internal.ListProbes.as_view(), name='probes'),
-    path('probeversion/<str:probekey>', views_internal.ListProbeVersionInfo.as_view(), name='probeversion'),
     path('metric/', views_internal.ListMetric.as_view(), name='metric'),
     path('metric/<str:name>', views_internal.ListMetric.as_view(), name='metric'),
     path('metricprofiles/', views_internal.ListMetricProfiles.as_view(), name='metricprofiles'),
