@@ -12,9 +12,10 @@ import {
   Col,
   Label,
   FormText,
-  Button
+  Button,
+  InputGroup,
+  InputGroupAddon
 } from 'reactstrap';
-import './APIKey.css';
 
 
 export class APIKeyList extends Component {
@@ -279,16 +280,18 @@ export class APIKeyChange extends Component {
                   <FormGroup>
                   <h4 className="mt-2 p-1 pl-3 text-light text-uppercase rounded" style={{"backgroundColor": "#416090"}}>Credentials</h4>
                   <Row>
-                    <Label for='token' sm={1}>Token</Label>
-                    <Col sm={10}>
-                      <Field
-                        type='text'
-                        name='token'
-                        id='token'
-                        disabled={true}
-                        className='form-control'
-                      />
-                      <FormText className='pl-3' color='muted'>
+                    <Col sm={6}>
+                      <InputGroup>
+                        <InputGroupAddon addonType='prepend'>Token</InputGroupAddon>
+                        <Field
+                          type='text'
+                          name='token'
+                          id='token'
+                          disabled={true}
+                          className='form-control'
+                        />
+                      </InputGroup>
+                      <FormText color='muted'>
                         A public, unique identifier for this API key.
                       </FormText>
                     </Col>
