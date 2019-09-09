@@ -185,7 +185,7 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
     ]
 }
-TOKEN_HEADER = 'HTTP_X_API_KEY'
+API_KEY_CUSTOM_HEADER = 'HTTP_X_API_KEY'
 
 # Django development server settings
 # MEDIA_URL = '/poem_media/'
