@@ -58,11 +58,11 @@ class ListAPIKeys(APIView):
             raise NotFound(status=404, detail='API key not found')
 
     def post(self, request):
-        names = MyAPIKey.objects.all().values_list('name', flat=True)
+        names = MyAPIKey.objects.get_usable_keys().values_list('name',
+                                                               flat=True)
         if request.data['name'] not in names:
             MyAPIKey.objects.create_key(
-                name=request.data['name'],
-                revoked=request.data['revoked']
+                name=request.data['name']
             )
 
             return Response(status=status.HTTP_201_CREATED)

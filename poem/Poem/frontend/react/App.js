@@ -74,7 +74,7 @@ class App extends Component {
   }
 
   fetchToken() {
-    return fetch('/api/v2/internal/tokens/WEB-API')
+    return fetch('/api/v2/internal/apikeys/WEB-API')
       .then(response => response.ok ? response.json() : null)
       .then(json => json['token'])
       .catch(err => alert('Something went wrong: ' + err))
