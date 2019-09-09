@@ -174,8 +174,7 @@ export class APIKeyChange extends Component {
         : alert('Something went wrong: ' + response.statusText))
     } else {
       this.backend.addToken({
-        name: values.name,
-        revoked: values.revoked
+        name: values.name
       }).then(response => response.ok ?
         NotifyOk({
           msg: 'API key successfully added',

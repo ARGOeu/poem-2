@@ -66,7 +66,6 @@ class ListTokens(APIView):
         hashed_token = hash_token(token, settings.SECRET_KEY)
         obj = api_models.APIKey(
             client_id=request.data['name'],
-            revoked=request.data['revoked'],
             token=token,
             hashed_token=hashed_token
         )
