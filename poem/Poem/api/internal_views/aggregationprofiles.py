@@ -1,6 +1,7 @@
 from django.conf import settings
 
 from Poem.api import serializers
+from Poem.api.models import MyAPIKey
 from Poem.api.views import NotFound
 from Poem.poem import models as poem_models
 
@@ -9,13 +10,11 @@ from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from rest_framework_api_key.models import APIKey
-
 import requests
 
 
 def sync_webapi(api, model):
-    token = APIKey.objects.get(client_id="WEB-API")
+    token = MyAPIKey.objects.get(name="WEB-API")
 
     headers = dict()
     headers = {'Accept': 'application/json', 'x-api-key': token.token}
