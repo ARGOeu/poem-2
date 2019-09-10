@@ -7,6 +7,6 @@ djangorestframework==3.10.3
 djangorestframework-api-key==1.4.1
 djangosaml2==0.17.2
 ndg-httpsclient==0.5.1
-psycopg2<2.8
+psycopg2-binary==2.8.3
 requests==2.22.0
 unidecode==1.1.1
