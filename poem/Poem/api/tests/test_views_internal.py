@@ -2056,3 +2056,28 @@ class ListVersionsAPIViewTests(TenantTestCase):
         response = self.view(request, 'probe', 'nonexisting')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(response.data, {'detail': 'Probe not found'})
+
+
+class GetPoemVersionAPIViewTests(TenantTestCase):
+    def setUp(self):
+        self.factory = TenantRequestFactory(self.tenant)
+        self.view = views.GetPoemVersion.as_view()
+        self.url = '/api/v2/internal/schema/'
+
+    def test_get_tenant_schema(self):
+        request = self.factory.get(self.url)
+        response = self.view(request)
+        self.assertEqual(
+            response.data,
+            {'schema': 'tenant'}
+        )
+
+    @patch('Poem.api.internal_views.app.connection')
+    def test_get_schema_name_if_public_schema(self, args):
+        args.schema_name = get_public_schema_name()
+        request = self.factory.get(self.url)
+        response = self.view(request)
+        self.assertEqual(
+            response.data,
+            {'schema': 'superadmin'}
+        )

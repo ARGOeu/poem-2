@@ -27,6 +27,7 @@ urlpatterns = [
     path('metricsgroup/<str:group>', views_internal.ListMetricsInGroup.as_view(), name='metrics'),
     path('mtypes/', views_internal.ListMetricTypes.as_view(), name='mtypes'),
     path('saml2login', views_internal.Saml2Login.as_view(), name='saml2login'),
+    path('schema/', views_internal.GetPoemVersion.as_view(), name='schema'),
     path('serviceflavoursall/', views_internal.ListAllServiceFlavours.as_view(), name='serviceflavoursall'),
     path('services/', views_internal.ListServices.as_view(), name='services'),
     path('tags/', views_internal.ListTags.as_view(), name='tags'),
