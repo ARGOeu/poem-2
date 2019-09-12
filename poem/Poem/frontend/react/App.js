@@ -4,7 +4,7 @@ import { MetricProfilesChange, MetricProfilesList } from './MetricProfiles';
 import Home from './Home';
 import { ProbeList, ProbeDetails, ProbeHistory, ProbeVersionCompare, ProbeVersionDetails } from './Probes';
 import { MetricList, MetricChange } from './Metrics';
-import Administration from './Administration';
+import { TenantAdministration, SuperAdminAdministration } from './Administration';
 import { AggregationProfilesChange, AggregationProfilesList } from './AggregationProfiles';
 import Reports from './Reports';
 import Services from './Services';
@@ -72,7 +72,7 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, token, tenantName})
         webapitoken={token}
         tenantname={tenantName}/>} 
       />
-    <Route exact path="/ui/administration" component={Administration} />
+    <Route exact path="/ui/administration" component={TenantAdministration} />
     <Route exact path="/ui/administration/users" component={UsersList} />
     <Route exact path="/ui/administration/users/add"
       render={props => <UserChange
@@ -129,7 +129,7 @@ const SuperAdminRouteSwitch = ({props}) => (
     <Route exact path="/ui/probes/:name/history/compare/:id1/:id2" render={props => <ProbeVersionCompare {...props}/>}/>
     <Route exact path="/ui/probes/:name/history/:version" render={props => <ProbeVersionDetails {...props}/>}/>
     <Route exact path="/ui/probes/:name" render={props => <ProbeDetails {...props}/>}/>
-    <Route exact path="/ui/administration" render={props => <Administration/>}/>
+    <Route exact path="/ui/administration" component={SuperAdminAdministration}/>
     <Route exact path="/ui/administration/users" component={UsersList} />
     <Route exact path="/ui/administration/users/add"
       render={props => <UserChange
@@ -255,7 +255,6 @@ class App extends Component {
       )
     }
     else if (this.state.isLogged && this.state.poemversion) {
-        const tenant_conditions = this.state.token && this.state.tenantName && this.state.webApiMetric && this.state.webApiAggregation;
 
       return ( 
         <BrowserRouter>
@@ -273,16 +272,12 @@ class App extends Component {
             </Row>
             <Row className="no-gutters">
               <Col sm={{size: 2}} md={{size: 2}} className="d-flex flex-column">
-                {tenant_conditions ? 
-                  <NavigationLinksWithRouter poemver={this.state.poemversion}/>
-                :
-                  <NavigationLinksWithRouter poemver={this.state.poemversion}/>
-                }
+                <NavigationLinksWithRouter poemver={this.state.poemversion}/>
                 <div id="sidebar-grow" className="flex-grow-1 border-left border-right rounded-bottom"/>
               </Col>
               <Col>
                 <CustomBreadcrumbWithRouter />
-                {tenant_conditions ? 
+                {this.state.poemversion === 'tenant' ? 
                   <TenantRouteSwitch 
                     webApiMetric={this.state.webApiMetric}
                     webApiAggregation={this.state.webApiAggregation}
