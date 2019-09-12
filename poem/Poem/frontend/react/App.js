@@ -18,15 +18,137 @@ import { NavigationBar, CustomBreadcrumb, NavigationLinks, Footer } from './UIEl
 import { NotificationContainer, NotificationManager } from 'react-notifications';
 
 import './App.css';
+import { Backend } from './DataManager';
 
 
 const NavigationBarWithRouter = withRouter(NavigationBar);
 const NavigationLinksWithRouter = withRouter(NavigationLinks);
 const CustomBreadcrumbWithRouter = withRouter(CustomBreadcrumb);
 
+
+const TenantRouteSwitch = ({webApiAggregation, webApiMetric, token, tenantName}) => (
+  <Switch>
+    <Route exact path="/ui/home" component={Home} />
+    <Route exact path="/ui/services" component={Services} />
+    <Route exact path="/ui/reports" component={Reports} />
+    <Route exact path="/ui/probes" component={ProbeList} />
+    <Route exact path="/ui/probes/:name/history" render={props => <ProbeHistory {...props}/>}/>
+    <Route exact path="/ui/probes/:name/history/compare/:id1/:id2" render={props => <ProbeVersionCompare {...props}/>}/>
+    <Route exact path="/ui/probes/:name/history/:version" render={props => <ProbeVersionDetails {...props}/>}/>
+    <Route exact path="/ui/probes/:name" render={props => <ProbeDetails {...props}/>}/>
+    <Route exact path="/ui/metrics" component={MetricList} />
+    <Route exact path="/ui/metrics/:name" render={props => <MetricChange {...props}/>}/>
+    <Route exact path="/ui/metricprofiles" component={MetricProfilesList} />
+    <Route exact path="/ui/metricprofiles/add" 
+      render={props => <MetricProfilesChange 
+        {...props}
+        webapimetric={webApiMetric}
+        webapitoken={token}
+        tenantname={tenantName}
+        addview={true}/>}
+      />
+    <Route exact path="/ui/metricprofiles/:name" 
+      render={props => <MetricProfilesChange 
+        {...props}
+        webapimetric={webApiMetric}
+        webapitoken={token}
+        tenantname={tenantName}/>}
+      />
+    <Route exact path="/ui/aggregationprofiles" component={AggregationProfilesList} />
+    <Route exact path="/ui/aggregationprofiles/add"
+      render={props => <AggregationProfilesChange 
+        {...props} 
+        webapiaggregation={webApiAggregation} 
+        webapimetric={webApiMetric}
+        webapitoken={token}
+        tenantname={tenantName}
+        addview={true}/>} 
+      />
+    <Route exact path="/ui/aggregationprofiles/:name" 
+      render={props => <AggregationProfilesChange 
+        {...props} 
+        webapiaggregation={webApiAggregation} 
+        webapimetric={webApiMetric}
+        webapitoken={token}
+        tenantname={tenantName}/>} 
+      />
+    <Route exact path="/ui/administration" component={Administration} />
+    <Route exact path="/ui/administration/users" component={UsersList} />
+    <Route exact path="/ui/administration/users/add"
+      render={props => <UserChange
+        {...props}
+        addview={true}/>}
+    />
+    <Route exact path="/ui/administration/users/:user_name"
+      render={props => <UserChange {...props}/>}
+    />
+    <Route exact path="/ui/administration/groupofmetrics" component={GroupOfMetricsList} />
+    <Route exact path="/ui/administration/groupofmetrics/add"
+      render={props => <GroupOfMetricsChange
+        {...props}
+        addview={true}/>}
+    />
+    <Route exact path="/ui/administration/groupofmetrics/:group"
+      render={props => <GroupOfMetricsChange {...props}/>}
+    />
+    <Route exact path="/ui/administration/groupofaggregations" component={GroupOfAggregationsList} />
+    <Route exact path="/ui/administration/groupofaggregations/add"
+      render={props => <GroupOfAggregationsChange
+        {...props}
+        addview={true}/>}
+    />
+    <Route exact path="/ui/administration/groupofaggregations/:group"
+      render={props => <GroupOfAggregationsChange {...props}/>}
+    />
+    <Route exact path="/ui/administration/groupofmetricprofiles" component={GroupOfMetricProfilesList} />
+    <Route exact path="/ui/administration/groupofmetricprofiles/add"
+      render={props => <GroupOfMetricProfilesChange
+        {...props}
+        addview={true}/>}
+    />
+    <Route exact path="/ui/administration/groupofmetricprofiles/:group"
+      render={props => <GroupOfMetricProfilesChange {...props}/>}
+    />
+    <Route exact path="/ui/administration/apikey" component={APIKeyList} />
+    <Route exact path="/ui/administration/apikey/add"  
+      render={props => <APIKeyChange {...props} addview={true}/>}
+    />
+    <Route exact path="/ui/administration/apikey/:name"  
+      render={props => <APIKeyChange {...props} />}
+    />
+    <Route component={NotFound} />
+  </Switch>
+)
+
+
+const SuperAdminRouteSwitch = ({props}) => (
+  <Switch>
+    <Route exact path="/ui/home" component={Home} />
+    <Route exact path="/ui/probes" component={ProbeList} />
+    <Route exact path="/ui/probes/:name/history" render={props => <ProbeHistory {...props}/>}/>
+    <Route exact path="/ui/probes/:name/history/compare/:id1/:id2" render={props => <ProbeVersionCompare {...props}/>}/>
+    <Route exact path="/ui/probes/:name/history/:version" render={props => <ProbeVersionDetails {...props}/>}/>
+    <Route exact path="/ui/probes/:name" render={props => <ProbeDetails {...props}/>}/>
+    <Route exact path="/ui/administration" render={props => <Administration/>}/>
+    <Route exact path="/ui/administration/users" component={UsersList} />
+    <Route exact path="/ui/administration/users/add"
+      render={props => <UserChange
+        {...props}
+        addview={true}/>}
+    />
+    <Route exact path="/ui/administration/users/:user_name"
+      render={props => <UserChange {...props}/>}
+    />
+    <Route component={NotFound} />
+  </Switch>
+)
+
+
 class App extends Component {
   constructor(props) {
     super(props);
+
+    this.backend = new Backend();
 
     this.state = {
       isLogged: localStorage.getItem('authIsLogged') ? true : false,
@@ -35,6 +157,7 @@ class App extends Component {
       webApiMetric: undefined,
       tenantName: undefined,
       token: undefined,
+      poemversion: undefined
     };
 
     this.onLogin = this.onLogin.bind(this);
@@ -81,15 +204,20 @@ class App extends Component {
   }
 
   componentDidMount() {
-    this.state.isLogged && Promise.all([this.fetchToken(), this.fetchConfigOptions()])
-      .then(([token, options]) => {
-        this.setState({
-          token: token,
-          webApiMetric: options.result.webapimetric,
-          webApiAggregation: options.result.webapiaggregation,
-          tenantName: options.result.tenant_name
-        })
-      })
+    this.backend.fetchPoemVersion().then((poemversion) => {
+      this.setState({poemversion: poemversion})
+      if (poemversion === 'tenant') {
+        this.state.isLogged && Promise.all([this.fetchToken(), this.fetchConfigOptions()])
+          .then(([token, options]) => {
+            this.setState({
+              token: token,
+              webApiMetric: options.result.webapimetric,
+              webApiAggregation: options.result.webapiaggregation,
+              tenantName: options.result.tenant_name,
+            })
+          })
+      }
+    })
   }
 
   componentDidUpdate(prevProps, prevState) {
@@ -126,9 +254,8 @@ class App extends Component {
         </BrowserRouter>
       )
     }
-    else if (this.state.isLogged && this.state.token &&
-      this.state.tenantName && this.state.webApiMetric && 
-      this.state.webApiAggregation) {
+    else if (this.state.isLogged && this.state.poemversion) {
+        const tenant_conditions = this.state.token && this.state.tenantName && this.state.webApiMetric && this.state.webApiAggregation;
 
       return ( 
         <BrowserRouter>
@@ -146,102 +273,24 @@ class App extends Component {
             </Row>
             <Row className="no-gutters">
               <Col sm={{size: 2}} md={{size: 2}} className="d-flex flex-column">
-                <NavigationLinksWithRouter />
+                {tenant_conditions ? 
+                  <NavigationLinksWithRouter poemver={this.state.poemversion}/>
+                :
+                  <NavigationLinksWithRouter poemver={this.state.poemversion}/>
+                }
                 <div id="sidebar-grow" className="flex-grow-1 border-left border-right rounded-bottom"/>
               </Col>
               <Col>
                 <CustomBreadcrumbWithRouter />
-                <Switch>
-                  <Route exact path="/ui/home" component={Home} />
-                  <Route exact path="/ui/services" component={Services} />
-                  <Route exact path="/ui/reports" component={Reports} />
-                  <Route exact path="/ui/probes" component={ProbeList} />
-                  <Route exact path="/ui/probes/:name/history" render={props => <ProbeHistory {...props}/>}/>
-                  <Route exact path="/ui/probes/:name/history/compare/:id1/:id2" render={props => <ProbeVersionCompare {...props}/>}/>
-                  <Route exact path="/ui/probes/:name/history/:version" render={props => <ProbeVersionDetails {...props}/>}/>
-                  <Route exact path="/ui/probes/:name" render={props => <ProbeDetails {...props}/>}/>
-                  <Route exact path="/ui/metrics" component={MetricList} />
-                  <Route exact path="/ui/metrics/:name" render={props => <MetricChange {...props}/>}/>
-                  <Route exact path="/ui/metricprofiles" component={MetricProfilesList} />
-                  <Route exact path="/ui/metricprofiles/add" 
-                    render={props => <MetricProfilesChange 
-                      {...props}
-                      webapimetric={this.state.webApiMetric}
-                      webapitoken={this.state.token}
-                      tenantname={this.state.tenantName}
-                      addview={true}/>}
-                    />
-                  <Route exact path="/ui/metricprofiles/:name" 
-                    render={props => <MetricProfilesChange 
-                      {...props}
-                      webapimetric={this.state.webApiMetric}
-                      webapitoken={this.state.token}
-                      tenantname={this.state.tenantName}/>}
-                    />
-                  <Route exact path="/ui/aggregationprofiles" component={AggregationProfilesList} />
-                  <Route exact path="/ui/aggregationprofiles/add"
-                    render={props => <AggregationProfilesChange 
-                      {...props} 
-                      webapiaggregation={this.state.webApiAggregation} 
-                      webapimetric={this.state.webApiMetric}
-                      webapitoken={this.state.token}
-                      tenantname={this.state.tenantName}
-                      addview={true}/>} 
-                    />
-                  <Route exact path="/ui/aggregationprofiles/:name" 
-                    render={props => <AggregationProfilesChange 
-                      {...props} 
-                      webapiaggregation={this.state.webApiAggregation} 
-                      webapimetric={this.state.webApiMetric}
-                      webapitoken={this.state.token}
-                      tenantname={this.state.tenantName}/>} 
-                    />
-                  <Route exact path="/ui/administration" component={Administration} />
-                  <Route exact path="/ui/administration/users" component={UsersList} />
-                  <Route exact path="/ui/administration/users/add"
-                    render={props => <UserChange
-                      {...props}
-                      addview={true}/>}
-                  />
-                  <Route exact path="/ui/administration/users/:user_name"
-                    render={props => <UserChange {...props}/>}
-                  />
-                  <Route exact path="/ui/administration/groupofmetrics" component={GroupOfMetricsList} />
-                  <Route exact path="/ui/administration/groupofmetrics/add"
-                    render={props => <GroupOfMetricsChange
-                      {...props}
-                      addview={true}/>}
-                  />
-                  <Route exact path="/ui/administration/groupofmetrics/:group"
-                    render={props => <GroupOfMetricsChange {...props}/>}
-                  />
-                  <Route exact path="/ui/administration/groupofaggregations" component={GroupOfAggregationsList} />
-                  <Route exact path="/ui/administration/groupofaggregations/add"
-                    render={props => <GroupOfAggregationsChange
-                      {...props}
-                      addview={true}/>}
-                  />
-                  <Route exact path="/ui/administration/groupofaggregations/:group"
-                    render={props => <GroupOfAggregationsChange {...props}/>}
-                  />
-                  <Route exact path="/ui/administration/groupofmetricprofiles" component={GroupOfMetricProfilesList} />
-                  <Route exact path="/ui/administration/groupofmetricprofiles/add"
-                    render={props => <GroupOfMetricProfilesChange
-                      {...props}
-                      addview={true}/>}
-                  />
-                  <Route exact path="/ui/administration/groupofmetricprofiles/:group"
-                    render={props => <GroupOfMetricProfilesChange {...props}/>}
-                  />
-                  <Route exact path="/ui/administration/apikey" component={APIKeyList} />
-                  <Route exact path="/ui/administration/apikey/add"  
-                    render={props => <APIKeyChange {...props} addview={true}/>}
-                  />
-                  <Route exact path="/ui/administration/apikey/:name"  
-                    render={props => <APIKeyChange {...props} />}
-                  />
-                  <Route component={NotFound} />
-                </Switch>
+                {tenant_conditions ? 
+                  <TenantRouteSwitch 
+                    webApiMetric={this.state.webApiMetric}
+                    webApiAggregation={this.state.webApiAggregation}
+                    token={this.state.token} 
+                    tenantName={this.state.tenantName}/> 
+                 :
+                 <SuperAdminRouteSwitch/>
+                }
               </Col>
             </Row>
             <Row>

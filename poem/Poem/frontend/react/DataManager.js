@@ -188,6 +188,13 @@ export class Backend {
       .catch(err => alert('Something went wrong: ' + err))
   }
 
+  fetchPoemVersion() {
+    return fetch('/api/v2/internal/schema')
+      .then(response => response.ok ? response.json() : null)
+      .then(json => json['schema'])
+      .catch(err => alert('Something went wrong: ' + err))
+  }
+
   changeMetricProfile(profile) {
     return this.send(
       '/api/v2/internal/metricprofiles/',
