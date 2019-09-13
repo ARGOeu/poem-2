@@ -164,9 +164,12 @@ export class ProbeList extends Component {
   constructor(props) {
     super(props);
 
+    this.location = props.location;
+
     this.state = {
       loading: false,
       list_probe: null,
+      poemversion: null,
       search_name: '',
       search_description: ''
     };
@@ -177,10 +180,14 @@ export class ProbeList extends Component {
   componentDidMount() {
     this.setState({loading: true});
 
-    this.backend.fetchAllProbes()
-      .then(json =>
+    Promise.all([
+      this.backend.fetchAllProbes(),
+      this.backend.fetchPoemVersion()
+    ])
+      .then(([json, ver]) =>
         this.setState({
           list_probe: json,
+          poemversion: ver,
           loading: false,
           search_name: ''
         }))
@@ -244,8 +251,7 @@ export class ProbeList extends Component {
       }
     ];
 
-    const { loading } = this.state;
-    var { list_probe } = this.state;
+    var { poemversion, list_probe, loading } = this.state;
 
     if (this.state.search_name) {
       list_probe = list_probe.filter(row => 
@@ -266,9 +272,17 @@ export class ProbeList extends Component {
       return (
         <React.Fragment>
           <div className="d-flex align-items-center justify-content-between">
-            <React.Fragment>
-              <h2 className="ml-3 mt-1 mb-4">{'Select probe for details'}</h2>
-            </React.Fragment>
+            {
+              poemversion === 'tenant' ?
+                <React.Fragment>
+                  <h2 className="ml-3 mt-1 mb-4">{'Select probe for details'}</h2>
+                </React.Fragment>
+              :
+                <React.Fragment>
+                  <h2 className="ml-3 mt-1 mb-4">{'Select probe to change'}</h2>
+                  <Link className="btn btn-secondary" to={this.location.pathname + "/add"} role="button">Add</Link>
+                </React.Fragment>
+            }
           </div>
           <div id="argo-contentwrap" className="ml-2 mb-2 mt-2 p-3 border rounded">
             <ReactTable
