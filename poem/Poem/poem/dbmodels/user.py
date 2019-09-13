@@ -1,10 +1,14 @@
 from django.conf import settings
-from django.db import models
+from django.db import models, connection
+from django.db.models.signals import pre_delete
+from django.dispatch import receiver
 from django.utils.translation import ugettext_lazy as _
 
 from Poem.poem.dbmodels.aggregations import GroupOfAggregations
 from Poem.poem.dbmodels.metricstags import GroupOfMetrics
 from Poem.poem.dbmodels.metricprofiles import GroupOfMetricProfiles
+
+from tenant_schemas.utils import get_public_schema_name
 
 
 class UserProfile(models.Model):
@@ -16,7 +20,7 @@ class UserProfile(models.Model):
 
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE
+        on_delete=models.DO_NOTHING
     )
     subject = models.CharField(
         'distinguishedName',
@@ -62,3 +66,8 @@ class UserProfile(models.Model):
         related_query_name='user'
     )
 
+
+@receiver(pre_delete, sender=settings.AUTH_USER_MODEL)
+def on_delete_user(sender, instance, **kwargs):
+    if connection.schema_name != get_public_schema_name():
+        userprofile = UserProfile.objects.get(user=instance).delete()
