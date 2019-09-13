@@ -97,15 +97,27 @@ export class UsersList extends Component
       },
       {
         Header: 'First name',
-        accessor: 'first_name'
+        accessor: 'first_name',
+        Cell: row =>
+          <div style={{textAlign: 'center'}}>
+            {row.value}
+          </div>
       },
       {
         Header: 'Last name',
-        accessor: 'last_name'
+        accessor: 'last_name',
+        Cell: row =>
+          <div style={{textAlign: 'center'}}>
+            {row.value}
+          </div>
       },
       {
         Header: 'Email address',
-        accessor: 'email'
+        accessor: 'email',
+        Cell: row =>
+          <div style={{textAlign: 'center'}}>
+            {row.value}
+          </div>
       },
       {
         id: 'is_superuser',
@@ -250,14 +262,34 @@ export class UserChange extends Component {
       .catch(err => alert('Something went wrong: ' + err))
     }
     else {
-      this.backend.addUser(values)
-        .then(() => NotifyOk({
-          msg: 'User successfully added',
-          title: 'Added',
-          callback: () => this.history.push('/ui/administration/users')
-        },
-        ))
-        .catch(err => alert('Something went wrong: ' + err))
+      this.backend.addUser({
+        username: values.username,
+        password: values.password,
+        first_name: values.first_name,
+        last_name: values.last_name,
+        email: values.email,
+        is_superuser: values.is_superuser,
+        is_staff: values.is_staff,
+        is_active: values.is_active
+      })
+        .then(r => {
+          this.backend.addUserProfile({
+            username: values.username,
+            displayname: values.displayname,
+            subject: values.subject,
+            egiid: values.egiid,
+            groupsofaggregations: values.groupsofaggregations,
+            groupsofmetrics: values.groupsofmetrics,
+            groupsofmetricprofiles: values.groupsofmetricprofiles
+          })
+        })
+          .then(() => NotifyOk({
+            msg: 'User successfully added',
+            title: 'Added',
+            callback: () => this.history.push('/ui/administration/users')
+          },
+          ))
+          .catch(err => alert('Something went wrong: ' + err))
     }
   }
 

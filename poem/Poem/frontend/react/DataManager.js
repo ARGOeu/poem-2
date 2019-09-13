@@ -275,6 +275,14 @@ export class Backend {
     );
   }
 
+  addUserProfile(user) {
+    return this.send(
+      '/api/v2/internal/userprofile/',
+      'POST',
+      user
+    );
+  }
+
   addGroup(group, name) {
     return this.send(
       '/api/v2/internal/' + group + 'group/',
