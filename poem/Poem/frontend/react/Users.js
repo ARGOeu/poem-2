@@ -347,7 +347,7 @@ export class UserChange extends Component {
               'metricprofiles': []
             },
             allgroups: groups,
-            write_perm: true,
+            write_perm: localStorage.getItem('authIsSuperuser') === 'true',
             loading: false
           }
         ))
@@ -608,6 +608,299 @@ export class UserChange extends Component {
                         className="form-control"
                         id="displayname"
                       />
+                    </Col>
+                  </Row>
+                </FormGroup>
+                {
+                  (write_perm) &&
+                    <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
+                      <Button
+                        color="danger"
+                        onClick={() => {
+                          this.toggleAreYouSureSetModal('Are you sure you want to delete User?',
+                          'Delete user',
+                          () => this.doDelete(props.values.username))
+                        }}
+                      >
+                        Delete
+                      </Button>
+                      <Button color="success" id="submit-button" type="submit">Save</Button>
+                    </div>
+                }
+              </Form>
+            )}
+          />
+        </BaseArgoView>
+      )
+    }
+  }
+}
+
+
+export class SuperAdminUserChange extends Component {
+  constructor(props) {
+    super(props);
+
+    this.user_name = props.match.params.user_name;
+    this.addview = props.addview;
+    this.location = props.location;
+    this.history = props.history;
+
+    this.state = {
+      custuser: {},
+      password: '',
+      write_perm: false,
+      loading: false,
+      areYouSureModal: false,
+      modalFunc: undefined,
+      modalTitle: undefined,
+      modalMsg: undefined
+    }
+
+    this.backend = new Backend();
+
+    this.toggleAreYouSure = this.toggleAreYouSure.bind(this);
+    this.toggleAreYouSureSetModal = this.toggleAreYouSureSetModal.bind(this);
+    this.onSubmitHandle = this.onSubmitHandle.bind(this);
+    this.doChange = this.doChange.bind(this);
+    this.doDelete = this.doDelete.bind(this);
+  }
+
+  toggleAreYouSure() {
+    this.setState(prevState => 
+      ({areYouSureModal: !prevState.areYouSureModal}));
+  }
+
+  toggleAreYouSureSetModal(msg, title, onyes) {
+    this.setState(prevState => 
+      ({areYouSureModal: !prevState.areYouSureModal,
+        modalFunc: onyes,
+        modalMsg: msg,
+        modalTitle: title,
+      }));
+  }
+
+  onSubmitHandle(values, action) {
+    let msg = undefined;
+    let title = undefined;
+
+    if (this.addview) {
+      msg = 'Are you sure you want to add User?';
+      title = 'Add user';
+    }
+    else {
+      msg = 'Are you sure you want to change User?';
+      title = 'Change user';
+    }
+    this.toggleAreYouSureSetModal(msg, title,
+      () => this.doChange(values, action))
+  }
+
+  doChange(values, action) {
+    if (!this.addview) {
+      this.backend.changeUser({
+        username: values.username,
+        first_name: values.first_name,
+        last_name: values.last_name,
+        email: values.email,
+        is_superuser: values.is_superuser,
+        is_staff: values.is_staff,
+        is_active: values.is_active
+      })
+        .then(() => NotifyOk({
+          msg: 'User successfully changed',
+          title: 'Changed',
+          callback: () => this.history.push('/ui/administration/users')
+        },
+        ))
+        .catch(err => alert('Something went wrong: ' + err))
+    }
+    else {
+      this.backend.addUser({
+        username: values.username,
+        password: values.password,
+        first_name: values.first_name,
+        last_name: values.last_name,
+        email: values.email,
+        is_superuser: values.is_superuser,
+        is_staff: values.is_staff,
+        is_active: values.is_active
+      })
+        .then(() => NotifyOk({
+          msg: 'User successfully added',
+          title: 'Added',
+          callback: () => this.history.push('/ui/administration/users')
+        },
+        ))
+        .catch(err => alert('Something went wrong: ' + err))
+    }
+  }
+
+  doDelete(username) {
+    this.backend.deleteUser(username)
+      .then(() => NotifyOk({
+        msg: 'User successfully deleted',
+        title: 'Deleted',
+        callback: () => this.history.push('/ui/administration/users')
+      }))
+      .catch(err => alert('Something went wrong: ' + err))
+  }
+
+  componentDidMount() {
+    this.setState({loading: true})
+
+    if (!this.addview) {
+      this.backend.fetchUserByUsername(this.user_name)
+      .then((user) => {
+        this.setState({
+          custuser: user,
+          write_perm: localStorage.getItem('authIsSuperuser') === 'true',
+          loading: false
+        });
+      });
+    }
+
+    else {
+      this.backend.fetchPoemVersion()
+      .then(r => {
+        this.setState(
+          {
+            custuser: {
+              'first_name': '', 
+              'last_name': '', 
+              'username': '',
+              'is_active': true,
+              'is_superuser': false,
+              'is_staff': true,
+              'email': ''
+          },
+            write_perm: localStorage.getItem('authIsSuperuser') === 'true',
+            loading: false
+          }
+        )
+      })
+    }
+  }
+  
+  render() {
+    const {custuser, loading, write_perm} = this.state;
+
+    if (loading)
+      return(<LoadingAnim />)
+
+    else if (!loading) {
+      return (
+        <BaseArgoView
+          resourcename="Users"
+          location={this.location}
+          addview={this.addview}
+          infoview={!this.addview}
+          modal={true}
+          state={this.state}
+          toggle={this.toggleAreYouSure}
+          submitperm={write_perm}>
+          <Formik
+            initialValues = {{
+              first_name: custuser.first_name,
+              last_name: custuser.last_name,
+              username: custuser.username,
+              password: '',
+              is_active: custuser.is_active,
+              is_superuser: custuser.is_superuser,
+              is_staff: custuser.is_staff,
+              email: custuser.email,
+            }}
+            onSubmit = {(values, actions) => this.onSubmitHandle(values, actions)}
+            render = {props => (
+              <Form> 
+                <UsernamePassword
+                  {...props}
+                  add={this.addview}
+                />
+                <FormGroup>
+                  <h4 className="mt-2 p-1 pl-3 text-light text-uppercase rounded" style={{"backgroundColor": "#416090"}}>Personal info</h4>
+                  <Row>
+                    <Col md={6}>
+                      <Label for="userFirstName">First name</Label>
+                      <Field
+                        type="text"
+                        name="first_name"
+                        required={false}
+                        className="form-control"
+                        id="userFirstName"
+                      />
+                    </Col>
+                  </Row>
+                  <Row>
+                    <Col md={6}>
+                      <Label for="userLastName">Last name</Label>
+                      <Field
+                        type="text"
+                        name="last_name"
+                        required={false}
+                        className="form-control"
+                        id="userLastName"
+                      />
+                    </Col>
+                  </Row>
+                  <Row>
+                    <Col md={6}>
+                      <Label for="userEmail">Email</Label>
+                      <Field
+                        type="text"
+                        name="email"
+                        required={true}
+                        className="form-control"
+                        id="userEmail"
+                      />
+                    </Col>
+                  </Row>
+                </FormGroup>
+                <FormGroup>
+                  <h4 className="mt-2 p-1 pl-3 text-light text-uppercase rounded" style={{"backgroundColor": "#416090"}}>Permissions</h4>
+                  <Row>
+                    <Col md={6}>
+                      <Field
+                        component={Checkbox}
+                        name="is_superuser"
+                        required={false}
+                        className="form-control"
+                        id="checkbox"
+                        label="Superuser status"
+                      />
+                      <FormText color="muted">
+                        Designates that this user has all permissions without explicitly assigning them.
+                      </FormText>
+                    </Col>
+                  </Row>
+                  <Row>
+                    <Col md={6}>
+                      <Field
+                        component={Checkbox}
+                        name="is_staff"
+                        required={false}
+                        className="form-control"
+                        id="checkbox"
+                        label="Staff status"
+                      />
+                      <FormText color="muted">
+                        Designates whether the user can log into this admin site.
+                      </FormText>
+                    </Col>
+                  </Row>
+                  <Row>
+                    <Col md={6}>
+                      <Field 
+                        component={Checkbox}
+                        name="is_active"
+                        required={false}
+                        className="form-control"
+                        id="checkbox"
+                        label="Active"
+                      />
+                      <FormText color="muted">
+                        Designates whether this user should be treated as active. Unselect this instead of deleting accounts.
+                      </FormText>
                     </Col>
                   </Row>
                 </FormGroup>

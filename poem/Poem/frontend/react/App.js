@@ -8,7 +8,7 @@ import { TenantAdministration, SuperAdminAdministration } from './Administration
 import { AggregationProfilesChange, AggregationProfilesList } from './AggregationProfiles';
 import Reports from './Reports';
 import Services from './Services';
-import { UsersList, UserChange } from './Users';
+import { UsersList, UserChange, SuperAdminUserChange } from './Users';
 import { GroupOfMetricsList, GroupOfMetricsChange, GroupOfAggregationsList, GroupOfAggregationsChange, GroupOfMetricProfilesList, GroupOfMetricProfilesChange } from './GroupElements';
 import { APIKeyList, APIKeyChange } from './APIKey';
 import NotFound from './NotFound';
@@ -132,12 +132,12 @@ const SuperAdminRouteSwitch = ({props}) => (
     <Route exact path="/ui/administration" component={SuperAdminAdministration}/>
     <Route exact path="/ui/administration/users" component={UsersList} />
     <Route exact path="/ui/administration/users/add"
-      render={props => <UserChange
+      render={props => <SuperAdminUserChange
         {...props}
         addview={true}/>}
     />
     <Route exact path="/ui/administration/users/:user_name"
-      render={props => <UserChange {...props}/>}
+      render={props => <SuperAdminUserChange {...props}/>}
     />
     <Route component={NotFound} />
   </Switch>
