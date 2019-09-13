@@ -79,30 +79,6 @@ class ListUsers(APIView):
                 is_staff=request.data['is_staff'],
                 is_active=request.data['is_active']
             )
-            user = CustUser.objects.get(username=request.data['username'])
-
-            userprofile = poem_models.UserProfile(
-                user=user,
-                displayname=request.data['displayname'],
-                subject=request.data['subject'],
-                egiid=request.data['egiid']
-            )
-            userprofile.save()
-
-            for group in request.data['groupsofaggregations']:
-                userprofile.groupsofaggregations.add(
-                    poem_models.GroupOfAggregations.objects.get(name=group)
-                )
-
-            for group in request.data['groupsofmetrics']:
-                userprofile.groupsofmetrics.add(
-                    poem_models.GroupOfMetrics.objects.get(name=group)
-                )
-
-            for group in request.data['groupsofmetricprofiles']:
-                userprofile.groupsofmetricprofiles.add(
-                    poem_models.GroupOfMetricProfiles.objects.get(name=group)
-                )
 
             return Response(status=status.HTTP_201_CREATED)
 
@@ -182,7 +158,34 @@ class GetUserprofileForUsername(APIView):
                     poem_models.GroupOfMetricProfiles.objects.get(name=group)
                 )
 
-        return Response(status.HTTP_201_CREATED)
+        return Response(status=status.HTTP_201_CREATED)
+
+    def post(self, request):
+        user = CustUser.objects.get(username=request.data['username'])
+
+        userprofile = poem_models.UserProfile.objects.create(
+            user=user,
+            displayname=request.data['displayname'],
+            subject=request.data['subject'],
+            egiid=request.data['egiid']
+        )
+
+        for group in request.data['groupsofaggregations']:
+            userprofile.groupsofaggregations.add(
+                poem_models.GroupOfAggregations.objects.get(name=group)
+            )
+
+        for group in request.data['groupsofmetrics']:
+            userprofile.groupsofmetrics.add(
+                poem_models.GroupOfMetrics.objects.get(name=group)
+            )
+
+        for group in request.data['groupsofmetricprofiles']:
+            userprofile.groupsofmetricprofiles.add(
+                poem_models.GroupOfMetricProfiles.objects.get(name=group)
+            )
+
+        return Response(status=status.HTTP_201_CREATED)
 
 
 class ListGroupsForGivenUser(APIView):
