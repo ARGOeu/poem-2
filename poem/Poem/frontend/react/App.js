@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import Login from './Login';
 import { MetricProfilesChange, MetricProfilesList } from './MetricProfiles';
 import Home from './Home';
-import { ProbeList, ProbeDetails, ProbeHistory, ProbeVersionCompare, ProbeVersionDetails } from './Probes';
+import { ProbeList, ProbeChange, ProbeHistory, ProbeVersionCompare, ProbeVersionDetails } from './Probes';
 import { MetricList, MetricChange } from './Metrics';
 import { TenantAdministration, SuperAdminAdministration } from './Administration';
 import { AggregationProfilesChange, AggregationProfilesList } from './AggregationProfiles';
@@ -35,7 +35,7 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, token, tenantName})
     <Route exact path="/ui/probes/:name/history" render={props => <ProbeHistory {...props}/>}/>
     <Route exact path="/ui/probes/:name/history/compare/:id1/:id2" render={props => <ProbeVersionCompare {...props}/>}/>
     <Route exact path="/ui/probes/:name/history/:version" render={props => <ProbeVersionDetails {...props}/>}/>
-    <Route exact path="/ui/probes/:name" render={props => <ProbeDetails {...props}/>}/>
+    <Route exact path="/ui/probes/:name" render={props => <ProbeChange {...props}/>}/>
     <Route exact path="/ui/metrics" component={MetricList} />
     <Route exact path="/ui/metrics/:name" render={props => <MetricChange {...props}/>}/>
     <Route exact path="/ui/metricprofiles" component={MetricProfilesList} />
@@ -125,10 +125,11 @@ const SuperAdminRouteSwitch = ({props}) => (
   <Switch>
     <Route exact path="/ui/home" component={Home} />
     <Route exact path="/ui/probes" component={ProbeList} />
+    <Route exact path="/ui/probes/add" render={props => <ProbeChange {...props} addview={true}/>}/>
     <Route exact path="/ui/probes/:name/history" render={props => <ProbeHistory {...props}/>}/>
     <Route exact path="/ui/probes/:name/history/compare/:id1/:id2" render={props => <ProbeVersionCompare {...props}/>}/>
     <Route exact path="/ui/probes/:name/history/:version" render={props => <ProbeVersionDetails {...props}/>}/>
-    <Route exact path="/ui/probes/:name" render={props => <ProbeDetails {...props}/>}/>
+    <Route exact path="/ui/probes/:name" render={props => <ProbeChange {...props}/>}/>
     <Route exact path="/ui/administration" component={SuperAdminAdministration}/>
     <Route exact path="/ui/administration/users" component={UsersList} />
     <Route exact path="/ui/administration/users/add"

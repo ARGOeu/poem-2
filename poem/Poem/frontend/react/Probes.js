@@ -55,7 +55,7 @@ const DiffElement = ({title, item1, item2}) => {
   )
 }
 
-const ProbeForm = ({props}) => (
+const ProbeForm = ({poemversion=null, historyview=false}) => (
   <Form>
     <FormGroup>
       <Row>
@@ -66,7 +66,8 @@ const ProbeForm = ({props}) => (
             name='name'
             className='form-control'
             id='name'
-            disabled={true}
+            required={true}
+            disabled={poemversion === 'tenant' || historyview}
           />
           <FormText color="muted">
             Name of this probe.
@@ -79,7 +80,8 @@ const ProbeForm = ({props}) => (
             name='version'
             className='form-control'
             id='version'
-            disabled={true}
+            required={true}
+            disabled={poemversion === 'tenant' || historyview}
           />
           <FormText color="muted">
             Version of the probe.
@@ -98,7 +100,8 @@ const ProbeForm = ({props}) => (
               name='repository'
               className='form-control'
               id='repository'
-              disabled={true}
+              required={true}
+              disabled={poemversion === 'tenant' || historyview}
             />
           </InputGroup>
           <FormText color='muted'>
@@ -115,7 +118,8 @@ const ProbeForm = ({props}) => (
               name='docurl'
               className='form-control'
               id='docurl'
-              disabled={true}
+              required={true}
+              disabled={poemversion === 'tenant' || historyview}
             />
           </InputGroup>
           <FormText color='muted'>
@@ -132,7 +136,8 @@ const ProbeForm = ({props}) => (
             rows='15'
             className='form-control'
             id='description'
-            disabled={true}
+            required={true}
+            disabled={poemversion === 'tenant' || historyview}
           />
           <FormText color='muted'>
             Free text description outlining the purpose of this probe.
@@ -148,7 +153,8 @@ const ProbeForm = ({props}) => (
             rows='5'
             className='form-control'
             id='comment'
-            disabled={true}
+            required={true}
+            disabled={poemversion === 'tenant' || historyview}
           />
           <FormText color='muted'>
             Short comment about this version.
@@ -301,55 +307,137 @@ export class ProbeList extends Component {
 }
 
 
-export class ProbeDetails extends Component {
+export class ProbeChange extends Component {
   constructor(props) {
     super(props);
 
     this.name = props.match.params.name;
+    this.addview = props.addview;
     this.location = props.location;
     this.backend = new Backend();
 
     this.state = {
       probe: {},
-      loading: false
+      poemversion: null,
+      loading: false,
+      write_perm: false,
+      areYouSureModal: false,
+      modalFunc: undefined,
+      modalTitle: undefined,
+      modalMsg: undefined
     };
+
+    this.toggleAreYouSure = this.toggleAreYouSure.bind(this);
+    this.toggleAreYouSureSetModal = this.toggleAreYouSureSetModal.bind(this);
+    this.onSubmitHandle = this.onSubmitHandle.bind(this);
+  }
+
+  toggleAreYouSure() {
+    this.setState(prevState => 
+      ({areYouSureModal: !prevState.areYouSureModal}));
+  }
+
+  toggleAreYouSureSetModal(msg, title, onyes) {
+    this.setState(prevState => 
+      ({areYouSureModal: !prevState.areYouSureModal,
+        modalFunc: onyes,
+        modalMsg: msg,
+        modalTitle: title,
+      }));
+  }
+
+  onSubmitHandle(values, actions) {
+
   }
 
   componentDidMount() {
     this.setState({loading: true});
 
-    this.backend.fetchProbeByName(this.name)
-      .then((json) => {
-        this.setState({
-          probe: json,
-          loading: false
-        });
-      });
+    if (!this.addview) {
+      Promise.all([
+        this.backend.fetchProbeByName(this.name),
+        this.backend.fetchPoemVersion()
+      ])
+          .then(([probe, ver]) => {
+            this.setState({
+              probe: probe,
+              poemversion: ver,
+              write_perm: localStorage.getItem('authIsSuperuser') === 'true',
+              loading: false
+            });
+          });
+    } else {
+      this.backend.fetchPoemVersion()
+        .then((ver) => {
+          this.setState({
+            poemversion: ver,
+            write_perm: localStorage.getItem('authIsSuperuser') === 'true',
+            loading: false
+          })
+        })
+    }
   }
 
   render() {
-    const { probe, loading } = this.state;
+    const { probe, poemversion, write_perm, loading } = this.state;
 
     if (loading)
       return(<LoadingAnim/>)
 
     else if (!loading) {
-      return (
-        <React.Fragment>
-          <div className="d-flex align-items-center justify-content-between">
+      if (poemversion === 'superadmin') {
+        return (
+          <BaseArgoView
+            resourcename='Probes'
+            location={this.location}
+            addview={this.addview}
+            modal={true}
+            state={this.state}
+            toggle={this.toggleAreYouSure}
+            submitperm={write_perm}>
+              <Formik
+                initialValues = {{
+                  name: probe.name,
+                  version: probe.version,
+                  repository: probe.repository,
+                  docurl: probe.docurl,
+                  description: probe.description,
+                  comment: probe.comment
+                }}
+                onSubmit = {(values, actions) => this.onSubmitHandle(values, actions)}
+                render = {props => (
+                  <React.Fragment>
+                    <ProbeForm poemversion={poemversion}/>
+                    {
+                      (write_perm) &&
+                        <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
+                          <Button color='danger'>
+                            Delete
+                          </Button>
+                          <Button color='success' id='submit-button' type='submit'>
+                            Save
+                          </Button>
+                        </div>  
+                  }
+                  </React.Fragment>
+                )}
+              />          
+          </BaseArgoView>
+        )
+      } else {
+        return (
           <React.Fragment>
-            <h2 className="ml-3 mt-1 mb-4">{'Probe details'}</h2>
-            <Link className='btn btn-secondary' to={this.location.pathname + '/history'} role='button'>History</Link>
-          </React.Fragment>
-          </div>
-          <div id="argo-contentwrap" className="ml-2 mb-2 mt-2 p-3 border rounded">
-            {
+            <div className="d-flex align-items-center justify-content-between">
+              <h2 className="ml-3 mt-1 mb-4">{'Probe details'}</h2>
+              <Link className='btn btn-secondary' to={this.location.pathname + '/history'} role='button'>History</Link>
+            </div>
+            <div id="argo-contentwrap" className="ml-2 mb-2 mt-2 p-3 border rounded">
               <Alert color='info'>
                 <center>
                   This is a read-only instance. Probes can be changed only by super admin.
                 </center>
               </Alert>
-            }
+            </div>
             <Formik
               initialValues = {{
                 name: probe.name,
@@ -360,12 +448,12 @@ export class ProbeDetails extends Component {
                 comment: probe.comment
               }}
               render = {props => (
-                <ProbeForm {...props}/>
+                <ProbeForm poemversion={poemversion}/>
               )}
             />
-          </div>
-        </React.Fragment>
-      )
+          </React.Fragment>
+        )
+      }
     }
   }
 }
@@ -714,7 +802,7 @@ export class ProbeVersionDetails extends Component {
                 comment: comment
               }}
               render = {props => (
-                <ProbeForm {...props}/>
+                <ProbeForm historyview={true}/>
               )}
               />
           </div>
