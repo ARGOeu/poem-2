@@ -4,6 +4,8 @@ import datetime
 from django.contrib.contenttypes.models import ContentType
 from django.test.client import encode_multipart
 
+import factory
+
 from Poem.api import views_internal as views
 from Poem.api.internal_views.metrics import inline_metric_for_db
 from Poem.api.models import MyAPIKey
@@ -15,6 +17,7 @@ from rest_framework.test import force_authenticate
 from rest_framework import status
 
 from reversion.models import Revision, Version
+from reversion.signals import post_revision_commit
 
 from tenant_schemas.test.cases import TenantTestCase
 from tenant_schemas.test.client import TenantRequestFactory
@@ -476,6 +479,32 @@ class ListProbesAPIViewTests(TenantTestCase):
         force_authenticate(request, user=self.user)
         response = self.view(request, 'nonexisting_probe')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    @factory.django.mute_signals(post_revision_commit)
+    def test_put_probe(self):
+
+        data = {
+            'name': 'ams-probe',
+            'version': '0.1.7',
+            'comment': 'New version.',
+            'docurl':
+                'https://github.com/ARGOeu/nagios-plugins-argo/blob/'
+                'master/README.md',
+            'description': 'Probe is inspecting AMS service by trying '
+                           'to publish and consume randomly generated '
+                           'messages.',
+            'repository': 'https://github.com/ARGOeu/nagios-plugins-'
+                          'argo'
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url_base,
+                                   content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        probe = admin_models.Probe.objects.get(name='ams-probe')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(probe.version, '0.1.7')
+        self.assertEqual(probe.comment, 'New version.')
 
 
 class ListServicesAPIViewTests(TenantTestCase):
