@@ -307,6 +307,14 @@ export class Backend {
     );
   }
 
+  addProbe(probe) {
+    return this.send(
+      '/api/v2/internal/probes/',
+      'POST',
+      probe
+    );
+  }
+
   deleteMetricProfile(id) {
     return this.send(
       '/api/v2/internal/metricprofiles/' + id,
