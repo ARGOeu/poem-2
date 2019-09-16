@@ -1,3 +1,4 @@
+import datetime
 import json
 
 from Poem.api import serializers
@@ -74,6 +75,10 @@ class ListProbes(APIView):
                 probe.comment = request.data['comment']
                 fields.append('comment')
 
+            if probe.user != request.user:
+                probe.user = request.user.username
+                fields.append('user')
+
             probe.save()
 
             reversion.set_user(request.user)
@@ -90,3 +95,28 @@ class ListProbes(APIView):
             )
 
         return Response(status=status.HTTP_201_CREATED)
+
+    def post(self, request):
+        data = {
+            'name': request.data['name'],
+            'version': request.data['version'],
+            'repository': request.data['repository'],
+            'docurl': request.data['docurl'],
+            'description': request.data['description'],
+            'comment': request.data['comment'],
+            'user': request.user.username,
+            'datetime': datetime.datetime.now()
+        }
+        serializer = serializers.ProbeSerializer(data=data)
+
+        if serializer.is_valid():
+            with reversion.create_revision():
+                serializer.save()
+                reversion.set_user(request.user)
+                reversion.set_comment('Initial version.')
+
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        else:
+            return Response(serializer.errors,
+                            status=status.HTTP_400_BAD_REQUEST)
