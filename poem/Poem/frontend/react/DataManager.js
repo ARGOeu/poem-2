@@ -357,6 +357,13 @@ export class Backend {
     );
   }
 
+  deleteProbe(name) {
+    return this.send(
+      '/api/v2/internal/probes/' + name,
+      'DELETE'
+    );
+  }
+
   send(url, method, values=undefined) {
     const cookies = new Cookies();
 
