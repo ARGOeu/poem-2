@@ -55,8 +55,8 @@ const DiffElement = ({title, item1, item2}) => {
   )
 }
 
-const ProbeForm = ({poemversion=null, historyview=false, write_perm=false}) => (
-  <Form>
+const ProbeForm = ({poemversion=null, historyview=false }) => (
+  <>
     <FormGroup>
       <Row>
         <Col md={6}>
@@ -162,18 +162,7 @@ const ProbeForm = ({poemversion=null, historyview=false, write_perm=false}) => (
         </Col>
       </Row>
     </FormGroup>
-    {
-      (write_perm && poemversion === 'superadmin') &&
-        <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
-          <Button color='danger'>
-            Delete
-          </Button>
-          <Button color='success' id='submit-button' type='submit'>
-            Save
-          </Button>
-        </div>  
-    }
-  </Form>
+  </>
 )
 
 
@@ -342,6 +331,7 @@ export class ProbeChange extends Component {
     this.toggleAreYouSure = this.toggleAreYouSure.bind(this);
     this.toggleAreYouSureSetModal = this.toggleAreYouSureSetModal.bind(this);
     this.onSubmitHandle = this.onSubmitHandle.bind(this);
+    this.doDelete = this.doDelete.bind(this);
   }
 
   toggleAreYouSure() {
@@ -408,6 +398,15 @@ export class ProbeChange extends Component {
     }
   }
 
+  doDelete(name) {
+    this.backend.deleteProbe(name)
+      .then(() => NotifyOk({
+        msg: 'Probe successfully deleted',
+        title: 'Deleted',
+        callback: () => this.history.push('/ui/probes')
+      }))
+  }
+
   componentDidMount() {
     this.setState({loading: true});
 
@@ -464,7 +463,28 @@ export class ProbeChange extends Component {
                 }}
                 onSubmit = {(values, actions) => this.onSubmitHandle(values, actions)}
                 render = {props => (
-                  <ProbeForm poemversion={poemversion} write_perm={write_perm}/>
+                  <Form>
+                    <ProbeForm poemversion={poemversion}/>
+                    {
+                      (write_perm) &&
+                        <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
+                          <Button 
+                          color='danger'
+                          onClick={() => {
+                            this.toggleAreYouSureSetModal(
+                              'Are you sure you want to delete Probe?',
+                              'Delete probe',
+                              () => this.doDelete(props.values.name)
+                            )
+                          }}>
+                            Delete
+                          </Button>
+                          <Button color='success' id='submit-button' type='submit'>
+                            Save
+                          </Button>
+                        </div>  
+                    }
+                  </Form>
                 )}
               />          
           </BaseArgoView>
