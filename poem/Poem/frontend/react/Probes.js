@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { Backend } from './DataManager';
 import { Link } from 'react-router-dom';
-import { LoadingAnim, BaseArgoView } from './UIElements';
+import { LoadingAnim, BaseArgoView, NotifyOk } from './UIElements';
 import ReactTable from 'react-table';
 import { Alert, 
   FormGroup, 
@@ -55,7 +55,7 @@ const DiffElement = ({title, item1, item2}) => {
   )
 }
 
-const ProbeForm = ({poemversion=null, historyview=false}) => (
+const ProbeForm = ({poemversion=null, historyview=false, write_perm=false}) => (
   <Form>
     <FormGroup>
       <Row>
@@ -162,6 +162,17 @@ const ProbeForm = ({poemversion=null, historyview=false}) => (
         </Col>
       </Row>
     </FormGroup>
+    {
+      (write_perm && poemversion === 'superadmin') &&
+        <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
+          <Button color='danger'>
+            Delete
+          </Button>
+          <Button color='success' id='submit-button' type='submit'>
+            Save
+          </Button>
+        </div>  
+    }
   </Form>
 )
 
@@ -314,6 +325,7 @@ export class ProbeChange extends Component {
     this.name = props.match.params.name;
     this.addview = props.addview;
     this.location = props.location;
+    this.history = props.history;
     this.backend = new Backend();
 
     this.state = {
@@ -347,7 +359,38 @@ export class ProbeChange extends Component {
   }
 
   onSubmitHandle(values, actions) {
+    let msg = undefined;
+    let title = undefined;
 
+    if (this.addview) {
+      msg = 'Are you sure you want to add Probe?';
+      title = 'Add probe';
+    } else {
+      msg = 'Are you sure you want to change Probe?';
+      title = 'Change probe';
+    }
+
+    this.toggleAreYouSureSetModal(msg, title,
+      () => this.doChange(values, actions))
+  }
+
+  doChange(values, actions) {
+    if (!this.addview) {
+      this.backend.changeProbe({
+        name: values.name,
+        version: values.version,
+        repository: values.repository,
+        docurl: values.docurl,
+        description: values.description,
+        comment: values.comment
+      })
+        .then(() => NotifyOk({
+          msg: 'Probe successfully changed',
+          title: 'Changed',
+          callback: () => this.history.push('/ui/probes')
+        }))
+          .catch(err => alert('Something went wrong: ' + err))
+    }
   }
 
   componentDidMount() {
@@ -406,20 +449,7 @@ export class ProbeChange extends Component {
                 }}
                 onSubmit = {(values, actions) => this.onSubmitHandle(values, actions)}
                 render = {props => (
-                  <React.Fragment>
-                    <ProbeForm poemversion={poemversion}/>
-                    {
-                      (write_perm) &&
-                        <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
-                          <Button color='danger'>
-                            Delete
-                          </Button>
-                          <Button color='success' id='submit-button' type='submit'>
-                            Save
-                          </Button>
-                        </div>  
-                  }
-                  </React.Fragment>
+                  <ProbeForm poemversion={poemversion} write_perm={write_perm}/>
                 )}
               />          
           </BaseArgoView>
@@ -437,20 +467,20 @@ export class ProbeChange extends Component {
                   This is a read-only instance. Probes can be changed only by super admin.
                 </center>
               </Alert>
+              <Formik
+                initialValues = {{
+                  name: probe.name,
+                  version: probe.version,
+                  repository: probe.repository,
+                  docurl: probe.docurl,
+                  description: probe.description,
+                  comment: probe.comment
+                }}
+                render = {props => (
+                  <ProbeForm poemversion={poemversion}/>
+                )}
+              />
             </div>
-            <Formik
-              initialValues = {{
-                name: probe.name,
-                version: probe.version,
-                repository: probe.repository,
-                docurl: probe.docurl,
-                description: probe.description,
-                comment: probe.comment
-              }}
-              render = {props => (
-                <ProbeForm poemversion={poemversion}/>
-              )}
-            />
           </React.Fragment>
         )
       }
