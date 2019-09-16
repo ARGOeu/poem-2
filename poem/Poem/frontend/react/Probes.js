@@ -230,12 +230,16 @@ export class ProbeList extends Component {
       },
       {
         Header: '#versions',
+        id: 'nv',
         minWidth: 25,
+        accessor: e =>
+          <Link to={'/ui/probes/' + e.name + '/history'}>
+            {e.nv}
+          </Link>,
         Cell: row =>
           <div style={{textAlign: 'center'}}>
             {row.value}
-          </div>,
-        accessor: 'nv'
+          </div>
       },
       {
         Header: 'Description',
