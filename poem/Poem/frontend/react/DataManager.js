@@ -251,6 +251,14 @@ export class Backend {
     )
   }
 
+  changeProbe(probe) {
+    return this.send(
+      '/api/v2/internal/probes/',
+      'PUT',
+      probe
+    )
+  }
+
   addAggregation(profile) {
     return this.send(
       '/api/v2/internal/aggregations/',
