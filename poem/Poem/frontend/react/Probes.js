@@ -390,6 +390,21 @@ export class ProbeChange extends Component {
           callback: () => this.history.push('/ui/probes')
         }))
           .catch(err => alert('Something went wrong: ' + err))
+    } else {
+      this.backend.addProbe({
+        name: values.name,
+        version: values.version,
+        repository: values.repository,
+        docurl: values.docurl,
+        description: values.description,
+        comment: values.comment
+      })
+        .then(() => NotifyOk({
+          msg: 'Probe successfully added',
+          title: 'Added',
+          callback: () => this.history.push('/ui/probes')
+        }))
+          .catch(err => alert('Something went wrong: ' + err))
     }
   }
 
