@@ -2,7 +2,10 @@ from django.db import models
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 
+import reversion
 
+
+@reversion.register()
 class Probe(models.Model):
     name = models.CharField(max_length=128, null=False,
                             help_text='Name of the probe.', unique=True)
