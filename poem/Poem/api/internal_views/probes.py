@@ -120,3 +120,16 @@ class ListProbes(APIView):
         else:
             return Response(serializer.errors,
                             status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, name=None):
+        if name:
+            try:
+                probe = Probe.objects.get(name=name)
+                probe.delete()
+                return Response(status=status.HTTP_204_NO_CONTENT)
+
+            except Probe.DoesNotExist:
+                raise NotFound(status=404, detail='Probe not found')
+
+        else:
+            return Response(status=status.HTTP_400_BAD_REQUEST)

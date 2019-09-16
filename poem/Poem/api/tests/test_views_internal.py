@@ -548,6 +548,27 @@ class ListProbesAPIViewTests(TenantTestCase):
             'master/README.md'
         )
 
+    def test_delete_probe(self):
+        self.assertEqual(admin_models.Probe.objects.all().count(), 2)
+        request = self.factory.delete(self.url_base + 'ams-probe')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'ams-probe')
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(admin_models.Probe.objects.all().count(), 1)
+
+    def test_delete_probe_without_name(self):
+        request = self.factory.delete(self.url_base)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_trying_to_delete_nonexisting_probe(self):
+        request = self.factory.delete(self.url_base + 'nonexisting')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'nonexisting')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data, {'detail': 'Probe not found'})
+
 
 class ListServicesAPIViewTests(TenantTestCase):
     def setUp(self):
