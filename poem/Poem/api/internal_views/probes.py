@@ -45,6 +45,8 @@ class ListProbes(APIView):
                     )
                 )
 
+            results = sorted(results, key=lambda k: k['name'].lower())
+
             return Response(results)
 
     def put(self, request):
