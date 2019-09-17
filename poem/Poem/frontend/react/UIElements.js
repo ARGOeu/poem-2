@@ -330,7 +330,8 @@ export const NotifyOk = ({msg='', title='', callback=undefined}) => {
 
 export const BaseArgoView = ({resourcename='', location=undefined, 
     infoview=false, addview=false, listview=false, modal=false, 
-    state=undefined, toggle=undefined, submitperm=true, history=true, children}) => 
+    state=undefined, toggle=undefined, submitperm=true, history=true, 
+    addnew=true, children}) => 
 (
   <React.Fragment>
     {
@@ -353,7 +354,10 @@ export const BaseArgoView = ({resourcename='', location=undefined,
             listview ?
               <React.Fragment>
                 <h2 className="ml-3 mt-1 mb-4">{`Select ${resourcename} to change`}</h2>
-                <Link className="btn btn-secondary" to={location.pathname + "/add"} role="button">Add</Link>
+                {
+                  addnew &&
+                    <Link className="btn btn-secondary" to={location.pathname + "/add"} role="button">Add</Link>
+                }
               </React.Fragment>
             :
               <React.Fragment>
