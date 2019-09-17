@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { Backend } from './DataManager';
 import { Link } from 'react-router-dom';
-import { LoadingAnim, BaseArgoView, NotifyOk } from './UIElements';
+import { LoadingAnim, BaseArgoView, NotifyOk, Checkbox } from './UIElements';
 import ReactTable from 'react-table';
 import { Alert, 
   FormGroup, 
@@ -14,6 +14,7 @@ import { Alert,
   InputGroupAddon } from 'reactstrap';
 import { Formik, Form, Field } from 'formik';
 import ReactDiffViewer from 'react-diff-viewer';
+import { NotificationManager } from 'react-notifications';
 
 
 const DiffElement = ({title, item1, item2}) => {
@@ -55,38 +56,58 @@ const DiffElement = ({title, item1, item2}) => {
   )
 }
 
-const ProbeForm = ({poemversion=null, historyview=false }) => (
+const ProbeForm = ({poemversion=null, historyview=false, addview=false}) => (
   <>
     <FormGroup>
       <Row>
         <Col md={6}>
-          <Label for='name'>Name</Label>
-          <Field
-            type='text'
-            name='name'
-            className='form-control'
-            id='name'
-            required={true}
-            disabled={poemversion === 'tenant' || historyview}
-          />
+          <InputGroup>
+            <InputGroupAddon addonType='prepend'>Name</InputGroupAddon>
+            <Field
+              type='text'
+              name='name'
+              className='form-control'
+              id='name'
+              required={true}
+              disabled={poemversion === 'tenant' || historyview}
+            />          
+          </InputGroup>
           <FormText color="muted">
             Name of this probe.
           </FormText>
         </Col>
         <Col md={2}>
-          <Label for='version'>Version</Label>
-          <Field
-            type='text'
-            name='version'
-            className='form-control'
-            id='version'
-            required={true}
-            disabled={poemversion === 'tenant' || historyview}
-          />
+          <InputGroup>
+            <InputGroupAddon addonType='prepend'>Version</InputGroupAddon>
+            <Field
+              type='text'
+              name='version'
+              className='form-control'
+              id='version'
+              required={true}
+              disabled={poemversion === 'tenant' || historyview}
+            />
+          </InputGroup>
           <FormText color="muted">
             Version of the probe.
           </FormText>
         </Col>
+        {
+          (poemversion === 'superadmin' && !addview) &&
+          <Col md={2}>
+            <Field
+              component={Checkbox}
+              name='new_version'
+              required={false}
+              className='form-control'
+              id='checkbox'
+              label='New version'
+            />
+            <FormText color='muted'>
+              Create version for changes.
+            </FormText>
+          </Col>
+        }
       </Row>
     </FormGroup>
     <FormGroup>
@@ -324,6 +345,7 @@ export class ProbeChange extends Component {
     this.state = {
       probe: {},
       poemversion: null,
+      new_version: true,
       loading: false,
       write_perm: false,
       areYouSureModal: false,
@@ -370,20 +392,29 @@ export class ProbeChange extends Component {
 
   doChange(values, actions) {
     if (!this.addview) {
-      this.backend.changeProbe({
-        name: values.name,
-        version: values.version,
-        repository: values.repository,
-        docurl: values.docurl,
-        description: values.description,
-        comment: values.comment
-      })
-        .then(() => NotifyOk({
-          msg: 'Probe successfully changed',
-          title: 'Changed',
-          callback: () => this.history.push('/ui/probes')
-        }))
-          .catch(err => alert('Something went wrong: ' + err))
+      if (values.new_version && values.version === this.state.probe.version) {
+        NotificationManager.error(
+          'Version number should be changed.',
+          'Version error'
+        )
+      } else {
+        this.backend.changeProbe({
+          id: values.id,
+          name: values.name,
+          version: values.version,
+          repository: values.repository,
+          docurl: values.docurl,
+          description: values.description,
+          comment: values.comment,
+          new_version: values.new_version
+        })
+          .then(() => NotifyOk({
+            msg: 'Probe successfully changed',
+            title: 'Changed',
+            callback: () => this.history.push('/ui/probes')
+          }))
+            .catch(err => alert('Something went wrong: ' + err))
+      }
     } else {
       this.backend.addProbe({
         name: values.name,
@@ -440,7 +471,7 @@ export class ProbeChange extends Component {
   }
 
   render() {
-    const { probe, poemversion, write_perm, loading } = this.state;
+    const { probe, new_version, poemversion, write_perm, loading } = this.state;
 
     if (loading)
       return(<LoadingAnim/>)
@@ -458,17 +489,19 @@ export class ProbeChange extends Component {
             submitperm={write_perm}>
               <Formik
                 initialValues = {{
+                  id: probe.id,
                   name: probe.name,
                   version: probe.version,
                   repository: probe.repository,
                   docurl: probe.docurl,
                   description: probe.description,
-                  comment: probe.comment
+                  comment: probe.comment,
+                  new_version: new_version
                 }}
                 onSubmit = {(values, actions) => this.onSubmitHandle(values, actions)}
                 render = {props => (
                   <Form>
-                    <ProbeForm poemversion={poemversion}/>
+                    <ProbeForm poemversion={poemversion} addview={this.addview}/>
                     {
                       (write_perm) &&
                         <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
@@ -508,6 +541,7 @@ export class ProbeChange extends Component {
               </Alert>
               <Formik
                 initialValues = {{
+                  id: probe.id,
                   name: probe.name,
                   version: probe.version,
                   repository: probe.repository,
