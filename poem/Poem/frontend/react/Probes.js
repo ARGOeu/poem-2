@@ -673,26 +673,18 @@ export class ProbeHistory extends Component {
                             />
                           </td>
                       }
-                      {e.version && 
-                        <td>
-                          <Link to={'/ui/probes/' + e.fields.name + '/history/' + e.version}>{e.version}</Link>
-                        </td>
-                      }
-                      {e.date_created && 
-                        <td>
-                          {e.date_created}
-                        </td>
-                      }
-                      {e.user && 
-                        <td>
-                          {e.user}
-                        </td>
-                      }
-                      {e.comment && 
-                        <td>
-                          {e.comment}
-                        </td>
-                      }
+                      <td>
+                        {e.version ? <Link to={'/ui/probes/' + e.fields.name + '/history/' + e.version}>{e.version}</Link> : ''}
+                      </td>
+                      <td>
+                        {e.date_created ? e.date_created : ''}
+                      </td>
+                      <td>
+                        {e.user ? e.user : ''}
+                      </td>
+                      <td>
+                        {e.comment ? e.comment : ''}
+                      </td>
                     </tr>
                   )
                 }
