@@ -17,6 +17,8 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 
+export const MetricList = ListOfMetrics('metric');
+
 
 const DefaultFilterComponent = ({value, onChange, field}) => (
   <input 
@@ -113,205 +115,229 @@ export const ProbeVersionLink = ({probeversion}) => (
 )
 
 
-export class MetricList extends Component {
-  constructor(props) {
-    super(props);
+function ListOfMetrics(type) {
+  return class extends Component {
+    constructor(props) {
+      super(props);
 
-    this.state = {
-      loading: false,
-      list_metric: null,
-      list_tags: null,
-      list_groups: null,
-      list_types: null,
-      search_name: '',
-      search_probeversion: '',
-      search_tag: '',
-      search_type: '',
-      search_group: ''
-    }
+      this.location = props.location;
 
-    this.backend = new Backend();
-    this.doFilter = this.doFilter.bind(this);
-  }
-
-  doFilter(list_metric, field, filter) {
-    return (
-      list_metric.filter(row => 
-        eval(`row.${field}`).toLowerCase().includes(filter.toLowerCase()))
-    )
-  }
-
-  componentDidMount() {
-    this.setState({loading: true});
-
-    Promise.all([this.backend.fetchAllMetric(),
-      this.backend.fetchAllGroups(),
-      this.backend.fetchTags(),
-      this.backend.fetchMetricTypes()
-    ]).then(([metrics, groups, tags, types]) =>
-          this.setState({
-            list_metric: metrics,
-            list_tags: tags,
-            list_groups: groups['metrics'],
-            list_types: types,
-            loading: false, 
-            search_name: '',
-            search_probeversion: '',
-            search_tag: '',
-            search_group: '',
-            search_type: ''
-          }));
-  }
-
-  render() {
-    const columns = [
-      {
-        Header: '#',
-        id: 'row',
-        minWidth: 12,
-        Cell: (row) =>
-          <div style={{textAlign: 'center'}}>
-            {row.index + 1}
-          </div>
-      },
-      {
-        Header: 'Name',
-        id: 'name',
-        minWidth: 100,
-        accessor: e =>
-        <Link to={'/ui/metrics/' + e.name}>
-          {e.name}
-        </Link>,
-        filterable: true,
-        Filter: (
-          <DefaultFilterComponent
-            field='name'
-            value={this.state.search_name}
-            onChange={e => this.setState({search_name: e.target.value})}
-          />
-        )
-      },
-      {
-        Header: 'Probe version',
-        id: 'probeversion',
-        minWidth: 80,
-        accessor: e => (e.probeversion ?
-          <ProbeVersionLink probeversion={e.probeversion}/>
-          :
-          ""
-        ),
-        Cell: row =>
-          <div style={{textAlign: 'center'}}>
-            {row.value}
-          </div>,
-        filterable: true,
-        Filter: (
-          <DefaultFilterComponent 
-            field='probe version'
-            value={this.state.search_probeversion}
-            onChange={e => this.setState({search_probeversion: e.target.value})}
-          />
-        )
-      },
-      {
-        Header: 'Tag',
-        accessor: 'tag',
-        minWidth: 30,
-        Cell: row =>
-          <div style={{textAlign: 'center'}}>
-            {row.value}
-          </div>,
-        filterable: true,
-        Filter: (
-        <DropdownFilterComponent
-          value={this.state.search_tag}
-          onChange={e => this.setState({search_tag: e.target.value})}
-          data={this.state.list_tags}
-        />
-        )
-      },
-      {
-        Header: 'Group',
-        minWidth: 30,
-        accessor: 'group',
-        Cell: row =>
-          <div style={{textAlign: 'center'}}>
-            {row.value}
-          </div>,
-        filterable: true,
-        Filter: (
-          <DropdownFilterComponent 
-            value={this.state.search_group}
-            onChange={e => this.setState({search_group: e.target.value})}
-            data={this.state.list_groups}
-          />
-        )
-      },
-      {
-        Header: 'Type',
-        minWidth: 30,
-        accessor: 'mtype',
-        Cell: row =>
-          <div style={{textAlign: 'center'}}>
-            {row.value}
-          </div>,
-        filterable:true,
-        Filter: (
-          <DropdownFilterComponent
-            value={this.state.mtype}
-            onChange={e => this.setState({search_type: e.target.value})}
-            data={this.state.list_types}
-          />
-        )
+      if (type === 'metric') {
+        this.state = {
+          loading: false,
+          list_metric: null,
+          list_tags: null,
+          list_groups: null,
+          list_types: null,
+          search_name: '',
+          search_probeversion: '',
+          search_tag: '',
+          search_type: '',
+          search_group: ''
+        }
+      } else {
+        this.state = {
+          loading: false,
+          list_metric: null,
+          list_types: null,
+          search_name: '',
+          search_probeversion: '',
+          search_type: ''
+        }
       }
-    ];
 
-    var { loading, list_metric } = this.state;
-
-    if (this.state.search_name) {
-      list_metric = this.doFilter(list_metric, 'name', this.state.search_name)
+      this.backend = new Backend();
+      this.doFilter = this.doFilter.bind(this);
     }
 
-    if (this.state.search_probeversion) {
-      list_metric = this.doFilter(list_metric, 'probeversion', this.state.search_probeversion)
-    }
-
-    if (this.state.search_tag) {
-      list_metric = this.doFilter(list_metric, 'tag', this.state.search_tag)
-    }
-
-    if (this.state.search_type) {
-      list_metric = this.doFilter(list_metric, 'mtype', this.state.search_type)
-    }
-
-    if (this.state.search_group) {
-      list_metric = this.doFilter(list_metric, 'group', this.state.search_group)
-    }
-
-    if (loading)
-      return (<LoadingAnim />);
-
-    else if (!loading && list_metric) {
+    doFilter(list_metric, field, filter) {
       return (
-        <React.Fragment>
-          <div className="d-flex align-items-center justify-content-between">
-            <React.Fragment>
-              <h2 className="ml-3 mt-1 mb-4">{'Select metric to change'}</h2>
-            </React.Fragment>
-          </div>
-          <div id="argo-contentwrap" className="ml-2 mb-2 mt-2 p-3 border rounded">
-            <ReactTable
-              data={list_metric}
-              columns={columns}
-              className='-striped -highlight'
-              defaultPageSize={50}
-            />
-          </div>
-        </React.Fragment>
+        list_metric.filter(row => 
+          eval(`row.${field}`).toLowerCase().includes(filter.toLowerCase()))
       )
     }
-    else
-      return null
+
+    componentDidMount() {
+      this.setState({loading: true});
+  
+      if (type === 'metric') {
+        Promise.all([this.backend.fetchAllMetric(),
+          this.backend.fetchAllGroups(),
+          this.backend.fetchTags(),
+          this.backend.fetchMetricTypes()
+        ]).then(([metrics, groups, tags, types]) =>
+              this.setState({
+                list_metric: metrics,
+                list_tags: tags,
+                list_groups: groups['metrics'],
+                list_types: types,
+                loading: false, 
+                search_name: '',
+                search_probeversion: '',
+                search_tag: '',
+                search_group: '',
+                search_type: ''
+              }));
+        }
+    }
+
+    render() {
+      let metriclink = undefined;
+      if (type === 'metric') {
+        metriclink = '/ui/metrics/'
+      }
+
+      const columns = [
+        {
+          Header: '#',
+          id: 'row',
+          minWidth: 12,
+          Cell: (row) =>
+            <div style={{textAlign: 'center'}}>
+              {row.index + 1}
+            </div>
+        },
+        {
+          Header: 'Name',
+          id: 'name',
+          minWidth: 100,
+          accessor: e =>
+          <Link to={metriclink + e.name}>
+            {e.name}
+          </Link>,
+          filterable: true,
+          Filter: (
+            <DefaultFilterComponent
+              field='name'
+              value={this.state.search_name}
+              onChange={e => this.setState({search_name: e.target.value})}
+            />
+          )
+        },
+        {
+          Header: 'Probe version',
+          id: 'probeversion',
+          minWidth: 80,
+          accessor: e => (e.probeversion ?
+            <ProbeVersionLink probeversion={e.probeversion}/>
+            :
+            ""
+          ),
+          Cell: row =>
+            <div style={{textAlign: 'center'}}>
+              {row.value}
+            </div>,
+          filterable: true,
+          Filter: (
+            <DefaultFilterComponent 
+              field='probe version'
+              value={this.state.search_probeversion}
+              onChange={e => this.setState({search_probeversion: e.target.value})}
+            />
+          )
+        },
+        type === 'metric' && 
+        {
+          Header: 'Tag',
+          accessor: 'tag',
+          minWidth: 30,
+          Cell: row =>
+            <div style={{textAlign: 'center'}}>
+              {row.value}
+            </div>,
+          filterable: true,
+          Filter: (
+          <DropdownFilterComponent
+            value={this.state.search_tag}
+            onChange={e => this.setState({search_tag: e.target.value})}
+            data={this.state.list_tags}
+          />
+          )
+        },
+        type === 'metric' &&
+        {
+          Header: 'Group',
+          minWidth: 30,
+          accessor: 'group',
+          Cell: row =>
+            <div style={{textAlign: 'center'}}>
+              {row.value}
+            </div>,
+          filterable: true,
+          Filter: (
+            <DropdownFilterComponent 
+              value={this.state.search_group}
+              onChange={e => this.setState({search_group: e.target.value})}
+              data={this.state.list_groups}
+            />
+          )
+        },
+        {
+          Header: 'Type',
+          minWidth: 30,
+          accessor: 'mtype',
+          Cell: row =>
+            <div style={{textAlign: 'center'}}>
+              {row.value}
+            </div>,
+          filterable:true,
+          Filter: (
+            <DropdownFilterComponent
+              value={this.state.mtype}
+              onChange={e => this.setState({search_type: e.target.value})}
+              data={this.state.list_types}
+            />
+          )
+        }
+      ];
+
+      var { loading, list_metric } = this.state;
+
+      if (this.state.search_name) {
+        list_metric = this.doFilter(list_metric, 'name', this.state.search_name)
+      }
+  
+      if (this.state.search_probeversion) {
+        list_metric = this.doFilter(list_metric, 'probeversion', this.state.search_probeversion)
+      }
+  
+      if (type === 'metric' && this.state.search_tag) {
+        list_metric = this.doFilter(list_metric, 'tag', this.state.search_tag)
+      }
+  
+      if (this.state.search_type) {
+        list_metric = this.doFilter(list_metric, 'mtype', this.state.search_type)
+      }
+  
+      if (type === 'metric' && this.state.search_group) {
+        list_metric = this.doFilter(list_metric, 'group', this.state.search_group)
+      }
+
+      if (loading)
+      return (<LoadingAnim />);
+
+      else if (!loading && list_metric) {
+        if (type === 'metric') {
+          return (
+            <BaseArgoView
+              resourcename='metric'
+              location={this.location}
+              listview={true}
+              addview={false}
+            >
+              <ReactTable
+                data={list_metric}
+                columns={columns}
+                className='-striped -highlight'
+                defaultPageSize={50}
+              />
+            </BaseArgoView>
+          )
+        }
+      }
+      else
+        return null
+    }
   }
 }
 
