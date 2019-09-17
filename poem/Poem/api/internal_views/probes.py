@@ -4,6 +4,7 @@ import json
 from Poem.api import serializers
 from Poem.api.views import NotFound
 from Poem.poem_super_admin.models import Probe, ExtRevision
+from Poem.tenants.models import Tenant
 
 from rest_framework import status
 from rest_framework.authentication import SessionAuthentication
@@ -11,6 +12,10 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 import reversion
+from reversion.models import Version
+
+from tenant_schemas.utils import schema_context, get_public_schema_name
+
 
 
 class ListProbes(APIView):
@@ -51,48 +56,70 @@ class ListProbes(APIView):
             return Response(results)
 
     def put(self, request):
-        probe = Probe.objects.get(name=request.data['name'])
+        probe = Probe.objects.get(id=request.data['id'])
         fields = []
 
-        with reversion.create_revision():
-            if probe.version != request.data['version']:
+        schemas = list(
+            Tenant.objects.all().values_list('schema_name', flat=True)
+        )
+
+        if request.data['new_version']:
+            with reversion.create_revision():
                 probe.version = request.data['version']
                 fields.append('version')
 
-            if probe.repository != request.data['repository']:
-                probe.repository = request.data['repository']
-                fields.append('repository')
+                if probe.repository != request.data['repository']:
+                    probe.repository = request.data['repository']
+                    fields.append('repository')
 
-            if probe.docurl != request.data['docurl']:
-                probe.docurl = request.data['docurl']
-                fields.append('docurl')
+                if probe.docurl != request.data['docurl']:
+                    probe.docurl = request.data['docurl']
+                    fields.append('docurl')
 
-            if probe.description != request.data['description']:
-                probe.description = request.data['description']
-                fields.append('description')
+                if probe.description != request.data['description']:
+                    probe.description = request.data['description']
+                    fields.append('description')
 
-            if probe.comment != request.data['comment']:
-                probe.comment = request.data['comment']
-                fields.append('comment')
+                if probe.comment != request.data['comment']:
+                    probe.comment = request.data['comment']
+                    fields.append('comment')
 
-            if probe.user != request.user:
-                probe.user = request.user.username
-                fields.append('user')
+                if probe.user != request.user.username:
+                    probe.user = request.user.username
+                    fields.append('user')
 
-            probe.save()
+                probe.save()
 
-            reversion.set_user(request.user)
-            reversion.set_comment(
-                json.dumps(
-                    [
-                        {
-                            'changed': {
-                                'fields': fields
-                            }
-                        }
-                    ]
+                reversion.set_user(request.user)
+                reversion.set_comment(
+                    json.dumps([{'changed': {'fields': fields}}])
                 )
-            )
+
+        else:
+            for schema in schemas:
+                with schema_context(schema):
+                    versions = Version.objects.get_for_object(probe)
+                    for version in versions:
+                        if version.object_repr == probe.nameversion:
+                            pk = version.id
+                    data = json.loads(
+                        Version.objects.get(pk=pk).serialized_data
+                    )
+                    new_serialized_field = {
+                        'name': request.data['name'],
+                        'version': request.data['version'],
+                        'description': request.data['description'],
+                        'comment': request.data['comment'],
+                        'repository': request.data['repository'],
+                        'docurl': request.data['docurl'],
+                        'user': request.user.username
+                    }
+                    data[0]['fields'] = new_serialized_field
+                    Version.objects.filter(pk=pk).update(
+                        serialized_data=json.dumps(data)
+                    )
+
+            Probe.objects.filter(pk=probe.id).update(**new_serialized_field)
 
         return Response(status=status.HTTP_201_CREATED)
 
