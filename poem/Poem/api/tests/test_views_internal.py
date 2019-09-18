@@ -2214,3 +2214,235 @@ class GetPoemVersionAPIViewTests(TenantTestCase):
             response.data,
             {'schema': 'superadmin'}
         )
+
+
+class ListMetricTemplatesAPIViewTests(TenantTestCase):
+    def setUp(self):
+        self.factory = TenantRequestFactory(self.tenant)
+        self.view = views.ListMetricTemplates.as_view()
+        self.url = '/api/v2/internal/metrictemplates/'
+        self.user = CustUser.objects.create_user(username='testuser')
+
+        mtype1 = admin_models.MetricTemplateType.objects.create(name='Active')
+        mtype2 = admin_models.MetricTemplateType.objects.create(name='Passive')
+
+        probe1 = admin_models.Probe.objects.create(
+            name='ams-probe',
+            version='0.1.7',
+            description='Probe is inspecting AMS service by trying to publish '
+                        'and consume randomly generated messages.',
+            comment='Initial version.',
+            repository='https://github.com/ARGOeu/nagios-plugins-argo',
+            docurl='https://github.com/ARGOeu/nagios-plugins-argo/blob/master/'
+                   'README.md'
+        )
+
+        for schema in [self.tenant.schema_name, get_public_schema_name()]:
+            with schema_context(schema):
+                user = CustUser.objects.create_user('superadmin')
+                probe_revision1 = Revision.objects.create(
+                    date_created=datetime.datetime.now(),
+                    comment='Initial version.',
+                    user=user
+                )
+
+                ct = ContentType.objects.get_for_model(admin_models.Probe)
+
+                probeversion1 = Version.objects.create(
+                    object_id=probe1.id,
+                    serialized_data='[{"pk": 5, "model": '
+                                    '"poem_super_admin.probe",'
+                                    ' "fields": {"name": "ams-probe",'
+                                    ' "version": "0.1.7", "description":'
+                                    ' "Probe is inspecting AMS service by '
+                                    'trying to publish and consume randomly '
+                                    'generated messages.'
+                                    ', "comment": "Initial version",'
+                                    ' "repository": "https://github.com/ARGOeu'
+                                    '/nagios-plugins-argo", "docurl":'
+                                    ' "https://github.com/ARGOeu/nagios-'
+                                    'plugins-argo/blob/master/README.md", '
+                                    '"user": "poem"}}]',
+                    object_repr='ams-probe (0.1.7)',
+                    content_type_id=ct.id,
+                    revision_id=probe_revision1.id
+                )
+
+                self.probekey = probeversion1.id
+
+        metrictemplate1 = admin_models.MetricTemplate.objects.create(
+            name='argo.AMS-Check',
+            mtype=mtype1,
+            probeversion='ams-probe (0.1.7)',
+            probekey=probeversion1,
+            probeexecutable='["ams-probe"]',
+            config='["maxCheckAttempts 3", "timeout 60",'
+                   ' "path /usr/libexec/argo-monitoring/probes/argo",'
+                   ' "interval 5", "retryInterval 3"]',
+            attribute='["argo.ams_TOKEN --token"]',
+            flags='["OBSESS 1"]',
+            parameter='["--project EGI"]'
+        )
+
+        metrictemplate2 = admin_models.MetricTemplate.objects.create(
+            name='org.apel.APEL-Pub',
+            flags='["OBSESS 1", "PASSIVE 1"]',
+            mtype=mtype2,
+        )
+
+        self.id1 = metrictemplate1.id
+        self.id2 = metrictemplate2.id
+
+    def test_get_metric_template_list(self):
+        request = self.factory.get(self.url)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(
+            response.data,
+            [
+                {
+                    'id': self.id1,
+                    'name': 'argo.AMS-Check',
+                    'mtype': 'Active',
+                    'probeversion': 'ams-probe (0.1.7)',
+                    'probekey': self.probekey,
+                    'parent': '',
+                    'probeexecutable': 'ams-probe',
+                    'config': [
+                        {
+                            'key': 'maxCheckAttempts',
+                            'value': '3'
+                        },
+                        {
+                            'key': 'timeout',
+                            'value': '60'
+                        },
+                        {
+                            'key': 'path',
+                            'value': '/usr/libexec/argo-monitoring/probes/argo'
+                        },
+                        {
+                            'key': 'interval',
+                            'value': '5'
+                        },
+                        {
+                            'key': 'retryInterval',
+                            'value': '3'
+                        }
+                    ],
+                    'attribute': [
+                        {
+                            'key': 'argo.ams_TOKEN',
+                            'value': '--token'
+                        }
+                    ],
+                    'dependency': [],
+                    'flags': [
+                        {
+                            'key': 'OBSESS',
+                            'value': '1'
+                        }
+                    ],
+                    'files': [],
+                    'parameter': [
+                        {
+                            'key': '--project',
+                            'value': 'EGI'
+                        }
+                    ],
+                    'fileparameter': []
+                },
+                {
+                    'id': self.id2,
+                    'name': 'org.apel.APEL-Pub',
+                    'mtype': 'Passive',
+                    'probeversion': '',
+                    'probekey': '',
+                    'parent': '',
+                    'probeexecutable': '',
+                    'config': [],
+                    'attribute': [],
+                    'dependency': [],
+                    'flags': [
+                        {
+                            'key': 'OBSESS',
+                            'value': '1'
+                        },
+                        {
+                            'key': 'PASSIVE',
+                            'value': '1'
+                        }
+                    ],
+                    'files': [],
+                    'parameter': [],
+                    'fileparameter': []
+                }
+            ]
+        )
+
+    def test_get_metrictemplate_by_name(self):
+        request = self.factory.get(self.url + 'argo.AMS-Check')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'argo.AMS-Check')
+        self.assertEqual(
+            response.data,
+            {
+                'id': self.id1,
+                'name': 'argo.AMS-Check',
+                'mtype': 'Active',
+                'probeversion': 'ams-probe (0.1.7)',
+                'probekey': self.probekey,
+                'parent': '',
+                'probeexecutable': 'ams-probe',
+                'config': [
+                    {
+                        'key': 'maxCheckAttempts',
+                        'value': '3'
+                    },
+                    {
+                        'key': 'timeout',
+                        'value': '60'
+                    },
+                    {
+                        'key': 'path',
+                        'value': '/usr/libexec/argo-monitoring/probes/argo'
+                    },
+                    {
+                        'key': 'interval',
+                        'value': '5'
+                    },
+                    {
+                        'key': 'retryInterval',
+                        'value': '3'
+                    }
+                ],
+                'attribute': [
+                    {
+                        'key': 'argo.ams_TOKEN',
+                        'value': '--token'
+                    }
+                ],
+                'dependency': [],
+                'flags': [
+                    {
+                        'key': 'OBSESS',
+                        'value': '1'
+                    }
+                ],
+                'files': [],
+                'parameter': [
+                    {
+                        'key': '--project',
+                        'value': 'EGI'
+                    }
+                ],
+                'fileparameter': []
+            }
+        )
+
+    def test_get_metric_template_by_nonexisting_name(self):
+        request = self.factory.get(self.url + 'nonexisting')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'nonexisting')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data, {'detail': 'Metric template not found'})

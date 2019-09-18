@@ -6,6 +6,7 @@ from Poem.api.internal_views.history import *
 from Poem.api.internal_views.login import *
 from Poem.api.internal_views.metricprofiles import *
 from Poem.api.internal_views.metrics import *
+from Poem.api.internal_views.metrictemplates import *
 from Poem.api.internal_views.probes import *
 from Poem.api.internal_views.services import *
 from Poem.api.internal_views.users import *
