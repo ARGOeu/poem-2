@@ -115,7 +115,7 @@ export const ProbeVersionLink = ({probeversion}) => (
 )
 
 
-function ListOfMetrics(type) {
+export function ListOfMetrics(type) {
   return class extends Component {
     constructor(props) {
       super(props);
@@ -178,6 +178,20 @@ function ListOfMetrics(type) {
                 search_group: '',
                 search_type: ''
               }));
+        } else {
+          Promise.all([
+            this.backend.fetchMetricTemplates(),
+            this.backend.fetchMetricTemplateTypes()
+        ]).then(([metrictemplates, types]) =>
+            this.setState({
+              list_metric: metrictemplates,
+              list_types: types,
+              loading: false,
+              search_name: '',
+              search_probeversion: '',
+              search_type: ''
+            })
+        )
         }
     }
 
@@ -185,6 +199,8 @@ function ListOfMetrics(type) {
       let metriclink = undefined;
       if (type === 'metric') {
         metriclink = '/ui/metrics/'
+      } else {
+        metriclink = '/ui/metrictemplates/'
       }
 
       const columns = [
@@ -236,42 +252,6 @@ function ListOfMetrics(type) {
             />
           )
         },
-        type === 'metric' && 
-        {
-          Header: 'Tag',
-          accessor: 'tag',
-          minWidth: 30,
-          Cell: row =>
-            <div style={{textAlign: 'center'}}>
-              {row.value}
-            </div>,
-          filterable: true,
-          Filter: (
-          <DropdownFilterComponent
-            value={this.state.search_tag}
-            onChange={e => this.setState({search_tag: e.target.value})}
-            data={this.state.list_tags}
-          />
-          )
-        },
-        type === 'metric' &&
-        {
-          Header: 'Group',
-          minWidth: 30,
-          accessor: 'group',
-          Cell: row =>
-            <div style={{textAlign: 'center'}}>
-              {row.value}
-            </div>,
-          filterable: true,
-          Filter: (
-            <DropdownFilterComponent 
-              value={this.state.search_group}
-              onChange={e => this.setState({search_group: e.target.value})}
-              data={this.state.list_groups}
-            />
-          )
-        },
         {
           Header: 'Type',
           minWidth: 30,
@@ -290,6 +270,47 @@ function ListOfMetrics(type) {
           )
         }
       ];
+
+      if (type === 'metric') {
+        columns.splice(
+          3,
+          0,
+          {
+            Header: 'Tag',
+            accessor: 'tag',
+            minWidth: 30,
+            Cell: row =>
+              <div style={{textAlign: 'center'}}>
+                {row.value}
+              </div>,
+            filterable: true,
+            Filter: (
+            <DropdownFilterComponent
+              value={this.state.search_tag}
+              onChange={e => this.setState({search_tag: e.target.value})}
+              data={this.state.list_tags}
+            />
+            )
+          },
+          {
+            Header: 'Group',
+            minWidth: 30,
+            accessor: 'group',
+            Cell: row =>
+              <div style={{textAlign: 'center'}}>
+                {row.value}
+              </div>,
+            filterable: true,
+            Filter: (
+              <DropdownFilterComponent 
+                value={this.state.search_group}
+                onChange={e => this.setState({search_group: e.target.value})}
+                data={this.state.list_groups}
+              />
+            )
+          }
+        )
+      }
 
       var { loading, list_metric } = this.state;
 
@@ -323,7 +344,23 @@ function ListOfMetrics(type) {
               resourcename='metric'
               location={this.location}
               listview={true}
-              addview={false}
+              addnew={false}
+            >
+              <ReactTable
+                data={list_metric}
+                columns={columns}
+                className='-striped -highlight'
+                defaultPageSize={50}
+              />
+            </BaseArgoView>
+          )
+        } else {
+          return (
+            <BaseArgoView
+              resourcename='metric template'
+              location={this.location}
+              listview={true}
+              addnew={true}
             >
               <ReactTable
                 data={list_metric}
