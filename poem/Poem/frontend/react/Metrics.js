@@ -46,65 +46,65 @@ const DropdownFilterComponent = ({value, onChange, data}) => (
 )
 
 
-const InlineFields = ({values, field}) => (
+export const InlineFields = ({values, field, addnew=false}) => (
   <div>
-  <h6 className='mt-4 font-weight-bold text-uppercase' hidden={values.type === 'Passive' && field !== 'flags'}>{field.replace('_', ' ')}</h6>
-  <FieldArray
-    name={field}
-    render={arrayHelpers => (
-      (eval(`values.${field}`) && eval(`values.${field}`).length > 0) ? (
-        eval(`values.${field}`).map((item, index) => (
-          <Row key={'row-' + index}>
+    <h6 className='mt-4 font-weight-bold text-uppercase' hidden={values.type === 'Passive' && field !== 'flags'}>{field.replace('_', ' ')}</h6>
+    <FieldArray
+      name={field}
+      render={arrayHelpers => (
+        (eval(`values.${field}`) && eval(`values.${field}`).length > 0) ? (
+          eval(`values.${field}`).map((item, index) => (
+            <Row key={'row-' + index}>
+              <Col md={5}>
+                {(index === 0) ? <Label for={`${field}.0.key`}>Key</Label> : null}
+                <Field 
+                  type='text'
+                  name={`${field}.${index}.key`} 
+                  id={`${field}.${index}.key`}
+                  className='form-control'
+                  disabled={!addnew || field === 'config'}
+                />
+              </Col>
+              <Col md={5}>
+                {(index === 0) ? <Label for={`${field}.0.value`}>Value</Label> : null}
+                <Field 
+                  type='text'
+                  name={`${field}.${index}.value`} 
+                  id={`${field}.${index}.value`} 
+                  className='form-control'
+                  disabled={!addnew && (field !== 'config' || field === 'config' && item.key === 'path')}
+                />
+              </Col>
+            </Row>
+          ))
+        ) : (
+          <Row>
             <Col md={5}>
-              {(index === 0) ? <Label for={`${field}.0.key`}>Key</Label> : null}
+              <Label to={'empty-key'} hidden={values.type === 'Passive' && field !== 'flags'}>Key</Label>
               <Field 
                 type='text'
-                name={`${field}.${index}.key`} 
-                id={`${field}.${index}.key`}
                 className='form-control'
-                disabled={true}
+                value=''
+                id='empty-key'
+                disabled={!addnew}
+                hidden={values.type === 'Passive' && field !== 'flags'}
               />
             </Col>
             <Col md={5}>
-              {(index === 0) ? <Label for={`${field}.0.value`}>Value</Label> : null}
+              <Label to={'empty-value'} hidden={values.type === 'Passive' && field !== 'flags'}>Value</Label>
               <Field 
                 type='text'
-                name={`${field}.${index}.value`} 
-                id={`${field}.${index}.value`} 
+                value=''
                 className='form-control'
-                disabled={field !== 'config' || field === 'config' && item.key === 'path'}
+                id='empty-value'
+                disabled={!addnew}
+                hidden={values.type === 'Passive' && field !== 'flags'}
               />
             </Col>
           </Row>
-        ))
-      ) : (
-        <Row>
-          <Col md={5}>
-            <Label to={'emtpty-key'} hidden={values.type === 'Passive' && field !== 'flags'}>Key</Label>
-            <Field 
-              type='text'
-              className='form-control'
-              value=''
-              id='empty-key'
-              disabled={true}
-              hidden={values.type === 'Passive' && field !== 'flags'}
-            />
-          </Col>
-          <Col md={5}>
-            <Label to={'emtpty-value'} hidden={values.type === 'Passive' && field !== 'flags'}>Value</Label>
-            <Field 
-              type='text'
-              value=''
-              className='form-control'
-              id='empty-value'
-              disabled={true}
-              hidden={values.type === 'Passive' && field !== 'flags'}
-            />
-          </Col>
-        </Row>
-      )
-    )}
-  />
+        )
+      )}
+    />
   </div>
 )
 
