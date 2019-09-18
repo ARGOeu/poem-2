@@ -195,6 +195,18 @@ export class Backend {
       .catch(err => alert('Something went wrong: ' + err))
   }
 
+  fetchMetricTemplateTypes() {
+    return fetch('/api/v2/internal/mttypes')
+      .then(response => response.json())
+      .catch(err => alert('Something went wrong: ' + err))
+  }
+
+  fetchMetricTemplates() {
+    return fetch('/api/v2/internal/metrictemplates/')
+      .then(response => response.json())
+      .catch(err => alert('Something went wrong: ' + err))
+  }
+
   changeMetricProfile(profile) {
     return this.send(
       '/api/v2/internal/metricprofiles/',
