@@ -86,7 +86,7 @@ class ListMetric(APIView):
                 fileparameter=fileparameter
             ))
 
-            results = sorted(results, key=lambda k: k['name'])
+        results = sorted(results, key=lambda k: k['name'])
 
         if name:
             return Response(results[0])
