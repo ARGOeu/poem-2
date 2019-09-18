@@ -28,6 +28,7 @@ urlpatterns = [
     path('metrictemplates/', views_internal.ListMetricTemplates.as_view(), name='metrictemplates'),
     path('metrictemplates/<str:name>', views_internal.ListMetricTemplates.as_view(), name='metrictemplates'),
     path('mtypes/', views_internal.ListMetricTypes.as_view(), name='mtypes'),
+    path('mttypes/', views_internal.ListMetricTemplateTypes.as_view(), name='mttypes'),
     path('saml2login', views_internal.Saml2Login.as_view(), name='saml2login'),
     path('schema/', views_internal.GetPoemVersion.as_view(), name='schema'),
     path('serviceflavoursall/', views_internal.ListAllServiceFlavours.as_view(), name='serviceflavoursall'),

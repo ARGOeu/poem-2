@@ -2446,3 +2446,26 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         response = self.view(request, 'nonexisting')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(response.data, {'detail': 'Metric template not found'})
+
+
+class ListMetricTemplateTypesAPIViewTests(TenantTestCase):
+    def setUp(self):
+        self.factory = TenantRequestFactory(self.tenant)
+        self.view = views.ListMetricTemplateTypes.as_view()
+        self.url = '/api/v2/internal/mttypes/'
+        self.user = CustUser.objects.create_user(username='testuser')
+
+        admin_models.MetricTemplateType.objects.create(name='Active')
+        admin_models.MetricTemplateType.objects.create(name='Passive')
+
+    def test_get_metric_template_types(self):
+        request = self.factory.get(self.url)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(
+            [r for r in response.data],
+            [
+                'Active',
+                'Passive'
+            ]
+        )

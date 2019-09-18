@@ -1,6 +1,6 @@
 from Poem.api.internal_views.metrics import one_value_inline, two_value_inline
 from Poem.api.views import NotFound
-from Poem.poem_super_admin.models import MetricTemplate
+from Poem.poem_super_admin.models import MetricTemplate, MetricTemplateType
 
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
@@ -58,3 +58,11 @@ class ListMetricTemplates(APIView):
             return Response(results[0])
         else:
             return Response(results)
+
+
+class ListMetricTemplateTypes(APIView):
+    authentication_classes = (SessionAuthentication,)
+
+    def get(self, request):
+        types = MetricTemplateType.objects.all().values_list('name', flat=True)
+        return Response(types)
