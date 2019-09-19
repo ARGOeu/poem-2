@@ -30,6 +30,7 @@ export class MetricTemplateChange extends Component {
     this.state = {
       metrictemplate: {},
       probe: {},
+      types: [],
       loading: false,
       popoverOpen: false,
       write_perm: false,
@@ -68,8 +69,10 @@ export class MetricTemplateChange extends Component {
     this.setState({loading: true});
 
     if (!this.addview) {
-      this.backend.fetchMetricTemplateByName(this.name)
-        .then(metrictemplate => {
+      Promise.all([
+        this.backend.fetchMetricTemplateByName(this.name),
+        this.backend.fetchMetricTemplateTypes()
+      ]).then(([metrictemplate, types]) => {
           metrictemplate.probekey ?
             this.backend.fetchVersions('probe', metrictemplate.probeversion.split(' ')[0])
               .then(probe => {
@@ -82,6 +85,7 @@ export class MetricTemplateChange extends Component {
                 this.setState({
                   metrictemplate: metrictemplate,
                   probe: fields,
+                  types: types,
                   loading: false,
                   write_perm: localStorage.getItem('authIsSuperuser') === 'true'
                 })
@@ -89,6 +93,7 @@ export class MetricTemplateChange extends Component {
             :
             this.setState({
               metrictemplate: metrictemplate,
+              types: types,
               loading: false,
               write_perm: localStorage.getItem('authIsSuperuser') === 'true'
             })
@@ -97,7 +102,7 @@ export class MetricTemplateChange extends Component {
   }
 
   render() {
-    const { metrictemplate, loading, write_perm } = this.state;
+    const { metrictemplate, types, loading, write_perm } = this.state;
 
     if (loading)
       return (<LoadingAnim/>)
@@ -164,11 +169,17 @@ export class MetricTemplateChange extends Component {
                     <Col md={2}>
                       <Label to='mtype'>Type</Label>
                       <Field
-                        type='text'
+                        component='select'
                         name='type'
                         className='form-control'
                         id='mtype'
-                      />
+                      >
+                        {
+                          types.map((name, i) =>
+                            <option key={i} value={name}>{name}</option>
+                          )
+                        }
+                      </Field>
                       <FormText color='muted'>
                         Metric is of given type
                       </FormText>
