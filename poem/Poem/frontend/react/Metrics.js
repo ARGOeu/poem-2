@@ -57,10 +57,10 @@ export const InlineFields = ({values, field, addnew=false}) => (
             <React.Fragment key={`fragment.${field}.${index}`}>
               <Row>
                 <Col md={5}>
-                  {(index === 0) ? <Label for={`${field}.0.key`}>Key</Label> : null}
+                  {(index === 0) ? <Label hidden={values.type === 'Passive' && field !== 'flags'} for={`${field}.0.key`}>Key</Label> : null}
                 </Col>
                 <Col md={5}>
-                  {(index === 0) ? <Label for={`${field}.0.value`}>Value</Label> : null}
+                  {(index === 0) ? <Label hidden={values.type === 'Passive' && field !== 'flags'} for={`${field}.0.value`}>Value</Label> : null}
                 </Col>
               </Row>
               <Row>
@@ -71,6 +71,7 @@ export const InlineFields = ({values, field, addnew=false}) => (
                     id={`${field}.${index}.key`}
                     className='form-control'
                     disabled={!addnew || field === 'config'}
+                    hidden={values.type === 'Passive' && field !== 'flags'}
                   />
                 </Col>
                 <Col md={5}>
@@ -80,12 +81,14 @@ export const InlineFields = ({values, field, addnew=false}) => (
                     id={`${field}.${index}.value`} 
                     className='form-control'
                     disabled={!addnew && (field !== 'config' || field === 'config' && item.key === 'path')}
+                    hidden={values.type === 'Passive' && field !== 'flags'}
                   />
                 </Col>
                 <Col md={2}>
                   {
                     (addnew && field !== 'config') &&
                       <Button 
+                        hidden={values.type === 'Passive' && field !== 'flags'}
                         size='sm' 
                         color='danger'
                         type='button' 
@@ -98,9 +101,10 @@ export const InlineFields = ({values, field, addnew=false}) => (
               </Row>
               {
                 (addnew && field !== 'config' && index === eval(`values.${field}`).length - 1) &&
-                <Row className='mt-2'>
+                <Row className={values.type === 'Passive' ? 'mt-0' : 'mt-2'}>
                   <Col md={2}>
                     <Button 
+                      hidden={values.type === 'Passive' && field !== 'flags'}
                       size='sm'
                       color='success'
                       type='button' 
@@ -141,9 +145,10 @@ export const InlineFields = ({values, field, addnew=false}) => (
             </Row>
             {
               addnew &&
-                <Row className='mt-2'>
+                <Row className={values.type === 'Passive' ? 'mt-0' : 'mt-2'}>
                   <Col md={2}>
                     <Button 
+                      hidden={values.type === 'Passive' && field !== 'flags'}
                       size='sm'
                       color='success'
                       type='button' 
