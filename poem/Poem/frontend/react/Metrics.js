@@ -15,7 +15,7 @@ import {
   PopoverBody,
   PopoverHeader} from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
+import { faInfoCircle, faMinus, faPlus } from '@fortawesome/free-solid-svg-icons';
 
 export const MetricList = ListOfMetrics('metric');
 
@@ -54,54 +54,107 @@ export const InlineFields = ({values, field, addnew=false}) => (
       render={arrayHelpers => (
         (eval(`values.${field}`) && eval(`values.${field}`).length > 0) ? (
           eval(`values.${field}`).map((item, index) => (
-            <Row key={'row-' + index}>
+            <React.Fragment key={`fragment.${field}.${index}`}>
+              <Row>
+                <Col md={5}>
+                  {(index === 0) ? <Label for={`${field}.0.key`}>Key</Label> : null}
+                </Col>
+                <Col md={5}>
+                  {(index === 0) ? <Label for={`${field}.0.value`}>Value</Label> : null}
+                </Col>
+              </Row>
+              <Row>
+                <Col md={5}>
+                  <Field 
+                    type='text'
+                    name={`${field}.${index}.key`} 
+                    id={`${field}.${index}.key`}
+                    className='form-control'
+                    disabled={!addnew || field === 'config'}
+                  />
+                </Col>
+                <Col md={5}>
+                  <Field 
+                    type='text'
+                    name={`${field}.${index}.value`} 
+                    id={`${field}.${index}.value`} 
+                    className='form-control'
+                    disabled={!addnew && (field !== 'config' || field === 'config' && item.key === 'path')}
+                  />
+                </Col>
+                <Col md={2}>
+                  {
+                    (addnew && field !== 'config') &&
+                      <Button 
+                        size='sm' 
+                        color='danger'
+                        type='button' 
+                        onClick={() => arrayHelpers.remove(index)}
+                      >
+                        <FontAwesomeIcon icon={faMinus}/>
+                      </Button>
+                  }
+                </Col>
+              </Row>
+              {
+                (addnew && field !== 'config' && index === eval(`values.${field}`).length - 1) &&
+                <Row className='mt-2'>
+                  <Col md={2}>
+                    <Button 
+                      size='sm'
+                      color='success'
+                      type='button' 
+                      onClick={() => arrayHelpers.push({key: '', value: ''})}
+                    >
+                      <FontAwesomeIcon icon={faPlus}/> Add another {field.slice(-1) === 's' ? field.slice(0, -1).replace('_', ' '): field.replace('_', ' ')}
+                    </Button>
+                  </Col>
+                </Row>
+              }
+            </React.Fragment>
+          ))
+        ) : (
+          <React.Fragment key={`fragment.${field}`}>
+            <Row>
               <Col md={5}>
-                {(index === 0) ? <Label for={`${field}.0.key`}>Key</Label> : null}
+                <Label to={'empty-key'} hidden={values.type === 'Passive' && field !== 'flags'}>Key</Label>
                 <Field 
                   type='text'
-                  name={`${field}.${index}.key`} 
-                  id={`${field}.${index}.key`}
                   className='form-control'
-                  disabled={!addnew || field === 'config'}
+                  value=''
+                  id='empty-key'
+                  disabled={!addnew}
+                  hidden={values.type === 'Passive' && field !== 'flags'}
                 />
               </Col>
               <Col md={5}>
-                {(index === 0) ? <Label for={`${field}.0.value`}>Value</Label> : null}
+                <Label to={'empty-value'} hidden={values.type === 'Passive' && field !== 'flags'}>Value</Label>
                 <Field 
                   type='text'
-                  name={`${field}.${index}.value`} 
-                  id={`${field}.${index}.value`} 
+                  value=''
                   className='form-control'
-                  disabled={!addnew && (field !== 'config' || field === 'config' && item.key === 'path')}
+                  id='empty-value'
+                  disabled={!addnew}
+                  hidden={values.type === 'Passive' && field !== 'flags'}
                 />
               </Col>
             </Row>
-          ))
-        ) : (
-          <Row>
-            <Col md={5}>
-              <Label to={'empty-key'} hidden={values.type === 'Passive' && field !== 'flags'}>Key</Label>
-              <Field 
-                type='text'
-                className='form-control'
-                value=''
-                id='empty-key'
-                disabled={!addnew}
-                hidden={values.type === 'Passive' && field !== 'flags'}
-              />
-            </Col>
-            <Col md={5}>
-              <Label to={'empty-value'} hidden={values.type === 'Passive' && field !== 'flags'}>Value</Label>
-              <Field 
-                type='text'
-                value=''
-                className='form-control'
-                id='empty-value'
-                disabled={!addnew}
-                hidden={values.type === 'Passive' && field !== 'flags'}
-              />
-            </Col>
-          </Row>
+            {
+              addnew &&
+                <Row className='mt-2'>
+                  <Col md={2}>
+                    <Button 
+                      size='sm'
+                      color='success'
+                      type='button' 
+                      onClick={() => arrayHelpers.push({key: '', value: ''})}
+                    >
+                      <FontAwesomeIcon icon={faPlus}/> Add another {field.slice(-1) === 's' ? field.slice(0, -1).replace('_', ' ') : field.replace('_', ' ')}
+                    </Button>
+                  </Col>
+                </Row>
+            }
+          </React.Fragment>
         )
       )}
     />
