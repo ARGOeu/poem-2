@@ -15,6 +15,7 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import Autocomplete from 'react-autocomplete';
+import './MetricTemplates.css';
 
 export const MetricTemplateList = ListOfMetrics('metrictemplate');
 
@@ -46,7 +47,7 @@ const AutocompleteField = ({lists, onselect_handler, field, setFieldValue, value
     wrapperStyle={{}}
     shouldItemRender={matchItem}
     renderMenu={(items) =>
-      <div children={items}/>  
+      <div className='metrictemplates-autocomplete-menu' children={items}/>  
     }
   />
 

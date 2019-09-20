@@ -1,0 +1,15 @@
+.metrictemplates-autocomplete-menu {
+  display: block;
+  width: 100%;
+  color: #495057;
+  position: absolute;
+  background-color: white;
+  z-index: 1000;
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.5;
+  border: 1px solid #ced4da;
+  border-radius: 0.25rem;
+  overflow-y: auto;
+  max-height: 400px;
+}
