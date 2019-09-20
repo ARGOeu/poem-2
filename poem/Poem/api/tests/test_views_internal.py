@@ -2059,7 +2059,7 @@ class ListVersionsAPIViewTests(TenantTestCase):
         self.url = '/api/v2/internal/version/'
         self.user = CustUser.objects.create(username='testuser')
 
-        probe = admin_models.Probe.objects.create(
+        probe1 = admin_models.Probe.objects.create(
             name='poem-probe',
             version='0.1.11',
             description='Probe inspects POEM service.',
@@ -2080,6 +2080,16 @@ class ListVersionsAPIViewTests(TenantTestCase):
                    'README.md'
         )
 
+        probe2 = admin_models.Probe.objects.create(
+            name='ams-publisher-probe',
+            version='0.1.11',
+            description='Probe is inspecting AMS publisher',
+            comment='Initial version',
+            repository='https://github.com/ARGOeu/nagios-plugins-argo',
+            docurl='https://github.com/ARGOeu/nagios-plugins-argo/blob/master/'
+                   'README.md'
+        )
+
         self.rev1 = Revision.objects.create(
             date_created=datetime.datetime.now(),
             comment='Initial version.',
@@ -2092,11 +2102,18 @@ class ListVersionsAPIViewTests(TenantTestCase):
             user=self.user
         )
 
+        self.rev3 = Revision.objects.create(
+            date_created=datetime.datetime.now(),
+            comment='Initial version.',
+            user=self.user
+        )
+
         ct = ContentType.objects.get_for_model(admin_models.Probe)
 
         self.ver1 = Version.objects.create(
-            object_id=probe.id,
-            serialized_data='[{"pk": 1, "model": "poem_super_admin.probe",'
+            object_id=probe1.id,
+            serialized_data='[{"pk": ' + str(probe1.id) + ', "model": '
+                            '"poem_super_admin.probe",'
                             ' "fields": {"name": "poem-probe", "version": '
                             '"0.1.7", "description": "Probe inspects POEM '
                             'service.", "comment": "Initial version.", '
@@ -2110,8 +2127,9 @@ class ListVersionsAPIViewTests(TenantTestCase):
         )
 
         self.ver2 = Version.objects.create(
-            object_id=probe.id,
-            serialized_data='[{"pk": 1, "model": "poem_super_admin.probe",'
+            object_id=probe1.id,
+            serialized_data='[{"pk": ' + str(probe1.id) + ', "model": '
+                            '"poem_super_admin.probe",'
                             ' "fields": {"name": "poem-probe", "version": '
                             '"0.1.11", "description": "Probe inspects POEM '
                             'service.", "comment": "This version added: Check '
@@ -2123,6 +2141,23 @@ class ListVersionsAPIViewTests(TenantTestCase):
             object_repr='poem-probe (0.1.11)',
             content_type_id=ct.id,
             revision_id=self.rev2.id
+        )
+
+        self.ver3 = Version.objects.create(
+            object_id=probe2.id,
+            serialized_data='[{"pk": ' + str(probe2.id) + ', "model": '
+                            '"poem_super_admin.probe", '
+                            '"fields": {"name": "ams-publisher-probe", '
+                            '"version": "0.1.11", "description": '
+                            '"Probe is inspecting AMS publisher", '
+                            '"comment": "Initial version", '
+                            '"repository": "https://github.com/'
+                            'ARGOeu/nagios-plugins-argo", "docurl": '
+                            '"https://github.com/ARGOeu/nagios-plugins-argo/'
+                            'blob/master/README.md", "user": "poem"}}]',
+            object_repr='ams-publisher-probe (0.1.11)',
+            content_type_id=ct.id,
+            revision_id=self.rev3.id
         )
 
     def test_get_versions_of_probes(self):
@@ -2189,6 +2224,19 @@ class ListVersionsAPIViewTests(TenantTestCase):
         response = self.view(request, 'probe', 'nonexisting')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(response.data, {'detail': 'Probe not found'})
+
+    def test_get_all_probe_versions(self):
+        request = self.factory.get(self.url + 'probe/')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'probe')
+        self.assertEqual(
+            [r for r in response.data],
+            [
+                'ams-publisher-probe (0.1.11)',
+                'poem-probe (0.1.11)',
+                'poem-probe (0.1.7)'
+            ]
+        )
 
 
 class GetPoemVersionAPIViewTests(TenantTestCase):

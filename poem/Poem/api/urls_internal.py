@@ -40,5 +40,6 @@ urlpatterns = [
     path('userprofile/<str:username>', views_internal.GetUserprofileForUsername.as_view(), name='userprofile'),
     path('users/', views_internal.ListUsers.as_view(), name='users'),
     path('users/<str:username>', views_internal.ListUsers.as_view(), name='users'),
+    path('version/<str:obj>/', views_internal.ListVersions.as_view(), name='version'),
     path('version/<str:obj>/<str:name>', views_internal.ListVersions.as_view(), name='version'),
 ]
