@@ -24,12 +24,12 @@ function matchItem(item, value) {
 }
 
 
-const AutocompleteField = ({lists, onselect_handler, setFieldValue, values}) =>
+const AutocompleteField = ({lists, onselect_handler, field, setFieldValue, values}) =>
   <Autocomplete
     inputProps={{className: 'form-control'}}
     getItemValue={(item) => item}
     items={lists}
-    value={values.probe}
+    value={eval(`values.${field}`)}
     renderItem={(item, isHighlighted) =>
       <div 
         key={lists.indexOf(item)}
@@ -38,9 +38,9 @@ const AutocompleteField = ({lists, onselect_handler, setFieldValue, values}) =>
         {item}
       </div>
     }
-    onChange={(e) => {setFieldValue('probe', e.target.value)}}
+    onChange={(e) => {setFieldValue(field, e.target.value)}}
     onSelect={(val) =>  {
-      setFieldValue('probe', val)
+      setFieldValue(field, val)
       onselect_handler(val);
     }}
     wrapperStyle={{}}
@@ -65,6 +65,7 @@ export class MetricTemplateChange extends Component {
       probe: {},
       types: [],
       probeversions: [],
+      metrictemplatelist: [],
       loading: false,
       popoverOpen: false,
       write_perm: false,
@@ -100,9 +101,9 @@ export class MetricTemplateChange extends Component {
       }));
   }
 
-  onSelect(value) {
+  onSelect(field, value) {
     let metrictemplate = this.state.metrictemplate;
-    metrictemplate.probeversion = value;
+    metrictemplate[field] = value;
     this.setState({
       metrictemplate: metrictemplate      
     });
@@ -115,8 +116,9 @@ export class MetricTemplateChange extends Component {
       Promise.all([
         this.backend.fetchMetricTemplateByName(this.name),
         this.backend.fetchMetricTemplateTypes(),
-        this.backend.fetchProbeVersions()
-      ]).then(([metrictemplate, types, probeversions]) => {
+        this.backend.fetchProbeVersions(),
+        this.backend.fetchMetricTemplates()
+      ]).then(([metrictemplate, types, probeversions, metrictemplatelist]) => {
           metrictemplate.probekey ?
             this.backend.fetchVersions('probe', metrictemplate.probeversion.split(' ')[0])
               .then(probe => {
@@ -126,10 +128,15 @@ export class MetricTemplateChange extends Component {
                     fields = e.fields;
                   }
                 });
+                let mlist = [];
+                metrictemplatelist.forEach((e) => {
+                  mlist.push(e.name)
+                });
                 this.setState({
                   metrictemplate: metrictemplate,
                   probe: fields,
                   probeversions: probeversions,
+                  metrictemplatelist: mlist,
                   types: types,
                   loading: false,
                   write_perm: localStorage.getItem('authIsSuperuser') === 'true'
@@ -138,6 +145,7 @@ export class MetricTemplateChange extends Component {
             :
             this.setState({
               metrictemplate: metrictemplate,
+              metrictemplatelist: mlist,
               types: types,
               loading: false,
               write_perm: localStorage.getItem('authIsSuperuser') === 'true'
@@ -147,7 +155,7 @@ export class MetricTemplateChange extends Component {
   }
 
   render() {
-    const { metrictemplate, types, probeversions, loading, write_perm } = this.state;
+    const { metrictemplate, types, probeversions, metrictemplatelist, loading, write_perm } = this.state;
 
     if (loading)
       return (<LoadingAnim/>)
@@ -166,7 +174,7 @@ export class MetricTemplateChange extends Component {
           <Formik 
             initialValues = {{
               name: metrictemplate.name,
-              probe: metrictemplate.probeversion,
+              probeversion: metrictemplate.probeversion,
               type: metrictemplate.mtype,
               probeexecutable: metrictemplate.probeexecutable,
               parent: metrictemplate.parent,
@@ -200,6 +208,7 @@ export class MetricTemplateChange extends Component {
                       <AutocompleteField
                         {...props}
                         lists={probeversions}
+                        field='probeversion'
                         onselect_handler={this.onSelect}
                       />
                       <FormText color='muted'>
@@ -254,11 +263,11 @@ export class MetricTemplateChange extends Component {
                 <h6 className='mt-4 font-weight-bold text-uppercase'>parent</h6>
                 <Row>
                   <Col md={5}>
-                    <Field
-                      type='text'
-                      name='parent'
-                      id='parent'
-                      className='form-control'
+                    <AutocompleteField
+                      {...props}
+                      lists={metrictemplatelist}
+                      field='parent'
+                      onselect_handler={this.onSelect}
                     />
                   </Col>
                 </Row>
