@@ -14,8 +14,41 @@ import {
   PopoverHeader} from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
+import Autocomplete from 'react-autocomplete';
 
 export const MetricTemplateList = ListOfMetrics('metrictemplate');
+
+
+function matchItem(item, value) {
+  return item.toLowerCase().indexOf(value.toLowerCase()) !== -1;
+}
+
+
+const AutocompleteField = ({lists, onselect_handler, setFieldValue, values}) =>
+  <Autocomplete
+    inputProps={{className: 'form-control'}}
+    getItemValue={(item) => item}
+    items={lists}
+    value={values.probe}
+    renderItem={(item, isHighlighted) =>
+      <div 
+        key={lists.indexOf(item)}
+        style={{ background: isHighlighted ? '#4A90D9' : 'white'}}
+      >
+        {item}
+      </div>
+    }
+    onChange={(e) => {setFieldValue('probe', e.target.value)}}
+    onSelect={(val) =>  {
+      setFieldValue('probe', val)
+      onselect_handler(val);
+    }}
+    wrapperStyle={{}}
+    shouldItemRender={matchItem}
+    renderMenu={(items) =>
+      <div children={items}/>  
+    }
+  />
 
 
 export class MetricTemplateChange extends Component {
@@ -31,6 +64,7 @@ export class MetricTemplateChange extends Component {
       metrictemplate: {},
       probe: {},
       types: [],
+      probeversions: [],
       loading: false,
       popoverOpen: false,
       write_perm: false,
@@ -43,6 +77,7 @@ export class MetricTemplateChange extends Component {
     this.toggleAreYouSure = this.toggleAreYouSure.bind(this);
     this.toggleAreYouSureSetModal = this.toggleAreYouSureSetModal.bind(this);
     this.togglePopOver = this.togglePopOver.bind(this);
+    this.onSelect = this.onSelect.bind(this);
   }
 
   togglePopOver() {
@@ -65,14 +100,23 @@ export class MetricTemplateChange extends Component {
       }));
   }
 
+  onSelect(value) {
+    let metrictemplate = this.state.metrictemplate;
+    metrictemplate.probeversion = value;
+    this.setState({
+      metrictemplate: metrictemplate      
+    });
+  }
+
   componentDidMount() {
     this.setState({loading: true});
 
     if (!this.addview) {
       Promise.all([
         this.backend.fetchMetricTemplateByName(this.name),
-        this.backend.fetchMetricTemplateTypes()
-      ]).then(([metrictemplate, types]) => {
+        this.backend.fetchMetricTemplateTypes(),
+        this.backend.fetchProbeVersions()
+      ]).then(([metrictemplate, types, probeversions]) => {
           metrictemplate.probekey ?
             this.backend.fetchVersions('probe', metrictemplate.probeversion.split(' ')[0])
               .then(probe => {
@@ -85,6 +129,7 @@ export class MetricTemplateChange extends Component {
                 this.setState({
                   metrictemplate: metrictemplate,
                   probe: fields,
+                  probeversions: probeversions,
                   types: types,
                   loading: false,
                   write_perm: localStorage.getItem('authIsSuperuser') === 'true'
@@ -102,7 +147,7 @@ export class MetricTemplateChange extends Component {
   }
 
   render() {
-    const { metrictemplate, types, loading, write_perm } = this.state;
+    const { metrictemplate, types, probeversions, loading, write_perm } = this.state;
 
     if (loading)
       return (<LoadingAnim/>)
@@ -152,11 +197,10 @@ export class MetricTemplateChange extends Component {
                     </Col>
                     <Col md={4}>
                       <Label to='probeversion'>Probe</Label>
-                      <Field
-                        type='text'
-                        name='probe'
-                        className='form-control'
-                        id='probeversion'
+                      <AutocompleteField
+                        {...props}
+                        lists={probeversions}
+                        onselect_handler={this.onSelect}
                       />
                       <FormText color='muted'>
                         Probe name and version <FontAwesomeIcon id='probe-popover' hidden={this.state.metrictemplate.mtype === 'Passive'} icon={faInfoCircle} style={{color: '#416090'}}/>
