@@ -339,6 +339,14 @@ export class Backend {
     );
   }
 
+  addMetricTemplate(metric) {
+    return this.send(
+      '/api/v2/internal/metrictemplates/',
+      'POST',
+      metric
+    );
+  }
+
   deleteMetricProfile(id) {
     return this.send(
       '/api/v2/internal/metricprofiles/' + id,
