@@ -86,7 +86,7 @@ export const InlineFields = ({values, field, addnew=false}) => (
                 </Col>
                 <Col md={2}>
                   {
-                    (addnew && field !== 'config') &&
+                    (addnew && field !== 'config' && eval(`values.${field}`).length > 1) &&
                       <Button 
                         hidden={values.type === 'Passive' && field !== 'flags'}
                         size='sm' 
