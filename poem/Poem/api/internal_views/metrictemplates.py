@@ -1,10 +1,28 @@
+import json
+
 from Poem.api.internal_views.metrics import one_value_inline, two_value_inline
 from Poem.api.views import NotFound
 from Poem.poem_super_admin.models import MetricTemplate, MetricTemplateType
 
+from rest_framework import status
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
+from reversion.models import Version
+
+
+def inline_metric_for_db(input):
+    result = []
+
+    for item in input:
+        if item['key'] and item['value']:
+            result.append('{} {}'.format(item['key'], item['value']))
+
+    if result:
+        return json.dumps(result)
+    else:
+        return ''
 
 
 class ListMetricTemplates(APIView):
@@ -58,6 +76,51 @@ class ListMetricTemplates(APIView):
             return Response(results[0])
         else:
             return Response(results)
+
+    def post(self, request):
+        if request.data['parent']:
+            parent = json.dumps([request.data['parent']])
+        else:
+            parent = ''
+
+        if request.data['probeexecutable']:
+            probeexecutable = json.dumps([request.data['probeexecutable']])
+        else:
+            probeexecutable = ''
+
+        if request.data['mtype'] == 'Active':
+            MetricTemplate.objects.create(
+                name=request.data['name'],
+                mtype=MetricTemplateType.objects.get(
+                    name=request.data['mtype']
+                ),
+                probeversion=request.data['probeversion'],
+                probekey=Version.objects.get(
+                    object_repr=request.data['probeversion']
+                ),
+                parent=parent,
+                probeexecutable=probeexecutable,
+                config=inline_metric_for_db(request.data['config']),
+                attribute=inline_metric_for_db(request.data['attribute']),
+                dependency=inline_metric_for_db(request.data['dependency']),
+                flags=inline_metric_for_db(request.data['flags']),
+                files=inline_metric_for_db(request.data['files']),
+                parameter=inline_metric_for_db(request.data['parameter']),
+                fileparameter=inline_metric_for_db(
+                    request.data['fileparameter']
+                )
+            )
+        else:
+            MetricTemplate.objects.create(
+                name=request.data['name'],
+                mtype=MetricTemplateType.objects.get(
+                    name=request.data['mtype']
+                ),
+                parent=parent,
+                flags=inline_metric_for_db(request.data['flags'])
+            )
+
+        return Response(status=status.HTTP_201_CREATED)
 
 
 class ListMetricTemplateTypes(APIView):

@@ -2274,6 +2274,8 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         mtype1 = admin_models.MetricTemplateType.objects.create(name='Active')
         mtype2 = admin_models.MetricTemplateType.objects.create(name='Passive')
 
+        self.mtype = mtype1
+
         probe1 = admin_models.Probe.objects.create(
             name='ams-probe',
             version='0.1.7',
@@ -2317,6 +2319,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
                 )
 
                 self.probekey = probeversion1.id
+                self.probekey_instance = probeversion1
 
         metrictemplate1 = admin_models.MetricTemplate.objects.create(
             name='argo.AMS-Check',
@@ -2494,6 +2497,53 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         response = self.view(request, 'nonexisting')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(response.data, {'detail': 'Metric template not found'})
+
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    def test_post_metric_template(self, func):
+        func.return_value = ['maxCheckAttempts 4', 'timeout 70',
+                             'path /usr/libexec/argo-monitoring/probes/argo',
+                             'interval 6', 'retryInterval 4']
+
+        conf = [
+            {'key': 'maxCheckAttempts', 'value': '4'},
+            {'key': 'timeout', 'value': '70'},
+            {'key': 'path',
+             'value': '/usr/libexec/argo-monitoring/probes/argo'},
+            {'key': 'interval', 'value': '6'},
+            {'key': 'retryInterval', 'value': '4'}
+        ]
+
+        data = {
+            'name': 'new-template',
+            'probeversion': 'ams-probe (0.1.7)',
+            'mtype': 'Active',
+            'probeexecutable': 'ams-probe',
+            'parent': '',
+            'config': conf,
+            'attribute': [{'key': '', 'value': ''}],
+            'dependency': [{'key': '', 'value': ''}],
+            'parameter': [{'key': '', 'value': ''}],
+            'flags': [{'key': '', 'value': ''}],
+            'files': [{'key': '', 'value': ''}],
+            'fileparameter': [{'key': '', 'value': ''}]
+        }
+
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        mt = admin_models.MetricTemplate.objects.get(name='new-template')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(mt.mtype, self.mtype)
+        self.assertEqual(mt.probeversion, 'ams-probe (0.1.7)')
+        self.assertEqual(mt.probekey, self.probekey_instance)
+        self.assertEqual(mt.parent, '')
+        self.assertEqual(mt.probeexecutable, '["ams-probe"]')
+        self.assertEqual(
+            mt.config,
+            "['maxCheckAttempts 4', 'timeout 70', "
+            "'path /usr/libexec/argo-monitoring/probes/argo', "
+            "'interval 6', 'retryInterval 4']"
+        )
 
 
 class ListMetricTemplateTypesAPIViewTests(TenantTestCase):
