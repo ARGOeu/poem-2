@@ -283,6 +283,14 @@ export class Backend {
     )
   }
 
+  changeMetricTemplate(metric) {
+    return this.send(
+      '/api/v2/internal/metrictemplates/',
+      'PUT',
+      metric
+    )
+  }
+
   addAggregation(profile) {
     return this.send(
       '/api/v2/internal/aggregations/',
