@@ -122,6 +122,9 @@ export class MetricTemplateChange extends Component {
     if (this.addview) {
       msg = 'Are you sure you want to add Metric template?';
       title = 'Add metric template';
+    } else {
+      msg = 'Are you sure you want to change Metric template?';
+      title = 'Change metric template';
     }
 
     this.toggleAreYouSureSetModal(msg, title,
@@ -150,6 +153,27 @@ export class MetricTemplateChange extends Component {
           callback: () => this.history.push('/ui/metrictemplates')
         }))
         .catch(err => alert('Something went wrong: ' + err))
+    } else {
+      this.backend.changeMetricTemplate({
+        name: values.name,
+        probeversion: values.probeversion,
+        mtype: values.type,
+        probeexecutable: values.probeexecutable,
+        parent: values.parent,
+        config: values.config,
+        attribute: values.attributes,
+        dependency: values.dependency,
+        parameter: values.parameter,
+        flags: values.flags,
+        files: values.file_attributes,
+        fileparameter: values.file_parameters
+      })
+        .then(() => NotifyOk({
+          msg: 'Metric template successfully changed',
+          title: 'Changed',
+          callback: () => this.history.push('/ui/metrictemplates')
+        }))
+        .catch(err => alert('Something went wrong: ' + err))
     }
   }
 
@@ -163,6 +187,25 @@ export class MetricTemplateChange extends Component {
         this.backend.fetchProbeVersions(),
         this.backend.fetchMetricTemplates()
       ]).then(([metrictemplate, types, probeversions, metrictemplatelist]) => {
+          if (metrictemplate.attribute.length === 0) {
+            metrictemplate.attribute = [{'key': '', 'value': ''}];
+          }
+          if (metrictemplate.dependency.length === 0) {
+            metrictemplate.dependency = [{'key': '', 'value': ''}];
+          }
+          if (metrictemplate.parameter.length === 0) {
+            metrictemplate.parameter = [{'key': '', 'value': ''}];
+          }
+          if (metrictemplate.flags.length === 0) {
+            metrictemplate.flags = [{'key': '', 'value': ''}];
+          }
+          if (metrictemplate.files.length === 0) {
+            metrictemplate.files = [{'key': '', 'value': ''}];
+          }
+          if (metrictemplate.fileparameter.length === 0) {
+            metrictemplate.fileparameter = [{'key': '', 'value': ''}];
+          }
+
           metrictemplate.probekey ?
             this.backend.fetchVersions('probe', metrictemplate.probeversion.split(' ')[0])
               .then(probe => {
@@ -174,7 +217,7 @@ export class MetricTemplateChange extends Component {
                 });
                 let mlist = [];
                 metrictemplatelist.forEach((e) => {
-                  mlist.push(e.name)
+                  mlist.push(e.name);
                 });
                 this.setState({
                   metrictemplate: metrictemplate,
@@ -226,7 +269,7 @@ export class MetricTemplateChange extends Component {
           probeversions: probeversions,
           types: types,
           loading: false,
-              write_perm: localStorage.getItem('authIsSuperuser') === 'true'
+          write_perm: localStorage.getItem('authIsSuperuser') === 'true'
         })
       })
     }
