@@ -404,6 +404,13 @@ export class Backend {
     );
   }
 
+  deleteMetricTemplate(name) {
+    return this.send(
+      '/api/v2/internal/metrictemplates/' + name,
+      'DELETE'
+    );
+  }
+
   send(url, method, values=undefined) {
     const cookies = new Cookies();
 
