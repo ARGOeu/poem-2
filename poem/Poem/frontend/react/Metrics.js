@@ -86,13 +86,19 @@ export const InlineFields = ({values, field, addnew=false}) => (
                 </Col>
                 <Col md={2}>
                   {
-                    (addnew && field !== 'config' && eval(`values.${field}`).length > 1) &&
+                    (addnew && field !== 'config' && eval(`values.${field}`)[0]['key'] !== '' && eval(`values.${field}`)[0]['value'] !== '') &&
                       <Button 
                         hidden={values.type === 'Passive' && field !== 'flags'}
                         size='sm' 
                         color='danger'
                         type='button' 
-                        onClick={() => arrayHelpers.remove(index)}
+                        onClick={() => {
+                          arrayHelpers.remove(index)
+                          if (eval(`values.${field}`).length === 1) {
+                            arrayHelpers.push({key: '', value: ''})
+                          }
+                        }
+                        }
                       >
                         <FontAwesomeIcon icon={faMinus}/>
                       </Button>
