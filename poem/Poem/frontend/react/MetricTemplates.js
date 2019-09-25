@@ -85,6 +85,7 @@ export class MetricTemplateChange extends Component {
     this.onSelect = this.onSelect.bind(this);
     this.onSubmitHandle = this.onSubmitHandle.bind(this);
     this.doChange = this.doChange.bind(this);
+    this.doDelete = this.doDelete.bind(this);
   }
 
   togglePopOver() {
@@ -175,6 +176,16 @@ export class MetricTemplateChange extends Component {
         }))
         .catch(err => alert('Something went wrong: ' + err))
     }
+  }
+
+  doDelete(name) {
+    this.backend.deleteMetricTemplate(name)
+      .then(() => NotifyOk({
+        msg: 'Metric template successfully deleted',
+        title: 'Deleted',
+        callback: () => this.history.push('/ui/metrictemplates')
+      }))
+      .catch(err => alert('Something went wrong: ' + err))
   }
 
   componentDidMount() {
@@ -399,6 +410,11 @@ export class MetricTemplateChange extends Component {
                     <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
                       <Button
                         color="danger"
+                        onClick={() => {
+                          this.toggleAreYouSureSetModal('Are you sure you want to delete Metric template?',
+                          'Delete metric template',
+                          () => this.doDelete(props.values.name))
+                        }}
                       >
                         Delete
                       </Button>
