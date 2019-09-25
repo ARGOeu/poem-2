@@ -1,11 +1,12 @@
 import React, { Component } from 'react';
 import { ListOfMetrics, InlineFields, ProbeVersionLink } from './Metrics';
 import { Backend } from './DataManager';
-import { LoadingAnim, BaseArgoView } from './UIElements';
+import { LoadingAnim, BaseArgoView, NotifyOk } from './UIElements';
 import { Formik, Form, Field } from 'formik';
 import {
   FormGroup,
   Row,
+  Button,
   Col,
   Label,
   FormText,
@@ -21,7 +22,8 @@ export const MetricTemplateList = ListOfMetrics('metrictemplate');
 
 
 function matchItem(item, value) {
-  return item.toLowerCase().indexOf(value.toLowerCase()) !== -1;
+  if (value)
+    return item.toLowerCase().indexOf(value.toLowerCase()) !== -1;
 }
 
 
@@ -59,6 +61,7 @@ export class MetricTemplateChange extends Component {
     this.name = props.match.params.name;
     this.addview = props.addview;
     this.location = props.location;
+    this.history = props.history;
     this.backend = new Backend();
 
     this.state = {
@@ -80,6 +83,8 @@ export class MetricTemplateChange extends Component {
     this.toggleAreYouSureSetModal = this.toggleAreYouSureSetModal.bind(this);
     this.togglePopOver = this.togglePopOver.bind(this);
     this.onSelect = this.onSelect.bind(this);
+    this.onSubmitHandle = this.onSubmitHandle.bind(this);
+    this.doChange = this.doChange.bind(this);
   }
 
   togglePopOver() {
@@ -108,6 +113,44 @@ export class MetricTemplateChange extends Component {
     this.setState({
       metrictemplate: metrictemplate      
     });
+  }
+
+  onSubmitHandle(values, actions) {
+    let msg = undefined;
+    let title = undefined;
+
+    if (this.addview) {
+      msg = 'Are you sure you want to add Metric template?';
+      title = 'Add metric template';
+    }
+
+    this.toggleAreYouSureSetModal(msg, title,
+      () => this.doChange(values, actions))
+  }
+
+  doChange(values, actions){
+    if (this.addview) {
+      this.backend.addMetricTemplate({
+        name: values.name,
+        probeversion: values.probeversion,
+        mtype: values.type,
+        probeexecutable: values.probeexecutable,
+        parent: values.parent,
+        config: values.config,
+        attribute: values.attributes,
+        dependency: values.dependency,
+        parameter: values.parameter,
+        flags: values.flags,
+        files: values.file_attributes,
+        fileparameter: values.file_parameters
+      })
+        .then(() => NotifyOk({
+          msg: 'Metric template successfully added',
+          title: 'Added',
+          callback: () => this.history.push('/ui/metrictemplates')
+        }))
+        .catch(err => alert('Something went wrong: ' + err))
+    }
   }
 
   componentDidMount() {
@@ -152,6 +195,40 @@ export class MetricTemplateChange extends Component {
               write_perm: localStorage.getItem('authIsSuperuser') === 'true'
             })
         })
+    } else {
+      Promise.all([
+        this.backend.fetchMetricTemplateTypes(),
+        this.backend.fetchProbeVersions(),
+        this.backend.fetchMetricTemplates()
+      ]).then(([types, probeversions, mtlist]) => {
+        this.setState({
+          metrictemplate: {
+            name: '',
+            probeversion: '',
+            mtype: 'Active',
+            probeexecutable: '',
+            parent: '',
+            config: [
+              {'key': 'maxCheckAttempts', 'value': ''},
+              {'key': 'timeout', 'value': ''},
+              {'key': 'path', 'value': ''},
+              {'key': 'interval', 'value': ''},
+              {'key': 'retryInterval', 'value': ''}
+            ],
+            attribute: [{'key': '', 'value': ''}],
+            dependency: [{'key': '', 'value': ''}],
+            parameter: [{'key': '', 'value': ''}],
+            flags: [{'key': '', 'value': ''}],
+            files: [{'key': '', 'value': ''}],
+            fileparameter: [{'key': '', 'value': ''}]
+          },
+          metrictemplatelist: mtlist,
+          probeversions: probeversions,
+          types: types,
+          loading: false,
+              write_perm: localStorage.getItem('authIsSuperuser') === 'true'
+        })
+      })
     }
   }
 
@@ -187,6 +264,7 @@ export class MetricTemplateChange extends Component {
               file_attributes: metrictemplate.files,
               file_parameters: metrictemplate.fileparameter
             }}
+            onSubmit = {(values, actions) => this.onSubmitHandle(values, actions)}
             render = {props => (
               <Form>
                 <FormGroup>
@@ -273,6 +351,17 @@ export class MetricTemplateChange extends Component {
                   </Col>
                 </Row>
                 </FormGroup>
+                {
+                  (write_perm) &&
+                    <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
+                      <Button
+                        color="danger"
+                      >
+                        Delete
+                      </Button>
+                      <Button color="success" id="submit-button" type="submit">Save</Button>
+                    </div>
+                }
               </Form>
             )}
           />        
