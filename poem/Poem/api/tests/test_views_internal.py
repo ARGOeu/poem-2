@@ -2584,6 +2584,26 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.probeexecutable, '["ams-probe"]')
         self.assertEqual(mt.attribute, "['argo.ams_TOKEN --token']")
 
+    def test_delete_metric_template(self):
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 2)
+        request = self.factory.delete(self.url + 'argo.AMS-Check')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'argo.AMS-Check')
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 1)
+
+    def test_delete_nonexisting_metric_template(self):
+        request = self.factory.delete(self.url + 'nonexisting')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'nonexisting')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_delete_metric_template_without_specifying_name(self):
+        request = self.factory.delete(self.url)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
 
 class ListMetricTemplateTypesAPIViewTests(TenantTestCase):
     def setUp(self):

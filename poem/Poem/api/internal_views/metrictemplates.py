@@ -166,6 +166,17 @@ class ListMetricTemplates(APIView):
 
         return Response(status=status.HTTP_201_CREATED)
 
+    def delete(self, request, name=None):
+        if name:
+            try:
+                MetricTemplate.objects.get(name=name).delete()
+                return Response(status=status.HTTP_204_NO_CONTENT)
+
+            except MetricTemplate.DoesNotExist:
+                raise NotFound(status=404, detail='Metric template not found')
+
+        else:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
 class ListMetricTemplateTypes(APIView):
