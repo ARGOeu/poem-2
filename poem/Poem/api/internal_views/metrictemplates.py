@@ -122,6 +122,51 @@ class ListMetricTemplates(APIView):
 
         return Response(status=status.HTTP_201_CREATED)
 
+    def put(self, request):
+        metrictemplate = MetricTemplate.objects.get(name=request.data['name'])
+
+        if request.data['parent']:
+            parent = json.dumps([request.data['parent']])
+        else:
+            parent = ''
+
+        if request.data['probeexecutable']:
+            probeexecutable = json.dumps([request.data['probeexecutable']])
+        else:
+            probeexecutable = ''
+
+        if request.data['mtype'] == 'Active':
+            metrictemplate.probeversion = request.data['probeversion']
+            metrictemplate.probekey = Version.objects.get(
+                object_repr=request.data['probeversion']
+            )
+            metrictemplate.parent = parent
+            metrictemplate.probeexecutable = probeexecutable
+            metrictemplate.config = inline_metric_for_db(request.data['config'])
+            metrictemplate.attribute = inline_metric_for_db(
+                request.data['attribute']
+            )
+            metrictemplate.dependency = inline_metric_for_db(
+                request.data['dependency']
+            )
+            metrictemplate.flags = inline_metric_for_db(request.data['flags'])
+            metrictemplate.files = inline_metric_for_db(request.data['files'])
+            metrictemplate.parameter = inline_metric_for_db(
+                request.data['parameter']
+            )
+            metrictemplate.fileparameter = inline_metric_for_db(
+                request.data['fileparameter']
+            )
+
+        else:
+            metrictemplate.parent = parent
+            metrictemplate.flags = inline_metric_for_db(request.data['flags'])
+
+        metrictemplate.save()
+
+        return Response(status=status.HTTP_201_CREATED)
+
+
 
 class ListMetricTemplateTypes(APIView):
     authentication_classes = (SessionAuthentication,)
