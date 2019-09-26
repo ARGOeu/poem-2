@@ -4,6 +4,7 @@ import { Backend } from './DataManager';
 import { LoadingAnim, BaseArgoView, NotifyOk } from './UIElements';
 import { Formik, Form, Field } from 'formik';
 import {
+  Alert,
   FormGroup,
   Row,
   Button,
@@ -16,6 +17,7 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import Autocomplete from 'react-autocomplete';
+import * as Yup from 'yup';
 import './MetricTemplates.css';
 
 export const MetricTemplateList = ListOfMetrics('metrictemplate');
@@ -54,6 +56,13 @@ const AutocompleteField = ({lists, onselect_handler, field, setFieldValue, value
   />
 
 
+const MetricTemplateSchema = Yup.object().shape({
+    name: Yup.string()
+      .matches(/^\S*$/, 'Name cannot contain white spaces')
+      .required('Required')
+  });
+
+
 export class MetricTemplateChange extends Component {
   constructor(props) {
     super(props);
@@ -67,6 +76,7 @@ export class MetricTemplateChange extends Component {
     this.state = {
       metrictemplate: {},
       probe: {},
+      validationVisible: true,
       types: [],
       probeversions: [],
       metrictemplatelist: [],
@@ -86,6 +96,7 @@ export class MetricTemplateChange extends Component {
     this.onSubmitHandle = this.onSubmitHandle.bind(this);
     this.doChange = this.doChange.bind(this);
     this.doDelete = this.doDelete.bind(this);
+    this.onDismiss = this.onDismiss.bind(this);
   }
 
   togglePopOver() {
@@ -186,6 +197,10 @@ export class MetricTemplateChange extends Component {
         callback: () => this.history.push('/ui/metrictemplates')
       }))
       .catch(err => alert('Something went wrong: ' + err))
+  }
+
+  onDismiss() {
+    this.setState({ validationVisible: false });
   }
 
   componentDidMount() {
@@ -319,6 +334,7 @@ export class MetricTemplateChange extends Component {
               file_parameters: metrictemplate.fileparameter
             }}
             onSubmit = {(values, actions) => this.onSubmitHandle(values, actions)}
+            validationSchema={MetricTemplateSchema}
             render = {props => (
               <Form>
                 <FormGroup>
@@ -332,6 +348,14 @@ export class MetricTemplateChange extends Component {
                         className='form-control'
                         id='name'
                       />
+                      {
+                        props.errors.name && props.touched.name ?
+                        <Alert color='danger' isOpen={this.state.validationVisible} toggle={this.onDismiss} fade={false}>
+                          {props.errors.name}
+                        </Alert>
+                        :
+                        null
+                      }
                       <FormText color='muted'>
                         Metric name
                       </FormText>
