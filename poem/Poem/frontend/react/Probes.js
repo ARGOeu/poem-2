@@ -78,6 +78,16 @@ const ProbeSchema = Yup.object().shape({
 });
 
 
+const LinkField = ({
+  field: { value },
+  ...props
+}) => (
+  <div className='form-control' style={{backgroundColor: '#e9ecef'}}>
+    <a href={value}>{value}</a>
+  </div>
+)
+
+
 const ProbeForm = () =>
   <>
     <FormGroup>
@@ -121,7 +131,7 @@ const ProbeForm = () =>
           <InputGroup>
             <InputGroupAddon addonType='prepend'>Repository</InputGroupAddon>
             <Field
-              type='text'
+              component={LinkField}
               name='repository'
               className='form-control'
               id='repository'
@@ -138,7 +148,7 @@ const ProbeForm = () =>
           <InputGroup>
             <InputGroupAddon addonType='prepend'>Documentation</InputGroupAddon>
             <Field
-              type='text'
+              component={LinkField}
               name='docurl'
               className='form-control'
               id='docurl'
@@ -688,7 +698,7 @@ export class ProbeChange extends Component {
                           this.toggleAreYouSureSetModal(
                             'Are you sure you want to delete Probe?',
                             'Delete probe',
-                            () => this.doDelete(values.name)
+                            () => this.doDelete(props.values.name)
                           )
                         }}>
                           Delete
