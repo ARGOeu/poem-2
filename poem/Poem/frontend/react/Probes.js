@@ -383,39 +383,41 @@ export class ProbeChange extends Component {
       msg = 'Are you sure you want to add Probe?';
       title = 'Add probe';
     } else {
-      msg = 'Are you sure you want to change Probe?';
-      title = 'Change probe';
-    }
-
-    this.toggleAreYouSureSetModal(msg, title,
-      () => this.doChange(values, actions))
-  }
-
-  doChange(values, actions) {
-    if (!this.addview) {
       if (values.new_version && values.version === this.state.probe.version) {
         NotificationManager.error(
           'Version number should be changed.',
           'Version error'
         )
       } else {
-        this.backend.changeProbe({
-          id: values.id,
-          name: values.name,
-          version: values.version,
-          repository: values.repository,
-          docurl: values.docurl,
-          description: values.description,
-          comment: values.comment,
-          new_version: values.new_version
-        })
-          .then(() => NotifyOk({
-            msg: 'Probe successfully changed',
-            title: 'Changed',
-            callback: () => this.history.push('/ui/probes')
-          }))
-            .catch(err => alert('Something went wrong: ' + err))
+        msg = 'Are you sure you want to change Probe?';
+        title = 'Change probe';
       }
+    }
+
+    if (msg && title) {
+      this.toggleAreYouSureSetModal(msg, title,
+        () => this.doChange(values, actions))
+    }
+  }
+
+  doChange(values, actions) {
+    if (!this.addview) {
+      this.backend.changeProbe({
+        id: values.id,
+        name: values.name,
+        version: values.version,
+        repository: values.repository,
+        docurl: values.docurl,
+        description: values.description,
+        comment: values.comment,
+        new_version: values.new_version
+      })
+        .then(() => NotifyOk({
+          msg: 'Probe successfully changed',
+          title: 'Changed',
+          callback: () => this.history.push('/ui/probes')
+        }))
+          .catch(err => alert('Something went wrong: ' + err))
     } else {
       this.backend.addProbe({
         name: values.name,
@@ -515,7 +517,7 @@ export class ProbeChange extends Component {
               validationSchema={ProbeSchema}
               onSubmit = {(values, actions) => this.onSubmitHandle(values, actions)}
             >
-              {({errors, touched}) => (
+              {({errors, touched, values}) => (
                 <Form>
                   <FormGroup>
                     <Row>
@@ -563,18 +565,21 @@ export class ProbeChange extends Component {
                           Version of the probe.
                         </FormText>
                       </Col>
-                      <Col md={2}>
-                        <Field
-                          component={Checkbox}
-                          name='new_version'
-                          className='form-control'
-                          id='checkbox'
-                          label='New version'
-                        />
-                        <FormText color='muted'>
-                          Create version for changes.
-                        </FormText>
-                      </Col>
+                      {
+                        !this.addview &&
+                          <Col md={2}>
+                            <Field
+                              component={Checkbox}
+                              name='new_version'
+                              className='form-control'
+                              id='checkbox'
+                              label='New version'
+                            />
+                            <FormText color='muted'>
+                              Create version for changes.
+                            </FormText>
+                          </Col>
+                      }
                     </Row>
                   </FormGroup>
                   <FormGroup>
@@ -683,7 +688,7 @@ export class ProbeChange extends Component {
                           this.toggleAreYouSureSetModal(
                             'Are you sure you want to delete Probe?',
                             'Delete probe',
-                            () => this.doDelete(props.values.name)
+                            () => this.doDelete(values.name)
                           )
                         }}>
                           Delete
