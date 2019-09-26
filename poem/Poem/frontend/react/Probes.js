@@ -3,8 +3,7 @@ import { Backend } from './DataManager';
 import { Link } from 'react-router-dom';
 import { LoadingAnim, BaseArgoView, NotifyOk, Checkbox } from './UIElements';
 import ReactTable from 'react-table';
-import { Alert, 
-  FormGroup, 
+import { FormGroup, 
   Label, 
   FormText, 
   Row, 
@@ -534,11 +533,6 @@ export class ProbeChange extends Component {
               <Link className='btn btn-secondary' to={this.location.pathname + '/history'} role='button'>History</Link>
             </div>
             <div id="argo-contentwrap" className="ml-2 mb-2 mt-2 p-3 border rounded">
-              <Alert color='info'>
-                <center>
-                  This is a read-only instance. Probes can be changed only by super admin.
-                </center>
-              </Alert>
               <Formik
                 initialValues = {{
                   id: probe.id,
