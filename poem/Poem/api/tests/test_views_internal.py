@@ -311,13 +311,7 @@ class ListUsersAPIViewTests(TenantTestCase):
         self.assertFalse(user.is_staff)
         self.assertTrue(user.is_active)
 
-    @patch('Poem.poem.models.GroupOfMetricProfiles.objects.get')
-    @patch('Poem.poem.models.GroupOfMetrics.objects.get')
-    @patch('Poem.poem.models.GroupOfAggregations.objects.get')
-    def test_post_user(self, aggr, metr, mp):
-        aggr.return_value = self.groupofaggregations
-        metr.return_value = self.groupofmetrics
-        mp.return_value = self.groupofmetricprofiles
+    def test_post_user(self):
         data = {
             'username': 'newuser',
             'first_name': 'New',
@@ -327,18 +321,11 @@ class ListUsersAPIViewTests(TenantTestCase):
             'is_staff': True,
             'is_active': True,
             'password': 'blablabla',
-            'groupsofaggregations': ['Aggr1'],
-            'groupsofmetrics': ['Metric1'],
-            'groupsofmetricprofiles': ['MP1'],
-            'displayname': '',
-            'subject': '',
-            'egiid': ''
         }
         request = self.factory.post(self.url, data, format='json')
         force_authenticate(request, user=self.user)
         response = self.view(request)
         user = CustUser.objects.get(username='newuser')
-        userprof = poem_models.UserProfile.objects.get(user=user)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(user.username, 'newuser')
         self.assertEqual(user.first_name, 'New')
@@ -347,10 +334,6 @@ class ListUsersAPIViewTests(TenantTestCase):
         self.assertTrue(user.is_superuser)
         self.assertTrue(user.is_staff)
         self.assertTrue(user.is_active)
-        self.assertEqual(userprof.user, user)
-        self.assertEqual(userprof.displayname, '')
-        self.assertEqual(userprof.subject, '')
-        self.assertEqual(userprof.egiid, '')
 
     def test_delete_user(self):
         request = self.factory.delete(self.url + 'another_user')
@@ -2056,3 +2039,28 @@ class ListVersionsAPIViewTests(TenantTestCase):
         response = self.view(request, 'probe', 'nonexisting')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(response.data, {'detail': 'Probe not found'})
+
+
+class GetPoemVersionAPIViewTests(TenantTestCase):
+    def setUp(self):
+        self.factory = TenantRequestFactory(self.tenant)
+        self.view = views.GetPoemVersion.as_view()
+        self.url = '/api/v2/internal/schema/'
+
+    def test_get_tenant_schema(self):
+        request = self.factory.get(self.url)
+        response = self.view(request)
+        self.assertEqual(
+            response.data,
+            {'schema': 'tenant'}
+        )
+
+    @patch('Poem.api.internal_views.app.connection')
+    def test_get_schema_name_if_public_schema(self, args):
+        args.schema_name = get_public_schema_name()
+        request = self.factory.get(self.url)
+        response = self.view(request)
+        self.assertEqual(
+            response.data,
+            {'schema': 'superadmin'}
+        )

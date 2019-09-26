@@ -44,6 +44,8 @@ import { Field } from 'formik';
 
 var list_pages = ['administration','services', 'reports', 'probes',
                   'metrics', 'metricprofiles', 'aggregationprofiles'];
+var admin_list_pages = ['administration', 'probes'];
+
 var link_title = new Map();
 link_title.set('administration', 'Administration');
 link_title.set('services', 'Services');
@@ -224,34 +226,38 @@ export const NavigationBar = ({history, onLogout, isOpenModal, toggle, titleModa
 )
 
 
-export const NavigationLinks = ({location}) =>
-(
-  <Nav vertical pills id="argo-navlinks" className="border-left border-right border-top rounded-top sticky-top">
-    {
-      list_pages.map((item, i) =>  
-        item === 'administration' && localStorage.getItem('authIsSuperuser') 
-          ?
-            <NavItem key={i}>
-              <NavLink
-                tag={Link}
-                active={location.pathname.includes(item) ? true : false} 
-                className={location.pathname.includes(item) ? "text-white bg-info" : "text-dark"}
-                to={'/ui/' + item}><Icon i={item}/> {link_title.get(item)}
-              </NavLink>
-            </NavItem>
-          :
-            <NavItem key={i}>
-              <NavLink 
-                tag={Link}
-                active={location.pathname.split('/')[2] === item ? true : false} 
-                className={location.pathname.split('/')[2] === item ? "text-white bg-info" : "text-dark"}
-                to={'/ui/' + item}><Icon i={item}/> {link_title.get(item)}
-              </NavLink>
-            </NavItem>
-      )
-    }
-  </Nav>
-)
+export const NavigationLinks = ({location, poemver}) => {
+  var data = undefined;
+  poemver === 'superadmin' ? data = admin_list_pages : data = list_pages
+
+  return (
+    <Nav vertical pills id="argo-navlinks" className="border-left border-right border-top rounded-top sticky-top">
+        {
+          data.map((item, i) =>  
+            item === 'administration' && localStorage.getItem('authIsSuperuser') 
+              ?
+                <NavItem key={i}>
+                  <NavLink
+                    tag={Link}
+                    active={location.pathname.includes(item) ? true : false} 
+                    className={location.pathname.includes(item) ? "text-white bg-info" : "text-dark"}
+                    to={'/ui/' + item}><Icon i={item}/> {link_title.get(item)}
+                  </NavLink>
+                </NavItem>
+              :
+                <NavItem key={i}>
+                  <NavLink 
+                    tag={Link}
+                    active={location.pathname.split('/')[2] === item ? true : false} 
+                    className={location.pathname.split('/')[2] === item ? "text-white bg-info" : "text-dark"}
+                    to={'/ui/' + item}><Icon i={item}/> {link_title.get(item)}
+                  </NavLink>
+                </NavItem>
+          )
+        }
+      </Nav>
+    )
+}
 
 
 const InnerFooter = ({border=false}) =>
