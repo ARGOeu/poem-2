@@ -1,19 +1,15 @@
 import json
 import datetime
 
-from mock import patch
-
 from rest_framework import status
-
-from rest_framework_api_key.models import APIKey
-from rest_framework_api_key.crypto import _generate_token, hash_token
 
 from tenant_schemas.test.cases import TenantTestCase
 from tenant_schemas.test.client import TenantRequestFactory
 
+from Poem.api import views
+from Poem.api.models import MyAPIKey
 from Poem.poem.models import GroupOfMetrics, Metric, MetricType, Tags
 from Poem.users.models import CustUser
-from Poem.api import views
 
 from reversion.models import Version, Revision
 
@@ -84,17 +80,10 @@ def mock_db_for_tagged_metrics_tests():
 
 
 def create_credentials():
-    token = _generate_token()
-    hashed_token = hash_token(token, 'top_secret')
-    obj = APIKey.objects.create(client_id='EGI')
-    obj.token = token
-    obj.hashed_token = hashed_token
-    obj.save()
-    return token
+    obj, key = MyAPIKey.objects.create_key(name='EGI')
+    return obj.token
 
 
-@patch('Poem.api.permissions.SECRET_KEY', 'top_secret')
-@patch('Poem.api.permissions.TOKEN_HEADER', 'HTTP_X_API_KEY')
 class ListTaggedMetricsAPIViewTests(TenantTestCase):
     def setUp(self):
         self.token = create_credentials()
@@ -192,8 +181,6 @@ class ListTaggedMetricsAPIViewTests(TenantTestCase):
         self.assertEqual(response.data, [])
 
 
-@patch('Poem.api.permissions.SECRET_KEY', 'top_secret')
-@patch('Poem.api.permissions.TOKEN_HEADER', 'HTTP_X_API_KEY')
 class ListMetricsAPIViewTests(TenantTestCase):
     def setUp(self):
         self.token = create_credentials()

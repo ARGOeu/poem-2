@@ -177,13 +177,13 @@ export class Backend {
   }
 
   fetchTokens() {
-    return fetch('/api/v2/internal/tokens/')
+    return fetch('/api/v2/internal/apikeys/')
       .then(response => response.json())
       .catch(err => alert('Something went wrong: ' + err))
   }
 
   fetchTokenByName(name) {
-    return fetch('/api/v2/internal/tokens/' + name)
+    return fetch('/api/v2/internal/apikeys/' + name)
       .then(response => response.json())
       .catch(err => alert('Something went wrong: ' + err))
   }
@@ -238,7 +238,7 @@ export class Backend {
 
   changeToken(token) {
     return this.send(
-      '/api/v2/internal/tokens/',
+      '/api/v2/internal/apikeys/',
       'PUT',
       token
     )
@@ -278,7 +278,7 @@ export class Backend {
 
   addToken(token) {
     return this.send(
-      '/api/v2/internal/tokens/',
+      '/api/v2/internal/apikeys/',
       'POST',
       token
     );
@@ -321,7 +321,7 @@ export class Backend {
 
   deleteToken(name) {
     return this.send(
-      '/api/v2/internal/tokens/' + name,
+      '/api/v2/internal/apikeys/' + name,
       'DELETE'
     );
   }

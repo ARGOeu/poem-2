@@ -267,7 +267,7 @@ export class APIKeyChange extends Component {
                         </FormText>
                       </Col>
                     </Row>
-                    <Row>
+                    <Row className='mt-2'>
                       <Col md={6}>
                         <Field
                           component={Checkbox}
@@ -276,6 +276,9 @@ export class APIKeyChange extends Component {
                           id='checkbox'
                           label='Revoked'
                         />
+                        <FormText color='muted'>
+                          If the API key is revoked, clients cannot use it any more. (This cannot be undone.)
+                        </FormText>
                       </Col>
                     </Row>
                   </FormGroup>
