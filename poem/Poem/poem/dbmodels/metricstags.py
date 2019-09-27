@@ -83,12 +83,3 @@ class Metric(models.Model):
 
     def __str__(self):
         return u'%s (%s)' % (self.name, self.tag)
-
-
-class MetricDependancy(models.Model):
-    key = models.CharField(max_length=384)
-    value = models.CharField(max_length=384)
-    metric = models.ForeignKey(Metric, on_delete=models.CASCADE)
-
-    class Meta:
-        app_label = 'poem'
