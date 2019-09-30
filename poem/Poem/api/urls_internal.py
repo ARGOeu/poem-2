@@ -14,6 +14,7 @@ urlpatterns = [
     path('config_options/', views_internal.GetConfigOptions.as_view(), name='config_options'),
     path('groups/', views_internal.ListGroupsForUser.as_view(), name='groups'),
     path('groups/<str:group>', views_internal.ListGroupsForUser.as_view(), name='groups'),
+    path('importmetrics/', views_internal.ImportMetrics.as_view(), name='import'),
     path('probes/', views_internal.ListProbes.as_view(), name='probes'),
     path('probes/<str:name>', views_internal.ListProbes.as_view(), name='probes'),
     path('metric/', views_internal.ListMetric.as_view(), name='metric'),
