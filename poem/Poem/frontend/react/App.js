@@ -4,7 +4,7 @@ import { MetricProfilesChange, MetricProfilesList } from './MetricProfiles';
 import Home from './Home';
 import { ProbeList, ProbeChange, ProbeHistory, ProbeVersionCompare, ProbeVersionDetails } from './Probes';
 import { MetricList, MetricChange } from './Metrics';
-import { MetricTemplateList, MetricTemplateChange } from './MetricTemplates';
+import { MetricTemplateList, MetricTemplateChange, TenantMetricTemplateList } from './MetricTemplates';
 import { TenantAdministration, SuperAdminAdministration } from './Administration';
 import { AggregationProfilesChange, AggregationProfilesList } from './AggregationProfiles';
 import Reports from './Reports';
@@ -114,6 +114,7 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, token, tenantName})
     <Route exact path="/ui/administration/apikey/add"  
       render={props => <APIKeyChange {...props} addview={true}/>}
     />
+    <Route exact path='/ui/administration/metrictemplates/' component={TenantMetricTemplateList}/>
     <Route exact path="/ui/administration/apikey/:name"  
       render={props => <APIKeyChange {...props} />}
     />
