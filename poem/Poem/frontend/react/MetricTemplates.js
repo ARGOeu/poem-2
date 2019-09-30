@@ -21,6 +21,7 @@ import * as Yup from 'yup';
 import './MetricTemplates.css';
 
 export const MetricTemplateList = ListOfMetrics('metrictemplate');
+export const TenantMetricTemplateList = ListOfMetrics('metrictemplate', true)
 
 
 function matchItem(item, value) {
