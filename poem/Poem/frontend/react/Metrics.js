@@ -179,7 +179,7 @@ export const ProbeVersionLink = ({probeversion}) => (
 )
 
 
-export function ListOfMetrics(type) {
+export function ListOfMetrics(type, imp=false) {
   return class extends Component {
     constructor(props) {
       super(props);
@@ -206,12 +206,15 @@ export function ListOfMetrics(type) {
           list_types: null,
           search_name: '',
           search_probeversion: '',
-          search_type: ''
+          search_type: '',
+          selected: {},
+          selectAll: 0
         }
       }
 
       this.backend = new Backend();
       this.doFilter = this.doFilter.bind(this);
+      this.toggleRow = this.toggleRow.bind(this);
     }
 
     doFilter(list_metric, field, filter) {
@@ -219,6 +222,42 @@ export function ListOfMetrics(type) {
         list_metric.filter(row => 
           eval(`row.${field}`).toLowerCase().includes(filter.toLowerCase()))
       )
+    }
+
+    toggleRow(name) {
+      const newSelected = Object.assign({}, this.state.selected);
+      newSelected[name] = !this.state.selected[name];
+      this.setState({
+        selected: newSelected,
+        selectAll: 2
+      })
+    }
+
+    toggleSelectAll() {
+      var { list_metric } = this.state;
+
+      if (this.state.search_name) {
+        list_metric = this.doFilter(list_metric, 'name', this.state.search_name)
+      }
+  
+      if (this.state.search_probeversion) {
+        list_metric = this.doFilter(list_metric, 'probeversion', this.state.search_probeversion)
+      }
+  
+      if (this.state.search_type) {
+        list_metric = this.doFilter(list_metric, 'mtype', this.state.search_type)
+      }
+ 
+      let newSelected = {};
+      if (this.state.selectAll === 0) {
+        list_metric.forEach(x => {
+          newSelected[x.name] = true;
+        });
+      }
+      this.setState({
+        selected: newSelected,
+        selectAll: this.state.selectAll === 0 ? 1 : 0
+      });
     }
 
     componentDidMount() {
@@ -264,19 +303,13 @@ export function ListOfMetrics(type) {
       if (type === 'metric') {
         metriclink = '/ui/metrics/'
       } else {
-        metriclink = '/ui/metrictemplates/'
+        if (imp)
+          metriclink = '/ui/administration/metrictemplates/'
+        else
+          metriclink = '/ui/metrictemplates/'
       }
 
       const columns = [
-        {
-          Header: '#',
-          id: 'row',
-          minWidth: 12,
-          Cell: (row) =>
-            <div style={{textAlign: 'center'}}>
-              {row.index + 1}
-            </div>
-        },
         {
           Header: 'Name',
           id: 'name',
@@ -334,6 +367,62 @@ export function ListOfMetrics(type) {
           )
         }
       ];
+
+      if (imp) {
+        columns.splice(
+          0,
+          0,
+          {
+            id: 'checkbox',
+            accessor: '',
+            Cell: ({original}) => {
+              return (
+                <div style={{display: 'flex', justifyContent: 'center'}}>
+                  <input
+                    type='checkbox'
+                    className='checkbox'
+                    checked={this.state.selected[original.name] === true}
+                    onChange={() => this.toggleRow(original.name)}
+                  />
+                </div>
+              );
+            },
+            Header: 'Select all',
+            Filter: (
+              <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
+                <input
+                  type='checkbox'
+                  className='checkbox'
+                  checked={this.state.selectAll === 1}
+                  ref={input => {
+                    if (input) {
+                      input.indeterminate = this.state.selectAll === 2;
+                    }
+                  }}
+                  onChange={() => this.toggleSelectAll()}
+                />
+              </div>
+              ),
+            filterable: true,
+            sortable: false,
+            minWidth: 12
+          }
+        )
+      } else {
+        columns.splice(
+          0,
+          0,
+          {
+            Header: '#',
+            id: 'row',
+            minWidth: 12,
+            Cell: (row) =>
+              <div style={{textAlign: 'center'}}>
+                {row.index + 1}
+              </div>
+          }
+        )
+      }
 
       if (type === 'metric') {
         columns.splice(
