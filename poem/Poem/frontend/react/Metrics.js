@@ -16,6 +16,7 @@ import {
   PopoverHeader} from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faInfoCircle, faMinus, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { NotificationManager } from 'react-notifications';
 
 export const MetricList = ListOfMetrics('metric');
 
@@ -215,6 +216,7 @@ export function ListOfMetrics(type, imp=false) {
       this.backend = new Backend();
       this.doFilter = this.doFilter.bind(this);
       this.toggleRow = this.toggleRow.bind(this);
+      this.importMetrics = this.importMetrics.bind(this);
     }
 
     doFilter(list_metric, field, filter) {
@@ -258,6 +260,27 @@ export function ListOfMetrics(type, imp=false) {
         selected: newSelected,
         selectAll: this.state.selectAll === 0 ? 1 : 0
       });
+    }
+
+    importMetrics() {
+      let selectedMetrics = this.state.selected;
+      let mt = Object.keys(selectedMetrics);
+      if (mt.length > 0) {
+        this.backend.importMetrics({'metrictemplates': Object.keys(selectedMetrics)})
+          .then(response => response.json())
+          .then(json => {
+            if (json.imported)
+              NotificationManager.success(json.imported, 'Imported');
+            
+            if (json.err)
+              NotificationManager.warning(json.err, 'Not imported')
+          })
+      } else {
+        NotificationManager.error(
+          'No metric templates were selected!',
+          'Error'
+        )
+      }
     }
 
     componentDidMount() {
@@ -508,21 +531,45 @@ export function ListOfMetrics(type, imp=false) {
             </BaseArgoView>
           )
         } else {
-          return (
-            <BaseArgoView
-              resourcename='metric template'
-              location={this.location}
-              listview={true}
-              addnew={true}
-            >
-              <ReactTable
-                data={list_metric}
-                columns={columns}
-                className='-striped -highlight'
-                defaultPageSize={50}
-              />
-            </BaseArgoView>
-          )
+          if (imp)
+            return (
+              <>
+                <div className="d-flex align-items-center justify-content-between">
+                  <h2 className="ml-3 mt-1 mb-4">{`Select Metric template(s) to import`}</h2>
+                  <Button 
+                  className='btn btn-secondary'
+                  onClick={() => this.importMetrics()}
+                    >
+                      Import
+                    </Button>
+                </div>
+                <div id="argo-contentwrap" className="ml-2 mb-2 mt-2 p-3 border rounded">
+                  <ReactTable
+                    data={list_metric}
+                    columns={columns}
+                    className='-striped -highlight'
+                    defaultPageSize={50}
+                  />
+                </div>
+            </>
+            )
+          else 
+            return (
+              <BaseArgoView
+                resourcename='metric template'
+                location={this.location}
+                listview={!imp}
+                importlistview={imp}
+                addnew={true}
+              >
+                <ReactTable
+                  data={list_metric}
+                  columns={columns}
+                  className='-striped -highlight'
+                  defaultPageSize={50}
+                />
+              </BaseArgoView>
+            )
         }
       }
       else
