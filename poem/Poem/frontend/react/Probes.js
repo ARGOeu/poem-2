@@ -1,9 +1,9 @@
 import React, { Component } from 'react';
 import { Backend } from './DataManager';
 import { Link } from 'react-router-dom';
-import { LoadingAnim, BaseArgoView } from './UIElements';
+import { LoadingAnim, BaseArgoView, NotifyOk, Checkbox } from './UIElements';
 import ReactTable from 'react-table';
-import { Alert, 
+import { Alert,
   FormGroup, 
   Label, 
   FormText, 
@@ -14,6 +14,8 @@ import { Alert,
   InputGroupAddon } from 'reactstrap';
 import { Formik, Form, Field } from 'formik';
 import ReactDiffViewer from 'react-diff-viewer';
+import { NotificationManager } from 'react-notifications';
+import * as Yup from 'yup';
 
 
 const DiffElement = ({title, item1, item2}) => {
@@ -55,32 +57,67 @@ const DiffElement = ({title, item1, item2}) => {
   )
 }
 
-const ProbeForm = ({props}) => (
-  <Form>
+
+const ProbeSchema = Yup.object().shape({
+  name: Yup.string()
+    .matches(/^\S*$/, 'Name cannot contain white spaces')
+    .required('Required'),
+  version: Yup.string()
+    .matches(/^\S*$/, 'Version cannot contain white spaces')
+    .required('Required'),
+  repository: Yup.string()
+    .url('Invalid url')
+    .required('Required'),
+  docurl: Yup.string()
+    .url('Invalid url')
+    .required('Required'),
+  description: Yup.string()
+    .required('Required'),
+  comment: Yup.string()
+    .required('Required')
+});
+
+
+const LinkField = ({
+  field: { value },
+  ...props
+}) => (
+  <div className='form-control' style={{backgroundColor: '#e9ecef'}}>
+    <a href={value}>{value}</a>
+  </div>
+)
+
+
+const ProbeForm = () =>
+  <>
     <FormGroup>
       <Row>
         <Col md={6}>
-          <Label for='name'>Name</Label>
-          <Field
-            type='text'
-            name='name'
-            className='form-control'
-            id='name'
-            disabled={true}
-          />
+          <InputGroup>
+            <InputGroupAddon addonType='prepend'>Name</InputGroupAddon>
+            <Field
+              type='text'
+              name='name'
+              className='form-control'
+              id='name'
+              disabled={true}
+            />          
+          </InputGroup>
           <FormText color="muted">
             Name of this probe.
           </FormText>
         </Col>
         <Col md={2}>
-          <Label for='version'>Version</Label>
-          <Field
-            type='text'
-            name='version'
-            className='form-control'
-            id='version'
-            disabled={true}
-          />
+          <InputGroup>
+            <InputGroupAddon addonType='prepend'>Version</InputGroupAddon>
+            <Field
+              type='text'
+              name='version'
+              className='form-control'
+              id='version'
+              disabled={true}
+            />
+          </InputGroup>
           <FormText color="muted">
             Version of the probe.
           </FormText>
@@ -94,7 +131,7 @@ const ProbeForm = ({props}) => (
           <InputGroup>
             <InputGroupAddon addonType='prepend'>Repository</InputGroupAddon>
             <Field
-              type='text'
+              component={LinkField}
               name='repository'
               className='form-control'
               id='repository'
@@ -111,7 +148,7 @@ const ProbeForm = ({props}) => (
           <InputGroup>
             <InputGroupAddon addonType='prepend'>Documentation</InputGroupAddon>
             <Field
-              type='text'
+              component={LinkField}
               name='docurl'
               className='form-control'
               id='docurl'
@@ -156,17 +193,19 @@ const ProbeForm = ({props}) => (
         </Col>
       </Row>
     </FormGroup>
-  </Form>
-)
+  </>
 
 
 export class ProbeList extends Component {
   constructor(props) {
     super(props);
 
+    this.location = props.location;
+
     this.state = {
       loading: false,
       list_probe: null,
+      poemversion: null,
       search_name: '',
       search_description: ''
     };
@@ -177,10 +216,14 @@ export class ProbeList extends Component {
   componentDidMount() {
     this.setState({loading: true});
 
-    this.backend.fetchAllProbes()
-      .then(json =>
+    Promise.all([
+      this.backend.fetchAllProbes(),
+      this.backend.fetchPoemVersion()
+    ])
+      .then(([json, ver]) =>
         this.setState({
           list_probe: json,
+          poemversion: ver,
           loading: false,
           search_name: ''
         }))
@@ -217,12 +260,16 @@ export class ProbeList extends Component {
       },
       {
         Header: '#versions',
+        id: 'nv',
         minWidth: 25,
+        accessor: e =>
+          <Link to={'/ui/probes/' + e.name + '/history'}>
+            {e.nv}
+          </Link>,
         Cell: row =>
           <div style={{textAlign: 'center'}}>
             {row.value}
-          </div>,
-        accessor: 'nv'
+          </div>
       },
       {
         Header: 'Description',
@@ -244,8 +291,7 @@ export class ProbeList extends Component {
       }
     ];
 
-    const { loading } = this.state;
-    var { list_probe } = this.state;
+    var { poemversion, list_probe, loading } = this.state;
 
     if (this.state.search_name) {
       list_probe = list_probe.filter(row => 
@@ -266,9 +312,17 @@ export class ProbeList extends Component {
       return (
         <React.Fragment>
           <div className="d-flex align-items-center justify-content-between">
-            <React.Fragment>
-              <h2 className="ml-3 mt-1 mb-4">{'Select probe for details'}</h2>
-            </React.Fragment>
+            {
+              poemversion === 'tenant' ?
+                <React.Fragment>
+                  <h2 className="ml-3 mt-1 mb-4">{'Select probe for details'}</h2>
+                </React.Fragment>
+              :
+                <React.Fragment>
+                  <h2 className="ml-3 mt-1 mb-4">{'Select probe to change'}</h2>
+                  <Link className="btn btn-secondary" to={this.location.pathname + "/add"} role="button">Add</Link>
+                </React.Fragment>
+            }
           </div>
           <div id="argo-contentwrap" className="ml-2 mb-2 mt-2 p-3 border rounded">
             <ReactTable
@@ -287,71 +341,404 @@ export class ProbeList extends Component {
 }
 
 
-export class ProbeDetails extends Component {
+export class ProbeChange extends Component {
   constructor(props) {
     super(props);
 
     this.name = props.match.params.name;
+    this.addview = props.addview;
     this.location = props.location;
+    this.history = props.history;
     this.backend = new Backend();
 
     this.state = {
       probe: {},
-      loading: false
+      poemversion: null,
+      validationVisible: true,
+      new_version: true,
+      loading: false,
+      write_perm: false,
+      areYouSureModal: false,
+      modalFunc: undefined,
+      modalTitle: undefined,
+      modalMsg: undefined
     };
+
+    this.toggleAreYouSure = this.toggleAreYouSure.bind(this);
+    this.toggleAreYouSureSetModal = this.toggleAreYouSureSetModal.bind(this);
+    this.onSubmitHandle = this.onSubmitHandle.bind(this);
+    this.doDelete = this.doDelete.bind(this);
+    this.onDismiss = this.onDismiss.bind(this);
+  }
+
+  toggleAreYouSure() {
+    this.setState(prevState => 
+      ({areYouSureModal: !prevState.areYouSureModal}));
+  }
+
+  toggleAreYouSureSetModal(msg, title, onyes) {
+    this.setState(prevState => 
+      ({areYouSureModal: !prevState.areYouSureModal,
+        modalFunc: onyes,
+        modalMsg: msg,
+        modalTitle: title,
+      }));
+  }
+
+  onSubmitHandle(values, actions) {
+    let msg = undefined;
+    let title = undefined;
+
+    if (this.addview) {
+      msg = 'Are you sure you want to add Probe?';
+      title = 'Add probe';
+    } else {
+      if (values.new_version && values.version === this.state.probe.version) {
+        NotificationManager.error(
+          'Version number should be changed.',
+          'Version error'
+        )
+      } else {
+        msg = 'Are you sure you want to change Probe?';
+        title = 'Change probe';
+      }
+    }
+
+    if (msg && title) {
+      this.toggleAreYouSureSetModal(msg, title,
+        () => this.doChange(values, actions))
+    }
+  }
+
+  doChange(values, actions) {
+    if (!this.addview) {
+      this.backend.changeProbe({
+        id: values.id,
+        name: values.name,
+        version: values.version,
+        repository: values.repository,
+        docurl: values.docurl,
+        description: values.description,
+        comment: values.comment,
+        new_version: values.new_version
+      })
+        .then(() => NotifyOk({
+          msg: 'Probe successfully changed',
+          title: 'Changed',
+          callback: () => this.history.push('/ui/probes')
+        }))
+          .catch(err => alert('Something went wrong: ' + err))
+    } else {
+      this.backend.addProbe({
+        name: values.name,
+        version: values.version,
+        repository: values.repository,
+        docurl: values.docurl,
+        description: values.description,
+        comment: values.comment
+      })
+        .then(() => NotifyOk({
+          msg: 'Probe successfully added',
+          title: 'Added',
+          callback: () => this.history.push('/ui/probes')
+        }))
+          .catch(err => alert('Something went wrong: ' + err))
+    }
+  }
+
+  doDelete(name) {
+    this.backend.deleteProbe(name)
+      .then(() => NotifyOk({
+        msg: 'Probe successfully deleted',
+        title: 'Deleted',
+        callback: () => this.history.push('/ui/probes')
+      }))
+  }
+
+  onDismiss() {
+    this.setState({ validationVisible: false });
   }
 
   componentDidMount() {
     this.setState({loading: true});
 
-    this.backend.fetchProbeByName(this.name)
-      .then((json) => {
-        this.setState({
-          probe: json,
-          loading: false
-        });
-      });
+    if (!this.addview) {
+      Promise.all([
+        this.backend.fetchProbeByName(this.name),
+        this.backend.fetchPoemVersion()
+      ])
+          .then(([probe, ver]) => {
+            this.setState({
+              probe: probe,
+              poemversion: ver,
+              write_perm: localStorage.getItem('authIsSuperuser') === 'true',
+              loading: false
+            });
+          });
+    } else {
+      this.backend.fetchPoemVersion()
+        .then((ver) => {
+          this.setState({
+            probe: {
+              id: '',
+              name: '',
+              version: '',
+              repository: '',
+              docurl: '',
+              description: '',
+              comment: ''
+            },
+            poemversion: ver,
+            write_perm: localStorage.getItem('authIsSuperuser') === 'true',
+            loading: false
+          })
+        })
+    }
   }
 
   render() {
-    const { probe, loading } = this.state;
+    const { probe, new_version, poemversion, write_perm, loading } = this.state;
 
     if (loading)
       return(<LoadingAnim/>)
 
     else if (!loading) {
-      return (
-        <React.Fragment>
-          <div className="d-flex align-items-center justify-content-between">
-          <React.Fragment>
-            <h2 className="ml-3 mt-1 mb-4">{'Probe details'}</h2>
-            <Link className='btn btn-secondary' to={this.location.pathname + '/history'} role='button'>History</Link>
-          </React.Fragment>
-          </div>
-          <div id="argo-contentwrap" className="ml-2 mb-2 mt-2 p-3 border rounded">
-            {
-              <Alert color='info'>
-                <center>
-                  This is a read-only instance. Probes can be changed only by super admin.
-                </center>
-              </Alert>
-            }
+      if (poemversion === 'superadmin') {
+        return (
+          <BaseArgoView
+            resourcename='Probes'
+            location={this.location}
+            addview={this.addview}
+            modal={true}
+            state={this.state}
+            toggle={this.toggleAreYouSure}
+            submitperm={write_perm}>
             <Formik
               initialValues = {{
+                id: probe.id,
                 name: probe.name,
                 version: probe.version,
                 repository: probe.repository,
                 docurl: probe.docurl,
                 description: probe.description,
-                comment: probe.comment
+                comment: probe.comment,
+                new_version: new_version
               }}
-              render = {props => (
-                <ProbeForm {...props}/>
+              validationSchema={ProbeSchema}
+              onSubmit = {(values, actions) => this.onSubmitHandle(values, actions)}
+            >
+              {({errors, touched, values}) => (
+                <Form>
+                  <FormGroup>
+                    <Row>
+                      <Col md={6}>
+                        <InputGroup>
+                          <InputGroupAddon addonType='prepend'>Name</InputGroupAddon>
+                          <Field
+                            type='text'
+                            name='name'
+                            className='form-control'
+                            id='name'
+                          />          
+                        </InputGroup>
+                          {
+                            errors.name && touched.name ? 
+                            <Alert color='danger' isOpen={this.state.validationVisible} toggle={this.onDismiss} fade={false}>
+                              {errors.name}
+                            </Alert>
+                            : 
+                            null
+                          }
+                        <FormText color="muted">
+                          Name of this probe.
+                        </FormText>
+                      </Col>
+                      <Col md={2}>
+                        <InputGroup>
+                          <InputGroupAddon addonType='prepend'>Version</InputGroupAddon>
+                          <Field
+                            type='text'
+                            name='version'
+                            className='form-control'
+                            id='version'
+                          />
+                        </InputGroup>
+                          {
+                            errors.version && touched.version ? 
+                            <Alert color='danger' isOpen={this.state.validationVisible} toggle={this.onDismiss} fade={false}>
+                              {errors.version}
+                            </Alert>
+                            : 
+                            null
+                          }
+                        <FormText color="muted">
+                          Version of the probe.
+                        </FormText>
+                      </Col>
+                      {
+                        !this.addview &&
+                          <Col md={2}>
+                            <Field
+                              component={Checkbox}
+                              name='new_version'
+                              className='form-control'
+                              id='checkbox'
+                              label='New version'
+                            />
+                            <FormText color='muted'>
+                              Create version for changes.
+                            </FormText>
+                          </Col>
+                      }
+                    </Row>
+                  </FormGroup>
+                  <FormGroup>
+                    <h4 className="mt-2 p-1 pl-3 text-light text-uppercase rounded" style={{"backgroundColor": "#416090"}}>Probe metadata</h4>
+                    <Row className='mt-4 mb-3 align-items-top'>
+                      <Col md={8}>
+                        <InputGroup>
+                          <InputGroupAddon addonType='prepend'>Repository</InputGroupAddon>
+                          <Field
+                            type='text'
+                            name='repository'
+                            className='form-control'
+                            id='repository'
+                          />
+                        </InputGroup>
+                          {
+                            errors.repository && touched.repository ? 
+                            <Alert color='danger' isOpen={this.state.validationVisible} toggle={this.onDismiss} fade={false}>
+                              {errors.repository}
+                            </Alert>
+                            : 
+                            null
+                          }
+                        <FormText color='muted'>
+                          Probe repository URL.
+                        </FormText>
+                      </Col>
+                    </Row>
+                    <Row className='mb-3 align-items-top'>
+                      <Col md={8}>
+                        <InputGroup>
+                          <InputGroupAddon addonType='prepend'>Documentation</InputGroupAddon>
+                          <Field
+                            type='text'
+                            name='docurl'
+                            className='form-control'
+                            id='docurl'
+                          />
+                        </InputGroup>
+                          {
+                            errors.docurl && touched.docurl ? 
+                            <Alert color='danger' isOpen={this.state.validationVisible} toggle={this.onDismiss} fade={false}>
+                              {errors.docurl}
+                            </Alert>
+                            : 
+                            null
+                          }
+                        <FormText color='muted'>
+                          Documentation URL.
+                        </FormText>
+                      </Col>
+                    </Row>
+                    <Row className='mb-3 align-items-top'>
+                      <Col md={8}>
+                        <Label for='description'>Description</Label>
+                        <Field
+                          component='textarea'
+                          name='description'
+                          rows='15'
+                          className='form-control'
+                          id='description'
+                        />
+                          {
+                            errors.description && touched.description ? 
+                            <Alert color='danger' isOpen={this.state.validationVisible} toggle={this.onDismiss} fade={false}>
+                              {errors.description}
+                            </Alert>
+                            : 
+                            null
+                          }
+                        <FormText color='muted'>
+                          Free text description outlining the purpose of this probe.
+                        </FormText>
+                      </Col>
+                    </Row>
+                    <Row className='mb-3 align-items-top'>
+                      <Col md={8}>
+                        <Label for='comment'>Comment</Label>
+                        <Field 
+                          component='textarea'
+                          name='comment'
+                          rows='5'
+                          className='form-control'
+                          id='comment'
+                        />
+                          {
+                            errors.comment && touched.comment ? 
+                            <Alert color='danger' isOpen={this.state.validationVisible} toggle={this.onDismiss} fade={false}>
+                              {errors.comment}
+                            </Alert>
+                            : 
+                            null
+                          }
+                        <FormText color='muted'>
+                          Short comment about this version.
+                        </FormText>
+                      </Col>
+                    </Row>
+                  </FormGroup>
+                  {
+                    (write_perm) &&
+                      <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
+                        <Button 
+                        color='danger'
+                        onClick={() => {
+                          this.toggleAreYouSureSetModal(
+                            'Are you sure you want to delete Probe?',
+                            'Delete probe',
+                            () => this.doDelete(props.values.name)
+                          )
+                        }}>
+                          Delete
+                        </Button>
+                        <Button color='success' id='submit-button' type='submit'>
+                          Save
+                        </Button>
+                      </div>  
+                }
+                </Form>
               )}
-            />
-          </div>
-        </React.Fragment>
-      )
+            </Formik>
+          </BaseArgoView>
+        )
+      } else {
+        return (
+          <React.Fragment>
+            <div className="d-flex align-items-center justify-content-between">
+              <h2 className="ml-3 mt-1 mb-4">{'Probe details'}</h2>
+              <Link className='btn btn-secondary' to={this.location.pathname + '/history'} role='button'>History</Link>
+            </div>
+            <div id="argo-contentwrap" className="ml-2 mb-2 mt-2 p-3 border rounded">
+              <Formik
+                initialValues = {{
+                  id: probe.id,
+                  name: probe.name,
+                  version: probe.version,
+                  repository: probe.repository,
+                  docurl: probe.docurl,
+                  description: probe.description,
+                  comment: probe.comment
+                }}
+                render = {props => (
+                  <ProbeForm/> 
+                )}
+              />
+            </div>
+          </React.Fragment>
+        )
+      }
     }
   }
 }
@@ -468,26 +855,18 @@ export class ProbeHistory extends Component {
                             />
                           </td>
                       }
-                      {e.version && 
-                        <td>
-                          <Link to={'/ui/probes/' + e.fields.name + '/history/' + e.version}>{e.version}</Link>
-                        </td>
-                      }
-                      {e.date_created && 
-                        <td>
-                          {e.date_created}
-                        </td>
-                      }
-                      {e.user && 
-                        <td>
-                          {e.user}
-                        </td>
-                      }
-                      {e.comment && 
-                        <td>
-                          {e.comment}
-                        </td>
-                      }
+                      <td>
+                        {e.version ? <Link to={'/ui/probes/' + e.fields.name + '/history/' + e.version}>{e.version}</Link> : ''}
+                      </td>
+                      <td>
+                        {e.date_created ? e.date_created : ''}
+                      </td>
+                      <td>
+                        {e.user ? e.user : ''}
+                      </td>
+                      <td>
+                        {e.comment ? e.comment : ''}
+                      </td>
                     </tr>
                   )
                 }
@@ -700,7 +1079,7 @@ export class ProbeVersionDetails extends Component {
                 comment: comment
               }}
               render = {props => (
-                <ProbeForm {...props}/>
+                <ProbeForm/>
               )}
               />
           </div>

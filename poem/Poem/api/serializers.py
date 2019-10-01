@@ -51,5 +51,4 @@ class UserProfileSerializer(serializers.ModelSerializer):
 class ProbeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Probe
-        fields = ('name', 'version', 'docurl', 'description', 'comment',
-                  'repository')
+        exclude = ['nameversion']

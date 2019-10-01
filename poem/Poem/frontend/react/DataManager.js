@@ -251,6 +251,14 @@ export class Backend {
     )
   }
 
+  changeProbe(probe) {
+    return this.send(
+      '/api/v2/internal/probes/',
+      'PUT',
+      probe
+    )
+  }
+
   addAggregation(profile) {
     return this.send(
       '/api/v2/internal/aggregations/',
@@ -299,6 +307,14 @@ export class Backend {
     );
   }
 
+  addProbe(probe) {
+    return this.send(
+      '/api/v2/internal/probes/',
+      'POST',
+      probe
+    );
+  }
+
   deleteMetricProfile(id) {
     return this.send(
       '/api/v2/internal/metricprofiles/' + id,
@@ -337,6 +353,13 @@ export class Backend {
   deleteToken(name) {
     return this.send(
       '/api/v2/internal/apikeys/' + name,
+      'DELETE'
+    );
+  }
+
+  deleteProbe(name) {
+    return this.send(
+      '/api/v2/internal/probes/' + name,
       'DELETE'
     );
   }
