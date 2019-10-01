@@ -411,6 +411,14 @@ export class Backend {
     );
   }
 
+  importMetrics(data) {
+    return this.send(
+      '/api/v2/internal/importmetrics/',
+      'POST',
+      data
+    )
+  }
+
   send(url, method, values=undefined) {
     const cookies = new Cookies();
 
