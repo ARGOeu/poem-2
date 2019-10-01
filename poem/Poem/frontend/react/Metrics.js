@@ -46,7 +46,7 @@ const DropdownFilterComponent = ({value, onChange, data}) => (
 )
 
 
-export const InlineFields = ({values, field, addnew=false}) => (
+export const InlineFields = ({values, field, addnew=false, readonly=false}) => (
   <div>
     <h6 className='mt-4 font-weight-bold text-uppercase' hidden={values.type === 'Passive' && field !== 'flags'}>{field.replace('_', ' ')}</h6>
     <FieldArray
@@ -80,7 +80,7 @@ export const InlineFields = ({values, field, addnew=false}) => (
                     name={`${field}.${index}.value`} 
                     id={`${field}.${index}.value`} 
                     className='form-control'
-                    disabled={!addnew && (field !== 'config' || field === 'config' && item.key === 'path')}
+                    disabled={readonly || (!addnew && (field !== 'config' || field === 'config' && item.key === 'path'))}
                     hidden={values.type === 'Passive' && field !== 'flags'}
                   />
                 </Col>
