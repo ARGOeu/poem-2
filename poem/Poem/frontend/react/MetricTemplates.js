@@ -70,6 +70,7 @@ export class MetricTemplateChange extends Component {
 
     this.name = props.match.params.name;
     this.addview = props.addview;
+    this.infoview = props.infoview;
     this.location = props.location;
     this.history = props.history;
     this.backend = new Backend();
@@ -311,9 +312,10 @@ export class MetricTemplateChange extends Component {
     else if (!loading) {
       return (
         <BaseArgoView
-          resourcename='Metric templates'
+          resourcename='Metric template'
           location={this.location}
           addview={this.addview}
+          infoview={this.infoview}
           modal={true}
           state={this.state}
           toggle={this.toggleAreYouSure}
@@ -348,6 +350,7 @@ export class MetricTemplateChange extends Component {
                         required={true}
                         className='form-control'
                         id='name'
+                        disabled={this.infoview}
                       />
                       {
                         props.errors.name && props.touched.name ?
@@ -363,12 +366,23 @@ export class MetricTemplateChange extends Component {
                     </Col>
                     <Col md={4}>
                       <Label to='probeversion'>Probe</Label>
-                      <AutocompleteField
-                        {...props}
-                        lists={probeversions}
-                        field='probeversion'
-                        onselect_handler={this.onSelect}
-                      />
+                      {
+                        this.infoview ?
+                          <Field 
+                            type='text'
+                            name='probeversion'
+                            className='form-control'
+                            id='probeversion'
+                            disabled={true}
+                          />
+                        :
+                        <AutocompleteField
+                          {...props}
+                          lists={probeversions}
+                          field='probeversion'
+                          onselect_handler={this.onSelect}
+                        />
+                      }
                       <FormText color='muted'>
                         Probe name and version <FontAwesomeIcon id='probe-popover' hidden={this.state.metrictemplate.mtype === 'Passive'} icon={faInfoCircle} style={{color: '#416090'}}/>
                         <Popover placement='bottom' isOpen={this.state.popoverOpen} target='probe-popover' toggle={this.togglePopOver} trigger='hover'>
@@ -384,6 +398,7 @@ export class MetricTemplateChange extends Component {
                         name='type'
                         className='form-control'
                         id='mtype'
+                        disabled={this.infoview}
                       >
                         {
                           types.map((name, i) =>
@@ -408,30 +423,42 @@ export class MetricTemplateChange extends Component {
                       id='probeexecutable'
                       className='form-control'
                       hidden={props.values.type === 'Passive'}
+                      disabled={this.infoview}
                     />
                   </Col>
                 </Row>
-                <InlineFields {...props} field='config' addnew={true}/>
-                <InlineFields {...props} field='attributes' addnew={true}/>
-                <InlineFields {...props} field='dependency' addnew={true}/>
-                <InlineFields {...props} field='parameter' addnew={true}/>
-                <InlineFields {...props} field='flags' addnew={true}/>
-                <InlineFields {...props} field='file_attributes' addnew={true}/>
-                <InlineFields {...props} field='file_parameters' addnew={true}/>
+                <InlineFields {...props} field='config' addnew={!this.infoview} readonly={this.infoview}/>
+                <InlineFields {...props} field='attributes' addnew={!this.infoview}/>
+                <InlineFields {...props} field='dependency' addnew={!this.infoview}/>
+                <InlineFields {...props} field='parameter' addnew={!this.infoview}/>
+                <InlineFields {...props} field='flags' addnew={!this.infoview}/>
+                <InlineFields {...props} field='file_attributes' addnew={!this.infoview}/>
+                <InlineFields {...props} field='file_parameters' addnew={!this.infoview}/>
                 <h6 className='mt-4 font-weight-bold text-uppercase'>parent</h6>
                 <Row>
                   <Col md={5}>
-                    <AutocompleteField
-                      {...props}
-                      lists={metrictemplatelist}
-                      field='parent'
-                      onselect_handler={this.onSelect}
-                    />
+                    {
+                      this.infoview ?
+                        <Field
+                          type='text'
+                          name='parent'
+                          id='parent'
+                          className='form-control'
+                          disabled={true}
+                        />
+                        :
+                          <AutocompleteField
+                            {...props}
+                            lists={metrictemplatelist}
+                            field='parent'
+                            onselect_handler={this.onSelect}
+                          />
+                    }
                   </Col>
                 </Row>
                 </FormGroup>
                 {
-                  (write_perm) &&
+                  (write_perm && !this.infoview) &&
                     <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
                       <Button
                         color="danger"
