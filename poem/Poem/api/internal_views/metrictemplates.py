@@ -2,7 +2,9 @@ import json
 
 from Poem.api.internal_views.metrics import one_value_inline, two_value_inline
 from Poem.api.views import NotFound
+from Poem.poem.models import Metric
 from Poem.poem_super_admin.models import MetricTemplate, MetricTemplateType
+from Poem.tenants.models import Tenant
 
 from rest_framework import status
 from rest_framework.authentication import SessionAuthentication
@@ -10,6 +12,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from reversion.models import Version
+
+from tenant_schemas.utils import get_public_schema_name, schema_context
 
 
 def inline_metric_for_db(input):
@@ -167,9 +171,15 @@ class ListMetricTemplates(APIView):
         return Response(status=status.HTTP_201_CREATED)
 
     def delete(self, request, name=None):
+        schemas = list(Tenant.objects.all().values_list('schema_name',
+                                                        flat=True))
+        schemas.remove(get_public_schema_name())
         if name:
             try:
                 MetricTemplate.objects.get(name=name).delete()
+                for schema in schemas:
+                    with schema_context(schema):
+                        Metric.objects.get(name=name).delete()
                 return Response(status=status.HTTP_204_NO_CONTENT)
 
             except MetricTemplate.DoesNotExist:
