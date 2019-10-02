@@ -698,7 +698,7 @@ export class ProbeChange extends Component {
                           this.toggleAreYouSureSetModal(
                             'Are you sure you want to delete Probe?',
                             'Delete probe',
-                            () => this.doDelete(props.values.name)
+                            () => this.doDelete(values.name)
                           )
                         }}>
                           Delete
