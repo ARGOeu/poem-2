@@ -127,6 +127,10 @@ class ListMetricTemplates(APIView):
         return Response(status=status.HTTP_201_CREATED)
 
     def put(self, request):
+        schemas = list(Tenant.objects.all().values_list('schema_name',
+                                                        flat=True))
+        schemas.remove(get_public_schema_name())
+
         metrictemplate = MetricTemplate.objects.get(name=request.data['name'])
 
         if request.data['parent']:
@@ -167,6 +171,77 @@ class ListMetricTemplates(APIView):
             metrictemplate.flags = inline_metric_for_db(request.data['flags'])
 
         metrictemplate.save()
+
+        for schema in schemas:
+            with schema_context(schema):
+                try:
+                    changes = 0
+                    met = Metric.objects.get(name=metrictemplate.name)
+
+                    if met.probeversion != metrictemplate.probeversion:
+                        met.probeversion = metrictemplate.probeversion
+                        changes += 1
+
+                    if met.probeexecutable != metrictemplate.probeexecutable:
+                        met.probeexecutable = metrictemplate.probeexecutable
+
+                    if met.parent != metrictemplate.parent:
+                        met.parent = metrictemplate.parent
+                        changes += 1
+
+                    if met.attribute != metrictemplate.attribute:
+                        met.attribute = metrictemplate.attribute
+                        changes += 1
+
+                    if met.dependancy != metrictemplate.dependency:
+                        met.dependancy = metrictemplate.dependency
+                        changes += 1
+
+                    if met.flags != metrictemplate.flags:
+                        met.flags = metrictemplate.flags
+                        changes += 1
+
+                    if met.files != metrictemplate.files:
+                        met.files = metrictemplate.files
+                        changes += 1
+
+                    if met.parameter != metrictemplate.parameter:
+                        met.parameter = metrictemplate.parameter
+                        changes += 1
+
+                    if met.fileparameter != metrictemplate.fileparameter:
+                        met.fileparameter = metrictemplate.fileparameter
+                        changes += 1
+
+                    if metrictemplate.config:
+                        for item in json.loads(metrictemplate.config):
+                            if item.split(' ')[0] == 'path':
+                                objpath = item
+
+                        for item in json.loads(met.config):
+                            if item.split(' ')[0] == 'path':
+                                oldpath = item
+
+                        if oldpath != objpath:
+                            metconfig = []
+                            for item in json.loads(met.config):
+                                if item.split(' ')[0] == 'path':
+                                    metconfig.append(objpath)
+                                else:
+                                    metconfig.append(item)
+
+                            met.config = json.dumps(metconfig)
+                            changes += 1
+                    else:
+                        if met.config != '':
+                            met.config = ''
+                            changes += 1
+
+                    if changes > 0:
+                        met.save()
+
+                except Metric.DoesNotExist:
+                    pass
 
         return Response(status=status.HTTP_201_CREATED)
 
