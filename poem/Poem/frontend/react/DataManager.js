@@ -145,13 +145,6 @@ export class Backend {
       .catch(err => alert('Something went wrong: ' + err))
   }
 
-  fetchTags() {
-    return fetch('/api/v2/internal/tags/')
-      .then(response => response.json())
-      .catch(err => alert('Something went wrong: ' + err))
-
-  }
-
   fetchMetricTypes() {
     return fetch('/api/v2/internal/mtypes/')
       .then(response => response.json())
