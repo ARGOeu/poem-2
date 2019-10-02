@@ -196,7 +196,6 @@ export function ListOfMetrics(type, imp=false) {
           list_types: null,
           search_name: '',
           search_probeversion: '',
-          search_tag: '',
           search_type: '',
           search_group: ''
         }
@@ -289,18 +288,15 @@ export function ListOfMetrics(type, imp=false) {
       if (type === 'metric') {
         Promise.all([this.backend.fetchAllMetric(),
           this.backend.fetchAllGroups(),
-          this.backend.fetchTags(),
           this.backend.fetchMetricTypes()
-        ]).then(([metrics, groups, tags, types]) =>
+        ]).then(([metrics, groups, types]) =>
               this.setState({
                 list_metric: metrics,
-                list_tags: tags,
                 list_groups: groups['metrics'],
                 list_types: types,
                 loading: false, 
                 search_name: '',
                 search_probeversion: '',
-                search_tag: '',
                 search_group: '',
                 search_type: ''
               }));
@@ -452,23 +448,6 @@ export function ListOfMetrics(type, imp=false) {
           3,
           0,
           {
-            Header: 'Tag',
-            accessor: 'tag',
-            minWidth: 30,
-            Cell: row =>
-              <div style={{textAlign: 'center'}}>
-                {row.value}
-              </div>,
-            filterable: true,
-            Filter: (
-            <DropdownFilterComponent
-              value={this.state.search_tag}
-              onChange={e => this.setState({search_tag: e.target.value})}
-              data={this.state.list_tags}
-            />
-            )
-          },
-          {
             Header: 'Group',
             minWidth: 30,
             accessor: 'group',
@@ -496,10 +475,6 @@ export function ListOfMetrics(type, imp=false) {
   
       if (this.state.search_probeversion) {
         list_metric = this.doFilter(list_metric, 'probeversion', this.state.search_probeversion)
-      }
-  
-      if (type === 'metric' && this.state.search_tag) {
-        list_metric = this.doFilter(list_metric, 'tag', this.state.search_tag)
       }
   
       if (this.state.search_type) {
@@ -592,7 +567,6 @@ export class MetricChange extends Component {
     this.state = {
       metric: {},
       probe: {},
-      tags: [],
       groups: [],
       loading: false,
       popoverOpen: false,
@@ -643,7 +617,6 @@ export class MetricChange extends Component {
     this.backend.changeMetric({
       name: values.name,
       group: values.group,
-      tag: values.tag,
       config: values.config
     })
       .then(() => NotifyOk({
@@ -670,9 +643,8 @@ export class MetricChange extends Component {
     if (!this.addview) {
       Promise.all([this.backend.fetchMetricByName(this.name),
         this.backend.fetchMetricUserGroups(),
-        this.backend.fetchTags(),
         this.backend.fetchAllGroups()
-      ]).then(([metrics, usergroups, tags, groups]) => {
+      ]).then(([metrics, usergroups, groups]) => {
         metrics.probekey ? 
         this.backend.fetchVersions('probe', metrics.probeversion.split(' ')[0])
           .then(probe => {
@@ -685,7 +657,6 @@ export class MetricChange extends Component {
             this.setState({
               metric: metrics,
               probe: fields,
-              tags: tags,
               groups: groups['metrics'],
               loading: false,
               write_perm: localStorage.getItem('authIsSuperuser') === 'true' || usergroups.indexOf(metrics.group) >= 0,
@@ -694,7 +665,6 @@ export class MetricChange extends Component {
           :
           this.setState({
             metric: metrics,
-            tags:tags,
             groups: groups['metrics'],
             loading: false,
             write_perm: localStorage.getItem('authIsSuperuser') === 'true' || usergroups.indexOf(metrics.group) >= 0,
@@ -704,7 +674,7 @@ export class MetricChange extends Component {
   }
 
   render() {
-    const { metric, tags, groups, loading, write_perm } = this.state;
+    const { metric, groups, loading, write_perm } = this.state;
 
     if (loading)
       return (<LoadingAnim/>)
@@ -723,7 +693,6 @@ export class MetricChange extends Component {
             initialValues = {{
               name: metric.name,
               probe: metric.probeversion,
-              tag: metric.tag,
               type: metric.mtype,
               group: metric.group,
               probeexecutable: metric.probeexecutable,
@@ -772,22 +741,6 @@ export class MetricChange extends Component {
                       </FormText>
                     </Col>
                     <Col md={2}>
-                      <Label to="tag">Tag</Label>
-                      <Field 
-                        component='select'
-                        name='tag'
-                        className='form-control'
-                        id='tag'
-                      >
-                        {
-                          tags.map((name, i) =>
-                          <option key={i} value={name}>{name}</option>)
-                        }
-                      </Field>
-                    </Col>
-                  </Row>
-                  <Row className='mb-4'>
-                    <Col md={2}>
                       <Label to='mtype'>Type</Label>
                       <Field
                         type='text'
@@ -800,6 +753,8 @@ export class MetricChange extends Component {
                         Metric is of given type
                       </FormText>
                     </Col>
+                  </Row>
+                  <Row className='mb-4'>
                     <Col md={2}>
                       <Label to='group'>Group</Label>
                       <Field 
