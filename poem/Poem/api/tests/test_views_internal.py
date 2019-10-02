@@ -2250,12 +2250,14 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
                 probe_revision1 = Revision.objects.create(
                     date_created=datetime.datetime.now(),
                     comment='Initial version.',
-                    user=user
+                    user=user,
+                    id=1
                 )
 
                 ct = ContentType.objects.get_for_model(admin_models.Probe)
 
                 probeversion1 = Version.objects.create(
+                    id=1,
                     object_id=probe1.id,
                     serialized_data='[{"pk": 5, "model": '
                                     '"poem_super_admin.probe",'
@@ -2275,7 +2277,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
                     revision_id=probe_revision1.id
                 )
 
-                self.probekey = probeversion1.id
+                self.probekey = 1
                 self.probekey_instance = probeversion1
 
         metrictemplate1 = admin_models.MetricTemplate.objects.create(
