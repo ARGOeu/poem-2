@@ -35,19 +35,10 @@ class NotFound(APIException):
         self.code = code if code else detail
 
 
-def build_metricconfigs(tag=None):
+def build_metricconfigs():
     ret = []
 
-    try:
-        if tag:
-            tagobj = models.Tags.objects.get(name__iexact=tag)
-            metricsobjs = models.Metric.objects.filter(tag=tagobj)
-        else:
-            metricsobjs = models.Metric.objects.all()
-
-    except models.Tags.DoesNotExist:
-        raise NotFound(status=404,
-                       detail='Tag not found')
+    metricsobjs = models.Metric.objects.all()
 
     for m in metricsobjs:
         mdict = dict()
@@ -119,13 +110,6 @@ def build_metricconfigs(tag=None):
         ret.append(mdict)
 
     return ret
-
-
-class ListTaggedMetrics(APIView):
-    permission_classes = (MyHasAPIKey,)
-
-    def get(self, request, tag):
-        return Response(build_metricconfigs(tag))
 
 
 class ListMetrics(APIView):
