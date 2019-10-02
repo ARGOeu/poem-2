@@ -234,6 +234,11 @@ export class MetricTemplateChange extends Component {
             metrictemplate.fileparameter = [{'key': '', 'value': ''}];
           }
 
+          let mlist = [];
+          metrictemplatelist.forEach((e) => {
+            mlist.push(e.name);
+          });
+
           metrictemplate.probekey ?
             this.backend.fetchVersions('probe', metrictemplate.probeversion.split(' ')[0])
               .then(probe => {
@@ -242,10 +247,6 @@ export class MetricTemplateChange extends Component {
                   if (e.id === metrictemplate.probekey) {
                     fields = e.fields;
                   }
-                });
-                let mlist = [];
-                metrictemplatelist.forEach((e) => {
-                  mlist.push(e.name);
                 });
                 this.setState({
                   metrictemplate: metrictemplate,
@@ -272,6 +273,10 @@ export class MetricTemplateChange extends Component {
         this.backend.fetchProbeVersions(),
         this.backend.fetchMetricTemplates()
       ]).then(([types, probeversions, mtlist]) => {
+        let mlist = [];
+        mtlist.forEach((e) => {
+          mlist.push(e.name);
+        });
         this.setState({
           metrictemplate: {
             name: '',
@@ -293,7 +298,7 @@ export class MetricTemplateChange extends Component {
             files: [{'key': '', 'value': ''}],
             fileparameter: [{'key': '', 'value': ''}]
           },
-          metrictemplatelist: mtlist,
+          metrictemplatelist: mlist,
           probeversions: probeversions,
           types: types,
           loading: false,
