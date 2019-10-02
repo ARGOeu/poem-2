@@ -17,17 +17,6 @@ class Metrics(models.Model):
         return u'%s' % self.name
 
 
-class Tags(models.Model):
-    id = models.AutoField(primary_key=True)
-    name = models.CharField(max_length=128)
-
-    class Meta:
-        app_label = 'poem'
-
-    def __str__(self):
-        return u'%s' % (self.name)
-
-
 class MetricType(models.Model):
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=128)
@@ -42,7 +31,8 @@ class MetricType(models.Model):
 class GroupOfMetrics(models.Model):
     name = models.CharField(_('name'), max_length=80, unique=True)
     permissions = models.ManyToManyField(Permission,
-                                         verbose_name=_('permissions'), blank=True)
+                                         verbose_name=_('permissions'),
+                                         blank=True)
     metrics = models.ManyToManyField(Metrics, blank=True)
     objects = GroupManager()
 
@@ -60,12 +50,13 @@ class GroupOfMetrics(models.Model):
 
 class Metric(models.Model):
     id = models.AutoField(primary_key=True)
-    name = models.CharField(max_length=128)
-    tag = models.ForeignKey(Tags, on_delete=models.CASCADE)
+    name = models.CharField(max_length=128, unique=True)
     mtype = models.ForeignKey(MetricType, on_delete=models.CASCADE)
     probeversion = models.CharField(max_length=128)
-    probekey = models.ForeignKey(Version, blank=True, null=True, on_delete=models.SET_NULL)
-    group = models.ForeignKey(GroupOfMetrics, null=True, on_delete=models.CASCADE)
+    probekey = models.ForeignKey(Version, blank=True, null=True,
+                                 on_delete=models.SET_NULL)
+    group = models.ForeignKey(GroupOfMetrics, null=True,
+                              on_delete=models.CASCADE)
     parent = models.CharField(max_length=128)
     probeexecutable = models.CharField(max_length=128)
     config = models.CharField(max_length=1024)
@@ -79,7 +70,6 @@ class Metric(models.Model):
     class Meta:
         app_label = 'poem'
         verbose_name = 'Metric'
-        unique_together = (('name', 'tag'),)
 
     def __str__(self):
-        return u'%s (%s)' % (self.name, self.tag)
+        return u'%s' % self.name
