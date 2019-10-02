@@ -75,7 +75,6 @@ class ListMetric(APIView):
             results.append(dict(
                 id=metric.id,
                 name=metric.name,
-                tag=metric.tag.name,
                 mtype=metric.mtype.name,
                 probeversion=metric.probeversion,
                 probekey=probekey,
@@ -107,11 +106,6 @@ class ListMetric(APIView):
                 name=request.data['group']
             )
 
-        if request.data['tag'] != metric.tag.name:
-            metric.tag = poem_models.Tags.objects.get(
-                name=request.data['tag']
-            )
-
         if set(config) != set(json.loads(metric.config)):
             metric.config = json.dumps(config)
 
@@ -131,14 +125,6 @@ class ListMetric(APIView):
 
         else:
             return Response(status=status.HTTP_400_BAD_REQUEST)
-
-
-class ListTags(APIView):
-    authentication_classes = (SessionAuthentication,)
-
-    def get(self, request):
-        tags = poem_models.Tags.objects.all().values_list('name', flat=True)
-        return Response(tags)
 
 
 class ListMetricTypes(APIView):
@@ -164,7 +150,6 @@ class ImportMetrics(APIView):
             mt = poem_models.MetricType.objects.get(
                 name=metrictemplate.mtype.name
             )
-            t = poem_models.Tags.objects.get(name='Test')
             gr = poem_models.GroupOfMetrics.objects.get(
                 name=request.tenant.name.upper()
             )
@@ -181,7 +166,6 @@ class ImportMetrics(APIView):
                         probeversion=metrictemplate.probeversion,
                         probekey=ver,
                         parent=metrictemplate.parent,
-                        tag=t,
                         group=gr,
                         probeexecutable=metrictemplate.probeexecutable,
                         config=metrictemplate.config,
@@ -198,7 +182,6 @@ class ImportMetrics(APIView):
                         mtype=mt,
                         parent=metrictemplate.parent,
                         flags=metrictemplate.flags,
-                        tag=t,
                         group=gr
                     )
 

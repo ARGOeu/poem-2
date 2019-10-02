@@ -710,10 +710,6 @@ class ListServicesAPIViewTests(TenantTestCase):
             metric='org.sam.SRM-All'
         )
 
-        tag = poem_models.Tags.objects.create(
-            name='Production'
-        )
-
         mtype = poem_models.MetricType.objects.create(
             name='Active'
         )
@@ -721,28 +717,24 @@ class ListServicesAPIViewTests(TenantTestCase):
         poem_models.Metric.objects.create(
             name='org.onedata.Oneprovider-Health',
             probeversion='check_oneprovider (3.2.0)',
-            tag=tag,
             mtype=mtype
         )
 
         poem_models.Metric.objects.create(
             name='eu.egi.CertValidity',
             probeversion='check_ssl_cert (1.84.0)',
-            tag=tag,
             mtype=mtype
         )
 
         poem_models.Metric.objects.create(
             name='hr.srce.SRM2-CertLifetime',
             probeversion='CertLifetime-probe (1.0.0)',
-            tag=tag,
             mtype=mtype
         )
 
         poem_models.Metric.objects.create(
             name='org.sam.SRM-All',
             probeversion='SRM-probe (1.0.1)',
-            tag=tag,
             mtype=mtype
         )
 
@@ -1553,9 +1545,6 @@ class ListMetricAPIViewTests(TenantTestCase):
         self.url = '/api/v2/internal/metric/'
         self.user = CustUser.objects.create(username='testuser')
 
-        tag = poem_models.Tags.objects.create(name='Production')
-        poem_models.Tags.objects.create(name='TEST')
-
         mtype1 = poem_models.MetricType.objects.create(name='Active')
         mtype2 = poem_models.MetricType.objects.create(name='Passive')
 
@@ -1600,7 +1589,6 @@ class ListMetricAPIViewTests(TenantTestCase):
 
         metric1 = poem_models.Metric.objects.create(
             name='argo.AMS-Check',
-            tag=tag,
             mtype=mtype1,
             probeversion='ams-probe (0.1.7)',
             probekey=self.probeversion1,
@@ -1619,7 +1607,6 @@ class ListMetricAPIViewTests(TenantTestCase):
             flags='["OBSESS 1", "PASSIVE 1"]',
             group=group,
             mtype=mtype2,
-            tag=tag
         )
 
         self.id1 = metric1.id
@@ -1635,7 +1622,6 @@ class ListMetricAPIViewTests(TenantTestCase):
                 {
                     'id': self.id1,
                     'name': 'argo.AMS-Check',
-                    'tag': 'Production',
                     'mtype': 'Active',
                     'probeversion': 'ams-probe (0.1.7)',
                     'probekey': self.probeversion1.id,
@@ -1689,7 +1675,6 @@ class ListMetricAPIViewTests(TenantTestCase):
                 {
                     'id': self.id2,
                     'name': 'org.apel.APEL-Pub',
-                    'tag': 'Production',
                     'mtype': 'Passive',
                     'probeversion': '',
                     'probekey': '',
@@ -1725,7 +1710,6 @@ class ListMetricAPIViewTests(TenantTestCase):
             {
                 'id': self.id1,
                 'name': 'argo.AMS-Check',
-                'tag': 'Production',
                 'mtype': 'Active',
                 'probeversion': 'ams-probe (0.1.7)',
                 'probekey': self.probeversion1.id,
@@ -1820,7 +1804,6 @@ class ListMetricAPIViewTests(TenantTestCase):
 
         data = {
             'name': 'argo.AMS-Check',
-            'tag': 'TEST',
             'group': 'EUDAT',
             'config': conf
         }
@@ -1831,7 +1814,6 @@ class ListMetricAPIViewTests(TenantTestCase):
         metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(metric.group.name, 'EUDAT')
-        self.assertEqual(metric.tag.name, 'TEST')
         self.assertEqual(
             metric.config,
             '["maxCheckAttempts 4", "timeout 70", '
@@ -1857,31 +1839,6 @@ class ListMetricAPIViewTests(TenantTestCase):
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
-
-class ListTagsAPIViewTests(TenantTestCase):
-    def setUp(self):
-        self.factory = TenantRequestFactory(self.tenant)
-        self.view = views.ListTags.as_view()
-        self.url = '/api/v2/internal/tags/'
-        self.user = CustUser.objects.create(username='testuser')
-
-        poem_models.Tags.objects.create(name='Production')
-        poem_models.Tags.objects.create(name='Devel')
-        poem_models.Tags.objects.create(name='Test')
-
-    def test_get_tags(self):
-        request = self.factory.get(self.url)
-        force_authenticate(request, user=self.user)
-        response = self.view(request)
-        self.assertEqual(
-            [r for r in response.data],
-            [
-                'Production',
-                'Devel',
-                'Test'
-            ]
-        )
 
 
 class ListMetricTypesAPIViewTests(TenantTestCase):
@@ -2761,7 +2718,6 @@ class ImportMetricsAPIViewTests(TenantTestCase):
             revision_id=rev2.id
         )
 
-        self.defaultTag = poem_models.Tags.objects.create(name='Test')
         self.defaultGroup = poem_models.GroupOfMetrics.objects.create(
             name='TENANT'
         )
