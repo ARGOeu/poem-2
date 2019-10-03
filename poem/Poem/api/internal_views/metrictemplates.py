@@ -254,7 +254,10 @@ class ListMetricTemplates(APIView):
                 MetricTemplate.objects.get(name=name).delete()
                 for schema in schemas:
                     with schema_context(schema):
-                        Metric.objects.get(name=name).delete()
+                        try:
+                            Metric.objects.get(name=name).delete()
+                        except Metric.DoesNotExist:
+                            pass
                 return Response(status=status.HTTP_204_NO_CONTENT)
 
             except MetricTemplate.DoesNotExist:
