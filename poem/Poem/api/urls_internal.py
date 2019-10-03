@@ -24,6 +24,7 @@ urlpatterns = [
     path('metricprofilesgroup/', views_internal.ListMetricProfilesInGroup.as_view(), name='metricprofilesgroup'),
     path('metricprofilesgroup/<str:group>', views_internal.ListMetricProfilesInGroup.as_view(), name='metricprofilesgroup'),
     path('metricsall/', views_internal.ListAllMetrics.as_view(), name='metricsall'),
+    path('metricsforprobes/<str:probeversion>', views_internal.ListMetricTemplatesForProbeVersion.as_view(), name='metricsforprobes'),
     path('metricsgroup/', views_internal.ListMetricsInGroup.as_view(), name='metrics'),
     path('metricsgroup/<str:group>', views_internal.ListMetricsInGroup.as_view(), name='metrics'),
     path('metrictemplates/', views_internal.ListMetricTemplates.as_view(), name='metrictemplates'),

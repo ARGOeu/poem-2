@@ -267,6 +267,24 @@ class ListMetricTemplates(APIView):
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
+class ListMetricTemplatesForProbeVersion(APIView):
+    authentication_classes = (SessionAuthentication,)
+
+    def get(self, request, probeversion):
+        if probeversion:
+            nameversion = probeversion[0:probeversion.index('(')] + ' ' + \
+                probeversion[probeversion.index('('):]
+            metrics = MetricTemplate.objects.filter(probeversion=nameversion)
+
+            if metrics.count() == 0:
+                raise NotFound(status=404, detail='Metrics not found')
+            else:
+                return Response(
+                    metrics.order_by('name').values_list('name', flat=True)
+                )
+
+
+
 class ListMetricTemplateTypes(APIView):
     authentication_classes = (SessionAuthentication,)
 
