@@ -2,8 +2,9 @@ import datetime
 import json
 
 from Poem.api import serializers
+from Poem.api.internal_views.metrictemplates import update_metrics
 from Poem.api.views import NotFound
-from Poem.poem_super_admin.models import Probe, ExtRevision
+from Poem.poem_super_admin.models import Probe, ExtRevision, MetricTemplate
 from Poem.tenants.models import Tenant
 
 from rest_framework import status
@@ -15,7 +16,6 @@ import reversion
 from reversion.models import Version
 
 from tenant_schemas.utils import schema_context, get_public_schema_name
-
 
 
 class ListProbes(APIView):
@@ -57,6 +57,7 @@ class ListProbes(APIView):
 
     def put(self, request):
         probe = Probe.objects.get(id=request.data['id'])
+        nameversion = probe.nameversion
         fields = []
 
         schemas = list(
@@ -66,6 +67,9 @@ class ListProbes(APIView):
         if request.data['new_version']:
             with reversion.create_revision():
                 probe.version = request.data['version']
+                new_nameversion = '{} ({})'.format(
+                    request.data['name'], request.data['version']
+                )
                 fields.append('version')
 
                 if probe.repository != request.data['repository']:
@@ -94,6 +98,19 @@ class ListProbes(APIView):
                 reversion.set_comment(
                     json.dumps([{'changed': {'fields': fields}}])
                 )
+
+            if request.data['update_metrics']:
+                metrictemplates = MetricTemplate.objects.filter(
+                    probeversion=nameversion
+                )
+
+                for metrictemplate in metrictemplates:
+                    metrictemplate.probeversion = new_nameversion
+                    metrictemplate.probekey = Version.objects.get(
+                        object_repr=new_nameversion
+                    )
+                    metrictemplate.save()
+                    update_metrics(metrictemplate)
 
         else:
             for schema in schemas:

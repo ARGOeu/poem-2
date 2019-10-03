@@ -532,7 +532,8 @@ class ListProbesAPIViewTests(TenantTestCase):
                            'messages.',
             'repository': 'https://github.com/ARGOeu/nagios-plugins-'
                           'argo',
-            'new_version': True
+            'new_version': True,
+            'update_metrics': False
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url_base,
@@ -558,7 +559,8 @@ class ListProbesAPIViewTests(TenantTestCase):
                            'to publish randomly generated messages.',
             'repository': 'https://github.com/ARGOeu/nagios-plugins-'
                           'argo',
-            'new_version': False
+            'new_version': False,
+            'update_metrics': False
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url_base, content,
