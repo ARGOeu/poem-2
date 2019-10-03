@@ -354,8 +354,10 @@ export class ProbeChange extends Component {
     this.state = {
       probe: {},
       poemversion: null,
+      metrictemplatelist: [],
       validationVisible: true,
       new_version: true,
+      update_metrics: false,
       loading: false,
       write_perm: false,
       areYouSureModal: false,
@@ -420,7 +422,8 @@ export class ProbeChange extends Component {
         docurl: values.docurl,
         description: values.description,
         comment: values.comment,
-        new_version: values.new_version
+        new_version: values.new_version,
+        update_metrics: values.update_metrics
       })
         .then(() => NotifyOk({
           msg: 'Probe successfully changed',
@@ -468,12 +471,16 @@ export class ProbeChange extends Component {
         this.backend.fetchPoemVersion()
       ])
           .then(([probe, ver]) => {
-            this.setState({
-              probe: probe,
-              poemversion: ver,
-              write_perm: localStorage.getItem('authIsSuperuser') === 'true',
-              loading: false
-            });
+            this.backend.fetchMetricTemplatesByProbeVersion(probe.name + '(' + probe.version + ')')
+            .then(metrics => {
+              this.setState({
+                probe: probe,
+                poemversion: ver,
+                metrictemplatelist: metrics,
+                write_perm: localStorage.getItem('authIsSuperuser') === 'true',
+                loading: false
+              });
+            })
           });
     } else {
       this.backend.fetchPoemVersion()
@@ -497,7 +504,7 @@ export class ProbeChange extends Component {
   }
 
   render() {
-    const { probe, new_version, poemversion, write_perm, loading } = this.state;
+    const { probe, new_version, update_metrics, poemversion, metrictemplatelist, write_perm, loading } = this.state;
 
     if (loading)
       return(<LoadingAnim/>)
@@ -522,7 +529,8 @@ export class ProbeChange extends Component {
                 docurl: probe.docurl,
                 description: probe.description,
                 comment: probe.comment,
-                new_version: new_version
+                new_version: new_version,
+                update_metrics: update_metrics
               }}
               validationSchema={ProbeSchema}
               onSubmit = {(values, actions) => this.onSubmitHandle(values, actions)}
@@ -577,18 +585,32 @@ export class ProbeChange extends Component {
                       </Col>
                       {
                         !this.addview &&
-                          <Col md={2}>
-                            <Field
-                              component={Checkbox}
-                              name='new_version'
-                              className='form-control'
-                              id='checkbox'
-                              label='New version'
-                            />
-                            <FormText color='muted'>
-                              Create version for changes.
-                            </FormText>
-                          </Col>
+                          <>
+                            <Col md={2}>
+                              <Field
+                                component={Checkbox}
+                                name='new_version'
+                                className='form-control'
+                                id='checkbox-1'
+                                label='New version'
+                              />
+                              <FormText color='muted'>
+                                Create version for changes.
+                              </FormText>
+                            </Col>
+                            <Col md={2}>
+                              <Field
+                                component={Checkbox}
+                                name='update_metrics'
+                                className='form-control'
+                                id='checkbox-2'
+                                label='Update metric templates'
+                              />
+                              <FormText color='muted'>
+                                Update all associated metric templates.
+                              </FormText>
+                            </Col>
+                          </>
                       }
                     </Row>
                   </FormGroup>
@@ -688,6 +710,26 @@ export class ProbeChange extends Component {
                         </FormText>
                       </Col>
                     </Row>
+                    {
+                      !this.addview &&
+                      <Row>
+                        <Col md={8}>
+                          <div>
+                            Metric templates: 
+                            {
+                              metrictemplatelist.length > 0 && 
+                              <div>
+                                {
+                                  metrictemplatelist
+                                    .map((e, i) => <Link key={i} to={'/ui/metrictemplates/' + e}>{e}</Link>)
+                                    .reduce((prev, curr) => [prev, ', ', curr])
+                                }
+                            </div>
+                            }
+                          </div>
+                        </Col>
+                      </Row>
+                    }
                   </FormGroup>
                   {
                     (write_perm) &&
