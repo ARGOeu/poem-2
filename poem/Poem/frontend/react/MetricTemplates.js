@@ -30,31 +30,40 @@ function matchItem(item, value) {
 }
 
 
-const AutocompleteField = ({lists, onselect_handler, field, setFieldValue, values}) =>
-  <Autocomplete
-    inputProps={{className: 'form-control'}}
-    getItemValue={(item) => item}
-    items={lists}
-    value={eval(`values.${field}`)}
-    renderItem={(item, isHighlighted) =>
-      <div 
-        key={lists.indexOf(item)}
-        style={{ background: isHighlighted ? '#4A90D9' : 'white'}}
-      >
-        {item}
-      </div>
-    }
-    onChange={(e) => {setFieldValue(field, e.target.value)}}
-    onSelect={(val) =>  {
-      setFieldValue(field, val)
-      onselect_handler(val);
-    }}
-    wrapperStyle={{}}
-    shouldItemRender={matchItem}
-    renderMenu={(items) =>
-      <div className='metrictemplates-autocomplete-menu' children={items}/>  
-    }
-  />
+const AutocompleteField = ({lists, onselect_handler, field, setFieldValue, req, values}) => {
+  let classname = undefined;
+  if (req)
+    classname = 'form-control border-danger';
+  else 
+    classname = 'form-control'
+
+  return(
+    <Autocomplete
+      inputProps={{className: classname}}
+      getItemValue={(item) => item}
+      items={lists}
+      value={eval(`values.${field}`)}
+      renderItem={(item, isHighlighted) =>
+        <div 
+          key={lists.indexOf(item)}
+          style={{ background: isHighlighted ? '#4A90D9' : 'white'}}
+        >
+          {item}
+        </div>
+      }
+      onChange={(e) => {setFieldValue(field, e.target.value)}}
+      onSelect={(val) =>  {
+        setFieldValue(field, val)
+        onselect_handler(val);
+      }}
+      wrapperStyle={{}}
+      shouldItemRender={matchItem}
+      renderMenu={(items) =>
+        <div className='metrictemplates-autocomplete-menu' children={items}/>  
+      }
+    />
+  );
+}
 
 
 const MetricTemplateSchema = Yup.object().shape({
@@ -393,6 +402,7 @@ export class MetricTemplateChange extends Component {
                             lists={probeversions}
                             field='probeversion'
                             onselect_handler={this.onSelect}
+                            req={props.errors.probeversion}
                           />
                       }
                       {
@@ -505,6 +515,7 @@ export class MetricTemplateChange extends Component {
                               field='parent'
                               className={props.errors.parent ? 'form-control border-danger' : 'form-control'}
                               onselect_handler={this.onSelect}
+                              req={props.errors.parent}
                             />
                             {
                               props.errors.parent ?
