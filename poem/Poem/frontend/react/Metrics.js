@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { Backend } from './DataManager';
 import { Link } from 'react-router-dom';
-import { LoadingAnim, BaseArgoView, NotifyOk } from './UIElements';
+import { LoadingAnim, BaseArgoView, NotifyOk, FancyErrorMessage } from './UIElements';
 import ReactTable from 'react-table';
 import { Formik, Form, Field, FieldArray } from 'formik';
 import {
@@ -80,7 +80,7 @@ export const InlineFields = ({values, errors, field, addnew=false, readonly=fals
                     name={`${field}.${index}.key`} 
                     id={`${field}.${index}.key`}
                     className='form-control'
-                    disabled={!addnew || field === 'config'}
+                    disabled={!addnew || field === 'config' || (values.type === 'Passive' && item.key === 'PASSIVE')}
                     hidden={values.type === 'Passive' && field !== 'flags'}
                   />
                 </Col>
@@ -101,14 +101,14 @@ export const InlineFields = ({values, errors, field, addnew=false, readonly=fals
                         name={`${field}.${index}.value`} 
                         id={`${field}.${index}.value`} 
                         className={'form-control'}
-                        disabled={readonly || (!addnew && (field !== 'config' || field === 'config' && item.key === 'path'))}
+                        disabled={readonly || (!addnew && (field !== 'config' || field === 'config' && item.key === 'path')) || values.type === 'Passive' && item.key === 'PASSIVE'}
                         hidden={values.type === 'Passive' && field !== 'flags'}
                       />
                   }                  
                   {
                     errors.config && field === 'config' ?
                       errors.config[index] &&
-                        <div style={{color: '#FF0000', fontSize: 'small'}}>{errors.config[index].value}</div>
+                        FancyErrorMessage(errors.config[index].value)
                       :
                       null
                   }
@@ -117,7 +117,21 @@ export const InlineFields = ({values, errors, field, addnew=false, readonly=fals
                   {
                     (addnew && field !== 'config' && eval(`values.${field}`)[0]['key'] !== '' && eval(`values.${field}`)[0]['value'] !== '') &&
                       <Button 
-                        hidden={values.type === 'Passive' && field !== 'flags'}
+                        hidden={
+                          (
+                            values.type === 'Passive' && 
+                            field !== 'flags'
+                          ) 
+                          || (
+                            field === 'flags' && 
+                            values.type === 'Passive' && (
+                              eval(`values.${field}[${index}]`)['key'] === 'PASSIVE'
+                              || (eval(`values.${field}[${index}]`)['key'] === '' &&
+                                eval(`values.${field}[${index}]`)['value'] === ''
+                              )
+                            )
+                            )
+                          }
                         size='sm' 
                         color='danger'
                         type='button' 
