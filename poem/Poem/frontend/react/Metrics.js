@@ -47,7 +47,16 @@ const DropdownFilterComponent = ({value, onChange, data}) => (
 )
 
 
-export const InlineFields = ({values, field, addnew=false, readonly=false}) => (
+function validateConfig(value) {
+  let error;
+  if (!value) {
+    error = 'Required';
+  }
+  return error;
+}
+
+
+export const InlineFields = ({values, errors, field, addnew=false, readonly=false}) => (
   <div>
     <h6 className='mt-4 font-weight-bold text-uppercase' hidden={values.type === 'Passive' && field !== 'flags'}>{field.replace('_', ' ')}</h6>
     <FieldArray
@@ -76,14 +85,33 @@ export const InlineFields = ({values, field, addnew=false, readonly=false}) => (
                   />
                 </Col>
                 <Col md={5}>
-                  <Field 
-                    type='text'
-                    name={`${field}.${index}.value`} 
-                    id={`${field}.${index}.value`} 
-                    className='form-control'
-                    disabled={readonly || (!addnew && (field !== 'config' || field === 'config' && item.key === 'path'))}
-                    hidden={values.type === 'Passive' && field !== 'flags'}
-                  />
+                  {
+                    values.type === 'Active' && field === 'config' ?
+                      <Field 
+                        type='text'
+                        name={`${field}.${index}.value`} 
+                        id={`${field}.${index}.value`} 
+                        className={errors.config && errors.config[index] ? 'form-control border-danger' : 'form-control'}
+                        disabled={readonly || (!addnew && field === 'config' && item.key === 'path')}
+                        validate={validateConfig}
+                      />
+                    :
+                      <Field
+                        type='text'
+                        name={`${field}.${index}.value`} 
+                        id={`${field}.${index}.value`} 
+                        className={'form-control'}
+                        disabled={readonly || (!addnew && (field !== 'config' || field === 'config' && item.key === 'path'))}
+                        hidden={values.type === 'Passive' && field !== 'flags'}
+                      />
+                  }                  
+                  {
+                    errors.config && field === 'config' ?
+                      errors.config[index] &&
+                        <div style={{color: '#FF0000', fontSize: 'small'}}>{errors.config[index].value}</div>
+                      :
+                      null
+                  }
                 </Col>
                 <Col md={2}>
                   {
