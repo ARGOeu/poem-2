@@ -1,9 +1,9 @@
 import React, { Component } from 'react';
 import { Backend } from './DataManager';
 import { Link } from 'react-router-dom';
-import { LoadingAnim, BaseArgoView, NotifyOk, Checkbox } from './UIElements';
+import { LoadingAnim, BaseArgoView, NotifyOk, Checkbox, FancyErrorMessage } from './UIElements';
 import ReactTable from 'react-table';
-import { Alert,
+import {
   FormGroup, 
   Label, 
   FormText, 
@@ -545,17 +545,15 @@ export class ProbeChange extends Component {
                           <Field
                             type='text'
                             name='name'
-                            className='form-control'
+                            className={errors.name ? 'form-control border-danger' : 'form-control'}
                             id='name'
                           />          
                         </InputGroup>
                           {
-                            errors.name && touched.name ? 
-                            <Alert color='danger' isOpen={this.state.validationVisible} toggle={this.onDismiss} fade={false}>
-                              {errors.name}
-                            </Alert>
+                            errors.name ? 
+                              FancyErrorMessage(errors.name)
                             : 
-                            null
+                              null
                           }
                         <FormText color="muted">
                           Name of this probe.
@@ -567,17 +565,15 @@ export class ProbeChange extends Component {
                           <Field
                             type='text'
                             name='version'
-                            className='form-control'
+                            className={errors.version ? 'form-control border-danger' : 'form-control'}
                             id='version'
                           />
                         </InputGroup>
                           {
-                            errors.version && touched.version ? 
-                            <Alert color='danger' isOpen={this.state.validationVisible} toggle={this.onDismiss} fade={false}>
-                              {errors.version}
-                            </Alert>
+                            errors.version ? 
+                              FancyErrorMessage(errors.version)
                             : 
-                            null
+                              null
                           }
                         <FormText color="muted">
                           Version of the probe.
@@ -623,17 +619,15 @@ export class ProbeChange extends Component {
                           <Field
                             type='text'
                             name='repository'
-                            className='form-control'
+                            className={errors.repository ? 'form-control border-danger' : 'form-control'}
                             id='repository'
                           />
                         </InputGroup>
                           {
-                            errors.repository && touched.repository ? 
-                            <Alert color='danger' isOpen={this.state.validationVisible} toggle={this.onDismiss} fade={false}>
-                              {errors.repository}
-                            </Alert>
+                            errors.repository ? 
+                              FancyErrorMessage(errors.repository)
                             : 
-                            null
+                              null
                           }
                         <FormText color='muted'>
                           Probe repository URL.
@@ -647,17 +641,15 @@ export class ProbeChange extends Component {
                           <Field
                             type='text'
                             name='docurl'
-                            className='form-control'
+                            className={errors.docurl ? 'form-control border-danger' : 'form-control'}
                             id='docurl'
                           />
                         </InputGroup>
                           {
-                            errors.docurl && touched.docurl ? 
-                            <Alert color='danger' isOpen={this.state.validationVisible} toggle={this.onDismiss} fade={false}>
-                              {errors.docurl}
-                            </Alert>
+                            errors.docurl ? 
+                              FancyErrorMessage(errors.docurl)
                             : 
-                            null
+                              null
                           }
                         <FormText color='muted'>
                           Documentation URL.
@@ -671,16 +663,14 @@ export class ProbeChange extends Component {
                           component='textarea'
                           name='description'
                           rows='15'
-                          className='form-control'
+                          className={errors.description? 'form-control border-danger' : 'form-control'} 
                           id='description'
                         />
                           {
-                            errors.description && touched.description ? 
-                            <Alert color='danger' isOpen={this.state.validationVisible} toggle={this.onDismiss} fade={false}>
-                              {errors.description}
-                            </Alert>
+                            errors.description ? 
+                              FancyErrorMessage(errors.description)
                             : 
-                            null
+                              null
                           }
                         <FormText color='muted'>
                           Free text description outlining the purpose of this probe.
@@ -694,16 +684,14 @@ export class ProbeChange extends Component {
                           component='textarea'
                           name='comment'
                           rows='5'
-                          className='form-control'
+                          className={errors.comment? 'form-control border-danger' : 'form-control'}
                           id='comment'
                         />
                           {
-                            errors.comment && touched.comment ? 
-                            <Alert color='danger' isOpen={this.state.validationVisible} toggle={this.onDismiss} fade={false}>
-                              {errors.comment}
-                            </Alert>
+                            errors.comment ? 
+                              FancyErrorMessage(errors.comment)
                             : 
-                            null
+                              null
                           }
                         <FormText color='muted'>
                           Short comment about this version.
