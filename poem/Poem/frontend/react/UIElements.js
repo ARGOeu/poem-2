@@ -409,3 +409,8 @@ export const Checkbox = ({
     </div>
   );
 };
+
+
+export const FancyErrorMessage = (msg) => (
+  <div style={{color: '#FF0000', fontSize: 'small'}}>{msg}</div>
+)
