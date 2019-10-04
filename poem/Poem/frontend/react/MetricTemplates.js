@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { ListOfMetrics, InlineFields, ProbeVersionLink } from './Metrics';
 import { Backend } from './DataManager';
-import { LoadingAnim, BaseArgoView, NotifyOk } from './UIElements';
+import { LoadingAnim, BaseArgoView, NotifyOk, FancyErrorMessage } from './UIElements';
 import { Formik, Form, Field } from 'formik';
 import {
   Alert,
@@ -58,10 +58,23 @@ const AutocompleteField = ({lists, onselect_handler, field, setFieldValue, value
 
 
 const MetricTemplateSchema = Yup.object().shape({
-    name: Yup.string()
-      .matches(/^\S*$/, 'Name cannot contain white spaces')
-      .required('Required')
-  });
+  name: Yup.string()
+    .matches(/^\S*$/, 'Name cannot contain white spaces')
+    .required('Required'),
+  type: Yup.string(),
+  probeversion: Yup.string().when('type', {
+    is: (val) => val === 'Active',
+    then: Yup.string().required('Required')
+  }),
+  probeexecutable: Yup.string().when('type', {
+    is: (val) => val === 'Active',
+    then: Yup.string().required('Required')
+  }),
+  parent: Yup.string().when('type', {
+    is: (val) => val === 'Passive',
+    then: Yup.string().required('Required')
+  })
+});
 
 
 export class MetricTemplateChange extends Component {
@@ -78,7 +91,6 @@ export class MetricTemplateChange extends Component {
     this.state = {
       metrictemplate: {},
       probe: {},
-      validationVisible: true,
       types: [],
       probeversions: [],
       metrictemplatelist: [],
@@ -98,7 +110,6 @@ export class MetricTemplateChange extends Component {
     this.onSubmitHandle = this.onSubmitHandle.bind(this);
     this.doChange = this.doChange.bind(this);
     this.doDelete = this.doDelete.bind(this);
-    this.onDismiss = this.onDismiss.bind(this);
   }
 
   togglePopOver() {
@@ -199,10 +210,6 @@ export class MetricTemplateChange extends Component {
         callback: () => this.history.push('/ui/metrictemplates')
       }))
       .catch(err => alert('Something went wrong: ' + err))
-  }
-
-  onDismiss() {
-    this.setState({ validationVisible: false });
   }
 
   componentDidMount() {
@@ -352,18 +359,15 @@ export class MetricTemplateChange extends Component {
                       <Field
                         type='text'
                         name='name'
-                        required={true}
-                        className='form-control'
+                        className={props.errors.name ? 'form-control border-danger' : 'form-control'}
                         id='name'
                         disabled={this.infoview}
                       />
                       {
-                        props.errors.name && props.touched.name ?
-                        <Alert color='danger' isOpen={this.state.validationVisible} toggle={this.onDismiss} fade={false}>
-                          {props.errors.name}
-                        </Alert>
+                        props.errors.name ?
+                          FancyErrorMessage(props.errors.name)
                         :
-                        null
+                          null
                       }
                       <FormText color='muted'>
                         Metric name
@@ -372,29 +376,41 @@ export class MetricTemplateChange extends Component {
                     <Col md={4}>
                       <Label to='probeversion'>Probe</Label>
                       {
-                        this.infoview ?
-                          <Field 
-                            type='text'
-                            name='probeversion'
-                            className='form-control'
-                            id='probeversion'
-                            disabled={true}
-                          />
+                        props.values.type === 'Passive' ?
+                          <input type='text' className='form-control' disabled={true} id='passive-probeversion'/>
                         :
-                        <AutocompleteField
-                          {...props}
-                          lists={probeversions}
-                          field='probeversion'
-                          onselect_handler={this.onSelect}
-                        />
+                          this.infoview ?
+                            <Field 
+                              type='text'
+                              name='probeversion'
+                              className='form-control'
+                              id='probeversion'
+                              disabled={true}
+                            />
+                          :
+                          <AutocompleteField
+                            {...props}
+                            lists={probeversions}
+                            field='probeversion'
+                            onselect_handler={this.onSelect}
+                          />
                       }
-                      <FormText color='muted'>
-                        Probe name and version <FontAwesomeIcon id='probe-popover' hidden={this.state.metrictemplate.mtype === 'Passive'} icon={faInfoCircle} style={{color: '#416090'}}/>
-                        <Popover placement='bottom' isOpen={this.state.popoverOpen} target='probe-popover' toggle={this.togglePopOver} trigger='hover'>
-                          <PopoverHeader><ProbeVersionLink probeversion={this.state.metrictemplate.probeversion}/></PopoverHeader>
-                          <PopoverBody>{this.state.probe.description}</PopoverBody>
-                        </Popover>
-                      </FormText>
+                      {
+                        props.errors.probeversion ?
+                          FancyErrorMessage(props.errors.probeversion)
+                        :
+                          null
+                      }
+                      {
+                        props.values.type === 'Active' &&
+                        <FormText color='muted'>
+                          Probe name and version <FontAwesomeIcon id='probe-popover' hidden={this.state.metrictemplate.mtype === 'Passive'} icon={faInfoCircle} style={{color: '#416090'}}/>
+                          <Popover placement='bottom' isOpen={this.state.popoverOpen} target='probe-popover' toggle={this.togglePopOver} trigger='hover'>
+                            <PopoverHeader><ProbeVersionLink probeversion={this.state.metrictemplate.probeversion}/></PopoverHeader>
+                            <PopoverBody>{this.state.probe.description}</PopoverBody>
+                          </Popover>
+                        </FormText>
+                      }
                     </Col>
                     <Col md={2}>
                       <Label to='mtype'>Type</Label>
@@ -404,6 +420,30 @@ export class MetricTemplateChange extends Component {
                         className='form-control'
                         id='mtype'
                         disabled={this.infoview}
+                        onChange={e => {
+                          props.handleChange(e);
+                          if (e.target.value === 'Passive' && this.addview) {
+                            let ind = props.values.flags.length;
+                            if (ind === 1 && props.values.flags[0].key === '') {
+                              props.setFieldValue('flags[0].key', 'PASSIVE');
+                              props.setFieldValue('flags[0].value', '1');
+                            } else {
+                              props.setFieldValue(`flags[${ind}].key`, 'PASSIVE')
+                              props.setFieldValue(`flags[${ind}].value`, '1')
+                            }
+                          } else if (e.target.value === 'Active' && this.addview) {
+                            let ind = undefined;
+                            props.values.flags.forEach((e, index) => {
+                              if (e.key === 'PASSIVE') {
+                                ind = index;
+                              }
+                            });
+                            if (props.values.flags.length === 1)
+                              props.values.flags.splice(ind, 1, {'key': '', 'value': ''})
+                            else
+                              props.values.flags.splice(ind, 1)
+                          }
+                        }}
                       >
                         {
                           types.map((name, i) =>
@@ -426,10 +466,16 @@ export class MetricTemplateChange extends Component {
                       type='text'
                       name='probeexecutable'
                       id='probeexecutable'
-                      className='form-control'
+                      className={props.errors.probeexecutable ? 'form-control border-danger' : 'form-control'}
                       hidden={props.values.type === 'Passive'}
                       disabled={this.infoview}
                     />
+                    {
+                      props.errors.probeexecutable ?
+                        FancyErrorMessage(props.errors.probeexecutable)
+                      :
+                        null
+                    }
                   </Col>
                 </Row>
                 <InlineFields {...props} field='config' addnew={!this.infoview} readonly={this.infoview}/>
@@ -452,12 +498,21 @@ export class MetricTemplateChange extends Component {
                           disabled={true}
                         />
                         :
-                          <AutocompleteField
-                            {...props}
-                            lists={metrictemplatelist}
-                            field='parent'
-                            onselect_handler={this.onSelect}
-                          />
+                          <>
+                            <AutocompleteField
+                              {...props}
+                              lists={metrictemplatelist}
+                              field='parent'
+                              className={props.errors.parent ? 'form-control border-danger' : 'form-control'}
+                              onselect_handler={this.onSelect}
+                            />
+                            {
+                              props.errors.parent ?
+                                FancyErrorMessage(props.errors.parent)
+                              :
+                                null
+                            }
+                          </>
                     }
                   </Col>
                 </Row>
