@@ -51,7 +51,7 @@ const AutocompleteField = ({lists, onselect_handler, field, setFieldValue, req, 
             : ""}`
         }
         >
-          {item}
+          {item ? <Icon i='probes'/> : ''} {item}
         </div>
       }
       onChange={(e) => {setFieldValue(field, e.target.value)}}
