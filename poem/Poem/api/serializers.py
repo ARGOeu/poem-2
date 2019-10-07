@@ -49,6 +49,9 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
 
 class ProbeSerializer(serializers.ModelSerializer):
+    def create(self, validated_data):
+        return Probe.objects.create(**validated_data)
+
     class Meta:
         model = Probe
         exclude = ['nameversion']
