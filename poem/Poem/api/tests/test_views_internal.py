@@ -399,17 +399,6 @@ class ListProbesAPIViewTests(TenantTestCase):
 
         with schema_context(get_public_schema_name()):
             user = CustUser.objects.create_user('superadmin')
-            revision1 = Revision.objects.create(
-                date_created=datetime.datetime.now(),
-                comment='Initial version.',
-                user=user
-            )
-
-            revision2 = Revision.objects.create(
-                date_created=datetime.datetime.now(),
-                comment='Initial version',
-                user=user
-            )
 
             self.ct = ContentType.objects.get_for_model(admin_models.Probe)
 
@@ -429,38 +418,29 @@ class ListProbesAPIViewTests(TenantTestCase):
                 object_repr='ams-probe (0.1.7)',
                 content_type=self.ct,
                 comment='Initial version.',
+                date_created=datetime.datetime.now(),
                 user='poem'
             )
 
-            # Version.objects.create(
-            #     object_id=probe1.id,
-            #     serialized_data='[{"pk": 5, "model": "poem_super_admin.probe",'
-            #                     ' "fields": {"name": "ams-probe",'
-            #                     ' "version": "0.1.7", "description":'
-            #                     ' "Probe is inspecting AMS service by trying to'
-            #                     ' publish and consume randomly generated'
-            #                     ' messages., "comment": "Initial version",'
-            #                     ' "repository": "https://github.com/ARGOeu/'
-            #                     'nagios-plugins-argo", "docurl":'
-            #                     ' "https://github.com/ARGOeu/nagios-plugins-'
-            #                     'argo/blob/master/README.md", "user": '
-            #                     '"poem"}}]',
-            #     object_repr='ams-probe (0.1.7)',
-            #     content_type_id=ct.id,
-            #     revision_id=revision1.id
-            # )
-
-        admin_models.ExtRevision.objects.create(
-            probeid=probe1.id,
-            version=probe1.version,
-            revision=revision1
-        )
-
-        admin_models.ExtRevision.objects.create(
-            probeid=probe2.id,
-            version=probe2.version,
-            revision=revision2
-        )
+            admin_models.History.objects.create(
+                object_id=probe2.id,
+                serialized_data='[{"pk": 5, "model": "poem_super_admin.probe",'
+                                ' "fields": {"name": "argo-web-api",'
+                                ' "version": "0.1.7", "description":'
+                                ' "This is probe for checking AR and status'
+                                ' reports are properly working. ", '
+                                ' "comment": "Initial version",'
+                                ' "repository": "https://github.com/ARGOeu/'
+                                'nagios-plugins-argo", "docurl":'
+                                ' "https://github.com/ARGOeu/nagios-plugins-'
+                                'argo/blob/master/README.md", "user": '
+                                '"poem"}}]',
+                object_repr='argo-web-api (0.1.7)',
+                content_type=self.ct,
+                comment='Initial version.',
+                date_created=datetime.datetime.now(),
+                user='poem'
+            )
 
 
     def test_get_list_of_all_probes(self):
@@ -2070,27 +2050,9 @@ class ListVersionsAPIViewTests(TenantTestCase):
                    'README.md'
         )
 
-        self.rev1 = Revision.objects.create(
-            date_created=datetime.datetime.now(),
-            comment='Initial version.',
-            user=self.user
-        )
-
-        self.rev2 = Revision.objects.create(
-            date_created=datetime.datetime.now(),
-            comment='[{"changed": {"fields": ["version", "comment"]}}]',
-            user=self.user
-        )
-
-        self.rev3 = Revision.objects.create(
-            date_created=datetime.datetime.now(),
-            comment='Initial version.',
-            user=self.user
-        )
-
         ct = ContentType.objects.get_for_model(admin_models.Probe)
 
-        self.ver1 = Version.objects.create(
+        self.ver1 = admin_models.History.objects.create(
             object_id=probe1.id,
             serialized_data='[{"pk": ' + str(probe1.id) + ', "model": '
                             '"poem_super_admin.probe",'
@@ -2102,11 +2064,13 @@ class ListVersionsAPIViewTests(TenantTestCase):
                             'ARGOeu/nagios-plugins-argo/blob/master/README.md",'
                             ' "user": "poem"}}]',
             object_repr='poem-probe (0.1.7)',
-            content_type_id=ct.id,
-            revision_id=self.rev1.id
+            content_type=ct,
+            date_created=datetime.datetime.now(),
+            comment='Initial version.',
+            user=self.user.username
         )
 
-        self.ver2 = Version.objects.create(
+        self.ver2 = admin_models.History.objects.create(
             object_id=probe1.id,
             serialized_data='[{"pk": ' + str(probe1.id) + ', "model": '
                             '"poem_super_admin.probe",'
@@ -2119,11 +2083,13 @@ class ListVersionsAPIViewTests(TenantTestCase):
                             'ARGOeu/nagios-plugins-argo/blob/master/README.md",'
                             ' "user": "poem"}}]',
             object_repr='poem-probe (0.1.11)',
-            content_type_id=ct.id,
-            revision_id=self.rev2.id
+            content_type=ct,
+            date_created=datetime.datetime.now(),
+            comment='[{"changed": {"fields": ["version", "comment"]}}]',
+            user=self.user.username
         )
 
-        self.ver3 = Version.objects.create(
+        self.ver3 = admin_models.History.objects.create(
             object_id=probe2.id,
             serialized_data='[{"pk": ' + str(probe2.id) + ', "model": '
                             '"poem_super_admin.probe", '
@@ -2136,8 +2102,10 @@ class ListVersionsAPIViewTests(TenantTestCase):
                             '"https://github.com/ARGOeu/nagios-plugins-argo/'
                             'blob/master/README.md", "user": "poem"}}]',
             object_repr='ams-publisher-probe (0.1.11)',
-            content_type_id=ct.id,
-            revision_id=self.rev3.id
+            content_type=ct,
+            date_created=datetime.datetime.now(),
+            comment='Initial version.',
+            user=self.user.username
         )
 
     def test_get_versions_of_probes(self):
@@ -2162,9 +2130,9 @@ class ListVersionsAPIViewTests(TenantTestCase):
                                   'argo/blob/master/README.md',
                         'user': 'poem'
                     },
-                    'user': 'poem',
+                    'user': 'testuser',
                     'date_created': datetime.datetime.strftime(
-                        self.rev1.date_created, '%Y-%m-%d %H:%M:%S'),
+                        self.ver1.date_created, '%Y-%m-%d %H:%M:%S'),
                     'comment': 'Changed version and comment.',
                     'version': '0.1.11'
                 },
@@ -2182,10 +2150,10 @@ class ListVersionsAPIViewTests(TenantTestCase):
                                   'argo/blob/master/README.md',
                         'user': 'poem'
                     },
-                    'user': 'poem',
+                    'user': 'testuser',
                     'date_created': datetime.datetime.strftime(
-                        self.rev1.date_created, '%Y-%m-%d %H:%M:%S'),
-                    'comment': 'No fields changed.',
+                        self.ver1.date_created, '%Y-%m-%d %H:%M:%S'),
+                    'comment': 'Initial version.',
                     'version': '0.1.7'
                 },
             ]
