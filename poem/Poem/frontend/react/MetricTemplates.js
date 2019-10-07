@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { ListOfMetrics, InlineFields, ProbeVersionLink } from './Metrics';
 import { Backend } from './DataManager';
-import { LoadingAnim, BaseArgoView, NotifyOk, FancyErrorMessage } from './UIElements';
+import { LoadingAnim, BaseArgoView, NotifyOk, FancyErrorMessage, Icon } from './UIElements';
 import { Formik, Form, Field } from 'formik';
 import {
   Alert,
@@ -46,7 +46,10 @@ const AutocompleteField = ({lists, onselect_handler, field, setFieldValue, req, 
       renderItem={(item, isHighlighted) =>
         <div 
           key={lists.indexOf(item)}
-          style={{ background: isHighlighted ? '#4A90D9' : 'white'}}
+          className={`metrictemplates-autocomplete-entries ${isHighlighted ? 
+            "metrictemplates-autocomplete-entries-highlighted" 
+            : ""}`
+        }
         >
           {item}
         </div>
