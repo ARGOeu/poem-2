@@ -411,25 +411,44 @@ class ListProbesAPIViewTests(TenantTestCase):
                 user=user
             )
 
-            ct = ContentType.objects.get_for_model(admin_models.Probe)
+            self.ct = ContentType.objects.get_for_model(admin_models.Probe)
 
-            Version.objects.create(
+            admin_models.History.objects.create(
                 object_id=probe1.id,
                 serialized_data='[{"pk": 5, "model": "poem_super_admin.probe",'
                                 ' "fields": {"name": "ams-probe",'
                                 ' "version": "0.1.7", "description":'
                                 ' "Probe is inspecting AMS service by trying to'
                                 ' publish and consume randomly generated'
-                                ' messages., "comment": "Initial version",'
+                                ' messages.", "comment": "Initial version",'
                                 ' "repository": "https://github.com/ARGOeu/'
                                 'nagios-plugins-argo", "docurl":'
                                 ' "https://github.com/ARGOeu/nagios-plugins-'
                                 'argo/blob/master/README.md", "user": '
                                 '"poem"}}]',
                 object_repr='ams-probe (0.1.7)',
-                content_type_id=ct.id,
-                revision_id=revision1.id
+                content_type=self.ct,
+                comment='Initial version.',
+                user='poem'
             )
+
+            # Version.objects.create(
+            #     object_id=probe1.id,
+            #     serialized_data='[{"pk": 5, "model": "poem_super_admin.probe",'
+            #                     ' "fields": {"name": "ams-probe",'
+            #                     ' "version": "0.1.7", "description":'
+            #                     ' "Probe is inspecting AMS service by trying to'
+            #                     ' publish and consume randomly generated'
+            #                     ' messages., "comment": "Initial version",'
+            #                     ' "repository": "https://github.com/ARGOeu/'
+            #                     'nagios-plugins-argo", "docurl":'
+            #                     ' "https://github.com/ARGOeu/nagios-plugins-'
+            #                     'argo/blob/master/README.md", "user": '
+            #                     '"poem"}}]',
+            #     object_repr='ams-probe (0.1.7)',
+            #     content_type_id=ct.id,
+            #     revision_id=revision1.id
+            # )
 
         admin_models.ExtRevision.objects.create(
             probeid=probe1.id,
@@ -568,7 +587,8 @@ class ListProbesAPIViewTests(TenantTestCase):
         force_authenticate(request, user=self.user)
         response = self.view(request)
         probe = admin_models.Probe.objects.get(name='ams-probe')
-        version = Version.objects.get_for_model(probe)
+        version = admin_models.History.objects.filter(object_id=probe.id,
+                                                      content_type=self.ct)
         ser_data = json.loads(version[0].serialized_data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(probe.version, '0.1.7')

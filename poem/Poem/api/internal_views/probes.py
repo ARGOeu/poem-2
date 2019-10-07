@@ -1,10 +1,13 @@
-import datetime
+from django.contrib.contenttypes.models import ContentType
+
 import json
 
 from Poem.api import serializers
 from Poem.api.internal_views.metrictemplates import update_metrics
 from Poem.api.views import NotFound
-from Poem.poem_super_admin.models import Probe, ExtRevision, MetricTemplate
+from Poem.helpers.history_helpers import create_history
+from Poem.poem_super_admin.models import Probe, ExtRevision, MetricTemplate, \
+    History
 from Poem.tenants.models import Tenant
 
 from rest_framework import status
@@ -12,10 +15,7 @@ from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-import reversion
 from reversion.models import Version
-
-from tenant_schemas.utils import schema_context, get_public_schema_name
 
 
 class ListProbes(APIView):
@@ -60,44 +60,35 @@ class ListProbes(APIView):
         nameversion = probe.nameversion
         fields = []
 
-        schemas = list(
-            Tenant.objects.all().values_list('schema_name', flat=True)
-        )
-
         if request.data['new_version']:
-            with reversion.create_revision():
-                probe.version = request.data['version']
-                new_nameversion = '{} ({})'.format(
-                    request.data['name'], request.data['version']
-                )
-                fields.append('version')
+            probe.version = request.data['version']
+            new_nameversion = '{} ({})'.format(
+                request.data['name'], request.data['version']
+            )
+            fields.append('version')
 
-                if probe.repository != request.data['repository']:
-                    probe.repository = request.data['repository']
-                    fields.append('repository')
+            if probe.repository != request.data['repository']:
+                probe.repository = request.data['repository']
+                fields.append('repository')
 
-                if probe.docurl != request.data['docurl']:
-                    probe.docurl = request.data['docurl']
-                    fields.append('docurl')
+            if probe.docurl != request.data['docurl']:
+                probe.docurl = request.data['docurl']
+                fields.append('docurl')
 
-                if probe.description != request.data['description']:
-                    probe.description = request.data['description']
-                    fields.append('description')
+            if probe.description != request.data['description']:
+                probe.description = request.data['description']
+                fields.append('description')
 
-                if probe.comment != request.data['comment']:
-                    probe.comment = request.data['comment']
-                    fields.append('comment')
+            if probe.comment != request.data['comment']:
+                probe.comment = request.data['comment']
+                fields.append('comment')
 
-                if probe.user != request.user.username:
-                    probe.user = request.user.username
-                    fields.append('user')
+            if probe.user != request.user.username:
+                probe.user = request.user.username
+                fields.append('user')
 
-                probe.save()
-
-                reversion.set_user(request.user)
-                reversion.set_comment(
-                    json.dumps([{'changed': {'fields': fields}}])
-                )
+            probe.save()
+            create_history(probe, probe.user)
 
             if request.data['update_metrics']:
                 metrictemplates = MetricTemplate.objects.filter(
@@ -113,16 +104,9 @@ class ListProbes(APIView):
                     update_metrics(metrictemplate)
 
         else:
-            for schema in schemas:
-                with schema_context(schema):
-                    versions = Version.objects.get_for_object(probe)
-                    for version in versions:
-                        if version.object_repr == probe.nameversion:
-                            pk = version.id
-                    data = json.loads(
-                        Version.objects.get(pk=pk).serialized_data
-                    )
-                    new_serialized_field = {
+            history = History.objects.filter(object_repr=probe.__str__())
+            data = json.loads(history[0].serialized_data)
+            new_serialized_field = {
                         'name': request.data['name'],
                         'version': request.data['version'],
                         'description': request.data['description'],
@@ -131,10 +115,8 @@ class ListProbes(APIView):
                         'docurl': request.data['docurl'],
                         'user': request.user.username
                     }
-                    data[0]['fields'] = new_serialized_field
-                    Version.objects.filter(pk=pk).update(
-                        serialized_data=json.dumps(data)
-                    )
+            data[0]['fields'] = new_serialized_field
+            history.update(serialized_data=json.dumps(data))
 
             Probe.objects.filter(pk=probe.id).update(**new_serialized_field)
 
@@ -148,16 +130,13 @@ class ListProbes(APIView):
             'docurl': request.data['docurl'],
             'description': request.data['description'],
             'comment': request.data['comment'],
-            'user': request.user.username,
-            'datetime': datetime.datetime.now()
+            'user': request.user.username
         }
         serializer = serializers.ProbeSerializer(data=data)
 
         if serializer.is_valid():
-            with reversion.create_revision():
-                serializer.save()
-                reversion.set_user(request.user)
-                reversion.set_comment('Initial version.')
+            probe = serializer.save()
+            create_history(probe, probe.user)
 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
@@ -169,6 +148,9 @@ class ListProbes(APIView):
         if name:
             try:
                 probe = Probe.objects.get(name=name)
+                History.objects.filter(
+                    object_id=str(probe.id),
+                    content_type=ContentType.objects.get_for_model(probe)).delete()
                 probe.delete()
                 return Response(status=status.HTTP_204_NO_CONTENT)
 
