@@ -96,7 +96,10 @@ SHARED_APPS = (
     'django.contrib.messages',
     'django.contrib.sessions',
     'reversion',
-    'reversion_compare',
+    'rest_framework',
+    'rest_framework.authtoken',
+    'rest_framework_api_key',
+    'rest_auth',
     'Poem.users',
     'Poem.poem_super_admin',
 )
@@ -110,7 +113,6 @@ TENANT_APPS = (
     'django.contrib.sessions',
     'djangosaml2',
     'reversion',
-    'reversion_compare',
     'rest_framework',
     'rest_framework.authtoken',
     'rest_framework_api_key',
@@ -185,7 +187,7 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
     ]
 }
-TOKEN_HEADER = 'HTTP_X_API_KEY'
+API_KEY_CUSTOM_HEADER = 'HTTP_X_API_KEY'
 
 # Django development server settings
 # MEDIA_URL = '/poem_media/'

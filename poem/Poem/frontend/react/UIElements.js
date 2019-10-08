@@ -36,13 +36,16 @@ import {
   faServer,
   faCogs,
   faHighlighter,
-  faTasks} from '@fortawesome/free-solid-svg-icons';
+  faTasks,
+  faKey} from '@fortawesome/free-solid-svg-icons';
 import { NotificationManager } from 'react-notifications';
 import { Field } from 'formik';
 
 
 var list_pages = ['administration','services', 'reports', 'probes',
                   'metrics', 'metricprofiles', 'aggregationprofiles'];
+var admin_list_pages = ['administration', 'probes'];
+
 var link_title = new Map();
 link_title.set('administration', 'Administration');
 link_title.set('services', 'Services');
@@ -55,6 +58,7 @@ link_title.set('groupofaggregations', 'Groups of aggregations');
 link_title.set('groupofmetrics', 'Groups of metrics');
 link_title.set('groupofmetricprofiles', 'Groups of metric profiles');
 link_title.set('users', 'Users');
+link_title.set('apikey', 'API key');
 
 export const Icon = props =>
 {
@@ -67,6 +71,7 @@ export const Icon = props =>
   link_icon.set('metrics', faCog);
   link_icon.set('metricprofiles', faCogs);
   link_icon.set('aggregationprofiles', faTasks);
+  link_icon.set('apikey', faKey)
 
   return <FontAwesomeIcon icon={link_icon.get(props.i)} fixedWidth/>
 }
@@ -221,34 +226,38 @@ export const NavigationBar = ({history, onLogout, isOpenModal, toggle, titleModa
 )
 
 
-export const NavigationLinks = ({location}) =>
-(
-  <Nav vertical pills id="argo-navlinks" className="border-left border-right border-top rounded-top sticky-top">
-    {
-      list_pages.map((item, i) =>  
-        item === 'administration' && localStorage.getItem('authIsSuperuser') 
-          ?
-            <NavItem key={i}>
-              <NavLink
-                tag={Link}
-                active={location.pathname.includes(item) ? true : false} 
-                className={location.pathname.includes(item) ? "text-white bg-info" : "text-dark"}
-                to={'/ui/' + item}><Icon i={item}/> {link_title.get(item)}
-              </NavLink>
-            </NavItem>
-          :
-            <NavItem key={i}>
-              <NavLink 
-                tag={Link}
-                active={location.pathname.split('/')[2] === item ? true : false} 
-                className={location.pathname.split('/')[2] === item ? "text-white bg-info" : "text-dark"}
-                to={'/ui/' + item}><Icon i={item}/> {link_title.get(item)}
-              </NavLink>
-            </NavItem>
-      )
-    }
-  </Nav>
-)
+export const NavigationLinks = ({location, poemver}) => {
+  var data = undefined;
+  poemver === 'superadmin' ? data = admin_list_pages : data = list_pages
+
+  return (
+    <Nav vertical pills id="argo-navlinks" className="border-left border-right border-top rounded-top sticky-top">
+        {
+          data.map((item, i) =>  
+            item === 'administration' && localStorage.getItem('authIsSuperuser') 
+              ?
+                <NavItem key={i}>
+                  <NavLink
+                    tag={Link}
+                    active={location.pathname.includes(item) ? true : false} 
+                    className={location.pathname.includes(item) ? "text-white bg-info" : "text-dark"}
+                    to={'/ui/' + item}><Icon i={item}/> {link_title.get(item)}
+                  </NavLink>
+                </NavItem>
+              :
+                <NavItem key={i}>
+                  <NavLink 
+                    tag={Link}
+                    active={location.pathname.split('/')[2] === item ? true : false} 
+                    className={location.pathname.split('/')[2] === item ? "text-white bg-info" : "text-dark"}
+                    to={'/ui/' + item}><Icon i={item}/> {link_title.get(item)}
+                  </NavLink>
+                </NavItem>
+          )
+        }
+      </Nav>
+    )
+}
 
 
 const InnerFooter = ({border=false}) =>
@@ -321,7 +330,7 @@ export const NotifyOk = ({msg='', title='', callback=undefined}) => {
 
 export const BaseArgoView = ({resourcename='', location=undefined, 
     infoview=false, addview=false, listview=false, modal=false, 
-    state=undefined, toggle=undefined, submitperm=true, children}) => 
+    state=undefined, toggle=undefined, submitperm=true, history=true, children}) => 
 (
   <React.Fragment>
     {
@@ -349,7 +358,10 @@ export const BaseArgoView = ({resourcename='', location=undefined,
             :
               <React.Fragment>
                 <h2 className="ml-3 mt-1 mb-4">{`Change ${resourcename}`}</h2>
-                <Link className="btn btn-secondary" to={location.pathname + "/history"} role="button">History</Link>
+                {
+                  history &&
+                    <Link className="btn btn-secondary" to={location.pathname + "/history"} role="button">History</Link>
+                }
               </React.Fragment>
       }
     </div>

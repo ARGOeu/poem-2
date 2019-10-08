@@ -25,6 +25,7 @@ class Login extends Component {
     this.state = {
       samlIdpString: null,
       loginFailedVisible: false,
+      poemversion: null
     };
 
     this.dismissLoginAlert = this.dismissLoginAlert.bind(this);
@@ -62,25 +63,40 @@ class Login extends Component {
       .catch(err => console.log('Something went wrong: ' + err));
   }
 
-  componentDidMount() {
-    this.fetchSamlButtonString().then(
-      this.isSaml2Logged().then(response => {
-        response.ok && response.json().then(
-          json => {
-            if (Object.keys(json).length > 0) {
-              this.flushSaml2Cache().then(
-                response => {
-                  if (response.ok) {
-                    this.props.onLogin(json); 
-                    this.props.history.push('/ui/home');
-                  }
-                }
-              )
-            }
-          })
-      })
+  fetchPoemVersion() {
+    return fetch('/api/v2/internal/schema')
+      .then(response => response.ok ? response.json() : null)
+      .then(json => json['schema'])
       .catch(err => console.log('Something went wrong: ' + err))
-    )
+  }
+
+  componentDidMount() {
+    this.fetchPoemVersion().then(response => {
+      if (response)
+        this.setState({poemversion: response})
+
+      if (response === 'tenant') {
+        this.fetchSamlButtonString().then(
+          this.isSaml2Logged().then(response => {
+            response.ok && response.json().then(
+              json => {
+                if (Object.keys(json).length > 0) {
+                  this.flushSaml2Cache().then(
+                    response => {
+                      if (response.ok) {
+                        this.props.onLogin(json);
+                        this.props.history.push('/ui/home');
+                      }
+                    }
+                  )
+                }
+              }
+            )
+          })
+        )
+      }
+    })
+      .catch(err => console.log('Something went wrong: ' + err))
   }
 
   fetchUserDetails(username) {
@@ -116,7 +132,7 @@ class Login extends Component {
   }
 
   render() {
-    if (this.state.samlIdpString) {
+    if (this.state.poemversion) {
       return (
         <Container>
           <Row className="login-first-row">
@@ -168,7 +184,7 @@ class Login extends Component {
                       </div>
                       <FormGroup>
                         <Button color="success" type="submit" block>Log in using username and password</Button>
-                        <a className="btn btn-success btn-block" role="button" href="/saml2/login">{this.state.samlIdpString}</a>
+                        {this.state.poemversion === 'tenant' && <a className="btn btn-success btn-block" role="button" href="/saml2/login">{this.state.samlIdpString}</a>}
                       </FormGroup>
                     </Form>
                   </Formik>

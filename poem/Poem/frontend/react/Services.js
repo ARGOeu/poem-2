@@ -14,7 +14,6 @@ class Services extends Component {
       loading: false,
       rows: null,
       rowspan: null,
-      id_probes: null, 
     };
 
     this.backend = new Backend();
@@ -27,7 +26,6 @@ class Services extends Component {
         this.setState({
           rows: json.result.rows, 
           rowspan: json.result.rowspan, 
-          id_probes: json.result.id_probes, 
           loading: false})
       );
   }
@@ -38,7 +36,7 @@ class Services extends Component {
   }
 
   render() {
-    const {loading, rows, rowspan, id_probes} = this.state;
+    const {loading, rows, rowspan} = this.state;
 
     if (loading) {
       return (<LoadingAnim />)

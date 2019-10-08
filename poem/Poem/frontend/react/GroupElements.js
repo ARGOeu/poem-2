@@ -243,7 +243,7 @@ function GroupChange(gr, id, ttl) {
       const BOOTSTRAP_CLASSES = {
         filter: 'form-control',
         select: 'form-control',
-        button: 'btn btn btn-block btn-default',
+        button: 'btn btn btn-block btn-primary',
         buttonActive: 'btn btn btn-block btn-primary'
       }
   
@@ -304,7 +304,7 @@ function GroupChange(gr, id, ttl) {
                             classNames={{
                               filter: 'form-control',
                               select: 'form-control',
-                              button: 'btn btn btn-block btn-default',
+                              button: 'btn btn btn-block btn-danger',
                               buttonActive: 'btn btn btn-block btn-danger'
                             }}
                             onChange={this.handleDeselect}

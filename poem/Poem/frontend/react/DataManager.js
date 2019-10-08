@@ -170,15 +170,28 @@ export class Backend {
       .catch(err => alert('Something went wrong: ' + err))
   }
 
-  fetchProbeVersionInfo(id) {
-    return fetch('/api/v2/internal/probeversion/' + id)
+  fetchVersions(obj, name) {
+    return fetch('/api/v2/internal/version/' + obj + '/' + name)
       .then(response => response.json())
       .catch(err => alert('Something went wrong: ' + err))
   }
 
-  fetchVersions(obj, name) {
-    return fetch('/api/v2/internal/version/' + obj + '/' + name)
+  fetchTokens() {
+    return fetch('/api/v2/internal/apikeys/')
       .then(response => response.json())
+      .catch(err => alert('Something went wrong: ' + err))
+  }
+
+  fetchTokenByName(name) {
+    return fetch('/api/v2/internal/apikeys/' + name)
+      .then(response => response.json())
+      .catch(err => alert('Something went wrong: ' + err))
+  }
+
+  fetchPoemVersion() {
+    return fetch('/api/v2/internal/schema')
+      .then(response => response.ok ? response.json() : null)
+      .then(json => json['schema'])
       .catch(err => alert('Something went wrong: ' + err))
   }
 
@@ -230,6 +243,22 @@ export class Backend {
     )
   }
 
+  changeToken(token) {
+    return this.send(
+      '/api/v2/internal/apikeys/',
+      'PUT',
+      token
+    )
+  }
+
+  changeProbe(probe) {
+    return this.send(
+      '/api/v2/internal/probes/',
+      'PUT',
+      probe
+    )
+  }
+
   addAggregation(profile) {
     return this.send(
       '/api/v2/internal/aggregations/',
@@ -254,11 +283,35 @@ export class Backend {
     );
   }
 
+  addUserProfile(user) {
+    return this.send(
+      '/api/v2/internal/userprofile/',
+      'POST',
+      user
+    );
+  }
+
   addGroup(group, name) {
     return this.send(
       '/api/v2/internal/' + group + 'group/',
       'POST',
       name
+    );
+  }
+
+  addToken(token) {
+    return this.send(
+      '/api/v2/internal/apikeys/',
+      'POST',
+      token
+    );
+  }
+
+  addProbe(probe) {
+    return this.send(
+      '/api/v2/internal/probes/',
+      'POST',
+      probe
     );
   }
 
@@ -293,6 +346,20 @@ export class Backend {
   deleteMetric(name) {
     return this.send(
       '/api/v2/internal/metric/' + name,
+      'DELETE'
+    );
+  }
+
+  deleteToken(name) {
+    return this.send(
+      '/api/v2/internal/apikeys/' + name,
+      'DELETE'
+    );
+  }
+
+  deleteProbe(name) {
+    return this.send(
+      '/api/v2/internal/probes/' + name,
       'DELETE'
     );
   }
