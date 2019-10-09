@@ -3,6 +3,9 @@ import argparse
 import datetime
 import json
 
+probekey_pks = {}
+probeversion_pks = {}
+
 
 def create_public_file(file):
     with open(file, 'r') as f:
@@ -11,8 +14,6 @@ def create_public_file(file):
     new_data = []
     new_history = []
     history_index = 1
-    probekey_pks = {}
-    probeversion_pks = {}
     for item in data:
         if item['model'] == 'poem_super_admin.probe':
             item['fields']['datetime'] = datetime.datetime.now().strftime(
@@ -78,15 +79,76 @@ def create_public_file(file):
         json.dump(new_data, f, indent=2)
 
 
+def create_tenant_file(file):
+    with open(file, 'r') as f:
+        data = json.load(f)
+
+    new_data = []
+    for item in data:
+        if item['model'] == 'poem.serviceflavour' or \
+                item['model'] == 'poem.metrics' or \
+                item['model'] == 'poem.metrictype' or \
+                item['model'] == 'poem.service' or \
+                item['model'] == 'poem.aggregation' or \
+                item['model'] == 'poem.groupofmetrics' or \
+                item['model'] == 'poem.groupofaggregations':
+            new_data.append(item)
+
+        if item['model'] == 'users.custuser':
+            item['fields']['user_permissions'] = []
+            new_data.append(item)
+
+        if item['model'] == 'poem.metricinstance':
+            del item['fields']['profile']
+            del item['fields']['vo']
+            del item['fields']['fqan']
+            new_data.append(item)
+
+        if item['model'] == 'poem.metric':
+            del item['fields']['tag']
+            if item['fields']['probekey']:
+                item['fields']['probeversion'] = probeversion_pks[
+                    item['fields']['probeversion'].split(' ')[0]
+                ]
+                item['fields']['probekey'] = probekey_pks[
+                    item['fields']['probeversion'].split(' ')[0]
+                ]
+            new_data.append(item)
+
+        if item['model'] == 'poem.userprofile':
+            del item['fields']['groupsofprofiles']
+            item['fields']['groupsofmetricprofiles'] = []
+            new_data.append(item)
+
+    with open('new-' + file, 'w') as f:
+        json.dump(new_data, f, indent=2)
+
+
 def main():
     parser = argparse.ArgumentParser('Helper tool for react-poem')
     parser.add_argument('--public', dest='public', help='input public file',
                         type=str, required=True)
+    parser.add_argument('--egi', dest='egi', help='input file for EGI tenant',
+                        type=str, required=True)
+    parser.add_argument('--eudat', dest='eudat', type=str, required=True,
+                        help='input file for EUDAT tenant')
+    parser.add_argument('--sdc', dest='sdc', help='input file for SDC tenant',
+                        type=str, required=True)
+    parser.add_argument('--ni4os', dest='ni4os', type=str, required=True,
+                        help='input file for NI4OS tenant')
     args = parser.parse_args()
 
     file0 = args.public
+    file1 = args.egi
+    file2 = args.eudat
+    file3 = args.sdc
+    file4 = args.ni4os
 
     create_public_file(file0)
+    create_tenant_file(file1)
+    create_tenant_file(file2)
+    create_tenant_file(file3)
+    create_tenant_file(file4)
 
 
 main()
