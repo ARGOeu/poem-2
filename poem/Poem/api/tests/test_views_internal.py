@@ -1565,15 +1565,9 @@ class ListMetricAPIViewTests(TenantTestCase):
                    'README.md'
         )
 
-        probe_revision1 = Revision.objects.create(
-            date_created=datetime.datetime.now(),
-            comment='Initial version.',
-            user=self.user
-        )
-
         ct = ContentType.objects.get_for_model(admin_models.Probe)
 
-        self.probeversion1 = Version.objects.create(
+        self.probeversion1 = admin_models.History.objects.create(
             object_id=probe1.id,
             serialized_data='[{"pk": 5, "model": "poem_super_admin.probe",'
                             ' "fields": {"name": "ams-probe",'
@@ -1586,8 +1580,10 @@ class ListMetricAPIViewTests(TenantTestCase):
                             ' "https://github.com/ARGOeu/nagios-plugins-argo/'
                             'blob/master/README.md", "user": "poem"}}]',
             object_repr='ams-probe (0.1.7)',
-            content_type_id=ct.id,
-            revision_id=probe_revision1.id
+            content_type=ct,
+            date_created=datetime.datetime.now(),
+            comment='Initial version.',
+            user=self.user.username
         )
 
         metric1 = poem_models.Metric.objects.create(
