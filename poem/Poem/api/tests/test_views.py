@@ -1,6 +1,11 @@
 import json
 import datetime
 
+from django.contrib.contenttypes.models import ContentType
+from django.db.models.signals import post_save
+
+import factory
+
 from rest_framework import status
 
 from tenant_schemas.test.cases import TenantTestCase
@@ -9,24 +14,19 @@ from tenant_schemas.test.client import TenantRequestFactory
 from Poem.api import views
 from Poem.api.models import MyAPIKey
 from Poem.poem.models import GroupOfMetrics, Metric, MetricType
+from Poem.poem_super_admin import models as admin_models
 from Poem.users.models import CustUser
 
-from reversion.models import Version, Revision
 
-
+@factory.django.mute_signals(post_save)
 def mock_db_for_metrics_tests():
     user = CustUser.objects.create_user(username='testuser')
 
-    metrictype = MetricType.objects.create(name='active')
+    metrictype = MetricType.objects.create(name='Active')
 
-    Revision.objects.create(
-        id=1,
-        comment='Initial version',
-        date_created=datetime.datetime(2015, 1, 1, 0, 0, 0),
-        user_id=user.id
-    )
+    ct = ContentType.objects.get_for_model(admin_models.Probe)
 
-    probekey = Version.objects.create(
+    probekey = admin_models.History.objects.create(
         object_repr='ams_probe (0.1.7)',
         serialized_data=json.dumps(
             [
@@ -34,7 +34,6 @@ def mock_db_for_metrics_tests():
                     'model': 'poem.probe',
                     'fields': {
                         'comment': 'Initial version',
-                        'group': 'EOSC',
                         'version': '0.1.7',
                         'docurl':
                             'https://github.com/ARGOeu/nagios-plugins-argo'
@@ -43,8 +42,10 @@ def mock_db_for_metrics_tests():
                 }
             ]
         ),
-        content_type_id='1',
-        revision_id='1'
+        content_type=ct,
+        comment='Initial version',
+        date_created=datetime.datetime(2015, 1, 1, 0, 0, 0),
+        user=user.username
     )
 
     metric1 = Metric.objects.create(
