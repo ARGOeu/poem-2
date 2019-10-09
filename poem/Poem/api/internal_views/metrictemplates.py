@@ -14,8 +14,6 @@ from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from reversion.models import Version
-
 from tenant_schemas.utils import get_public_schema_name, schema_context
 
 
@@ -44,7 +42,7 @@ def update_metrics(metrictemplate):
 
                 if met.probeversion != metrictemplate.probeversion:
                     met.probeversion = metrictemplate.probeversion
-                    met.probekey = Version.objects.get(
+                    met.probekey = History.objects.get(
                         object_repr=metrictemplate.probeversion
                     )
                     changes += 1
