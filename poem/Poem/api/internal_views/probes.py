@@ -15,7 +15,7 @@ from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from reversion.models import Version
+from tenant_schemas.utils import schema_context, get_public_schema_name
 
 
 class ListProbes(APIView):
@@ -97,7 +97,7 @@ class ListProbes(APIView):
 
                 for metrictemplate in metrictemplates:
                     metrictemplate.probeversion = new_nameversion
-                    metrictemplate.probekey = Version.objects.get(
+                    metrictemplate.probekey = History.objects.get(
                         object_repr=new_nameversion
                     )
                     metrictemplate.save()
@@ -145,12 +145,20 @@ class ListProbes(APIView):
                             status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, name=None):
+        schemas = list(Tenant.objects.all().values_list('schema_name', flat=True))
+        schemas.remove(get_public_schema_name())
         if name:
             try:
                 probe = Probe.objects.get(name=name)
-                History.objects.filter(
-                    object_id=str(probe.id),
-                    content_type=ContentType.objects.get_for_model(probe)).delete()
+                ExtRevision.objects.filter(probeid=probe.id).delete()
+                for schema in schemas:
+                    # need to iterate through schemase because of foreign key
+                    # in Metric model
+                    with schema_context(schema):
+                        History.objects.filter(
+                            object_id=probe.id,
+                            content_type=ContentType.objects.get_for_model(probe)
+                        ).delete()
                 probe.delete()
                 return Response(status=status.HTTP_204_NO_CONTENT)
 

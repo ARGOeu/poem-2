@@ -364,6 +364,10 @@ class ListProbesAPIViewTests(TenantTestCase):
         self.url_base = '/api/v2/internal/probes/'
         self.user = CustUser.objects.create(username='testuser')
 
+        with schema_context(get_public_schema_name()):
+            Tenant.objects.create(name='public', domain_url='public',
+                                  schema_name=get_public_schema_name())
+
         probe1 = admin_models.Probe.objects.create(
             name='ams-probe',
             version='0.1.7',
@@ -394,8 +398,6 @@ class ListProbesAPIViewTests(TenantTestCase):
         self.id1 = probe1.id
 
         with schema_context(get_public_schema_name()):
-            user = CustUser.objects.create_user('superadmin')
-
             self.ct = ContentType.objects.get_for_model(admin_models.Probe)
 
             admin_models.History.objects.create(
