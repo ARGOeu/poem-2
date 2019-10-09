@@ -451,11 +451,21 @@ export class ProbeChange extends Component {
 
   doDelete(name) {
     this.backend.deleteProbe(name)
-      .then(() => NotifyOk({
-        msg: 'Probe successfully deleted',
-        title: 'Deleted',
-        callback: () => this.history.push('/ui/probes')
-      }))
+      .then(response => {
+        if (!response.ok) {
+          response.json()
+            .then(json => {
+              NotificationManager.error(json.detail, 'Error');
+            });
+        } else {
+          NotifyOk({
+            msg: 'Probe successfully deleted',
+            title: 'Deleted',
+            callback: () => this.history.push('/ui/probes')
+          })
+        }
+      })
+      .catch(err => alert('Something went wrong: ' + err))
   }
 
   onDismiss() {
