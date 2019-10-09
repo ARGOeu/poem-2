@@ -2649,88 +2649,27 @@ class ImportMetricsAPIViewTests(TenantTestCase):
 
         ct = ContentType.objects.get_for_model(admin_models.Probe)
 
-        with schema_context(get_public_schema_name()):
-            superuser = CustUser.objects.create(username='superuser')
-            rev1 = Revision.objects.create(
-                date_created=datetime.datetime.now(),
-                comment='Initial version.',
-                user=superuser
-            )
-
-            rev2 = Revision.objects.create(
-                date_created=datetime.datetime.now(),
-                comment='Initial version.',
-                user=superuser
-            )
-
-            pk1 = Version.objects.create(
-                object_id=probe1.id,
-                serialized_data='[{"pk": ' + str(probe1.id) + ', "model": '
-                                '"poem_super_admin.probe", '
-                                '"fields": {"name": "ams-probe", '
-                                '"version": "0.1.7", "description": '
-                                '"Probe is inspecting AMS service.", '
-                                '"comment": "Initial version", '
-                                '"repository": "https://github.com/ARGOeu/nagios-'
-                                'plugins-argo", '
-                                '"docurl": "https://github.com/ARGOeu/nagios-'
-                                'plugins-argo/blob/master/README.md", '
-                                '"user": "testuser"}}]',
-                object_repr='ams-probe (0.1.7)',
-                content_type_id=ct.id,
-                revision_id=rev1.id
-            )
-
-            pk2 = Version.objects.create(
-                object_id=probe2.id,
-                serialized_data='[{"model": "poem_super_admin.probe", '
-                                '"pk": ' + str(probe2.id) + ', "fields": '
-                                '{"name": "ams-publisher-probe", '
-                                '"version": "0.1.11", "description": '
-                                '"Probe is inspecting AMS publisher running on '
-                                'Nagios monitoring instances.", '
-                                '"comment": "New version", '
-                                '"repository": "https://github.com/ARGOeu/nagios-'
-                                'plugins-argo", '
-                                '"docurl": "https://github.com/ARGOeu/nagios-'
-                                'plugins-argo/blob/master/README.md", '
-                                '"user": "testuser"}}]',
-                object_repr='ams-publisher-probe (0.1.11)',
-                content_type_id=ct.id,
-                revision_id=rev2.id
-            )
-
-        rev1 = Revision.objects.create(
-            date_created=datetime.datetime.now(),
-            comment='Initial version.',
-            user=superuser
-        )
-
-        rev2 = Revision.objects.create(
-            date_created=datetime.datetime.now(),
-            comment='Initial version.',
-            user=superuser
-        )
-
-        pk1 = Version.objects.create(
+        pk1 = admin_models.History.objects.create(
             object_id=probe1.id,
             serialized_data='[{"pk": ' + str(probe1.id) + ', "model": '
-                              '"poem_super_admin.probe", '
-                              '"fields": {"name": "ams-probe", '
-                              '"version": "0.1.7", "description": '
-                              '"Probe is inspecting AMS service.", '
-                              '"comment": "Initial version", '
-                              '"repository": "https://github.com/ARGOeu/nagios-'
-                              'plugins-argo", '
-                              '"docurl": "https://github.com/ARGOeu/nagios-'
-                              'plugins-argo/blob/master/README.md", '
-                              '"user": "testuser"}}]',
+                            '"poem_super_admin.probe", '
+                            '"fields": {"name": "ams-probe", '
+                            '"version": "0.1.7", "description": '
+                            '"Probe is inspecting AMS service.", '
+                            '"comment": "Initial version", '
+                            '"repository": "https://github.com/ARGOeu/nagios-'
+                            'plugins-argo", '
+                            '"docurl": "https://github.com/ARGOeu/nagios-'
+                            'plugins-argo/blob/master/README.md", '
+                            '"user": "testuser"}}]',
             object_repr='ams-probe (0.1.7)',
-            content_type_id=ct.id,
-            revision_id=rev1.id
+            content_type=ct,
+            date_created=datetime.datetime.now(),
+            comment='Initial version.',
+            user=self.user.username
         )
 
-        pk2 = Version.objects.create(
+        pk2 = admin_models.History.objects.create(
             object_id=probe2.id,
             serialized_data='[{"model": "poem_super_admin.probe", '
                             '"pk": ' + str(probe2.id) + ', "fields": '
@@ -2745,8 +2684,10 @@ class ImportMetricsAPIViewTests(TenantTestCase):
                             'plugins-argo/blob/master/README.md", '
                             '"user": "testuser"}}]',
             object_repr='ams-publisher-probe (0.1.11)',
-            content_type_id=ct.id,
-            revision_id=rev2.id
+            content_type=ct,
+            date_created=datetime.datetime.now(),
+            comment='Initial version.',
+            user=self.user.username
         )
 
         self.defaultGroup = poem_models.GroupOfMetrics.objects.create(
