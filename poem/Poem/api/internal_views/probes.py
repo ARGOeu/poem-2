@@ -150,17 +150,28 @@ class ListProbes(APIView):
         if name:
             try:
                 probe = Probe.objects.get(name=name)
-                ExtRevision.objects.filter(probeid=probe.id).delete()
-                for schema in schemas:
-                    # need to iterate through schemase because of foreign key
-                    # in Metric model
-                    with schema_context(schema):
-                        History.objects.filter(
-                            object_id=probe.id,
-                            content_type=ContentType.objects.get_for_model(probe)
-                        ).delete()
-                probe.delete()
-                return Response(status=status.HTTP_204_NO_CONTENT)
+                mt = MetricTemplate.objects.filter(
+                    probeversion=probe.nameversion
+                )
+                if len(mt) == 0:
+                    ExtRevision.objects.filter(probeid=probe.id).delete()
+                    for schema in schemas:
+                        # need to iterate through schemase because of foreign
+                        # key in Metric model
+                        with schema_context(schema):
+                            History.objects.filter(
+                                object_id=probe.id,
+                                content_type=
+                                ContentType.objects.get_for_model(probe)
+                            ).delete()
+                    probe.delete()
+                    return Response(status=status.HTTP_204_NO_CONTENT)
+                else:
+                    return Response(
+                        {'detail': 'You cannot delete Probe that is associated '
+                                   'to metric templates!'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
 
             except Probe.DoesNotExist:
                 raise NotFound(status=404, detail='Probe not found')

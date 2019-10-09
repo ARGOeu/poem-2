@@ -397,48 +397,62 @@ class ListProbesAPIViewTests(TenantTestCase):
         self.datetime1 = probe1.datetime
         self.id1 = probe1.id
 
-        with schema_context(get_public_schema_name()):
-            self.ct = ContentType.objects.get_for_model(admin_models.Probe)
+        self.ct = ContentType.objects.get_for_model(admin_models.Probe)
 
-            admin_models.History.objects.create(
-                object_id=probe1.id,
-                serialized_data='[{"pk": 5, "model": "poem_super_admin.probe",'
-                                ' "fields": {"name": "ams-probe",'
-                                ' "version": "0.1.7", "description":'
-                                ' "Probe is inspecting AMS service by trying to'
-                                ' publish and consume randomly generated'
-                                ' messages.", "comment": "Initial version",'
-                                ' "repository": "https://github.com/ARGOeu/'
-                                'nagios-plugins-argo", "docurl":'
-                                ' "https://github.com/ARGOeu/nagios-plugins-'
-                                'argo/blob/master/README.md", "user": '
-                                '"poem"}}]',
-                object_repr='ams-probe (0.1.7)',
-                content_type=self.ct,
-                comment='Initial version.',
-                date_created=datetime.datetime.now(),
-                user='poem'
-            )
+        admin_models.History.objects.create(
+            object_id=probe1.id,
+            serialized_data='[{"pk": 5, "model": "poem_super_admin.probe",'
+                            ' "fields": {"name": "ams-probe",'
+                            ' "version": "0.1.7", "description":'
+                            ' "Probe is inspecting AMS service by trying to'
+                            ' publish and consume randomly generated'
+                            ' messages.", "comment": "Initial version",'
+                            ' "repository": "https://github.com/ARGOeu/'
+                            'nagios-plugins-argo", "docurl":'
+                            ' "https://github.com/ARGOeu/nagios-plugins-'
+                            'argo/blob/master/README.md", "user": '
+                            '"poem"}}]',
+            object_repr='ams-probe (0.1.7)',
+            content_type=self.ct,
+            comment='Initial version.',
+            date_created=datetime.datetime.now(),
+            user='poem'
+        )
 
-            admin_models.History.objects.create(
-                object_id=probe2.id,
-                serialized_data='[{"pk": 5, "model": "poem_super_admin.probe",'
-                                ' "fields": {"name": "argo-web-api",'
-                                ' "version": "0.1.7", "description":'
-                                ' "This is probe for checking AR and status'
-                                ' reports are properly working. ", '
-                                ' "comment": "Initial version",'
-                                ' "repository": "https://github.com/ARGOeu/'
-                                'nagios-plugins-argo", "docurl":'
-                                ' "https://github.com/ARGOeu/nagios-plugins-'
-                                'argo/blob/master/README.md", "user": '
-                                '"poem"}}]',
-                object_repr='argo-web-api (0.1.7)',
-                content_type=self.ct,
-                comment='Initial version.',
-                date_created=datetime.datetime.now(),
-                user='poem'
-            )
+        pv = admin_models.History.objects.create(
+            object_id=probe2.id,
+            serialized_data='[{"pk": 5, "model": "poem_super_admin.probe",'
+                            ' "fields": {"name": "argo-web-api",'
+                            ' "version": "0.1.7", "description":'
+                            ' "This is probe for checking AR and status'
+                            ' reports are properly working. ", '
+                            ' "comment": "Initial version",'
+                            ' "repository": "https://github.com/ARGOeu/'
+                            'nagios-plugins-argo", "docurl":'
+                            ' "https://github.com/ARGOeu/nagios-plugins-'
+                            'argo/blob/master/README.md", "user": '
+                            '"poem"}}]',
+            object_repr='argo-web-api (0.1.7)',
+            content_type=self.ct,
+            comment='Initial version.',
+            date_created=datetime.datetime.now(),
+            user='poem'
+        )
+
+        type = admin_models.MetricTemplateType.objects.create(name='Active')
+
+        admin_models.MetricTemplate.objects.create(
+            name='argo.API-Check',
+            probeversion='argo-web-api (0.1.7)',
+            mtype=type,
+            probekey=pv,
+            probeexecutable='["web-api"]',
+            config='["maxCheckAttempts 3", "timeout 120", '
+                   '"path /usr/libexec/argo-monitoring/probes/argo", '
+                   '"interval 5", "retryInterval 3"]',
+            attribute='["argo.api_TOKEN --token"]',
+            flags='["OBSESS 1"]'
+        )
 
 
     def test_get_list_of_all_probes(self):
@@ -611,6 +625,19 @@ class ListProbesAPIViewTests(TenantTestCase):
         response = self.view(request, 'ams-probe')
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(admin_models.Probe.objects.all().count(), 1)
+
+    def test_delete_probe_associated_to_metric_template(self):
+        request = self.factory.delete(self.url_base + 'argo-web-api')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'argo-web-api')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data,
+            {
+                'detail': 'You cannot delete Probe that is associated to metric'
+                          ' templates!'
+            }
+        )
 
     def test_delete_probe_without_name(self):
         request = self.factory.delete(self.url_base)
