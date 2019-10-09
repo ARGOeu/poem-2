@@ -1,9 +1,12 @@
+from django.db import IntegrityError
+
 import json
 
 from Poem.api.internal_views.metrics import one_value_inline, two_value_inline
 from Poem.api.views import NotFound
 from Poem.poem.models import Metric
-from Poem.poem_super_admin.models import MetricTemplate, MetricTemplateType
+from Poem.poem_super_admin.models import MetricTemplate, MetricTemplateType, \
+    History
 from Poem.tenants.models import Tenant
 
 from rest_framework import status
@@ -171,39 +174,47 @@ class ListMetricTemplates(APIView):
         else:
             probeexecutable = ''
 
-        if request.data['mtype'] == 'Active':
-            MetricTemplate.objects.create(
-                name=request.data['name'],
-                mtype=MetricTemplateType.objects.get(
-                    name=request.data['mtype']
-                ),
-                probeversion=request.data['probeversion'],
-                probekey=Version.objects.get(
-                    object_repr=request.data['probeversion']
-                ),
-                parent=parent,
-                probeexecutable=probeexecutable,
-                config=inline_metric_for_db(request.data['config']),
-                attribute=inline_metric_for_db(request.data['attribute']),
-                dependency=inline_metric_for_db(request.data['dependency']),
-                flags=inline_metric_for_db(request.data['flags']),
-                files=inline_metric_for_db(request.data['files']),
-                parameter=inline_metric_for_db(request.data['parameter']),
-                fileparameter=inline_metric_for_db(
-                    request.data['fileparameter']
+        try:
+            if request.data['mtype'] == 'Active':
+                MetricTemplate.objects.create(
+                    name=request.data['name'],
+                    mtype=MetricTemplateType.objects.get(
+                        name=request.data['mtype']
+                    ),
+                    probeversion=request.data['probeversion'],
+                    probekey=History.objects.get(
+                        object_repr=request.data['probeversion']
+                    ),
+                    parent=parent,
+                    probeexecutable=probeexecutable,
+                    config=inline_metric_for_db(request.data['config']),
+                    attribute=inline_metric_for_db(request.data['attribute']),
+                    dependency=inline_metric_for_db(request.data['dependency']),
+                    flags=inline_metric_for_db(request.data['flags']),
+                    files=inline_metric_for_db(request.data['files']),
+                    parameter=inline_metric_for_db(request.data['parameter']),
+                    fileparameter=inline_metric_for_db(
+                        request.data['fileparameter']
+                    )
                 )
-            )
-        else:
-            MetricTemplate.objects.create(
-                name=request.data['name'],
-                mtype=MetricTemplateType.objects.get(
-                    name=request.data['mtype']
-                ),
-                parent=parent,
-                flags=inline_metric_for_db(request.data['flags'])
-            )
+            else:
+                MetricTemplate.objects.create(
+                    name=request.data['name'],
+                    mtype=MetricTemplateType.objects.get(
+                        name=request.data['mtype']
+                    ),
+                    parent=parent,
+                    flags=inline_metric_for_db(request.data['flags'])
+                )
 
-        return Response(status=status.HTTP_201_CREATED)
+            return Response(status=status.HTTP_201_CREATED)
+
+        except IntegrityError:
+            return Response(
+                {'detail':
+                     'Metric template with the given name already exists.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
     def put(self, request):
         metrictemplate = MetricTemplate.objects.get(name=request.data['name'])
@@ -220,7 +231,7 @@ class ListMetricTemplates(APIView):
 
         if request.data['mtype'] == 'Active':
             metrictemplate.probeversion = request.data['probeversion']
-            metrictemplate.probekey = Version.objects.get(
+            metrictemplate.probekey = History.objects.get(
                 object_repr=request.data['probeversion']
             )
             metrictemplate.parent = parent
