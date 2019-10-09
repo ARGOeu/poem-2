@@ -11,6 +11,7 @@ def create_public_file(file):
     new_data = []
     new_history = []
     history_index = 1
+    probekey_pks = {}
     probeversion_pks = {}
     for item in data:
         if item['model'] == 'poem_super_admin.probe':
@@ -41,7 +42,13 @@ def create_public_file(file):
 
             probeversion_pks.update(
                 {
-                    item['fields']['nameversion']: history_index
+                    item['fields']['name']: item['fields']['nameversion']
+                }
+            )
+
+            probekey_pks.update(
+                {
+                    item['fields']['name']: history_index
                 }
             )
 
@@ -49,13 +56,23 @@ def create_public_file(file):
 
     new_data = new_data + new_history
 
+    mt_names = []
     for item in data:
         if item['model'] == 'users.custuser' or \
-                item['model'] == 'poem_super_admin.metrictemplatetype' or \
-                item['model'] == 'poem_super_admin.metrictemplate' or \
-                item['model'] == 'reversion.revision' or \
-                item['model'] == 'reversion.version':
+                item['model'] == 'poem_super_admin.metrictemplatetype':
             new_data.append(item)
+
+        if item['model'] == 'poem_super_admin.metrictemplate':
+            if item['fields']['probekey']:
+                item['fields']['probeversion'] = probeversion_pks[
+                    item['fields']['probeversion'].split(' ')[0]
+                ]
+                item['fields']['probekey'] = probekey_pks[
+                    item['fields']['probeversion'].split(' ')[0]
+                ]
+            if item['fields']['name'] not in mt_names:
+                new_data.append(item)
+                mt_names.append(item['fields']['name'])
 
     with open('new-' + file, 'w') as f:
         json.dump(new_data, f, indent=2)
