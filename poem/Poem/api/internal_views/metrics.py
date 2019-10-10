@@ -1,12 +1,17 @@
+from django.db import IntegrityError
+
 import json
 
 from Poem.api.views import NotFound
 from Poem.poem import models as poem_models
+from Poem.poem_super_admin import models as admin_models
 
 from rest_framework import status
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
+from reversion.models import Version
 
 
 def one_value_inline(input):
@@ -70,7 +75,6 @@ class ListMetric(APIView):
             results.append(dict(
                 id=metric.id,
                 name=metric.name,
-                tag=metric.tag.name,
                 mtype=metric.mtype.name,
                 probeversion=metric.probeversion,
                 probekey=probekey,
@@ -86,7 +90,7 @@ class ListMetric(APIView):
                 fileparameter=fileparameter
             ))
 
-            results = sorted(results, key=lambda k: k['name'])
+        results = sorted(results, key=lambda k: k['name'])
 
         if name:
             return Response(results[0])
@@ -100,11 +104,6 @@ class ListMetric(APIView):
         if request.data['group'] != metric.group.name:
             metric.group = poem_models.GroupOfMetrics.objects.get(
                 name=request.data['group']
-            )
-
-        if request.data['tag'] != metric.tag.name:
-            metric.tag = poem_models.Tags.objects.get(
-                name=request.data['tag']
             )
 
         if set(config) != set(json.loads(metric.config)):
@@ -128,14 +127,6 @@ class ListMetric(APIView):
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
-class ListTags(APIView):
-    authentication_classes = (SessionAuthentication,)
-
-    def get(self, request):
-        tags = poem_models.Tags.objects.all().values_list('name', flat=True)
-        return Response(tags)
-
-
 class ListMetricTypes(APIView):
     authentication_classes = (SessionAuthentication,)
 
@@ -144,3 +135,93 @@ class ListMetricTypes(APIView):
             'name', flat=True
         )
         return Response(types)
+
+
+class ImportMetrics(APIView):
+    authentication_classes = (SessionAuthentication,)
+
+    def post(self, request):
+        imported = []
+        err = []
+        for template in dict(request.data)['metrictemplates']:
+            metrictemplate = admin_models.MetricTemplate.objects.get(
+                name=template
+            )
+            mt = poem_models.MetricType.objects.get(
+                name=metrictemplate.mtype.name
+            )
+            gr = poem_models.GroupOfMetrics.objects.get(
+                name=request.tenant.name.upper()
+            )
+
+            try:
+                if metrictemplate.probeversion:
+                    ver = Version.objects.get(
+                        object_repr=metrictemplate.probeversion
+                    )
+
+                    poem_models.Metric.objects.create(
+                        name=metrictemplate.name,
+                        mtype=mt,
+                        probeversion=metrictemplate.probeversion,
+                        probekey=ver,
+                        parent=metrictemplate.parent,
+                        group=gr,
+                        probeexecutable=metrictemplate.probeexecutable,
+                        config=metrictemplate.config,
+                        attribute=metrictemplate.attribute,
+                        dependancy=metrictemplate.dependency,
+                        flags=metrictemplate.flags,
+                        files=metrictemplate.files,
+                        parameter=metrictemplate.parameter,
+                        fileparameter=metrictemplate.fileparameter
+                    )
+                else:
+                    poem_models.Metric.objects.create(
+                        name=metrictemplate.name,
+                        mtype=mt,
+                        parent=metrictemplate.parent,
+                        flags=metrictemplate.flags,
+                        group=gr
+                    )
+
+                imported.append(metrictemplate.name)
+
+            except IntegrityError:
+                err.append(metrictemplate.name)
+                continue
+
+        if imported:
+            if len(imported) == 1:
+                message_bit = '{} has'.format(imported[0])
+            else:
+                message_bit = ', '.join(msg for msg in imported) + ' have'
+
+        if err:
+            if len(err) == 1:
+                error_bit = '{} has'.format(err[0])
+            else:
+                error_bit = ', '.join(msg for msg in err) + ' have'
+
+        if imported and err:
+            data = {
+                'imported':
+                    '{} been successfully imported.'.format(message_bit),
+                'err':
+                    '{} not been imported, since those metrics already exist '
+                    'in the database.'.format(error_bit)
+            }
+        elif imported and not err:
+            data = {
+                'imported':
+                    '{} been successfully imported.'.format(message_bit),
+            }
+        elif not imported and err:
+            data = {
+                'err':
+                    '{} not been imported, since those metrics already exist '
+                    'in the database.'.format(error_bit)
+            }
+
+        return Response(status=status.HTTP_201_CREATED,
+                        data=data)

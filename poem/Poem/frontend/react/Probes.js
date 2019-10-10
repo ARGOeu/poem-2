@@ -1,9 +1,9 @@
 import React, { Component } from 'react';
 import { Backend } from './DataManager';
 import { Link } from 'react-router-dom';
-import { LoadingAnim, BaseArgoView, NotifyOk, Checkbox } from './UIElements';
+import { LoadingAnim, BaseArgoView, NotifyOk, Checkbox, FancyErrorMessage } from './UIElements';
 import ReactTable from 'react-table';
-import { Alert,
+import {
   FormGroup, 
   Label, 
   FormText, 
@@ -354,8 +354,10 @@ export class ProbeChange extends Component {
     this.state = {
       probe: {},
       poemversion: null,
+      metrictemplatelist: [],
       validationVisible: true,
       new_version: true,
+      update_metrics: false,
       loading: false,
       write_perm: false,
       areYouSureModal: false,
@@ -420,7 +422,8 @@ export class ProbeChange extends Component {
         docurl: values.docurl,
         description: values.description,
         comment: values.comment,
-        new_version: values.new_version
+        new_version: values.new_version,
+        update_metrics: values.update_metrics
       })
         .then(() => NotifyOk({
           msg: 'Probe successfully changed',
@@ -468,12 +471,16 @@ export class ProbeChange extends Component {
         this.backend.fetchPoemVersion()
       ])
           .then(([probe, ver]) => {
-            this.setState({
-              probe: probe,
-              poemversion: ver,
-              write_perm: localStorage.getItem('authIsSuperuser') === 'true',
-              loading: false
-            });
+            this.backend.fetchMetricTemplatesByProbeVersion(probe.name + '(' + probe.version + ')')
+            .then(metrics => {
+              this.setState({
+                probe: probe,
+                poemversion: ver,
+                metrictemplatelist: metrics,
+                write_perm: localStorage.getItem('authIsSuperuser') === 'true',
+                loading: false
+              });
+            })
           });
     } else {
       this.backend.fetchPoemVersion()
@@ -497,7 +504,7 @@ export class ProbeChange extends Component {
   }
 
   render() {
-    const { probe, new_version, poemversion, write_perm, loading } = this.state;
+    const { probe, new_version, update_metrics, poemversion, metrictemplatelist, write_perm, loading } = this.state;
 
     if (loading)
       return(<LoadingAnim/>)
@@ -522,7 +529,8 @@ export class ProbeChange extends Component {
                 docurl: probe.docurl,
                 description: probe.description,
                 comment: probe.comment,
-                new_version: new_version
+                new_version: new_version,
+                update_metrics: update_metrics
               }}
               validationSchema={ProbeSchema}
               onSubmit = {(values, actions) => this.onSubmitHandle(values, actions)}
@@ -537,17 +545,15 @@ export class ProbeChange extends Component {
                           <Field
                             type='text'
                             name='name'
-                            className='form-control'
+                            className={errors.name ? 'form-control border-danger' : 'form-control'}
                             id='name'
                           />          
                         </InputGroup>
                           {
-                            errors.name && touched.name ? 
-                            <Alert color='danger' isOpen={this.state.validationVisible} toggle={this.onDismiss} fade={false}>
-                              {errors.name}
-                            </Alert>
+                            errors.name ? 
+                              FancyErrorMessage(errors.name)
                             : 
-                            null
+                              null
                           }
                         <FormText color="muted">
                           Name of this probe.
@@ -559,17 +565,15 @@ export class ProbeChange extends Component {
                           <Field
                             type='text'
                             name='version'
-                            className='form-control'
+                            className={errors.version ? 'form-control border-danger' : 'form-control'}
                             id='version'
                           />
                         </InputGroup>
                           {
-                            errors.version && touched.version ? 
-                            <Alert color='danger' isOpen={this.state.validationVisible} toggle={this.onDismiss} fade={false}>
-                              {errors.version}
-                            </Alert>
+                            errors.version ? 
+                              FancyErrorMessage(errors.version)
                             : 
-                            null
+                              null
                           }
                         <FormText color="muted">
                           Version of the probe.
@@ -577,18 +581,32 @@ export class ProbeChange extends Component {
                       </Col>
                       {
                         !this.addview &&
-                          <Col md={2}>
-                            <Field
-                              component={Checkbox}
-                              name='new_version'
-                              className='form-control'
-                              id='checkbox'
-                              label='New version'
-                            />
-                            <FormText color='muted'>
-                              Create version for changes.
-                            </FormText>
-                          </Col>
+                          <>
+                            <Col md={2}>
+                              <Field
+                                component={Checkbox}
+                                name='new_version'
+                                className='form-control'
+                                id='checkbox-1'
+                                label='New version'
+                              />
+                              <FormText color='muted'>
+                                Create version for changes.
+                              </FormText>
+                            </Col>
+                            <Col md={2}>
+                              <Field
+                                component={Checkbox}
+                                name='update_metrics'
+                                className='form-control'
+                                id='checkbox-2'
+                                label='Update metric templates'
+                              />
+                              <FormText color='muted'>
+                                Update all associated metric templates.
+                              </FormText>
+                            </Col>
+                          </>
                       }
                     </Row>
                   </FormGroup>
@@ -601,17 +619,15 @@ export class ProbeChange extends Component {
                           <Field
                             type='text'
                             name='repository'
-                            className='form-control'
+                            className={errors.repository ? 'form-control border-danger' : 'form-control'}
                             id='repository'
                           />
                         </InputGroup>
                           {
-                            errors.repository && touched.repository ? 
-                            <Alert color='danger' isOpen={this.state.validationVisible} toggle={this.onDismiss} fade={false}>
-                              {errors.repository}
-                            </Alert>
+                            errors.repository ? 
+                              FancyErrorMessage(errors.repository)
                             : 
-                            null
+                              null
                           }
                         <FormText color='muted'>
                           Probe repository URL.
@@ -625,17 +641,15 @@ export class ProbeChange extends Component {
                           <Field
                             type='text'
                             name='docurl'
-                            className='form-control'
+                            className={errors.docurl ? 'form-control border-danger' : 'form-control'}
                             id='docurl'
                           />
                         </InputGroup>
                           {
-                            errors.docurl && touched.docurl ? 
-                            <Alert color='danger' isOpen={this.state.validationVisible} toggle={this.onDismiss} fade={false}>
-                              {errors.docurl}
-                            </Alert>
+                            errors.docurl ? 
+                              FancyErrorMessage(errors.docurl)
                             : 
-                            null
+                              null
                           }
                         <FormText color='muted'>
                           Documentation URL.
@@ -649,16 +663,14 @@ export class ProbeChange extends Component {
                           component='textarea'
                           name='description'
                           rows='15'
-                          className='form-control'
+                          className={errors.description? 'form-control border-danger' : 'form-control'} 
                           id='description'
                         />
                           {
-                            errors.description && touched.description ? 
-                            <Alert color='danger' isOpen={this.state.validationVisible} toggle={this.onDismiss} fade={false}>
-                              {errors.description}
-                            </Alert>
+                            errors.description ? 
+                              FancyErrorMessage(errors.description)
                             : 
-                            null
+                              null
                           }
                         <FormText color='muted'>
                           Free text description outlining the purpose of this probe.
@@ -672,22 +684,40 @@ export class ProbeChange extends Component {
                           component='textarea'
                           name='comment'
                           rows='5'
-                          className='form-control'
+                          className={errors.comment? 'form-control border-danger' : 'form-control'}
                           id='comment'
                         />
                           {
-                            errors.comment && touched.comment ? 
-                            <Alert color='danger' isOpen={this.state.validationVisible} toggle={this.onDismiss} fade={false}>
-                              {errors.comment}
-                            </Alert>
+                            errors.comment ? 
+                              FancyErrorMessage(errors.comment)
                             : 
-                            null
+                              null
                           }
                         <FormText color='muted'>
                           Short comment about this version.
                         </FormText>
                       </Col>
                     </Row>
+                    {
+                      !this.addview &&
+                      <Row>
+                        <Col md={8}>
+                          <div>
+                            Metric templates: 
+                            {
+                              metrictemplatelist.length > 0 && 
+                              <div>
+                                {
+                                  metrictemplatelist
+                                    .map((e, i) => <Link key={i} to={'/ui/metrictemplates/' + e}>{e}</Link>)
+                                    .reduce((prev, curr) => [prev, ', ', curr])
+                                }
+                            </div>
+                            }
+                          </div>
+                        </Col>
+                      </Row>
+                    }
                   </FormGroup>
                   {
                     (write_perm) &&
@@ -698,7 +728,7 @@ export class ProbeChange extends Component {
                           this.toggleAreYouSureSetModal(
                             'Are you sure you want to delete Probe?',
                             'Delete probe',
-                            () => this.doDelete(props.values.name)
+                            () => this.doDelete(values.name)
                           )
                         }}>
                           Delete

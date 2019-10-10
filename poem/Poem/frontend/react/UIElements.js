@@ -44,7 +44,7 @@ import { Field } from 'formik';
 
 var list_pages = ['administration','services', 'reports', 'probes',
                   'metrics', 'metricprofiles', 'aggregationprofiles'];
-var admin_list_pages = ['administration', 'probes'];
+var admin_list_pages = ['administration', 'probes', 'metrictemplates'];
 
 var link_title = new Map();
 link_title.set('administration', 'Administration');
@@ -59,6 +59,7 @@ link_title.set('groupofmetrics', 'Groups of metrics');
 link_title.set('groupofmetricprofiles', 'Groups of metric profiles');
 link_title.set('users', 'Users');
 link_title.set('apikey', 'API key');
+link_title.set('metrictemplates', 'Metric templates');
 
 export const Icon = props =>
 {
@@ -69,6 +70,7 @@ export const Icon = props =>
   link_icon.set('reports', faFileAlt);
   link_icon.set('probes', faServer);
   link_icon.set('metrics', faCog);
+  link_icon.set('metrictemplates', faCog);
   link_icon.set('metricprofiles', faCogs);
   link_icon.set('aggregationprofiles', faTasks);
   link_icon.set('apikey', faKey)
@@ -330,7 +332,8 @@ export const NotifyOk = ({msg='', title='', callback=undefined}) => {
 
 export const BaseArgoView = ({resourcename='', location=undefined, 
     infoview=false, addview=false, listview=false, modal=false, 
-    state=undefined, toggle=undefined, submitperm=true, history=true, children}) => 
+    state=undefined, toggle=undefined, submitperm=true, history=true, 
+    addnew=true, children}) => 
 (
   <React.Fragment>
     {
@@ -353,7 +356,10 @@ export const BaseArgoView = ({resourcename='', location=undefined,
             listview ?
               <React.Fragment>
                 <h2 className="ml-3 mt-1 mb-4">{`Select ${resourcename} to change`}</h2>
-                <Link className="btn btn-secondary" to={location.pathname + "/add"} role="button">Add</Link>
+                {
+                  addnew &&
+                    <Link className="btn btn-secondary" to={location.pathname + "/add"} role="button">Add</Link>
+                }
               </React.Fragment>
             :
               <React.Fragment>
@@ -403,3 +409,8 @@ export const Checkbox = ({
     </div>
   );
 };
+
+
+export const FancyErrorMessage = (msg) => (
+  <div style={{color: '#FF0000', fontSize: 'small'}}>{msg}</div>
+)
