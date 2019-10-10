@@ -33,7 +33,6 @@ class GroupOfMetrics(models.Model):
     permissions = models.ManyToManyField(Permission,
                                          verbose_name=_('permissions'),
                                          blank=True)
-    metrics = models.ManyToManyField(Metrics, blank=True)
     objects = GroupManager()
 
     class Meta:
