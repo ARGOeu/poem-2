@@ -55,7 +55,7 @@ class Metric(models.Model):
     probekey = models.ForeignKey(History, blank=True, null=True,
                                  on_delete=models.SET_NULL)
     group = models.ForeignKey(GroupOfMetrics, null=True,
-                              on_delete=models.CASCADE)
+                              on_delete=models.SET_NULL)
     parent = models.CharField(max_length=128)
     probeexecutable = models.CharField(max_length=128)
     config = models.CharField(max_length=1024)
