@@ -5,18 +5,6 @@ from django.utils.translation import ugettext_lazy as _
 from Poem.poem_super_admin.models import History
 
 
-class Metrics(models.Model):
-    id = models.AutoField(primary_key=True)
-    name = models.CharField(max_length=128)
-
-    class Meta:
-        permissions = (('metricsown', 'Read/Write/Modify'),)
-        app_label = 'poem'
-
-    def __str__(self):
-        return u'%s' % self.name
-
-
 class MetricType(models.Model):
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=128)
@@ -67,6 +55,7 @@ class Metric(models.Model):
     fileparameter = models.CharField(max_length=1024)
 
     class Meta:
+        permissions = (('metricsown', 'Read/Write/Modify'),)
         app_label = 'poem'
         verbose_name = 'Metric'
 
