@@ -90,7 +90,7 @@ class ListProbes(APIView):
                             object_repr=new_nameversion
                         )
                         metrictemplate.save()
-                        update_metrics(metrictemplate)
+                        update_metrics(metrictemplate, metrictemplate.name)
 
             else:
                 history = History.objects.filter(object_repr=probe.__str__())
