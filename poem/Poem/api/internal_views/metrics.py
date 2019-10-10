@@ -11,8 +11,6 @@ from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from reversion.models import Version
-
 
 def one_value_inline(input):
     if input:
@@ -156,7 +154,7 @@ class ImportMetrics(APIView):
 
             try:
                 if metrictemplate.probeversion:
-                    ver = Version.objects.get(
+                    ver = admin_models.History.objects.get(
                         object_repr=metrictemplate.probeversion
                     )
 

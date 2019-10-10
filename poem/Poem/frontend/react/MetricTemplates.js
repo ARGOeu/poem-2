@@ -4,7 +4,6 @@ import { Backend } from './DataManager';
 import { LoadingAnim, BaseArgoView, NotifyOk, FancyErrorMessage, Icon } from './UIElements';
 import { Formik, Form, Field } from 'formik';
 import {
-  Alert,
   FormGroup,
   Row,
   Button,
@@ -18,6 +17,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import Autocomplete from 'react-autocomplete';
 import * as Yup from 'yup';
+import { NotificationManager } from 'react-notifications';
 import './MetricTemplates.css';
 
 export const MetricTemplateList = ListOfMetrics('metrictemplate');
@@ -184,14 +184,24 @@ export class MetricTemplateChange extends Component {
         files: values.file_attributes,
         fileparameter: values.file_parameters
       })
-        .then(() => NotifyOk({
-          msg: 'Metric template successfully added',
-          title: 'Added',
-          callback: () => this.history.push('/ui/metrictemplates')
-        }))
+        .then(response => {
+          if (!response.ok) {
+            response.json()
+              .then(json => {
+                NotificationManager.error(json.detail, 'Error');
+              });
+          } else {
+            NotifyOk({
+              msg: 'Metric template successfully added',
+              title: 'Added',
+              callback: () => this.history.push('/ui/metrictemplates')
+            })
+          }
+        })
         .catch(err => alert('Something went wrong: ' + err))
     } else {
       this.backend.changeMetricTemplate({
+        id: values.id,
         name: values.name,
         probeversion: values.probeversion,
         mtype: values.type,
@@ -205,11 +215,20 @@ export class MetricTemplateChange extends Component {
         files: values.file_attributes,
         fileparameter: values.file_parameters
       })
-        .then(() => NotifyOk({
-          msg: 'Metric template successfully changed',
-          title: 'Changed',
-          callback: () => this.history.push('/ui/metrictemplates')
-        }))
+        .then(response => {
+          if (!response.ok) {
+            response.json()
+              .then(json => {
+                NotificationManager.error(json.detail, 'Error');
+              });
+          } else {
+            NotifyOk({
+              msg: 'Metric template successfully changed',
+              title: 'Changed',
+              callback: () => this.history.push('/ui/metrictemplates')
+            })
+          }
+        })
         .catch(err => alert('Something went wrong: ' + err))
     }
   }
@@ -298,6 +317,7 @@ export class MetricTemplateChange extends Component {
         });
         this.setState({
           metrictemplate: {
+            id: '',
             name: '',
             probeversion: '',
             mtype: 'Active',
@@ -347,6 +367,7 @@ export class MetricTemplateChange extends Component {
         >
           <Formik 
             initialValues = {{
+              id: metrictemplate.id,
               name: metrictemplate.name,
               probeversion: metrictemplate.probeversion,
               type: metrictemplate.mtype,

@@ -2,7 +2,7 @@ from django.contrib.auth.models import GroupManager, Permission
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
-from reversion.models import Version
+from Poem.poem_super_admin.models import History
 
 
 class Metrics(models.Model):
@@ -25,7 +25,7 @@ class MetricType(models.Model):
         app_label = 'poem'
 
     def __str__(self):
-        return u'%s' % (self.name)
+        return u'%s' % self.name
 
 
 class GroupOfMetrics(models.Model):
@@ -53,7 +53,7 @@ class Metric(models.Model):
     name = models.CharField(max_length=128, unique=True)
     mtype = models.ForeignKey(MetricType, on_delete=models.CASCADE)
     probeversion = models.CharField(max_length=128)
-    probekey = models.ForeignKey(Version, blank=True, null=True,
+    probekey = models.ForeignKey(History, blank=True, null=True,
                                  on_delete=models.SET_NULL)
     group = models.ForeignKey(GroupOfMetrics, null=True,
                               on_delete=models.CASCADE)
