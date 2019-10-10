@@ -425,12 +425,21 @@ export class ProbeChange extends Component {
         new_version: values.new_version,
         update_metrics: values.update_metrics
       })
-        .then(() => NotifyOk({
-          msg: 'Probe successfully changed',
-          title: 'Changed',
-          callback: () => this.history.push('/ui/probes')
-        }))
-          .catch(err => alert('Something went wrong: ' + err))
+        .then(response => {
+          if (!response.ok) {
+            response.json()
+              .then(json => {
+                NotificationManager.error(json.detail, 'Error');
+              });
+          } else {
+            NotifyOk({
+              msg: 'Probe successfully changed',
+              title: 'Changed',
+              callback: () => this.history.push('/ui/probes')
+            });
+          }
+        })
+        .catch(err => alert('Something went wrong: ' + err))
     } else {
       this.backend.addProbe({
         name: values.name,
@@ -440,12 +449,21 @@ export class ProbeChange extends Component {
         description: values.description,
         comment: values.comment
       })
-        .then(() => NotifyOk({
-          msg: 'Probe successfully added',
-          title: 'Added',
-          callback: () => this.history.push('/ui/probes')
-        }))
-          .catch(err => alert('Something went wrong: ' + err))
+        .then(response => {
+          if (!response.ok) {
+            response.json()
+              .then(json => {
+                NotificationManager.error(json.detail, 'Error');
+              });
+          } else {
+            NotifyOk({
+              msg: 'Probe successfully added',
+              title: 'Added',
+              callback: () => this.history.push('/ui/probes')
+            });
+          }
+        })
+        .catch(err => alert('Something went wrong: ' + err))
     }
   }
 
