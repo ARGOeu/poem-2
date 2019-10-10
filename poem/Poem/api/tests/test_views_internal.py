@@ -2554,7 +2554,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         )
 
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
-    def test_post_metric_template(self, func):
+    def test_post_metric_template_with_existing_name(self, func):
         func.return_value = ['maxCheckAttempts 4', 'timeout 70',
                              'path /usr/libexec/argo-monitoring/probes/argo',
                              'interval 6', 'retryInterval 4']
@@ -2589,12 +2589,12 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(
             response.data,
             {
-                'detail': 'Metric template with the given name already exists.'
+                'detail': 'Metric template with this name already exists.'
             }
         )
 
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
-    def test_put_metrictemplate_with_existing_name(self, func):
+    def test_put_metrictemplate(self, func):
         func.return_value = ["argo.ams_TOKEN --token"]
         attr = [{'key': 'dependency-key', 'value': 'dependency-value'}]
         conf = [
@@ -2607,6 +2607,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         ]
 
         data = {
+            'id': self.id1,
             'name': 'argo.AMS-Check',
             'mtype': self.mtype,
             'probeversion': 'ams-probe (0.1.7)',
@@ -2631,6 +2632,45 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.mtype.name, 'Active')
         self.assertEqual(mt.probeexecutable, '["ams-probe"]')
         self.assertEqual(mt.attribute, "['argo.ams_TOKEN --token']")
+
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    def test_put_metrictemplate_with_existing_name(self, func):
+        func.return_value = ["argo.ams_TOKEN --token"]
+        attr = [{'key': 'dependency-key', 'value': 'dependency-value'}]
+        conf = [
+            {'key': 'maxCheckAttempts', 'value': '3'},
+            {'key': 'timeout', 'key': '60'},
+            {'key': 'path', 'value':
+                '/usr/libexec/argo-monitoring/probes/argo'},
+            {'key': 'interval', 'value': '5'},
+            {'key': 'retryInterval', 'value': '3'}
+        ]
+
+        data = {
+            'id': self.id1,
+            'name': 'org.apel.APEL-Pub',
+            'mtype': self.mtype,
+            'probeversion': 'ams-probe (0.1.7)',
+            'parent': '',
+            'probeexecutable': 'ams-probe',
+            'config': conf,
+            'attribute': attr,
+            'dependency': [{'key': '', 'value': ''}],
+            'parameter': [{'key': '', 'value': ''}],
+            'flags': [{'key': '', 'value': ''}],
+            'files': [{'key': '', 'value': ''}],
+            'fileparameter': [{'key': '', 'value': ''}]
+        }
+
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data,
+            {'detail': 'Metric template with this name already exists.'}
+        )
 
     def test_delete_metric_template(self):
         self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 2)

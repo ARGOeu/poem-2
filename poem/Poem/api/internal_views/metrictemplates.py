@@ -30,7 +30,7 @@ def inline_metric_for_db(input):
         return ''
 
 
-def update_metrics(metrictemplate):
+def update_metrics(metrictemplate, name):
     schemas = list(Tenant.objects.all().values_list('schema_name', flat=True))
     schemas.remove(get_public_schema_name())
 
@@ -38,7 +38,11 @@ def update_metrics(metrictemplate):
         with schema_context(schema):
             try:
                 changes = 0
-                met = Metric.objects.get(name=metrictemplate.name)
+                met = Metric.objects.get(name=name)
+
+                if met.name != metrictemplate.name:
+                    met.name = metrictemplate.name
+                    changes += 1
 
                 if met.probeversion != metrictemplate.probeversion:
                     met.probeversion = metrictemplate.probeversion
@@ -210,12 +214,13 @@ class ListMetricTemplates(APIView):
         except IntegrityError:
             return Response(
                 {'detail':
-                     'Metric template with the given name already exists.'},
+                     'Metric template with this name already exists.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
     def put(self, request):
-        metrictemplate = MetricTemplate.objects.get(name=request.data['name'])
+        metrictemplate = MetricTemplate.objects.get(id=request.data['id'])
+        old_name = metrictemplate.name
 
         if request.data['parent']:
             parent = json.dumps([request.data['parent']])
@@ -227,38 +232,55 @@ class ListMetricTemplates(APIView):
         else:
             probeexecutable = ''
 
-        if request.data['mtype'] == 'Active':
-            metrictemplate.probeversion = request.data['probeversion']
-            metrictemplate.probekey = History.objects.get(
-                object_repr=request.data['probeversion']
-            )
-            metrictemplate.parent = parent
-            metrictemplate.probeexecutable = probeexecutable
-            metrictemplate.config = inline_metric_for_db(request.data['config'])
-            metrictemplate.attribute = inline_metric_for_db(
-                request.data['attribute']
-            )
-            metrictemplate.dependency = inline_metric_for_db(
-                request.data['dependency']
-            )
-            metrictemplate.flags = inline_metric_for_db(request.data['flags'])
-            metrictemplate.files = inline_metric_for_db(request.data['files'])
-            metrictemplate.parameter = inline_metric_for_db(
-                request.data['parameter']
-            )
-            metrictemplate.fileparameter = inline_metric_for_db(
-                request.data['fileparameter']
-            )
+        try:
+            if request.data['mtype'] == 'Active':
+                metrictemplate.name = request.data['name']
+                metrictemplate.probeversion = request.data['probeversion']
+                metrictemplate.probekey = History.objects.get(
+                    object_repr=request.data['probeversion']
+                )
+                metrictemplate.parent = parent
+                metrictemplate.probeexecutable = probeexecutable
+                metrictemplate.config = inline_metric_for_db(
+                    request.data['config']
+                )
+                metrictemplate.attribute = inline_metric_for_db(
+                    request.data['attribute']
+                )
+                metrictemplate.dependency = inline_metric_for_db(
+                    request.data['dependency']
+                )
+                metrictemplate.flags = inline_metric_for_db(
+                    request.data['flags']
+                )
+                metrictemplate.files = inline_metric_for_db(
+                    request.data['files']
+                )
+                metrictemplate.parameter = inline_metric_for_db(
+                    request.data['parameter']
+                )
+                metrictemplate.fileparameter = inline_metric_for_db(
+                    request.data['fileparameter']
+                )
 
-        else:
-            metrictemplate.parent = parent
-            metrictemplate.flags = inline_metric_for_db(request.data['flags'])
+            else:
+                metrictemplate.name = metrictemplate.name
+                metrictemplate.parent = parent
+                metrictemplate.flags = inline_metric_for_db(
+                    request.data['flags']
+                )
 
-        metrictemplate.save()
+            metrictemplate.save()
 
-        update_metrics(metrictemplate)
+            update_metrics(metrictemplate, old_name)
 
-        return Response(status=status.HTTP_201_CREATED)
+            return Response(status=status.HTTP_201_CREATED)
+
+        except IntegrityError:
+            return Response(
+                {'detail': 'Metric template with this name already exists.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
     def delete(self, request, name=None):
         schemas = list(Tenant.objects.all().values_list('schema_name',
