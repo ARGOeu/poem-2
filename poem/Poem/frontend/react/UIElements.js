@@ -236,16 +236,20 @@ export const NavigationLinks = ({location, poemver}) => {
     <Nav vertical pills id="argo-navlinks" className="border-left border-right border-top rounded-top sticky-top">
         {
           data.map((item, i) =>  
-            item === 'administration' && localStorage.getItem('authIsSuperuser') 
+            item === 'administration'
               ?
-                <NavItem key={i}>
-                  <NavLink
-                    tag={Link}
-                    active={location.pathname.includes(item) ? true : false} 
-                    className={location.pathname.includes(item) ? "text-white bg-info" : "text-dark"}
-                    to={'/ui/' + item}><Icon i={item}/> {link_title.get(item)}
-                  </NavLink>
-                </NavItem>
+                localStorage.getItem('authIsSuperuser') === 'true'
+                  ?
+                    <NavItem key={i}>
+                      <NavLink
+                        tag={Link}
+                        active={location.pathname.includes(item) ? true : false} 
+                        className={location.pathname.includes(item) ? "text-white bg-info" : "text-dark"}
+                        to={'/ui/' + item}><Icon i={item}/> {link_title.get(item)}
+                      </NavLink>
+                    </NavItem>
+                  :
+                    null
               :
                 <NavItem key={i}>
                   <NavLink 
