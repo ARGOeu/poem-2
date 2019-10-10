@@ -83,13 +83,18 @@ class ListMetric(APIView):
             else:
                 probekey = ''
 
+            if metric.group:
+                group = metric.group.name
+            else:
+                group = ''
+
             results.append(dict(
                 id=metric.id,
                 name=metric.name,
                 mtype=metric.mtype.name,
                 probeversion=metric.probeversion,
                 probekey=probekey,
-                group=metric.group.name,
+                group=group,
                 parent=parent,
                 probeexecutable=probeexecutable,
                 config=config,
