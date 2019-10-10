@@ -531,7 +531,7 @@ class ListProbesAPIViewTests(TenantTestCase):
     def test_put_probe_with_new_version(self):
         data = {
             'id': self.id1,
-            'name': 'ams-probe',
+            'name': 'argo-web-api',
             'version': '0.1.7',
             'comment': 'New version.',
             'docurl':
@@ -550,10 +550,11 @@ class ListProbesAPIViewTests(TenantTestCase):
                                    content, content_type=content_type)
         force_authenticate(request, user=self.user)
         response = self.view(request)
-        probe = admin_models.Probe.objects.get(name='ams-probe')
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(probe.version, '0.1.7')
-        self.assertEqual(probe.comment, 'New version.')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data,
+            {'detail': 'Probe with this name already exists.'}
+        )
 
     def test_put_probe_without_new_version(self):
         data = {
@@ -590,6 +591,24 @@ class ListProbesAPIViewTests(TenantTestCase):
         )
         self.assertEqual(ser_data[0]['fields']['description'], probe.description)
 
+    def test_put_probe_with_already_existing_name(self):
+        data = {
+            'id': self.id1,
+            'name': 'ams-probe',
+            'version': '0.1.7',
+            'comment': 'Initial version',
+            'docurl':
+                'https://github.com/ARGOeu/nagios-plugins-argo/blob/'
+                'master/README.md',
+            'description': 'Probe is inspecting AMS service by trying '
+                           'to publish randomly generated messages.',
+            'repository': 'https://github.com/ARGOeu/nagios-plugins-'
+                          'argo',
+            'new_version': False,
+            'update_metrics': False
+        }
+        content, content_type = encode_data(data)
+
     def test_post_probe(self):
         data = {
             'name': 'poem-probe',
@@ -616,6 +635,29 @@ class ListProbesAPIViewTests(TenantTestCase):
             probe.docurl,
             'https://github.com/ARGOeu/nagios-plugins-argo/blob/'
             'master/README.md'
+        )
+
+    def test_post_probe_with_name_which_already_exists(self):
+        data = {
+            'name': 'ams-probe',
+            'version': '0.1.11',
+            'description': 'Probe inspects POEM service.',
+            'comment': 'Initial version.',
+            'repository': 'https://github.com/ARGOeu/nagios-plugins-argo',
+            'docurl': 'https://github.com/ARGOeu/nagios-plugins-argo/blob/'
+                      'master/README.md',
+            'user': 'testuser',
+            'datetime': datetime.datetime.now()
+        }
+        request = self.factory.post(self.url_base, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data,
+            {
+                'detail': 'Probe with this name already exists.'
+            }
         )
 
     def test_delete_probe(self):
