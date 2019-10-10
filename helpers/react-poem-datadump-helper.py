@@ -89,9 +89,7 @@ def create_tenant_file(file):
                 item['model'] == 'poem.metrics' or \
                 item['model'] == 'poem.metrictype' or \
                 item['model'] == 'poem.service' or \
-                item['model'] == 'poem.aggregation' or \
-                item['model'] == 'poem.groupofmetrics' or \
-                item['model'] == 'poem.groupofaggregations':
+                item['model'] == 'poem.groupofmetrics':
             new_data.append(item)
 
         if item['model'] == 'users.custuser':
@@ -118,6 +116,7 @@ def create_tenant_file(file):
         if item['model'] == 'poem.userprofile':
             del item['fields']['groupsofprofiles']
             item['fields']['groupsofmetricprofiles'] = []
+            item['fields']['groupsofaggregations'] = []
             new_data.append(item)
 
     with open('new-' + file, 'w') as f:
