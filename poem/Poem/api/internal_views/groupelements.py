@@ -12,41 +12,42 @@ class ListMetricsInGroup(APIView):
 
     def get(self, request, group=None):
         if group:
-            metrics = poem_models.Metrics.objects.filter(
-                groupofmetrics__name__exact=group
-            )
+            gr = poem_models.GroupOfMetrics.objects.filter(name__exact=group)
+            if len(gr) > 0:
+                metrics = poem_models.Metric.objects.filter(
+                    group__name__exact=group
+                )
+            else:
+                raise NotFound(status=404, detail='Group not found')
         else:
-            metrics = poem_models.Metrics.objects.filter(
-                groupofmetrics__exact=None
+            metrics = poem_models.Metric.objects.filter(
+                group=None
             )
+
         results = []
         for item in metrics:
             results.append({'id': item.id, 'name': item.name})
 
         results = sorted(results, key=lambda k: k['name'])
 
-        if results or (not results and
-                       poem_models.GroupOfMetrics.objects.filter(
-                           name__exact=group)):
-            return Response({'result': results})
-        else:
-            raise NotFound(status=404,
-                           detail='Group not found')
+        return Response({'result': results})
 
     def put(self, request):
         group = poem_models.GroupOfMetrics.objects.get(
             name=request.data['name']
         )
 
-        for metric in request.data['items']:
-            group.metrics.add(poem_models.Metrics.objects.get(name=metric))
+        for name in dict(request.data)['items']:
+            metric = poem_models.Metric.objects.get(name=name)
+            metric.group = group
+            metric.save()
 
         # remove the metrics that existed before, and now were removed
-        for metric in group.metrics.all():
-            if metric.name not in request.data['items']:
-                group.metrics.remove(
-                    poem_models.Metrics.objects.get(name=metric)
-                )
+        metrics = poem_models.Metric.objects.filter(group=group)
+        for metric in metrics:
+            if metric.name not in dict(request.data)['items']:
+                metric.group = None
+                metric.save()
 
         return Response(status=status.HTTP_201_CREATED)
 
@@ -56,8 +57,10 @@ class ListMetricsInGroup(APIView):
                 name=request.data['name']
             )
 
-            for metric in request.data['items']:
-                group.metrics.add(poem_models.Metrics.objects.get(name=metric))
+            for name in dict(request.data)['items']:
+                metric = poem_models.Metric.objects.get(name=name)
+                metric.group = group
+                metric.save()
 
         except Exception:
             return Response(status=status.HTTP_400_BAD_REQUEST)

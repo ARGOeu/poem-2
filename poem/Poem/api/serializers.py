@@ -23,12 +23,6 @@ class ServiceFlavourSerializer(serializers.ModelSerializer):
         model = models.ServiceFlavour
 
 
-class MetricsSerializer(serializers.ModelSerializer):
-    class Meta:
-        fields = ('name', )
-        model = models.Metrics
-
-
 class UsersSerializer(serializers.ModelSerializer):
     class Meta:
         fields = ('first_name', 'last_name', 'username', 'is_active',

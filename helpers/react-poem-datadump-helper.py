@@ -86,10 +86,16 @@ def create_tenant_file(file):
     new_data = []
     for item in data:
         if item['model'] == 'poem.serviceflavour' or \
-                item['model'] == 'poem.metrics' or \
                 item['model'] == 'poem.metrictype' or \
-                item['model'] == 'poem.service' or \
-                item['model'] == 'poem.groupofmetrics':
+                item['model'] == 'poem.service':
+            new_data.append(item)
+
+        if item['model'] == 'poem.groupofmetrics':
+            del item['fields']['metrics']
+            item['fields']['permissions'][0] = \
+                [p.replace('metrics', 'metric') for p in item['fields']['permissions'][0]]
+            item['fields']['permissions'][0] = \
+                [p.replace('metricown', 'metricsown') for p in item['fields']['permissions'][0]]
             new_data.append(item)
 
         if item['model'] == 'users.custuser':

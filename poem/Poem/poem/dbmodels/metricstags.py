@@ -5,18 +5,6 @@ from django.utils.translation import ugettext_lazy as _
 from Poem.poem_super_admin.models import History
 
 
-class Metrics(models.Model):
-    id = models.AutoField(primary_key=True)
-    name = models.CharField(max_length=128)
-
-    class Meta:
-        permissions = (('metricsown', 'Read/Write/Modify'),)
-        app_label = 'poem'
-
-    def __str__(self):
-        return u'%s' % self.name
-
-
 class MetricType(models.Model):
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=128)
@@ -33,7 +21,6 @@ class GroupOfMetrics(models.Model):
     permissions = models.ManyToManyField(Permission,
                                          verbose_name=_('permissions'),
                                          blank=True)
-    metrics = models.ManyToManyField(Metrics, blank=True)
     objects = GroupManager()
 
     class Meta:
@@ -56,7 +43,7 @@ class Metric(models.Model):
     probekey = models.ForeignKey(History, blank=True, null=True,
                                  on_delete=models.SET_NULL)
     group = models.ForeignKey(GroupOfMetrics, null=True,
-                              on_delete=models.CASCADE)
+                              on_delete=models.SET_NULL)
     parent = models.CharField(max_length=128)
     probeexecutable = models.CharField(max_length=128)
     config = models.CharField(max_length=1024)
@@ -68,6 +55,7 @@ class Metric(models.Model):
     fileparameter = models.CharField(max_length=1024)
 
     class Meta:
+        permissions = (('metricsown', 'Read/Write/Modify'),)
         app_label = 'poem'
         verbose_name = 'Metric'
 
