@@ -4,6 +4,7 @@ import { MetricProfilesChange, MetricProfilesList } from './MetricProfiles';
 import Home from './Home';
 import { ProbeList, ProbeChange, ProbeHistory, ProbeVersionCompare, ProbeVersionDetails } from './Probes';
 import { MetricList, MetricChange } from './Metrics';
+import { MetricTemplateList, MetricTemplateChange, TenantMetricTemplateList } from './MetricTemplates';
 import { TenantAdministration, SuperAdminAdministration } from './Administration';
 import { AggregationProfilesChange, AggregationProfilesList } from './AggregationProfiles';
 import Reports from './Reports';
@@ -113,6 +114,10 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, token, tenantName})
     <Route exact path="/ui/administration/apikey/add"  
       render={props => <APIKeyChange {...props} addview={true}/>}
     />
+    <Route exact path='/ui/administration/metrictemplates/' component={TenantMetricTemplateList}/>
+    <Route exact path='/ui/administration/metrictemplates/:name'
+      render={props => <MetricTemplateChange {...props} infoview={true}/>}
+    />
     <Route exact path="/ui/administration/apikey/:name"  
       render={props => <APIKeyChange {...props} />}
     />
@@ -130,6 +135,9 @@ const SuperAdminRouteSwitch = ({props}) => (
     <Route exact path="/ui/probes/:name/history/compare/:id1/:id2" render={props => <ProbeVersionCompare {...props}/>}/>
     <Route exact path="/ui/probes/:name/history/:version" render={props => <ProbeVersionDetails {...props}/>}/>
     <Route exact path="/ui/probes/:name" render={props => <ProbeChange {...props}/>}/>
+    <Route exact path='/ui/metrictemplates' component={MetricTemplateList}/>
+    <Route exact path='/ui/metrictemplates/add' render={props => <MetricTemplateChange {...props} addview={true}/>}/>
+    <Route exact path='/ui/metrictemplates/:name' render={props => <MetricTemplateChange {...props}/>}/>
     <Route exact path="/ui/administration" component={SuperAdminAdministration}/>
     <Route exact path="/ui/administration/users" component={UsersList} />
     <Route exact path="/ui/administration/users/add"

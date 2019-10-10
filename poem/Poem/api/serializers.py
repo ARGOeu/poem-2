@@ -23,12 +23,6 @@ class ServiceFlavourSerializer(serializers.ModelSerializer):
         model = models.ServiceFlavour
 
 
-class MetricsSerializer(serializers.ModelSerializer):
-    class Meta:
-        fields = ('name', )
-        model = models.Metrics
-
-
 class UsersSerializer(serializers.ModelSerializer):
     class Meta:
         fields = ('first_name', 'last_name', 'username', 'is_active',
@@ -49,6 +43,9 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
 
 class ProbeSerializer(serializers.ModelSerializer):
+    def create(self, validated_data):
+        return Probe.objects.create(**validated_data)
+
     class Meta:
         model = Probe
         exclude = ['nameversion']

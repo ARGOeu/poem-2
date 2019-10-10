@@ -4,54 +4,55 @@ import json
 
 from Poem.api.views import NotFound
 from Poem.helpers.versioned_comments import new_comment
-from Poem.poem_super_admin.models import Probe
+from Poem.poem_super_admin.models import Probe, History
 
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from reversion.models import Revision, Version
-
 
 class ListVersions(APIView):
     authentication_classes = (SessionAuthentication,)
 
-    def get(self, request, obj, name):
+    def get(self, request, obj, name=None):
         models = {'probe': Probe}
 
-        try:
-            obj = models[obj].objects.get(name=name)
-        except models[obj].DoesNotExist:
-            raise NotFound(status=404,
-                           detail='{} not found'.format(obj.capitalize()))
+        ct = ContentType.objects.get_for_model(models[obj])
 
-        ct = ContentType.objects.get_for_model(obj)
-        vers = Version.objects.filter(object_id=obj.id,
-                                      content_type_id=ct.id)
+        if name:
+            try:
+                obj = models[obj].objects.get(name=name)
+            except models[obj].DoesNotExist:
+                raise NotFound(status=404,
+                               detail='{} not found'.format(obj.capitalize()))
 
-        if vers.count() == 0:
-            raise NotFound(status=404, detail='Version not found')
+            vers = History.objects.filter(object_id=obj.id,
+                                          content_type=ct)
+
+            if vers.count() == 0:
+                raise NotFound(status=404, detail='Version not found')
+
+            else:
+                results = []
+                for ver in vers:
+                    results.append(dict(
+                        id=ver.id,
+                        object_repr=ver.object_repr,
+                        fields=json.loads(ver.serialized_data)[0]['fields'],
+                        user=ver.user,
+                        date_created=datetime.datetime.strftime(
+                            ver.date_created, '%Y-%m-%d %H:%M:%S'
+                        ),
+                        comment=new_comment(ver.comment),
+                        version=json.loads(
+                            ver.serialized_data
+                        )[0]['fields']['version']
+                    ))
+
+                results = sorted(results, key=lambda k: k['id'], reverse=True)
+                return Response(results)
 
         else:
-            results = []
-            for ver in vers:
-                rev = Revision.objects.get(id=ver.revision_id)
-                comment = new_comment(rev.comment, obj_id=obj.id,
-                                      version_id=ver.id, ctt_id=ct.id)
-
-                results.append(dict(
-                    id=ver.id,
-                    object_repr=ver.object_repr,
-                    fields=json.loads(ver.serialized_data)[0]['fields'],
-                    user=json.loads(ver.serialized_data)[0]['fields']['user'],
-                    date_created=datetime.datetime.strftime(
-                        rev.date_created, '%Y-%m-%d %H:%M:%S'
-                    ),
-                    comment=comment,
-                    version=json.loads(
-                        ver.serialized_data
-                    )[0]['fields']['version']
-                ))
-
-            results = sorted(results, key=lambda k: k['id'], reverse=True)
+            vers = History.objects.filter(content_type_id=ct.id)
+            results = sorted([ver.object_repr for ver in vers], key=str.lower)
             return Response(results)

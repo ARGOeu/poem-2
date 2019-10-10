@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { Backend } from './DataManager';
 import { Link } from 'react-router-dom';
-import { LoadingAnim, BaseArgoView, NotifyOk } from './UIElements';
+import { LoadingAnim, BaseArgoView, NotifyOk, FancyErrorMessage } from './UIElements';
 import ReactTable from 'react-table';
 import { Formik, Form, Field, FieldArray } from 'formik';
 import {
@@ -15,7 +15,10 @@ import {
   PopoverBody,
   PopoverHeader} from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
+import { faInfoCircle, faMinus, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { NotificationManager } from 'react-notifications';
+
+export const MetricList = ListOfMetrics('metric');
 
 
 const DefaultFilterComponent = ({value, onChange, field}) => (
@@ -44,65 +47,171 @@ const DropdownFilterComponent = ({value, onChange, data}) => (
 )
 
 
-const InlineFields = ({values, field}) => (
+function validateConfig(value) {
+  let error;
+  if (!value) {
+    error = 'Required';
+  }
+  return error;
+}
+
+
+export const InlineFields = ({values, errors, field, addnew=false, readonly=false}) => (
   <div>
-  <h6 className='mt-4 font-weight-bold text-uppercase' hidden={values.type === 'Passive' && field !== 'flags'}>{field.replace('_', ' ')}</h6>
-  <FieldArray
-    name={field}
-    render={arrayHelpers => (
-      (eval(`values.${field}`) && eval(`values.${field}`).length > 0) ? (
-        eval(`values.${field}`).map((item, index) => (
-          <Row key={'row-' + index}>
-            <Col md={5}>
-              {(index === 0) ? <Label for={`${field}.0.key`}>Key</Label> : null}
-              <Field 
-                type='text'
-                name={`${field}.${index}.key`} 
-                id={`${field}.${index}.key`}
-                className='form-control'
-                disabled={true}
-              />
-            </Col>
-            <Col md={5}>
-              {(index === 0) ? <Label for={`${field}.0.value`}>Value</Label> : null}
-              <Field 
-                type='text'
-                name={`${field}.${index}.value`} 
-                id={`${field}.${index}.value`} 
-                className='form-control'
-                disabled={field !== 'config' || field === 'config' && item.key === 'path'}
-              />
-            </Col>
-          </Row>
-        ))
-      ) : (
-        <Row>
-          <Col md={5}>
-            <Label to={'emtpty-key'} hidden={values.type === 'Passive' && field !== 'flags'}>Key</Label>
-            <Field 
-              type='text'
-              className='form-control'
-              value=''
-              id='empty-key'
-              disabled={true}
-              hidden={values.type === 'Passive' && field !== 'flags'}
-            />
-          </Col>
-          <Col md={5}>
-            <Label to={'emtpty-value'} hidden={values.type === 'Passive' && field !== 'flags'}>Value</Label>
-            <Field 
-              type='text'
-              value=''
-              className='form-control'
-              id='empty-value'
-              disabled={true}
-              hidden={values.type === 'Passive' && field !== 'flags'}
-            />
-          </Col>
-        </Row>
-      )
-    )}
-  />
+    <h6 className='mt-4 font-weight-bold text-uppercase' hidden={values.type === 'Passive' && field !== 'flags'}>{field.replace('_', ' ')}</h6>
+    <FieldArray
+      name={field}
+      render={arrayHelpers => (
+        (eval(`values.${field}`) && eval(`values.${field}`).length > 0) ? (
+          eval(`values.${field}`).map((item, index) => (
+            <React.Fragment key={`fragment.${field}.${index}`}>
+              <Row>
+                <Col md={5}>
+                  {(index === 0) ? <Label hidden={values.type === 'Passive' && field !== 'flags'} for={`${field}.0.key`}>Key</Label> : null}
+                </Col>
+                <Col md={5}>
+                  {(index === 0) ? <Label hidden={values.type === 'Passive' && field !== 'flags'} for={`${field}.0.value`}>Value</Label> : null}
+                </Col>
+              </Row>
+              <Row>
+                <Col md={5}>
+                  <Field 
+                    type='text'
+                    name={`${field}.${index}.key`} 
+                    id={`${field}.${index}.key`}
+                    className='form-control'
+                    disabled={!addnew || field === 'config' || (values.type === 'Passive' && item.key === 'PASSIVE')}
+                    hidden={values.type === 'Passive' && field !== 'flags'}
+                  />
+                </Col>
+                <Col md={5}>
+                  {
+                    values.type === 'Active' && field === 'config' ?
+                      <Field 
+                        type='text'
+                        name={`${field}.${index}.value`} 
+                        id={`${field}.${index}.value`} 
+                        className={errors.config && errors.config[index] ? 'form-control border-danger' : 'form-control'}
+                        disabled={readonly || (!addnew && field === 'config' && item.key === 'path')}
+                        validate={validateConfig}
+                      />
+                    :
+                      <Field
+                        type='text'
+                        name={`${field}.${index}.value`} 
+                        id={`${field}.${index}.value`} 
+                        className={'form-control'}
+                        disabled={readonly || (!addnew && (field !== 'config' || field === 'config' && item.key === 'path')) || values.type === 'Passive' && item.key === 'PASSIVE'}
+                        hidden={values.type === 'Passive' && field !== 'flags'}
+                      />
+                  }                  
+                  {
+                    errors.config && field === 'config' ?
+                      errors.config[index] &&
+                        FancyErrorMessage(errors.config[index].value)
+                      :
+                      null
+                  }
+                </Col>
+                <Col md={2}>
+                  {
+                    (addnew && field !== 'config' && eval(`values.${field}`)[0]['key'] !== '' && eval(`values.${field}`)[0]['value'] !== '') &&
+                      <Button 
+                        hidden={
+                          (
+                            values.type === 'Passive' && 
+                            field !== 'flags'
+                          ) 
+                          || (
+                            field === 'flags' && 
+                            values.type === 'Passive' && (
+                              eval(`values.${field}[${index}]`)['key'] === 'PASSIVE'
+                              || (eval(`values.${field}[${index}]`)['key'] === '' &&
+                                eval(`values.${field}[${index}]`)['value'] === ''
+                              )
+                            )
+                            )
+                          }
+                        size='sm' 
+                        color='danger'
+                        type='button' 
+                        onClick={() => {
+                          arrayHelpers.remove(index)
+                          if (eval(`values.${field}`).length === 1) {
+                            arrayHelpers.push({key: '', value: ''})
+                          }
+                        }
+                        }
+                      >
+                        <FontAwesomeIcon icon={faMinus}/>
+                      </Button>
+                  }
+                </Col>
+              </Row>
+              {
+                (addnew && field !== 'config' && index === eval(`values.${field}`).length - 1) &&
+                <Row className={values.type === 'Passive' ? 'mt-0' : 'mt-2'}>
+                  <Col md={2}>
+                    <Button 
+                      hidden={values.type === 'Passive' && field !== 'flags'}
+                      size='sm'
+                      color='success'
+                      type='button' 
+                      onClick={() => arrayHelpers.push({key: '', value: ''})}
+                    >
+                      <FontAwesomeIcon icon={faPlus}/> Add another {field.slice(-1) === 's' ? field.slice(0, -1).replace('_', ' '): field.replace('_', ' ')}
+                    </Button>
+                  </Col>
+                </Row>
+              }
+            </React.Fragment>
+          ))
+        ) : (
+          <React.Fragment key={`fragment.${field}`}>
+            <Row>
+              <Col md={5}>
+                <Label to={'empty-key'} hidden={values.type === 'Passive' && field !== 'flags'}>Key</Label>
+                <Field 
+                  type='text'
+                  className='form-control'
+                  value=''
+                  id='empty-key'
+                  disabled={!addnew}
+                  hidden={values.type === 'Passive' && field !== 'flags'}
+                />
+              </Col>
+              <Col md={5}>
+                <Label to={'empty-value'} hidden={values.type === 'Passive' && field !== 'flags'}>Value</Label>
+                <Field 
+                  type='text'
+                  value=''
+                  className='form-control'
+                  id='empty-value'
+                  disabled={!addnew}
+                  hidden={values.type === 'Passive' && field !== 'flags'}
+                />
+              </Col>
+            </Row>
+            {
+              addnew &&
+                <Row className={values.type === 'Passive' ? 'mt-0' : 'mt-2'}>
+                  <Col md={2}>
+                    <Button 
+                      hidden={values.type === 'Passive' && field !== 'flags'}
+                      size='sm'
+                      color='success'
+                      type='button' 
+                      onClick={() => arrayHelpers.push({key: '', value: ''})}
+                    >
+                      <FontAwesomeIcon icon={faPlus}/> Add another {field.slice(-1) === 's' ? field.slice(0, -1).replace('_', ' ') : field.replace('_', ' ')}
+                    </Button>
+                  </Col>
+                </Row>
+            }
+          </React.Fragment>
+        )
+      )}
+    />
   </div>
 )
 
@@ -113,205 +222,376 @@ export const ProbeVersionLink = ({probeversion}) => (
 )
 
 
-export class MetricList extends Component {
-  constructor(props) {
-    super(props);
+export function ListOfMetrics(type, imp=false) {
+  return class extends Component {
+    constructor(props) {
+      super(props);
 
-    this.state = {
-      loading: false,
-      list_metric: null,
-      list_tags: null,
-      list_groups: null,
-      list_types: null,
-      search_name: '',
-      search_probeversion: '',
-      search_tag: '',
-      search_type: '',
-      search_group: ''
-    }
+      this.location = props.location;
 
-    this.backend = new Backend();
-    this.doFilter = this.doFilter.bind(this);
-  }
-
-  doFilter(list_metric, field, filter) {
-    return (
-      list_metric.filter(row => 
-        eval(`row.${field}`).toLowerCase().includes(filter.toLowerCase()))
-    )
-  }
-
-  componentDidMount() {
-    this.setState({loading: true});
-
-    Promise.all([this.backend.fetchAllMetric(),
-      this.backend.fetchAllGroups(),
-      this.backend.fetchTags(),
-      this.backend.fetchMetricTypes()
-    ]).then(([metrics, groups, tags, types]) =>
-          this.setState({
-            list_metric: metrics,
-            list_tags: tags,
-            list_groups: groups['metrics'],
-            list_types: types,
-            loading: false, 
-            search_name: '',
-            search_probeversion: '',
-            search_tag: '',
-            search_group: '',
-            search_type: ''
-          }));
-  }
-
-  render() {
-    const columns = [
-      {
-        Header: '#',
-        id: 'row',
-        minWidth: 12,
-        Cell: (row) =>
-          <div style={{textAlign: 'center'}}>
-            {row.index + 1}
-          </div>
-      },
-      {
-        Header: 'Name',
-        id: 'name',
-        minWidth: 100,
-        accessor: e =>
-        <Link to={'/ui/metrics/' + e.name}>
-          {e.name}
-        </Link>,
-        filterable: true,
-        Filter: (
-          <DefaultFilterComponent
-            field='name'
-            value={this.state.search_name}
-            onChange={e => this.setState({search_name: e.target.value})}
-          />
-        )
-      },
-      {
-        Header: 'Probe version',
-        id: 'probeversion',
-        minWidth: 80,
-        accessor: e => (e.probeversion ?
-          <ProbeVersionLink probeversion={e.probeversion}/>
-          :
-          ""
-        ),
-        Cell: row =>
-          <div style={{textAlign: 'center'}}>
-            {row.value}
-          </div>,
-        filterable: true,
-        Filter: (
-          <DefaultFilterComponent 
-            field='probe version'
-            value={this.state.search_probeversion}
-            onChange={e => this.setState({search_probeversion: e.target.value})}
-          />
-        )
-      },
-      {
-        Header: 'Tag',
-        accessor: 'tag',
-        minWidth: 30,
-        Cell: row =>
-          <div style={{textAlign: 'center'}}>
-            {row.value}
-          </div>,
-        filterable: true,
-        Filter: (
-        <DropdownFilterComponent
-          value={this.state.search_tag}
-          onChange={e => this.setState({search_tag: e.target.value})}
-          data={this.state.list_tags}
-        />
-        )
-      },
-      {
-        Header: 'Group',
-        minWidth: 30,
-        accessor: 'group',
-        Cell: row =>
-          <div style={{textAlign: 'center'}}>
-            {row.value}
-          </div>,
-        filterable: true,
-        Filter: (
-          <DropdownFilterComponent 
-            value={this.state.search_group}
-            onChange={e => this.setState({search_group: e.target.value})}
-            data={this.state.list_groups}
-          />
-        )
-      },
-      {
-        Header: 'Type',
-        minWidth: 30,
-        accessor: 'mtype',
-        Cell: row =>
-          <div style={{textAlign: 'center'}}>
-            {row.value}
-          </div>,
-        filterable:true,
-        Filter: (
-          <DropdownFilterComponent
-            value={this.state.mtype}
-            onChange={e => this.setState({search_type: e.target.value})}
-            data={this.state.list_types}
-          />
-        )
+      if (type === 'metric') {
+        this.state = {
+          loading: false,
+          list_metric: null,
+          list_tags: null,
+          list_groups: null,
+          list_types: null,
+          search_name: '',
+          search_probeversion: '',
+          search_type: '',
+          search_group: ''
+        }
+      } else {
+        this.state = {
+          loading: false,
+          list_metric: null,
+          list_types: null,
+          search_name: '',
+          search_probeversion: '',
+          search_type: '',
+          selected: {},
+          selectAll: 0
+        }
       }
-    ];
 
-    var { loading, list_metric } = this.state;
-
-    if (this.state.search_name) {
-      list_metric = this.doFilter(list_metric, 'name', this.state.search_name)
+      this.backend = new Backend();
+      this.doFilter = this.doFilter.bind(this);
+      this.toggleRow = this.toggleRow.bind(this);
+      this.importMetrics = this.importMetrics.bind(this);
     }
 
-    if (this.state.search_probeversion) {
-      list_metric = this.doFilter(list_metric, 'probeversion', this.state.search_probeversion)
-    }
-
-    if (this.state.search_tag) {
-      list_metric = this.doFilter(list_metric, 'tag', this.state.search_tag)
-    }
-
-    if (this.state.search_type) {
-      list_metric = this.doFilter(list_metric, 'mtype', this.state.search_type)
-    }
-
-    if (this.state.search_group) {
-      list_metric = this.doFilter(list_metric, 'group', this.state.search_group)
-    }
-
-    if (loading)
-      return (<LoadingAnim />);
-
-    else if (!loading && list_metric) {
+    doFilter(list_metric, field, filter) {
       return (
-        <React.Fragment>
-          <div className="d-flex align-items-center justify-content-between">
-            <React.Fragment>
-              <h2 className="ml-3 mt-1 mb-4">{'Select metric to change'}</h2>
-            </React.Fragment>
-          </div>
-          <div id="argo-contentwrap" className="ml-2 mb-2 mt-2 p-3 border rounded">
-            <ReactTable
-              data={list_metric}
-              columns={columns}
-              className='-striped -highlight'
-              defaultPageSize={50}
-            />
-          </div>
-        </React.Fragment>
+        list_metric.filter(row => 
+          eval(`row.${field}`).toLowerCase().includes(filter.toLowerCase()))
       )
     }
-    else
-      return null
+
+    toggleRow(name) {
+      const newSelected = Object.assign({}, this.state.selected);
+      newSelected[name] = !this.state.selected[name];
+      this.setState({
+        selected: newSelected,
+        selectAll: 2
+      })
+    }
+
+    toggleSelectAll() {
+      var { list_metric } = this.state;
+
+      if (this.state.search_name) {
+        list_metric = this.doFilter(list_metric, 'name', this.state.search_name)
+      }
+  
+      if (this.state.search_probeversion) {
+        list_metric = this.doFilter(list_metric, 'probeversion', this.state.search_probeversion)
+      }
+  
+      if (this.state.search_type) {
+        list_metric = this.doFilter(list_metric, 'mtype', this.state.search_type)
+      }
+ 
+      let newSelected = {};
+      if (this.state.selectAll === 0) {
+        list_metric.forEach(x => {
+          newSelected[x.name] = true;
+        });
+      }
+      this.setState({
+        selected: newSelected,
+        selectAll: this.state.selectAll === 0 ? 1 : 0
+      });
+    }
+
+    importMetrics() {
+      let selectedMetrics = this.state.selected;
+      let mt = Object.keys(selectedMetrics);
+      if (mt.length > 0) {
+        this.backend.importMetrics({'metrictemplates': Object.keys(selectedMetrics)})
+          .then(response => response.json())
+          .then(json => {
+            if (json.imported)
+              NotificationManager.success(json.imported, 'Imported');
+            
+            if (json.err)
+              NotificationManager.warning(json.err, 'Not imported')
+          })
+      } else {
+        NotificationManager.error(
+          'No metric templates were selected!',
+          'Error'
+        )
+      }
+    }
+
+    componentDidMount() {
+      this.setState({loading: true});
+  
+      if (type === 'metric') {
+        Promise.all([this.backend.fetchAllMetric(),
+          this.backend.fetchAllGroups(),
+          this.backend.fetchMetricTypes()
+        ]).then(([metrics, groups, types]) =>
+              this.setState({
+                list_metric: metrics,
+                list_groups: groups['metrics'],
+                list_types: types,
+                loading: false, 
+                search_name: '',
+                search_probeversion: '',
+                search_group: '',
+                search_type: ''
+              }));
+        } else {
+          Promise.all([
+            this.backend.fetchMetricTemplates(),
+            this.backend.fetchMetricTemplateTypes()
+        ]).then(([metrictemplates, types]) =>
+            this.setState({
+              list_metric: metrictemplates,
+              list_types: types,
+              loading: false,
+              search_name: '',
+              search_probeversion: '',
+              search_type: ''
+            })
+        )
+        }
+    }
+
+    render() {
+      let metriclink = undefined;
+      if (type === 'metric') {
+        metriclink = '/ui/metrics/'
+      } else {
+        if (imp)
+          metriclink = '/ui/administration/metrictemplates/'
+        else
+          metriclink = '/ui/metrictemplates/'
+      }
+
+      const columns = [
+        {
+          Header: 'Name',
+          id: 'name',
+          minWidth: 100,
+          accessor: e =>
+          <Link to={metriclink + e.name}>
+            {e.name}
+          </Link>,
+          filterable: true,
+          Filter: (
+            <DefaultFilterComponent
+              field='name'
+              value={this.state.search_name}
+              onChange={e => this.setState({search_name: e.target.value})}
+            />
+          )
+        },
+        {
+          Header: 'Probe version',
+          id: 'probeversion',
+          minWidth: 80,
+          accessor: e => (e.probeversion ?
+            <ProbeVersionLink probeversion={e.probeversion}/>
+            :
+            ""
+          ),
+          Cell: row =>
+            <div style={{textAlign: 'center'}}>
+              {row.value}
+            </div>,
+          filterable: true,
+          Filter: (
+            <DefaultFilterComponent 
+              field='probe version'
+              value={this.state.search_probeversion}
+              onChange={e => this.setState({search_probeversion: e.target.value})}
+            />
+          )
+        },
+        {
+          Header: 'Type',
+          minWidth: 30,
+          accessor: 'mtype',
+          Cell: row =>
+            <div style={{textAlign: 'center'}}>
+              {row.value}
+            </div>,
+          filterable:true,
+          Filter: (
+            <DropdownFilterComponent
+              value={this.state.mtype}
+              onChange={e => this.setState({search_type: e.target.value})}
+              data={this.state.list_types}
+            />
+          )
+        }
+      ];
+
+      if (imp) {
+        columns.splice(
+          0,
+          0,
+          {
+            id: 'checkbox',
+            accessor: '',
+            Cell: ({original}) => {
+              return (
+                <div style={{display: 'flex', justifyContent: 'center'}}>
+                  <input
+                    type='checkbox'
+                    className='checkbox'
+                    checked={this.state.selected[original.name] === true}
+                    onChange={() => this.toggleRow(original.name)}
+                  />
+                </div>
+              );
+            },
+            Header: 'Select all',
+            Filter: (
+              <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
+                <input
+                  type='checkbox'
+                  className='checkbox'
+                  checked={this.state.selectAll === 1}
+                  ref={input => {
+                    if (input) {
+                      input.indeterminate = this.state.selectAll === 2;
+                    }
+                  }}
+                  onChange={() => this.toggleSelectAll()}
+                />
+              </div>
+              ),
+            filterable: true,
+            sortable: false,
+            minWidth: 12
+          }
+        )
+      } else {
+        columns.splice(
+          0,
+          0,
+          {
+            Header: '#',
+            id: 'row',
+            minWidth: 12,
+            Cell: (row) =>
+              <div style={{textAlign: 'center'}}>
+                {row.index + 1}
+              </div>
+          }
+        )
+      }
+
+      if (type === 'metric') {
+        columns.splice(
+          3,
+          0,
+          {
+            Header: 'Group',
+            minWidth: 30,
+            accessor: 'group',
+            Cell: row =>
+              <div style={{textAlign: 'center'}}>
+                {row.value}
+              </div>,
+            filterable: true,
+            Filter: (
+              <DropdownFilterComponent 
+                value={this.state.search_group}
+                onChange={e => this.setState({search_group: e.target.value})}
+                data={this.state.list_groups}
+              />
+            )
+          }
+        )
+      }
+
+      var { loading, list_metric } = this.state;
+
+      if (this.state.search_name) {
+        list_metric = this.doFilter(list_metric, 'name', this.state.search_name)
+      }
+  
+      if (this.state.search_probeversion) {
+        list_metric = this.doFilter(list_metric, 'probeversion', this.state.search_probeversion)
+      }
+  
+      if (this.state.search_type) {
+        list_metric = this.doFilter(list_metric, 'mtype', this.state.search_type)
+      }
+  
+      if (type === 'metric' && this.state.search_group) {
+        list_metric = this.doFilter(list_metric, 'group', this.state.search_group)
+      }
+
+      if (loading)
+      return (<LoadingAnim />);
+
+      else if (!loading && list_metric) {
+        if (type === 'metric') {
+          return (
+            <BaseArgoView
+              resourcename='metric'
+              location={this.location}
+              listview={true}
+              addnew={false}
+            >
+              <ReactTable
+                data={list_metric}
+                columns={columns}
+                className='-striped -highlight'
+                defaultPageSize={50}
+              />
+            </BaseArgoView>
+          )
+        } else {
+          if (imp)
+            return (
+              <>
+                <div className="d-flex align-items-center justify-content-between">
+                  <h2 className="ml-3 mt-1 mb-4">{`Select Metric template(s) to import`}</h2>
+                  <Button 
+                  className='btn btn-secondary'
+                  onClick={() => this.importMetrics()}
+                    >
+                      Import
+                    </Button>
+                </div>
+                <div id="argo-contentwrap" className="ml-2 mb-2 mt-2 p-3 border rounded">
+                  <ReactTable
+                    data={list_metric}
+                    columns={columns}
+                    className='-striped -highlight'
+                    defaultPageSize={50}
+                  />
+                </div>
+            </>
+            )
+          else 
+            return (
+              <BaseArgoView
+                resourcename='metric template'
+                location={this.location}
+                listview={!imp}
+                importlistview={imp}
+                addnew={true}
+              >
+                <ReactTable
+                  data={list_metric}
+                  columns={columns}
+                  className='-striped -highlight'
+                  defaultPageSize={50}
+                />
+              </BaseArgoView>
+            )
+        }
+      }
+      else
+        return null
+    }
   }
 }
 
@@ -329,7 +609,6 @@ export class MetricChange extends Component {
     this.state = {
       metric: {},
       probe: {},
-      tags: [],
       groups: [],
       loading: false,
       popoverOpen: false,
@@ -380,7 +659,6 @@ export class MetricChange extends Component {
     this.backend.changeMetric({
       name: values.name,
       group: values.group,
-      tag: values.tag,
       config: values.config
     })
       .then(() => NotifyOk({
@@ -407,9 +685,8 @@ export class MetricChange extends Component {
     if (!this.addview) {
       Promise.all([this.backend.fetchMetricByName(this.name),
         this.backend.fetchMetricUserGroups(),
-        this.backend.fetchTags(),
         this.backend.fetchAllGroups()
-      ]).then(([metrics, usergroups, tags, groups]) => {
+      ]).then(([metrics, usergroups, groups]) => {
         metrics.probekey ? 
         this.backend.fetchVersions('probe', metrics.probeversion.split(' ')[0])
           .then(probe => {
@@ -422,7 +699,6 @@ export class MetricChange extends Component {
             this.setState({
               metric: metrics,
               probe: fields,
-              tags: tags,
               groups: groups['metrics'],
               loading: false,
               write_perm: localStorage.getItem('authIsSuperuser') === 'true' || usergroups.indexOf(metrics.group) >= 0,
@@ -431,7 +707,6 @@ export class MetricChange extends Component {
           :
           this.setState({
             metric: metrics,
-            tags:tags,
             groups: groups['metrics'],
             loading: false,
             write_perm: localStorage.getItem('authIsSuperuser') === 'true' || usergroups.indexOf(metrics.group) >= 0,
@@ -441,7 +716,7 @@ export class MetricChange extends Component {
   }
 
   render() {
-    const { metric, tags, groups, loading, write_perm } = this.state;
+    const { metric, groups, loading, write_perm } = this.state;
 
     if (loading)
       return (<LoadingAnim/>)
@@ -460,7 +735,6 @@ export class MetricChange extends Component {
             initialValues = {{
               name: metric.name,
               probe: metric.probeversion,
-              tag: metric.tag,
               type: metric.mtype,
               group: metric.group,
               probeexecutable: metric.probeexecutable,
@@ -509,22 +783,6 @@ export class MetricChange extends Component {
                       </FormText>
                     </Col>
                     <Col md={2}>
-                      <Label to="tag">Tag</Label>
-                      <Field 
-                        component='select'
-                        name='tag'
-                        className='form-control'
-                        id='tag'
-                      >
-                        {
-                          tags.map((name, i) =>
-                          <option key={i} value={name}>{name}</option>)
-                        }
-                      </Field>
-                    </Col>
-                  </Row>
-                  <Row className='mb-4'>
-                    <Col md={2}>
                       <Label to='mtype'>Type</Label>
                       <Field
                         type='text'
@@ -537,6 +795,8 @@ export class MetricChange extends Component {
                         Metric is of given type
                       </FormText>
                     </Col>
+                  </Row>
+                  <Row className='mb-4'>
                     <Col md={2}>
                       <Label to='group'>Group</Label>
                       <Field 

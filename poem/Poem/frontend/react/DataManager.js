@@ -145,13 +145,6 @@ export class Backend {
       .catch(err => alert('Something went wrong: ' + err))
   }
 
-  fetchTags() {
-    return fetch('/api/v2/internal/tags/')
-      .then(response => response.json())
-      .catch(err => alert('Something went wrong: ' + err))
-
-  }
-
   fetchMetricTypes() {
     return fetch('/api/v2/internal/mtypes/')
       .then(response => response.json())
@@ -192,6 +185,36 @@ export class Backend {
     return fetch('/api/v2/internal/schema')
       .then(response => response.ok ? response.json() : null)
       .then(json => json['schema'])
+      .catch(err => alert('Something went wrong: ' + err))
+  }
+
+  fetchMetricTemplateTypes() {
+    return fetch('/api/v2/internal/mttypes')
+      .then(response => response.json())
+      .catch(err => alert('Something went wrong: ' + err))
+  }
+
+  fetchMetricTemplates() {
+    return fetch('/api/v2/internal/metrictemplates/')
+      .then(response => response.json())
+      .catch(err => alert('Something went wrong: ' + err))
+  }
+
+  fetchMetricTemplateByName(name) {
+    return fetch('/api/v2/internal/metrictemplates/' + name)
+      .then(response => response.json())
+      .catch(err => alert('Something went wrong: ' + err))
+  }
+
+  fetchProbeVersions() {
+    return fetch('/api/v2/internal/version/probe')
+      .then(response => response.json())
+      .catch(err => alert('Something went wrong: ' + err))
+  }
+
+  fetchMetricTemplatesByProbeVersion(probeversion) {
+    return fetch('/api/v2/internal/metricsforprobes/' + probeversion)
+      .then(response => response.json())
       .catch(err => alert('Something went wrong: ' + err))
   }
 
@@ -259,6 +282,14 @@ export class Backend {
     )
   }
 
+  changeMetricTemplate(metric) {
+    return this.send(
+      '/api/v2/internal/metrictemplates/',
+      'PUT',
+      metric
+    )
+  }
+
   addAggregation(profile) {
     return this.send(
       '/api/v2/internal/aggregations/',
@@ -315,6 +346,14 @@ export class Backend {
     );
   }
 
+  addMetricTemplate(metric) {
+    return this.send(
+      '/api/v2/internal/metrictemplates/',
+      'POST',
+      metric
+    );
+  }
+
   deleteMetricProfile(id) {
     return this.send(
       '/api/v2/internal/metricprofiles/' + id,
@@ -362,6 +401,21 @@ export class Backend {
       '/api/v2/internal/probes/' + name,
       'DELETE'
     );
+  }
+
+  deleteMetricTemplate(name) {
+    return this.send(
+      '/api/v2/internal/metrictemplates/' + name,
+      'DELETE'
+    );
+  }
+
+  importMetrics(data) {
+    return this.send(
+      '/api/v2/internal/importmetrics/',
+      'POST',
+      data
+    )
   }
 
   send(url, method, values=undefined) {
