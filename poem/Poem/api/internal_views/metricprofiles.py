@@ -21,15 +21,6 @@ class ListAllServiceFlavours(APIView):
         return Response(serializer.data)
 
 
-class ListAllMetrics(APIView):
-    authentication_classes = (SessionAuthentication,)
-
-    def get(self, request):
-        metrics = poem_models.Metrics.objects.all()
-        serializer = serializers.MetricsSerializer(metrics, many=True)
-        return Response(serializer.data)
-
-
 class ListMetricProfiles(APIView):
     authentication_classes = (SessionAuthentication,)
 

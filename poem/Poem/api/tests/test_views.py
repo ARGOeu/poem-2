@@ -47,10 +47,12 @@ def mock_db_for_metrics_tests():
         date_created=datetime.datetime(2015, 1, 1, 0, 0, 0),
         user=user.username
     )
+    group = GroupOfMetrics.objects.create(name='EOSC')
 
-    metric1 = Metric.objects.create(
+    Metric.objects.create(
         name='argo.AMS-Check',
         mtype=metrictype,
+        group=group,
         probekey=probekey,
         parent='["org.nagios.CDMI-TCP"]',
         probeexecutable='["ams-probe"]',
@@ -69,9 +71,6 @@ def mock_db_for_metrics_tests():
         name='argo.AMSPublisher-Check',
         mtype=metrictype,
     )
-
-    group = GroupOfMetrics.objects.create(name='EOSC')
-    group.metrics.create(name=metric1.name)
 
 
 def create_credentials():

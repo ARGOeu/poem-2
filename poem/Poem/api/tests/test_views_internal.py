@@ -35,56 +35,6 @@ def mocked_func(*args):
     pass
 
 
-class ListMetricsInGroupAPIViewTests(TenantTestCase):
-    def setUp(self):
-        self.factory = TenantRequestFactory(self.tenant)
-        self.view = views.ListMetricsInGroup.as_view()
-        self.url = '/api/v2/internal/metricsgroup/EOSC'
-        self.user = CustUser.objects.create(username='testuser')
-
-        metric1 = poem_models.Metrics.objects.create(name='org.apel.APEL-Pub', id=1)
-        metric2 = poem_models.Metrics.objects.create(name='org.apel.APEL-Sync', id=2)
-
-        group1 = poem_models.GroupOfMetrics.objects.create(name='EOSC')
-        group1.metrics.add(metric1)
-        group1.metrics.add(metric2)
-
-        poem_models.GroupOfMetrics.objects.create(name='Empty_group')
-
-    def test_permission_denied_in_case_no_authorization(self):
-        request = self.factory.get(self.url)
-        response = self.view(request)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-
-    def test_status_code_in_case_nonexisting_site(self):
-        url = '/api/v2/internal/metricsgroup/fake_group'
-        request = self.factory.get(url)
-        force_authenticate(request, user=self.user)
-        response = self.view(request, 'fake_group')
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-
-    def test_get_metrics_in_group_for_a_given_group(self):
-        request = self.factory.get(self.url)
-        force_authenticate(request, user=self.user)
-        response = self.view(request, 'EOSC')
-        self.assertEqual(
-            response.data,
-            {
-                'result': [
-                    {'id': 1, 'name': 'org.apel.APEL-Pub'},
-                    {'id': 2, 'name': 'org.apel.APEL-Sync'}
-                ]
-            }
-        )
-
-    def test_get_metrics_in_group_if_empty_group(self):
-        url = '/api/v2/internal/metricsgroup/Empty_group'
-        request = self.factory.get(url)
-        force_authenticate(request, user=self.user)
-        response = self.view(request, 'Empty_group')
-        self.assertEqual(response.data, {'result': []})
-
-
 class ListAPIKeysAPIViewTests(TenantTestCase):
     def setUp(self):
         self.factory = TenantRequestFactory(self.tenant)
@@ -1033,8 +983,24 @@ class ListAllMetricsAPIViewTests(TenantTestCase):
         self.url = '/api/v2/internal/metricsall/'
         self.user = CustUser.objects.create(username='testuser')
 
-        poem_models.Metrics.objects.create(name='hr.srce.GRAM-Auth')
-        poem_models.Metrics.objects.create(name='org.apel.APEL-Pub')
+        group = poem_models.GroupOfMetrics.objects.create(name='EGI')
+        poem_models.GroupOfMetrics.objects.create(name='delete')
+
+        mtype1 = poem_models.MetricType.objects.create(name='Active')
+        mtype2 = poem_models.MetricType.objects.create(name='Passive')
+
+        poem_models.Metric.objects.create(
+            name='argo.AMS-Check',
+            mtype=mtype1,
+            probeversion='ams-probe (0.1.7)',
+            group=group,
+        )
+
+        poem_models.Metric.objects.create(
+            name='org.apel.APEL-Pub',
+            group=group,
+            mtype=mtype2,
+        )
 
     def test_get_all_metrics(self):
         request = self.factory.get(self.url)
@@ -1043,12 +1009,8 @@ class ListAllMetricsAPIViewTests(TenantTestCase):
         self.assertEqual(
             response.data,
             [
-                OrderedDict([
-                    ('name', 'hr.srce.GRAM-Auth')
-                ]),
-                OrderedDict([
-                    ('name', 'org.apel.APEL-Pub')
-                ])
+                {'name': 'argo.AMS-Check'},
+                {'name': 'org.apel.APEL-Pub'}
             ]
         )
 
@@ -1288,18 +1250,35 @@ class ListMetricsInGroupAPIViewTests(TenantTestCase):
         self.url = '/api/v2/internal/metricsgroup/'
         self.user = CustUser.objects.create(username='testuser')
 
-        self.metric1 = poem_models.Metrics.objects.create(name='hr.srce.GRAM-Auth')
-        self.metric2 = poem_models.Metrics.objects.create(name='eu.egi.CREAM-IGTF')
-        self.metric3 = poem_models.Metrics.objects.create(name='pl.plgrid.QCG-Broker')
+        group = poem_models.GroupOfMetrics.objects.create(name='EGI')
+        poem_models.GroupOfMetrics.objects.create(name='delete')
+
+        mtype1 = poem_models.MetricType.objects.create(name='Active')
+        mtype2 = poem_models.MetricType.objects.create(name='Passive')
+
+        self.metric1 = poem_models.Metric.objects.create(
+            name='argo.AMS-Check',
+            mtype=mtype1,
+            probeversion='ams-probe (0.1.7)',
+            group=group,
+        )
+
+        self.metric2 = poem_models.Metric.objects.create(
+            name='org.apel.APEL-Pub',
+            group=group,
+            mtype=mtype2,
+        )
+
+        self.metric3 = poem_models.Metric.objects.create(
+            name='eu.egi.CertValidity',
+            probeversion='check_ssl_cert (1.84.0)',
+            mtype=mtype1
+        )
 
         self.id1 = self.metric1.id
         self.id2 = self.metric2.id
         self.id3 = self.metric3.id
 
-        group = poem_models.GroupOfMetrics.objects.create(name='EGI')
-        poem_models.GroupOfMetrics.objects.create(name='delete')
-        group.metrics.add(self.metric1)
-        group.metrics.add(self.metric2)
 
     def test_get_metrics_in_group(self):
         request = self.factory.get(self.url + 'EGI')
@@ -1309,8 +1288,8 @@ class ListMetricsInGroupAPIViewTests(TenantTestCase):
             response.data,
             {
                 'result': [
-                    {'id': self.id2, 'name': 'eu.egi.CREAM-IGTF'},
-                    {'id': self.id1, 'name': 'hr.srce.GRAM-Auth'}
+                    {'id': self.id1, 'name': 'argo.AMS-Check'},
+                    {'id': self.id2, 'name': 'org.apel.APEL-Pub'}
                 ]
             }
         )
@@ -1323,7 +1302,7 @@ class ListMetricsInGroupAPIViewTests(TenantTestCase):
             response.data,
             {
                 'result': [
-                    {'id': self.id3, 'name': 'pl.plgrid.QCG-Broker'}
+                    {'id': self.id3, 'name': 'eu.egi.CertValidity'}
                 ]
             }
         )
@@ -1334,26 +1313,28 @@ class ListMetricsInGroupAPIViewTests(TenantTestCase):
         response = self.view(request, 'bla')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
-    @patch('Poem.poem.models.Metrics.objects.get')
-    def test_put_metrics(self, metrics):
-        metrics.return_value = self.metric1
+    def test_put_metrics(self):
         data = {'name': 'EGI',
-                'items': ['hr.srce.GRAM-Auth', 'pl.plgrid.QCG-Broker']}
+                'items': ['argo.AMS-Check', 'eu.egi.CertValidity']}
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
         force_authenticate(request, user=self.user)
         response = self.view(request)
+        metric1 = poem_models.Metric.objects.get(name='argo.AMS-Check')
+        metric2 = poem_models.Metric.objects.get(name='eu.egi.CertValidity')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(metric1.group.name, 'EGI')
+        self.assertEqual(metric2.group.name, 'EGI')
 
-    @patch('Poem.poem.models.Metrics.objects.get')
-    def test_post_metrics(self, metrics):
-        metrics.return_value = self.metric1
+    def test_post_metrics(self):
         data = {'name': 'new_name',
-                'items': ['pl.plgrid.QCG-Broker']}
+                'items': ['eu.egi.CertValidity']}
         request = self.factory.post(self.url, data, format='json')
         force_authenticate(request, user=self.user)
         response = self.view(request)
+        metric = poem_models.Metric.objects.get(name='eu.egi.CertValidity')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(metric.group.name, 'new_name')
 
     def test_post_metrics_group_with_name_that_already_exists(self):
         data = {'name': 'EGI',
