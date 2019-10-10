@@ -110,7 +110,7 @@ def update_metrics(metrictemplate, name):
                     met.save()
 
             except Metric.DoesNotExist:
-                pass
+                continue
 
 
 class ListMetricTemplates(APIView):
