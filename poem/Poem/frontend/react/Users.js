@@ -450,6 +450,7 @@ export class UserChange extends Component {
           resourcename="Users"
           location={this.location}
           addview={this.addview}
+          history={false}
           modal={true}
           state={this.state}
           toggle={this.toggleAreYouSure}
@@ -911,7 +912,7 @@ export class SuperAdminUserChange extends Component {
           resourcename="Users"
           location={this.location}
           addview={this.addview}
-          infoview={!this.addview}
+          history={false}
           modal={true}
           state={this.state}
           toggle={this.toggleAreYouSure}
