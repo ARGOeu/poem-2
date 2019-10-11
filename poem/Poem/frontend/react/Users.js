@@ -114,11 +114,16 @@ const UsernamePassword = ({add, errors}) =>
             <Field
               type="text"
               name='username'
-              required={true}
               className="form-control"
               id='userUsername'
             />
           </InputGroup>
+          {
+            errors.username ? 
+              FancyErrorMessage(errors.username)
+            :
+              null
+          }
         </Col>
       </Row>
     </FormGroup>
@@ -879,15 +884,18 @@ export class SuperAdminUserChange extends Component {
           submitperm={write_perm}>
           <Formik
             initialValues = {{
+              addview: this.addview,
               first_name: custuser.first_name,
               last_name: custuser.last_name,
               username: custuser.username,
               password: '',
+              confirm_password: '',
               is_active: custuser.is_active,
               is_superuser: custuser.is_superuser,
               is_staff: custuser.is_staff,
               email: custuser.email,
             }}
+            validationSchema={UserSchema}
             onSubmit = {(values, actions) => this.onSubmitHandle(values, actions)}
             render = {props => (
               <Form> 
@@ -899,38 +907,47 @@ export class SuperAdminUserChange extends Component {
                   <h4 className="mt-2 p-1 pl-3 text-light text-uppercase rounded" style={{"backgroundColor": "#416090"}}>Personal info</h4>
                   <Row>
                     <Col md={6}>
-                      <Label for="userFirstName">First name</Label>
-                      <Field
-                        type="text"
-                        name="first_name"
-                        required={false}
-                        className="form-control"
-                        id="userFirstName"
-                      />
+                      <InputGroup>
+                        <InputGroupAddon addonType="prepend">First name</InputGroupAddon>
+                        <Field
+                          type="text"
+                          name="first_name"
+                          className="form-control"
+                          id="userFirstName"
+                        />
+                      </InputGroup>
                     </Col>
                   </Row>
                   <Row>
                     <Col md={6}>
-                      <Label for="userLastName">Last name</Label>
-                      <Field
-                        type="text"
-                        name="last_name"
-                        required={false}
-                        className="form-control"
-                        id="userLastName"
-                      />
+                      <InputGroup>
+                        <InputGroupAddon addonType="prepend">Last name</InputGroupAddon>
+                        <Field
+                          type="text"
+                          name="last_name"
+                          className="form-control"
+                          id="userLastName"
+                        />
+                      </InputGroup>
                     </Col>
                   </Row>
                   <Row>
                     <Col md={6}>
-                      <Label for="userEmail">Email</Label>
-                      <Field
-                        type="text"
-                        name="email"
-                        required={true}
-                        className="form-control"
-                        id="userEmail"
-                      />
+                      <InputGroup>
+                        <InputGroupAddon addonType="prepend">Email</InputGroupAddon>
+                        <Field
+                          type="text"
+                          name="email"
+                          className={props.errors.email ? 'form-control border-danger' : 'form-control'}
+                          id="userEmail"
+                        />
+                      </InputGroup>
+                      {
+                        props.errors.email ?
+                          FancyErrorMessage(props.errors.email)
+                        :
+                          null
+                      }
                     </Col>
                   </Row>
                 </FormGroup>
@@ -941,7 +958,6 @@ export class SuperAdminUserChange extends Component {
                       <Field
                         component={Checkbox}
                         name="is_superuser"
-                        required={false}
                         className="form-control"
                         id="checkbox"
                         label="Superuser status"
@@ -956,7 +972,6 @@ export class SuperAdminUserChange extends Component {
                       <Field
                         component={Checkbox}
                         name="is_staff"
-                        required={false}
                         className="form-control"
                         id="checkbox"
                         label="Staff status"
@@ -971,7 +986,6 @@ export class SuperAdminUserChange extends Component {
                       <Field 
                         component={Checkbox}
                         name="is_active"
-                        required={false}
                         className="form-control"
                         id="checkbox"
                         label="Active"
