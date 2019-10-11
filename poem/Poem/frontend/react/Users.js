@@ -799,6 +799,7 @@ export class SuperAdminUserChange extends Component {
   doChange(values, action) {
     if (!this.addview) {
       this.backend.changeUser({
+        pk: values.pk,
         username: values.username,
         first_name: values.first_name,
         last_name: values.last_name,
@@ -807,12 +808,20 @@ export class SuperAdminUserChange extends Component {
         is_staff: values.is_staff,
         is_active: values.is_active
       })
-        .then(() => NotifyOk({
-          msg: 'User successfully changed',
-          title: 'Changed',
-          callback: () => this.history.push('/ui/administration/users')
-        },
-        ))
+        .then(response => {
+          if (!response.ok) {
+            response.json()
+              .then(json => {
+                NotificationManager.error(json.detail, 'Error');
+              });
+          } else {
+            NotifyOk({
+              msg: 'User successfully changed',
+              title: 'Changed',
+              callback: () => this.history.push('/ui/administration/users')
+            });
+          }
+        })
         .catch(err => alert('Something went wrong: ' + err))
     }
     else {
@@ -826,13 +835,20 @@ export class SuperAdminUserChange extends Component {
         is_staff: values.is_staff,
         is_active: values.is_active
       })
-        .then(() => NotifyOk({
-          msg: 'User successfully added',
-          title: 'Added',
-          callback: () => this.history.push('/ui/administration/users')
-        },
-        ))
-        .catch(err => alert('Something went wrong: ' + err))
+        .then(response => {
+          if (!response.ok) {
+            response.json()
+              .then(json => {
+                NotificationManager.error(json.detail, 'Error');
+              });
+          } else {
+            NotifyOk({
+              msg: 'User successfully added',
+              title: 'Added',
+              callback: () => this.history.push('/ui/administration/users')
+            })
+          }
+        })
     }
   }
 
@@ -866,6 +882,7 @@ export class SuperAdminUserChange extends Component {
         this.setState(
           {
             custuser: {
+              'pk': '',
               'first_name': '', 
               'last_name': '', 
               'username': '',
@@ -902,6 +919,7 @@ export class SuperAdminUserChange extends Component {
           <Formik
             initialValues = {{
               addview: this.addview,
+              pk: custuser.pk,
               first_name: custuser.first_name,
               last_name: custuser.last_name,
               username: custuser.username,
