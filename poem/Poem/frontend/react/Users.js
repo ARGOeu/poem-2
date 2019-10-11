@@ -157,7 +157,7 @@ export class UsersList extends Component
               data={list_users}
               columns={columns}
               className="-striped -highlight"
-              defaultPageSize={12}
+              defaultPageSize={20}
             />
           </BaseArgoView>
       )
