@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
 import { Backend } from './DataManager';
-import { LoadingAnim, BaseArgoView, Checkbox, NotifyOk } from './UIElements';
+import { LoadingAnim, BaseArgoView, Checkbox, NotifyOk, FancyErrorMessage } from './UIElements';
 import ReactTable from 'react-table';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
@@ -16,10 +16,35 @@ import {
   InputGroup,
   InputGroupAddon
 } from "reactstrap";
+import * as Yup from 'yup';
+
+const UserSchema  = Yup.object().shape({
+  username: Yup.string()
+    .max(30, 'Username must be 30 characters or fewer.')
+    .matches(/^[A-Za-z0-9@.+\-_]*$/, 'Letters, numbers and @/./+/-/_ characters')
+    .required('Required'),
+  addview: Yup.boolean(),
+  password: Yup.string().when('addview', {
+    is: true,
+    then: Yup.string()
+      .required('Required')
+      .min(8, 'Your password must contain at least 8 characters.')
+      .matches(/^\d*[a-zA-Z][a-zA-Z\d]*$/, 'Your password cannot be entirely numeric.')
+  }),
+  confirm_password: Yup.string().when('addview', {
+    is: true,
+    then: Yup.string()
+      .required('Required')
+      .oneOf([Yup.ref('password'), null], 'Passwords do not match!')
+  }),
+  email: Yup.string()
+    .email('Enter valid email.')
+    .required('Required')
+})
 
 import './Users.css';
 
-const UsernamePassword = ({add} ) => 
+const UsernamePassword = ({add, errors}) => 
   (add) ?
    <FormGroup>
     <Row>
@@ -29,11 +54,16 @@ const UsernamePassword = ({add} ) =>
           <Field
             type="text"
             name="username"
-            required={true}
-            className="form-control"
+            className={errors.username ? 'form-control border-danger' : 'form-control'}
             id="userUsername"
           />
         </InputGroup>
+        {
+          errors.username ?
+            FancyErrorMessage(errors.username)
+          :
+            null
+        }
       </Col>
     </Row>
     <Row>
@@ -43,11 +73,35 @@ const UsernamePassword = ({add} ) =>
           <Field
           type="password"
           name="password"
-          required={true}
-          className="form-control"
+          className={errors.password ? 'form-control border-danger' : 'form-control'}
           id="password"
         />
         </InputGroup>
+        {
+          errors.password ?
+            FancyErrorMessage(errors.password)
+          :
+            null
+        }
+      </Col>
+    </Row>
+    <Row>
+      <Col md={6}>
+        <InputGroup>
+          <InputGroupAddon addonType='prepend'>Confirm password</InputGroupAddon>
+          <Field
+            type='password'
+            name='confirm_password'
+            className={errors.confirm_password ? 'form-control border-danger' : 'form-control'}
+            id='confirm_password'
+          />
+        </InputGroup>
+        {
+          errors.confirm_password ? 
+            FancyErrorMessage(errors.confirm_password)
+          :
+            null
+        }
       </Col>
     </Row>
    </FormGroup>
@@ -381,10 +435,12 @@ export class UserChange extends Component {
           submitperm={write_perm}>
           <Formik
             initialValues = {{
+              addview: this.addview,
               first_name: custuser.first_name,
               last_name: custuser.last_name,
               username: custuser.username,
               password: '',
+              confirm_password: '',
               is_active: custuser.is_active,
               is_superuser: custuser.is_superuser,
               is_staff: custuser.is_staff,
@@ -396,6 +452,7 @@ export class UserChange extends Component {
               subject: userprofile.subject,
               egiid: userprofile.egiid
             }}
+            validationSchema={UserSchema}
             onSubmit = {(values, actions) => this.onSubmitHandle(values, actions)}
             render = {props => (
               <Form> 
@@ -412,7 +469,6 @@ export class UserChange extends Component {
                         <Field
                           type="text"
                           name="first_name"
-                          required={false}
                           className="form-control"
                           id="userFirstName"
                         />
@@ -426,7 +482,6 @@ export class UserChange extends Component {
                         <Field
                           type="text"
                           name="last_name"
-                          required={false}
                           className="form-control"
                           id="userLastName"
                         />
@@ -440,11 +495,16 @@ export class UserChange extends Component {
                         <Field
                           type="text"
                           name="email"
-                          required={true}
-                          className="form-control"
+                          className={props.errors.email ? 'form-control border-danger' : 'form-control'}
                           id="userEmail"
                         />
                       </InputGroup>
+                      {
+                        props.errors.email ? 
+                          FancyErrorMessage(props.errors.email)
+                        :
+                          null
+                      }
                     </Col>
                   </Row>
                 </FormGroup>
@@ -455,7 +515,6 @@ export class UserChange extends Component {
                       <Field
                         component={Checkbox}
                         name="is_superuser"
-                        required={false}
                         className="form-control"
                         id="checkbox"
                         label="Superuser status"
@@ -470,7 +529,6 @@ export class UserChange extends Component {
                       <Field
                         component={Checkbox}
                         name="is_staff"
-                        required={false}
                         className="form-control"
                         id="checkbox"
                         label="Staff status"
@@ -485,7 +543,6 @@ export class UserChange extends Component {
                       <Field 
                         component={Checkbox}
                         name="is_active"
-                        required={false}
                         className="form-control"
                         id="checkbox"
                         label="Active"
