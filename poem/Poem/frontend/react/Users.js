@@ -12,7 +12,10 @@ import {
   Col, 
   Label, 
   FormText, 
-  Button} from "reactstrap";
+  Button,
+  InputGroup,
+  InputGroupAddon
+} from "reactstrap";
 
 import './Users.css';
 
@@ -21,26 +24,30 @@ const UsernamePassword = ({add} ) =>
    <FormGroup>
     <Row>
       <Col md={6}>
-        <Label for="userUsername">Username</Label>
-        <Field
-          type="text"
-          name="username"
-          required={true}
-          className="form-control"
-          id="userUsername"
-        />
+        <InputGroup>
+          <InputGroupAddon addonType='prepend'>Username</InputGroupAddon>
+          <Field
+            type="text"
+            name="username"
+            required={true}
+            className="form-control"
+            id="userUsername"
+          />
+        </InputGroup>
       </Col>
     </Row>
     <Row>
       <Col md={6}>
-        <Label for="password">Password</Label>
-        <Field
-         type="password"
-         name="password"
-         required={true}
-         className="form-control"
-         id="password"
-       />
+        <InputGroup>
+          <InputGroupAddon addonType='prepend'>Password</InputGroupAddon>
+          <Field
+          type="password"
+          name="password"
+          required={true}
+          className="form-control"
+          id="password"
+        />
+        </InputGroup>
       </Col>
     </Row>
    </FormGroup>
@@ -48,14 +55,16 @@ const UsernamePassword = ({add} ) =>
     <FormGroup>
       <Row>
         <Col md={6}>
-          <Label for='userUsername'>Username</Label>
-          <Field
-            type="text"
-            name='username'
-            required={true}
-            className="form-control"
-            id='userUsername'
-          />
+          <InputGroup>
+            <InputGroupAddon addonType='prepend'>Username</InputGroupAddon>
+            <Field
+              type="text"
+              name='username'
+              required={true}
+              className="form-control"
+              id='userUsername'
+            />
+          </InputGroup>
         </Col>
       </Row>
     </FormGroup>
@@ -398,38 +407,44 @@ export class UserChange extends Component {
                   <h4 className="mt-2 p-1 pl-3 text-light text-uppercase rounded" style={{"backgroundColor": "#416090"}}>Personal info</h4>
                   <Row>
                     <Col md={6}>
-                      <Label for="userFirstName">First name</Label>
-                      <Field
-                        type="text"
-                        name="first_name"
-                        required={false}
-                        className="form-control"
-                        id="userFirstName"
-                      />
+                      <InputGroup>
+                        <InputGroupAddon addonType='prepend'>First name</InputGroupAddon>
+                        <Field
+                          type="text"
+                          name="first_name"
+                          required={false}
+                          className="form-control"
+                          id="userFirstName"
+                        />
+                      </InputGroup>
                     </Col>
                   </Row>
                   <Row>
                     <Col md={6}>
-                      <Label for="userLastName">Last name</Label>
-                      <Field
-                        type="text"
-                        name="last_name"
-                        required={false}
-                        className="form-control"
-                        id="userLastName"
-                      />
+                      <InputGroup>
+                        <InputGroupAddon addonType='prepend'>Last name</InputGroupAddon>
+                        <Field
+                          type="text"
+                          name="last_name"
+                          required={false}
+                          className="form-control"
+                          id="userLastName"
+                        />
+                      </InputGroup>
                     </Col>
                   </Row>
                   <Row>
                     <Col md={6}>
-                      <Label for="userEmail">Email</Label>
-                      <Field
-                        type="text"
-                        name="email"
-                        required={true}
-                        className="form-control"
-                        id="userEmail"
-                      />
+                      <InputGroup>
+                        <InputGroupAddon addonType='prepend'>Email</InputGroupAddon>
+                        <Field
+                          type="text"
+                          name="email"
+                          required={true}
+                          className="form-control"
+                          id="userEmail"
+                        />
+                      </InputGroup>
                     </Col>
                   </Row>
                 </FormGroup>
@@ -572,42 +587,48 @@ export class UserChange extends Component {
                   <h4 className="mt-2 p-1 pl-3 text-light text-uppercase rounded" style={{"backgroundColor": "#416090"}}>Additional information</h4>
                   <Row>
                     <Col md={12}>
-                      <Label for="distinguishedname">distinguishedName</Label>
-                      <Field 
-                        type="text"
-                        name="subject"
-                        required={false}
-                        className="form-control"
-                        id="distinguishedname"
-                      />
+                      <InputGroup>
+                        <InputGroupAddon addonType='prepend'>distinguishedName</InputGroupAddon>
+                        <Field 
+                          type="text"
+                          name="subject"
+                          required={false}
+                          className="form-control"
+                          id="distinguishedname"
+                        />
+                      </InputGroup>
                     </Col>
                   </Row>
                 </FormGroup>
                 <FormGroup>
                   <Row>
                     <Col md={8}>
-                      <Label for="eduid">eduPersonUniqueId</Label>
-                      <Field 
-                        type="text"
-                        name="egiid"
-                        required={false}
-                        className="form-control"
-                        id='eduid'
-                      />
+                      <InputGroup>
+                        <InputGroupAddon addonType="prepend">eduPersonUniqueId</InputGroupAddon>
+                        <Field 
+                          type="text"
+                          name="egiid"
+                          required={false}
+                          className="form-control"
+                          id='eduid'
+                        />
+                      </InputGroup>
                     </Col>
                   </Row>
                 </FormGroup>
                 <FormGroup>
                   <Row>
                     <Col md={6}>
-                      <Label for="displayname">displayName</Label>
-                      <Field 
-                        type="text"
-                        name="displayname"
-                        required={false}
-                        className="form-control"
-                        id="displayname"
-                      />
+                      <InputGroup>
+                        <InputGroupAddon addonType="prepend">displayName</InputGroupAddon>
+                        <Field 
+                          type="text"
+                          name="displayname"
+                          required={false}
+                          className="form-control"
+                          id="displayname"
+                        />
+                      </InputGroup>
                     </Col>
                   </Row>
                 </FormGroup>
