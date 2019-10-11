@@ -43,6 +43,7 @@ const UserSchema  = Yup.object().shape({
 })
 
 import './Users.css';
+import { NotificationManager } from 'react-notifications';
 
 const UsernamePassword = ({add, errors}) => 
   (add) ?
@@ -301,6 +302,7 @@ export class UserChange extends Component {
   doChange(values, action) {
     if (!this.addview) {
       this.backend.changeUser({
+        pk: values.pk,
         username: values.username,
         first_name: values.first_name,
         last_name: values.last_name,
@@ -309,25 +311,31 @@ export class UserChange extends Component {
         is_staff: values.is_staff,
         is_active: values.is_active
       })
-      .then(r => {
-        this.backend.changeUserProfile({
-          username: values.username,
-          displayname: values.displayname,
-          subject: values.subject,
-          egiid: values.egiid,
-          groupsofaggregations: values.groupsofaggregations,
-          groupsofmetrics: values.groupsofmetrics,
-          groupsofmetricprofiles: values.groupsofmetricprofiles
+      .then(response => {
+        if (!response.ok) {
+          response.json()
+            .then(json => {
+              NotificationManager.error(json.detail, 'Error');
+            });
+        } else {
+          this.backend.changeUserProfile({
+            username: values.username,
+            displayname: values.displayname,
+            subject: values.subject,
+            egiid: values.egiid,
+            groupsofaggregations: values.groupsofaggregations,
+            groupsofmetrics: values.groupsofmetrics,
+            groupsofmetricprofiles: values.groupsofmetricprofiles
+          })
+            .then(() => NotifyOk({
+              msg: 'User successfully changed',
+              title: 'Changed',
+              callback: () => this.history.push('/ui/administration/users')
+            })
+            )
+          }
         })
-          .then(() => NotifyOk({
-            msg: 'User successfully changed',
-            title: 'Changed',
-            callback: () => this.history.push('/ui/administration/users')
-          },
-          ))
-          .catch(err => alert('Something went wrong: ' + err))
-      })
-      .catch(err => alert('Something went wrong: ' + err))
+        .catch(err => alert('Something went wrong: ' + err))
     }
     else {
       this.backend.addUser({
@@ -340,26 +348,33 @@ export class UserChange extends Component {
         is_staff: values.is_staff,
         is_active: values.is_active
       })
-        .then(r => {
-          this.backend.addUserProfile({
-            username: values.username,
-            displayname: values.displayname,
-            subject: values.subject,
-            egiid: values.egiid,
-            groupsofaggregations: values.groupsofaggregations,
-            groupsofmetrics: values.groupsofmetrics,
-            groupsofmetricprofiles: values.groupsofmetricprofiles
-          })
+        .then(response => {
+          if (!response.ok) {
+            response.json()
+              .then(json => {
+                NotificationManager.error(json.detail, 'Error');
+              });
+          } else {
+            this.backend.addUserProfile({
+              username: values.username,
+              displayname: values.displayname,
+              subject: values.subject,
+              egiid: values.egiid,
+              groupsofaggregations: values.groupsofaggregations,
+              groupsofmetrics: values.groupsofmetrics,
+              groupsofmetricprofiles: values.groupsofmetricprofiles
+            })
+            .then(() => NotifyOk({
+              msg: 'User successfully added',
+              title: 'Added',
+              callback: () => this.history.push('/ui/administration/users')
+            })
+            )
+          }
         })
-          .then(() => NotifyOk({
-            msg: 'User successfully added',
-            title: 'Added',
-            callback: () => this.history.push('/ui/administration/users')
-          },
-          ))
-          .catch(err => alert('Something went wrong: ' + err))
+        .catch(err => alert('Something went wrong: ' + err))
+      }
     }
-  }
 
   doDelete(username) {
     this.backend.deleteUser(username)
@@ -396,6 +411,7 @@ export class UserChange extends Component {
         this.setState(
           {
             custuser: {
+              'pk': '',
               'first_name': '', 
               'last_name': '', 
               'username': '',
@@ -441,6 +457,7 @@ export class UserChange extends Component {
           <Formik
             initialValues = {{
               addview: this.addview,
+              pk: custuser.pk,
               first_name: custuser.first_name,
               last_name: custuser.last_name,
               username: custuser.username,
