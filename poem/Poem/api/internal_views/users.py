@@ -53,7 +53,9 @@ class ListUsers(APIView):
             users = CustUser.objects.all()
             serializer = serializers.UsersSerializer(users, many=True)
 
-            return Response(serializer.data)
+            data = sorted(serializer.data, key=lambda k: k['username'].lower())
+
+            return Response(data)
 
     def put(self, request):
         user = CustUser.objects.get(username=request.data['username'])

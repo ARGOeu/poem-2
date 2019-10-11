@@ -195,14 +195,6 @@ class ListUsersAPIViewTests(TenantTestCase):
         self.assertEqual(
             response.data,
             [
-                OrderedDict([('first_name', 'Test'),
-                             ('last_name', 'User'),
-                             ('username', 'testuser'),
-                             ('is_active', True),
-                             ('is_superuser', False),
-                             ('is_staff', False),
-                             ('email', 'testuser@example.com'),
-                             ('date_joined', '2015-01-01T00:00:00')]),
                 OrderedDict([('first_name', 'Another'),
                              ('last_name', 'User'),
                              ('username', 'another_user'),
@@ -210,7 +202,15 @@ class ListUsersAPIViewTests(TenantTestCase):
                              ('is_superuser', False),
                              ('is_staff', False),
                              ('email', 'otheruser@example.com'),
-                             ('date_joined', '2015-01-02T00:00:00')])
+                             ('date_joined', '2015-01-02T00:00:00')]),
+                OrderedDict([('first_name', 'Test'),
+                             ('last_name', 'User'),
+                             ('username', 'testuser'),
+                             ('is_active', True),
+                             ('is_superuser', False),
+                             ('is_staff', False),
+                             ('email', 'testuser@example.com'),
+                             ('date_joined', '2015-01-01T00:00:00')])
             ]
         )
 
