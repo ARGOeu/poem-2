@@ -1,3 +1,5 @@
+from django.db import IntegrityError
+
 from Poem.api import serializers
 from Poem.api.views import NotFound
 from Poem.poem import models as poem_models
@@ -58,16 +60,24 @@ class ListUsers(APIView):
             return Response(data)
 
     def put(self, request):
-        user = CustUser.objects.get(username=request.data['username'])
-        user.first_name = request.data['first_name']
-        user.last_name = request.data['last_name']
-        user.email = request.data['email']
-        user.is_superuser = request.data['is_superuser']
-        user.is_staff = request.data['is_staff']
-        user.is_active = request.data['is_active']
-        user.save()
+        try:
+            user = CustUser.objects.get(pk=request.data['pk'])
+            user.username = request.data['username']
+            user.first_name = request.data['first_name']
+            user.last_name = request.data['last_name']
+            user.email = request.data['email']
+            user.is_superuser = request.data['is_superuser']
+            user.is_staff = request.data['is_staff']
+            user.is_active = request.data['is_active']
+            user.save()
 
-        return Response(status=status.HTTP_201_CREATED)
+            return Response(status=status.HTTP_201_CREATED)
+
+        except IntegrityError:
+            return Response(
+                {'detail': 'User with this username already exists.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
     def post(self, request):
         try:
@@ -84,8 +94,11 @@ class ListUsers(APIView):
 
             return Response(status=status.HTTP_201_CREATED)
 
-        except Exception:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+        except IntegrityError:
+            return Response(
+                {'detail': 'User with this username already exists.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
     def delete(self, request, username=None):
         if username:

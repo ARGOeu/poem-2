@@ -174,7 +174,7 @@ class ListUsersAPIViewTests(TenantTestCase):
             date_joined=datetime.datetime(2015, 1, 1, 0, 0, 0)
         )
 
-        user2 = CustUser.objects.create_user(
+        self.user2 = CustUser.objects.create_user(
             username='another_user',
             first_name='Another',
             last_name='User',
@@ -182,7 +182,7 @@ class ListUsersAPIViewTests(TenantTestCase):
             date_joined=datetime.datetime(2015, 1, 2, 0, 0, 0)
         )
 
-        poem_models.UserProfile.objects.create(user=user2)
+        poem_models.UserProfile.objects.create(user=self.user2)
 
         self.groupofmetrics = poem_models.GroupOfMetrics.objects.create(name='Metric1')
         self.groupofmetricprofiles = poem_models.GroupOfMetricProfiles.objects.create(name='MP1')
@@ -202,7 +202,8 @@ class ListUsersAPIViewTests(TenantTestCase):
                              ('is_superuser', False),
                              ('is_staff', False),
                              ('email', 'otheruser@example.com'),
-                             ('date_joined', '2015-01-02T00:00:00')]),
+                             ('date_joined', '2015-01-02T00:00:00'),
+                             ('pk', self.user2.pk)]),
                 OrderedDict([('first_name', 'Test'),
                              ('last_name', 'User'),
                              ('username', 'testuser'),
@@ -210,7 +211,8 @@ class ListUsersAPIViewTests(TenantTestCase):
                              ('is_superuser', False),
                              ('is_staff', False),
                              ('email', 'testuser@example.com'),
-                             ('date_joined', '2015-01-01T00:00:00')])
+                             ('date_joined', '2015-01-01T00:00:00'),
+                             ('pk', self.user.pk)])
             ]
         )
 
@@ -232,7 +234,8 @@ class ListUsersAPIViewTests(TenantTestCase):
                          ('is_superuser', False),
                          ('is_staff', False),
                          ('email', 'testuser@example.com'),
-                         ('date_joined', '2015-01-01T00:00:00')])
+                         ('date_joined', '2015-01-01T00:00:00'),
+                         ('pk', self.user.pk)])
         )
 
     def test_get_user_by_username_if_username_does_not_exist(self):
@@ -243,6 +246,7 @@ class ListUsersAPIViewTests(TenantTestCase):
 
     def test_put_user(self):
         data = {
+            'pk': self.user.pk,
             'username': 'testuser',
             'first_name': 'Test',
             'last_name': 'Newuser',
@@ -263,6 +267,27 @@ class ListUsersAPIViewTests(TenantTestCase):
         self.assertFalse(user.is_superuser)
         self.assertFalse(user.is_staff)
         self.assertTrue(user.is_active)
+
+    def test_put_user_with_already_existing_name(self):
+        data = {
+            'pk': self.user.pk,
+            'username': 'another_user',
+            'first_name': 'Test',
+            'last_name': 'Newuser',
+            'email': 'testuser@example.com',
+            'is_superuser': False,
+            'is_staff': False,
+            'is_active': True
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data,
+            {'detail': 'User with this username already exists.'}
+        )
 
     def test_post_user(self):
         data = {
@@ -287,6 +312,26 @@ class ListUsersAPIViewTests(TenantTestCase):
         self.assertTrue(user.is_superuser)
         self.assertTrue(user.is_staff)
         self.assertTrue(user.is_active)
+
+    def test_post_user_with_already_existing_username(self):
+        data = {
+            'username': 'testuser',
+            'first_name': 'New',
+            'last_name': 'User',
+            'email': 'newuser@example.com',
+            'is_superuser': True,
+            'is_staff': True,
+            'is_active': True,
+            'password': 'blablabla',
+        }
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data,
+            {'detail': 'User with this username already exists.'}
+        )
 
     def test_delete_user(self):
         request = self.factory.delete(self.url + 'another_user')
