@@ -360,6 +360,7 @@ export class MetricTemplateChange extends Component {
           location={this.location}
           addview={this.addview}
           infoview={this.infoview}
+          clone={true}
           modal={true}
           state={this.state}
           toggle={this.toggleAreYouSure}
