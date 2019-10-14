@@ -58,11 +58,11 @@ def create_comment(object_id, ct, new_serialized_data):
             'fields']
 
         for key, value in old_serialized_data.items():
-            if key in ['nameversion', 'cloned', 'probekey']:
+            if key in ['nameversion', 'probekey']:
                 pass
 
             elif key in ['config', 'attribute', 'dependency', 'flags', 'files',
-                       'parameter', 'fileparameter']:
+                         'parameter', 'fileparameter']:
                 old = inline_models_to_dicts(old_serialized_data[key])
                 new = inline_models_to_dicts(new_serialized_data[key])
 
@@ -119,7 +119,7 @@ def create_comment(object_id, ct, new_serialized_data):
             if key not in ['config', 'attribute', 'dependency', 'flags',
                            'files', 'parameter', 'fileparameter',
                            'probeexecutable', 'parent', 'nameversion',
-                           'datetime', 'cloned']:
+                           'datetime']:
                 if not old_serialized_data[key]:
                     added.append(key)
 
