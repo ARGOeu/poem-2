@@ -2288,19 +2288,29 @@ class ListVersionsAPIViewTests(TenantTestCase):
                         'name': 'argo.AMS-Check',
                         'mtype': self.mtype1.id,
                         'probeversion': 'ams-probe (0.1.7)',
-                        'probekey': self.ver3.id,
                         'parent': '',
-                        'probeexecutable': '["ams-probe"]',
-                        'config': '["maxCheckAttempts 3", "timeout 60", '
-                                  '"path /usr/libexec/argo-monitoring/'
-                                  'probes/argo", "interval 5", '
-                                  '"retryInterval 3"]',
-                        'attribute': '["argo.ams_TOKEN --token"]',
-                        'dependency': '',
-                        'flags': '["OBSESS 1"]',
-                        'files': '',
-                        'parameter': '["--project EGI"]',
-                        'fileparameter': ''
+                        'probeexecutable': 'ams-probe',
+                        'config': [
+                            {'key': 'maxCheckAttempts', 'value': '3'},
+                            {'key': 'timeout', 'value': '60'},
+                            {'key': 'path',
+                             'value':
+                                 '/usr/libexec/argo-monitoring/probes/argo'},
+                            {'key': 'interval', 'value': '5'},
+                            {'key': 'retryInterval', 'value': '3'}
+                        ],
+                        'attribute': [
+                            {'key': 'argo.ams_TOKEN', 'value': '--token'}
+                        ],
+                        'dependency': [],
+                        'flags': [
+                            {'key': 'OBSESS', 'value': '1'}
+                        ],
+                        'files': [],
+                        'parameter': [
+                            {'key': '--project', 'value': 'EGI'}
+                        ],
+                        'fileparameter': []
                     },
                     'user': 'testuser',
                     'date_created': datetime.datetime.strftime(
