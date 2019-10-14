@@ -58,7 +58,7 @@ def create_comment(object_id, ct, new_serialized_data):
             'fields']
 
         for key, value in old_serialized_data.items():
-            if key in ['nameversion', 'cloned']:
+            if key in ['nameversion', 'cloned', 'probekey']:
                 pass
 
             elif key in ['config', 'attribute', 'dependency', 'flags', 'files',
