@@ -23,6 +23,9 @@ import './MetricTemplates.css';
 export const MetricTemplateList = ListOfMetrics('metrictemplate');
 export const TenantMetricTemplateList = ListOfMetrics('metrictemplate', true)
 
+export const MetricTemplateChange = MetricTemplateComponent()
+export const MetricTemplateClone = MetricTemplateComponent(true)
+
 
 function matchItem(item, value) {
   if (value)
@@ -87,9 +90,6 @@ const MetricTemplateSchema = Yup.object().shape({
     then: Yup.string().required('Required')
   })
 });
-
-export const MetricTemplateChange = MetricTemplateComponent()
-export const MetricTemplateClone = MetricTemplateComponent(true)
 
 
 function MetricTemplateComponent(cloneview=false) {
@@ -174,7 +174,14 @@ function MetricTemplateComponent(cloneview=false) {
 
     doChange(values, actions){
       if (this.addview || cloneview) {
+        let cloned_from = undefined;
+        if (cloneview) {
+          cloned_from = values.id;
+        } else {
+          cloned_from = '';
+        }
         this.backend.addMetricTemplate({
+          cloned_from: cloned_from,
           name: values.name,
           probeversion: values.probeversion,
           mtype: values.type,
