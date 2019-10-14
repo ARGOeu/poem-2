@@ -2306,7 +2306,8 @@ class ListVersionsAPIViewTests(TenantTestCase):
                     'date_created': datetime.datetime.strftime(
                         self.ver4.date_created, '%Y-%m-%d %H:%M:%S'
                     ),
-                    'comment': 'Initial version.'
+                    'comment': 'Initial version.',
+                    'version': 1
                 }
             ]
         )

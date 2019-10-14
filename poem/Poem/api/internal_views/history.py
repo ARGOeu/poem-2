@@ -26,41 +26,36 @@ class ListVersions(APIView):
                 raise NotFound(status=404,
                                detail='{} not found'.format(obj.capitalize()))
 
-            vers = History.objects.filter(object_id=obj.id,
-                                          content_type=ct)
+            vers = History.objects.filter(
+                object_id=obj.id,
+                content_type=ct).order_by('date_created')
 
             if vers.count() == 0:
                 raise NotFound(status=404, detail='Version not found')
 
             else:
                 results = []
+                i = 0
                 for ver in vers:
+                    i += 1
                     if isinstance(obj, Probe):
-                        results.append(dict(
-                            id=ver.id,
-                            object_repr=ver.object_repr,
-                            fields=json.loads(ver.serialized_data)[0]['fields'],
-                            user=ver.user,
-                            date_created=datetime.datetime.strftime(
-                                ver.date_created, '%Y-%m-%d %H:%M:%S'
-                            ),
-                            comment=new_comment(ver.comment),
-                            version=json.loads(
-                                ver.serialized_data
-                            )[0]['fields']['version']
-                        ))
-
+                        version = json.loads(
+                            ver.serialized_data
+                        )[0]['fields']['version']
                     elif isinstance(obj, MetricTemplate):
-                        results.append(dict(
-                            id=ver.id,
-                            object_repr=ver.object_repr,
-                            fields=json.loads(ver.serialized_data)[0]['fields'],
-                            user=ver.user,
-                            date_created=datetime.datetime.strftime(
-                                ver.date_created, '%Y-%m-%d %H:%M:%S'
-                            ),
-                            comment=new_comment(ver.comment),
-                        ))
+                        version = i
+
+                    results.append(dict(
+                        id=ver.id,
+                        object_repr=ver.object_repr,
+                        fields=json.loads(ver.serialized_data)[0]['fields'],
+                        user=ver.user,
+                        date_created=datetime.datetime.strftime(
+                            ver.date_created, '%Y-%m-%d %H:%M:%S'
+                        ),
+                        comment=new_comment(ver.comment),
+                        version=version
+                    ))
 
                 results = sorted(results, key=lambda k: k['id'], reverse=True)
                 return Response(results)
