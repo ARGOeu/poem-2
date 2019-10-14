@@ -2548,6 +2548,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         ]
 
         data = {
+            'cloned_from': '',
             'name': 'new-template',
             'probeversion': 'ams-probe (0.1.7)',
             'mtype': 'Active',
