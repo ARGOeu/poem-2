@@ -4,7 +4,7 @@ import { MetricProfilesChange, MetricProfilesList } from './MetricProfiles';
 import Home from './Home';
 import { ProbeList, ProbeChange, ProbeHistory, ProbeVersionCompare, ProbeVersionDetails } from './Probes';
 import { MetricList, MetricChange } from './Metrics';
-import { MetricTemplateList, MetricTemplateChange, MetricTemplateClone, TenantMetricTemplateList } from './MetricTemplates';
+import { MetricTemplateList, MetricTemplateChange, MetricTemplateClone, TenantMetricTemplateList, MetricTemplateHistory } from './MetricTemplates';
 import { TenantAdministration, SuperAdminAdministration } from './Administration';
 import { AggregationProfilesChange, AggregationProfilesList } from './AggregationProfiles';
 import Reports from './Reports';
@@ -115,6 +115,7 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, token, tenantName})
       render={props => <APIKeyChange {...props} addview={true}/>}
     />
     <Route exact path='/ui/administration/metrictemplates/' component={TenantMetricTemplateList}/>
+    <Route exact path="/ui/administration/metrictemplates/:name/history" render={props => <MetricTemplateHistory {...props}/>}/>
     <Route exact path='/ui/administration/metrictemplates/:name'
       render={props => <MetricTemplateChange {...props} infoview={true}/>}
     />
@@ -138,6 +139,7 @@ const SuperAdminRouteSwitch = ({props}) => (
     <Route exact path='/ui/metrictemplates' component={MetricTemplateList}/>
     <Route exact path='/ui/metrictemplates/add' render={props => <MetricTemplateChange {...props} addview={true}/>}/>
     <Route exact path='/ui/metrictemplates/:name/clone' render={props => <MetricTemplateClone {...props}/>}/>
+    <Route exact path='/ui/metrictemplates/:name/history' render={props => <MetricTemplateHistory {...props}/>}/>
     <Route exact path='/ui/metrictemplates/:name' render={props => <MetricTemplateChange {...props}/>}/>
     <Route exact path="/ui/administration" component={SuperAdminAdministration}/>
     <Route exact path="/ui/administration/users" component={UsersList} />

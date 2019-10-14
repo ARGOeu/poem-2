@@ -18,6 +18,7 @@ import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import Autocomplete from 'react-autocomplete';
 import * as Yup from 'yup';
 import { NotificationManager } from 'react-notifications';
+import { HistoryComponent } from './Probes';
 import './MetricTemplates.css';
 
 export const MetricTemplateList = ListOfMetrics('metrictemplate');
@@ -25,6 +26,8 @@ export const TenantMetricTemplateList = ListOfMetrics('metrictemplate', true)
 
 export const MetricTemplateChange = MetricTemplateComponent()
 export const MetricTemplateClone = MetricTemplateComponent(true)
+
+export const MetricTemplateHistory = HistoryComponent('metrictemplate');
 
 
 function matchItem(item, value) {
