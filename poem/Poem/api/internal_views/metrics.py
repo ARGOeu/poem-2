@@ -2,6 +2,8 @@ from django.db import IntegrityError
 
 import json
 
+from Poem.api.internal_views.utils import one_value_inline, two_value_inline, \
+    inline_metric_for_db
 from Poem.api.views import NotFound
 from Poem.poem import models as poem_models
 from Poem.poem_super_admin import models as admin_models
@@ -10,35 +12,6 @@ from rest_framework import status
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
-
-def one_value_inline(input):
-    if input:
-        return json.loads(input)[0]
-    else:
-        return ''
-
-
-def two_value_inline(input):
-    results = []
-
-    if input:
-        data = json.loads(input)
-
-        for item in data:
-            results.append(({'key': item.split(' ')[0],
-                             'value': item.split(' ')[1]}))
-
-    return results
-
-
-def inline_metric_for_db(input):
-    result = []
-
-    for item in input:
-        result.append('{} {}'.format(item['key'], item['value']))
-
-    return result
 
 
 class ListAllMetrics(APIView):

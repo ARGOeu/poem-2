@@ -2,7 +2,7 @@ from django.db import IntegrityError
 
 import json
 
-from Poem.api.internal_views.metrics import one_value_inline, two_value_inline
+from Poem.api.internal_views.utils import one_value_inline, two_value_inline
 from Poem.api.views import NotFound
 from Poem.helpers.history_helpers import create_history
 from Poem.poem.models import Metric
