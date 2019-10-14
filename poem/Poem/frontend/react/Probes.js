@@ -21,7 +21,7 @@ import * as Yup from 'yup';
 export const ProbeHistory = HistoryComponent('probe')
 
 
-const DiffElement = ({title, item1, item2}) => {
+export const DiffElement = ({title, item1, item2}) => {
   item1 = item1.split('\r\n')
   item2 = item2.split('\r\n')
 
