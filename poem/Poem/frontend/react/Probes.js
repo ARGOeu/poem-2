@@ -929,7 +929,7 @@ export function HistoryComponent(obj) {
                           <td>
                             {e.user ? e.user : ''}
                           </td>
-                          <td>
+                          <td className={obj === 'probe' ? 'col-md-6' : 'col-md-8'}>
                             {e.comment ? e.comment : ''}
                           </td>
                         </tr>
