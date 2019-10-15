@@ -88,11 +88,11 @@ class ListAggregationsInGroup(APIView):
     def get(self, request, group=None):
         if group:
             aggr = poem_models.Aggregation.objects.filter(
-                groupofaggregations__name__exact=group
+                groupname=group
             )
         else:
             aggr = poem_models.Aggregation.objects.filter(
-                groupofaggregations__exact=None
+                groupname=''
             )
 
         results = []
@@ -100,15 +100,7 @@ class ListAggregationsInGroup(APIView):
             results.append({'id': item.id, 'name': item.name})
 
         results = sorted(results, key=lambda k: k['name'])
-
-        if results or (not results and
-                       poem_models.GroupOfAggregations.objects.filter(
-                           name__exact=group
-                       )):
-            return Response({'result': results})
-        else:
-            raise NotFound(status=404,
-                           detail='Group not found')
+        return Response({'result': results})
 
     def put(self, request):
         group = poem_models.GroupOfAggregations.objects.get(
@@ -176,11 +168,11 @@ class ListMetricProfilesInGroup(APIView):
     def get(self, request, group=None):
         if group:
             mp = poem_models.MetricProfiles.objects.filter(
-                groupofmetricprofiles__name__exact=group
+                groupname=group
             )
         else:
             mp = poem_models.MetricProfiles.objects.filter(
-                groupofmetricprofiles__exact=None
+                groupname=''
             )
 
         results = []
@@ -189,14 +181,7 @@ class ListMetricProfilesInGroup(APIView):
 
         results = sorted(results, key=lambda k: k['name'])
 
-        if results or (not results and
-                       poem_models.GroupOfMetricProfiles.objects.filter(
-                           name__exact=group
-                       )):
-            return Response({'result': results})
-        else:
-            raise NotFound(status=404,
-                           detail='Group of metric profiles not found')
+        return Response({'result': results})
 
     def put(self, request):
         group = poem_models.GroupOfMetricProfiles.objects.get(

@@ -1462,12 +1462,6 @@ class ListAggregationsInGroupAPIViewTests(TenantTestCase):
             }
         )
 
-    def test_get_aggregation_with_wrong_group(self):
-        request = self.factory.get(self.url + 'bla')
-        force_authenticate(request, user=self.user)
-        response = self.view(request, 'bla')
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-
     @patch('Poem.poem.models.Aggregation.objects.get')
     def test_put_aggregation_profile(self, aggr):
         aggr.return_value = self.aggr1
@@ -1571,12 +1565,6 @@ class ListMetricProfilesInGroupAPIViewTests(TenantTestCase):
                 ]
             }
         )
-
-    def test_get_metric_profiles_with_wrong_group(self):
-        request = self.factory.get(self.url + 'bla')
-        force_authenticate(request, user=self.user)
-        response = self.view(request, 'bla')
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     @patch('Poem.poem.models.MetricProfiles.objects.get')
     def test_put_metric_profile_group(self, mp):
