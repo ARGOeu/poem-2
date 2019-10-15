@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
 import { Backend } from './DataManager';
-import { LoadingAnim, BaseArgoView, Checkbox, NotifyOk } from './UIElements';
+import { LoadingAnim, BaseArgoView, Checkbox, NotifyOk, FancyErrorMessage } from './UIElements';
 import ReactTable from 'react-table';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
@@ -12,35 +12,97 @@ import {
   Col, 
   Label, 
   FormText, 
-  Button} from "reactstrap";
+  Button,
+  InputGroup,
+  InputGroupAddon
+} from "reactstrap";
+import * as Yup from 'yup';
+
+const UserSchema  = Yup.object().shape({
+  username: Yup.string()
+    .max(30, 'Username must be 30 characters or fewer.')
+    .matches(/^[A-Za-z0-9@.+\-_]*$/, 'Letters, numbers and @/./+/-/_ characters')
+    .required('Required'),
+  addview: Yup.boolean(),
+  password: Yup.string().when('addview', {
+    is: true,
+    then: Yup.string()
+      .required('Required')
+      .min(8, 'Your password must contain at least 8 characters.')
+      .matches(/^\d*[a-zA-Z][a-zA-Z\d]*$/, 'Your password cannot be entirely numeric.')
+  }),
+  confirm_password: Yup.string().when('addview', {
+    is: true,
+    then: Yup.string()
+      .required('Required')
+      .oneOf([Yup.ref('password'), null], 'Passwords do not match!')
+  }),
+  email: Yup.string()
+    .email('Enter valid email.')
+    .required('Required')
+})
 
 import './Users.css';
+import { NotificationManager } from 'react-notifications';
 
-const UsernamePassword = ({add} ) => 
+const UsernamePassword = ({add, errors}) => 
   (add) ?
    <FormGroup>
     <Row>
       <Col md={6}>
-        <Label for="userUsername">Username</Label>
-        <Field
-          type="text"
-          name="username"
-          required={true}
-          className="form-control"
-          id="userUsername"
-        />
+        <InputGroup>
+          <InputGroupAddon addonType='prepend'>Username</InputGroupAddon>
+          <Field
+            type="text"
+            name="username"
+            className={errors.username ? 'form-control border-danger' : 'form-control'}
+            id="userUsername"
+          />
+        </InputGroup>
+        {
+          errors.username ?
+            FancyErrorMessage(errors.username)
+          :
+            null
+        }
       </Col>
     </Row>
     <Row>
       <Col md={6}>
-        <Label for="password">Password</Label>
-        <Field
-         type="password"
-         name="password"
-         required={true}
-         className="form-control"
-         id="password"
-       />
+        <InputGroup>
+          <InputGroupAddon addonType='prepend'>Password</InputGroupAddon>
+          <Field
+          type="password"
+          name="password"
+          className={errors.password ? 'form-control border-danger' : 'form-control'}
+          id="password"
+        />
+        </InputGroup>
+        {
+          errors.password ?
+            FancyErrorMessage(errors.password)
+          :
+            null
+        }
+      </Col>
+    </Row>
+    <Row>
+      <Col md={6}>
+        <InputGroup>
+          <InputGroupAddon addonType='prepend'>Confirm password</InputGroupAddon>
+          <Field
+            type='password'
+            name='confirm_password'
+            className={errors.confirm_password ? 'form-control border-danger' : 'form-control'}
+            id='confirm_password'
+          />
+        </InputGroup>
+        {
+          errors.confirm_password ? 
+            FancyErrorMessage(errors.confirm_password)
+          :
+            null
+        }
       </Col>
     </Row>
    </FormGroup>
@@ -48,14 +110,21 @@ const UsernamePassword = ({add} ) =>
     <FormGroup>
       <Row>
         <Col md={6}>
-          <Label for='userUsername'>Username</Label>
-          <Field
-            type="text"
-            name='username'
-            required={true}
-            className="form-control"
-            id='userUsername'
-          />
+          <InputGroup>
+            <InputGroupAddon addonType='prepend'>Username</InputGroupAddon>
+            <Field
+              type="text"
+              name='username'
+              className="form-control"
+              id='userUsername'
+            />
+          </InputGroup>
+          {
+            errors.username ? 
+              FancyErrorMessage(errors.username)
+            :
+              null
+          }
         </Col>
       </Row>
     </FormGroup>
@@ -157,7 +226,7 @@ export class UsersList extends Component
               data={list_users}
               columns={columns}
               className="-striped -highlight"
-              defaultPageSize={12}
+              defaultPageSize={20}
             />
           </BaseArgoView>
       )
@@ -233,6 +302,7 @@ export class UserChange extends Component {
   doChange(values, action) {
     if (!this.addview) {
       this.backend.changeUser({
+        pk: values.pk,
         username: values.username,
         first_name: values.first_name,
         last_name: values.last_name,
@@ -241,25 +311,31 @@ export class UserChange extends Component {
         is_staff: values.is_staff,
         is_active: values.is_active
       })
-      .then(r => {
-        this.backend.changeUserProfile({
-          username: values.username,
-          displayname: values.displayname,
-          subject: values.subject,
-          egiid: values.egiid,
-          groupsofaggregations: values.groupsofaggregations,
-          groupsofmetrics: values.groupsofmetrics,
-          groupsofmetricprofiles: values.groupsofmetricprofiles
+      .then(response => {
+        if (!response.ok) {
+          response.json()
+            .then(json => {
+              NotificationManager.error(json.detail, 'Error');
+            });
+        } else {
+          this.backend.changeUserProfile({
+            username: values.username,
+            displayname: values.displayname,
+            subject: values.subject,
+            egiid: values.egiid,
+            groupsofaggregations: values.groupsofaggregations,
+            groupsofmetrics: values.groupsofmetrics,
+            groupsofmetricprofiles: values.groupsofmetricprofiles
+          })
+            .then(() => NotifyOk({
+              msg: 'User successfully changed',
+              title: 'Changed',
+              callback: () => this.history.push('/ui/administration/users')
+            })
+            )
+          }
         })
-          .then(() => NotifyOk({
-            msg: 'User successfully changed',
-            title: 'Changed',
-            callback: () => this.history.push('/ui/administration/users')
-          },
-          ))
-          .catch(err => alert('Something went wrong: ' + err))
-      })
-      .catch(err => alert('Something went wrong: ' + err))
+        .catch(err => alert('Something went wrong: ' + err))
     }
     else {
       this.backend.addUser({
@@ -272,26 +348,33 @@ export class UserChange extends Component {
         is_staff: values.is_staff,
         is_active: values.is_active
       })
-        .then(r => {
-          this.backend.addUserProfile({
-            username: values.username,
-            displayname: values.displayname,
-            subject: values.subject,
-            egiid: values.egiid,
-            groupsofaggregations: values.groupsofaggregations,
-            groupsofmetrics: values.groupsofmetrics,
-            groupsofmetricprofiles: values.groupsofmetricprofiles
-          })
+        .then(response => {
+          if (!response.ok) {
+            response.json()
+              .then(json => {
+                NotificationManager.error(json.detail, 'Error');
+              });
+          } else {
+            this.backend.addUserProfile({
+              username: values.username,
+              displayname: values.displayname,
+              subject: values.subject,
+              egiid: values.egiid,
+              groupsofaggregations: values.groupsofaggregations,
+              groupsofmetrics: values.groupsofmetrics,
+              groupsofmetricprofiles: values.groupsofmetricprofiles
+            })
+            .then(() => NotifyOk({
+              msg: 'User successfully added',
+              title: 'Added',
+              callback: () => this.history.push('/ui/administration/users')
+            })
+            )
+          }
         })
-          .then(() => NotifyOk({
-            msg: 'User successfully added',
-            title: 'Added',
-            callback: () => this.history.push('/ui/administration/users')
-          },
-          ))
-          .catch(err => alert('Something went wrong: ' + err))
+        .catch(err => alert('Something went wrong: ' + err))
+      }
     }
-  }
 
   doDelete(username) {
     this.backend.deleteUser(username)
@@ -328,6 +411,7 @@ export class UserChange extends Component {
         this.setState(
           {
             custuser: {
+              'pk': '',
               'first_name': '', 
               'last_name': '', 
               'username': '',
@@ -366,16 +450,20 @@ export class UserChange extends Component {
           resourcename="Users"
           location={this.location}
           addview={this.addview}
+          history={false}
           modal={true}
           state={this.state}
           toggle={this.toggleAreYouSure}
           submitperm={write_perm}>
           <Formik
             initialValues = {{
+              addview: this.addview,
+              pk: custuser.pk,
               first_name: custuser.first_name,
               last_name: custuser.last_name,
               username: custuser.username,
               password: '',
+              confirm_password: '',
               is_active: custuser.is_active,
               is_superuser: custuser.is_superuser,
               is_staff: custuser.is_staff,
@@ -387,6 +475,7 @@ export class UserChange extends Component {
               subject: userprofile.subject,
               egiid: userprofile.egiid
             }}
+            validationSchema={UserSchema}
             onSubmit = {(values, actions) => this.onSubmitHandle(values, actions)}
             render = {props => (
               <Form> 
@@ -398,38 +487,47 @@ export class UserChange extends Component {
                   <h4 className="mt-2 p-1 pl-3 text-light text-uppercase rounded" style={{"backgroundColor": "#416090"}}>Personal info</h4>
                   <Row>
                     <Col md={6}>
-                      <Label for="userFirstName">First name</Label>
-                      <Field
-                        type="text"
-                        name="first_name"
-                        required={false}
-                        className="form-control"
-                        id="userFirstName"
-                      />
+                      <InputGroup>
+                        <InputGroupAddon addonType='prepend'>First name</InputGroupAddon>
+                        <Field
+                          type="text"
+                          name="first_name"
+                          className="form-control"
+                          id="userFirstName"
+                        />
+                      </InputGroup>
                     </Col>
                   </Row>
                   <Row>
                     <Col md={6}>
-                      <Label for="userLastName">Last name</Label>
-                      <Field
-                        type="text"
-                        name="last_name"
-                        required={false}
-                        className="form-control"
-                        id="userLastName"
-                      />
+                      <InputGroup>
+                        <InputGroupAddon addonType='prepend'>Last name</InputGroupAddon>
+                        <Field
+                          type="text"
+                          name="last_name"
+                          className="form-control"
+                          id="userLastName"
+                        />
+                      </InputGroup>
                     </Col>
                   </Row>
                   <Row>
                     <Col md={6}>
-                      <Label for="userEmail">Email</Label>
-                      <Field
-                        type="text"
-                        name="email"
-                        required={true}
-                        className="form-control"
-                        id="userEmail"
-                      />
+                      <InputGroup>
+                        <InputGroupAddon addonType='prepend'>Email</InputGroupAddon>
+                        <Field
+                          type="text"
+                          name="email"
+                          className={props.errors.email ? 'form-control border-danger' : 'form-control'}
+                          id="userEmail"
+                        />
+                      </InputGroup>
+                      {
+                        props.errors.email ? 
+                          FancyErrorMessage(props.errors.email)
+                        :
+                          null
+                      }
                     </Col>
                   </Row>
                 </FormGroup>
@@ -440,7 +538,6 @@ export class UserChange extends Component {
                       <Field
                         component={Checkbox}
                         name="is_superuser"
-                        required={false}
                         className="form-control"
                         id="checkbox"
                         label="Superuser status"
@@ -455,7 +552,6 @@ export class UserChange extends Component {
                       <Field
                         component={Checkbox}
                         name="is_staff"
-                        required={false}
                         className="form-control"
                         id="checkbox"
                         label="Staff status"
@@ -470,7 +566,6 @@ export class UserChange extends Component {
                       <Field 
                         component={Checkbox}
                         name="is_active"
-                        required={false}
                         className="form-control"
                         id="checkbox"
                         label="Active"
@@ -572,42 +667,48 @@ export class UserChange extends Component {
                   <h4 className="mt-2 p-1 pl-3 text-light text-uppercase rounded" style={{"backgroundColor": "#416090"}}>Additional information</h4>
                   <Row>
                     <Col md={12}>
-                      <Label for="distinguishedname">distinguishedName</Label>
-                      <Field 
-                        type="text"
-                        name="subject"
-                        required={false}
-                        className="form-control"
-                        id="distinguishedname"
-                      />
+                      <InputGroup>
+                        <InputGroupAddon addonType='prepend'>distinguishedName</InputGroupAddon>
+                        <Field 
+                          type="text"
+                          name="subject"
+                          required={false}
+                          className="form-control"
+                          id="distinguishedname"
+                        />
+                      </InputGroup>
                     </Col>
                   </Row>
                 </FormGroup>
                 <FormGroup>
                   <Row>
                     <Col md={8}>
-                      <Label for="eduid">eduPersonUniqueId</Label>
-                      <Field 
-                        type="text"
-                        name="egiid"
-                        required={false}
-                        className="form-control"
-                        id='eduid'
-                      />
+                      <InputGroup>
+                        <InputGroupAddon addonType="prepend">eduPersonUniqueId</InputGroupAddon>
+                        <Field 
+                          type="text"
+                          name="egiid"
+                          required={false}
+                          className="form-control"
+                          id='eduid'
+                        />
+                      </InputGroup>
                     </Col>
                   </Row>
                 </FormGroup>
                 <FormGroup>
                   <Row>
                     <Col md={6}>
-                      <Label for="displayname">displayName</Label>
-                      <Field 
-                        type="text"
-                        name="displayname"
-                        required={false}
-                        className="form-control"
-                        id="displayname"
-                      />
+                      <InputGroup>
+                        <InputGroupAddon addonType="prepend">displayName</InputGroupAddon>
+                        <Field 
+                          type="text"
+                          name="displayname"
+                          required={false}
+                          className="form-control"
+                          id="displayname"
+                        />
+                      </InputGroup>
                     </Col>
                   </Row>
                 </FormGroup>
@@ -699,6 +800,7 @@ export class SuperAdminUserChange extends Component {
   doChange(values, action) {
     if (!this.addview) {
       this.backend.changeUser({
+        pk: values.pk,
         username: values.username,
         first_name: values.first_name,
         last_name: values.last_name,
@@ -707,12 +809,20 @@ export class SuperAdminUserChange extends Component {
         is_staff: values.is_staff,
         is_active: values.is_active
       })
-        .then(() => NotifyOk({
-          msg: 'User successfully changed',
-          title: 'Changed',
-          callback: () => this.history.push('/ui/administration/users')
-        },
-        ))
+        .then(response => {
+          if (!response.ok) {
+            response.json()
+              .then(json => {
+                NotificationManager.error(json.detail, 'Error');
+              });
+          } else {
+            NotifyOk({
+              msg: 'User successfully changed',
+              title: 'Changed',
+              callback: () => this.history.push('/ui/administration/users')
+            });
+          }
+        })
         .catch(err => alert('Something went wrong: ' + err))
     }
     else {
@@ -726,13 +836,20 @@ export class SuperAdminUserChange extends Component {
         is_staff: values.is_staff,
         is_active: values.is_active
       })
-        .then(() => NotifyOk({
-          msg: 'User successfully added',
-          title: 'Added',
-          callback: () => this.history.push('/ui/administration/users')
-        },
-        ))
-        .catch(err => alert('Something went wrong: ' + err))
+        .then(response => {
+          if (!response.ok) {
+            response.json()
+              .then(json => {
+                NotificationManager.error(json.detail, 'Error');
+              });
+          } else {
+            NotifyOk({
+              msg: 'User successfully added',
+              title: 'Added',
+              callback: () => this.history.push('/ui/administration/users')
+            })
+          }
+        })
     }
   }
 
@@ -766,6 +883,7 @@ export class SuperAdminUserChange extends Component {
         this.setState(
           {
             custuser: {
+              'pk': '',
               'first_name': '', 
               'last_name': '', 
               'username': '',
@@ -794,22 +912,26 @@ export class SuperAdminUserChange extends Component {
           resourcename="Users"
           location={this.location}
           addview={this.addview}
-          infoview={!this.addview}
+          history={false}
           modal={true}
           state={this.state}
           toggle={this.toggleAreYouSure}
           submitperm={write_perm}>
           <Formik
             initialValues = {{
+              addview: this.addview,
+              pk: custuser.pk,
               first_name: custuser.first_name,
               last_name: custuser.last_name,
               username: custuser.username,
               password: '',
+              confirm_password: '',
               is_active: custuser.is_active,
               is_superuser: custuser.is_superuser,
               is_staff: custuser.is_staff,
               email: custuser.email,
             }}
+            validationSchema={UserSchema}
             onSubmit = {(values, actions) => this.onSubmitHandle(values, actions)}
             render = {props => (
               <Form> 
@@ -821,38 +943,47 @@ export class SuperAdminUserChange extends Component {
                   <h4 className="mt-2 p-1 pl-3 text-light text-uppercase rounded" style={{"backgroundColor": "#416090"}}>Personal info</h4>
                   <Row>
                     <Col md={6}>
-                      <Label for="userFirstName">First name</Label>
-                      <Field
-                        type="text"
-                        name="first_name"
-                        required={false}
-                        className="form-control"
-                        id="userFirstName"
-                      />
+                      <InputGroup>
+                        <InputGroupAddon addonType="prepend">First name</InputGroupAddon>
+                        <Field
+                          type="text"
+                          name="first_name"
+                          className="form-control"
+                          id="userFirstName"
+                        />
+                      </InputGroup>
                     </Col>
                   </Row>
                   <Row>
                     <Col md={6}>
-                      <Label for="userLastName">Last name</Label>
-                      <Field
-                        type="text"
-                        name="last_name"
-                        required={false}
-                        className="form-control"
-                        id="userLastName"
-                      />
+                      <InputGroup>
+                        <InputGroupAddon addonType="prepend">Last name</InputGroupAddon>
+                        <Field
+                          type="text"
+                          name="last_name"
+                          className="form-control"
+                          id="userLastName"
+                        />
+                      </InputGroup>
                     </Col>
                   </Row>
                   <Row>
                     <Col md={6}>
-                      <Label for="userEmail">Email</Label>
-                      <Field
-                        type="text"
-                        name="email"
-                        required={true}
-                        className="form-control"
-                        id="userEmail"
-                      />
+                      <InputGroup>
+                        <InputGroupAddon addonType="prepend">Email</InputGroupAddon>
+                        <Field
+                          type="text"
+                          name="email"
+                          className={props.errors.email ? 'form-control border-danger' : 'form-control'}
+                          id="userEmail"
+                        />
+                      </InputGroup>
+                      {
+                        props.errors.email ?
+                          FancyErrorMessage(props.errors.email)
+                        :
+                          null
+                      }
                     </Col>
                   </Row>
                 </FormGroup>
@@ -863,7 +994,6 @@ export class SuperAdminUserChange extends Component {
                       <Field
                         component={Checkbox}
                         name="is_superuser"
-                        required={false}
                         className="form-control"
                         id="checkbox"
                         label="Superuser status"
@@ -878,7 +1008,6 @@ export class SuperAdminUserChange extends Component {
                       <Field
                         component={Checkbox}
                         name="is_staff"
-                        required={false}
                         className="form-control"
                         id="checkbox"
                         label="Staff status"
@@ -893,7 +1022,6 @@ export class SuperAdminUserChange extends Component {
                       <Field 
                         component={Checkbox}
                         name="is_active"
-                        required={false}
                         className="form-control"
                         id="checkbox"
                         label="Active"
