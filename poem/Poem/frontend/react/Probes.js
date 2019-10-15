@@ -875,7 +875,7 @@ export function HistoryComponent(obj) {
                           </Button>
                         </th>
                       }
-                      <th scope='col'>Version</th>
+                      {obj === 'probe' && <th scope='col'>Version</th>}
                       <th scope='col'>Date/time</th>
                       <th scope='col'>User</th>
                       <th scope='col'>Comment</th>
@@ -894,7 +894,7 @@ export function HistoryComponent(obj) {
                                 <input
                                   type='radio'
                                   name='radio-1'
-                                  value={e.version}
+                                  value={obj === 'probe' ? e.version : e.date_created}
                                   defaultChecked={true}
                                   onChange={e => this.setState({compare1: e.target.value})}
                                 />
@@ -904,24 +904,27 @@ export function HistoryComponent(obj) {
                                 <input
                                   type='radio'
                                   name='radio-1'
-                                  value={e.version}
+                                  value={obj === 'probe' ? e.version : e.date_created}
                                   onChange={e => this.setState({compare1: e.target.value})}
                                 /> 
                                 {' '}
                                 <input
                                   type='radio'
                                   name='radio-2'
-                                  value={e.version}
+                                  value={obj === 'probe' ? e.version : e.date_created}
                                   defaultChecked={i===1}
                                   onChange={e => this.setState({compare2: e.target.value})}
                                 />
                               </td>
                           }
+                          {
+                            obj === 'probe' &&
+                              <td>
+                                {e.version ? <Link to={'/ui/' + obj +'s/' + e.fields.name + '/history/' + e.version}>{e.version}</Link> : ''}
+                              </td>
+                          }
                           <td>
-                            {e.version ? <Link to={'/ui/' + obj +'s/' + e.fields.name + '/history/' + e.version}>{e.version}</Link> : ''}
-                          </td>
-                          <td>
-                            {e.date_created ? e.date_created : ''}
+                            {e.date_created ? (obj === 'metrictemplate') ? <Link to={'/ui/metrictemplates/' + e.fields.name + '/history/' + e.version}>{e.date_created}</Link> : e.date_created : ''}
                           </td>
                           <td>
                             {e.user ? e.user : ''}
