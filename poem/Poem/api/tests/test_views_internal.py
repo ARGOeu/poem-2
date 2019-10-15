@@ -2286,7 +2286,7 @@ class ListVersionsAPIViewTests(TenantTestCase):
                     'object_repr': 'argo.AMS-Check',
                     'fields': {
                         'name': 'argo.AMS-Check',
-                        'mtype': self.mtype1.id,
+                        'mtype': self.mtype1.name,
                         'probeversion': 'ams-probe (0.1.7)',
                         'parent': '',
                         'probeexecutable': 'ams-probe',
@@ -2317,7 +2317,9 @@ class ListVersionsAPIViewTests(TenantTestCase):
                         self.ver4.date_created, '%Y-%m-%d %H:%M:%S'
                     ),
                     'comment': 'Initial version.',
-                    'version': 1
+                    'version': datetime.datetime.strftime(
+                        self.ver4.date_created, '%Y%m%d-%H%M%S'
+                    )
                 }
             ]
         )

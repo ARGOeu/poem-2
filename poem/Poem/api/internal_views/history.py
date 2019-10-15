@@ -6,7 +6,8 @@ from Poem.api.internal_views.utils import one_value_inline, \
     two_value_inline
 from Poem.api.views import NotFound
 from Poem.helpers.versioned_comments import new_comment
-from Poem.poem_super_admin.models import Probe, History, MetricTemplate
+from Poem.poem_super_admin.models import Probe, History, MetricTemplate, \
+    MetricTemplateType
 
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
@@ -37,20 +38,21 @@ class ListVersions(APIView):
 
             else:
                 results = []
-                i = 0
                 for ver in vers:
-                    i += 1
                     if isinstance(obj, Probe):
                         version = json.loads(
                             ver.serialized_data
                         )[0]['fields']['version']
                         fields = json.loads(ver.serialized_data)[0]['fields']
                     elif isinstance(obj, MetricTemplate):
-                        version = i
+                        version = datetime.datetime.strftime(
+                            ver.date_created, '%Y%m%d-%H%M%S'
+                        )
                         fields0 = json.loads(ver.serialized_data)[0]['fields']
                         fields = {
                             'name': fields0['name'],
-                            'mtype': fields0['mtype'],
+                            'mtype': MetricTemplateType.objects.get(
+                                id=fields0['mtype']).name,
                             'probeversion': fields0['probeversion'],
                             'parent': one_value_inline(fields0['parent']),
                             'probeexecutable': one_value_inline(
