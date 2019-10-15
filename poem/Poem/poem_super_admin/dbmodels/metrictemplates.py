@@ -30,7 +30,6 @@ class MetricTemplate(models.Model):
     files = models.CharField(max_length=1024)
     parameter = models.CharField(max_length=1024)
     fileparameter = models.CharField(max_length=1024)
-    cloned = models.CharField(max_length=128, null=True)
 
     class Meta:
         app_label = 'poem_super_admin'

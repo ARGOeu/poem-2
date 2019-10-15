@@ -90,6 +90,7 @@ class ListProbes(APIView):
                             object_repr=new_nameversion
                         )
                         metrictemplate.save()
+                        create_history(metrictemplate, request.user.username)
                         update_metrics(metrictemplate, metrictemplate.name)
 
             else:

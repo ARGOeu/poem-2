@@ -4,28 +4,11 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.exceptions import APIException
 
+from Poem.api.internal_views.utils import one_value_inline, \
+    two_value_inline_dict
 from Poem.api.permissions import MyHasAPIKey
 
 from Poem.poem import models
-
-
-def one_value_inline(input):
-    if input:
-        return json.loads(input)[0]
-    else:
-        return ''
-
-
-def two_value_inline(input):
-    results = dict()
-
-    if input:
-        data = json.loads(input)
-
-        for item in data:
-            results.update(({item.split(' ')[0]: item.split(' ')[1]}))
-
-    return results
 
 
 class NotFound(APIException):
@@ -44,15 +27,15 @@ def build_metricconfigs():
         mdict = dict()
         mdict.update({m.name: dict()})
 
-        config = two_value_inline(m.config)
+        config = two_value_inline_dict(m.config)
         parent = one_value_inline(m.parent)
         probeexecutable = one_value_inline(m.probeexecutable)
-        attribute = two_value_inline(m.attribute)
-        dependancy = two_value_inline(m.dependancy)
-        flags = two_value_inline(m.flags)
-        files = two_value_inline(m.files)
-        parameter = two_value_inline(m.parameter)
-        fileparameter = two_value_inline(m.fileparameter)
+        attribute = two_value_inline_dict(m.attribute)
+        dependancy = two_value_inline_dict(m.dependancy)
+        flags = two_value_inline_dict(m.flags)
+        files = two_value_inline_dict(m.files)
+        parameter = two_value_inline_dict(m.parameter)
+        fileparameter = two_value_inline_dict(m.fileparameter)
 
         if probeexecutable:
             mdict[m.name].update({'probe': probeexecutable})

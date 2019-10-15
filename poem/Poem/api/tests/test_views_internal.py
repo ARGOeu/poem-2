@@ -2,6 +2,7 @@ from collections import OrderedDict
 import datetime
 
 from django.contrib.contenttypes.models import ContentType
+from django.core import serializers
 from django.test.client import encode_multipart
 
 import json
@@ -2137,6 +2138,7 @@ class ListVersionsAPIViewTests(TenantTestCase):
         )
 
         ct = ContentType.objects.get_for_model(admin_models.Probe)
+        ct_mt = ContentType.objects.get_for_model(admin_models.MetricTemplate)
 
         self.ver1 = admin_models.History.objects.create(
             object_id=probe1.id,
@@ -2194,6 +2196,33 @@ class ListVersionsAPIViewTests(TenantTestCase):
             user=self.user.username
         )
 
+
+        self.mtype1 = admin_models.MetricTemplateType.objects.create(name='Active')
+
+        metrictemplate1 = admin_models.MetricTemplate.objects.create(
+            name='argo.AMS-Check',
+            mtype=self.mtype1,
+            probeversion='ams-probe (0.1.7)',
+            probekey=self.ver3,
+            probeexecutable='["ams-probe"]',
+            config='["maxCheckAttempts 3", "timeout 60",'
+                   ' "path /usr/libexec/argo-monitoring/probes/argo",'
+                   ' "interval 5", "retryInterval 3"]',
+            attribute='["argo.ams_TOKEN --token"]',
+            flags='["OBSESS 1"]',
+            parameter='["--project EGI"]'
+        )
+
+        self.ver4 = admin_models.History.objects.create(
+            object_id=metrictemplate1.id,
+            serialized_data=serializers.serialize('json', [metrictemplate1]),
+            object_repr='argo.AMS-Check',
+            content_type=ct_mt,
+            date_created=datetime.datetime.now(),
+            comment='Initial version.',
+            user=self.user.username
+        )
+
     def test_get_versions_of_probes(self):
         request = self.factory.get(self.url + 'probe/poem-probe')
         force_authenticate(request, user=self.user)
@@ -2242,6 +2271,56 @@ class ListVersionsAPIViewTests(TenantTestCase):
                     'comment': 'Initial version.',
                     'version': '0.1.7'
                 },
+            ]
+        )
+
+    def test_get_versions_of_metric_template(self):
+        request = self.factory.get(self.url + 'metrictemplate/argo.AMS-Check')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'metrictemplate', 'argo.AMS-Check')
+        self.assertEqual(
+            response.data,
+            [
+                {
+                    'id': self.ver4.id,
+                    'object_repr': 'argo.AMS-Check',
+                    'fields': {
+                        'name': 'argo.AMS-Check',
+                        'mtype': self.mtype1.name,
+                        'probeversion': 'ams-probe (0.1.7)',
+                        'parent': '',
+                        'probeexecutable': 'ams-probe',
+                        'config': [
+                            {'key': 'maxCheckAttempts', 'value': '3'},
+                            {'key': 'timeout', 'value': '60'},
+                            {'key': 'path',
+                             'value':
+                                 '/usr/libexec/argo-monitoring/probes/argo'},
+                            {'key': 'interval', 'value': '5'},
+                            {'key': 'retryInterval', 'value': '3'}
+                        ],
+                        'attribute': [
+                            {'key': 'argo.ams_TOKEN', 'value': '--token'}
+                        ],
+                        'dependency': [],
+                        'flags': [
+                            {'key': 'OBSESS', 'value': '1'}
+                        ],
+                        'files': [],
+                        'parameter': [
+                            {'key': '--project', 'value': 'EGI'}
+                        ],
+                        'fileparameter': []
+                    },
+                    'user': 'testuser',
+                    'date_created': datetime.datetime.strftime(
+                        self.ver4.date_created, '%Y-%m-%d %H:%M:%S'
+                    ),
+                    'comment': 'Initial version.',
+                    'version': datetime.datetime.strftime(
+                        self.ver4.date_created, '%Y%m%d-%H%M%S'
+                    )
+                }
             ]
         )
 
@@ -2548,6 +2627,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         ]
 
         data = {
+            'cloned_from': '',
             'name': 'new-template',
             'probeversion': 'ams-probe (0.1.7)',
             'mtype': 'Active',

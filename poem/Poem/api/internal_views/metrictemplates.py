@@ -2,8 +2,9 @@ from django.db import IntegrityError
 
 import json
 
-from Poem.api.internal_views.metrics import one_value_inline, two_value_inline
+from Poem.api.internal_views.utils import one_value_inline, two_value_inline
 from Poem.api.views import NotFound
+from Poem.helpers.history_helpers import create_history
 from Poem.poem.models import Metric
 from Poem.poem_super_admin.models import MetricTemplate, MetricTemplateType, \
     History
@@ -178,7 +179,7 @@ class ListMetricTemplates(APIView):
 
         try:
             if request.data['mtype'] == 'Active':
-                MetricTemplate.objects.create(
+                mt = MetricTemplate.objects.create(
                     name=request.data['name'],
                     mtype=MetricTemplateType.objects.get(
                         name=request.data['mtype']
@@ -200,7 +201,7 @@ class ListMetricTemplates(APIView):
                     )
                 )
             else:
-                MetricTemplate.objects.create(
+                mt = MetricTemplate.objects.create(
                     name=request.data['name'],
                     mtype=MetricTemplateType.objects.get(
                         name=request.data['mtype']
@@ -208,6 +209,15 @@ class ListMetricTemplates(APIView):
                     parent=parent,
                     flags=inline_metric_for_db(request.data['flags'])
                 )
+
+            if request.data['cloned_from']:
+                clone = MetricTemplate.objects.get(
+                    id=request.data['cloned_from']
+                )
+                comment = 'Derived from ' + clone.name
+                create_history(mt, request.user.username, comment=comment)
+            else:
+                create_history(mt, request.user.username)
 
             return Response(status=status.HTTP_201_CREATED)
 
@@ -271,6 +281,8 @@ class ListMetricTemplates(APIView):
                 )
 
             metrictemplate.save()
+
+            create_history(metrictemplate, request.user.username)
 
             update_metrics(metrictemplate, old_name)
 
