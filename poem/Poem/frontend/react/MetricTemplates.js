@@ -862,3 +862,178 @@ export class MetricTemplateVersionCompare extends Component {
   }
   
 }
+
+
+export class MetricTemplateVersionDetails extends Component {
+  constructor(props) {
+    super(props);
+
+    this.name = props.match.params.name;
+    this.version = props.match.params.version;
+
+    this.backend = new Backend();
+
+    this.state = {
+      name: '',
+      probeversion: '',
+      mtype: '',
+      probeexecutable: '',
+      parent: '',
+      config: [],
+      attribute: [],
+      dependency: [],
+      parameter: [],
+      flags: [],
+      files: [],
+      fileparameter: [],
+      loading: false
+    };
+  }
+
+  componentDidMount() {
+    this.setState({loading: true});
+
+    this.backend.fetchVersions('metrictemplate', this.name)
+      .then((json) => {
+        json.forEach((e) => {
+          if (e.version == this.version)
+            this.setState({
+              name: e.fields.name,
+              probeversion: e.fields.probeversion,
+              type: e.fields.mtype,
+              probeexecutable: e.fields.probeexecutable,
+              parent: e.fields.parent,
+              config: e.fields.config,
+              attribute: e.fields.attribute,
+              dependency: e.fields.dependency,
+              parameter: e.fields.parameter,
+              flags: e.fields.flags,
+              files: e.fields.files,
+              fileparameter: e.fields.fileparameter,
+              date_created: e.date_created,
+              loading: false
+            });
+        });
+      })
+  }
+
+  render() {
+    const { name, probeversion, type, probeexecutable, parent, config, 
+      attribute, dependency, parameter, flags, files, fileparameter, date_created,
+      loading } = this.state;
+    
+    if (loading)
+    return (<LoadingAnim/>);
+
+    else if (!loading && name) {
+      return (
+        <React.Fragment>
+          <div className='d-flex align-items-center justify-content-between'>
+            <React.Fragment>
+              <h2 className='ml-3 mt-1 mb-4'>{name + ' (' + date_created + ')'}</h2>
+            </React.Fragment>
+          </div>
+          <div id='argo-contentwrap' className='ml-2 mb-2 mt-2 p-3 border rounded'>
+            <Formik
+              initialValues = {{
+                name: name,
+                probeversion: probeversion,
+                mtype: type,
+                probeexecutable: probeexecutable,
+                parent: parent,
+                config: config,
+                attribute: attribute,
+                dependency: dependency,
+                parameter: parameter,
+                flags: flags,
+                files: files,
+                fileparameter: fileparameter
+              }}
+              render = {props => (
+                <Form>
+                  <FormGroup>
+                    <Row className='mb-3'>
+                      <Col md={4}>
+                        <Label to='name'>Name</Label>
+                        <Field
+                          type='text'
+                          name='name'
+                          className={'form-control'}
+                          id='name'
+                          disabled={true}
+                        />
+                        <FormText color='muted'>
+                          Metric name
+                        </FormText>
+                      </Col>
+                      <Col md={4}>
+                        <Label to='probeversion'>Probe</Label>
+                        <Field 
+                          type='text'
+                          name='probeversion'
+                          className='form-control'
+                          id='probeversion'
+                          disabled={true}
+                        />
+                      </Col>
+                      <Col md={2}>
+                        <Label to='mtype'>Type</Label>
+                        <Field
+                          type='text'
+                          name='mtype'
+                          className='form-control'
+                          id='mtype'
+                          disabled={true}
+                        />
+                        <FormText color='muted'>
+                          Metric is of given type
+                        </FormText>
+                      </Col>
+                    </Row>
+                  </FormGroup>
+                  <FormGroup>
+                  <h4 className="mt-2 p-1 pl-3 text-light text-uppercase rounded" style={{"backgroundColor": "#416090"}}>Metric configuration</h4>
+                  <h6 className='mt-4 font-weight-bold text-uppercase' hidden={props.values.type === 'Passive'}>probe executable</h6>
+                  <Row>
+                    <Col md={5}>
+                      <Field
+                        type='text'
+                        name='probeexecutable'
+                        id='probeexecutable'
+                        className='form-control'
+                        hidden={props.values.type === 'Passive'}
+                        disabled={true}
+                      />
+                    </Col>
+                  </Row>
+                  <InlineFields {...props} field='config' readonly={true}/>
+                  <InlineFields {...props} field='attributes'/>
+                  <InlineFields {...props} field='dependency'/>
+                  <InlineFields {...props} field='parameter'/>
+                  <InlineFields {...props} field='flags'/>
+                  <InlineFields {...props} field='files'/>
+                  <InlineFields {...props} field='fileparameter'/>
+                  <h6 className='mt-4 font-weight-bold text-uppercase'>parent</h6>
+                  <Row>
+                    <Col md={5}>
+                      <Field
+                        type='text'
+                        name='parent'
+                        id='parent'
+                        className='form-control'
+                        disabled={true}
+                      />
+                    </Col>
+                  </Row>
+                  </FormGroup>
+                </Form>
+              )}
+              />
+          </div>
+        </React.Fragment>
+      )
+    }
+    else
+      return null
+  }
+}
