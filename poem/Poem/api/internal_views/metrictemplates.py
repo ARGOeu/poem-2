@@ -6,7 +6,7 @@ import json
 from Poem.api.internal_views.utils import one_value_inline, two_value_inline
 from Poem.api.views import NotFound
 from Poem.helpers.history_helpers import create_history
-from Poem.poem.models import Metric
+from Poem.poem.models import Metric, TenantHistory
 from Poem.poem_super_admin.models import MetricTemplate, MetricTemplateType, \
     History
 from Poem.tenants.models import Tenant
@@ -302,18 +302,27 @@ class ListMetricTemplates(APIView):
         schemas.remove(get_public_schema_name())
         if name:
             try:
-                mt = MetricTemplate.objects.get(name=name).delete()
-                History.objects.filter(
-                    object_id=mt.id,
-                    content_type=ContentType.objects.get_for_model(mt)
-                ).delete()
-                mt.delete()
+                mt = MetricTemplate.objects.get(name=name)
                 for schema in schemas:
                     with schema_context(schema):
                         try:
-                            Metric.objects.get(name=name).delete()
+                            History.objects.filter(
+                                object_id=mt.id,
+                                content_type=ContentType.objects.get_for_model(
+                                    mt)
+                            ).delete()
+                            m = Metric.objects.get(name=name)
+                            TenantHistory.objects.filter(
+                                object_id=m.id,
+                                content_type=ContentType.objects.get_for_model(
+                                    m
+                                )
+                            ).delete()
+                            m.delete()
                         except Metric.DoesNotExist:
                             pass
+                        
+                mt.delete()
                 return Response(status=status.HTTP_204_NO_CONTENT)
 
             except MetricTemplate.DoesNotExist:
