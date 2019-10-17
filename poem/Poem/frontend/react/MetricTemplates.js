@@ -942,7 +942,7 @@ export class MetricTemplateVersionDetails extends Component {
                 probeexecutable: probeexecutable,
                 parent: parent,
                 config: config,
-                attribute: attribute,
+                attributes: attribute,
                 dependency: dependency,
                 parameter: parameter,
                 flags: flags,
