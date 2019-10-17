@@ -1,3 +1,4 @@
+from django.contrib.contenttypes.models import ContentType
 from django.db import IntegrityError
 
 import json
@@ -300,7 +301,12 @@ class ListMetricTemplates(APIView):
         schemas.remove(get_public_schema_name())
         if name:
             try:
-                MetricTemplate.objects.get(name=name).delete()
+                mt = MetricTemplate.objects.get(name=name).delete()
+                History.objects.filter(
+                    object_id=mt.id,
+                    content_type=ContentType.objects.get_for_model(mt)
+                ).delete()
+                mt.delete()
                 for schema in schemas:
                     with schema_context(schema):
                         try:
