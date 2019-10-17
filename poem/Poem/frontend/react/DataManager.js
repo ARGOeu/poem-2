@@ -164,9 +164,14 @@ export class Backend {
   }
 
   fetchVersions(obj, name) {
-    return fetch('/api/v2/internal/version/' + obj + '/' + name)
-      .then(response => response.json())
-      .catch(err => alert('Something went wrong: ' + err))
+    if (obj === 'metric')
+      return fetch('/api/v2/internal/tenantversion/' + obj + '/' + name)
+        .then(response => response.json())
+        .catch(err => alert('Something went wrong: ' + err))
+    else
+      return fetch('/api/v2/internal/version/' + obj + '/' + name)
+        .then(response => response.json())
+        .catch(err => alert('Something went wrong: ' + err))
   }
 
   fetchTokens() {
