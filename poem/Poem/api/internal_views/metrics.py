@@ -1,3 +1,4 @@
+from django.contrib.contenttypes.models import ContentType
 from django.db import IntegrityError
 
 import json
@@ -5,6 +6,7 @@ import json
 from Poem.api.internal_views.utils import one_value_inline, two_value_inline, \
     inline_metric_for_db
 from Poem.api.views import NotFound
+from Poem.helpers.history_helpers import create_history
 from Poem.poem import models as poem_models
 from Poem.poem_super_admin import models as admin_models
 
@@ -99,6 +101,7 @@ class ListMetric(APIView):
             metric.config = json.dumps(config)
 
         metric.save()
+        create_history(metric, request.user.username)
 
         return Response(status=status.HTTP_201_CREATED)
 
@@ -106,6 +109,12 @@ class ListMetric(APIView):
         if name:
             try:
                 metric = poem_models.Metric.objects.get(name=name)
+                poem_models.TenantHistory.objects.filter(
+                    object_id=metric.id,
+                    content_type=ContentType.objects.get_for_model(
+                        poem_models.Metric
+                    )
+                ).delete()
                 metric.delete()
                 return Response(status=status.HTTP_204_NO_CONTENT)
 
