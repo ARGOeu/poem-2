@@ -3,7 +3,7 @@ import Login from './Login';
 import { MetricProfilesChange, MetricProfilesList } from './MetricProfiles';
 import Home from './Home';
 import { ProbeList, ProbeChange, ProbeHistory, ProbeVersionCompare, ProbeVersionDetails } from './Probes';
-import { MetricList, MetricChange } from './Metrics';
+import { MetricList, MetricChange, MetricHistory } from './Metrics';
 import { MetricTemplateList, MetricTemplateChange, MetricTemplateClone, TenantMetricTemplateList, MetricTemplateHistory, MetricTemplateVersionCompare, MetricTemplateVersionDetails  } from './MetricTemplates';
 import { TenantAdministration, SuperAdminAdministration } from './Administration';
 import { AggregationProfilesChange, AggregationProfilesList } from './AggregationProfiles';
@@ -38,6 +38,7 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, token, tenantName})
     <Route exact path="/ui/probes/:name/history/:version" render={props => <ProbeVersionDetails {...props}/>}/>
     <Route exact path="/ui/probes/:name" render={props => <ProbeChange {...props}/>}/>
     <Route exact path="/ui/metrics" component={MetricList} />
+    <Route exact path="/ui/metrics/:name/history" render={props => <MetricHistory {...props}/>}/>
     <Route exact path="/ui/metrics/:name" render={props => <MetricChange {...props}/>}/>
     <Route exact path="/ui/metricprofiles" component={MetricProfilesList} />
     <Route exact path="/ui/metricprofiles/add" 

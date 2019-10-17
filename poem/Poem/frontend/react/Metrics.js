@@ -17,8 +17,10 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faInfoCircle, faMinus, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { NotificationManager } from 'react-notifications';
+import { HistoryComponent } from './Probes';
 
 export const MetricList = ListOfMetrics('metric');
+export const MetricHistory = HistoryComponent('metric');
 
 
 const DefaultFilterComponent = ({value, onChange, field}) => (
