@@ -158,7 +158,7 @@ class ImportMetrics(APIView):
                         object_repr=metrictemplate.probeversion
                     )
 
-                    poem_models.Metric.objects.create(
+                    metric = poem_models.Metric.objects.create(
                         name=metrictemplate.name,
                         mtype=mt,
                         probeversion=metrictemplate.probeversion,
@@ -175,13 +175,16 @@ class ImportMetrics(APIView):
                         fileparameter=metrictemplate.fileparameter
                     )
                 else:
-                    poem_models.Metric.objects.create(
+                    metric = poem_models.Metric.objects.create(
                         name=metrictemplate.name,
                         mtype=mt,
                         parent=metrictemplate.parent,
                         flags=metrictemplate.flags,
                         group=gr
                     )
+
+                create_history(metric, request.user.username,
+                               comment='Initial version.')
 
                 imported.append(metrictemplate.name)
 
