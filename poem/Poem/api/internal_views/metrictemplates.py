@@ -110,6 +110,7 @@ def update_metrics(metrictemplate, name):
 
                 if changes > 0:
                     met.save()
+                    create_history(met, user='Super POEM user')
 
             except Metric.DoesNotExist:
                 continue
