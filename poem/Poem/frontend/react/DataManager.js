@@ -223,6 +223,12 @@ export class Backend {
       .catch(err => alert('Something went wrong: ' + err))
   }
 
+  fetchYumRepos() {
+    return fetch('/api/v2/internal/yumrepos/')
+      .then(response => response.json())
+      .catch(err => alert('Something went wrong: ' + err))
+  }
+
   changeMetricProfile(profile) {
     return this.send(
       '/api/v2/internal/metricprofiles/',
