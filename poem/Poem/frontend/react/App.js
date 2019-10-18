@@ -17,9 +17,10 @@ import { Route, Switch, BrowserRouter, Redirect, withRouter } from 'react-router
 import { Container, Button, Row, Col } from 'reactstrap';
 import { NavigationBar, CustomBreadcrumb, NavigationLinks, Footer } from './UIElements';
 import { NotificationContainer, NotificationManager } from 'react-notifications';
+import { Backend } from './DataManager';
+import { YumRepoList } from './YumRepos';
 
 import './App.css';
-import { Backend } from './DataManager';
 
 
 const NavigationBarWithRouter = withRouter(NavigationBar);
@@ -145,6 +146,7 @@ const SuperAdminRouteSwitch = ({props}) => (
     <Route exact path='/ui/metrictemplates/:name/history/compare/:id1/:id2' render={props => <MetricTemplateVersionCompare {...props}/>}/>
     <Route exact path='/ui/metrictemplates/:name/history/:version' render={props => <MetricTemplateVersionDetails {...props}/>}/>
     <Route exact path='/ui/metrictemplates/:name' render={props => <MetricTemplateChange {...props}/>}/>
+    <Route exact path='/ui/yumrepos/' render={props => <YumRepoList {...props}/>}/>
     <Route exact path="/ui/administration" component={SuperAdminAdministration}/>
     <Route exact path="/ui/administration/users" component={UsersList} />
     <Route exact path="/ui/administration/users/add"
