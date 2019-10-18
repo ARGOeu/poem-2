@@ -1,5 +1,6 @@
 from django.db import IntegrityError
 
+from Poem.api.views import NotFound
 from Poem.poem_super_admin.models import YumRepo
 
 from rest_framework import status
@@ -72,3 +73,15 @@ class ListYumRepos(APIView):
                 {'detail': 'YUM repo with this name already exists.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+    def delete(self, request, name=None):
+        if name:
+            try:
+                YumRepo.objects.get(name=name).delete()
+                return Response(status=status.HTTP_204_NO_CONTENT)
+
+            except YumRepo.DoesNotExist:
+                raise NotFound(status=404, detail='YUM repo not found.')
+
+        else:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
