@@ -371,6 +371,14 @@ export class Backend {
     );
   }
 
+  addYumRepo(repo) {
+    return this.send(
+      '/api/v2/internal/yumrepos/',
+      'POST',
+      repo
+    );
+  }
+
   deleteMetricProfile(id) {
     return this.send(
       '/api/v2/internal/metricprofiles/' + id,
