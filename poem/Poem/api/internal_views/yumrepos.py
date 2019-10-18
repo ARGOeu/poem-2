@@ -56,3 +56,19 @@ class ListYumRepos(APIView):
                 {'detail': 'YUM repo with this name already exists.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+    def put(self, request):
+        repo = YumRepo.objects.get(id=request.data['id'])
+
+        try:
+            repo.name = request.data['name']
+            repo.description = request.data['description']
+            repo.save()
+
+            return Response(status=status.HTTP_201_CREATED)
+
+        except IntegrityError:
+            return Response(
+                {'detail': 'YUM repo with this name already exists.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
