@@ -3315,3 +3315,37 @@ class ListYumReposAPIViewTests(TenantTestCase):
         force_authenticate(request, user=self.user)
         response = self.view(request, 'nonexisting')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_post_yum_repo(self):
+        data = {
+            'name': 'repo-3',
+            'description': 'Lorem ipsum dolor sit amet, consectetur adipiscing '
+                           'elit, sed do eiusmod tempor incididunt ut labore '
+                           'et dolore magna aliqua. Morbi non arcu risus quis '
+                           'varius quam quisque id. Phasellus faucibus '
+                           'scelerisque eleifend donec pretium vulputate '
+                           'sapien nec.'
+        }
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_post_yum_repo_with_name_that_already_exists(self):
+        data = {
+            'name': 'repo-1',
+            'description': 'Lorem ipsum dolor sit amet, consectetur adipiscing '
+                           'elit, sed do eiusmod tempor incididunt ut labore '
+                           'et dolore magna aliqua. Morbi non arcu risus quis '
+                           'varius quam quisque id. Phasellus faucibus '
+                           'scelerisque eleifend donec pretium vulputate '
+                           'sapien nec.'
+        }
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data,
+            {'detail': 'YUM repo with this name already exists.'}
+        )

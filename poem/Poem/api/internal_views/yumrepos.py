@@ -1,3 +1,5 @@
+from django.db import IntegrityError
+
 from Poem.poem_super_admin.models import YumRepo
 
 from rest_framework import status
@@ -39,3 +41,18 @@ class ListYumRepos(APIView):
             results = sorted(results, key=lambda k: k['name'].lower())
 
             return Response(results)
+
+    def post(self, request):
+        try:
+            YumRepo.objects.create(
+                name=request.data['name'],
+                description=request.data['description']
+            )
+
+            return Response(status=status.HTTP_201_CREATED)
+
+        except IntegrityError:
+            return Response(
+                {'detail': 'YUM repo with this name already exists.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
