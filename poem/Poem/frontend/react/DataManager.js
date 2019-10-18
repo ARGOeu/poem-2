@@ -307,6 +307,14 @@ export class Backend {
     )
   }
 
+  changeYumRepo(repo) {
+    return this.send(
+      '/api/v2/internal/yumrepos/',
+      'PUT',
+      repo
+    );
+  }
+
   addAggregation(profile) {
     return this.send(
       '/api/v2/internal/aggregations/',
