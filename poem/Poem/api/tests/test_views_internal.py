@@ -3210,7 +3210,7 @@ class ListYumReposAPIViewTests(TenantTestCase):
         self.url = '/api/v2/internal/yumrepos/'
         self.user = CustUser.objects.create_user(username='testuser')
 
-        admin_models.YumRepo.objects.create(
+        self.repo1 = admin_models.YumRepo.objects.create(
             name='repo-1',
             description='Lorem ipsum dolor sit amet, consectetur adipiscing '
                         'elit, sed do eiusmod tempor incididunt ut labore et '
@@ -3223,7 +3223,7 @@ class ListYumReposAPIViewTests(TenantTestCase):
                         'quisque sagittis purus.'
         )
 
-        admin_models.YumRepo.objects.create(
+        self.repo2 = admin_models.YumRepo.objects.create(
             name='repo-2',
             description='Quam viverra orci sagittis eu volutpat odio facilisis '
                         'mauris. Justo eget magna fermentum iaculis eu non '
@@ -3247,6 +3247,7 @@ class ListYumReposAPIViewTests(TenantTestCase):
             response.data,
             [
                 {
+                    'id': self.repo1.id,
                     'name': 'repo-1',
                     'description': 'Lorem ipsum dolor sit amet, consectetur '
                                    'adipiscing elit, sed do eiusmod tempor '
@@ -3262,6 +3263,7 @@ class ListYumReposAPIViewTests(TenantTestCase):
                                    'dictumst quisque sagittis purus.'
                 },
                 {
+                    'id': self.repo2.id,
                     'name': 'repo-2',
                     'description': 'Quam viverra orci sagittis eu volutpat '
                                    'odio facilisis mauris. Justo eget magna '
@@ -3282,3 +3284,34 @@ class ListYumReposAPIViewTests(TenantTestCase):
                 }
             ]
         )
+
+    def test_get_yum_repo_by_name(self):
+        request = self.factory.get(self.url + 'repo-1')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'repo-1')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            response.data,
+            {
+                'id': self.repo1.id,
+                'name': 'repo-1',
+                'description': 'Lorem ipsum dolor sit amet, consectetur '
+                               'adipiscing elit, sed do eiusmod tempor '
+                               'incididunt ut labore et '
+                               'dolore magna aliqua. Condimentum mattis '
+                               'pellentesque id nibh tortor. Ut eu sem '
+                               'integer vitae justo eget '
+                               'magna fermentum. Neque convallis a cras '
+                               'semper auctor neque vitae tempus quam. In '
+                               'metus vulputate eu scelerisque felis '
+                               'imperdiet proin fermentum. Semper '
+                               'quis lectus nulla at. Hac habitasse platea '
+                               'dictumst quisque sagittis purus.'
+            }
+        )
+
+    def test_get_yum_repo_in_case_of_nonexisting_name(self):
+        request = self.factory.get(self.url + 'nonexisting')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'nonexisting')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
