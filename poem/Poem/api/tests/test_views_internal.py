@@ -3201,3 +3201,84 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
         force_authenticate(request, user=self.user)
         response = self.view(request, 'metric')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+class ListYumReposAPIViewTests(TenantTestCase):
+    def setUp(self):
+        self.factory = TenantRequestFactory(self.tenant)
+        self.view = views.ListYumRepos.as_view()
+        self.url = '/api/v2/internal/yumrepos/'
+        self.user = CustUser.objects.create_user(username='testuser')
+
+        admin_models.YumRepo.objects.create(
+            name='repo-1',
+            description='Lorem ipsum dolor sit amet, consectetur adipiscing '
+                        'elit, sed do eiusmod tempor incididunt ut labore et '
+                        'dolore magna aliqua. Condimentum mattis pellentesque '
+                        'id nibh tortor. Ut eu sem integer vitae justo eget '
+                        'magna fermentum. Neque convallis a cras semper auctor '
+                        'neque vitae tempus quam. In metus vulputate eu '
+                        'scelerisque felis imperdiet proin fermentum. Semper '
+                        'quis lectus nulla at. Hac habitasse platea dictumst '
+                        'quisque sagittis purus.'
+        )
+
+        admin_models.YumRepo.objects.create(
+            name='repo-2',
+            description='Quam viverra orci sagittis eu volutpat odio facilisis '
+                        'mauris. Justo eget magna fermentum iaculis eu non '
+                        'diam. Porta non pulvinar neque laoreet suspendisse. '
+                        'Suspendisse sed nisi lacus sed viverra tellus. Mattis '
+                        'ullamcorper velit sed ullamcorper morbi tincidunt '
+                        'ornare massa. Quis vel eros donec ac odio tempor orci '
+                        'dapibus ultrices. Duis ut diam quam nulla porttitor '
+                        'massa id neque aliquam. Augue interdum velit euismod '
+                        'in pellentesque. Elementum integer enim neque volutpat'
+                        ' ac tincidunt vitae semper. A diam maecenas sed enim '
+                        'ut sem viverra aliquet eget. Eget velit aliquet '
+                        'sagittis id consectetur purus ut faucibus pulvinar.'
+        )
+
+    def test_get_list_of_yum_repos(self):
+        request = self.factory.get(self.url)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(
+            response.data,
+            [
+                {
+                    'name': 'repo-1',
+                    'description': 'Lorem ipsum dolor sit amet, consectetur '
+                                   'adipiscing elit, sed do eiusmod tempor '
+                                   'incididunt ut labore et '
+                                   'dolore magna aliqua. Condimentum mattis '
+                                   'pellentesque id nibh tortor. Ut eu sem '
+                                   'integer vitae justo eget '
+                                   'magna fermentum. Neque convallis a cras '
+                                   'semper auctor neque vitae tempus quam. In '
+                                   'metus vulputate eu scelerisque felis '
+                                   'imperdiet proin fermentum. Semper '
+                                   'quis lectus nulla at. Hac habitasse platea '
+                                   'dictumst quisque sagittis purus.'
+                },
+                {
+                    'name': 'repo-2',
+                    'description': 'Quam viverra orci sagittis eu volutpat '
+                                   'odio facilisis mauris. Justo eget magna '
+                                   'fermentum iaculis eu non diam. Porta non '
+                                   'pulvinar neque laoreet suspendisse. '
+                                   'Suspendisse sed nisi lacus sed viverra '
+                                   'tellus. Mattis ullamcorper velit sed '
+                                   'ullamcorper morbi tincidunt ornare massa. '
+                                   'Quis vel eros donec ac odio tempor orci '
+                                   'dapibus ultrices. Duis ut diam quam nulla '
+                                   'porttitor massa id neque aliquam. Augue '
+                                   'interdum velit euismod in pellentesque. '
+                                   'Elementum integer enim neque volutpat'
+                                   ' ac tincidunt vitae semper. A diam '
+                                   'maecenas sed enim ut sem viverra aliquet '
+                                   'eget. Eget velit aliquet sagittis id '
+                                   'consectetur purus ut faucibus pulvinar.'
+                }
+            ]
+        )
