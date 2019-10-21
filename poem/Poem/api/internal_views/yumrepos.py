@@ -19,6 +19,7 @@ class ListYumRepos(APIView):
                 result = {
                     'id': repo.id,
                     'name': repo.name,
+                    'content': repo.content,
                     'description': repo.description
                 }
                 return Response(result)
@@ -35,6 +36,7 @@ class ListYumRepos(APIView):
                     {
                         'id': repo.id,
                         'name': repo.name,
+                        'content': repo.content,
                         'description': repo.description
                     }
                 )
@@ -47,6 +49,7 @@ class ListYumRepos(APIView):
         try:
             YumRepo.objects.create(
                 name=request.data['name'],
+                content=request.data['content'],
                 description=request.data['description']
             )
 
@@ -63,6 +66,7 @@ class ListYumRepos(APIView):
 
         try:
             repo.name = request.data['name']
+            repo.content = request.data['content']
             repo.description = request.data['description']
             repo.save()
 

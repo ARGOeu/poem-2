@@ -3212,6 +3212,7 @@ class ListYumReposAPIViewTests(TenantTestCase):
 
         self.repo1 = admin_models.YumRepo.objects.create(
             name='repo-1',
+            content='content1=content1\ncontent2=content2',
             description='Lorem ipsum dolor sit amet, consectetur adipiscing '
                         'elit, sed do eiusmod tempor incididunt ut labore et '
                         'dolore magna aliqua. Condimentum mattis pellentesque '
@@ -3225,6 +3226,7 @@ class ListYumReposAPIViewTests(TenantTestCase):
 
         self.repo2 = admin_models.YumRepo.objects.create(
             name='repo-2',
+            content='content1=content1\ncontent2=content2',
             description='Quam viverra orci sagittis eu volutpat odio facilisis '
                         'mauris. Justo eget magna fermentum iaculis eu non '
                         'diam. Porta non pulvinar neque laoreet suspendisse. '
@@ -3249,6 +3251,7 @@ class ListYumReposAPIViewTests(TenantTestCase):
                 {
                     'id': self.repo1.id,
                     'name': 'repo-1',
+                    'content': 'content1=content1\ncontent2=content2',
                     'description': 'Lorem ipsum dolor sit amet, consectetur '
                                    'adipiscing elit, sed do eiusmod tempor '
                                    'incididunt ut labore et '
@@ -3265,6 +3268,7 @@ class ListYumReposAPIViewTests(TenantTestCase):
                 {
                     'id': self.repo2.id,
                     'name': 'repo-2',
+                    'content': 'content1=content1\ncontent2=content2',
                     'description': 'Quam viverra orci sagittis eu volutpat '
                                    'odio facilisis mauris. Justo eget magna '
                                    'fermentum iaculis eu non diam. Porta non '
@@ -3295,6 +3299,7 @@ class ListYumReposAPIViewTests(TenantTestCase):
             {
                 'id': self.repo1.id,
                 'name': 'repo-1',
+                'content': 'content1=content1\ncontent2=content2',
                 'description': 'Lorem ipsum dolor sit amet, consectetur '
                                'adipiscing elit, sed do eiusmod tempor '
                                'incididunt ut labore et '
@@ -3319,6 +3324,7 @@ class ListYumReposAPIViewTests(TenantTestCase):
     def test_post_yum_repo(self):
         data = {
             'name': 'repo-3',
+            'content': 'content1=content1\ncontent2=content2',
             'description': 'Lorem ipsum dolor sit amet, consectetur adipiscing '
                            'elit, sed do eiusmod tempor incididunt ut labore '
                            'et dolore magna aliqua. Morbi non arcu risus quis '
@@ -3334,6 +3340,7 @@ class ListYumReposAPIViewTests(TenantTestCase):
     def test_post_yum_repo_with_name_that_already_exists(self):
         data = {
             'name': 'repo-1',
+            'content': 'content1=content1\ncontent2=content2',
             'description': 'Lorem ipsum dolor sit amet, consectetur adipiscing '
                            'elit, sed do eiusmod tempor incididunt ut labore '
                            'et dolore magna aliqua. Morbi non arcu risus quis '
@@ -3354,6 +3361,7 @@ class ListYumReposAPIViewTests(TenantTestCase):
         data = {
             'id': self.repo1.id,
             'name': 'repo-1',
+            'content': 'content1=content1\ncontent2=content2',
             'description': 'Lorem ipsum dolor sit amet, consectetur adipiscing '
                            'elit, sed do eiusmod tempor incididunt ut labore '
                            'et dolore magna aliqua.'
@@ -3368,6 +3376,7 @@ class ListYumReposAPIViewTests(TenantTestCase):
         data = {
             'id': self.repo1.id,
             'name': 'repo-2',
+            'content': 'content1=content1\ncontent2=content2',
             'description': 'Lorem ipsum dolor sit amet, consectetur adipiscing '
                            'elit, sed do eiusmod tempor incididunt ut labore '
                            'et dolore magna aliqua.'
