@@ -35,6 +35,7 @@ export class YumRepoList extends Component {
     this.state = {
       loading: false,
       list_repos: null,
+      poemversion: null,
       search_name: '',
       search_description: ''
     };
@@ -45,16 +46,28 @@ export class YumRepoList extends Component {
   componentDidMount() {
     this.setState({loading: true});
 
-    this.backend.fetchYumRepos()
-      .then(json => {
+    Promise.all([
+      this.backend.fetchYumRepos(),
+      this.backend.fetchPoemVersion()
+    ])
+      .then(([repos, ver]) => {
         this.setState({
-          list_repos: json,
+          list_repos: repos,
+          poemversion: ver,
           loading: false
         });
       });
   };
 
   render() {
+    var { list_repos, poemversion, loading } = this.state;
+    let repolink = undefined;
+
+    if (poemversion === 'superadmin')
+      repolink = '/ui/yumrepos/';
+    else
+      repolink = '/ui/administration/yumrepos/'
+
     const columns = [
       {
         Header: '#',
@@ -70,7 +83,7 @@ export class YumRepoList extends Component {
         id: 'name',
         minWidth: 80,
         accessor: e =>
-          <Link to={'/ui/yumrepos/' + e.name}>{e.name}</Link>,
+          <Link to={repolink + e.name}>{e.name}</Link>,
         filterable: true,
         Filter: (
           <input
@@ -97,7 +110,6 @@ export class YumRepoList extends Component {
       }
     ];
 
-    var { list_repos, loading } = this.state;
 
     if (this.state.search_name) {
       list_repos = list_repos.filter(row =>
@@ -142,6 +154,7 @@ export class YumRepoChange extends Component {
 
     this.name = props.match.params.name;
     this.addview = props.addview;
+    this.disabled = props.disabled;
     this.location = props.location;
     this.history = props.history;
     this.backend = new Backend();
@@ -320,6 +333,7 @@ export class YumRepoChange extends Component {
                           name='name'
                           className={props.errors.name ? 'form-control border-danger' : 'form-control'}
                           id='name'
+                          disabled={this.disabled}
                         />
                       </InputGroup>
                       {
@@ -342,6 +356,7 @@ export class YumRepoChange extends Component {
                         rows='20'
                         className={props.errors.content ? 'form-control border-danger' : 'form-control'}
                         id='content'
+                        disabled={this.disabled}
                       />
                       {
                         props.errors.content &&
@@ -363,6 +378,7 @@ export class YumRepoChange extends Component {
                         rows='5'
                         className={props.errors.description ? 'form-control border-danger' : 'form-control'}
                         id='description'
+                        disabled={this.disabled}
                       />
                       {
                         props.errors.description &&
@@ -375,7 +391,7 @@ export class YumRepoChange extends Component {
                   </Row>
                 </FormGroup>
                 {
-                  write_perm &&
+                  (write_perm && !this.disabled) &&
                   <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
                     {
                       !this.addview ?
