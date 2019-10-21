@@ -443,6 +443,13 @@ export class Backend {
     );
   }
 
+  deleteYumRepo(name) {
+    return this.send(
+      '/api/v2/internal/yumrepos/' + name,
+      'DELETE'
+    );
+  }
+
   importMetrics(data) {
     return this.send(
       '/api/v2/internal/importmetrics/',
