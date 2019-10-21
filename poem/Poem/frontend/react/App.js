@@ -125,6 +125,7 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, token, tenantName})
     <Route exact path="/ui/administration/apikey/:name"  
       render={props => <APIKeyChange {...props} />}
     />
+    <Route exact path='/ui/administration/yumrepos/' component={YumRepoList}/>
     <Route component={NotFound} />
   </Switch>
 )
