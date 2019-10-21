@@ -21,6 +21,7 @@ import { NotificationManager } from 'react-notifications';
 const RepoSchema = Yup.object().shape({
   name: Yup.string()
     .required('Required'),
+  content: Yup.string().required('Required'),
   description: Yup.string().required('Required')
 });
 
@@ -149,6 +150,7 @@ export class YumRepoChange extends Component {
       repo: {
         id: '',
         name: '',
+        content: '',
         description: ''
       },
       loading: false,
@@ -202,6 +204,7 @@ export class YumRepoChange extends Component {
       this.backend.changeYumRepo({
         id: values.id,
         name: values.name,
+        content: values.content,
         description: values.description
       })
         .then(response => {
@@ -221,6 +224,7 @@ export class YumRepoChange extends Component {
     } else {
       this.backend.addYumRepo({
         name: values.name,
+        content: values.content,
         description: values.description
       })
         .then(response => {
@@ -299,6 +303,7 @@ export class YumRepoChange extends Component {
             initialValues = {{
               id: repo.id,
               name: repo.name,
+              content: repo.content,
               description: repo.description
             }}
             onSubmit = {(values, actions) => this.onSubmitHandle(values, actions)}
@@ -330,11 +335,32 @@ export class YumRepoChange extends Component {
                 <FormGroup>
                   <Row>
                     <Col md={8}>
+                      <Label for='content'>File content</Label>
+                      <Field
+                        component='textarea'
+                        name='content'
+                        rows='20'
+                        className={props.errors.content ? 'form-control border-danger' : 'form-control'}
+                        id='content'
+                      />
+                      {
+                        props.errors.content &&
+                          FancyErrorMessage(props.errors.content)
+                      }
+                      <FormText color='muted'>
+                        Content of the repo file.
+                      </FormText>
+                    </Col>
+                  </Row>
+                </FormGroup>
+                <FormGroup>
+                  <Row>
+                    <Col md={8}>
                       <Label for='description'>Description</Label>
                       <Field
                         component='textarea'
                         name='description'
-                        rows='20'
+                        rows='5'
                         className={props.errors.description ? 'form-control border-danger' : 'form-control'}
                         id='description'
                       />
@@ -343,7 +369,7 @@ export class YumRepoChange extends Component {
                           FancyErrorMessage(props.errors.description)
                       }
                       <FormText color='muted'>
-                        Free text description.
+                        Short free text description.
                       </FormText>
                     </Col>
                   </Row>
