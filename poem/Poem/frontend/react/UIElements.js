@@ -363,7 +363,12 @@ export const BaseArgoView = ({resourcename='', location=undefined,
           :
             listview ?
               <React.Fragment>
-                <h2 className="ml-3 mt-1 mb-4">{`Select ${resourcename} to change`}</h2>
+                {
+                  addnew ?
+                    <h2 className="ml-3 mt-1 mb-4">{`Select ${resourcename} to change`}</h2>
+                  :
+                    <h2 className='ml-3 mt-1 mb-4'>{`Select ${resourcename} for details`}</h2>
+                }
                 {
                   addnew &&
                     <Link className="btn btn-secondary" to={location.pathname + "/add"} role="button">Add</Link>
