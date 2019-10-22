@@ -132,6 +132,7 @@ export class YumRepoList extends Component {
           resourcename='YUM repo'
           location={this.location}
           listview={true}
+          addnew={poemversion === 'superadmin'}
         >
           <ReactTable
             data={list_repos}
