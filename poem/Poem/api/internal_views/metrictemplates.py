@@ -22,7 +22,7 @@ def inline_metric_for_db(input):
     result = []
 
     for item in input:
-        if item['key'] and item['value']:
+        if item['key']:
             result.append('{} {}'.format(item['key'], item['value']))
 
     if result:
