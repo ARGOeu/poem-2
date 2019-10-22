@@ -21,8 +21,9 @@ def two_value_inline(input):
                     'value': ''
                 })
             else:
+                val = ' '.join(item.split(' ')[1:])
                 results.append(({'key': item.split(' ')[0],
-                                 'value': item.split(' ')[1]}))
+                                 'value': val}))
 
     return results
 
