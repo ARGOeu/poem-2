@@ -44,6 +44,10 @@ def two_value_inline_dict(input):
         data = json.loads(input)
 
         for item in data:
-            results.update(({item.split(' ')[0]: item.split(' ')[1]}))
+            if len(item.split(' ')) == 1:
+                results.update({item.split(' ')[0]: ''})
+            else:
+                val = ' '.join(item.split(' ')[1:])
+                results.update(({item.split(' ')[0]: val}))
 
     return results
