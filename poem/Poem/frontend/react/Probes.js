@@ -924,7 +924,17 @@ export function HistoryComponent(obj) {
                               </td>
                           }
                           <td>
-                            {e.date_created ? (obj === 'metrictemplate') ? <Link to={'/ui/metrictemplates/' + e.fields.name + '/history/' + e.version}>{e.date_created}</Link> : e.date_created : ''}
+                            {e.date_created ? 
+                              (obj === 'metrictemplate') ? 
+                                  <Link to={'/ui/metrictemplates/' + e.fields.name + '/history/' + e.version}>{e.date_created}</Link> 
+                                  : 
+                                    (obj === 'metric') ?
+                                      <Link to={'/ui/metrics/' + e.fields.name + '/history/' + e.version}>{e.date_created}</Link>
+                                    :
+                                      e.date_created 
+                              : 
+                                ''
+                               }
                           </td>
                           <td>
                             {e.user ? e.user : ''}

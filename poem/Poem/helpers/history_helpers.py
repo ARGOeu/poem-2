@@ -3,6 +3,7 @@ from django.core import serializers
 
 import json
 
+from Poem.poem.models import TenantHistory, Metric
 from Poem.poem_super_admin.models import History
 
 
@@ -26,6 +27,10 @@ def inline_one_to_dict(input):
 
 
 def create_history(instance, user, comment=None):
+    if isinstance(instance, Metric):
+        model = TenantHistory
+    else:
+        model = History
     object_id = instance.id
     serialized_data = serializers.serialize('json', [instance])
     object_repr = instance.__str__()
@@ -34,7 +39,7 @@ def create_history(instance, user, comment=None):
     if not comment:
         comment = create_comment(object_id, content_type, serialized_data)
 
-    History.objects.create(
+    model.objects.create(
         object_id=object_id,
         serialized_data=serialized_data,
         object_repr=object_repr,
@@ -45,8 +50,16 @@ def create_history(instance, user, comment=None):
 
 
 def create_comment(object_id, ct, new_serialized_data):
-    history = History.objects.filter(object_id=object_id, content_type=ct).\
-        order_by('-date_created')
+    if ct == ContentType.objects.get_for_model(Metric):
+        history = TenantHistory.objects.filter(
+            object_id=object_id,
+            content_type=ct
+        ).order_by('-date_created')
+    else:
+        history = History.objects.filter(
+            object_id=object_id,
+            content_type=ct
+        ).order_by('-date_created')
 
     changed = []
     added = []
@@ -62,7 +75,7 @@ def create_comment(object_id, ct, new_serialized_data):
                 pass
 
             elif key in ['config', 'attribute', 'dependency', 'flags', 'files',
-                         'parameter', 'fileparameter']:
+                         'parameter', 'fileparameter', 'dependancy']:
                 old = inline_models_to_dicts(old_serialized_data[key])
                 new = inline_models_to_dicts(new_serialized_data[key])
 
@@ -112,14 +125,14 @@ def create_comment(object_id, ct, new_serialized_data):
                 if old_serialized_data[key] != new_serialized_data[key]:
                     changed.append(key)
 
-                elif not new_serialized_data[key]:
+                elif not new_serialized_data[key] and key not in ['datetime']:
                     deleted.append(key)
 
         for key, value in new_serialized_data.items():
             if key not in ['config', 'attribute', 'dependency', 'flags',
                            'files', 'parameter', 'fileparameter',
                            'probeexecutable', 'parent', 'nameversion',
-                           'datetime']:
+                           'datetime', 'dependancy']:
                 if not old_serialized_data[key]:
                     added.append(key)
 

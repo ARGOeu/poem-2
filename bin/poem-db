@@ -73,7 +73,7 @@ do
         l)
             su -m -s /bin/sh $RUNASUSER -c \
             "export DJANGO_SETTINGS_MODULE=Poem.settings && \
-            python $SITEPACK/Poem/manage.py showmigrations poem"
+            python $SITEPACK/Poem/manage.py showmigrations poem poem_super_admin users tenants"
             ;;
         s)
             while getopts 'n:' OPTION2

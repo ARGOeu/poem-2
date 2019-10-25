@@ -35,6 +35,7 @@ urlpatterns = [
     path('schema/', views_internal.GetPoemVersion.as_view(), name='schema'),
     path('serviceflavoursall/', views_internal.ListAllServiceFlavours.as_view(), name='serviceflavoursall'),
     path('services/', views_internal.ListServices.as_view(), name='services'),
+    path('tenantversion/<str:obj>/<str:name>', views_internal.ListTenantVersions.as_view(), name='tenantversions    '),
     path('usergroups/', views_internal.ListGroupsForGivenUser.as_view(), name='usergroups'),
     path('usergroups/<str:username>', views_internal.ListGroupsForGivenUser.as_view(), name='usergroups'),
     path('userprofile/', views_internal.GetUserprofileForUsername.as_view(), name='userprofile'),

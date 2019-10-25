@@ -3046,3 +3046,158 @@ class ListMetricTemplatesForProbeVersionAPIViewTests(TenantTestCase):
             [r for r in response.data],
             ['argo.AMS-Check', 'test-metric']
         )
+
+
+class ListTenantVersionsAPIViewTests(TenantTestCase):
+    def setUp(self):
+        self.factory = TenantRequestFactory(self.tenant)
+        self.view = views.ListTenantVersions.as_view()
+        self.url = '/api/v2/internal/tenantversion/'
+        self.user = CustUser.objects.create_user(username='testuser')
+
+        probe1 = admin_models.Probe.objects.create(
+            name='ams-probe',
+            version='0.1.7',
+            description='Probe is inspecting AMS service.',
+            comment='Initial version.',
+            repository='https://github.com/ARGOeu/nagios-plugins-argo',
+            docurl='https://github.com/ARGOeu/nagios-plugins-argo/blob/master/'
+                   'README.md'
+        )
+
+        ct_p = ContentType.objects.get_for_model(admin_models.Probe)
+        ct_m = ContentType.objects.get_for_model(poem_models.Metric)
+
+        self.ver1 = admin_models.History.objects.create(
+            object_id=probe1.id,
+            serialized_data='[{"pk": ' + str(probe1.id) + ', "model": '
+                            '"poem_super_admin.probe",'
+                            ' "fields": {"name": "ams-probe", "version": '
+                            '"0.1.7", "description": "Probe is inspecting AMS '
+                            'service.", "comment": "Initial version.", '
+                            '"repository": "https://github.com/ARGOeu/nagios-'
+                            'plugins-argo", "docurl": "https://github.com/'
+                            'ARGOeu/nagios-plugins-argo/blob/master/README.md",'
+                            ' "user": "poem"}}]',
+            object_repr='ams-probe (0.1.7)',
+            content_type=ct_p,
+            date_created=datetime.datetime.now(),
+            comment='Initial version.',
+            user=self.user.username
+        )
+
+        self.mtype1 = poem_models.MetricType.objects.create(name='Active')
+        group1 = poem_models.GroupOfMetrics.objects.create(name='EGI')
+
+        metric1 = poem_models.Metric.objects.create(
+            name='argo.AMS-Check',
+            mtype=self.mtype1,
+            group=group1,
+            probeversion='ams-probe (0.1.7)',
+            probekey=self.ver1,
+            probeexecutable='["ams-probe"]',
+            config='["maxCheckAttempts 3", "timeout 60",'
+                   ' "path /usr/libexec/argo-monitoring/probes/argo",'
+                   ' "interval 5", "retryInterval 3"]',
+            attribute='["argo.ams_TOKEN --token"]',
+            flags='["OBSESS 1"]',
+            parameter='["--project EGI"]'
+        )
+
+        poem_models.Metric.objects.create(
+            name='test.AMS-Check',
+            mtype=self.mtype1,
+            group=group1,
+            probeversion='ams-probe (0.1.7)',
+            probekey=self.ver1,
+            probeexecutable='["ams-probe"]',
+            config='["maxCheckAttempts 3", "timeout 60",'
+                   ' "path /usr/libexec/argo-monitoring/probes/argo",'
+                   ' "interval 5", "retryInterval 3"]',
+            attribute='["argo.ams_TOKEN --token"]',
+            flags='["OBSESS 1"]',
+            parameter='["--project EGI"]'
+        )
+
+        self.ver1 = poem_models.TenantHistory.objects.create(
+            object_id=metric1.id,
+            serialized_data=serializers.serialize('json', [metric1]),
+            object_repr='argo.AMS-Check',
+            content_type=ct_m,
+            date_created=datetime.datetime.now(),
+            comment='Initial version.',
+            user=self.user.username
+        )
+
+
+
+    def test_get_versions_of_metrics(self):
+        request = self.factory.get(self.url + 'metric/argo.AMS-Check')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'metric', 'argo.AMS-Check')
+        self.assertEqual(
+            response.data,
+            [
+                {
+                    'id': self.ver1.id,
+                    'object_repr': 'argo.AMS-Check',
+                    'fields': {
+                        'name': 'argo.AMS-Check',
+                        'mtype': self.mtype1.name,
+                        'group': 'EGI',
+                        'probeversion': 'ams-probe (0.1.7)',
+                        'parent': '',
+                        'probeexecutable': 'ams-probe',
+                        'config': [
+                            {'key': 'maxCheckAttempts', 'value': '3'},
+                            {'key': 'timeout', 'value': '60'},
+                            {'key': 'path',
+                             'value':
+                                 '/usr/libexec/argo-monitoring/probes/argo'},
+                            {'key': 'interval', 'value': '5'},
+                            {'key': 'retryInterval', 'value': '3'}
+                        ],
+                        'attribute': [
+                            {'key': 'argo.ams_TOKEN', 'value': '--token'}
+                        ],
+                        'dependancy': [],
+                        'flags': [
+                            {'key': 'OBSESS', 'value': '1'}
+                        ],
+                        'files': [],
+                        'parameter': [
+                            {'key': '--project', 'value': 'EGI'}
+                        ],
+                        'fileparameter': []
+                    },
+                    'user': 'testuser',
+                    'date_created': datetime.datetime.strftime(
+                        self.ver1.date_created, '%Y-%m-%d %H:%M:%S'
+                    ),
+                    'comment': 'Initial version.',
+                    'version': datetime.datetime.strftime(
+                        self.ver1.date_created, '%Y%m%d-%H%M%S'
+                    )
+                }
+            ]
+        )
+
+    def test_get_nonexisting_metric_version(self):
+        request = self.factory.get(self.url + 'metric/test.AMS-Check')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'metric', 'test.AMS-Check')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data, {'detail': 'Version not found.'})
+
+    def test_get_nonexisting_metric(self):
+        request = self.factory.get(self.url + 'metric/nonexisting')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'metric', 'nonexisting')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data, {'detail': 'Metric not found.'})
+
+    def test_get_metric_version_without_specifying_name(self):
+        request = self.factory.get(self.url + 'metric')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'metric')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

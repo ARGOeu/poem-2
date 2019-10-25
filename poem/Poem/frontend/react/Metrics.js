@@ -17,8 +17,11 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faInfoCircle, faMinus, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { NotificationManager } from 'react-notifications';
+import { HistoryComponent, DiffElement } from './Probes';
+import { arraysEqual, InlineDiffElement } from './MetricTemplates';
 
 export const MetricList = ListOfMetrics('metric');
+export const MetricHistory = HistoryComponent('metric');
 
 
 const DefaultFilterComponent = ({value, onChange, field}) => (
@@ -874,5 +877,407 @@ export class MetricChange extends Component {
           </BaseArgoView>
       )
     }
+  }
+}
+
+
+export class MetricVersonCompare extends Component {
+  constructor(props) {
+    super(props);
+
+    this.version1 = props.match.params.id1;
+    this.version2 = props.match.params.id2;
+    this.name = props.match.params.name;
+
+    this.state = {
+      loading: false,
+      name1: '',
+      probeversion1: '',
+      type1: '',
+      group1: '',
+      probeexecutable1: '',
+      parent1: '',
+      config1: '',
+      attribute1: '',
+      dependancy1: '',
+      parameter1: '',
+      flags1: '',
+      files1: '',
+      fileparameter1: '',
+      name2: '',
+      probeversion2: '',
+      type2: '',
+      group2: '',
+      probeexecutable2: '',
+      parent2: '',
+      config2: '',
+      attribute2: '',
+      dependancy2: '',
+      parameter2: '',
+      flags2: '',
+      files2: '',
+      fileparameter2: ''
+    };
+
+    this.backend = new Backend();
+  };
+
+  componentDidMount() {
+    this.setState({loading: true});
+
+    this.backend.fetchVersions('metric', this.name)
+      .then (json => {
+        let name1 = '';
+        let probeversion1 = '';
+        let type1 = '';
+        let group1 = '';
+        let probeexecutable1 = '';
+        let parent1 = '';
+        let config1 = '';
+        let attribute1 = '';
+        let dependancy1 = '';
+        let flags1 = '';
+        let files1 = '';
+        let parameter1 = '';
+        let fileparameter1 = '';
+        let name2 = '';
+        let probeversion2 = '';
+        let type2 = '';
+        let group2 = '';
+        let probeexecutable2 = '';
+        let parent2 = '';
+        let config2 = '';
+        let attribute2 = '';
+        let dependancy2 = '';
+        let flags2 = '';
+        let files2 = '';
+        let parameter2 = '';
+        let fileparameter2 = '';
+
+        json.forEach((e) => {
+          if (e.version == this.version1) {
+            name1 = e.fields.name;
+            probeversion1 = e.fields.probeversion;
+            type1 = e.fields.mtype;
+            group1 = e.fields.group;
+            probeexecutable1 = e.fields.probeexecutable; 
+            parent1 = e.fields.parent; 
+            config1 = e.fields.config; 
+            attribute1 = e.fields.attribute; 
+            dependancy1 = e.fields.dependancy; 
+            parameter1 = e.fields.parameter; 
+            flags1 = e.fields.flags; files1 = e.fields.files; 
+            fileparameter1 = e.fields.fileparameter; 
+          } else if (e.version == this.version2) {
+              name2 = e.fields.name;
+              probeversion2 = e.fields.probeversion;
+              type2 = e.fields.mtype;
+              group2 = e.fields.group;
+              probeexecutable2 = e.fields.probeexecutable;
+              parent2 = e.fields.parent;
+              config2 = e.fields.config;
+              attribute2 = e.fields.attribute;
+              dependancy2 = e.fields.dependancy;
+              flags2 = e.fields.flags;
+              files2 = e.fields.files;
+              parameter2 = e.fields.parameter;
+              fileparameter2 = e.fields.fileparameter;
+          }
+        });
+
+        this.setState({
+          name1: name1,
+          probeversion1: probeversion1,
+          type1: type1,
+          group1: group1,
+          probeexecutable1: probeexecutable1,
+          parent1: parent1,
+          config1: config1,
+          attribute1: attribute1,
+          dependancy1: dependancy1,
+          parameter1: parameter1,
+          flags1: flags1,
+          files1: files1,
+          fileparameter1: fileparameter1,
+          name2: name2,
+          probeversion2: probeversion2,
+          type2: type2,
+          group2: group2,
+          probeexecutable2: probeexecutable2,
+          parent2: parent2,
+          config2: config2,
+          attribute2: attribute2,
+          dependancy2: dependancy2,
+          parameter2: parameter2,
+          flags2: flags2,
+          files2: files2,
+          fileparameter2: fileparameter2,
+          loading: false
+        });
+      });
+  };
+
+  render() {
+    var { name1, name2, probeversion1, probeversion2, type1, type2, 
+    probeexecutable1, probeexecutable2, parent1, parent2, config1, 
+    config2, attribute1, attribute2, dependancy1, dependancy2,
+    parameter1, parameter2, flags1, flags2, files1, files2, 
+    fileparameter1, fileparameter2, group1, group2, loading } = this.state;
+
+    if (loading)
+      return (<LoadingAnim/>);
+
+    else if (!loading && name1 && name2) {
+      return (
+        <React.Fragment>
+          <div className="d-flex align-items-center justify-content-between">
+            <h2 className='ml-3 mt-1 mb-4'>{'Compare ' + this.name}</h2>
+          </div>
+          {
+            (name1 !== name2) &&
+              <DiffElement title='name' item1={name1} item2={name2}/>
+          }
+          {
+            (probeversion1 !== probeversion2) &&
+              <DiffElement title='probe version' item1={probeversion1} item2={probeversion2}/>
+          }
+          {
+            (type1 !== type2) &&
+              <DiffElement title='type' item1={type1} item2={type2}/>
+          }
+          {
+            (group1 !== group2) &&
+              <DiffElement title='group' item1={group1} item2={group2}/>
+          }
+          {
+            (probeexecutable1 !== probeexecutable2) &&
+              <DiffElement title='probe executable' item1={probeexecutable1} item2={probeexecutable2}/>
+          }
+          {
+            (parent1 !== parent2) &&
+              <DiffElement title='parent' item1={parent1} item2={parent2}/>
+          }
+          {
+            (!arraysEqual(config1, config2)) &&
+              <InlineDiffElement title='config' item1={config1} item2={config2}/>
+          }
+          {
+            (!arraysEqual(attribute1, attribute2)) &&
+              <InlineDiffElement title='attribute' item1={attribute1} item2={attribute2}/>
+          }
+          {
+            (!arraysEqual(dependancy1, dependancy2)) &&
+              <InlineDiffElement title='dependency' item1={dependancy1} item2={dependancy2}/>
+          }
+          {
+            (!arraysEqual(parameter1, parameter2)) &&
+              <InlineDiffElement title='parameter' item1={parameter1} item2={parameter2}/>
+          }
+          {
+            (!arraysEqual(flags1, flags2)) &&
+              <InlineDiffElement title='flags' item1={flags1} item2={flags2}/>
+          }
+          {
+            (!arraysEqual(files1, files2)) &&
+              <InlineDiffElement title='file attributes' item1={files1} item2={files2}/>
+          }
+          {
+            (!arraysEqual(fileparameter1, fileparameter2)) &&
+              <InlineDiffElement title='file parameters' item1={fileparameter1} item2={fileparameter2}/>
+          }
+        </React.Fragment>
+      )
+    } else
+      return null
+  };
+}
+
+
+export class MetricVersionDetails extends Component {
+  constructor(props) {
+    super(props);
+
+    this.name = props.match.params.name;
+    this.version = props.match.params.version;
+
+    this.backend = new Backend();
+
+    this.state = {
+      name: '',
+      probeversion: '',
+      mtype: '',
+      group: '',
+      probeexecutable: '',
+      parent: '',
+      config: [],
+      attribute: [],
+      dependancy: [],
+      parameter: [],
+      flags: [],
+      files: [],
+      fileparameter: [],
+      loading: false
+    };
+  }
+
+  componentDidMount() {
+    this.setState({loading: true});
+
+    this.backend.fetchVersions('metric', this.name)
+      .then((json) => {
+        json.forEach((e) => {
+          if (e.version == this.version)
+            this.setState({
+              name: e.fields.name,
+              probeversion: e.fields.probeversion,
+              type: e.fields.mtype,
+              group: e.fields.group,
+              probeexecutable: e.fields.probeexecutable,
+              parent: e.fields.parent,
+              config: e.fields.config,
+              attribute: e.fields.attribute,
+              dependancy: e.fields.dependancy,
+              parameter: e.fields.parameter,
+              flags: e.fields.flags,
+              files: e.fields.files,
+              fileparameter: e.fields.fileparameter,
+              date_created: e.date_created,
+              loading: false
+            });
+        });
+      })
+  }
+
+  render() {
+    const { name, probeversion, type, group, probeexecutable, parent, config, 
+      attribute, dependancy, parameter, flags, files, fileparameter, date_created,
+      loading } = this.state;
+    
+    if (loading)
+    return (<LoadingAnim/>);
+
+    else if (!loading && name) {
+      return (
+        <React.Fragment>
+          <div className='d-flex align-items-center justify-content-between'>
+            <React.Fragment>
+              <h2 className='ml-3 mt-1 mb-4'>{name + ' (' + date_created + ')'}</h2>
+            </React.Fragment>
+          </div>
+          <div id='argo-contentwrap' className='ml-2 mb-2 mt-2 p-3 border rounded'>
+            <Formik
+              initialValues = {{
+                name: name,
+                probeversion: probeversion,
+                mtype: type,
+                group: group,
+                probeexecutable: probeexecutable,
+                parent: parent,
+                config: config,
+                attributes: attribute,
+                dependency: dependancy,
+                parameter: parameter,
+                flags: flags,
+                files: files,
+                fileparameter: fileparameter
+              }}
+              render = {props => (
+                <Form>
+                  <FormGroup>
+                    <Row className='mb-3'>
+                      <Col md={4}>
+                        <Label to='name'>Name</Label>
+                        <Field
+                          type='text'
+                          name='name'
+                          className={'form-control'}
+                          id='name'
+                          disabled={true}
+                        />
+                        <FormText color='muted'>
+                          Metric name
+                        </FormText>
+                      </Col>
+                      <Col md={4}>
+                        <Label to='probeversion'>Probe</Label>
+                        <Field 
+                          type='text'
+                          name='probeversion'
+                          className='form-control'
+                          id='probeversion'
+                          disabled={true}
+                        />
+                      </Col>
+                      <Col md={2}>
+                        <Label to='mtype'>Type</Label>
+                        <Field
+                          type='text'
+                          name='mtype'
+                          className='form-control'
+                          id='mtype'
+                          disabled={true}
+                        />
+                        <FormText color='muted'>
+                          Metric is of given type
+                        </FormText>
+                      </Col>
+                    </Row>
+                    <Row className='mb-4'>
+                      <Col md={2}>
+                        <Label to='group'>Group</Label>
+                        <Field
+                          type='text'
+                          name='group'
+                          className='form-control'
+                          id='group'
+                          disabled={true}
+                        />
+                      </Col>
+                    </Row>
+                  </FormGroup>
+                  <FormGroup>
+                  <h4 className="mt-2 p-1 pl-3 text-light text-uppercase rounded" style={{"backgroundColor": "#416090"}}>Metric configuration</h4>
+                  <h6 className='mt-4 font-weight-bold text-uppercase' hidden={props.values.type === 'Passive'}>probe executable</h6>
+                  <Row>
+                    <Col md={5}>
+                      <Field
+                        type='text'
+                        name='probeexecutable'
+                        id='probeexecutable'
+                        className='form-control'
+                        hidden={props.values.type === 'Passive'}
+                        disabled={true}
+                      />
+                    </Col>
+                  </Row>
+                  <InlineFields {...props} field='config' readonly={true}/>
+                  <InlineFields {...props} field='attributes'/>
+                  <InlineFields {...props} field='dependency'/>
+                  <InlineFields {...props} field='parameter'/>
+                  <InlineFields {...props} field='flags'/>
+                  <InlineFields {...props} field='files'/>
+                  <InlineFields {...props} field='fileparameter'/>
+                  <h6 className='mt-4 font-weight-bold text-uppercase'>parent</h6>
+                  <Row>
+                    <Col md={5}>
+                      <Field
+                        type='text'
+                        name='parent'
+                        id='parent'
+                        className='form-control'
+                        disabled={true}
+                      />
+                    </Col>
+                  </Row>
+                  </FormGroup>
+                </Form>
+              )}
+              />
+          </div>
+        </React.Fragment>
+      )
+    }
+    else
+      return null
   }
 }

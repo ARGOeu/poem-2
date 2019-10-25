@@ -37,7 +37,7 @@ function matchItem(item, value) {
 }
 
 
-const InlineDiffElement = ({title, item1, item2}) => {
+export const InlineDiffElement = ({title, item1, item2}) => {
   let n = Math.max(item1.length, item2.length);
 
   let elem1 = [];
@@ -85,11 +85,11 @@ const InlineDiffElement = ({title, item1, item2}) => {
 }
 
 
-function arraysEqual(arr1, arr2) {
+export function arraysEqual(arr1, arr2) {
     if(arr1.length !== arr2.length)
         return false;
     for(var i = arr1.length; i--;) {
-        if(arr1[i]['key'] !== arr2[i]['key'] && arr1[i]['value'] !== arr2[i]['value'])
+        if(arr1[i]['key'] !== arr2[i]['key'] || arr1[i]['value'] !== arr2[i]['value'])
             return false;
     }
 
@@ -938,7 +938,7 @@ export class MetricTemplateVersionDetails extends Component {
                 probeexecutable: probeexecutable,
                 parent: parent,
                 config: config,
-                attribute: attribute,
+                attributes: attribute,
                 dependency: dependency,
                 parameter: parameter,
                 flags: flags,
