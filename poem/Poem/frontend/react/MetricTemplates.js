@@ -148,10 +148,6 @@ const MetricTemplateSchema = Yup.object().shape({
   probeexecutable: Yup.string().when('type', {
     is: (val) => val === 'Active',
     then: Yup.string().required('Required')
-  }),
-  parent: Yup.string().when('type', {
-    is: (val) => val === 'Passive',
-    then: Yup.string().required('Required')
   })
 });
 
