@@ -15,8 +15,15 @@ def two_value_inline(input):
         data = json.loads(input)
 
         for item in data:
-            results.append(({'key': item.split(' ')[0],
-                             'value': item.split(' ')[1]}))
+            if len(item.split(' ')) == 1:
+                results.append({
+                    'key': item.split(' ')[0],
+                    'value': ''
+                })
+            else:
+                val = ' '.join(item.split(' ')[1:])
+                results.append(({'key': item.split(' ')[0],
+                                 'value': val}))
 
     return results
 
@@ -37,6 +44,10 @@ def two_value_inline_dict(input):
         data = json.loads(input)
 
         for item in data:
-            results.update(({item.split(' ')[0]: item.split(' ')[1]}))
+            if len(item.split(' ')) == 1:
+                results.update({item.split(' ')[0]: ''})
+            else:
+                val = ' '.join(item.split(' ')[1:])
+                results.update(({item.split(' ')[0]: val}))
 
     return results
