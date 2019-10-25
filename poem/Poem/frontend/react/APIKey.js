@@ -292,7 +292,7 @@ export class APIKeyChange extends Component {
                           type='text'
                           name='token'
                           id='token'
-                          disabled={true}
+                          readOnly
                           className='form-control'
                         />
                       </InputGroup>
