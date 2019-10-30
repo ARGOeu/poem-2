@@ -223,6 +223,18 @@ export class Backend {
       .catch(err => alert('Something went wrong: ' + err))
   }
 
+  fetchYumRepos() {
+    return fetch('/api/v2/internal/yumrepos/')
+      .then(response => response.json())
+      .catch(err => alert('Something went wrong: ' + err))
+  }
+
+  fetchYumRepoByName(name) {
+    return fetch('/api/v2/internal/yumrepos/' + name)
+      .then(response => response.json())
+      .catch(err => alert('Something went wrong: ' + err))
+  }
+
   changeMetricProfile(profile) {
     return this.send(
       '/api/v2/internal/metricprofiles/',
@@ -295,6 +307,14 @@ export class Backend {
     )
   }
 
+  changeYumRepo(repo) {
+    return this.send(
+      '/api/v2/internal/yumrepos/',
+      'PUT',
+      repo
+    );
+  }
+
   addAggregation(profile) {
     return this.send(
       '/api/v2/internal/aggregations/',
@@ -359,6 +379,14 @@ export class Backend {
     );
   }
 
+  addYumRepo(repo) {
+    return this.send(
+      '/api/v2/internal/yumrepos/',
+      'POST',
+      repo
+    );
+  }
+
   deleteMetricProfile(id) {
     return this.send(
       '/api/v2/internal/metricprofiles/' + id,
@@ -411,6 +439,13 @@ export class Backend {
   deleteMetricTemplate(name) {
     return this.send(
       '/api/v2/internal/metrictemplates/' + name,
+      'DELETE'
+    );
+  }
+
+  deleteYumRepo(name) {
+    return this.send(
+      '/api/v2/internal/yumrepos/' + name,
       'DELETE'
     );
   }

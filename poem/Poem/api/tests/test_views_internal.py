@@ -3201,3 +3201,213 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
         force_authenticate(request, user=self.user)
         response = self.view(request, 'metric')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+class ListYumReposAPIViewTests(TenantTestCase):
+    def setUp(self):
+        self.factory = TenantRequestFactory(self.tenant)
+        self.view = views.ListYumRepos.as_view()
+        self.url = '/api/v2/internal/yumrepos/'
+        self.user = CustUser.objects.create_user(username='testuser')
+
+        self.repo1 = admin_models.YumRepo.objects.create(
+            name='repo-1',
+            content='content1=content1\ncontent2=content2',
+            description='Lorem ipsum dolor sit amet, consectetur adipiscing '
+                        'elit, sed do eiusmod tempor incididunt ut labore et '
+                        'dolore magna aliqua. Condimentum mattis pellentesque '
+                        'id nibh tortor. Ut eu sem integer vitae justo eget '
+                        'magna fermentum. Neque convallis a cras semper auctor '
+                        'neque vitae tempus quam. In metus vulputate eu '
+                        'scelerisque felis imperdiet proin fermentum. Semper '
+                        'quis lectus nulla at. Hac habitasse platea dictumst '
+                        'quisque sagittis purus.'
+        )
+
+        self.repo2 = admin_models.YumRepo.objects.create(
+            name='repo-2',
+            content='content1=content1\ncontent2=content2',
+            description='Quam viverra orci sagittis eu volutpat odio facilisis '
+                        'mauris. Justo eget magna fermentum iaculis eu non '
+                        'diam. Porta non pulvinar neque laoreet suspendisse. '
+                        'Suspendisse sed nisi lacus sed viverra tellus. Mattis '
+                        'ullamcorper velit sed ullamcorper morbi tincidunt '
+                        'ornare massa. Quis vel eros donec ac odio tempor orci '
+                        'dapibus ultrices. Duis ut diam quam nulla porttitor '
+                        'massa id neque aliquam. Augue interdum velit euismod '
+                        'in pellentesque. Elementum integer enim neque volutpat'
+                        ' ac tincidunt vitae semper. A diam maecenas sed enim '
+                        'ut sem viverra aliquet eget. Eget velit aliquet '
+                        'sagittis id consectetur purus ut faucibus pulvinar.'
+        )
+
+    def test_get_list_of_yum_repos(self):
+        request = self.factory.get(self.url)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(
+            response.data,
+            [
+                {
+                    'id': self.repo1.id,
+                    'name': 'repo-1',
+                    'content': 'content1=content1\ncontent2=content2',
+                    'description': 'Lorem ipsum dolor sit amet, consectetur '
+                                   'adipiscing elit, sed do eiusmod tempor '
+                                   'incididunt ut labore et '
+                                   'dolore magna aliqua. Condimentum mattis '
+                                   'pellentesque id nibh tortor. Ut eu sem '
+                                   'integer vitae justo eget '
+                                   'magna fermentum. Neque convallis a cras '
+                                   'semper auctor neque vitae tempus quam. In '
+                                   'metus vulputate eu scelerisque felis '
+                                   'imperdiet proin fermentum. Semper '
+                                   'quis lectus nulla at. Hac habitasse platea '
+                                   'dictumst quisque sagittis purus.'
+                },
+                {
+                    'id': self.repo2.id,
+                    'name': 'repo-2',
+                    'content': 'content1=content1\ncontent2=content2',
+                    'description': 'Quam viverra orci sagittis eu volutpat '
+                                   'odio facilisis mauris. Justo eget magna '
+                                   'fermentum iaculis eu non diam. Porta non '
+                                   'pulvinar neque laoreet suspendisse. '
+                                   'Suspendisse sed nisi lacus sed viverra '
+                                   'tellus. Mattis ullamcorper velit sed '
+                                   'ullamcorper morbi tincidunt ornare massa. '
+                                   'Quis vel eros donec ac odio tempor orci '
+                                   'dapibus ultrices. Duis ut diam quam nulla '
+                                   'porttitor massa id neque aliquam. Augue '
+                                   'interdum velit euismod in pellentesque. '
+                                   'Elementum integer enim neque volutpat'
+                                   ' ac tincidunt vitae semper. A diam '
+                                   'maecenas sed enim ut sem viverra aliquet '
+                                   'eget. Eget velit aliquet sagittis id '
+                                   'consectetur purus ut faucibus pulvinar.'
+                }
+            ]
+        )
+
+    def test_get_yum_repo_by_name(self):
+        request = self.factory.get(self.url + 'repo-1')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'repo-1')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            response.data,
+            {
+                'id': self.repo1.id,
+                'name': 'repo-1',
+                'content': 'content1=content1\ncontent2=content2',
+                'description': 'Lorem ipsum dolor sit amet, consectetur '
+                               'adipiscing elit, sed do eiusmod tempor '
+                               'incididunt ut labore et '
+                               'dolore magna aliqua. Condimentum mattis '
+                               'pellentesque id nibh tortor. Ut eu sem '
+                               'integer vitae justo eget '
+                               'magna fermentum. Neque convallis a cras '
+                               'semper auctor neque vitae tempus quam. In '
+                               'metus vulputate eu scelerisque felis '
+                               'imperdiet proin fermentum. Semper '
+                               'quis lectus nulla at. Hac habitasse platea '
+                               'dictumst quisque sagittis purus.'
+            }
+        )
+
+    def test_get_yum_repo_in_case_of_nonexisting_name(self):
+        request = self.factory.get(self.url + 'nonexisting')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'nonexisting')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_post_yum_repo(self):
+        data = {
+            'name': 'repo-3',
+            'content': 'content1=content1\ncontent2=content2',
+            'description': 'Lorem ipsum dolor sit amet, consectetur adipiscing '
+                           'elit, sed do eiusmod tempor incididunt ut labore '
+                           'et dolore magna aliqua. Morbi non arcu risus quis '
+                           'varius quam quisque id. Phasellus faucibus '
+                           'scelerisque eleifend donec pretium vulputate '
+                           'sapien nec.'
+        }
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_post_yum_repo_with_name_that_already_exists(self):
+        data = {
+            'name': 'repo-1',
+            'content': 'content1=content1\ncontent2=content2',
+            'description': 'Lorem ipsum dolor sit amet, consectetur adipiscing '
+                           'elit, sed do eiusmod tempor incididunt ut labore '
+                           'et dolore magna aliqua. Morbi non arcu risus quis '
+                           'varius quam quisque id. Phasellus faucibus '
+                           'scelerisque eleifend donec pretium vulputate '
+                           'sapien nec.'
+        }
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data,
+            {'detail': 'YUM repo with this name already exists.'}
+        )
+
+    def test_put_yum_repo(self):
+        data = {
+            'id': self.repo1.id,
+            'name': 'repo-1',
+            'content': 'content1=content1\ncontent2=content2',
+            'description': 'Lorem ipsum dolor sit amet, consectetur adipiscing '
+                           'elit, sed do eiusmod tempor incididunt ut labore '
+                           'et dolore magna aliqua.'
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_put_yum_repo_with_existing_name(self):
+        data = {
+            'id': self.repo1.id,
+            'name': 'repo-2',
+            'content': 'content1=content1\ncontent2=content2',
+            'description': 'Lorem ipsum dolor sit amet, consectetur adipiscing '
+                           'elit, sed do eiusmod tempor incididunt ut labore '
+                           'et dolore magna aliqua.'
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data,
+            {'detail': 'YUM repo with this name already exists.'}
+        )
+
+    def test_delete_yum_repo(self):
+        self.assertEqual(admin_models.YumRepo.objects.all().count(), 2)
+        request = self.factory.delete(self.url + 'repo-1')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'repo-1')
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(admin_models.YumRepo.objects.all().count(), 1)
+
+    def test_delete_yum_repo_without_name(self):
+        request = self.factory.delete(self.url)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_delete_yum_repo_nonexisting_name(self):
+        request = self.factory.delete(self.url + 'nonexisting')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'nonexisting')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data, {'detail': 'YUM repo not found.'})

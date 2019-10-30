@@ -59,6 +59,9 @@ export const TenantAdministration = (props) =>
         <Row className="p-1 align-items-center">
             <Icon i='metrics'/> <Link to={'/ui/administration/metrictemplates'}>Metric templates</Link>
         </Row>
+        <Row>
+          <Icon i='yumrepos'/> <Link to={'/ui/administration/yumrepos/'}>YUM repos</Link>
+        </Row>
       </CardBody>
     </Card>
     <Card>

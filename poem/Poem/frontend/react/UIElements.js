@@ -38,14 +38,15 @@ import {
   faCogs,
   faHighlighter,
   faTasks,
-  faKey} from '@fortawesome/free-solid-svg-icons';
+  faKey,
+  faBoxOpen} from '@fortawesome/free-solid-svg-icons';
 import { NotificationManager } from 'react-notifications';
 import { Field } from 'formik';
 
 
 var list_pages = ['administration','services', 'reports', 'probes',
                   'metrics', 'metricprofiles', 'aggregationprofiles'];
-var admin_list_pages = ['administration', 'probes', 'metrictemplates'];
+var admin_list_pages = ['administration', 'probes', 'yumrepos', 'metrictemplates'];
 
 var link_title = new Map();
 link_title.set('administration', 'Administration');
@@ -61,6 +62,7 @@ link_title.set('groupofmetricprofiles', 'Groups of metric profiles');
 link_title.set('users', 'Users');
 link_title.set('apikey', 'API key');
 link_title.set('metrictemplates', 'Metric templates');
+link_title.set('yumrepos', 'YUM repos');
 
 export const Icon = props =>
 {
@@ -75,6 +77,7 @@ export const Icon = props =>
   link_icon.set('metricprofiles', faCogs);
   link_icon.set('aggregationprofiles', faTasks);
   link_icon.set('apikey', faKey)
+  link_icon.set('yumrepos', faBoxOpen)
 
   return <FontAwesomeIcon icon={link_icon.get(props.i)} fixedWidth/>
 }
@@ -360,7 +363,12 @@ export const BaseArgoView = ({resourcename='', location=undefined,
           :
             listview ?
               <React.Fragment>
-                <h2 className="ml-3 mt-1 mb-4">{`Select ${resourcename} to change`}</h2>
+                {
+                  addnew ?
+                    <h2 className="ml-3 mt-1 mb-4">{`Select ${resourcename} to change`}</h2>
+                  :
+                    <h2 className='ml-3 mt-1 mb-4'>{`Select ${resourcename} for details`}</h2>
+                }
                 {
                   addnew &&
                     <Link className="btn btn-secondary" to={location.pathname + "/add"} role="button">Add</Link>

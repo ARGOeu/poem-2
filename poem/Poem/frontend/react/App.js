@@ -17,9 +17,10 @@ import { Route, Switch, BrowserRouter, Redirect, withRouter } from 'react-router
 import { Container, Button, Row, Col } from 'reactstrap';
 import { NavigationBar, CustomBreadcrumb, NavigationLinks, Footer } from './UIElements';
 import { NotificationContainer, NotificationManager } from 'react-notifications';
+import { Backend } from './DataManager';
+import { YumRepoList, YumRepoChange } from './YumRepos';
 
 import './App.css';
-import { Backend } from './DataManager';
 
 
 const NavigationBarWithRouter = withRouter(NavigationBar);
@@ -124,6 +125,10 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, token, tenantName})
     <Route exact path="/ui/administration/apikey/:name"  
       render={props => <APIKeyChange {...props} />}
     />
+    <Route exact path='/ui/administration/yumrepos/' component={YumRepoList}/>
+    <Route exact path='/ui/administration/yumrepos/:name' 
+      render={props => <YumRepoChange {...props} disabled={true}/>}
+    />
     <Route component={NotFound} />
   </Switch>
 )
@@ -145,6 +150,9 @@ const SuperAdminRouteSwitch = ({props}) => (
     <Route exact path='/ui/metrictemplates/:name/history/compare/:id1/:id2' render={props => <MetricTemplateVersionCompare {...props}/>}/>
     <Route exact path='/ui/metrictemplates/:name/history/:version' render={props => <MetricTemplateVersionDetails {...props}/>}/>
     <Route exact path='/ui/metrictemplates/:name' render={props => <MetricTemplateChange {...props}/>}/>
+    <Route exact path='/ui/yumrepos/' render={props => <YumRepoList {...props}/>}/>
+    <Route exact path='/ui/yumrepos/add' render={props => <YumRepoChange addview={true} {...props}/>}/>
+    <Route exact path='/ui/yumrepos/:name' render={props => <YumRepoChange {...props}/>}/>
     <Route exact path="/ui/administration" component={SuperAdminAdministration}/>
     <Route exact path="/ui/administration/users" component={UsersList} />
     <Route exact path="/ui/administration/users/add"
