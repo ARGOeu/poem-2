@@ -10,6 +10,7 @@ import json
 from Poem.api import views_internal as views
 from Poem.api.internal_views.metrics import inline_metric_for_db
 from Poem.api.models import MyAPIKey
+from Poem.helpers.history_helpers import create_comment
 from Poem.poem import models as poem_models
 from Poem.poem_super_admin import models as admin_models
 from Poem.tenants.models import Tenant
@@ -3411,3 +3412,658 @@ class ListYumReposAPIViewTests(TenantTestCase):
         response = self.view(request, 'nonexisting')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(response.data, {'detail': 'YUM repo not found.'})
+
+
+class HistoryHelpersTests(TenantTestCase):
+    def setUp(self):
+        self.probe1 = admin_models.Probe.objects.create(
+            name='probe-1',
+            version='1.0.0',
+            description='Some description.',
+            comment='Some comment.',
+            repository='https://repository.url',
+            docurl='https://doc.url',
+            user='testuser',
+            datetime=datetime.datetime.now()
+        )
+
+        self.ct_probe = ContentType.objects.get_for_model(admin_models.Probe)
+        self.ct_mt = ContentType.objects.get_for_model(
+            admin_models.MetricTemplate
+        )
+        self.ct_metric = ContentType.objects.get_for_model(poem_models.Metric)
+
+        self.active = admin_models.MetricTemplateType.objects.create(
+            name='Active'
+        )
+        self.metric_active = poem_models.MetricType.objects.create(
+            name='Active'
+        )
+
+        probe_history1 = admin_models.History.objects.create(
+            object_id=self.probe1.id,
+            serialized_data=serializers.serialize('json', [self.probe1]),
+            object_repr=self.probe1.__str__(),
+            comment='Initial version.',
+            user='testuser',
+            content_type=self.ct_probe
+        )
+
+        self.probe1.version = '1.0.1'
+        self.probe1.comment = 'New version.'
+        self.probe1.save()
+
+        self.probe_history2 = admin_models.History.objects.create(
+            object_id=self.probe1.id,
+            serialized_data=serializers.serialize('json', [self.probe1]),
+            object_repr=self.probe1.__str__(),
+            comment='New version.',
+            user='testuser',
+            content_type=self.ct_probe
+        )
+
+        self.mt1 = admin_models.MetricTemplate.objects.create(
+            name='metric-template-1',
+            probeversion='probe-1 (1.0.0)',
+            parent='["parent"]',
+            config='["maxCheckAttempts 3", "timeout 60",'
+                   ' "path $USER", "interval 5", "retryInterval 3"]',
+            attribute='["attribute-key attribute-value"]',
+            dependency='["dependency-key1 dependency-value1", '
+                       '"dependency-key2 dependency-value2"]',
+            flags='["flags-key flags-value"]',
+            files='["files-key files-value"]',
+            parameter='["parameter-key parameter-value"]',
+            fileparameter='["fileparameter-key fileparameter-value"]',
+            mtype=self.active,
+            probekey=probe_history1
+        )
+
+        admin_models.History.objects.create(
+            object_id=self.mt1.id,
+            serialized_data=serializers.serialize('json', [self.mt1]),
+            object_repr=self.mt1.__str__(),
+            comment='Initial version.',
+            user='testuser',
+            content_type=self.ct_mt
+        )
+
+        self.metric1 = poem_models.Metric.objects.create(
+            name='metric-1',
+            probeversion='probe-1 (1.0.0)',
+            parent='["parent"]',
+            config='["maxCheckAttempts 3", "timeout 60",'
+                   ' "path $USER", "interval 5", "retryInterval 3"]',
+            attribute='["attribute-key attribute-value"]',
+            dependancy='["dependency-key1 dependency-value1", '
+                       '"dependency-key2 dependency-value2"]',
+            flags='["flags-key flags-value"]',
+            files='["files-key files-value"]',
+            parameter='["parameter-key parameter-value"]',
+            fileparameter='["fileparameter-key fileparameter-value"]',
+            mtype=self.metric_active,
+            probekey=probe_history1
+        )
+
+        poem_models.TenantHistory.objects.create(
+            object_id=self.metric1.id,
+            serialized_data=serializers.serialize('json', [self.metric1]),
+            object_repr=self.metric1.__str__(),
+            comment='Initial version.',
+            user='testuser',
+            content_type=self.ct_metric
+        )
+
+
+    def test_create_comment_for_metric_template(self):
+        mt = admin_models.MetricTemplate(
+            name='metric-template-2',
+            probeversion='probe-1 (1.0.1)',
+            probekey=self.probe_history2,
+            probeexecutable='["new-probeexecutable"]',
+            config='["maxCheckAttempts 3", "timeout 60",'
+                   ' "path $USER", "interval 5", "retryInterval 3"]',
+            attribute='["attribute-key attribute-value"]',
+            dependency='["dependency-key1 dependency-value1"]',
+            flags='["flags-key flags-value", "flags-key1 flags-value2"]',
+            files='["files-key files-value"]',
+            parameter='["parameter-key parameter-value"]',
+            fileparameter='["fileparameter-key fileparameter-value"]',
+            mtype=self.active
+        )
+
+        serialized_data = serializers.serialize('json', [mt])
+
+        comment = create_comment(self.mt1.id, self.ct_mt, serialized_data)
+
+        self.assertEqual(
+            json.loads(comment),
+            [
+                {
+                    'deleted': {
+                        'fields': ['dependency'],
+                        'object': ['dependency-key2']
+                    }
+                },
+                {
+                    'added': {
+                        'fields': ['flags'],
+                        'object': ['flags-key1']
+                    }
+                },
+                {
+                    'added': {
+                        'fields': ['probeexecutable']
+                    }
+                },
+                {
+                    'changed': {
+                        'fields': [
+                            'name', 'probeversion'
+                        ]
+                    }
+                },
+                {
+                    'deleted': {
+                        'fields': ['parent']
+                    }
+                }
+            ]
+        )
+
+    def test_create_comment_for_metric_template_if_field_deleted_from_model(self):
+        mt = admin_models.MetricTemplate(
+            name='metric-template-2',
+            probeversion='probe-1 (1.0.1)',
+            probekey=self.probe_history2,
+            probeexecutable='["new-probeexecutable"]',
+            config='["maxCheckAttempts 4", "timeout 60",'
+                   ' "path $USER", "interval 5", "retryInterval 3"]',
+            attribute='["attribute-key attribute-value"]',
+            dependency='["dependency-key1 dependency-value1"]',
+            flags='["flags-key flags-value", "flags-key1 flags-value2"]',
+            files='["files-key files-value"]',
+            parameter='["parameter-key parameter-value"]',
+            mtype=self.active
+        )
+
+        serialized_data = serializers.serialize('json', [mt])
+
+        # let's say fileparameter and probeversion fields no longer exists in
+        # the model
+        dict_serialized = json.loads(serialized_data)
+        del dict_serialized[0]['fields']['fileparameter']
+        del dict_serialized[0]['fields']['probeversion']
+        new_serialized_data = json.dumps(dict_serialized)
+
+        comment = create_comment(self.mt1.id, self.ct_mt, new_serialized_data)
+
+        self.assertEqual(
+            json.loads(comment),
+            [
+                {
+                    'changed': {
+                        'fields': ['config'],
+                        'object': ['maxCheckAttempts']
+                    }
+                },
+                {
+                    'deleted': {
+                        'fields': ['dependency'],
+                        'object': ['dependency-key2']
+                    }
+                },
+                {
+                    'added': {
+                        'fields': ['flags'],
+                        'object': ['flags-key1']
+                    }
+                },
+                {
+                    'added': {
+                        'fields': ['probeexecutable']
+                    }
+                },
+                {
+                    'changed': {
+                        'fields': [
+                            'name'
+                        ]
+                    }
+                },
+                {
+                    'deleted': {
+                        'fields': ['parent']
+                    }
+                }
+            ]
+        )
+
+    def test_create_comment_for_metric_template_if_field_added_to_model(self):
+        mt = admin_models.MetricTemplate(
+            name='metric-template-2',
+            probeversion='probe-1 (1.0.1)',
+            probekey=self.probe_history2,
+            probeexecutable='["new-probeexecutable"]',
+            config='["maxCheckAttempts 4", "timeout 60",'
+                   ' "path $USER", "interval 5", "retryInterval 4"]',
+            attribute='["attribute-key attribute-value"]',
+            dependency='["dependency-key1 dependency-value1"]',
+            flags='["flags-key flags-value", "flags-key1 flags-value2"]',
+            files='["files-key files-value"]',
+            parameter='["parameter-key parameter-value"]',
+            fileparameter='["fileparameter-key fileparameter-value"]',
+            mtype=self.active
+        )
+
+        serialized_data = serializers.serialize('json', [mt])
+
+        # let's say mock_field was added to model
+        dict_serialized = json.loads(serialized_data)
+        dict_serialized[0]['fields']['mock_field'] = 'mock_value'
+        new_serialized_data = json.dumps(dict_serialized)
+
+        comment = create_comment(self.mt1.id, self.ct_mt, new_serialized_data)
+
+        self.assertEqual(
+            json.loads(comment),
+            [
+                {
+                    'changed': {
+                        'fields': ['config'],
+                        'object': ['maxCheckAttempts', 'retryInterval']
+                    }
+                },
+                {
+                    'deleted': {
+                        'fields': ['dependency'],
+                        'object': ['dependency-key2']
+                    }
+                },
+                {
+                    'added': {
+                        'fields': ['flags'],
+                        'object': ['flags-key1']
+                    }
+                },
+                {
+                    'added': {
+                        'fields': ['probeexecutable', 'mock_field']
+                    }
+                },
+                {
+                    'changed': {
+                        'fields': [
+                            'name', 'probeversion'
+                        ]
+                    }
+                },
+                {
+                    'deleted': {
+                        'fields': ['parent']
+                    }
+                }
+            ]
+        )
+
+    def test_create_comment_for_metric_template_if_initial(self):
+        mt = admin_models.MetricTemplate.objects.create(
+            name='metric-template-2',
+            probeversion='probe-1 (1.0.1)',
+            probekey=self.probe_history2,
+            probeexecutable='["new-probeexecutable"]',
+            config='["maxCheckAttempts 4", "timeout 60",'
+                   ' "path $USER", "interval 5", "retryInterval 4"]',
+            attribute='["attribute-key attribute-value"]',
+            dependency='["dependency-key1 dependency-value1"]',
+            flags='["flags-key flags-value", "flags-key1 flags-value2"]',
+            files='["files-key files-value"]',
+            parameter='["parameter-key parameter-value"]',
+            fileparameter='["fileparameter-key fileparameter-value"]',
+            mtype=self.active
+        )
+
+        serialized_data = serializers.serialize('json', [mt])
+
+        comment = create_comment(mt.id, self.ct_mt, serialized_data)
+
+        self.assertEqual(comment, 'Initial version.')
+
+    def test_create_comment_for_probe(self):
+        probe1 = admin_models.Probe(
+            name='probe-2',
+            version='1.0.2',
+            description='Some new description.',
+            comment='Newer version.',
+            repository='https://repository2.url',
+            docurl='https://doc2.url',
+            user='testuser',
+            datetime=self.probe1.datetime
+        )
+
+        serialized_data = serializers.serialize('json', [probe1])
+
+        comment = create_comment(self.probe1.id, self.ct_probe, serialized_data)
+
+        self.assertEqual(
+            json.loads(comment),
+            [
+                {'changed': {
+                    'fields': [
+                        'name', 'version', 'description', 'comment',
+                        'repository', 'docurl'
+                    ]
+                }}
+            ]
+        )
+
+    def test_create_comment_for_probe_if_field_deleted_from_model(self):
+        probe1 = admin_models.Probe(
+            name='probe-2',
+            version='1.0.2',
+            description='Some new description.',
+            comment='Newer version.',
+            repository='https://repository2.url',
+            docurl='https://doc2.url',
+            user='testuser',
+            datetime=self.probe1.datetime
+        )
+
+        serialized_data = serializers.serialize('json', [probe1])
+
+        # let's say docurl field no longer exists in Probe model
+        dict_serialized = json.loads(serialized_data)
+        del dict_serialized[0]['fields']['docurl']
+        new_serialized_data = json.dumps(dict_serialized)
+
+        comment = create_comment(self.probe1.id, self.ct_probe,
+                                 new_serialized_data)
+
+        self.assertEqual(
+            json.loads(comment),
+            [
+                {
+                    'changed': {
+                        'fields': [
+                            'name', 'version', 'description', 'comment',
+                            'repository'
+                        ]
+                    }
+                }
+            ]
+        )
+
+    def test_create_comment_for_probe_if_field_added_to_model(self):
+        probe1 = admin_models.Probe(
+            name='probe-2',
+            version='1.0.2',
+            description='Some new description.',
+            comment='Newer version.',
+            repository='https://repository2.url',
+            docurl='https://doc2.url',
+            user='testuser',
+            datetime=self.probe1.datetime
+        )
+
+        serialized_data = serializers.serialize('json', [probe1])
+
+        # let's say mock_field field was added in Probe model
+        dict_serialized = json.loads(serialized_data)
+        dict_serialized[0]['fields']['mock_field'] = 'mock_value'
+        new_serialized_data = json.dumps(dict_serialized)
+
+        comment = create_comment(self.probe1.id, self.ct_probe,
+                                 new_serialized_data)
+
+        self.assertEqual(
+            json.loads(comment),
+            [
+                {
+                    'added': {
+                        'fields': ['mock_field']
+                    }
+                },
+                {
+                    'changed': {
+                        'fields': [
+                            'name', 'version', 'description', 'comment',
+                            'repository', 'docurl'
+                        ]
+                    }
+                }
+            ]
+        )
+
+    def test_create_comment_for_probe_if_initial(self):
+        probe2 = admin_models.Probe.objects.create(
+            name='probe-2',
+            version='1.0.2',
+            description='Some new description.',
+            comment='Newer version.',
+            repository='https://repository2.url',
+            docurl='https://doc2.url',
+            user='testuser',
+            datetime=datetime.datetime.now()
+        )
+
+        serialized_data = serializers.serialize('json', [probe2])
+        comment = create_comment(probe2.id, self.ct_probe, serialized_data)
+
+        self.assertEqual(comment, 'Initial version.')
+
+    def test_create_comment_for_metric(self):
+        metric = poem_models.Metric(
+            name='metric-2',
+            probeversion='probe-1 (1.0.1)',
+            probekey=self.probe_history2,
+            probeexecutable='["new-probeexecutable"]',
+            config='["maxCheckAttempts 3", "timeout 60",'
+                   ' "path $USER", "interval 5", "retryInterval 3"]',
+            attribute='["attribute-key attribute-value"]',
+            dependancy='["dependency-key1 dependency-value1"]',
+            flags='["flags-key flags-value", "flags-key1 flags-value2"]',
+            files='["files-key files-value"]',
+            parameter='["parameter-key parameter-value"]',
+            fileparameter='["fileparameter-key fileparameter-value"]',
+            mtype=self.metric_active
+        )
+
+        serialized_data = serializers.serialize('json', [metric])
+
+        comment = create_comment(self.metric1.id, self.ct_metric,
+                                 serialized_data)
+
+        self.assertEqual(
+            json.loads(comment),
+            [
+                {
+                    'deleted': {
+                        'fields': ['dependancy'],
+                        'object': ['dependency-key2']
+                    }
+                },
+                {
+                    'added': {
+                        'fields': ['flags'],
+                        'object': ['flags-key1']
+                    }
+                },
+                {
+                    'added': {
+                        'fields': ['probeexecutable']
+                    }
+                },
+                {
+                    'changed': {
+                        'fields': [
+                            'name', 'probeversion'
+                        ]
+                    }
+                },
+                {
+                    'deleted': {
+                        'fields': ['parent']
+                    }
+                }
+            ]
+        )
+
+    def test_create_comment_for_metric_if_field_deleted_from_model(self):
+        mt = poem_models.Metric(
+            name='metric-2',
+            probeversion='probe-1 (1.0.1)',
+            probekey=self.probe_history2,
+            probeexecutable='["new-probeexecutable"]',
+            config='["maxCheckAttempts 4", "timeout 60",'
+                   ' "path $USER", "interval 5", "retryInterval 3"]',
+            attribute='["attribute-key attribute-value"]',
+            dependancy='["dependency-key1 dependency-value1"]',
+            flags='["flags-key flags-value", "flags-key1 flags-value2"]',
+            files='["files-key files-value"]',
+            parameter='["parameter-key parameter-value"]',
+            mtype=self.metric_active
+        )
+
+        serialized_data = serializers.serialize('json', [mt])
+
+        # let's say fileparameter and probeversion fields no longer exists in
+        # the model
+        dict_serialized = json.loads(serialized_data)
+        del dict_serialized[0]['fields']['fileparameter']
+        del dict_serialized[0]['fields']['probeversion']
+        new_serialized_data = json.dumps(dict_serialized)
+
+        comment = create_comment(self.metric1.id, self.ct_metric,
+                                 new_serialized_data)
+
+        self.assertEqual(
+            json.loads(comment),
+            [
+                {
+                    'changed': {
+                        'fields': ['config'],
+                        'object': ['maxCheckAttempts']
+                    }
+                },
+                {
+                    'deleted': {
+                        'fields': ['dependancy'],
+                        'object': ['dependency-key2']
+                    }
+                },
+                {
+                    'added': {
+                        'fields': ['flags'],
+                        'object': ['flags-key1']
+                    }
+                },
+                {
+                    'added': {
+                        'fields': ['probeexecutable']
+                    }
+                },
+                {
+                    'changed': {
+                        'fields': [
+                            'name'
+                        ]
+                    }
+                },
+                {
+                    'deleted': {
+                        'fields': ['parent']
+                    }
+                }
+            ]
+        )
+
+    def test_create_comment_for_metric_if_field_added_to_model(self):
+        mt = poem_models.Metric(
+            name='metric-2',
+            probeversion='probe-1 (1.0.1)',
+            probekey=self.probe_history2,
+            probeexecutable='["new-probeexecutable"]',
+            config='["maxCheckAttempts 4", "timeout 60",'
+                   ' "path $USER", "interval 5", "retryInterval 4"]',
+            attribute='["attribute-key attribute-value"]',
+            dependancy='["dependency-key1 dependency-value1"]',
+            flags='["flags-key flags-value", "flags-key1 flags-value2"]',
+            files='["files-key files-value"]',
+            parameter='["parameter-key parameter-value"]',
+            fileparameter='["fileparameter-key fileparameter-value"]',
+            mtype=self.metric_active
+        )
+
+        serialized_data = serializers.serialize('json', [mt])
+
+        # let's say mock_field was added to model
+        dict_serialized = json.loads(serialized_data)
+        dict_serialized[0]['fields']['mock_field'] = 'mock_value'
+        new_serialized_data = json.dumps(dict_serialized)
+
+        comment = create_comment(self.metric1.id, self.ct_metric,
+                                 new_serialized_data)
+
+        self.assertEqual(
+            json.loads(comment),
+            [
+                {
+                    'changed': {
+                        'fields': ['config'],
+                        'object': ['maxCheckAttempts', 'retryInterval']
+                    }
+                },
+                {
+                    'deleted': {
+                        'fields': ['dependancy'],
+                        'object': ['dependency-key2']
+                    }
+                },
+                {
+                    'added': {
+                        'fields': ['flags'],
+                        'object': ['flags-key1']
+                    }
+                },
+                {
+                    'added': {
+                        'fields': ['probeexecutable', 'mock_field']
+                    }
+                },
+                {
+                    'changed': {
+                        'fields': [
+                            'name', 'probeversion'
+                        ]
+                    }
+                },
+                {
+                    'deleted': {
+                        'fields': ['parent']
+                    }
+                }
+            ]
+        )
+
+    def test_create_comment_for_metric_if_initial(self):
+        mt = poem_models.Metric.objects.create(
+            name='metric-template-2',
+            probeversion='probe-1 (1.0.1)',
+            probekey=self.probe_history2,
+            probeexecutable='["new-probeexecutable"]',
+            config='["maxCheckAttempts 4", "timeout 60",'
+                   ' "path $USER", "interval 5", "retryInterval 4"]',
+            attribute='["attribute-key attribute-value"]',
+            dependancy='["dependency-key1 dependency-value1"]',
+            flags='["flags-key flags-value", "flags-key1 flags-value2"]',
+            files='["files-key files-value"]',
+            parameter='["parameter-key parameter-value"]',
+            fileparameter='["fileparameter-key fileparameter-value"]',
+            mtype=self.metric_active
+        )
+
+        serialized_data = serializers.serialize('json', [mt])
+
+        comment = create_comment(mt.id, self.ct_metric, serialized_data)
+
+        self.assertEqual(comment, 'Initial version.')

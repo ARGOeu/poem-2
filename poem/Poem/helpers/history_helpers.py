@@ -61,6 +61,13 @@ def create_comment(object_id, ct, new_serialized_data):
             content_type=ct
         ).order_by('-date_created')
 
+    inlines = ['config', 'attribute', 'dependency', 'flags', 'files',
+               'parameter', 'fileparameter', 'dependancy']
+
+    single_value_inline = ['parent', 'probeexecutable']
+
+    not_tracked_fields = ['nameversion', 'probekey']
+
     changed = []
     added = []
     deleted = []
@@ -71,69 +78,79 @@ def create_comment(object_id, ct, new_serialized_data):
             'fields']
 
         for key, value in old_serialized_data.items():
-            if key in ['nameversion', 'probekey', 'cloned']:
+            try:
+                if key in not_tracked_fields:
+                    pass
+
+                elif key in inlines:
+                    old = inline_models_to_dicts(old_serialized_data[key])
+                    new = inline_models_to_dicts(new_serialized_data[key])
+
+                    deleted_fields = []
+                    changed_fields = []
+                    added_fields = []
+                    for k, v in old.items():
+                        if k not in new:
+                            deleted_fields.append(k)
+
+                        elif old[k] != new[k]:
+                            changed_fields.append(k)
+
+                    for k, v in new.items():
+                        if k not in old:
+                            added_fields.append(k)
+
+                    if deleted_fields:
+                        msg.append(
+                            {'deleted': {
+                                'fields': [key], 'object': deleted_fields
+                            }}
+                        )
+
+                    if changed_fields:
+                        msg.append(
+                            {'changed': {
+                                'fields': [key], 'object': changed_fields
+                            }}
+                        )
+
+                    if added_fields:
+                        msg.append(
+                            {'added': {'fields': [key], 'object': added_fields}}
+                        )
+
+                elif key in single_value_inline:
+                    old = inline_one_to_dict(old_serialized_data[key])
+                    new = inline_one_to_dict(new_serialized_data[key])
+
+                    if old and new and old != new:
+                        changed.append(key)
+
+                    elif old and not new:
+                        deleted.append(key)
+
+                    elif not old and new:
+                        added.append(key)
+
+                else:
+                    if old_serialized_data[key] != new_serialized_data[key]:
+                        changed.append(key)
+
+                    elif not new_serialized_data[key] and \
+                            old_serialized_data[key]:
+                        deleted.append(key)
+
+            except KeyError:
                 pass
 
-            elif key in ['config', 'attribute', 'dependency', 'flags', 'files',
-                         'parameter', 'fileparameter', 'dependancy']:
-                old = inline_models_to_dicts(old_serialized_data[key])
-                new = inline_models_to_dicts(new_serialized_data[key])
-
-                deleted_fields = []
-                changed_fields = []
-                added_fields = []
-                for k, v in old.items():
-                    if k not in new:
-                        deleted_fields.append(k)
-
-                    elif old[k] != new[k]:
-                        changed_fields.append(k)
-
-                for k, v in new.items():
-                    if k not in old:
-                        added_fields.append(k)
-
-                if deleted_fields:
-                    msg.append(
-                        {'deleted': {'fields': [key], 'object': deleted_fields}}
-                    )
-
-                if changed_fields:
-                    msg.append(
-                        {'changed': {'fields': [key], 'object': changed_fields}}
-                    )
-
-                if added_fields:
-                    msg.append(
-                        {'added': {'fields': [key], 'object': added_fields}}
-                    )
-
-            elif key in ['probeexecutable', 'parent']:
-                old = inline_one_to_dict(old_serialized_data[key])
-                new = inline_one_to_dict(new_serialized_data[key])
-
-                if old and new and old != new:
-                    changed.append(key)
-
-                elif old and not new:
-                    deleted.append(key)
-
-                elif not old and new:
-                    added.append(key)
-
-            else:
-                if old_serialized_data[key] != new_serialized_data[key]:
-                    changed.append(key)
-
-                elif not new_serialized_data[key] and key not in ['datetime']:
-                    deleted.append(key)
-
         for key, value in new_serialized_data.items():
-            if key not in ['config', 'attribute', 'dependency', 'flags',
-                           'files', 'parameter', 'fileparameter',
-                           'probeexecutable', 'parent', 'nameversion',
-                           'datetime', 'dependancy']:
-                if not old_serialized_data[key]:
+            if key not in inlines and key not in single_value_inline:
+                try:
+                    if not old_serialized_data[key] and \
+                            new_serialized_data[key]:
+                        added.append(key)
+
+                except KeyError:
                     added.append(key)
 
         if added:
