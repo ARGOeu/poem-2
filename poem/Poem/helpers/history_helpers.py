@@ -66,7 +66,7 @@ def create_comment(object_id, ct, new_serialized_data):
 
     single_value_inline = ['parent', 'probeexecutable']
 
-    not_tracked_fields = ['nameversion', 'probekey']
+    not_tracked_fields = ['nameversion', 'probekey', 'datetime']
 
     changed = []
     added = []
