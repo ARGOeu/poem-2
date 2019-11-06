@@ -59,13 +59,17 @@ class ListMetricsInGroup(APIView):
                 name=request.data['name']
             )
 
-            for name in dict(request.data)['items']:
-                metric = poem_models.Metric.objects.get(name=name)
-                metric.group = group
-                metric.save()
+            if 'items' in dict(request.data):
+                for name in dict(request.data)['items']:
+                    metric = poem_models.Metric.objects.get(name=name)
+                    metric.group = group
+                    metric.save()
 
-        except Exception:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+        except IntegrityError:
+            return Response(
+                {'detail': 'Group of metrics with this name already exists.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         else:
             return Response(status=status.HTTP_201_CREATED)
@@ -109,7 +113,7 @@ class ListAggregationsInGroup(APIView):
             name=request.data['name']
         )
 
-        for aggr in request.data['items']:
+        for aggr in dict(request.data)['items']:
             ag = poem_models.Aggregation.objects.get(name=aggr)
             group.aggregations.add(ag)
             ag.groupname = group.name
@@ -117,7 +121,7 @@ class ListAggregationsInGroup(APIView):
 
         # remove removed aggregations:
         for aggr in group.aggregations.all():
-            if aggr.name not in request.data['items']:
+            if aggr.name not in dict(request.data)['items']:
                 group.aggregations.remove(aggr)
                 aggr.groupname = ''
                 aggr.save()
@@ -130,14 +134,21 @@ class ListAggregationsInGroup(APIView):
                 name=request.data['name']
             )
 
-            for aggr in request.data['items']:
-                ag = poem_models.Aggregation.objects.get(name=aggr)
-                group.aggregations.add(ag)
-                ag.groupname = group.name
-                ag.save()
+            if 'items' in dict(request.data):
+                for aggr in dict(request.data)['items']:
+                    ag = poem_models.Aggregation.objects.get(name=aggr)
+                    group.aggregations.add(ag)
+                    ag.groupname = group.name
+                    ag.save()
 
-        except Exception:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+        except IntegrityError:
+            return Response(
+                {
+                    'detail':
+                        'Group of aggregations with this name already exists.'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         else:
             return Response(status=status.HTTP_201_CREATED)
@@ -190,7 +201,7 @@ class ListMetricProfilesInGroup(APIView):
             name=request.data['name']
         )
 
-        for item in request.data['items']:
+        for item in dict(request.data)['items']:
             mp = poem_models.MetricProfiles.objects.get(name=item)
             group.metricprofiles.add(mp)
             mp.groupname = group.name
@@ -198,7 +209,7 @@ class ListMetricProfilesInGroup(APIView):
 
         # remove removed metric profiles
         for mp in group.metricprofiles.all():
-            if mp.name not in request.data['items']:
+            if mp.name not in dict(request.data)['items']:
                 group.metricprofiles.remove(mp)
                 mp.groupname = ''
                 mp.save()
@@ -211,14 +222,21 @@ class ListMetricProfilesInGroup(APIView):
                 name=request.data['name']
             )
 
-            for item in request.data['items']:
-                mp = poem_models.MetricProfiles.objects.get(name=item)
-                group.metricprofiles.add(mp)
-                mp.groupname = group.name
-                mp.save()
+            if 'items' in dict(request.data):
+                for item in dict(request.data)['items']:
+                    mp = poem_models.MetricProfiles.objects.get(name=item)
+                    group.metricprofiles.add(mp)
+                    mp.groupname = group.name
+                    mp.save()
 
-        except Exception:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+        except IntegrityError:
+            return Response(
+                {
+                    'detail':
+                        'Metric profiles group with this name already exists.'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         else:
             return Response(status=status.HTTP_201_CREATED)
