@@ -1,3 +1,5 @@
+from django.db import IntegrityError
+
 from Poem.api.views import NotFound
 from Poem.poem import models as poem_models
 
@@ -240,6 +242,96 @@ class ListMetricProfilesInGroup(APIView):
             except poem_models.GroupOfMetricProfiles.DoesNotExist:
                 raise NotFound(status=404,
                                detail='Group of metric profiles not found')
+
+        else:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+class ListThresholdsProfilesInGroup(APIView):
+    authentication_classes = (SessionAuthentication,)
+
+    def get(self, request, group=None):
+        if group:
+            tp = poem_models.ThresholdsProfiles.objects.filter(
+                groupname=group
+            )
+        else:
+            tp = poem_models.ThresholdsProfiles.objects.filter(
+                groupname=''
+            )
+
+        results = []
+        for item in tp:
+            results.append({'id': item.id, 'name': item.name})
+
+        results = sorted(results, key=lambda k: k['name'])
+
+        return Response({'result': results})
+
+    def put(self, request):
+        group = poem_models.GroupOfThresholdsProfiles.objects.get(
+            name=request.data['name']
+        )
+
+        for item in dict(request.data)['items']:
+            tp = poem_models.ThresholdsProfiles.objects.get(name=item)
+            group.thresholdsprofiles.add(tp)
+            tp.groupname = group.name
+            tp.save()
+
+        # remove removed metric profiles
+        for tp in group.thresholdsprofiles.all():
+            if tp.name not in dict(request.data)['items']:
+                group.thresholdsprofiles.remove(tp)
+                tp.groupname = ''
+                tp.save()
+
+        return Response(status=status.HTTP_201_CREATED)
+
+    def post(self, request):
+        try:
+            group = poem_models.GroupOfThresholdsProfiles.objects.create(
+                name=request.data['name']
+            )
+
+            if 'items' in dict(request.data):
+                for item in dict(request.data)['items']:
+                    tp = poem_models.ThresholdsProfiles.objects.get(name=item)
+                    group.thresholdsprofiles.add(tp)
+                    tp.groupname = group.name
+                    tp.save()
+
+        except IntegrityError:
+            return Response(
+                {
+                    'detail':
+                        'Thresholds profiles group with this name already '
+                        'exists.'
+                },
+                status=status.HTTP_400_BAD_REQUEST)
+
+        else:
+            return Response(status=status.HTTP_201_CREATED)
+
+    def delete(self, request, group=None):
+        if group:
+            try:
+                gr = poem_models.GroupOfThresholdsProfiles.objects.get(
+                    name=group
+                )
+                gr.delete()
+
+                for tp in poem_models.ThresholdsProfiles.objects.filter(
+                        groupname=group
+                ):
+                    tp.groupname = ''
+                    tp.save()
+
+                return Response(status=status.HTTP_204_NO_CONTENT)
+
+            except poem_models.GroupOfThresholdsProfiles.DoesNotExist:
+                raise NotFound(status=404,
+                               detail='Group of threshold profiles not found')
 
         else:
             return Response(status=status.HTTP_400_BAD_REQUEST)

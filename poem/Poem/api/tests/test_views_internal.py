@@ -4092,3 +4092,197 @@ class HistoryHelpersTests(TenantTestCase):
         comment = create_comment(mt.id, self.ct_metric, serialized_data)
 
         self.assertEqual(comment, 'Initial version.')
+
+
+class ListThresholdsProfilesInGroupAPIViewTests(TenantTestCase):
+    def setUp(self):
+        self.factory = TenantRequestFactory(self.tenant)
+        self.view = views.ListThresholdsProfilesInGroup.as_view()
+        self.url = '/api/v2/internal/thresholdsprofilesgroup/'
+        self.user = CustUser.objects.create_user(username='testuser')
+
+        self.tp1 = poem_models.ThresholdsProfiles.objects.create(
+            name='TEST_PROFILE',
+            apiid='00000000-oooo-kkkk-aaaa-aaeekkccnnee',
+            groupname='EGI'
+        )
+
+        self.tp2 = poem_models.ThresholdsProfiles.objects.create(
+            name='ANOTHER_PROFILE',
+            apiid='12341234-oooo-kkkk-aaaa-aaeekkccnnee'
+        )
+
+        self.tp3 = poem_models.ThresholdsProfiles.objects.create(
+            name='DELETE_PROFILE',
+            apiid='12341234-hhhh-kkkk-aaaa-aaeekkccnnee',
+            groupname='delete'
+        )
+
+        self.group = poem_models.GroupOfThresholdsProfiles.objects.create(
+            name='EGI'
+        )
+        group2 = poem_models.GroupOfThresholdsProfiles.objects.create(
+            name='delete'
+        )
+        self.group.thresholdsprofiles.add(self.tp1)
+        group2.thresholdsprofiles.add(self.tp3)
+
+    def test_get_thresholds_profiles_in_group(self):
+        request = self.factory.get(self.url + 'EGI')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'EGI')
+        self.assertEqual(
+            response.data,
+            {
+                'result': [
+                    {'id': self.tp1.id, 'name': 'TEST_PROFILE'}
+                ]
+            }
+        )
+
+    def test_get_thresholds_profiles_in_group_in_case_no_authorization(self):
+        request = self.factory.get(self.url + 'EGI')
+        response = self.view(request, 'EGI')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_get_thresholds_profiles_without_group(self):
+        request = self.factory.get(self.url)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(
+            response.data,
+            {
+                'result': [
+                    {'id': self.tp2.id, 'name': 'ANOTHER_PROFILE'}
+                ]
+            }
+        )
+
+    def test_add_thresholds_profile_in_group(self):
+        self.assertEqual(self.group.thresholdsprofiles.count(), 1)
+        data = {
+            'name': 'EGI',
+            'items': ['TEST_PROFILE', 'ANOTHER_PROFILE']
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        tp1 = poem_models.ThresholdsProfiles.objects.get(name='TEST_PROFILE')
+        tp2 = poem_models.ThresholdsProfiles.objects.get(name='ANOTHER_PROFILE')
+        self.assertEqual(tp1.groupname, 'EGI')
+        self.assertEqual(tp2.groupname, 'EGI')
+        self.assertEqual(self.group.thresholdsprofiles.count(), 2)
+
+    def test_remove_thresholds_profile_from_group(self):
+        self.group.thresholdsprofiles.add(self.tp2)
+        self.assertEqual(self.group.thresholdsprofiles.all().count(), 2)
+        data = {
+            'name': 'EGI',
+            'items': ['ANOTHER_PROFILE']
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        tp1 = poem_models.ThresholdsProfiles.objects.get(name='TEST_PROFILE')
+        tp2 = poem_models.ThresholdsProfiles.objects.get(name='ANOTHER_PROFILE')
+        self.assertEqual(tp1.groupname, '')
+        self.assertEqual(tp2.groupname, 'EGI')
+        self.assertEqual(self.group.thresholdsprofiles.count(), 1)
+
+    def test_post_thresholds_profile_group_without_tp(self):
+        self.assertEqual(
+            poem_models.GroupOfThresholdsProfiles.objects.all().count(), 2
+        )
+        data = {
+            'name': 'new_group',
+            'items': []
+        }
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(
+            poem_models.GroupOfThresholdsProfiles.objects.all().count(), 3
+        )
+        group = poem_models.GroupOfThresholdsProfiles.objects.get(
+            name='new_group'
+        )
+        self.assertEqual(group.name, 'new_group')
+        self.assertEqual(group.thresholdsprofiles.count(), 0)
+
+    def test_post_thresholds_profile_group_with_tp(self):
+        self.assertEqual(
+            poem_models.GroupOfThresholdsProfiles.objects.all().count(), 2
+        )
+        data = {
+            'name': 'new_group',
+            'items': ['ANOTHER_PROFILE']
+        }
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(
+            poem_models.GroupOfThresholdsProfiles.objects.all().count(), 3
+        )
+        group = poem_models.GroupOfThresholdsProfiles.objects.get(
+            name='new_group'
+        )
+        self.assertEqual(group.name, 'new_group')
+        self.assertEqual(group.thresholdsprofiles.count(), 1)
+        tp1 = poem_models.ThresholdsProfiles.objects.get(name='TEST_PROFILE')
+        tp2 = poem_models.ThresholdsProfiles.objects.get(name='ANOTHER_PROFILE')
+        self.assertEqual(tp1.groupname, 'EGI')
+        self.assertEqual(tp2.groupname, 'new_group')
+
+    def test_post_thresholds_profile_group_with_name_that_already_exists(self):
+        data = {
+            'name': 'EGI',
+            'items': ['TEST_PROFILE']
+        }
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data,
+            {
+                'detail':
+                    'Thresholds profiles group with this name already exists.'
+            }
+        )
+
+    def test_delete_thresholds_profile_group(self):
+        self.assertEqual(
+            poem_models.GroupOfThresholdsProfiles.objects.all().count(), 2
+        )
+        request = self.factory.delete(self.url + 'delete')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'delete')
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(
+            poem_models.GroupOfThresholdsProfiles.objects.all().count(), 1
+        )
+        self.assertRaises(
+            poem_models.GroupOfThresholdsProfiles.DoesNotExist,
+            poem_models.GroupOfThresholdsProfiles.objects.get,
+            name='delete'
+        )
+        tp = poem_models.ThresholdsProfiles.objects.get(name='DELETE_PROFILE')
+        self.assertEqual(tp.groupname, '')
+
+    def test_delete_nonexisting_thresholds_profile_group(self):
+        request = self.factory.delete(self.url + 'nonexisting')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'nonexisting')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_delete_thresholds_profile_group_without_specifying_name(self):
+        request = self.factory.delete(self.url)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
