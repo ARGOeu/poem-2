@@ -1316,6 +1316,64 @@ class ListMetricsInGroupAPIViewTests(TenantTestCase):
             mtype=mtype2
         )
 
+        self.ct = ContentType.objects.get_for_model(poem_models.Metric)
+
+        self.ver1 = poem_models.TenantHistory.objects.create(
+            object_id=self.metric1.id,
+            serialized_data=serializers.serialize(
+                'json', [self.metric1],
+                use_natural_foreign_keys=True,
+                use_natural_primary_keys=True
+            ),
+            object_repr=self.metric1.__str__(),
+            content_type=self.ct,
+            date_created=datetime.datetime.now(),
+            comment='Initial version.',
+            user=self.user.username
+        )
+
+        self.ver2 = poem_models.TenantHistory.objects.create(
+            object_id=self.metric2.id,
+            serialized_data=serializers.serialize(
+                'json', [self.metric2],
+                use_natural_foreign_keys=True,
+                use_natural_primary_keys=True
+            ),
+            object_repr=self.metric2.__str__(),
+            content_type=self.ct,
+            date_created=datetime.datetime.now(),
+            comment='Initial version.',
+            user=self.user.username
+        )
+
+        self.ver3 = poem_models.TenantHistory.objects.create(
+            object_id=self.metric3.id,
+            serialized_data=serializers.serialize(
+                'json', [self.metric3],
+                use_natural_foreign_keys=True,
+                use_natural_primary_keys=True
+            ),
+            object_repr=self.metric3.__str__(),
+            content_type=self.ct,
+            date_created=datetime.datetime.now(),
+            comment='Initial version.',
+            user=self.user.username
+        )
+
+        self.ver4 = poem_models.TenantHistory.objects.create(
+            object_id=self.metric4.id,
+            serialized_data=serializers.serialize(
+                'json', [self.metric4],
+                use_natural_foreign_keys=True,
+                use_natural_primary_keys=True
+            ),
+            object_repr=self.metric4.__str__(),
+            content_type=self.ct,
+            date_created=datetime.datetime.now(),
+            comment='Initial version.',
+            user=self.user.username
+        )
+
     def test_get_metrics_in_group(self):
         request = self.factory.get(self.url + 'EGI')
         force_authenticate(request, user=self.user)
@@ -1364,8 +1422,28 @@ class ListMetricsInGroupAPIViewTests(TenantTestCase):
         metric1 = poem_models.Metric.objects.get(name='argo.AMS-Check')
         metric2 = poem_models.Metric.objects.get(name='eu.egi.CertValidity')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        ver1 = poem_models.TenantHistory.objects.filter(
+            object_id=metric1.id,
+            content_type=self.ct
+        )
+        ver2 = poem_models.TenantHistory.objects.filter(
+            object_id=metric2.id,
+            content_type=self.ct
+        )
+        self.assertEqual(ver1.count(), 1)
+        self.assertEqual(ver2.count(), 2)
         self.assertEqual(metric1.group.name, 'EGI')
         self.assertEqual(metric2.group.name, 'EGI')
+        self.assertEqual(
+            json.loads(ver2[0].serialized_data)[0]['fields']['group'][0],
+            'EGI'
+        )
+        self.assertEqual(ver2[0].comment,
+                         '[{"added": {"fields": ["group"]}}]')
+        self.assertEqual(
+            json.loads(ver1[0].serialized_data)[0]['fields']['group'][0],
+            'EGI'
+        )
 
     def test_remove_metric_from_group(self):
         self.metric3.group = self.group

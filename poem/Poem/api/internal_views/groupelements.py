@@ -1,6 +1,7 @@
 from django.db import IntegrityError
 
 from Poem.api.views import NotFound
+from Poem.helpers.history_helpers import create_history
 from Poem.poem import models as poem_models
 
 from rest_framework import status
@@ -41,8 +42,10 @@ class ListMetricsInGroup(APIView):
 
         for name in dict(request.data)['items']:
             metric = poem_models.Metric.objects.get(name=name)
-            metric.group = group
-            metric.save()
+            if metric.group != group:
+                metric.group = group
+                metric.save()
+                create_history(metric, request.user.username)
 
         # remove the metrics that existed before, and now were removed
         metrics = poem_models.Metric.objects.filter(group=group)
@@ -50,6 +53,7 @@ class ListMetricsInGroup(APIView):
             if metric.name not in dict(request.data)['items']:
                 metric.group = None
                 metric.save()
+                create_history(metric, request.user.username)
 
         return Response(status=status.HTTP_201_CREATED)
 
@@ -64,6 +68,7 @@ class ListMetricsInGroup(APIView):
                     metric = poem_models.Metric.objects.get(name=name)
                     metric.group = group
                     metric.save()
+                    create_history(metric, request.user.username)
 
         except IntegrityError:
             return Response(
