@@ -48,12 +48,8 @@ class ListTenantVersions(APIView):
                         fields0 = json.loads(ver.serialized_data)[0]['fields']
                         fields = {
                             'name': fields0['name'],
-                            'mtype': MetricType.objects.get(
-                                id=fields0['mtype']
-                            ).name,
-                            'group': GroupOfMetrics.objects.get(
-                                id=fields0['group']
-                            ).name,
+                            'mtype': fields0['mtype'][0],
+                            'group': fields0['group'][0],
                             'probeversion': fields0['probeversion'],
                             'parent': one_value_inline(fields0['parent']),
                             'probeexecutable': one_value_inline(
