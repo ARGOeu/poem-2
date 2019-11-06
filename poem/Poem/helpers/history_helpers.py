@@ -32,7 +32,10 @@ def create_history(instance, user, comment=None):
     else:
         model = History
     object_id = instance.id
-    serialized_data = serializers.serialize('json', [instance])
+    serialized_data = serializers.serialize(
+        'json', [instance], use_natural_foreign_keys=True,
+        use_natural_primary_keys=True
+    )
     object_repr = instance.__str__()
     content_type = ContentType.objects.get_for_model(instance)
 
