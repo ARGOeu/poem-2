@@ -4067,3 +4067,15 @@ class HistoryHelpersTests(TenantTestCase):
         comment = create_comment(mt.id, self.ct_metric, serialized_data)
 
         self.assertEqual(comment, 'Initial version.')
+
+    def test_create_comment_for_metric_if_group_was_none(self):
+        group = poem_models.GroupOfMetrics.objects.create(name='EGI')
+        m = self.metric1
+        m.group = group
+        m.save()
+
+        serialized_data = serializers.serialize('json', [m])
+
+        comment = create_comment(m.id, self.ct_metric, serialized_data)
+
+        self.assertEqual(comment, '[{"added": {"fields": ["group"]}}]')
