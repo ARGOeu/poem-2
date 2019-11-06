@@ -13,3 +13,6 @@ class History(models.Model):
 
     class Meta:
         app_label = 'poem_super_admin'
+
+    def natural_key(self):
+        return (self.object_repr,)

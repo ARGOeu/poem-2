@@ -18,3 +18,6 @@ class TenantHistory(models.Model):
 
     class Meta:
         app_label = 'poem'
+
+    def natural_key(self):
+        return (self.object_repr,)
