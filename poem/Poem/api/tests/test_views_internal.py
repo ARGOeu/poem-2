@@ -4739,3 +4739,162 @@ class ListThresholdsProfilesInGroupAPIViewTests(TenantTestCase):
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+class ListThresholdsProfilesAPIViewTests(TenantTestCase):
+    def setUp(self):
+        self.factory = TenantRequestFactory(self.tenant)
+        self.view = views.ListThresholdsProfiles.as_view()
+        self.url = '/api/v2/internal/thresholdsprofiles/'
+        self.user = CustUser.objects.create_user(username='testuser')
+
+        poem_models.ThresholdsProfiles.objects.create(
+            name='TEST_PROFILE',
+            apiid='00000000-oooo-kkkk-aaaa-aaeekkccnnee',
+            groupname='GROUP'
+        )
+
+        poem_models.ThresholdsProfiles.objects.create(
+            name='ANOTHER_PROFILE',
+            apiid='12341234-oooo-kkkk-aaaa-aaeekkccnnee'
+        )
+
+        poem_models.GroupOfThresholdsProfiles.objects.create(name='GROUP')
+        poem_models.GroupOfThresholdsProfiles.objects.create(name='NEWGROUP')
+
+    @patch('Poem.api.internal_views.thresholdsprofiles.sync_webapi',
+           side_effect=mocked_func)
+    def test_get_all_thresholds_profiles(self, func):
+        request = self.factory.get(self.url)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(
+            response.data,
+            [
+                OrderedDict([
+                    ('name', 'TEST_PROFILE'),
+                    ('apiid', '00000000-oooo-kkkk-aaaa-aaeekkccnnee'),
+                    ('groupname', 'GROUP')
+                ]),
+                OrderedDict([
+                    ('name', 'ANOTHER_PROFILE'),
+                    ('apiid', '12341234-oooo-kkkk-aaaa-aaeekkccnnee'),
+                    ('groupname', '')
+                ])
+            ]
+        )
+
+    @patch('Poem.api.internal_views.thresholdsprofiles.sync_webapi',
+           side_effect=mocked_func)
+    def test_get_thresholds_profiles_if_no_authentication(self, func):
+        request = self.factory.get(self.url)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    @patch('Poem.api.internal_views.thresholdsprofiles.sync_webapi',
+           side_effect=mocked_func)
+    def test_get_thresholds_profile_by_name(self, func):
+        request = self.factory.get(self.url + 'TEST_PROFILE')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'TEST_PROFILE')
+        self.assertEqual(
+            response.data,
+            OrderedDict([
+                ('name', 'TEST_PROFILE'),
+                ('apiid', '00000000-oooo-kkkk-aaaa-aaeekkccnnee'),
+                ('groupname', 'GROUP')
+            ])
+        )
+
+    @patch('Poem.api.internal_views.thresholdsprofiles.sync_webapi',
+           side_effect=mocked_func)
+    def test_get_thresholds_profile_by_name(self, func):
+        request = self.factory.get(self.url + 'nonexisting')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'nonexisting')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(
+            response.data,
+            {'detail': 'Thresholds profile not found.'}
+        )
+
+    def put_thresholds_profile(self):
+        data = {
+            'name': 'NEW_TEST_PROFILE',
+            'apiid': '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
+            'group': 'NEWGROUP'
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        tp = poem_models.ThresholdsProfiles.objects.get(
+            apiid='00000000-oooo-kkkk-aaaa-aaeekkccnnee'
+        )
+        self.assertEqual(tp.name, 'NEW_TEST_PROFILE')
+        self.assertEqual(tp.groupname, 'NEWGROUP')
+        group1 = poem_models.GroupOfThresholdsProfiles.objects.get(
+            name='NEWGROUP'
+        )
+        group2 = poem_models.GroupOfThresholdsProfiles.objects.get(
+            name='GROUP'
+        )
+        self.assertTrue(
+            group1.thresholdsprofiles.filter(
+                apiid='00000000-oooo-kkkk-aaaa-aaeekkccnnee'
+            ).exists()
+        )
+        self.assertFalse(
+            group2.thresholdsprofiles.filter(
+                apiid='00000000-oooo-kkkk-aaaa-aaeekkccnnee'
+            ).exists()
+        )
+
+    def post_thresholds_profile(self):
+        self.assertEqual(
+            poem_models.ThresholdsProfiles.objects.all().count(), 2
+        )
+        data = {
+            'name': 'NEW_PROFILE',
+            'apiid': '12341234-aaaa-kkkk-aaaa-aaeekkccnnee',
+            'groupname': 'GROUP'
+        }
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(
+            poem_models.ThresholdsProfiles.objects.all().count(), 3
+        )
+        profile = poem_models.ThresholdsProfiles.objects.get(
+            apiid='12341234-aaaa-kkkk-aaaa-aaeekkccnnee'
+        )
+        self.assertEqual(profile.name, 'NEW_PROFILE')
+        self.assertEqual(profile.groupname, 'GROUP')
+        group = poem_models.GroupOfThresholdsProfiles.objects.get(name='GROUP')
+        self.assertTrue(
+            group.thresholdsprofiles.filter(
+                apiid='12341234-aaaa-kkkk-aaaa-aaeekkccnnee'
+            ).exists()
+        )
+
+    def delete_thresholds_profile(self):
+        self.assertEqual(
+            poem_models.ThresholdsProfiles.objects.all().count(), 2
+        )
+        request = self.factory.delete(self.url + 'TEST_PROFILE')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'TEST_PROFILE')
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertRaises(
+            poem_models.ThresholdsProfiles.DoesNotExist,
+            poem_models.ThresholdsProfiles.objects.get,
+            apiid='00000000-oooo-kkkk-aaaa-aaeekkccnnee'
+        )
+
+    def delete_nonexisting_thresholds_profile(self):
+        request = self.factory.delete(self.url + 'nonexisting')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status.code, status.HTTP_404_NOT_FOUND)
