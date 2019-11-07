@@ -63,6 +63,7 @@ link_title.set('users', 'Users');
 link_title.set('apikey', 'API key');
 link_title.set('metrictemplates', 'Metric templates');
 link_title.set('yumrepos', 'YUM repos');
+link_title.set('groupofthresholdsprofiles', 'Groups of thresholds profiles');
 
 export const Icon = props =>
 {

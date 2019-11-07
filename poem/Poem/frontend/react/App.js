@@ -10,13 +10,22 @@ import { AggregationProfilesChange, AggregationProfilesList } from './Aggregatio
 import Reports from './Reports';
 import Services from './Services';
 import { UsersList, UserChange, SuperAdminUserChange } from './Users';
-import { GroupOfMetricsList, GroupOfMetricsChange, GroupOfAggregationsList, GroupOfAggregationsChange, GroupOfMetricProfilesList, GroupOfMetricProfilesChange } from './GroupElements';
+import { 
+  GroupOfMetricsList, 
+  GroupOfMetricsChange, 
+  GroupOfAggregationsList, 
+  GroupOfAggregationsChange, 
+  GroupOfMetricProfilesList, 
+  GroupOfMetricProfilesChange,
+  GroupOfThresholdsProfilesList,
+  GroupOfThresholdsProfilesChange
+} from './GroupElements';
 import { APIKeyList, APIKeyChange } from './APIKey';
 import NotFound from './NotFound';
 import { Route, Switch, BrowserRouter, Redirect, withRouter } from 'react-router-dom';
-import { Container, Button, Row, Col } from 'reactstrap';
+import { Container, Row, Col } from 'reactstrap';
 import { NavigationBar, CustomBreadcrumb, NavigationLinks, Footer } from './UIElements';
-import { NotificationContainer, NotificationManager } from 'react-notifications';
+import { NotificationContainer } from 'react-notifications';
 import { Backend } from './DataManager';
 import { YumRepoList, YumRepoChange } from './YumRepos';
 
@@ -128,6 +137,15 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, token, tenantName})
     <Route exact path='/ui/administration/yumrepos/' component={YumRepoList}/>
     <Route exact path='/ui/administration/yumrepos/:name' 
       render={props => <YumRepoChange {...props} disabled={true}/>}
+    />
+    <Route exact path="/ui/administration/groupofthresholdsprofiles" component={GroupOfThresholdsProfilesList} />
+    <Route exact path="/ui/administration/groupofthresholdsprofiles/add"
+      render={props => <GroupOfThresholdsProfilesChange
+        {...props}
+        addview={true}/>}
+    />
+    <Route exact path="/ui/administration/groupofthresholdsprofiles/:group"
+      render={props => <GroupOfThresholdsProfilesChange {...props}/>}
     />
     <Route component={NotFound} />
   </Switch>
