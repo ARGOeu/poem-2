@@ -251,7 +251,12 @@ export class UserChange extends Component {
       userprofile: {},
       usergroups: {},
       password: '',
-      allgroups: {'metrics': [], 'aggregations': [], 'metricprofiles': []},
+      allgroups: {
+        'metrics': [], 
+        'aggregations': [], 
+        'metricprofiles': [],
+        'thresholdsprofiles': []
+      },
       write_perm: false,
       loading: false,
       areYouSureModal: false,
@@ -325,19 +330,19 @@ export class UserChange extends Component {
             egiid: values.egiid,
             groupsofaggregations: values.groupsofaggregations,
             groupsofmetrics: values.groupsofmetrics,
-            groupsofmetricprofiles: values.groupsofmetricprofiles
+            groupsofmetricprofiles: values.groupsofmetricprofiles,
+            groupsofthresholdsprofiles: values.groupsofthresholdsprofiles
           })
-            .then(() => NotifyOk({
-              msg: 'User successfully changed',
-              title: 'Changed',
-              callback: () => this.history.push('/ui/administration/users')
-            })
-            )
-          }
-        })
-        .catch(err => alert('Something went wrong: ' + err))
-    }
-    else {
+            .then(() =>
+                NotifyOk({
+                  msg: 'User successfully changed',
+                  title: 'Changed',
+                  callback: () => this.history.push('/ui/administration/users')
+                })
+             )
+        }
+      })
+    } else {
       this.backend.addUser({
         username: values.username,
         password: values.password,
@@ -362,19 +367,19 @@ export class UserChange extends Component {
               egiid: values.egiid,
               groupsofaggregations: values.groupsofaggregations,
               groupsofmetrics: values.groupsofmetrics,
-              groupsofmetricprofiles: values.groupsofmetricprofiles
+              groupsofmetricprofiles: values.groupsofmetricprofiles,
+              groupsofthresholdsprofiles: values.groupsofthresholdsprofiles
             })
             .then(() => NotifyOk({
               msg: 'User successfully added',
               title: 'Added',
               callback: () => this.history.push('/ui/administration/users')
             })
-            )
-          }
-        })
-        .catch(err => alert('Something went wrong: ' + err))
-      }
-    }
+            );
+          };
+        });
+      };
+    };
 
   doDelete(username) {
     this.backend.deleteUser(username)
@@ -382,9 +387,8 @@ export class UserChange extends Component {
         msg: 'User successfully deleted',
         title: 'Deleted',
         callback: () => this.history.push('/ui/administration/users')
-      }))
-      .catch(err => alert('Something went wrong: ' + err))
-  }
+      }));
+  };
 
   componentDidMount() {
     this.setState({loading: true})
@@ -404,9 +408,7 @@ export class UserChange extends Component {
         loading: false
       });
     });
-    }
-
-    else {
+    } else {
       this.backend.fetchAllGroups().then(groups => 
         this.setState(
           {
@@ -428,15 +430,16 @@ export class UserChange extends Component {
             usergroups: {
               'aggregations': [],
               'metrics': [],
-              'metricprofiles': []
+              'metricprofiles': [],
+              'thresholdsprofiles': []
             },
             allgroups: groups,
             write_perm: localStorage.getItem('authIsSuperuser') === 'true',
             loading: false
           }
-        ))
-    }
-  }
+        ));
+    };
+  };
   
   render() {
     const {custuser, userprofile, usergroups, allgroups, loading, write_perm} = this.state;
@@ -471,6 +474,7 @@ export class UserChange extends Component {
               groupsofaggregations: usergroups.aggregations,
               groupsofmetrics: usergroups.metrics,
               groupsofmetricprofiles: usergroups.metricprofiles,
+              groupsofthresholdsprofiles: usergroups.thresholdsprofiles,
               displayname: userprofile.displayname,
               subject: userprofile.subject,
               egiid: userprofile.egiid
@@ -660,6 +664,34 @@ export class UserChange extends Component {
                       <FormText color="muted">
                         The groups of aggregations that user will control. Hold down "Control" or "Command" on a Mac to select more than one.
                       </FormText>
+                    </Col>
+                  </Row>
+                  <Row>
+                    <Col md={6}>
+                      <Label for="groupsofthresholdsprofiles" className="grouplabel">Groups of thresholds profiles</Label>
+                      <Field
+                        component="select"
+                        name="groupsofthresholdsprofiles"
+                        id='select-field'
+                        onChange={evt =>
+                          props.setFieldValue(
+                            "groupsofthresholdsprofiles",
+                            [].slice
+                              .call(evt.target.selectedOptions)
+                              .map(option => option.value)
+                          )
+                        }
+                        multiple={true}
+                      >
+                        {allgroups.thresholdsprofiles.map( s => (
+                          <option key={s} value={s}>
+                            {s}
+                          </option>
+                        ))}
+                      </Field>
+                      <FormText color="muted">
+                        The groups of thresholds profiles that user will control. Hold down "Control" or "Command" on a Mac to select more than one.
+                    </FormText>
                     </Col>
                   </Row>
                 </FormGroup>
