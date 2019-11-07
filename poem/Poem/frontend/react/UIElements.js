@@ -39,13 +39,15 @@ import {
   faHighlighter,
   faTasks,
   faKey,
-  faBoxOpen} from '@fortawesome/free-solid-svg-icons';
+  faBoxOpen,
+  faExclamation} from '@fortawesome/free-solid-svg-icons';
 import { NotificationManager } from 'react-notifications';
 import { Field } from 'formik';
 
 
 var list_pages = ['administration','services', 'reports', 'probes',
-                  'metrics', 'metricprofiles', 'aggregationprofiles'];
+                  'metrics', 'metricprofiles', 'aggregationprofiles',
+                  'thresholdsprofiles'];
 var admin_list_pages = ['administration', 'probes', 'yumrepos', 'metrictemplates'];
 
 var link_title = new Map();
@@ -64,6 +66,7 @@ link_title.set('apikey', 'API key');
 link_title.set('metrictemplates', 'Metric templates');
 link_title.set('yumrepos', 'YUM repos');
 link_title.set('groupofthresholdsprofiles', 'Groups of thresholds profiles');
+link_title.set('thresholdsprofiles', 'Thresholds profiles');
 
 export const Icon = props =>
 {
@@ -77,8 +80,9 @@ export const Icon = props =>
   link_icon.set('metrictemplates', faCog);
   link_icon.set('metricprofiles', faCogs);
   link_icon.set('aggregationprofiles', faTasks);
-  link_icon.set('apikey', faKey)
-  link_icon.set('yumrepos', faBoxOpen)
+  link_icon.set('apikey', faKey);
+  link_icon.set('yumrepos', faBoxOpen);
+  link_icon.set('thresholdsprofiles', faExclamation);
 
   return <FontAwesomeIcon icon={link_icon.get(props.i)} fixedWidth/>
 }
