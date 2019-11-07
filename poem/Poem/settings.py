@@ -53,6 +53,7 @@ try:
     SECRETKEY_PATH = config.get('SECURITY', 'SecretKeyPath')
     WEBAPI_METRIC = config.get('WEBAPI', 'MetricProfile')
     WEBAPI_AGGREGATION = config.get('WEBAPI', 'AggregationProfile')
+    WEBAPI_THRESHOLDS = config.get('WEBAPI', 'ThresholdsProfile')
 
 
 except NoSectionError as e:
