@@ -1183,20 +1183,36 @@ class GetUserProfileForUsernameAPIViewTests(TenantTestCase):
             is_superuser=False
         )
 
-        self.gm = poem_models.GroupOfMetrics.objects.create(name='EGI')
-        self.ga = poem_models.GroupOfAggregations.objects.create(name='EUDAT')
-        self.gmp = poem_models.GroupOfMetricProfiles.objects.create(name='SDC')
+        self.gm = poem_models.GroupOfMetrics.objects.create(
+            name='GROUP-metrics'
+        )
+        poem_models.GroupOfMetrics.objects.create(name='GROUP2-metrics')
+        self.ga = poem_models.GroupOfAggregations.objects.create(
+            name='GROUP-aggregations'
+        )
+        poem_models.GroupOfAggregations.objects.create(
+            name='GROUP2-aggregations'
+        )
+        self.gmp = poem_models.GroupOfMetricProfiles.objects.create(
+            name='GROUP-metricprofiles'
+        )
+        self.gtp = poem_models.GroupOfThresholdsProfiles.objects.create(
+            name='GROUP-thresholds'
+        )
+        poem_models.GroupOfThresholdsProfiles.objects.create(
+            name='GROUP2-thresholds'
+        )
 
-        userprofile = poem_models.UserProfile.objects.create(
+        self.userprofile = poem_models.UserProfile.objects.create(
             user=user1,
             subject='bla',
             displayname='First_User',
             egiid='blablabla'
         )
-        userprofile.groupsofmetrics.add(self.gm)
-        userprofile.groupsofaggregations.add(self.ga)
-        userprofile.groupsofmetricprofiles.add(self.gmp)
-
+        self.userprofile.groupsofmetrics.add(self.gm)
+        self.userprofile.groupsofaggregations.add(self.ga)
+        self.userprofile.groupsofmetricprofiles.add(self.gmp)
+        self.userprofile.groupsofthresholdsprofiles.add(self.gtp)
 
     def test_get_user_profile_for_given_username(self):
         request = self.factory.get(self.url + 'username1')
@@ -1225,6 +1241,122 @@ class GetUserProfileForUsernameAPIViewTests(TenantTestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(response.data, {'detail': 'User profile not found'})
 
+    def test_put_userprofile(self):
+        self.assertEqual(self.userprofile.groupsofmetrics.count(), 1)
+        self.assertEqual(self.userprofile.groupsofmetricprofiles.count(), 1)
+        self.assertEqual(self.userprofile.groupsofaggregations.count(), 1)
+        self.assertEqual(self.userprofile.groupsofthresholdsprofiles.count(), 1)
+        data = {
+            'username': 'username1',
+            'displayname': 'Username_1',
+            'egiid': 'newegiid',
+            'subject': 'newsubject',
+            'groupsofaggregations': ['GROUP2-aggregations'],
+            'groupsofmetrics': ['GROUP-metrics', 'GROUP2-metrics'],
+            'groupsofmetricprofiles': ['GROUP-metricprofiles'],
+            'groupsofthresholdsprofiles': ['GROUP2-thresholds']
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        userprofile = poem_models.UserProfile.objects.get(
+            id=self.userprofile.id
+        )
+        self.assertEqual(userprofile.displayname, 'Username_1')
+        self.assertEqual(userprofile.egiid, 'newegiid')
+        self.assertEqual(userprofile.subject, 'newsubject')
+        self.assertEqual(userprofile.groupsofaggregations.count(), 1)
+        self.assertTrue(
+            userprofile.groupsofaggregations.filter(
+                name='GROUP2-aggregations'
+            ).exists()
+        )
+        self.assertFalse(
+            userprofile.groupsofaggregations.filter(
+                name='GROUP-aggregations'
+            ).exists()
+        )
+        self.assertEqual(userprofile.groupsofmetrics.count(), 2)
+        self.assertTrue(
+            userprofile.groupsofmetrics.filter(
+                name='GROUP-metrics'
+            ).exists()
+        )
+        self.assertTrue(
+            userprofile.groupsofmetrics.filter(
+                name='GROUP2-metrics'
+            ).exists()
+        )
+        self.assertEqual(userprofile.groupsofmetricprofiles.count(), 1)
+        self.assertTrue(
+            userprofile.groupsofmetricprofiles.filter(
+                name='GROUP-metricprofiles'
+            ).exists()
+        )
+        self.assertEqual(userprofile.groupsofthresholdsprofiles.count(), 1)
+        self.assertTrue(
+            userprofile.groupsofthresholdsprofiles.filter(
+                name='GROUP2-thresholds'
+            ).exists()
+        )
+        self.assertFalse(
+            userprofile.groupsofthresholdsprofiles.filter(
+                name='GROUP-thresholds'
+            ).exists()
+        )
+
+    def test_post_userprofile(self):
+        self.assertEqual(poem_models.UserProfile.objects.all().count(), 1)
+        user = CustUser.objects.create_user(
+            username='username2',
+            first_name='Second',
+            last_name='User',
+            email='suser@example.com',
+            is_staff=True,
+            is_active=True,
+            is_superuser=False
+        )
+        data = {
+            'username': 'username2',
+            'displayname': 'Second_User',
+            'subject': 'secondsubject',
+            'egiid': 'bla',
+            'groupsofaggregations': ['GROUP-aggregations',
+                                     'GROUP2-aggregations'],
+            'groupsofmetrics': ['GROUP-metrics'],
+            'groupsofthresholdsprofiles': [],
+            'groupofmetricprofiles': []
+        }
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        userprofile = poem_models.UserProfile.objects.get(user=user)
+        self.assertEqual(userprofile.displayname, 'Second_User')
+        self.assertEqual(userprofile.egiid, 'bla')
+        self.assertEqual(userprofile.subject, 'secondsubject')
+        self.assertEqual(userprofile.groupsofaggregations.count(), 2)
+        self.assertTrue(
+            userprofile.groupsofaggregations.filter(
+                name='GROUP-aggregations'
+            ).exists()
+        )
+        self.assertTrue(
+            userprofile.groupsofaggregations.filter(
+                name='GROUP2-aggregations'
+            ).exists()
+        )
+        self.assertEqual(userprofile.groupsofmetrics.count(), 1)
+        self.assertTrue(
+            userprofile.groupsofmetrics.filter(
+                name='GROUP-metrics'
+            ).exists()
+        )
+        self.assertEqual(userprofile.groupsofmetricprofiles.count(), 0)
+        self.assertEqual(userprofile.groupsofthresholdsprofiles.count(), 0)
+
 
 class ListGroupsForGivenUserAPIViewTests(TenantTestCase):
     def setUp(self):
@@ -1243,10 +1375,17 @@ class ListGroupsForGivenUserAPIViewTests(TenantTestCase):
             is_superuser=False
         )
 
-        gm = poem_models.GroupOfMetrics.objects.create(name='EGI')
-        poem_models.GroupOfMetrics.objects.create(name='EUDAT')
-        ga = poem_models.GroupOfAggregations.objects.create(name='EUDAT')
-        gmp = poem_models.GroupOfMetricProfiles.objects.create(name='SDC')
+        gm = poem_models.GroupOfMetrics.objects.create(name='GROUP-metrics')
+        poem_models.GroupOfMetrics.objects.create(name='GROUP2-metrics')
+        ga = poem_models.GroupOfAggregations.objects.create(
+            name='GROUP-aggregations'
+        )
+        gmp = poem_models.GroupOfMetricProfiles.objects.create(
+            name='GROUP-metricprofiles'
+        )
+        gtp = poem_models.GroupOfThresholdsProfiles.objects.create(
+            name='GROUP-thresholds'
+        )
 
         userprofile = poem_models.UserProfile.objects.create(
             user=user1
@@ -1254,28 +1393,39 @@ class ListGroupsForGivenUserAPIViewTests(TenantTestCase):
         userprofile.groupsofmetrics.add(gm)
         userprofile.groupsofaggregations.add(ga)
         userprofile.groupsofmetricprofiles.add(gmp)
+        userprofile.groupsofthresholdsprofiles.add(gtp)
 
     def test_get_groups_for_given_user(self):
         request = self.factory.get(self.url + 'username1')
         force_authenticate(request, user=self.user)
         response = self.view(request, 'username1')
-        aggr = [r for r in response.data['result']['aggregations']]
-        met = [r for r in response.data['result']['metrics']]
-        mp = [r for r in response.data['result']['metricprofiles']]
-        self.assertEqual(aggr, ['EUDAT'])
-        self.assertEqual(met, ['EGI'])
-        self.assertEqual(mp, ['SDC'])
+        self.assertEqual(
+            response.data,
+            {
+                'result': {
+                    'aggregations': ['GROUP-aggregations'],
+                    'metrics': ['GROUP-metrics'],
+                    'metricprofiles': ['GROUP-metricprofiles'],
+                    'thresholdsprofiles': ['GROUP-thresholds']
+                }
+            }
+        )
 
     def test_get_all_groups(self):
         request = self.factory.get(self.url)
         force_authenticate(request, user=self.user)
         response = self.view(request)
-        aggr = [r for r in response.data['result']['aggregations']]
-        met = [r for r in response.data['result']['metrics']]
-        mp = [r for r in response.data['result']['metricprofiles']]
-        self.assertEqual(aggr, ['EUDAT'])
-        self.assertEqual(met, ['EGI', 'EUDAT'])
-        self.assertEqual(mp, ['SDC'])
+        self.assertEqual(
+            response.data,
+            {
+                'result': {
+                    'aggregations': ['GROUP-aggregations'],
+                    'metrics': ['GROUP-metrics', 'GROUP2-metrics'],
+                    'metricprofiles': ['GROUP-metricprofiles'],
+                    'thresholdsprofiles': ['GROUP-thresholds']
+                }
+            }
+        )
 
 
 class ListMetricsInGroupAPIViewTests(TenantTestCase):
@@ -2191,43 +2341,53 @@ class ListGroupsForUserAPIViewTests(TenantTestCase):
         self.factory = TenantRequestFactory(self.tenant)
         self.view = views.ListGroupsForUser.as_view()
         self.url = '/api/v2/internal/groups/'
-        self.user = CustUser.objects.create(username='testuser')
-        self.superuser = CustUser.objects.create(username='superuser',
-                                                 is_superuser=True)
+        self.user = CustUser.objects.create_user(username='testuser')
+        self.superuser = CustUser.objects.create_user(
+            username='superuser', is_superuser=True
+        )
 
-        gm1 = poem_models.GroupOfMetrics.objects.create(name='metricgroup1')
-        gm2 = poem_models.GroupOfMetrics.objects.create(name='metricgroup2')
+        poem_models.GroupOfMetrics.objects.create(name='metricgroup1')
+        gm1 = poem_models.GroupOfMetrics.objects.create(name='metricgroup2')
 
-        gmp1 = poem_models.GroupOfMetricProfiles.objects.create(
+        poem_models.GroupOfMetricProfiles.objects.create(
             name='metricprofilegroup1'
         )
-        gmp2 = poem_models.GroupOfMetricProfiles.objects.create(
+        gmp1 = poem_models.GroupOfMetricProfiles.objects.create(
             name='metricprofilegroup2'
         )
 
-        ga1 = poem_models.GroupOfAggregations.objects.create(name='aggrgroup1')
-        ga2 = poem_models.GroupOfAggregations.objects.create(name='aggrgroup2')
+        poem_models.GroupOfAggregations.objects.create(name='aggrgroup1')
+        ga1 = poem_models.GroupOfAggregations.objects.create(name='aggrgroup2')
+
+        poem_models.GroupOfThresholdsProfiles.objects.create(
+            name='thresholdsgroup1'
+        )
+        gtp1 = poem_models.GroupOfThresholdsProfiles.objects.create(
+            name='thresholdsgroup2'
+        )
 
         userprofile = poem_models.UserProfile.objects.create(user=self.user)
-        userprofile.groupsofmetrics.add(gm2)
-        userprofile.groupsofmetricprofiles.add(gmp2)
-        userprofile.groupsofaggregations.add(ga2)
+        userprofile.groupsofmetrics.add(gm1)
+        userprofile.groupsofmetricprofiles.add(gmp1)
+        userprofile.groupsofaggregations.add(ga1)
+        userprofile.groupsofthresholdsprofiles.add(gtp1)
 
     def test_list_all_groups(self):
         request = self.factory.get(self.url)
         force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(
-            [d for d in response.data['result']['aggregations']],
-            ['aggrgroup1', 'aggrgroup2']
-        )
-        self.assertEqual(
-            [d for d in response.data['result']['metrics']],
-            ['metricgroup1', 'metricgroup2']
-        )
-        self.assertEqual(
-            [d for d in response.data['result']['metricprofiles']],
-            ['metricprofilegroup1', 'metricprofilegroup2']
+            response.data,
+            {
+                'result': {
+                    'aggregations': ['aggrgroup1', 'aggrgroup2'],
+                    'metrics': ['metricgroup1', 'metricgroup2'],
+                    'metricprofiles': ['metricprofilegroup1',
+                                       'metricprofilegroup2'],
+                    'thresholdsprofiles': ['thresholdsgroup1',
+                                           'thresholdsgroup2']
+                }
+            }
         )
 
     def test_list_groups_for_user_that_is_not_superuser(self):
@@ -2235,16 +2395,15 @@ class ListGroupsForUserAPIViewTests(TenantTestCase):
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(
-            [d for d in response.data['result']['aggregations']],
-            ['aggrgroup2']
-        )
-        self.assertEqual(
-            [d for d in response.data['result']['metrics']],
-            ['metricgroup2']
-        )
-        self.assertEqual(
-            [d for d in response.data['result']['metricprofiles']],
-            ['metricprofilegroup2']
+            response.data,
+            {
+                'result': {
+                    'aggregations': ['aggrgroup2'],
+                    'metrics': ['metricgroup2'],
+                    'metricprofiles': ['metricprofilegroup2'],
+                    'thresholdsprofiles': ['thresholdsgroup2']
+                }
+            }
         )
 
     def test_get_aggregation_groups_for_superuser(self):
@@ -2252,7 +2411,7 @@ class ListGroupsForUserAPIViewTests(TenantTestCase):
         force_authenticate(request, user=self.superuser)
         response = self.view(request, 'aggregations')
         self.assertEqual(
-            [d for d in response.data],
+            response.data,
             ['aggrgroup1', 'aggrgroup2']
         )
 
@@ -2261,7 +2420,7 @@ class ListGroupsForUserAPIViewTests(TenantTestCase):
         force_authenticate(request, user=self.superuser)
         response = self.view(request, 'metrics')
         self.assertEqual(
-            [d for d in response.data],
+            response.data,
             ['metricgroup1', 'metricgroup2']
         )
 
@@ -2270,8 +2429,17 @@ class ListGroupsForUserAPIViewTests(TenantTestCase):
         force_authenticate(request, user=self.superuser)
         response = self.view(request, 'metricprofiles')
         self.assertEqual(
-            [d for d in response.data],
+            response.data,
             ['metricprofilegroup1', 'metricprofilegroup2']
+        )
+
+    def test_get_thresholds_profiles_groups_for_superuser(self):
+        request = self.factory.get(self.url + 'thresholdsprofiles')
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request, 'thresholdsprofiles')
+        self.assertEqual(
+            response.data,
+            ['thresholdsgroup1', 'thresholdsgroup2']
         )
 
     def test_get_aggregation_groups_for_basic_user(self):
@@ -2279,7 +2447,7 @@ class ListGroupsForUserAPIViewTests(TenantTestCase):
         force_authenticate(request, user=self.user)
         response = self.view(request, 'aggregations')
         self.assertEqual(
-            [d for d in response.data],
+            response.data,
             ['aggrgroup2']
         )
 
@@ -2288,7 +2456,7 @@ class ListGroupsForUserAPIViewTests(TenantTestCase):
         force_authenticate(request, user=self.user)
         response = self.view(request, 'metrics')
         self.assertEqual(
-            [d for d in response.data],
+            response.data,
             ['metricgroup2']
         )
 
@@ -2297,8 +2465,17 @@ class ListGroupsForUserAPIViewTests(TenantTestCase):
         force_authenticate(request, user=self.user)
         response = self.view(request, 'metricprofiles')
         self.assertEqual(
-            [d for d in response.data],
+            response.data,
             ['metricprofilegroup2']
+        )
+
+    def test_get_thresholds_profiles_groups_for_basic_user(self):
+        request = self.factory.get(self.url + 'thresholdsprofiles')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'thresholdsprofiles')
+        self.assertEqual(
+            response.data,
+            ['thresholdsgroup2']
         )
 
 
