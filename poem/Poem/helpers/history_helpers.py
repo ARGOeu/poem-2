@@ -136,7 +136,8 @@ def create_comment(object_id, ct, new_serialized_data):
                         added.append(key)
 
                 else:
-                    if old_serialized_data[key] != new_serialized_data[key]:
+                    if old_serialized_data[key] and \
+                            old_serialized_data[key] != new_serialized_data[key]:
                         changed.append(key)
 
                     elif not new_serialized_data[key] and \
