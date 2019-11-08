@@ -1,5 +1,50 @@
 # Changelog
 
+## [3.0.0] - 2019-11-08
+### Added
+* ARGO-1797 User/Pass and SAML2 Login and base UI structure
+* ARGO-1798 Services page
+* ARGO-1799 Aggregation page
+* ARGO-1807 Investigate and possibly fix additional re-render from changelist to change view
+* ARGO-1804 Add breadcrumb navigation
+* ARGO-1808 Introduce CRUD for Metric profiles on WEB-API
+* ARGO-1806 Add Fontawesome icons
+* ARGO-1929 Handle users and groups ACLs
+* ARGO-1933 Introduce probe read-only tenant page
+* ARGO-1937 Introduce Metric page
+* ARGO-1936 History of changes for Probes
+* ARGO-1934 Introduce page for API keys handling
+* ARGO-1979 Introduce Super Admin POEM
+* ARGO-1980 Introduce Probe page on Super Admin POEM
+* ARGO-1981 Introduce Metric template page on Super Admin POEM
+* ARGO-1991 Create custom Version model to use instead of django-reversion plugin
+* ARGO-2012 Limit access to Administration page only to super users
+* ARGO-1930 Handle password validation
+* ARGO-1992 Clone functionality for Metric templates
+* ARGO-2020 History of changes for Metric templates
+* ARGO-1940 History of changes for Metrics
+* ARGO-1995 Add yum repositories
+* ARGO-2030 Metric template change not working properly
+
+### Fixed
+
+* ARGO-1807 Investigate and possibly fix additional re-render from changelist to change view
+* ARGO-1836 Session not activated for superuser login
+* ARGO-1818 Select flavor in aggregation form 
+* ARGO-1923 Create UserProfile when creating Superuser using poem-db tool
+* ARGO-2023 Internal group of resources API should be filtered by correct field
+* ARGO-2026 Make API key clickable
+* ARGO-2031 Fix handling of multiple parameters
+* ARGO-2033 Parent field in metric templates shouldn't be required in case of passive metrics
+
+### Changed
+
+* ARGO-1819 Refactor with general HOC and API query components
+* ARGO-1884 Merge old poem backend with new poem-2
+* ARGO-1939 Refactor internal api views
+* ARGO-1959 Update backend Python packages
+* ARGO-2011 Refactor GroupOfMetrics model
+
 ## [2.3.0] - 2019-04-04
 ### Added
 - ARGO-1573 Back reference fields on metrics and probes pages
