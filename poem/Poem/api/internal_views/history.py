@@ -51,8 +51,7 @@ class ListVersions(APIView):
                         fields0 = json.loads(ver.serialized_data)[0]['fields']
                         fields = {
                             'name': fields0['name'],
-                            'mtype': MetricTemplateType.objects.get(
-                                id=fields0['mtype']).name,
+                            'mtype': fields0['mtype'][0],
                             'probeversion': fields0['probeversion'],
                             'parent': one_value_inline(fields0['parent']),
                             'probeexecutable': one_value_inline(

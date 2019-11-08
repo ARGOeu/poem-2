@@ -15,6 +15,9 @@ class MetricType(models.Model):
     def __str__(self):
         return u'%s' % self.name
 
+    def natural_key(self):
+        return (self.name,)
+
 
 class GroupOfMetrics(models.Model):
     name = models.CharField(_('name'), max_length=80, unique=True)

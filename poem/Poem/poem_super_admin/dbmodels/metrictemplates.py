@@ -13,6 +13,9 @@ class MetricTemplateType(models.Model):
     def __str__(self):
         return u'%s' % self.name
 
+    def natural_key(self):
+        return (self.name,)
+
 
 class MetricTemplate(models.Model):
     id = models.AutoField(primary_key=True)
