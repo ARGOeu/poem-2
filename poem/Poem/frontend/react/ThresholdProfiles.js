@@ -23,12 +23,15 @@ import {
   Card,
   CardHeader,
   CardBody,
-  Button
+  Button,
+  Popover,
+  PopoverBody,
+  PopoverHeader
 } from 'reactstrap';
 import * as Yup from 'yup';
 import { FancyErrorMessage } from './UIElements';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTimes, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faTimes, faPlus, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 
 
 const ThresholdsSchema = Yup.object().shape({
@@ -48,11 +51,11 @@ const ThresholdsSchema = Yup.object().shape({
           uom: Yup.string()
             .required('Required'),
           warn1: Yup.string()
-            .matches(/^[0-9@.]*$/, 'Must be a number or @ symbol.')
+            .matches(/^[0-9@.~]*$/, 'Must be a number or @ symbol.')
             .required('Required'),
           warn2: Yup.string(),
           crit1: Yup.string()
-            .matches(/^[0-9@.]*$/, 'Must be a number or @ symbol.')
+            .matches(/^[0-9@.~]*$/, 'Must be a number or @ symbol.')
             .required('Required'),
           crit2: Yup.string(),
           min: Yup.string()
@@ -155,12 +158,16 @@ export class ThresholdsProfilesChange extends Component {
       loading: false,
       modalFunc: undefined,
       modalTitle: undefined,
-      modalMsg: undefined
+      modalMsg: undefined,
+      popoverWarningOpen: false,
+      popoverCriticalOpen: false
     };
 
     this.toggleAreYouSure = this.toggleAreYouSure.bind(this);
     this.toggleAreYouSureSetModal = this.toggleAreYouSureSetModal.bind(this);
     this.onSelect = this.onSelect.bind(this);
+    this.toggleWarningPopOver = this.toggleWarningPopOver.bind(this);
+    this.toggleCriticalPopOver = this.toggleCriticalPopOver.bind(this);
   };
 
   toggleAreYouSureSetModal(msg, title, onyes) {
@@ -176,6 +183,18 @@ export class ThresholdsProfilesChange extends Component {
     this.setState(prevState => 
       ({areYouSureModal: !prevState.areYouSureModal}));
   };
+
+  toggleWarningPopOver() {
+    this.setState({
+      popoverWarningOpen: !this.state.popoverWarningOpen
+    });
+  }
+
+  toggleCriticalPopOver() {
+    this.setState({
+      popoverCriticalOpen: !this.state.popoverCriticalOpen
+    });
+  }
 
   onSelect(field, value) {
     let thresholds_rules = this.state.thresholds_rules;
@@ -234,8 +253,7 @@ export class ThresholdsProfilesChange extends Component {
               rules: thresholds_rules
             }}
             validationSchema={ThresholdsSchema}
-            render = {props => {
-              return(
+            render = {props => (
               <Form>
                 <FormGroup>
                   <Row>
@@ -374,8 +392,30 @@ export class ThresholdsProfilesChange extends Component {
                                                     <th style={{width: '4%'}}>#</th>
                                                     <th style={{width: '12%'}}>Label</th>
                                                     <th colSpan={2} style={{width: '12%'}}>Value</th>
-                                                    <th colSpan={3} style={{width: '12%'}}>Warning</th>
-                                                    <th colSpan={3} style={{width: '12%'}}>Critical</th>
+                                                    <th colSpan={3} style={{width: '12%'}}>
+                                                      Warning <FontAwesomeIcon id='warning-popover' icon={faInfoCircle} style={{color: '#416090'}}/>
+                                                      <Popover placement='bottom' isOpen={this.state.popoverWarningOpen} target='warning-popover' toggle={this.toggleWarningPopOver} trigger='hover'>
+                                                        <PopoverHeader>Warning range</PopoverHeader>
+                                                        <PopoverBody>
+                                                          <p>Defined in format: <code>@&#123;floor&#125;:&#123;ceil&#125;</code></p>
+                                                          <p><code>@</code> - optional - negates the range (value should belong outside limits)</p>
+                                                          <p><code>&#123;floor&#125;</code>: integer/float or <code>~</code> that defines negative infinity</p>
+                                                          <p><code>&#123;ceil&#125;</code>: integer/float or empty (defines positive infinity)</p>
+                                                        </PopoverBody>
+                                                      </Popover>
+                                                    </th>
+                                                    <th colSpan={3} style={{width: '12%'}}>
+                                                      Critical <FontAwesomeIcon id='critical-popover' icon={faInfoCircle} style={{color: '#416090'}}/>
+                                                      <Popover placement='bottom' isOpen={this.state.popoverCriticalOpen} target='critical-popover' toggle={this.toggleCriticalPopOver} trigger='hover'>
+                                                        <PopoverHeader>Critical range</PopoverHeader>
+                                                        <PopoverBody>
+                                                          <p>Defined in format: <code>@&#123;floor&#125;:&#123;ceil&#125;</code></p>
+                                                          <p><code>@</code> - optional - negates the range (value should belong outside limits)</p>
+                                                          <p><code>&#123;floor&#125;</code>: integer/float or <code>~</code> that defines negative infinity</p>
+                                                          <p><code>&#123;ceil&#125;</code>: integer/float or empty (defines positive infinity)</p>
+                                                        </PopoverBody>
+                                                      </Popover>
+                                                    </th>
                                                     <th style={{width: '12%'}}>min</th>
                                                     <th style={{width: '12%'}}>max</th>
                                                     <th style={{width: '12%'}}>Action</th>
@@ -822,7 +862,7 @@ export class ThresholdsProfilesChange extends Component {
                 </Row>
                 </FormGroup>
               </Form>
-            )}}
+            )}
           />
         </BaseArgoView>
       );
