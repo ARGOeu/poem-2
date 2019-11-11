@@ -29,12 +29,38 @@ import * as Yup from 'yup';
 import { FancyErrorMessage } from './UIElements';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes, faPlus } from '@fortawesome/free-solid-svg-icons';
-import { fileURLToPath } from 'url';
 
 
 const ThresholdsSchema = Yup.object().shape({
   name: Yup.string().required('Required'),
-  groupname: Yup.string().required('Required')
+  groupname: Yup.string().required('Required'),
+  rules: Yup.array()
+    .of(Yup.object().shape({
+      metric: Yup.string().required('Required'),
+      thresholds: Yup.array()
+        .of(Yup.object().shape({
+          label: Yup.string()
+            .matches(/^[a-zA-Z][A-Za-z0-9]*$/, 'Label can contain alphanumeric characters, but must always begin with a letter.')
+            .required('Required'),
+          value: Yup.string()
+            .matches(/^[0-9.]*$/, 'Must be a number.')
+            .required('Required'),
+          uom: Yup.string()
+            .required('Required'),
+          warn1: Yup.string()
+            .matches(/^[0-9@.]*$/, 'Must be a number or @ symbol.')
+            .required('Required'),
+          warn2: Yup.string(),
+          crit1: Yup.string()
+            .matches(/^[0-9@.]*$/, 'Must be a number or @ symbol.')
+            .required('Required'),
+          crit2: Yup.string(),
+          min: Yup.string()
+            .matches(/^[0-9.]*$/, 'Must be a number.'),
+          max: Yup.string()
+            .matches(/^[0-9.]*$/, 'Must be a number.'),
+        }))
+    }))
 });
 
 
@@ -154,7 +180,7 @@ export class ThresholdsProfilesChange extends Component {
   onSelect(field, value) {
     let thresholds_rules = this.state.thresholds_rules;
     let index = field.split('[')[1].split(']')[0]
-    if (thresholds_rules.length === 0) {
+    if (thresholds_rules.length == index) {
       thresholds_rules.push({'metric': '', thresholds: [], 'host': '', 'endpoint_group': ''})
     } 
     thresholds_rules[index].metric = value;
@@ -208,7 +234,8 @@ export class ThresholdsProfilesChange extends Component {
               rules: thresholds_rules
             }}
             validationSchema={ThresholdsSchema}
-            render = {props => (
+            render = {props => {
+              return(
               <Form>
                 <FormGroup>
                   <Row>
@@ -289,12 +316,25 @@ export class ThresholdsProfilesChange extends Component {
                                       <Col md={12}>
                                         <AutocompleteField
                                           {...props}
+                                          req={
+                                            props.errors.rules && 
+                                            props.errors.rules.length > index && 
+                                            props.errors.rules[index].metric
+                                          }
                                           lists={metrics_list}
                                           icon='metrics'
                                           field={`rules[${index}].metric`}
                                           onselect_handler={this.onSelect}
                                           label='Metric'
                                         />
+                                        {
+                                          (
+                                            props.errors.rules && 
+                                            props.errors.rules.length > index && 
+                                            props.errors.rules[index].metric
+                                            ) &&
+                                            FancyErrorMessage(props.errors.rules[index].metric)
+                                        }
                                       </Col>
                                     </Row>
                                     <Row className='mt-2'>
@@ -343,8 +383,8 @@ export class ThresholdsProfilesChange extends Component {
                                                 </thead>
                                                 <tbody>
                                                   {
-                                                    (eval(`props.values.rules[${index}].thresholds`) && eval(`props.values.rules.${index}.thresholds`.length > 0)) ?
-                                                      eval(`props.values.rules[${index}].thresholds`).map((t, i) =>
+                                                    (props.values.rules[index].thresholds && props.values.rules[index].thresholds.length > 0) ?
+                                                      props.values.rules[index].thresholds.map((t, i) =>
                                                       <tr key={`rule-${index}-threshold-${i}`}>
                                                         <td className='align-middle text-center'>
                                                           {i + 1}
@@ -352,23 +392,86 @@ export class ThresholdsProfilesChange extends Component {
                                                         <td>
                                                           <Field
                                                             type='text'
-                                                            className='form-control'
+                                                            className={
+                                                              (
+                                                                props.errors.rules &&
+                                                                props.errors.rules.length > index &&
+                                                                props.errors.rules[index] &&
+                                                                props.errors.rules[index].thresholds &&
+                                                                props.errors.rules[index].thresholds.length > i &&
+                                                                props.errors.rules[index].thresholds[i] &&
+                                                                props.errors.rules[index].thresholds[i].label
+                                                              ) ?
+                                                               'form-control border-danger'
+                                                              : 
+                                                                'form-control'
+                                                            }
                                                             name={`rules[${index}].thresholds[${i}].label`}
                                                             id={`props.values.rules.${index}.thresholds.${i}.label`}
                                                           />
+                                                          {
+                                                            (
+                                                              props.errors.rules &&
+                                                              props.errors.rules.length > index &&
+                                                              props.errors.rules[index] &&
+                                                              props.errors.rules[index].thresholds &&
+                                                              props.errors.rules[index].thresholds.length > i &&
+                                                              props.errors.rules[index].thresholds[i] &&
+                                                              props.errors.rules[index].thresholds[i].label
+                                                            ) &&
+                                                              FancyErrorMessage(props.errors.rules[index].thresholds[i].label)
+                                                          }
                                                         </td>
                                                         <td>
                                                           <Field
                                                             type='text'
-                                                            className='form-control'
+                                                            className={
+                                                              (
+                                                                props.errors.rules &&
+                                                                props.errors.rules.length > index &&
+                                                                props.errors.rules[index] &&
+                                                                props.errors.rules[index].thresholds &&
+                                                                props.errors.rules[index].thresholds.length > i &&
+                                                                props.errors.rules[index].thresholds[i] &&
+                                                                props.errors.rules[index].thresholds[i].value
+                                                              ) ?
+                                                               'form-control border-danger'
+                                                              : 
+                                                                'form-control'
+                                                            }
                                                             name={`rules.${index}.thresholds.${i}.value`}
                                                             id={`props.values.rules.${index}.thresholds.${i}.value`}
                                                           />
+                                                          {
+                                                            (
+                                                              props.errors.rules &&
+                                                              props.errors.rules.length > index &&
+                                                              props.errors.rules[index] &&
+                                                              props.errors.rules[index].thresholds &&
+                                                              props.errors.rules[index].thresholds.length > i &&
+                                                              props.errors.rules[index].thresholds[i] &&
+                                                              props.errors.rules[index].thresholds[i].value
+                                                            ) &&
+                                                              FancyErrorMessage(props.errors.rules[index].thresholds[i].value)
+                                                          }
                                                         </td>
                                                         <td style={{width: '6%'}}>
                                                           <Field
                                                             component='select'
-                                                            className='form-control'
+                                                            className={
+                                                              (
+                                                                props.errors.rules &&
+                                                                props.errors.rules.length > index &&
+                                                                props.errors.rules[index] &&
+                                                                props.errors.rules[index].thresholds &&
+                                                                props.errors.rules[index].thresholds.length > i &&
+                                                                props.errors.rules[index].thresholds[i] &&
+                                                                props.errors.rules[index].thresholds[i].uom
+                                                              ) ?
+                                                               'form-control border-danger'
+                                                              : 
+                                                                'form-control'
+                                                            }
                                                             name={`rules.${index}.thresholds.${i}.uom`}
                                                             id={`props.values.rules.${index}.thresholds.${i}.uom`}
                                                           >
@@ -383,14 +486,51 @@ export class ThresholdsProfilesChange extends Component {
                                                             <option key='option-8' value='%'>%</option>
                                                             <option key='option-9' value='c'>c</option>
                                                           </Field>
+                                                          {
+                                                            (
+                                                              props.errors.rules &&
+                                                              props.errors.rules.length > index &&
+                                                              props.errors.rules[index] &&
+                                                              props.errors.rules[index].thresholds &&
+                                                              props.errors.rules[index].thresholds.length > i &&
+                                                              props.errors.rules[index].thresholds[i] &&
+                                                              props.errors.rules[index].thresholds[i].uom
+                                                            ) &&
+                                                              FancyErrorMessage(props.errors.rules[index].thresholds[i].uom)
+                                                          }
                                                         </td>
                                                         <td>
                                                           <Field
                                                             type='text'
-                                                            className='form-control'
+                                                            className={
+                                                              (
+                                                                props.errors.rules &&
+                                                                props.errors.rules.length > index &&
+                                                                props.errors.rules[index] &&
+                                                                props.errors.rules[index].thresholds &&
+                                                                props.errors.rules[index].thresholds.length > i &&
+                                                                props.errors.rules[index].thresholds[i] &&
+                                                                props.errors.rules[index].thresholds[i].warn1
+                                                              ) ?
+                                                               'form-control border-danger'
+                                                              : 
+                                                                'form-control'
+                                                            }
                                                             name={`rules.${index}.thresholds.${i}.warn1`}
                                                             id={`props.values.rules.${index}.thresholds.${i}.warn1`}
                                                           />
+                                                          {
+                                                            (
+                                                              props.errors.rules &&
+                                                              props.errors.rules.length > index &&
+                                                              props.errors.rules[index] &&
+                                                              props.errors.rules[index].thresholds &&
+                                                              props.errors.rules[index].thresholds.length > i &&
+                                                              props.errors.rules[index].thresholds[i] &&
+                                                              props.errors.rules[index].thresholds[i].warn1
+                                                            ) &&
+                                                              FancyErrorMessage(props.errors.rules[index].thresholds[i].warn1)
+                                                          }
                                                         </td>
                                                         <td>
                                                           :
@@ -398,18 +538,68 @@ export class ThresholdsProfilesChange extends Component {
                                                         <td>
                                                           <Field
                                                             type='text'
-                                                            className='form-control'
+                                                            className={
+                                                              (
+                                                                props.errors.rules &&
+                                                                props.errors.rules.length > index &&
+                                                                props.errors.rules[index] &&
+                                                                props.errors.rules[index].thresholds &&
+                                                                props.errors.rules[index].thresholds.length > i &&
+                                                                props.errors.rules[index].thresholds[i] &&
+                                                                props.errors.rules[index].thresholds[i].warn2
+                                                              ) ?
+                                                               'form-control border-danger'
+                                                              : 
+                                                                'form-control'
+                                                            }
                                                             name={`rules.${index}.thresholds.${i}.warn2`}
                                                             id={`props.values.rules.${index}.thresholds.${i}.warn2`}
                                                           />
+                                                          {
+                                                            (
+                                                              props.errors.rules &&
+                                                              props.errors.rules.length > index &&
+                                                              props.errors.rules[index] &&
+                                                              props.errors.rules[index].thresholds &&
+                                                              props.errors.rules[index].thresholds.length > i &&
+                                                              props.errors.rules[index].thresholds[i] &&
+                                                              props.errors.rules[index].thresholds[i].warn2
+                                                            ) &&
+                                                              FancyErrorMessage(props.errors.rules[index].thresholds[i].warn2)
+                                                          }
                                                         </td>
                                                         <td>
                                                           <Field
                                                             type='text'
-                                                            className='form-control'
+                                                            className={
+                                                              (
+                                                                props.errors.rules &&
+                                                                props.errors.rules.length > index &&
+                                                                props.errors.rules[index] &&
+                                                                props.errors.rules[index].thresholds &&
+                                                                props.errors.rules[index].thresholds.length > i &&
+                                                                props.errors.rules[index].thresholds[i] &&
+                                                                props.errors.rules[index].thresholds[i].crit1
+                                                              ) ?
+                                                               'form-control border-danger'
+                                                              : 
+                                                                'form-control'
+                                                            }
                                                             name={`rules.${index}.thresholds.${i}.crit1`}
                                                             id={`props.values.rules.${index}.thresholds.${i}.crit1`}
                                                           />
+                                                          {
+                                                            (
+                                                              props.errors.rules &&
+                                                              props.errors.rules.length > index &&
+                                                              props.errors.rules[index] &&
+                                                              props.errors.rules[index].thresholds &&
+                                                              props.errors.rules[index].thresholds.length > i &&
+                                                              props.errors.rules[index].thresholds[i] &&
+                                                              props.errors.rules[index].thresholds[i].crit1
+                                                            ) &&
+                                                              FancyErrorMessage(props.errors.rules[index].thresholds[i].crit1)
+                                                          }
                                                         </td>
                                                         <td>
                                                           :
@@ -417,26 +607,101 @@ export class ThresholdsProfilesChange extends Component {
                                                         <td>
                                                           <Field
                                                             type='text'
-                                                            className='form-control'
+                                                            className={
+                                                              (
+                                                                props.errors.rules &&
+                                                                props.errors.rules.length > index &&
+                                                                props.errors.rules[index] &&
+                                                                props.errors.rules[index].thresholds &&
+                                                                props.errors.rules[index].thresholds.length > i &&
+                                                                props.errors.rules[index].thresholds[i] &&
+                                                                props.errors.rules[index].thresholds[i].crit2
+                                                              ) ?
+                                                               'form-control border-danger'
+                                                              : 
+                                                                'form-control'
+                                                            }
                                                             name={`rules.${index}.thresholds.${i}.crit2`}
                                                             id={`props.values.rules.${index}.thresholds.${i}.crit2`}
                                                           />
+                                                          {
+                                                            (
+                                                              props.errors.rules &&
+                                                              props.errors.rules.length > index &&
+                                                              props.errors.rules[index] &&
+                                                              props.errors.rules[index].thresholds &&
+                                                              props.errors.rules[index].thresholds.length > i &&
+                                                              props.errors.rules[index].thresholds[i] &&
+                                                              props.errors.rules[index].thresholds[i].crit2
+                                                            ) &&
+                                                              FancyErrorMessage(props.errors.rules[index].thresholds[i].crit2)
+                                                          }
                                                         </td>
                                                         <td>
                                                           <Field
                                                             type='text'
-                                                            className='form-control'
+                                                            className={
+                                                              (
+                                                                props.errors.rules &&
+                                                                props.errors.rules.length > index &&
+                                                                props.errors.rules[index] &&
+                                                                props.errors.rules[index].thresholds &&
+                                                                props.errors.rules[index].thresholds.length > i &&
+                                                                props.errors.rules[index].thresholds[i] &&
+                                                                props.errors.rules[index].thresholds[i].min
+                                                              ) ?
+                                                               'form-control border-danger'
+                                                              : 
+                                                                'form-control'
+                                                            }
                                                             name={`rules.${index}.thresholds.${i}.min`}
                                                             id={`props.values.rules.${index}.thresholds.${i}.min`}
                                                           />
+                                                          {
+                                                            (
+                                                              props.errors.rules &&
+                                                              props.errors.rules.length > index &&
+                                                              props.errors.rules[index] &&
+                                                              props.errors.rules[index].thresholds &&
+                                                              props.errors.rules[index].thresholds.length > i &&
+                                                              props.errors.rules[index].thresholds[i] &&
+                                                              props.errors.rules[index].thresholds[i].min
+                                                            ) &&
+                                                              FancyErrorMessage(props.errors.rules[index].thresholds[i].min)
+                                                          }
                                                         </td>
                                                         <td>
                                                           <Field
                                                             type='text'
-                                                            className='form-control'
+                                                            className={
+                                                              (
+                                                                props.errors.rules &&
+                                                                props.errors.rules.length > index &&
+                                                                props.errors.rules[index] &&
+                                                                props.errors.rules[index].thresholds &&
+                                                                props.errors.rules[index].thresholds.length > i &&
+                                                                props.errors.rules[index].thresholds[i] &&
+                                                                props.errors.rules[index].thresholds[i].max
+                                                              ) ?
+                                                               'form-control border-danger'
+                                                              : 
+                                                                'form-control'
+                                                            }
                                                             name={`rules.${index}.thresholds.${i}.max`}
                                                             id={`props.values.rules.${index}.thresholds.${i}.max`}
                                                           />
+                                                          {
+                                                            (
+                                                              props.errors.rules &&
+                                                              props.errors.rules.length > index &&
+                                                              props.errors.rules[index] &&
+                                                              props.errors.rules[index].thresholds &&
+                                                              props.errors.rules[index].thresholds.length > i &&
+                                                              props.errors.rules[index].thresholds[i] &&
+                                                              props.errors.rules[index].thresholds[i].max
+                                                            ) &&
+                                                              FancyErrorMessage(props.errors.rules[index].thresholds[i].max)
+                                                          }
                                                         </td>
                                                         <td className='align-middle pl-3'>
                                                           <Button
@@ -445,7 +710,7 @@ export class ThresholdsProfilesChange extends Component {
                                                             type='button'
                                                             onClick={() => {
                                                               thresholdHelpers.remove(i);
-                                                              if (eval(`props.values.rules[${index}].thresholds`).length === 1) {
+                                                              if (props.values.rules[index].thresholds.length === 1) {
                                                                 thresholdHelpers.push({
                                                                   label: '',
                                                                   value: '',
@@ -557,7 +822,7 @@ export class ThresholdsProfilesChange extends Component {
                 </Row>
                 </FormGroup>
               </Form>
-            )}
+            )}}
           />
         </BaseArgoView>
       );
