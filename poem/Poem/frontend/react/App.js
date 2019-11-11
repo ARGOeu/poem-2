@@ -190,13 +190,19 @@ class App extends Component {
     this.toggleAreYouSure = this.toggleAreYouSure.bind(this);
   }
 
-  onLogin(json) {
+  onLogin(json, history) {
     localStorage.setItem('authUsername', json.username);
     localStorage.setItem('authIsLogged', true);
     localStorage.setItem('authFirstName', json.first_name);
     localStorage.setItem('authLastName', json.last_name);
     localStorage.setItem('authIsSuperuser', json.is_superuser);
-    this.setState({isLogged: true, isSessionActive: true});
+    this.backend.fetchPoemVersion().then((poemversion) => 
+      poemversion === 'tenant' && 
+      this.initalizeState(poemversion, true, true)).then(
+        setTimeout(() => {
+          history.push('/ui/home');
+        }, 200
+      ))
   } 
 
   flushLocalStorage() {
@@ -232,36 +238,33 @@ class App extends Component {
       .catch(err => alert('Something went wrong: ' + err))
   }
 
+  initalizeState(poemType, activeSession, isLogged) {
+    return Promise.all([this.fetchToken(), this.fetchConfigOptions()])
+      .then(([token, options]) => {
+        this.setState({
+          poemversion: poemType,
+          isSessionActive: activeSession,
+          isLogged: isLogged,
+          token: token,
+          webApiMetric: options.result.webapimetric,
+          webApiAggregation: options.result.webapiaggregation,
+          tenantName: options.result.tenant_name,
+        })
+      })
+  }
+
   componentDidMount() {
     this.backend.fetchPoemVersion().then((poemversion) => {
       if (poemversion === 'tenant') {
         this.state.isLogged && this.backend.isActiveSession().then(active => {
           if (active) {
-            Promise.all([this.fetchToken(), this.fetchConfigOptions()])
-            .then(([token, options]) => {
-              this.setState({
-                poemversion: poemversion,
-                isSessionActive: active,
-                token: token,
-                webApiMetric: options.result.webapimetric,
-                webApiAggregation: options.result.webapiaggregation,
-                tenantName: options.result.tenant_name,
-              })
-            })
+            this.initalizeState(poemversion, active, this.state.isLogged)
           } 
           else
             this.flushLocalStorage()
         })
       }
     })
-  }
-
-  componentDidUpdate(prevProps, prevState) {
-    // Intentional push to /ui/home route again if history.push 
-    // from Login does not trigger rendering of Home 
-    if (this.state.isSessionActive !== prevState.isSessionActive &&
-      this.state.token === undefined)
-      window.location = '/ui/home';
   }
 
   render() {
