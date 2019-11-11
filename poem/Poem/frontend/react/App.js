@@ -28,7 +28,7 @@ import { NavigationBar, CustomBreadcrumb, NavigationLinks, Footer } from './UIEl
 import { NotificationContainer } from 'react-notifications';
 import { Backend } from './DataManager';
 import { YumRepoList, YumRepoChange } from './YumRepos';
-import { ThresholdsProfilesList } from './ThresholdProfiles';
+import { ThresholdsProfilesList, ThresholdsProfilesChange } from './ThresholdProfiles';
 
 import './App.css';
 
@@ -149,6 +149,9 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, token, tenantName})
       render={props => <GroupOfThresholdsProfilesChange {...props}/>}
     />
     <Route exact path="/ui/thresholdsprofiles" component={ThresholdsProfilesList} />
+    <Route exact path="/ui/thresholdsprofiles/add" 
+      render={props => <ThresholdsProfilesChange {...props} addview={true}/>}
+    />
     <Route component={NotFound} />
   </Switch>
 )
