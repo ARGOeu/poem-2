@@ -43,6 +43,7 @@ import {
   faExclamation} from '@fortawesome/free-solid-svg-icons';
 import { NotificationManager } from 'react-notifications';
 import { Field } from 'formik';
+import Autocomplete from 'react-autocomplete';
 
 
 var list_pages = ['administration','services', 'reports', 'probes',
@@ -438,3 +439,61 @@ export const Checkbox = ({
 export const FancyErrorMessage = (msg) => (
   <div style={{color: '#FF0000', fontSize: 'small'}}>{msg}</div>
 )
+
+
+function matchItem(item, value) {
+  if (value)
+    return item.toLowerCase().indexOf(value.toLowerCase()) !== -1;
+};
+
+
+export const AutocompleteField = ({lists, onselect_handler, field, icon, setFieldValue, req, label, values}) => {
+  let classname = undefined;
+  if (req)
+    classname = 'form-control border-danger';
+  else 
+    classname = 'form-control '
+
+  return(
+    <Autocomplete
+      inputProps={{className: classname}}
+      getItemValue={(item) => item}
+      items={lists}
+      value={eval(`values.${field}`)}
+      renderItem={(item, isHighlighted) =>
+        <div 
+          key={lists.indexOf(item)}
+          className={`argo-autocomplete-entries ${isHighlighted ? 
+            "argo-autocomplete-entries-highlighted" 
+            : ""}`
+        }
+        >
+          {item ? <Icon i={icon}/> : ''} {item}
+        </div>
+      }
+      renderInput={(props) => {
+        if (label)
+          return (
+            <div className='input-group mb-3'>
+              <div className='input-group-prepend'>
+                <span className='input-group-text' id='basic-addon1'>{label}</span>
+              </div>
+              <input {...props} type='text' className={classname} aria-label='label'/>
+            </div>
+          );
+        else
+          return <input {...props}/>;
+      }}
+      onChange={(e) => {setFieldValue(field, e.target.value)}}
+      onSelect={(val) =>  {
+        setFieldValue(field, val)
+        onselect_handler(field, val);
+      }}
+      wrapperStyle={{}}
+      shouldItemRender={matchItem}
+      renderMenu={(items) =>
+        <div className='argo-autocomplete-menu' children={items}/>  
+      }
+    />
+  );
+};
