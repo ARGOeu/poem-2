@@ -176,6 +176,7 @@ class App extends Component {
 
     this.state = {
       isLogged: localStorage.getItem('authIsLogged') ? true : false,
+      isSessionActive: undefined, 
       areYouSureModal: false,
       webApiAggregation: undefined,
       webApiMetric: undefined,
@@ -195,16 +196,20 @@ class App extends Component {
     localStorage.setItem('authFirstName', json.first_name);
     localStorage.setItem('authLastName', json.last_name);
     localStorage.setItem('authIsSuperuser', json.is_superuser);
-    this.setState({isLogged: true});
+    this.setState({isLogged: true, isSessionActive: true});
   } 
 
-  onLogout() {
+  flushLocalStorage() {
     localStorage.removeItem('authUsername');
     localStorage.removeItem('authIsLogged');
     localStorage.removeItem('authFirstName');
     localStorage.removeItem('authLastName');
     localStorage.removeItem('authIsSuperuser');
-    this.setState({isLogged: false});
+  }
+
+  onLogout() {
+    this.flushLocalStorage()
+    this.setState({isLogged: false, isSessionActive: false});
   } 
 
   toggleAreYouSure() {
@@ -229,17 +234,24 @@ class App extends Component {
 
   componentDidMount() {
     this.backend.fetchPoemVersion().then((poemversion) => {
-      this.setState({poemversion: poemversion})
       if (poemversion === 'tenant') {
-        this.state.isLogged && Promise.all([this.fetchToken(), this.fetchConfigOptions()])
-          .then(([token, options]) => {
-            this.setState({
-              token: token,
-              webApiMetric: options.result.webapimetric,
-              webApiAggregation: options.result.webapiaggregation,
-              tenantName: options.result.tenant_name,
+        this.state.isLogged && this.backend.isActiveSession().then(active => {
+          if (active) {
+            Promise.all([this.fetchToken(), this.fetchConfigOptions()])
+            .then(([token, options]) => {
+              this.setState({
+                poemversion: poemversion,
+                isSessionActive: active,
+                token: token,
+                webApiMetric: options.result.webapimetric,
+                webApiAggregation: options.result.webapiaggregation,
+                tenantName: options.result.tenant_name,
+              })
             })
-          })
+          } 
+          else
+            this.flushLocalStorage()
+        })
       }
     })
   }
@@ -247,13 +259,13 @@ class App extends Component {
   componentDidUpdate(prevProps, prevState) {
     // Intentional push to /ui/home route again if history.push 
     // from Login does not trigger rendering of Home 
-    if (this.state.isLogged !== prevState.isLogged && 
+    if (this.state.isSessionActive !== prevState.isSessionActive &&
       this.state.token === undefined)
       window.location = '/ui/home';
   }
 
   render() {
-    if (!this.state.isLogged) {
+    if ((this.state.isLogged && !this.state.isSessionActive) || !this.state.isLogged) {
       return (
         <BrowserRouter>
           <Switch>
@@ -278,7 +290,8 @@ class App extends Component {
         </BrowserRouter>
       )
     }
-    else if (this.state.isLogged && this.state.poemversion) {
+    else if (this.state.isLogged && this.state.isSessionActive &&
+      this.state.poemversion) {
 
       return ( 
         <BrowserRouter>
