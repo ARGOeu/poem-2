@@ -3116,7 +3116,7 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
         self.mtype1 = poem_models.MetricType.objects.create(name='Active')
         group1 = poem_models.GroupOfMetrics.objects.create(name='EGI')
 
-        metric1 = poem_models.Metric.objects.create(
+        self.metric1 = poem_models.Metric.objects.create(
             name='argo.AMS-Check',
             mtype=self.mtype1,
             group=group1,
@@ -3147,9 +3147,9 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
         )
 
         self.ver1 = poem_models.TenantHistory.objects.create(
-            object_id=metric1.id,
+            object_id=self.metric1.id,
             serialized_data=serializers.serialize(
-                'json', [metric1],
+                'json', [self.metric1],
                 use_natural_foreign_keys=True,
                 use_natural_primary_keys=True
             ),
@@ -3160,13 +3160,78 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
             user=self.user.username
         )
 
+        self.metric1.name = 'argo.AMS-Check-new'
+        self.metric1.probeexecutable = '["ams-probe-2"]'
+        self.metric1.config = '["maxCheckAttempts 4", "timeout 60",'\
+                              ' "path /usr/libexec/argo-monitoring/probes/' \
+                              'argo", "interval 5", "retryInterval 3"]'
+        self.metric1.save()
+
+        self.ver2 = poem_models.TenantHistory.objects.create(
+            object_id=self.metric1.id,
+            serialized_data=serializers.serialize(
+                'json', [self.metric1],
+                use_natural_foreign_keys=True,
+                use_natural_primary_keys=True
+            ),
+            object_repr=self.metric1.__str__(),
+            content_type=ct_m,
+            date_created=datetime.datetime.now(),
+            comment='[{"changed": {"fields": ["probeexecutable"]}}, '
+                    '{"changed": {"fields": ["config"], "object": '
+                    '["maxCheckAttempts"]}}]',
+            user=self.user.username
+        )
+
     def test_get_versions_of_metrics(self):
-        request = self.factory.get(self.url + 'metric/argo.AMS-Check')
+        request = self.factory.get(self.url + 'metric/argo.AMS-Check-new')
         force_authenticate(request, user=self.user)
-        response = self.view(request, 'metric', 'argo.AMS-Check')
+        response = self.view(request, 'metric', 'argo.AMS-Check-new')
         self.assertEqual(
             response.data,
             [
+                {
+                    'id': self.ver2.id,
+                    'object_repr': 'argo.AMS-Check-new',
+                    'fields': {
+                        'name': 'argo.AMS-Check-new',
+                        'mtype': self.mtype1.name,
+                        'group': 'EGI',
+                        'probeversion': 'ams-probe (0.1.7)',
+                        'parent': '',
+                        'probeexecutable': 'ams-probe-2',
+                        'config': [
+                            {'key': 'maxCheckAttempts', 'value': '4'},
+                            {'key': 'timeout', 'value': '60'},
+                            {'key': 'path',
+                             'value':
+                                 '/usr/libexec/argo-monitoring/probes/argo'},
+                            {'key': 'interval', 'value': '5'},
+                            {'key': 'retryInterval', 'value': '3'}
+                        ],
+                        'attribute': [
+                            {'key': 'argo.ams_TOKEN', 'value': '--token'}
+                        ],
+                        'dependancy': [],
+                        'flags': [
+                            {'key': 'OBSESS', 'value': '1'}
+                        ],
+                        'files': [],
+                        'parameter': [
+                            {'key': '--project', 'value': 'EGI'}
+                        ],
+                        'fileparameter': []
+                    },
+                    'user': 'testuser',
+                    'date_created': datetime.datetime.strftime(
+                        self.ver2.date_created, '%Y-%m-%d %H:%M:%S'
+                    ),
+                    'comment': 'Changed probeexecutable. Changed '
+                               'config fields "maxCheckAttempts".',
+                    'version': datetime.datetime.strftime(
+                        self.ver2.date_created, '%Y%m%d-%H%M%S'
+                    )
+                },
                 {
                     'id': self.ver1.id,
                     'object_repr': 'argo.AMS-Check',
