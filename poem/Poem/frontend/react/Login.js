@@ -138,7 +138,8 @@ class Login extends Component {
   }
 
   render() {
-    if (this.state.samlIdpString && this.state.poemversion) {
+
+    if (this.state.poemversion) {
       return (
         <Container>
           <Row className="login-first-row">
