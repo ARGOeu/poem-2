@@ -53,7 +53,7 @@ class GetConfigOptions(APIView):
         return Response({'result': options})
 
 
-class GetPoemVersion(APIView):
+class GetIsTenantSchema(APIView):
     authentication_classes = ()
     permission_classes = ()
 
@@ -61,8 +61,8 @@ class GetPoemVersion(APIView):
         schema = connection.schema_name
 
         if schema == get_public_schema_name():
-            resp = 'superadmin'
+            resp = False
         else:
-            resp = 'tenant'
+            resp = True
 
-        return Response({'schema': resp})
+        return Response({'isTenantSchema': resp})

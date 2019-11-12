@@ -2333,18 +2333,18 @@ class ListVersionsAPIViewTests(TenantTestCase):
         )
 
 
-class GetPoemVersionAPIViewTests(TenantTestCase):
+class GetIsTenantSchemaAPIViewTests(TenantTestCase):
     def setUp(self):
         self.factory = TenantRequestFactory(self.tenant)
-        self.view = views.GetPoemVersion.as_view()
-        self.url = '/api/v2/internal/schema/'
+        self.view = views.GetIsTenantSchema.as_view()
+        self.url = '/api/v2/internal/istenantschema/'
 
     def test_get_tenant_schema(self):
         request = self.factory.get(self.url)
         response = self.view(request)
         self.assertEqual(
             response.data,
-            {'schema': 'tenant'}
+            {'isTenantSchema': True}
         )
 
     @patch('Poem.api.internal_views.app.connection')
@@ -2354,7 +2354,7 @@ class GetPoemVersionAPIViewTests(TenantTestCase):
         response = self.view(request)
         self.assertEqual(
             response.data,
-            {'schema': 'superadmin'}
+            {'isTenantSchema': False}
         )
 
 
@@ -4099,7 +4099,11 @@ class HistoryHelpersTests(TenantTestCase):
         m.group = group
         m.save()
 
-        serialized_data = serializers.serialize('json', [m])
+        serialized_data = serializers.serialize(
+            'json', [m],
+            use_natural_foreign_keys=True,
+            use_natural_primary_keys=True
+        )
 
         comment = create_comment(m.id, self.ct_metric, serialized_data)
 
