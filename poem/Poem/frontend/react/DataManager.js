@@ -195,10 +195,10 @@ export class Backend {
       .catch(err => alert('Something went wrong: ' + err))
   }
 
-  fetchPoemVersion() {
-    return fetch('/api/v2/internal/schema')
+  fetchIsTenantSchema() {
+    return fetch('/api/v2/internal/istenantschema')
       .then(response => response.ok ? response.json() : null)
-      .then(json => json['schema'])
+      .then(json => json['isTenantSchema'])
       .catch(err => alert('Something went wrong: ' + err))
   }
 
