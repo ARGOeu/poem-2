@@ -28,7 +28,7 @@ class Login extends Component {
     this.state = {
       samlIdpString: null,
       loginFailedVisible: false,
-      poemversion: null
+      isTenantSchema: null
     };
 
     this.dismissLoginAlert = this.dismissLoginAlert.bind(this);
@@ -67,21 +67,21 @@ class Login extends Component {
       .catch(err => console.log('Something went wrong: ' + err));
   }
 
-  fetchPoemVersion() {
-    return fetch('/api/v2/internal/schema')
+  fetchIsTenantSchema() {
+    return fetch('/api/v2/internal/istenantschema')
       .then(response => response.ok ? response.json() : null)
-      .then(json => json['schema'])
+      .then(json => json['isTenantSchema'])
       .catch(err => console.log('Something went wrong: ' + err))
   }
 
   componentDidMount() {
     this._isMounted = true;
 
-    this.fetchPoemVersion().then(response => {
-      if (response)
-        this._isMounted && this.setState({poemversion: response})
+    this.fetchIsTenantSchema().then(response => {
+      if (response !== null)
+        this._isMounted && this.setState({isTenantSchema: response})
 
-      if (response === 'tenant') {
+      if (response) {
         this.fetchSamlButtonString().then(
           this.isSaml2Logged().then(response => {
             response.ok && response.json().then(
@@ -139,7 +139,7 @@ class Login extends Component {
 
   render() {
 
-    if (this.state.poemversion) {
+    if (this.state.isTenantSchema !== null) {
       return (
         <Container>
           <Row className="login-first-row">
@@ -188,7 +188,7 @@ class Login extends Component {
                       </div>
                       <FormGroup>
                         <Button color="success" type="submit" block>Log in using username and password</Button>
-                        {this.state.poemversion === 'tenant' && <a className="btn btn-success btn-block" role="button" href="/saml2/login">{this.state.samlIdpString}</a>}
+                        {this.state.isTenantSchema && <a className="btn btn-success btn-block" role="button" href="/saml2/login">{this.state.samlIdpString}</a>}
                       </FormGroup>
                     </Form>
                   </Formik>
