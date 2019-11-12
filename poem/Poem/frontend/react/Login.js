@@ -19,8 +19,11 @@ import Cookies from 'universal-cookie';
 
 
 class Login extends Component {
+
   constructor(props) {
     super(props);
+
+    this._isMounted = false;
 
     this.state = {
       samlIdpString: null,
@@ -59,7 +62,8 @@ class Login extends Component {
   fetchSamlButtonString() {
     return fetch('/api/v2/internal/config_options')
       .then(response => response.json())
-      .then(json => this.setState({samlIdpString: json.result.saml_login_string}))
+      .then(json => this._isMounted && 
+        this.setState({samlIdpString: json.result.saml_login_string}))
       .catch(err => console.log('Something went wrong: ' + err));
   }
 
@@ -71,9 +75,11 @@ class Login extends Component {
   }
 
   componentDidMount() {
+    this._isMounted = true;
+
     this.fetchPoemVersion().then(response => {
       if (response)
-        this.setState({poemversion: response})
+        this._isMounted && this.setState({poemversion: response})
 
       if (response === 'tenant') {
         this.fetchSamlButtonString().then(
@@ -82,12 +88,8 @@ class Login extends Component {
               json => {
                 if (Object.keys(json).length > 0) {
                   this.flushSaml2Cache().then(
-                    response => {
-                      if (response.ok) {
-                        this.props.onLogin(json);
-                        this.props.history.push('/ui/home');
-                      }
-                    }
+                    response => response.ok && 
+                      this.props.onLogin(json, this.props.history)
                   )
                 }
               }
@@ -97,6 +99,10 @@ class Login extends Component {
       }
     })
       .catch(err => console.log('Something went wrong: ' + err))
+  }
+
+  componentWillUnmount() {
+    this._isMounted = false;
   }
 
   fetchUserDetails(username) {
@@ -128,11 +134,11 @@ class Login extends Component {
   }
 
   dismissLoginAlert() {
-    this.setState({loginFailedVisible: false});
+    this._isMounted && this.setState({loginFailedVisible: false});
   }
 
   render() {
-    if (this.state.poemversion) {
+    if (this.state.samlIdpString && this.state.poemversion) {
       return (
         <Container>
           <Row className="login-first-row">
@@ -153,10 +159,7 @@ class Login extends Component {
                           {
                             if (response.ok) {
                               response.json().then(
-                                json => {
-                                  this.props.onLogin(json);
-                                  this.props.history.push('/ui/home');
-                                }
+                                json => this.props.onLogin(json, this.props.history)
                               )
                             } 
                             else {

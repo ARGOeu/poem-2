@@ -29,6 +29,13 @@ class ListGroupsForUser(APIView):
             return Response({'result': results})
 
 
+class IsSessionActive(APIView):
+    authentication_classes = (SessionAuthentication,)
+
+    def get(self, request):
+        return Response({'active': True})
+
+
 class GetConfigOptions(APIView):
     authentication_classes = ()
     permission_classes = ()

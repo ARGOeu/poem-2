@@ -19,6 +19,7 @@ import { NavigationBar, CustomBreadcrumb, NavigationLinks, Footer } from './UIEl
 import { NotificationContainer, NotificationManager } from 'react-notifications';
 import { Backend } from './DataManager';
 import { YumRepoList, YumRepoChange } from './YumRepos';
+import Cookies from 'universal-cookie';
 
 import './App.css';
 
@@ -30,6 +31,7 @@ const CustomBreadcrumbWithRouter = withRouter(CustomBreadcrumb);
 
 const TenantRouteSwitch = ({webApiAggregation, webApiMetric, token, tenantName}) => (
   <Switch>
+    <Route exact path="/ui/login" render={() => <Redirect to="/ui/home" />}/>
     <Route exact path="/ui/home" component={Home} />
     <Route exact path="/ui/services" component={Services} />
     <Route exact path="/ui/reports" component={Reports} />
@@ -172,10 +174,12 @@ class App extends Component {
   constructor(props) {
     super(props);
 
+    this.cookies = new Cookies();
     this.backend = new Backend();
 
     this.state = {
       isLogged: localStorage.getItem('authIsLogged') ? true : false,
+      isSessionActive: undefined, 
       areYouSureModal: false,
       webApiAggregation: undefined,
       webApiMetric: undefined,
@@ -189,22 +193,33 @@ class App extends Component {
     this.toggleAreYouSure = this.toggleAreYouSure.bind(this);
   }
 
-  onLogin(json) {
+  onLogin(json, history) {
     localStorage.setItem('authUsername', json.username);
     localStorage.setItem('authIsLogged', true);
     localStorage.setItem('authFirstName', json.first_name);
     localStorage.setItem('authLastName', json.last_name);
     localStorage.setItem('authIsSuperuser', json.is_superuser);
-    this.setState({isLogged: true});
+    this.backend.fetchPoemVersion().then((poemversion) => 
+      poemversion === 'tenant' && 
+      this.initalizeState(poemversion, true, true)).then(
+        setTimeout(() => {
+          history.push('/ui/home');
+        }, 50
+      )).then(this.cookies.set('poemActiveSession', true))
   } 
 
-  onLogout() {
+  flushStorage() {
     localStorage.removeItem('authUsername');
     localStorage.removeItem('authIsLogged');
     localStorage.removeItem('authFirstName');
     localStorage.removeItem('authLastName');
     localStorage.removeItem('authIsSuperuser');
-    this.setState({isLogged: false});
+    this.cookies.remove('poemActiveSession')
+  }
+
+  onLogout() {
+    this.flushStorage()
+    this.setState({isLogged: false, isSessionActive: false});
   } 
 
   toggleAreYouSure() {
@@ -227,33 +242,39 @@ class App extends Component {
       .catch(err => alert('Something went wrong: ' + err))
   }
 
+  initalizeState(poemType, activeSession, isLogged) {
+    return Promise.all([this.fetchToken(), this.fetchConfigOptions()])
+      .then(([token, options]) => {
+        this.setState({
+          poemversion: poemType,
+          isSessionActive: activeSession,
+          isLogged: isLogged,
+          token: token,
+          webApiMetric: options.result.webapimetric,
+          webApiAggregation: options.result.webapiaggregation,
+          tenantName: options.result.tenant_name,
+        })
+      })
+  }
+
   componentDidMount() {
     this.backend.fetchPoemVersion().then((poemversion) => {
-      this.setState({poemversion: poemversion})
       if (poemversion === 'tenant') {
-        this.state.isLogged && Promise.all([this.fetchToken(), this.fetchConfigOptions()])
-          .then(([token, options]) => {
-            this.setState({
-              token: token,
-              webApiMetric: options.result.webapimetric,
-              webApiAggregation: options.result.webapiaggregation,
-              tenantName: options.result.tenant_name,
-            })
-          })
+        this.state.isLogged && this.backend.isActiveSession().then(active => {
+          if (active) {
+            this.initalizeState(poemversion, active, this.state.isLogged)
+          } 
+          else
+            this.flushStorage()
+        })
       }
     })
   }
 
-  componentDidUpdate(prevProps, prevState) {
-    // Intentional push to /ui/home route again if history.push 
-    // from Login does not trigger rendering of Home 
-    if (this.state.isLogged !== prevState.isLogged && 
-      this.state.token === undefined)
-      window.location = '/ui/home';
-  }
-
   render() {
-    if (!this.state.isLogged) {
+    let cookie = this.cookies.get('poemActiveSession')
+
+    if (!cookie || !this.state.isLogged) {
       return (
         <BrowserRouter>
           <Switch>
@@ -278,7 +299,8 @@ class App extends Component {
         </BrowserRouter>
       )
     }
-    else if (this.state.isLogged && this.state.poemversion) {
+    else if (this.state.isLogged && cookie &&
+      this.state.poemversion && this.state.token) {
 
       return ( 
         <BrowserRouter>

@@ -18,8 +18,8 @@ def get_files(install_prefix, directory):
 poem_media_files = get_files("usr/share", "poem/media") + get_files("usr/share/", "poem/static")
 
 setup(name=NAME,
-    version='2.3.0',
-    description='Profile, Probes and Metric Configuration Management (POEM) for ARGO Monitoring framework.',
+    version='3.0.0',
+    description='Profiles, Probes and Metric Configuration Management (POEM) for ARGO Monitoring framework.',
     author='SRCE',
     author_email='dvrcic@srce.hr, kzailac@srce.hr',
     license='Apache License 2.0',
