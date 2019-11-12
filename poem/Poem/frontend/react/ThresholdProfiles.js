@@ -46,22 +46,22 @@ const ThresholdsSchema = Yup.object().shape({
             .matches(/^[a-zA-Z][A-Za-z0-9]*$/, 'Label can contain alphanumeric characters, but must always begin with a letter.')
             .required('Required'),
           value: Yup.string()
-            .matches(/^[0-9.]*$/, 'Must be a number.')
-            .required('Required'),
-          uom: Yup.string()
+            .matches(/^\d*(\.\d+)?$/, 'Must be a number.')
             .required('Required'),
           warn1: Yup.string()
-            .matches(/^[0-9@.~]*$/, 'Must be a number or @ symbol.')
+            .matches(/^[@]?(~|\d*(\.\d+)?)$/, 'Must be a number or ~')
             .required('Required'),
-          warn2: Yup.string(),
+          warn2: Yup.string()
+            .matches(/^\d*(\.\d+)?$/, 'Must be a number.'),
           crit1: Yup.string()
-            .matches(/^[0-9@.~]*$/, 'Must be a number or @ symbol.')
+            .matches(/^[@]?(~|\d*(\.\d+)?)$/, 'Must be a number or ~')
             .required('Required'),
-          crit2: Yup.string(),
+          crit2: Yup.string()
+            .matches(/^\d*(\.\d+)?$/, 'Must be a number.'),
           min: Yup.string()
-            .matches(/^[0-9.]*$/, 'Must be a number.'),
+            .matches(/^\d*(\.\d+)?$/, 'Must be a number.'),
           max: Yup.string()
-            .matches(/^[0-9.]*$/, 'Must be a number.'),
+            .matches(/^\d*(\.\d+)?$/, 'Must be a number.')
         }))
     }))
 });
@@ -498,24 +498,11 @@ export class ThresholdsProfilesChange extends Component {
                                                         <td style={{width: '6%'}}>
                                                           <Field
                                                             component='select'
-                                                            className={
-                                                              (
-                                                                props.errors.rules &&
-                                                                props.errors.rules.length > index &&
-                                                                props.errors.rules[index] &&
-                                                                props.errors.rules[index].thresholds &&
-                                                                props.errors.rules[index].thresholds.length > i &&
-                                                                props.errors.rules[index].thresholds[i] &&
-                                                                props.errors.rules[index].thresholds[i].uom
-                                                              ) ?
-                                                               'form-control border-danger'
-                                                              : 
-                                                                'form-control'
-                                                            }
+                                                            className='form-control'
                                                             name={`rules.${index}.thresholds.${i}.uom`}
                                                             id={`props.values.rules.${index}.thresholds.${i}.uom`}
                                                           >
-                                                            <option key='option-0' value=''>Unit</option>
+                                                            <option key='option-0' value=''></option>
                                                             <option key='option-1' value='s'>s</option>
                                                             <option key='option-2' value='us'>us</option>
                                                             <option key='option-3' value='ms'>ms</option>
@@ -526,18 +513,6 @@ export class ThresholdsProfilesChange extends Component {
                                                             <option key='option-8' value='%'>%</option>
                                                             <option key='option-9' value='c'>c</option>
                                                           </Field>
-                                                          {
-                                                            (
-                                                              props.errors.rules &&
-                                                              props.errors.rules.length > index &&
-                                                              props.errors.rules[index] &&
-                                                              props.errors.rules[index].thresholds &&
-                                                              props.errors.rules[index].thresholds.length > i &&
-                                                              props.errors.rules[index].thresholds[i] &&
-                                                              props.errors.rules[index].thresholds[i].uom
-                                                            ) &&
-                                                              FancyErrorMessage(props.errors.rules[index].thresholds[i].uom)
-                                                          }
                                                         </td>
                                                         <td>
                                                           <Field
