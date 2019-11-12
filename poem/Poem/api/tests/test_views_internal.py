@@ -2106,9 +2106,15 @@ class ListVersionsAPIViewTests(TenantTestCase):
             user=self.user.username
         )
 
+        self.probe1.name = 'poem-probe-new'
         self.probe1.version = '0.1.11'
         self.probe1.comment = 'This version added: Check POEM metric ' \
                               'configuration API'
+        self.probe1.description = 'Probe inspects new POEM service.'
+        self.probe1.repository = 'https://github.com/ARGOeu/nagios-plugins-' \
+                                 'argo2'
+        self.probe1.docurl = 'https://github.com/ARGOeu/nagios-plugins-argo2/' \
+                             'blob/master/README.md'
         self.probe1.save()
 
         self.ver2 = admin_models.History.objects.create(
@@ -2117,10 +2123,11 @@ class ListVersionsAPIViewTests(TenantTestCase):
                 'json', [self.probe1], use_natural_foreign_keys=True,
                 use_natural_primary_keys=True
             ),
-            object_repr='poem-probe (0.1.11)',
+            object_repr='poem-probe-new (0.1.11)',
             content_type=ct,
             date_created=datetime.datetime.now(),
-            comment='[{"changed": {"fields": ["version", "comment"]}}]',
+            comment='[{"changed": {"fields": ["name", "version", '
+                    '"comment", "description", "repository", "docurl"]}}]',
             user=self.user.username
         )
 
@@ -2166,7 +2173,7 @@ class ListVersionsAPIViewTests(TenantTestCase):
             name='Active'
         )
 
-        metrictemplate1 = admin_models.MetricTemplate.objects.create(
+        self.metrictemplate1 = admin_models.MetricTemplate.objects.create(
             name='argo.AMS-Check',
             mtype=self.mtype1,
             probeversion='ams-probe (0.1.7)',
@@ -2181,9 +2188,9 @@ class ListVersionsAPIViewTests(TenantTestCase):
         )
 
         self.ver4 = admin_models.History.objects.create(
-            object_id=metrictemplate1.id,
+            object_id=self.metrictemplate1.id,
             serialized_data=serializers.serialize(
-                'json', [metrictemplate1], use_natural_foreign_keys=True,
+                'json', [self.metrictemplate1], use_natural_foreign_keys=True,
                 use_natural_primary_keys=True
             ),
             object_repr='argo.AMS-Check',
@@ -2193,27 +2200,46 @@ class ListVersionsAPIViewTests(TenantTestCase):
             user=self.user.username
         )
 
+        self.metrictemplate1.name = 'argo.AMS-Check-new'
+        self.metrictemplate1.probeversion = 'poem-probe-new (0.1.11)'
+        self.metrictemplate1.probekey = self.ver2
+        self.metrictemplate1.save()
+
+        self.ver5 = admin_models.History.objects.create(
+            object_id=self.metrictemplate1.id,
+            serialized_data=serializers.serialize(
+                'json', [self.metrictemplate1],
+                use_natural_foreign_keys=True,
+                use_natural_primary_keys=True
+            ),
+            object_repr=self.metrictemplate1.__str__(),
+            content_type=ct_mt,
+            date_created=datetime.datetime.now(),
+            comment='[{"changed": {"fields": ["name", "probeversion"]}}]',
+            user=self.user.username
+        )
+
     def test_get_versions_of_probes(self):
-        request = self.factory.get(self.url + 'probe/poem-probe')
+        request = self.factory.get(self.url + 'probe/poem-probe-new')
         force_authenticate(request, user=self.user)
-        response = self.view(request, 'probe', 'poem-probe')
+        response = self.view(request, 'probe', 'poem-probe-new')
         self.assertEqual(
             response.data,
             [
                 {
                     'id': self.ver2.id,
-                    'object_repr': 'poem-probe (0.1.11)',
+                    'object_repr': 'poem-probe-new (0.1.11)',
                     'fields': {
-                        'name': 'poem-probe',
+                        'name': 'poem-probe-new',
                         'version': '0.1.11',
-                        'nameversion': 'poem-probe (0.1.11)',
-                        'description': 'Probe inspects POEM service.',
+                        'nameversion': 'poem-probe-new (0.1.11)',
+                        'description': 'Probe inspects new POEM service.',
                         'comment': 'This version added: Check POEM metric '
                                    'configuration API',
                         'repository': 'https://github.com/ARGOeu/nagios-'
-                                      'plugins-argo',
+                                      'plugins-argo2',
                         'docurl': 'https://github.com/ARGOeu/nagios-plugins-'
-                                  'argo/blob/master/README.md',
+                                  'argo2/blob/master/README.md',
                         'user': 'testuser',
                         'datetime': datetime.datetime.strftime(
                             self.probe1.datetime, '%Y-%m-%dT%H:%M:%S.%f'
@@ -2223,7 +2249,8 @@ class ListVersionsAPIViewTests(TenantTestCase):
                     'date_created': datetime.datetime.strftime(
                             self.ver2.date_created, '%Y-%m-%d %H:%M:%S'
                         ),
-                    'comment': 'Changed version and comment.',
+                    'comment': 'Changed name, version, comment, description, '
+                               'repository and docurl.',
                     'version': '0.1.11'
                 },
                 {
@@ -2252,16 +2279,56 @@ class ListVersionsAPIViewTests(TenantTestCase):
                     'version': '0.1.7'
                 }
             ]
-
         )
 
     def test_get_versions_of_metric_template(self):
-        request = self.factory.get(self.url + 'metrictemplate/argo.AMS-Check')
+        request = self.factory.get(self.url +
+                                   'metrictemplate/argo.AMS-Check-new')
         force_authenticate(request, user=self.user)
-        response = self.view(request, 'metrictemplate', 'argo.AMS-Check')
+        response = self.view(request, 'metrictemplate', 'argo.AMS-Check-new')
         self.assertEqual(
             response.data,
             [
+                {
+                    'id': self.ver5.id,
+                    'object_repr': 'argo.AMS-Check-new',
+                    'fields': {
+                        'name': 'argo.AMS-Check-new',
+                        'mtype': self.mtype1.name,
+                        'probeversion': 'poem-probe-new (0.1.11)',
+                        'parent': '',
+                        'probeexecutable': 'ams-probe',
+                        'config': [
+                            {'key': 'maxCheckAttempts', 'value': '3'},
+                            {'key': 'timeout', 'value': '60'},
+                            {'key': 'path',
+                             'value':
+                                 '/usr/libexec/argo-monitoring/probes/argo'},
+                            {'key': 'interval', 'value': '5'},
+                            {'key': 'retryInterval', 'value': '3'}
+                        ],
+                        'attribute': [
+                            {'key': 'argo.ams_TOKEN', 'value': '--token'}
+                        ],
+                        'dependency': [],
+                        'flags': [
+                            {'key': 'OBSESS', 'value': '1'}
+                        ],
+                        'files': [],
+                        'parameter': [
+                            {'key': '--project', 'value': 'EGI'}
+                        ],
+                        'fileparameter': []
+                    },
+                    'user': 'testuser',
+                    'date_created': datetime.datetime.strftime(
+                        self.ver5.date_created, '%Y-%m-%d %H:%M:%S'
+                    ),
+                    'comment': 'Changed name and probeversion.',
+                    'version': datetime.datetime.strftime(
+                        self.ver5.date_created, '%Y%m%d-%H%M%S'
+                    )
+                },
                 {
                     'id': self.ver4.id,
                     'object_repr': 'argo.AMS-Check',
@@ -2327,8 +2394,8 @@ class ListVersionsAPIViewTests(TenantTestCase):
             [r for r in response.data],
             [
                 'ams-publisher-probe (0.1.11)',
-                'poem-probe (0.1.11)',
-                'poem-probe (0.1.7)'
+                'poem-probe (0.1.7)',
+                'poem-probe-new (0.1.11)'
             ]
         )
 
