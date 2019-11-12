@@ -1,8 +1,8 @@
 {
   "name": "poem",
-  "version": "1.0.0",
-  "author": "Daniel Vrcic <dvrcic@srce.hr>",
-  "description": "React code embedded into POEM Django web application",
+  "version": "3.0.0",
+  "author": "Daniel Vrcic <dvrcic@srce.hr>, Katarina Zailac <kzailac@srce.hr>",
+  "description": "React frontend for POEM Django web application",
   "main": "webpack.config.js",
   "scripts": {
     "build-devel": "webpack --config webpack.config.js --progress --colors --mode development",
@@ -11,10 +11,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ARGOeu/poem.git"
+    "url": "git+https://github.com/ARGOeu/poem-2.git"
   },
   "license": "ISC",
-  "homepage": "https://github.com/ARGOeu/poem",
+  "homepage": "https://github.com/ARGOeu/poem-2",
   "devDependencies": {
     "@babel/core": "^7.4.5",
     "@babel/plugin-proposal-object-rest-spread": "^7.4.4",
@@ -63,6 +63,6 @@
     "universal-cookie": "^3.1.0"
   },
   "bugs": {
-    "url": "https://github.com/ARGOeu/poem/issues"
+    "url": "https://github.com/ARGOeu/poem-2/issues"
   }
 }
