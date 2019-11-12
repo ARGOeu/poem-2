@@ -35,7 +35,7 @@ export class YumRepoList extends Component {
     this.state = {
       loading: false,
       list_repos: null,
-      poemversion: null,
+      isTenantSchema: null,
       search_name: '',
       search_description: ''
     };
@@ -48,22 +48,22 @@ export class YumRepoList extends Component {
 
     Promise.all([
       this.backend.fetchYumRepos(),
-      this.backend.fetchPoemVersion()
+      this.backend.fetchIsTenantSchema()
     ])
-      .then(([repos, ver]) => {
+      .then(([repos, isTenantSchema]) => {
         this.setState({
           list_repos: repos,
-          poemversion: ver,
+          isTenantSchema: isTenantSchema,
           loading: false
         });
       });
   };
 
   render() {
-    var { list_repos, poemversion, loading } = this.state;
+    var { list_repos, isTenantSchema, loading } = this.state;
     let repolink = undefined;
 
-    if (poemversion === 'superadmin')
+    if (!isTenantSchema)
       repolink = '/ui/yumrepos/';
     else
       repolink = '/ui/administration/yumrepos/'
@@ -132,7 +132,7 @@ export class YumRepoList extends Component {
           resourcename='YUM repo'
           location={this.location}
           listview={true}
-          addnew={poemversion === 'superadmin'}
+          addnew={!isTenantSchema}
         >
           <ReactTable
             data={list_repos}

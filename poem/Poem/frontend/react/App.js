@@ -186,7 +186,7 @@ class App extends Component {
       webApiMetric: undefined,
       tenantName: undefined,
       token: undefined,
-      poemversion: undefined
+      isTenantSchema: null
     };
 
     this.onLogin = this.onLogin.bind(this);
@@ -201,8 +201,8 @@ class App extends Component {
     localStorage.setItem('authFirstName', json.first_name);
     localStorage.setItem('authLastName', json.last_name);
     localStorage.setItem('authIsSuperuser', json.is_superuser);
-    this.backend.fetchPoemVersion().then((poemversion) => 
-      this.initalizeState(poemversion, true, true)).then(
+    this.backend.fetchIsTenantSchema().then((isTenantSchema) => 
+      this.initalizeState(isTenantSchema, true, true)).then(
         setTimeout(() => {
           history.push('/ui/home');
         }, 50
@@ -244,11 +244,11 @@ class App extends Component {
   }
 
   initalizeState(poemType, activeSession, isLogged) {
-    if (poemType === 'tenant') {
+    if (poemType) {
       return Promise.all([this.fetchToken(), this.fetchConfigOptions()])
         .then(([token, options]) => {
           this.setState({
-            poemversion: poemType,
+            isTenantSchema: poemType,
             isSessionActive: activeSession,
             isLogged: isLogged,
             token: token,
@@ -260,7 +260,7 @@ class App extends Component {
     }
     else {
       this.setState({
-        poemversion: poemType,
+        isTenantSchema: poemType,
         isSessionActive: activeSession,
         isLogged: isLogged,
       })
@@ -268,10 +268,10 @@ class App extends Component {
   }
 
   componentDidMount() {
-    this.backend.fetchPoemVersion().then((poemversion) => {
+    this.backend.fetchIsTenantSchema().then((isTenantSchema) => {
       this.state.isLogged && this.backend.isActiveSession().then(active => {
         if (active) {
-          this.initalizeState(poemversion, active, this.state.isLogged)
+          this.initalizeState(isTenantSchema, active, this.state.isLogged)
         } 
         else
           this.flushStorage()
@@ -308,7 +308,7 @@ class App extends Component {
       )
     }
     else if (this.state.isLogged && cookie &&
-      this.state.poemversion) {
+      this.state.isTenantSchema !== null) {
 
       return ( 
         <BrowserRouter>
@@ -326,12 +326,12 @@ class App extends Component {
             </Row>
             <Row className="no-gutters">
               <Col sm={{size: 2}} md={{size: 2}} className="d-flex flex-column">
-                <NavigationLinksWithRouter poemver={this.state.poemversion}/>
+                <NavigationLinksWithRouter isTenantSchema={this.state.isTenantSchema}/>
                 <div id="sidebar-grow" className="flex-grow-1 border-left border-right rounded-bottom"/>
               </Col>
               <Col>
                 <CustomBreadcrumbWithRouter />
-                {this.state.poemversion === 'tenant' ? 
+                {this.state.isTenantSchema ? 
                   <TenantRouteSwitch 
                     webApiMetric={this.state.webApiMetric}
                     webApiAggregation={this.state.webApiAggregation}

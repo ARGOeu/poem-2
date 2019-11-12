@@ -208,7 +208,7 @@ export class ProbeList extends Component {
     this.state = {
       loading: false,
       list_probe: null,
-      poemversion: null,
+      isTenantSchema: null,
       search_name: '',
       search_description: ''
     };
@@ -221,12 +221,12 @@ export class ProbeList extends Component {
 
     Promise.all([
       this.backend.fetchAllProbes(),
-      this.backend.fetchPoemVersion()
+      this.backend.fetchIsTenantSchema()
     ])
-      .then(([json, ver]) =>
+      .then(([json, isTenantSchema]) =>
         this.setState({
           list_probe: json,
-          poemversion: ver,
+          isTenantSchema: isTenantSchema,
           loading: false,
           search_name: ''
         }))
@@ -294,7 +294,7 @@ export class ProbeList extends Component {
       }
     ];
 
-    var { poemversion, list_probe, loading } = this.state;
+    var { isTenantSchema, list_probe, loading } = this.state;
 
     if (this.state.search_name) {
       list_probe = list_probe.filter(row => 
@@ -316,7 +316,7 @@ export class ProbeList extends Component {
         <React.Fragment>
           <div className="d-flex align-items-center justify-content-between">
             {
-              poemversion === 'tenant' ?
+              isTenantSchema ?
                 <React.Fragment>
                   <h2 className="ml-3 mt-1 mb-4">{'Select probe for details'}</h2>
                 </React.Fragment>
@@ -356,7 +356,7 @@ export class ProbeChange extends Component {
 
     this.state = {
       probe: {},
-      poemversion: null,
+      isTenantSchema: null,
       metrictemplatelist: [],
       validationVisible: true,
       new_version: true,
@@ -499,14 +499,14 @@ export class ProbeChange extends Component {
     if (!this.addview) {
       Promise.all([
         this.backend.fetchProbeByName(this.name),
-        this.backend.fetchPoemVersion()
+        this.backend.fetchIsTenantSchema()
       ])
-          .then(([probe, ver]) => {
+          .then(([probe, isTenantSchema]) => {
             this.backend.fetchMetricTemplatesByProbeVersion(probe.name + '(' + probe.version + ')')
             .then(metrics => {
               this.setState({
                 probe: probe,
-                poemversion: ver,
+                isTenantSchema: isTenantSchema,
                 metrictemplatelist: metrics,
                 write_perm: localStorage.getItem('authIsSuperuser') === 'true',
                 loading: false
@@ -514,8 +514,8 @@ export class ProbeChange extends Component {
             })
           });
     } else {
-      this.backend.fetchPoemVersion()
-        .then((ver) => {
+      this.backend.fetchIsTenantSchema()
+        .then((isTenantSchema) => {
           this.setState({
             probe: {
               id: '',
@@ -526,7 +526,7 @@ export class ProbeChange extends Component {
               description: '',
               comment: ''
             },
-            poemversion: ver,
+            isTenantSchema: isTenantSchema,
             write_perm: localStorage.getItem('authIsSuperuser') === 'true',
             loading: false
           })
@@ -535,13 +535,13 @@ export class ProbeChange extends Component {
   }
 
   render() {
-    const { probe, new_version, update_metrics, poemversion, metrictemplatelist, write_perm, loading } = this.state;
+    const { probe, new_version, update_metrics, isTenantSchema, metrictemplatelist, write_perm, loading } = this.state;
 
     if (loading)
       return(<LoadingAnim/>)
 
     else if (!loading) {
-      if (poemversion === 'superadmin') {
+      if (!isTenantSchema) {
         return (
           <BaseArgoView
             resourcename='Probes'

@@ -232,9 +232,9 @@ export const NavigationBar = ({history, onLogout, isOpenModal, toggle, titleModa
 )
 
 
-export const NavigationLinks = ({location, poemver}) => {
+export const NavigationLinks = ({location, isTenantSchema}) => {
   var data = undefined;
-  poemver === 'superadmin' ? data = admin_list_pages : data = list_pages
+  !isTenantSchema ? data = admin_list_pages : data = list_pages
 
   return (
     <Nav vertical pills id="argo-navlinks" className="border-left border-right border-top rounded-top sticky-top">
