@@ -23,6 +23,7 @@ import {
   Card,
   CardHeader,
   CardBody,
+  CardFooter,
   Button,
   Popover,
   PopoverBody,
@@ -305,7 +306,7 @@ export class ThresholdsProfilesChange extends Component {
                 <FormGroup>
                 <h4 className="mt-2 p-1 pl-3 text-light text-uppercase rounded" style={{"backgroundColor": "#416090"}}>Thresholds rules</h4>
                 <Row>
-                  <Col md={9}>
+                  <Col md={12}>
                     <FieldArray
                       name='rules'
                       render={arrayHelpers => (
@@ -314,7 +315,7 @@ export class ThresholdsProfilesChange extends Component {
                             props.values.rules.map((rule, index) => 
                               <React.Fragment key={`fragment.rules.${index}`}>
                                 <Card className={index === 0 ? 'mt-1' : 'mt-4'}>
-                                  <CardHeader className='p-1 font-weight-bold text-light text-uppercase' style={{backgroundColor: '#416090'}}>
+                                  <CardHeader className='p-1 font-weight-bold text-uppercase'>
                                     <div className='d-flex align-items-center justify-content-between no-gutters'>
                                       Rule {index + 1}
                                       <Button
@@ -379,9 +380,11 @@ export class ThresholdsProfilesChange extends Component {
                                         </InputGroup>
                                       </Col>
                                     </Row>
+                                    </CardBody>
+                                    <CardFooter>
                                     <Row className='mt-2'>
                                       <Col md={12}>
-                                        <h6 className="mt-2 alert-info p-1 pl-3 text-light text-uppercase rounded" style={{'backgroundColor': "#416090"}}>Thresholds</h6>
+                                        <h6 className="text-uppercase rounded">Thresholds</h6>
                                         <FieldArray
                                           name={`rules.${index}.thresholds`}
                                           render={thresholdHelpers => (
@@ -718,7 +721,7 @@ export class ThresholdsProfilesChange extends Component {
                                                               FancyErrorMessage(props.errors.rules[index].thresholds[i].max)
                                                           }
                                                         </td>
-                                                        <td className='align-middle pl-3'>
+                                                        <td className='align-middle d-flex justify-content-center align-items-center'>
                                                           <Button
                                                             size='sm'
                                                             color='light'
@@ -773,7 +776,7 @@ export class ThresholdsProfilesChange extends Component {
                                         />
                                       </Col>
                                     </Row>
-                                  </CardBody>
+                                  </CardFooter>
                                 </Card>
                                 {
                                   ((index + 1) === props.values.rules.length) &&
