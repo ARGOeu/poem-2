@@ -295,7 +295,7 @@ class App extends Component {
             />
             <Route
               exact 
-              path="/ui/(home|services|reports|metricprofiles|aggregationprofiles|administration)"
+              path="/ui/(home|services|probes|reports|probes|metrics|metricprofiles|aggregationprofiles|administration|metrictemplates|yumrepos)"
               render={props => (
                 <Redirect to={{
                   pathname: '/ui/login',
