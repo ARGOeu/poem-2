@@ -138,6 +138,7 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, token, tenantName})
 
 const SuperAdminRouteSwitch = ({props}) => (
   <Switch>
+    <Route exact path="/ui/login" render={() => <Redirect to="/ui/home" />}/>
     <Route exact path="/ui/home" component={Home} />
     <Route exact path="/ui/probes" component={ProbeList} />
     <Route exact path="/ui/probes/add" render={props => <ProbeChange {...props} addview={true}/>}/>
@@ -191,6 +192,7 @@ class App extends Component {
     this.onLogin = this.onLogin.bind(this);
     this.onLogout = this.onLogout.bind(this);
     this.toggleAreYouSure = this.toggleAreYouSure.bind(this);
+    this.flushStorage = this.flushStorage.bind(this);
   }
 
   onLogin(json, history) {
@@ -200,7 +202,6 @@ class App extends Component {
     localStorage.setItem('authLastName', json.last_name);
     localStorage.setItem('authIsSuperuser', json.is_superuser);
     this.backend.fetchPoemVersion().then((poemversion) => 
-      poemversion === 'tenant' && 
       this.initalizeState(poemversion, true, true)).then(
         setTimeout(() => {
           history.push('/ui/home');
@@ -243,31 +244,38 @@ class App extends Component {
   }
 
   initalizeState(poemType, activeSession, isLogged) {
-    return Promise.all([this.fetchToken(), this.fetchConfigOptions()])
-      .then(([token, options]) => {
-        this.setState({
-          poemversion: poemType,
-          isSessionActive: activeSession,
-          isLogged: isLogged,
-          token: token,
-          webApiMetric: options.result.webapimetric,
-          webApiAggregation: options.result.webapiaggregation,
-          tenantName: options.result.tenant_name,
+    if (poemType === 'tenant') {
+      return Promise.all([this.fetchToken(), this.fetchConfigOptions()])
+        .then(([token, options]) => {
+          this.setState({
+            poemversion: poemType,
+            isSessionActive: activeSession,
+            isLogged: isLogged,
+            token: token,
+            webApiMetric: options && options.result.webapimetric,
+            webApiAggregation: options && options.result.webapiaggregation,
+            tenantName: options && options.result.tenant_name,
+          })
         })
+    }
+    else {
+      this.setState({
+        poemversion: poemType,
+        isSessionActive: activeSession,
+        isLogged: isLogged,
       })
+    }
   }
 
   componentDidMount() {
     this.backend.fetchPoemVersion().then((poemversion) => {
-      if (poemversion === 'tenant') {
-        this.state.isLogged && this.backend.isActiveSession().then(active => {
-          if (active) {
-            this.initalizeState(poemversion, active, this.state.isLogged)
-          } 
-          else
-            this.flushStorage()
-        })
-      }
+      this.state.isLogged && this.backend.isActiveSession().then(active => {
+        if (active) {
+          this.initalizeState(poemversion, active, this.state.isLogged)
+        } 
+        else
+          this.flushStorage()
+      })
     })
   }
 
@@ -287,7 +295,7 @@ class App extends Component {
             />
             <Route
               exact 
-              path="/ui/(home|services|reports|metricprofiles|aggregationprofiles|administration)"
+              path="/ui/(home|services|probes|reports|probes|metrics|metricprofiles|aggregationprofiles|administration|metrictemplates|yumrepos)"
               render={props => (
                 <Redirect to={{
                   pathname: '/ui/login',
@@ -300,7 +308,7 @@ class App extends Component {
       )
     }
     else if (this.state.isLogged && cookie &&
-      this.state.poemversion && this.state.token) {
+      this.state.poemversion) {
 
       return ( 
         <BrowserRouter>
