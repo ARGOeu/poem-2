@@ -390,9 +390,9 @@ export class ThresholdsProfilesChange extends Component {
                                                 <thead className='table-active'>
                                                   <tr className='align-middle text-center'>
                                                     <th style={{width: '4%'}}>#</th>
-                                                    <th style={{width: '12%'}}>Label</th>
-                                                    <th colSpan={2} style={{width: '12%'}}>Value</th>
-                                                    <th colSpan={3} style={{width: '12%'}}>
+                                                    <th style={{width: '13%'}}>Label</th>
+                                                    <th colSpan={2} style={{width: '13%'}}>Value</th>
+                                                    <th colSpan={3} style={{width: '13%'}}>
                                                       Warning <FontAwesomeIcon id='warning-popover' icon={faInfoCircle} style={{color: '#416090'}}/>
                                                       <Popover placement='bottom' isOpen={this.state.popoverWarningOpen} target='warning-popover' toggle={this.toggleWarningPopOver} trigger='hover'>
                                                         <PopoverHeader>Warning range</PopoverHeader>
@@ -404,7 +404,7 @@ export class ThresholdsProfilesChange extends Component {
                                                         </PopoverBody>
                                                       </Popover>
                                                     </th>
-                                                    <th colSpan={3} style={{width: '12%'}}>
+                                                    <th colSpan={3} style={{width: '13%'}}>
                                                       Critical <FontAwesomeIcon id='critical-popover' icon={faInfoCircle} style={{color: '#416090'}}/>
                                                       <Popover placement='bottom' isOpen={this.state.popoverCriticalOpen} target='critical-popover' toggle={this.toggleCriticalPopOver} trigger='hover'>
                                                         <PopoverHeader>Critical range</PopoverHeader>
@@ -418,7 +418,7 @@ export class ThresholdsProfilesChange extends Component {
                                                     </th>
                                                     <th style={{width: '12%'}}>min</th>
                                                     <th style={{width: '12%'}}>max</th>
-                                                    <th style={{width: '12%'}}>Action</th>
+                                                    <th style={{width: '8%'}}>Action</th>
                                                   </tr>
                                                 </thead>
                                                 <tbody>
