@@ -19,6 +19,7 @@ import { NavigationBar, CustomBreadcrumb, NavigationLinks, Footer } from './UIEl
 import { NotificationContainer, NotificationManager } from 'react-notifications';
 import { Backend } from './DataManager';
 import { YumRepoList, YumRepoChange } from './YumRepos';
+import Cookies from 'universal-cookie';
 
 import './App.css';
 
@@ -30,6 +31,7 @@ const CustomBreadcrumbWithRouter = withRouter(CustomBreadcrumb);
 
 const TenantRouteSwitch = ({webApiAggregation, webApiMetric, token, tenantName}) => (
   <Switch>
+    <Route exact path="/ui/login" render={() => <Redirect to="/ui/home" />}/>
     <Route exact path="/ui/home" component={Home} />
     <Route exact path="/ui/services" component={Services} />
     <Route exact path="/ui/reports" component={Reports} />
@@ -172,6 +174,7 @@ class App extends Component {
   constructor(props) {
     super(props);
 
+    this.cookies = new Cookies();
     this.backend = new Backend();
 
     this.state = {
@@ -201,20 +204,21 @@ class App extends Component {
       this.initalizeState(poemversion, true, true)).then(
         setTimeout(() => {
           history.push('/ui/home');
-        }, 200
-      ))
+        }, 50
+      )).then(this.cookies.set('poemActiveSession', true))
   } 
 
-  flushLocalStorage() {
+  flushStorage() {
     localStorage.removeItem('authUsername');
     localStorage.removeItem('authIsLogged');
     localStorage.removeItem('authFirstName');
     localStorage.removeItem('authLastName');
     localStorage.removeItem('authIsSuperuser');
+    this.cookies.remove('poemActiveSession')
   }
 
   onLogout() {
-    this.flushLocalStorage()
+    this.flushStorage()
     this.setState({isLogged: false, isSessionActive: false});
   } 
 
@@ -261,14 +265,16 @@ class App extends Component {
             this.initalizeState(poemversion, active, this.state.isLogged)
           } 
           else
-            this.flushLocalStorage()
+            this.flushStorage()
         })
       }
     })
   }
 
   render() {
-    if ((this.state.isLogged && !this.state.isSessionActive) || !this.state.isLogged) {
+    let cookie = this.cookies.get('poemActiveSession')
+
+    if (!cookie || !this.state.isLogged) {
       return (
         <BrowserRouter>
           <Switch>
@@ -293,8 +299,8 @@ class App extends Component {
         </BrowserRouter>
       )
     }
-    else if (this.state.isLogged && this.state.isSessionActive &&
-      this.state.poemversion) {
+    else if (this.state.isLogged && cookie &&
+      this.state.poemversion && this.state.token) {
 
       return ( 
         <BrowserRouter>
