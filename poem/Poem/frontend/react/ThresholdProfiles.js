@@ -338,6 +338,7 @@ export class ThresholdsProfilesChange extends Component {
                                           req={
                                             props.errors.rules && 
                                             props.errors.rules.length > index && 
+                                            props.errors.rules[index] &&
                                             props.errors.rules[index].metric
                                           }
                                           lists={metrics_list}
@@ -350,6 +351,7 @@ export class ThresholdsProfilesChange extends Component {
                                           (
                                             props.errors.rules && 
                                             props.errors.rules.length > index && 
+                                            props.errors.rules[index] &&
                                             props.errors.rules[index].metric
                                             ) &&
                                             FancyErrorMessage(props.errors.rules[index].metric)
