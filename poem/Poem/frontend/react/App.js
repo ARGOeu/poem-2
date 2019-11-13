@@ -344,7 +344,7 @@ class App extends Component {
             </Row>
             <Row>
               <Col>
-                <Footer addBorder={true}/>
+                <Footer loginPage={false}/>
               </Col>
             </Row>
           </Container>
