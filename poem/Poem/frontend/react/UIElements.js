@@ -274,7 +274,7 @@ const InnerFooter = ({border=false}) =>
 (
   <React.Fragment>
     {
-      border && <div className="pt-3"/>
+      border && <div className="pt-1"/>
     }
     <div className="text-center pt-1">
       <img src={EULogo} id="eulogo" alt="EU logo"/>
@@ -298,18 +298,18 @@ const InnerFooter = ({border=false}) =>
 )
 
 
-export const Footer = ({addBorder=false}) =>
+export const Footer = ({loginPage=false}) =>
 {
-  if (addBorder) {
+  if (!loginPage) {
     return (
       <div id="argo-footer" className="border rounded">
-        <InnerFooter border={addBorder}/>
+        <InnerFooter border={true}/>
       </div>
     )
   }
   else {
     return (
-      <div id="argo-footer">
+      <div id="argo-loginfooter">
         <InnerFooter />
       </div>
     )

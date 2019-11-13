@@ -325,7 +325,7 @@ class App extends Component {
               </Col>
             </Row>
             <Row className="no-gutters">
-              <Col sm={{size: 2}} md={{size: 2}} className="d-flex flex-column">
+              <Col sm={{size: 2}} md={{size: 2}} id="sidebar-col" className="d-flex flex-column">
                 <NavigationLinksWithRouter isTenantSchema={this.state.isTenantSchema}/>
                 <div id="sidebar-grow" className="flex-grow-1 border-left border-right rounded-bottom"/>
               </Col>
@@ -344,7 +344,7 @@ class App extends Component {
             </Row>
             <Row>
               <Col>
-                <Footer addBorder={true}/>
+                <Footer loginPage={false}/>
               </Col>
             </Row>
           </Container>

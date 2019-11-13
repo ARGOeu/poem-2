@@ -1,5 +1,11 @@
 #argo-footer {
   background-color: #ffffff;
+  max-height: 92px;
+}
+
+#argo-loginfooter {
+  background-color: #ffffff;
+  max-height: 155px;
 }
 
 #argo-navbar-logout {
