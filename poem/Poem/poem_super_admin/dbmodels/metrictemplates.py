@@ -3,9 +3,16 @@ from django.db import models
 from Poem.poem_super_admin.models import History
 
 
+class MetricTemplateTypeManager(models.Manager):
+    def get_by_natural_key(self, name):
+        return self.get(name=name)
+
+
 class MetricTemplateType(models.Model):
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=128)
+
+    objects = MetricTemplateTypeManager()
 
     class Meta:
         app_label = 'poem_super_admin'

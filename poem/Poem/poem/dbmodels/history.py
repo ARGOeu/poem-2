@@ -2,6 +2,11 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import models
 
 
+class TenantHistoryManager(models.Manager):
+    def get_by_natural_key(self, object_repr):
+        return self.get(object_repr=object_repr)
+
+
 class TenantHistory(models.Model):
     """
     Tenant history model is going to store versions of tenant specific
@@ -15,6 +20,8 @@ class TenantHistory(models.Model):
     date_created = models.DateTimeField(auto_now_add=True)
     comment = models.TextField(blank=True)
     user = models.CharField(max_length=32)
+
+    objects = TenantHistoryManager()
 
     class Meta:
         app_label = 'poem'
