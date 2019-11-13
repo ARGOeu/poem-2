@@ -274,7 +274,7 @@ const InnerFooter = ({border=false}) =>
 (
   <React.Fragment>
     {
-      border && <div className="pt-3"/>
+      border && <div className="pt-1"/>
     }
     <div className="text-center pt-1">
       <img src={EULogo} id="eulogo" alt="EU logo"/>
