@@ -298,18 +298,18 @@ const InnerFooter = ({border=false}) =>
 )
 
 
-export const Footer = ({addBorder=false}) =>
+export const Footer = ({loginPage=false}) =>
 {
-  if (addBorder) {
+  if (!loginPage) {
     return (
       <div id="argo-footer" className="border rounded">
-        <InnerFooter border={addBorder}/>
+        <InnerFooter border={true}/>
       </div>
     )
   }
   else {
     return (
-      <div id="argo-footer">
+      <div id="argo-loginfooter">
         <InnerFooter />
       </div>
     )
