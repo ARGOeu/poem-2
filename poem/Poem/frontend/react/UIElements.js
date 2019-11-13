@@ -238,9 +238,9 @@ export const NavigationBar = ({history, onLogout, isOpenModal, toggle, titleModa
 )
 
 
-export const NavigationLinks = ({location, poemver}) => {
+export const NavigationLinks = ({location, isTenantSchema}) => {
   var data = undefined;
-  poemver === 'superadmin' ? data = admin_list_pages : data = list_pages
+  !isTenantSchema ? data = admin_list_pages : data = list_pages
 
   return (
     <Nav vertical pills id="argo-navlinks" className="border-left border-right border-top rounded-top sticky-top">
@@ -280,7 +280,7 @@ const InnerFooter = ({border=false}) =>
 (
   <React.Fragment>
     {
-      border && <div className="pt-3"/>
+      border && <div className="pt-1"/>
     }
     <div className="text-center pt-1">
       <img src={EULogo} id="eulogo" alt="EU logo"/>
@@ -304,18 +304,18 @@ const InnerFooter = ({border=false}) =>
 )
 
 
-export const Footer = ({addBorder=false}) =>
+export const Footer = ({loginPage=false}) =>
 {
-  if (addBorder) {
+  if (!loginPage) {
     return (
       <div id="argo-footer" className="border rounded">
-        <InnerFooter border={addBorder}/>
+        <InnerFooter border={true}/>
       </div>
     )
   }
   else {
     return (
-      <div id="argo-footer">
+      <div id="argo-loginfooter">
         <InnerFooter />
       </div>
     )

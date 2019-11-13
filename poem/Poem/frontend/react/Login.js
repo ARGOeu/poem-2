@@ -19,13 +19,16 @@ import Cookies from 'universal-cookie';
 
 
 class Login extends Component {
+
   constructor(props) {
     super(props);
+
+    this._isMounted = false;
 
     this.state = {
       samlIdpString: null,
       loginFailedVisible: false,
-      poemversion: null
+      isTenantSchema: null
     };
 
     this.dismissLoginAlert = this.dismissLoginAlert.bind(this);
@@ -59,35 +62,34 @@ class Login extends Component {
   fetchSamlButtonString() {
     return fetch('/api/v2/internal/config_options')
       .then(response => response.json())
-      .then(json => this.setState({samlIdpString: json.result.saml_login_string}))
+      .then(json => this._isMounted && 
+        this.setState({samlIdpString: json.result.saml_login_string}))
       .catch(err => console.log('Something went wrong: ' + err));
   }
 
-  fetchPoemVersion() {
-    return fetch('/api/v2/internal/schema')
+  fetchIsTenantSchema() {
+    return fetch('/api/v2/internal/istenantschema')
       .then(response => response.ok ? response.json() : null)
-      .then(json => json['schema'])
+      .then(json => json['isTenantSchema'])
       .catch(err => console.log('Something went wrong: ' + err))
   }
 
   componentDidMount() {
-    this.fetchPoemVersion().then(response => {
-      if (response)
-        this.setState({poemversion: response})
+    this._isMounted = true;
 
-      if (response === 'tenant') {
+    this.fetchIsTenantSchema().then(response => {
+      if (response !== null)
+        this._isMounted && this.setState({isTenantSchema: response})
+
+      if (response) {
         this.fetchSamlButtonString().then(
           this.isSaml2Logged().then(response => {
             response.ok && response.json().then(
               json => {
                 if (Object.keys(json).length > 0) {
                   this.flushSaml2Cache().then(
-                    response => {
-                      if (response.ok) {
-                        this.props.onLogin(json);
-                        this.props.history.push('/ui/home');
-                      }
-                    }
+                    response => response.ok && 
+                      this.props.onLogin(json, this.props.history)
                   )
                 }
               }
@@ -97,6 +99,10 @@ class Login extends Component {
       }
     })
       .catch(err => console.log('Something went wrong: ' + err))
+  }
+
+  componentWillUnmount() {
+    this._isMounted = false;
   }
 
   fetchUserDetails(username) {
@@ -128,11 +134,12 @@ class Login extends Component {
   }
 
   dismissLoginAlert() {
-    this.setState({loginFailedVisible: false});
+    this._isMounted && this.setState({loginFailedVisible: false});
   }
 
   render() {
-    if (this.state.poemversion) {
+
+    if (this.state.isTenantSchema !== null) {
       return (
         <Container>
           <Row className="login-first-row">
@@ -153,10 +160,7 @@ class Login extends Component {
                           {
                             if (response.ok) {
                               response.json().then(
-                                json => {
-                                  this.props.onLogin(json);
-                                  this.props.history.push('/ui/home');
-                                }
+                                json => this.props.onLogin(json, this.props.history)
                               )
                             } 
                             else {
@@ -184,13 +188,13 @@ class Login extends Component {
                       </div>
                       <FormGroup>
                         <Button color="success" type="submit" block>Log in using username and password</Button>
-                        {this.state.poemversion === 'tenant' && <a className="btn btn-success btn-block" role="button" href="/saml2/login">{this.state.samlIdpString}</a>}
+                        {this.state.isTenantSchema && <a className="btn btn-success btn-block" role="button" href="/saml2/login">{this.state.samlIdpString}</a>}
                       </FormGroup>
                     </Form>
                   </Formik>
                 </CardBody> 
                 <CardFooter id="argo-loginfooter">
-                  <Footer />
+                  <Footer loginPage={true}/>
                 </CardFooter>
               </Card>
             </Col>

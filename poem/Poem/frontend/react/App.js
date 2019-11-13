@@ -29,6 +29,7 @@ import { NotificationContainer } from 'react-notifications';
 import { Backend } from './DataManager';
 import { YumRepoList, YumRepoChange } from './YumRepos';
 import { ThresholdsProfilesList, ThresholdsProfilesChange } from './ThresholdProfiles';
+import Cookies from 'universal-cookie';
 
 import './App.css';
 
@@ -40,6 +41,7 @@ const CustomBreadcrumbWithRouter = withRouter(CustomBreadcrumb);
 
 const TenantRouteSwitch = ({webApiAggregation, webApiMetric, token, tenantName}) => (
   <Switch>
+    <Route exact path="/ui/login" render={() => <Redirect to="/ui/home" />}/>
     <Route exact path="/ui/home" component={Home} />
     <Route exact path="/ui/services" component={Services} />
     <Route exact path="/ui/reports" component={Reports} />
@@ -159,6 +161,7 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, token, tenantName})
 
 const SuperAdminRouteSwitch = ({props}) => (
   <Switch>
+    <Route exact path="/ui/login" render={() => <Redirect to="/ui/home" />}/>
     <Route exact path="/ui/home" component={Home} />
     <Route exact path="/ui/probes" component={ProbeList} />
     <Route exact path="/ui/probes/add" render={props => <ProbeChange {...props} addview={true}/>}/>
@@ -195,39 +198,52 @@ class App extends Component {
   constructor(props) {
     super(props);
 
+    this.cookies = new Cookies();
     this.backend = new Backend();
 
     this.state = {
       isLogged: localStorage.getItem('authIsLogged') ? true : false,
+      isSessionActive: undefined, 
       areYouSureModal: false,
       webApiAggregation: undefined,
       webApiMetric: undefined,
       tenantName: undefined,
       token: undefined,
-      poemversion: undefined
+      isTenantSchema: null
     };
 
     this.onLogin = this.onLogin.bind(this);
     this.onLogout = this.onLogout.bind(this);
     this.toggleAreYouSure = this.toggleAreYouSure.bind(this);
+    this.flushStorage = this.flushStorage.bind(this);
   }
 
-  onLogin(json) {
+  onLogin(json, history) {
     localStorage.setItem('authUsername', json.username);
     localStorage.setItem('authIsLogged', true);
     localStorage.setItem('authFirstName', json.first_name);
     localStorage.setItem('authLastName', json.last_name);
     localStorage.setItem('authIsSuperuser', json.is_superuser);
-    this.setState({isLogged: true});
+    this.backend.fetchIsTenantSchema().then((isTenantSchema) => 
+      this.initalizeState(isTenantSchema, true, true)).then(
+        setTimeout(() => {
+          history.push('/ui/home');
+        }, 50
+      )).then(this.cookies.set('poemActiveSession', true))
   } 
 
-  onLogout() {
+  flushStorage() {
     localStorage.removeItem('authUsername');
     localStorage.removeItem('authIsLogged');
     localStorage.removeItem('authFirstName');
     localStorage.removeItem('authLastName');
     localStorage.removeItem('authIsSuperuser');
-    this.setState({isLogged: false});
+    this.cookies.remove('poemActiveSession')
+  }
+
+  onLogout() {
+    this.flushStorage()
+    this.setState({isLogged: false, isSessionActive: false});
   } 
 
   toggleAreYouSure() {
@@ -250,33 +266,46 @@ class App extends Component {
       .catch(err => alert('Something went wrong: ' + err))
   }
 
-  componentDidMount() {
-    this.backend.fetchPoemVersion().then((poemversion) => {
-      this.setState({poemversion: poemversion})
-      if (poemversion === 'tenant') {
-        this.state.isLogged && Promise.all([this.fetchToken(), this.fetchConfigOptions()])
-          .then(([token, options]) => {
-            this.setState({
-              token: token,
-              webApiMetric: options.result.webapimetric,
-              webApiAggregation: options.result.webapiaggregation,
-              tenantName: options.result.tenant_name,
-            })
+  initalizeState(poemType, activeSession, isLogged) {
+    if (poemType) {
+      return Promise.all([this.fetchToken(), this.fetchConfigOptions()])
+        .then(([token, options]) => {
+          this.setState({
+            isTenantSchema: poemType,
+            isSessionActive: activeSession,
+            isLogged: isLogged,
+            token: token,
+            webApiMetric: options && options.result.webapimetric,
+            webApiAggregation: options && options.result.webapiaggregation,
+            tenantName: options && options.result.tenant_name,
           })
-      }
+        })
+    }
+    else {
+      this.setState({
+        isTenantSchema: poemType,
+        isSessionActive: activeSession,
+        isLogged: isLogged,
+      })
+    }
+  }
+
+  componentDidMount() {
+    this.backend.fetchIsTenantSchema().then((isTenantSchema) => {
+      this.state.isLogged && this.backend.isActiveSession().then(active => {
+        if (active) {
+          this.initalizeState(isTenantSchema, active, this.state.isLogged)
+        } 
+        else
+          this.flushStorage()
+      })
     })
   }
 
-  componentDidUpdate(prevProps, prevState) {
-    // Intentional push to /ui/home route again if history.push 
-    // from Login does not trigger rendering of Home 
-    if (this.state.isLogged !== prevState.isLogged && 
-      this.state.token === undefined)
-      window.location = '/ui/home';
-  }
-
   render() {
-    if (!this.state.isLogged) {
+    let cookie = this.cookies.get('poemActiveSession')
+
+    if (!cookie || !this.state.isLogged) {
       return (
         <BrowserRouter>
           <Switch>
@@ -289,7 +318,7 @@ class App extends Component {
             />
             <Route
               exact 
-              path="/ui/(home|services|reports|metricprofiles|aggregationprofiles|administration)"
+              path="/ui/(home|services|probes|reports|probes|metrics|metricprofiles|aggregationprofiles|administration|metrictemplates|yumrepos)"
               render={props => (
                 <Redirect to={{
                   pathname: '/ui/login',
@@ -301,7 +330,8 @@ class App extends Component {
         </BrowserRouter>
       )
     }
-    else if (this.state.isLogged && this.state.poemversion) {
+    else if (this.state.isLogged && cookie &&
+      this.state.isTenantSchema !== null) {
 
       return ( 
         <BrowserRouter>
@@ -318,13 +348,13 @@ class App extends Component {
               </Col>
             </Row>
             <Row className="no-gutters">
-              <Col sm={{size: 2}} md={{size: 2}} className="d-flex flex-column">
-                <NavigationLinksWithRouter poemver={this.state.poemversion}/>
+              <Col sm={{size: 2}} md={{size: 2}} id="sidebar-col" className="d-flex flex-column">
+                <NavigationLinksWithRouter isTenantSchema={this.state.isTenantSchema}/>
                 <div id="sidebar-grow" className="flex-grow-1 border-left border-right rounded-bottom"/>
               </Col>
               <Col>
                 <CustomBreadcrumbWithRouter />
-                {this.state.poemversion === 'tenant' ? 
+                {this.state.isTenantSchema ? 
                   <TenantRouteSwitch 
                     webApiMetric={this.state.webApiMetric}
                     webApiAggregation={this.state.webApiAggregation}
@@ -337,7 +367,7 @@ class App extends Component {
             </Row>
             <Row>
               <Col>
-                <Footer addBorder={true}/>
+                <Footer loginPage={false}/>
               </Col>
             </Row>
           </Container>

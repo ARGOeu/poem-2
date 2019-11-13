@@ -910,7 +910,7 @@ export class SuperAdminUserChange extends Component {
     }
 
     else {
-      this.backend.fetchPoemVersion()
+      this.backend.fetchIsTenantSchema()
       .then(r => {
         this.setState(
           {

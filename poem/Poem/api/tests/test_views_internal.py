@@ -2770,18 +2770,18 @@ class ListVersionsAPIViewTests(TenantTestCase):
         )
 
 
-class GetPoemVersionAPIViewTests(TenantTestCase):
+class GetIsTenantSchemaAPIViewTests(TenantTestCase):
     def setUp(self):
         self.factory = TenantRequestFactory(self.tenant)
-        self.view = views.GetPoemVersion.as_view()
-        self.url = '/api/v2/internal/schema/'
+        self.view = views.GetIsTenantSchema.as_view()
+        self.url = '/api/v2/internal/istenantschema/'
 
     def test_get_tenant_schema(self):
         request = self.factory.get(self.url)
         response = self.view(request)
         self.assertEqual(
             response.data,
-            {'schema': 'tenant'}
+            {'isTenantSchema': True}
         )
 
     @patch('Poem.api.internal_views.app.connection')
@@ -2791,7 +2791,7 @@ class GetPoemVersionAPIViewTests(TenantTestCase):
         response = self.view(request)
         self.assertEqual(
             response.data,
-            {'schema': 'superadmin'}
+            {'isTenantSchema': False}
         )
 
 

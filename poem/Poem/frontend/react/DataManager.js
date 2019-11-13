@@ -1,6 +1,15 @@
 import Cookies from 'universal-cookie';
 
 export class Backend {
+  isActiveSession() {
+    return fetch('/api/v2/internal/sessionactive')
+      .then(response => {
+        let active = response.ok ? true : false
+        return active 
+      })
+      .catch(() => false);
+  }
+
   fetchServices() {
     return fetch('/api/v2/internal/services')
       .then(response => response.json())
@@ -186,10 +195,10 @@ export class Backend {
       .catch(err => alert('Something went wrong: ' + err))
   }
 
-  fetchPoemVersion() {
-    return fetch('/api/v2/internal/schema')
+  fetchIsTenantSchema() {
+    return fetch('/api/v2/internal/istenantschema')
       .then(response => response.ok ? response.json() : null)
-      .then(json => json['schema'])
+      .then(json => json['isTenantSchema'])
       .catch(err => alert('Something went wrong: ' + err))
   }
 

@@ -1,8 +1,8 @@
 {
   "name": "poem",
-  "version": "1.0.0",
-  "author": "Daniel Vrcic <dvrcic@srce.hr>",
-  "description": "React code embedded into POEM Django web application",
+  "version": "3.0.0",
+  "author": "Daniel Vrcic <dvrcic@srce.hr>, Katarina Zailac <kzailac@srce.hr>",
+  "description": "React frontend for POEM Django web application",
   "main": "webpack.config.js",
   "scripts": {
     "build-devel": "webpack --config webpack.config.js --progress --colors --mode development",
@@ -11,10 +11,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ARGOeu/poem.git"
+    "url": "git+https://github.com/ARGOeu/poem-2.git"
   },
   "license": "ISC",
-  "homepage": "https://github.com/ARGOeu/poem",
+  "homepage": "https://github.com/ARGOeu/poem-2",
   "devDependencies": {
     "@babel/core": "^7.4.5",
     "@babel/plugin-proposal-object-rest-spread": "^7.4.4",
@@ -38,12 +38,12 @@
     "jshint": "^2.10.2",
     "postcss-loader": "^3.0.0",
     "react-autocomplete": "^1.8.1",
-    "react-diff-viewer": "^2.0.1",
+    "react-diff-viewer": "^2.0.5",
     "react-filtered-multiselect": "^0.5.1",
     "react-notifications": "^1.4.3",
-    "react-router-dom": "^5.0.1",
-    "react-table": "^6.10.0",
-    "reactstrap": "^8.0.0",
+    "react-router-dom": "^5.1.2",
+    "react-table": "^6.10.3",
+    "reactstrap": "^8.1.1",
     "style-loader": "^0.23.1",
     "url-loader": "^1.1.2",
     "webpack": "^4.29.5",
@@ -55,13 +55,14 @@
     "@fortawesome/fontawesome-svg-core": "^1.2.17",
     "@fortawesome/free-solid-svg-icons": "^5.8.1",
     "@fortawesome/react-fontawesome": "^0.1.4",
-    "formik": "^1.5.7",
-    "react": "^16.8.6",
-    "react-dom": "^16.8.6",
+    "formik": "^1.5.8",
+    "react": "^16.11.0",
+    "react-dom": "^16.11.0",
     "react-popup": "^0.10.0",
+    "react-router": "^5.1.2",
     "universal-cookie": "^3.1.0"
   },
   "bugs": {
-    "url": "https://github.com/ARGOeu/poem/issues"
+    "url": "https://github.com/ARGOeu/poem-2/issues"
   }
 }
