@@ -94,13 +94,14 @@ const Group = ({operation, services, list_operations, list_services,
               name={`groups.${groupindex}`}
               render={props => (
                 <ServiceList
-                    list_services={list_services}
-                    list_operations={list_operations}
-                    last_service_operation={last_service_operation}
-                    services={services}
-                    groupindex={groupindex}
-                    groupoperation={operation}
-                    form={form}
+                  list_services={list_services}
+                  list_operations={list_operations}
+                  last_service_operation={last_service_operation}
+                  services={services}
+                  groupindex={groupindex}
+                  groupoperation={operation}
+                  groupnew={isnew}
+                  form={form}
                 />)}
             />
           </CardBody>
@@ -132,7 +133,7 @@ const Group = ({operation, services, list_operations, list_services,
     </Col>
 
 
-const ServiceList = ({services, list_services=[], list_operations=[], last_service_operation, groupindex, form}) =>
+const ServiceList = ({services, list_services=[], list_operations=[], last_service_operation, groupindex, groupnew=false, form}) =>
   services.map((service, i) =>
     <FieldArray
       key={i}
@@ -147,21 +148,24 @@ const ServiceList = ({services, list_services=[], list_operations=[], last_servi
           list_operations={list_operations} 
           last_service_operation={last_service_operation}
           groupindex={groupindex}
+          groupnew={groupnew}
           index={i}
           last={i === services.length - 1}
           form={form}
+          isnew={service.isnew}
         />
       )}
     />
   )
 
 
-const Service = ({name, service, operation, list_services, list_operations, last_service_operation, groupindex, index, remove, insert, form}) => 
+const Service = ({name, service, operation, list_services, list_operations,
+  last_service_operation, groupindex, groupnew, index, remove, insert, form, isnew}) => 
   <Row className="d-flex align-items-center service pt-1 pb-1 no-gutters" key={index}>
     <Col md={8}>
       <Autocomplete
         inputProps={{
-          className: "form-control custom-select"
+          className: `"form-control custom-select " ${isnew && !groupnew ? "border-success" : ""}`
         }}
         getItemValue={(item) => item}
         items={list_services}
@@ -192,6 +196,7 @@ const Service = ({name, service, operation, list_services, list_operations, last
           data={list_operations}
           prefix={`groups.${groupindex}.services.${index}`}
           class_name="custom-select service-operation"
+          isnew={isnew && !groupnew}
         />
       </div>
     </Col>
@@ -204,7 +209,7 @@ const Service = ({name, service, operation, list_services, list_operations, last
       <Button size="sm" color="light"
         type="button"
         onClick={() => insert(index + 1, {name: '', operation: 
-          last_service_operation(index, form.values.groups[groupindex].services)})}>
+          last_service_operation(index, form.values.groups[groupindex].services), isnew: true})}>
         <FontAwesomeIcon icon={faPlus}/>
       </Button>
     </Col>
