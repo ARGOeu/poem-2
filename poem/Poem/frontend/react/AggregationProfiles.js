@@ -53,6 +53,7 @@ const GroupList = ({name, form, list_services, list_operations, last_service_ope
             last_service_operation={last_service_operation}
             write_perm={write_perm}
             groupindex={i}
+            isnew={group.isNew}
             last={i === form.values[name].length - 1}
           />
         )}
@@ -62,11 +63,13 @@ const GroupList = ({name, form, list_services, list_operations, last_service_ope
   </Row>
 
 
-const Group = ({operation, services, list_operations, list_services, last_service_operation, write_perm, form, groupindex, remove, insert, last}) =>
+const Group = ({operation, services, list_operations, list_services,
+  last_service_operation, write_perm, form, groupindex, remove, insert, isnew,
+  last}) =>
   (!last) ?
     <React.Fragment key={groupindex}>
       <Col sm={{size: 8}} md={{size: 5}} className="mt-4 mb-2">
-        <Card>
+        <Card className={isnew ? "border-success" : ""}>
           <CardHeader className="p-1" color="primary">
             <Row className="d-flex align-items-center no-gutters">
               <Col sm={{size: 10}} md={{size: 11}}>
@@ -123,7 +126,7 @@ const Group = ({operation, services, list_operations, list_services, last_servic
     <Col sm={{size: 12}} md={{size: 6}} className="mt-4 mb-2 d-flex justify-content-center align-items-center">
       <Button outline color="secondary" size='lg' disabled={!write_perm ? true : false} onClick={
         () => write_perm &&
-          insert(groupindex, {name: '', operation: '',
+          insert(groupindex, {name: '', operation: '', isNew: true,
               services: [{name: '', operation: ''}]})
       }>Add new group</Button>
     </Col>
