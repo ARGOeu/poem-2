@@ -5,9 +5,16 @@ from django.utils.translation import ugettext_lazy as _
 from Poem.poem_super_admin.models import History
 
 
+class MetricTypeManager(models.Manager):
+    def get_by_natural_key(self, name):
+        return self.get(name=name)
+
+
 class MetricType(models.Model):
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=128)
+
+    objects = MetricTypeManager()
 
     class Meta:
         app_label = 'poem'
