@@ -153,6 +153,7 @@ const ServiceList = ({services, list_services=[], list_operations=[], last_servi
           last={i === services.length - 1}
           form={form}
           isnew={service.isnew}
+          ismissing={list_services.indexOf(service.name) === -1}
         />
       )}
     />
@@ -160,12 +161,13 @@ const ServiceList = ({services, list_services=[], list_operations=[], last_servi
 
 
 const Service = ({name, service, operation, list_services, list_operations,
-  last_service_operation, groupindex, groupnew, index, remove, insert, form, isnew}) => 
+  last_service_operation, groupindex, groupnew, index, remove, insert, form,
+  isnew, ismissing}) => 
   <Row className="d-flex align-items-center service pt-1 pb-1 no-gutters" key={index}>
     <Col md={8}>
       <Autocomplete
         inputProps={{
-          className: `"form-control custom-select " ${isnew && !groupnew ? "border-success" : ""}`
+          className: `"form-control custom-select " ${isnew && !groupnew ? "border-success" : ""} ${ismissing ? "border-danger": ""}`
         }}
         getItemValue={(item) => item}
         items={list_services}
