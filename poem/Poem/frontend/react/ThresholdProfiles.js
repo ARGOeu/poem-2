@@ -264,7 +264,7 @@ export class ThresholdsProfilesChange extends Component {
                         <Field
                           type='text'
                           name='name'
-                          className={props.errors.name ? 'form-control border-danger' : 'form-control'}
+                          className={`form-control ${props.errors.name && 'border-danger'}`}
                           id='name'
                         />
                       </InputGroup>
@@ -437,7 +437,7 @@ export class ThresholdsProfilesChange extends Component {
                                                         <td>
                                                           <Field
                                                             type='text'
-                                                            className={
+                                                            className={`form-control ${
                                                               (
                                                                 props.errors.rules &&
                                                                 props.errors.rules.length > index &&
@@ -446,10 +446,9 @@ export class ThresholdsProfilesChange extends Component {
                                                                 props.errors.rules[index].thresholds.length > i &&
                                                                 props.errors.rules[index].thresholds[i] &&
                                                                 props.errors.rules[index].thresholds[i].label
-                                                              ) ?
-                                                               'form-control border-danger'
-                                                              : 
-                                                                'form-control'
+                                                              ) &&
+                                                                'border-danger'
+                                                              }`
                                                             }
                                                             name={`rules[${index}].thresholds[${i}].label`}
                                                             id={`props.values.rules.${index}.thresholds.${i}.label`}
@@ -470,7 +469,7 @@ export class ThresholdsProfilesChange extends Component {
                                                         <td>
                                                           <Field
                                                             type='text'
-                                                            className={
+                                                            className={`form-control ${
                                                               (
                                                                 props.errors.rules &&
                                                                 props.errors.rules.length > index &&
@@ -479,11 +478,9 @@ export class ThresholdsProfilesChange extends Component {
                                                                 props.errors.rules[index].thresholds.length > i &&
                                                                 props.errors.rules[index].thresholds[i] &&
                                                                 props.errors.rules[index].thresholds[i].value
-                                                              ) ?
-                                                               'form-control border-danger'
-                                                              : 
-                                                                'form-control'
-                                                            }
+                                                              ) &&
+                                                                'border-danger'
+                                                            }`}
                                                             name={`rules.${index}.thresholds.${i}.value`}
                                                             id={`props.values.rules.${index}.thresholds.${i}.value`}
                                                           />
@@ -522,7 +519,7 @@ export class ThresholdsProfilesChange extends Component {
                                                         <td>
                                                           <Field
                                                             type='text'
-                                                            className={
+                                                            className={`form-control ${
                                                               (
                                                                 props.errors.rules &&
                                                                 props.errors.rules.length > index &&
@@ -531,11 +528,9 @@ export class ThresholdsProfilesChange extends Component {
                                                                 props.errors.rules[index].thresholds.length > i &&
                                                                 props.errors.rules[index].thresholds[i] &&
                                                                 props.errors.rules[index].thresholds[i].warn1
-                                                              ) ?
-                                                               'form-control border-danger'
-                                                              : 
-                                                                'form-control'
-                                                            }
+                                                              ) &&
+                                                                'border-danger'
+                                                            }`}
                                                             name={`rules.${index}.thresholds.${i}.warn1`}
                                                             id={`props.values.rules.${index}.thresholds.${i}.warn1`}
                                                           />
@@ -558,7 +553,7 @@ export class ThresholdsProfilesChange extends Component {
                                                         <td>
                                                           <Field
                                                             type='text'
-                                                            className={
+                                                            className={`form-control ${
                                                               (
                                                                 props.errors.rules &&
                                                                 props.errors.rules.length > index &&
@@ -567,11 +562,9 @@ export class ThresholdsProfilesChange extends Component {
                                                                 props.errors.rules[index].thresholds.length > i &&
                                                                 props.errors.rules[index].thresholds[i] &&
                                                                 props.errors.rules[index].thresholds[i].warn2
-                                                              ) ?
-                                                               'form-control border-danger'
-                                                              : 
-                                                                'form-control'
-                                                            }
+                                                              ) &&
+                                                                'border-danger'
+                                                            }`}
                                                             name={`rules.${index}.thresholds.${i}.warn2`}
                                                             id={`props.values.rules.${index}.thresholds.${i}.warn2`}
                                                           />
@@ -591,7 +584,7 @@ export class ThresholdsProfilesChange extends Component {
                                                         <td>
                                                           <Field
                                                             type='text'
-                                                            className={
+                                                            className={`form-control ${
                                                               (
                                                                 props.errors.rules &&
                                                                 props.errors.rules.length > index &&
@@ -600,11 +593,9 @@ export class ThresholdsProfilesChange extends Component {
                                                                 props.errors.rules[index].thresholds.length > i &&
                                                                 props.errors.rules[index].thresholds[i] &&
                                                                 props.errors.rules[index].thresholds[i].crit1
-                                                              ) ?
-                                                               'form-control border-danger'
-                                                              : 
-                                                                'form-control'
-                                                            }
+                                                              ) &&
+                                                                'border-danger'
+                                                            }`}
                                                             name={`rules.${index}.thresholds.${i}.crit1`}
                                                             id={`props.values.rules.${index}.thresholds.${i}.crit1`}
                                                           />
@@ -627,7 +618,7 @@ export class ThresholdsProfilesChange extends Component {
                                                         <td>
                                                           <Field
                                                             type='text'
-                                                            className={
+                                                            className={`form-control ${
                                                               (
                                                                 props.errors.rules &&
                                                                 props.errors.rules.length > index &&
@@ -636,11 +627,9 @@ export class ThresholdsProfilesChange extends Component {
                                                                 props.errors.rules[index].thresholds.length > i &&
                                                                 props.errors.rules[index].thresholds[i] &&
                                                                 props.errors.rules[index].thresholds[i].crit2
-                                                              ) ?
-                                                               'form-control border-danger'
-                                                              : 
-                                                                'form-control'
-                                                            }
+                                                              ) &&
+                                                                'border-danger'
+                                                            }`}
                                                             name={`rules.${index}.thresholds.${i}.crit2`}
                                                             id={`props.values.rules.${index}.thresholds.${i}.crit2`}
                                                           />
@@ -660,7 +649,7 @@ export class ThresholdsProfilesChange extends Component {
                                                         <td>
                                                           <Field
                                                             type='text'
-                                                            className={
+                                                            className={`form-control ${
                                                               (
                                                                 props.errors.rules &&
                                                                 props.errors.rules.length > index &&
@@ -669,11 +658,9 @@ export class ThresholdsProfilesChange extends Component {
                                                                 props.errors.rules[index].thresholds.length > i &&
                                                                 props.errors.rules[index].thresholds[i] &&
                                                                 props.errors.rules[index].thresholds[i].min
-                                                              ) ?
-                                                               'form-control border-danger'
-                                                              : 
-                                                                'form-control'
-                                                            }
+                                                              ) &&
+                                                                'border-danger'
+                                                            }`}
                                                             name={`rules.${index}.thresholds.${i}.min`}
                                                             id={`props.values.rules.${index}.thresholds.${i}.min`}
                                                           />
@@ -693,7 +680,7 @@ export class ThresholdsProfilesChange extends Component {
                                                         <td>
                                                           <Field
                                                             type='text'
-                                                            className={
+                                                            className={`form-control ${
                                                               (
                                                                 props.errors.rules &&
                                                                 props.errors.rules.length > index &&
@@ -702,11 +689,9 @@ export class ThresholdsProfilesChange extends Component {
                                                                 props.errors.rules[index].thresholds.length > i &&
                                                                 props.errors.rules[index].thresholds[i] &&
                                                                 props.errors.rules[index].thresholds[i].max
-                                                              ) ?
-                                                               'form-control border-danger'
-                                                              : 
-                                                                'form-control'
-                                                            }
+                                                              ) &&
+                                                                'border-danger'
+                                                            }`}
                                                             name={`rules.${index}.thresholds.${i}.max`}
                                                             id={`props.values.rules.${index}.thresholds.${i}.max`}
                                                           />

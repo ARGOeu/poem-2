@@ -448,11 +448,7 @@ function matchItem(item, value) {
 
 
 export const AutocompleteField = ({lists, onselect_handler, field, icon, setFieldValue, req, label, values}) => {
-  let classname = undefined;
-  if (req)
-    classname = 'form-control border-danger';
-  else 
-    classname = 'form-control '
+  let classname = `form-control ${req && 'border-danger'}`;
 
   return(
     <Autocomplete
