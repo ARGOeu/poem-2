@@ -98,18 +98,14 @@ export function arraysEqual(arr1, arr2) {
 
 
 const AutocompleteField = ({lists, onselect_handler, field, setFieldValue, req, values}) => {
-  let classname = undefined;
-  if (req)
-    classname = 'form-control border-danger';
-  else 
-    classname = 'form-control'
+  let classname = `form-control ${req && 'border-danger'}`;
 
   return(
     <Autocomplete
       inputProps={{className: classname}}
       getItemValue={(item) => item}
       items={lists}
-      value={eval(`values.${field}`)}
+      value={values[field]}
       renderItem={(item, isHighlighted) =>
         <div 
           key={lists.indexOf(item)}
@@ -465,7 +461,7 @@ function MetricTemplateComponent(cloneview=false) {
                         <Field
                           type='text'
                           name='name'
-                          className={props.errors.name ? 'form-control border-danger' : 'form-control'}
+                          className={`form-control ${props.errors.name && 'border-danger'}`}
                           id='name'
                           disabled={this.infoview}
                         />
@@ -576,7 +572,7 @@ function MetricTemplateComponent(cloneview=false) {
                         type='text'
                         name='probeexecutable'
                         id='probeexecutable'
-                        className={props.errors.probeexecutable ? 'form-control border-danger' : 'form-control'}
+                        className={`form-control ${props.errors.probeexecutable && 'border-danger'}`}
                         hidden={props.values.type === 'Passive'}
                         disabled={this.infoview}
                       />
@@ -613,7 +609,7 @@ function MetricTemplateComponent(cloneview=false) {
                                 {...props}
                                 lists={metrictemplatelist}
                                 field='parent'
-                                className={props.errors.parent ? 'form-control border-danger' : 'form-control'}
+                                className={`form-control ${props.errors.parent && 'border-danger'}`}
                                 onselect_handler={this.onSelect}
                                 req={props.errors.parent}
                               />
@@ -955,7 +951,7 @@ export class MetricTemplateVersionDetails extends Component {
                         <Field
                           type='text'
                           name='name'
-                          className={'form-control'}
+                          className='form-control'
                           id='name'
                           disabled={true}
                         />
