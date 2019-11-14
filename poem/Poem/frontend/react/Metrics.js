@@ -82,7 +82,7 @@ export const InlineFields = ({values, errors, field, addnew=false, readonly=fals
                     type='text'
                     name={`${field}.${index}.key`} 
                     id={`${field}.${index}.key`}
-                    className={values[field][index].isNew ? 'form-control border-success' : 'form-control'}
+                    className={`form-control ${values[field][index].isNew && 'border-success'}`}
                     disabled={!addnew || field === 'config' || (values.type === 'Passive' && item.key === 'PASSIVE')}
                     hidden={values.type === 'Passive' && field !== 'flags'}
                   />
@@ -94,7 +94,7 @@ export const InlineFields = ({values, errors, field, addnew=false, readonly=fals
                         type='text'
                         name={`${field}.${index}.value`} 
                         id={`${field}.${index}.value`} 
-                        className={errors.config && errors.config[index] ? 'form-control border-danger' : 'form-control'}
+                        className={`form-control ${(errors.config && errors.config[index]) && 'border-danger'}`}
                         disabled={readonly || (!addnew && field === 'config' && item.key === 'path')}
                         validate={validateConfig}
                       />
@@ -103,7 +103,7 @@ export const InlineFields = ({values, errors, field, addnew=false, readonly=fals
                         type='text'
                         name={`${field}.${index}.value`} 
                         id={`${field}.${index}.value`} 
-                        className={values[field][index].isNew ? 'form-control border-success' : 'form-control'}
+                        className={`form-control ${values[field][index].isNew && 'border-success'}`}
                         disabled={readonly || (!addnew && (field !== 'config' || field === 'config' && item.key === 'path')) || values.type === 'Passive' && item.key === 'PASSIVE'}
                         hidden={values.type === 'Passive' && field !== 'flags'}
                       />
