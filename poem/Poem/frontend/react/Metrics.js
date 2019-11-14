@@ -65,8 +65,8 @@ export const InlineFields = ({values, errors, field, addnew=false, readonly=fals
     <FieldArray
       name={field}
       render={arrayHelpers => (
-        (eval(`values.${field}`) && eval(`values.${field}`).length > 0) ? (
-          eval(`values.${field}`).map((item, index) => (
+        (values[field] && values[field].length > 0) ? (
+          values[field].map((item, index) => (
             <React.Fragment key={`fragment.${field}.${index}`}>
               <Row>
                 <Col md={5}>
@@ -82,7 +82,7 @@ export const InlineFields = ({values, errors, field, addnew=false, readonly=fals
                     type='text'
                     name={`${field}.${index}.key`} 
                     id={`${field}.${index}.key`}
-                    className={eval(`values.${field}[${index}].isNew`) ? 'form-control border-success' : 'form-control'}
+                    className={values[field][index].isNew ? 'form-control border-success' : 'form-control'}
                     disabled={!addnew || field === 'config' || (values.type === 'Passive' && item.key === 'PASSIVE')}
                     hidden={values.type === 'Passive' && field !== 'flags'}
                   />
@@ -94,7 +94,7 @@ export const InlineFields = ({values, errors, field, addnew=false, readonly=fals
                         type='text'
                         name={`${field}.${index}.value`} 
                         id={`${field}.${index}.value`} 
-                        className='form-control'
+                        className={errors.config && errors.config[index] ? 'form-control border-danger' : 'form-control'}
                         disabled={readonly || (!addnew && field === 'config' && item.key === 'path')}
                         validate={validateConfig}
                       />
@@ -103,7 +103,7 @@ export const InlineFields = ({values, errors, field, addnew=false, readonly=fals
                         type='text'
                         name={`${field}.${index}.value`} 
                         id={`${field}.${index}.value`} 
-                        className={eval(`values.${field}[${index}].isNew`) ? 'form-control border-success' : 'form-control'}
+                        className={values[field][index].isNew ? 'form-control border-success' : 'form-control'}
                         disabled={readonly || (!addnew && (field !== 'config' || field === 'config' && item.key === 'path')) || values.type === 'Passive' && item.key === 'PASSIVE'}
                         hidden={values.type === 'Passive' && field !== 'flags'}
                       />
@@ -118,7 +118,7 @@ export const InlineFields = ({values, errors, field, addnew=false, readonly=fals
                 </Col>
                 <Col md={2}>
                   {
-                    (addnew && field !== 'config' && eval(`values.${field}`)[0]['key'] !== '' && eval(`values.${field}`)[0]['value'] !== '') &&
+                    (addnew && field !== 'config' && values[field][0]['key'] !== '' && values[field][0]['value'] !== '') &&
                       <Button 
                         hidden={
                           (
@@ -128,9 +128,9 @@ export const InlineFields = ({values, errors, field, addnew=false, readonly=fals
                           || (
                             field === 'flags' && 
                             values.type === 'Passive' && (
-                              eval(`values.${field}[${index}]`)['key'] === 'PASSIVE'
-                              || (eval(`values.${field}[${index}]`)['key'] === '' &&
-                                eval(`values.${field}[${index}]`)['value'] === ''
+                              values[field][index]['key'] === 'PASSIVE'
+                              || (values[field][index]['key'] === '' &&
+                                values[field][index]['value'] === ''
                               )
                             )
                             )
@@ -140,7 +140,7 @@ export const InlineFields = ({values, errors, field, addnew=false, readonly=fals
                         type='button' 
                         onClick={() => {
                           arrayHelpers.remove(index)
-                          if (eval(`values.${field}`).length === 1) {
+                          if (values[field].length === 1) {
                             arrayHelpers.push({key: '', value: ''})
                           }
                         }
@@ -152,7 +152,7 @@ export const InlineFields = ({values, errors, field, addnew=false, readonly=fals
                 </Col>
               </Row>
               {
-                (addnew && field !== 'config' && index === eval(`values.${field}`).length - 1) &&
+                (addnew && field !== 'config' && index === values[field].length - 1) &&
                 <Row className={values.type === 'Passive' ? 'mt-0' : 'mt-2'}>
                   <Col md={2}>
                     <Button 
