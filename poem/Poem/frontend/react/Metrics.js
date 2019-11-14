@@ -82,7 +82,7 @@ export const InlineFields = ({values, errors, field, addnew=false, readonly=fals
                     type='text'
                     name={`${field}.${index}.key`} 
                     id={`${field}.${index}.key`}
-                    className='form-control'
+                    className={eval(`values.${field}[${index}].isNew`) ? 'form-control border-success' : 'form-control'}
                     disabled={!addnew || field === 'config' || (values.type === 'Passive' && item.key === 'PASSIVE')}
                     hidden={values.type === 'Passive' && field !== 'flags'}
                   />
@@ -94,7 +94,7 @@ export const InlineFields = ({values, errors, field, addnew=false, readonly=fals
                         type='text'
                         name={`${field}.${index}.value`} 
                         id={`${field}.${index}.value`} 
-                        className={errors.config && errors.config[index] ? 'form-control border-danger' : 'form-control'}
+                        className='form-control'
                         disabled={readonly || (!addnew && field === 'config' && item.key === 'path')}
                         validate={validateConfig}
                       />
@@ -103,7 +103,7 @@ export const InlineFields = ({values, errors, field, addnew=false, readonly=fals
                         type='text'
                         name={`${field}.${index}.value`} 
                         id={`${field}.${index}.value`} 
-                        className={'form-control'}
+                        className={eval(`values.${field}[${index}].isNew`) ? 'form-control border-success' : 'form-control'}
                         disabled={readonly || (!addnew && (field !== 'config' || field === 'config' && item.key === 'path')) || values.type === 'Passive' && item.key === 'PASSIVE'}
                         hidden={values.type === 'Passive' && field !== 'flags'}
                       />
@@ -160,7 +160,7 @@ export const InlineFields = ({values, errors, field, addnew=false, readonly=fals
                       size='sm'
                       color='success'
                       type='button' 
-                      onClick={() => arrayHelpers.push({key: '', value: ''})}
+                      onClick={() => arrayHelpers.push({key: '', value: '', isNew: true})}
                     >
                       <FontAwesomeIcon icon={faPlus}/> Add another {field.slice(-1) === 's' ? field.slice(0, -1).replace('_', ' '): field.replace('_', ' ')}
                     </Button>
