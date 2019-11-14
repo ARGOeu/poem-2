@@ -344,6 +344,7 @@ export class ThresholdsProfilesChange extends Component {
                                           lists={metrics_list}
                                           icon='metrics'
                                           field={`rules[${index}].metric`}
+                                          val={props.values.rules[index].metric}
                                           onselect_handler={this.onSelect}
                                           label='Metric'
                                         />

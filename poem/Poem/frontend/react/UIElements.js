@@ -447,7 +447,7 @@ function matchItem(item, value) {
 };
 
 
-export const AutocompleteField = ({lists, onselect_handler, field, icon, setFieldValue, req, label, values}) => {
+export const AutocompleteField = ({lists, onselect_handler, field, val, icon, setFieldValue, req, label, values}) => {
   let classname = `form-control ${req && 'border-danger'}`;
 
   return(
@@ -455,7 +455,7 @@ export const AutocompleteField = ({lists, onselect_handler, field, icon, setFiel
       inputProps={{className: classname}}
       getItemValue={(item) => item}
       items={lists}
-      value={eval(`values.${field}`)}
+      value={val}
       renderItem={(item, isHighlighted) =>
         <div 
           key={lists.indexOf(item)}

@@ -452,6 +452,7 @@ function MetricTemplateComponent(cloneview=false) {
                               lists={probeversions}
                               icon='probes'
                               field='probeversion'
+                              val={props.values.probeversion}
                               onselect_handler={this.onSelect}
                               req={props.errors.probeversion}
                             />
@@ -567,6 +568,7 @@ function MetricTemplateComponent(cloneview=false) {
                                 {...props}
                                 lists={metrictemplatelist}
                                 field='parent'
+                                val={props.values.parent}
                                 icon='metrics'
                                 className={props.errors.parent ? 'form-control border-danger' : 'form-control'}
                                 onselect_handler={this.onSelect}
