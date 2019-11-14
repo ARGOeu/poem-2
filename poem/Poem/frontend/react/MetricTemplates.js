@@ -427,10 +427,11 @@ function MetricTemplateComponent(cloneview=false) {
       else if (!loading) {
         return (
           <BaseArgoView
-            resourcename='Metric template'
+            resourcename='metric template'
             location={this.location}
             addview={this.addview}
             infoview={this.infoview}
+            cloneview={cloneview}
             clone={true}
             modal={true}
             state={this.state}
