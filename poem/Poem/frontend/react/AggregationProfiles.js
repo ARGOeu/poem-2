@@ -441,15 +441,19 @@ export class AggregationProfilesChange extends Component
     }
   }
 
-  checkIfServiceMissingInMetricProfile(servicesMetricProfile, servicesAggregationProfile) {
+  checkIfServiceMissingInMetricProfile(servicesMetricProfile, serviceGroupsAggregationProfile) {
     let servicesInMetricProfiles = new Set(servicesMetricProfile)
     let isMissing = false 
 
-    servicesAggregationProfile.forEach(service => {
-      if (!servicesInMetricProfiles.has(service.name))
-        isMissing = true
+    serviceGroupsAggregationProfile.forEach(group => {
+      for (let service of group.services) {
+        if (!servicesInMetricProfiles.has(service.name)) {
+          isMissing = true
+          break
+        }
+      }
     })
-
+        
     return isMissing
   }
 
