@@ -11,10 +11,11 @@ import ReactTable from 'react-table';
 import 'react-table/react-table.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Formik, Field, FieldArray, Form } from 'formik';
-import { faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faTimes, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import FormikEffect from './FormikEffect.js';
 import {Backend, WebApi} from './DataManager';
 import {
+  Alert,
   Button, 
   Row, 
   Col, 
@@ -440,6 +441,18 @@ export class AggregationProfilesChange extends Component
     }
   }
 
+  checkIfServiceMissingInMetricProfile(servicesMetricProfile, servicesAggregationProfile) {
+    let servicesInMetricProfiles = new Set(servicesMetricProfile)
+    let isMissing = false 
+
+    servicesAggregationProfile.forEach(service => {
+      if (!servicesInMetricProfiles.has(service.name))
+        isMissing = true
+    })
+
+    return isMissing
+  }
+
   componentDidMount() {
     this.setState({loading: true})
 
@@ -498,12 +511,15 @@ export class AggregationProfilesChange extends Component
         list_complete_metric_profiles, list_user_groups, groups_field,
         list_services, write_perm, loading} = this.state
 
+
     if (loading)
       return (<LoadingAnim />)
 
     else if (!loading && aggregation_profile && 
       aggregation_profile.metric_profile && list_user_groups 
       && this.token) {
+
+      let is_service_missing = this.checkIfServiceMissingInMetricProfile(list_services, aggregation_profile.groups)
 
       return (
         <BaseArgoView
@@ -539,6 +555,15 @@ export class AggregationProfilesChange extends Component
                   }
                 }}
                 />
+                {
+                  is_service_missing && 
+                  <Alert color='danger'>
+                    <center>
+                      <FontAwesomeIcon icon={faInfoCircle} size="lg" color="black"/> &nbsp;
+                      Some Service Flavours used in Aggregation profile are not presented in associated Metric profile meaning that two profiles are out of sync. Check below Service Flavours in red borders.
+                    </center>
+                  </Alert>
+                }
                 <FormGroup>
                   <Row>
                     <Col md={4}>
