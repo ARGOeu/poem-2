@@ -564,7 +564,7 @@ export class AggregationProfilesChange extends Component
                   <Alert color='danger'>
                     <center>
                       <FontAwesomeIcon icon={faInfoCircle} size="lg" color="black"/> &nbsp;
-                      Some Service Flavours used in Aggregation profile are not presented in associated Metric profile meaning that two profiles are out of sync. Check below Service Flavours in red borders.
+                      Some Service Flavours used in Aggregation profile are not presented in associated Metric profile meaning that two profiles are out of sync. Check below for Service Flavours in red borders.
                     </center>
                   </Alert>
                 }
