@@ -586,6 +586,12 @@ export class MetricProfilesChange extends Component
         let element_index = tmp_list_services[i].index
         tmp_list_services[i].index = element_index - 1;
       }
+
+      for (var i = index_tmp; i < tmp_view_services.length; i++) {
+        let element_index = tmp_view_services[i].index
+        tmp_view_services[i].index = element_index - 1;
+      }
+
       this.setState({
         list_services: tmp_list_services,
         view_services: tmp_view_services
