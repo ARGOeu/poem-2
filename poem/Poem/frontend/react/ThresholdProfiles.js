@@ -47,22 +47,72 @@ const ThresholdsSchema = Yup.object().shape({
             .matches(/^[a-zA-Z][A-Za-z0-9]*$/, 'Label can contain alphanumeric characters, but must always begin with a letter.')
             .required('Required'),
           value: Yup.string()
-            .matches(/^\d*(\.\d+)?$/, 'Must be a number.')
+            .matches(/^[-]?\d*(\.\d+)?$/, 'Must be a number.')
             .required('Required'),
           warn1: Yup.string()
-            .matches(/^[@]?(~|\d*(\.\d+)?)$/, 'Must be a number or ~')
+            .matches(/^[@]?(~|[-]?\d*(\.\d+)?)$/, 'Must be a number or ~')
             .required('Required'),
           warn2: Yup.string()
-            .matches(/^\d*(\.\d+)?$/, 'Must be a number.'),
+            .matches(/^[-]?\d*(\.\d+)?$/, 'Must be a number.')
+            .test('greater-than', 
+            'Should be greater than lower warning limit', 
+            function(value) {
+              const lowerLimit = this.parent.warn1.charAt(0) === '@' ? 
+                this.parent.warn1.substr(1) : 
+                this.parent.warn1;
+              if (!lowerLimit || !value) {
+                return true;
+              } else {
+                if (lowerLimit === '~')
+                  return true;
+                else
+                  if (!isNaN(Number(lowerLimit)) && !isNaN(Number(value)))
+                    return Number(lowerLimit) <= Number(value);
+                  else
+                    return true;
+              }
+            }),
           crit1: Yup.string()
-            .matches(/^[@]?(~|\d*(\.\d+)?)$/, 'Must be a number or ~')
+            .matches(/^[@]?(~|[-]?\d*(\.\d+)?)$/, 'Must be a number or ~')
             .required('Required'),
           crit2: Yup.string()
-            .matches(/^\d*(\.\d+)?$/, 'Must be a number.'),
+            .matches(/^[-]?\d*(\.\d+)?$/, 'Must be a number.')
+            .test('greater-than', 
+            'Should be greater than lower critical limit', 
+            function(value) {
+              const lowerLimit = this.parent.crit1.charAt(0) === '@' ? 
+                this.parent.crit1.substr(1) : 
+                this.parent.crit1;
+              if (!lowerLimit || !value) {
+                return true;
+              } else {
+                if (lowerLimit === '~')
+                  return true;
+                else
+                  if (!isNaN(Number(lowerLimit)) && !isNaN(Number(value)))
+                    return Number(lowerLimit) <= Number(value);
+                  else
+                    return true;
+              }
+            }),
           min: Yup.string()
-            .matches(/^\d*(\.\d+)?$/, 'Must be a number.'),
+            .matches(/^[-]?\d*(\.\d+)?$/, 'Must be a number.'),
           max: Yup.string()
-            .matches(/^\d*(\.\d+)?$/, 'Must be a number.')
+            .matches(/^[-]?\d*(\.\d+)?$/, 'Must be a number.')
+            .test('greater-than-min',
+            'Should be greater than min value.',
+            function(value) {
+              const lowerLimit = this.parent.min;
+              if (!lowerLimit) {
+                return true;
+              } else {
+                if (!isNaN(Number(lowerLimit)) && !isNaN(Number(value)))
+                  return Number(lowerLimit) < Number(value);
+                else
+                  return true;
+              };
+            }
+            )
         }))
     }))
 });
