@@ -88,11 +88,11 @@ export const Icon = props =>
   return <FontAwesomeIcon icon={link_icon.get(props.i)} fixedWidth/>
 }
 
-export const DropDown = ({field, data=[], prefix="", class_name=""}) => 
+export const DropDown = ({field, data=[], prefix="", class_name="", isnew=false}) => 
   <Field component="select"
     name={prefix ? `${prefix}.${field.name}` : field.name}
     required={true}
-    className={`form-control ${class_name}`}
+    className={`form-control ${class_name} ${isnew ? 'border-success' : ''}`}
   >
     {
       data.map((name, i) => 
@@ -347,7 +347,7 @@ export const NotifyOk = ({msg='', title='', callback=undefined}) => {
 export const BaseArgoView = ({resourcename='', location=undefined, 
     infoview=false, addview=false, listview=false, modal=false, 
     state=undefined, toggle=undefined, submitperm=true, history=true, 
-    addnew=true, clone=false, children}) => 
+    addnew=true, clone=false, cloneview=false, children}) => 
 (
   <React.Fragment>
     {
@@ -381,19 +381,24 @@ export const BaseArgoView = ({resourcename='', location=undefined,
                 }
               </React.Fragment>
             :
-              <React.Fragment>
-                <h2 className="ml-3 mt-1 mb-4">{`Change ${resourcename}`}</h2>
-                  <ButtonToolbar>
-                    {
-                      clone &&
-                        <Link className="btn btn-secondary mr-2" to={location.pathname + "/clone"} role="button">Clone</Link>
-                    }
-                    {
-                      history &&
-                        <Link className="btn btn-secondary" to={location.pathname + "/history"} role="button">History</Link>
-                    }
-                  </ButtonToolbar>
-              </React.Fragment>
+              cloneview ?
+                <React.Fragment>
+                  <h2 className="ml-3 mt-1 mb-4">{`Clone ${resourcename}`}</h2>
+                </React.Fragment>
+              :
+                <React.Fragment>
+                  <h2 className="ml-3 mt-1 mb-4">{`Change ${resourcename}`}</h2>
+                    <ButtonToolbar>
+                      {
+                        clone &&
+                          <Link className="btn btn-secondary mr-2" to={location.pathname + "/clone"} role="button">Clone</Link>
+                      }
+                      {
+                        history &&
+                          <Link className="btn btn-secondary" to={location.pathname + "/history"} role="button">History</Link>
+                      }
+                    </ButtonToolbar>
+                </React.Fragment>
       }
     </div>
     <div id="argo-contentwrap" className="ml-2 mb-2 mt-2 p-3 border rounded">

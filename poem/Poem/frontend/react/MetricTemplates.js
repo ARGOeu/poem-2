@@ -381,10 +381,11 @@ function MetricTemplateComponent(cloneview=false) {
       else if (!loading) {
         return (
           <BaseArgoView
-            resourcename='Metric template'
+            resourcename='metric template'
             location={this.location}
             addview={this.addview}
             infoview={this.infoview}
+            cloneview={cloneview}
             clone={true}
             modal={true}
             state={this.state}
@@ -418,7 +419,7 @@ function MetricTemplateComponent(cloneview=false) {
                         <Field
                           type='text'
                           name='name'
-                          className={props.errors.name ? 'form-control border-danger' : 'form-control'}
+                          className={`form-control ${props.errors.name && 'border-danger'}`}
                           id='name'
                           disabled={this.infoview}
                         />
@@ -531,7 +532,7 @@ function MetricTemplateComponent(cloneview=false) {
                         type='text'
                         name='probeexecutable'
                         id='probeexecutable'
-                        className={props.errors.probeexecutable ? 'form-control border-danger' : 'form-control'}
+                        className={`form-control ${props.errors.probeexecutable && 'border-danger'}`}
                         hidden={props.values.type === 'Passive'}
                         disabled={this.infoview}
                       />
@@ -570,7 +571,7 @@ function MetricTemplateComponent(cloneview=false) {
                                 field='parent'
                                 val={props.values.parent}
                                 icon='metrics'
-                                className={props.errors.parent ? 'form-control border-danger' : 'form-control'}
+                                className={`form-control ${props.errors.parent && 'border-danger'}`}
                                 onselect_handler={this.onSelect}
                                 req={props.errors.parent}
                               />
@@ -912,7 +913,7 @@ export class MetricTemplateVersionDetails extends Component {
                         <Field
                           type='text'
                           name='name'
-                          className={'form-control'}
+                          className='form-control'
                           id='name'
                           disabled={true}
                         />
