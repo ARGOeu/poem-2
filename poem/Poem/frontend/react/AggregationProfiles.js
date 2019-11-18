@@ -11,10 +11,11 @@ import ReactTable from 'react-table';
 import 'react-table/react-table.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Formik, Field, FieldArray, Form } from 'formik';
-import { faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faTimes, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import FormikEffect from './FormikEffect.js';
 import {Backend, WebApi} from './DataManager';
 import {
+  Alert,
   Button, 
   Row, 
   Col, 
@@ -53,6 +54,7 @@ const GroupList = ({name, form, list_services, list_operations, last_service_ope
             last_service_operation={last_service_operation}
             write_perm={write_perm}
             groupindex={i}
+            isnew={group.isNew}
             last={i === form.values[name].length - 1}
           />
         )}
@@ -62,11 +64,13 @@ const GroupList = ({name, form, list_services, list_operations, last_service_ope
   </Row>
 
 
-const Group = ({operation, services, list_operations, list_services, last_service_operation, write_perm, form, groupindex, remove, insert, last}) =>
+const Group = ({operation, services, list_operations, list_services,
+  last_service_operation, write_perm, form, groupindex, remove, insert, isnew,
+  last}) =>
   (!last) ?
     <React.Fragment key={groupindex}>
       <Col sm={{size: 8}} md={{size: 5}} className="mt-4 mb-2">
-        <Card>
+        <Card className={isnew ? "border-success" : ""}>
           <CardHeader className="p-1" color="primary">
             <Row className="d-flex align-items-center no-gutters">
               <Col sm={{size: 10}} md={{size: 11}}>
@@ -91,13 +95,14 @@ const Group = ({operation, services, list_operations, list_services, last_servic
               name={`groups.${groupindex}`}
               render={props => (
                 <ServiceList
-                    list_services={list_services}
-                    list_operations={list_operations}
-                    last_service_operation={last_service_operation}
-                    services={services}
-                    groupindex={groupindex}
-                    groupoperation={operation}
-                    form={form}
+                  list_services={list_services}
+                  list_operations={list_operations}
+                  last_service_operation={last_service_operation}
+                  services={services}
+                  groupindex={groupindex}
+                  groupoperation={operation}
+                  groupnew={isnew}
+                  form={form}
                 />)}
             />
           </CardBody>
@@ -123,13 +128,13 @@ const Group = ({operation, services, list_operations, list_services, last_servic
     <Col sm={{size: 12}} md={{size: 6}} className="mt-4 mb-2 d-flex justify-content-center align-items-center">
       <Button outline color="secondary" size='lg' disabled={!write_perm ? true : false} onClick={
         () => write_perm &&
-          insert(groupindex, {name: '', operation: '',
+          insert(groupindex, {name: '', operation: '', isNew: true,
               services: [{name: '', operation: ''}]})
       }>Add new group</Button>
     </Col>
 
 
-const ServiceList = ({services, list_services=[], list_operations=[], last_service_operation, groupindex, form}) =>
+const ServiceList = ({services, list_services=[], list_operations=[], last_service_operation, groupindex, groupnew=false, form}) =>
   services.map((service, i) =>
     <FieldArray
       key={i}
@@ -144,21 +149,26 @@ const ServiceList = ({services, list_services=[], list_operations=[], last_servi
           list_operations={list_operations} 
           last_service_operation={last_service_operation}
           groupindex={groupindex}
+          groupnew={groupnew}
           index={i}
           last={i === services.length - 1}
           form={form}
+          isnew={service.isnew}
+          ismissing={list_services.indexOf(service.name) === -1}
         />
       )}
     />
   )
 
 
-const Service = ({name, service, operation, list_services, list_operations, last_service_operation, groupindex, index, remove, insert, form}) => 
+const Service = ({name, service, operation, list_services, list_operations,
+  last_service_operation, groupindex, groupnew, index, remove, insert, form,
+  isnew, ismissing}) => 
   <Row className="d-flex align-items-center service pt-1 pb-1 no-gutters" key={index}>
     <Col md={8}>
       <Autocomplete
         inputProps={{
-          className: "form-control custom-select"
+          className: `"form-control custom-select " ${isnew && !groupnew ? "border-success" : ""} ${ismissing ? "border-danger": ""}`
         }}
         getItemValue={(item) => item}
         items={list_services}
@@ -189,6 +199,7 @@ const Service = ({name, service, operation, list_services, list_operations, last
           data={list_operations}
           prefix={`groups.${groupindex}.services.${index}`}
           class_name="custom-select service-operation"
+          isnew={isnew && !groupnew}
         />
       </div>
     </Col>
@@ -201,7 +212,7 @@ const Service = ({name, service, operation, list_services, list_operations, last
       <Button size="sm" color="light"
         type="button"
         onClick={() => insert(index + 1, {name: '', operation: 
-          last_service_operation(index, form.values.groups[groupindex].services)})}>
+          last_service_operation(index, form.values.groups[groupindex].services), isnew: true})}>
         <FontAwesomeIcon icon={faPlus}/>
       </Button>
     </Col>
@@ -430,6 +441,22 @@ export class AggregationProfilesChange extends Component
     }
   }
 
+  checkIfServiceMissingInMetricProfile(servicesMetricProfile, serviceGroupsAggregationProfile) {
+    let servicesInMetricProfiles = new Set(servicesMetricProfile)
+    let isMissing = false 
+
+    serviceGroupsAggregationProfile.forEach(group => {
+      for (let service of group.services) {
+        if (!servicesInMetricProfiles.has(service.name)) {
+          isMissing = true
+          break
+        }
+      }
+    })
+        
+    return isMissing
+  }
+
   componentDidMount() {
     this.setState({loading: true})
 
@@ -488,12 +515,15 @@ export class AggregationProfilesChange extends Component
         list_complete_metric_profiles, list_user_groups, groups_field,
         list_services, write_perm, loading} = this.state
 
+
     if (loading)
       return (<LoadingAnim />)
 
     else if (!loading && aggregation_profile && 
       aggregation_profile.metric_profile && list_user_groups 
       && this.token) {
+
+      let is_service_missing = this.checkIfServiceMissingInMetricProfile(list_services, aggregation_profile.groups)
 
       return (
         <BaseArgoView
@@ -529,6 +559,15 @@ export class AggregationProfilesChange extends Component
                   }
                 }}
                 />
+                {
+                  is_service_missing && 
+                  <Alert color='danger'>
+                    <center>
+                      <FontAwesomeIcon icon={faInfoCircle} size="lg" color="black"/> &nbsp;
+                      Some Service Flavours used in Aggregation profile are not presented in associated Metric profile meaning that two profiles are out of sync. Check below Service Flavours in red borders.
+                    </center>
+                  </Alert>
+                }
                 <FormGroup>
                   <Row>
                     <Col md={4}>

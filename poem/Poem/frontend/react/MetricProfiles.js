@@ -83,7 +83,7 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
             <td className={service.isNew ? "bg-light" : ""}>
               <Autocomplete
                 inputProps={{
-                  className: service.isNew ? "form-control custom-select border border-success" : "form-control custom-select"
+                  className: `"form-control custom-select " ${service.isNew ? "border border-success" : ""}`
                 }}
                 getItemValue={(item) => item}
                 items={serviceflavours_all}
@@ -113,7 +113,7 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
             <td className={service.isNew ? "bg-light" : ""}>
               <Autocomplete
                 inputProps={{
-                  className: service.isNew ? "form-control custom-select border border-success" : "form-control custom-select"
+                  className: `"form-control custom-select " ${service.isNew ? "border border-success" : ""}`
                 }}
                 getItemValue={(item) => item}
                 items={metrics_all}

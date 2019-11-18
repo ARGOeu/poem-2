@@ -82,11 +82,11 @@ export const Icon = props =>
   return <FontAwesomeIcon icon={link_icon.get(props.i)} fixedWidth/>
 }
 
-export const DropDown = ({field, data=[], prefix="", class_name=""}) => 
+export const DropDown = ({field, data=[], prefix="", class_name="", isnew=false}) => 
   <Field component="select"
     name={prefix ? `${prefix}.${field.name}` : field.name}
     required={true}
-    className={`form-control ${class_name}`}
+    className={`form-control ${class_name} ${isnew ? 'border-success' : ''}`}
   >
     {
       data.map((name, i) => 
