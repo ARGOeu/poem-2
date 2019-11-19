@@ -2669,7 +2669,8 @@ class GetConfigOptionsAPIViewTests(TenantTestCase):
            return_value='Tenant')
     def test_get_config_options(self, *args):
         with self.settings(WEBAPI_METRIC='https://metric.profile.com',
-                           WEBAPI_AGGREGATION='https://aggregations.com'):
+                           WEBAPI_AGGREGATION='https://aggregations.com',
+                           WEBAPI_THRESHOLDS='https://thresholds.com'):
             request = self.factory.get(self.url)
             response = self.view(request)
             self.assertEqual(
@@ -2679,6 +2680,7 @@ class GetConfigOptionsAPIViewTests(TenantTestCase):
                         'saml_login_string': 'Log in using B2ACCESS',
                         'webapimetric': 'https://metric.profile.com',
                         'webapiaggregation': 'https://aggregations.com',
+                        'webapithresholds': 'https://thresholds.com',
                         'tenant_name': 'Tenant'
                     }
                 }

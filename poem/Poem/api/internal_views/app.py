@@ -48,6 +48,7 @@ class GetConfigOptions(APIView):
 
         options.update(webapimetric=settings.WEBAPI_METRIC)
         options.update(webapiaggregation=settings.WEBAPI_AGGREGATION)
+        options.update(webapithresholds=settings.WEBAPI_THRESHOLDS)
         options.update(tenant_name=tenant)
 
         return Response({'result': options})
