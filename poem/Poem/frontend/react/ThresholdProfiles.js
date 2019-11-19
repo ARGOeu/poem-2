@@ -219,6 +219,9 @@ export class ThresholdsProfilesChange extends Component {
     this.onSelect = this.onSelect.bind(this);
     this.toggleWarningPopOver = this.toggleWarningPopOver.bind(this);
     this.toggleCriticalPopOver = this.toggleCriticalPopOver.bind(this);
+    this.thresholdsToString = this.thresholdsToString.bind(this);
+    this.thresholdsToValues = this.thresholdsToValues.bind(this);
+    this.getUOM = this.getUOM.bind(this);
   };
 
   toggleAreYouSureSetModal(msg, title, onyes) {
@@ -257,6 +260,122 @@ export class ThresholdsProfilesChange extends Component {
     this.setState({
       thresholds_rules: thresholds_rules
     });
+  };
+
+  thresholdsToString(rules) {
+    rules.forEach((r => {
+      let thresholds = [];
+      r.thresholds.forEach((t => {
+        let thresholds_string = undefined;
+        thresholds_string = t.label + '=' + t.value + t.uom + ';' + t.warn1 + ':' + t.warn2 + ';' + t.crit1 + ':' + t.crit2;
+        if (t.min && t.max)
+          thresholds_string = thresholds_string + ';' + t.min + ';' + t.max;
+        thresholds.push(thresholds_string)
+      }));
+      let th = thresholds.join(' ');
+      r.thresholds = th;
+    }));
+    return rules;
+  };
+
+  getUOM(value) {
+    if (!isNaN(value.charAt(value.length - 1))) {
+      return '';
+    }
+
+    if (value.endsWith('us'))
+      return 'us';
+
+    if (value.endsWith('ms'))
+      return 'ms';
+
+    if (value.endsWith('s'))
+      return 's';
+    
+    if (value.endsWith('%'))
+      return '%';
+    
+    if (value.endsWith('KB'))
+      return 'KB';
+
+    if (value.endsWith('MB'))
+      return 'MB';
+    
+    if (value.endsWith('TB'))
+      return ('TB');
+
+    if (value.endsWith('B'))
+      return 'B';
+
+    if (value.endsWith('c'))
+      return 'c';
+  };
+
+  thresholdsToValues(rules) {
+    rules.forEach((r => {
+      let thresholds_strings = r.thresholds.split(' ');
+      let thresholds = [];
+      thresholds_strings.forEach((s => {
+        let label = '';
+        let value = '';
+        let uom = ''; 
+        let warn1 = '';
+        let warn2 = ''; 
+        let crit1 = ''; 
+        let crit2 = '';
+        let min = '';
+        let max = ''; 
+        let tokens = s.split('=')
+        if (tokens.length === 2) {
+          label = tokens[0];
+          let subtokens = tokens[1].split(';');
+          if (subtokens.length > 0) {
+            uom = this.getUOM(subtokens[0]);
+            value = subtokens[0].replace(uom, '');
+            if (subtokens.length > 1) {
+              for (let i = 1; i < subtokens.length; i++) {
+                if (i === 1) {
+                  let warn = subtokens[i].split(':');
+                  if (warn.length > 1) {
+                    warn1 = warn[0];
+                    warn2 = warn[1];
+                  } else {
+                    warn1 = '0';
+                    warn2 = subtokens[i];
+                  };
+                } else if (i === 2) {
+                  let crit = subtokens[i].split(':');
+                  if (crit.length > 1) {
+                    crit1 = crit[0];
+                    crit2 = crit[1];
+                  } else {
+                    crit1 = '0';
+                    crit2 = subtokens[i];
+                  };
+                } else if (i === 3) {
+                  min = subtokens[i];
+                } else if (i === 4) {
+                  max = subtokens[i];
+                };
+              };
+            };
+          };
+        };
+        thresholds.push({
+          label: label,
+          value: value,
+          uom: uom,
+          warn1: warn1,
+          warn2: warn2,
+          crit1: crit1,
+          crit2: crit2,
+          min: min,
+          max: max
+        });
+      }));
+      r.thresholds = thresholds;
+    }));
+    return rules;
   };
 
   componentDidMount() {
