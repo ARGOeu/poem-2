@@ -408,6 +408,14 @@ export class Backend {
     );
   }
 
+  addThresholdsProfile(profile) {
+    return this.send(
+      '/api/v2/internal/thresholdsprofiles/',
+      'POST',
+      profile
+    )
+  }
+
   deleteMetricProfile(id) {
     return this.send(
       '/api/v2/internal/metricprofiles/' + id,
@@ -505,11 +513,13 @@ export class WebApi {
       token=undefined, 
       metricProfiles=undefined,
       aggregationProfiles=undefined,
+      thresholdsProfiles=undefined,
       reportsConfigurations=undefined
     }) {
     this.token = token;
     this.metricprofiles = metricProfiles;
     this.aggregationprofiles = aggregationProfiles; 
+    this.thresholdsprofiles = thresholdsProfiles;
   }
 
   fetchMetricProfiles() {
@@ -580,6 +590,14 @@ export class WebApi {
   addAggregation(profile) {
     return this.send(
       this.aggregationprofiles,
+      'POST',
+      profile
+    );
+  }
+
+  addThresholdsProfile(profile) {
+    return this.send(
+      this.thresholdsprofiles,
       'POST',
       profile
     );
