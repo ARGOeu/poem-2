@@ -1,10 +1,11 @@
 import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
-import { Backend } from './DataManager';
+import { Backend, WebApi } from './DataManager';
 import {
     LoadingAnim,
     BaseArgoView,
-    AutocompleteField
+    AutocompleteField,
+    NotifyOk
 } from './UIElements';
 import ReactTable from 'react-table';
 import { 
@@ -33,6 +34,7 @@ import * as Yup from 'yup';
 import { FancyErrorMessage } from './UIElements';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes, faPlus, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
+import { NotificationManager } from 'react-notifications';
 
 
 const ThresholdsSchema = Yup.object().shape({
@@ -192,8 +194,15 @@ export class ThresholdsProfilesChange extends Component {
     this.addview = props.addview;
     this.history = props.history;
     this.location = props.location;
+    this.tenant_name = props.tenantname;
+    this.webapithresholds = props.webapithresholds;
+    this.token = props.webapitoken;
 
     this.backend = new Backend();
+    this.webapi = new WebApi({
+      token: this.token,
+      thresholdsProfiles: this.webapithresholds
+    })
 
     this.state = {
       thresholds_profile: {
@@ -222,6 +231,8 @@ export class ThresholdsProfilesChange extends Component {
     this.thresholdsToString = this.thresholdsToString.bind(this);
     this.thresholdsToValues = this.thresholdsToValues.bind(this);
     this.getUOM = this.getUOM.bind(this);
+    this.onSubmitHandle = this.onSubmitHandle.bind(this);
+    this.doChange = this.doChange.bind(this);
   };
 
   toggleAreYouSureSetModal(msg, title, onyes) {
@@ -265,6 +276,10 @@ export class ThresholdsProfilesChange extends Component {
   thresholdsToString(rules) {
     rules.forEach((r => {
       let thresholds = [];
+      if (!r.host)
+        delete r.host;
+      if (!r.endpoint_group)
+        delete r.endpoint_group;
       r.thresholds.forEach((t => {
         let thresholds_string = undefined;
         thresholds_string = t.label + '=' + t.value + t.uom + ';' + t.warn1 + ':' + t.warn2 + ';' + t.crit1 + ':' + t.crit2;
@@ -378,6 +393,54 @@ export class ThresholdsProfilesChange extends Component {
     return rules;
   };
 
+  onSubmitHandle(values, actions) {
+    let msg = undefined;
+    let title = undefined;
+    
+    if (this.addview) {
+      msg = 'Are you sure you want to add thresholds profile?';
+      title = 'Add thresholds profile';
+    } else {
+      msg = 'Are you sure you want to change thresholds profile?';
+      title = 'Change thresholds profile';
+    };
+
+    this.toggleAreYouSureSetModal(msg, title,
+      () => this.doChange(values, actions));
+  };
+
+  doChange(values, actions) {
+    let values_send = JSON.parse(JSON.stringify(values));
+    if (this.addview) {
+      this.webapi.addThresholdsProfile({
+        name: values_send.name,
+        rules: this.thresholdsToString(values_send.rules)
+      })
+      .then(response => {
+        if (!response.ok) {
+          NotificationManager.error(
+            `Error: ${response.status} ${response.statusText}`,
+            'Error adding thresholds profile'
+          );
+        } else {
+          response.json()
+            .then(r => {
+              this.backend.addThresholdsProfile({
+                apiid: r.data.id,
+                name: values_send.name,
+                groupname: values.groupname,
+              })
+                .then(() => NotifyOk({
+                  msg: 'Thresholds profile successfully added',
+                  title: 'Added',
+                  callback: () => this.history.push('/ui/thresholdsprofiles')
+                }))
+            });
+        };
+      });
+    };
+  };
+
   componentDidMount() {
     this.setState({loading: true});
 
@@ -423,6 +486,7 @@ export class ThresholdsProfilesChange extends Component {
               rules: thresholds_rules
             }}
             validationSchema={ThresholdsSchema}
+            onSubmit = {(values, actions) => this.onSubmitHandle(values, actions)}
             render = {props => (
               <Form>
                 <FormGroup>
@@ -598,7 +662,13 @@ export class ThresholdsProfilesChange extends Component {
                                                 </thead>
                                                 <tbody>
                                                   {
-                                                    (props.values.rules[index].thresholds && props.values.rules[index].thresholds.length > 0) ?
+                                                    (
+                                                      props.values.rules &&
+                                                      props.values.rules.length > index &&
+                                                      props.values.rules[index] &&
+                                                      props.values.rules[index].thresholds && 
+                                                      props.values.rules[index].thresholds.length > 0
+                                                      ) ?
                                                       props.values.rules[index].thresholds.map((t, i) =>
                                                       <tr key={`rule-${index}-threshold-${i}`}>
                                                         <td className='align-middle text-center'>
@@ -996,6 +1066,28 @@ export class ThresholdsProfilesChange extends Component {
                   </Col>
                 </Row>
                 </FormGroup>
+                {
+                  write_perm &&
+                    <div className='submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5'>
+                      {
+                        !this.addview ?
+                          <Button
+                            color='danger'
+                          >
+                            Delete
+                          </Button>
+                        :
+                          <div></div>
+                      }
+                      <Button
+                        color='success'
+                        id='submit-button'
+                        type='submit'
+                      >
+                        Save
+                      </Button>
+                    </div>
+                }
               </Form>
             )}
           />

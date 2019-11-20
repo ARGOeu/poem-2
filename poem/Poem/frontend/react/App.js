@@ -39,7 +39,7 @@ const NavigationLinksWithRouter = withRouter(NavigationLinks);
 const CustomBreadcrumbWithRouter = withRouter(CustomBreadcrumb);
 
 
-const TenantRouteSwitch = ({webApiAggregation, webApiMetric, token, tenantName}) => (
+const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, token, tenantName}) => (
   <Switch>
     <Route exact path="/ui/login" render={() => <Redirect to="/ui/home" />}/>
     <Route exact path="/ui/home" component={Home} />
@@ -152,7 +152,12 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, token, tenantName})
     />
     <Route exact path="/ui/thresholdsprofiles" component={ThresholdsProfilesList} />
     <Route exact path="/ui/thresholdsprofiles/add" 
-      render={props => <ThresholdsProfilesChange {...props} addview={true}/>}
+      render={props => <ThresholdsProfilesChange 
+        {...props} 
+        webapithresholds={webApiThresholds}
+        webapitoken={token}
+        tenantname={tenantName}
+        addview={true}/>}
     />
     <Route component={NotFound} />
   </Switch>
@@ -207,6 +212,7 @@ class App extends Component {
       areYouSureModal: false,
       webApiAggregation: undefined,
       webApiMetric: undefined,
+      webApiThresholds: undefined,
       tenantName: undefined,
       token: undefined,
       isTenantSchema: null
@@ -277,6 +283,7 @@ class App extends Component {
             token: token,
             webApiMetric: options && options.result.webapimetric,
             webApiAggregation: options && options.result.webapiaggregation,
+            webApiThresholds: options && options.result.webapithresholds,
             tenantName: options && options.result.tenant_name,
           })
         })
@@ -358,6 +365,7 @@ class App extends Component {
                   <TenantRouteSwitch 
                     webApiMetric={this.state.webApiMetric}
                     webApiAggregation={this.state.webApiAggregation}
+                    webApiThresholds={this.state.webApiThresholds}
                     token={this.state.token} 
                     tenantName={this.state.tenantName}/> 
                  :
