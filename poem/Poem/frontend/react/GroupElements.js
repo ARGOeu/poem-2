@@ -259,6 +259,7 @@ function GroupChange(gr, id, ttl) {
             resourcename={'group of ' + ttl}
             location={this.location}
             addview={this.addview}
+            history={false}
             modal={true}
             state={this.state}
             toggle={this.toggleAreYouSure}
