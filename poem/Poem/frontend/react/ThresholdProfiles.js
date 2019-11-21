@@ -233,6 +233,7 @@ export class ThresholdsProfilesChange extends Component {
     this.getUOM = this.getUOM.bind(this);
     this.onSubmitHandle = this.onSubmitHandle.bind(this);
     this.doChange = this.doChange.bind(this);
+    this.doDelete = this.doDelete.bind(this);
   };
 
   toggleAreYouSureSetModal(msg, title, onyes) {
@@ -467,6 +468,26 @@ export class ThresholdsProfilesChange extends Component {
           };
         });
     };
+  };
+
+  doDelete(profileId) {
+    this.webapi.deleteThresholdsProfile(profileId)
+      .then(response => {
+        if (!response.ok) {
+          NotificationManager.error(
+            `Error: ${response.status} ${response.statusText}`,
+            'Error deleting thresholds profile'
+          );
+        } else {
+          response.json()
+            .then(this.backend.deleteThresholdsProfile(profileId))
+            .then(() => NotifyOk({
+              msg: 'Thresholds profile successfully deleted',
+              title: 'Deleted',
+              callback: () => this.history.push('/ui/thresholdsprofiles')
+            }));
+        };
+      });
   };
 
   componentDidMount() {
@@ -1128,6 +1149,13 @@ export class ThresholdsProfilesChange extends Component {
                         !this.addview ?
                           <Button
                             color='danger'
+                            onClick={() => {
+                              this.toggleAreYouSureSetModal(
+                                'Are you sure you want to delete thresholds profile?',
+                                'Delete thresholds profile',
+                                () => this.doDelete(props.values.id)
+                              )
+                            }}
                           >
                             Delete
                           </Button>
