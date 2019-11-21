@@ -527,7 +527,7 @@ export class ThresholdsProfilesChange extends Component {
                     thresholds_rules: this.thresholdsToValues(thresholdsprofile.rules),
                     groups_list: groups['thresholdsprofiles'],
                     metrics_list: metricsall,
-                    write_perm: localStorage.getItem('authIsSuperuser') === 'true' || usergroup.indexOf(group),
+                    write_perm: localStorage.getItem('authIsSuperuser') === 'true' || usergroup.indexOf(group) >= 0,
                     loading: false
                   });
                 });
