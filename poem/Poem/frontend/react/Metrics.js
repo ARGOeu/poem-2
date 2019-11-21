@@ -432,7 +432,7 @@ export function ListOfMetrics(type, imp=false) {
         }
       ];
 
-      if (imp) {
+      if (imp && localStorage.getItem('authIsSuperuser') === 'true') {
         columns.splice(
           0,
           0,
@@ -555,13 +555,16 @@ export function ListOfMetrics(type, imp=false) {
             return (
               <>
                 <div className="d-flex align-items-center justify-content-between">
-                  <h2 className="ml-3 mt-1 mb-4">{`Select Metric template(s) to import`}</h2>
-                  <Button 
-                  className='btn btn-secondary'
-                  onClick={() => this.importMetrics()}
-                    >
-                      Import
-                    </Button>
+                  <h2 className="ml-3 mt-1 mb-4">{`Select metric template${localStorage.getItem('authIsSuperuser') === 'true'  ? '(s) to import' : ' for details'}`}</h2>
+                  {
+                    localStorage.getItem('authIsSuperuser') === 'true' &&
+                      <Button 
+                      className='btn btn-secondary'
+                      onClick={() => this.importMetrics()}
+                        >
+                          Import
+                        </Button>
+                  }
                 </div>
                 <div id="argo-contentwrap" className="ml-2 mb-2 mt-2 p-3 border rounded">
                   <ReactTable
