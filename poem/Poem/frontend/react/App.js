@@ -10,15 +10,25 @@ import { AggregationProfilesChange, AggregationProfilesList } from './Aggregatio
 import Reports from './Reports';
 import Services from './Services';
 import { UsersList, UserChange, SuperAdminUserChange } from './Users';
-import { GroupOfMetricsList, GroupOfMetricsChange, GroupOfAggregationsList, GroupOfAggregationsChange, GroupOfMetricProfilesList, GroupOfMetricProfilesChange } from './GroupElements';
+import { 
+  GroupOfMetricsList, 
+  GroupOfMetricsChange, 
+  GroupOfAggregationsList, 
+  GroupOfAggregationsChange, 
+  GroupOfMetricProfilesList, 
+  GroupOfMetricProfilesChange,
+  GroupOfThresholdsProfilesList,
+  GroupOfThresholdsProfilesChange
+} from './GroupElements';
 import { APIKeyList, APIKeyChange } from './APIKey';
 import NotFound from './NotFound';
 import { Route, Switch, BrowserRouter, Redirect, withRouter } from 'react-router-dom';
-import { Container, Button, Row, Col } from 'reactstrap';
+import { Container, Row, Col } from 'reactstrap';
 import { NavigationBar, CustomBreadcrumb, NavigationLinks, Footer } from './UIElements';
-import { NotificationContainer, NotificationManager } from 'react-notifications';
+import { NotificationContainer } from 'react-notifications';
 import { Backend } from './DataManager';
 import { YumRepoList, YumRepoChange } from './YumRepos';
+import { ThresholdsProfilesList, ThresholdsProfilesChange } from './ThresholdProfiles';
 import Cookies from 'universal-cookie';
 
 import './App.css';
@@ -29,7 +39,7 @@ const NavigationLinksWithRouter = withRouter(NavigationLinks);
 const CustomBreadcrumbWithRouter = withRouter(CustomBreadcrumb);
 
 
-const TenantRouteSwitch = ({webApiAggregation, webApiMetric, token, tenantName}) => (
+const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, token, tenantName}) => (
   <Switch>
     <Route exact path="/ui/login" render={() => <Redirect to="/ui/home" />}/>
     <Route exact path="/ui/home" component={Home} />
@@ -131,6 +141,31 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, token, tenantName})
     <Route exact path='/ui/administration/yumrepos/:name' 
       render={props => <YumRepoChange {...props} disabled={true}/>}
     />
+    <Route exact path="/ui/administration/groupofthresholdsprofiles" component={GroupOfThresholdsProfilesList} />
+    <Route exact path="/ui/administration/groupofthresholdsprofiles/add"
+      render={props => <GroupOfThresholdsProfilesChange
+        {...props}
+        addview={true}/>}
+    />
+    <Route exact path="/ui/administration/groupofthresholdsprofiles/:group"
+      render={props => <GroupOfThresholdsProfilesChange {...props}/>}
+    />
+    <Route exact path="/ui/thresholdsprofiles" component={ThresholdsProfilesList} />
+    <Route exact path="/ui/thresholdsprofiles/add" 
+      render={props => <ThresholdsProfilesChange 
+        {...props} 
+        webapithresholds={webApiThresholds}
+        webapitoken={token}
+        tenantname={tenantName}
+        addview={true}/>}
+    />
+    <Route exact path="/ui/thresholdsprofiles/:name" 
+      render={props => <ThresholdsProfilesChange 
+        {...props} 
+        webapithresholds={webApiThresholds}
+        webapitoken={token}
+        tenantname={tenantName}/>}
+    />
     <Route component={NotFound} />
   </Switch>
 )
@@ -184,6 +219,7 @@ class App extends Component {
       areYouSureModal: false,
       webApiAggregation: undefined,
       webApiMetric: undefined,
+      webApiThresholds: undefined,
       tenantName: undefined,
       token: undefined,
       isTenantSchema: null
@@ -254,6 +290,7 @@ class App extends Component {
             token: token,
             webApiMetric: options && options.result.webapimetric,
             webApiAggregation: options && options.result.webapiaggregation,
+            webApiThresholds: options && options.result.webapithresholds,
             tenantName: options && options.result.tenant_name,
           })
         })
@@ -325,7 +362,7 @@ class App extends Component {
               </Col>
             </Row>
             <Row className="no-gutters">
-              <Col sm={{size: 2}} md={{size: 2}} className="d-flex flex-column">
+              <Col sm={{size: 2}} md={{size: 2}} id="sidebar-col" className="d-flex flex-column">
                 <NavigationLinksWithRouter isTenantSchema={this.state.isTenantSchema}/>
                 <div id="sidebar-grow" className="flex-grow-1 border-left border-right rounded-bottom"/>
               </Col>
@@ -335,6 +372,7 @@ class App extends Component {
                   <TenantRouteSwitch 
                     webApiMetric={this.state.webApiMetric}
                     webApiAggregation={this.state.webApiAggregation}
+                    webApiThresholds={this.state.webApiThresholds}
                     token={this.state.token} 
                     tenantName={this.state.tenantName}/> 
                  :
@@ -344,7 +382,7 @@ class App extends Component {
             </Row>
             <Row>
               <Col>
-                <Footer addBorder={true}/>
+                <Footer loginPage={false}/>
               </Col>
             </Row>
           </Container>

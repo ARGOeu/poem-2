@@ -13,6 +13,10 @@
   background-color: #ecf0f5;
 }
 
+#sidebar-col {
+  max-width: 215px;
+}
+
 #argo-breadcrumb > ol {
   background-color: #ecf0f5;
 }

@@ -920,16 +920,16 @@ export function HistoryComponent(obj) {
                           {
                             obj === 'probe' &&
                               <td>
-                                {e.version ? <Link to={'/ui/' + obj +'s/' + e.fields.name + '/history/' + e.version}>{e.version}</Link> : ''}
+                                {e.version ? <Link to={'/ui/' + obj +'s/' + this.name + '/history/' + e.version}>{e.version}</Link> : ''}
                               </td>
                           }
                           <td>
                             {e.date_created ? 
                               (obj === 'metrictemplate') ? 
-                                  <Link to={'/ui/metrictemplates/' + e.fields.name + '/history/' + e.version}>{e.date_created}</Link> 
+                                  <Link to={'/ui/metrictemplates/' + this.name + '/history/' + e.version}>{e.date_created}</Link> 
                                   : 
                                     (obj === 'metric') ?
-                                      <Link to={'/ui/metrics/' + e.fields.name + '/history/' + e.version}>{e.date_created}</Link>
+                                      <Link to={'/ui/metrics/' + this.name + '/history/' + e.version}>{e.date_created}</Link>
                                     :
                                       e.date_created 
                               : 

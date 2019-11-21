@@ -47,6 +47,9 @@ export const TenantAdministration = (props) =>
           <Link to={'/ui/administration/groupofmetricprofiles'}>Groups of metric profiles</Link>
         </Row>
         <Row className="p-1 align-items-center">
+          <Link to={'/ui/administration/groupofthresholdsprofiles'}>Groups of thresholds profiles</Link>
+        </Row>
+        <Row className="p-1 align-items-center">
           <Link to={'/ui/administration/users'}>Users</Link>
         </Row>
       </CardBody>

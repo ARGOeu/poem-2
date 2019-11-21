@@ -358,7 +358,7 @@ class ListProbesAPIViewTests(TenantTestCase):
     def setUp(self):
         self.factory = TenantRequestFactory(self.tenant)
         self.view = views.ListProbes.as_view()
-        self.url_base = '/api/v2/internal/probes/'
+        self.url = '/api/v2/internal/probes/'
         self.user = CustUser.objects.create(username='testuser')
 
         with schema_context(get_public_schema_name()):
@@ -391,12 +391,25 @@ class ListProbesAPIViewTests(TenantTestCase):
             datetime=datetime.datetime.now()
         )
 
+        probe3 = admin_models.Probe.objects.create(
+            name='ams-publisher-probe',
+            version='0.1.11',
+            description='Probe is inspecting AMS publisher running on Nagios '
+                        'monitoring instances.',
+            comment='Initial version.',
+            repository='https://github.com/ARGOeu/nagios-plugins-argo',
+            docurl='https://github.com/ARGOeu/nagios-plugins-argo/blob/master/'
+                   'README.md',
+            user='testuser',
+            datetime=datetime.datetime.now()
+        )
+
         self.datetime1 = probe1.datetime
         self.id1 = probe1.id
 
         self.ct = ContentType.objects.get_for_model(admin_models.Probe)
 
-        admin_models.History.objects.create(
+        pv1 = admin_models.History.objects.create(
             object_id=probe1.id,
             serialized_data=serializers.serialize(
                 'json', [probe1],
@@ -424,6 +437,20 @@ class ListProbesAPIViewTests(TenantTestCase):
             user='poem'
         )
 
+        admin_models.History.objects.create(
+            object_id=probe3.id,
+            serialized_data=serializers.serialize(
+                'json', [probe3],
+                use_natural_foreign_keys=True,
+                use_natural_primary_keys=True,
+            ),
+            object_repr=probe3.__str__(),
+            content_type=self.ct,
+            comment='Initial version.',
+            date_created=datetime.datetime.now(),
+            user='testuser'
+        )
+
         type = admin_models.MetricTemplateType.objects.create(name='Active')
 
         admin_models.MetricTemplate.objects.create(
@@ -439,9 +466,23 @@ class ListProbesAPIViewTests(TenantTestCase):
             flags='["OBSESS 1"]'
         )
 
+        admin_models.MetricTemplate.objects.create(
+            name='argo.AMS-Check',
+            probeversion='ams-probe (0.1.7)',
+            mtype=type,
+            probekey=pv1,
+            probeexecutable='["ams-probe"]',
+            config='["maxCheckAttempts 3", "timeout 60", '
+                   '"path /usr/libexec/argo-monitoring/probes/argo", '
+                   '"interval 5", "retryInterval 3"]',
+            attribute='["argo.ams_TOKEN --token"]',
+            flags='["OBSESS 1"]',
+            parameter='["--project EGI"]'
+        )
+
 
     def test_get_list_of_all_probes(self):
-        request = self.factory.get(self.url_base)
+        request = self.factory.get(self.url)
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(
@@ -456,6 +497,19 @@ class ListProbesAPIViewTests(TenantTestCase):
                     'description': 'Probe is inspecting AMS service by trying '
                                    'to publish and consume randomly generated '
                                    'messages.',
+                    'comment': 'Initial version.',
+                    'repository': 'https://github.com/ARGOeu/nagios-plugins-'
+                                  'argo',
+                    'nv': 1
+                },
+                {
+                    'name': 'ams-publisher-probe',
+                    'version': '0.1.11',
+                    'docurl':
+                        'https://github.com/ARGOeu/nagios-plugins-argo/blob/'
+                        'master/README.md',
+                    'description': 'Probe is inspecting AMS publisher running '
+                                   'on Nagios monitoring instances.',
                     'comment': 'Initial version.',
                     'repository': 'https://github.com/ARGOeu/nagios-plugins-'
                                   'argo',
@@ -477,7 +531,7 @@ class ListProbesAPIViewTests(TenantTestCase):
         )
 
     def test_get_probe_by_name(self):
-        request = self.factory.get(self.url_base + 'ams-probe')
+        request = self.factory.get(self.url + 'ams-probe')
         force_authenticate(request, user=self.user)
         response = self.view(request, 'ams-probe')
         self.assertEqual(
@@ -503,17 +557,17 @@ class ListProbesAPIViewTests(TenantTestCase):
         )
 
     def test_get_probe_permission_denied_in_case_of_no_authorization(self):
-        request = self.factory.get(self.url_base + 'ams-probe')
+        request = self.factory.get(self.url + 'ams-probe')
         response = self.view(request, 'ams-probe')
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_get_probe_empty_dict_in_case_of_nonexisting_probe(self):
-        request = self.factory.get(self.url_base + 'nonexisting_probe')
+        request = self.factory.get(self.url + 'nonexisting_probe')
         force_authenticate(request, user=self.user)
         response = self.view(request, 'nonexisting_probe')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
-    def test_put_probe_with_new_version(self):
+    def test_put_probe_with_already_existing_name(self):
         data = {
             'id': self.id1,
             'name': 'argo-web-api',
@@ -531,8 +585,7 @@ class ListProbesAPIViewTests(TenantTestCase):
             'update_metrics': False
         }
         content, content_type = encode_data(data)
-        request = self.factory.put(self.url_base,
-                                   content, content_type=content_type)
+        request = self.factory.put(self.url, content, content_type=content_type)
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -544,55 +597,165 @@ class ListProbesAPIViewTests(TenantTestCase):
     def test_put_probe_without_new_version(self):
         data = {
             'id': self.id1,
-            'name': 'ams-probe',
+            'name': 'ams-probe-new',
             'version': '0.1.7',
             'comment': 'Initial version',
             'docurl':
-                'https://github.com/ARGOeu/nagios-plugins-argo/blob/'
+                'https://github.com/ARGOeu/nagios-plugins-argo2/blob/'
                 'master/README.md',
-            'description': 'Probe is inspecting AMS service by trying '
-                           'to publish randomly generated messages.',
+            'description': 'Probe is inspecting AMS service.',
             'repository': 'https://github.com/ARGOeu/nagios-plugins-'
-                          'argo',
+                          'argo2',
             'new_version': False,
             'update_metrics': False
         }
         content, content_type = encode_data(data)
-        request = self.factory.put(self.url_base, content,
-                                   content_type=content_type)
+        request = self.factory.put(self.url, content, content_type=content_type)
         force_authenticate(request, user=self.user)
         response = self.view(request)
-        probe = admin_models.Probe.objects.get(name='ams-probe')
+        probe = admin_models.Probe.objects.get(id=self.id1)
         version = admin_models.History.objects.filter(object_id=probe.id,
                                                       content_type=self.ct)
         ser_data = json.loads(version[0].serialized_data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(probe.name, 'ams-probe-new')
         self.assertEqual(probe.version, '0.1.7')
         self.assertEqual(probe.comment, 'Initial version')
         self.assertEqual(
-            probe.description,
-            'Probe is inspecting AMS service by trying to publish randomly'
-            ' generated messages.'
+            probe.docurl,
+            'https://github.com/ARGOeu/nagios-plugins-argo2/blob/master/'
+            'README.md',
         )
-        self.assertEqual(ser_data[0]['fields']['description'], probe.description)
+        self.assertEqual(
+            probe.description,
+            'Probe is inspecting AMS service.'
+        )
+        self.assertEqual(
+            probe.repository,
+            'https://github.com/ARGOeu/nagios-plugins-argo2',
+        )
+        self.assertEqual(ser_data[0]['fields']['name'], probe.name)
+        self.assertEqual(ser_data[0]['fields']['version'], probe.version)
+        self.assertEqual(ser_data[0]['fields']['comment'], probe.comment)
+        self.assertEqual(ser_data[0]['fields']['docurl'], probe.docurl)
+        self.assertEqual(ser_data[0]['fields']['description'],
+                         probe.description)
+        self.assertEqual(ser_data[0]['fields']['repository'], probe.repository)
+        self.assertEqual(ser_data[0]['fields']['nameversion'],
+                         probe.nameversion)
+        mt = admin_models.MetricTemplate.objects.get(name='argo.AMS-Check')
+        self.assertEqual(mt.probekey.id, version[0].id)
+        self.assertEqual(mt.probeversion, 'ams-probe-new (0.1.7)')
 
-    def test_put_probe_with_already_existing_name(self):
+    def test_put_probe_with_new_version_without_metrictemplate_update(self):
         data = {
             'id': self.id1,
-            'name': 'ams-probe',
-            'version': '0.1.7',
-            'comment': 'Initial version',
+            'name': 'ams-probe-new',
+            'version': '0.1.11',
+            'comment': 'New version.',
             'docurl':
-                'https://github.com/ARGOeu/nagios-plugins-argo/blob/'
+                'https://github.com/ARGOeu/nagios-plugins-argo2/blob/'
                 'master/README.md',
-            'description': 'Probe is inspecting AMS service by trying '
-                           'to publish randomly generated messages.',
+            'description': 'Probe is inspecting AMS service.',
             'repository': 'https://github.com/ARGOeu/nagios-plugins-'
-                          'argo',
-            'new_version': False,
+                          'argo2',
+            'new_version': True,
             'update_metrics': False
         }
         content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        probe = admin_models.Probe.objects.get(id=self.id1)
+        version = admin_models.History.objects.filter(object_id=probe.id,
+                                                      content_type=self.ct)
+        self.assertEqual(version.count(), 2)
+        ser_data = json.loads(version[0].serialized_data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(probe.name, 'ams-probe-new')
+        self.assertEqual(probe.version, '0.1.11')
+        self.assertEqual(probe.comment, 'New version.')
+        self.assertEqual(
+            probe.docurl,
+            'https://github.com/ARGOeu/nagios-plugins-argo2/blob/master/'
+            'README.md',
+        )
+        self.assertEqual(
+            probe.description,
+            'Probe is inspecting AMS service.'
+        )
+        self.assertEqual(
+            probe.repository,
+            'https://github.com/ARGOeu/nagios-plugins-argo2',
+        )
+        self.assertEqual(ser_data[0]['fields']['name'], probe.name)
+        self.assertEqual(ser_data[0]['fields']['version'], probe.version)
+        self.assertEqual(ser_data[0]['fields']['comment'], probe.comment)
+        self.assertEqual(ser_data[0]['fields']['docurl'], probe.docurl)
+        self.assertEqual(ser_data[0]['fields']['description'],
+                         probe.description)
+        self.assertEqual(ser_data[0]['fields']['repository'], probe.repository)
+        self.assertEqual(ser_data[0]['fields']['nameversion'],
+                         probe.nameversion)
+        mt = admin_models.MetricTemplate.objects.get(name='argo.AMS-Check')
+        self.assertEqual(mt.probekey.id, version[1].id)
+        self.assertEqual(mt.probeversion, 'ams-probe (0.1.7)')
+
+    def test_put_probe_with_new_version_with_metrictemplate_update(self):
+        data = {
+            'id': self.id1,
+            'name': 'ams-probe-new',
+            'version': '0.1.11',
+            'comment': 'New version.',
+            'docurl':
+                'https://github.com/ARGOeu/nagios-plugins-argo2/blob/'
+                'master/README.md',
+            'description': 'Probe is inspecting AMS service.',
+            'repository': 'https://github.com/ARGOeu/nagios-plugins-'
+                          'argo2',
+            'new_version': True,
+            'update_metrics': True
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content,
+                                   content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        probe = admin_models.Probe.objects.get(id=self.id1)
+        version = admin_models.History.objects.filter(object_id=probe.id,
+                                                      content_type=self.ct)
+        self.assertEqual(version.count(), 2)
+        ser_data = json.loads(version[0].serialized_data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(probe.name, 'ams-probe-new')
+        self.assertEqual(probe.version, '0.1.11')
+        self.assertEqual(probe.comment, 'New version.')
+        self.assertEqual(
+            probe.docurl,
+            'https://github.com/ARGOeu/nagios-plugins-argo2/blob/master/'
+            'README.md',
+        )
+        self.assertEqual(
+            probe.description,
+            'Probe is inspecting AMS service.'
+        )
+        self.assertEqual(
+            probe.repository,
+            'https://github.com/ARGOeu/nagios-plugins-argo2',
+        )
+        self.assertEqual(ser_data[0]['fields']['name'], probe.name)
+        self.assertEqual(ser_data[0]['fields']['version'], probe.version)
+        self.assertEqual(ser_data[0]['fields']['comment'], probe.comment)
+        self.assertEqual(ser_data[0]['fields']['docurl'], probe.docurl)
+        self.assertEqual(ser_data[0]['fields']['description'],
+                         probe.description)
+        self.assertEqual(ser_data[0]['fields']['repository'],
+                         probe.repository)
+        self.assertEqual(ser_data[0]['fields']['nameversion'],
+                         probe.nameversion)
+        mt = admin_models.MetricTemplate.objects.get(name='argo.AMS-Check')
+        self.assertEqual(mt.probekey.id, version[0].id)
+        self.assertEqual(mt.probeversion, 'ams-probe-new (0.1.11)')
 
     def test_post_probe(self):
         data = {
@@ -606,7 +769,7 @@ class ListProbesAPIViewTests(TenantTestCase):
             'user': 'testuser',
             'datetime': datetime.datetime.now()
         }
-        request = self.factory.post(self.url_base, data, format='json')
+        request = self.factory.post(self.url, data, format='json')
         force_authenticate(request, user=self.user)
         response = self.view(request)
         probe = admin_models.Probe.objects.get(name='poem-probe')
@@ -621,6 +784,20 @@ class ListProbesAPIViewTests(TenantTestCase):
             'https://github.com/ARGOeu/nagios-plugins-argo/blob/'
             'master/README.md'
         )
+        version = admin_models.History.objects.filter(object_id=probe.id,
+                                                      content_type=self.ct)
+        ser_data = json.loads(version[0].serialized_data)
+        self.assertEqual(version.count(), 1)
+        self.assertEqual(ser_data[0]['fields']['name'], probe.name)
+        self.assertEqual(ser_data[0]['fields']['version'], probe.version)
+        self.assertEqual(ser_data[0]['fields']['comment'], probe.comment)
+        self.assertEqual(ser_data[0]['fields']['docurl'], probe.docurl)
+        self.assertEqual(ser_data[0]['fields']['description'],
+                         probe.description)
+        self.assertEqual(ser_data[0]['fields']['repository'],
+                         probe.repository)
+        self.assertEqual(ser_data[0]['fields']['nameversion'],
+                         probe.nameversion)
 
     def test_post_probe_with_name_which_already_exists(self):
         data = {
@@ -634,7 +811,7 @@ class ListProbesAPIViewTests(TenantTestCase):
             'user': 'testuser',
             'datetime': datetime.datetime.now()
         }
-        request = self.factory.post(self.url_base, data, format='json')
+        request = self.factory.post(self.url, data, format='json')
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -646,15 +823,15 @@ class ListProbesAPIViewTests(TenantTestCase):
         )
 
     def test_delete_probe(self):
-        self.assertEqual(admin_models.Probe.objects.all().count(), 2)
-        request = self.factory.delete(self.url_base + 'ams-probe')
+        self.assertEqual(admin_models.Probe.objects.all().count(), 3)
+        request = self.factory.delete(self.url + 'ams-publisher-probe')
         force_authenticate(request, user=self.user)
-        response = self.view(request, 'ams-probe')
+        response = self.view(request, 'ams-publisher-probe')
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-        self.assertEqual(admin_models.Probe.objects.all().count(), 1)
+        self.assertEqual(admin_models.Probe.objects.all().count(), 2)
 
     def test_delete_probe_associated_to_metric_template(self):
-        request = self.factory.delete(self.url_base + 'argo-web-api')
+        request = self.factory.delete(self.url + 'argo-web-api')
         force_authenticate(request, user=self.user)
         response = self.view(request, 'argo-web-api')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -667,13 +844,13 @@ class ListProbesAPIViewTests(TenantTestCase):
         )
 
     def test_delete_probe_without_name(self):
-        request = self.factory.delete(self.url_base)
+        request = self.factory.delete(self.url)
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_trying_to_delete_nonexisting_probe(self):
-        request = self.factory.delete(self.url_base + 'nonexisting')
+        request = self.factory.delete(self.url + 'nonexisting')
         force_authenticate(request, user=self.user)
         response = self.view(request, 'nonexisting')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
@@ -1183,20 +1360,36 @@ class GetUserProfileForUsernameAPIViewTests(TenantTestCase):
             is_superuser=False
         )
 
-        self.gm = poem_models.GroupOfMetrics.objects.create(name='EGI')
-        self.ga = poem_models.GroupOfAggregations.objects.create(name='EUDAT')
-        self.gmp = poem_models.GroupOfMetricProfiles.objects.create(name='SDC')
+        self.gm = poem_models.GroupOfMetrics.objects.create(
+            name='GROUP-metrics'
+        )
+        poem_models.GroupOfMetrics.objects.create(name='GROUP2-metrics')
+        self.ga = poem_models.GroupOfAggregations.objects.create(
+            name='GROUP-aggregations'
+        )
+        poem_models.GroupOfAggregations.objects.create(
+            name='GROUP2-aggregations'
+        )
+        self.gmp = poem_models.GroupOfMetricProfiles.objects.create(
+            name='GROUP-metricprofiles'
+        )
+        self.gtp = poem_models.GroupOfThresholdsProfiles.objects.create(
+            name='GROUP-thresholds'
+        )
+        poem_models.GroupOfThresholdsProfiles.objects.create(
+            name='GROUP2-thresholds'
+        )
 
-        userprofile = poem_models.UserProfile.objects.create(
+        self.userprofile = poem_models.UserProfile.objects.create(
             user=user1,
             subject='bla',
             displayname='First_User',
             egiid='blablabla'
         )
-        userprofile.groupsofmetrics.add(self.gm)
-        userprofile.groupsofaggregations.add(self.ga)
-        userprofile.groupsofmetricprofiles.add(self.gmp)
-
+        self.userprofile.groupsofmetrics.add(self.gm)
+        self.userprofile.groupsofaggregations.add(self.ga)
+        self.userprofile.groupsofmetricprofiles.add(self.gmp)
+        self.userprofile.groupsofthresholdsprofiles.add(self.gtp)
 
     def test_get_user_profile_for_given_username(self):
         request = self.factory.get(self.url + 'username1')
@@ -1225,6 +1418,122 @@ class GetUserProfileForUsernameAPIViewTests(TenantTestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(response.data, {'detail': 'User profile not found'})
 
+    def test_put_userprofile(self):
+        self.assertEqual(self.userprofile.groupsofmetrics.count(), 1)
+        self.assertEqual(self.userprofile.groupsofmetricprofiles.count(), 1)
+        self.assertEqual(self.userprofile.groupsofaggregations.count(), 1)
+        self.assertEqual(self.userprofile.groupsofthresholdsprofiles.count(), 1)
+        data = {
+            'username': 'username1',
+            'displayname': 'Username_1',
+            'egiid': 'newegiid',
+            'subject': 'newsubject',
+            'groupsofaggregations': ['GROUP2-aggregations'],
+            'groupsofmetrics': ['GROUP-metrics', 'GROUP2-metrics'],
+            'groupsofmetricprofiles': ['GROUP-metricprofiles'],
+            'groupsofthresholdsprofiles': ['GROUP2-thresholds']
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        userprofile = poem_models.UserProfile.objects.get(
+            id=self.userprofile.id
+        )
+        self.assertEqual(userprofile.displayname, 'Username_1')
+        self.assertEqual(userprofile.egiid, 'newegiid')
+        self.assertEqual(userprofile.subject, 'newsubject')
+        self.assertEqual(userprofile.groupsofaggregations.count(), 1)
+        self.assertTrue(
+            userprofile.groupsofaggregations.filter(
+                name='GROUP2-aggregations'
+            ).exists()
+        )
+        self.assertFalse(
+            userprofile.groupsofaggregations.filter(
+                name='GROUP-aggregations'
+            ).exists()
+        )
+        self.assertEqual(userprofile.groupsofmetrics.count(), 2)
+        self.assertTrue(
+            userprofile.groupsofmetrics.filter(
+                name='GROUP-metrics'
+            ).exists()
+        )
+        self.assertTrue(
+            userprofile.groupsofmetrics.filter(
+                name='GROUP2-metrics'
+            ).exists()
+        )
+        self.assertEqual(userprofile.groupsofmetricprofiles.count(), 1)
+        self.assertTrue(
+            userprofile.groupsofmetricprofiles.filter(
+                name='GROUP-metricprofiles'
+            ).exists()
+        )
+        self.assertEqual(userprofile.groupsofthresholdsprofiles.count(), 1)
+        self.assertTrue(
+            userprofile.groupsofthresholdsprofiles.filter(
+                name='GROUP2-thresholds'
+            ).exists()
+        )
+        self.assertFalse(
+            userprofile.groupsofthresholdsprofiles.filter(
+                name='GROUP-thresholds'
+            ).exists()
+        )
+
+    def test_post_userprofile(self):
+        self.assertEqual(poem_models.UserProfile.objects.all().count(), 1)
+        user = CustUser.objects.create_user(
+            username='username2',
+            first_name='Second',
+            last_name='User',
+            email='suser@example.com',
+            is_staff=True,
+            is_active=True,
+            is_superuser=False
+        )
+        data = {
+            'username': 'username2',
+            'displayname': 'Second_User',
+            'subject': 'secondsubject',
+            'egiid': 'bla',
+            'groupsofaggregations': ['GROUP-aggregations',
+                                     'GROUP2-aggregations'],
+            'groupsofmetrics': ['GROUP-metrics'],
+            'groupsofthresholdsprofiles': [],
+            'groupofmetricprofiles': []
+        }
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        userprofile = poem_models.UserProfile.objects.get(user=user)
+        self.assertEqual(userprofile.displayname, 'Second_User')
+        self.assertEqual(userprofile.egiid, 'bla')
+        self.assertEqual(userprofile.subject, 'secondsubject')
+        self.assertEqual(userprofile.groupsofaggregations.count(), 2)
+        self.assertTrue(
+            userprofile.groupsofaggregations.filter(
+                name='GROUP-aggregations'
+            ).exists()
+        )
+        self.assertTrue(
+            userprofile.groupsofaggregations.filter(
+                name='GROUP2-aggregations'
+            ).exists()
+        )
+        self.assertEqual(userprofile.groupsofmetrics.count(), 1)
+        self.assertTrue(
+            userprofile.groupsofmetrics.filter(
+                name='GROUP-metrics'
+            ).exists()
+        )
+        self.assertEqual(userprofile.groupsofmetricprofiles.count(), 0)
+        self.assertEqual(userprofile.groupsofthresholdsprofiles.count(), 0)
+
 
 class ListGroupsForGivenUserAPIViewTests(TenantTestCase):
     def setUp(self):
@@ -1243,10 +1552,17 @@ class ListGroupsForGivenUserAPIViewTests(TenantTestCase):
             is_superuser=False
         )
 
-        gm = poem_models.GroupOfMetrics.objects.create(name='EGI')
-        poem_models.GroupOfMetrics.objects.create(name='EUDAT')
-        ga = poem_models.GroupOfAggregations.objects.create(name='EUDAT')
-        gmp = poem_models.GroupOfMetricProfiles.objects.create(name='SDC')
+        gm = poem_models.GroupOfMetrics.objects.create(name='GROUP-metrics')
+        poem_models.GroupOfMetrics.objects.create(name='GROUP2-metrics')
+        ga = poem_models.GroupOfAggregations.objects.create(
+            name='GROUP-aggregations'
+        )
+        gmp = poem_models.GroupOfMetricProfiles.objects.create(
+            name='GROUP-metricprofiles'
+        )
+        gtp = poem_models.GroupOfThresholdsProfiles.objects.create(
+            name='GROUP-thresholds'
+        )
 
         userprofile = poem_models.UserProfile.objects.create(
             user=user1
@@ -1254,28 +1570,39 @@ class ListGroupsForGivenUserAPIViewTests(TenantTestCase):
         userprofile.groupsofmetrics.add(gm)
         userprofile.groupsofaggregations.add(ga)
         userprofile.groupsofmetricprofiles.add(gmp)
+        userprofile.groupsofthresholdsprofiles.add(gtp)
 
     def test_get_groups_for_given_user(self):
         request = self.factory.get(self.url + 'username1')
         force_authenticate(request, user=self.user)
         response = self.view(request, 'username1')
-        aggr = [r for r in response.data['result']['aggregations']]
-        met = [r for r in response.data['result']['metrics']]
-        mp = [r for r in response.data['result']['metricprofiles']]
-        self.assertEqual(aggr, ['EUDAT'])
-        self.assertEqual(met, ['EGI'])
-        self.assertEqual(mp, ['SDC'])
+        self.assertEqual(
+            response.data,
+            {
+                'result': {
+                    'aggregations': ['GROUP-aggregations'],
+                    'metrics': ['GROUP-metrics'],
+                    'metricprofiles': ['GROUP-metricprofiles'],
+                    'thresholdsprofiles': ['GROUP-thresholds']
+                }
+            }
+        )
 
     def test_get_all_groups(self):
         request = self.factory.get(self.url)
         force_authenticate(request, user=self.user)
         response = self.view(request)
-        aggr = [r for r in response.data['result']['aggregations']]
-        met = [r for r in response.data['result']['metrics']]
-        mp = [r for r in response.data['result']['metricprofiles']]
-        self.assertEqual(aggr, ['EUDAT'])
-        self.assertEqual(met, ['EGI', 'EUDAT'])
-        self.assertEqual(mp, ['SDC'])
+        self.assertEqual(
+            response.data,
+            {
+                'result': {
+                    'aggregations': ['GROUP-aggregations'],
+                    'metrics': ['GROUP-metrics', 'GROUP2-metrics'],
+                    'metricprofiles': ['GROUP-metricprofiles'],
+                    'thresholdsprofiles': ['GROUP-thresholds']
+                }
+            }
+        )
 
 
 class ListMetricsInGroupAPIViewTests(TenantTestCase):
@@ -1283,10 +1610,10 @@ class ListMetricsInGroupAPIViewTests(TenantTestCase):
         self.factory = TenantRequestFactory(self.tenant)
         self.view = views.ListMetricsInGroup.as_view()
         self.url = '/api/v2/internal/metricsgroup/'
-        self.user = CustUser.objects.create(username='testuser')
+        self.user = CustUser.objects.create_user(username='testuser')
 
-        group = poem_models.GroupOfMetrics.objects.create(name='EGI')
-        poem_models.GroupOfMetrics.objects.create(name='delete')
+        self.group = poem_models.GroupOfMetrics.objects.create(name='EGI')
+        group2 = poem_models.GroupOfMetrics.objects.create(name='delete')
 
         mtype1 = poem_models.MetricType.objects.create(name='Active')
         mtype2 = poem_models.MetricType.objects.create(name='Passive')
@@ -1295,12 +1622,12 @@ class ListMetricsInGroupAPIViewTests(TenantTestCase):
             name='argo.AMS-Check',
             mtype=mtype1,
             probeversion='ams-probe (0.1.7)',
-            group=group,
+            group=self.group,
         )
 
         self.metric2 = poem_models.Metric.objects.create(
             name='org.apel.APEL-Pub',
-            group=group,
+            group=self.group,
             mtype=mtype2,
         )
 
@@ -1310,10 +1637,69 @@ class ListMetricsInGroupAPIViewTests(TenantTestCase):
             mtype=mtype1
         )
 
-        self.id1 = self.metric1.id
-        self.id2 = self.metric2.id
-        self.id3 = self.metric3.id
+        self.metric4 = poem_models.Metric.objects.create(
+            name='delete.metric',
+            group=group2,
+            mtype=mtype2
+        )
 
+        self.ct = ContentType.objects.get_for_model(poem_models.Metric)
+
+        self.ver1 = poem_models.TenantHistory.objects.create(
+            object_id=self.metric1.id,
+            serialized_data=serializers.serialize(
+                'json', [self.metric1],
+                use_natural_foreign_keys=True,
+                use_natural_primary_keys=True
+            ),
+            object_repr=self.metric1.__str__(),
+            content_type=self.ct,
+            date_created=datetime.datetime.now(),
+            comment='Initial version.',
+            user=self.user.username
+        )
+
+        self.ver2 = poem_models.TenantHistory.objects.create(
+            object_id=self.metric2.id,
+            serialized_data=serializers.serialize(
+                'json', [self.metric2],
+                use_natural_foreign_keys=True,
+                use_natural_primary_keys=True
+            ),
+            object_repr=self.metric2.__str__(),
+            content_type=self.ct,
+            date_created=datetime.datetime.now(),
+            comment='Initial version.',
+            user=self.user.username
+        )
+
+        self.ver3 = poem_models.TenantHistory.objects.create(
+            object_id=self.metric3.id,
+            serialized_data=serializers.serialize(
+                'json', [self.metric3],
+                use_natural_foreign_keys=True,
+                use_natural_primary_keys=True
+            ),
+            object_repr=self.metric3.__str__(),
+            content_type=self.ct,
+            date_created=datetime.datetime.now(),
+            comment='Initial version.',
+            user=self.user.username
+        )
+
+        self.ver4 = poem_models.TenantHistory.objects.create(
+            object_id=self.metric4.id,
+            serialized_data=serializers.serialize(
+                'json', [self.metric4],
+                use_natural_foreign_keys=True,
+                use_natural_primary_keys=True
+            ),
+            object_repr=self.metric4.__str__(),
+            content_type=self.ct,
+            date_created=datetime.datetime.now(),
+            comment='Initial version.',
+            user=self.user.username
+        )
 
     def test_get_metrics_in_group(self):
         request = self.factory.get(self.url + 'EGI')
@@ -1323,8 +1709,8 @@ class ListMetricsInGroupAPIViewTests(TenantTestCase):
             response.data,
             {
                 'result': [
-                    {'id': self.id1, 'name': 'argo.AMS-Check'},
-                    {'id': self.id2, 'name': 'org.apel.APEL-Pub'}
+                    {'id': self.metric1.id, 'name': 'argo.AMS-Check'},
+                    {'id': self.metric2.id, 'name': 'org.apel.APEL-Pub'}
                 ]
             }
         )
@@ -1337,18 +1723,23 @@ class ListMetricsInGroupAPIViewTests(TenantTestCase):
             response.data,
             {
                 'result': [
-                    {'id': self.id3, 'name': 'eu.egi.CertValidity'}
+                    {'id': self.metric3.id, 'name': 'eu.egi.CertValidity'}
                 ]
             }
         )
 
-    def test_get_metrics_with_wrong_group(self):
+    def test_get_metric_group_with_no_autorization(self):
+        request = self.factory.get(self.url + 'EGI')
+        response = self.view(request, 'EGI')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_get_metrics_with_nonexisting_group(self):
         request = self.factory.get(self.url + 'bla')
         force_authenticate(request, user=self.user)
         response = self.view(request, 'bla')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
-    def test_put_metrics(self):
+    def test_add_metrics_in_group(self):
         data = {'name': 'EGI',
                 'items': ['argo.AMS-Check', 'eu.egi.CertValidity']}
         content, content_type = encode_data(data)
@@ -1358,17 +1749,64 @@ class ListMetricsInGroupAPIViewTests(TenantTestCase):
         metric1 = poem_models.Metric.objects.get(name='argo.AMS-Check')
         metric2 = poem_models.Metric.objects.get(name='eu.egi.CertValidity')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        ver1 = poem_models.TenantHistory.objects.filter(
+            object_id=metric1.id,
+            content_type=self.ct
+        )
+        ver2 = poem_models.TenantHistory.objects.filter(
+            object_id=metric2.id,
+            content_type=self.ct
+        )
+        self.assertEqual(ver1.count(), 1)
+        self.assertEqual(ver2.count(), 2)
         self.assertEqual(metric1.group.name, 'EGI')
         self.assertEqual(metric2.group.name, 'EGI')
+        self.assertEqual(
+            json.loads(ver2[0].serialized_data)[0]['fields']['group'][0],
+            'EGI'
+        )
+        self.assertEqual(ver2[0].comment,
+                         '[{"added": {"fields": ["group"]}}]')
+        self.assertEqual(
+            json.loads(ver1[0].serialized_data)[0]['fields']['group'][0],
+            'EGI'
+        )
 
-    def test_post_metrics(self):
+    def test_remove_metric_from_group(self):
+        self.metric3.group = self.group
+        self.metric3.save()
+        data = {'name': 'EGI',
+                'items': ['eu.egi.CertValidity']}
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        metric1 = poem_models.Metric.objects.get(name='argo.AMS-Check')
+        metric2 = poem_models.Metric.objects.get(name='eu.egi.CertValidity')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(metric1.group, None)
+        self.assertEqual(metric2.group.name, 'EGI')
+
+    def test_post_metric_group_without_metrics(self):
+        self.assertEqual(poem_models.GroupOfMetrics.objects.all().count(), 2)
+        data = {'name': 'new_name',
+                'items': []}
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(poem_models.GroupOfMetrics.objects.all().count(), 3)
+
+    def test_post_metric_group_with_metrics(self):
+        self.assertEqual(poem_models.GroupOfMetrics.objects.all().count(), 2)
         data = {'name': 'new_name',
                 'items': ['eu.egi.CertValidity']}
         request = self.factory.post(self.url, data, format='json')
         force_authenticate(request, user=self.user)
         response = self.view(request)
-        metric = poem_models.Metric.objects.get(name='eu.egi.CertValidity')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(poem_models.GroupOfMetrics.objects.all().count(), 3)
+        metric = poem_models.Metric.objects.get(name='eu.egi.CertValidity')
         self.assertEqual(metric.group.name, 'new_name')
 
     def test_post_metrics_group_with_name_that_already_exists(self):
@@ -1378,6 +1816,10 @@ class ListMetricsInGroupAPIViewTests(TenantTestCase):
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data,
+            {'detail': 'Group of metrics with this name already exists.'}
+        )
 
     def test_delete_metric_group(self):
         self.assertEqual(poem_models.GroupOfMetrics.objects.all().count(), 2)
@@ -1386,6 +1828,13 @@ class ListMetricsInGroupAPIViewTests(TenantTestCase):
         response = self.view(request, 'delete')
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(poem_models.GroupOfMetrics.objects.all().count(), 1)
+        self.assertRaises(
+            poem_models.GroupOfMetrics.DoesNotExist,
+            poem_models.GroupOfMetrics.objects.get,
+            name='delete'
+        )
+        metric = poem_models.Metric.objects.get(name='delete.metric')
+        self.assertEqual(metric.group, None)
 
     def test_delete_nonexisting_metric_group(self):
         request = self.factory.delete(self.url + 'nonexisting')
@@ -1405,7 +1854,7 @@ class ListAggregationsInGroupAPIViewTests(TenantTestCase):
         self.factory = TenantRequestFactory(self.tenant)
         self.view = views.ListAggregationsInGroup.as_view()
         self.url = '/api/v2/internal/aggregationsgroup/'
-        self.user = CustUser.objects.create(username='testuser')
+        self.user = CustUser.objects.create_user(username='testuser')
 
         self.aggr1 = poem_models.Aggregation.objects.create(
             name='TEST_PROFILE',
@@ -1413,17 +1862,21 @@ class ListAggregationsInGroupAPIViewTests(TenantTestCase):
             groupname='EGI'
         )
 
-        aggr2 = poem_models.Aggregation.objects.create(
+        self.aggr2 = poem_models.Aggregation.objects.create(
             name='ANOTHER-PROFILE',
             apiid='12341234-oooo-kkkk-aaaa-aaeekkccnnee'
         )
 
-        self.id1 = self.aggr1.id
-        self.id2 = aggr2.id
+        self.aggr3 = poem_models.Aggregation.objects.create(
+            name='DELETE_PROFILE',
+            apiid='12341234-hhhh-kkkk-aaaa-aaeekkccnnee',
+            groupname='delete'
+        )
 
-        group = poem_models.GroupOfAggregations.objects.create(name='EGI')
-        poem_models.GroupOfAggregations.objects.create(name='delete')
-        group.aggregations.add(self.aggr1)
+        self.group = poem_models.GroupOfAggregations.objects.create(name='EGI')
+        group2 = poem_models.GroupOfAggregations.objects.create(name='delete')
+        self.group.aggregations.add(self.aggr1)
+        group2.aggregations.add(self.aggr3)
 
     def test_get_aggregations_in_group(self):
         request = self.factory.get(self.url + 'EGI')
@@ -1433,10 +1886,15 @@ class ListAggregationsInGroupAPIViewTests(TenantTestCase):
             response.data,
             {
                 'result': [
-                    {'id': self.id1, 'name': 'TEST_PROFILE'}
+                    {'id': self.aggr1.id, 'name': 'TEST_PROFILE'}
                 ]
             }
         )
+
+    def test_get_aggregations_in_case_no_authorization(self):
+        request = self.factory.get(self.url + 'EGI')
+        response = self.view(request, 'EGI')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_get_aggregation_without_group(self):
         request = self.factory.get(self.url)
@@ -1446,14 +1904,13 @@ class ListAggregationsInGroupAPIViewTests(TenantTestCase):
             response.data,
             {
                 'result': [
-                    {'id': self.id2, 'name': 'ANOTHER-PROFILE'}
+                    {'id': self.aggr2.id, 'name': 'ANOTHER-PROFILE'}
                 ]
             }
         )
 
-    @patch('Poem.poem.models.Aggregation.objects.get')
-    def test_put_aggregation_profile(self, aggr):
-        aggr.return_value = self.aggr1
+    def test_add_aggregation_profile_in_group(self):
+        self.assertEqual(self.group.aggregations.count(), 1)
         data = {'name': 'EGI',
                 'items': ['TEST_PROFILE', 'ANOTHER-PROFILE']}
         content, content_type = encode_data(data)
@@ -1461,16 +1918,65 @@ class ListAggregationsInGroupAPIViewTests(TenantTestCase):
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        aggr1 = poem_models.Aggregation.objects.get(name='TEST_PROFILE')
+        aggr2 = poem_models.Aggregation.objects.get(name='ANOTHER-PROFILE')
+        self.assertEqual(aggr1.groupname, 'EGI')
+        self.assertEqual(aggr2.groupname, 'EGI')
+        self.assertEqual(self.group.aggregations.count(), 2)
 
-    @patch('Poem.poem.models.Aggregation.objects.get')
-    def test_post_aggregation_profile(self, aggr):
-        aggr.return_value = self.aggr1
+    def test_remove_aggregation_profile_from_group(self):
+        self.group.aggregations.add(self.aggr2)
+        self.assertEqual(self.group.aggregations.count(), 2)
+        data = {
+            'name': 'EGI',
+            'items': ['ANOTHER-PROFILE']
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        aggr1 = poem_models.Aggregation.objects.get(name='TEST_PROFILE')
+        aggr2 = poem_models.Aggregation.objects.get(name='ANOTHER-PROFILE')
+        self.assertEqual(aggr1.groupname, '')
+        self.assertEqual(aggr2.groupname, 'EGI')
+        self.assertEqual(self.group.aggregations.count(), 1)
+
+    def test_post_aggregation_group_without_aggregation(self):
+        self.assertEqual(
+            poem_models.GroupOfAggregations.objects.all().count(), 2
+        )
+        data = {'name': 'new_name',
+                'items': []}
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(
+            poem_models.GroupOfAggregations.objects.all().count(), 3
+        )
+        group = poem_models.GroupOfAggregations.objects.get(name='new_name')
+        self.assertEqual(group.aggregations.count(), 0)
+
+    def test_post_aggregation_group_with_aggregation(self):
+        self.assertEqual(
+            poem_models.GroupOfAggregations.objects.all().count(), 2
+        )
         data = {'name': 'new_name',
                 'items': ['ANOTHER-PROFILE']}
         request = self.factory.post(self.url, data, format='json')
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(
+            poem_models.GroupOfAggregations.objects.all().count(), 3
+        )
+        group = poem_models.GroupOfAggregations.objects.get(name='new_name')
+        self.assertEqual(group.aggregations.count(), 1)
+        aggr1 = poem_models.Aggregation.objects.get(name='TEST_PROFILE')
+        aggr2 = poem_models.Aggregation.objects.get(name='ANOTHER-PROFILE')
+        self.assertEqual(aggr1.groupname, 'EGI')
+        self.assertEqual(aggr2.groupname, 'new_name')
 
     def test_post_aggregation_group_with_name_that_already_exists(self):
         data = {'name': 'EGI',
@@ -1479,6 +1985,10 @@ class ListAggregationsInGroupAPIViewTests(TenantTestCase):
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data,
+            {'detail': 'Group of aggregations with this name already exists.'}
+        )
 
     def test_delete_aggregation_group(self):
         self.assertEqual(poem_models.GroupOfAggregations.objects.all().count(),
@@ -1489,6 +1999,13 @@ class ListAggregationsInGroupAPIViewTests(TenantTestCase):
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(poem_models.GroupOfAggregations.objects.all().count(),
                          1)
+        self.assertRaises(
+            poem_models.GroupOfAggregations.DoesNotExist,
+            poem_models.GroupOfAggregations.objects.get,
+            name='delete'
+        )
+        aggr = poem_models.Aggregation.objects.get(name='DELETE_PROFILE')
+        self.assertEqual(aggr.groupname, '')
 
     def test_delete_nonexisting_aggregation_group(self):
         request = self.factory.delete(self.url + 'nonexisting')
@@ -1516,18 +2033,24 @@ class ListMetricProfilesInGroupAPIViewTests(TenantTestCase):
             groupname='EGI'
         )
 
-        mp2 = poem_models.MetricProfiles.objects.create(
+        self.mp2 = poem_models.MetricProfiles.objects.create(
             name='ANOTHER-PROFILE',
             apiid='12341234-oooo-kkkk-aaaa-aaeekkccnnee'
         )
 
-        self.id1 = self.mp1.id
-        self.id2 = mp2.id
+        self.mp3 = poem_models.MetricProfiles.objects.create(
+            name='DELETE_PROFILE',
+            apiid='12341234-hhhh-kkkk-aaaa-aaeekkccnnee',
+            groupname='delete'
+        )
 
-        group = poem_models.GroupOfMetricProfiles.objects.create(name='EGI')
-        poem_models.GroupOfMetricProfiles.objects.create(name='delete')
+        self.group = poem_models.GroupOfMetricProfiles.objects.create(
+            name='EGI'
+        )
+        group2 = poem_models.GroupOfMetricProfiles.objects.create(name='delete')
 
-        group.metricprofiles.add(self.mp1)
+        self.group.metricprofiles.add(self.mp1)
+        group2.metricprofiles.add(self.mp3)
 
     def test_get_metric_profiles_in_group(self):
         request = self.factory.get(self.url + 'EGI')
@@ -1537,10 +2060,15 @@ class ListMetricProfilesInGroupAPIViewTests(TenantTestCase):
             response.data,
             {
                 'result': [
-                    {'id': self.id1, 'name': 'TEST_PROFILE'}
+                    {'id': self.mp1.id, 'name': 'TEST_PROFILE'}
                 ]
             }
         )
+
+    def test_get_metric_profiles_in_group_in_case_no_authorization(self):
+        request = self.factory.get(self.url + 'EGI')
+        response = self.view(request, 'EGI')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_get_metric_profiles_without_group(self):
         request = self.factory.get(self.url)
@@ -1550,14 +2078,13 @@ class ListMetricProfilesInGroupAPIViewTests(TenantTestCase):
             response.data,
             {
                 'result': [
-                    {'id': self.id2, 'name': 'ANOTHER-PROFILE'}
+                    {'id': self.mp2.id, 'name': 'ANOTHER-PROFILE'}
                 ]
             }
         )
 
-    @patch('Poem.poem.models.MetricProfiles.objects.get')
-    def test_put_metric_profile_group(self, mp):
-        mp.return_value = self.mp1
+    def test_add_metric_profile_in_group(self):
+        self.assertEqual(self.group.metricprofiles.count(), 1)
         data = {'name': 'EGI',
                 'items': ['TEST_PROFILE', 'ANOTHER-PROFILE']}
         content, content_type = encode_data(data)
@@ -1565,16 +2092,65 @@ class ListMetricProfilesInGroupAPIViewTests(TenantTestCase):
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        mp1 = poem_models.MetricProfiles.objects.get(name='TEST_PROFILE')
+        mp2 = poem_models.MetricProfiles.objects.get(name='ANOTHER-PROFILE')
+        self.assertEqual(mp1.groupname, 'EGI')
+        self.assertEqual(mp2.groupname, 'EGI')
+        self.assertEqual(self.group.metricprofiles.count(), 2)
 
-    @patch('Poem.poem.models.MetricProfiles.objects.get')
-    def test_post_metric_profile_group(self, mp):
-        mp.return_value = self.mp1
+    def test_remove_metric_profile_from_group(self):
+        self.group.metricprofiles.add(self.mp2)
+        self.assertEqual(self.group.metricprofiles.all().count(), 2)
+        data = {
+            'name': 'EGI',
+            'items': ['ANOTHER-PROFILE']
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        mp1 = poem_models.MetricProfiles.objects.get(name='TEST_PROFILE')
+        mp2 = poem_models.MetricProfiles.objects.get(name='ANOTHER-PROFILE')
+        self.assertEqual(mp1.groupname, '')
+        self.assertEqual(mp2.groupname, 'EGI')
+        self.assertEqual(self.group.metricprofiles.count(), 1)
+
+    def test_post_metric_profile_group_without_metric_profile(self):
+        self.assertEqual(
+            poem_models.GroupOfMetricProfiles.objects.all().count(), 2
+        )
+        data = {'name': 'new_name',
+                'items': []}
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(
+            poem_models.GroupOfMetricProfiles.objects.all().count(), 3
+        )
+        group = poem_models.GroupOfMetricProfiles.objects.get(name='new_name')
+        self.assertEqual(group.metricprofiles.count(), 0)
+
+    def test_post_metric_profile_group_with_metric_profile(self):
+        self.assertEqual(
+            poem_models.GroupOfMetricProfiles.objects.all().count(), 2
+        )
         data = {'name': 'new_name',
                 'items': ['ANOTHER-PROFILE']}
         request = self.factory.post(self.url, data, format='json')
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(
+            poem_models.GroupOfMetricProfiles.objects.all().count(), 3
+        )
+        group = poem_models.GroupOfMetricProfiles.objects.get(name='new_name')
+        self.assertEqual(group.metricprofiles.count(), 1)
+        mp1 = poem_models.MetricProfiles.objects.get(name='TEST_PROFILE')
+        mp2 = poem_models.MetricProfiles.objects.get(name='ANOTHER-PROFILE')
+        self.assertEqual(mp1.groupname, 'EGI')
+        self.assertEqual(mp2.groupname, 'new_name')
 
     def test_post_metric_profile_group_with_name_that_already_exists(self):
         data = {'name': 'EGI',
@@ -1583,6 +2159,10 @@ class ListMetricProfilesInGroupAPIViewTests(TenantTestCase):
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data,
+            {'detail': 'Metric profiles group with this name already exists.'}
+        )
 
     def test_delete_metric_profile_group(self):
         self.assertEqual(
@@ -1595,6 +2175,13 @@ class ListMetricProfilesInGroupAPIViewTests(TenantTestCase):
         self.assertEqual(
             poem_models.GroupOfMetricProfiles.objects.all().count(), 1
         )
+        self.assertRaises(
+            poem_models.GroupOfMetrics.DoesNotExist,
+            poem_models.GroupOfMetrics.objects.get,
+            name='delete'
+        )
+        mp = poem_models.MetricProfiles.objects.get(name='DELETE_PROFILE')
+        self.assertEqual(mp.groupname, '')
 
     def test_delete_nonexisting_metric_profile_group(self):
         request = self.factory.delete(self.url + 'nonexisting')
@@ -1931,43 +2518,53 @@ class ListGroupsForUserAPIViewTests(TenantTestCase):
         self.factory = TenantRequestFactory(self.tenant)
         self.view = views.ListGroupsForUser.as_view()
         self.url = '/api/v2/internal/groups/'
-        self.user = CustUser.objects.create(username='testuser')
-        self.superuser = CustUser.objects.create(username='superuser',
-                                                 is_superuser=True)
+        self.user = CustUser.objects.create_user(username='testuser')
+        self.superuser = CustUser.objects.create_user(
+            username='superuser', is_superuser=True
+        )
 
-        gm1 = poem_models.GroupOfMetrics.objects.create(name='metricgroup1')
-        gm2 = poem_models.GroupOfMetrics.objects.create(name='metricgroup2')
+        poem_models.GroupOfMetrics.objects.create(name='metricgroup1')
+        gm1 = poem_models.GroupOfMetrics.objects.create(name='metricgroup2')
 
-        gmp1 = poem_models.GroupOfMetricProfiles.objects.create(
+        poem_models.GroupOfMetricProfiles.objects.create(
             name='metricprofilegroup1'
         )
-        gmp2 = poem_models.GroupOfMetricProfiles.objects.create(
+        gmp1 = poem_models.GroupOfMetricProfiles.objects.create(
             name='metricprofilegroup2'
         )
 
-        ga1 = poem_models.GroupOfAggregations.objects.create(name='aggrgroup1')
-        ga2 = poem_models.GroupOfAggregations.objects.create(name='aggrgroup2')
+        poem_models.GroupOfAggregations.objects.create(name='aggrgroup1')
+        ga1 = poem_models.GroupOfAggregations.objects.create(name='aggrgroup2')
+
+        poem_models.GroupOfThresholdsProfiles.objects.create(
+            name='thresholdsgroup1'
+        )
+        gtp1 = poem_models.GroupOfThresholdsProfiles.objects.create(
+            name='thresholdsgroup2'
+        )
 
         userprofile = poem_models.UserProfile.objects.create(user=self.user)
-        userprofile.groupsofmetrics.add(gm2)
-        userprofile.groupsofmetricprofiles.add(gmp2)
-        userprofile.groupsofaggregations.add(ga2)
+        userprofile.groupsofmetrics.add(gm1)
+        userprofile.groupsofmetricprofiles.add(gmp1)
+        userprofile.groupsofaggregations.add(ga1)
+        userprofile.groupsofthresholdsprofiles.add(gtp1)
 
     def test_list_all_groups(self):
         request = self.factory.get(self.url)
         force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(
-            [d for d in response.data['result']['aggregations']],
-            ['aggrgroup1', 'aggrgroup2']
-        )
-        self.assertEqual(
-            [d for d in response.data['result']['metrics']],
-            ['metricgroup1', 'metricgroup2']
-        )
-        self.assertEqual(
-            [d for d in response.data['result']['metricprofiles']],
-            ['metricprofilegroup1', 'metricprofilegroup2']
+            response.data,
+            {
+                'result': {
+                    'aggregations': ['aggrgroup1', 'aggrgroup2'],
+                    'metrics': ['metricgroup1', 'metricgroup2'],
+                    'metricprofiles': ['metricprofilegroup1',
+                                       'metricprofilegroup2'],
+                    'thresholdsprofiles': ['thresholdsgroup1',
+                                           'thresholdsgroup2']
+                }
+            }
         )
 
     def test_list_groups_for_user_that_is_not_superuser(self):
@@ -1975,16 +2572,15 @@ class ListGroupsForUserAPIViewTests(TenantTestCase):
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(
-            [d for d in response.data['result']['aggregations']],
-            ['aggrgroup2']
-        )
-        self.assertEqual(
-            [d for d in response.data['result']['metrics']],
-            ['metricgroup2']
-        )
-        self.assertEqual(
-            [d for d in response.data['result']['metricprofiles']],
-            ['metricprofilegroup2']
+            response.data,
+            {
+                'result': {
+                    'aggregations': ['aggrgroup2'],
+                    'metrics': ['metricgroup2'],
+                    'metricprofiles': ['metricprofilegroup2'],
+                    'thresholdsprofiles': ['thresholdsgroup2']
+                }
+            }
         )
 
     def test_get_aggregation_groups_for_superuser(self):
@@ -1992,7 +2588,7 @@ class ListGroupsForUserAPIViewTests(TenantTestCase):
         force_authenticate(request, user=self.superuser)
         response = self.view(request, 'aggregations')
         self.assertEqual(
-            [d for d in response.data],
+            response.data,
             ['aggrgroup1', 'aggrgroup2']
         )
 
@@ -2001,7 +2597,7 @@ class ListGroupsForUserAPIViewTests(TenantTestCase):
         force_authenticate(request, user=self.superuser)
         response = self.view(request, 'metrics')
         self.assertEqual(
-            [d for d in response.data],
+            response.data,
             ['metricgroup1', 'metricgroup2']
         )
 
@@ -2010,8 +2606,17 @@ class ListGroupsForUserAPIViewTests(TenantTestCase):
         force_authenticate(request, user=self.superuser)
         response = self.view(request, 'metricprofiles')
         self.assertEqual(
-            [d for d in response.data],
+            response.data,
             ['metricprofilegroup1', 'metricprofilegroup2']
+        )
+
+    def test_get_thresholds_profiles_groups_for_superuser(self):
+        request = self.factory.get(self.url + 'thresholdsprofiles')
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request, 'thresholdsprofiles')
+        self.assertEqual(
+            response.data,
+            ['thresholdsgroup1', 'thresholdsgroup2']
         )
 
     def test_get_aggregation_groups_for_basic_user(self):
@@ -2019,7 +2624,7 @@ class ListGroupsForUserAPIViewTests(TenantTestCase):
         force_authenticate(request, user=self.user)
         response = self.view(request, 'aggregations')
         self.assertEqual(
-            [d for d in response.data],
+            response.data,
             ['aggrgroup2']
         )
 
@@ -2028,7 +2633,7 @@ class ListGroupsForUserAPIViewTests(TenantTestCase):
         force_authenticate(request, user=self.user)
         response = self.view(request, 'metrics')
         self.assertEqual(
-            [d for d in response.data],
+            response.data,
             ['metricgroup2']
         )
 
@@ -2037,8 +2642,17 @@ class ListGroupsForUserAPIViewTests(TenantTestCase):
         force_authenticate(request, user=self.user)
         response = self.view(request, 'metricprofiles')
         self.assertEqual(
-            [d for d in response.data],
+            response.data,
             ['metricprofilegroup2']
+        )
+
+    def test_get_thresholds_profiles_groups_for_basic_user(self):
+        request = self.factory.get(self.url + 'thresholdsprofiles')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'thresholdsprofiles')
+        self.assertEqual(
+            response.data,
+            ['thresholdsgroup2']
         )
 
 
@@ -2055,7 +2669,8 @@ class GetConfigOptionsAPIViewTests(TenantTestCase):
            return_value='Tenant')
     def test_get_config_options(self, *args):
         with self.settings(WEBAPI_METRIC='https://metric.profile.com',
-                           WEBAPI_AGGREGATION='https://aggregations.com'):
+                           WEBAPI_AGGREGATION='https://aggregations.com',
+                           WEBAPI_THRESHOLDS='https://thresholds.com'):
             request = self.factory.get(self.url)
             response = self.view(request)
             self.assertEqual(
@@ -2065,6 +2680,7 @@ class GetConfigOptionsAPIViewTests(TenantTestCase):
                         'saml_login_string': 'Log in using B2ACCESS',
                         'webapimetric': 'https://metric.profile.com',
                         'webapiaggregation': 'https://aggregations.com',
+                        'webapithresholds': 'https://thresholds.com',
                         'tenant_name': 'Tenant'
                     }
                 }
@@ -2106,9 +2722,15 @@ class ListVersionsAPIViewTests(TenantTestCase):
             user=self.user.username
         )
 
+        self.probe1.name = 'poem-probe-new'
         self.probe1.version = '0.1.11'
         self.probe1.comment = 'This version added: Check POEM metric ' \
                               'configuration API'
+        self.probe1.description = 'Probe inspects new POEM service.'
+        self.probe1.repository = 'https://github.com/ARGOeu/nagios-plugins-' \
+                                 'argo2'
+        self.probe1.docurl = 'https://github.com/ARGOeu/nagios-plugins-argo2/' \
+                             'blob/master/README.md'
         self.probe1.save()
 
         self.ver2 = admin_models.History.objects.create(
@@ -2117,10 +2739,11 @@ class ListVersionsAPIViewTests(TenantTestCase):
                 'json', [self.probe1], use_natural_foreign_keys=True,
                 use_natural_primary_keys=True
             ),
-            object_repr='poem-probe (0.1.11)',
+            object_repr='poem-probe-new (0.1.11)',
             content_type=ct,
             date_created=datetime.datetime.now(),
-            comment='[{"changed": {"fields": ["version", "comment"]}}]',
+            comment='[{"changed": {"fields": ["name", "version", '
+                    '"comment", "description", "repository", "docurl"]}}]',
             user=self.user.username
         )
 
@@ -2166,7 +2789,7 @@ class ListVersionsAPIViewTests(TenantTestCase):
             name='Active'
         )
 
-        metrictemplate1 = admin_models.MetricTemplate.objects.create(
+        self.metrictemplate1 = admin_models.MetricTemplate.objects.create(
             name='argo.AMS-Check',
             mtype=self.mtype1,
             probeversion='ams-probe (0.1.7)',
@@ -2181,9 +2804,9 @@ class ListVersionsAPIViewTests(TenantTestCase):
         )
 
         self.ver4 = admin_models.History.objects.create(
-            object_id=metrictemplate1.id,
+            object_id=self.metrictemplate1.id,
             serialized_data=serializers.serialize(
-                'json', [metrictemplate1], use_natural_foreign_keys=True,
+                'json', [self.metrictemplate1], use_natural_foreign_keys=True,
                 use_natural_primary_keys=True
             ),
             object_repr='argo.AMS-Check',
@@ -2193,27 +2816,46 @@ class ListVersionsAPIViewTests(TenantTestCase):
             user=self.user.username
         )
 
+        self.metrictemplate1.name = 'argo.AMS-Check-new'
+        self.metrictemplate1.probeversion = 'poem-probe-new (0.1.11)'
+        self.metrictemplate1.probekey = self.ver2
+        self.metrictemplate1.save()
+
+        self.ver5 = admin_models.History.objects.create(
+            object_id=self.metrictemplate1.id,
+            serialized_data=serializers.serialize(
+                'json', [self.metrictemplate1],
+                use_natural_foreign_keys=True,
+                use_natural_primary_keys=True
+            ),
+            object_repr=self.metrictemplate1.__str__(),
+            content_type=ct_mt,
+            date_created=datetime.datetime.now(),
+            comment='[{"changed": {"fields": ["name", "probeversion"]}}]',
+            user=self.user.username
+        )
+
     def test_get_versions_of_probes(self):
-        request = self.factory.get(self.url + 'probe/poem-probe')
+        request = self.factory.get(self.url + 'probe/poem-probe-new')
         force_authenticate(request, user=self.user)
-        response = self.view(request, 'probe', 'poem-probe')
+        response = self.view(request, 'probe', 'poem-probe-new')
         self.assertEqual(
             response.data,
             [
                 {
                     'id': self.ver2.id,
-                    'object_repr': 'poem-probe (0.1.11)',
+                    'object_repr': 'poem-probe-new (0.1.11)',
                     'fields': {
-                        'name': 'poem-probe',
+                        'name': 'poem-probe-new',
                         'version': '0.1.11',
-                        'nameversion': 'poem-probe (0.1.11)',
-                        'description': 'Probe inspects POEM service.',
+                        'nameversion': 'poem-probe-new (0.1.11)',
+                        'description': 'Probe inspects new POEM service.',
                         'comment': 'This version added: Check POEM metric '
                                    'configuration API',
                         'repository': 'https://github.com/ARGOeu/nagios-'
-                                      'plugins-argo',
+                                      'plugins-argo2',
                         'docurl': 'https://github.com/ARGOeu/nagios-plugins-'
-                                  'argo/blob/master/README.md',
+                                  'argo2/blob/master/README.md',
                         'user': 'testuser',
                         'datetime': datetime.datetime.strftime(
                             self.probe1.datetime, '%Y-%m-%dT%H:%M:%S.%f'
@@ -2223,7 +2865,8 @@ class ListVersionsAPIViewTests(TenantTestCase):
                     'date_created': datetime.datetime.strftime(
                             self.ver2.date_created, '%Y-%m-%d %H:%M:%S'
                         ),
-                    'comment': 'Changed version and comment.',
+                    'comment': 'Changed name, version, comment, description, '
+                               'repository and docurl.',
                     'version': '0.1.11'
                 },
                 {
@@ -2252,16 +2895,56 @@ class ListVersionsAPIViewTests(TenantTestCase):
                     'version': '0.1.7'
                 }
             ]
-
         )
 
     def test_get_versions_of_metric_template(self):
-        request = self.factory.get(self.url + 'metrictemplate/argo.AMS-Check')
+        request = self.factory.get(self.url +
+                                   'metrictemplate/argo.AMS-Check-new')
         force_authenticate(request, user=self.user)
-        response = self.view(request, 'metrictemplate', 'argo.AMS-Check')
+        response = self.view(request, 'metrictemplate', 'argo.AMS-Check-new')
         self.assertEqual(
             response.data,
             [
+                {
+                    'id': self.ver5.id,
+                    'object_repr': 'argo.AMS-Check-new',
+                    'fields': {
+                        'name': 'argo.AMS-Check-new',
+                        'mtype': self.mtype1.name,
+                        'probeversion': 'poem-probe-new (0.1.11)',
+                        'parent': '',
+                        'probeexecutable': 'ams-probe',
+                        'config': [
+                            {'key': 'maxCheckAttempts', 'value': '3'},
+                            {'key': 'timeout', 'value': '60'},
+                            {'key': 'path',
+                             'value':
+                                 '/usr/libexec/argo-monitoring/probes/argo'},
+                            {'key': 'interval', 'value': '5'},
+                            {'key': 'retryInterval', 'value': '3'}
+                        ],
+                        'attribute': [
+                            {'key': 'argo.ams_TOKEN', 'value': '--token'}
+                        ],
+                        'dependency': [],
+                        'flags': [
+                            {'key': 'OBSESS', 'value': '1'}
+                        ],
+                        'files': [],
+                        'parameter': [
+                            {'key': '--project', 'value': 'EGI'}
+                        ],
+                        'fileparameter': []
+                    },
+                    'user': 'testuser',
+                    'date_created': datetime.datetime.strftime(
+                        self.ver5.date_created, '%Y-%m-%d %H:%M:%S'
+                    ),
+                    'comment': 'Changed name and probeversion.',
+                    'version': datetime.datetime.strftime(
+                        self.ver5.date_created, '%Y%m%d-%H%M%S'
+                    )
+                },
                 {
                     'id': self.ver4.id,
                     'object_repr': 'argo.AMS-Check',
@@ -2327,8 +3010,8 @@ class ListVersionsAPIViewTests(TenantTestCase):
             [r for r in response.data],
             [
                 'ams-publisher-probe (0.1.11)',
-                'poem-probe (0.1.11)',
-                'poem-probe (0.1.7)'
+                'poem-probe (0.1.7)',
+                'poem-probe-new (0.1.11)'
             ]
         )
 
@@ -3049,7 +3732,7 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
         self.mtype1 = poem_models.MetricType.objects.create(name='Active')
         group1 = poem_models.GroupOfMetrics.objects.create(name='EGI')
 
-        metric1 = poem_models.Metric.objects.create(
+        self.metric1 = poem_models.Metric.objects.create(
             name='argo.AMS-Check',
             mtype=self.mtype1,
             group=group1,
@@ -3080,9 +3763,9 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
         )
 
         self.ver1 = poem_models.TenantHistory.objects.create(
-            object_id=metric1.id,
+            object_id=self.metric1.id,
             serialized_data=serializers.serialize(
-                'json', [metric1],
+                'json', [self.metric1],
                 use_natural_foreign_keys=True,
                 use_natural_primary_keys=True
             ),
@@ -3093,13 +3776,78 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
             user=self.user.username
         )
 
+        self.metric1.name = 'argo.AMS-Check-new'
+        self.metric1.probeexecutable = '["ams-probe-2"]'
+        self.metric1.config = '["maxCheckAttempts 4", "timeout 60",'\
+                              ' "path /usr/libexec/argo-monitoring/probes/' \
+                              'argo", "interval 5", "retryInterval 3"]'
+        self.metric1.save()
+
+        self.ver2 = poem_models.TenantHistory.objects.create(
+            object_id=self.metric1.id,
+            serialized_data=serializers.serialize(
+                'json', [self.metric1],
+                use_natural_foreign_keys=True,
+                use_natural_primary_keys=True
+            ),
+            object_repr=self.metric1.__str__(),
+            content_type=ct_m,
+            date_created=datetime.datetime.now(),
+            comment='[{"changed": {"fields": ["probeexecutable"]}}, '
+                    '{"changed": {"fields": ["config"], "object": '
+                    '["maxCheckAttempts"]}}]',
+            user=self.user.username
+        )
+
     def test_get_versions_of_metrics(self):
-        request = self.factory.get(self.url + 'metric/argo.AMS-Check')
+        request = self.factory.get(self.url + 'metric/argo.AMS-Check-new')
         force_authenticate(request, user=self.user)
-        response = self.view(request, 'metric', 'argo.AMS-Check')
+        response = self.view(request, 'metric', 'argo.AMS-Check-new')
         self.assertEqual(
             response.data,
             [
+                {
+                    'id': self.ver2.id,
+                    'object_repr': 'argo.AMS-Check-new',
+                    'fields': {
+                        'name': 'argo.AMS-Check-new',
+                        'mtype': self.mtype1.name,
+                        'group': 'EGI',
+                        'probeversion': 'ams-probe (0.1.7)',
+                        'parent': '',
+                        'probeexecutable': 'ams-probe-2',
+                        'config': [
+                            {'key': 'maxCheckAttempts', 'value': '4'},
+                            {'key': 'timeout', 'value': '60'},
+                            {'key': 'path',
+                             'value':
+                                 '/usr/libexec/argo-monitoring/probes/argo'},
+                            {'key': 'interval', 'value': '5'},
+                            {'key': 'retryInterval', 'value': '3'}
+                        ],
+                        'attribute': [
+                            {'key': 'argo.ams_TOKEN', 'value': '--token'}
+                        ],
+                        'dependancy': [],
+                        'flags': [
+                            {'key': 'OBSESS', 'value': '1'}
+                        ],
+                        'files': [],
+                        'parameter': [
+                            {'key': '--project', 'value': 'EGI'}
+                        ],
+                        'fileparameter': []
+                    },
+                    'user': 'testuser',
+                    'date_created': datetime.datetime.strftime(
+                        self.ver2.date_created, '%Y-%m-%d %H:%M:%S'
+                    ),
+                    'comment': 'Changed probeexecutable. Changed '
+                               'config fields "maxCheckAttempts".',
+                    'version': datetime.datetime.strftime(
+                        self.ver2.date_created, '%Y%m%d-%H%M%S'
+                    )
+                },
                 {
                     'id': self.ver1.id,
                     'object_repr': 'argo.AMS-Check',
@@ -4108,3 +4856,357 @@ class HistoryHelpersTests(TenantTestCase):
         comment = create_comment(m.id, self.ct_metric, serialized_data)
 
         self.assertEqual(comment, '[{"added": {"fields": ["group"]}}]')
+
+
+class ListThresholdsProfilesInGroupAPIViewTests(TenantTestCase):
+    def setUp(self):
+        self.factory = TenantRequestFactory(self.tenant)
+        self.view = views.ListThresholdsProfilesInGroup.as_view()
+        self.url = '/api/v2/internal/thresholdsprofilesgroup/'
+        self.user = CustUser.objects.create_user(username='testuser')
+
+        self.tp1 = poem_models.ThresholdsProfiles.objects.create(
+            name='TEST_PROFILE',
+            apiid='00000000-oooo-kkkk-aaaa-aaeekkccnnee',
+            groupname='EGI'
+        )
+
+        self.tp2 = poem_models.ThresholdsProfiles.objects.create(
+            name='ANOTHER_PROFILE',
+            apiid='12341234-oooo-kkkk-aaaa-aaeekkccnnee'
+        )
+
+        self.tp3 = poem_models.ThresholdsProfiles.objects.create(
+            name='DELETE_PROFILE',
+            apiid='12341234-hhhh-kkkk-aaaa-aaeekkccnnee',
+            groupname='delete'
+        )
+
+        self.group = poem_models.GroupOfThresholdsProfiles.objects.create(
+            name='EGI'
+        )
+        group2 = poem_models.GroupOfThresholdsProfiles.objects.create(
+            name='delete'
+        )
+        self.group.thresholdsprofiles.add(self.tp1)
+        group2.thresholdsprofiles.add(self.tp3)
+
+    def test_get_thresholds_profiles_in_group(self):
+        request = self.factory.get(self.url + 'EGI')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'EGI')
+        self.assertEqual(
+            response.data,
+            {
+                'result': [
+                    {'id': self.tp1.id, 'name': 'TEST_PROFILE'}
+                ]
+            }
+        )
+
+    def test_get_thresholds_profiles_in_group_in_case_no_authorization(self):
+        request = self.factory.get(self.url + 'EGI')
+        response = self.view(request, 'EGI')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_get_thresholds_profiles_without_group(self):
+        request = self.factory.get(self.url)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(
+            response.data,
+            {
+                'result': [
+                    {'id': self.tp2.id, 'name': 'ANOTHER_PROFILE'}
+                ]
+            }
+        )
+
+    def test_add_thresholds_profile_in_group(self):
+        self.assertEqual(self.group.thresholdsprofiles.count(), 1)
+        data = {
+            'name': 'EGI',
+            'items': ['TEST_PROFILE', 'ANOTHER_PROFILE']
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        tp1 = poem_models.ThresholdsProfiles.objects.get(name='TEST_PROFILE')
+        tp2 = poem_models.ThresholdsProfiles.objects.get(name='ANOTHER_PROFILE')
+        self.assertEqual(tp1.groupname, 'EGI')
+        self.assertEqual(tp2.groupname, 'EGI')
+        self.assertEqual(self.group.thresholdsprofiles.count(), 2)
+
+    def test_remove_thresholds_profile_from_group(self):
+        self.group.thresholdsprofiles.add(self.tp2)
+        self.assertEqual(self.group.thresholdsprofiles.all().count(), 2)
+        data = {
+            'name': 'EGI',
+            'items': ['ANOTHER_PROFILE']
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        tp1 = poem_models.ThresholdsProfiles.objects.get(name='TEST_PROFILE')
+        tp2 = poem_models.ThresholdsProfiles.objects.get(name='ANOTHER_PROFILE')
+        self.assertEqual(tp1.groupname, '')
+        self.assertEqual(tp2.groupname, 'EGI')
+        self.assertEqual(self.group.thresholdsprofiles.count(), 1)
+
+    def test_post_thresholds_profile_group_without_tp(self):
+        self.assertEqual(
+            poem_models.GroupOfThresholdsProfiles.objects.all().count(), 2
+        )
+        data = {
+            'name': 'new_group',
+            'items': []
+        }
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(
+            poem_models.GroupOfThresholdsProfiles.objects.all().count(), 3
+        )
+        group = poem_models.GroupOfThresholdsProfiles.objects.get(
+            name='new_group'
+        )
+        self.assertEqual(group.name, 'new_group')
+        self.assertEqual(group.thresholdsprofiles.count(), 0)
+
+    def test_post_thresholds_profile_group_with_tp(self):
+        self.assertEqual(
+            poem_models.GroupOfThresholdsProfiles.objects.all().count(), 2
+        )
+        data = {
+            'name': 'new_group',
+            'items': ['ANOTHER_PROFILE']
+        }
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(
+            poem_models.GroupOfThresholdsProfiles.objects.all().count(), 3
+        )
+        group = poem_models.GroupOfThresholdsProfiles.objects.get(
+            name='new_group'
+        )
+        self.assertEqual(group.name, 'new_group')
+        self.assertEqual(group.thresholdsprofiles.count(), 1)
+        tp1 = poem_models.ThresholdsProfiles.objects.get(name='TEST_PROFILE')
+        tp2 = poem_models.ThresholdsProfiles.objects.get(name='ANOTHER_PROFILE')
+        self.assertEqual(tp1.groupname, 'EGI')
+        self.assertEqual(tp2.groupname, 'new_group')
+
+    def test_post_thresholds_profile_group_with_name_that_already_exists(self):
+        data = {
+            'name': 'EGI',
+            'items': ['TEST_PROFILE']
+        }
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data,
+            {
+                'detail':
+                    'Thresholds profiles group with this name already exists.'
+            }
+        )
+
+    def test_delete_thresholds_profile_group(self):
+        self.assertEqual(
+            poem_models.GroupOfThresholdsProfiles.objects.all().count(), 2
+        )
+        request = self.factory.delete(self.url + 'delete')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'delete')
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(
+            poem_models.GroupOfThresholdsProfiles.objects.all().count(), 1
+        )
+        self.assertRaises(
+            poem_models.GroupOfThresholdsProfiles.DoesNotExist,
+            poem_models.GroupOfThresholdsProfiles.objects.get,
+            name='delete'
+        )
+        tp = poem_models.ThresholdsProfiles.objects.get(name='DELETE_PROFILE')
+        self.assertEqual(tp.groupname, '')
+
+    def test_delete_nonexisting_thresholds_profile_group(self):
+        request = self.factory.delete(self.url + 'nonexisting')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'nonexisting')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_delete_thresholds_profile_group_without_specifying_name(self):
+        request = self.factory.delete(self.url)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+class ListThresholdsProfilesAPIViewTests(TenantTestCase):
+    def setUp(self):
+        self.factory = TenantRequestFactory(self.tenant)
+        self.view = views.ListThresholdsProfiles.as_view()
+        self.url = '/api/v2/internal/thresholdsprofiles/'
+        self.user = CustUser.objects.create_user(username='testuser')
+
+        poem_models.ThresholdsProfiles.objects.create(
+            name='TEST_PROFILE',
+            apiid='00000000-oooo-kkkk-aaaa-aaeekkccnnee',
+            groupname='GROUP'
+        )
+
+        poem_models.ThresholdsProfiles.objects.create(
+            name='ANOTHER_PROFILE',
+            apiid='12341234-oooo-kkkk-aaaa-aaeekkccnnee'
+        )
+
+        poem_models.GroupOfThresholdsProfiles.objects.create(name='GROUP')
+        poem_models.GroupOfThresholdsProfiles.objects.create(name='NEWGROUP')
+
+    @patch('Poem.api.internal_views.thresholdsprofiles.sync_webapi',
+           side_effect=mocked_func)
+    def test_get_all_thresholds_profiles(self, func):
+        request = self.factory.get(self.url)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(
+            response.data,
+            [
+                OrderedDict([
+                    ('name', 'TEST_PROFILE'),
+                    ('apiid', '00000000-oooo-kkkk-aaaa-aaeekkccnnee'),
+                    ('groupname', 'GROUP')
+                ]),
+                OrderedDict([
+                    ('name', 'ANOTHER_PROFILE'),
+                    ('apiid', '12341234-oooo-kkkk-aaaa-aaeekkccnnee'),
+                    ('groupname', '')
+                ])
+            ]
+        )
+
+    @patch('Poem.api.internal_views.thresholdsprofiles.sync_webapi',
+           side_effect=mocked_func)
+    def test_get_thresholds_profiles_if_no_authentication(self, func):
+        request = self.factory.get(self.url)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    @patch('Poem.api.internal_views.thresholdsprofiles.sync_webapi',
+           side_effect=mocked_func)
+    def test_get_thresholds_profile_by_name(self, func):
+        request = self.factory.get(self.url + 'TEST_PROFILE')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'TEST_PROFILE')
+        self.assertEqual(
+            response.data,
+            OrderedDict([
+                ('name', 'TEST_PROFILE'),
+                ('apiid', '00000000-oooo-kkkk-aaaa-aaeekkccnnee'),
+                ('groupname', 'GROUP')
+            ])
+        )
+
+    @patch('Poem.api.internal_views.thresholdsprofiles.sync_webapi',
+           side_effect=mocked_func)
+    def test_get_thresholds_profile_by_name(self, func):
+        request = self.factory.get(self.url + 'nonexisting')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'nonexisting')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(
+            response.data,
+            {'detail': 'Thresholds profile not found.'}
+        )
+
+    def put_thresholds_profile(self):
+        data = {
+            'name': 'NEW_TEST_PROFILE',
+            'apiid': '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
+            'group': 'NEWGROUP'
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        tp = poem_models.ThresholdsProfiles.objects.get(
+            apiid='00000000-oooo-kkkk-aaaa-aaeekkccnnee'
+        )
+        self.assertEqual(tp.name, 'NEW_TEST_PROFILE')
+        self.assertEqual(tp.groupname, 'NEWGROUP')
+        group1 = poem_models.GroupOfThresholdsProfiles.objects.get(
+            name='NEWGROUP'
+        )
+        group2 = poem_models.GroupOfThresholdsProfiles.objects.get(
+            name='GROUP'
+        )
+        self.assertTrue(
+            group1.thresholdsprofiles.filter(
+                apiid='00000000-oooo-kkkk-aaaa-aaeekkccnnee'
+            ).exists()
+        )
+        self.assertFalse(
+            group2.thresholdsprofiles.filter(
+                apiid='00000000-oooo-kkkk-aaaa-aaeekkccnnee'
+            ).exists()
+        )
+
+    def post_thresholds_profile(self):
+        self.assertEqual(
+            poem_models.ThresholdsProfiles.objects.all().count(), 2
+        )
+        data = {
+            'name': 'NEW_PROFILE',
+            'apiid': '12341234-aaaa-kkkk-aaaa-aaeekkccnnee',
+            'groupname': 'GROUP'
+        }
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(
+            poem_models.ThresholdsProfiles.objects.all().count(), 3
+        )
+        profile = poem_models.ThresholdsProfiles.objects.get(
+            apiid='12341234-aaaa-kkkk-aaaa-aaeekkccnnee'
+        )
+        self.assertEqual(profile.name, 'NEW_PROFILE')
+        self.assertEqual(profile.groupname, 'GROUP')
+        group = poem_models.GroupOfThresholdsProfiles.objects.get(name='GROUP')
+        self.assertTrue(
+            group.thresholdsprofiles.filter(
+                apiid='12341234-aaaa-kkkk-aaaa-aaeekkccnnee'
+            ).exists()
+        )
+
+    def delete_thresholds_profile(self):
+        self.assertEqual(
+            poem_models.ThresholdsProfiles.objects.all().count(), 2
+        )
+        request = self.factory.delete(self.url +
+                                      '00000000-oooo-kkkk-aaaa-aaeekkccnnee')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, '00000000-oooo-kkkk-aaaa-aaeekkccnnee')
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertRaises(
+            poem_models.ThresholdsProfiles.DoesNotExist,
+            poem_models.ThresholdsProfiles.objects.get,
+            apiid='00000000-oooo-kkkk-aaaa-aaeekkccnnee'
+        )
+
+    def delete_nonexisting_thresholds_profile(self):
+        request = self.factory.delete(self.url + 'nonexisting')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status.code, status.HTTP_404_NOT_FOUND)

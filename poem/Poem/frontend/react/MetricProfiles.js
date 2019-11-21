@@ -83,7 +83,7 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
             <td className={service.isNew ? "bg-light" : ""}>
               <Autocomplete
                 inputProps={{
-                  className: service.isNew ? "form-control custom-select border border-success" : "form-control custom-select"
+                  className: `"form-control custom-select " ${service.isNew ? "border border-success" : ""}`
                 }}
                 getItemValue={(item) => item}
                 items={serviceflavours_all}
@@ -113,7 +113,7 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
             <td className={service.isNew ? "bg-light" : ""}>
               <Autocomplete
                 inputProps={{
-                  className: service.isNew ? "form-control custom-select border border-success" : "form-control custom-select"
+                  className: `"form-control custom-select " ${service.isNew ? "border border-success" : ""}`
                 }}
                 getItemValue={(item) => item}
                 items={metrics_all}
@@ -586,6 +586,12 @@ export class MetricProfilesChange extends Component
         let element_index = tmp_list_services[i].index
         tmp_list_services[i].index = element_index - 1;
       }
+
+      for (var i = index_tmp; i < tmp_view_services.length; i++) {
+        let element_index = tmp_view_services[i].index
+        tmp_view_services[i].index = element_index - 1;
+      }
+
       this.setState({
         list_services: tmp_list_services,
         view_services: tmp_view_services

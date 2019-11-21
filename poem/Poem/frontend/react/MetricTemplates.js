@@ -15,12 +15,11 @@ import {
   PopoverHeader} from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
-import Autocomplete from 'react-autocomplete';
 import * as Yup from 'yup';
 import { NotificationManager } from 'react-notifications';
 import { HistoryComponent, DiffElement } from './Probes';
 import ReactDiffViewer from 'react-diff-viewer';
-import './MetricTemplates.css';
+import { AutocompleteField } from './UIElements';
 
 export const MetricTemplateList = ListOfMetrics('metrictemplate');
 export const TenantMetricTemplateList = ListOfMetrics('metrictemplate', true)
@@ -29,12 +28,6 @@ export const MetricTemplateChange = MetricTemplateComponent()
 export const MetricTemplateClone = MetricTemplateComponent(true)
 
 export const MetricTemplateHistory = HistoryComponent('metrictemplate');
-
-
-function matchItem(item, value) {
-  if (value)
-    return item.toLowerCase().indexOf(value.toLowerCase()) !== -1;
-}
 
 
 export const InlineDiffElement = ({title, item1, item2}) => {
@@ -94,45 +87,6 @@ export function arraysEqual(arr1, arr2) {
     }
 
     return true;
-}
-
-
-const AutocompleteField = ({lists, onselect_handler, field, setFieldValue, req, values}) => {
-  let classname = undefined;
-  if (req)
-    classname = 'form-control border-danger';
-  else 
-    classname = 'form-control'
-
-  return(
-    <Autocomplete
-      inputProps={{className: classname}}
-      getItemValue={(item) => item}
-      items={lists}
-      value={eval(`values.${field}`)}
-      renderItem={(item, isHighlighted) =>
-        <div 
-          key={lists.indexOf(item)}
-          className={`metrictemplates-autocomplete-entries ${isHighlighted ? 
-            "metrictemplates-autocomplete-entries-highlighted" 
-            : ""}`
-        }
-        >
-          {item ? <Icon i='probes'/> : ''} {item}
-        </div>
-      }
-      onChange={(e) => {setFieldValue(field, e.target.value)}}
-      onSelect={(val) =>  {
-        setFieldValue(field, val)
-        onselect_handler(val);
-      }}
-      wrapperStyle={{}}
-      shouldItemRender={matchItem}
-      renderMenu={(items) =>
-        <div className='metrictemplates-autocomplete-menu' children={items}/>  
-      }
-    />
-  );
 }
 
 
@@ -427,10 +381,11 @@ function MetricTemplateComponent(cloneview=false) {
       else if (!loading) {
         return (
           <BaseArgoView
-            resourcename='Metric template'
+            resourcename='metric template'
             location={this.location}
             addview={this.addview}
             infoview={this.infoview}
+            cloneview={cloneview}
             clone={true}
             modal={true}
             state={this.state}
@@ -464,7 +419,7 @@ function MetricTemplateComponent(cloneview=false) {
                         <Field
                           type='text'
                           name='name'
-                          className={props.errors.name ? 'form-control border-danger' : 'form-control'}
+                          className={`form-control ${props.errors.name && 'border-danger'}`}
                           id='name'
                           disabled={this.infoview}
                         />
@@ -496,7 +451,9 @@ function MetricTemplateComponent(cloneview=false) {
                             <AutocompleteField
                               {...props}
                               lists={probeversions}
+                              icon='probes'
                               field='probeversion'
+                              val={props.values.probeversion}
                               onselect_handler={this.onSelect}
                               req={props.errors.probeversion}
                             />
@@ -575,7 +532,7 @@ function MetricTemplateComponent(cloneview=false) {
                         type='text'
                         name='probeexecutable'
                         id='probeexecutable'
-                        className={props.errors.probeexecutable ? 'form-control border-danger' : 'form-control'}
+                        className={`form-control ${props.errors.probeexecutable && 'border-danger'}`}
                         hidden={props.values.type === 'Passive'}
                         disabled={this.infoview}
                       />
@@ -612,7 +569,9 @@ function MetricTemplateComponent(cloneview=false) {
                                 {...props}
                                 lists={metrictemplatelist}
                                 field='parent'
-                                className={props.errors.parent ? 'form-control border-danger' : 'form-control'}
+                                val={props.values.parent}
+                                icon='metrics'
+                                className={`form-control ${props.errors.parent && 'border-danger'}`}
                                 onselect_handler={this.onSelect}
                                 req={props.errors.parent}
                               />
@@ -954,7 +913,7 @@ export class MetricTemplateVersionDetails extends Component {
                         <Field
                           type='text'
                           name='name'
-                          className={'form-control'}
+                          className='form-control'
                           id='name'
                           disabled={true}
                         />

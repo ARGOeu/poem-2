@@ -59,10 +59,11 @@ class ListProbes(APIView):
     def put(self, request):
         probe = Probe.objects.get(id=request.data['id'])
         nameversion = probe.nameversion
+        ct = ContentType.objects.get_for_model(Probe)
         fields = []
 
         try:
-            if request.data['new_version']:
+            if request.data['new_version'] in [True, 'True', 'true']:
                 probe.version = request.data['version']
                 new_nameversion = '{} ({})'.format(
                     request.data['name'], request.data['version']
@@ -79,7 +80,7 @@ class ListProbes(APIView):
                 probe.save()
                 create_history(probe, probe.user)
 
-                if request.data['update_metrics']:
+                if request.data['update_metrics'] in [True, 'true', 'True']:
                     metrictemplates = MetricTemplate.objects.filter(
                         probeversion=nameversion
                     )
@@ -99,6 +100,9 @@ class ListProbes(APIView):
                 new_serialized_field = {
                             'name': request.data['name'],
                             'version': request.data['version'],
+                            'nameversion': '{} ({})'.format(
+                                request.data['name'], request.data['version']
+                            ),
                             'description': request.data['description'],
                             'comment': request.data['comment'],
                             'repository': request.data['repository'],
@@ -109,6 +113,19 @@ class ListProbes(APIView):
 
                 data[0]['fields'] = new_serialized_field
                 history.update(serialized_data=json.dumps(data))
+
+                if probe.name != request.data['name']:
+                    metrictemplates = MetricTemplate.objects.filter(
+                        probeversion=nameversion
+                    )
+
+                    for metrictemplate in metrictemplates:
+                        metrictemplate.probeversion = '{} ({})'.format(
+                            request.data['name'], request.data['version']
+                        )
+                        metrictemplate.save()
+                        create_history(metrictemplate, request.user.username)
+                        update_metrics(metrictemplate, metrictemplate.name)
 
             return Response(status=status.HTTP_201_CREATED)
 

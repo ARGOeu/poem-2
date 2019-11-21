@@ -39,13 +39,16 @@ import {
   faHighlighter,
   faTasks,
   faKey,
-  faBoxOpen} from '@fortawesome/free-solid-svg-icons';
+  faBoxOpen,
+  faExclamation} from '@fortawesome/free-solid-svg-icons';
 import { NotificationManager } from 'react-notifications';
 import { Field } from 'formik';
+import Autocomplete from 'react-autocomplete';
 
 
 var list_pages = ['administration','services', 'reports', 'probes',
-                  'metrics', 'metricprofiles', 'aggregationprofiles'];
+                  'metrics', 'metricprofiles', 'aggregationprofiles',
+                  'thresholdsprofiles'];
 var admin_list_pages = ['administration', 'probes', 'yumrepos', 'metrictemplates'];
 
 var link_title = new Map();
@@ -63,6 +66,8 @@ link_title.set('users', 'Users');
 link_title.set('apikey', 'API key');
 link_title.set('metrictemplates', 'Metric templates');
 link_title.set('yumrepos', 'YUM repos');
+link_title.set('groupofthresholdsprofiles', 'Groups of thresholds profiles');
+link_title.set('thresholdsprofiles', 'Thresholds profiles');
 
 export const Icon = props =>
 {
@@ -76,17 +81,18 @@ export const Icon = props =>
   link_icon.set('metrictemplates', faCog);
   link_icon.set('metricprofiles', faCogs);
   link_icon.set('aggregationprofiles', faTasks);
-  link_icon.set('apikey', faKey)
-  link_icon.set('yumrepos', faBoxOpen)
+  link_icon.set('apikey', faKey);
+  link_icon.set('yumrepos', faBoxOpen);
+  link_icon.set('thresholdsprofiles', faExclamation);
 
   return <FontAwesomeIcon icon={link_icon.get(props.i)} fixedWidth/>
 }
 
-export const DropDown = ({field, data=[], prefix="", class_name=""}) => 
+export const DropDown = ({field, data=[], prefix="", class_name="", isnew=false}) => 
   <Field component="select"
     name={prefix ? `${prefix}.${field.name}` : field.name}
     required={true}
-    className={`form-control ${class_name}`}
+    className={`form-control ${class_name} ${isnew ? 'border-success' : ''}`}
   >
     {
       data.map((name, i) => 
@@ -274,7 +280,7 @@ const InnerFooter = ({border=false}) =>
 (
   <React.Fragment>
     {
-      border && <div className="pt-3"/>
+      border && <div className="pt-1"/>
     }
     <div className="text-center pt-1">
       <img src={EULogo} id="eulogo" alt="EU logo"/>
@@ -298,18 +304,18 @@ const InnerFooter = ({border=false}) =>
 )
 
 
-export const Footer = ({addBorder=false}) =>
+export const Footer = ({loginPage=false}) =>
 {
-  if (addBorder) {
+  if (!loginPage) {
     return (
       <div id="argo-footer" className="border rounded">
-        <InnerFooter border={addBorder}/>
+        <InnerFooter border={true}/>
       </div>
     )
   }
   else {
     return (
-      <div id="argo-footer">
+      <div id="argo-loginfooter">
         <InnerFooter />
       </div>
     )
@@ -341,7 +347,7 @@ export const NotifyOk = ({msg='', title='', callback=undefined}) => {
 export const BaseArgoView = ({resourcename='', location=undefined, 
     infoview=false, addview=false, listview=false, modal=false, 
     state=undefined, toggle=undefined, submitperm=true, history=true, 
-    addnew=true, clone=false, children}) => 
+    addnew=true, clone=false, cloneview=false, children}) => 
 (
   <React.Fragment>
     {
@@ -375,19 +381,24 @@ export const BaseArgoView = ({resourcename='', location=undefined,
                 }
               </React.Fragment>
             :
-              <React.Fragment>
-                <h2 className="ml-3 mt-1 mb-4">{`Change ${resourcename}`}</h2>
-                  <ButtonToolbar>
-                    {
-                      clone &&
-                        <Link className="btn btn-secondary mr-2" to={location.pathname + "/clone"} role="button">Clone</Link>
-                    }
-                    {
-                      history &&
-                        <Link className="btn btn-secondary" to={location.pathname + "/history"} role="button">History</Link>
-                    }
-                  </ButtonToolbar>
-              </React.Fragment>
+              cloneview ?
+                <React.Fragment>
+                  <h2 className="ml-3 mt-1 mb-4">{`Clone ${resourcename}`}</h2>
+                </React.Fragment>
+              :
+                <React.Fragment>
+                  <h2 className="ml-3 mt-1 mb-4">{`Change ${resourcename}`}</h2>
+                    <ButtonToolbar>
+                      {
+                        clone &&
+                          <Link className="btn btn-secondary mr-2" to={location.pathname + "/clone"} role="button">Clone</Link>
+                      }
+                      {
+                        history &&
+                          <Link className="btn btn-secondary" to={location.pathname + "/history"} role="button">History</Link>
+                      }
+                    </ButtonToolbar>
+                </React.Fragment>
       }
     </div>
     <div id="argo-contentwrap" className="ml-2 mb-2 mt-2 p-3 border rounded">
@@ -433,3 +444,57 @@ export const Checkbox = ({
 export const FancyErrorMessage = (msg) => (
   <div style={{color: '#FF0000', fontSize: 'small'}}>{msg}</div>
 )
+
+
+function matchItem(item, value) {
+  if (value)
+    return item.toLowerCase().indexOf(value.toLowerCase()) !== -1;
+};
+
+
+export const AutocompleteField = ({lists, onselect_handler, field, val, icon, setFieldValue, req, label, values}) => {
+  let classname = `form-control ${req && 'border-danger'}`;
+
+  return(
+    <Autocomplete
+      inputProps={{className: classname}}
+      getItemValue={(item) => item}
+      items={lists}
+      value={val}
+      renderItem={(item, isHighlighted) =>
+        <div 
+          key={lists.indexOf(item)}
+          className={`argo-autocomplete-entries ${isHighlighted ? 
+            "argo-autocomplete-entries-highlighted" 
+            : ""}`
+        }
+        >
+          {item ? <Icon i={icon}/> : ''} {item}
+        </div>
+      }
+      renderInput={(props) => {
+        if (label)
+          return (
+            <div className='input-group mb-3'>
+              <div className='input-group-prepend'>
+                <span className='input-group-text' id='basic-addon1'>{label}</span>
+              </div>
+              <input {...props} type='text' className={classname} aria-label='label'/>
+            </div>
+          );
+        else
+          return <input {...props}/>;
+      }}
+      onChange={(e) => {setFieldValue(field, e.target.value)}}
+      onSelect={(val) =>  {
+        setFieldValue(field, val)
+        onselect_handler(field, val);
+      }}
+      wrapperStyle={{}}
+      shouldItemRender={matchItem}
+      renderMenu={(items) =>
+        <div className='argo-autocomplete-menu' children={items}/>  
+      }
+    />
+  );
+};

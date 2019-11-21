@@ -194,7 +194,7 @@ class Login extends Component {
                   </Formik>
                 </CardBody> 
                 <CardFooter id="argo-loginfooter">
-                  <Footer />
+                  <Footer loginPage={true}/>
                 </CardFooter>
               </Card>
             </Col>
