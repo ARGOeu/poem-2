@@ -233,7 +233,7 @@ function GroupChange(gr, id, ttl) {
               name: '',
               items: [],
               nogroupitems: items,
-              write_perm: true,
+              write_perm: localStorage.getItem('authIsSuperuser') === 'true',
               loading: false
             }
           ))
