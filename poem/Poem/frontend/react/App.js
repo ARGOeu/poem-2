@@ -159,6 +159,13 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, t
         tenantname={tenantName}
         addview={true}/>}
     />
+    <Route exact path="/ui/thresholdsprofiles/:name" 
+      render={props => <ThresholdsProfilesChange 
+        {...props} 
+        webapithresholds={webApiThresholds}
+        webapitoken={token}
+        tenantname={tenantName}/>}
+    />
     <Route component={NotFound} />
   </Switch>
 )

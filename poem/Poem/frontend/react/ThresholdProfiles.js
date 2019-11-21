@@ -206,7 +206,7 @@ export class ThresholdsProfilesChange extends Component {
 
     this.state = {
       thresholds_profile: {
-        'id': '',
+        'apiid': '',
         'name': '',
         'groupname': ''
       },
@@ -438,6 +438,34 @@ export class ThresholdsProfilesChange extends Component {
             });
         };
       });
+    } else {
+      this.webapi.changeThresholdsProfile({
+        id: values_send.id,
+        name: values_send.name,
+        rules: this.thresholdsToString(values_send.rules)
+      })
+        .then(response => {
+          if (!response.ok) {
+            NotificationManager.error(
+              `Error: ${response.status} ${response.statusText}`,
+              'Error changing thresholds profile'
+            );
+          } else {
+            response.json()
+              .then(r => {
+                this.backend.changeThresholdsProfile({
+                  apiid: values_send.id,
+                  name: values_send.name,
+                  groupname: values.groupname
+                })
+                  .then(() => NotifyOk({
+                    msg: 'Thresholds profile successfully changed',
+                    title: 'Changed',
+                    callback: () => this.history.push('/ui/thresholdsprofiles')
+                  }));
+              });
+          };
+        });
     };
   };
 
@@ -457,6 +485,33 @@ export class ThresholdsProfilesChange extends Component {
             write_perm: localStorage.getItem('authIsSuperuser') === 'true'
           });
         });
+    } else {
+      this.backend.fetchThresholdsProfileIdFromName(this.name)
+        .then(id =>
+          Promise.all([
+            this.webapi.fetchThresholdsProfile(id),
+            this.backend.fetchThresholdsProfileUserGroups(),
+            this.backend.fetchAllGroups(),
+            this.backend.fetchMetricsAll()
+          ])
+            .then(([thresholdsprofile, usergroup, groups, metricsall]) => {
+              this.backend.fetchThresholdsProfileGroup(this.name)
+                .then(group => {
+                  this.setState({
+                    thresholds_profile: {
+                      'apiid': thresholdsprofile.id,
+                      'name': thresholdsprofile.name,
+                      'groupname': group
+                    },
+                    thresholds_rules: this.thresholdsToValues(thresholdsprofile.rules),
+                    groups_list: groups['thresholdsprofiles'],
+                    metrics_list: metricsall,
+                    write_perm: localStorage.getItem('authIsSuperuser') === 'true' || usergroup.indexOf(group),
+                    loading: false
+                  });
+                });
+            })
+        );
     };
   };
 
