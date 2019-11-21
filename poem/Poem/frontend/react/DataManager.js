@@ -507,6 +507,13 @@ export class Backend {
     );
   }
 
+  deleteThresholdsProfile(id) {
+    return this.send(
+      '/api/v2/internal/thresholdsprofiles/' + id,
+      'DELETE'
+    );
+  }
+
   importMetrics(data) {
     return this.send(
       '/api/v2/internal/importmetrics/',
@@ -664,6 +671,13 @@ export class WebApi {
   deleteAggregation(id) {
     return this.send(
       this.aggregationprofiles + '/' + id,
+      'DELETE'
+    );
+  }
+
+  deleteThresholdsProfile(id) {
+    return this.send(
+      this.thresholdsprofiles + '/' + id,
       'DELETE'
     );
   }
