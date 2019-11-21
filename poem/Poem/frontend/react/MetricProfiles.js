@@ -273,7 +273,7 @@ export class MetricProfilesChange extends Component
             metric_profile_name: '',
             groups_field: '',
             list_user_groups: usergroups,
-            write_perm: true,
+            write_perm: localStorage.getItem('authIsSuperuser') === 'true',
             view_services: [{service: '', metric: '', index: 0, isNew: true}],
             serviceflavours_all: serviceflavoursall,
             metrics_all: metricsall,

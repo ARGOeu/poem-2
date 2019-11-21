@@ -501,7 +501,7 @@ export class AggregationProfilesChange extends Component
         aggregation_profile: empty_aggregation_profile,
         groups_field: '',
         list_user_groups: usergroups,
-        write_perm: true,
+        write_perm: localStorage.getItem('authIsSuperuser') === 'true',
         list_id_metric_profiles: this.extractListOfMetricsProfiles(metricp),
         list_complete_metric_profiles: metricp,
         list_services: [],
