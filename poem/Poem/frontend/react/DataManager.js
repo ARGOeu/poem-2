@@ -256,6 +256,26 @@ export class Backend {
       .catch(err => alert('Something went wrong: ' + err))
   }
 
+  fetchThresholdsProfileIdFromName(thresholdsprofiles_name) {
+    return fetch('/api/v2/internal/thresholdsprofiles' + '/' + thresholdsprofiles_name)
+      .then(response => response.json())
+      .then(json => json.apiid)
+      .catch(err => alert('Something went wrong: ' + err));
+  }
+
+  fetchThresholdsProfileGroup(thresholdsprofiles_name) {
+    return fetch('/api/v2/internal/thresholdsprofiles' + '/' + thresholdsprofiles_name)
+      .then(response => response.json())
+      .then(json => json['groupname'])
+      .catch(err => alert('Something went wrong: ' + err))
+  }
+
+  fetchThresholdsProfileUserGroups() {
+    return fetch('/api/v2/internal/groups/thresholdsprofiles')
+      .then(response => response.json())
+      .catch(err => alert('Something went wrong: ' + err))
+  }
+
   changeMetricProfile(profile) {
     return this.send(
       '/api/v2/internal/metricprofiles/',
@@ -333,6 +353,14 @@ export class Backend {
       '/api/v2/internal/yumrepos/',
       'PUT',
       repo
+    );
+  }
+
+  changeThresholdsProfile(profile) {
+    return this.send(
+      '/api/v2/internal/thresholdsprofiles/',
+      'PUT',
+      profile
     );
   }
 
@@ -563,6 +591,21 @@ export class WebApi {
       .catch(err => alert('Something went wrong: ' + err));
   }
 
+  fetchThresholdsProfile(id) {
+    return fetch(this.thresholdsprofiles + '/' + id,
+    {
+      headers:
+        {
+          "Accept": "application/json",
+          "x-api-key": this.token
+        }
+    })
+      .then(response => response.json())
+      .then(json => json['data'])
+      .then(array => array[0])
+      .catch(err => alert('Something went wrong: ' + err))
+  }
+
   changeAggregation(profile) {
     return this.send(
       this.aggregationprofiles + '/' + profile.id,
@@ -574,6 +617,14 @@ export class WebApi {
   changeMetricProfile(profile) {
     return this.send(
       this.metricprofiles + '/' + profile.id,
+      'PUT',
+      profile
+    );
+  }
+
+  changeThresholdsProfile(profile) {
+    return this.send(
+      this.thresholdsprofiles + '/' + profile.id,
       'PUT',
       profile
     );
