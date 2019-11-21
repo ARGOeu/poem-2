@@ -5194,9 +5194,10 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
         self.assertEqual(
             poem_models.ThresholdsProfiles.objects.all().count(), 2
         )
-        request = self.factory.delete(self.url + 'TEST_PROFILE')
+        request = self.factory.delete(self.url +
+                                      '00000000-oooo-kkkk-aaaa-aaeekkccnnee')
         force_authenticate(request, user=self.user)
-        response = self.view(request, 'TEST_PROFILE')
+        response = self.view(request, '00000000-oooo-kkkk-aaaa-aaeekkccnnee')
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertRaises(
             poem_models.ThresholdsProfiles.DoesNotExist,

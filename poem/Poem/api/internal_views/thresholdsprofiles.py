@@ -65,10 +65,10 @@ class ListThresholdsProfiles(APIView):
         else:
             return Response(serializer.data, status=status.HTTP_400_BAD_REQUEST)
 
-    def delete(self, request, name=None):
-        if name:
+    def delete(self, request, apiid=None):
+        if apiid:
             try:
-                ThresholdsProfiles.objects.get(name=name).delete()
+                ThresholdsProfiles.objects.get(apiid=apiid).delete()
                 return Response(status=status.HTTP_204_NO_CONTENT)
 
             except ThresholdsProfiles.DoesNotExist:
