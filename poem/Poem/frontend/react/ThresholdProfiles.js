@@ -49,13 +49,13 @@ const ThresholdsSchema = Yup.object().shape({
             .matches(/^[a-zA-Z][A-Za-z0-9]*$/, 'Label can contain alphanumeric characters, but must always begin with a letter.')
             .required('Required'),
           value: Yup.string()
-            .matches(/^[-]?\d*(\.\d+)?$/, 'Must be a number.')
+            .matches(/^([-](?=\.?\d))?(\d+)?(\.\d+)?$/, 'Must be a number.')
             .required('Required'),
           warn1: Yup.string()
-            .matches(/^[@]?(~|[-]?\d*(\.\d+)?)$/, 'Must be a number or ~')
+            .matches(/^[@]?(~|[-](?=\.?\d))?(\d+)?(\.\d+)?$/, 'Must be a number.')
             .required('Required'),
           warn2: Yup.string()
-            .matches(/^[-]?\d*(\.\d+)?$/, 'Must be a number.')
+            .matches(/^([-](?=\.?\d))?(\d+)?(\.\d+)?$/, 'Must be a number.')
             .test('greater-than', 
             'Should be greater than lower warning limit', 
             function(value) {
@@ -75,10 +75,10 @@ const ThresholdsSchema = Yup.object().shape({
               }
             }),
           crit1: Yup.string()
-            .matches(/^[@]?(~|[-]?\d*(\.\d+)?)$/, 'Must be a number or ~')
+            .matches(/^[@]?(~|[-](?=\.?\d))?(\d+)?(\.\d+)?$/, 'Must be a number.')
             .required('Required'),
           crit2: Yup.string()
-            .matches(/^[-]?\d*(\.\d+)?$/, 'Must be a number.')
+            .matches(/^([-](?=\.?\d))?(\d+)?(\.\d+)?$/, 'Must be a number.')
             .test('greater-than', 
             'Should be greater than lower critical limit', 
             function(value) {
@@ -98,9 +98,9 @@ const ThresholdsSchema = Yup.object().shape({
               }
             }),
           min: Yup.string()
-            .matches(/^[-]?\d*(\.\d+)?$/, 'Must be a number.'),
+            .matches(/^([-](?=\.?\d))?(\d+)?(\.\d+)?$/, 'Must be a number.'),
           max: Yup.string()
-            .matches(/^[-]?\d*(\.\d+)?$/, 'Must be a number.')
+            .matches(/^([-](?=\.?\d))?(\d+)?(\.\d+)?$/, 'Must be a number.')
             .test('greater-than-min',
             'Should be greater than min value.',
             function(value) {
