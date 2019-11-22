@@ -503,7 +503,7 @@ export class ThresholdsProfilesChange extends Component {
             loading: false,
             groups_list: groups,
             metrics_list: metricsall,
-            write_perm: groups.length > 0
+            write_perm: localStorage.getItem('authIsSuperuser') === 'true' || groups.length > 0
           });
         });
     } else {
