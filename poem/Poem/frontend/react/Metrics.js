@@ -689,10 +689,10 @@ export class MetricChange extends Component {
     this.setState({loading: true});
 
     if (!this.addview) {
-      Promise.all([this.backend.fetchMetricByName(this.name),
-        this.backend.fetchMetricUserGroups(),
-        this.backend.fetchAllGroups()
-      ]).then(([metrics, usergroups, groups]) => {
+      Promise.all([
+        this.backend.fetchMetricByName(this.name),
+        this.backend.fetchMetricUserGroups()
+      ]).then(([metrics, usergroups]) => {
         metrics.probekey ? 
         this.backend.fetchVersions('probe', metrics.probeversion.split(' ')[0])
           .then(probe => {
@@ -705,7 +705,7 @@ export class MetricChange extends Component {
             this.setState({
               metric: metrics,
               probe: fields,
-              groups: groups['metrics'],
+              groups: usergroups,
               loading: false,
               write_perm: localStorage.getItem('authIsSuperuser') === 'true' || usergroups.indexOf(metrics.group) >= 0,
             })
@@ -713,7 +713,7 @@ export class MetricChange extends Component {
           :
           this.setState({
             metric: metrics,
-            groups: groups['metrics'],
+            groups: usergroups,
             loading: false,
             write_perm: localStorage.getItem('authIsSuperuser') === 'true' || usergroups.indexOf(metrics.group) >= 0,
           })
@@ -723,6 +723,9 @@ export class MetricChange extends Component {
 
   render() {
     const { metric, groups, loading, write_perm } = this.state;
+
+    if (!groups.includes(metric.group))
+      groups.push(metric.group);
 
     if (loading)
       return (<LoadingAnim/>)
