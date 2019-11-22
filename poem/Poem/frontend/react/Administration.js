@@ -101,7 +101,7 @@ export const SuperAdminAdministration = (props) =>
       </CardHeader>
       <CardBody> 
         <Row className="p-1 align-items-center">
-          <Link to={'/ui/administration/users'}>Users</Link>
+          <Icon i='users'/> <Link to={'/ui/administration/users'}>Users</Link>
         </Row>
       </CardBody>
     </Card>
