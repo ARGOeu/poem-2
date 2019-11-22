@@ -495,15 +495,15 @@ export class ThresholdsProfilesChange extends Component {
 
     if (this.addview) {
       Promise.all([
-        this.backend.fetchAllGroups(),
+        this.backend.fetchThresholdsProfileUserGroups(),
         this.backend.fetchMetricsAll()
       ])
         .then(([groups, metricsall]) => {
           this.setState({
             loading: false,
-            groups_list: groups['thresholdsprofiles'],
+            groups_list: groups,
             metrics_list: metricsall,
-            write_perm: localStorage.getItem('authIsSuperuser') === 'true'
+            write_perm: groups.length > 0
           });
         });
     } else {
