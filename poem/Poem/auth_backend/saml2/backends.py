@@ -54,7 +54,7 @@ class SAML2Backend(Saml2Backend):
         else:
             return attrs[NAME_TO_OID[attr]]
 
-    def authenticate(self, session_info=None, attribute_mapping=None,
+    def authenticate(self, request, session_info=None, attribute_mapping=None,
                      create_unknown_user=True):
         attributes = session_info['ava']
 

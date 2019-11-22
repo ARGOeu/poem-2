@@ -205,6 +205,7 @@ LOGIN_REDIRECT_URL = '/ui/home'
 LOGOUT_REDIRECT_URL = '/ui/login'
 SAML_CONFIG_LOADER = 'Poem.poem.saml2.config.get_saml_config'
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_COOKIE_SAMESITE = None
 
 
 WEBPACK_LOADER = {
