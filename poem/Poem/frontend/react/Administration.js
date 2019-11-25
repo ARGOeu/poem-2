@@ -19,7 +19,7 @@ export const TenantAdministration = (props) =>
       </CardHeader>
       <CardBody>
         <Row className="p-1 align-items-center">
-          <Icon i="reports"/><Link className='pl-1' to={'/ui/reports'}>Reports</Link>
+          <Icon i="reports"/> <Link className='pl-1' to={'/ui/reports'}>Reports</Link>
         </Row>
         <Row className="p-1 align-items-center">
           <Icon i="metrics"/> <Link className='pl-1' to={'/ui/metrics'}>Metrics</Link>
@@ -38,19 +38,19 @@ export const TenantAdministration = (props) =>
       </CardHeader>
       <CardBody> 
         <Row className="p-1 align-items-center">
-          <Link to={'/ui/administration/groupofaggregations'}>Groups of aggregations</Link>
+          <Icon i="groupofaggregationprofiles"/> <Link to={'/ui/administration/groupofaggregations'}>Groups of aggregations</Link> 
         </Row>
         <Row className="p-1 align-items-center">
-          <Link to={'/ui/administration/groupofmetrics'}>Groups of metrics</Link>
+          <Icon i="groupofmetrics"/> <Link to={'/ui/administration/groupofmetrics'}>Groups of metrics</Link>
         </Row>
         <Row className="p-1 align-items-center">
-          <Link to={'/ui/administration/groupofmetricprofiles'}>Groups of metric profiles</Link>
+          <Icon i="groupofmetricprofiles"/> <Link to={'/ui/administration/groupofmetricprofiles'}>Groups of metric profiles</Link>
         </Row>
         <Row className="p-1 align-items-center">
-          <Link to={'/ui/administration/groupofthresholdsprofiles'}>Groups of thresholds profiles</Link>
+          <Icon i='groupofthresholdsprofiles'/> <Link to={'/ui/administration/groupofthresholdsprofiles'}>Groups of thresholds profiles</Link>
         </Row>
         <Row className="p-1 align-items-center">
-          <Link to={'/ui/administration/users'}>Users</Link>
+          <Icon i="users"/> <Link to={'/ui/administration/users'}>Users</Link>
         </Row>
       </CardBody>
     </Card>
@@ -60,10 +60,10 @@ export const TenantAdministration = (props) =>
       </CardHeader>
       <CardBody> 
         <Row className="p-1 align-items-center">
-            <Icon i='metrics'/> <Link to={'/ui/administration/metrictemplates'}>Metric templates</Link>
+          <Icon i="metrics"/> <Link to={'/ui/administration/metrictemplates'}>Metric templates</Link>
         </Row>
-        <Row>
-          <Icon i='yumrepos'/> <Link to={'/ui/administration/yumrepos'}>YUM repos</Link>
+        <Row className='p-1 align-items-center'>
+            <Icon i="yumrepos"/> <Link to={'/ui/administration/yumrepos'}>YUM repos</Link>
         </Row>
       </CardBody>
     </Card>
@@ -73,7 +73,7 @@ export const TenantAdministration = (props) =>
       </CardHeader>
       <CardBody> 
         <Row className="p-1 align-items-center">
-          <Icon i='apikey'/> <Link to={'/ui/administration/apikey'}>API keys</Link>
+          <Icon i="apikey"/> <Link to={'/ui/administration/apikey'}>API keys</Link>
         </Row>
       </CardBody>
     </Card>
@@ -101,7 +101,7 @@ export const SuperAdminAdministration = (props) =>
       </CardHeader>
       <CardBody> 
         <Row className="p-1 align-items-center">
-          <Link to={'/ui/administration/users'}>Users</Link>
+          <Icon i='users'/> <Link to={'/ui/administration/users'}>Users</Link>
         </Row>
       </CardBody>
     </Card>

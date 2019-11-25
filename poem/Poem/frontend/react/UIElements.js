@@ -40,7 +40,9 @@ import {
   faTasks,
   faKey,
   faBoxOpen,
-  faExclamation} from '@fortawesome/free-solid-svg-icons';
+  faExclamation,
+  faSquare,
+  faUser} from '@fortawesome/free-solid-svg-icons';
 import { NotificationManager } from 'react-notifications';
 import { Field } from 'formik';
 import Autocomplete from 'react-autocomplete';
@@ -84,8 +86,19 @@ export const Icon = props =>
   link_icon.set('apikey', faKey);
   link_icon.set('yumrepos', faBoxOpen);
   link_icon.set('thresholdsprofiles', faExclamation);
+  link_icon.set('users', faUser);
 
-  return <FontAwesomeIcon icon={link_icon.get(props.i)} fixedWidth/>
+  if (props.i.startsWith('groupof'))
+    return (
+      <span className='fa-layers fa-fw'>
+        <FontAwesomeIcon icon={faSquare} color='white' fixedWidth/>
+        <FontAwesomeIcon icon={link_icon.get(props.i.replace('groupof', ''))} transform={`shrink-${props.i === 'groupofmetricprofiles' ? 9 : 8} up-3`}/>
+        <FontAwesomeIcon icon={link_icon.get(props.i.replace('groupof', ''))} transform={`shrink-${props.i === 'groupofmetricprofiles' ? 9 : 8} down-4.2 left-5`}/>
+        <FontAwesomeIcon icon={link_icon.get(props.i.replace('groupof', ''))} transform={`shrink-${props.i === 'groupofmetricprofiles' ? 9 : 8} down-4.2 right-5`}/>
+      </span>
+    )
+  else
+    return <FontAwesomeIcon icon={link_icon.get(props.i)} size={props.i === 'yumrepos' || props.i === 'metricprofiles' ? 'sm' : '1x'} fixedWidth/>
 }
 
 export const DropDown = ({field, data=[], prefix="", class_name="", isnew=false}) => 
