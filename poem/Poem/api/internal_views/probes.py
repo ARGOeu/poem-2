@@ -58,9 +58,7 @@ class ListProbes(APIView):
 
     def put(self, request):
         probe = Probe.objects.get(id=request.data['id'])
-        nameversion = probe.nameversion
-        ct = ContentType.objects.get_for_model(Probe)
-        fields = []
+        nameversion = '{} ({})'.format(probe.name, probe.version)
 
         try:
             if request.data['new_version'] in [True, 'True', 'true']:
@@ -68,7 +66,6 @@ class ListProbes(APIView):
                 new_nameversion = '{} ({})'.format(
                     request.data['name'], request.data['version']
                 )
-                fields.append('version')
 
                 probe.name = request.data['name']
                 probe.repository = request.data['repository']
@@ -100,9 +97,6 @@ class ListProbes(APIView):
                 new_serialized_field = {
                             'name': request.data['name'],
                             'version': request.data['version'],
-                            'nameversion': '{} ({})'.format(
-                                request.data['name'], request.data['version']
-                            ),
                             'description': request.data['description'],
                             'comment': request.data['comment'],
                             'repository': request.data['repository'],
@@ -174,12 +168,12 @@ class ListProbes(APIView):
             try:
                 probe = Probe.objects.get(name=name)
                 mt = MetricTemplate.objects.filter(
-                    probeversion=probe.nameversion
+                    probeversion='{} ({})'.format(probe.name, probe.version)
                 )
                 if len(mt) == 0:
                     ExtRevision.objects.filter(probeid=probe.id).delete()
                     for schema in schemas:
-                        # need to iterate through schemase because of foreign
+                        # need to iterate through schemas because of foreign
                         # key in Metric model
                         with schema_context(schema):
                             History.objects.filter(
