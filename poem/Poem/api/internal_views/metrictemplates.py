@@ -142,16 +142,15 @@ class ListMetricTemplates(APIView):
             fileparameter = two_value_inline(metrictemplate.fileparameter)
 
             if metrictemplate.probekey:
-                probekey = metrictemplate.probekey.id
+                probeversion = metrictemplate.probekey.__str__()
             else:
-                probekey = ''
+                probeversion = ''
 
             results.append(dict(
                 id=metrictemplate.id,
                 name=metrictemplate.name,
                 mtype=metrictemplate.mtype.name,
-                probeversion=metrictemplate.probeversion,
-                probekey=probekey,
+                probeversion=probeversion,
                 parent=parent,
                 probeexecutable=probeexecutable,
                 config=config,
@@ -188,7 +187,6 @@ class ListMetricTemplates(APIView):
                     mtype=admin_models.MetricTemplateType.objects.get(
                         name=request.data['mtype']
                     ),
-                    probeversion=request.data['probeversion'],
                     probekey=admin_models.ProbeHistory.objects.get(
                         name=request.data['probeversion'].split(' ')[0],
                         version=request.data['probeversion'].split(' ')[1][1:-1]
@@ -343,10 +341,9 @@ class ListMetricTemplatesForProbeVersion(APIView):
 
     def get(self, request, probeversion):
         if probeversion:
-            nameversion = probeversion[0:probeversion.index('(')] + ' ' + \
-                probeversion[probeversion.index('('):]
             metrics = admin_models.MetricTemplate.objects.filter(
-                probeversion=nameversion
+                probekey__name=probeversion.split('(')[0],
+                probekey__version=probeversion.split('(')[1][0:-1]
             )
 
             if metrics.count() == 0:

@@ -48,5 +48,8 @@ class ProbeHistory(models.Model):
         app_label = 'poem_super_admin'
         unique_together = [['name', 'version']]
 
+    def __str__(self):
+        return u'%s (%s)' % (self.name, self.version)
+
     def natural_key(self):
         return (self.name, self.version)

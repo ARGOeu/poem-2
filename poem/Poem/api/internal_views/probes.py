@@ -59,7 +59,8 @@ class ListProbes(APIView):
 
     def put(self, request):
         probe = admin_models.Probe.objects.get(id=request.data['id'])
-        nameversion = '{} ({})'.format(probe.name, probe.version)
+        old_name = probe.name
+        old_version = probe.version
 
         try:
             if request.data['new_version'] in [True, 'True', 'true']:
@@ -81,7 +82,8 @@ class ListProbes(APIView):
                 if request.data['update_metrics'] in [True, 'true', 'True']:
                     metrictemplates = \
                         admin_models.MetricTemplate.objects.filter(
-                            probeversion=nameversion
+                            probekey__name=old_name,
+                            probekey__version=old_version
                         )
 
                     for metrictemplate in metrictemplates:
@@ -117,7 +119,8 @@ class ListProbes(APIView):
                 if probe.name != request.data['name']:
                     metrictemplates = \
                         admin_models.MetricTemplate.objects.filter(
-                            probeversion=nameversion
+                            probekey__name=old_name,
+                            probekey__version=old_version
                         )
 
                     for metrictemplate in metrictemplates:
@@ -175,7 +178,8 @@ class ListProbes(APIView):
             try:
                 probe = admin_models.Probe.objects.get(name=name)
                 mt = admin_models.MetricTemplate.objects.filter(
-                    probeversion='{} ({})'.format(probe.name, probe.version)
+                    probekey__name=probe.name,
+                    probekey__version=probe.version
                 )
                 if len(mt) == 0:
                     for schema in schemas:

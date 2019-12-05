@@ -37,6 +37,20 @@ def mocked_func(*args):
     pass
 
 
+def mocked_inline_metric_for_db(data):
+    data = json.loads(data)
+
+    result = []
+    for item in data:
+        if item['key']:
+            result.append('{} {}'.format(item['key'], item['value']))
+
+    if result:
+        return json.dumps(result)
+    else:
+        return ''
+
+
 class ListAPIKeysAPIViewTests(TenantTestCase):
     def setUp(self):
         self.factory = TenantRequestFactory(self.tenant)
@@ -446,7 +460,6 @@ class ListProbesAPIViewTests(TenantTestCase):
 
         admin_models.MetricTemplate.objects.create(
             name='argo.API-Check',
-            probeversion='argo-web-api (0.1.7)',
             mtype=mtype,
             probekey=pv,
             probeexecutable='["web-api"]',
@@ -459,7 +472,6 @@ class ListProbesAPIViewTests(TenantTestCase):
 
         admin_models.MetricTemplate.objects.create(
             name='argo.AMS-Check',
-            probeversion='ams-probe (0.1.7)',
             mtype=mtype,
             probekey=pv1,
             probeexecutable='["ams-probe"]',
@@ -633,7 +645,6 @@ class ListProbesAPIViewTests(TenantTestCase):
         self.assertEqual(version.repository, probe.repository)
         mt = admin_models.MetricTemplate.objects.get(name='argo.AMS-Check')
         self.assertEqual(mt.probekey, version)
-        self.assertEqual(mt.probeversion, 'ams-probe-new (0.1.7)')
 
     def test_put_probe_with_new_version_without_metrictemplate_update(self):
         data = {
@@ -688,7 +699,6 @@ class ListProbesAPIViewTests(TenantTestCase):
             mt.probekey,
             admin_models.ProbeHistory.objects.filter(object_id=probe)[1]
         )
-        self.assertEqual(mt.probeversion, 'ams-probe (0.1.7)')
 
     def test_put_probe_with_new_version_with_metrictemplate_update(self):
         data = {
@@ -742,7 +752,6 @@ class ListProbesAPIViewTests(TenantTestCase):
         self.assertEqual(version.repository, probe.repository)
         mt = admin_models.MetricTemplate.objects.get(name='argo.AMS-Check')
         self.assertEqual(mt.probekey, version)
-        self.assertEqual(mt.probeversion, 'ams-probe-new (0.1.11)')
 
     def test_post_probe(self):
         data = {
@@ -2768,7 +2777,6 @@ class ListVersionsAPIViewTests(TenantTestCase):
         self.metrictemplate1 = admin_models.MetricTemplate.objects.create(
             name='argo.AMS-Check',
             mtype=self.mtype1,
-            probeversion='ams-probe (0.1.7)',
             probekey=self.ver3,
             probeexecutable='["ams-probe"]',
             config='["maxCheckAttempts 3", "timeout 60",'
@@ -2794,7 +2802,6 @@ class ListVersionsAPIViewTests(TenantTestCase):
         )
 
         self.metrictemplate1.name = 'argo.AMS-Check-new'
-        self.metrictemplate1.probeversion = 'poem-probe-new (0.1.11)'
         self.metrictemplate1.probekey = self.ver2
         self.metrictemplate1.save()
 
@@ -2808,7 +2815,7 @@ class ListVersionsAPIViewTests(TenantTestCase):
             object_repr=self.metrictemplate1.__str__(),
             content_type=ct_mt,
             date_created=datetime.datetime.now(),
-            comment='[{"changed": {"fields": ["name", "probeversion"]}}]',
+            comment='[{"changed": {"fields": ["name", "probekey"]}}]',
             user=self.user.username
         )
 
@@ -2907,7 +2914,7 @@ class ListVersionsAPIViewTests(TenantTestCase):
                     'date_created': datetime.datetime.strftime(
                         self.ver5.date_created, '%Y-%m-%d %H:%M:%S'
                     ),
-                    'comment': 'Changed name and probeversion.',
+                    'comment': 'Changed name and probekey.',
                     'version': datetime.datetime.strftime(
                         self.ver5.date_created, '%Y%m%d-%H%M%S'
                     )
@@ -2918,7 +2925,7 @@ class ListVersionsAPIViewTests(TenantTestCase):
                     'fields': {
                         'name': 'argo.AMS-Check',
                         'mtype': self.mtype1.name,
-                        'probeversion': 'ams-probe (0.1.7)',
+                        'probeversion': 'ams-publisher-probe (0.1.11)',
                         'parent': '',
                         'probeexecutable': 'ams-probe',
                         'config': [
@@ -3020,6 +3027,8 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         )
         mtype2 = admin_models.MetricTemplateType.objects.create(name='Passive')
 
+        self.ct = ContentType.objects.get_for_model(admin_models.MetricTemplate)
+
         probe1 = admin_models.Probe.objects.create(
             name='ams-probe',
             version='0.1.7',
@@ -3054,7 +3063,6 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.metrictemplate1 = admin_models.MetricTemplate.objects.create(
             name='argo.AMS-Check',
             mtype=self.mtype1,
-            probeversion='ams-probe (0.1.7)',
             probekey=self.probeversion1,
             probeexecutable='["ams-probe"]',
             config='["maxCheckAttempts 3", "timeout 60",'
@@ -3071,6 +3079,34 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             mtype=mtype2,
         )
 
+        admin_models.History.objects.create(
+            object_repr=self.metrictemplate1.__str__(),
+            object_id=self.metrictemplate1.id,
+            serialized_data=serializers.serialize(
+                'json', [self.metrictemplate1],
+                use_natural_foreign_keys=True,
+                use_natural_primary_keys=True
+            ),
+            date_created=datetime.datetime.now(),
+            user=self.user.username,
+            comment='Initial version.',
+            content_type=self.ct
+        )
+
+        admin_models.History.objects.create(
+            object_repr=self.metrictemplate2.__str__(),
+            object_id=self.metrictemplate2.id,
+            serialized_data=serializers.serialize(
+                'json', [self.metrictemplate2],
+                use_natural_foreign_keys=True,
+                use_natural_primary_keys=True
+            ),
+            date_created=datetime.datetime.now(),
+            user=self.user.username,
+            comment='Initial version.',
+            content_type=self.ct
+        )
+
     def test_get_metric_template_list(self):
         request = self.factory.get(self.url)
         force_authenticate(request, user=self.user)
@@ -3083,7 +3119,6 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
                     'name': 'argo.AMS-Check',
                     'mtype': 'Active',
                     'probeversion': 'ams-probe (0.1.7)',
-                    'probekey': self.probeversion1.id,
                     'parent': '',
                     'probeexecutable': 'ams-probe',
                     'config': [
@@ -3135,7 +3170,6 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
                     'name': 'org.apel.APEL-Pub',
                     'mtype': 'Passive',
                     'probeversion': '',
-                    'probekey': '',
                     'parent': '',
                     'probeexecutable': '',
                     'config': [],
@@ -3169,7 +3203,6 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
                 'name': 'argo.AMS-Check',
                 'mtype': 'Active',
                 'probeversion': 'ams-probe (0.1.7)',
-                'probekey': self.probeversion1.id,
                 'parent': '',
                 'probeexecutable': 'ams-probe',
                 'config': [
@@ -3225,12 +3258,9 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(response.data, {'detail': 'Metric template not found'})
 
-    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db',
+           side_effect=mocked_inline_metric_for_db)
     def test_post_metric_template(self, func):
-        func.return_value = ['maxCheckAttempts 4', 'timeout 70',
-                             'path /usr/libexec/argo-monitoring/probes/argo',
-                             'interval 6', 'retryInterval 4']
-
         conf = [
             {'key': 'maxCheckAttempts', 'value': '4'},
             {'key': 'timeout', 'value': '70'},
@@ -3239,7 +3269,6 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             {'key': 'interval', 'value': '6'},
             {'key': 'retryInterval', 'value': '4'}
         ]
-
         data = {
             'cloned_from': '',
             'name': 'new-template',
@@ -3247,37 +3276,60 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'mtype': 'Active',
             'probeexecutable': 'ams-probe',
             'parent': '',
-            'config': conf,
-            'attribute': [{'key': '', 'value': ''}],
-            'dependency': [{'key': '', 'value': ''}],
-            'parameter': [{'key': '', 'value': ''}],
-            'flags': [{'key': '', 'value': ''}],
-            'files': [{'key': '', 'value': ''}],
-            'fileparameter': [{'key': '', 'value': ''}]
+            'config': json.dumps(conf),
+            'attribute': json.dumps([{'key': 'attr-key', 'value': 'attr-val'}]),
+            'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
+            'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
+            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
+            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
         }
-
         request = self.factory.post(self.url, data, format='json')
         force_authenticate(request, user=self.user)
         response = self.view(request)
-        mt = admin_models.MetricTemplate.objects.get(name='new-template')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        mt = admin_models.MetricTemplate.objects.get(name='new-template')
+        versions = admin_models.History.objects.filter(
+            object_id=mt.id, content_type=self.ct
+        )
+        self.assertEqual(versions.count(), 1)
+        serialized_data = json.loads(
+            versions[0].serialized_data
+        )[0]['fields']
         self.assertEqual(mt.mtype, self.mtype1)
-        self.assertEqual(mt.probeversion, 'ams-probe (0.1.7)')
         self.assertEqual(mt.probekey, self.probeversion1)
         self.assertEqual(mt.parent, '')
         self.assertEqual(mt.probeexecutable, '["ams-probe"]')
         self.assertEqual(
             mt.config,
-            "['maxCheckAttempts 4', 'timeout 70', "
-            "'path /usr/libexec/argo-monitoring/probes/argo', "
-            "'interval 6', 'retryInterval 4']"
+            '["maxCheckAttempts 4", "timeout 70", '
+            '"path /usr/libexec/argo-monitoring/probes/argo", '
+            '"interval 6", "retryInterval 4"]'
         )
+        self.assertEqual(mt.attribute, '["attr-key attr-val"]')
+        self.assertEqual(mt.dependency, '["dep-key dep-val"]')
+        self.assertEqual(mt.flags, '["flag-key flag-val"]')
+        self.assertEqual(mt.files, '["file-key file-val"]')
+        self.assertEqual(mt.parameter, '["par-key par-val"]')
+        self.assertEqual(mt.fileparameter, '["fp-key fp-val"]')
+        self.assertEqual(serialized_data['name'], mt.name)
+        self.assertEqual(serialized_data['mtype'], [mt.mtype.name])
+        self.assertEqual(
+            serialized_data['probekey'], [mt.probekey.name, mt.probekey.version]
+        )
+        self.assertEqual(serialized_data['parent'], mt.parent)
+        self.assertEqual(serialized_data['probeexecutable'], mt.probeexecutable)
+        self.assertEqual(serialized_data['config'], mt.config)
+        self.assertEqual(serialized_data['attribute'], mt.attribute)
+        self.assertEqual(serialized_data['dependency'], mt.dependency)
+        self.assertEqual(serialized_data['flags'], mt.flags)
+        self.assertEqual(serialized_data['files'], mt.files)
+        self.assertEqual(serialized_data['parameter'], mt.parameter)
+        self.assertEqual(serialized_data['fileparameter'], mt.fileparameter)
 
-    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db',
+           side_effect=mocked_inline_metric_for_db)
     def test_post_metric_template_with_existing_name(self, func):
-        func.return_value = ['maxCheckAttempts 4', 'timeout 70',
-                             'path /usr/libexec/argo-monitoring/probes/argo',
-                             'interval 6', 'retryInterval 4']
         conf = [
             {'key': 'maxCheckAttempts', 'value': '4'},
             {'key': 'timeout', 'value': '70'},
@@ -3292,13 +3344,13 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'mtype': 'Active',
             'probeexecutable': 'ams-probe',
             'parent': '',
-            'config': conf,
-            'attribute': [{'key': '', 'value': ''}],
-            'dependency': [{'key': '', 'value': ''}],
-            'parameter': [{'key': '', 'value': ''}],
-            'flags': [{'key': '', 'value': ''}],
-            'files': [{'key': '', 'value': ''}],
-            'fileparameter': [{'key': '', 'value': ''}]
+            'config': json.dumps(conf),
+            'attribute': json.dumps([{'key': '', 'value': ''}]),
+            'dependency': json.dumps([{'key': '', 'value': ''}]),
+            'parameter': json.dumps([{'key': '', 'value': ''}]),
+            'flags': json.dumps([{'key': '', 'value': ''}]),
+            'files': json.dumps([{'key': '', 'value': ''}]),
+            'fileparameter': json.dumps([{'key': '', 'value': ''}])
         }
         request = self.factory.post(self.url, data, format='json')
         force_authenticate(request, user=self.user)
@@ -3311,13 +3363,15 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             }
         )
 
-    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db',
+           side_effect=mocked_inline_metric_for_db)
     def test_put_metrictemplate(self, func):
-        func.return_value = ["argo.ams_TOKEN --token"]
-        attr = [{'key': 'dependency-key', 'value': 'dependency-value'}]
+        attr = [
+            {'key': 'argo.ams_TOKEN', 'value': '--token'}
+        ]
         conf = [
             {'key': 'maxCheckAttempts', 'value': '3'},
-            {'key': 'timeout', 'key': '60'},
+            {'key': 'timeout', 'value': '60'},
             {'key': 'path', 'value':
                 '/usr/libexec/argo-monitoring/probes/argo'},
             {'key': 'interval', 'value': '5'},
@@ -3330,32 +3384,66 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'probeversion': 'ams-probe (0.1.7)',
             'parent': '',
             'probeexecutable': 'ams-probe',
-            'config': conf,
-            'attribute': attr,
-            'dependency': [{'key': '', 'value': ''}],
-            'parameter': [{'key': '', 'value': ''}],
-            'flags': [{'key': '', 'value': ''}],
-            'files': [{'key': '', 'value': ''}],
-            'fileparameter': [{'key': '', 'value': ''}]
+            'config': json.dumps(conf),
+            'attribute': json.dumps(attr),
+            'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
+            'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
+            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
+            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
         force_authenticate(request, user=self.user)
         response = self.view(request)
-        mt = admin_models.MetricTemplate.objects.get(name='argo.AMS-Check')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        mt = admin_models.MetricTemplate.objects.get(name='argo.AMS-Check')
+        versions = admin_models.History.objects.filter(
+            object_id=mt.id, content_type=self.ct
+        )
+        self.assertEqual(versions.count(), 2)
+        serialized_data = json.loads(
+            versions[0].serialized_data
+        )[0]['fields']
         self.assertEqual(mt.name, 'argo.AMS-Check')
         self.assertEqual(mt.mtype.name, 'Active')
         self.assertEqual(mt.probeexecutable, '["ams-probe"]')
-        self.assertEqual(mt.attribute, "['argo.ams_TOKEN --token']")
+        self.assertEqual(
+            mt.config,
+            '["maxCheckAttempts 3", "timeout 60", '
+            '"path /usr/libexec/argo-monitoring/probes/argo", '
+            '"interval 5", "retryInterval 3"]'
+        )
+        self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
+        self.assertEqual(mt.dependency, '["dep-key dep-val"]')
+        self.assertEqual(mt.flags, '["flag-key flag-val"]')
+        self.assertEqual(mt.files, '["file-key file-val"]')
+        self.assertEqual(mt.parameter, '["par-key par-val"]')
+        self.assertEqual(mt.fileparameter, '["fp-key fp-val"]')
+        self.assertEqual(serialized_data['name'], mt.name)
+        self.assertEqual(serialized_data['mtype'], [mt.mtype.name])
+        self.assertEqual(
+            serialized_data['probekey'], [mt.probekey.name, mt.probekey.version]
+        )
+        self.assertEqual(serialized_data['parent'], mt.parent)
+        self.assertEqual(serialized_data['probeexecutable'], mt.probeexecutable)
+        self.assertEqual(serialized_data['config'], mt.config)
+        self.assertEqual(serialized_data['attribute'], mt.attribute)
+        self.assertEqual(serialized_data['dependency'], mt.dependency)
+        self.assertEqual(serialized_data['flags'], mt.flags)
+        self.assertEqual(serialized_data['files'], mt.files)
+        self.assertEqual(serialized_data['parameter'], mt.parameter)
+        self.assertEqual(serialized_data['fileparameter'], mt.fileparameter)
 
-    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db',
+           side_effect=mocked_inline_metric_for_db)
     def test_put_metrictemplate_with_existing_name(self, func):
-        func.return_value = ["argo.ams_TOKEN --token"]
-        attr = [{'key': 'dependency-key', 'value': 'dependency-value'}]
+        attr = [
+            {'key': 'argo.ams_TOKEN', 'value': '--token'}
+        ]
         conf = [
             {'key': 'maxCheckAttempts', 'value': '3'},
-            {'key': 'timeout', 'key': '60'},
+            {'key': 'timeout', 'value': '60'},
             {'key': 'path', 'value':
                 '/usr/libexec/argo-monitoring/probes/argo'},
             {'key': 'interval', 'value': '5'},
@@ -3368,13 +3456,13 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'probeversion': 'ams-probe (0.1.7)',
             'parent': '',
             'probeexecutable': 'ams-probe',
-            'config': conf,
-            'attribute': attr,
-            'dependency': [{'key': '', 'value': ''}],
-            'parameter': [{'key': '', 'value': ''}],
-            'flags': [{'key': '', 'value': ''}],
-            'files': [{'key': '', 'value': ''}],
-            'fileparameter': [{'key': '', 'value': ''}]
+            'config': json.dumps(conf),
+            'attribute': json.dumps(attr),
+            'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
+            'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
+            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
+            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -3493,7 +3581,6 @@ class ImportMetricsAPIViewTests(TenantTestCase):
 
         self.template1 = admin_models.MetricTemplate.objects.create(
             name='argo.AMS-Check',
-            probeversion='ams-probe (0.1.7)',
             probeexecutable='["ams-probe"]',
             config='["maxCheckAttempts 3", "timeout 60", '
                    '"path /usr/libexec/argo-monitoring/probes/argo", '
@@ -3507,7 +3594,6 @@ class ImportMetricsAPIViewTests(TenantTestCase):
 
         self.template2 = admin_models.MetricTemplate.objects.create(
             name='argo.AMSPublisher-Check',
-            probeversion='ams-publisher-probe (0.1.11)',
             probeexecutable='["ams-publisher-probe"]',
             config='["interval 180", "maxCheckAttempts 1", '
                    '"path /usr/libexec/argo-monitoring/probes/argo", '
@@ -3534,7 +3620,6 @@ class ImportMetricsAPIViewTests(TenantTestCase):
         self.assertEqual(poem_models.Metric.objects.all().count(), 2)
         mt1 = poem_models.Metric.objects.get(name='argo.AMS-Check')
         mt2 = poem_models.Metric.objects.get(name='argo.AMSPublisher-Check')
-        self.assertEqual(mt1.probeversion, self.template1.probeversion)
         self.assertEqual(mt1.parent, self.template1.parent)
         self.assertEqual(mt1.probeexecutable, self.template1.probeexecutable)
         self.assertEqual(mt1.config, self.template1.config)
@@ -3545,7 +3630,6 @@ class ImportMetricsAPIViewTests(TenantTestCase):
         self.assertEqual(mt1.parameter, self.template1.parameter)
         self.assertEqual(mt1.fileparameter, self.template1.fileparameter)
         self.assertEqual(mt1.probekey, self.template1.probekey)
-        self.assertEqual(mt2.probeversion, self.template2.probeversion)
         self.assertEqual(mt2.parent, self.template2.parent)
         self.assertEqual(mt2.probeexecutable, self.template2.probeexecutable)
         self.assertEqual(mt2.config, self.template2.config)
@@ -3592,10 +3676,9 @@ class ListMetricTemplatesForProbeVersionAPIViewTests(TenantTestCase):
             version_user=self.user.username
         )
 
-        metrictemplate1 = admin_models.MetricTemplate.objects.create(
+        admin_models.MetricTemplate.objects.create(
             name='argo.AMS-Check',
             mtype=mtype1,
-            probeversion='ams-probe (0.1.7)',
             probekey=self.probeversion1,
             probeexecutable='["ams-probe"]',
             config='["maxCheckAttempts 3", "timeout 60",'
@@ -3606,16 +3689,15 @@ class ListMetricTemplatesForProbeVersionAPIViewTests(TenantTestCase):
             parameter='["--project EGI"]'
         )
 
-        metrictemplate2 = admin_models.MetricTemplate.objects.create(
+        admin_models.MetricTemplate.objects.create(
             name='org.apel.APEL-Pub',
             flags='["OBSESS 1", "PASSIVE 1"]',
             mtype=mtype2,
         )
 
-        metrictemplate3 = admin_models.MetricTemplate.objects.create(
+        admin_models.MetricTemplate.objects.create(
             name='test-metric',
             mtype=mtype1,
-            probeversion='ams-probe (0.1.7)',
             probekey=self.probeversion1,
             probeexecutable='["test-metric"]',
             config='["maxCheckAttempts 3", "timeout 60",'
@@ -3625,10 +3707,6 @@ class ListMetricTemplatesForProbeVersionAPIViewTests(TenantTestCase):
             flags='["OBSESS 1"]',
             parameter='["--project EGI"]'
         )
-
-        self.id1 = metrictemplate1.id
-        self.id2 = metrictemplate2.id
-        self.id3 = metrictemplate3.id
 
     def test_get_metric_templates_for_probe_version(self):
         request = self.factory.get(self.url + 'ams-probe(0.1.7)')
@@ -4079,7 +4157,6 @@ class HistoryHelpersTests(TenantTestCase):
             datetime=datetime.datetime.now()
         )
 
-        self.ct_probe = ContentType.objects.get_for_model(admin_models.Probe)
         self.ct_mt = ContentType.objects.get_for_model(
             admin_models.MetricTemplate
         )
@@ -4122,7 +4199,6 @@ class HistoryHelpersTests(TenantTestCase):
 
         self.mt1 = admin_models.MetricTemplate.objects.create(
             name='metric-template-1',
-            probeversion='probe-1 (1.0.0)',
             parent='["parent"]',
             config='["maxCheckAttempts 3", "timeout 60",'
                    ' "path $USER", "interval 5", "retryInterval 3"]',
@@ -4183,7 +4259,6 @@ class HistoryHelpersTests(TenantTestCase):
     def test_create_comment_for_metric_template(self):
         mt = admin_models.MetricTemplate(
             name='metric-template-2',
-            probeversion='probe-1 (1.0.1)',
             probekey=self.probe_history2,
             probeexecutable='["new-probeexecutable"]',
             config='["maxCheckAttempts 3", "timeout 60",'
@@ -4228,7 +4303,7 @@ class HistoryHelpersTests(TenantTestCase):
                 {
                     'changed': {
                         'fields': [
-                            'name', 'probeversion'
+                            'name', 'probekey'
                         ]
                     }
                 },
@@ -4243,7 +4318,6 @@ class HistoryHelpersTests(TenantTestCase):
     def test_create_comment_for_metric_template_if_field_deleted_from_model(self):
         mt = admin_models.MetricTemplate(
             name='metric-template-2',
-            probeversion='probe-1 (1.0.1)',
             probekey=self.probe_history2,
             probeexecutable='["new-probeexecutable"]',
             config='["maxCheckAttempts 4", "timeout 60",'
@@ -4262,11 +4336,9 @@ class HistoryHelpersTests(TenantTestCase):
             use_natural_primary_keys=True
         )
 
-        # let's say fileparameter and probeversion fields no longer exists in
-        # the model
+        # let's say fileparameter field no longer exists in the model
         dict_serialized = json.loads(serialized_data)
         del dict_serialized[0]['fields']['fileparameter']
-        del dict_serialized[0]['fields']['probeversion']
         new_serialized_data = json.dumps(dict_serialized)
 
         comment = create_comment(self.mt1.id, self.ct_mt, new_serialized_data)
@@ -4300,7 +4372,7 @@ class HistoryHelpersTests(TenantTestCase):
                 {
                     'changed': {
                         'fields': [
-                            'name'
+                            'name', 'probekey'
                         ]
                     }
                 },
@@ -4315,7 +4387,6 @@ class HistoryHelpersTests(TenantTestCase):
     def test_create_comment_for_metric_template_if_field_added_to_model(self):
         mt = admin_models.MetricTemplate(
             name='metric-template-2',
-            probeversion='probe-1 (1.0.1)',
             probekey=self.probe_history2,
             probeexecutable='["new-probeexecutable"]',
             config='["maxCheckAttempts 4", "timeout 60",'
@@ -4371,7 +4442,7 @@ class HistoryHelpersTests(TenantTestCase):
                 {
                     'changed': {
                         'fields': [
-                            'name', 'probeversion'
+                            'name', 'probekey'
                         ]
                     }
                 },
@@ -4386,7 +4457,6 @@ class HistoryHelpersTests(TenantTestCase):
     def test_create_comment_for_metric_template_if_initial(self):
         mt = admin_models.MetricTemplate.objects.create(
             name='metric-template-2',
-            probeversion='probe-1 (1.0.1)',
             probekey=self.probe_history2,
             probeexecutable='["new-probeexecutable"]',
             config='["maxCheckAttempts 4", "timeout 60",'
@@ -4442,12 +4512,7 @@ class HistoryHelpersTests(TenantTestCase):
             user='testuser',
             datetime=datetime.datetime.now()
         )
-        serialized_data = serializers.serialize(
-            'json', [probe2],
-            use_natural_foreign_keys=True,
-            use_natural_primary_keys=True
-        )
-        comment = create_comment(probe2.id, self.ct_probe, serialized_data)
+        comment = create_new_comment(probe2)
         self.assertEqual(comment, 'Initial version.')
 
     def test_create_comment_for_metric(self):
@@ -4499,7 +4564,7 @@ class HistoryHelpersTests(TenantTestCase):
                 {
                     'changed': {
                         'fields': [
-                            'name', 'probeversion'
+                            'name', 'probeversion', 'probekey'
                         ]
                     }
                 },
@@ -4572,7 +4637,7 @@ class HistoryHelpersTests(TenantTestCase):
                 {
                     'changed': {
                         'fields': [
-                            'name'
+                            'name', 'probekey'
                         ]
                     }
                 },
@@ -4644,7 +4709,7 @@ class HistoryHelpersTests(TenantTestCase):
                 {
                     'changed': {
                         'fields': [
-                            'name', 'probeversion'
+                            'name', 'probeversion', 'probekey'
                         ]
                     }
                 },

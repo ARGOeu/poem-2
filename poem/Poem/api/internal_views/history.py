@@ -68,7 +68,11 @@ class ListVersions(APIView):
                         fields = {
                             'name': fields0['name'],
                             'mtype': fields0['mtype'][0],
-                            'probeversion': fields0['probeversion'],
+                            'probeversion':
+                                admin_models.ProbeHistory.objects.get(
+                                    name=fields0['probekey'][0],
+                                    version=fields0['probekey'][1]
+                                ).__str__(),
                             'parent': one_value_inline(fields0['parent']),
                             'probeexecutable': one_value_inline(
                                 fields0['probeexecutable']

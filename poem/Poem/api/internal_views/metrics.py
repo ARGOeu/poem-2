@@ -153,16 +153,16 @@ class ImportMetrics(APIView):
             )
 
             try:
-                if metrictemplate.probeversion:
+                if metrictemplate.probekey:
                     ver = admin_models.ProbeHistory.objects.get(
-                        name=metrictemplate.probeversion.split(' ')[0],
-                        version=metrictemplate.probeversion.split(' ')[1][1:-1]
+                        name=metrictemplate.probekey.name,
+                        version=metrictemplate.probekey.version
                     )
 
                     metric = poem_models.Metric.objects.create(
                         name=metrictemplate.name,
                         mtype=mt,
-                        probeversion=metrictemplate.probeversion,
+                        probeversion=metrictemplate.probekey.__str__(),
                         probekey=ver,
                         parent=metrictemplate.parent,
                         group=gr,
