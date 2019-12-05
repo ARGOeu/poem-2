@@ -2,7 +2,7 @@ from django.contrib.auth.models import GroupManager, Permission
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
-from Poem.poem_super_admin.models import History
+from Poem.poem_super_admin.models import ProbeHistory
 
 
 class MetricTypeManager(models.Manager):
@@ -50,7 +50,7 @@ class Metric(models.Model):
     name = models.CharField(max_length=128, unique=True)
     mtype = models.ForeignKey(MetricType, on_delete=models.CASCADE)
     probeversion = models.CharField(max_length=128)
-    probekey = models.ForeignKey(History, blank=True, null=True,
+    probekey = models.ForeignKey(ProbeHistory, blank=True, null=True,
                                  on_delete=models.SET_NULL)
     group = models.ForeignKey(GroupOfMetrics, null=True,
                               on_delete=models.SET_NULL)
