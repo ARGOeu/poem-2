@@ -10,7 +10,7 @@ import json
 from Poem.api import views_internal as views
 from Poem.api.internal_views.metrics import inline_metric_for_db
 from Poem.api.models import MyAPIKey
-from Poem.helpers.history_helpers import create_comment
+from Poem.helpers.history_helpers import create_comment, create_new_comment
 from Poem.poem import models as poem_models
 from Poem.poem_super_admin import models as admin_models
 from Poem.tenants.models import Tenant
@@ -406,46 +406,40 @@ class ListProbesAPIViewTests(TenantTestCase):
 
         self.ct = ContentType.objects.get_for_model(admin_models.Probe)
 
-        pv1 = admin_models.History.objects.create(
-            object_id=self.probe1.id,
-            serialized_data=serializers.serialize(
-                'json', [self.probe1],
-                use_natural_foreign_keys=True,
-                use_natural_primary_keys=True,
-            ),
-            object_repr='ams-probe (0.1.7)',
-            content_type=self.ct,
-            comment='Initial version.',
-            date_created=datetime.datetime.now(),
-            user='poem'
+        pv1 = admin_models.ProbeHistory.objects.create(
+            object_id=self.probe1,
+            name=self.probe1.name,
+            version=self.probe1.version,
+            description=self.probe1.description,
+            comment=self.probe1.comment,
+            repository=self.probe1.repository,
+            docurl=self.probe1.docurl,
+            version_comment='Initial version.',
+            version_user=self.user.username
         )
 
-        pv = admin_models.History.objects.create(
-            object_id=probe2.id,
-            serialized_data=serializers.serialize(
-                'json', [probe2],
-                use_natural_foreign_keys=True,
-                use_natural_primary_keys=True,
-            ),
-            object_repr='argo-web-api (0.1.7)',
-            content_type=self.ct,
-            comment='Initial version.',
-            date_created=datetime.datetime.now(),
-            user='poem'
+        pv = admin_models.ProbeHistory.objects.create(
+            object_id=probe2,
+            name=probe2.name,
+            version=probe2.version,
+            description=probe2.description,
+            comment=probe2.comment,
+            repository=probe2.repository,
+            docurl=probe2.docurl,
+            version_comment='Initial version.',
+            version_user=self.user.username
         )
 
-        admin_models.History.objects.create(
-            object_id=probe3.id,
-            serialized_data=serializers.serialize(
-                'json', [probe3],
-                use_natural_foreign_keys=True,
-                use_natural_primary_keys=True,
-            ),
-            object_repr=probe3.__str__(),
-            content_type=self.ct,
-            comment='Initial version.',
-            date_created=datetime.datetime.now(),
-            user='testuser'
+        admin_models.ProbeHistory.objects.create(
+            object_id=probe3,
+            name=probe3.name,
+            version=probe3.version,
+            description=probe3.description,
+            comment=probe3.comment,
+            repository=probe3.repository,
+            docurl=probe3.docurl,
+            version_comment='Initial version.',
+            version_user=self.user.username
         )
 
         mtype = admin_models.MetricTemplateType.objects.create(name='Active')
@@ -611,9 +605,9 @@ class ListProbesAPIViewTests(TenantTestCase):
         force_authenticate(request, user=self.user)
         response = self.view(request)
         probe = admin_models.Probe.objects.get(id=self.probe1.id)
-        version = admin_models.History.objects.filter(object_id=probe.id,
-                                                      content_type=self.ct)
-        ser_data = json.loads(version[0].serialized_data)
+        version = admin_models.ProbeHistory.objects.get(
+            name=probe.name, version=probe.version
+        )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(probe.name, 'ams-probe-new')
         self.assertEqual(probe.version, '0.1.7')
@@ -631,15 +625,14 @@ class ListProbesAPIViewTests(TenantTestCase):
             probe.repository,
             'https://github.com/ARGOeu/nagios-plugins-argo2',
         )
-        self.assertEqual(ser_data[0]['fields']['name'], probe.name)
-        self.assertEqual(ser_data[0]['fields']['version'], probe.version)
-        self.assertEqual(ser_data[0]['fields']['comment'], probe.comment)
-        self.assertEqual(ser_data[0]['fields']['docurl'], probe.docurl)
-        self.assertEqual(ser_data[0]['fields']['description'],
-                         probe.description)
-        self.assertEqual(ser_data[0]['fields']['repository'], probe.repository)
+        self.assertEqual(version.name, probe.name)
+        self.assertEqual(version.version, probe.version)
+        self.assertEqual(version.comment, probe.comment)
+        self.assertEqual(version.docurl, probe.docurl)
+        self.assertEqual(version.description, probe.description)
+        self.assertEqual(version.repository, probe.repository)
         mt = admin_models.MetricTemplate.objects.get(name='argo.AMS-Check')
-        self.assertEqual(mt.probekey.id, version[0].id)
+        self.assertEqual(mt.probekey, version)
         self.assertEqual(mt.probeversion, 'ams-probe-new (0.1.7)')
 
     def test_put_probe_with_new_version_without_metrictemplate_update(self):
@@ -662,10 +655,11 @@ class ListProbesAPIViewTests(TenantTestCase):
         force_authenticate(request, user=self.user)
         response = self.view(request)
         probe = admin_models.Probe.objects.get(id=self.probe1.id)
-        version = admin_models.History.objects.filter(object_id=probe.id,
-                                                      content_type=self.ct)
-        self.assertEqual(version.count(), 2)
-        ser_data = json.loads(version[0].serialized_data)
+        self.assertEqual(
+            admin_models.ProbeHistory.objects.filter(object_id=probe).count(), 2
+        )
+        version = admin_models.ProbeHistory.objects.get(
+            name=probe.name, version=probe.version)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(probe.name, 'ams-probe-new')
         self.assertEqual(probe.version, '0.1.11')
@@ -683,15 +677,17 @@ class ListProbesAPIViewTests(TenantTestCase):
             probe.repository,
             'https://github.com/ARGOeu/nagios-plugins-argo2',
         )
-        self.assertEqual(ser_data[0]['fields']['name'], probe.name)
-        self.assertEqual(ser_data[0]['fields']['version'], probe.version)
-        self.assertEqual(ser_data[0]['fields']['comment'], probe.comment)
-        self.assertEqual(ser_data[0]['fields']['docurl'], probe.docurl)
-        self.assertEqual(ser_data[0]['fields']['description'],
-                         probe.description)
-        self.assertEqual(ser_data[0]['fields']['repository'], probe.repository)
+        self.assertEqual(version.name, probe.name)
+        self.assertEqual(version.version, probe.version)
+        self.assertEqual(version.comment, probe.comment)
+        self.assertEqual(version.docurl, probe.docurl)
+        self.assertEqual(version.description, probe.description)
+        self.assertEqual(version.repository, probe.repository)
         mt = admin_models.MetricTemplate.objects.get(name='argo.AMS-Check')
-        self.assertEqual(mt.probekey.id, version[1].id)
+        self.assertEqual(
+            mt.probekey,
+            admin_models.ProbeHistory.objects.filter(object_id=probe)[1]
+        )
         self.assertEqual(mt.probeversion, 'ams-probe (0.1.7)')
 
     def test_put_probe_with_new_version_with_metrictemplate_update(self):
@@ -715,10 +711,12 @@ class ListProbesAPIViewTests(TenantTestCase):
         force_authenticate(request, user=self.user)
         response = self.view(request)
         probe = admin_models.Probe.objects.get(id=self.probe1.id)
-        version = admin_models.History.objects.filter(object_id=probe.id,
-                                                      content_type=self.ct)
-        self.assertEqual(version.count(), 2)
-        ser_data = json.loads(version[0].serialized_data)
+        self.assertEqual(
+            admin_models.ProbeHistory.objects.filter(object_id=probe).count(), 2
+        )
+        version = admin_models.ProbeHistory.objects.get(
+            name=probe.name, version=probe.version
+        )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(probe.name, 'ams-probe-new')
         self.assertEqual(probe.version, '0.1.11')
@@ -736,16 +734,14 @@ class ListProbesAPIViewTests(TenantTestCase):
             probe.repository,
             'https://github.com/ARGOeu/nagios-plugins-argo2',
         )
-        self.assertEqual(ser_data[0]['fields']['name'], probe.name)
-        self.assertEqual(ser_data[0]['fields']['version'], probe.version)
-        self.assertEqual(ser_data[0]['fields']['comment'], probe.comment)
-        self.assertEqual(ser_data[0]['fields']['docurl'], probe.docurl)
-        self.assertEqual(ser_data[0]['fields']['description'],
-                         probe.description)
-        self.assertEqual(ser_data[0]['fields']['repository'],
-                         probe.repository)
+        self.assertEqual(version.name, probe.name)
+        self.assertEqual(version.version, probe.version)
+        self.assertEqual(version.comment, probe.comment)
+        self.assertEqual(version.docurl, probe.docurl)
+        self.assertEqual(version.description, probe.description)
+        self.assertEqual(version.repository, probe.repository)
         mt = admin_models.MetricTemplate.objects.get(name='argo.AMS-Check')
-        self.assertEqual(mt.probekey.id, version[0].id)
+        self.assertEqual(mt.probekey, version)
         self.assertEqual(mt.probeversion, 'ams-probe-new (0.1.11)')
 
     def test_post_probe(self):
@@ -775,18 +771,18 @@ class ListProbesAPIViewTests(TenantTestCase):
             'https://github.com/ARGOeu/nagios-plugins-argo/blob/'
             'master/README.md'
         )
-        version = admin_models.History.objects.filter(object_id=probe.id,
-                                                      content_type=self.ct)
-        ser_data = json.loads(version[0].serialized_data)
-        self.assertEqual(version.count(), 1)
-        self.assertEqual(ser_data[0]['fields']['name'], probe.name)
-        self.assertEqual(ser_data[0]['fields']['version'], probe.version)
-        self.assertEqual(ser_data[0]['fields']['comment'], probe.comment)
-        self.assertEqual(ser_data[0]['fields']['docurl'], probe.docurl)
-        self.assertEqual(ser_data[0]['fields']['description'],
-                         probe.description)
-        self.assertEqual(ser_data[0]['fields']['repository'],
-                         probe.repository)
+        self.assertEqual(
+            admin_models.ProbeHistory.objects.filter(object_id=probe).count(), 1
+        )
+        version = admin_models.ProbeHistory.objects.get(
+            name=probe.name, version=probe.version
+        )
+        self.assertEqual(version.name, probe.name)
+        self.assertEqual(version.version, probe.version)
+        self.assertEqual(version.comment, probe.comment)
+        self.assertEqual(version.docurl, probe.docurl)
+        self.assertEqual(version.description, probe.description)
+        self.assertEqual(version.repository, probe.repository)
 
     def test_post_probe_with_name_which_already_exists(self):
         data = {
@@ -2190,7 +2186,7 @@ class ListMetricAPIViewTests(TenantTestCase):
         self.factory = TenantRequestFactory(self.tenant)
         self.view = views.ListMetric.as_view()
         self.url = '/api/v2/internal/metric/'
-        self.user = CustUser.objects.create(username='testuser')
+        self.user = CustUser.objects.create_user(username='testuser')
 
         mtype1 = poem_models.MetricType.objects.create(name='Active')
         mtype2 = poem_models.MetricType.objects.create(name='Passive')
@@ -2209,23 +2205,20 @@ class ListMetricAPIViewTests(TenantTestCase):
                    'README.md'
         )
 
-        ct = ContentType.objects.get_for_model(admin_models.Probe)
-
-        self.probeversion1 = admin_models.History.objects.create(
-            object_id=probe1.id,
-            serialized_data=serializers.serialize(
-                'json', [probe1],
-                use_natural_foreign_keys=True,
-                use_natural_primary_keys=True,
-            ),
-            object_repr='ams-probe (0.1.7)',
-            content_type=ct,
+        self.probeversion1 = admin_models.ProbeHistory.objects.create(
+            object_id=probe1,
+            name=probe1.name,
+            version=probe1.version,
+            description=probe1.description,
+            comment=probe1.comment,
+            repository=probe1.repository,
+            docurl=probe1.docurl,
             date_created=datetime.datetime.now(),
-            comment='Initial version.',
-            user=self.user.username
+            version_comment='Initial version.',
+            version_user=self.user.username
         )
 
-        metric1 = poem_models.Metric.objects.create(
+        self.metric1 = poem_models.Metric.objects.create(
             name='argo.AMS-Check',
             mtype=mtype1,
             probeversion='ams-probe (0.1.7)',
@@ -2240,15 +2233,12 @@ class ListMetricAPIViewTests(TenantTestCase):
             parameter='["--project EGI"]'
         )
 
-        metric2 = poem_models.Metric.objects.create(
+        self.metric2 = poem_models.Metric.objects.create(
             name='org.apel.APEL-Pub',
             flags='["OBSESS 1", "PASSIVE 1"]',
             group=group,
             mtype=mtype2,
         )
-
-        self.id1 = metric1.id
-        self.id2 = metric2.id
 
     def test_get_metric_list(self):
         request = self.factory.get(self.url)
@@ -2258,7 +2248,7 @@ class ListMetricAPIViewTests(TenantTestCase):
             response.data,
             [
                 {
-                    'id': self.id1,
+                    'id': self.metric1.id,
                     'name': 'argo.AMS-Check',
                     'mtype': 'Active',
                     'probeversion': 'ams-probe (0.1.7)',
@@ -2311,7 +2301,7 @@ class ListMetricAPIViewTests(TenantTestCase):
                     'fileparameter': []
                 },
                 {
-                    'id': self.id2,
+                    'id': self.metric2.id,
                     'name': 'org.apel.APEL-Pub',
                     'mtype': 'Passive',
                     'probeversion': '',
@@ -2346,7 +2336,7 @@ class ListMetricAPIViewTests(TenantTestCase):
         self.assertEqual(
             response.data,
             {
-                'id': self.id1,
+                'id': self.metric1.id,
                 'name': 'argo.AMS-Check',
                 'mtype': 'Active',
                 'probeversion': 'ams-probe (0.1.7)',
@@ -2407,7 +2397,6 @@ class ListMetricAPIViewTests(TenantTestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(response.data, {'detail': 'Metric not found'})
 
-
     def test_inline_metric_for_db_function(self):
         conf = [
             {'key': 'maxCheckAttempts', 'value': '4'},
@@ -2417,7 +2406,6 @@ class ListMetricAPIViewTests(TenantTestCase):
             {'key': 'interval', 'value': '6'},
             {'key': 'retryInterval', 'value': '4'}
         ]
-
         res = inline_metric_for_db(conf)
         self.assertEqual(
             res,
@@ -2439,7 +2427,6 @@ class ListMetricAPIViewTests(TenantTestCase):
             {'key': 'interval', 'value': '6'},
             {'key': 'retryInterval', 'value': '4'}
         ]
-
         data = {
             'name': 'argo.AMS-Check',
             'group': 'EUDAT',
@@ -2681,9 +2668,8 @@ class ListVersionsAPIViewTests(TenantTestCase):
         self.factory = TenantRequestFactory(self.tenant)
         self.view = views.ListVersions.as_view()
         self.url = '/api/v2/internal/version/'
-        self.user = CustUser.objects.create(username='testuser')
+        self.user = CustUser.objects.create_user(username='testuser')
 
-        ct = ContentType.objects.get_for_model(admin_models.Probe)
         ct_mt = ContentType.objects.get_for_model(admin_models.MetricTemplate)
 
         self.probe1 = admin_models.Probe.objects.create(
@@ -2698,17 +2684,17 @@ class ListVersionsAPIViewTests(TenantTestCase):
             datetime=datetime.datetime.now()
         )
 
-        self.ver1 = admin_models.History.objects.create(
-            object_id=self.probe1.id,
-            serialized_data=serializers.serialize(
-                'json', [self.probe1], use_natural_foreign_keys=True,
-                use_natural_primary_keys=True
-            ),
-            object_repr='poem-probe (0.1.7)',
-            content_type=ct,
+        self.ver1 = admin_models.ProbeHistory.objects.create(
+            object_id=self.probe1,
+            name=self.probe1.name,
+            version=self.probe1.version,
+            description=self.probe1.description,
+            comment=self.probe1.comment,
+            repository=self.probe1.repository,
+            docurl=self.probe1.docurl,
             date_created=datetime.datetime.now(),
-            comment='Initial version.',
-            user=self.user.username
+            version_comment='Initial version.',
+            version_user=self.user.username
         )
 
         self.probe1.name = 'poem-probe-new'
@@ -2722,18 +2708,19 @@ class ListVersionsAPIViewTests(TenantTestCase):
                              'blob/master/README.md'
         self.probe1.save()
 
-        self.ver2 = admin_models.History.objects.create(
-            object_id=self.probe1.id,
-            serialized_data=serializers.serialize(
-                'json', [self.probe1], use_natural_foreign_keys=True,
-                use_natural_primary_keys=True
-            ),
-            object_repr='poem-probe-new (0.1.11)',
-            content_type=ct,
+        self.ver2 = admin_models.ProbeHistory.objects.create(
+            object_id=self.probe1,
+            name=self.probe1.name,
+            version=self.probe1.version,
+            description=self.probe1.description,
+            comment=self.probe1.comment,
+            repository=self.probe1.repository,
+            docurl=self.probe1.docurl,
             date_created=datetime.datetime.now(),
-            comment='[{"changed": {"fields": ["name", "version", '
-                    '"comment", "description", "repository", "docurl"]}}]',
-            user=self.user.username
+            version_user=self.user.username,
+            version_comment='[{"changed": {"fields": ["name", "version", '
+                            '"comment", "description", "repository", '
+                            '"docurl"]}}]'
         )
 
         admin_models.Probe.objects.create(
@@ -2761,17 +2748,17 @@ class ListVersionsAPIViewTests(TenantTestCase):
             datetime=datetime.datetime.now()
         )
 
-        self.ver3 = admin_models.History.objects.create(
-            object_id=probe2.id,
-            serialized_data=serializers.serialize(
-                'json', [probe2], use_natural_foreign_keys=True,
-                use_natural_primary_keys=True
-            ),
-            object_repr='ams-publisher-probe (0.1.11)',
-            content_type=ct,
+        self.ver3 = admin_models.ProbeHistory.objects.create(
+            object_id=probe2,
+            name=probe2.name,
+            version=probe2.version,
+            description=probe2.description,
+            comment=probe2.comment,
+            repository=probe2.repository,
+            docurl=probe2.docurl,
             date_created=datetime.datetime.now(),
-            comment='Initial version.',
-            user=self.user.username
+            version_comment='Initial version.',
+            version_user=self.user.username
         )
 
         self.mtype1 = admin_models.MetricTemplateType.objects.create(
@@ -2795,7 +2782,8 @@ class ListVersionsAPIViewTests(TenantTestCase):
         self.ver4 = admin_models.History.objects.create(
             object_id=self.metrictemplate1.id,
             serialized_data=serializers.serialize(
-                'json', [self.metrictemplate1], use_natural_foreign_keys=True,
+                'json', [self.metrictemplate1],
+                use_natural_foreign_keys=True,
                 use_natural_primary_keys=True
             ),
             object_repr='argo.AMS-Check',
@@ -2843,11 +2831,7 @@ class ListVersionsAPIViewTests(TenantTestCase):
                         'repository': 'https://github.com/ARGOeu/nagios-'
                                       'plugins-argo2',
                         'docurl': 'https://github.com/ARGOeu/nagios-plugins-'
-                                  'argo2/blob/master/README.md',
-                        'user': 'testuser',
-                        'datetime': datetime.datetime.strftime(
-                            self.probe1.datetime, '%Y-%m-%dT%H:%M:%S.%f'
-                        )[:-3]
+                                  'argo2/blob/master/README.md'
                     },
                     'user': 'testuser',
                     'date_created': datetime.datetime.strftime(
@@ -2868,11 +2852,7 @@ class ListVersionsAPIViewTests(TenantTestCase):
                         'repository': 'https://github.com/ARGOeu/nagios-'
                                       'plugins-argo',
                         'docurl': 'https://github.com/ARGOeu/nagios-plugins-'
-                                  'argo/blob/master/README.md',
-                        'user': 'testuser',
-                        'datetime': datetime.datetime.strftime(
-                            self.probe1.datetime, '%Y-%m-%dT%H:%M:%S.%f'
-                        )[:-3]
+                                  'argo/blob/master/README.md'
                     },
                     'user': 'testuser',
                     'date_created': datetime.datetime.strftime(
@@ -3035,10 +3015,10 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.url = '/api/v2/internal/metrictemplates/'
         self.user = CustUser.objects.create_user(username='testuser')
 
-        mtype1 = admin_models.MetricTemplateType.objects.create(name='Active')
+        self.mtype1 = admin_models.MetricTemplateType.objects.create(
+            name='Active'
+        )
         mtype2 = admin_models.MetricTemplateType.objects.create(name='Passive')
-
-        self.mtype = mtype1
 
         probe1 = admin_models.Probe.objects.create(
             name='ams-probe',
@@ -3051,24 +3031,18 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
                    'README.md'
         )
 
-        ct = ContentType.objects.get_for_model(admin_models.Probe)
-
-        probeversion1 = admin_models.History.objects.create(
-            object_id=probe1.id,
-            serialized_data=serializers.serialize(
-                'json', [probe1],
-                use_natural_foreign_keys=True,
-                use_natural_primary_keys=True,
-            ),
-            object_repr='ams-probe (0.1.7)',
-            content_type=ct,
+        self.probeversion1 = admin_models.ProbeHistory.objects.create(
+            object_id=probe1,
+            name=probe1.name,
+            version=probe1.version,
+            description=probe1.description,
+            comment=probe1.comment,
+            repository=probe1.repository,
+            docurl=probe1.docurl,
             date_created=datetime.datetime.now(),
-            comment='Initial version.',
-            user=self.user.username,
+            version_comment='Initial version.',
+            version_user=self.user.username,
         )
-
-        self.probekey = probeversion1.id
-        self.probekey_instance = probeversion1
 
         for schema in [self.tenant.schema_name, get_public_schema_name()]:
             with schema_context(schema):
@@ -3077,11 +3051,11 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
                                           domain_url='public',
                                           schema_name=get_public_schema_name())
 
-        metrictemplate1 = admin_models.MetricTemplate.objects.create(
+        self.metrictemplate1 = admin_models.MetricTemplate.objects.create(
             name='argo.AMS-Check',
-            mtype=mtype1,
+            mtype=self.mtype1,
             probeversion='ams-probe (0.1.7)',
-            probekey=probeversion1,
+            probekey=self.probeversion1,
             probeexecutable='["ams-probe"]',
             config='["maxCheckAttempts 3", "timeout 60",'
                    ' "path /usr/libexec/argo-monitoring/probes/argo",'
@@ -3091,14 +3065,11 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             parameter='["--project EGI"]'
         )
 
-        metrictemplate2 = admin_models.MetricTemplate.objects.create(
+        self.metrictemplate2 = admin_models.MetricTemplate.objects.create(
             name='org.apel.APEL-Pub',
             flags='["OBSESS 1", "PASSIVE 1"]',
             mtype=mtype2,
         )
-
-        self.id1 = metrictemplate1.id
-        self.id2 = metrictemplate2.id
 
     def test_get_metric_template_list(self):
         request = self.factory.get(self.url)
@@ -3108,11 +3079,11 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             response.data,
             [
                 {
-                    'id': self.id1,
+                    'id': self.metrictemplate1.id,
                     'name': 'argo.AMS-Check',
                     'mtype': 'Active',
                     'probeversion': 'ams-probe (0.1.7)',
-                    'probekey': self.probekey,
+                    'probekey': self.probeversion1.id,
                     'parent': '',
                     'probeexecutable': 'ams-probe',
                     'config': [
@@ -3160,7 +3131,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
                     'fileparameter': []
                 },
                 {
-                    'id': self.id2,
+                    'id': self.metrictemplate2.id,
                     'name': 'org.apel.APEL-Pub',
                     'mtype': 'Passive',
                     'probeversion': '',
@@ -3194,11 +3165,11 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(
             response.data,
             {
-                'id': self.id1,
+                'id': self.metrictemplate1.id,
                 'name': 'argo.AMS-Check',
                 'mtype': 'Active',
                 'probeversion': 'ams-probe (0.1.7)',
-                'probekey': self.probekey,
+                'probekey': self.probeversion1.id,
                 'parent': '',
                 'probeexecutable': 'ams-probe',
                 'config': [
@@ -3290,9 +3261,9 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         response = self.view(request)
         mt = admin_models.MetricTemplate.objects.get(name='new-template')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(mt.mtype, self.mtype)
+        self.assertEqual(mt.mtype, self.mtype1)
         self.assertEqual(mt.probeversion, 'ams-probe (0.1.7)')
-        self.assertEqual(mt.probekey, self.probekey_instance)
+        self.assertEqual(mt.probekey, self.probeversion1)
         self.assertEqual(mt.parent, '')
         self.assertEqual(mt.probeexecutable, '["ams-probe"]')
         self.assertEqual(
@@ -3307,7 +3278,6 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         func.return_value = ['maxCheckAttempts 4', 'timeout 70',
                              'path /usr/libexec/argo-monitoring/probes/argo',
                              'interval 6', 'retryInterval 4']
-
         conf = [
             {'key': 'maxCheckAttempts', 'value': '4'},
             {'key': 'timeout', 'value': '70'},
@@ -3316,7 +3286,6 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             {'key': 'interval', 'value': '6'},
             {'key': 'retryInterval', 'value': '4'}
         ]
-
         data = {
             'name': 'argo.AMS-Check',
             'probeversion': 'ams-probe (0.1.7)',
@@ -3354,11 +3323,10 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             {'key': 'interval', 'value': '5'},
             {'key': 'retryInterval', 'value': '3'}
         ]
-
         data = {
-            'id': self.id1,
+            'id': self.metrictemplate1.id,
             'name': 'argo.AMS-Check',
-            'mtype': self.mtype,
+            'mtype': self.mtype1,
             'probeversion': 'ams-probe (0.1.7)',
             'parent': '',
             'probeexecutable': 'ams-probe',
@@ -3370,7 +3338,6 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'files': [{'key': '', 'value': ''}],
             'fileparameter': [{'key': '', 'value': ''}]
         }
-
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
         force_authenticate(request, user=self.user)
@@ -3394,11 +3361,10 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             {'key': 'interval', 'value': '5'},
             {'key': 'retryInterval', 'value': '3'}
         ]
-
         data = {
-            'id': self.id1,
+            'id': self.metrictemplate1.id,
             'name': 'org.apel.APEL-Pub',
-            'mtype': self.mtype,
+            'mtype': self.mtype1,
             'probeversion': 'ams-probe (0.1.7)',
             'parent': '',
             'probeexecutable': 'ams-probe',
@@ -3410,7 +3376,6 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'files': [{'key': '', 'value': ''}],
             'fileparameter': [{'key': '', 'value': ''}]
         }
-
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
         force_authenticate(request, user=self.user)
@@ -3496,34 +3461,30 @@ class ImportMetricsAPIViewTests(TenantTestCase):
                    'README.md'
         )
 
-        ct = ContentType.objects.get_for_model(admin_models.Probe)
-
-        pk1 = admin_models.History.objects.create(
-            object_id=probe1.id,
-            serialized_data=serializers.serialize(
-                'json', [probe1],
-                use_natural_foreign_keys=True,
-                use_natural_primary_keys=True,
-            ),
-            object_repr='ams-probe (0.1.7)',
-            content_type=ct,
+        pk1 = admin_models.ProbeHistory.objects.create(
+            object_id=probe1,
+            name=probe1.name,
+            version=probe1.version,
+            description=probe1.description,
+            comment=probe1.comment,
+            repository=probe1.repository,
+            docurl=probe1.docurl,
             date_created=datetime.datetime.now(),
-            comment='Initial version.',
-            user=self.user.username
+            version_comment='Initial version.',
+            version_user=self.user.username
         )
 
-        pk2 = admin_models.History.objects.create(
-            object_id=probe2.id,
-            serialized_data=serializers.serialize(
-                'json', [probe2],
-                use_natural_foreign_keys=True,
-                use_natural_primary_keys=True,
-            ),
-            object_repr='ams-publisher-probe (0.1.11)',
-            content_type=ct,
+        pk2 = admin_models.ProbeHistory.objects.create(
+            object_id=probe2,
+            name=probe2.name,
+            version=probe2.version,
+            description=probe2.description,
+            comment=probe2.comment,
+            repository=probe2.repository,
+            docurl=probe2.docurl,
             date_created=datetime.datetime.now(),
-            comment='Initial version.',
-            user=self.user.username
+            version_comment='Initial version.',
+            version_user=self.user.username
         )
 
         self.defaultGroup = poem_models.GroupOfMetrics.objects.create(
@@ -3602,7 +3563,7 @@ class ListMetricTemplatesForProbeVersionAPIViewTests(TenantTestCase):
         self.factory = TenantRequestFactory(self.tenant)
         self.view = views.ListMetricTemplatesForProbeVersion.as_view()
         self.url = '/api/v2/internal/metricsforprobes/'
-        self.user = CustUser.objects.create(username='testuser')
+        self.user = CustUser.objects.create_user(username='testuser')
 
         mtype1 = admin_models.MetricTemplateType.objects.create(name='Active')
         mtype2 = admin_models.MetricTemplateType.objects.create(name='Passive')
@@ -3618,20 +3579,17 @@ class ListMetricTemplatesForProbeVersionAPIViewTests(TenantTestCase):
                    'README.md'
         )
 
-        ct = ContentType.objects.get_for_model(admin_models.Probe)
-
-        self.probeversion1 = admin_models.History.objects.create(
-            object_id=probe1.id,
-            serialized_data=serializers.serialize(
-                'json', [probe1],
-                use_natural_foreign_keys=True,
-                use_natural_primary_keys=True,
-            ),
-            object_repr='ams-probe (0.1.7)',
-            content_type=ct,
+        self.probeversion1 = admin_models.ProbeHistory.objects.create(
+            object_id=probe1,
+            name=probe1.name,
+            version=probe1.version,
+            description=probe1.description,
+            comment=probe1.comment,
+            repository=probe1.repository,
+            docurl=probe1.docurl,
             date_created=datetime.datetime.now(),
-            comment='Initial version.',
-            user=self.user.username
+            version_comment='Initial version.',
+            version_user=self.user.username
         )
 
         metrictemplate1 = admin_models.MetricTemplate.objects.create(
@@ -3699,21 +3657,19 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
                    'README.md'
         )
 
-        ct_p = ContentType.objects.get_for_model(admin_models.Probe)
         ct_m = ContentType.objects.get_for_model(poem_models.Metric)
 
-        self.ver1 = admin_models.History.objects.create(
-            object_id=probe1.id,
-            serialized_data=serializers.serialize(
-                'json', [probe1],
-                use_natural_foreign_keys=True,
-                use_natural_primary_keys=True,
-            ),
-            object_repr='ams-probe (0.1.7)',
-            content_type=ct_p,
+        self.ver1 = admin_models.ProbeHistory.objects.create(
+            object_id=probe1,
+            name=probe1.name,
+            version=probe1.version,
+            description=probe1.description,
+            comment=probe1.comment,
+            repository=probe1.repository,
+            docurl=probe1.docurl,
             date_created=datetime.datetime.now(),
-            comment='Initial version.',
-            user=self.user.username
+            version_comment='Initial version.',
+            version_user=self.user.username
         )
 
         self.mtype1 = poem_models.MetricType.objects.create(name='Active')
@@ -4136,34 +4092,32 @@ class HistoryHelpersTests(TenantTestCase):
             name='Active'
         )
 
-        probe_history1 = admin_models.History.objects.create(
-            object_id=self.probe1.id,
-            serialized_data=serializers.serialize(
-                'json', [self.probe1],
-                use_natural_foreign_keys=True,
-                use_natural_primary_keys=True
-            ),
-            object_repr=self.probe1.__str__(),
-            comment='Initial version.',
-            user='testuser',
-            content_type=self.ct_probe
+        probe_history1 = admin_models.ProbeHistory.objects.create(
+            object_id=self.probe1,
+            name=self.probe1.name,
+            version=self.probe1.version,
+            description=self.probe1.description,
+            comment=self.probe1.comment,
+            repository=self.probe1.repository,
+            docurl=self.probe1.docurl,
+            version_comment='Initial version.',
+            version_user='testuser'
         )
 
         self.probe1.version = '1.0.1'
         self.probe1.comment = 'New version.'
         self.probe1.save()
 
-        self.probe_history2 = admin_models.History.objects.create(
-            object_id=self.probe1.id,
-            serialized_data=serializers.serialize(
-                'json', [self.probe1],
-                use_natural_foreign_keys=True,
-                use_natural_primary_keys=True
-            ),
-            object_repr=self.probe1.__str__(),
-            comment='New version.',
-            user='testuser',
-            content_type=self.ct_probe
+        self.probe_history2 = admin_models.ProbeHistory.objects.create(
+            object_id=self.probe1,
+            name=self.probe1.name,
+            version=self.probe1.version,
+            description=self.probe1.description,
+            comment=self.probe1.comment,
+            repository=self.probe1.repository,
+            docurl=self.probe1.docurl,
+            version_comment='New version.',
+            version_user='testuser'
         )
 
         self.mt1 = admin_models.MetricTemplate.objects.create(
@@ -4225,7 +4179,6 @@ class HistoryHelpersTests(TenantTestCase):
             user='testuser',
             content_type=self.ct_metric
         )
-
 
     def test_create_comment_for_metric_template(self):
         mt = admin_models.MetricTemplate(
@@ -4458,25 +4411,14 @@ class HistoryHelpersTests(TenantTestCase):
         self.assertEqual(comment, 'Initial version.')
 
     def test_create_comment_for_probe(self):
-        probe1 = admin_models.Probe(
-            name='probe-2',
-            version='1.0.2',
-            description='Some new description.',
-            comment='Newer version.',
-            repository='https://repository2.url',
-            docurl='https://doc2.url',
-            user='testuser',
-            datetime=self.probe1.datetime
-        )
-
-        serialized_data = serializers.serialize(
-            'json', [probe1],
-            use_natural_foreign_keys=True,
-            use_natural_primary_keys=True
-        )
-
-        comment = create_comment(self.probe1.id, self.ct_probe, serialized_data)
-
+        self.probe1.name = 'probe-2'
+        self.probe1.version = '1.0.2'
+        self.probe1.description = 'Some new description.'
+        self.probe1.comment = 'Newer version.'
+        self.probe1.repository = 'https://repository2.url'
+        self.probe1.docurl = 'https://doc2.url',
+        self.probe1.save()
+        comment = create_new_comment(self.probe1)
         self.assertEqual(
             json.loads(comment),
             [
@@ -4486,91 +4428,6 @@ class HistoryHelpersTests(TenantTestCase):
                         'repository', 'docurl'
                     ]
                 }}
-            ]
-        )
-
-    def test_create_comment_for_probe_if_field_deleted_from_model(self):
-        probe1 = admin_models.Probe(
-            name='probe-2',
-            version='1.0.2',
-            description='Some new description.',
-            comment='Newer version.',
-            repository='https://repository2.url',
-            docurl='https://doc2.url',
-            user='testuser',
-            datetime=self.probe1.datetime
-        )
-
-        serialized_data = serializers.serialize(
-            'json', [probe1],
-            use_natural_foreign_keys=True,
-            use_natural_primary_keys=True
-        )
-
-        # let's say docurl field no longer exists in Probe model
-        dict_serialized = json.loads(serialized_data)
-        del dict_serialized[0]['fields']['docurl']
-        new_serialized_data = json.dumps(dict_serialized)
-
-        comment = create_comment(self.probe1.id, self.ct_probe,
-                                 new_serialized_data)
-
-        self.assertEqual(
-            json.loads(comment),
-            [
-                {
-                    'changed': {
-                        'fields': [
-                            'name', 'version', 'description', 'comment',
-                            'repository'
-                        ]
-                    }
-                }
-            ]
-        )
-
-    def test_create_comment_for_probe_if_field_added_to_model(self):
-        probe1 = admin_models.Probe(
-            name='probe-2',
-            version='1.0.2',
-            description='Some new description.',
-            comment='Newer version.',
-            repository='https://repository2.url',
-            docurl='https://doc2.url',
-            user='testuser',
-            datetime=self.probe1.datetime
-        )
-
-        serialized_data = serializers.serialize(
-            'json', [probe1],
-            use_natural_foreign_keys=True,
-            use_natural_primary_keys=True
-        )
-
-        # let's say mock_field field was added in Probe model
-        dict_serialized = json.loads(serialized_data)
-        dict_serialized[0]['fields']['mock_field'] = 'mock_value'
-        new_serialized_data = json.dumps(dict_serialized)
-
-        comment = create_comment(self.probe1.id, self.ct_probe,
-                                 new_serialized_data)
-
-        self.assertEqual(
-            json.loads(comment),
-            [
-                {
-                    'added': {
-                        'fields': ['mock_field']
-                    }
-                },
-                {
-                    'changed': {
-                        'fields': [
-                            'name', 'version', 'description', 'comment',
-                            'repository', 'docurl'
-                        ]
-                    }
-                }
             ]
         )
 
@@ -4585,14 +4442,12 @@ class HistoryHelpersTests(TenantTestCase):
             user='testuser',
             datetime=datetime.datetime.now()
         )
-
         serialized_data = serializers.serialize(
             'json', [probe2],
             use_natural_foreign_keys=True,
             use_natural_primary_keys=True
         )
         comment = create_comment(probe2.id, self.ct_probe, serialized_data)
-
         self.assertEqual(comment, 'Initial version.')
 
     def test_create_comment_for_metric(self):

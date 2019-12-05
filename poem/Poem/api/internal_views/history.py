@@ -6,8 +6,7 @@ from Poem.api.internal_views.utils import one_value_inline, \
     two_value_inline
 from Poem.api.views import NotFound
 from Poem.helpers.versioned_comments import new_comment
-from Poem.poem_super_admin.models import Probe, History, MetricTemplate, \
-    MetricTemplateType
+from Poem.poem_super_admin import models as admin_models
 
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
@@ -18,7 +17,10 @@ class ListVersions(APIView):
     authentication_classes = (SessionAuthentication,)
 
     def get(self, request, obj, name=None):
-        models = {'probe': Probe, 'metrictemplate': MetricTemplate}
+        models = {
+            'probe': admin_models.Probe,
+            'metrictemplate': admin_models.MetricTemplate
+        }
 
         ct = ContentType.objects.get_for_model(models[obj])
 
@@ -29,9 +31,15 @@ class ListVersions(APIView):
                 raise NotFound(status=404,
                                detail='{} not found'.format(obj.capitalize()))
 
-            vers = History.objects.filter(
-                object_id=obj.id,
-                content_type=ct).order_by('date_created')
+            if isinstance(obj, admin_models.Probe):
+                vers = admin_models.ProbeHistory.objects.filter(
+                    object_id=obj
+                ).order_by('-date_created')
+            else:
+                vers = admin_models.History.objects.filter(
+                    object_id=obj.id,
+                    content_type=ct
+                ).order_by('-date_created')
 
             if vers.count() == 0:
                 raise NotFound(status=404, detail='Version not found')
@@ -39,12 +47,20 @@ class ListVersions(APIView):
             else:
                 results = []
                 for ver in vers:
-                    if isinstance(obj, Probe):
-                        version = json.loads(
-                            ver.serialized_data
-                        )[0]['fields']['version']
-                        fields = json.loads(ver.serialized_data)[0]['fields']
-                    elif isinstance(obj, MetricTemplate):
+                    if isinstance(obj, admin_models.Probe):
+                        version = ver.version
+                        fields = {
+                            'name': ver.name,
+                            'version': ver.version,
+                            'description': ver.description,
+                            'comment': ver.comment,
+                            'repository': ver.repository,
+                            'docurl': ver.docurl
+                        }
+                        object_repr = '{} ({})'.format(ver.name, ver.version)
+                        user = ver.version_user
+                        comment = ver.version_comment
+                    elif isinstance(obj, admin_models.MetricTemplate):
                         version = datetime.datetime.strftime(
                             ver.date_created, '%Y%m%d-%H%M%S'
                         )
@@ -73,16 +89,19 @@ class ListVersions(APIView):
                                 fields0['fileparameter']
                             )
                         }
+                        object_repr = ver.object_repr
+                        user = ver.user
+                        comment = ver.comment
 
                     results.append(dict(
                         id=ver.id,
-                        object_repr=ver.object_repr,
+                        object_repr=object_repr,
                         fields=fields,
-                        user=ver.user,
+                        user=user,
                         date_created=datetime.datetime.strftime(
                             ver.date_created, '%Y-%m-%d %H:%M:%S'
                         ),
-                        comment=new_comment(ver.comment),
+                        comment=new_comment(comment),
                         version=version
                     ))
 
@@ -90,6 +109,16 @@ class ListVersions(APIView):
                 return Response(results)
 
         else:
-            vers = History.objects.filter(content_type_id=ct.id)
-            results = sorted([ver.object_repr for ver in vers], key=str.lower)
+            if obj == 'probe':
+                vers = admin_models.ProbeHistory.objects.all()
+                results = sorted(
+                    ['{} ({})'.format(ver.name, ver.version) for ver in vers],
+                    key=str.lower
+                )
+            else:
+                vers = admin_models.History.objects.filter(content_type=ct)
+                results = sorted(
+                    [ver.object_repr for ver in vers], key=str.lower
+                )
+
             return Response(results)

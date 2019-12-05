@@ -154,8 +154,9 @@ class ImportMetrics(APIView):
 
             try:
                 if metrictemplate.probeversion:
-                    ver = admin_models.History.objects.get(
-                        object_repr=metrictemplate.probeversion
+                    ver = admin_models.ProbeHistory.objects.get(
+                        name=metrictemplate.probeversion.split(' ')[0],
+                        version=metrictemplate.probeversion.split(' ')[1][1:-1]
                     )
 
                     metric = poem_models.Metric.objects.create(

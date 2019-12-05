@@ -7,8 +7,7 @@ from Poem.api.internal_views.utils import one_value_inline, two_value_inline
 from Poem.api.views import NotFound
 from Poem.helpers.history_helpers import create_history
 from Poem.poem.models import Metric, TenantHistory
-from Poem.poem_super_admin.models import MetricTemplate, MetricTemplateType, \
-    History
+from Poem.poem_super_admin import models as admin_models
 from Poem.tenants.models import Tenant
 
 from rest_framework import status
@@ -19,10 +18,10 @@ from rest_framework.views import APIView
 from tenant_schemas.utils import get_public_schema_name, schema_context
 
 
-def inline_metric_for_db(input):
+def inline_metric_for_db(data):
     result = []
 
-    for item in input:
+    for item in data:
         if item['key']:
             result.append('{} {}'.format(item['key'], item['value']))
 
@@ -48,8 +47,9 @@ def update_metrics(metrictemplate, name):
 
                 if met.probeversion != metrictemplate.probeversion:
                     met.probeversion = metrictemplate.probeversion
-                    met.probekey = History.objects.get(
-                        object_repr=metrictemplate.probeversion
+                    met.probekey = admin_models.ProbeHistory.objects.get(
+                        name=metrictemplate.probeversion.split(' ')[0],
+                        version=metrictemplate.probeversion.split(' ')[1][1:-1]
                     )
                     changes += 1
 
@@ -121,11 +121,13 @@ class ListMetricTemplates(APIView):
 
     def get(self, request, name=None):
         if name:
-            metrictemplates = MetricTemplate.objects.filter(name=name)
+            metrictemplates = admin_models.MetricTemplate.objects.filter(
+                name=name
+            )
             if metrictemplates.count() == 0:
                 raise NotFound(status=404, detail='Metric template not found')
         else:
-            metrictemplates = MetricTemplate.objects.all()
+            metrictemplates = admin_models.MetricTemplate.objects.all()
 
         results = []
         for metrictemplate in metrictemplates:
@@ -181,14 +183,15 @@ class ListMetricTemplates(APIView):
 
         try:
             if request.data['mtype'] == 'Active':
-                mt = MetricTemplate.objects.create(
+                mt = admin_models.MetricTemplate.objects.create(
                     name=request.data['name'],
-                    mtype=MetricTemplateType.objects.get(
+                    mtype=admin_models.MetricTemplateType.objects.get(
                         name=request.data['mtype']
                     ),
                     probeversion=request.data['probeversion'],
-                    probekey=History.objects.get(
-                        object_repr=request.data['probeversion']
+                    probekey=admin_models.ProbeHistory.objects.get(
+                        name=request.data['probeversion'].split(' ')[0],
+                        version=request.data['probeversion'].split(' ')[1][1:-1]
                     ),
                     parent=parent,
                     probeexecutable=probeexecutable,
@@ -203,9 +206,9 @@ class ListMetricTemplates(APIView):
                     )
                 )
             else:
-                mt = MetricTemplate.objects.create(
+                mt = admin_models.MetricTemplate.objects.create(
                     name=request.data['name'],
-                    mtype=MetricTemplateType.objects.get(
+                    mtype=admin_models.MetricTemplateType.objects.get(
                         name=request.data['mtype']
                     ),
                     parent=parent,
@@ -213,7 +216,7 @@ class ListMetricTemplates(APIView):
                 )
 
             if request.data['cloned_from']:
-                clone = MetricTemplate.objects.get(
+                clone = admin_models.MetricTemplate.objects.get(
                     id=request.data['cloned_from']
                 )
                 comment = 'Derived from ' + clone.name
@@ -231,7 +234,9 @@ class ListMetricTemplates(APIView):
             )
 
     def put(self, request):
-        metrictemplate = MetricTemplate.objects.get(id=request.data['id'])
+        metrictemplate = admin_models.MetricTemplate.objects.get(
+            id=request.data['id']
+        )
         old_name = metrictemplate.name
 
         if request.data['parent']:
@@ -248,8 +253,9 @@ class ListMetricTemplates(APIView):
             if request.data['mtype'] == 'Active':
                 metrictemplate.name = request.data['name']
                 metrictemplate.probeversion = request.data['probeversion']
-                metrictemplate.probekey = History.objects.get(
-                    object_repr=request.data['probeversion']
+                metrictemplate.probekey = admin_models.ProbeHistory.objects.get(
+                    name=request.data['probeversion'].split(' ')[0],
+                    version=request.data['probeversion'].split(' ')[1][1:-1]
                 )
                 metrictemplate.parent = parent
                 metrictemplate.probeexecutable = probeexecutable
@@ -302,11 +308,11 @@ class ListMetricTemplates(APIView):
         schemas.remove(get_public_schema_name())
         if name:
             try:
-                mt = MetricTemplate.objects.get(name=name)
+                mt = admin_models.MetricTemplate.objects.get(name=name)
                 for schema in schemas:
                     with schema_context(schema):
                         try:
-                            History.objects.filter(
+                            admin_models.History.objects.filter(
                                 object_id=mt.id,
                                 content_type=ContentType.objects.get_for_model(
                                     mt)
@@ -325,7 +331,7 @@ class ListMetricTemplates(APIView):
                 mt.delete()
                 return Response(status=status.HTTP_204_NO_CONTENT)
 
-            except MetricTemplate.DoesNotExist:
+            except admin_models.MetricTemplate.DoesNotExist:
                 raise NotFound(status=404, detail='Metric template not found')
 
         else:
@@ -339,7 +345,9 @@ class ListMetricTemplatesForProbeVersion(APIView):
         if probeversion:
             nameversion = probeversion[0:probeversion.index('(')] + ' ' + \
                 probeversion[probeversion.index('('):]
-            metrics = MetricTemplate.objects.filter(probeversion=nameversion)
+            metrics = admin_models.MetricTemplate.objects.filter(
+                probeversion=nameversion
+            )
 
             if metrics.count() == 0:
                 raise NotFound(status=404, detail='Metrics not found')
@@ -353,5 +361,7 @@ class ListMetricTemplateTypes(APIView):
     authentication_classes = (SessionAuthentication,)
 
     def get(self, request):
-        types = MetricTemplateType.objects.all().values_list('name', flat=True)
+        types = admin_models.MetricTemplateType.objects.all().values_list(
+            'name', flat=True
+        )
         return Response(types)
