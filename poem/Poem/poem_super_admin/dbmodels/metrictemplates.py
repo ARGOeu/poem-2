@@ -1,6 +1,6 @@
 from django.db import models
 
-from Poem.poem_super_admin.models import History
+from Poem.poem_super_admin.models import ProbeHistory
 
 
 class MetricTemplateTypeManager(models.Manager):
@@ -29,7 +29,7 @@ class MetricTemplate(models.Model):
     name = models.CharField(max_length=128, unique=True)
     mtype = models.ForeignKey(MetricTemplateType, on_delete=models.CASCADE)
     probeversion = models.CharField(max_length=128)
-    probekey = models.ForeignKey(History, blank=True, null=True,
+    probekey = models.ForeignKey(ProbeHistory, blank=True, null=True,
                                  on_delete=models.SET_NULL)
     parent = models.CharField(max_length=128)
     probeexecutable = models.CharField(max_length=128)
