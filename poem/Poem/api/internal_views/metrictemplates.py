@@ -45,12 +45,8 @@ def update_metrics(metrictemplate, name):
                     met.name = metrictemplate.name
                     changes += 1
 
-                if met.probeversion != metrictemplate.probeversion:
-                    met.probeversion = metrictemplate.probeversion
-                    met.probekey = admin_models.ProbeHistory.objects.get(
-                        name=metrictemplate.probeversion.split(' ')[0],
-                        version=metrictemplate.probeversion.split(' ')[1][1:-1]
-                    )
+                if met.probekey != metrictemplate.probekey:
+                    met.probekey = metrictemplate.probekey
                     changes += 1
 
                 if met.probeexecutable != metrictemplate.probeexecutable:
@@ -236,6 +232,7 @@ class ListMetricTemplates(APIView):
             id=request.data['id']
         )
         old_name = metrictemplate.name
+        old_probekey = metrictemplate.probekey
 
         if request.data['parent']:
             parent = json.dumps([request.data['parent']])
@@ -247,14 +244,19 @@ class ListMetricTemplates(APIView):
         else:
             probeexecutable = ''
 
+        if request.data['probeversion']:
+            new_probekey = admin_models.ProbeHistory.objects.get(
+                name=request.data['probeversion'].split(' ')[0],
+                version=request.data['probeversion'].split(' ')[1][1:-1]
+            )
+        else:
+            new_probekey = None
+
         try:
-            if request.data['mtype'] == 'Active':
+            if request.data['mtype'] == 'Active' and \
+                    old_probekey != new_probekey:
                 metrictemplate.name = request.data['name']
-                metrictemplate.probeversion = request.data['probeversion']
-                metrictemplate.probekey = admin_models.ProbeHistory.objects.get(
-                    name=request.data['probeversion'].split(' ')[0],
-                    version=request.data['probeversion'].split(' ')[1][1:-1]
-                )
+                metrictemplate.probekey = new_probekey
                 metrictemplate.parent = parent
                 metrictemplate.probeexecutable = probeexecutable
                 metrictemplate.config = inline_metric_for_db(
@@ -278,19 +280,46 @@ class ListMetricTemplates(APIView):
                 metrictemplate.fileparameter = inline_metric_for_db(
                     request.data['fileparameter']
                 )
+                metrictemplate.save()
 
+                create_history(metrictemplate, request.user.username)
             else:
-                metrictemplate.name = metrictemplate.name
-                metrictemplate.parent = parent
-                metrictemplate.flags = inline_metric_for_db(
-                    request.data['flags']
-                )
+                new_data = {
+                    'name': request.data['name'],
+                    'probekey': new_probekey,
+                    'mtype': admin_models.MetricTemplateType.objects.get(
+                        name=request.data['mtype']
+                    ),
+                    'parent': parent,
+                    'probeexecutable': probeexecutable,
+                    'config': inline_metric_for_db(request.data['config']),
+                    'attribute': inline_metric_for_db(
+                        request.data['attribute']
+                    ),
+                    'dependency': inline_metric_for_db(
+                        request.data['dependency']
+                    ),
+                    'flags': inline_metric_for_db(request.data['flags']),
+                    'files': inline_metric_for_db(request.data['files']),
+                    'parameter': inline_metric_for_db(
+                        request.data['parameter']
+                    ),
+                    'fileparameter': inline_metric_for_db(
+                        request.data['fileparameter']
+                    )
+                }
+                admin_models.MetricTemplate.objects.filter(
+                    id=request.data['id']
+                ).update(**new_data)
 
-            metrictemplate.save()
+                admin_models.MetricTemplateHistory.objects.filter(
+                    name=old_name, probekey=old_probekey
+                ).update(**new_data)
 
-            create_history(metrictemplate, request.user.username)
-
-            update_metrics(metrictemplate, old_name)
+            update_metrics(
+                admin_models.MetricTemplate.objects.get(id=request.data['id']),
+                old_name
+            )
 
             return Response(status=status.HTTP_201_CREATED)
 
