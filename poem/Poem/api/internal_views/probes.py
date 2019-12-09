@@ -7,8 +7,7 @@ from Poem.api import serializers
 from Poem.api.internal_views.metrictemplates import update_metrics
 from Poem.api.views import NotFound
 from Poem.helpers.history_helpers import create_history
-from Poem.poem_super_admin.models import Probe, ExtRevision, MetricTemplate, \
-    History
+from Poem.poem_super_admin import models as admin_models
 from Poem.tenants.models import Tenant
 
 from rest_framework import status
@@ -25,21 +24,23 @@ class ListProbes(APIView):
     def get(self, request, name=None):
         if name:
             try:
-                probe = Probe.objects.get(name=name)
+                probe = admin_models.Probe.objects.get(name=name)
                 serializer = serializers.ProbeSerializer(probe)
 
                 return Response(serializer.data)
 
-            except Probe.DoesNotExist:
+            except admin_models.Probe.DoesNotExist:
                 raise NotFound(status=404, detail='Probe not found')
 
         else:
-            probes = Probe.objects.all()
+            probes = admin_models.Probe.objects.all()
 
             results = []
             for probe in probes:
                 # number of probe revisions
-                nv = ExtRevision.objects.filter(probeid=probe.id).count()
+                nv = admin_models.ProbeHistory.objects.filter(
+                    object_id=probe
+                ).count()
                 results.append(
                     dict(
                         name=probe.name,
@@ -57,10 +58,9 @@ class ListProbes(APIView):
             return Response(results)
 
     def put(self, request):
-        probe = Probe.objects.get(id=request.data['id'])
-        nameversion = probe.nameversion
-        ct = ContentType.objects.get_for_model(Probe)
-        fields = []
+        probe = admin_models.Probe.objects.get(id=request.data['id'])
+        old_name = probe.name
+        old_version = probe.version
 
         try:
             if request.data['new_version'] in [True, 'True', 'true']:
@@ -68,7 +68,6 @@ class ListProbes(APIView):
                 new_nameversion = '{} ({})'.format(
                     request.data['name'], request.data['version']
                 )
-                fields.append('version')
 
                 probe.name = request.data['name']
                 probe.repository = request.data['repository']
@@ -81,43 +80,48 @@ class ListProbes(APIView):
                 create_history(probe, probe.user)
 
                 if request.data['update_metrics'] in [True, 'true', 'True']:
-                    metrictemplates = MetricTemplate.objects.filter(
-                        probeversion=nameversion
-                    )
+                    metrictemplates = \
+                        admin_models.MetricTemplate.objects.filter(
+                            probekey__name=old_name,
+                            probekey__version=old_version
+                        )
 
                     for metrictemplate in metrictemplates:
                         metrictemplate.probeversion = new_nameversion
-                        metrictemplate.probekey = History.objects.get(
-                            object_repr=new_nameversion
-                        )
+                        metrictemplate.probekey = \
+                            admin_models.ProbeHistory.objects.get(
+                                name=probe.name, version=probe.version
+                            )
                         metrictemplate.save()
                         create_history(metrictemplate, request.user.username)
                         update_metrics(metrictemplate, metrictemplate.name)
 
             else:
-                history = History.objects.filter(object_repr=probe.__str__())
-                data = json.loads(history[0].serialized_data)
-                new_serialized_field = {
+                history = admin_models.ProbeHistory.objects.filter(
+                    object_id=probe
+                )
+                new_data = {
                             'name': request.data['name'],
                             'version': request.data['version'],
-                            'nameversion': '{} ({})'.format(
-                                request.data['name'], request.data['version']
-                            ),
                             'description': request.data['description'],
                             'comment': request.data['comment'],
                             'repository': request.data['repository'],
                             'docurl': request.data['docurl'],
                             'user': request.user.username
                         }
-                Probe.objects.filter(pk=probe.id).update(**new_serialized_field)
+                admin_models.Probe.objects.filter(pk=probe.id).update(
+                    **new_data
+                )
 
-                data[0]['fields'] = new_serialized_field
-                history.update(serialized_data=json.dumps(data))
+                del new_data['user']
+                history.update(**new_data)
 
                 if probe.name != request.data['name']:
-                    metrictemplates = MetricTemplate.objects.filter(
-                        probeversion=nameversion
-                    )
+                    metrictemplates = \
+                        admin_models.MetricTemplate.objects.filter(
+                            probekey__name=old_name,
+                            probekey__version=old_version
+                        )
 
                     for metrictemplate in metrictemplates:
                         metrictemplate.probeversion = '{} ({})'.format(
@@ -172,20 +176,18 @@ class ListProbes(APIView):
         schemas.remove(get_public_schema_name())
         if name:
             try:
-                probe = Probe.objects.get(name=name)
-                mt = MetricTemplate.objects.filter(
-                    probeversion=probe.nameversion
+                probe = admin_models.Probe.objects.get(name=name)
+                mt = admin_models.MetricTemplate.objects.filter(
+                    probekey__name=probe.name,
+                    probekey__version=probe.version
                 )
                 if len(mt) == 0:
-                    ExtRevision.objects.filter(probeid=probe.id).delete()
                     for schema in schemas:
-                        # need to iterate through schemase because of foreign
+                        # need to iterate through schemas because of foreign
                         # key in Metric model
                         with schema_context(schema):
-                            History.objects.filter(
-                                object_id=probe.id,
-                                content_type=
-                                ContentType.objects.get_for_model(probe)
+                            admin_models.ProbeHistory.objects.filter(
+                                object_id=probe
                             ).delete()
                     probe.delete()
                     return Response(status=status.HTTP_204_NO_CONTENT)
@@ -196,7 +198,7 @@ class ListProbes(APIView):
                         status=status.HTTP_400_BAD_REQUEST
                     )
 
-            except Probe.DoesNotExist:
+            except admin_models.Probe.DoesNotExist:
                 raise NotFound(status=404, detail='Probe not found')
 
         else:

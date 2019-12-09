@@ -117,7 +117,7 @@ class ListServices(APIView):
         found_metrics = poem_models.Metric.objects.filter(name__in=metrics)
 
         for metric in found_metrics:
-            if metric.probeversion:
+            if metric.probekey:
                 return True
 
         return False
@@ -217,9 +217,9 @@ class ListServices(APIView):
                 stt = self._get_or_create(snt, service_type)
 
                 for metric in found_metrics:
-                    if metric.probeversion:
+                    if metric.probekey:
                         mt = self.tree.addchild(metric.name, stt)
-                        self.tree.addchild(metric.probeversion, mt)
+                        self.tree.addchild(metric.probekey.__str__(), mt)
 
         nleaves = self._count_leaves(r)
         nleaves_perelem = self._count_leaves_per_element(r)

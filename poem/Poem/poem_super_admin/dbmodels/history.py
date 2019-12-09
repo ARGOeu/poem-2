@@ -16,8 +16,6 @@ class History(models.Model):
     comment = models.TextField(blank=True)
     user = models.CharField(max_length=32)
 
-    objects = HistoryManager()
-
     class Meta:
         app_label = 'poem_super_admin'
 

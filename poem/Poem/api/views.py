@@ -83,9 +83,9 @@ def build_metricconfigs():
             mdict[m.name].update({'parent': ''})
 
         if m.probekey:
-            version_fields = json.loads(m.probekey.serialized_data)
+            docurl_field = m.probekey.docurl
             mdict[m.name].update(
-                {'docurl': version_fields[0]['fields']['docurl']}
+                {'docurl': docurl_field}
             )
         else:
             mdict[m.name].update({'docurl': ''})

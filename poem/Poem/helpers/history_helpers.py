@@ -3,15 +3,28 @@ from django.core import serializers
 
 import json
 
-from Poem.poem.models import TenantHistory, Metric
-from Poem.poem_super_admin.models import History
+from Poem.poem import models as poem_models
+from Poem.poem_super_admin import models as admin_models
 
 
-def inline_models_to_dicts(input):
+def to_dict(instance):
+    serialized_data = serializers.serialize(
+        'json', [instance],
+        use_natural_foreign_keys=True,
+        use_natural_primary_keys=True
+    )
+    return json.loads(serialized_data)[0]['fields']
+
+
+def serialized_data_to_dict(data):
+    return json.loads(data)[0]['fields']
+
+
+def inline_models_to_dicts(data):
     new_data = {}
 
-    if input:
-        data = json.loads(input)
+    if data:
+        data = json.loads(data)
 
         for item in data:
             new_data.update({item.split(' ')[0]: item.split(' ')[1]})
@@ -19,75 +32,98 @@ def inline_models_to_dicts(input):
     return new_data
 
 
-def inline_one_to_dict(input):
-    if input:
-        return json.loads(input)[0]
+def inline_one_to_dict(data):
+    if data:
+        return json.loads(data)[0]
     else:
         return ''
 
 
+def create_history_entry(instance, user, comment):
+    if isinstance(instance, poem_models.Metric):
+        poem_models.TenantHistory.objects.create(
+            object_id=instance.id,
+            serialized_data=serializers.serialize(
+                'json', [instance],
+                use_natural_foreign_keys=True,
+                use_natural_primary_keys=True
+            ),
+            object_repr=instance.__str__(),
+            content_type=ContentType.objects.get_for_model(instance),
+            comment=comment,
+            user=user
+        )
+
+    elif isinstance(instance, admin_models.Probe):
+        admin_models.ProbeHistory.objects.create(
+            object_id=instance,
+            name=instance.name,
+            version=instance.version,
+            description=instance.description,
+            comment=instance.comment,
+            repository=instance.repository,
+            docurl=instance.docurl,
+            version_comment=comment,
+            version_user=user
+        )
+
+    else:
+        admin_models.MetricTemplateHistory.objects.create(
+            object_id=instance,
+            name=instance.name,
+            mtype=instance.mtype,
+            probekey=instance.probekey,
+            parent=instance.parent,
+            probeexecutable=instance.probeexecutable,
+            config=instance.config,
+            attribute=instance.attribute,
+            dependency=instance.dependency,
+            flags=instance.flags,
+            files=instance.files,
+            parameter=instance.parameter,
+            fileparameter=instance.fileparameter,
+            version_comment=comment,
+            version_user=user
+        )
+
+
 def create_history(instance, user, comment=None):
-    if isinstance(instance, Metric):
-        model = TenantHistory
+    if isinstance(instance, poem_models.Metric):
+        serialized_data = serializers.serialize(
+            'json', [instance],
+            use_natural_foreign_keys=True,
+            use_natural_primary_keys=True
+        )
+        content_type = ContentType.objects.get_for_model(instance)
+
+        if not comment:
+            comment = create_comment(
+                instance, ct=content_type, new_serialized_data=serialized_data
+            )
+
     else:
-        model = History
-    object_id = instance.id
-    serialized_data = serializers.serialize(
-        'json', [instance], use_natural_foreign_keys=True,
-        use_natural_primary_keys=True
-    )
-    object_repr = instance.__str__()
-    content_type = ContentType.objects.get_for_model(instance)
+        if not comment:
+            comment = create_comment(instance)
 
-    if not comment:
-        comment = create_comment(object_id, content_type, serialized_data)
-
-    model.objects.create(
-        object_id=object_id,
-        serialized_data=serialized_data,
-        object_repr=object_repr,
-        content_type=content_type,
-        comment=comment,
-        user=user
-    )
+    create_history_entry(instance, user, comment)
 
 
-def create_comment(object_id, ct, new_serialized_data):
-    if ct == ContentType.objects.get_for_model(Metric):
-        history = TenantHistory.objects.filter(
-            object_id=object_id,
-            content_type=ct
-        ).order_by('-date_created')
-    else:
-        history = History.objects.filter(
-            object_id=object_id,
-            content_type=ct
-        ).order_by('-date_created')
-
+def analyze_differences(old_data, new_data):
     inlines = ['config', 'attribute', 'dependency', 'flags', 'files',
                'parameter', 'fileparameter', 'dependancy']
 
     single_value_inline = ['parent', 'probeexecutable']
 
-    not_tracked_fields = ['nameversion', 'probekey', 'datetime']
-
     changed = []
     added = []
     deleted = []
     msg = []
-    if len(history) > 0:
-        new_serialized_data = json.loads(new_serialized_data)[0]['fields']
-        old_serialized_data = json.loads(history[0].serialized_data)[0][
-            'fields']
-
-        for key, value in old_serialized_data.items():
+    if old_data:
+        for key, value in old_data.items():
             try:
-                if key in not_tracked_fields:
-                    pass
-
-                elif key in inlines:
-                    old = inline_models_to_dicts(old_serialized_data[key])
-                    new = inline_models_to_dicts(new_serialized_data[key])
+                if key in inlines:
+                    old = inline_models_to_dicts(old_data[key])
+                    new = inline_models_to_dicts(new_data[key])
 
                     deleted_fields = []
                     changed_fields = []
@@ -123,8 +159,8 @@ def create_comment(object_id, ct, new_serialized_data):
                         )
 
                 elif key in single_value_inline:
-                    old = inline_one_to_dict(old_serialized_data[key])
-                    new = inline_one_to_dict(new_serialized_data[key])
+                    old = inline_one_to_dict(old_data[key])
+                    new = inline_one_to_dict(new_data[key])
 
                     if old and new and old != new:
                         changed.append(key)
@@ -136,22 +172,19 @@ def create_comment(object_id, ct, new_serialized_data):
                         added.append(key)
 
                 else:
-                    if old_serialized_data[key] and \
-                            old_serialized_data[key] != new_serialized_data[key]:
+                    if old_data[key] and old_data[key] != new_data[key]:
                         changed.append(key)
 
-                    elif not new_serialized_data[key] and \
-                            old_serialized_data[key]:
+                    elif not new_data[key] and old_data[key]:
                         deleted.append(key)
 
             except KeyError:
                 pass
 
-        for key, value in new_serialized_data.items():
+        for key, value in new_data.items():
             if key not in inlines and key not in single_value_inline:
                 try:
-                    if not old_serialized_data[key] and \
-                            new_serialized_data[key]:
+                    if not old_data[key] and new_data[key]:
                         added.append(key)
 
                 except KeyError:
@@ -166,3 +199,36 @@ def create_comment(object_id, ct, new_serialized_data):
         return json.dumps(msg)
     else:
         return 'Initial version.'
+
+
+def create_comment(instance, ct=None, new_serialized_data=None):
+    if isinstance(instance, poem_models.Metric):
+        history = poem_models.TenantHistory.objects.filter(
+            object_id=instance.id,
+            content_type=ct
+        ).order_by('-date_created')
+        new_data = serialized_data_to_dict(new_serialized_data)
+
+    else:
+        if isinstance(instance, admin_models.Probe):
+            history_model = admin_models.ProbeHistory
+        else:
+            history_model = admin_models.MetricTemplateHistory
+        history = history_model.objects.filter(object_id=instance)\
+            .order_by('-date_created')
+
+        new_data = to_dict(instance)
+        if isinstance(instance, admin_models.Probe):
+            del new_data['user'], new_data['datetime']
+
+    if len(history) > 0:
+        if isinstance(instance, poem_models.Metric):
+            old_data = serialized_data_to_dict(history[0].serialized_data)
+        else:
+            old_data = to_dict(history[0])
+            del old_data['object_id'], old_data['version_comment'], \
+                old_data['version_user'], old_data['date_created']
+    else:
+        old_data = ''
+
+    return analyze_differences(old_data, new_data)

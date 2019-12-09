@@ -48,7 +48,7 @@ class ProbeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Probe
-        exclude = ['nameversion']
+        fields = '__all__'
 
 
 class ThresholdsProfileSerializer(serializers.ModelSerializer):

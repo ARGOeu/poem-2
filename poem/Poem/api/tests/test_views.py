@@ -24,28 +24,29 @@ def mock_db_for_metrics_tests():
 
     metrictype = MetricType.objects.create(name='Active')
 
-    ct = ContentType.objects.get_for_model(admin_models.Probe)
+    probe = admin_models.Probe.objects.create(
+        name='ams-probe',
+        version='0.1.7',
+        description='Probe is inspecting AMS service by trying to publish '
+                        'and consume randomly generated messages.',
+        comment='Initial version.',
+        repository='https://github.com/ARGOeu/nagios-plugins-argo',
+        docurl='https://github.com/ARGOeu/nagios-plugins-argo/blob/master/'
+               'README.md',
+        datetime=datetime.datetime.now(),
+        user='testuser'
+    )
 
-    probekey = admin_models.History.objects.create(
-        object_repr='ams_probe (0.1.7)',
-        serialized_data=json.dumps(
-            [
-                {
-                    'model': 'poem.probe',
-                    'fields': {
-                        'comment': 'Initial version',
-                        'version': '0.1.7',
-                        'docurl':
-                            'https://github.com/ARGOeu/nagios-plugins-argo'
-                            '/blob/master/README.md'
-                    }
-                }
-            ]
-        ),
-        content_type=ct,
-        comment='Initial version',
-        date_created=datetime.datetime(2015, 1, 1, 0, 0, 0),
-        user=user.username
+    probekey = admin_models.ProbeHistory.objects.create(
+        object_id=probe,
+        name=probe.name,
+        version=probe.version,
+        description=probe.description,
+        comment=probe.comment,
+        repository=probe.repository,
+        docurl=probe.docurl,
+        version_comment='Initial version.',
+        version_user='testuser'
     )
     group = GroupOfMetrics.objects.create(name='EOSC')
 
