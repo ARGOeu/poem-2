@@ -44,20 +44,32 @@ class ListVersions(APIView):
                 for ver in vers:
                     if isinstance(instance, admin_models.Probe):
                         version = ver.version
+                        if ver.package:
+                            package = ver.package.__str__()
+                        else:
+                            package = ''
                         fields = {
                             'name': ver.name,
                             'version': ver.version,
+                            'package': package,
                             'description': ver.description,
                             'comment': ver.comment,
                             'repository': ver.repository,
                             'docurl': ver.docurl
                         }
                     else:
-                        version = ver.probekey.__str__().split(' ')[1][1:-1]
+                        if ver.probekey:
+                            probekey = ver.probekey.__str__()
+                            version = ver.probekey.__str__().split(' ')[1][1:-1]
+                        else:
+                            probekey = ''
+                            version = datetime.datetime.strftime(
+                                ver.date_created, '%Y-%m-%d %H:%M:%S'
+                            )
                         fields = {
                             'name': ver.name,
                             'mtype': ver.mtype.name,
-                            'probeversion': ver.probekey.__str__(),
+                            'probeversion': probekey,
                             'parent': one_value_inline(ver.parent),
                             'probeexecutable': one_value_inline(
                                 ver.probeexecutable

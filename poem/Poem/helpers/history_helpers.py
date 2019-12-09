@@ -59,6 +59,7 @@ def create_history_entry(instance, user, comment):
             object_id=instance,
             name=instance.name,
             version=instance.version,
+            package=instance.package,
             description=instance.description,
             comment=instance.comment,
             repository=instance.repository,

@@ -379,9 +379,23 @@ class ListProbesAPIViewTests(TenantTestCase):
             Tenant.objects.create(name='public', domain_url='public',
                                   schema_name=get_public_schema_name())
 
+        repo = admin_models.YumRepo.objects.create(name='repo-1')
+
+        self.package1 = admin_models.Package.objects.create(
+            name='nagios-plugins-argo',
+            version='0.1.7',
+            repo=repo
+        )
+
+        self.package2 = admin_models.Package.objects.create(
+            name='nagios-plugins-argo',
+            version='0.1.11',
+            repo=repo
+        )
+
         self.probe1 = admin_models.Probe.objects.create(
             name='ams-probe',
-            version='0.1.7',
+            package=self.package1,
             description='Probe is inspecting AMS service by trying to publish '
                         'and consume randomly generated messages.',
             comment='Initial version.',
@@ -394,7 +408,7 @@ class ListProbesAPIViewTests(TenantTestCase):
 
         probe2 = admin_models.Probe.objects.create(
             name='argo-web-api',
-            version='0.1.7',
+            package=self.package1,
             description='This is a probe for checking AR and status reports are'
                         ' properly working.',
             comment='Initial version.',
@@ -407,7 +421,7 @@ class ListProbesAPIViewTests(TenantTestCase):
 
         probe3 = admin_models.Probe.objects.create(
             name='ams-publisher-probe',
-            version='0.1.11',
+            package=self.package2,
             description='Probe is inspecting AMS publisher running on Nagios '
                         'monitoring instances.',
             comment='Initial version.',
@@ -418,12 +432,24 @@ class ListProbesAPIViewTests(TenantTestCase):
             datetime=datetime.datetime.now()
         )
 
-        self.ct = ContentType.objects.get_for_model(admin_models.Probe)
+        probe4 = admin_models.Probe.objects.create(
+            name='argo-web-api-without-package',
+            version='0.1.6',
+            description='This is a probe for checking AR and status reports are'
+                        ' properly working.',
+            comment='Initial version.',
+            repository='https://github.com/ARGOeu/nagios-plugins-argo',
+            docurl='https://github.com/ARGOeu/nagios-plugins-argo/blob/master/'
+                   'README.md',
+            user='testuser',
+            datetime=datetime.datetime.now()
+        )
 
         pv1 = admin_models.ProbeHistory.objects.create(
             object_id=self.probe1,
             name=self.probe1.name,
             version=self.probe1.version,
+            package=self.probe1.package,
             description=self.probe1.description,
             comment=self.probe1.comment,
             repository=self.probe1.repository,
@@ -436,6 +462,7 @@ class ListProbesAPIViewTests(TenantTestCase):
             object_id=probe2,
             name=probe2.name,
             version=probe2.version,
+            package=probe2.package,
             description=probe2.description,
             comment=probe2.comment,
             repository=probe2.repository,
@@ -448,10 +475,24 @@ class ListProbesAPIViewTests(TenantTestCase):
             object_id=probe3,
             name=probe3.name,
             version=probe3.version,
+            package=probe3.package,
             description=probe3.description,
             comment=probe3.comment,
             repository=probe3.repository,
             docurl=probe3.docurl,
+            version_comment='Initial version.',
+            version_user=self.user.username
+        )
+
+        admin_models.ProbeHistory.objects.create(
+            object_id=probe4,
+            name=probe4.name,
+            version=probe4.version,
+            package=probe4.package,
+            description=probe4.description,
+            comment=probe4.comment,
+            repository=probe4.repository,
+            docurl=probe4.docurl,
             version_comment='Initial version.',
             version_user=self.user.username
         )
@@ -483,7 +524,6 @@ class ListProbesAPIViewTests(TenantTestCase):
             parameter='["--project EGI"]'
         )
 
-
     def test_get_list_of_all_probes(self):
         request = self.factory.get(self.url)
         force_authenticate(request, user=self.user)
@@ -494,6 +534,7 @@ class ListProbesAPIViewTests(TenantTestCase):
                 {
                     'name': 'ams-probe',
                     'version': '0.1.7',
+                    'package': 'nagios-plugins-argo (0.1.7)',
                     'docurl':
                         'https://github.com/ARGOeu/nagios-plugins-argo/blob/'
                         'master/README.md',
@@ -508,6 +549,7 @@ class ListProbesAPIViewTests(TenantTestCase):
                 {
                     'name': 'ams-publisher-probe',
                     'version': '0.1.11',
+                    'package': 'nagios-plugins-argo (0.1.11)',
                     'docurl':
                         'https://github.com/ARGOeu/nagios-plugins-argo/blob/'
                         'master/README.md',
@@ -521,6 +563,20 @@ class ListProbesAPIViewTests(TenantTestCase):
                 {
                     'name': 'argo-web-api',
                     'version': '0.1.7',
+                    'package': 'nagios-plugins-argo (0.1.7)',
+                    'description': 'This is a probe for checking AR and status '
+                                   'reports are properly working.',
+                    'comment': 'Initial version.',
+                    'repository': 'https://github.com/ARGOeu/nagios-plugins-'
+                                  'argo',
+                    'docurl': 'https://github.com/ARGOeu/nagios-plugins-argo/'
+                              'blob/master/README.md',
+                    'nv': 1
+                },
+                {
+                    'name': 'argo-web-api-without-package',
+                    'version': '0.1.6',
+                    'package': '',
                     'description': 'This is a probe for checking AR and status '
                                    'reports are properly working.',
                     'comment': 'Initial version.',
@@ -543,6 +599,7 @@ class ListProbesAPIViewTests(TenantTestCase):
                 'id': self.probe1.id,
                 'name': 'ams-probe',
                 'version': '0.1.7',
+                'package': 'nagios-plugins-argo (0.1.7)',
                 'docurl':
                     'https://github.com/ARGOeu/nagios-plugins-argo/blob/master/'
                     'README.md',
@@ -574,7 +631,7 @@ class ListProbesAPIViewTests(TenantTestCase):
         data = {
             'id': self.probe1.id,
             'name': 'argo-web-api',
-            'version': '0.1.7',
+            'package': 'nagios-plugins-argo (0.1.7)',
             'comment': 'New version.',
             'docurl':
                 'https://github.com/ARGOeu/nagios-plugins-argo/blob/'
@@ -584,7 +641,6 @@ class ListProbesAPIViewTests(TenantTestCase):
                            'messages.',
             'repository': 'https://github.com/ARGOeu/nagios-plugins-'
                           'argo',
-            'new_version': True,
             'update_metrics': False
         }
         content, content_type = encode_data(data)
@@ -601,7 +657,7 @@ class ListProbesAPIViewTests(TenantTestCase):
         data = {
             'id': self.probe1.id,
             'name': 'ams-probe-new',
-            'version': '0.1.7',
+            'package': 'nagios-plugins-argo (0.1.7)',
             'comment': 'Initial version',
             'docurl':
                 'https://github.com/ARGOeu/nagios-plugins-argo2/blob/'
@@ -609,7 +665,6 @@ class ListProbesAPIViewTests(TenantTestCase):
             'description': 'Probe is inspecting AMS service.',
             'repository': 'https://github.com/ARGOeu/nagios-plugins-'
                           'argo2',
-            'new_version': False,
             'update_metrics': False
         }
         content, content_type = encode_data(data)
@@ -623,6 +678,7 @@ class ListProbesAPIViewTests(TenantTestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(probe.name, 'ams-probe-new')
         self.assertEqual(probe.version, '0.1.7')
+        self.assertEqual(probe.package, self.package1)
         self.assertEqual(probe.comment, 'Initial version')
         self.assertEqual(
             probe.docurl,
@@ -639,6 +695,7 @@ class ListProbesAPIViewTests(TenantTestCase):
         )
         self.assertEqual(version.name, probe.name)
         self.assertEqual(version.version, probe.version)
+        self.assertEqual(version.package, probe.package)
         self.assertEqual(version.comment, probe.comment)
         self.assertEqual(version.docurl, probe.docurl)
         self.assertEqual(version.description, probe.description)
@@ -650,7 +707,7 @@ class ListProbesAPIViewTests(TenantTestCase):
         data = {
             'id': self.probe1.id,
             'name': 'ams-probe-new',
-            'version': '0.1.11',
+            'package': 'nagios-plugins-argo (0.1.11)',
             'comment': 'New version.',
             'docurl':
                 'https://github.com/ARGOeu/nagios-plugins-argo2/blob/'
@@ -658,7 +715,6 @@ class ListProbesAPIViewTests(TenantTestCase):
             'description': 'Probe is inspecting AMS service.',
             'repository': 'https://github.com/ARGOeu/nagios-plugins-'
                           'argo2',
-            'new_version': True,
             'update_metrics': False
         }
         content, content_type = encode_data(data)
@@ -674,6 +730,7 @@ class ListProbesAPIViewTests(TenantTestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(probe.name, 'ams-probe-new')
         self.assertEqual(probe.version, '0.1.11')
+        self.assertEqual(probe.package, self.package2)
         self.assertEqual(probe.comment, 'New version.')
         self.assertEqual(
             probe.docurl,
@@ -690,6 +747,7 @@ class ListProbesAPIViewTests(TenantTestCase):
         )
         self.assertEqual(version.name, probe.name)
         self.assertEqual(version.version, probe.version)
+        self.assertEqual(version.package, probe.package)
         self.assertEqual(version.comment, probe.comment)
         self.assertEqual(version.docurl, probe.docurl)
         self.assertEqual(version.description, probe.description)
@@ -704,7 +762,7 @@ class ListProbesAPIViewTests(TenantTestCase):
         data = {
             'id': self.probe1.id,
             'name': 'ams-probe-new',
-            'version': '0.1.11',
+            'package': 'nagios-plugins-argo (0.1.11)',
             'comment': 'New version.',
             'docurl':
                 'https://github.com/ARGOeu/nagios-plugins-argo2/blob/'
@@ -712,7 +770,6 @@ class ListProbesAPIViewTests(TenantTestCase):
             'description': 'Probe is inspecting AMS service.',
             'repository': 'https://github.com/ARGOeu/nagios-plugins-'
                           'argo2',
-            'new_version': True,
             'update_metrics': True
         }
         content, content_type = encode_data(data)
@@ -730,6 +787,7 @@ class ListProbesAPIViewTests(TenantTestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(probe.name, 'ams-probe-new')
         self.assertEqual(probe.version, '0.1.11')
+        self.assertEqual(probe.package, self.package2)
         self.assertEqual(probe.comment, 'New version.')
         self.assertEqual(
             probe.docurl,
@@ -746,6 +804,7 @@ class ListProbesAPIViewTests(TenantTestCase):
         )
         self.assertEqual(version.name, probe.name)
         self.assertEqual(version.version, probe.version)
+        self.assertEqual(version.package, probe.package)
         self.assertEqual(version.comment, probe.comment)
         self.assertEqual(version.docurl, probe.docurl)
         self.assertEqual(version.description, probe.description)
@@ -756,7 +815,7 @@ class ListProbesAPIViewTests(TenantTestCase):
     def test_post_probe(self):
         data = {
             'name': 'poem-probe',
-            'version': '0.1.11',
+            'package': 'nagios-plugins-argo (0.1.11)',
             'description': 'Probe inspects POEM service.',
             'comment': 'Initial version.',
             'repository': 'https://github.com/ARGOeu/nagios-plugins-argo',
@@ -771,6 +830,7 @@ class ListProbesAPIViewTests(TenantTestCase):
         probe = admin_models.Probe.objects.get(name='poem-probe')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(probe.version, '0.1.11')
+        self.assertEqual(probe.package, self.package2)
         self.assertEqual(probe.description, 'Probe inspects POEM service.')
         self.assertEqual(probe.comment, 'Initial version.')
         self.assertEqual(probe.repository,
@@ -788,6 +848,7 @@ class ListProbesAPIViewTests(TenantTestCase):
         )
         self.assertEqual(version.name, probe.name)
         self.assertEqual(version.version, probe.version)
+        self.assertEqual(version.package, probe.package)
         self.assertEqual(version.comment, probe.comment)
         self.assertEqual(version.docurl, probe.docurl)
         self.assertEqual(version.description, probe.description)
@@ -796,7 +857,7 @@ class ListProbesAPIViewTests(TenantTestCase):
     def test_post_probe_with_name_which_already_exists(self):
         data = {
             'name': 'ams-probe',
-            'version': '0.1.11',
+            'package': 'nagios-plugins-argo (0.1.11)',
             'description': 'Probe inspects POEM service.',
             'comment': 'Initial version.',
             'repository': 'https://github.com/ARGOeu/nagios-plugins-argo',
@@ -817,12 +878,12 @@ class ListProbesAPIViewTests(TenantTestCase):
         )
 
     def test_delete_probe(self):
-        self.assertEqual(admin_models.Probe.objects.all().count(), 3)
+        self.assertEqual(admin_models.Probe.objects.all().count(), 4)
         request = self.factory.delete(self.url + 'ams-publisher-probe')
         force_authenticate(request, user=self.user)
         response = self.view(request, 'ams-publisher-probe')
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-        self.assertEqual(admin_models.Probe.objects.all().count(), 2)
+        self.assertEqual(admin_models.Probe.objects.all().count(), 3)
 
     def test_delete_probe_associated_to_metric_template(self):
         request = self.factory.delete(self.url + 'argo-web-api')
@@ -937,9 +998,35 @@ class ListServicesAPIViewTests(TenantTestCase):
             name='Active'
         )
 
+        repo = admin_models.YumRepo.objects.create(name='repo-1')
+
+        package1 = admin_models.Package.objects.create(
+            name='nagios-plugins-onedata',
+            version='3.2.0',
+            repo=repo
+        )
+
+        package2 = admin_models.Package.objects.create(
+            name='nagios-plugins-check_ssl_cert',
+            version='1.84.0',
+            repo=repo
+        )
+
+        package3 = admin_models.Package.objects.create(
+            name='nagios-plugins-cert',
+            version='1.0.0',
+            repo=repo
+        )
+
+        package4 = admin_models.Package.objects.create(
+            name='emi.dcache.srm-probes',
+            version='1.0.1',
+            repo=repo
+        )
+
         probe1 = admin_models.Probe.objects.create(
             name='check_oneprovider',
-            version='3.2.0',
+            package=package1,
             description='Each of Onedata services expose an endpoint with '
                         'health data in XML for all worker processes running '
                         'on a given site.',
@@ -951,7 +1038,7 @@ class ListServicesAPIViewTests(TenantTestCase):
 
         probe2 = admin_models.Probe.objects.create(
             name='check_ssl_cert',
-            version='1.84.0',
+            package=package2,
             description='A Nagios plugin to check an X.509 certificate.',
             comment='Initial version.',
             repository='https://github.com/matteocorti/check_ssl_cert',
@@ -961,7 +1048,7 @@ class ListServicesAPIViewTests(TenantTestCase):
 
         probe3 = admin_models.Probe.objects.create(
             name='CertLifetime-probe',
-            version='1.0.0',
+            package=package3,
             description='Nagios plugin for checking X509 certificate lifetime.',
             comment='Initial version.',
             repository='https://github.com/ARGOeu/nagios-plugins-cert',
@@ -971,7 +1058,7 @@ class ListServicesAPIViewTests(TenantTestCase):
 
         probe4 = admin_models.Probe.objects.create(
             name='SRM-probe',
-            version='1.0.1',
+            package=package4,
             description='SRM probe.',
             comment='Initial version.',
             repository='https://github.com/dCache/emi-builds/tree/master/'
@@ -983,6 +1070,7 @@ class ListServicesAPIViewTests(TenantTestCase):
             object_id=probe1,
             name=probe1.name,
             version=probe1.version,
+            package=probe1.package,
             description=probe1.description,
             comment=probe1.comment,
             repository=probe1.repository,
@@ -995,6 +1083,7 @@ class ListServicesAPIViewTests(TenantTestCase):
             object_id=probe2,
             name=probe2.name,
             version=probe2.version,
+            package=probe2.package,
             description=probe2.description,
             comment=probe2.comment,
             repository=probe2.repository,
@@ -1007,6 +1096,7 @@ class ListServicesAPIViewTests(TenantTestCase):
             object_id=probe3,
             name=probe3.name,
             version=probe3.version,
+            package=probe3.package,
             description=probe3.description,
             comment=probe3.comment,
             repository=probe3.repository,
@@ -1019,6 +1109,7 @@ class ListServicesAPIViewTests(TenantTestCase):
             object_id=probe4,
             name=probe4.name,
             version=probe4.version,
+            package=probe4.package,
             description=probe4.description,
             comment=probe4.comment,
             repository=probe4.repository,
@@ -1285,9 +1376,16 @@ class ListAllMetricsAPIViewTests(TenantTestCase):
         mtype1 = poem_models.MetricType.objects.create(name='Active')
         mtype2 = poem_models.MetricType.objects.create(name='Passive')
 
+        repo = admin_models.YumRepo.objects.create(name='repo-1')
+        package = admin_models.Package.objects.create(
+            name='nagios-plugins-argo',
+            version='0.1.7',
+            repo=repo
+        )
+
         probe1 = admin_models.Probe.objects.create(
             name='ams-probe',
-            version='0.1.7',
+            package=package,
             description='Probe is inspecting AMS service by trying to publish '
                         'and consume randomly generated messages.',
             comment='Initial version.',
@@ -1300,6 +1398,7 @@ class ListAllMetricsAPIViewTests(TenantTestCase):
             object_id=probe1,
             name=probe1.name,
             version=probe1.version,
+            package=probe1.package,
             description=probe1.description,
             comment=probe1.comment,
             repository=probe1.repository,
@@ -1726,9 +1825,23 @@ class ListMetricsInGroupAPIViewTests(TenantTestCase):
         mtype1 = poem_models.MetricType.objects.create(name='Active')
         mtype2 = poem_models.MetricType.objects.create(name='Passive')
 
+        repo = admin_models.YumRepo.objects.create(name='repo-1')
+
+        package1 = admin_models.Package.objects.create(
+            name='nagios-plugins-argo',
+            version='0.1.7',
+            repo=repo
+        )
+
+        package2 = admin_models.Package.objects.create(
+            name='nagios-plugins-check_ssl_cert',
+            version='1.84.0',
+            repo=repo
+        )
+
         probe1 = admin_models.Probe.objects.create(
             name='ams-probe',
-            version='0.1.7',
+            package=package1,
             description='Probe is inspecting AMS service by trying to publish '
                         'and consume randomly generated messages.',
             comment='Initial version.',
@@ -1741,7 +1854,7 @@ class ListMetricsInGroupAPIViewTests(TenantTestCase):
 
         probe2 = admin_models.Probe.objects.create(
             name='check_ssl_cert',
-            version='1.84.0',
+            package=package2,
             description='A Nagios plugin to check an X.509 certificate.',
             comment='Initial version.',
             repository='https://github.com/matteocorti/check_ssl_cert',
@@ -1753,6 +1866,7 @@ class ListMetricsInGroupAPIViewTests(TenantTestCase):
             object_id=probe1,
             name=probe1.name,
             version=probe1.version,
+            package=probe1.package,
             description=probe1.description,
             comment=probe1.comment,
             repository=probe1.repository,
@@ -1765,6 +1879,7 @@ class ListMetricsInGroupAPIViewTests(TenantTestCase):
             object_id=probe2,
             name=probe2.name,
             version=probe2.version,
+            package=probe2.package,
             description=probe2.description,
             comment=probe2.comment,
             repository=probe2.repository,
@@ -2364,9 +2479,16 @@ class ListMetricAPIViewTests(TenantTestCase):
         group = poem_models.GroupOfMetrics.objects.create(name='EGI')
         poem_models.GroupOfMetrics.objects.create(name='EUDAT')
 
+        repo = admin_models.YumRepo.objects.create(name='repo-1')
+        package = admin_models.Package.objects.create(
+            name='nagios-plugins-argo',
+            version='0.1.7',
+            repo=repo
+        )
+
         probe1 = admin_models.Probe.objects.create(
             name='ams-probe',
-            version='0.1.7',
+            package=package,
             description='Probe is inspecting AMS service by trying to publish '
                         'and consume randomly generated messages.',
             comment='Initial version.',
@@ -2379,6 +2501,7 @@ class ListMetricAPIViewTests(TenantTestCase):
             object_id=probe1,
             name=probe1.name,
             version=probe1.version,
+            package=probe1.package,
             description=probe1.description,
             comment=probe1.comment,
             repository=probe1.repository,
@@ -2900,9 +3023,22 @@ class ListVersionsAPIViewTests(TenantTestCase):
         self.url = '/api/v2/internal/version/'
         self.user = CustUser.objects.create_user(username='testuser')
 
+        repo = admin_models.YumRepo.objects.create(name='repo-1')
+
+        package1 = admin_models.Package.objects.create(
+            name='nagios-plugins-argo',
+            version='0.1.7',
+            repo=repo
+        )
+        package2 = admin_models.Package.objects.create(
+            name='nagios-plugins-argo',
+            version='0.1.11',
+            repo=repo
+        )
+
         self.probe1 = admin_models.Probe.objects.create(
             name='poem-probe',
-            version='0.1.7',
+            package=package1,
             description='Probe inspects POEM service.',
             comment='Initial version.',
             repository='https://github.com/ARGOeu/nagios-plugins-argo',
@@ -2916,6 +3052,7 @@ class ListVersionsAPIViewTests(TenantTestCase):
             object_id=self.probe1,
             name=self.probe1.name,
             version=self.probe1.version,
+            package=self.probe1.package,
             description=self.probe1.description,
             comment=self.probe1.comment,
             repository=self.probe1.repository,
@@ -2926,7 +3063,7 @@ class ListVersionsAPIViewTests(TenantTestCase):
         )
 
         self.probe1.name = 'poem-probe-new'
-        self.probe1.version = '0.1.11'
+        self.probe1.package = package2
         self.probe1.comment = 'This version added: Check POEM metric ' \
                               'configuration API'
         self.probe1.description = 'Probe inspects new POEM service.'
@@ -2940,6 +3077,7 @@ class ListVersionsAPIViewTests(TenantTestCase):
             object_id=self.probe1,
             name=self.probe1.name,
             version=self.probe1.version,
+            package=self.probe1.package,
             description=self.probe1.description,
             comment=self.probe1.comment,
             repository=self.probe1.repository,
@@ -2953,7 +3091,7 @@ class ListVersionsAPIViewTests(TenantTestCase):
 
         admin_models.Probe.objects.create(
             name='ams-probe',
-            version='0.1.7',
+            package=package1,
             description='Probe is inspecting AMS service by trying to publish '
                         'and consume randomly generated messages.',
             comment='Initial version.',
@@ -2966,7 +3104,7 @@ class ListVersionsAPIViewTests(TenantTestCase):
 
         probe2 = admin_models.Probe.objects.create(
             name='ams-publisher-probe',
-            version='0.1.11',
+            package=package2,
             description='Probe is inspecting AMS publisher',
             comment='Initial version',
             repository='https://github.com/ARGOeu/nagios-plugins-argo',
@@ -2980,6 +3118,7 @@ class ListVersionsAPIViewTests(TenantTestCase):
             object_id=probe2,
             name=probe2.name,
             version=probe2.version,
+            package=probe2.package,
             description=probe2.description,
             comment=probe2.comment,
             repository=probe2.repository,
@@ -2991,6 +3130,9 @@ class ListVersionsAPIViewTests(TenantTestCase):
 
         self.mtype1 = admin_models.MetricTemplateType.objects.create(
             name='Active'
+        )
+        self.mtype2 = admin_models.MetricTemplateType.objects.create(
+            name='Passive'
         )
 
         self.metrictemplate1 = admin_models.MetricTemplate.objects.create(
@@ -3047,6 +3189,51 @@ class ListVersionsAPIViewTests(TenantTestCase):
             version_user=self.user.username
         )
 
+        self.metrictemplate2 = admin_models.MetricTemplate.objects.create(
+            name='org.apel.APEL-Pub',
+            mtype=self.mtype2,
+            flags='["OBSESS 1", "PASSIVE 1"]'
+        )
+
+        self.ver6 = admin_models.MetricTemplateHistory.objects.create(
+            object_id=self.metrictemplate2,
+            name=self.metrictemplate2.name,
+            mtype=self.metrictemplate2.mtype,
+            probekey=self.metrictemplate2.probekey,
+            probeexecutable=self.metrictemplate2.probeexecutable,
+            config=self.metrictemplate2.config,
+            attribute=self.metrictemplate2.attribute,
+            dependency=self.metrictemplate2.dependency,
+            flags=self.metrictemplate2.flags,
+            files=self.metrictemplate2.files,
+            parameter=self.metrictemplate2.parameter,
+            fileparameter=self.metrictemplate2.fileparameter,
+            date_created=datetime.datetime.now(),
+            version_comment='Initial version.',
+            version_user=self.user.username
+        )
+
+        self.metrictemplate2.name = 'org.apel.APEL-Pub-new'
+        self.metrictemplate2.save()
+
+        self.ver7 = admin_models.MetricTemplateHistory.objects.create(
+            object_id=self.metrictemplate2,
+            name=self.metrictemplate2.name,
+            mtype=self.metrictemplate2.mtype,
+            probekey=self.metrictemplate2.probekey,
+            probeexecutable=self.metrictemplate2.probeexecutable,
+            config=self.metrictemplate2.config,
+            attribute=self.metrictemplate2.attribute,
+            dependency=self.metrictemplate2.dependency,
+            flags=self.metrictemplate2.flags,
+            files=self.metrictemplate2.files,
+            parameter=self.metrictemplate2.parameter,
+            fileparameter=self.metrictemplate2.fileparameter,
+            date_created=datetime.datetime.now(),
+            version_comment=json.dumps([{'changed': {'fields': ['name']}}]),
+            version_user=self.user.username
+        )
+
     def test_get_versions_of_probes(self):
         request = self.factory.get(self.url + 'probe/poem-probe-new')
         force_authenticate(request, user=self.user)
@@ -3060,6 +3247,7 @@ class ListVersionsAPIViewTests(TenantTestCase):
                     'fields': {
                         'name': 'poem-probe-new',
                         'version': '0.1.11',
+                        'package': 'nagios-plugins-argo (0.1.11)',
                         'description': 'Probe inspects new POEM service.',
                         'comment': 'This version added: Check POEM metric '
                                    'configuration API',
@@ -3082,6 +3270,7 @@ class ListVersionsAPIViewTests(TenantTestCase):
                     'fields': {
                         'name': 'poem-probe',
                         'version': '0.1.7',
+                        'package': 'nagios-plugins-argo (0.1.7)',
                         'description': 'Probe inspects POEM service.',
                         'comment': 'Initial version.',
                         'repository': 'https://github.com/ARGOeu/nagios-'
@@ -3184,6 +3373,76 @@ class ListVersionsAPIViewTests(TenantTestCase):
             ]
         )
 
+    def test_get_versions_of_passive_metric_template(self):
+        request = self.factory.get(self.url + 'org.apel.APEL-Pub-new')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'metrictemplate', 'org.apel.APEL-Pub-new')
+        self.assertEqual(
+            response.data,
+            [
+                {
+                    'id': self.ver7.id,
+                    'object_repr':
+                        'org.apel.APEL-Pub-new',
+                    'fields': {
+                        'name': 'org.apel.APEL-Pub-new',
+                        'mtype': self.mtype2.name,
+                        'probeversion': '',
+                        'parent': '',
+                        'probeexecutable': '',
+                        'config': [],
+                        'attribute': [],
+                        'dependency': [],
+                        'flags': [
+                            {'key': 'OBSESS', 'value': '1'},
+                            {'key': 'PASSIVE', 'value': '1'}
+                        ],
+                        'files': [],
+                        'parameter': [],
+                        'fileparameter': []
+                    },
+                    'user': 'testuser',
+                    'date_created': datetime.datetime.strftime(
+                        self.ver7.date_created, '%Y-%m-%d %H:%M:%S'
+                    ),
+                    'comment': 'Changed name.',
+                    'version': datetime.datetime.strftime(
+                        self.ver7.date_created, '%Y-%m-%d %H:%M:%S'
+                    )
+                },
+                {
+                    'id': self.ver6.id,
+                    'object_repr':
+                        'org.apel.APEL-Pub',
+                    'fields': {
+                        'name': 'org.apel.APEL-Pub',
+                        'mtype': self.mtype2.name,
+                        'probeversion': '',
+                        'parent': '',
+                        'probeexecutable': '',
+                        'config': [],
+                        'attribute': [],
+                        'dependency': [],
+                        'flags': [
+                            {'key': 'OBSESS', 'value': '1'},
+                            {'key': 'PASSIVE', 'value': '1'}
+                        ],
+                        'files': [],
+                        'parameter': [],
+                        'fileparameter': []
+                    },
+                    'user': 'testuser',
+                    'date_created': datetime.datetime.strftime(
+                        self.ver6.date_created, '%Y-%m-%d %H:%M:%S'
+                    ),
+                    'comment': 'Initial version.',
+                    'version': datetime.datetime.strftime(
+                        self.ver6.date_created, '%Y-%m-%d %H:%M:%S'
+                    )
+                }
+            ]
+        )
+
     def test_get_nonexisting_probe_version(self):
         request = self.factory.get(self.url + 'probe/ams-probe')
         force_authenticate(request, user=self.user)
@@ -3254,9 +3513,22 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
 
         self.ct = ContentType.objects.get_for_model(poem_models.Metric)
 
+        repo = admin_models.YumRepo.objects.create(name='repo-1')
+
+        package1 = admin_models.Package.objects.create(
+            name='nagios-plugins-argo',
+            version='0.1.7',
+            repo=repo
+        )
+        package2 = admin_models.Package.objects.create(
+            name='nagios-plugins-argo',
+            version='0.1.11',
+            repo=repo
+        )
+
         probe1 = admin_models.Probe.objects.create(
             name='ams-probe',
-            version='0.1.7',
+            package=package1,
             description='Probe is inspecting AMS service by trying to publish '
                         'and consume randomly generated messages.',
             comment='Initial version.',
@@ -3269,6 +3541,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             object_id=probe1,
             name=probe1.name,
             version=probe1.version,
+            package=probe1.package,
             description=probe1.description,
             comment=probe1.comment,
             repository=probe1.repository,
@@ -3278,7 +3551,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             version_user=self.user.username,
         )
 
-        probe1.version = '0.1.11'
+        probe1.package = package2
         probe1.comment = 'Newer version.'
         probe1.save()
 
@@ -3286,6 +3559,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             object_id=probe1,
             name=probe1.name,
             version=probe1.version,
+            package=probe1.package,
             description=probe1.description,
             comment=probe1.comment,
             repository=probe1.repository,
@@ -4062,9 +4336,22 @@ class ImportMetricsAPIViewTests(TenantTestCase):
         mt = admin_models.MetricTemplateType.objects.create(name='Active')
         poem_models.MetricType.objects.create(name='Active')
 
+        repo = admin_models.YumRepo.objects.create(name='repo-1')
+
+        package1 = admin_models.Package.objects.create(
+            name='nagios-plugins-argo',
+            version='0.1.7',
+            repo=repo
+        )
+        package2 = admin_models.Package.objects.create(
+            name='nagios-plugins-argo',
+            version='0.1.11',
+            repo=repo
+        )
+
         probe1 = admin_models.Probe.objects.create(
             name='ams-probe',
-            version='0.1.7',
+            package=package1,
             description='Probe is inspecting AMS service.',
             comment='Initial version',
             repository='https://github.com/ARGOeu/nagios-plugins-argo',
@@ -4074,7 +4361,7 @@ class ImportMetricsAPIViewTests(TenantTestCase):
 
         probe2 = admin_models.Probe.objects.create(
             name='ams-publisher-probe',
-            version='0.1.11',
+            package=package2,
             description='Probe is inspecting AMS publisher running on Nagios '
                         'monitoring instances.',
             comment='New version',
@@ -4087,6 +4374,7 @@ class ImportMetricsAPIViewTests(TenantTestCase):
             object_id=probe1,
             name=probe1.name,
             version=probe1.version,
+            package=probe1.package,
             description=probe1.description,
             comment=probe1.comment,
             repository=probe1.repository,
@@ -4100,6 +4388,7 @@ class ImportMetricsAPIViewTests(TenantTestCase):
             object_id=probe2,
             name=probe2.name,
             version=probe2.version,
+            package=probe2.package,
             description=probe2.description,
             comment=probe2.comment,
             repository=probe2.repository,
@@ -4186,9 +4475,16 @@ class ListMetricTemplatesForProbeVersionAPIViewTests(TenantTestCase):
         mtype1 = admin_models.MetricTemplateType.objects.create(name='Active')
         mtype2 = admin_models.MetricTemplateType.objects.create(name='Passive')
 
+        repo = admin_models.YumRepo.objects.create(name='repo-1')
+        package1 = admin_models.Package.objects.create(
+            name='nagios-plugins-argo',
+            version='0.1.7',
+            repo=repo
+        )
+
         probe1 = admin_models.Probe.objects.create(
             name='ams-probe',
-            version='0.1.7',
+            package=package1,
             description='Probe is inspecting AMS service by trying to publish '
                         'and consume randomly generated messages.',
             comment='Initial version.',
@@ -4201,6 +4497,7 @@ class ListMetricTemplatesForProbeVersionAPIViewTests(TenantTestCase):
             object_id=probe1,
             name=probe1.name,
             version=probe1.version,
+            package=probe1.package,
             description=probe1.description,
             comment=probe1.comment,
             repository=probe1.repository,
@@ -4259,9 +4556,16 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
         self.url = '/api/v2/internal/tenantversion/'
         self.user = CustUser.objects.create_user(username='testuser')
 
+        repo = admin_models.YumRepo.objects.create(name='repo-1')
+        package1 = admin_models.Package.objects.create(
+            name='nagios-plugins-argo',
+            version='0.1.7',
+            repo=repo
+        )
+
         probe1 = admin_models.Probe.objects.create(
             name='ams-probe',
-            version='0.1.7',
+            package=package1,
             description='Probe is inspecting AMS service.',
             comment='Initial version.',
             repository='https://github.com/ARGOeu/nagios-plugins-argo',
@@ -4275,6 +4579,7 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
             object_id=probe1,
             name=probe1.name,
             version=probe1.version,
+            package=probe1.package,
             description=probe1.description,
             comment=probe1.comment,
             repository=probe1.repository,
@@ -4678,9 +4983,22 @@ class ListYumReposAPIViewTests(TenantTestCase):
 
 class HistoryHelpersTests(TenantTestCase):
     def setUp(self):
+        self.repo = admin_models.YumRepo.objects.create(name='repo-1')
+
+        package1 = admin_models.Package.objects.create(
+            name='package-1',
+            version='1.0.0',
+            repo=self.repo
+        )
+        package2 = admin_models.Package.objects.create(
+            name='package-1',
+            version='1.0.1',
+            repo=self.repo
+        )
+
         self.probe1 = admin_models.Probe.objects.create(
             name='probe-1',
-            version='1.0.0',
+            package=package1,
             description='Some description.',
             comment='Some comment.',
             repository='https://repository.url',
@@ -4702,6 +5020,7 @@ class HistoryHelpersTests(TenantTestCase):
             object_id=self.probe1,
             name=self.probe1.name,
             version=self.probe1.version,
+            package=self.probe1.package,
             description=self.probe1.description,
             comment=self.probe1.comment,
             repository=self.probe1.repository,
@@ -4710,7 +5029,7 @@ class HistoryHelpersTests(TenantTestCase):
             version_user='testuser'
         )
 
-        self.probe1.version = '1.0.1'
+        self.probe1.package = package2
         self.probe1.comment = 'New version.'
         self.probe1.save()
 
@@ -4718,6 +5037,7 @@ class HistoryHelpersTests(TenantTestCase):
             object_id=self.probe1,
             name=self.probe1.name,
             version=self.probe1.version,
+            package=self.probe1.package,
             description=self.probe1.description,
             comment=self.probe1.comment,
             repository=self.probe1.repository,
@@ -4853,8 +5173,13 @@ class HistoryHelpersTests(TenantTestCase):
         self.assertEqual(comment, 'Initial version.')
 
     def test_create_comment_for_probe(self):
+        package = admin_models.Package.objects.create(
+            name='package',
+            version='1.0.2',
+            repo=self.repo
+        )
         self.probe1.name = 'probe-2'
-        self.probe1.version = '1.0.2'
+        self.probe1.package = package
         self.probe1.description = 'Some new description.'
         self.probe1.comment = 'Newer version.'
         self.probe1.repository = 'https://repository2.url'
@@ -4866,7 +5191,7 @@ class HistoryHelpersTests(TenantTestCase):
             [
                 {'changed': {
                     'fields': [
-                        'name', 'version', 'description', 'comment',
+                        'name', 'version', 'package', 'description', 'comment',
                         'repository', 'docurl'
                     ]
                 }}
@@ -4874,9 +5199,15 @@ class HistoryHelpersTests(TenantTestCase):
         )
 
     def test_create_comment_for_probe_if_initial(self):
+        package = admin_models.Package.objects.create(
+            name='package',
+            version='1.0.2',
+            repo=self.repo
+        )
+
         probe2 = admin_models.Probe.objects.create(
             name='probe-2',
-            version='1.0.2',
+            package=package,
             description='Some new description.',
             comment='Newer version.',
             repository='https://repository2.url',

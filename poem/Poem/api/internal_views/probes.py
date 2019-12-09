@@ -1,7 +1,6 @@
-from django.contrib.contenttypes.models import ContentType
-from django.db import IntegrityError
+import datetime
 
-import json
+from django.db import IntegrityError
 
 from Poem.api import serializers
 from Poem.api.internal_views.metrictemplates import update_metrics
@@ -25,9 +24,27 @@ class ListProbes(APIView):
         if name:
             try:
                 probe = admin_models.Probe.objects.get(name=name)
-                serializer = serializers.ProbeSerializer(probe)
+                if probe.package:
+                    package = probe.package.__str__()
+                else:
+                    package = ''
 
-                return Response(serializer.data)
+                result = dict(
+                    id=probe.id,
+                    name=probe.name,
+                    version=probe.version,
+                    package=package,
+                    docurl=probe.docurl,
+                    description=probe.description,
+                    comment=probe.comment,
+                    repository=probe.repository,
+                    user=probe.user,
+                    datetime=datetime.datetime.strftime(
+                        probe.datetime, '%Y-%m-%dT%H:%M:%S.%f'
+                    )
+                )
+
+                return Response(result)
 
             except admin_models.Probe.DoesNotExist:
                 raise NotFound(status=404, detail='Probe not found')
@@ -41,10 +58,17 @@ class ListProbes(APIView):
                 nv = admin_models.ProbeHistory.objects.filter(
                     object_id=probe
                 ).count()
+
+                if probe.package:
+                    package = probe.package.__str__()
+                else:
+                    package = ''
+
                 results.append(
                     dict(
                         name=probe.name,
                         version=probe.version,
+                        package=package,
                         docurl=probe.docurl,
                         description=probe.description,
                         comment=probe.comment,
@@ -60,16 +84,20 @@ class ListProbes(APIView):
     def put(self, request):
         probe = admin_models.Probe.objects.get(id=request.data['id'])
         old_name = probe.name
-        old_version = probe.version
+        package_name = request.data['package'].split(' ')[0]
+        package_version = request.data['package'].split(' ')[1][1:-1]
+        package = admin_models.Package.objects.get(
+            name=package_name, version=package_version
+        )
+        if probe.package:
+            old_version = probe.package.version
+        else:
+            old_version = probe.version
 
         try:
-            if request.data['new_version'] in [True, 'True', 'true']:
-                probe.version = request.data['version']
-                new_nameversion = '{} ({})'.format(
-                    request.data['name'], request.data['version']
-                )
-
+            if package.version != old_version:
                 probe.name = request.data['name']
+                probe.package = package
                 probe.repository = request.data['repository']
                 probe.docurl = request.data['docurl']
                 probe.description = request.data['description']
@@ -87,7 +115,6 @@ class ListProbes(APIView):
                         )
 
                     for metrictemplate in metrictemplates:
-                        metrictemplate.probeversion = new_nameversion
                         metrictemplate.probekey = \
                             admin_models.ProbeHistory.objects.get(
                                 name=probe.name, version=probe.version
@@ -98,11 +125,11 @@ class ListProbes(APIView):
 
             else:
                 history = admin_models.ProbeHistory.objects.filter(
-                    object_id=probe
+                    name=old_name, version=old_version
                 )
                 new_data = {
                             'name': request.data['name'],
-                            'version': request.data['version'],
+                            'package': package,
                             'description': request.data['description'],
                             'comment': request.data['comment'],
                             'repository': request.data['repository'],
@@ -116,21 +143,6 @@ class ListProbes(APIView):
                 del new_data['user']
                 history.update(**new_data)
 
-                if probe.name != request.data['name']:
-                    metrictemplates = \
-                        admin_models.MetricTemplate.objects.filter(
-                            probekey__name=old_name,
-                            probekey__version=old_version
-                        )
-
-                    for metrictemplate in metrictemplates:
-                        metrictemplate.probeversion = '{} ({})'.format(
-                            request.data['name'], request.data['version']
-                        )
-                        metrictemplate.save()
-                        create_history(metrictemplate, request.user.username)
-                        update_metrics(metrictemplate, metrictemplate.name)
-
             return Response(status=status.HTTP_201_CREATED)
 
         except IntegrityError:
@@ -140,39 +152,34 @@ class ListProbes(APIView):
             )
 
     def post(self, request):
-        data = {
-            'name': request.data['name'],
-            'version': request.data['version'],
-            'repository': request.data['repository'],
-            'docurl': request.data['docurl'],
-            'description': request.data['description'],
-            'comment': request.data['comment'],
-            'user': request.user.username
-        }
-        serializer = serializers.ProbeSerializer(data=data)
+        package_name = request.data['package'].split(' ')[0]
+        package_version = request.data['package'].split(' ')[1][1:-1]
+        try:
+            probe = admin_models.Probe.objects.create(
+                name=request.data['name'],
+                package=admin_models.Package.objects.get(
+                    name=package_name, version=package_version
+                ),
+                repository=request.data['repository'],
+                docurl=request.data['docurl'],
+                description=request.data['description'],
+                comment=request.data['comment'],
+                user=request.user.username,
+                datetime=datetime.datetime.now()
+            )
 
-        if serializer.is_valid():
-            probe = serializer.save()
             create_history(probe, probe.user)
 
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(status=status.HTTP_201_CREATED)
 
-        else:
-            errors = []
-            for key, value in serializer.errors.items():
-                if serializer.errors[key]:
-                    detail = []
-                    for err in serializer.errors[key]:
-                        detail.append(err)
-                    detail = ' '.join(detail)
-                    errors.append(detail)
-
-            errors = '\\'.join(errors)
-            return Response({'detail': errors},
+        except IntegrityError:
+            return Response({'detail': 'Probe with this name already exists.'},
                             status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, name=None):
-        schemas = list(Tenant.objects.all().values_list('schema_name', flat=True))
+        schemas = list(
+            Tenant.objects.all().values_list('schema_name', flat=True)
+        )
         schemas.remove(get_public_schema_name())
         if name:
             try:
