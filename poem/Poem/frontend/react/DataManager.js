@@ -282,6 +282,12 @@ export class Backend {
       .catch(err => alert('Something went wrong: ' + err))
   }
 
+  fetchPackagebyNameversion(nameversion) {
+    return fetch('/api/v2/internal/packages/' + nameversion)
+      .then(response => response.json())
+      .catch(err => alert('Something went wrong: ' + err))
+  }
+
   changeMetricProfile(profile) {
     return this.send(
       '/api/v2/internal/metricprofiles/',
@@ -448,6 +454,14 @@ export class Backend {
       'POST',
       profile
     )
+  }
+
+  addPackage(pkg) {
+    return this.send(
+      '/api/v2/internal/packages/',
+      'POST',
+      pkg
+    );
   }
 
   deleteMetricProfile(id) {
