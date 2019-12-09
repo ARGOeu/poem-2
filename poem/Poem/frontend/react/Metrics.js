@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { Backend } from './DataManager';
 import { Link } from 'react-router-dom';
-import { LoadingAnim, BaseArgoView, NotifyOk, FancyErrorMessage } from './UIElements';
+import { LoadingAnim, BaseArgoView, NotifyOk, FancyErrorMessage, DropdownFilterComponent } from './UIElements';
 import ReactTable from 'react-table';
 import { Formik, Form, Field, FieldArray } from 'formik';
 import {
@@ -32,21 +32,6 @@ const DefaultFilterComponent = ({value, onChange, field}) => (
     onChange={onChange}
     style={{width: '100%'}}
   />
-)
-
-const DropdownFilterComponent = ({value, onChange, data}) => (
-  <select
-    onChange={onChange}
-    style={{width: '100%'}}
-    value={value}
-  >
-    <option key={0} value=''>Show all</option>
-    {
-      data.map((name, i) => 
-        <option key={i + 1} value={name}>{name}</option>
-      )
-    }
-  </select>
 )
 
 

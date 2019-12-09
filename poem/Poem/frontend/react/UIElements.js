@@ -511,3 +511,18 @@ export const AutocompleteField = ({lists, onselect_handler, field, val, icon, se
     />
   );
 };
+
+export const DropdownFilterComponent = ({value, onChange, data}) => (
+  <select
+    onChange={onChange}
+    style={{width: '100%'}}
+    value={value}
+  >
+    <option key={0} value=''>Show all</option>
+    {
+      data.map((name, i) => 
+        <option key={i + 1} value={name}>{name}</option>
+      )
+    }
+  </select>
+)
