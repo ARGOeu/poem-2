@@ -41,6 +41,7 @@ class ProbeHistory(models.Model):
     object_id = models.ForeignKey(Probe, on_delete=models.CASCADE)
     name = models.CharField(max_length=128)
     version = models.CharField(max_length=28)
+    package = models.ForeignKey(Package,  null=True, on_delete=models.SET_NULL)
     description = models.CharField(max_length=1024)
     comment = models.CharField(max_length=512)
     repository = models.CharField(max_length=512)
@@ -56,7 +57,10 @@ class ProbeHistory(models.Model):
         unique_together = [['name', 'version']]
 
     def __str__(self):
-        return u'%s (%s)' % (self.name, self.version)
+        if self.package:
+            return u'%s (%s)' % (self.name, self.package.version)
+        else:
+            return u'%s (%s)' % (self.name, self.version)
 
     def natural_key(self):
         return (self.name, self.version)
