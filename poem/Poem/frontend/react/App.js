@@ -32,6 +32,7 @@ import { ThresholdsProfilesList, ThresholdsProfilesChange } from './ThresholdPro
 import Cookies from 'universal-cookie';
 
 import './App.css';
+import { PackageList } from './Package';
 
 
 const NavigationBarWithRouter = withRouter(NavigationBar);
@@ -191,6 +192,7 @@ const SuperAdminRouteSwitch = ({props}) => (
     <Route exact path='/ui/yumrepos/' render={props => <YumRepoList {...props}/>}/>
     <Route exact path='/ui/yumrepos/add' render={props => <YumRepoChange addview={true} {...props}/>}/>
     <Route exact path='/ui/yumrepos/:name' render={props => <YumRepoChange {...props}/>}/>
+    <Route exact path='/ui/packages/' render={props => <PackageList {...props}/>}/>
     <Route exact path="/ui/administration" component={SuperAdminAdministration}/>
     <Route exact path="/ui/administration/users" component={UsersList} />
     <Route exact path="/ui/administration/users/add"
