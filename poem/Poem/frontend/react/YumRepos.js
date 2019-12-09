@@ -231,7 +231,7 @@ export class YumRepoChange extends Component {
             NotifyOk({
               msg: 'YUM repo successfully changed',
               title: 'Changed',
-              callback: () => this.history.push('/ui/yumrepos/')
+              callback: () => this.history.push('/ui/yumrepos')
             });
           }
         })
