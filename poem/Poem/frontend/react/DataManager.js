@@ -376,6 +376,14 @@ export class Backend {
     );
   }
 
+  changePackage(pkg) {
+    return this.send(
+      '/api/v2/internal/packages/',
+      'PUT',
+      pkg
+    );
+  }
+
   addAggregation(profile) {
     return this.send(
       '/api/v2/internal/aggregations/',

@@ -194,6 +194,7 @@ const SuperAdminRouteSwitch = ({props}) => (
     <Route exact path='/ui/yumrepos/:name' render={props => <YumRepoChange {...props}/>}/>
     <Route exact path='/ui/packages/' render={props => <PackageList {...props}/>}/>
     <Route exact path='/ui/packages/add' render={props => <PackageChange addview={true} {...props}/>}/>
+    <Route exact path='/ui/packages/:nameversion' render={props => <PackageChange {...props}/>}/>
     <Route exact path="/ui/administration" component={SuperAdminAdministration}/>
     <Route exact path="/ui/administration/users" component={UsersList} />
     <Route exact path="/ui/administration/users/add"

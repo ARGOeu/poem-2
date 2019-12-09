@@ -229,11 +229,34 @@ export class PackageChange extends Component {
         .then(response => {
           if (!response.ok) {
             response.json()
-            NotificationManager.error(json.detail, 'Error');
+              .then(json => {
+                NotificationManager.error(json.detail, 'Error');
+              });
           } else {
             NotifyOk({
               msg: 'Package successfully added',
               title: 'Added',
+              callback: () => this.history.push('/ui/packages')
+            });
+          };
+        });
+    } else {
+      this.backend.changePackage({
+        id: values.id,
+        name: values.name,
+        version: values.version,
+        repo: values.repo
+      })
+        .then(response => {
+          if (!response.ok) {
+            response.json()
+              .then(json => {
+                NotificationManager.error(json.detail, 'Erro');
+              });
+          } else {
+            NotifyOk({
+              msg: 'Package successfully changed',
+              title: 'Changed',
               callback: () => this.history.push('/ui/packages')
             });
           };
@@ -254,6 +277,16 @@ export class PackageChange extends Component {
               write_perm: localStorage.getItem('authIsSuperuser') === 'true',
               loading: false
             });
+          } else {
+            this.backend.fetchPackagebyNameversion(this.nameversion)
+              .then(pkg => {
+                this.setState({
+                  pkg: pkg,
+                  list_repos: list_repos,
+                  write_perm: localStorage.getItem('authIsSuperuser') === 'true',
+                  loading: false
+                });
+              });
           };
       });
   };
