@@ -6,13 +6,23 @@ class PackageManager(models.Manager):
         return self.get(name=name, version=version)
 
 
+class YumRepoManager(models.Manager):
+    def get_by_natural_key(self, name):
+        return self.get(name=name)
+
+
 class YumRepo(models.Model):
     name = models.TextField(unique=True)
     content = models.TextField(blank=True)
     description = models.TextField()
 
+    objects = YumRepoManager()
+
     class Meta:
         app_label = 'poem_super_admin'
+
+    def natural_key(self):
+        return (self.name,)
 
 
 class Package(models.Model):
