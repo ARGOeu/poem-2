@@ -3,7 +3,7 @@ from django.db import models
 from Poem.poem_super_admin.models import ProbeHistory
 
 
-class MetricTemplateTypeManager(models.Manager):
+class MetricTemplateManager(models.Manager):
     def get_by_natural_key(self, name):
         return self.get(name=name)
 
@@ -12,7 +12,7 @@ class MetricTemplateType(models.Model):
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=128)
 
-    objects = MetricTemplateTypeManager()
+    objects = MetricTemplateManager()
 
     class Meta:
         app_label = 'poem_super_admin'
@@ -40,12 +40,17 @@ class MetricTemplate(models.Model):
     parameter = models.CharField(max_length=1024)
     fileparameter = models.CharField(max_length=1024)
 
+    objects = MetricTemplateManager()
+
     class Meta:
         app_label = 'poem_super_admin'
         verbose_name = 'Metric template'
 
     def __str__(self):
         return u'%s' % self.name
+
+    def natural_key(self):
+        return (self.name,)
 
 
 class MetricTemplateHistory(models.Model):
