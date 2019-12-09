@@ -5809,25 +5809,25 @@ class ListPackagesAPIViewTests(TenantTestCase):
         self.url = '/api/v2/internal/packages/'
         self.user = CustUser.objects.create_user(username='testuser')
 
-        repo1 = admin_models.YumRepo.objects.create(name='repo-1')
-        repo2 = admin_models.YumRepo.objects.create(name='repo-2')
+        self.repo1 = admin_models.YumRepo.objects.create(name='repo-1')
+        self.repo2 = admin_models.YumRepo.objects.create(name='repo-2')
 
         self.package1 = admin_models.Package.objects.create(
             name='nagios-plugins-argo',
             version='0.1.11',
-            repo=repo1
+            repo=self.repo1
         )
 
-        self.package2 = admin_models.Package.objects.create(
+        admin_models.Package.objects.create(
             name='nagios-plugins-globus',
             version='0.1.5',
-            repo=repo2
+            repo=self.repo2
         )
 
-        self.package3 = admin_models.Package.objects.create(
+        admin_models.Package.objects.create(
             name='nagios-plugins-fedcloud',
             version='0.5.0',
-            repo=repo2
+            repo=self.repo2
         )
 
     def test_get_list_of_packages(self):
@@ -5880,3 +5880,52 @@ class ListPackagesAPIViewTests(TenantTestCase):
         response = self.view(request, 'nonexisting-0.1.1')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(response.data, {'detail': 'Package not found.'})
+
+    def test_post_package(self):
+        data = {
+            'name': 'nagios-plugins-activemq',
+            'version': '1.0.0',
+            'repo': 'repo-1'
+        }
+        self.assertEqual(admin_models.Package.objects.all().count(), 3)
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(admin_models.Package.objects.all().count(), 4)
+        package = admin_models.Package.objects.get(
+            name='nagios-plugins-activemq', version='1.0.0'
+        )
+        self.assertEqual(package.repo, self.repo1)
+
+    def test_post_package_with_name_and_version_which_already_exist(self):
+        data = {
+            'name': 'nagios-plugins-argo',
+            'version': '0.1.11',
+            'repo': 'repo-1'
+        }
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data,
+            {'detail': 'Package with this name and version already exists.'}
+        )
+
+    def test_post_package_with_name_that_exists_and_new_version(self):
+        data = {
+            'name': 'nagios-plugins-argo',
+            'version': '0.1.7',
+            'repo': 'repo-2'
+        }
+        self.assertEqual(admin_models.Package.objects.all().count(), 3)
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(admin_models.Package.objects.all().count(), 4)
+        package = admin_models.Package.objects.get(
+            name='nagios-plugins-argo', version='0.1.7'
+        )
+        self.assertEqual(package.repo, self.repo2)
