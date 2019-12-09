@@ -5929,3 +5929,37 @@ class ListPackagesAPIViewTests(TenantTestCase):
             name='nagios-plugins-argo', version='0.1.7'
         )
         self.assertEqual(package.repo, self.repo2)
+
+    def test_put_package(self):
+        data = {
+            'id': self.package1.id,
+            'name': 'nagios-plugins-argo2',
+            'version': '0.1.7',
+            'repo': 'repo-2'
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        package = admin_models.Package.objects.get(id=self.package1.id)
+        self.assertEqual(package.name, 'nagios-plugins-argo2')
+        self.assertEqual(package.version, '0.1.7')
+        self.assertEqual(package.repo, self.repo2)
+
+    def test_put_package_with_already_existing_name_and_version(self):
+        data = {
+            'id': self.package1.id,
+            'name': 'nagios-plugins-globus',
+            'version': '0.1.5',
+            'repo': 'repo-1'
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data,
+            {'detail': 'Package with this name and version already exists.'}
+        )

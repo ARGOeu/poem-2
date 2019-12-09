@@ -66,3 +66,22 @@ class ListPackages(APIView):
                      'Package with this name and version already exists.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+    def put(self, request):
+        package = admin_models.Package.objects.get(id=request.data['id'])
+        try:
+            package.name = request.data['name']
+            package.version = request.data['version']
+            package.repo = admin_models.YumRepo.objects.get(
+                name=request.data['repo']
+            )
+            package.save()
+
+            return Response(status=status.HTTP_201_CREATED)
+
+        except IntegrityError:
+            return Response(
+                {'detail':
+                     'Package with this name and version already exists.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
