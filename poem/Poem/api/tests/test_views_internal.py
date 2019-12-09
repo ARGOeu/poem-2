@@ -5963,3 +5963,26 @@ class ListPackagesAPIViewTests(TenantTestCase):
             response.data,
             {'detail': 'Package with this name and version already exists.'}
         )
+
+    def test_delete_package(self):
+        self.assertEqual(admin_models.Package.objects.all().count(), 3)
+        request = self.factory.delete(self.url + 'nagios-plugins-argo-0.1.11')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'nagios-plugins-argo-0.1.11')
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertRaises(
+            admin_models.Package.DoesNotExist,
+            admin_models.Package.objects.get,
+            name='nagios-plugins-argo'
+        )
+        self.assertEqual(admin_models.Package.objects.all().count(), 2)
+
+    def test_delete_nonexisting_package(self):
+        request = self.factory.delete(self.url + 'nonexisting-0.1.1')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'nonexisting-0.1.1')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(
+            response.data,
+            {'detail': 'Package not found.'}
+        )

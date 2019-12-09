@@ -11,13 +11,15 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 
+nv = compile('(\S+)-(.*)')
+
+
 class ListPackages(APIView):
     authentication_classes = (SessionAuthentication,)
 
     def get(self, request, nameversion=None):
         if nameversion:
             try:
-                nv = compile('(\S+)-(.*)')
                 package_name, package_version = nv.match(nameversion).groups()
                 package = admin_models.Package.objects.get(
                     name=package_name, version=package_version
@@ -85,3 +87,15 @@ class ListPackages(APIView):
                      'Package with this name and version already exists.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+    def delete(self, request, nameversion):
+        package_name, package_version = nv.match(nameversion).groups()
+        try:
+            admin_models.Package.objects.get(
+                name=package_name, version=package_version
+            ).delete()
+
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
+        except admin_models.Package.DoesNotExist:
+            raise NotFound(status=404, detail='Package not found.')
