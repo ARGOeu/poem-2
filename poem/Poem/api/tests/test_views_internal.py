@@ -5800,3 +5800,83 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(response.status.code, status.HTTP_404_NOT_FOUND)
+
+
+class ListPackagesAPIViewTests(TenantTestCase):
+    def setUp(self):
+        self.factory = TenantRequestFactory(self.tenant)
+        self.view = views.ListPackages.as_view()
+        self.url = '/api/v2/internal/packages/'
+        self.user = CustUser.objects.create_user(username='testuser')
+
+        repo1 = admin_models.YumRepo.objects.create(name='repo-1')
+        repo2 = admin_models.YumRepo.objects.create(name='repo-2')
+
+        self.package1 = admin_models.Package.objects.create(
+            name='nagios-plugins-argo',
+            version='0.1.11',
+            repo=repo1
+        )
+
+        self.package2 = admin_models.Package.objects.create(
+            name='nagios-plugins-globus',
+            version='0.1.5',
+            repo=repo2
+        )
+
+        self.package3 = admin_models.Package.objects.create(
+            name='nagios-plugins-fedcloud',
+            version='0.5.0',
+            repo=repo2
+        )
+
+    def test_get_list_of_packages(self):
+        request = self.factory.get(self.url)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(
+            response.data,
+            [
+                {
+                    'name': 'nagios-plugins-argo',
+                    'version': '0.1.11',
+                    'repo': 'repo-1'
+                },
+                {
+                    'name': 'nagios-plugins-fedcloud',
+                    'version': '0.5.0',
+                    'repo': 'repo-2'
+                },
+                {
+                    'name': 'nagios-plugins-globus',
+                    'version': '0.1.5',
+                    'repo': 'repo-2'
+                }
+            ]
+        )
+
+    def test_access_denied_if_no_authn(self):
+        request = self.factory.get(self.url)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_get_package_by_name_and_version(self):
+        request = self.factory.get(self.url + 'nagios-plugins-argo-0.1.11')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'nagios-plugins-argo-0.1.11')
+        self.assertEqual(
+            response.data,
+            {
+                'id': self.package1.id,
+                'name': 'nagios-plugins-argo',
+                'version': '0.1.11',
+                'repo': 'repo-1'
+            }
+        )
+
+    def test_get_package_by_nonexisting_name_and_version(self):
+        request = self.factory.get(self.url + 'nonexisting-0.1.1')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'nonexisting-0.1.1')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data, {'detail': 'Package not found.'})
