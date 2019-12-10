@@ -678,30 +678,30 @@ export class MetricChange extends Component {
         this.backend.fetchMetricByName(this.name),
         this.backend.fetchMetricUserGroups()
       ]).then(([metrics, usergroups]) => {
-        metrics.probekey ? 
-        this.backend.fetchVersions('probe', metrics.probeversion.split(' ')[0])
-          .then(probe => {
-            let fields = {};
-            probe.forEach((e) => {
-              if (e.id === metrics.probekey) {
-                fields = e.fields;
-              }
+        metrics.probeversion ? 
+          this.backend.fetchVersions('probe', metrics.probeversion.split(' ')[0])
+            .then(probe => {
+              let fields = {};
+              probe.forEach((e) => {
+                if (e.object_repr === metrics.probeversion) {
+                  fields = e.fields;
+                }
+              })
+              this.setState({
+                metric: metrics,
+                probe: fields,
+                groups: usergroups,
+                loading: false,
+                write_perm: localStorage.getItem('authIsSuperuser') === 'true' || usergroups.indexOf(metrics.group) >= 0,
+              })
             })
+          :
             this.setState({
               metric: metrics,
-              probe: fields,
               groups: usergroups,
               loading: false,
               write_perm: localStorage.getItem('authIsSuperuser') === 'true' || usergroups.indexOf(metrics.group) >= 0,
             })
-          })
-          :
-          this.setState({
-            metric: metrics,
-            groups: usergroups,
-            loading: false,
-            write_perm: localStorage.getItem('authIsSuperuser') === 'true' || usergroups.indexOf(metrics.group) >= 0,
-          })
       })
     }
   }

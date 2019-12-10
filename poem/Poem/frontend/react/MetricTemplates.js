@@ -302,12 +302,12 @@ function MetricTemplateComponent(cloneview=false) {
               mlist.push(e.name);
             });
   
-            metrictemplate.probekey ?
+            metrictemplate.probeversion ?
               this.backend.fetchVersions('probe', metrictemplate.probeversion.split(' ')[0])
                 .then(probe => {
                   let fields = {};
                   probe.forEach((e) => {
-                    if (e.id === metrictemplate.probekey) {
+                    if (e.object_repr === metrictemplate.probeversion) {
                       fields = e.fields;
                     }
                   });
