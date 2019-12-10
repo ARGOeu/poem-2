@@ -29,6 +29,13 @@ class ListProbes(APIView):
                 else:
                     package = ''
 
+                if probe.datetime:
+                    probe_datetime = datetime.datetime.strftime(
+                        probe.datetime, '%Y-%m-%dT%H:%M:%S.%f'
+                    )
+                else:
+                    probe_datetime = ''
+
                 result = dict(
                     id=probe.id,
                     name=probe.name,
@@ -39,9 +46,7 @@ class ListProbes(APIView):
                     comment=probe.comment,
                     repository=probe.repository,
                     user=probe.user,
-                    datetime=datetime.datetime.strftime(
-                        probe.datetime, '%Y-%m-%dT%H:%M:%S.%f'
-                    )
+                    datetime=probe_datetime
                 )
 
                 return Response(result)

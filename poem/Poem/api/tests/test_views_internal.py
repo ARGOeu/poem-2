@@ -406,7 +406,7 @@ class ListProbesAPIViewTests(TenantTestCase):
             datetime=datetime.datetime.now()
         )
 
-        probe2 = admin_models.Probe.objects.create(
+        self.probe2 = admin_models.Probe.objects.create(
             name='argo-web-api',
             package=self.package1,
             description='This is a probe for checking AR and status reports are'
@@ -414,9 +414,7 @@ class ListProbesAPIViewTests(TenantTestCase):
             comment='Initial version.',
             repository='https://github.com/ARGOeu/nagios-plugins-argo',
             docurl='https://github.com/ARGOeu/nagios-plugins-argo/blob/master/'
-                   'README.md',
-            user='testuser',
-            datetime=datetime.datetime.now()
+                   'README.md'
         )
 
         probe3 = admin_models.Probe.objects.create(
@@ -459,14 +457,14 @@ class ListProbesAPIViewTests(TenantTestCase):
         )
 
         pv = admin_models.ProbeHistory.objects.create(
-            object_id=probe2,
-            name=probe2.name,
-            version=probe2.version,
-            package=probe2.package,
-            description=probe2.description,
-            comment=probe2.comment,
-            repository=probe2.repository,
-            docurl=probe2.docurl,
+            object_id=self.probe2,
+            name=self.probe2.name,
+            version=self.probe2.version,
+            package=self.probe2.package,
+            description=self.probe2.description,
+            comment=self.probe2.comment,
+            repository=self.probe2.repository,
+            docurl=self.probe2.docurl,
             version_comment='Initial version.',
             version_user=self.user.username
         )
@@ -613,6 +611,29 @@ class ListProbesAPIViewTests(TenantTestCase):
                     self.probe1.datetime,
                     '%Y-%m-%dT%H:%M:%S.%f'
                 ),
+            }
+        )
+
+    def test_get_probe_by_name_if_no_datetime_nor_user(self):
+        request = self.factory.get(self.url + 'argo-web-api')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'argo-web-api')
+        self.assertEqual(
+            response.data,
+            {
+                'id': self.probe2.id,
+                'name': 'argo-web-api',
+                'version': '0.1.7',
+                'package': 'nagios-plugins-argo (0.1.7)',
+                'docurl':
+                    'https://github.com/ARGOeu/nagios-plugins-argo/blob/master/'
+                    'README.md',
+                'description': 'This is a probe for checking AR and status '
+                               'reports are properly working.',
+                'comment': 'Initial version.',
+                'repository': 'https://github.com/ARGOeu/nagios-plugins-argo',
+                'user': '',
+                'datetime': ''
             }
         )
 
