@@ -882,7 +882,7 @@ export function HistoryComponent(obj) {
                           </Button>
                         </th>
                       }
-                      {obj === 'probe' && <th scope='col'>Version</th>}
+                      <th scope='col'>Version</th>
                       <th scope='col'>Date/time</th>
                       <th scope='col'>User</th>
                       <th scope='col'>Comment</th>
