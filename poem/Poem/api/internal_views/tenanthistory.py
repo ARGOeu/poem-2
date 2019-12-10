@@ -8,7 +8,6 @@ from Poem.api.internal_views.utils import one_value_inline, two_value_inline
 from Poem.api.views import NotFound
 from Poem.helpers.versioned_comments import new_comment
 from Poem.poem import models as poem_models
-from Poem.poem_super_admin import models as admin_models
 
 from rest_framework import status
 from rest_framework.authentication import SessionAuthentication
@@ -51,11 +50,10 @@ class ListTenantVersions(APIView):
                             'name': fields0['name'],
                             'mtype': fields0['mtype'][0],
                             'group': fields0['group'][0],
-                            'probeversion':
-                                admin_models.ProbeHistory.objects.get(
-                                    name=fields0['probekey'][0],
-                                    version=fields0['probekey'][1]
-                                ).__str__(),
+                            'probeversion': '{} ({})'.format(
+                                fields0['probekey'][0],
+                                fields0['probekey'][1]
+                            ),
                             'parent': one_value_inline(fields0['parent']),
                             'probeexecutable': one_value_inline(
                                 fields0['probeexecutable']
