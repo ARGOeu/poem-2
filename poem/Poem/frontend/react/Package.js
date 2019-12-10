@@ -164,7 +164,8 @@ export class PackageChange extends Component {
         version: '',
         repo: ''
       },
-      list_repos: null,
+      list_repos: [],
+      list_probes: [],
       loading: false,
       write_perm: false,
       areYouSureModal: false,
@@ -278,11 +279,20 @@ export class PackageChange extends Component {
               loading: false
             });
           } else {
-            this.backend.fetchPackagebyNameversion(this.nameversion)
-              .then(pkg => {
+            Promise.all([
+              this.backend.fetchPackagebyNameversion(this.nameversion),
+              this.backend.fetchAllProbes()
+            ])
+              .then(([pkg, probes]) => {
+                let list_probes = [];
+                probes.forEach(e => {
+                  if (e.package === `${pkg.name} (${pkg.version})`)
+                    list_probes.push(e.name);
+                });
                 this.setState({
                   pkg: pkg,
                   list_repos: list_repos,
+                  list_probes: list_probes,
                   write_perm: localStorage.getItem('authIsSuperuser') === 'true',
                   loading: false
                 });
@@ -292,7 +302,7 @@ export class PackageChange extends Component {
   };
 
   render() {
-    const { pkg, list_repos, write_perm, loading } = this.state;
+    const { pkg, list_repos, list_probes, write_perm, loading } = this.state;
 
     if (loading)
       return <LoadingAnim/>;
@@ -380,6 +390,24 @@ export class PackageChange extends Component {
                       </FormText>
                     </Col>
                   </Row>
+                  {
+                    !this.addview &&
+                      <Row className='mt-3'>
+                        <Col md={8}>
+                          Probes:
+                          {
+                            list_probes.length > 0 &&
+                              <div>
+                                {
+                                  list_probes
+                                    .map((e, i) => <Link key={i} to={'/ui/probes/' + e}>{e}</Link>)
+                                    .reduce((prev, curr) => [prev, ', ', curr])
+                                }
+                              </div>
+                          }
+                        </Col>
+                      </Row>
+                  }
                 </FormGroup>
                 {
                   write_perm &&
