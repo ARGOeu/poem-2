@@ -2,10 +2,10 @@ import datetime
 
 from django.db import IntegrityError
 
-from Poem.api import serializers
 from Poem.api.internal_views.metrictemplates import update_metrics
 from Poem.api.views import NotFound
 from Poem.helpers.history_helpers import create_history
+from Poem.poem import models as poem_models
 from Poem.poem_super_admin import models as admin_models
 from Poem.tenants.models import Tenant
 
@@ -132,6 +132,7 @@ class ListProbes(APIView):
                 history = admin_models.ProbeHistory.objects.filter(
                     name=old_name, version=old_version
                 )
+                probekey = history[0]
                 new_data = {
                             'name': request.data['name'],
                             'package': package,
@@ -147,6 +148,11 @@ class ListProbes(APIView):
 
                 del new_data['user']
                 history.update(**new_data)
+
+                # update Metric history in case probekey name has changed:
+                if request.data['name'] != old_name:
+                    metric = poem_models.Metric.objects.get(probekey=probekey)
+                    create_history(metric, 'Super POEM user')
 
             return Response(status=status.HTTP_201_CREATED)
 
