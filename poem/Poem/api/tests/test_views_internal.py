@@ -6131,6 +6131,99 @@ class ListPackagesAPIViewTests(TenantTestCase):
             repo=self.repo2
         )
 
+        probe1 = admin_models.Probe.objects.create(
+            name='ams-probe',
+            package=self.package1,
+            description='Probe is inspecting AMS service by trying to publish '
+                        'and consume randomly generated messages.',
+            comment='Initial version.',
+            repository='https://github.com/ARGOeu/nagios-plugins-argo',
+            docurl='https://github.com/ARGOeu/nagios-plugins-argo/blob/master/'
+                   'README.md',
+            user='testuser',
+            datetime=datetime.datetime.now()
+        )
+
+        pv1 = admin_models.ProbeHistory.objects.create(
+            object_id=probe1,
+            name=probe1.name,
+            version=probe1.version,
+            package=probe1.package,
+            description=probe1.description,
+            comment=probe1.comment,
+            repository=probe1.repository,
+            docurl=probe1.docurl,
+            version_comment='Initial version.',
+            version_user=self.user.username
+        )
+
+        mtype = admin_models.MetricTemplateType.objects.create(name='Active')
+        metrictype = poem_models.MetricType.objects.create(name='Active')
+
+        group = poem_models.GroupOfMetrics.objects.create(name='TEST')
+
+        ct = ContentType.objects.get_for_model(poem_models.Metric)
+
+        mt = admin_models.MetricTemplate.objects.create(
+            name='argo.AMS-Check',
+            mtype=mtype,
+            probekey=pv1,
+            probeexecutable='["ams-probe"]',
+            config='["maxCheckAttempts 3", "timeout 60", '
+                   '"path /usr/libexec/argo-monitoring/probes/argo", '
+                   '"interval 5", "retryInterval 3"]',
+            attribute='["argo.ams_TOKEN --token"]',
+            flags='["OBSESS 1"]',
+            parameter='["--project EGI"]'
+        )
+
+        admin_models.MetricTemplateHistory.objects.create(
+            object_id=mt,
+            name=mt.name,
+            mtype=mt.mtype,
+            probekey=mt.probekey,
+            parent=mt.parent,
+            probeexecutable=mt.probeexecutable,
+            config=mt.config,
+            attribute=mt.attribute,
+            dependency=mt.dependency,
+            flags=mt.flags,
+            files=mt.files,
+            parameter=mt.parameter,
+            fileparameter=mt.fileparameter,
+            date_created=datetime.datetime.now(),
+            version_comment='Initial version.',
+            version_user=self.user.username
+        )
+
+        metric1 = poem_models.Metric.objects.create(
+            name='argo.AMS-Check',
+            group=group,
+            mtype=metrictype,
+            probekey=pv1,
+            probeexecutable='["ams-probe"]',
+            config='["maxCheckAttempts 3", "timeout 60", '
+                   '"path /usr/libexec/argo-monitoring/probes/argo", '
+                   '"interval 5", "retryInterval 3"]',
+            attribute='["argo.ams_TOKEN --token"]',
+            flags='["OBSESS 1"]',
+            parameter='["--project EGI"]'
+        )
+
+        poem_models.TenantHistory.objects.create(
+            object_id=metric1.id,
+            serialized_data=serializers.serialize(
+                'json', [metric1],
+                use_natural_foreign_keys=True,
+                use_natural_primary_keys=True
+            ),
+            object_repr=metric1.__str__(),
+            content_type=ct,
+            date_created=datetime.datetime.now(),
+            comment='Initial version.',
+            user=self.user.username
+        )
+
     def test_get_list_of_packages(self):
         request = self.factory.get(self.url)
         force_authenticate(request, user=self.user)
@@ -6247,6 +6340,31 @@ class ListPackagesAPIViewTests(TenantTestCase):
         self.assertEqual(package.name, 'nagios-plugins-argo2')
         self.assertEqual(package.version, '0.1.7')
         self.assertEqual(package.repo, self.repo2)
+        probe = admin_models.Probe.objects.get(name='ams-probe')
+        self.assertEqual(probe.package, package)
+        self.assertEqual(probe.version, '0.1.7')
+        probe_history = admin_models.ProbeHistory.objects.filter(
+            object_id=probe
+        ).order_by('-date_created')
+        self.assertEqual(probe_history.count(), 1)
+        self.assertEqual(probe_history[0].version, probe.version)
+        self.assertEqual(probe_history[0].package, probe.package)
+        mt = admin_models.MetricTemplate.objects.get(name='argo.AMS-Check')
+        self.assertEqual(mt.probekey, probe_history[0])
+        mt_history = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=mt
+        ).order_by('-date_created')
+        self.assertEqual(mt_history.count(), 1)
+        self.assertEqual(mt_history[0].probekey, probe_history[0])
+        metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
+        self.assertEqual(metric.probekey, probe_history[0])
+        metric_history = poem_models.TenantHistory.objects.filter(
+            object_repr=metric.__str__()
+        ).order_by('-date_created')
+        self.assertEqual(metric_history.count(), 2)
+        serialized_data = \
+            json.loads(metric_history[0].serialized_data)[0]['fields']
+        self.assertEqual(serialized_data['probekey'], ['ams-probe', '0.1.7'])
 
     def test_put_package_with_already_existing_name_and_version(self):
         data = {

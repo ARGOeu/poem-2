@@ -1,6 +1,8 @@
 from django.db import IntegrityError
 
 from Poem.api.views import NotFound
+from Poem.helpers.history_helpers import create_history
+from Poem.poem import models as poem_models
 from Poem.poem_super_admin import models as admin_models
 
 from re import compile
@@ -71,6 +73,7 @@ class ListPackages(APIView):
 
     def put(self, request):
         package = admin_models.Package.objects.get(id=request.data['id'])
+        old_version = package.version
         try:
             package.name = request.data['name']
             package.version = request.data['version']
@@ -78,6 +81,25 @@ class ListPackages(APIView):
                 name=request.data['repo']
             )
             package.save()
+
+            if old_version != request.data['version']:
+                probe = admin_models.Probe.objects.get(package=package)
+                probe.version = package.version
+                probe.save()
+
+                probe_history = admin_models.ProbeHistory.objects.get(
+                    package=package
+                )
+                probe_history.version = package.version
+                probe_history.save()
+
+                metric = poem_models.Metric.objects.get(
+                    probekey=admin_models.ProbeHistory.objects.get(
+                        package=package
+                    )
+                )
+
+                create_history(metric, 'Super POEM user')
 
             return Response(status=status.HTTP_201_CREATED)
 
