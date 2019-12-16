@@ -58,7 +58,6 @@ def create_history_entry(instance, user, comment):
         admin_models.ProbeHistory.objects.create(
             object_id=instance,
             name=instance.name,
-            version=instance.package.version,
             package=instance.package,
             description=instance.description,
             comment=instance.comment,

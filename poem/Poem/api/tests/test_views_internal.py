@@ -433,7 +433,6 @@ class ListProbesAPIViewTests(TenantTestCase):
         pv1 = admin_models.ProbeHistory.objects.create(
             object_id=self.probe1,
             name=self.probe1.name,
-            version=self.probe1.package.version,
             package=self.probe1.package,
             description=self.probe1.description,
             comment=self.probe1.comment,
@@ -446,7 +445,6 @@ class ListProbesAPIViewTests(TenantTestCase):
         pv = admin_models.ProbeHistory.objects.create(
             object_id=self.probe2,
             name=self.probe2.name,
-            version=self.probe2.package.version,
             package=self.probe2.package,
             description=self.probe2.description,
             comment=self.probe2.comment,
@@ -459,7 +457,6 @@ class ListProbesAPIViewTests(TenantTestCase):
         admin_models.ProbeHistory.objects.create(
             object_id=probe3,
             name=probe3.name,
-            version=probe3.package.version,
             package=probe3.package,
             description=probe3.description,
             comment=probe3.comment,
@@ -715,7 +712,7 @@ class ListProbesAPIViewTests(TenantTestCase):
         response = self.view(request)
         probe = admin_models.Probe.objects.get(id=self.probe1.id)
         version = admin_models.ProbeHistory.objects.get(
-            name=probe.name, version=probe.package.version
+            name=probe.name, package__version=probe.package.version
         )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(probe.name, 'ams-probe-new')
@@ -735,7 +732,6 @@ class ListProbesAPIViewTests(TenantTestCase):
             'https://github.com/ARGOeu/nagios-plugins-argo2',
         )
         self.assertEqual(version.name, probe.name)
-        self.assertEqual(version.version, probe.package.version)
         self.assertEqual(version.package, probe.package)
         self.assertEqual(version.comment, probe.comment)
         self.assertEqual(version.docurl, probe.docurl)
@@ -806,7 +802,7 @@ class ListProbesAPIViewTests(TenantTestCase):
         response = self.view(request)
         probe = admin_models.Probe.objects.get(id=self.probe1.id)
         version = admin_models.ProbeHistory.objects.get(
-            name=probe.name, version=probe.package.version
+            name=probe.name, package__version=probe.package.version
         )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(probe.name, 'ams-probe')
@@ -826,7 +822,6 @@ class ListProbesAPIViewTests(TenantTestCase):
             'https://github.com/ARGOeu/nagios-plugins-argo2',
         )
         self.assertEqual(version.name, probe.name)
-        self.assertEqual(version.version, probe.package.version)
         self.assertEqual(version.package, probe.package)
         self.assertEqual(version.comment, probe.comment)
         self.assertEqual(version.docurl, probe.docurl)
@@ -900,7 +895,7 @@ class ListProbesAPIViewTests(TenantTestCase):
             admin_models.ProbeHistory.objects.filter(object_id=probe).count(), 2
         )
         version = admin_models.ProbeHistory.objects.get(
-            name=probe.name, version=probe.package.version)
+            name=probe.name, package__version=probe.package.version)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(probe.name, 'ams-probe-new')
         self.assertEqual(probe.package, self.package2)
@@ -919,7 +914,6 @@ class ListProbesAPIViewTests(TenantTestCase):
             'https://github.com/ARGOeu/nagios-plugins-argo2',
         )
         self.assertEqual(version.name, probe.name)
-        self.assertEqual(version.version, probe.package.version)
         self.assertEqual(version.package, probe.package)
         self.assertEqual(version.comment, probe.comment)
         self.assertEqual(version.docurl, probe.docurl)
@@ -1000,7 +994,7 @@ class ListProbesAPIViewTests(TenantTestCase):
             admin_models.ProbeHistory.objects.filter(object_id=probe).count(), 2
         )
         version = admin_models.ProbeHistory.objects.get(
-            name=probe.name, version=probe.package.version
+            name=probe.name, package__version=probe.package.version
         )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(probe.name, 'ams-probe-new')
@@ -1020,7 +1014,6 @@ class ListProbesAPIViewTests(TenantTestCase):
             'https://github.com/ARGOeu/nagios-plugins-argo2',
         )
         self.assertEqual(version.name, probe.name)
-        self.assertEqual(version.version, probe.package.version)
         self.assertEqual(version.package, probe.package)
         self.assertEqual(version.comment, probe.comment)
         self.assertEqual(version.docurl, probe.docurl)
@@ -1102,10 +1095,9 @@ class ListProbesAPIViewTests(TenantTestCase):
             admin_models.ProbeHistory.objects.filter(object_id=probe).count(), 1
         )
         version = admin_models.ProbeHistory.objects.get(
-            name=probe.name, version=probe.package.version
+            name=probe.name, package__version=probe.package.version
         )
         self.assertEqual(version.name, probe.name)
-        self.assertEqual(version.version, probe.package.version)
         self.assertEqual(version.package, probe.package)
         self.assertEqual(version.comment, probe.comment)
         self.assertEqual(version.docurl, probe.docurl)
@@ -1327,7 +1319,6 @@ class ListServicesAPIViewTests(TenantTestCase):
         probeversion1 = admin_models.ProbeHistory.objects.create(
             object_id=probe1,
             name=probe1.name,
-            version=probe1.package.version,
             package=probe1.package,
             description=probe1.description,
             comment=probe1.comment,
@@ -1340,7 +1331,6 @@ class ListServicesAPIViewTests(TenantTestCase):
         probeversion2 = admin_models.ProbeHistory.objects.create(
             object_id=probe2,
             name=probe2.name,
-            version=probe2.package.version,
             package=probe2.package,
             description=probe2.description,
             comment=probe2.comment,
@@ -1353,7 +1343,6 @@ class ListServicesAPIViewTests(TenantTestCase):
         probeversion3 = admin_models.ProbeHistory.objects.create(
             object_id=probe3,
             name=probe3.name,
-            version=probe3.package.version,
             package=probe3.package,
             description=probe3.description,
             comment=probe3.comment,
@@ -1366,7 +1355,6 @@ class ListServicesAPIViewTests(TenantTestCase):
         probeversion4 = admin_models.ProbeHistory.objects.create(
             object_id=probe4,
             name=probe4.name,
-            version=probe4.package.version,
             package=probe4.package,
             description=probe4.description,
             comment=probe4.comment,
@@ -1655,7 +1643,6 @@ class ListAllMetricsAPIViewTests(TenantTestCase):
         probeversion1 = admin_models.ProbeHistory.objects.create(
             object_id=probe1,
             name=probe1.name,
-            version=probe1.package.version,
             package=probe1.package,
             description=probe1.description,
             comment=probe1.comment,
@@ -2123,7 +2110,6 @@ class ListMetricsInGroupAPIViewTests(TenantTestCase):
         pv1 = admin_models.ProbeHistory.objects.create(
             object_id=probe1,
             name=probe1.name,
-            version=probe1.package.version,
             package=probe1.package,
             description=probe1.description,
             comment=probe1.comment,
@@ -2136,7 +2122,6 @@ class ListMetricsInGroupAPIViewTests(TenantTestCase):
         pv2 = admin_models.ProbeHistory.objects.create(
             object_id=probe2,
             name=probe2.name,
-            version=probe2.package.version,
             package=probe2.package,
             description=probe2.description,
             comment=probe2.comment,
@@ -2758,7 +2743,6 @@ class ListMetricAPIViewTests(TenantTestCase):
         self.probeversion1 = admin_models.ProbeHistory.objects.create(
             object_id=probe1,
             name=probe1.name,
-            version=probe1.package.version,
             package=probe1.package,
             description=probe1.description,
             comment=probe1.comment,
@@ -3042,7 +3026,7 @@ class ListMetricAPIViewTests(TenantTestCase):
         self.assertEqual(serialized_data['mtype'], [metric.mtype.name])
         self.assertEqual(
             serialized_data['probekey'],
-            [metric.probekey.name, metric.probekey.version]
+            [metric.probekey.name, metric.probekey.package.version]
         )
         self.assertEqual(serialized_data['parent'], metric.parent)
         self.assertEqual(
@@ -3309,7 +3293,6 @@ class ListVersionsAPIViewTests(TenantTestCase):
         self.ver1 = admin_models.ProbeHistory.objects.create(
             object_id=self.probe1,
             name=self.probe1.name,
-            version=self.probe1.package.version,
             package=self.probe1.package,
             description=self.probe1.description,
             comment=self.probe1.comment,
@@ -3334,7 +3317,6 @@ class ListVersionsAPIViewTests(TenantTestCase):
         self.ver2 = admin_models.ProbeHistory.objects.create(
             object_id=self.probe1,
             name=self.probe1.name,
-            version=self.probe1.package.version,
             package=self.probe1.package,
             description=self.probe1.description,
             comment=self.probe1.comment,
@@ -3375,7 +3357,6 @@ class ListVersionsAPIViewTests(TenantTestCase):
         self.ver3 = admin_models.ProbeHistory.objects.create(
             object_id=probe2,
             name=probe2.name,
-            version=probe2.package.version,
             package=probe2.package,
             description=probe2.description,
             comment=probe2.comment,
@@ -3798,7 +3779,6 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.probeversion1 = admin_models.ProbeHistory.objects.create(
             object_id=probe1,
             name=probe1.name,
-            version=probe1.package.version,
             package=probe1.package,
             description=probe1.description,
             comment=probe1.comment,
@@ -3816,7 +3796,6 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.probeversion2 = admin_models.ProbeHistory.objects.create(
             object_id=probe1,
             name=probe1.name,
-            version=probe1.package.version,
             package=probe1.package,
             description=probe1.description,
             comment=probe1.comment,
@@ -4284,7 +4263,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(serialized_data['mtype'], [metric.mtype.name])
         self.assertEqual(
             serialized_data['probekey'],
-            [metric.probekey.name, metric.probekey.version]
+            [metric.probekey.name, metric.probekey.package.version]
         )
         self.assertEqual(serialized_data['group'], ['TEST'])
         self.assertEqual(serialized_data['parent'], metric.parent)
@@ -4397,7 +4376,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(serialized_data['mtype'], [metric.mtype.name])
         self.assertEqual(
             serialized_data['probekey'],
-            [metric.probekey.name, metric.probekey.version]
+            [metric.probekey.name, metric.probekey.package.version]
         )
         self.assertEqual(serialized_data['group'], ['TEST'])
         self.assertEqual(serialized_data['parent'], metric.parent)
@@ -4630,7 +4609,6 @@ class ImportMetricsAPIViewTests(TenantTestCase):
         pk1 = admin_models.ProbeHistory.objects.create(
             object_id=probe1,
             name=probe1.name,
-            version=probe1.package.version,
             package=probe1.package,
             description=probe1.description,
             comment=probe1.comment,
@@ -4644,7 +4622,6 @@ class ImportMetricsAPIViewTests(TenantTestCase):
         pk2 = admin_models.ProbeHistory.objects.create(
             object_id=probe2,
             name=probe2.name,
-            version=probe2.package.version,
             package=probe2.package,
             description=probe2.description,
             comment=probe2.comment,
@@ -4753,7 +4730,6 @@ class ListMetricTemplatesForProbeVersionAPIViewTests(TenantTestCase):
         self.probeversion1 = admin_models.ProbeHistory.objects.create(
             object_id=probe1,
             name=probe1.name,
-            version=probe1.package.version,
             package=probe1.package,
             description=probe1.description,
             comment=probe1.comment,
@@ -4835,7 +4811,6 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
         self.ver1 = admin_models.ProbeHistory.objects.create(
             object_id=probe1,
             name=probe1.name,
-            version=probe1.package.version,
             package=probe1.package,
             description=probe1.description,
             comment=probe1.comment,
@@ -5276,7 +5251,6 @@ class HistoryHelpersTests(TenantTestCase):
         probe_history1 = admin_models.ProbeHistory.objects.create(
             object_id=self.probe1,
             name=self.probe1.name,
-            version=self.probe1.package.version,
             package=self.probe1.package,
             description=self.probe1.description,
             comment=self.probe1.comment,
@@ -5293,7 +5267,6 @@ class HistoryHelpersTests(TenantTestCase):
         self.probe_history2 = admin_models.ProbeHistory.objects.create(
             object_id=self.probe1,
             name=self.probe1.name,
-            version=self.probe1.package.version,
             package=self.probe1.package,
             description=self.probe1.description,
             comment=self.probe1.comment,
@@ -6107,7 +6080,6 @@ class ListPackagesAPIViewTests(TenantTestCase):
         pv1 = admin_models.ProbeHistory.objects.create(
             object_id=probe1,
             name=probe1.name,
-            version=probe1.package.version,
             package=probe1.package,
             description=probe1.description,
             comment=probe1.comment,
@@ -6306,7 +6278,6 @@ class ListPackagesAPIViewTests(TenantTestCase):
             object_id=probe
         ).order_by('-date_created')
         self.assertEqual(probe_history.count(), 1)
-        self.assertEqual(probe_history[0].version, probe.package.version)
         self.assertEqual(probe_history[0].package, probe.package)
         mt = admin_models.MetricTemplate.objects.get(name='argo.AMS-Check')
         self.assertEqual(mt.probekey, probe_history[0])

@@ -185,7 +185,8 @@ class ListMetricTemplates(APIView):
                     ),
                     probekey=admin_models.ProbeHistory.objects.get(
                         name=request.data['probeversion'].split(' ')[0],
-                        version=request.data['probeversion'].split(' ')[1][1:-1]
+                        package__version=
+                        request.data['probeversion'].split(' ')[1][1:-1]
                     ),
                     parent=parent,
                     probeexecutable=probeexecutable,
@@ -247,7 +248,8 @@ class ListMetricTemplates(APIView):
         if request.data['probeversion']:
             new_probekey = admin_models.ProbeHistory.objects.get(
                 name=request.data['probeversion'].split(' ')[0],
-                version=request.data['probeversion'].split(' ')[1][1:-1]
+                package__version=
+                request.data['probeversion'].split(' ')[1][1:-1]
             )
         else:
             new_probekey = None
@@ -372,7 +374,7 @@ class ListMetricTemplatesForProbeVersion(APIView):
         if probeversion:
             metrics = admin_models.MetricTemplate.objects.filter(
                 probekey__name=probeversion.split('(')[0],
-                probekey__version=probeversion.split('(')[1][0:-1]
+                probekey__package__version=probeversion.split('(')[1][0:-1]
             )
 
             if metrics.count() == 0:

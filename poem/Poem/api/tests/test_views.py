@@ -1,7 +1,5 @@
-import json
 import datetime
 
-from django.contrib.contenttypes.models import ContentType
 from django.db.models.signals import post_save
 
 import factory
@@ -15,18 +13,22 @@ from Poem.api import views
 from Poem.api.models import MyAPIKey
 from Poem.poem.models import GroupOfMetrics, Metric, MetricType
 from Poem.poem_super_admin import models as admin_models
-from Poem.users.models import CustUser
 
 
 @factory.django.mute_signals(post_save)
 def mock_db_for_metrics_tests():
-    user = CustUser.objects.create_user(username='testuser')
-
     metrictype = MetricType.objects.create(name='Active')
+
+    repo = admin_models.YumRepo.objects.create(name='repo-1')
+    package = admin_models.Package.objects.create(
+        name='nagios-plugins-argo',
+        version='0.1.7',
+        repo=repo
+    )
 
     probe = admin_models.Probe.objects.create(
         name='ams-probe',
-        version='0.1.7',
+        package=package,
         description='Probe is inspecting AMS service by trying to publish '
                         'and consume randomly generated messages.',
         comment='Initial version.',
@@ -40,7 +42,7 @@ def mock_db_for_metrics_tests():
     probekey = admin_models.ProbeHistory.objects.create(
         object_id=probe,
         name=probe.name,
-        version=probe.version,
+        package=probe.package,
         description=probe.description,
         comment=probe.comment,
         repository=probe.repository,

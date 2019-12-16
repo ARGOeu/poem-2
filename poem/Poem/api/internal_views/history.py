@@ -43,15 +43,11 @@ class ListVersions(APIView):
                 results = []
                 for ver in vers:
                     if isinstance(instance, admin_models.Probe):
-                        version = ver.version
-                        if ver.package:
-                            package = ver.package.__str__()
-                        else:
-                            package = ''
+                        version = ver.package.version
                         fields = {
                             'name': ver.name,
-                            'version': ver.version,
-                            'package': package,
+                            'version': ver.package.version,
+                            'package': ver.package.__str__(),
                             'description': ver.description,
                             'comment': ver.comment,
                             'repository': ver.repository,

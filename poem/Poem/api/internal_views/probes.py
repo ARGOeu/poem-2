@@ -111,13 +111,14 @@ class ListProbes(APIView):
                     metrictemplates = \
                         admin_models.MetricTemplate.objects.filter(
                             probekey__name=old_name,
-                            probekey__version=old_version
+                            probekey__package__version=old_version
                         )
 
                     for metrictemplate in metrictemplates:
                         metrictemplate.probekey = \
                             admin_models.ProbeHistory.objects.get(
-                                name=probe.name, version=probe.package.version
+                                name=probe.name,
+                                package__version=probe.package.version
                             )
                         metrictemplate.save()
                         create_history(metrictemplate, request.user.username)
@@ -125,7 +126,7 @@ class ListProbes(APIView):
 
             else:
                 history = admin_models.ProbeHistory.objects.filter(
-                    name=old_name, version=old_version
+                    name=old_name, package__version=old_version
                 )
                 probekey = history[0]
                 new_data = {
@@ -214,7 +215,7 @@ class ListProbes(APIView):
                 probe = admin_models.Probe.objects.get(name=name)
                 mt = admin_models.MetricTemplate.objects.filter(
                     probekey=admin_models.ProbeHistory.objects.get(
-                        name=probe.name, version=probe.package.version
+                        name=probe.name, package__version=probe.package.version
                     )
                 )
                 if len(mt) == 0:
