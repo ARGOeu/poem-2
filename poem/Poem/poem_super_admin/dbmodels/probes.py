@@ -10,7 +10,7 @@ class ProbeManager(models.Manager):
 
 class ProbeHistoryManager(models.Manager):
     def get_by_natural_key(self, name, version):
-        return self.get(name=name, version=version)
+        return self.get(name=name, package__version=version)
 
 
 class Probe(models.Model):
@@ -39,8 +39,7 @@ class Probe(models.Model):
 class ProbeHistory(models.Model):
     object_id = models.ForeignKey(Probe, on_delete=models.CASCADE)
     name = models.CharField(max_length=128)
-    version = models.CharField(max_length=28)
-    package = models.ForeignKey(Package,  null=True, on_delete=models.SET_NULL)
+    package = models.ForeignKey(Package,  on_delete=models.PROTECT)
     description = models.CharField(max_length=1024)
     comment = models.CharField(max_length=512)
     repository = models.CharField(max_length=512)
@@ -53,13 +52,10 @@ class ProbeHistory(models.Model):
 
     class Meta:
         app_label = 'poem_super_admin'
-        unique_together = [['name', 'version']]
+        unique_together = [['name', 'package']]
 
     def __str__(self):
-        if self.package:
-            return u'%s (%s)' % (self.name, self.package.version)
-        else:
-            return u'%s (%s)' % (self.name, self.version)
+        return u'%s (%s)' % (self.name, self.package.version)
 
     def natural_key(self):
-        return (self.name, self.version)
+        return (self.name, self.package.version)
