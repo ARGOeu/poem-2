@@ -2,6 +2,8 @@ import datetime
 
 from django.db import IntegrityError
 
+import json
+
 from Poem.api.internal_views.metrictemplates import update_metrics
 from Poem.api.views import NotFound
 from Poem.helpers.history_helpers import create_history
@@ -24,10 +26,6 @@ class ListProbes(APIView):
         if name:
             try:
                 probe = admin_models.Probe.objects.get(name=name)
-                if probe.package:
-                    package = probe.package.__str__()
-                else:
-                    package = ''
 
                 if probe.datetime:
                     probe_datetime = datetime.datetime.strftime(
@@ -39,8 +37,8 @@ class ListProbes(APIView):
                 result = dict(
                     id=probe.id,
                     name=probe.name,
-                    version=probe.version,
-                    package=package,
+                    version=probe.package.version,
+                    package=probe.package.__str__(),
                     docurl=probe.docurl,
                     description=probe.description,
                     comment=probe.comment,
@@ -64,16 +62,11 @@ class ListProbes(APIView):
                     object_id=probe
                 ).count()
 
-                if probe.package:
-                    package = probe.package.__str__()
-                else:
-                    package = ''
-
                 results.append(
                     dict(
                         name=probe.name,
-                        version=probe.version,
-                        package=package,
+                        version=probe.package.version,
+                        package=probe.package.__str__(),
                         docurl=probe.docurl,
                         description=probe.description,
                         comment=probe.comment,
@@ -87,6 +80,11 @@ class ListProbes(APIView):
             return Response(results)
 
     def put(self, request):
+        schemas = list(
+            Tenant.objects.all().values_list('schema_name', flat=True)
+        )
+        schemas.remove(get_public_schema_name())
+
         probe = admin_models.Probe.objects.get(id=request.data['id'])
         old_name = probe.name
         package_name = request.data['package'].split(' ')[0]
@@ -94,10 +92,7 @@ class ListProbes(APIView):
         package = admin_models.Package.objects.get(
             name=package_name, version=package_version
         )
-        if probe.package:
-            old_version = probe.package.version
-        else:
-            old_version = probe.version
+        old_version = probe.package.version
 
         try:
             if package.version != old_version:
@@ -122,7 +117,7 @@ class ListProbes(APIView):
                     for metrictemplate in metrictemplates:
                         metrictemplate.probekey = \
                             admin_models.ProbeHistory.objects.get(
-                                name=probe.name, version=probe.version
+                                name=probe.name, version=probe.package.version
                             )
                         metrictemplate.save()
                         create_history(metrictemplate, request.user.username)
@@ -151,8 +146,30 @@ class ListProbes(APIView):
 
                 # update Metric history in case probekey name has changed:
                 if request.data['name'] != old_name:
-                    metric = poem_models.Metric.objects.get(probekey=probekey)
-                    create_history(metric, 'Super POEM user')
+                    for schema in schemas:
+                        with schema_context(schema):
+                            metrics = poem_models.Metric.objects.filter(
+                                probekey=probekey
+                            )
+
+                            for metric in metrics:
+                                vers = poem_models.TenantHistory.objects.filter(
+                                    object_id=metric.id
+                                )
+
+                                for ver in vers:
+                                    serialized_data = json.loads(
+                                        ver.serialized_data
+                                    )
+
+                                    serialized_data[0]['fields']['probekey'] = \
+                                        [request.data['name'],
+                                         package.version]
+
+                                    ver.serialized_data = json.dumps(
+                                        serialized_data
+                                    )
+                                    ver.save()
 
             return Response(status=status.HTTP_201_CREATED)
 
@@ -196,8 +213,9 @@ class ListProbes(APIView):
             try:
                 probe = admin_models.Probe.objects.get(name=name)
                 mt = admin_models.MetricTemplate.objects.filter(
-                    probekey__name=probe.name,
-                    probekey__version=probe.version
+                    probekey=admin_models.ProbeHistory.objects.get(
+                        name=probe.name, version=probe.package.version
+                    )
                 )
                 if len(mt) == 0:
                     for schema in schemas:

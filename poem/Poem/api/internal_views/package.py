@@ -1,7 +1,9 @@
 from django.db import IntegrityError
+from django.db.models import ProtectedError
+
+import json
 
 from Poem.api.views import NotFound
-from Poem.helpers.history_helpers import create_history
 from Poem.poem import models as poem_models
 from Poem.poem_super_admin import models as admin_models
 
@@ -83,23 +85,12 @@ class ListPackages(APIView):
             package.save()
 
             if old_version != request.data['version']:
-                probe = admin_models.Probe.objects.get(package=package)
-                probe.version = package.version
-                probe.save()
-
-                probe_history = admin_models.ProbeHistory.objects.get(
+                probe_history = admin_models.ProbeHistory.objects.filter(
                     package=package
                 )
-                probe_history.version = package.version
-                probe_history.save()
-
-                metric = poem_models.Metric.objects.get(
-                    probekey=admin_models.ProbeHistory.objects.get(
-                        package=package
-                    )
-                )
-
-                create_history(metric, 'Super POEM user')
+                for ph in probe_history:
+                    ph.version = package.version
+                    ph.save()
 
             return Response(status=status.HTTP_201_CREATED)
 
@@ -121,3 +112,9 @@ class ListPackages(APIView):
 
         except admin_models.Package.DoesNotExist:
             raise NotFound(status=404, detail='Package not found.')
+
+        except ProtectedError:
+            return Response(
+                {'detail': 'You cannot delete package with associated probes!'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
