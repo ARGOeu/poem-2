@@ -6,9 +6,24 @@ class PackageManager(models.Manager):
         return self.get(name=name, version=version)
 
 
-class YumRepoManager(models.Manager):
+class NameManager(models.Manager):
     def get_by_natural_key(self, name):
         return self.get(name=name)
+
+
+class OSTag(models.Model):
+    name = models.CharField(max_length=128, unique=True)
+
+    objects = NameManager()
+
+    class Meta:
+        app_label = 'poem_super_admin'
+
+    def __str__(self):
+        return u'%s' % self.name
+
+    def natural_key(self):
+        return (self.name,)
 
 
 class YumRepo(models.Model):
@@ -16,7 +31,7 @@ class YumRepo(models.Model):
     content = models.TextField(blank=True)
     description = models.TextField()
 
-    objects = YumRepoManager()
+    objects = NameManager()
 
     class Meta:
         app_label = 'poem_super_admin'
