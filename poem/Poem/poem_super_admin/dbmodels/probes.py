@@ -1,19 +1,21 @@
 from django.db import models
-from django.db.models.signals import pre_save
-from django.dispatch import receiver
 
 from Poem.poem_super_admin.models import Package
 
 
 class ProbeManager(models.Manager):
+    def get_by_natural_key(self, name):
+        return self.get(name=name)
+
+
+class ProbeHistoryManager(models.Manager):
     def get_by_natural_key(self, name, version):
         return self.get(name=name, version=version)
 
 
 class Probe(models.Model):
     name = models.CharField(max_length=128, null=False, unique=True)
-    version = models.CharField(max_length=28)
-    package = models.ForeignKey(Package,  null=True, on_delete=models.SET_NULL)
+    package = models.ForeignKey(Package,  on_delete=models.PROTECT)
     description = models.CharField(max_length=1024)
     comment = models.CharField(max_length=512)
     repository = models.CharField(max_length=512)
@@ -28,13 +30,10 @@ class Probe(models.Model):
         app_label = 'poem_super_admin'
 
     def __str__(self):
-        if self.package:
-            return u'%s (%s)' % (self.name, self.package.version)
-        else:
-            return u'%s (%s)' % (self.name, self.version)
+        return u'%s (%s)' % (self.name, self.package.version)
 
     def natural_key(self):
-        return (self.name, self.version)
+        return (self.name, )
 
 
 class ProbeHistory(models.Model):
@@ -50,7 +49,7 @@ class ProbeHistory(models.Model):
     version_comment = models.TextField(blank=True)
     version_user = models.CharField(max_length=32)
 
-    objects = ProbeManager()
+    objects = ProbeHistoryManager()
 
     class Meta:
         app_label = 'poem_super_admin'
@@ -64,9 +63,3 @@ class ProbeHistory(models.Model):
 
     def natural_key(self):
         return (self.name, self.version)
-
-
-@receiver(pre_save, sender=Probe)
-def probe_handler(sender, instance, **kwargs):
-    if instance.package:
-        instance.version = instance.package.version
