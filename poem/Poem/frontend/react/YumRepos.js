@@ -1,7 +1,13 @@
 import React, { Component } from 'react';
 import { Backend } from './DataManager';
 import { Link } from 'react-router-dom';
-import { LoadingAnim, BaseArgoView, FancyErrorMessage, NotifyOk } from './UIElements';
+import { 
+  LoadingAnim, 
+  BaseArgoView, 
+  FancyErrorMessage, 
+  NotifyOk, 
+  DropdownFilterComponent 
+} from './UIElements';
 import ReactTable from 'react-table';
 import { Formik, Form, Field } from 'formik';
 import {
@@ -35,9 +41,11 @@ export class YumRepoList extends Component {
     this.state = {
       loading: false,
       list_repos: null,
+      list_tags: null,
       isTenantSchema: null,
       search_name: '',
-      search_description: ''
+      search_description: '',
+      search_tag: ''
     };
 
     this.backend = new Backend();
@@ -48,11 +56,13 @@ export class YumRepoList extends Component {
 
     Promise.all([
       this.backend.fetchYumRepos(),
+      this.backend.fetchOSTags(),
       this.backend.fetchIsTenantSchema()
     ])
-      .then(([repos, isTenantSchema]) => {
+      .then(([repos, tags, isTenantSchema]) => {
         this.setState({
           list_repos: repos,
+          list_tags: tags,
           isTenantSchema: isTenantSchema,
           loading: false
         });
@@ -60,7 +70,7 @@ export class YumRepoList extends Component {
   };
 
   render() {
-    var { list_repos, isTenantSchema, loading } = this.state;
+    var { list_repos, list_tags, isTenantSchema, loading } = this.state;
     let repolink = undefined;
 
     if (!isTenantSchema)
@@ -107,6 +117,22 @@ export class YumRepoList extends Component {
             style={{width: '100%'}}
           />
         )
+      },
+      {
+        Header: 'Tag',
+        accessor: 'tag',
+        Cell: row =>
+          <div style={{textAlign: 'center'}}>
+            {row.value}
+          </div>,
+        filterable: true,
+        Filter: (
+          <DropdownFilterComponent
+            value={this.state.tag}
+            onChange={e => this.setState({search_tag: e.target.value})}
+            data={this.state.list_tags}
+          />
+        )
       }
     ];
 
@@ -121,6 +147,12 @@ export class YumRepoList extends Component {
       list_repos = list_repos.filter(row =>
           row.description.toLowerCase().includes(this.state.search_description.toLowerCase())
         )
+    };
+
+    if (this.state.search_tag) {
+      list_repos = list_repos.filter(row =>
+        row.tag.toLowerCase().includes(this.state.search_tag.toLowerCase())
+      )
     };
 
     if (loading)
