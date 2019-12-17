@@ -164,9 +164,11 @@ export class YumRepoChange extends Component {
       repo: {
         id: '',
         name: '',
+        tag: 'CentOS 6',
         content: '',
         description: ''
       },
+      tagslist: [],
       loading: false,
       write_perm: false,
       areYouSureModal: false,
@@ -218,6 +220,7 @@ export class YumRepoChange extends Component {
       this.backend.changeYumRepo({
         id: values.id,
         name: values.name,
+        tag: values.tag,
         content: values.content,
         description: values.description
       })
@@ -238,6 +241,7 @@ export class YumRepoChange extends Component {
     } else {
       this.backend.addYumRepo({
         name: values.name,
+        tag: values.tag,
         content: values.content,
         description: values.description
       })
@@ -277,26 +281,31 @@ export class YumRepoChange extends Component {
   }
 
   componentDidMount() {
-    if (!this.addview) {
-      this.setState({loading: true});
-      this.backend.fetchYumRepoByName(this.name)
-        .then(json => {
+    this.setState({loading: true});
+    this.backend.fetchOSTags()
+      .then(tags => {
+        if (!this.addview) {
+          this.backend.fetchYumRepoByName(this.name)
+            .then(json => {
+              this.setState({
+                repo: json,
+                tagslist: tags,
+                write_perm: localStorage.getItem('authIsSuperuser') === 'true',
+                loading: false
+              });
+            });
+        } else {
           this.setState({
-            repo: json,
+            tagslist: tags,
             write_perm: localStorage.getItem('authIsSuperuser') === 'true',
             loading: false
           });
-        });
-    } else {
-      this.setState({
-        write_perm: localStorage.getItem('authIsSuperuser') === 'true',
-        loading: false
+        };
       });
-    };
   };
 
   render() {
-    const { repo, loading, write_perm } = this.state;
+    const { repo, tagslist, loading, write_perm } = this.state;
 
     if (loading)
       return <LoadingAnim/>
@@ -317,6 +326,7 @@ export class YumRepoChange extends Component {
             initialValues = {{
               id: repo.id,
               name: repo.name,
+              tag: repo.tag,
               content: repo.content,
               description: repo.description
             }}
@@ -326,7 +336,7 @@ export class YumRepoChange extends Component {
               <Form>
                 <FormGroup>
                   <Row>
-                    <Col md={8}>
+                    <Col md={6}>
                       <InputGroup>
                         <InputGroupAddon addonType='prepend'>Name</InputGroupAddon>
                         <Field
@@ -343,6 +353,26 @@ export class YumRepoChange extends Component {
                       }
                       <FormText color='muted'>
                         Name of YUM repo file.
+                      </FormText>
+                    </Col>
+                    <Col md={2}>
+                      <InputGroup>
+                        <InputGroupAddon addonType='prepend'>Tag</InputGroupAddon>
+                        <Field
+                          component='select'
+                          name='tag'
+                          className='form-control'
+                          id='tag'
+                        >
+                          {
+                            tagslist.map((name, i) =>
+                              <option key={i} value={name}>{name}</option>  
+                            )
+                          }
+                        </Field>
+                      </InputGroup>
+                      <FormText color='muted'>
+                        OS tag.
                       </FormText>
                     </Col>
                   </Row>
