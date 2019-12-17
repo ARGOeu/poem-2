@@ -6,15 +6,20 @@ class PackageManager(models.Manager):
         return self.get(name=name, version=version)
 
 
-class NameManager(models.Manager):
+class TagManager(models.Manager):
     def get_by_natural_key(self, name):
         return self.get(name=name)
+
+
+class YumRepoManager(models.Manager):
+    def get_by_natural_key(self, name, tag):
+        return self.get(name=name, tag__name=tag)
 
 
 class OSTag(models.Model):
     name = models.CharField(max_length=128, unique=True)
 
-    objects = NameManager()
+    objects = TagManager()
 
     class Meta:
         app_label = 'poem_super_admin'
@@ -27,17 +32,19 @@ class OSTag(models.Model):
 
 
 class YumRepo(models.Model):
-    name = models.TextField(unique=True)
+    name = models.TextField(max_length=128)
+    tag = models.ForeignKey(OSTag, on_delete=models.CASCADE)
     content = models.TextField(blank=True)
     description = models.TextField()
 
-    objects = NameManager()
+    objects = YumRepoManager()
 
     class Meta:
         app_label = 'poem_super_admin'
+        unique_together = [['name', 'tag']]
 
     def natural_key(self):
-        return (self.name,)
+        return (self.name, self.tag.name)
 
 
 class Package(models.Model):
