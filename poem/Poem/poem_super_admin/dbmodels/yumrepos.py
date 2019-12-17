@@ -50,7 +50,7 @@ class YumRepo(models.Model):
 class Package(models.Model):
     name = models.TextField(null=False)
     version = models.TextField(null=False)
-    repo = models.ForeignKey(YumRepo, null=True, on_delete=models.SET_NULL)
+    repos = models.ManyToManyField(YumRepo)
 
     objects = PackageManager()
 
