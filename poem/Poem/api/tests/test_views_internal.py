@@ -379,7 +379,10 @@ class ListProbesAPIViewTests(TenantTestCase):
             Tenant.objects.create(name='public', domain_url='public',
                                   schema_name=get_public_schema_name())
 
-        repo = admin_models.YumRepo.objects.create(name='repo-1')
+        tag = admin_models.OSTag.objects.create(name='CentOS 6')
+        repo = admin_models.YumRepo.objects.create(
+            name='repo-1', tag=tag
+        )
 
         self.package1 = admin_models.Package.objects.create(
             name='nagios-plugins-argo',
@@ -1248,7 +1251,10 @@ class ListServicesAPIViewTests(TenantTestCase):
             name='Active'
         )
 
-        repo = admin_models.YumRepo.objects.create(name='repo-1')
+        tag = admin_models.OSTag.objects.create(name='CentOS 6')
+        repo = admin_models.YumRepo.objects.create(
+            name='repo-1', tag=tag
+        )
 
         package1 = admin_models.Package.objects.create(
             name='nagios-plugins-onedata',
@@ -1622,7 +1628,8 @@ class ListAllMetricsAPIViewTests(TenantTestCase):
         mtype1 = poem_models.MetricType.objects.create(name='Active')
         mtype2 = poem_models.MetricType.objects.create(name='Passive')
 
-        repo = admin_models.YumRepo.objects.create(name='repo-1')
+        tag = admin_models.OSTag.objects.create(name='CentOS 6')
+        repo = admin_models.YumRepo.objects.create(name='repo-1', tag=tag)
         package = admin_models.Package.objects.create(
             name='nagios-plugins-argo',
             version='0.1.7',
@@ -2070,7 +2077,8 @@ class ListMetricsInGroupAPIViewTests(TenantTestCase):
         mtype1 = poem_models.MetricType.objects.create(name='Active')
         mtype2 = poem_models.MetricType.objects.create(name='Passive')
 
-        repo = admin_models.YumRepo.objects.create(name='repo-1')
+        tag = admin_models.OSTag.objects.create(name='CentOS 6')
+        repo = admin_models.YumRepo.objects.create(name='repo-1', tag=tag)
 
         package1 = admin_models.Package.objects.create(
             name='nagios-plugins-argo',
@@ -2722,7 +2730,8 @@ class ListMetricAPIViewTests(TenantTestCase):
         group = poem_models.GroupOfMetrics.objects.create(name='EGI')
         poem_models.GroupOfMetrics.objects.create(name='EUDAT')
 
-        repo = admin_models.YumRepo.objects.create(name='repo-1')
+        tag = admin_models.OSTag.objects.create(name='CentOS 6')
+        repo = admin_models.YumRepo.objects.create(name='repo-1', tag=tag)
         package = admin_models.Package.objects.create(
             name='nagios-plugins-argo',
             version='0.1.7',
@@ -3265,7 +3274,8 @@ class ListVersionsAPIViewTests(TenantTestCase):
         self.url = '/api/v2/internal/version/'
         self.user = CustUser.objects.create_user(username='testuser')
 
-        repo = admin_models.YumRepo.objects.create(name='repo-1')
+        tag = admin_models.OSTag.objects.create(name='CentOS 6')
+        repo = admin_models.YumRepo.objects.create(name='repo-1', tag=tag)
 
         package1 = admin_models.Package.objects.create(
             name='nagios-plugins-argo',
@@ -3752,7 +3762,8 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
 
         self.ct = ContentType.objects.get_for_model(poem_models.Metric)
 
-        repo = admin_models.YumRepo.objects.create(name='repo-1')
+        tag = admin_models.OSTag.objects.create(name='CentOS 6')
+        repo = admin_models.YumRepo.objects.create(name='repo-1', tag=tag)
 
         package1 = admin_models.Package.objects.create(
             name='nagios-plugins-argo',
@@ -4572,7 +4583,8 @@ class ImportMetricsAPIViewTests(TenantTestCase):
         mt = admin_models.MetricTemplateType.objects.create(name='Active')
         poem_models.MetricType.objects.create(name='Active')
 
-        repo = admin_models.YumRepo.objects.create(name='repo-1')
+        tag = admin_models.OSTag.objects.create(name='CentOS 6')
+        repo = admin_models.YumRepo.objects.create(name='repo-1', tag=tag)
 
         package1 = admin_models.Package.objects.create(
             name='nagios-plugins-argo',
@@ -4709,7 +4721,8 @@ class ListMetricTemplatesForProbeVersionAPIViewTests(TenantTestCase):
         mtype1 = admin_models.MetricTemplateType.objects.create(name='Active')
         mtype2 = admin_models.MetricTemplateType.objects.create(name='Passive')
 
-        repo = admin_models.YumRepo.objects.create(name='repo-1')
+        tag = admin_models.OSTag.objects.create(name='CentOS 6')
+        repo = admin_models.YumRepo.objects.create(name='repo-1', tag=tag)
         package1 = admin_models.Package.objects.create(
             name='nagios-plugins-argo',
             version='0.1.7',
@@ -4789,7 +4802,8 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
         self.url = '/api/v2/internal/tenantversion/'
         self.user = CustUser.objects.create_user(username='testuser')
 
-        repo = admin_models.YumRepo.objects.create(name='repo-1')
+        tag = admin_models.OSTag.objects.create(name='CentOS 6')
+        repo = admin_models.YumRepo.objects.create(name='repo-1', tag=tag)
         package1 = admin_models.Package.objects.create(
             name='nagios-plugins-argo',
             version='0.1.7',
@@ -5010,35 +5024,21 @@ class ListYumReposAPIViewTests(TenantTestCase):
         self.url = '/api/v2/internal/yumrepos/'
         self.user = CustUser.objects.create_user(username='testuser')
 
+        self.tag1 = admin_models.OSTag.objects.create(name='CentOS 6')
+        self.tag2 = admin_models.OSTag.objects.create(name='CentOS 7')
+
         self.repo1 = admin_models.YumRepo.objects.create(
             name='repo-1',
+            tag=self.tag1,
             content='content1=content1\ncontent2=content2',
-            description='Lorem ipsum dolor sit amet, consectetur adipiscing '
-                        'elit, sed do eiusmod tempor incididunt ut labore et '
-                        'dolore magna aliqua. Condimentum mattis pellentesque '
-                        'id nibh tortor. Ut eu sem integer vitae justo eget '
-                        'magna fermentum. Neque convallis a cras semper auctor '
-                        'neque vitae tempus quam. In metus vulputate eu '
-                        'scelerisque felis imperdiet proin fermentum. Semper '
-                        'quis lectus nulla at. Hac habitasse platea dictumst '
-                        'quisque sagittis purus.'
+            description='Repo 1 description.'
         )
 
         self.repo2 = admin_models.YumRepo.objects.create(
             name='repo-2',
+            tag=self.tag2,
             content='content1=content1\ncontent2=content2',
-            description='Quam viverra orci sagittis eu volutpat odio facilisis '
-                        'mauris. Justo eget magna fermentum iaculis eu non '
-                        'diam. Porta non pulvinar neque laoreet suspendisse. '
-                        'Suspendisse sed nisi lacus sed viverra tellus. Mattis '
-                        'ullamcorper velit sed ullamcorper morbi tincidunt '
-                        'ornare massa. Quis vel eros donec ac odio tempor orci '
-                        'dapibus ultrices. Duis ut diam quam nulla porttitor '
-                        'massa id neque aliquam. Augue interdum velit euismod '
-                        'in pellentesque. Elementum integer enim neque volutpat'
-                        ' ac tincidunt vitae semper. A diam maecenas sed enim '
-                        'ut sem viverra aliquet eget. Eget velit aliquet '
-                        'sagittis id consectetur purus ut faucibus pulvinar.'
+            description='Repo 2 description.'
         )
 
     def test_get_list_of_yum_repos(self):
@@ -5051,40 +5051,16 @@ class ListYumReposAPIViewTests(TenantTestCase):
                 {
                     'id': self.repo1.id,
                     'name': 'repo-1',
+                    'tag': 'CentOS 6',
                     'content': 'content1=content1\ncontent2=content2',
-                    'description': 'Lorem ipsum dolor sit amet, consectetur '
-                                   'adipiscing elit, sed do eiusmod tempor '
-                                   'incididunt ut labore et '
-                                   'dolore magna aliqua. Condimentum mattis '
-                                   'pellentesque id nibh tortor. Ut eu sem '
-                                   'integer vitae justo eget '
-                                   'magna fermentum. Neque convallis a cras '
-                                   'semper auctor neque vitae tempus quam. In '
-                                   'metus vulputate eu scelerisque felis '
-                                   'imperdiet proin fermentum. Semper '
-                                   'quis lectus nulla at. Hac habitasse platea '
-                                   'dictumst quisque sagittis purus.'
+                    'description': 'Repo 1 description.'
                 },
                 {
                     'id': self.repo2.id,
                     'name': 'repo-2',
+                    'tag': 'CentOS 7',
                     'content': 'content1=content1\ncontent2=content2',
-                    'description': 'Quam viverra orci sagittis eu volutpat '
-                                   'odio facilisis mauris. Justo eget magna '
-                                   'fermentum iaculis eu non diam. Porta non '
-                                   'pulvinar neque laoreet suspendisse. '
-                                   'Suspendisse sed nisi lacus sed viverra '
-                                   'tellus. Mattis ullamcorper velit sed '
-                                   'ullamcorper morbi tincidunt ornare massa. '
-                                   'Quis vel eros donec ac odio tempor orci '
-                                   'dapibus ultrices. Duis ut diam quam nulla '
-                                   'porttitor massa id neque aliquam. Augue '
-                                   'interdum velit euismod in pellentesque. '
-                                   'Elementum integer enim neque volutpat'
-                                   ' ac tincidunt vitae semper. A diam '
-                                   'maecenas sed enim ut sem viverra aliquet '
-                                   'eget. Eget velit aliquet sagittis id '
-                                   'consectetur purus ut faucibus pulvinar.'
+                    'description': 'Repo 2 description.'
                 }
             ]
         )
@@ -5099,19 +5075,9 @@ class ListYumReposAPIViewTests(TenantTestCase):
             {
                 'id': self.repo1.id,
                 'name': 'repo-1',
+                'tag': 'CentOS 6',
                 'content': 'content1=content1\ncontent2=content2',
-                'description': 'Lorem ipsum dolor sit amet, consectetur '
-                               'adipiscing elit, sed do eiusmod tempor '
-                               'incididunt ut labore et '
-                               'dolore magna aliqua. Condimentum mattis '
-                               'pellentesque id nibh tortor. Ut eu sem '
-                               'integer vitae justo eget '
-                               'magna fermentum. Neque convallis a cras '
-                               'semper auctor neque vitae tempus quam. In '
-                               'metus vulputate eu scelerisque felis '
-                               'imperdiet proin fermentum. Semper '
-                               'quis lectus nulla at. Hac habitasse platea '
-                               'dictumst quisque sagittis purus.'
+                'description': 'Repo 1 description.'
             }
         )
 
@@ -5124,29 +5090,28 @@ class ListYumReposAPIViewTests(TenantTestCase):
     def test_post_yum_repo(self):
         data = {
             'name': 'repo-3',
+            'tag': 'CentOS 6',
             'content': 'content1=content1\ncontent2=content2',
-            'description': 'Lorem ipsum dolor sit amet, consectetur adipiscing '
-                           'elit, sed do eiusmod tempor incididunt ut labore '
-                           'et dolore magna aliqua. Morbi non arcu risus quis '
-                           'varius quam quisque id. Phasellus faucibus '
-                           'scelerisque eleifend donec pretium vulputate '
-                           'sapien nec.'
+            'description': 'Repo 3 description'
         }
         request = self.factory.post(self.url, data, format='json')
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        repo = admin_models.YumRepo.objects.get(name='repo-3')
+        self.assertEqual(repo.tag, self.tag1)
+        self.assertEqual(
+            repo.content,
+            'content1=content1\ncontent2=content2'
+        )
+        self.assertEqual(repo.description, 'Repo 3 description')
 
-    def test_post_yum_repo_with_name_that_already_exists(self):
+    def test_post_yum_repo_with_name_and_tag_that_already_exist(self):
         data = {
             'name': 'repo-1',
+            'tag': 'CentOS 6',
             'content': 'content1=content1\ncontent2=content2',
-            'description': 'Lorem ipsum dolor sit amet, consectetur adipiscing '
-                           'elit, sed do eiusmod tempor incididunt ut labore '
-                           'et dolore magna aliqua. Morbi non arcu risus quis '
-                           'varius quam quisque id. Phasellus faucibus '
-                           'scelerisque eleifend donec pretium vulputate '
-                           'sapien nec.'
+            'description': 'Another description.'
         }
         request = self.factory.post(self.url, data, format='json')
         force_authenticate(request, user=self.user)
@@ -5154,32 +5119,36 @@ class ListYumReposAPIViewTests(TenantTestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(
             response.data,
-            {'detail': 'YUM repo with this name already exists.'}
+            {'detail': 'YUM repo with this name and tag already exists.'}
         )
 
     def test_put_yum_repo(self):
         data = {
             'id': self.repo1.id,
-            'name': 'repo-1',
-            'content': 'content1=content1\ncontent2=content2',
-            'description': 'Lorem ipsum dolor sit amet, consectetur adipiscing '
-                           'elit, sed do eiusmod tempor incididunt ut labore '
-                           'et dolore magna aliqua.'
+            'name': 'repo-new-1',
+            'tag': 'CentOS 7',
+            'content': 'content3=content3\ncontent4=content4',
+            'description': 'Another description.'
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        repo = admin_models.YumRepo.objects.get(id=self.repo1.id)
+        self.assertEqual(repo.name, 'repo-new-1')
+        self.assertEqual(repo.tag, self.tag2)
+        self.assertEqual(repo.name, 'repo-new-1')
+        self.assertEqual(repo.content, 'content3=content3\ncontent4=content4')
+        self.assertEqual(repo.description, 'Another description.')
 
-    def test_put_yum_repo_with_existing_name(self):
+    def test_put_yum_repo_with_existing_name_and_tag(self):
         data = {
             'id': self.repo1.id,
             'name': 'repo-2',
+            'tag': 'CentOS 7',
             'content': 'content1=content1\ncontent2=content2',
-            'description': 'Lorem ipsum dolor sit amet, consectetur adipiscing '
-                           'elit, sed do eiusmod tempor incididunt ut labore '
-                           'et dolore magna aliqua.'
+            'description': 'Existing repo-2'
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -5188,8 +5157,27 @@ class ListYumReposAPIViewTests(TenantTestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(
             response.data,
-            {'detail': 'YUM repo with this name already exists.'}
+            {'detail': 'YUM repo with this name and tag already exists.'}
         )
+
+    def test_put_yum_repo_with_existing_name_but_different_tag(self):
+        data = {
+            'id': self.repo1.id,
+            'name': 'repo-2',
+            'tag': 'CentOS 6',
+            'content': 'content1=content1\ncontent2=content2',
+            'description': 'Existing repo-2'
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        repo = admin_models.YumRepo.objects.get(id=self.repo1.id)
+        self.assertEqual(repo.name, 'repo-2')
+        self.assertEqual(repo.tag, self.tag1)
+        self.assertEqual(repo.content, 'content1=content1\ncontent2=content2')
+        self.assertEqual(repo.description, 'Existing repo-2')
 
     def test_delete_yum_repo(self):
         self.assertEqual(admin_models.YumRepo.objects.all().count(), 2)
@@ -5198,6 +5186,11 @@ class ListYumReposAPIViewTests(TenantTestCase):
         response = self.view(request, 'repo-1')
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(admin_models.YumRepo.objects.all().count(), 1)
+        self.assertRaises(
+            admin_models.YumRepo.DoesNotExist,
+            admin_models.YumRepo.objects.get,
+            name='repo-1'
+        )
 
     def test_delete_yum_repo_without_name(self):
         request = self.factory.delete(self.url)
@@ -5215,7 +5208,8 @@ class ListYumReposAPIViewTests(TenantTestCase):
 
 class HistoryHelpersTests(TenantTestCase):
     def setUp(self):
-        self.repo = admin_models.YumRepo.objects.create(name='repo-1')
+        tag = admin_models.OSTag.objects.create(name='CentOS 6')
+        self.repo = admin_models.YumRepo.objects.create(name='repo-1', tag=tag)
 
         package1 = admin_models.Package.objects.create(
             name='package-1',
@@ -6043,8 +6037,9 @@ class ListPackagesAPIViewTests(TenantTestCase):
             Tenant.objects.create(name='public', domain_url='public',
                                   schema_name=get_public_schema_name())
 
-        self.repo1 = admin_models.YumRepo.objects.create(name='repo-1')
-        self.repo2 = admin_models.YumRepo.objects.create(name='repo-2')
+        tag = admin_models.OSTag.objects.create(name='CentOS 6')
+        self.repo1 = admin_models.YumRepo.objects.create(name='repo-1', tag=tag)
+        self.repo2 = admin_models.YumRepo.objects.create(name='repo-2', tag=tag)
 
         self.package1 = admin_models.Package.objects.create(
             name='nagios-plugins-argo',

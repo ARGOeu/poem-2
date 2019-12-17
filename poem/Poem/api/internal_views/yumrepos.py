@@ -1,7 +1,7 @@
 from django.db import IntegrityError
 
 from Poem.api.views import NotFound
-from Poem.poem_super_admin.models import YumRepo
+from Poem.poem_super_admin import models as admin_models
 
 from rest_framework import status
 from rest_framework.authentication import SessionAuthentication
@@ -15,20 +15,21 @@ class ListYumRepos(APIView):
     def get(self, request, name=None):
         if name:
             try:
-                repo = YumRepo.objects.get(name=name)
+                repo = admin_models.YumRepo.objects.get(name=name)
                 result = {
                     'id': repo.id,
                     'name': repo.name,
+                    'tag': repo.tag.name,
                     'content': repo.content,
                     'description': repo.description
                 }
                 return Response(result)
 
-            except YumRepo.DoesNotExist:
+            except admin_models.YumRepo.DoesNotExist:
                 return Response(status=status.HTTP_404_NOT_FOUND)
 
         else:
-            repos = YumRepo.objects.all()
+            repos = admin_models.YumRepo.objects.all()
 
             results = []
             for repo in repos:
@@ -36,6 +37,7 @@ class ListYumRepos(APIView):
                     {
                         'id': repo.id,
                         'name': repo.name,
+                        'tag': repo.tag.name,
                         'content': repo.content,
                         'description': repo.description
                     }
@@ -47,8 +49,9 @@ class ListYumRepos(APIView):
 
     def post(self, request):
         try:
-            YumRepo.objects.create(
+            admin_models.YumRepo.objects.create(
                 name=request.data['name'],
+                tag=admin_models.OSTag.objects.get(name=request.data['tag']),
                 content=request.data['content'],
                 description=request.data['description']
             )
@@ -57,15 +60,16 @@ class ListYumRepos(APIView):
 
         except IntegrityError:
             return Response(
-                {'detail': 'YUM repo with this name already exists.'},
+                {'detail': 'YUM repo with this name and tag already exists.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
     def put(self, request):
-        repo = YumRepo.objects.get(id=request.data['id'])
+        repo = admin_models.YumRepo.objects.get(id=request.data['id'])
 
         try:
             repo.name = request.data['name']
+            repo.tag = admin_models.OSTag.objects.get(name=request.data['tag'])
             repo.content = request.data['content']
             repo.description = request.data['description']
             repo.save()
@@ -74,17 +78,17 @@ class ListYumRepos(APIView):
 
         except IntegrityError:
             return Response(
-                {'detail': 'YUM repo with this name already exists.'},
+                {'detail': 'YUM repo with this name and tag already exists.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
     def delete(self, request, name=None):
         if name:
             try:
-                YumRepo.objects.get(name=name).delete()
+                admin_models.YumRepo.objects.get(name=name).delete()
                 return Response(status=status.HTTP_204_NO_CONTENT)
 
-            except YumRepo.DoesNotExist:
+            except admin_models.YumRepo.DoesNotExist:
                 raise NotFound(status=404, detail='YUM repo not found.')
 
         else:
