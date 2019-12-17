@@ -19,7 +19,8 @@ from Poem.poem_super_admin import models as admin_models
 def mock_db_for_metrics_tests():
     metrictype = MetricType.objects.create(name='Active')
 
-    repo = admin_models.YumRepo.objects.create(name='repo-1')
+    tag = admin_models.OSTag.objects.create(name='CentOS 6')
+    repo = admin_models.YumRepo.objects.create(name='repo-1', tag=tag)
     package = admin_models.Package.objects.create(
         name='nagios-plugins-argo',
         version='0.1.7',
