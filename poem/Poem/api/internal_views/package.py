@@ -29,11 +29,15 @@ class ListPackages(APIView):
                     name=package_name, version=package_version
                 )
 
+                repos = []
+                for repo in package.repos.all():
+                    repos.append('{} ({})'.format(repo.name, repo.tag.name))
+
                 result = {
                     'id': package.id,
                     'name': package.name,
                     'version': package.version,
-                    'repo': package.repo.name
+                    'repos': repos
                 }
 
                 return Response(result)
@@ -46,10 +50,13 @@ class ListPackages(APIView):
 
             results = []
             for package in packages:
+                repos = []
+                for repo in package.repos.all():
+                    repos.append('{} ({})'.format(repo.name, repo.tag.name))
                 results.append({
                     'name': package.name,
                     'version': package.version,
-                    'repo': package.repo.name
+                    'repos': repos
                 })
 
             results = sorted(results, key=lambda k: k['name'].lower())
@@ -58,11 +65,21 @@ class ListPackages(APIView):
 
     def post(self, request):
         try:
-            admin_models.Package.objects.create(
+            package = admin_models.Package.objects.create(
                 name=request.data['name'],
-                version=request.data['version'],
-                repo=admin_models.YumRepo.objects.get(name=request.data['repo'])
+                version=request.data['version']
             )
+
+            repos = dict(request.data)['repos']
+
+            for repo in repos:
+                repo_name = repo.split(' ')[0]
+                repo_tag = admin_models.OSTag.objects.get(
+                    name=repo.split('(')[1][0:-1]
+                )
+                package.repos.add(admin_models.YumRepo.objects.get(
+                    name=repo_name, tag=repo_tag
+                ))
 
             return Response(status=status.HTTP_201_CREATED)
 
@@ -79,10 +96,25 @@ class ListPackages(APIView):
         try:
             package.name = request.data['name']
             package.version = request.data['version']
-            package.repo = admin_models.YumRepo.objects.get(
-                name=request.data['repo']
-            )
             package.save()
+
+            repos = dict(request.data)['repos']
+
+            for r in repos:
+                repo_name = r.split(' ')[0]
+                repo_tag = admin_models.OSTag.objects.get(
+                    name=r.split('(')[1][0:-1]
+                )
+                repo = admin_models.YumRepo.objects.get(
+                    name=repo_name, tag=repo_tag
+                )
+                if repo not in package.repos.all():
+                    package.repos.add(repo)
+
+            for repo in package.repos.all():
+                r = '{} ({})'.format(repo.name, repo.tag.name)
+                if r not in repos:
+                    package.repos.remove(repo)
 
             if old_version != request.data['version']:
                 probe_history = admin_models.ProbeHistory.objects.filter(

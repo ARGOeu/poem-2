@@ -386,15 +386,15 @@ class ListProbesAPIViewTests(TenantTestCase):
 
         self.package1 = admin_models.Package.objects.create(
             name='nagios-plugins-argo',
-            version='0.1.7',
-            repo=repo
+            version='0.1.7'
         )
+        self.package1.repos.add(repo)
 
         self.package2 = admin_models.Package.objects.create(
             name='nagios-plugins-argo',
-            version='0.1.11',
-            repo=repo
+            version='0.1.11'
         )
+        self.package2.repos.add(repo)
 
         self.probe1 = admin_models.Probe.objects.create(
             name='ams-probe',
@@ -1258,27 +1258,27 @@ class ListServicesAPIViewTests(TenantTestCase):
 
         package1 = admin_models.Package.objects.create(
             name='nagios-plugins-onedata',
-            version='3.2.0',
-            repo=repo
+            version='3.2.0'
         )
+        package1.repos.add(repo)
 
         package2 = admin_models.Package.objects.create(
             name='nagios-plugins-check_ssl_cert',
-            version='1.84.0',
-            repo=repo
+            version='1.84.0'
         )
+        package2.repos.add(repo)
 
         package3 = admin_models.Package.objects.create(
             name='nagios-plugins-cert',
-            version='1.0.0',
-            repo=repo
+            version='1.0.0'
         )
+        package3.repos.add(repo)
 
         package4 = admin_models.Package.objects.create(
             name='emi.dcache.srm-probes',
-            version='1.0.1',
-            repo=repo
+            version='1.0.1'
         )
+        package4.repos.add(repo)
 
         probe1 = admin_models.Probe.objects.create(
             name='check_oneprovider',
@@ -1632,9 +1632,9 @@ class ListAllMetricsAPIViewTests(TenantTestCase):
         repo = admin_models.YumRepo.objects.create(name='repo-1', tag=tag)
         package = admin_models.Package.objects.create(
             name='nagios-plugins-argo',
-            version='0.1.7',
-            repo=repo
+            version='0.1.7'
         )
+        package.repos.add(repo)
 
         probe1 = admin_models.Probe.objects.create(
             name='ams-probe',
@@ -2082,15 +2082,15 @@ class ListMetricsInGroupAPIViewTests(TenantTestCase):
 
         package1 = admin_models.Package.objects.create(
             name='nagios-plugins-argo',
-            version='0.1.7',
-            repo=repo
+            version='0.1.7'
         )
+        package1.repos.add(repo)
 
         package2 = admin_models.Package.objects.create(
             name='nagios-plugins-check_ssl_cert',
-            version='1.84.0',
-            repo=repo
+            version='1.84.0'
         )
+        package2.repos.add(repo)
 
         probe1 = admin_models.Probe.objects.create(
             name='ams-probe',
@@ -2734,9 +2734,9 @@ class ListMetricAPIViewTests(TenantTestCase):
         repo = admin_models.YumRepo.objects.create(name='repo-1', tag=tag)
         package = admin_models.Package.objects.create(
             name='nagios-plugins-argo',
-            version='0.1.7',
-            repo=repo
+            version='0.1.7'
         )
+        package.repos.add(repo)
 
         probe1 = admin_models.Probe.objects.create(
             name='ams-probe',
@@ -3279,14 +3279,15 @@ class ListVersionsAPIViewTests(TenantTestCase):
 
         package1 = admin_models.Package.objects.create(
             name='nagios-plugins-argo',
-            version='0.1.7',
-            repo=repo
+            version='0.1.7'
         )
+        package1.repos.add(repo)
+
         package2 = admin_models.Package.objects.create(
             name='nagios-plugins-argo',
-            version='0.1.11',
-            repo=repo
+            version='0.1.11'
         )
+        package2.repos.add(repo)
 
         self.probe1 = admin_models.Probe.objects.create(
             name='poem-probe',
@@ -3767,14 +3768,15 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
 
         package1 = admin_models.Package.objects.create(
             name='nagios-plugins-argo',
-            version='0.1.7',
-            repo=repo
+            version='0.1.7'
         )
+        package1.repos.add(repo)
+
         package2 = admin_models.Package.objects.create(
             name='nagios-plugins-argo',
-            version='0.1.11',
-            repo=repo
+            version='0.1.11'
         )
+        package2.repos.add(repo)
 
         probe1 = admin_models.Probe.objects.create(
             name='ams-probe',
@@ -4588,14 +4590,15 @@ class ImportMetricsAPIViewTests(TenantTestCase):
 
         package1 = admin_models.Package.objects.create(
             name='nagios-plugins-argo',
-            version='0.1.7',
-            repo=repo
+            version='0.1.7'
         )
+        package1.repos.add(repo)
+
         package2 = admin_models.Package.objects.create(
             name='nagios-plugins-argo',
-            version='0.1.11',
-            repo=repo
+            version='0.1.11'
         )
+        package2.repos.add(repo)
 
         probe1 = admin_models.Probe.objects.create(
             name='ams-probe',
@@ -4725,9 +4728,9 @@ class ListMetricTemplatesForProbeVersionAPIViewTests(TenantTestCase):
         repo = admin_models.YumRepo.objects.create(name='repo-1', tag=tag)
         package1 = admin_models.Package.objects.create(
             name='nagios-plugins-argo',
-            version='0.1.7',
-            repo=repo
+            version='0.1.7'
         )
+        package1.repos.add(repo)
 
         probe1 = admin_models.Probe.objects.create(
             name='ams-probe',
@@ -4806,9 +4809,9 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
         repo = admin_models.YumRepo.objects.create(name='repo-1', tag=tag)
         package1 = admin_models.Package.objects.create(
             name='nagios-plugins-argo',
-            version='0.1.7',
-            repo=repo
+            version='0.1.7'
         )
+        package1.repos.add(repo)
 
         probe1 = admin_models.Probe.objects.create(
             name='ams-probe',
@@ -5213,14 +5216,15 @@ class HistoryHelpersTests(TenantTestCase):
 
         package1 = admin_models.Package.objects.create(
             name='package-1',
-            version='1.0.0',
-            repo=self.repo
+            version='1.0.0'
         )
+        package1.repos.add(self.repo)
+
         package2 = admin_models.Package.objects.create(
             name='package-1',
-            version='1.0.1',
-            repo=self.repo
+            version='1.0.1'
         )
+        package2.repos.add(self.repo)
 
         self.probe1 = admin_models.Probe.objects.create(
             name='probe-1',
@@ -5399,9 +5403,9 @@ class HistoryHelpersTests(TenantTestCase):
     def test_create_comment_for_probe(self):
         package = admin_models.Package.objects.create(
             name='package',
-            version='1.0.2',
-            repo=self.repo
+            version='1.0.2'
         )
+        package.repos.add(self.repo)
         self.probe1.name = 'probe-2'
         self.probe1.package = package
         self.probe1.description = 'Some new description.'
@@ -5425,10 +5429,9 @@ class HistoryHelpersTests(TenantTestCase):
     def test_create_comment_for_probe_if_initial(self):
         package = admin_models.Package.objects.create(
             name='package',
-            version='1.0.2',
-            repo=self.repo
+            version='1.0.2'
         )
-
+        package.repos.add(self.repo)
         probe2 = admin_models.Probe.objects.create(
             name='probe-2',
             package=package,
@@ -6037,27 +6040,30 @@ class ListPackagesAPIViewTests(TenantTestCase):
             Tenant.objects.create(name='public', domain_url='public',
                                   schema_name=get_public_schema_name())
 
-        tag = admin_models.OSTag.objects.create(name='CentOS 6')
-        self.repo1 = admin_models.YumRepo.objects.create(name='repo-1', tag=tag)
-        self.repo2 = admin_models.YumRepo.objects.create(name='repo-2', tag=tag)
+        self.tag1 = admin_models.OSTag.objects.create(name='CentOS 6')
+        self.tag2 = admin_models.OSTag.objects.create(name='CentOS 7')
+        self.repo1 = admin_models.YumRepo.objects.create(name='repo-1',
+                                                         tag=self.tag1)
+        self.repo2 = admin_models.YumRepo.objects.create(name='repo-2',
+                                                         tag=self.tag2)
 
         self.package1 = admin_models.Package.objects.create(
             name='nagios-plugins-argo',
-            version='0.1.11',
-            repo=self.repo1
+            version='0.1.11'
         )
+        self.package1.repos.add(self.repo1, self.repo2)
 
-        admin_models.Package.objects.create(
+        package2 = admin_models.Package.objects.create(
             name='nagios-plugins-globus',
-            version='0.1.5',
-            repo=self.repo2
+            version='0.1.5'
         )
+        package2.repos.add(self.repo2)
 
-        admin_models.Package.objects.create(
+        package3 = admin_models.Package.objects.create(
             name='nagios-plugins-fedcloud',
-            version='0.5.0',
-            repo=self.repo2
+            version='0.5.0'
         )
+        package3.repos.add(self.repo2)
 
         probe1 = admin_models.Probe.objects.create(
             name='ams-probe',
@@ -6161,17 +6167,17 @@ class ListPackagesAPIViewTests(TenantTestCase):
                 {
                     'name': 'nagios-plugins-argo',
                     'version': '0.1.11',
-                    'repo': 'repo-1'
+                    'repos': ['repo-1 (CentOS 6)', 'repo-2 (CentOS 7)']
                 },
                 {
                     'name': 'nagios-plugins-fedcloud',
                     'version': '0.5.0',
-                    'repo': 'repo-2'
+                    'repos': ['repo-2 (CentOS 7)']
                 },
                 {
                     'name': 'nagios-plugins-globus',
                     'version': '0.1.5',
-                    'repo': 'repo-2'
+                    'repos': ['repo-2 (CentOS 7)']
                 }
             ]
         )
@@ -6191,7 +6197,7 @@ class ListPackagesAPIViewTests(TenantTestCase):
                 'id': self.package1.id,
                 'name': 'nagios-plugins-argo',
                 'version': '0.1.11',
-                'repo': 'repo-1'
+                'repos': ['repo-1 (CentOS 6)', 'repo-2 (CentOS 7)']
             }
         )
 
@@ -6206,7 +6212,7 @@ class ListPackagesAPIViewTests(TenantTestCase):
         data = {
             'name': 'nagios-plugins-activemq',
             'version': '1.0.0',
-            'repo': 'repo-1'
+            'repos': ['repo-1 (CentOS 6)', 'repo-2 (CentOS 7)']
         }
         self.assertEqual(admin_models.Package.objects.all().count(), 3)
         request = self.factory.post(self.url, data, format='json')
@@ -6217,13 +6223,15 @@ class ListPackagesAPIViewTests(TenantTestCase):
         package = admin_models.Package.objects.get(
             name='nagios-plugins-activemq', version='1.0.0'
         )
-        self.assertEqual(package.repo, self.repo1)
+        self.assertEqual(package.repos.all().count(), 2)
+        self.assertTrue(self.repo1 in package.repos.all())
+        self.assertTrue(self.repo2 in package.repos.all())
 
     def test_post_package_with_name_and_version_which_already_exist(self):
         data = {
             'name': 'nagios-plugins-argo',
             'version': '0.1.11',
-            'repo': 'repo-1'
+            'repos': ['repo-1 (CentOS 6)']
         }
         request = self.factory.post(self.url, data, format='json')
         force_authenticate(request, user=self.user)
@@ -6238,7 +6246,7 @@ class ListPackagesAPIViewTests(TenantTestCase):
         data = {
             'name': 'nagios-plugins-argo',
             'version': '0.1.7',
-            'repo': 'repo-2'
+            'repos': ['repo-2 (CentOS 7)']
         }
         self.assertEqual(admin_models.Package.objects.all().count(), 3)
         request = self.factory.post(self.url, data, format='json')
@@ -6249,14 +6257,15 @@ class ListPackagesAPIViewTests(TenantTestCase):
         package = admin_models.Package.objects.get(
             name='nagios-plugins-argo', version='0.1.7'
         )
-        self.assertEqual(package.repo, self.repo2)
+        self.assertEqual(package.repos.all().count(), 1)
+        self.assertTrue(self.repo2 in package.repos.all())
 
     def test_put_package(self):
         data = {
             'id': self.package1.id,
             'name': 'nagios-plugins-argo2',
             'version': '0.1.7',
-            'repo': 'repo-2'
+            'repos': ['repo-2 (CentOS 7)']
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -6266,7 +6275,51 @@ class ListPackagesAPIViewTests(TenantTestCase):
         package = admin_models.Package.objects.get(id=self.package1.id)
         self.assertEqual(package.name, 'nagios-plugins-argo2')
         self.assertEqual(package.version, '0.1.7')
-        self.assertEqual(package.repo, self.repo2)
+        self.assertEqual(package.repos.all().count(), 1)
+        self.assertTrue(self.repo2 in package.repos.all())
+        probe = admin_models.Probe.objects.get(name='ams-probe')
+        self.assertEqual(probe.package, package)
+        probe_history = admin_models.ProbeHistory.objects.filter(
+            object_id=probe
+        ).order_by('-date_created')
+        self.assertEqual(probe_history.count(), 1)
+        self.assertEqual(probe_history[0].package, probe.package)
+        mt = admin_models.MetricTemplate.objects.get(name='argo.AMS-Check')
+        self.assertEqual(mt.probekey, probe_history[0])
+        mt_history = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=mt
+        ).order_by('-date_created')
+        self.assertEqual(mt_history.count(), 1)
+        self.assertEqual(mt_history[0].probekey, probe_history[0])
+        metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
+        self.assertEqual(metric.probekey, probe_history[0])
+        metric_history = poem_models.TenantHistory.objects.filter(
+            object_repr=metric.__str__()
+        ).order_by('-date_created')
+        self.assertEqual(metric_history.count(), 1)
+        serialized_data = \
+            json.loads(metric_history[0].serialized_data)[0]['fields']
+        self.assertEqual(serialized_data['probekey'], ['ams-probe', '0.1.7'])
+
+    def test_put_package_with_new_repo(self):
+        repo = admin_models.YumRepo.objects.create(name='repo-3', tag=self.tag1)
+        data = {
+            'id': self.package1.id,
+            'name': 'nagios-plugins-argo2',
+            'version': '0.1.7',
+            'repos': ['repo-2 (CentOS 7)', 'repo-3 (CentOS 6)']
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        package = admin_models.Package.objects.get(id=self.package1.id)
+        self.assertEqual(package.name, 'nagios-plugins-argo2')
+        self.assertEqual(package.version, '0.1.7')
+        self.assertEqual(package.repos.all().count(), 2)
+        self.assertTrue(self.repo2 in package.repos.all())
+        self.assertTrue(repo in package.repos.all())
         probe = admin_models.Probe.objects.get(name='ams-probe')
         self.assertEqual(probe.package, package)
         probe_history = admin_models.ProbeHistory.objects.filter(
@@ -6296,7 +6349,7 @@ class ListPackagesAPIViewTests(TenantTestCase):
             'id': self.package1.id,
             'name': 'nagios-plugins-globus',
             'version': '0.1.5',
-            'repo': 'repo-1'
+            'repos': ['repo-1 (CentOS 7)']
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
