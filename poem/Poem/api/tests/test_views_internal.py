@@ -6340,3 +6340,27 @@ class ListPackagesAPIViewTests(TenantTestCase):
             response.data,
             {'detail': 'Package not found.'}
         )
+
+
+class ListOSTagsAPIViewTests(TenantTestCase):
+    def setUp(self):
+        self.factory = TenantRequestFactory(self.tenant)
+        self.view = views.ListOSTags.as_view()
+        self.url = '/api/v2/internal/ostags/'
+        self.user = CustUser.objects.create(username='testuser')
+
+        admin_models.OSTag.objects.create(name='CentOS 6')
+        admin_models.OSTag.objects.create(name='CentOS 7')
+
+    def test_get_tags(self):
+        request = self.factory.get(self.url)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(
+            [r for r in response.data],
+            [
+                'CentOS 6',
+                'CentOS 7',
+            ]
+        )
+

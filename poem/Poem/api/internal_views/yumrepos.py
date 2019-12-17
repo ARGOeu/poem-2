@@ -93,3 +93,11 @@ class ListYumRepos(APIView):
 
         else:
             return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+class ListOSTags(APIView):
+    authentication_classes = (SessionAuthentication,)
+
+    def get(self, request):
+        tags = admin_models.OSTag.objects.all().values_list('name', flat=True)
+        return Response(tags)

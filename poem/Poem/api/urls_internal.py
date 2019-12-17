@@ -30,6 +30,7 @@ urlpatterns = [
     path('metrictemplates/<str:name>', views_internal.ListMetricTemplates.as_view(), name='metrictemplates'),
     path('mttypes/', views_internal.ListMetricTemplateTypes.as_view(), name='mttypes'),
     path('mtypes/', views_internal.ListMetricTypes.as_view(), name='mtypes'),
+    path('ostags/', views_internal.ListOSTags.as_view(), name='ostags'),
     path('packages/', views_internal.ListPackages.as_view(), name='packages'),
     path('packages/<str:nameversion>', views_internal.ListPackages.as_view(), name='packages'),
     path('probes/', views_internal.ListProbes.as_view(), name='probes'),
