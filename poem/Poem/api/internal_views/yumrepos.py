@@ -12,10 +12,15 @@ from rest_framework.views import APIView
 class ListYumRepos(APIView):
     authentication_classes = (SessionAuthentication,)
 
-    def get(self, request, name=None):
-        if name:
+    def get(self, request, name=None, tag=None):
+        if name and tag:
             try:
-                repo = admin_models.YumRepo.objects.get(name=name)
+                if tag == 'centos6':
+                    ostag = admin_models.OSTag.objects.get(name='CentOS 6')
+                else:
+                    ostag = admin_models.OSTag.objects.get(name='CentOS 7')
+
+                repo = admin_models.YumRepo.objects.get(name=name, tag=ostag)
                 result = {
                     'id': repo.id,
                     'name': repo.name,
@@ -28,7 +33,7 @@ class ListYumRepos(APIView):
             except admin_models.YumRepo.DoesNotExist:
                 return Response(status=status.HTTP_404_NOT_FOUND)
 
-        else:
+        elif not name and not tag:
             repos = admin_models.YumRepo.objects.all()
 
             results = []
@@ -46,6 +51,9 @@ class ListYumRepos(APIView):
             results = sorted(results, key=lambda k: k['name'].lower())
 
             return Response(results)
+
+        else:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
 
     def post(self, request):
         try:
@@ -82,10 +90,15 @@ class ListYumRepos(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-    def delete(self, request, name=None):
-        if name:
+    def delete(self, request, name=None, tag=None):
+        if name and tag:
+            if tag == 'centos6':
+                ostag = admin_models.OSTag.objects.get(name='CentOS 6')
+            else:
+                ostag = admin_models.OSTag.objects.get(name='CentOS 7')
+
             try:
-                admin_models.YumRepo.objects.get(name=name).delete()
+                admin_models.YumRepo.objects.get(name=name, tag=ostag).delete()
                 return Response(status=status.HTTP_204_NO_CONTENT)
 
             except admin_models.YumRepo.DoesNotExist:

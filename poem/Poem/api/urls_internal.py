@@ -53,5 +53,5 @@ urlpatterns = [
     path('version/<str:obj>/', views_internal.ListVersions.as_view(), name='version'),
     path('version/<str:obj>/<str:name>', views_internal.ListVersions.as_view(), name='version'),
     path('yumrepos/', views_internal.ListYumRepos.as_view(), name='yumrepos'),
-    path('yumrepos/<str:name>', views_internal.ListYumRepos.as_view(), name='yumrepos'),
+    path('yumrepos/<str:name>/<str:tag>', views_internal.ListYumRepos.as_view(), name='yumrepos'),
 ]

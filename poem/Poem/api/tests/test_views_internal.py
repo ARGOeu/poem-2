@@ -5069,9 +5069,9 @@ class ListYumReposAPIViewTests(TenantTestCase):
         )
 
     def test_get_yum_repo_by_name(self):
-        request = self.factory.get(self.url + 'repo-1')
+        request = self.factory.get(self.url + 'repo-1/centos6')
         force_authenticate(request, user=self.user)
-        response = self.view(request, 'repo-1')
+        response = self.view(request, 'repo-1', 'centos6')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(
             response.data,
@@ -5085,9 +5085,9 @@ class ListYumReposAPIViewTests(TenantTestCase):
         )
 
     def test_get_yum_repo_in_case_of_nonexisting_name(self):
-        request = self.factory.get(self.url + 'nonexisting')
+        request = self.factory.get(self.url + 'nonexisting/centos6')
         force_authenticate(request, user=self.user)
-        response = self.view(request, 'nonexisting')
+        response = self.view(request, 'nonexisting', 'centos6')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_post_yum_repo(self):
@@ -5184,9 +5184,9 @@ class ListYumReposAPIViewTests(TenantTestCase):
 
     def test_delete_yum_repo(self):
         self.assertEqual(admin_models.YumRepo.objects.all().count(), 2)
-        request = self.factory.delete(self.url + 'repo-1')
+        request = self.factory.delete(self.url + 'repo-1/centos6')
         force_authenticate(request, user=self.user)
-        response = self.view(request, 'repo-1')
+        response = self.view(request, 'repo-1', 'centos6')
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(admin_models.YumRepo.objects.all().count(), 1)
         self.assertRaises(
@@ -5202,9 +5202,9 @@ class ListYumReposAPIViewTests(TenantTestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_delete_yum_repo_nonexisting_name(self):
-        request = self.factory.delete(self.url + 'nonexisting')
+        request = self.factory.delete(self.url + 'nonexisting/centos7')
         force_authenticate(request, user=self.user)
-        response = self.view(request, 'nonexisting')
+        response = self.view(request, 'nonexisting', 'centos7')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(response.data, {'detail': 'YUM repo not found.'})
 
