@@ -26,6 +26,7 @@ import { NotificationManager } from 'react-notifications';
 
 const RepoSchema = Yup.object().shape({
   name: Yup.string()
+    .matches(/^\S*$/, 'Name cannot contain white spaces')
     .required('Required'),
   content: Yup.string().required('Required'),
   description: Yup.string().required('Required')
@@ -70,7 +71,7 @@ export class YumRepoList extends Component {
   };
 
   render() {
-    var { list_repos, list_tags, isTenantSchema, loading } = this.state;
+    var { list_repos, isTenantSchema, loading } = this.state;
     let repolink = undefined;
 
     if (!isTenantSchema)
@@ -93,7 +94,7 @@ export class YumRepoList extends Component {
         id: 'name',
         minWidth: 80,
         accessor: e =>
-          <Link to={repolink + e.name}>{e.name}</Link>,
+          <Link to={repolink + e.name + '-' + e.tag.replace(/\s/g, '').toLowerCase()}>{`${e.name} (${e.tag})`}</Link>,
         filterable: true,
         Filter: (
           <input
@@ -184,8 +185,10 @@ export class YumRepoList extends Component {
 export class YumRepoChange extends Component {
   constructor(props) {
     super(props);
-
-    this.name = props.match.params.name;
+    if (props.match.params.name) {
+      this.tag = props.match.params.name.split('-')[props.match.params.name.split('-').length - 1];
+      this.name = props.match.params.name.replace('-' + this.tag, '');
+    }
     this.addview = props.addview;
     this.disabled = props.disabled;
     this.location = props.location;
@@ -294,8 +297,8 @@ export class YumRepoChange extends Component {
     };
   };
 
-  doDelete(name) {
-    this.backend.deleteYumRepo(name)
+  doDelete(name, tag) {
+    this.backend.deleteYumRepo(name, tag)
       .then(response => {
         if (!response.ok) {
           response.json()
@@ -310,14 +313,14 @@ export class YumRepoChange extends Component {
           });
         };
       });
-  }
+  };
 
   componentDidMount() {
     this.setState({loading: true});
     this.backend.fetchOSTags()
       .then(tags => {
         if (!this.addview) {
-          this.backend.fetchYumRepoByName(this.name)
+          this.backend.fetchYumRepoByName(this.name, this.tag)
             .then(json => {
               this.setState({
                 repo: json,
@@ -374,7 +377,7 @@ export class YumRepoChange extends Component {
                         <Field
                           type='text'
                           name='name'
-                          className={props.errors.name ? 'form-control border-danger' : 'form-control'}
+                          className={`form-control ${props.errors.name && 'border-danger'}`}
                           id='name'
                           disabled={this.disabled}
                         />
@@ -417,7 +420,7 @@ export class YumRepoChange extends Component {
                         component='textarea'
                         name='content'
                         rows='20'
-                        className={props.errors.content ? 'form-control border-danger' : 'form-control'}
+                        className={`form-control ${props.errors.content && 'border-danger'}`}
                         id='content'
                         disabled={this.disabled}
                       />
@@ -439,7 +442,7 @@ export class YumRepoChange extends Component {
                         component='textarea'
                         name='description'
                         rows='5'
-                        className={props.errors.description ? 'form-control border-danger' : 'form-control'}
+                        className={`form-control ${props.errors.description && 'border-danger'}`}
                         id='description'
                         disabled={this.disabled}
                       />
@@ -464,7 +467,7 @@ export class YumRepoChange extends Component {
                             this.toggleAreYouSureSetModal(
                               'Are you sure you want to delete YUM repo?',
                               'Delete YUM repo',
-                              () => this.doDelete(props.values.name)
+                              () => this.doDelete(this.name, this.tag)
                             )
                           }}
                         >
@@ -486,4 +489,4 @@ export class YumRepoChange extends Component {
     } else
       return null;
   };
-}
+};

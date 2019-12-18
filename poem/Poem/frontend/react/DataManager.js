@@ -238,8 +238,8 @@ export class Backend {
       .catch(err => alert('Something went wrong: ' + err))
   }
 
-  fetchYumRepoByName(name) {
-    return fetch('/api/v2/internal/yumrepos/' + name)
+  fetchYumRepoByName(name, tag) {
+    return fetch('/api/v2/internal/yumrepos/' + name + '/' + tag)
       .then(response => response.json())
       .catch(err => alert('Something went wrong: ' + err))
   }
@@ -534,9 +534,9 @@ export class Backend {
     );
   }
 
-  deleteYumRepo(name) {
+  deleteYumRepo(name, tag) {
     return this.send(
-      '/api/v2/internal/yumrepos/' + name,
+      '/api/v2/internal/yumrepos/' + name + '/' + tag,
       'DELETE'
     );
   }
