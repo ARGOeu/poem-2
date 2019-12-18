@@ -55,7 +55,7 @@ export class PackageList extends Component {
       ])
         .then(([pkgs, repos]) => {
           let list_repos = [];
-          repos.forEach(e => list_repos.push(e.name));
+          repos.forEach(e => list_repos.push(e.name + ' (' + e.tag + ')'));
           this.setState({
             list_packages: pkgs,
             list_repos: list_repos,
@@ -96,10 +96,10 @@ export class PackageList extends Component {
         {
           Header: 'Repo',
           id: 'repo',
-          accessor: 'repo',
+          accessor: 'repos',
           Cell: row =>
             <div style={{textAlign: 'center'}}>
-              {row.value}
+              {row.value.join(', ')}
             </div>,
           filterable: true,
           Filter: 
@@ -120,7 +120,7 @@ export class PackageList extends Component {
       if (this.state.search_repo) {
         list_packages = list_packages.filter(
           row =>
-            `${row.repo}`.toLowerCase().includes(this.state.search_repo.toLowerCase())
+            `${row.repos.join(', ')}`.toLowerCase().includes(this.state.search_repo.toLowerCase())
         );
       };
 
