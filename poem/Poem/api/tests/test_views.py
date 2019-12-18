@@ -23,9 +23,9 @@ def mock_db_for_metrics_tests():
     repo = admin_models.YumRepo.objects.create(name='repo-1', tag=tag)
     package = admin_models.Package.objects.create(
         name='nagios-plugins-argo',
-        version='0.1.7',
-        repo=repo
+        version='0.1.7'
     )
+    package.repos.add(repo)
 
     probe = admin_models.Probe.objects.create(
         name='ams-probe',
