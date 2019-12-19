@@ -6260,6 +6260,34 @@ class ListPackagesAPIViewTests(TenantTestCase):
         self.assertEqual(package.repos.all().count(), 1)
         self.assertTrue(self.repo2 in package.repos.all())
 
+    def test_post_package_with_with_repo_without_tag(self):
+        data = {
+            'name': 'nagios-plugins-activemq',
+            'version': '1.0.0',
+            'repos': ['repo-1']
+        }
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data, {'detail': 'You should specify YUM repo tag!'}
+        )
+
+    def test_post_package_with_with_nonexisting_repo(self):
+        data = {
+            'name': 'nagios-plugins-activemq',
+            'version': '1.0.0',
+            'repos': ['nonexisting (CentOS 7)']
+        }
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(
+            response.data, {'detail': 'YUM repo not found.'}
+        )
+
     def test_put_package(self):
         data = {
             'id': self.package1.id,
@@ -6359,6 +6387,38 @@ class ListPackagesAPIViewTests(TenantTestCase):
         self.assertEqual(
             response.data,
             {'detail': 'Package with this name and version already exists.'}
+        )
+
+    def test_put_package_with_with_repo_without_tag(self):
+        data = {
+            'id': self.package1.id,
+            'name': 'nagios-plugins-argo',
+            'version': '0.1.12',
+            'repos': ['repo-1']
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data, {'detail': 'You should specify YUM repo tag!'}
+        )
+
+    def test_put_package_with_with_nonexisting_repo(self):
+        data = {
+            'id': self.package1.id,
+            'name': 'nagios-plugins-argo',
+            'version': '0.1.12',
+            'repos': ['nonexisting (CentOS 7)']
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(
+            response.data, {'detail': 'YUM repo not found.'}
         )
 
     def test_delete_package(self):

@@ -1,10 +1,7 @@
 from django.db import IntegrityError
 from django.db.models import ProtectedError
 
-import json
-
 from Poem.api.views import NotFound
-from Poem.poem import models as poem_models
 from Poem.poem_super_admin import models as admin_models
 
 from re import compile
@@ -90,6 +87,18 @@ class ListPackages(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+        except admin_models.YumRepo.DoesNotExist:
+            return Response(
+                {'detail': 'YUM repo not found.'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        except IndexError:
+            return Response(
+                {'detail': 'You should specify YUM repo tag!'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
     def put(self, request):
         package = admin_models.Package.objects.get(id=request.data['id'])
         old_version = package.version
@@ -130,6 +139,18 @@ class ListPackages(APIView):
             return Response(
                 {'detail':
                      'Package with this name and version already exists.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        except admin_models.YumRepo.DoesNotExist:
+            return Response(
+                {'detail': 'YUM repo not found.'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        except IndexError:
+            return Response(
+                {'detail': 'You should specify YUM repo tag!'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
