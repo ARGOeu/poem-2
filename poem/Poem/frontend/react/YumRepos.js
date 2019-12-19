@@ -393,18 +393,29 @@ export class YumRepoChange extends Component {
                     <Col md={2}>
                       <InputGroup>
                         <InputGroupAddon addonType='prepend'>Tag</InputGroupAddon>
-                        <Field
-                          component='select'
-                          name='tag'
-                          className='form-control'
-                          id='tag'
-                        >
-                          {
-                            tagslist.map((name, i) =>
-                              <option key={i} value={name}>{name}</option>  
-                            )
-                          }
-                        </Field>
+                        {
+                          this.disabled ?
+                            <Field
+                              type='text'
+                              name='tag'
+                              className='form-control'
+                              id='tag'
+                              disabled={true}
+                            />
+                          :
+                            <Field
+                              component='select'
+                              name='tag'
+                              className='form-control'
+                              id='tag'
+                            >
+                              {
+                                tagslist.map((name, i) =>
+                                  <option key={i} value={name}>{name}</option>  
+                                )
+                              }
+                            </Field>
+                        }
                       </InputGroup>
                       <FormText color='muted'>
                         OS tag.
