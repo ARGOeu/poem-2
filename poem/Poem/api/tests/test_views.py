@@ -11,13 +11,15 @@ from tenant_schemas.test.client import TenantRequestFactory
 
 from Poem.api import views
 from Poem.api.models import MyAPIKey
-from Poem.poem.models import GroupOfMetrics, Metric, MetricType
+from Poem.poem import models as poem_models
 from Poem.poem_super_admin import models as admin_models
+
+from unittest.mock import patch
 
 
 @factory.django.mute_signals(post_save)
 def mock_db_for_metrics_tests():
-    metrictype = MetricType.objects.create(name='Active')
+    metrictype = poem_models.MetricType.objects.create(name='Active')
 
     tag = admin_models.OSTag.objects.create(name='CentOS 6')
     repo = admin_models.YumRepo.objects.create(name='repo-1', tag=tag)
@@ -51,9 +53,9 @@ def mock_db_for_metrics_tests():
         version_comment='Initial version.',
         version_user='testuser'
     )
-    group = GroupOfMetrics.objects.create(name='EOSC')
+    group = poem_models.GroupOfMetrics.objects.create(name='EOSC')
 
-    Metric.objects.create(
+    poem_models.Metric.objects.create(
         name='argo.AMS-Check',
         mtype=metrictype,
         group=group,
@@ -71,9 +73,297 @@ def mock_db_for_metrics_tests():
         fileparameter='["FILE_SIZE_KBS 1000"]'
     )
 
-    Metric.objects.create(
+    poem_models.Metric.objects.create(
         name='argo.AMSPublisher-Check',
         mtype=metrictype,
+    )
+
+
+@factory.django.mute_signals(post_save)
+def mock_db_for_repos_tests():
+    tag1 = admin_models.OSTag.objects.create(name='CentOS 6')
+    tag2 = admin_models.OSTag.objects.create(name='CentOS 7')
+
+    repo1 = admin_models.YumRepo.objects.create(
+        name='repo-1',
+        tag=tag1,
+        content='content1\ncontent2\n',
+        description='For CentOS 6'
+    )
+
+    repo2 = admin_models.YumRepo.objects.create(
+        name='repo-1',
+        tag=tag2,
+        content='content3\ncontent4\n',
+        description='For CentOS 7'
+    )
+
+    repo3 = admin_models.YumRepo.objects.create(
+        name='repo-2',
+        tag=tag1,
+        content='content5\ncontent6',
+        description='CentOS 6'
+    )
+
+    repo4 = admin_models.YumRepo.objects.create(
+        name='repo-2',
+        tag=tag2,
+        content='content7\ncontent8',
+        description='CentOS 7'
+    )
+
+    package1 = admin_models.Package.objects.create(
+        name='nagios-plugins-argo',
+        version='0.1.11'
+    )
+    package1.repos.add(repo1, repo2)
+
+    package2 = admin_models.Package.objects.create(
+        name='nagios-plugins-http',
+        version='2.2.2'
+    )
+    package2.repos.add(repo3, repo4)
+
+    package3 = admin_models.Package.objects.create(
+        name='nagios-plugins-seadatacloud-nvs2',
+        version='1.0.1'
+    )
+    package3.repos.add(repo2)
+
+    probe1 = admin_models.Probe.objects.create(
+        name='ams-probe',
+        package=package1,
+        repository='https://github.com/ARGOeu/nagios-plugins-argo',
+        docurl='https://github.com/ARGOeu/nagios-plugins-argo/blob/master/'
+               'README.md',
+        description='Probe is inspecting AMS service.',
+        comment='Initial version.',
+        user='testuser',
+        datetime=datetime.datetime.now()
+    )
+
+    probe2 = admin_models.Probe.objects.create(
+        name='ams-publisher-probe',
+        package=package1,
+        repository='https://github.com/ARGOeu/nagios-plugins-argo',
+        docurl='https://github.com/ARGOeu/nagios-plugins-argo/blob/master/'
+               'README.md',
+        description='Probe is inspecting AMS publisher running on Nagios '
+                    'monitoring instances.',
+        comment='Initial version.',
+        user='testuser',
+        datetime=datetime.datetime.now()
+    )
+
+    probe3 = admin_models.Probe.objects.create(
+        name='check_http',
+        package=package2,
+        repository='https://nagios-plugins.org',
+        docurl='http://nagios-plugins.org/doc/man/check_http.html',
+        description='This plugin tests the HTTP service on the specified host.',
+        comment='Initial version.',
+        user='testuser',
+        datetime=datetime.datetime.now()
+    )
+
+    probe4 = admin_models.Probe.objects.create(
+        name='seadatacloud-nvs2',
+        package=package3,
+        repository='https://github.com/ARGOeu/nagios-plugins-seadatacloud-nvs2/'
+                   'tree/devel',
+        docurl='https://github.com/ARGOeu/nagios-plugins-seadatacloud-nvs2/'
+               'tree/devel',
+        description='Nagios plugin.',
+        comment='Initial version.',
+        user='testuser',
+        datetime=datetime.datetime.now()
+    )
+
+    probehistory1 = admin_models.ProbeHistory.objects.create(
+        object_id=probe1,
+        name=probe1.name,
+        package=probe1.package,
+        repository=probe1.repository,
+        docurl=probe1.docurl,
+        description=probe1.description,
+        comment=probe1.comment,
+        date_created=datetime.datetime.now(),
+        version_comment='Initial version.',
+        version_user='testuser'
+    )
+
+    probehistory2 = admin_models.ProbeHistory.objects.create(
+        object_id=probe2,
+        name=probe2.name,
+        package=probe2.package,
+        repository=probe2.repository,
+        docurl=probe2.docurl,
+        description=probe2.description,
+        comment=probe2.comment,
+        date_created=datetime.datetime.now(),
+        version_comment='Initial version.',
+        version_user='testuser'
+    )
+
+    probehistory3 = admin_models.ProbeHistory.objects.create(
+        object_id=probe3,
+        name=probe3.name,
+        package=probe3.package,
+        repository=probe3.repository,
+        docurl=probe3.docurl,
+        description=probe3.description,
+        comment=probe3.comment,
+        date_created=datetime.datetime.now(),
+        version_comment='Initial version.',
+        version_user='testuser'
+    )
+
+    probehistory4 = admin_models.ProbeHistory.objects.create(
+        object_id=probe4,
+        name=probe4.name,
+        package=probe4.package,
+        repository=probe4.repository,
+        docurl=probe4.docurl,
+        description=probe4.description,
+        comment=probe4.comment,
+        date_created=datetime.datetime.now(),
+        version_comment='Initial version.',
+        version_user='testuser'
+    )
+
+    mtype1 = admin_models.MetricTemplateType.objects.create(name='Active')
+    mtype2 = admin_models.MetricTemplateType.objects.create(name='Passive')
+
+    mt1 = admin_models.MetricTemplate.objects.create(
+        name='argo.AMS-Check',
+        probekey=probehistory1,
+        mtype=mtype1,
+        probeexecutable='["ams-probe"]',
+        config='["maxCheckAttempts 3", "timeout  60", '
+               '"path /usr/libexec/argo-monitoring/probes/argo", '
+               '"interval 5", "retryInterval 3"]',
+        attribute='["argo.ams_TOKEN --token"]',
+        parameter='["--project EGI"]',
+        flags='["OBSESS 1"]'
+    )
+
+    mt2 = admin_models.MetricTemplate.objects.create(
+        name='argo.AMSPublisher-Check',
+        probekey=probehistory2,
+        mtype=mtype1,
+        probeexecutable='["ams-publisher-probe"]',
+        config='["maxCheckAttempts 1", "timeout 120", '
+               '"path /usr/libexec/argo-monitoring/probes/argo",'
+               '"interval 180", "retryInterval 1"]',
+        flags='["NOHOSTNAME 1", "NOTIMEOUT 1"]'
+    )
+
+    mt3 = admin_models.MetricTemplate.objects.create(
+        name='eu.seadatanet.org.downloadmanager-check',
+        probekey=probehistory3,
+        mtype=mtype1,
+        probeexecutable='["check_http"]',
+        config='["maxCheckAttempts 3", "timeout 30", '
+               '"path $USER1$", "interval 5", "retryInterval 3"]',
+        attribute='["dm_path -u"]',
+        parameter='["-f follow", "-s OK"]',
+        flags='["PNP 1", "OBSESS 1"]'
+    )
+
+    mt4 = admin_models.MetricTemplate.objects.create(
+        name='eu.seadatanet.org.nvs2-check',
+        probekey=probehistory4,
+        mtype=mtype1,
+        probeexecutable='["seadatacloud-nvs2.sh"]',
+        config='["interval 10", "maxCheckAttempts 3", '
+               '"path /usr/libexec/argo-monitoring/probes/seadatacloud-nvs2/",'
+               '"retryInterval 3", "timeout 30"]',
+        attribute='["voc_collection -u"]'
+    )
+
+    mt5 = admin_models.MetricTemplate.objects.create(
+        name='org.apel.APEL-Pub',
+        mtype=mtype2,
+        flags='["OBSESS 1", "PASSIVE 1"]'
+    )
+
+    group = poem_models.GroupOfMetrics.objects.create(name='TEST')
+
+    metric_type = poem_models.MetricType.objects.create(name='Active')
+
+    poem_models.Metric.objects.create(
+        name=mt1.name,
+        group=group,
+        mtype=metric_type,
+        probekey=mt1.probekey,
+        probeexecutable=mt1.probeexecutable,
+        config=mt1.config,
+        attribute=mt1.attribute,
+        dependancy=mt1.dependency,
+        flags=mt1.flags,
+        files=mt1.files,
+        parameter=mt1.parameter,
+        fileparameter=mt1.fileparameter
+    )
+
+    poem_models.Metric.objects.create(
+        name=mt2.name,
+        group=group,
+        mtype=metric_type,
+        probekey=mt2.probekey,
+        probeexecutable=mt2.probeexecutable,
+        config=mt2.config,
+        attribute=mt2.attribute,
+        dependancy=mt2.dependency,
+        flags=mt2.flags,
+        files=mt2.files,
+        parameter=mt2.parameter,
+        fileparameter=mt2.fileparameter
+    )
+
+    poem_models.Metric.objects.create(
+        name=mt3.name,
+        group=group,
+        mtype=metric_type,
+        probekey=mt3.probekey,
+        probeexecutable=mt3.probeexecutable,
+        config=mt3.config,
+        attribute=mt3.attribute,
+        dependancy=mt3.dependency,
+        flags=mt3.flags,
+        files=mt3.files,
+        parameter=mt3.parameter,
+        fileparameter=mt3.fileparameter
+    )
+
+    poem_models.Metric.objects.create(
+        name=mt4.name,
+        group=group,
+        mtype=metric_type,
+        probekey=mt4.probekey,
+        probeexecutable=mt4.probeexecutable,
+        config=mt4.config,
+        attribute=mt4.attribute,
+        dependancy=mt4.dependency,
+        flags=mt4.flags,
+        files=mt4.files,
+        parameter=mt4.parameter,
+        fileparameter=mt4.fileparameter
+    )
+
+    poem_models.Metric.objects.create(
+        name=mt5.name,
+        group=group,
+        mtype=metric_type,
+        probekey=mt5.probekey,
+        probeexecutable=mt5.probeexecutable,
+        config=mt5.config,
+        attribute=mt5.attribute,
+        dependancy=mt5.dependency,
+        flags=mt5.flags,
+        files=mt5.files,
+        parameter=mt5.parameter,
+        fileparameter=mt5.fileparameter
     )
 
 
@@ -154,3 +444,185 @@ class ListMetricsAPIViewTests(TenantTestCase):
             ]
         )
 
+
+class ListReposAPIViewTests(TenantTestCase):
+    def setUp(self):
+        self.token = create_credentials()
+        self.view = views.ListRepos.as_view()
+        self.factory = TenantRequestFactory(self.tenant)
+        self.url = '/api/v2/repos'
+
+        mock_db_for_repos_tests()
+
+    def test_list_repos_if_wrong_token(self):
+        request = self.factory.get(
+            self.url + '/ARGO-MON/centos7', **{'HTTP_X_API_KEY': 'wrong_token'}
+        )
+        response = self.view(request, 'ARGO-MON', 'centos7')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    @patch('Poem.api.views.get_metrics_from_profile')
+    def test_list_repos(self, func):
+        func.return_value = {
+            'argo.AMS-Check', 'argo.AMSPublisher-Check',
+            'eu.seadatanet.org.downloadmanager-check',
+            'eu.seadatanet.org.nvs2-check'
+        }
+        request = self.factory.get(
+            self.url + '/ARGO-MON/centos7', **{'HTTP_X_API_KEY': self.token}
+        )
+        response = self.view(request, 'ARGO-MON', 'centos7')
+        test_data = response.data
+        test_data[0]['repo-1']['packages'] = sorted(
+            test_data[0]['repo-1']['packages'], key=lambda k: k['name']
+        )
+        self.assertEqual(
+            test_data,
+            [
+                {
+                    'repo-1': {
+                        'content': 'content3\ncontent4\n',
+                        'packages': [
+                            {
+                                'name': 'nagios-plugins-argo',
+                                'version': '0.1.11'
+                            },
+                            {
+                                'name': 'nagios-plugins-seadatacloud-nvs2',
+                                'version': '1.0.1'
+                            }
+                        ]
+                    },
+                    'repo-2': {
+                        'content': 'content7\ncontent8',
+                        'packages': [
+                            {
+                                'name': 'nagios-plugins-http',
+                                'version': '2.2.2'
+                            }
+                        ]
+                    }
+                }
+            ]
+        )
+
+    def test_list_repos_if_no_profile_or_tag(self):
+        request = self.factory.get(self.url, **{'HTTP_X_API_KEY': self.token})
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data,
+            {'detail': 'You must define profile and OS!'}
+        )
+
+    def test_list_repos_if_only_profile_defined(self):
+        request = self.factory.get(
+            self.url + 'PROFILE', **{'HTTP_X_API_KEY': self.token}
+        )
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data,
+            {'detail': 'You must define profile and OS!'}
+        )
+
+    @patch('Poem.api.views.get_metrics_from_profile')
+    def test_list_repos_if_passive_metric_present(self, func):
+        func.return_value = {
+            'argo.AMS-Check', 'argo.AMSPublisher-Check',
+            'eu.seadatanet.org.downloadmanager-check',
+            'org.apel.APEL-Pub'
+        }
+        request = self.factory.get(
+            self.url + '/ARGO-MON/centos6', **{'HTTP_X_API_KEY': self.token}
+        )
+        response = self.view(request, 'ARGO-MON', 'centos6')
+        self.assertEqual(
+            response.data,
+            [
+                {
+                    'repo-1': {
+                        'content': 'content1\ncontent2\n',
+                        'packages': [
+                            {
+                                'name': 'nagios-plugins-argo',
+                                'version': '0.1.11'
+                            }
+                        ]
+                    },
+                    'repo-2': {
+                        'content': 'content5\ncontent6',
+                        'packages': [
+                            {
+                                'name': 'nagios-plugins-http',
+                                'version': '2.2.2'
+                            }
+                        ]
+                    }
+                }
+            ]
+        )
+
+    @patch('Poem.api.views.get_metrics_from_profile')
+    def test_empty_repo_list(self, func):
+        func.return_value = {}
+        request = self.factory.get(
+            self.url + '/ARGO-MON/centos6', **{'HTTP_X_API_KEY': self.token}
+        )
+        response = self.view(request, 'ARGO-MON', 'centos6')
+        self.assertEqual(response.data, [])
+
+    @patch('Poem.api.views.get_metrics_from_profile')
+    def test_list_repos_if_nonexisting_tag(self, func):
+        func.return_value = {
+            'argo.AMS-Check', 'argo.AMSPublisher-Check',
+            'eu.seadatanet.org.downloadmanager-check',
+            'org.apel.APEL-Pub'
+        }
+        request = self.factory.get(
+            self.url + '/ARGO-MON/nonexisting',
+            **{'HTTP_X_API_KEY': self.token}
+        )
+        response = self.view(request, 'ARGO-MON', 'nonexisgint')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(
+            response.data,
+            {'detail': 'YUM repo tag not found.'}
+        )
+
+    @patch('Poem.api.views.get_metrics_from_profile')
+    def test_list_repos_if_function_return_metric_does_not_exist(self, func):
+        func.return_value = {
+            'argo.AMS-Check', 'argo.AMSPublisher-Check',
+            'eu.seadatanet.org.downloadmanager-check',
+            'nonexisting.metric'
+        }
+        request = self.factory.get(
+            self.url + '/ARGO-MON/centos6', **{'HTTP_X_API_KEY': self.token}
+        )
+        response = self.view(request, 'ARGO-MON', 'centos6')
+        self.assertEqual(
+            response.data,
+            [
+                {
+                    'repo-1': {
+                        'content': 'content1\ncontent2\n',
+                        'packages': [
+                            {
+                                'name': 'nagios-plugins-argo',
+                                'version': '0.1.11'
+                            }
+                        ]
+                    },
+                    'repo-2': {
+                        'content': 'content5\ncontent6',
+                        'packages': [
+                            {
+                                'name': 'nagios-plugins-http',
+                                'version': '2.2.2'
+                            }
+                        ]
+                    }
+                }
+            ]
+        )
