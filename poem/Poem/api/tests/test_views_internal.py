@@ -3925,6 +3925,20 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             fileparameter=self.metrictemplate2.fileparameter,
         )
 
+        poem_models.TenantHistory.objects.create(
+            object_id=self.metric2.id,
+            object_repr=self.metric2.__str__(),
+            serialized_data=serializers.serialize(
+                'json', [self.metric2],
+                use_natural_foreign_keys=True,
+                use_natural_primary_keys=True
+            ),
+            content_type=self.ct,
+            date_created=datetime.datetime.now(),
+            comment='Initial version.',
+            user=self.user.username
+        )
+
     def test_get_metric_template_list(self):
         request = self.factory.get(self.url)
         force_authenticate(request, user=self.user)
@@ -4224,7 +4238,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             metric_versions[0].serialized_data
         )[0]['fields']
         self.assertEqual(versions.count(), 1)
-        self.assertEqual(metric_versions.count(), 2)
+        self.assertEqual(metric_versions.count(), 1)
         self.assertEqual(mt.name, 'argo.AMS-Check-new')
         self.assertEqual(mt.mtype.name, 'Active')
         self.assertEqual(mt.parent, '["argo.AMS-Check"]')
@@ -4337,7 +4351,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             metric_versions[0].serialized_data
         )[0]['fields']
         self.assertEqual(versions.count(), 2)
-        self.assertEqual(metric_versions.count(), 2)
+        self.assertEqual(metric_versions.count(), 1)
         self.assertEqual(mt.name, 'argo.AMS-Check-new')
         self.assertEqual(mt.mtype.name, 'Active')
         self.assertEqual(mt.probeexecutable, '["ams-probe-new"]')
@@ -4366,25 +4380,24 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].files, mt.files)
         self.assertEqual(versions[0].parameter, mt.parameter)
         self.assertEqual(versions[0].fileparameter, mt.fileparameter)
-        self.assertEqual(metric.name, mt.name)
-        self.assertEqual(metric.mtype.name, mt.mtype.name)
-        self.assertEqual(metric.probekey, mt.probekey)
+        self.assertEqual(metric.name, 'argo.AMS-Check')
+        self.assertEqual(metric.mtype.name, 'Active')
+        self.assertEqual(metric.probekey, self.probeversion1)
         self.assertEqual(metric.group.name, 'TEST')
-        self.assertEqual(metric.parent, mt.parent)
-        self.assertEqual(metric.probeexecutable, mt.probeexecutable)
-        for item in json.loads(metric.config):
-            if item.startswith('path'):
-                metric_path = item.split(' ')[1]
-        for item in json.loads(mt.config):
-            if item.startswith('path'):
-                mt_path = item.split(' ')[1]
-        self.assertEqual(metric_path, mt_path)
-        self.assertEqual(metric.attribute, mt.attribute)
-        self.assertEqual(metric.dependancy, mt.dependency)
-        self.assertEqual(metric.flags, mt.flags)
-        self.assertEqual(metric.files, mt.files)
-        self.assertEqual(metric.parameter, mt.parameter)
-        self.assertEqual(metric.fileparameter, mt.fileparameter)
+        self.assertEqual(metric.parent, '')
+        self.assertEqual(metric.probeexecutable, '["ams-probe"]')
+        self.assertEqual(
+            metric.config,
+            '["maxCheckAttempts 3", "timeout 60", '
+            '"path /usr/libexec/argo-monitoring/probes/argo", '
+            '"interval 5", "retryInterval 3"]'
+        )
+        self.assertEqual(metric.attribute, '["argo.ams_TOKEN --token"]')
+        self.assertEqual(metric.dependancy, '')
+        self.assertEqual(metric.flags, '["OBSESS 1"]')
+        self.assertEqual(metric.files, '')
+        self.assertEqual(metric.parameter, '["--project EGI"]')
+        self.assertEqual(metric.fileparameter, '')
         self.assertEqual(serialized_data['name'], metric.name)
         self.assertEqual(serialized_data['mtype'], [metric.mtype.name])
         self.assertEqual(
@@ -4402,7 +4415,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(serialized_data['flags'], metric.flags)
         self.assertEqual(serialized_data['files'], metric.files)
         self.assertEqual(serialized_data['parameter'], metric.parameter)
-        self.assertEqual(serialized_data['fileparameter'], mt.fileparameter)
+        self.assertEqual(serialized_data['fileparameter'], metric.fileparameter)
 
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db',
            side_effect=mocked_inline_metric_for_db)
