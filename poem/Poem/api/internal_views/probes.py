@@ -4,7 +4,6 @@ from django.db import IntegrityError
 
 import json
 
-from Poem.api.internal_views.metrictemplates import update_metrics
 from Poem.api.views import NotFound
 from Poem.helpers.history_helpers import create_history
 from Poem.poem import models as poem_models
@@ -122,7 +121,6 @@ class ListProbes(APIView):
                             )
                         metrictemplate.save()
                         create_history(metrictemplate, request.user.username)
-                        update_metrics(metrictemplate, metrictemplate.name)
 
             else:
                 history = admin_models.ProbeHistory.objects.filter(
