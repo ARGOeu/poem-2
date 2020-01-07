@@ -182,6 +182,7 @@ export class PackageChange extends Component {
     this.onSelect = this.onSelect.bind(this);
     this.onSubmitHandle = this.onSubmitHandle.bind(this);
     this.doChange = this.doChange.bind(this);
+    this.doDelete = this.doDelete.bind(this);
   };
 
   toggleAreYouSure() {
@@ -273,6 +274,24 @@ export class PackageChange extends Component {
           };
         });
     };
+  };
+
+  doDelete(nameversion) {
+    this.backend.deletePackage(nameversion)
+      .then(response => {
+        if (!response.ok) {
+          response.json()
+            .then(json => {
+              NotificationManager.error(json.detail, 'Error');
+            });
+        } else {
+          NotifyOk({
+            msg: 'Package successfully deleted',
+            title: 'Deleted',
+            callback: () => this.history.push('/ui/packages')
+          });
+        };
+      });
   };
 
   componentDidMount() {
@@ -472,6 +491,13 @@ export class PackageChange extends Component {
                     !this.addview ?
                       <Button
                         color="danger"
+                        onClick={() => {
+                          this.toggleAreYouSureSetModal(
+                            'Are you sure you want to delete package?',
+                            'Delete package',
+                            () => this.doDelete(this.nameversion)
+                          )
+                        }}
                       >
                         Delete
                       </Button>

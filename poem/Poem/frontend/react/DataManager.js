@@ -548,6 +548,13 @@ export class Backend {
     );
   }
 
+  deletePackage(nameversion) {
+    return this.send(
+      '/api/v2/internal/packages/' + nameversion,
+      'DELETE'
+    );
+  }
+
   importMetrics(data) {
     return this.send(
       '/api/v2/internal/importmetrics/',
