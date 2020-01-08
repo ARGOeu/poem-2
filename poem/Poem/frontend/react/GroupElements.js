@@ -204,7 +204,7 @@ function GroupChange(gr, id, ttl) {
     }
   
     doDelete(name) {
-      this.backend.deleteGroup(gr, name)
+      this.backend.deleteObject(`/api/v2/internal/${gr}group/${name}`)
         .then(() => NotifyOk({
           msg:  'Group of ' + ttl + ' successfully deleted',
           title: 'Deleted',

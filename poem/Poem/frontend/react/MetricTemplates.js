@@ -263,7 +263,7 @@ function MetricTemplateComponent(cloneview=false) {
     }
 
     doDelete(name) {
-      this.backend.deleteMetricTemplate(name)
+      this.backend.deleteObject(`/api/v2/internal/metrictemplates/${name}`)
         .then(() => NotifyOk({
           msg: 'Metric template successfully deleted',
           title: 'Deleted',

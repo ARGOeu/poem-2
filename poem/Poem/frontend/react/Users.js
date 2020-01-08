@@ -390,7 +390,7 @@ export class UserChange extends Component {
     };
 
   doDelete(username) {
-    this.backend.deleteUser(username)
+    this.backend.deleteObject(`/api/v2/internal/users/${username}`)
       .then(() => NotifyOk({
         msg: 'User successfully deleted',
         title: 'Deleted',
@@ -898,7 +898,7 @@ export class SuperAdminUserChange extends Component {
   }
 
   doDelete(username) {
-    this.backend.deleteUser(username)
+    this.backend.deleteObject(`/api/v2/internal/users/${username}`)
       .then(() => NotifyOk({
         msg: 'User successfully deleted',
         title: 'Deleted',

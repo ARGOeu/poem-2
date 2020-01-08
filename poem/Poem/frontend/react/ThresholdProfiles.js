@@ -484,7 +484,7 @@ export class ThresholdsProfilesChange extends Component {
           );
         } else {
           response.json()
-            .then(this.backend.deleteThresholdsProfile(profileId))
+            .then(this.backend.deleteObject(`/api/v2/internal/thresholdsprofiles/${profileId}`))
             .then(() => NotifyOk({
               msg: 'Thresholds profile successfully deleted',
               title: 'Deleted',

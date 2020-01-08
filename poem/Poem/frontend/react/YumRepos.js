@@ -302,7 +302,7 @@ export class YumRepoChange extends Component {
   };
 
   doDelete(name, tag) {
-    this.backend.deleteYumRepo(name, tag)
+    this.backend.deleteObject(`/api/v2/internal/yumrepos/${name}/${tag}`)
       .then(response => {
         if (!response.ok) {
           response.json()

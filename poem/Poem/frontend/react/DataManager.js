@@ -49,82 +49,9 @@ export class Backend {
     return this.send(url, 'POST', data);
   };
 
-  deleteMetricProfile(id) {
-    return this.send(
-      '/api/v2/internal/metricprofiles/' + id,
-      'DELETE',
-    );
-  }
-
-  deleteAggregation(id) {
-    return this.send(
-      '/api/v2/internal/aggregations/' + id,
-      'DELETE'
-    );
-  }
-
-  deleteUser(id) {
-    return this.send(
-      '/api/v2/internal/users/' + id,
-      'DELETE'
-    );
-  }
-
-  deleteGroup(group, name) {
-    return this.send(
-      '/api/v2/internal/' + group + 'group/' + name,
-      'DELETE'
-    );
-  }
-
-  deleteMetric(name) {
-    return this.send(
-      '/api/v2/internal/metric/' + name,
-      'DELETE'
-    );
-  }
-
-  deleteToken(name) {
-    return this.send(
-      '/api/v2/internal/apikeys/' + name,
-      'DELETE'
-    );
-  }
-
-  deleteProbe(name) {
-    return this.send(
-      '/api/v2/internal/probes/' + name,
-      'DELETE'
-    );
-  }
-
-  deleteMetricTemplate(name) {
-    return this.send(
-      '/api/v2/internal/metrictemplates/' + name,
-      'DELETE'
-    );
-  }
-
-  deleteYumRepo(name, tag) {
-    return this.send(
-      '/api/v2/internal/yumrepos/' + name + '/' + tag,
-      'DELETE'
-    );
-  }
-
-  deleteThresholdsProfile(id) {
-    return this.send(
-      '/api/v2/internal/thresholdsprofiles/' + id,
-      'DELETE'
-    );
-  }
-
-  deletePackage(nameversion) {
-    return this.send(
-      '/api/v2/internal/packages/' + nameversion,
-      'DELETE'
-    );
-  }
+  deleteObject(url) {
+    return this.send(url, 'DELETE');
+  };
 
   importMetrics(data) {
     return this.send(

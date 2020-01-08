@@ -193,7 +193,7 @@ export class APIKeyChange extends Component {
   }
 
   doDelete(name) {
-    this.backend.deleteToken(name)
+    this.backend.deleteObject(`/api/v2/internal/apikeys/${name}`)
       .then(response => response.ok
         ?
           NotifyOk({

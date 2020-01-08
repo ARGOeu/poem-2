@@ -526,7 +526,7 @@ export class MetricProfilesChange extends Component
         alert(`Error: ${response.status}, ${response.statusText}`)
       } else {
         response.json()
-        .then(this.backend.deleteMetricProfile(idProfile))
+        .then(this.backend.deleteObject(`/api/v2/internal/metricprofiles/${idProfile}`))
         .then(
           () => NotifyOk({
             msg: 'Metric profile sucessfully deleted',

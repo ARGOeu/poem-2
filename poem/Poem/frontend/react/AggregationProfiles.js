@@ -422,7 +422,7 @@ export class AggregationProfilesChange extends Component
         alert(`Error: ${response.status}, ${response.statusText}`)
       } else {
         response.json()
-        .then(this.backend.deleteAggregation(idProfile))
+        .then(this.backend.deleteObject(`/api/v2/internal/aggregations/${idProfile}`))
         .then(
           () => NotifyOk({
             msg: 'Aggregation profile sucessfully deleted',

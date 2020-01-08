@@ -486,7 +486,7 @@ export class ProbeChange extends Component {
   };
 
   doDelete(name) {
-    this.backend.deleteProbe(name)
+    this.backend.deleteObject(`/api/v2/internal/probes/${name}`)
       .then(response => {
         if (!response.ok) {
           response.json()

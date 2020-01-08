@@ -281,7 +281,7 @@ export class PackageChange extends Component {
   };
 
   doDelete(nameversion) {
-    this.backend.deletePackage(nameversion)
+    this.backend.deleteObject(`/api/v2/internal/packages/${nameversion}`)
       .then(response => {
         if (!response.ok) {
           response.json()

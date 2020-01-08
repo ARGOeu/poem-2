@@ -663,7 +663,7 @@ export class MetricChange extends Component {
   }
 
   doDelete(name) {
-    this.backend.deleteMetric(name)
+    this.backend.deleteObject(`/api/v2/internal/metric/${name}`)
       .then(() => NotifyOk({
         msg: 'Metric successfully deleted',
         title: 'Deleted',
