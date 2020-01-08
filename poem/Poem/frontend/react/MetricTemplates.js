@@ -270,106 +270,97 @@ function MetricTemplateComponent(cloneview=false) {
 
     componentDidMount() {
       this.setState({loading: true});
-  
-      if (!this.addview) {
-        Promise.all([
-          this.backend.fetchData(`/api/v2/internal/metrictemplates/${this.name}`),
-          this.backend.fetchData('/api/v2/internal/mttypes'),
-          this.backend.fetchData('/api/v2/internal/version/probe'),
-          this.backend.fetchData('/api/v2/internal/metrictemplates')
-        ]).then(([metrictemplate, types, probeversions, metrictemplatelist]) => {
-            if (metrictemplate.attribute.length === 0) {
-              metrictemplate.attribute = [{'key': '', 'value': ''}];
-            }
-            if (metrictemplate.dependency.length === 0) {
-              metrictemplate.dependency = [{'key': '', 'value': ''}];
-            }
-            if (metrictemplate.parameter.length === 0) {
-              metrictemplate.parameter = [{'key': '', 'value': ''}];
-            }
-            if (metrictemplate.flags.length === 0) {
-              metrictemplate.flags = [{'key': '', 'value': ''}];
-            }
-            if (metrictemplate.files.length === 0) {
-              metrictemplate.files = [{'key': '', 'value': ''}];
-            }
-            if (metrictemplate.fileparameter.length === 0) {
-              metrictemplate.fileparameter = [{'key': '', 'value': ''}];
-            }
-  
-            let mlist = [];
-            metrictemplatelist.forEach((e) => {
-              mlist.push(e.name);
-            });
-  
-            metrictemplate.probeversion ?
-              this.backend.fetchData(`/api/v2/internal/version/probe/${metrictemplate.probeversion.split(' ')[0]}`)
-                .then(probe => {
-                  let fields = {};
-                  probe.forEach((e) => {
-                    if (e.object_repr === metrictemplate.probeversion) {
-                      fields = e.fields;
-                    }
-                  });
+
+      Promise.all([
+        this.backend.fetchData('/api/v2/internal/mttypes'),
+        this.backend.fetchData('/api/v2/internal/version/probe'),
+        this.backend.fetchData('/api/v2/internal/metrictemplates')
+      ])
+        .then(([types, probeversions, metrictemplatelist]) => {
+          let mlist = [];
+          metrictemplatelist.forEach(e => mlist.push(e.name));
+
+          if (!this.addview) {
+            this.backend.fetchData(`/api/v2/internal/metrictemplates/${this.name}`)
+              .then(metrictemplate => {
+                if (metrictemplate.attribute.length === 0) {
+                  metrictemplate.attribute = [{'key': '', 'value': ''}];
+                }
+                if (metrictemplate.dependency.length === 0) {
+                  metrictemplate.dependency = [{'key': '', 'value': ''}];
+                }
+                if (metrictemplate.parameter.length === 0) {
+                  metrictemplate.parameter = [{'key': '', 'value': ''}];
+                }
+                if (metrictemplate.flags.length === 0) {
+                  metrictemplate.flags = [{'key': '', 'value': ''}];
+                }
+                if (metrictemplate.files.length === 0) {
+                  metrictemplate.files = [{'key': '', 'value': ''}];
+                }
+                if (metrictemplate.fileparameter.length === 0) {
+                  metrictemplate.fileparameter = [{'key': '', 'value': ''}];
+                }
+                
+                metrictemplate.probeversion ?
+                  this.backend.fetchData(`/api/v2/internal/version/probe/${metrictemplate.probeversion.split(' ')[0]}`)
+                    .then(probe => {
+                      let fields = {};
+                      probe.forEach((e) => {
+                        if (e.object_repr === metrictemplate.probeversion) {
+                          fields = e.fields;
+                        }
+                      });
+                      this.setState({
+                        metrictemplate: metrictemplate,
+                        probe: fields,
+                        probeversions: probeversions,
+                        metrictemplatelist: mlist,
+                        types: types,
+                        loading: false,
+                        write_perm: localStorage.getItem('authIsSuperuser') === 'true'
+                      });
+                    })
+                  :
                   this.setState({
                     metrictemplate: metrictemplate,
-                    probe: fields,
-                    probeversions: probeversions,
                     metrictemplatelist: mlist,
                     types: types,
                     loading: false,
                     write_perm: localStorage.getItem('authIsSuperuser') === 'true'
-                  })
-                })
-              :
-              this.setState({
-                metrictemplate: metrictemplate,
-                metrictemplatelist: mlist,
-                types: types,
-                loading: false,
-                write_perm: localStorage.getItem('authIsSuperuser') === 'true'
-              })
-          })
-      } else {
-        Promise.all([
-          this.backend.fetchData('/api/v2/internal/mttypes'),
-          this.backend.fetchData('/api/v2/internal/version/probe'),
-          this.backend.fetchData('/api/v2/internal/metrictemplates')
-        ]).then(([types, probeversions, mtlist]) => {
-          let mlist = [];
-          mtlist.forEach((e) => {
-            mlist.push(e.name);
-          });
-          this.setState({
-            metrictemplate: {
-              id: '',
-              name: '',
-              probeversion: '',
-              mtype: 'Active',
-              probeexecutable: '',
-              parent: '',
-              config: [
-                {'key': 'maxCheckAttempts', 'value': ''},
-                {'key': 'timeout', 'value': ''},
-                {'key': 'path', 'value': ''},
-                {'key': 'interval', 'value': ''},
-                {'key': 'retryInterval', 'value': ''}
-              ],
-              attribute: [{'key': '', 'value': ''}],
-              dependency: [{'key': '', 'value': ''}],
-              parameter: [{'key': '', 'value': ''}],
-              flags: [{'key': '', 'value': ''}],
-              files: [{'key': '', 'value': ''}],
-              fileparameter: [{'key': '', 'value': ''}]
-            },
-            metrictemplatelist: mlist,
-            probeversions: probeversions,
-            types: types,
-            loading: false,
-            write_perm: localStorage.getItem('authIsSuperuser') === 'true'
-          })
-        })
-      }
+                  });
+              });
+          } else {
+            this.setState({
+              metrictemplate: {
+                id: '',
+                name: '',
+                probeversion: '',
+                mtype: 'Active',
+                probeexecutable: '',
+                parent: '',
+                config: [
+                  {'key': 'maxCheckAttempts', 'value': ''},
+                  {'key': 'timeout', 'value': ''},
+                  {'key': 'path', 'value': ''},
+                  {'key': 'interval', 'value': ''},
+                  {'key': 'retryInterval', 'value': ''}
+                ],
+                attribute: [{'key': '', 'value': ''}],
+                dependency: [{'key': '', 'value': ''}],
+                parameter: [{'key': '', 'value': ''}],
+                flags: [{'key': '', 'value': ''}],
+                files: [{'key': '', 'value': ''}],
+                fileparameter: [{'key': '', 'value': ''}]
+              },
+              metrictemplatelist: mlist,
+              probeversions: probeversions,
+              types: types,
+              loading: false,
+              write_perm: localStorage.getItem('authIsSuperuser') === 'true'
+            });
+          };
+        });
     }
 
     render() {
