@@ -493,47 +493,40 @@ export class ThresholdsProfilesChange extends Component {
   componentDidMount() {
     this.setState({loading: true});
 
-    if (this.addview) {
-      Promise.all([
-        this.backend.fetchData('/api/v2/internal/groups/thresholdsprofiles'),
-        this.backend.fetchListOfNames('/api/v2/internal/metricsall')
-      ])
-        .then(([groups, metricsall]) => {
-          this.setState({
-            loading: false,
-            groups_list: groups,
-            metrics_list: metricsall,
-            write_perm: localStorage.getItem('authIsSuperuser') === 'true' || groups.length > 0
-          });
-        });
-    } else {
-      this.backend.fetchData(`/api/v2/internal/thresholdsprofiles/${this.name}`)
-        .then(json1 =>
-          Promise.all([
-            this.webapi.fetchThresholdsProfile(json1.apiid),
-            this.backend.fetchData('/api/v2/internal/groups/thresholdsprofiles'),
-            this.backend.fetchResult('/api/v2/internal/usergroups'),
-            this.backend.fetchListOfNames('/api/v2/internal/metricsall')
-          ])
-            .then(([thresholdsprofile, usergroup, groups, metricsall]) => {
-              this.backend.fetchData(`/api/v2/internal/thresholdsprofiles/${this.name}`)
-                .then(json2 => {
-                  this.setState({
-                    thresholds_profile: {
-                      'apiid': thresholdsprofile.id,
-                      'name': thresholdsprofile.name,
-                      'groupname': json2['groupname']
-                    },
-                    thresholds_rules: this.thresholdsToValues(thresholdsprofile.rules),
-                    groups_list: groups['thresholdsprofiles'],
-                    metrics_list: metricsall,
-                    write_perm: localStorage.getItem('authIsSuperuser') === 'true' || usergroup.indexOf(group) >= 0,
-                    loading: false
-                  });
-                });
-            })
-        );
-    };
+    Promise.all([
+      this.backend.fetchData('/api/v2/internal/groups/thresholdsprofiles'),
+      this.backend.fetchListOfNames('/api/v2/internal/metricsall')
+    ])
+      .then(([usergroups, metricsall]) => {
+        if (this.addview) {
+            this.setState({
+              loading: false,
+              groups_list: usergroups,
+              metrics_list: metricsall,
+              write_perm: localStorage.getItem('authIsSuperuser') === 'true' || groups.length > 0
+            });
+        } else {
+          this.backend.fetchData(`/api/v2/internal/thresholdsprofiles/${this.name}`)
+            .then(json => 
+              Promise.all([
+                this.webapi.fetchThresholdsProfile(json.apiid),
+                this.backend.fetchResult('/api/v2/internal/usergroups')
+              ])
+                .then(([thresholdsprofile, groups]) => this.setState({
+                  thresholds_profile: {
+                    'apiid': thresholdsprofile.id,
+                    'name': thresholdsprofile.name,
+                    'groupname': json['groupname']
+                  },
+                  thresholds_rules: this.thresholdsToValues(thresholdsprofile.rules),
+                  groups_list: groups['thresholdsprofiles'],
+                  metrics_list: metricsall,
+                  write_perm: localStorage.getItem('authIsSuperuser') === 'true' || usergroups.indexOf(group) >= 0,
+                  loading: false
+                }))
+            );
+        };
+      });
   };
 
   render() {
