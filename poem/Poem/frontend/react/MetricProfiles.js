@@ -231,20 +231,20 @@ export class MetricProfilesChange extends Component
     this.setState({loading: true})
 
     if (!this.addview) {
-      this.backend.fetchMetricProfileIdFromName(this.profile_name).then(id =>
-        Promise.all([this.webapi.fetchMetricProfile(id),
-          this.backend.fetchMetricProfileUserGroups(),
-          this.backend.fetchServiceFlavoursAll(),
-          this.backend.fetchMetricsAll()
+      this.backend.fetchData(`/api/v2/internal/metricprofiles/${this.profile_name}`).then(json1 =>
+        Promise.all([this.webapi.fetchMetricProfile(json1.apiid),
+          this.backend.fetchData('/api/v2/internal/groups/metricprofiles'),
+          this.backend.fetchListOfNames('/api/v2/internal/serviceflavoursall'),
+          this.backend.fetchListOfNames('/api/v2/internal/metricsall')
         ])
         .then(([metricp, usergroups, serviceflavoursall, metricsall]) => {
-          this.backend.fetchMetricProfileGroup(metricp.name)
-            .then(group => {
+          this.backend.fetchData(`/api/v2/internal/metricprofiles/${metricp.name}`)
+            .then(json2 => {
               this.setState(
                 {
                   metric_profile: metricp,
                   metric_profile_name: metricp.name,
-                  groups_field: group,
+                  groups_field: json2['groupname'],
                   list_user_groups: usergroups,
                   write_perm: localStorage.getItem('authIsSuperuser') === 'true' || usergroups.indexOf(group) >= 0,
                   view_services: this.flattenServices(metricp.services).sort(this.sortServices),
@@ -262,9 +262,9 @@ export class MetricProfilesChange extends Component
         name: '',
         services: [],
       }
-      Promise.all([this.backend.fetchMetricProfileUserGroups(),
-        this.backend.fetchServiceFlavoursAll(),
-        this.backend.fetchMetricsAll()
+      Promise.all([this.backend.fetchData('/api/v2/internal/groups/metricprofiles'),
+        this.backend.fetchListOfNames('/api/v2/internal/serviceflavoursall'),
+        this.backend.fetchListOfNames('/api/v2/internal/metricsall')
       ])
       .then(([usergroups, serviceflavoursall, metricsall]) => {
         this.setState(
@@ -739,7 +739,7 @@ export class MetricProfilesList extends Component
 
   componentDidMount() {
     this.setState({loading: true})
-    this.backend.fetchMetricProfiles()
+    this.backend.fetchData('/api/v2/internal/metricprofiles')
       .then(json =>
         this.setState({
           list_metricprofiles: json, 

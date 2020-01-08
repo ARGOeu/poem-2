@@ -273,10 +273,10 @@ function MetricTemplateComponent(cloneview=false) {
   
       if (!this.addview) {
         Promise.all([
-          this.backend.fetchMetricTemplateByName(this.name),
-          this.backend.fetchMetricTemplateTypes(),
-          this.backend.fetchProbeVersions(),
-          this.backend.fetchMetricTemplates()
+          this.backend.fetchData(`/api/v2/internal/metrictemplates/${this.name}`),
+          this.backend.fetchData('/api/v2/internal/mttypes'),
+          this.backend.fetchData('/api/v2/internal/version/probe'),
+          this.backend.fetchData('/api/v2/internal/metrictemplates')
         ]).then(([metrictemplate, types, probeversions, metrictemplatelist]) => {
             if (metrictemplate.attribute.length === 0) {
               metrictemplate.attribute = [{'key': '', 'value': ''}];
@@ -303,7 +303,7 @@ function MetricTemplateComponent(cloneview=false) {
             });
   
             metrictemplate.probeversion ?
-              this.backend.fetchVersions('probe', metrictemplate.probeversion.split(' ')[0])
+              this.backend.fetchData(`/api/v2/internal/version/probe/${metrictemplate.probeversion.split(' ')[0]}`)
                 .then(probe => {
                   let fields = {};
                   probe.forEach((e) => {
@@ -332,9 +332,9 @@ function MetricTemplateComponent(cloneview=false) {
           })
       } else {
         Promise.all([
-          this.backend.fetchMetricTemplateTypes(),
-          this.backend.fetchProbeVersions(),
-          this.backend.fetchMetricTemplates()
+          this.backend.fetchData('/api/v2/internal/mttypes'),
+          this.backend.fetchData('/api/v2/internal/version/probe'),
+          this.backend.fetchData('/api/v2/internal/metrictemplates')
         ]).then(([types, probeversions, mtlist]) => {
           let mlist = [];
           mtlist.forEach((e) => {
@@ -660,7 +660,7 @@ export class MetricTemplateVersionCompare extends Component {
   componentDidMount() {
     this.setState({loading: true});
 
-    this.backend.fetchVersions('metrictemplate', this.name)
+    this.backend.fetchData(`/api/v2/internal/version/metrictemplate/${this.name}`)
       .then (json => {
         let name1 = '';
         let probeversion1 = '';
@@ -848,7 +848,7 @@ export class MetricTemplateVersionDetails extends Component {
   componentDidMount() {
     this.setState({loading: true});
 
-    this.backend.fetchVersions('metrictemplate', this.name)
+    this.backend.fetchData(`/api/v2/internal/version/metrictemplate/${this.name}`)
       .then((json) => {
         json.forEach((e) => {
           if (e.version == this.version)

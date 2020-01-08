@@ -40,7 +40,7 @@ function GroupList(group, id, name) {
 
   componentDidMount() {
       this.setState({loading: true});
-      this.backend.fetchAllGroups()
+      this.backend.fetchResult('/api/v2/internal/usergroups')
         .then(json =>
           this.setState({
             list_groups: json[group],
@@ -215,8 +215,8 @@ function GroupChange(gr, id, ttl) {
       this.setState({loading: true});
   
       if (!this.addview) {
-        Promise.all([this.backend.fetchItemsInGroup(gr, this.group),
-          this.backend.fetchItemsNoGroup(gr)
+        Promise.all([this.backend.fetchResult(`/api/v2/internal/${gr}group/${this.group}`),
+          this.backend.fetchResult(`/api/v2/internal/${gr}group`)
         ]).then(([items, nogroupitems]) => {
             this.setState({
               name: this.group,
@@ -227,7 +227,7 @@ function GroupChange(gr, id, ttl) {
             });
           });
       } else {
-        this.backend.fetchItemsNoGroup(gr).then(items =>
+        this.backend.fetchResult(`/api/v2/internal/${gr}group`).then(items =>
           this.setState(
             {
               name: '',

@@ -233,8 +233,8 @@ export class ProbeList extends Component {
     this.setState({loading: true});
 
     Promise.all([
-      this.backend.fetchAllProbes(),
-      this.backend.fetchIsTenantSchema()
+      this.backend.fetchData('/api/v2/internal/probes'),
+      this.backend.isTenantSchema()
     ])
       .then(([json, isTenantSchema]) =>
         this.setState({
@@ -514,16 +514,16 @@ export class ProbeChange extends Component {
     this.setState({loading: true});
 
     Promise.all([
-      this.backend.fetchIsTenantSchema(),
-      this.backend.fetchPackages()
+      this.backend.isTenantSchema(),
+      this.backend.fetchData('/api/v2/internal/packages')
     ])
       .then(([isTenantSchema, pkgs]) => {
         let list_packages = [];
         pkgs.forEach(e => list_packages.push(`${e.name} (${e.version})`));
         if (!this.addview) {
-          this.backend.fetchProbeByName(this.name)
+          this.backend.fetchData(`/api/v2/internal/probes/${this.name}`)
             .then(probe => {
-              this.backend.fetchMetricTemplatesByProbeVersion(probe.name + '(' + probe.version + ')')
+              this.backend.fetchData(`/api/v2/internal/metricsforprobes/${probe.name}(${probe.version})`)
                 .then(metrics => {
                   this.setState({
                     probe: probe,
@@ -832,8 +832,15 @@ export function HistoryComponent(obj) {
 
     componentDidMount() {
       this.setState({loading: true});
+      let url = undefined;
 
-      this.backend.fetchVersions(obj, this.name)
+      if (obj === 'metric')
+        url = '/api/v2/internal/tenantversion/'
+      
+      else
+        url = '/api/v2/internal/version/'
+
+      this.backend.fetchData(`${url}/${obj}/${this.name}`)
         .then((json) => {
           if (json.length > 1) {
             this.setState({
@@ -986,7 +993,7 @@ export class ProbeVersionCompare extends Component{
   componentDidMount() {
     this.setState({loading: true});
 
-    this.backend.fetchVersions('probe', this.name)
+    this.backend.fetchData(`/api/v2/internal/version/probe/${this.name}`)
       .then((json) => {
         let name1 = '';
         let version1 = '';
@@ -1124,7 +1131,7 @@ export class ProbeVersionDetails extends Component {
   componentDidMount() {
     this.setState({loading: true});
 
-    this.backend.fetchVersions('probe', this.name)
+    this.backend.fetchData(`/api/v2/internal/version/probe/${this.name}`)
       .then((json) => {
         json.forEach((e) => {
           if (e.version === this.version) 

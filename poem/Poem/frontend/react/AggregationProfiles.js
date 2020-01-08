@@ -461,17 +461,17 @@ export class AggregationProfilesChange extends Component
     this.setState({loading: true})
 
     if (!this.addview) {
-      this.backend.fetchAggregationProfileIdFromName(this.profile_name).then(id =>
-        Promise.all([this.webapi.fetchAggregationProfile(id), 
+      this.backend.fetchData(`/api/v2/internal/aggregations/${this.profile_name}`).then(json =>
+        Promise.all([this.webapi.fetchAggregationProfile(json.apiid), 
           this.webapi.fetchMetricProfiles(),
-          this.backend.fetchAggregationUserGroups()])
+          this.backend.fetchData('/api/v2/internal/groups/aggregations')])
         .then(([aggregp, metricp, usergroups]) => {
-          this.backend.fetchAggregationGroup(aggregp.name)
-          .then(group =>
+          this.backend.fetchData(`/api/v2/internal/aggregations/${aggregp.name}`)
+          .then(json2 =>
             this.setState(
             {
               aggregation_profile: aggregp,
-              groups_field: group,
+              groups_field: json2['groupname'],
               list_user_groups: usergroups,
               write_perm: localStorage.getItem('authIsSuperuser') === 'true' || usergroups.indexOf(group) >= 0,
               list_id_metric_profiles: this.extractListOfMetricsProfiles(metricp),
@@ -495,7 +495,7 @@ export class AggregationProfilesChange extends Component
         },
         groups: []
       }
-      Promise.all([this.webapi.fetchMetricProfiles(), this.backend.fetchAggregationUserGroups()])
+      Promise.all([this.webapi.fetchMetricProfiles(), this.backend.fetchData('/api/v2/internal/groups/aggregations')])
         .then(([metricp, usergroups]) => this.setState(
       {
         aggregation_profile: empty_aggregation_profile,
@@ -766,7 +766,7 @@ export class AggregationProfilesList extends Component
 
   componentDidMount() {
     this.setState({loading: true})
-    this.backend.fetchAggregation()
+    this.backend.fetchData('/api/v2/internal/aggregations')
       .then(json =>
         this.setState({
           list_aggregations: json, 

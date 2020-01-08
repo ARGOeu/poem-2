@@ -135,7 +135,7 @@ export class ThresholdsProfilesList extends Component {
   componentDidMount() {
     this.setState({loading: true});
 
-    this.backend.fetchThresholdsProfiles()
+    this.backend.fetchData('/api/v2/internal/thresholdsprofiles')
       .then(profiles => 
         this.setState({
           list_thresholdsprofiles: profiles,
@@ -495,8 +495,8 @@ export class ThresholdsProfilesChange extends Component {
 
     if (this.addview) {
       Promise.all([
-        this.backend.fetchThresholdsProfileUserGroups(),
-        this.backend.fetchMetricsAll()
+        this.backend.fetchData('/api/v2/internal/groups/thresholdsprofiles'),
+        this.backend.fetchListOfNames('/api/v2/internal/metricsall')
       ])
         .then(([groups, metricsall]) => {
           this.setState({
@@ -507,22 +507,22 @@ export class ThresholdsProfilesChange extends Component {
           });
         });
     } else {
-      this.backend.fetchThresholdsProfileIdFromName(this.name)
-        .then(id =>
+      this.backend.fetchData(`/api/v2/internal/thresholdsprofiles/${this.name}`)
+        .then(json1 =>
           Promise.all([
-            this.webapi.fetchThresholdsProfile(id),
-            this.backend.fetchThresholdsProfileUserGroups(),
-            this.backend.fetchAllGroups(),
-            this.backend.fetchMetricsAll()
+            this.webapi.fetchThresholdsProfile(json1.apiid),
+            this.backend.fetchData('/api/v2/internal/groups/thresholdsprofiles'),
+            this.backend.fetchResult('/api/v2/internal/usergroups'),
+            this.backend.fetchListOfNames('/api/v2/internal/metricsall')
           ])
             .then(([thresholdsprofile, usergroup, groups, metricsall]) => {
-              this.backend.fetchThresholdsProfileGroup(this.name)
-                .then(group => {
+              this.backend.fetchData(`/api/v2/internal/thresholdsprofiles/${this.name}`)
+                .then(json2 => {
                   this.setState({
                     thresholds_profile: {
                       'apiid': thresholdsprofile.id,
                       'name': thresholdsprofile.name,
-                      'groupname': group
+                      'groupname': json2['groupname']
                     },
                     thresholds_rules: this.thresholdsToValues(thresholdsprofile.rules),
                     groups_list: groups['thresholdsprofiles'],

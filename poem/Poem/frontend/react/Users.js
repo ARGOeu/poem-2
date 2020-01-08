@@ -146,7 +146,7 @@ export class UsersList extends Component
 
   componentDidMount() {
     this.setState({loading: true})
-    this.backend.fetchUsers()
+    this.backend.fetchData('/api/v2/internal/users')
       .then(json =>
         this.setState({
           list_users: json,
@@ -394,10 +394,10 @@ export class UserChange extends Component {
     this.setState({loading: true})
 
     if (!this.addview) {
-      Promise.all([this.backend.fetchUserByUsername(this.user_name),
-      this.backend.fetchUserprofile(this.user_name),
-      this.backend.fetchGroupsForUser(this.user_name),
-      this.backend.fetchAllGroups()
+      Promise.all([this.backend.fetchData(`/api/v2/internal/users/${this.user_name}`),
+      this.backend.fetchData(`/api/v2/internal/userprofile/${this.user_name}`),
+      this.backend.fetchResult(`/api/v2/internal/usergroups/${this.user_name}`),
+      this.backend.fetchResult('/api/v2/internal/usergroups')
     ]).then(([user, userprofile, usergroups, allgroups]) => {
       this.setState({
         custuser: user,
@@ -409,7 +409,7 @@ export class UserChange extends Component {
       });
     });
     } else {
-      this.backend.fetchAllGroups().then(groups => 
+      this.backend.fetchResult('/api/v2/internal/usergroups').then(groups => 
         this.setState(
           {
             custuser: {
@@ -899,7 +899,7 @@ export class SuperAdminUserChange extends Component {
     this.setState({loading: true})
 
     if (!this.addview) {
-      this.backend.fetchUserByUsername(this.user_name)
+      this.backend.fetchData(`/api/v2/internal/users/${this.user_name}`)
       .then((user) => {
         this.setState({
           custuser: user,
@@ -910,7 +910,7 @@ export class SuperAdminUserChange extends Component {
     }
 
     else {
-      this.backend.fetchIsTenantSchema()
+      this.backend.isTenantSchema()
       .then(r => {
         this.setState(
           {

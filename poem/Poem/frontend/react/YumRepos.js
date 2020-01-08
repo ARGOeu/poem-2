@@ -56,9 +56,9 @@ export class YumRepoList extends Component {
     this.setState({loading: true});
 
     Promise.all([
-      this.backend.fetchYumRepos(),
-      this.backend.fetchOSTags(),
-      this.backend.fetchIsTenantSchema()
+      this.backend.fetchData('/api/v2/internal/yumrepos'),
+      this.backend.fetchData('/api/v2/internal/ostags'),
+      this.backend.isTenantSchema()
     ])
       .then(([repos, tags, isTenantSchema]) => {
         this.setState({
@@ -317,10 +317,10 @@ export class YumRepoChange extends Component {
 
   componentDidMount() {
     this.setState({loading: true});
-    this.backend.fetchOSTags()
+    this.backend.fetchData('/api/v2/internal/ostags')
       .then(tags => {
         if (!this.addview) {
-          this.backend.fetchYumRepoByName(this.name, this.tag)
+          this.backend.fetchData(`/api/v2/internal/yumrepos/${this.name}/${this.tag}`)
             .then(json => {
               this.setState({
                 repo: json,

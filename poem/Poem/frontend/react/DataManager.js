@@ -8,291 +8,38 @@ export class Backend {
         return active 
       })
       .catch(() => false);
-  }
+  };
 
-  fetchServices() {
-    return fetch('/api/v2/internal/services')
-      .then(response => response.json())
-      .catch(err => alert('Something went wrong: ' + err));
-  }
-
-  fetchAggregationUserGroups() {
-    return fetch('/api/v2/internal/groups/aggregations')
-      .then(response => response.json())
-      .catch(err => alert('Something went wrong: ' + err));
-  }
-
-  fetchAggregationGroup(aggregation_name) {
-    return fetch('/api/v2/internal/aggregations' + '/' + aggregation_name)
-      .then(response => response.json())
-      .then(json => json['groupname'])
-      .catch(err => alert('Something went wrong: ' + err));
-  }
-
-  fetchAggregationProfileIdFromName(aggregation_name) {
-    return fetch('/api/v2/internal/aggregations' + '/' + aggregation_name)
-      .then(response => response.json())
-      .then(json => json.apiid)
-      .catch(err => alert('Something went wrong: ' + err));
-  }
-
-  fetchAggregation() {
-    return fetch('/api/v2/internal/aggregations')
-      .then(response => response.json())
-      .catch(err => alert('Something went wrong: ' + err));
-  }
-
-  fetchMetricProfiles() {
-    return fetch('/api/v2/internal/metricprofiles')
-      .then(response => response.json())
-      .catch(err => alert('Something went wrong: ' + err));
-  }
-
-  fetchMetricProfileGroup(metricprofile_name) {
-    return fetch('/api/v2/internal/metricprofiles' + '/' + metricprofile_name)
-      .then(response => response.json())
-      .then(json => json['groupname'])
-      .catch(err => alert('Something went wrong: ' + err));
-  }
-
-  fetchMetricProfileIdFromName(metricprofile_name) {
-    return fetch('/api/v2/internal/metricprofiles' + '/' + metricprofile_name)
-      .then(response => response.json())
-      .then(json => json.apiid)
-      .catch(err => alert('Something went wrong: ' + err));
-  }
-
-  fetchMetricsAll() {
-    return fetch('/api/v2/internal/metricsall')
-      .then(response => response.json())
-      .then(json => {
-        let metrics = [];
-        json.forEach((e) => metrics.push(e.name));
-        return metrics;
-      })
-      .catch(err => alert('Something went wrong: ' + err));
-  }
-
-  fetchItemsInGroup(group, name) {
-    return fetch('/api/v2/internal/' + group + 'group/' + name)
-      .then(response => response.json())
-      .then(json => json['result'])
-      .catch(err => alert('Something went wrong: ' + err))
-  }
-  
-  fetchItemsNoGroup(group) {
-    return fetch('/api/v2/internal/' + group + 'group/')
-      .then(response => response.json())
-      .then(json => json['result'])
-      .catch(err => alert('Something went wrong: ' + err))
-  }
-
-  fetchServiceFlavoursAll() {
-    return fetch('/api/v2/internal/serviceflavoursall')
-      .then(response => response.json())
-      .then(json => {
-        let service_flavours = [];
-        json.forEach((e) => service_flavours.push(e.name));
-        return service_flavours;
-      })
-      .catch(err => alert('Something went wrong: ' + err));
-  }
-
-  fetchMetricProfileUserGroups() {
-    return fetch('/api/v2/internal/groups/metricprofiles')
-      .then(response => response.json())
-      .catch(err => alert('Something went wrong: ' + err));
-  }
-
-  fetchUsers() {
-    return fetch('/api/v2/internal/users')
-      .then(response => response.json())
-      .catch(err => alert('Something went wrong: ' + err));
-  }
-
-  fetchUserByUsername(username) {
-    return fetch('/api/v2/internal/users' + '/' + username)
-      .then(response => response.json())
-      .catch(err => alert('Something went wrong: ' + err));
-  }
-
-  fetchUserprofile(username) {
-    return fetch('/api/v2/internal/userprofile/' + username)
-      .then(response => response.json())
-      .catch(err => alert('Something went wrong: ' + err));
-  }
-
-  fetchGroupsForUser(username) {
-    return fetch('/api/v2/internal/usergroups/' + username)
-      .then(response => response.json())
-      .then(json => json['result'])
-      .catch(err => alert('Something went wrong: ' + err));
-  }
-
-  fetchAllGroups() {
-    return fetch('/api/v2/internal/usergroups/')
-      .then(response => response.json())
-      .then(json => json['result'])
-      .catch(err => alert('Something went wrong: ' + err));
-  }
-
-  fetchAllProbes() {
-    return fetch('/api/v2/internal/probes/')
-      .then(response => response.json())
-      .catch(err => alert('Something went wrong: ' + err))
-  }
-
-  fetchProbeByName(name) {
-    return fetch('/api/v2/internal/probes/' + name)
-      .then(response => response.json())
-      .catch(err => alert('Something went wrong: ' + err))
-  }
-
-  fetchAllMetric() {
-    return fetch('/api/v2/internal/metric/')
-      .then(response => response.json())
-      .catch(err => alert('Something went wrong: ' + err))
-  }
-
-  fetchMetricTypes() {
-    return fetch('/api/v2/internal/mtypes/')
-      .then(response => response.json())
-      .catch(err => alert("Something went wrong: " + err))
-  }
-
-  fetchMetricByName(name) {
-    return fetch('/api/v2/internal/metric/' + name)
-      .then(response => response.json())
-      .catch(err => alert('Something went wrong: ' + err))
-  }
-
-  fetchMetricUserGroups() {
-    return fetch('/api/v2/internal/groups/metrics')
-      .then(response => response.json())
-      .catch(err => alert('Something went wrong: ' + err))
-  }
-
-  fetchVersions(obj, name) {
-    if (obj === 'metric')
-      return fetch('/api/v2/internal/tenantversion/' + obj + '/' + name)
-        .then(response => response.json())
-        .catch(err => alert('Something went wrong: ' + err))
-    else
-      return fetch('/api/v2/internal/version/' + obj + '/' + name)
-        .then(response => response.json())
-        .catch(err => alert('Something went wrong: ' + err))
-  }
-
-  fetchTokens() {
-    return fetch('/api/v2/internal/apikeys/')
-      .then(response => response.json())
-      .catch(err => alert('Something went wrong: ' + err))
-  }
-
-  fetchTokenByName(name) {
-    return fetch('/api/v2/internal/apikeys/' + name)
-      .then(response => response.json())
-      .catch(err => alert('Something went wrong: ' + err))
-  }
-
-  fetchIsTenantSchema() {
+  isTenantSchema() {
     return fetch('/api/v2/internal/istenantschema')
       .then(response => response.ok ? response.json() : null)
       .then(json => json['isTenantSchema'])
-      .catch(err => alert('Something went wrong: ' + err))
-  }
+      .catch(err => alert(`Something went wrong: ${err}`))
+  };
 
-  fetchMetricTemplateTypes() {
-    return fetch('/api/v2/internal/mttypes')
+  fetchData(url) {
+    return fetch(url)
       .then(response => response.json())
-      .catch(err => alert('Something went wrong: ' + err))
-  }
+      .catch(err => alert(`Something went wrong: ${err}`));
+  };
 
-  fetchMetricTemplates() {
-    return fetch('/api/v2/internal/metrictemplates/')
+  fetchListOfNames(url) {
+    return fetch(url)
       .then(response => response.json())
-      .catch(err => alert('Something went wrong: ' + err))
-  }
+      .then(json => {
+        let list = [];
+        json.forEach((e) => list.push(e.name));
+        return list;
+      })
+      .catch(err => alert(`Something went wrong: ${err}`));
+  };
 
-  fetchMetricTemplateByName(name) {
-    return fetch('/api/v2/internal/metrictemplates/' + name)
+  fetchResult(url) {
+    return fetch(url)
       .then(response => response.json())
-      .catch(err => alert('Something went wrong: ' + err))
-  }
-
-  fetchProbeVersions() {
-    return fetch('/api/v2/internal/version/probe')
-      .then(response => response.json())
-      .catch(err => alert('Something went wrong: ' + err))
-  }
-
-  fetchMetricTemplatesByProbeVersion(probeversion) {
-    return fetch('/api/v2/internal/metricsforprobes/' + probeversion)
-      .then(response => response.json())
-      .catch(err => alert('Something went wrong: ' + err))
-  }
-
-  fetchYumRepos() {
-    return fetch('/api/v2/internal/yumrepos/')
-      .then(response => response.json())
-      .catch(err => alert('Something went wrong: ' + err))
-  }
-
-  fetchYumRepoByName(name, tag) {
-    return fetch('/api/v2/internal/yumrepos/' + name + '/' + tag)
-      .then(response => response.json())
-      .catch(err => alert('Something went wrong: ' + err))
-  }
-
-  fetchThresholdsProfiles() {
-    return fetch('/api/v2/internal/thresholdsprofiles')
-      .then(response => response.json())
-      .catch(err => alert('Something went wrong: ' + err));
-  }
-
-  fetchThresholdsProfileUserGroups() {
-    return fetch('/api/v2/internal/groups/thresholdsprofiles')
-      .then(response => response.json())
-      .catch(err => alert('Something went wrong: ' + err))
-  }
-
-  fetchThresholdsProfileIdFromName(thresholdsprofiles_name) {
-    return fetch('/api/v2/internal/thresholdsprofiles' + '/' + thresholdsprofiles_name)
-      .then(response => response.json())
-      .then(json => json.apiid)
-      .catch(err => alert('Something went wrong: ' + err));
-  }
-
-  fetchThresholdsProfileGroup(thresholdsprofiles_name) {
-    return fetch('/api/v2/internal/thresholdsprofiles' + '/' + thresholdsprofiles_name)
-      .then(response => response.json())
-      .then(json => json['groupname'])
-      .catch(err => alert('Something went wrong: ' + err))
-  }
-
-  fetchThresholdsProfileUserGroups() {
-    return fetch('/api/v2/internal/groups/thresholdsprofiles')
-      .then(response => response.json())
-      .catch(err => alert('Something went wrong: ' + err))
-  }
-
-  fetchPackages() {
-    return fetch('/api/v2/internal/packages/')
-      .then(response => response.json())
-      .catch(err => alert('Something went wrong: ' + err))
-  }
-
-  fetchPackagebyNameversion(nameversion) {
-    return fetch('/api/v2/internal/packages/' + nameversion)
-      .then(response => response.json())
-      .catch(err => alert('Something went wrong: ' + err))
-  }
-
-  fetchOSTags() {
-    return fetch('/api/v2/internal/ostags/')
-      .then(response => response.json())
-      .catch(err => alert('Something went wrong: ' + err))
-  }
+      .then(json => json['result'])
+      .catch(err => alert(`Something went wrong: ${err}`));
+  };
 
   changeMetricProfile(profile) {
     return this.send(

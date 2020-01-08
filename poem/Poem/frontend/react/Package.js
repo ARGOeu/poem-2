@@ -50,8 +50,8 @@ export class PackageList extends Component {
       this.setState({loading: true});
 
       Promise.all([
-        this.backend.fetchPackages(),
-        this.backend.fetchYumRepos()
+        this.backend.fetchData('/api/v2/internal/packages'),
+        this.backend.fetchData('/api/v2/internal/yumrepos')
       ])
         .then(([pkgs, repos]) => {
           let list_repos = [];
@@ -296,7 +296,7 @@ export class PackageChange extends Component {
 
   componentDidMount() {
     this.setState({loading: true});
-    this.backend.fetchYumRepos()
+    this.backend.fetchData('/api/v2/internal/yumrepos')
       .then(repos => {
           let list_repos_6 = [];
           let list_repos_7 = [];
@@ -316,8 +316,8 @@ export class PackageChange extends Component {
             });
           } else {
             Promise.all([
-              this.backend.fetchPackagebyNameversion(this.nameversion),
-              this.backend.fetchAllProbes()
+              this.backend.fetchData(`/api/v2/internal/packages/${this.nameversion}`),
+              this.backend.fetchData('/api/v2/internal/probes')
             ])
               .then(([pkg, probes]) => {
                 let list_probes = [];

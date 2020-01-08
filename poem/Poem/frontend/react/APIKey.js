@@ -38,7 +38,7 @@ export class APIKeyList extends Component {
   componentDidMount() {
     this.setState({ loading: true });
 
-    this.backend.fetchTokens()
+    this.backend.fetchData('/api/v2/internal/apikeys')
       .then(json => 
         this.setState({
           list_keys: json,
@@ -204,7 +204,7 @@ export class APIKeyChange extends Component {
     this.setState({ loading: true });
 
     if (!this.addview) {
-      this.backend.fetchTokenByName(this.name)
+      this.backend.fetchData(`/api/v2/internal/apikeys/${this.name}`)
         .then((json) =>
           this.setState({
             key: json,
