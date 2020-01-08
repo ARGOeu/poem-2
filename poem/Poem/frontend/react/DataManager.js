@@ -94,7 +94,7 @@ export class WebApi {
     this.metricprofiles = metricProfiles;
     this.aggregationprofiles = aggregationProfiles; 
     this.thresholdsprofiles = thresholdsProfiles;
-  }
+  };
 
   fetchMetricProfiles() {
     return fetch(this.metricprofiles,
@@ -106,25 +106,59 @@ export class WebApi {
       })
       .then(response => response.json())
       .then(json => json['data']) 
-      .catch(err => alert('Something went wrong: ' + err));
-  }
+      .catch(err => alert(`Something went wrong: ${err}`));
+  };
 
   fetchMetricProfile(id) {
-    return fetch(this.metricprofiles + '/' + id, 
-      {headers: 
-        {
-          "Accept": "application/json",
-          "x-api-key": this.token
-        }
-      })
-      .then(response => response.json())
-      .then(json => json['data'])
-      .then(array => array[0])
-      .catch(err => alert('Something went wrong: ' + err));
-  }
+    return this.fetchProfile(`${this.metricprofiles}/${id}`);
+  };
 
   fetchAggregationProfile(id) {
-    return fetch(this.aggregationprofiles + '/' + id, 
+    return this.fetchProfile(`${this.aggregationprofiles}/${id}`);
+  };
+
+  fetchThresholdsProfile(id) {
+    return this.fetchProfile(`${this.thresholdsprofiles}/${id}`);
+  };
+
+  changeAggregation(profile) {
+    return this.changeProfile(this.aggregationprofiles, profile);
+  };
+
+  changeMetricProfile(profile) {
+    return this.changeProfile(this.metricprofiles, profile);
+  };
+
+  changeThresholdsProfile(profile) {
+    return this.changeProfile(this.thresholdsprofiles, profile);
+  };
+
+  addMetricProfile(profile) {
+    return this.addProfile(this.metricprofiles, profile);
+  };
+
+  addAggregation(profile) {
+    return this.addProfile(this.aggregationprofiles, profile);
+  };
+
+  addThresholdsProfile(profile) {
+    return this.addProfile(this.thresholdsprofiles, profile);
+  };
+
+  deleteMetricProfile(id) {
+    return this.deleteProfile(`${this.metricprofiles}/${id}`);
+  };
+
+  deleteAggregation(id) {
+    return this.deleteProfile(`${this.aggregationprofiles}/${id}`);
+  };
+
+  deleteThresholdsProfile(id) {
+    return this.deleteProfile(`${this.thresholdsprofiles}/${id}`);
+  };
+
+  fetchProfile(url) {
+    return fetch(url,
       {headers: 
         {
           "Accept": "application/json",
@@ -134,92 +168,20 @@ export class WebApi {
       .then(response => response.json())
       .then(json => json['data'])
       .then(array => array[0])
-      .catch(err => alert('Something went wrong: ' + err));
-  }
+      .catch(err => alert(`Something went wrong: ${err}`));
+  };
 
-  fetchThresholdsProfile(id) {
-    return fetch(this.thresholdsprofiles + '/' + id,
-    {
-      headers:
-        {
-          "Accept": "application/json",
-          "x-api-key": this.token
-        }
-    })
-      .then(response => response.json())
-      .then(json => json['data'])
-      .then(array => array[0])
-      .catch(err => alert('Something went wrong: ' + err))
-  }
+  changeProfile(url, data) {
+    return this.send(`${url}/${data.id}`, 'PUT', data);
+  };
 
-  changeAggregation(profile) {
-    return this.send(
-      this.aggregationprofiles + '/' + profile.id,
-      'PUT',
-      profile
-    );
-  }
+  addProfile(url, data) {
+    return this.send(url, 'POST', data);
+  };
 
-  changeMetricProfile(profile) {
-    return this.send(
-      this.metricprofiles + '/' + profile.id,
-      'PUT',
-      profile
-    );
-  }
-
-  changeThresholdsProfile(profile) {
-    return this.send(
-      this.thresholdsprofiles + '/' + profile.id,
-      'PUT',
-      profile
-    );
-  }
-
-  addMetricProfile(profile) {
-    return this.send(
-      this.metricprofiles,
-      'POST',
-      profile
-    );
-  }
-
-  addAggregation(profile) {
-    return this.send(
-      this.aggregationprofiles,
-      'POST',
-      profile
-    );
-  }
-
-  addThresholdsProfile(profile) {
-    return this.send(
-      this.thresholdsprofiles,
-      'POST',
-      profile
-    );
-  }
-
-  deleteMetricProfile(id) {
-    return this.send(
-      this.metricprofiles + '/' + id,
-      'DELETE'
-    );
-  }
-
-  deleteAggregation(id) {
-    return this.send(
-      this.aggregationprofiles + '/' + id,
-      'DELETE'
-    );
-  }
-
-  deleteThresholdsProfile(id) {
-    return this.send(
-      this.thresholdsprofiles + '/' + id,
-      'DELETE'
-    );
-  }
+  deleteProfile(url) {
+    return this.send(url, 'DELETE');
+  };
 
   send(url, method, values=null) {
     return fetch(url, {
