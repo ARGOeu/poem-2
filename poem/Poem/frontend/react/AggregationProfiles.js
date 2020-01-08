@@ -364,11 +364,14 @@ export class AggregationProfilesChange extends Component
         else {
           response.json()
             .then(r => {
-              this.backend.changeAggregation({ 
-                apiid: values_send.id, 
-                name: values_send.name, 
-                groupname: values_send.groups_field
-              })
+              this.backend.changeObject(
+                '/api/v2/internal/aggregations/',
+                { 
+                  apiid: values_send.id, 
+                  name: values_send.name, 
+                  groupname: values_send.groups_field
+                }
+              )
                 .then(() => NotifyOk({
                   msg: 'Aggregation profile succesfully changed',
                   title: 'Changed',
@@ -392,12 +395,14 @@ export class AggregationProfilesChange extends Component
         else {
           response.json()
             .then(r => { 
-              this.backend.addAggregation({
-                apiid: r.data.id, 
-                name: values_send.name, 
-                groupname: values_send.groups_field
-              })
-                .then(() => NotifyOk({
+              this.backend.addObject(
+                '/api/v2/internal/aggregations/',
+                {
+                  apiid: r.data.id, 
+                  name: values_send.name, 
+                  groupname: values_send.groups_field
+                }
+              ).then(() => NotifyOk({
                   msg: 'Aggregation profile successfully added',
                   title: 'Added',
                   callback: () => this.history.push('/ui/aggregationprofiles')

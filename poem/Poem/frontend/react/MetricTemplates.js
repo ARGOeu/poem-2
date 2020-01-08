@@ -194,22 +194,24 @@ function MetricTemplateComponent(cloneview=false) {
         } else {
           cloned_from = '';
         }
-        this.backend.addMetricTemplate({
-          cloned_from: cloned_from,
-          name: values.name,
-          probeversion: values.probeversion,
-          mtype: values.type,
-          probeexecutable: values.probeexecutable,
-          parent: values.parent,
-          config: values.config,
-          attribute: values.attributes,
-          dependency: values.dependency,
-          parameter: values.parameter,
-          flags: values.flags,
-          files: values.file_attributes,
-          fileparameter: values.file_parameters
-        })
-          .then(response => {
+        this.backend.addObject(
+          '/api/v2/internal/metrictemplates/',
+          {
+            cloned_from: cloned_from,
+            name: values.name,
+            probeversion: values.probeversion,
+            mtype: values.type,
+            probeexecutable: values.probeexecutable,
+            parent: values.parent,
+            config: values.config,
+            attribute: values.attributes,
+            dependency: values.dependency,
+            parameter: values.parameter,
+            flags: values.flags,
+            files: values.file_attributes,
+            fileparameter: values.file_parameters
+          }
+        ).then(response => {
             if (!response.ok) {
               response.json()
                 .then(json => {
@@ -225,22 +227,24 @@ function MetricTemplateComponent(cloneview=false) {
           })
           .catch(err => alert('Something went wrong: ' + err))
       } else {
-        this.backend.changeMetricTemplate({
-          id: values.id,
-          name: values.name,
-          probeversion: values.probeversion,
-          mtype: values.type,
-          probeexecutable: values.probeexecutable,
-          parent: values.parent,
-          config: values.config,
-          attribute: values.attributes,
-          dependency: values.dependency,
-          parameter: values.parameter,
-          flags: values.flags,
-          files: values.file_attributes,
-          fileparameter: values.file_parameters
-        })
-          .then(response => {
+        this.backend.changeObject(
+          '/api/v2/internal/metrictemplates/',
+          {
+            id: values.id,
+            name: values.name,
+            probeversion: values.probeversion,
+            mtype: values.type,
+            probeexecutable: values.probeexecutable,
+            parent: values.parent,
+            config: values.config,
+            attribute: values.attributes,
+            dependency: values.dependency,
+            parameter: values.parameter,
+            flags: values.flags,
+            files: values.file_attributes,
+            fileparameter: values.file_parameters
+          }
+        ).then(response => {
             if (!response.ok) {
               response.json()
                 .then(json => {

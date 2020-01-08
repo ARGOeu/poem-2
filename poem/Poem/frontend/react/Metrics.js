@@ -647,12 +647,14 @@ export class MetricChange extends Component {
   }
 
   doChange(values, actions) {
-    this.backend.changeMetric({
-      name: values.name,
-      group: values.group,
-      config: values.config
-    })
-      .then(() => NotifyOk({
+    this.backend.changeObject(
+      '/api/v2/internal/metric/',
+      {
+        name: values.name,
+        group: values.group,
+        config: values.config
+      }
+    ).then(() => NotifyOk({
         msg: 'Metric successfully changed',
         title: 'Changed',
         callback: () => this.history.push('/ui/metrics')

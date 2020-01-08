@@ -466,11 +466,14 @@ export class MetricProfilesChange extends Component
         else {
           response.json()
           .then(r => {
-            this.backend.changeMetricProfile({ 
-              apiid: dataToSend.id, 
-              name: dataToSend.name, 
-              groupname: formValues.groups_field
-            })
+            this.backend.changeObject(
+              '/api/v2/internal/metricprofiles/',
+              { 
+                apiid: dataToSend.id, 
+                name: dataToSend.name, 
+                groupname: formValues.groups_field
+              }
+            )
               .then(() => NotifyOk({
                 msg: 'Metric profile succesfully changed',
                 title: 'Changed',
@@ -496,12 +499,14 @@ export class MetricProfilesChange extends Component
         else {
           response.json()
           .then(r => { 
-            this.backend.addMetricProfile({
-              apiid: r.data.id, 
-              name: dataToSend.name, 
-              groupname: formValues.groups_field 
-            })
-              .then(() => NotifyOk({
+            this.backend.addObject(
+              '/api/v2/internal/metricprofiles/',
+              {
+                apiid: r.data.id, 
+                name: dataToSend.name, 
+                groupname: formValues.groups_field 
+              }
+            ).then(() => NotifyOk({
                 msg: 'Metric profile successfully added',
                 title: 'Added',
                 callback: () => this.history.push('/ui/metricprofiles')

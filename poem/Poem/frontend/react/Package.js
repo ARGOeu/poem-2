@@ -233,12 +233,14 @@ export class PackageChange extends Component {
       repos.push(values.repo_7);
    
     if (this.addview) {
-      this.backend.addPackage({
-        name: values.name,
-        version: values.version,
-        repos: repos
-      })
-        .then(response => {
+      this.backend.addObject(
+        '/api/v2/internal/packages/',
+        {
+          name: values.name,
+          version: values.version,
+          repos: repos
+        }
+      ).then(response => {
           if (!response.ok) {
             response.json()
               .then(json => {
@@ -253,13 +255,15 @@ export class PackageChange extends Component {
           };
         });
     } else {
-      this.backend.changePackage({
-        id: values.id,
-        name: values.name,
-        version: values.version,
-        repos: repos
-      })
-        .then(response => {
+      this.backend.changeObject(
+        '/api/v2/internal/packages/',
+        {
+          id: values.id,
+          name: values.name,
+          version: values.version,
+          repos: repos
+        }
+      ).then(response => {
           if (!response.ok) {
             response.json()
               .then(json => {

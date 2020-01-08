@@ -173,7 +173,8 @@ function GroupChange(gr, id, ttl) {
       this.state.items.forEach((i) => items.push(i.name));
   
       if (!this.addview) {
-        this.backend.changeGroup(gr,
+        this.backend.changeObject(
+          `/api/v2/internal/${gr}group/`,
           {
             name: values.name,
             items: items
@@ -186,7 +187,8 @@ function GroupChange(gr, id, ttl) {
         }))
         .catch(err => alert('Something went wrong: ' + err))
       } else {
-        this.backend.addGroup(gr, 
+        this.backend.addObject(
+          `/api/v2/internal/${gr}group/`, 
           {
             name: values.name,
             items: items

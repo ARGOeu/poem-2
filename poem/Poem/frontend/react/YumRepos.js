@@ -252,14 +252,16 @@ export class YumRepoChange extends Component {
 
   doChange(values, actions) {
     if (!this.addview) {
-      this.backend.changeYumRepo({
-        id: values.id,
-        name: values.name,
-        tag: values.tag,
-        content: values.content,
-        description: values.description
-      })
-        .then(response => {
+      this.backend.changeObject(
+        '/api/v2/internal/yumrepos/',
+        {
+          id: values.id,
+          name: values.name,
+          tag: values.tag,
+          content: values.content,
+          description: values.description
+        }
+      ).then(response => {
           if (!response.ok) {
             response.json()
               .then(json => {
@@ -274,13 +276,15 @@ export class YumRepoChange extends Component {
           }
         })
     } else {
-      this.backend.addYumRepo({
-        name: values.name,
-        tag: values.tag,
-        content: values.content,
-        description: values.description
-      })
-        .then(response => {
+      this.backend.addObject(
+        '/api/v2/internal/yumrepos/',
+        {
+          name: values.name,
+          tag: values.tag,
+          content: values.content,
+          description: values.description
+        }
+      ).then(response => {
           if (!response.ok) {
             response.json()
               .then(json => {

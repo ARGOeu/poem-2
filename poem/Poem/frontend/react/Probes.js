@@ -431,17 +431,19 @@ export class ProbeChange extends Component {
 
   doChange(values, actions) {
     if (!this.addview) {
-      this.backend.changeProbe({
-        id: values.id,
-        name: values.name,
-        package: values.package,
-        repository: values.repository,
-        docurl: values.docurl,
-        description: values.description,
-        comment: values.comment,
-        update_metrics: values.update_metrics
-      })
-        .then(response => {
+      this.backend.changeObject(
+        '/api/v2/internal/probes/',
+        {
+          id: values.id,
+          name: values.name,
+          package: values.package,
+          repository: values.repository,
+          docurl: values.docurl,
+          description: values.description,
+          comment: values.comment,
+          update_metrics: values.update_metrics
+        }
+      ).then(response => {
           if (!response.ok) {
             response.json()
               .then(json => {
@@ -456,15 +458,17 @@ export class ProbeChange extends Component {
           };
         });
     } else {
-      this.backend.addProbe({
-        name: values.name,
-        package: values.package,
-        repository: values.repository,
-        docurl: values.docurl,
-        description: values.description,
-        comment: values.comment
-      })
-        .then(response => {
+      this.backend.addObject(
+        '/api/v2/internal/probes/',
+        {
+          name: values.name,
+          package: values.package,
+          repository: values.repository,
+          docurl: values.docurl,
+          description: values.description,
+          comment: values.comment
+        }
+        ).then(response => {
           if (!response.ok) {
             response.json()
               .then(json => {

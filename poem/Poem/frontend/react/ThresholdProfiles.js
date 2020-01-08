@@ -426,12 +426,14 @@ export class ThresholdsProfilesChange extends Component {
         } else {
           response.json()
             .then(r => {
-              this.backend.addThresholdsProfile({
-                apiid: r.data.id,
-                name: values_send.name,
-                groupname: values.groupname,
-              })
-                .then(() => NotifyOk({
+              this.backend.addObject(
+                '/api/v2/internal/thresholdsprofiles/',
+                {
+                  apiid: r.data.id,
+                  name: values_send.name,
+                  groupname: values.groupname,
+                }
+              ).then(() => NotifyOk({
                   msg: 'Thresholds profile successfully added',
                   title: 'Added',
                   callback: () => this.history.push('/ui/thresholdsprofiles')
@@ -454,12 +456,14 @@ export class ThresholdsProfilesChange extends Component {
           } else {
             response.json()
               .then(r => {
-                this.backend.changeThresholdsProfile({
-                  apiid: values_send.id,
-                  name: values_send.name,
-                  groupname: values.groupname
-                })
-                  .then(() => NotifyOk({
+                this.backend.changeObject(
+                  '/api/v2/internal/thresholdsprofiles/',
+                  {
+                    apiid: values_send.id,
+                    name: values_send.name,
+                    groupname: values.groupname
+                  }
+                ).then(() => NotifyOk({
                     msg: 'Thresholds profile successfully changed',
                     title: 'Changed',
                     callback: () => this.history.push('/ui/thresholdsprofiles')
