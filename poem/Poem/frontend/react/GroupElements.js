@@ -214,30 +214,27 @@ function GroupChange(gr, id, ttl) {
     componentDidMount() {
       this.setState({loading: true});
   
-      if (!this.addview) {
-        Promise.all([this.backend.fetchResult(`/api/v2/internal/${gr}group/${this.group}`),
-          this.backend.fetchResult(`/api/v2/internal/${gr}group`)
-        ]).then(([items, nogroupitems]) => {
+      this.backend.fetchResult(`/api/v2/internal/${gr}group`)
+        .then(nogroupitems => {
+          if (!this.addview) {
+            this.backend.fetchResult(`/api/v2/internal/${gr}group/${this.group}`)
+              .then(items => this.setState({
+                name: this.group,
+                items: items,
+                nogroupitems: nogroupitems,
+                write_perm: localStorage.getItem('authIsSuperuser') === 'true',
+                loading: false
+              }));
+          } else {
             this.setState({
-              name: this.group,
-              items: items,
+              name: '',
+              items: [],
               nogroupitems: nogroupitems,
               write_perm: localStorage.getItem('authIsSuperuser') === 'true',
               loading: false
             });
-          });
-      } else {
-        this.backend.fetchResult(`/api/v2/internal/${gr}group`).then(items =>
-          this.setState(
-            {
-              name: '',
-              items: [],
-              nogroupitems: items,
-              write_perm: localStorage.getItem('authIsSuperuser') === 'true',
-              loading: false
-            }
-          ))
-      }
+          };
+        });
     }
   
     render() {
