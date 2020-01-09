@@ -543,7 +543,7 @@ export const DropdownFilterComponent = ({value, onChange, data}) => (
 )
 
 
-export function HistoryComponent(obj) {
+export function HistoryComponent(obj, tenantview=false) {
   return class extends Component {
     constructor(props) {
       super(props);
@@ -592,6 +592,13 @@ export function HistoryComponent(obj) {
 
       render() {
         const { loading, list_versions } = this.state; 
+
+        let compareurl = undefined;
+        if (tenantview)
+          compareurl = `/ui/administration/${obj}s/${this.name}/history`;
+
+        else
+          compareurl = `/ui/${obj}s/${this.name}/history`;
     
         if (loading)
           return (<LoadingAnim />);
@@ -612,7 +619,7 @@ export function HistoryComponent(obj) {
                             color='info'
                             onClick={() => 
                               this.history.push(
-                                '/ui/'+obj+'s/' + this.name + '/history/compare/' + this.state.compare1 + '/' + this.state.compare2,
+                                `${compareurl}/compare/${this.state.compare1}/${this.state.compare2}`,
                               )
                             }
                           >
@@ -664,7 +671,7 @@ export function HistoryComponent(obj) {
                           }
                           {
                             <td>
-                              {e.version ? <Link to={'/ui/' + obj +'s/' + this.name + '/history/' + e.version}>{e.version}</Link> : ''}
+                              {e.version ? <Link to={`${compareurl}/${e.version}`}>{e.version}</Link> : ''}
                             </td>
                           }
                           <td>
