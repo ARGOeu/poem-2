@@ -1,7 +1,14 @@
 import React, { Component } from 'react';
 import { Backend } from './DataManager';
 import { Link } from 'react-router-dom';
-import { LoadingAnim, BaseArgoView, NotifyOk, FancyErrorMessage, DropdownFilterComponent } from './UIElements';
+import { 
+  LoadingAnim, 
+  BaseArgoView, 
+  NotifyOk, 
+  FancyErrorMessage, 
+  DropdownFilterComponent,
+  HistoryComponent
+ } from './UIElements';
 import ReactTable from 'react-table';
 import { Formik, Form, Field, FieldArray } from 'formik';
 import {
@@ -17,7 +24,7 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faInfoCircle, faMinus, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { NotificationManager } from 'react-notifications';
-import { HistoryComponent, DiffElement } from './Probes';
+import { DiffElement } from './Probes';
 import { arraysEqual, InlineDiffElement } from './MetricTemplates';
 
 export const MetricList = ListOfMetrics('metric');

@@ -1,7 +1,13 @@
 import React, { Component } from 'react';
 import { ListOfMetrics, InlineFields, ProbeVersionLink } from './Metrics';
 import { Backend } from './DataManager';
-import { LoadingAnim, BaseArgoView, NotifyOk, FancyErrorMessage } from './UIElements';
+import { 
+  LoadingAnim, 
+  BaseArgoView, 
+  NotifyOk, 
+  FancyErrorMessage,
+  HistoryComponent
+} from './UIElements';
 import { Formik, Form, Field } from 'formik';
 import {
   FormGroup,
@@ -17,7 +23,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import * as Yup from 'yup';
 import { NotificationManager } from 'react-notifications';
-import { HistoryComponent, DiffElement } from './Probes';
+import { DiffElement } from './Probes';
 import ReactDiffViewer from 'react-diff-viewer';
 import { AutocompleteField } from './UIElements';
 
