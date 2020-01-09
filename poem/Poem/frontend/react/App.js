@@ -133,7 +133,7 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, t
     />
     <Route exact path='/ui/administration/metrictemplates/' component={TenantMetricTemplateList}/>
     <Route exact path='/ui/administration/metrictemplates/:name'
-      render={props => <MetricTemplateChange {...props} infoview={true}/>}
+      render={props => <MetricTemplateChange {...props} tenantview={true}/>}
     />
     <Route exact path="/ui/administration/apikey/:name"  
       render={props => <APIKeyChange {...props} />}
