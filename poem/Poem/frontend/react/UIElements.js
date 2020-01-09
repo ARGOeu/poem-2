@@ -189,15 +189,21 @@ export const CustomBreadcrumb = ({location, history}) =>
   }
 
   if (spliturl.length > 4) {
-    var four_level = new Object({'url': three_level['url'] + '/history'});
+    var four_level = new Object({'url': three_level['url'] + '/' + spliturl[4]});
     four_level['title'] = spliturl[4];
     breadcrumb_elements.push(four_level)
   }
 
   if (spliturl.length > 5) {
-    var five_level = new Object({'url': four_level['url'] + spliturl[5]});
+    var five_level = new Object({'url': four_level['url'] + '/' + spliturl[5]});
     five_level['title'] = spliturl[5];
     breadcrumb_elements.push(five_level);
+  }
+
+  if (spliturl.length > 6 && five_level['title'] === 'history') {
+    var six_level = new Object({'url': five_level['url'] + '/' + spliturl[6]});
+    six_level['title'] = spliturl[6];
+    breadcrumb_elements.push(six_level);
   }
 
   return (
