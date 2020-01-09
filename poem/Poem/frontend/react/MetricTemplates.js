@@ -34,6 +34,7 @@ export const MetricTemplateChange = MetricTemplateComponent()
 export const MetricTemplateClone = MetricTemplateComponent(true)
 
 export const MetricTemplateHistory = HistoryComponent('metrictemplate');
+export const TenantMetricTemplateHistory = HistoryComponent('metrictemplate', true);
 
 
 export const InlineDiffElement = ({title, item1, item2}) => {
