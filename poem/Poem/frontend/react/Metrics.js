@@ -7,7 +7,8 @@ import {
   NotifyOk, 
   FancyErrorMessage, 
   DropdownFilterComponent,
-  HistoryComponent
+  HistoryComponent,
+  DiffElement
  } from './UIElements';
 import ReactTable from 'react-table';
 import { Formik, Form, Field, FieldArray } from 'formik';
@@ -24,7 +25,6 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faInfoCircle, faMinus, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { NotificationManager } from 'react-notifications';
-import { DiffElement } from './Probes';
 import { arraysEqual, InlineDiffElement } from './MetricTemplates';
 
 export const MetricList = ListOfMetrics('metric');

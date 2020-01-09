@@ -6,7 +6,8 @@ import {
   BaseArgoView, 
   NotifyOk, 
   FancyErrorMessage,
-  HistoryComponent
+  HistoryComponent,
+  DiffElement
 } from './UIElements';
 import { Formik, Form, Field } from 'formik';
 import {
@@ -23,7 +24,6 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import * as Yup from 'yup';
 import { NotificationManager } from 'react-notifications';
-import { DiffElement } from './Probes';
 import ReactDiffViewer from 'react-diff-viewer';
 import { AutocompleteField } from './UIElements';
 
