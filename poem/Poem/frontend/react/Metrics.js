@@ -316,9 +316,9 @@ export function ListOfMetrics(type, imp=false) {
       this.setState({loading: true});
   
       if (type === 'metric') {
-        Promise.all([this.backend.fetchAllMetric(),
-          this.backend.fetchAllGroups(),
-          this.backend.fetchMetricTypes()
+        Promise.all([this.backend.fetchData('/api/v2/internal/metric'),
+          this.backend.fetchResult('/api/v2/internal/usergroups'),
+          this.backend.fetchData('/api/v2/internal/mtypes')
         ]).then(([metrics, groups, types]) =>
               this.setState({
                 list_metric: metrics,
@@ -332,8 +332,8 @@ export function ListOfMetrics(type, imp=false) {
               }));
         } else {
           Promise.all([
-            this.backend.fetchMetricTemplates(),
-            this.backend.fetchMetricTemplateTypes()
+            this.backend.fetchData('/api/v2/internal/metrictemplates'),
+            this.backend.fetchData('/api/v2/internal/mttypes')
         ]).then(([metrictemplates, types]) =>
             this.setState({
               list_metric: metrictemplates,
@@ -647,12 +647,14 @@ export class MetricChange extends Component {
   }
 
   doChange(values, actions) {
-    this.backend.changeMetric({
-      name: values.name,
-      group: values.group,
-      config: values.config
-    })
-      .then(() => NotifyOk({
+    this.backend.changeObject(
+      '/api/v2/internal/metric/',
+      {
+        name: values.name,
+        group: values.group,
+        config: values.config
+      }
+    ).then(() => NotifyOk({
         msg: 'Metric successfully changed',
         title: 'Changed',
         callback: () => this.history.push('/ui/metrics')
@@ -661,7 +663,7 @@ export class MetricChange extends Component {
   }
 
   doDelete(name) {
-    this.backend.deleteMetric(name)
+    this.backend.deleteObject(`/api/v2/internal/metric/${name}`)
       .then(() => NotifyOk({
         msg: 'Metric successfully deleted',
         title: 'Deleted',
@@ -675,11 +677,11 @@ export class MetricChange extends Component {
 
     if (!this.addview) {
       Promise.all([
-        this.backend.fetchMetricByName(this.name),
-        this.backend.fetchMetricUserGroups()
+        this.backend.fetchData(`/api/v2/internal/metric/${this.name}`),
+        this.backend.fetchData('/api/v2/internal/groups/metrics')
       ]).then(([metrics, usergroups]) => {
         metrics.probeversion ? 
-          this.backend.fetchVersions('probe', metrics.probeversion.split(' ')[0])
+          this.backend.fetchData(`/api/v2/internal/version/probe/${metrics.probeversion.split(' ')[0]}`)
             .then(probe => {
               let fields = {};
               probe.forEach((e) => {
@@ -916,7 +918,7 @@ export class MetricVersonCompare extends Component {
   componentDidMount() {
     this.setState({loading: true});
 
-    this.backend.fetchVersions('metric', this.name)
+    this.backend.fetchData(`/api/v2/internal/tenantversion/metric/${this.name}`)
       .then (json => {
         let name1 = '';
         let probeversion1 = '';
@@ -1114,7 +1116,7 @@ export class MetricVersionDetails extends Component {
   componentDidMount() {
     this.setState({loading: true});
 
-    this.backend.fetchVersions('metric', this.name)
+    this.backend.fetchData(`/api/v2/internal/tenantversion/metric/${this.name}`)
       .then((json) => {
         json.forEach((e) => {
           if (e.version == this.version)

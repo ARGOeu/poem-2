@@ -21,7 +21,7 @@ class Services extends Component {
 
   componentDidMount() {
     this.setState({loading: true});
-    this.backend.fetchServices()
+    this.backend.fetchData('/api/v2/internal/services')
       .then(json =>
         this.setState({
           rows: json.result.rows, 

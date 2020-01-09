@@ -146,7 +146,7 @@ export class UsersList extends Component
 
   componentDidMount() {
     this.setState({loading: true})
-    this.backend.fetchUsers()
+    this.backend.fetchData('/api/v2/internal/users')
       .then(json =>
         this.setState({
           list_users: json,
@@ -306,61 +306,28 @@ export class UserChange extends Component {
 
   doChange(values, action) {
     if (!this.addview) {
-      this.backend.changeUser({
-        pk: values.pk,
-        username: values.username,
-        first_name: values.first_name,
-        last_name: values.last_name,
-        email: values.email,
-        is_superuser: values.is_superuser,
-        is_staff: values.is_staff,
-        is_active: values.is_active
-      })
-      .then(response => {
+      this.backend.changeObject(
+        '/api/v2/internal/users/',
+        {
+          pk: values.pk,
+          username: values.username,
+          first_name: values.first_name,
+          last_name: values.last_name,
+          email: values.email,
+          is_superuser: values.is_superuser,
+          is_staff: values.is_staff,
+          is_active: values.is_active
+        }
+      ).then(response => {
         if (!response.ok) {
           response.json()
             .then(json => {
               NotificationManager.error(json.detail, 'Error');
             });
         } else {
-          this.backend.changeUserProfile({
-            username: values.username,
-            displayname: values.displayname,
-            subject: values.subject,
-            egiid: values.egiid,
-            groupsofaggregations: values.groupsofaggregations,
-            groupsofmetrics: values.groupsofmetrics,
-            groupsofmetricprofiles: values.groupsofmetricprofiles,
-            groupsofthresholdsprofiles: values.groupsofthresholdsprofiles
-          })
-            .then(() =>
-                NotifyOk({
-                  msg: 'User successfully changed',
-                  title: 'Changed',
-                  callback: () => this.history.push('/ui/administration/users')
-                })
-             )
-        }
-      })
-    } else {
-      this.backend.addUser({
-        username: values.username,
-        password: values.password,
-        first_name: values.first_name,
-        last_name: values.last_name,
-        email: values.email,
-        is_superuser: values.is_superuser,
-        is_staff: values.is_staff,
-        is_active: values.is_active
-      })
-        .then(response => {
-          if (!response.ok) {
-            response.json()
-              .then(json => {
-                NotificationManager.error(json.detail, 'Error');
-              });
-          } else {
-            this.backend.addUserProfile({
+          this.backend.changeObject(
+            '/api/v2/internal/userprofile/',
+            {
               username: values.username,
               displayname: values.displayname,
               subject: values.subject,
@@ -369,8 +336,49 @@ export class UserChange extends Component {
               groupsofmetrics: values.groupsofmetrics,
               groupsofmetricprofiles: values.groupsofmetricprofiles,
               groupsofthresholdsprofiles: values.groupsofthresholdsprofiles
+            }
+          ).then(() =>
+            NotifyOk({
+              msg: 'User successfully changed',
+              title: 'Changed',
+              callback: () => this.history.push('/ui/administration/users')
             })
-            .then(() => NotifyOk({
+          )
+        }
+      })
+    } else {
+      this.backend.addObject(
+        '/api/v2/internal/users/',
+        {
+          username: values.username,
+          password: values.password,
+          first_name: values.first_name,
+          last_name: values.last_name,
+          email: values.email,
+          is_superuser: values.is_superuser,
+          is_staff: values.is_staff,
+          is_active: values.is_active
+        }
+      ).then(response => {
+          if (!response.ok) {
+            response.json()
+              .then(json => {
+                NotificationManager.error(json.detail, 'Error');
+              });
+          } else {
+            this.backend.addObject(
+              '/api/v2/internal/userprofile/',
+              {
+                username: values.username,
+                displayname: values.displayname,
+                subject: values.subject,
+                egiid: values.egiid,
+                groupsofaggregations: values.groupsofaggregations,
+                groupsofmetrics: values.groupsofmetrics,
+                groupsofmetricprofiles: values.groupsofmetricprofiles,
+                groupsofthresholdsprofiles: values.groupsofthresholdsprofiles
+              }
+            ).then(() => NotifyOk({
               msg: 'User successfully added',
               title: 'Added',
               callback: () => this.history.push('/ui/administration/users')
@@ -382,7 +390,7 @@ export class UserChange extends Component {
     };
 
   doDelete(username) {
-    this.backend.deleteUser(username)
+    this.backend.deleteObject(`/api/v2/internal/users/${username}`)
       .then(() => NotifyOk({
         msg: 'User successfully deleted',
         title: 'Deleted',
@@ -394,10 +402,10 @@ export class UserChange extends Component {
     this.setState({loading: true})
 
     if (!this.addview) {
-      Promise.all([this.backend.fetchUserByUsername(this.user_name),
-      this.backend.fetchUserprofile(this.user_name),
-      this.backend.fetchGroupsForUser(this.user_name),
-      this.backend.fetchAllGroups()
+      Promise.all([this.backend.fetchData(`/api/v2/internal/users/${this.user_name}`),
+      this.backend.fetchData(`/api/v2/internal/userprofile/${this.user_name}`),
+      this.backend.fetchResult(`/api/v2/internal/usergroups/${this.user_name}`),
+      this.backend.fetchResult('/api/v2/internal/usergroups')
     ]).then(([user, userprofile, usergroups, allgroups]) => {
       this.setState({
         custuser: user,
@@ -409,7 +417,7 @@ export class UserChange extends Component {
       });
     });
     } else {
-      this.backend.fetchAllGroups().then(groups => 
+      this.backend.fetchResult('/api/v2/internal/usergroups').then(groups => 
         this.setState(
           {
             custuser: {
@@ -831,44 +839,48 @@ export class SuperAdminUserChange extends Component {
 
   doChange(values, action) {
     if (!this.addview) {
-      this.backend.changeUser({
-        pk: values.pk,
-        username: values.username,
-        first_name: values.first_name,
-        last_name: values.last_name,
-        email: values.email,
-        is_superuser: values.is_superuser,
-        is_staff: values.is_staff,
-        is_active: values.is_active
-      })
-        .then(response => {
-          if (!response.ok) {
-            response.json()
-              .then(json => {
-                NotificationManager.error(json.detail, 'Error');
-              });
-          } else {
-            NotifyOk({
-              msg: 'User successfully changed',
-              title: 'Changed',
-              callback: () => this.history.push('/ui/administration/users')
+      this.backend.changeObject(
+        '/api/v2/internal/users/',
+        {
+          pk: values.pk,
+          username: values.username,
+          first_name: values.first_name,
+          last_name: values.last_name,
+          email: values.email,
+          is_superuser: values.is_superuser,
+          is_staff: values.is_staff,
+          is_active: values.is_active
+        }
+      ).then(response => {
+        if (!response.ok) {
+          response.json()
+            .then(json => {
+              NotificationManager.error(json.detail, 'Error');
             });
-          }
-        })
-        .catch(err => alert('Something went wrong: ' + err))
+        } else {
+          NotifyOk({
+            msg: 'User successfully changed',
+            title: 'Changed',
+            callback: () => this.history.push('/ui/administration/users')
+          });
+        }
+      })
+      .catch(err => alert('Something went wrong: ' + err))
     }
     else {
-      this.backend.addUser({
-        username: values.username,
-        password: values.password,
-        first_name: values.first_name,
-        last_name: values.last_name,
-        email: values.email,
-        is_superuser: values.is_superuser,
-        is_staff: values.is_staff,
-        is_active: values.is_active
-      })
-        .then(response => {
+      this.backend.addObject(
+        '/api/v2/internal/users/',
+        {
+          username: values.username,
+          password: values.password,
+          first_name: values.first_name,
+          last_name: values.last_name,
+          email: values.email,
+          is_superuser: values.is_superuser,
+          is_staff: values.is_staff,
+          is_active: values.is_active
+        }
+      ).then(response => {
           if (!response.ok) {
             response.json()
               .then(json => {
@@ -886,7 +898,7 @@ export class SuperAdminUserChange extends Component {
   }
 
   doDelete(username) {
-    this.backend.deleteUser(username)
+    this.backend.deleteObject(`/api/v2/internal/users/${username}`)
       .then(() => NotifyOk({
         msg: 'User successfully deleted',
         title: 'Deleted',
@@ -899,7 +911,7 @@ export class SuperAdminUserChange extends Component {
     this.setState({loading: true})
 
     if (!this.addview) {
-      this.backend.fetchUserByUsername(this.user_name)
+      this.backend.fetchData(`/api/v2/internal/users/${this.user_name}`)
       .then((user) => {
         this.setState({
           custuser: user,
@@ -910,7 +922,7 @@ export class SuperAdminUserChange extends Component {
     }
 
     else {
-      this.backend.fetchIsTenantSchema()
+      this.backend.isTenantSchema()
       .then(r => {
         this.setState(
           {

@@ -50,8 +50,8 @@ export class PackageList extends Component {
       this.setState({loading: true});
 
       Promise.all([
-        this.backend.fetchPackages(),
-        this.backend.fetchYumRepos()
+        this.backend.fetchData('/api/v2/internal/packages'),
+        this.backend.fetchData('/api/v2/internal/yumrepos')
       ])
         .then(([pkgs, repos]) => {
           let list_repos = [];
@@ -233,12 +233,14 @@ export class PackageChange extends Component {
       repos.push(values.repo_7);
    
     if (this.addview) {
-      this.backend.addPackage({
-        name: values.name,
-        version: values.version,
-        repos: repos
-      })
-        .then(response => {
+      this.backend.addObject(
+        '/api/v2/internal/packages/',
+        {
+          name: values.name,
+          version: values.version,
+          repos: repos
+        }
+      ).then(response => {
           if (!response.ok) {
             response.json()
               .then(json => {
@@ -253,13 +255,15 @@ export class PackageChange extends Component {
           };
         });
     } else {
-      this.backend.changePackage({
-        id: values.id,
-        name: values.name,
-        version: values.version,
-        repos: repos
-      })
-        .then(response => {
+      this.backend.changeObject(
+        '/api/v2/internal/packages/',
+        {
+          id: values.id,
+          name: values.name,
+          version: values.version,
+          repos: repos
+        }
+      ).then(response => {
           if (!response.ok) {
             response.json()
               .then(json => {
@@ -277,7 +281,7 @@ export class PackageChange extends Component {
   };
 
   doDelete(nameversion) {
-    this.backend.deletePackage(nameversion)
+    this.backend.deleteObject(`/api/v2/internal/packages/${nameversion}`)
       .then(response => {
         if (!response.ok) {
           response.json()
@@ -296,7 +300,7 @@ export class PackageChange extends Component {
 
   componentDidMount() {
     this.setState({loading: true});
-    this.backend.fetchYumRepos()
+    this.backend.fetchData('/api/v2/internal/yumrepos')
       .then(repos => {
           let list_repos_6 = [];
           let list_repos_7 = [];
@@ -316,8 +320,8 @@ export class PackageChange extends Component {
             });
           } else {
             Promise.all([
-              this.backend.fetchPackagebyNameversion(this.nameversion),
-              this.backend.fetchAllProbes()
+              this.backend.fetchData(`/api/v2/internal/packages/${this.nameversion}`),
+              this.backend.fetchData('/api/v2/internal/probes')
             ])
               .then(([pkg, probes]) => {
                 let list_probes = [];

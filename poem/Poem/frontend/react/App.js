@@ -241,7 +241,7 @@ class App extends Component {
     localStorage.setItem('authFirstName', json.first_name);
     localStorage.setItem('authLastName', json.last_name);
     localStorage.setItem('authIsSuperuser', json.is_superuser);
-    this.backend.fetchIsTenantSchema().then((isTenantSchema) => 
+    this.backend.isTenantSchema().then((isTenantSchema) => 
       this.initalizeState(isTenantSchema, true, true)).then(
         setTimeout(() => {
           history.push('/ui/home');
@@ -309,7 +309,7 @@ class App extends Component {
   }
 
   componentDidMount() {
-    this.backend.fetchIsTenantSchema().then((isTenantSchema) => {
+    this.backend.isTenantSchema().then((isTenantSchema) => {
       this.state.isLogged && this.backend.isActiveSession().then(active => {
         if (active) {
           this.initalizeState(isTenantSchema, active, this.state.isLogged)

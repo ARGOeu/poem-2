@@ -40,7 +40,7 @@ function GroupList(group, id, name) {
 
   componentDidMount() {
       this.setState({loading: true});
-      this.backend.fetchAllGroups()
+      this.backend.fetchResult('/api/v2/internal/usergroups')
         .then(json =>
           this.setState({
             list_groups: json[group],
@@ -173,7 +173,8 @@ function GroupChange(gr, id, ttl) {
       this.state.items.forEach((i) => items.push(i.name));
   
       if (!this.addview) {
-        this.backend.changeGroup(gr,
+        this.backend.changeObject(
+          `/api/v2/internal/${gr}group/`,
           {
             name: values.name,
             items: items
@@ -186,7 +187,8 @@ function GroupChange(gr, id, ttl) {
         }))
         .catch(err => alert('Something went wrong: ' + err))
       } else {
-        this.backend.addGroup(gr, 
+        this.backend.addObject(
+          `/api/v2/internal/${gr}group/`, 
           {
             name: values.name,
             items: items
@@ -202,7 +204,7 @@ function GroupChange(gr, id, ttl) {
     }
   
     doDelete(name) {
-      this.backend.deleteGroup(gr, name)
+      this.backend.deleteObject(`/api/v2/internal/${gr}group/${name}`)
         .then(() => NotifyOk({
           msg:  'Group of ' + ttl + ' successfully deleted',
           title: 'Deleted',
@@ -214,30 +216,27 @@ function GroupChange(gr, id, ttl) {
     componentDidMount() {
       this.setState({loading: true});
   
-      if (!this.addview) {
-        Promise.all([this.backend.fetchItemsInGroup(gr, this.group),
-          this.backend.fetchItemsNoGroup(gr)
-        ]).then(([items, nogroupitems]) => {
+      this.backend.fetchResult(`/api/v2/internal/${gr}group`)
+        .then(nogroupitems => {
+          if (!this.addview) {
+            this.backend.fetchResult(`/api/v2/internal/${gr}group/${this.group}`)
+              .then(items => this.setState({
+                name: this.group,
+                items: items,
+                nogroupitems: nogroupitems,
+                write_perm: localStorage.getItem('authIsSuperuser') === 'true',
+                loading: false
+              }));
+          } else {
             this.setState({
-              name: this.group,
-              items: items,
+              name: '',
+              items: [],
               nogroupitems: nogroupitems,
               write_perm: localStorage.getItem('authIsSuperuser') === 'true',
               loading: false
             });
-          });
-      } else {
-        this.backend.fetchItemsNoGroup(gr).then(items =>
-          this.setState(
-            {
-              name: '',
-              items: [],
-              nogroupitems: items,
-              write_perm: localStorage.getItem('authIsSuperuser') === 'true',
-              loading: false
-            }
-          ))
-      }
+          };
+        });
     }
   
     render() {

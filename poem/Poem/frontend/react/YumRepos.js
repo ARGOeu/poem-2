@@ -56,9 +56,9 @@ export class YumRepoList extends Component {
     this.setState({loading: true});
 
     Promise.all([
-      this.backend.fetchYumRepos(),
-      this.backend.fetchOSTags(),
-      this.backend.fetchIsTenantSchema()
+      this.backend.fetchData('/api/v2/internal/yumrepos'),
+      this.backend.fetchData('/api/v2/internal/ostags'),
+      this.backend.isTenantSchema()
     ])
       .then(([repos, tags, isTenantSchema]) => {
         this.setState({
@@ -252,14 +252,16 @@ export class YumRepoChange extends Component {
 
   doChange(values, actions) {
     if (!this.addview) {
-      this.backend.changeYumRepo({
-        id: values.id,
-        name: values.name,
-        tag: values.tag,
-        content: values.content,
-        description: values.description
-      })
-        .then(response => {
+      this.backend.changeObject(
+        '/api/v2/internal/yumrepos/',
+        {
+          id: values.id,
+          name: values.name,
+          tag: values.tag,
+          content: values.content,
+          description: values.description
+        }
+      ).then(response => {
           if (!response.ok) {
             response.json()
               .then(json => {
@@ -274,13 +276,15 @@ export class YumRepoChange extends Component {
           }
         })
     } else {
-      this.backend.addYumRepo({
-        name: values.name,
-        tag: values.tag,
-        content: values.content,
-        description: values.description
-      })
-        .then(response => {
+      this.backend.addObject(
+        '/api/v2/internal/yumrepos/',
+        {
+          name: values.name,
+          tag: values.tag,
+          content: values.content,
+          description: values.description
+        }
+      ).then(response => {
           if (!response.ok) {
             response.json()
               .then(json => {
@@ -298,7 +302,7 @@ export class YumRepoChange extends Component {
   };
 
   doDelete(name, tag) {
-    this.backend.deleteYumRepo(name, tag)
+    this.backend.deleteObject(`/api/v2/internal/yumrepos/${name}/${tag}`)
       .then(response => {
         if (!response.ok) {
           response.json()
@@ -317,10 +321,10 @@ export class YumRepoChange extends Component {
 
   componentDidMount() {
     this.setState({loading: true});
-    this.backend.fetchOSTags()
+    this.backend.fetchData('/api/v2/internal/ostags')
       .then(tags => {
         if (!this.addview) {
-          this.backend.fetchYumRepoByName(this.name, this.tag)
+          this.backend.fetchData(`/api/v2/internal/yumrepos/${this.name}/${this.tag}`)
             .then(json => {
               this.setState({
                 repo: json,

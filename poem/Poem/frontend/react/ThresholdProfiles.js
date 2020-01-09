@@ -135,7 +135,7 @@ export class ThresholdsProfilesList extends Component {
   componentDidMount() {
     this.setState({loading: true});
 
-    this.backend.fetchThresholdsProfiles()
+    this.backend.fetchData('/api/v2/internal/thresholdsprofiles')
       .then(profiles => 
         this.setState({
           list_thresholdsprofiles: profiles,
@@ -426,12 +426,14 @@ export class ThresholdsProfilesChange extends Component {
         } else {
           response.json()
             .then(r => {
-              this.backend.addThresholdsProfile({
-                apiid: r.data.id,
-                name: values_send.name,
-                groupname: values.groupname,
-              })
-                .then(() => NotifyOk({
+              this.backend.addObject(
+                '/api/v2/internal/thresholdsprofiles/',
+                {
+                  apiid: r.data.id,
+                  name: values_send.name,
+                  groupname: values.groupname,
+                }
+              ).then(() => NotifyOk({
                   msg: 'Thresholds profile successfully added',
                   title: 'Added',
                   callback: () => this.history.push('/ui/thresholdsprofiles')
@@ -454,12 +456,14 @@ export class ThresholdsProfilesChange extends Component {
           } else {
             response.json()
               .then(r => {
-                this.backend.changeThresholdsProfile({
-                  apiid: values_send.id,
-                  name: values_send.name,
-                  groupname: values.groupname
-                })
-                  .then(() => NotifyOk({
+                this.backend.changeObject(
+                  '/api/v2/internal/thresholdsprofiles/',
+                  {
+                    apiid: values_send.id,
+                    name: values_send.name,
+                    groupname: values.groupname
+                  }
+                ).then(() => NotifyOk({
                     msg: 'Thresholds profile successfully changed',
                     title: 'Changed',
                     callback: () => this.history.push('/ui/thresholdsprofiles')
@@ -480,7 +484,7 @@ export class ThresholdsProfilesChange extends Component {
           );
         } else {
           response.json()
-            .then(this.backend.deleteThresholdsProfile(profileId))
+            .then(this.backend.deleteObject(`/api/v2/internal/thresholdsprofiles/${profileId}`))
             .then(() => NotifyOk({
               msg: 'Thresholds profile successfully deleted',
               title: 'Deleted',
@@ -493,47 +497,40 @@ export class ThresholdsProfilesChange extends Component {
   componentDidMount() {
     this.setState({loading: true});
 
-    if (this.addview) {
-      Promise.all([
-        this.backend.fetchThresholdsProfileUserGroups(),
-        this.backend.fetchMetricsAll()
-      ])
-        .then(([groups, metricsall]) => {
-          this.setState({
-            loading: false,
-            groups_list: groups,
-            metrics_list: metricsall,
-            write_perm: localStorage.getItem('authIsSuperuser') === 'true' || groups.length > 0
-          });
-        });
-    } else {
-      this.backend.fetchThresholdsProfileIdFromName(this.name)
-        .then(id =>
-          Promise.all([
-            this.webapi.fetchThresholdsProfile(id),
-            this.backend.fetchThresholdsProfileUserGroups(),
-            this.backend.fetchAllGroups(),
-            this.backend.fetchMetricsAll()
-          ])
-            .then(([thresholdsprofile, usergroup, groups, metricsall]) => {
-              this.backend.fetchThresholdsProfileGroup(this.name)
-                .then(group => {
-                  this.setState({
-                    thresholds_profile: {
-                      'apiid': thresholdsprofile.id,
-                      'name': thresholdsprofile.name,
-                      'groupname': group
-                    },
-                    thresholds_rules: this.thresholdsToValues(thresholdsprofile.rules),
-                    groups_list: groups['thresholdsprofiles'],
-                    metrics_list: metricsall,
-                    write_perm: localStorage.getItem('authIsSuperuser') === 'true' || usergroup.indexOf(group) >= 0,
-                    loading: false
-                  });
-                });
-            })
-        );
-    };
+    Promise.all([
+      this.backend.fetchData('/api/v2/internal/groups/thresholdsprofiles'),
+      this.backend.fetchListOfNames('/api/v2/internal/metricsall')
+    ])
+      .then(([usergroups, metricsall]) => {
+        if (this.addview) {
+            this.setState({
+              loading: false,
+              groups_list: usergroups,
+              metrics_list: metricsall,
+              write_perm: localStorage.getItem('authIsSuperuser') === 'true' || groups.length > 0
+            });
+        } else {
+          this.backend.fetchData(`/api/v2/internal/thresholdsprofiles/${this.name}`)
+            .then(json => 
+              Promise.all([
+                this.webapi.fetchThresholdsProfile(json.apiid),
+                this.backend.fetchResult('/api/v2/internal/usergroups')
+              ])
+                .then(([thresholdsprofile, groups]) => this.setState({
+                  thresholds_profile: {
+                    'apiid': thresholdsprofile.id,
+                    'name': thresholdsprofile.name,
+                    'groupname': json['groupname']
+                  },
+                  thresholds_rules: this.thresholdsToValues(thresholdsprofile.rules),
+                  groups_list: groups['thresholdsprofiles'],
+                  metrics_list: metricsall,
+                  write_perm: localStorage.getItem('authIsSuperuser') === 'true' || usergroups.indexOf(group) >= 0,
+                  loading: false
+                }))
+            );
+        };
+      });
   };
 
   render() {
