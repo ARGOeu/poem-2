@@ -155,7 +155,7 @@ class ImportMetrics(APIView):
                 if metrictemplate.probekey:
                     ver = admin_models.ProbeHistory.objects.get(
                         name=metrictemplate.probekey.name,
-                        version=metrictemplate.probekey.version
+                        package__version=metrictemplate.probekey.package.version
                     )
 
                     metric = poem_models.Metric.objects.create(

@@ -1,4 +1,5 @@
 from django.contrib.contenttypes.models import ContentType
+from django.core import serializers
 from django.db import IntegrityError
 
 import json
@@ -38,75 +39,44 @@ def update_metrics(metrictemplate, name):
     for schema in schemas:
         with schema_context(schema):
             try:
-                changes = 0
                 met = Metric.objects.get(name=name)
-
-                if met.name != metrictemplate.name:
-                    met.name = metrictemplate.name
-                    changes += 1
-
-                if met.probekey != metrictemplate.probekey:
-                    met.probekey = metrictemplate.probekey
-                    changes += 1
-
-                if met.probeexecutable != metrictemplate.probeexecutable:
-                    met.probeexecutable = metrictemplate.probeexecutable
-
-                if met.parent != metrictemplate.parent:
-                    met.parent = metrictemplate.parent
-                    changes += 1
-
-                if met.attribute != metrictemplate.attribute:
-                    met.attribute = metrictemplate.attribute
-                    changes += 1
-
-                if met.dependancy != metrictemplate.dependency:
-                    met.dependancy = metrictemplate.dependency
-                    changes += 1
-
-                if met.flags != metrictemplate.flags:
-                    met.flags = metrictemplate.flags
-                    changes += 1
-
-                if met.files != metrictemplate.files:
-                    met.files = metrictemplate.files
-                    changes += 1
-
-                if met.parameter != metrictemplate.parameter:
-                    met.parameter = metrictemplate.parameter
-                    changes += 1
-
-                if met.fileparameter != metrictemplate.fileparameter:
-                    met.fileparameter = metrictemplate.fileparameter
-                    changes += 1
+                met.name = metrictemplate.name
+                met.probeexecutable = metrictemplate.probeexecutable
+                met.parent = metrictemplate.parent
+                met.attribute = metrictemplate.attribute
+                met.dependancy = metrictemplate.dependency
+                met.flags = metrictemplate.flags
+                met.files = metrictemplate.files
+                met.parameter = metrictemplate.parameter
+                met.fileparameter = metrictemplate.fileparameter
 
                 if metrictemplate.config:
                     for item in json.loads(metrictemplate.config):
                         if item.split(' ')[0] == 'path':
                             objpath = item
 
+                    metconfig = []
                     for item in json.loads(met.config):
                         if item.split(' ')[0] == 'path':
-                            oldpath = item
+                            metconfig.append(objpath)
+                        else:
+                            metconfig.append(item)
 
-                    if oldpath != objpath:
-                        metconfig = []
-                        for item in json.loads(met.config):
-                            if item.split(' ')[0] == 'path':
-                                metconfig.append(objpath)
-                            else:
-                                metconfig.append(item)
+                    met.config = json.dumps(metconfig)
 
-                        met.config = json.dumps(metconfig)
-                        changes += 1
-                else:
-                    if met.config != '':
-                        met.config = ''
-                        changes += 1
+                met.save()
 
-                if changes > 0:
-                    met.save()
-                    create_history(met, user='Super POEM user')
+                history = TenantHistory.objects.filter(
+                    object_id=met.id,
+                    content_type=ContentType.objects.get_for_model(Metric)
+                )[0]
+                history.serialized_data = serializers.serialize(
+                    'json', [met],
+                    use_natural_foreign_keys=True,
+                    use_natural_primary_keys=True
+                )
+                history.object_repr = met.__str__()
+                history.save()
 
             except Metric.DoesNotExist:
                 continue
@@ -185,7 +155,9 @@ class ListMetricTemplates(APIView):
                     ),
                     probekey=admin_models.ProbeHistory.objects.get(
                         name=request.data['probeversion'].split(' ')[0],
-                        version=request.data['probeversion'].split(' ')[1][1:-1]
+                        package__version=request.data['probeversion'].split(
+                            ' '
+                        )[1][1:-1]
                     ),
                     parent=parent,
                     probeexecutable=probeexecutable,
@@ -223,7 +195,7 @@ class ListMetricTemplates(APIView):
         except IntegrityError:
             return Response(
                 {'detail':
-                     'Metric template with this name already exists.'},
+                 'Metric template with this name already exists.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -247,7 +219,9 @@ class ListMetricTemplates(APIView):
         if request.data['probeversion']:
             new_probekey = admin_models.ProbeHistory.objects.get(
                 name=request.data['probeversion'].split(' ')[0],
-                version=request.data['probeversion'].split(' ')[1][1:-1]
+                package__version=request.data['probeversion'].split(
+                    ' '
+                )[1][1:-1]
             )
         else:
             new_probekey = None
@@ -283,6 +257,7 @@ class ListMetricTemplates(APIView):
                 metrictemplate.save()
 
                 create_history(metrictemplate, request.user.username)
+
             else:
                 new_data = {
                     'name': request.data['name'],
@@ -316,10 +291,11 @@ class ListMetricTemplates(APIView):
                     name=old_name, probekey=old_probekey
                 ).update(**new_data)
 
-            update_metrics(
-                admin_models.MetricTemplate.objects.get(id=request.data['id']),
-                old_name
-            )
+                mt = admin_models.MetricTemplate.objects.get(
+                    pk=request.data['id']
+                )
+
+                update_metrics(mt, old_name)
 
             return Response(status=status.HTTP_201_CREATED)
 
@@ -372,7 +348,7 @@ class ListMetricTemplatesForProbeVersion(APIView):
         if probeversion:
             metrics = admin_models.MetricTemplate.objects.filter(
                 probekey__name=probeversion.split('(')[0],
-                probekey__version=probeversion.split('(')[1][0:-1]
+                probekey__package__version=probeversion.split('(')[1][0:-1]
             )
 
             if metrics.count() == 0:

@@ -238,8 +238,8 @@ export class Backend {
       .catch(err => alert('Something went wrong: ' + err))
   }
 
-  fetchYumRepoByName(name) {
-    return fetch('/api/v2/internal/yumrepos/' + name)
+  fetchYumRepoByName(name, tag) {
+    return fetch('/api/v2/internal/yumrepos/' + name + '/' + tag)
       .then(response => response.json())
       .catch(err => alert('Something went wrong: ' + err))
   }
@@ -272,6 +272,24 @@ export class Backend {
 
   fetchThresholdsProfileUserGroups() {
     return fetch('/api/v2/internal/groups/thresholdsprofiles')
+      .then(response => response.json())
+      .catch(err => alert('Something went wrong: ' + err))
+  }
+
+  fetchPackages() {
+    return fetch('/api/v2/internal/packages/')
+      .then(response => response.json())
+      .catch(err => alert('Something went wrong: ' + err))
+  }
+
+  fetchPackagebyNameversion(nameversion) {
+    return fetch('/api/v2/internal/packages/' + nameversion)
+      .then(response => response.json())
+      .catch(err => alert('Something went wrong: ' + err))
+  }
+
+  fetchOSTags() {
+    return fetch('/api/v2/internal/ostags/')
       .then(response => response.json())
       .catch(err => alert('Something went wrong: ' + err))
   }
@@ -364,6 +382,14 @@ export class Backend {
     );
   }
 
+  changePackage(pkg) {
+    return this.send(
+      '/api/v2/internal/packages/',
+      'PUT',
+      pkg
+    );
+  }
+
   addAggregation(profile) {
     return this.send(
       '/api/v2/internal/aggregations/',
@@ -444,6 +470,14 @@ export class Backend {
     )
   }
 
+  addPackage(pkg) {
+    return this.send(
+      '/api/v2/internal/packages/',
+      'POST',
+      pkg
+    );
+  }
+
   deleteMetricProfile(id) {
     return this.send(
       '/api/v2/internal/metricprofiles/' + id,
@@ -500,9 +534,9 @@ export class Backend {
     );
   }
 
-  deleteYumRepo(name) {
+  deleteYumRepo(name, tag) {
     return this.send(
-      '/api/v2/internal/yumrepos/' + name,
+      '/api/v2/internal/yumrepos/' + name + '/' + tag,
       'DELETE'
     );
   }
@@ -510,6 +544,13 @@ export class Backend {
   deleteThresholdsProfile(id) {
     return this.send(
       '/api/v2/internal/thresholdsprofiles/' + id,
+      'DELETE'
+    );
+  }
+
+  deletePackage(nameversion) {
+    return this.send(
+      '/api/v2/internal/packages/' + nameversion,
       'DELETE'
     );
   }

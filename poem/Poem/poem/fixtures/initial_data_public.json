@@ -12,5 +12,19 @@
     "fields": {
       "name": "Passive"
      }
+  },
+  {
+    "model": "poem_super_admin.OSTag",
+    "pk": 1,
+    "fields": {
+      "name": "CentOS 6"
+    }
+  },
+  {
+    "model": "poem_super_admin.OSTag",
+    "pk": 2,
+    "fields": {
+      "name": "CentOS 7"
+    }
   }
 ]

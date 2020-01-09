@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { Backend } from './DataManager';
 import { Link } from 'react-router-dom';
-import { LoadingAnim, BaseArgoView, NotifyOk, FancyErrorMessage } from './UIElements';
+import { LoadingAnim, BaseArgoView, NotifyOk, FancyErrorMessage, DropdownFilterComponent } from './UIElements';
 import ReactTable from 'react-table';
 import { Formik, Form, Field, FieldArray } from 'formik';
 import {
@@ -32,21 +32,6 @@ const DefaultFilterComponent = ({value, onChange, field}) => (
     onChange={onChange}
     style={{width: '100%'}}
   />
-)
-
-const DropdownFilterComponent = ({value, onChange, data}) => (
-  <select
-    onChange={onChange}
-    style={{width: '100%'}}
-    value={value}
-  >
-    <option key={0} value=''>Show all</option>
-    {
-      data.map((name, i) => 
-        <option key={i + 1} value={name}>{name}</option>
-      )
-    }
-  </select>
 )
 
 
@@ -693,30 +678,30 @@ export class MetricChange extends Component {
         this.backend.fetchMetricByName(this.name),
         this.backend.fetchMetricUserGroups()
       ]).then(([metrics, usergroups]) => {
-        metrics.probekey ? 
-        this.backend.fetchVersions('probe', metrics.probeversion.split(' ')[0])
-          .then(probe => {
-            let fields = {};
-            probe.forEach((e) => {
-              if (e.id === metrics.probekey) {
-                fields = e.fields;
-              }
+        metrics.probeversion ? 
+          this.backend.fetchVersions('probe', metrics.probeversion.split(' ')[0])
+            .then(probe => {
+              let fields = {};
+              probe.forEach((e) => {
+                if (e.object_repr === metrics.probeversion) {
+                  fields = e.fields;
+                }
+              })
+              this.setState({
+                metric: metrics,
+                probe: fields,
+                groups: usergroups,
+                loading: false,
+                write_perm: localStorage.getItem('authIsSuperuser') === 'true' || usergroups.indexOf(metrics.group) >= 0,
+              })
             })
+          :
             this.setState({
               metric: metrics,
-              probe: fields,
               groups: usergroups,
               loading: false,
               write_perm: localStorage.getItem('authIsSuperuser') === 'true' || usergroups.indexOf(metrics.group) >= 0,
             })
-          })
-          :
-          this.setState({
-            metric: metrics,
-            groups: usergroups,
-            loading: false,
-            write_perm: localStorage.getItem('authIsSuperuser') === 'true' || usergroups.indexOf(metrics.group) >= 0,
-          })
       })
     }
   }

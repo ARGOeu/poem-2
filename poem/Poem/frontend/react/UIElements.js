@@ -42,7 +42,8 @@ import {
   faBoxOpen,
   faExclamation,
   faSquare,
-  faUser} from '@fortawesome/free-solid-svg-icons';
+  faUser,
+  faBox} from '@fortawesome/free-solid-svg-icons';
 import { NotificationManager } from 'react-notifications';
 import { Field } from 'formik';
 import Autocomplete from 'react-autocomplete';
@@ -51,7 +52,8 @@ import Autocomplete from 'react-autocomplete';
 var list_pages = ['administration','services', 'reports', 'probes',
                   'metrics', 'metricprofiles', 'aggregationprofiles',
                   'thresholdsprofiles'];
-var admin_list_pages = ['administration', 'probes', 'yumrepos', 'metrictemplates'];
+var admin_list_pages = ['administration', 'probes', 'yumrepos', 
+                        'packages', 'metrictemplates'];
 
 var link_title = new Map();
 link_title.set('administration', 'Administration');
@@ -70,6 +72,7 @@ link_title.set('metrictemplates', 'Metric templates');
 link_title.set('yumrepos', 'YUM repos');
 link_title.set('groupofthresholdsprofiles', 'Groups of thresholds profiles');
 link_title.set('thresholdsprofiles', 'Thresholds profiles');
+link_title.set('packages', 'Packages');
 
 export const Icon = props =>
 {
@@ -87,6 +90,7 @@ export const Icon = props =>
   link_icon.set('yumrepos', faBoxOpen);
   link_icon.set('thresholdsprofiles', faExclamation);
   link_icon.set('users', faUser);
+  link_icon.set('packages', faBox);
 
   if (props.i.startsWith('groupof'))
     return (
@@ -511,3 +515,18 @@ export const AutocompleteField = ({lists, onselect_handler, field, val, icon, se
     />
   );
 };
+
+export const DropdownFilterComponent = ({value, onChange, data}) => (
+  <select
+    onChange={onChange}
+    style={{width: '100%'}}
+    value={value}
+  >
+    <option key={0} value=''>Show all</option>
+    {
+      data.map((name, i) => 
+        <option key={i + 1} value={name}>{name}</option>
+      )
+    }
+  </select>
+)

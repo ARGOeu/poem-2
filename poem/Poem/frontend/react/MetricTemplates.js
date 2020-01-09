@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { ListOfMetrics, InlineFields, ProbeVersionLink } from './Metrics';
 import { Backend } from './DataManager';
-import { LoadingAnim, BaseArgoView, NotifyOk, FancyErrorMessage, Icon } from './UIElements';
+import { LoadingAnim, BaseArgoView, NotifyOk, FancyErrorMessage } from './UIElements';
 import { Formik, Form, Field } from 'formik';
 import {
   FormGroup,
@@ -302,12 +302,12 @@ function MetricTemplateComponent(cloneview=false) {
               mlist.push(e.name);
             });
   
-            metrictemplate.probekey ?
+            metrictemplate.probeversion ?
               this.backend.fetchVersions('probe', metrictemplate.probeversion.split(' ')[0])
                 .then(probe => {
                   let fields = {};
                   probe.forEach((e) => {
-                    if (e.id === metrictemplate.probekey) {
+                    if (e.object_repr === metrictemplate.probeversion) {
                       fields = e.fields;
                     }
                   });
@@ -885,7 +885,7 @@ export class MetricTemplateVersionDetails extends Component {
         <React.Fragment>
           <div className='d-flex align-items-center justify-content-between'>
             <React.Fragment>
-              <h2 className='ml-3 mt-1 mb-4'>{name + ' (' + date_created + ')'}</h2>
+              <h2 className='ml-3 mt-1 mb-4'>{`${name} [${probeversion}]`}</h2>
             </React.Fragment>
           </div>
           <div id='argo-contentwrap' className='ml-2 mb-2 mt-2 p-3 border rounded'>

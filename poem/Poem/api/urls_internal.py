@@ -30,6 +30,9 @@ urlpatterns = [
     path('metrictemplates/<str:name>', views_internal.ListMetricTemplates.as_view(), name='metrictemplates'),
     path('mttypes/', views_internal.ListMetricTemplateTypes.as_view(), name='mttypes'),
     path('mtypes/', views_internal.ListMetricTypes.as_view(), name='mtypes'),
+    path('ostags/', views_internal.ListOSTags.as_view(), name='ostags'),
+    path('packages/', views_internal.ListPackages.as_view(), name='packages'),
+    path('packages/<str:nameversion>', views_internal.ListPackages.as_view(), name='packages'),
     path('probes/', views_internal.ListProbes.as_view(), name='probes'),
     path('probes/<str:name>', views_internal.ListProbes.as_view(), name='probes'),
     path('saml2login', views_internal.Saml2Login.as_view(), name='saml2login'),
@@ -50,5 +53,5 @@ urlpatterns = [
     path('version/<str:obj>/', views_internal.ListVersions.as_view(), name='version'),
     path('version/<str:obj>/<str:name>', views_internal.ListVersions.as_view(), name='version'),
     path('yumrepos/', views_internal.ListYumRepos.as_view(), name='yumrepos'),
-    path('yumrepos/<str:name>', views_internal.ListYumRepos.as_view(), name='yumrepos'),
+    path('yumrepos/<str:name>/<str:tag>', views_internal.ListYumRepos.as_view(), name='yumrepos'),
 ]
