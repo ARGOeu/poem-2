@@ -364,7 +364,7 @@ export const NotifyOk = ({msg='', title='', callback=undefined}) => {
 export const BaseArgoView = ({resourcename='', location=undefined, 
     infoview=false, addview=false, listview=false, modal=false, 
     state=undefined, toggle=undefined, submitperm=true, history=true, 
-    addnew=true, clone=false, cloneview=false, children}) => 
+    addnew=true, clone=false, cloneview=false, tenantview=false, children}) => 
 (
   <React.Fragment>
     {
@@ -403,19 +403,28 @@ export const BaseArgoView = ({resourcename='', location=undefined,
                   <h2 className="ml-3 mt-1 mb-4">{`Clone ${resourcename}`}</h2>
                 </React.Fragment>
               :
-                <React.Fragment>
-                  <h2 className="ml-3 mt-1 mb-4">{`Change ${resourcename}`}</h2>
-                    <ButtonToolbar>
-                      {
-                        clone &&
-                          <Link className="btn btn-secondary mr-2" to={location.pathname + "/clone"} role="button">Clone</Link>
-                      }
-                      {
-                        history &&
-                          <Link className="btn btn-secondary" to={location.pathname + "/history"} role="button">History</Link>
-                      }
-                    </ButtonToolbar>
-                </React.Fragment>
+                tenantview ?
+                  <React.Fragment>
+                    <h2 className="ml-3 mt-1 mb-4">{resourcename}</h2>
+                    {
+                      history &&
+                        <Link className="btn btn-secondary" to={location.pathname + "/history"} role="button">History</Link>
+                    }
+                  </React.Fragment>
+                :
+                  <React.Fragment>
+                    <h2 className="ml-3 mt-1 mb-4">{`Change ${resourcename}`}</h2>
+                      <ButtonToolbar>
+                        {
+                          clone &&
+                            <Link className="btn btn-secondary mr-2" to={location.pathname + "/clone"} role="button">Clone</Link>
+                        }
+                        {
+                          history &&
+                            <Link className="btn btn-secondary" to={location.pathname + "/history"} role="button">History</Link>
+                        }
+                      </ButtonToolbar>
+                  </React.Fragment>
       }
     </div>
     <div id="argo-contentwrap" className="ml-2 mb-2 mt-2 p-3 border rounded">
