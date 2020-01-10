@@ -322,17 +322,28 @@ function GroupChange(gr, id, ttl) {
                     {
                     (write_perm) &&
                       <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
+                        {
+                          !this.addview ?
+                            <Button 
+                              color="danger"
+                              onClick={() => {
+                                this.toggleAreYouSureSetModal('Are you sure you want to delete group of ' + gr + '?',
+                                'Delete group of ' + gr,
+                                () => this.doDelete(props.values.name))
+                              }}
+                            >
+                              Delete
+                            </Button>
+                          :
+                            <div></div>
+                        }
                         <Button 
-                          color="danger"
-                          onClick={() => {
-                            this.toggleAreYouSureSetModal('Are you sure you want to delete group of ' + gr + '?',
-                            'Delete group of ' + gr,
-                            () => this.doDelete(props.values.name))
-                          }}
+                          color="success" 
+                          id="submit-button" 
+                          type="submit"
                         >
-                          Delete
+                          Save
                         </Button>
-                        <Button color="success" id="submit-button" type="submit">Save</Button>
                       </div>
                   }
                   </Form>
