@@ -1,7 +1,13 @@
 import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
 import { Backend } from './DataManager';
-import { LoadingAnim, BaseArgoView, Checkbox, NotifyOk, FancyErrorMessage } from './UIElements';
+import { 
+  LoadingAnim, 
+  BaseArgoView, 
+  Checkbox, 
+  NotifyOk, 
+  FancyErrorMessage
+} from './UIElements';
 import ReactTable from 'react-table';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
@@ -45,89 +51,177 @@ const UserSchema  = Yup.object().shape({
 import './Users.css';
 import { NotificationManager } from 'react-notifications';
 
-const UsernamePassword = ({add, errors}) => 
-  (add) ?
-   <FormGroup>
-    <Row>
-      <Col md={6}>
-        <InputGroup>
-          <InputGroupAddon addonType='prepend'>Username</InputGroupAddon>
-          <Field
-            type="text"
-            name="username"
-            className={errors.username ? 'form-control border-danger' : 'form-control'}
-            id="userUsername"
-          />
-        </InputGroup>
-        {
-          errors.username ?
-            FancyErrorMessage(errors.username)
-          :
-            null
-        }
-      </Col>
-    </Row>
-    <Row>
-      <Col md={6}>
-        <InputGroup>
-          <InputGroupAddon addonType='prepend'>Password</InputGroupAddon>
-          <Field
-          type="password"
-          name="password"
-          className={errors.password ? 'form-control border-danger' : 'form-control'}
-          id="password"
-        />
-        </InputGroup>
-        {
-          errors.password ?
-            FancyErrorMessage(errors.password)
-          :
-            null
-        }
-      </Col>
-    </Row>
-    <Row>
-      <Col md={6}>
-        <InputGroup>
-          <InputGroupAddon addonType='prepend'>Confirm password</InputGroupAddon>
-          <Field
-            type='password'
-            name='confirm_password'
-            className={errors.confirm_password ? 'form-control border-danger' : 'form-control'}
-            id='confirm_password'
-          />
-        </InputGroup>
-        {
-          errors.confirm_password ? 
-            FancyErrorMessage(errors.confirm_password)
-          :
-            null
-        }
-      </Col>
-    </Row>
-   </FormGroup>
-  :
+
+const CommonUser = ({add, errors}) => 
+  <>
+    {
+      (add) ?
+        <FormGroup>
+          <Row>
+            <Col md={6}>
+              <InputGroup>
+                <InputGroupAddon addonType='prepend'>Username</InputGroupAddon>
+                <Field
+                  type="text"
+                  name="username"
+                  className={`form-control ${errors.username && 'border-danger'}`}
+                  id="userUsername"
+                />
+              </InputGroup>
+              {
+                errors.username &&
+                  FancyErrorMessage(errors.username)
+              }
+            </Col>
+          </Row>
+          <Row>
+            <Col md={6}>
+              <InputGroup>
+                <InputGroupAddon addonType='prepend'>Password</InputGroupAddon>
+                <Field
+                type="password"
+                name="password"
+                className={`form-control ${errors.password && 'border-danger'}`}
+                id="password"
+              />
+              </InputGroup>
+              {
+                errors.password &&
+                  FancyErrorMessage(errors.password)
+              }
+            </Col>
+          </Row>
+          <Row>
+            <Col md={6}>
+              <InputGroup>
+                <InputGroupAddon addonType='prepend'>Confirm password</InputGroupAddon>
+                <Field
+                  type='password'
+                  name='confirm_password'
+                  className={`form-control ${errors.confirm_password && 'border-danger'}`}
+                  id='confirm_password'
+                />
+              </InputGroup>
+              {
+                errors.confirm_password &&
+                  FancyErrorMessage(errors.confirm_password)
+              }
+            </Col>
+          </Row>
+        </FormGroup>
+      :
+        <FormGroup>
+          <Row>
+            <Col md={6}>
+              <InputGroup>
+                <InputGroupAddon addonType='prepend'>Username</InputGroupAddon>
+                <Field
+                  type="text"
+                  name='username'
+                  className="form-control"
+                  id='userUsername'
+                />
+              </InputGroup>
+              {
+                errors.username &&
+                  FancyErrorMessage(errors.username)
+              }
+            </Col>
+          </Row>
+        </FormGroup>
+    }
     <FormGroup>
+      <h4 className="mt-2 p-1 pl-3 text-light text-uppercase rounded" style={{"backgroundColor": "#416090"}}>Personal info</h4>
       <Row>
         <Col md={6}>
           <InputGroup>
-            <InputGroupAddon addonType='prepend'>Username</InputGroupAddon>
+            <InputGroupAddon addonType="prepend">First name</InputGroupAddon>
             <Field
               type="text"
-              name='username'
+              name="first_name"
               className="form-control"
-              id='userUsername'
+              id="userFirstName"
+            />
+          </InputGroup>
+        </Col>
+      </Row>
+      <Row>
+        <Col md={6}>
+          <InputGroup>
+            <InputGroupAddon addonType="prepend">Last name</InputGroupAddon>
+            <Field
+              type="text"
+              name="last_name"
+              className="form-control"
+              id="userLastName"
+            />
+          </InputGroup>
+        </Col>
+      </Row>
+      <Row>
+        <Col md={6}>
+          <InputGroup>
+            <InputGroupAddon addonType="prepend">Email</InputGroupAddon>
+            <Field
+              type="text"
+              name="email"
+              className={`form-control ${errors.email && 'border-danger'}`}
+              id="userEmail"
             />
           </InputGroup>
           {
-            errors.username ? 
-              FancyErrorMessage(errors.username)
-            :
-              null
+            errors.email &&
+              FancyErrorMessage(errors.email)
           }
         </Col>
       </Row>
     </FormGroup>
+    <FormGroup>
+      <h4 className="mt-2 p-1 pl-3 text-light text-uppercase rounded" style={{"backgroundColor": "#416090"}}>Permissions</h4>
+      <Row>
+        <Col md={6}>
+          <Field
+            component={Checkbox}
+            name="is_superuser"
+            className="form-control"
+            id="checkbox"
+            label="Superuser status"
+          />
+          <FormText color="muted">
+            Designates that this user has all permissions without explicitly assigning them.
+          </FormText>
+        </Col>
+      </Row>
+      <Row>
+        <Col md={6}>
+          <Field
+            component={Checkbox}
+            name="is_staff"
+            className="form-control"
+            id="checkbox"
+            label="Staff status"
+          />
+          <FormText color="muted">
+            Designates whether the user can log into this admin site.
+          </FormText>
+        </Col>
+      </Row>
+      <Row>
+        <Col md={6}>
+          <Field 
+            component={Checkbox}
+            name="is_active"
+            className="form-control"
+            id="checkbox"
+            label="Active"
+          />
+          <FormText color="muted">
+            Designates whether this user should be treated as active. Unselect this instead of deleting accounts.
+          </FormText>
+        </Col>
+      </Row>
+    </FormGroup>
+  </>
 
 
 export class UsersList extends Component
@@ -196,7 +290,8 @@ export class UsersList extends Component
           >{row.value}</div>,
         accessor: d => 
         d.is_superuser ? 
-          <FontAwesomeIcon icon={faCheckCircle} style={{color: "#339900"}}/> : 
+          <FontAwesomeIcon icon={faCheckCircle} style={{color: "#339900"}}/> 
+        : 
           <FontAwesomeIcon icon={faTimesCircle} style={{color: "#CC0000"}}/>
       },
       {
@@ -207,7 +302,8 @@ export class UsersList extends Component
           >{row.value}</div>,
         accessor: d => 
           d.is_staff ?
-            <FontAwesomeIcon icon={faCheckCircle} style={{color: "#339900"}}/> :
+            <FontAwesomeIcon icon={faCheckCircle} style={{color: "#339900"}}/> 
+          :
             <FontAwesomeIcon icon={faTimesCircle} style={{color: "#CC0000"}}/>
       }
     ];
@@ -293,11 +389,11 @@ export class UserChange extends Component {
     let title = undefined;
 
     if (this.addview) {
-      msg = 'Are you sure you want to add User?';
+      msg = 'Are you sure you want to add user?';
       title = 'Add user';
     }
     else {
-      msg = 'Are you sure you want to change User?';
+      msg = 'Are you sure you want to change user?';
       title = 'Change user';
     }
     this.toggleAreYouSureSetModal(msg, title,
@@ -458,7 +554,7 @@ export class UserChange extends Component {
     else if (!loading) {
       return (
         <BaseArgoView
-          resourcename="Users"
+          resourcename="users"
           location={this.location}
           addview={this.addview}
           history={false}
@@ -491,103 +587,10 @@ export class UserChange extends Component {
             onSubmit = {(values, actions) => this.onSubmitHandle(values, actions)}
             render = {props => (
               <Form> 
-                <UsernamePassword
+                <CommonUser
                   {...props}
                   add={this.addview}
                 />
-                <FormGroup>
-                  <h4 className="mt-2 p-1 pl-3 text-light text-uppercase rounded" style={{"backgroundColor": "#416090"}}>Personal info</h4>
-                  <Row>
-                    <Col md={6}>
-                      <InputGroup>
-                        <InputGroupAddon addonType='prepend'>First name</InputGroupAddon>
-                        <Field
-                          type="text"
-                          name="first_name"
-                          className="form-control"
-                          id="userFirstName"
-                        />
-                      </InputGroup>
-                    </Col>
-                  </Row>
-                  <Row>
-                    <Col md={6}>
-                      <InputGroup>
-                        <InputGroupAddon addonType='prepend'>Last name</InputGroupAddon>
-                        <Field
-                          type="text"
-                          name="last_name"
-                          className="form-control"
-                          id="userLastName"
-                        />
-                      </InputGroup>
-                    </Col>
-                  </Row>
-                  <Row>
-                    <Col md={6}>
-                      <InputGroup>
-                        <InputGroupAddon addonType='prepend'>Email</InputGroupAddon>
-                        <Field
-                          type="text"
-                          name="email"
-                          className={props.errors.email ? 'form-control border-danger' : 'form-control'}
-                          id="userEmail"
-                        />
-                      </InputGroup>
-                      {
-                        props.errors.email ? 
-                          FancyErrorMessage(props.errors.email)
-                        :
-                          null
-                      }
-                    </Col>
-                  </Row>
-                </FormGroup>
-                <FormGroup>
-                  <h4 className="mt-2 p-1 pl-3 text-light text-uppercase rounded" style={{"backgroundColor": "#416090"}}>Permissions</h4>
-                  <Row>
-                    <Col md={6}>
-                      <Field
-                        component={Checkbox}
-                        name="is_superuser"
-                        className="form-control"
-                        id="checkbox"
-                        label="Superuser status"
-                      />
-                      <FormText color="muted">
-                        Designates that this user has all permissions without explicitly assigning them.
-                      </FormText>
-                    </Col>
-                  </Row>
-                  <Row>
-                    <Col md={6}>
-                      <Field
-                        component={Checkbox}
-                        name="is_staff"
-                        className="form-control"
-                        id="checkbox"
-                        label="Staff status"
-                      />
-                      <FormText color="muted">
-                        Designates whether the user can log into this admin site.
-                      </FormText>
-                    </Col>
-                  </Row>
-                  <Row>
-                    <Col md={6}>
-                      <Field 
-                        component={Checkbox}
-                        name="is_active"
-                        className="form-control"
-                        id="checkbox"
-                        label="Active"
-                      />
-                      <FormText color="muted">
-                        Designates whether this user should be treated as active. Unselect this instead of deleting accounts.
-                      </FormText>
-                    </Col>
-                  </Row>
-                </FormGroup>
                 <FormGroup>
                   <h4 className="mt-2 p-1 pl-3 text-light text-uppercase rounded" style={{"backgroundColor": "#416090"}}>POEM user permissions</h4>
                   <Row>
@@ -837,11 +840,11 @@ export class SuperAdminUserChange extends Component {
     let title = undefined;
 
     if (this.addview) {
-      msg = 'Are you sure you want to add User?';
+      msg = 'Are you sure you want to add user?';
       title = 'Add user';
     }
     else {
-      msg = 'Are you sure you want to change User?';
+      msg = 'Are you sure you want to change user?';
       title = 'Change user';
     }
     this.toggleAreYouSureSetModal(msg, title,
@@ -876,7 +879,6 @@ export class SuperAdminUserChange extends Component {
           });
         }
       })
-      .catch(err => alert('Something went wrong: ' + err))
     }
     else {
       this.backend.addObject(
@@ -915,7 +917,6 @@ export class SuperAdminUserChange extends Component {
         title: 'Deleted',
         callback: () => this.history.push('/ui/administration/users')
       }))
-      .catch(err => alert('Something went wrong: ' + err))
   }
 
   componentDidMount() {
@@ -964,7 +965,7 @@ export class SuperAdminUserChange extends Component {
     else if (!loading) {
       return (
         <BaseArgoView
-          resourcename="Users"
+          resourcename="users"
           location={this.location}
           addview={this.addview}
           history={false}
@@ -990,103 +991,10 @@ export class SuperAdminUserChange extends Component {
             onSubmit = {(values, actions) => this.onSubmitHandle(values, actions)}
             render = {props => (
               <Form> 
-                <UsernamePassword
+                <CommonUser
                   {...props}
                   add={this.addview}
                 />
-                <FormGroup>
-                  <h4 className="mt-2 p-1 pl-3 text-light text-uppercase rounded" style={{"backgroundColor": "#416090"}}>Personal info</h4>
-                  <Row>
-                    <Col md={6}>
-                      <InputGroup>
-                        <InputGroupAddon addonType="prepend">First name</InputGroupAddon>
-                        <Field
-                          type="text"
-                          name="first_name"
-                          className="form-control"
-                          id="userFirstName"
-                        />
-                      </InputGroup>
-                    </Col>
-                  </Row>
-                  <Row>
-                    <Col md={6}>
-                      <InputGroup>
-                        <InputGroupAddon addonType="prepend">Last name</InputGroupAddon>
-                        <Field
-                          type="text"
-                          name="last_name"
-                          className="form-control"
-                          id="userLastName"
-                        />
-                      </InputGroup>
-                    </Col>
-                  </Row>
-                  <Row>
-                    <Col md={6}>
-                      <InputGroup>
-                        <InputGroupAddon addonType="prepend">Email</InputGroupAddon>
-                        <Field
-                          type="text"
-                          name="email"
-                          className={props.errors.email ? 'form-control border-danger' : 'form-control'}
-                          id="userEmail"
-                        />
-                      </InputGroup>
-                      {
-                        props.errors.email ?
-                          FancyErrorMessage(props.errors.email)
-                        :
-                          null
-                      }
-                    </Col>
-                  </Row>
-                </FormGroup>
-                <FormGroup>
-                  <h4 className="mt-2 p-1 pl-3 text-light text-uppercase rounded" style={{"backgroundColor": "#416090"}}>Permissions</h4>
-                  <Row>
-                    <Col md={6}>
-                      <Field
-                        component={Checkbox}
-                        name="is_superuser"
-                        className="form-control"
-                        id="checkbox"
-                        label="Superuser status"
-                      />
-                      <FormText color="muted">
-                        Designates that this user has all permissions without explicitly assigning them.
-                      </FormText>
-                    </Col>
-                  </Row>
-                  <Row>
-                    <Col md={6}>
-                      <Field
-                        component={Checkbox}
-                        name="is_staff"
-                        className="form-control"
-                        id="checkbox"
-                        label="Staff status"
-                      />
-                      <FormText color="muted">
-                        Designates whether the user can log into this admin site.
-                      </FormText>
-                    </Col>
-                  </Row>
-                  <Row>
-                    <Col md={6}>
-                      <Field 
-                        component={Checkbox}
-                        name="is_active"
-                        className="form-control"
-                        id="checkbox"
-                        label="Active"
-                      />
-                      <FormText color="muted">
-                        Designates whether this user should be treated as active. Unselect this instead of deleting accounts.
-                      </FormText>
-                    </Col>
-                  </Row>
-                </FormGroup>
                 {
                   (write_perm) &&
                     <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
