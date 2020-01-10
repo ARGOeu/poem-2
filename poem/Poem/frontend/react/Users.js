@@ -755,17 +755,28 @@ export class UserChange extends Component {
                 {
                   (write_perm) &&
                     <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
-                      <Button
-                        color="danger"
-                        onClick={() => {
-                          this.toggleAreYouSureSetModal('Are you sure you want to delete User?',
-                          'Delete user',
-                          () => this.doDelete(props.values.username))
-                        }}
+                      {
+                        !this.addview ?
+                          <Button
+                            color="danger"
+                            onClick={() => {
+                              this.toggleAreYouSureSetModal('Are you sure you want to delete User?',
+                              'Delete user',
+                              () => this.doDelete(props.values.username))
+                            }}
+                          >
+                            Delete
+                          </Button>
+                        :
+                          <div></div>
+                      }
+                      <Button 
+                        color="success" 
+                        id="submit-button" 
+                        type="submit"
                       >
-                        Delete
+                        Save
                       </Button>
-                      <Button color="success" id="submit-button" type="submit">Save</Button>
                     </div>
                 }
               </Form>
@@ -1079,17 +1090,28 @@ export class SuperAdminUserChange extends Component {
                 {
                   (write_perm) &&
                     <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
-                      <Button
-                        color="danger"
-                        onClick={() => {
-                          this.toggleAreYouSureSetModal('Are you sure you want to delete User?',
-                          'Delete user',
-                          () => this.doDelete(props.values.username))
-                        }}
+                      {
+                        !this.addview ?
+                          <Button
+                            color="danger"
+                            onClick={() => {
+                              this.toggleAreYouSureSetModal('Are you sure you want to delete User?',
+                              'Delete user',
+                              () => this.doDelete(props.values.username))
+                            }}
+                          >
+                            Delete
+                          </Button>
+                        :
+                          <div></div>
+                      }
+                      <Button 
+                        color="success" 
+                        id="submit-button" 
+                        type="submit"
                       >
-                        Delete
+                        Save
                       </Button>
-                      <Button color="success" id="submit-button" type="submit">Save</Button>
                     </div>
                 }
               </Form>
