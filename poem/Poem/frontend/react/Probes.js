@@ -195,7 +195,7 @@ export class ProbeList extends Component {
     };
 
     this.backend = new Backend();
-  }
+  };
 
   componentDidMount() {
     this.setState({loading: true});
@@ -203,15 +203,14 @@ export class ProbeList extends Component {
     Promise.all([
       this.backend.fetchData('/api/v2/internal/probes'),
       this.backend.isTenantSchema()
-    ])
-      .then(([json, isTenantSchema]) =>
+    ]).then(([json, isTenantSchema]) =>
         this.setState({
           list_probe: json,
           isTenantSchema: isTenantSchema,
           loading: false,
           search_name: ''
         }))
-  }
+  };
 
   render() {
     const columns = [
@@ -229,7 +228,7 @@ export class ProbeList extends Component {
         id: 'name', 
         minWidth: 80,
         accessor: e => 
-          <Link to={'/ui/probes/' + e.name}>
+          <Link to={`/ui/probes/${e.name}`}>
             {e.name}
           </Link>,
         filterable: true,
@@ -247,7 +246,7 @@ export class ProbeList extends Component {
         id: 'nv',
         minWidth: 25,
         accessor: e =>
-          <Link to={'/ui/probes/' + e.name + '/history'}>
+          <Link to={`/ui/probes/${e.name}/history`}>
             {e.nv}
           </Link>,
         Cell: row =>
@@ -280,49 +279,38 @@ export class ProbeList extends Component {
     if (this.state.search_name) {
       list_probe = list_probe.filter(row => 
         row.name.toLowerCase().includes(this.state.search_name.toLowerCase())
-      )
-    }
+      );
+    };
 
     if (this.state.search_description) {
       list_probe = list_probe.filter(row =>
         row.description.toLowerCase().includes(this.state.search_description.toLowerCase())  
-      )
-    }
+      );
+    };
 
     if (loading)
-      return (<LoadingAnim />)
+      return (<LoadingAnim />);
 
     else if (!loading && list_probe) {
       return (
-        <React.Fragment>
-          <div className="d-flex align-items-center justify-content-between">
-            {
-              isTenantSchema ?
-                <React.Fragment>
-                  <h2 className="ml-3 mt-1 mb-4">{'Select probe for details'}</h2>
-                </React.Fragment>
-              :
-                <React.Fragment>
-                  <h2 className="ml-3 mt-1 mb-4">{'Select probe to change'}</h2>
-                  <Link className="btn btn-secondary" to={this.location.pathname + "/add"} role="button">Add</Link>
-                </React.Fragment>
-            }
-          </div>
-          <div id="argo-contentwrap" className="ml-2 mb-2 mt-2 p-3 border rounded">
-            <ReactTable
-              data={list_probe}
-              columns={columns}
-              className='-striped -highlight'
-              defaultPageSize={50}
-            />
-          </div>
-        </React.Fragment>
-      )
-    }
-    else
+        <BaseArgoView
+          resourcename='probe'
+          location={this.location}
+          listview={true}
+          addnew={!isTenantSchema}
+        >
+          <ReactTable
+            data={list_probe}
+            columns={columns}
+            className='-striped -highlight'
+            defaultPageSize={50}
+          />
+        </BaseArgoView>
+      );
+    } else
       return null;
-  }
-}
+  };
+};
 
 
 export class ProbeChange extends Component {
