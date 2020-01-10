@@ -731,18 +731,27 @@ export class ProbeChange extends Component {
                   {
                     (write_perm) &&
                       <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
+                        {
+                          !this.addview ?
+                            <Button 
+                              color='danger'
+                              onClick={() => {
+                                this.toggleAreYouSureSetModal(
+                                  'Are you sure you want to delete probe?',
+                                  'Delete probe',
+                                  () => this.doDelete(props.values.name)
+                                )}}
+                            >
+                              Delete
+                            </Button>
+                          :
+                            <div></div>
+                        }
                         <Button 
-                        color='danger'
-                        onClick={() => {
-                          this.toggleAreYouSureSetModal(
-                            'Are you sure you want to delete Probe?',
-                            'Delete probe',
-                            () => this.doDelete(props.values.name)
-                          )
-                        }}>
-                          Delete
-                        </Button>
-                        <Button color='success' id='submit-button' type='submit'>
+                          color='success' 
+                          id='submit-button' 
+                          type='submit'
+                        >
                           Save
                         </Button>
                       </div>  
