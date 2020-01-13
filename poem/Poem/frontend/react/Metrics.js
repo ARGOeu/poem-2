@@ -110,7 +110,7 @@ export const InlineFields = ({values, errors, field, addnew=false, readonly=fals
                 </Col>
                 <Col md={2}>
                   {
-                    (addnew && field !== 'config' && values[field][0]['key'] !== '' && values[field][0]['value'] !== '') &&
+                    (addnew && field !== 'config' && (values[field][0]['key'] !== '' || values[field][0]['value'] !== '')) &&
                       <Button 
                         hidden={
                           (
