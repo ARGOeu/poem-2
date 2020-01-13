@@ -8,7 +8,8 @@ import {
   FancyErrorMessage, 
   DropdownFilterComponent,
   HistoryComponent,
-  DiffElement
+  DiffElement,
+  AutocompleteField
  } from './UIElements';
 import ReactTable from 'react-table';
 import { Formik, Form, Field, FieldArray } from 'formik';
@@ -21,7 +22,10 @@ import {
   Button,
   Popover,
   PopoverBody,
-  PopoverHeader} from 'reactstrap';
+  PopoverHeader,
+  InputGroup,
+  InputGroupAddon
+} from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faInfoCircle, faMinus, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { NotificationManager } from 'react-notifications';
@@ -62,10 +66,10 @@ export const InlineFields = ({values, errors, field, addnew=false, readonly=fals
             <React.Fragment key={`fragment.${field}.${index}`}>
               <Row>
                 <Col md={5}>
-                  {(index === 0) ? <Label hidden={values.type === 'Passive' && field !== 'flags'} for={`${field}.0.key`}>Key</Label> : null}
+                  {(index === 0) && <Label hidden={values.type === 'Passive' && field !== 'flags'} for={`${field}.0.key`}>Key</Label>}
                 </Col>
                 <Col md={5}>
-                  {(index === 0) ? <Label hidden={values.type === 'Passive' && field !== 'flags'} for={`${field}.0.value`}>Value</Label> : null}
+                  {(index === 0) && <Label hidden={values.type === 'Passive' && field !== 'flags'} for={`${field}.0.value`}>Value</Label>}
                 </Col>
               </Row>
               <Row>
@@ -101,11 +105,9 @@ export const InlineFields = ({values, errors, field, addnew=false, readonly=fals
                       />
                   }                  
                   {
-                    errors.config && field === 'config' ?
+                    errors.config && field === 'config' &&
                       errors.config[index] &&
                         FancyErrorMessage(errors.config[index].value)
-                      :
-                      null
                   }
                 </Col>
                 <Col md={2}>
@@ -594,6 +596,277 @@ export function ListOfMetrics(type, imp=false) {
 }
 
 
+export const MetricForm = 
+  ({
+    values=undefined, 
+    errors={
+      name: undefined, 
+      probeversion: undefined, 
+      probeexecutable: undefined
+    },
+    setFieldValue=undefined, 
+    handleChange, 
+    obj='', 
+    state=undefined, 
+    togglePopOver=undefined, 
+    onSelect=undefined, 
+    isHistory=false, 
+    isTenantSchema=false,
+    addview=false, 
+    probeversions=[], 
+    groups=[], 
+    metrictemplatelist=[], 
+    types=[],
+  }) => 
+  <>
+    <FormGroup>
+      <Row className='mb-3'>
+        <Col md={4}>
+          <InputGroup>
+            <InputGroupAddon addonType='prepend'>Name</InputGroupAddon>
+            <Field
+              type='text'
+              name='name'
+              className={`form-control ${errors.name && 'border-danger'}`}
+              id='name'
+              disabled={isHistory || isTenantSchema}
+            />
+          </InputGroup>
+          {
+            errors.name &&
+              FancyErrorMessage(errors.name)
+          }
+          <FormText color='muted'>
+            Metric name.
+          </FormText>
+        </Col>
+        <Col md={4}>
+            {
+              values.type === 'Passive' ?
+                <InputGroup>
+                  <InputGroupAddon addonType='prepend'>Probe</InputGroupAddon>
+                  <input 
+                    type='text'
+                    className='form-control'
+                    disabled={true}
+                    id='passive-probeversion'
+                  />
+                </InputGroup>
+              :
+                (isTenantSchema || isHistory) ?
+                  <InputGroup>
+                    <InputGroupAddon addonType='prepend'>Probe</InputGroupAddon>
+                    <Field
+                      type='text'
+                      name='probeversion'
+                      className='form-control'
+                      id='probeversion'
+                      disabled={true}
+                    />
+                  </InputGroup>
+                :
+                  <AutocompleteField
+                    setFieldValue={setFieldValue}
+                    lists={probeversions}
+                    icon='probes'
+                    field='probeversion'
+                    val={values.probeversion}
+                    onselect_handler={onSelect}
+                    req={errors.probeversion}
+                    label='Probe'
+                  />
+            }
+          {
+            errors.probeversion &&
+              FancyErrorMessage(errors.probeversion)
+          }
+          {
+            values.type === 'Active' &&
+              <FormText color='muted'>
+                Probe name and version 
+                {
+                  !isHistory &&
+                    <>
+                      <FontAwesomeIcon 
+                        id='probe-popover' 
+                        hidden={`state.${obj}.mtype` === 'Passive' || addview} 
+                        icon={faInfoCircle} 
+                        style={{color: '#416090'}}
+                      />
+                      <Popover 
+                        placement='bottom' 
+                        isOpen={state.popoverOpen} 
+                        target='probe-popover' 
+                        toggle={togglePopOver} 
+                        trigger='click'
+                      >
+                        <PopoverHeader>
+                          <ProbeVersionLink
+                            probeversion={obj === 'metric' ? state.metric.probeversion : state.metrictemplate.probeversion}
+                          />
+                        </PopoverHeader>
+                        <PopoverBody>{state.probe.description}</PopoverBody>
+                      </Popover>
+                    </>
+                }
+              </FormText>
+          }
+        </Col>
+        <Col md={2}>
+          <InputGroup>
+            <InputGroupAddon addonType='prepend'>Type</InputGroupAddon>
+            {
+              (isTenantSchema || isHistory) ?
+                <Field
+                  type='text'
+                  name='type'
+                  className='form-control'
+                  id='mtype'
+                  disabled={true}
+                />
+              :
+                <Field
+                  component='select'
+                  name='type'
+                  className='form-control'
+                  id='mtype'
+                  onChange={e => {
+                    handleChange(e);
+                    if (e.target.value === 'Passive') {
+                      let ind = values.flags.length;
+                      if (ind === 1 && values.flags[0].key === '') {
+                        setFieldValue('flags[0].key', 'PASSIVE');
+                        setFieldValue('flags[0].value', '1');
+                      } else {
+                        setFieldValue(`flags[${ind}].key`, 'PASSIVE')
+                        setFieldValue(`flags[${ind}].value`, '1')
+                      }
+                    } else if (e.target.value === 'Active') {
+                      let ind = undefined;
+                      values.flags.forEach((e, index) => {
+                        if (e.key === 'PASSIVE') {
+                          ind = index;
+                        }
+                      });
+                      if (values.flags.length === 1)
+                        values.flags.splice(ind, 1, {'key': '', 'value': ''})
+                      else
+                        values.flags.splice(ind, 1)
+                    }
+                  }}
+                >
+                  {
+                    types.map((name, i) =>
+                      <option key={i} value={name}>{name}</option>
+                    )
+                  }
+                </Field>
+            }
+          </InputGroup>
+          <FormText color='muted'>
+            Metric is of given type.
+          </FormText>
+        </Col>
+      </Row>
+      {
+        obj === 'metric' &&
+          <Row className='mb-4'>
+            <Col md={2}>
+              <InputGroup>
+                <InputGroupAddon addonType='prepend'>Group</InputGroupAddon>
+                {
+                  isHistory ?
+                    <Field
+                      type='text'
+                      name='group'
+                      className='form-control'
+                      disabled={true}
+                      id='group'
+                    />
+                  :
+                    <Field
+                      component='select'
+                      name='group'
+                      className='form-control'
+                      id='group'
+                    >
+                      {
+                        groups.map((name, i) =>
+                          <option key={i} value={name}>{name}</option>
+                        )
+                      }
+                    </Field>
+                }
+              </InputGroup>
+              <FormText color='muted'>
+                Metric is member of selected group.
+              </FormText>
+            </Col>
+          </Row>
+      }
+    </FormGroup>
+    <FormGroup>
+      <h4 className="mt-2 p-1 pl-3 text-light text-uppercase rounded" style={{"backgroundColor": "#416090"}}>Metric configuration</h4>
+      <h6 className='mt-4 font-weight-bold text-uppercase' hidden={values.type === 'Passive'}>probe executable</h6>
+      <Row>
+        <Col md={5}>
+          <Field
+            type='text'
+            name='probeexecutable'
+            id='probeexecutable'
+            className={`form-control ${errors.probeexecutable && 'border-danger'}`}
+            hidden={values.type === 'Passive'}
+            disabled={isTenantSchema || isHistory}
+          />
+          {
+            errors.probeexecutable &&
+              FancyErrorMessage(errors.probeexecutable)
+          }
+        </Col>
+      </Row>
+      <InlineFields values={values} errors={errors} field='config' addnew={!isTenantSchema && !isHistory} readonly={obj === 'metrictemplate' && isTenantSchema || isHistory}/>
+      <InlineFields values={values} errors={errors} field='attributes' addnew={!isTenantSchema && !isHistory}/>
+      <InlineFields values={values} errors={errors} field='dependency' addnew={!isTenantSchema && !isHistory}/>
+      <InlineFields values={values} errors={errors} field='parameter' addnew={!isTenantSchema && !isHistory}/>
+      <InlineFields values={values} errors={errors} field='flags' addnew={!isTenantSchema && !isHistory}/>
+      <InlineFields values={values} errors={errors} field='file_attributes' addnew={!isTenantSchema && !isHistory}/>
+      <InlineFields values={values} errors={errors} field='file_parameters' addnew={!isTenantSchema && !isHistory}/>
+      <h6 className='mt-4 font-weight-bold text-uppercase'>parent</h6>
+      <Row>
+        <Col md={5}>
+          {
+            (isTenantSchema || isHistory) ?
+              <Field 
+                type='text'
+                name='parent'
+                id='parent'
+                className='form-control'
+                disabled={true}
+              />
+            :
+              <>
+                <AutocompleteField
+                  setFieldValue={setFieldValue}
+                  lists={metrictemplatelist}
+                  field='parent'
+                  val={values.parent}
+                  icon='metrics'
+                  className={`form-control ${errors.parent && 'border-danger'}`}
+                  onselect_handler={onSelect}
+                  req={errors.parent}
+                />
+                {
+                  errors.parent &&
+                    FancyErrorMessage(errors.parent)
+                }
+              </>
+          }
+        </Col>
+      </Row>
+    </FormGroup>
+  </>
+
+
 export class MetricChange extends Component {
   constructor(props) {
     super(props);
@@ -646,7 +919,7 @@ export class MetricChange extends Component {
   }
 
   onSubmitHandle(values, actions) {
-    let msg = 'Are you sure you want to change Metric?';
+    let msg = 'Are you sure you want to change metric?';
     let title = 'Change metric';
 
     this.toggleAreYouSureSetModal(msg, title, 
@@ -727,7 +1000,7 @@ export class MetricChange extends Component {
     else if (!loading) {
       return (
         <BaseArgoView
-          resourcename='Metrics'
+          resourcename='metric'
           location={this.location}
           addview={this.addview}
           modal={true}
@@ -737,7 +1010,7 @@ export class MetricChange extends Component {
           <Formik
             initialValues = {{
               name: metric.name,
-              probe: metric.probeversion,
+              probeversion: metric.probeversion,
               type: metric.mtype,
               group: metric.group,
               probeexecutable: metric.probeexecutable,
@@ -753,108 +1026,14 @@ export class MetricChange extends Component {
             onSubmit = {(values, actions) => this.onSubmitHandle(values, actions)}
             render = {props => (
               <Form>
-                <FormGroup>
-                  <Row className='mb-3'>
-                    <Col md={4}>
-                      <Label to='name'>Name</Label>
-                      <Field
-                        type='text'
-                        name='name'
-                        className='form-control'
-                        id='name'
-                        disabled={true}
-                      />
-                      <FormText color='muted'>
-                        Metric name
-                      </FormText>
-                    </Col>
-                    <Col md={4}>
-                      <Label to='probeversion'>Probe</Label>
-                      <Field
-                        type='text'
-                        name='probe'
-                        className='form-control'
-                        id='probeversion'
-                        disabled={true}
-                      />
-                      <FormText color='muted'>
-                        Probe name and version <FontAwesomeIcon id='probe-popover' hidden={this.state.metric.mtype === 'Passive'} icon={faInfoCircle} style={{color: '#416090'}}/>
-                        <Popover placement='bottom' isOpen={this.state.popoverOpen} target='probe-popover' toggle={this.togglePopOver} trigger='hover'>
-                          <PopoverHeader><ProbeVersionLink probeversion={this.state.metric.probeversion}/></PopoverHeader>
-                          <PopoverBody>{this.state.probe.description}</PopoverBody>
-                        </Popover>
-                      </FormText>
-                    </Col>
-                    <Col md={2}>
-                      <Label to='mtype'>Type</Label>
-                      <Field
-                        type='text'
-                        name='type'
-                        className='form-control'
-                        id='mtype'
-                        disabled={true}
-                      />
-                      <FormText color='muted'>
-                        Metric is of given type
-                      </FormText>
-                    </Col>
-                  </Row>
-                  <Row className='mb-4'>
-                    <Col md={2}>
-                      <Label to='group'>Group</Label>
-                      <Field 
-                        component='select'
-                        name='group'
-                        className='form-control'
-                        id='group'
-                      >
-                        {
-                          groups.map((name, i) =>
-                            <option key={i} value={name}>{name}</option>
-                          )
-                        }
-                      </Field>
-                      <FormText color='muted'>
-                        Metric is member of selected group
-                      </FormText>
-                    </Col>
-                  </Row>
-                </FormGroup>
-                <FormGroup>
-                <h4 className="mt-2 p-1 pl-3 text-light text-uppercase rounded" style={{"backgroundColor": "#416090"}}>Metric configuration</h4>
-                <h6 className='mt-4 font-weight-bold text-uppercase' hidden={props.values.type === 'Passive'}>probe executable</h6>
-                <Row>
-                  <Col md={5}>
-                    <Field
-                      type='text'
-                      name='probeexecutable'
-                      id='probeexecutable'
-                      className='form-control'
-                      disabled={true}
-                      hidden={props.values.type === 'Passive'}
-                    />
-                  </Col>
-                </Row>
-                <InlineFields {...props} field='config'/>
-                <InlineFields {...props} field='attributes'/>
-                <InlineFields {...props} field='dependency'/>
-                <InlineFields {...props} field='parameter'/>
-                <InlineFields {...props} field='flags'/>
-                <InlineFields {...props} field='file_attributes'/>
-                <InlineFields {...props} field='file_parameters'/>
-                <h6 className='mt-4 font-weight-bold text-uppercase'>parent</h6>
-                <Row>
-                  <Col md={5}>
-                    <Field
-                      type='text'
-                      name='parent'
-                      id='parent'
-                      className='form-control'
-                      disabled={true}
-                    />
-                  </Col>
-                </Row>
-                </FormGroup>
+                <MetricForm
+                  {...props}
+                  obj='metric'
+                  isTenantSchema={true}
+                  state={this.state}
+                  togglePopOver={this.togglePopOver}
+                  groups={groups}
+                />
                 {
                   (write_perm) &&
                     <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
@@ -1158,123 +1337,38 @@ export class MetricVersionDetails extends Component {
 
     else if (!loading && name) {
       return (
-        <React.Fragment>
-          <div className='d-flex align-items-center justify-content-between'>
-            <React.Fragment>
-              <h2 className='ml-3 mt-1 mb-4'>{name + ' (' + date_created + ')'}</h2>
-            </React.Fragment>
-          </div>
-          <div id='argo-contentwrap' className='ml-2 mb-2 mt-2 p-3 border rounded'>
-            <Formik
-              initialValues = {{
-                name: name,
-                probeversion: probeversion,
-                mtype: type,
-                group: group,
-                probeexecutable: probeexecutable,
-                parent: parent,
-                config: config,
-                attributes: attribute,
-                dependency: dependancy,
-                parameter: parameter,
-                flags: flags,
-                files: files,
-                fileparameter: fileparameter
-              }}
-              render = {props => (
-                <Form>
-                  <FormGroup>
-                    <Row className='mb-3'>
-                      <Col md={4}>
-                        <Label to='name'>Name</Label>
-                        <Field
-                          type='text'
-                          name='name'
-                          className={'form-control'}
-                          id='name'
-                          disabled={true}
-                        />
-                        <FormText color='muted'>
-                          Metric name
-                        </FormText>
-                      </Col>
-                      <Col md={4}>
-                        <Label to='probeversion'>Probe</Label>
-                        <Field 
-                          type='text'
-                          name='probeversion'
-                          className='form-control'
-                          id='probeversion'
-                          disabled={true}
-                        />
-                      </Col>
-                      <Col md={2}>
-                        <Label to='mtype'>Type</Label>
-                        <Field
-                          type='text'
-                          name='mtype'
-                          className='form-control'
-                          id='mtype'
-                          disabled={true}
-                        />
-                        <FormText color='muted'>
-                          Metric is of given type
-                        </FormText>
-                      </Col>
-                    </Row>
-                    <Row className='mb-4'>
-                      <Col md={2}>
-                        <Label to='group'>Group</Label>
-                        <Field
-                          type='text'
-                          name='group'
-                          className='form-control'
-                          id='group'
-                          disabled={true}
-                        />
-                      </Col>
-                    </Row>
-                  </FormGroup>
-                  <FormGroup>
-                  <h4 className="mt-2 p-1 pl-3 text-light text-uppercase rounded" style={{"backgroundColor": "#416090"}}>Metric configuration</h4>
-                  <h6 className='mt-4 font-weight-bold text-uppercase' hidden={props.values.type === 'Passive'}>probe executable</h6>
-                  <Row>
-                    <Col md={5}>
-                      <Field
-                        type='text'
-                        name='probeexecutable'
-                        id='probeexecutable'
-                        className='form-control'
-                        hidden={props.values.type === 'Passive'}
-                        disabled={true}
-                      />
-                    </Col>
-                  </Row>
-                  <InlineFields {...props} field='config' readonly={true}/>
-                  <InlineFields {...props} field='attributes'/>
-                  <InlineFields {...props} field='dependency'/>
-                  <InlineFields {...props} field='parameter'/>
-                  <InlineFields {...props} field='flags'/>
-                  <InlineFields {...props} field='files'/>
-                  <InlineFields {...props} field='fileparameter'/>
-                  <h6 className='mt-4 font-weight-bold text-uppercase'>parent</h6>
-                  <Row>
-                    <Col md={5}>
-                      <Field
-                        type='text'
-                        name='parent'
-                        id='parent'
-                        className='form-control'
-                        disabled={true}
-                      />
-                    </Col>
-                  </Row>
-                  </FormGroup>
-                </Form>
-              )}
-              />
-          </div>
-        </React.Fragment>
+        <BaseArgoView
+          resourcename={`${name} (${date_created})`}
+          infoview={true}
+        >
+          <Formik
+            initialValues = {{
+              name: name,
+              probeversion: probeversion,
+              mtype: type,
+              group: group,
+              probeexecutable: probeexecutable,
+              parent: parent,
+              config: config,
+              attributes: attribute,
+              dependency: dependancy,
+              parameter: parameter,
+              flags: flags,
+              files: files,
+              fileparameter: fileparameter
+            }}
+            render = {props => (
+              <Form>
+                <MetricForm
+                  {...props}
+                  obj='metric'
+                  state={this.state}
+                  isHistory={true}
+                />
+              </Form>
+            )}
+            />
+        </BaseArgoView>
       )
     }
     else

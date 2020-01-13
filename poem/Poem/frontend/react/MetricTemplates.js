@@ -1,31 +1,18 @@
 import React, { Component } from 'react';
-import { ListOfMetrics, InlineFields, ProbeVersionLink } from './Metrics';
+import { ListOfMetrics, MetricForm } from './Metrics';
 import { Backend } from './DataManager';
 import { 
   LoadingAnim, 
   BaseArgoView, 
   NotifyOk, 
-  FancyErrorMessage,
   HistoryComponent,
   DiffElement
 } from './UIElements';
-import { Formik, Form, Field } from 'formik';
-import {
-  FormGroup,
-  Row,
-  Button,
-  Col,
-  Label,
-  FormText,
-  Popover,
-  PopoverBody,
-  PopoverHeader} from 'reactstrap';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
+import { Formik, Form } from 'formik';
+import { Button } from 'reactstrap';
 import * as Yup from 'yup';
 import { NotificationManager } from 'react-notifications';
 import ReactDiffViewer from 'react-diff-viewer';
-import { AutocompleteField } from './UIElements';
 
 export const MetricTemplateList = ListOfMetrics('metrictemplate');
 export const TenantMetricTemplateList = ListOfMetrics('metrictemplate', true)
@@ -182,10 +169,10 @@ function MetricTemplateComponent(cloneview=false) {
       let title = undefined;
 
       if (this.addview || cloneview) {
-        msg = 'Are you sure you want to add Metric template?';
+        msg = 'Are you sure you want to add metric template?';
         title = 'Add metric template';
       } else {
-        msg = 'Are you sure you want to change Metric template?';
+        msg = 'Are you sure you want to change metric template?';
         title = 'Change metric template';
       }
   
@@ -380,7 +367,7 @@ function MetricTemplateComponent(cloneview=false) {
       if (loading)
         return (<LoadingAnim/>)
       
-      else if (!loading) {
+      else if (!loading && metrictemplate) {
         return (
           <BaseArgoView
             resourcename={this.tenantview ? `${metrictemplate.name}` : 'metric template'}
@@ -414,183 +401,18 @@ function MetricTemplateComponent(cloneview=false) {
               validationSchema={MetricTemplateSchema}
               render = {props => (
                 <Form>
-                  <FormGroup>
-                    <Row className='mb-3'>
-                      <Col md={4}>
-                        <Label to='name'>Name</Label>
-                        <Field
-                          type='text'
-                          name='name'
-                          className={`form-control ${props.errors.name && 'border-danger'}`}
-                          id='name'
-                          disabled={this.tenantview}
-                        />
-                        {
-                          props.errors.name &&
-                            FancyErrorMessage(props.errors.name)
-                        }
-                        <FormText color='muted'>
-                          Metric name
-                        </FormText>
-                      </Col>
-                      <Col md={4}>
-                        <Label to='probeversion'>Probe</Label>
-                        {
-                          props.values.type === 'Passive' ?
-                            <input type='text' className='form-control' disabled={true} id='passive-probeversion'/>
-                          :
-                            this.tenantview ?
-                              <Field 
-                                type='text'
-                                name='probeversion'
-                                className='form-control'
-                                id='probeversion'
-                                disabled={true}
-                              />
-                            :
-                            <AutocompleteField
-                              {...props}
-                              lists={probeversions}
-                              icon='probes'
-                              field='probeversion'
-                              val={props.values.probeversion}
-                              onselect_handler={this.onSelect}
-                              req={props.errors.probeversion}
-                            />
-                        }
-                        {
-                          props.errors.probeversion &&
-                            FancyErrorMessage(props.errors.probeversion)
-                        }
-                        {
-                          props.values.type === 'Active' &&
-                          <FormText color='muted'>
-                            Probe name and version <FontAwesomeIcon id='probe-popover' hidden={this.state.metrictemplate.mtype === 'Passive' || this.addview} icon={faInfoCircle} style={{color: '#416090'}}/>
-                            {
-                              this.state.metrictemplate.probeversion &&
-                                <Popover placement='bottom' isOpen={this.state.popoverOpen} target='probe-popover' toggle={this.togglePopOver} trigger='hover'>
-                                  <PopoverHeader><ProbeVersionLink probeversion={this.state.metrictemplate.probeversion}/></PopoverHeader>
-                                  <PopoverBody>{this.state.probe.description}</PopoverBody>
-                                </Popover>
-                            }
-                          </FormText>
-                        }
-                      </Col>
-                      <Col md={2}>
-                        <Label to='mtype'>Type</Label>
-                        {
-                          this.tenantview ?
-                            <Field
-                              type='text'
-                              name='type'
-                              className='form-control'
-                              id='mtype'
-                              disabled={true}
-                            />
-                          :
-                            <Field
-                              component='select'
-                              name='type'
-                              className='form-control'
-                              id='mtype'
-                              disabled={this.tenantview}
-                              onChange={e => {
-                                props.handleChange(e);
-                                if (e.target.value === 'Passive' && this.addview) {
-                                  let ind = props.values.flags.length;
-                                  if (ind === 1 && props.values.flags[0].key === '') {
-                                    props.setFieldValue('flags[0].key', 'PASSIVE');
-                                    props.setFieldValue('flags[0].value', '1');
-                                  } else {
-                                    props.setFieldValue(`flags[${ind}].key`, 'PASSIVE')
-                                    props.setFieldValue(`flags[${ind}].value`, '1')
-                                  }
-                                } else if (e.target.value === 'Active' && this.addview) {
-                                  let ind = undefined;
-                                  props.values.flags.forEach((e, index) => {
-                                    if (e.key === 'PASSIVE') {
-                                      ind = index;
-                                    }
-                                  });
-                                  if (props.values.flags.length === 1)
-                                    props.values.flags.splice(ind, 1, {'key': '', 'value': ''})
-                                  else
-                                    props.values.flags.splice(ind, 1)
-                                }
-                              }}
-                            >
-                              {
-                                types.map((name, i) =>
-                                  <option key={i} value={name}>{name}</option>
-                                )
-                              }
-                            </Field>
-                        }
-                        <FormText color='muted'>
-                          Metric is of given type
-                        </FormText>
-                      </Col>
-                    </Row>
-                  </FormGroup>
-                  <FormGroup>
-                  <h4 className="mt-2 p-1 pl-3 text-light text-uppercase rounded" style={{"backgroundColor": "#416090"}}>Metric configuration</h4>
-                  <h6 className='mt-4 font-weight-bold text-uppercase' hidden={props.values.type === 'Passive'}>probe executable</h6>
-                  <Row>
-                    <Col md={5}>
-                      <Field
-                        type='text'
-                        name='probeexecutable'
-                        id='probeexecutable'
-                        className={`form-control ${props.errors.probeexecutable && 'border-danger'}`}
-                        hidden={props.values.type === 'Passive'}
-                        disabled={this.tenantview}
-                      />
-                      {
-                        props.errors.probeexecutable &&
-                          FancyErrorMessage(props.errors.probeexecutable)
-                      }
-                    </Col>
-                  </Row>
-                  <InlineFields {...props} field='config' addnew={!this.tenantview} readonly={this.tenantview}/>
-                  <InlineFields {...props} field='attributes' addnew={!this.tenantview}/>
-                  <InlineFields {...props} field='dependency' addnew={!this.tenantview}/>
-                  <InlineFields {...props} field='parameter' addnew={!this.tenantview}/>
-                  <InlineFields {...props} field='flags' addnew={!this.tenantview}/>
-                  <InlineFields {...props} field='file_attributes' addnew={!this.tenantview}/>
-                  <InlineFields {...props} field='file_parameters' addnew={!this.tenantview}/>
-                  <h6 className='mt-4 font-weight-bold text-uppercase'>parent</h6>
-                  <Row>
-                    <Col md={5}>
-                      {
-                        this.tenantview ?
-                          <Field
-                            type='text'
-                            name='parent'
-                            id='parent'
-                            className='form-control'
-                            disabled={true}
-                          />
-                        :
-                          <>
-                            <AutocompleteField
-                              {...props}
-                              lists={metrictemplatelist}
-                              field='parent'
-                              val={props.values.parent}
-                              icon='metrics'
-                              className={`form-control ${props.errors.parent && 'border-danger'}`}
-                              onselect_handler={this.onSelect}
-                              req={props.errors.parent}
-                            />
-                            {
-                              props.errors.parent &&
-                                FancyErrorMessage(props.errors.parent)
-                            }
-                          </>
-                      }
-                    </Col>
-                  </Row>
-                  </FormGroup>
+                  <MetricForm
+                    {...props}
+                    obj='metrictemplate'
+                    isTenantSchema={this.tenantview}
+                    addview={this.addview}
+                    state={this.state}
+                    onSelect={this.onSelect}
+                    togglePopOver={this.togglePopOver}
+                    types={types}
+                    probeversions={probeversions}
+                    metrictemplatelist={metrictemplatelist}
+                  />
                   {
                     (write_perm && !this.tenantview) &&
                       <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
@@ -617,6 +439,8 @@ function MetricTemplateComponent(cloneview=false) {
             />        
           </BaseArgoView>
         )
+      } else {
+        return null;
       }
     }
   }
@@ -879,7 +703,7 @@ export class MetricTemplateVersionDetails extends Component {
 
   render() {
     const { name, probeversion, type, probeexecutable, parent, config, 
-      attribute, dependency, parameter, flags, files, fileparameter, date_created,
+      attribute, dependency, parameter, flags, files, fileparameter, 
       loading } = this.state;
     
     if (loading)
@@ -887,110 +711,37 @@ export class MetricTemplateVersionDetails extends Component {
 
     else if (!loading && name) {
       return (
-        <React.Fragment>
-          <div className='d-flex align-items-center justify-content-between'>
-            <React.Fragment>
-              <h2 className='ml-3 mt-1 mb-4'>{`${name} [${probeversion}]`}</h2>
-            </React.Fragment>
-          </div>
-          <div id='argo-contentwrap' className='ml-2 mb-2 mt-2 p-3 border rounded'>
-            <Formik
-              initialValues = {{
-                name: name,
-                probeversion: probeversion,
-                mtype: type,
-                probeexecutable: probeexecutable,
-                parent: parent,
-                config: config,
-                attributes: attribute,
-                dependency: dependency,
-                parameter: parameter,
-                flags: flags,
-                files: files,
-                fileparameter: fileparameter
-              }}
-              render = {props => (
-                <Form>
-                  <FormGroup>
-                    <Row className='mb-3'>
-                      <Col md={4}>
-                        <Label to='name'>Name</Label>
-                        <Field
-                          type='text'
-                          name='name'
-                          className='form-control'
-                          id='name'
-                          disabled={true}
-                        />
-                        <FormText color='muted'>
-                          Metric name
-                        </FormText>
-                      </Col>
-                      <Col md={4}>
-                        <Label to='probeversion'>Probe</Label>
-                        <Field 
-                          type='text'
-                          name='probeversion'
-                          className='form-control'
-                          id='probeversion'
-                          disabled={true}
-                        />
-                      </Col>
-                      <Col md={2}>
-                        <Label to='mtype'>Type</Label>
-                        <Field
-                          type='text'
-                          name='mtype'
-                          className='form-control'
-                          id='mtype'
-                          disabled={true}
-                        />
-                        <FormText color='muted'>
-                          Metric is of given type
-                        </FormText>
-                      </Col>
-                    </Row>
-                  </FormGroup>
-                  <FormGroup>
-                  <h4 className="mt-2 p-1 pl-3 text-light text-uppercase rounded" style={{"backgroundColor": "#416090"}}>Metric configuration</h4>
-                  <h6 className='mt-4 font-weight-bold text-uppercase' hidden={props.values.type === 'Passive'}>probe executable</h6>
-                  <Row>
-                    <Col md={5}>
-                      <Field
-                        type='text'
-                        name='probeexecutable'
-                        id='probeexecutable'
-                        className='form-control'
-                        hidden={props.values.type === 'Passive'}
-                        disabled={true}
-                      />
-                    </Col>
-                  </Row>
-                  <InlineFields {...props} field='config' readonly={true}/>
-                  <InlineFields {...props} field='attributes'/>
-                  <InlineFields {...props} field='dependency'/>
-                  <InlineFields {...props} field='parameter'/>
-                  <InlineFields {...props} field='flags'/>
-                  <InlineFields {...props} field='files'/>
-                  <InlineFields {...props} field='fileparameter'/>
-                  <h6 className='mt-4 font-weight-bold text-uppercase'>parent</h6>
-                  <Row>
-                    <Col md={5}>
-                      <Field
-                        type='text'
-                        name='parent'
-                        id='parent'
-                        className='form-control'
-                        disabled={true}
-                      />
-                    </Col>
-                  </Row>
-                  </FormGroup>
-                </Form>
-              )}
-              />
-          </div>
-        </React.Fragment>
+        <BaseArgoView
+          resourcename={`${name} [${probeversion}]`}
+          infoview={true}
+        >
+          <Formik
+            initialValues = {{
+              name: name,
+              probeversion: probeversion,
+              type: type,
+              probeexecutable: probeexecutable,
+              parent: parent,
+              config: config,
+              attributes: attribute,
+              dependency: dependency,
+              parameter: parameter,
+              flags: flags,
+              files: files,
+              fileparameter: fileparameter
+            }}
+            render = {props => (
+              <Form>
+                <MetricForm
+                  {...props}
+                  obj='metrictemplate'
+                  state={this.state}
+                  isHistory={true}
+                />
+              </Form>
+            )}
+          />
+        </BaseArgoView>
       )
     }
     else
