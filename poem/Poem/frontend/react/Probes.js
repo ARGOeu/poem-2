@@ -58,7 +58,10 @@ const LinkField = ({
 )
 
 
-const ProbeForm = () =>
+const ProbeForm = ({isTenantSchema=false, isHistory=false, 
+  errors={name: undefined, package: undefined, repository: undefined, docurl: undefined, comment: undefined}, 
+  state=undefined, addview=false, list_packages=[], setFieldValue=undefined, 
+  values=undefined, onSelect=undefined, metrictemplatelist=[]}) =>
   <>
     <FormGroup>
       <Row>
@@ -68,11 +71,15 @@ const ProbeForm = () =>
             <Field
               type='text'
               name='name'
-              className='form-control'
+              className={`form-control ${errors.name && 'border-danger'}`}
               id='name'
-              disabled={true}
+              disabled={isTenantSchema || isHistory}
             />          
           </InputGroup>
+          {
+            errors.name &&
+              FancyErrorMessage(errors.name)
+          }
           <FormText color="muted">
             Name of this probe.
           </FormText>
@@ -84,6 +91,7 @@ const ProbeForm = () =>
               type='text'
               name='version'
               className='form-control'
+              value={isHistory ? state.version : state.probe.version}
               id='version'
               disabled={true}
             />
@@ -92,19 +100,57 @@ const ProbeForm = () =>
             Version of the probe.
           </FormText>
         </Col>
+        {
+          (!addview && !isTenantSchema && !isHistory) &&
+            <Col md={2}>
+              <Field
+                component={Checkbox}
+                name='update_metrics'
+                className='form-control'
+                id='checkbox'
+                label='Update metric templates'
+              />
+              <FormText color='muted'>
+                Update all associated metric templates.
+              </FormText>
+            </Col>
+        }
       </Row>
       <Row className='mt-3'>
         <Col md={8}>
-          <InputGroup>
-            <InputGroupAddon addonType='prepend'>Package</InputGroupAddon>
-            <Field
-              type='text'
-              name='package'
-              className='form-control'
-              id='package'
-              disabled={true}
-            />
-          </InputGroup>
+          {
+            (isTenantSchema || isHistory) ?
+              <InputGroup>
+                <InputGroupAddon addonType='prepend'>Package</InputGroupAddon>
+                <Field
+                  type='text'
+                  name='package'
+                  className='form-control'
+                  id='package'
+                  disabled={true}
+                />
+              </InputGroup>
+            :
+              <>
+                <AutocompleteField
+                  setFieldValue={setFieldValue}
+                  lists={list_packages}
+                  icon='packages'
+                  field='package'
+                  val={values.package}
+                  onselect_handler={onSelect}
+                  req={errors.package}
+                  label='Package'
+                />
+                {
+                  errors.package &&
+                    FancyErrorMessage(errors.package)
+                }
+              </>
+          }
+          <FormText color='muted'>
+            Probe is part of selected package.
+          </FormText>
         </Col>
       </Row>
     </FormGroup>
@@ -114,14 +160,28 @@ const ProbeForm = () =>
         <Col md={8}>
           <InputGroup>
             <InputGroupAddon addonType='prepend'>Repository</InputGroupAddon>
-            <Field
-              component={LinkField}
-              name='repository'
-              className='form-control'
-              id='repository'
-              disabled={true}
-            />
+            {
+              (isTenantSchema || isHistory) ?
+                <Field
+                  component={LinkField}
+                  name='repository'
+                  className='form-control'
+                  id='repository'
+                  disabled={true}
+                />
+              :
+                <Field
+                  type='text'
+                  name='repository'
+                  className={`form-control ${errors.repository && 'border-danger'}`}
+                  id='repository'
+                />
+            }
           </InputGroup>
+          {
+            errors.repository &&
+              FancyErrorMessage(errors.repository)
+          }
           <FormText color='muted'>
             Probe repository URL.
           </FormText>
@@ -131,14 +191,28 @@ const ProbeForm = () =>
         <Col md={8}>
           <InputGroup>
             <InputGroupAddon addonType='prepend'>Documentation</InputGroupAddon>
-            <Field
-              component={LinkField}
-              name='docurl'
-              className='form-control'
-              id='docurl'
-              disabled={true}
-            />
+            {
+              (isTenantSchema || isHistory) ?
+                <Field
+                  component={LinkField}
+                  name='docurl'
+                  className='form-control'
+                  id='docurl'
+                  disabled={true}
+                />
+              :
+                <Field
+                  type='text'
+                  name='docurl'
+                  className={`form-control ${errors.docurl && 'border-danger'}`}
+                  id='docurl'
+                />
+            }
           </InputGroup>
+          {
+            errors.docurl &&
+              FancyErrorMessage(errors.docurl)
+          }
           <FormText color='muted'>
             Documentation URL.
           </FormText>
@@ -151,10 +225,14 @@ const ProbeForm = () =>
             component='textarea'
             name='description'
             rows='15'
-            className='form-control'
+            className={`form-control ${errors.description && 'border-danger'}`}
             id='description'
-            disabled={true}
+            disabled={isTenantSchema || isHistory}
           />
+          {
+            errors.description &&
+              FancyErrorMessage(errors.description)
+          }
           <FormText color='muted'>
             Free text description outlining the purpose of this probe.
           </FormText>
@@ -167,15 +245,39 @@ const ProbeForm = () =>
             component='textarea'
             name='comment'
             rows='5'
-            className='form-control'
+            className={`form-control ${errors.comment && 'border-danger'}`}
             id='comment'
-            disabled={true}
+            disabled={isTenantSchema || isHistory}
           />
+          {
+            errors.comment &&
+              FancyErrorMessage(errors.comment)
+          }
           <FormText color='muted'>
             Short comment about this version.
           </FormText>
         </Col>
       </Row>
+      {
+        (!isTenantSchema && !isHistory && !addview) &&
+          <Row>
+            <Col md={8}>
+              <div>
+                Metric templates:
+                {
+                  metrictemplatelist.length > 0 &&
+                    <div>
+                      {
+                        metrictemplatelist
+                          .map((e, i) => <Link key={i} to={`/ui/metrictemplates/${e}`}>{e}</Link>)
+                          .reduce((prev, curr) => [prev, ', ', curr])
+                      }
+                    </div>
+                }
+              </div>
+            </Col>
+          </Row>
+      }
     </FormGroup>
   </>
 
@@ -374,10 +476,10 @@ export class ProbeChange extends Component {
     let title = undefined;
 
     if (this.addview) {
-      msg = 'Are you sure you want to add Probe?';
+      msg = 'Are you sure you want to add probe?';
       title = 'Add probe';
     } else {
-        msg = 'Are you sure you want to change Probe?';
+        msg = 'Are you sure you want to change probe?';
         title = 'Change probe';
     };
 
@@ -517,7 +619,7 @@ export class ProbeChange extends Component {
       if (!isTenantSchema) {
         return (
           <BaseArgoView
-            resourcename='probes'
+            resourcename='probe'
             location={this.location}
             addview={this.addview}
             modal={true}
@@ -541,181 +643,14 @@ export class ProbeChange extends Component {
             >
               {props => (
                 <Form>
-                  <FormGroup>
-                    <Row>
-                      <Col md={6}>
-                        <InputGroup>
-                          <InputGroupAddon addonType='prepend'>Name</InputGroupAddon>
-                          <Field
-                            type='text'
-                            name='name'
-                            className={`form-control ${props.errors.name && 'border-danger'}`}
-                            id='name'
-                          />          
-                        </InputGroup>
-                          {
-                            props.errors.name &&
-                              FancyErrorMessage(props.errors.name)
-                          }
-                        <FormText color="muted">
-                          Name of this probe.
-                        </FormText>
-                      </Col>
-                      <Col md={2}>
-                        <InputGroup>
-                          <InputGroupAddon addonType='prepend'>Version</InputGroupAddon>
-                          <Field
-                            type='text'
-                            name='version'
-                            value={this.state.probe.version}
-                            className='form-control'
-                            id='version'
-                            disabled={true}
-                          />
-                        </InputGroup>
-                        <FormText color="muted">
-                          Version of the probe.
-                        </FormText>
-                      </Col>
-                      {
-                        !this.addview &&
-                          <Col md={2}>
-                            <Field
-                              component={Checkbox}
-                              name='update_metrics'
-                              className='form-control'
-                              id='checkbox'
-                              label='Update metric templates'
-                            />
-                            <FormText color='muted'>
-                              Update all associated metric templates.
-                            </FormText>
-                          </Col>
-                      }
-                    </Row>
-                    <Row className='mt-3'>
-                      <Col md={8}>
-                        <AutocompleteField
-                          {...props}
-                          lists={list_packages}
-                          icon='packages'
-                          field='package'
-                          val={props.values.package}
-                          onselect_handler={this.onSelect}
-                          req={props.errors.package}
-                          label={'Package'}
-                        />
-                        {
-                          props.errors.package &&
-                            FancyErrorMessage(props.errors.package)
-                        }
-                        <FormText color='muted'>
-                          Probe is part of selected package.
-                        </FormText>
-                      </Col>
-                    </Row>
-                  </FormGroup>
-                  <FormGroup>
-                    <h4 className="mt-2 p-1 pl-3 text-light text-uppercase rounded" style={{"backgroundColor": "#416090"}}>Probe metadata</h4>
-                    <Row className='mt-4 mb-3 align-items-top'>
-                      <Col md={8}>
-                        <InputGroup>
-                          <InputGroupAddon addonType='prepend'>Repository</InputGroupAddon>
-                          <Field
-                            type='text'
-                            name='repository'
-                            className={`form-control ${props.errors.repository && 'border-danger'}`}
-                            id='repository'
-                          />
-                        </InputGroup>
-                          {
-                            props.errors.repository &&
-                              FancyErrorMessage(props.errors.repository)
-                          }
-                        <FormText color='muted'>
-                          Probe repository URL.
-                        </FormText>
-                      </Col>
-                    </Row>
-                    <Row className='mb-3 align-items-top'>
-                      <Col md={8}>
-                        <InputGroup>
-                          <InputGroupAddon addonType='prepend'>Documentation</InputGroupAddon>
-                          <Field
-                            type='text'
-                            name='docurl'
-                            className={`form-control ${props.errors.docurl && 'border-danger'}`}
-                            id='docurl'
-                          />
-                        </InputGroup>
-                          {
-                            props.errors.docurl &&
-                              FancyErrorMessage(props.errors.docurl)
-                          }
-                        <FormText color='muted'>
-                          Documentation URL.
-                        </FormText>
-                      </Col>
-                    </Row>
-                    <Row className='mb-3 align-items-top'>
-                      <Col md={8}>
-                        <Label for='description'>Description</Label>
-                        <Field
-                          component='textarea'
-                          name='description'
-                          rows='15'
-                          className={`form-control ${props.errors.description && 'border-danger'}`}
-                          id='description'
-                        />
-                          {
-                            props.errors.description &&
-                              FancyErrorMessage(props.errors.description)
-                          }
-                        <FormText color='muted'>
-                          Free text description outlining the purpose of this probe.
-                        </FormText>
-                      </Col>
-                    </Row>
-                    <Row className='mb-3 align-items-top'>
-                      <Col md={8}>
-                        <Label for='comment'>Comment</Label>
-                        <Field 
-                          component='textarea'
-                          name='comment'
-                          rows='5'
-                          className={`form-control ${props.errors.comment && 'border-danger'}`}
-                          id='comment'
-                        />
-                          {
-                            props.errors.comment &&
-                              FancyErrorMessage(props.errors.comment)
-                          }
-                        <FormText color='muted'>
-                          Short comment about this version.
-                        </FormText>
-                      </Col>
-                    </Row>
-                    {
-                      !this.addview &&
-                      <Row>
-                        <Col md={8}>
-                          <div>
-                            Metric templates: 
-                            {
-                              metrictemplatelist.length > 0 && 
-                              <div>
-                                {
-                                  metrictemplatelist
-                                    .map((e, i) => <Link key={i} to={'/ui/metrictemplates/' + e}>{e}</Link>)
-                                    .reduce((prev, curr) => [prev, ', ', curr])
-                                }
-                            </div>
-                            }
-                          </div>
-                        </Col>
-                      </Row>
-                    }
-                  </FormGroup>
+                  <ProbeForm
+                    {...props}
+                    state={this.state}
+                    addview={this.addview}
+                    list_packages={list_packages}
+                    onSelect={this.onSelect}
+                    metrictemplatelist={metrictemplatelist}
+                  />
                   {
                     (write_perm) &&
                       <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
@@ -751,29 +686,32 @@ export class ProbeChange extends Component {
         )
       } else {
         return (
-          <React.Fragment>
-            <div className="d-flex align-items-center justify-content-between">
-              <h2 className="ml-3 mt-1 mb-4">{'Probe details'}</h2>
-              <Link className='btn btn-secondary' to={this.location.pathname + '/history'} role='button'>History</Link>
-            </div>
-            <div id="argo-contentwrap" className="ml-2 mb-2 mt-2 p-3 border rounded">
-              <Formik
-                initialValues = {{
-                  id: probe.id,
-                  name: probe.name,
-                  version: probe.version,
-                  package: probe.package,
-                  repository: probe.repository,
-                  docurl: probe.docurl,
-                  description: probe.description,
-                  comment: probe.comment
-                }}
-                render = {props => (
-                  <ProbeForm/> 
-                )}
-              />
-            </div>
-          </React.Fragment>
+          <BaseArgoView
+            resourcename='Probe details'
+            location={this.location}
+            tenantview={true}
+            history={true}
+          >
+            <Formik
+              initialValues = {{
+                id: probe.id,
+                name: probe.name,
+                version: probe.version,
+                package: probe.package,
+                repository: probe.repository,
+                docurl: probe.docurl,
+                description: probe.description,
+                comment: probe.comment
+              }}
+              render = {props => (
+                <ProbeForm
+                  {...props}
+                  isTenantSchema={true}
+                  state={this.state}
+                /> 
+              )}
+            />
+          </BaseArgoView>
         );
       };
     };
@@ -980,7 +918,7 @@ export class ProbeVersionDetails extends Component {
     else if (!loading && name) {
       return (
         <BaseArgoView
-          resourcename={name + ' (' + version + ')'}
+          resourcename={`${name} (${version})`}
           infoview={true}
         >
           <Formik
@@ -994,7 +932,11 @@ export class ProbeVersionDetails extends Component {
               comment: comment
             }}
             render = {props => (
-              <ProbeForm/>
+              <ProbeForm
+                {...props}
+                state={this.state}
+                isHistory={true}
+              />
             )}
           />
         </BaseArgoView>
