@@ -1,7 +1,13 @@
 import React, { Component } from 'react';
 import { Backend } from './DataManager';
 import { Link } from 'react-router-dom';
-import { LoadingAnim, BaseArgoView, FancyErrorMessage, NotifyOk } from './UIElements';
+import { 
+  LoadingAnim, 
+  BaseArgoView, 
+  FancyErrorMessage, 
+  NotifyOk, 
+  DropdownFilterComponent 
+} from './UIElements';
 import ReactTable from 'react-table';
 import { Formik, Form, Field } from 'formik';
 import {
@@ -20,6 +26,7 @@ import { NotificationManager } from 'react-notifications';
 
 const RepoSchema = Yup.object().shape({
   name: Yup.string()
+    .matches(/^\S*$/, 'Name cannot contain white spaces')
     .required('Required'),
   content: Yup.string().required('Required'),
   description: Yup.string().required('Required')
@@ -35,9 +42,11 @@ export class YumRepoList extends Component {
     this.state = {
       loading: false,
       list_repos: null,
+      list_tags: null,
       isTenantSchema: null,
       search_name: '',
-      search_description: ''
+      search_description: '',
+      search_tag: ''
     };
 
     this.backend = new Backend();
@@ -47,12 +56,14 @@ export class YumRepoList extends Component {
     this.setState({loading: true});
 
     Promise.all([
-      this.backend.fetchYumRepos(),
-      this.backend.fetchIsTenantSchema()
+      this.backend.fetchData('/api/v2/internal/yumrepos'),
+      this.backend.fetchData('/api/v2/internal/ostags'),
+      this.backend.isTenantSchema()
     ])
-      .then(([repos, isTenantSchema]) => {
+      .then(([repos, tags, isTenantSchema]) => {
         this.setState({
           list_repos: repos,
+          list_tags: tags,
           isTenantSchema: isTenantSchema,
           loading: false
         });
@@ -83,7 +94,7 @@ export class YumRepoList extends Component {
         id: 'name',
         minWidth: 80,
         accessor: e =>
-          <Link to={repolink + e.name}>{e.name}</Link>,
+          <Link to={repolink + e.name + '-' + e.tag.replace(/\s/g, '').toLowerCase()}>{`${e.name} (${e.tag})`}</Link>,
         filterable: true,
         Filter: (
           <input
@@ -107,6 +118,22 @@ export class YumRepoList extends Component {
             style={{width: '100%'}}
           />
         )
+      },
+      {
+        Header: 'Tag',
+        accessor: 'tag',
+        Cell: row =>
+          <div style={{textAlign: 'center'}}>
+            {row.value}
+          </div>,
+        filterable: true,
+        Filter: (
+          <DropdownFilterComponent
+            value={this.state.tag}
+            onChange={e => this.setState({search_tag: e.target.value})}
+            data={this.state.list_tags}
+          />
+        )
       }
     ];
 
@@ -121,6 +148,12 @@ export class YumRepoList extends Component {
       list_repos = list_repos.filter(row =>
           row.description.toLowerCase().includes(this.state.search_description.toLowerCase())
         )
+    };
+
+    if (this.state.search_tag) {
+      list_repos = list_repos.filter(row =>
+        row.tag.toLowerCase().includes(this.state.search_tag.toLowerCase())
+      )
     };
 
     if (loading)
@@ -152,8 +185,10 @@ export class YumRepoList extends Component {
 export class YumRepoChange extends Component {
   constructor(props) {
     super(props);
-
-    this.name = props.match.params.name;
+    if (props.match.params.name) {
+      this.tag = props.match.params.name.split('-')[props.match.params.name.split('-').length - 1];
+      this.name = props.match.params.name.replace('-' + this.tag, '');
+    }
     this.addview = props.addview;
     this.disabled = props.disabled;
     this.location = props.location;
@@ -164,9 +199,11 @@ export class YumRepoChange extends Component {
       repo: {
         id: '',
         name: '',
+        tag: 'CentOS 6',
         content: '',
         description: ''
       },
+      tagslist: [],
       loading: false,
       write_perm: false,
       areYouSureModal: false,
@@ -215,13 +252,16 @@ export class YumRepoChange extends Component {
 
   doChange(values, actions) {
     if (!this.addview) {
-      this.backend.changeYumRepo({
-        id: values.id,
-        name: values.name,
-        content: values.content,
-        description: values.description
-      })
-        .then(response => {
+      this.backend.changeObject(
+        '/api/v2/internal/yumrepos/',
+        {
+          id: values.id,
+          name: values.name,
+          tag: values.tag,
+          content: values.content,
+          description: values.description
+        }
+      ).then(response => {
           if (!response.ok) {
             response.json()
               .then(json => {
@@ -231,17 +271,20 @@ export class YumRepoChange extends Component {
             NotifyOk({
               msg: 'YUM repo successfully changed',
               title: 'Changed',
-              callback: () => this.history.push('/ui/yumrepos/')
+              callback: () => this.history.push('/ui/yumrepos')
             });
           }
         })
     } else {
-      this.backend.addYumRepo({
-        name: values.name,
-        content: values.content,
-        description: values.description
-      })
-        .then(response => {
+      this.backend.addObject(
+        '/api/v2/internal/yumrepos/',
+        {
+          name: values.name,
+          tag: values.tag,
+          content: values.content,
+          description: values.description
+        }
+      ).then(response => {
           if (!response.ok) {
             response.json()
               .then(json => {
@@ -258,8 +301,8 @@ export class YumRepoChange extends Component {
     };
   };
 
-  doDelete(name) {
-    this.backend.deleteYumRepo(name)
+  doDelete(name, tag) {
+    this.backend.deleteObject(`/api/v2/internal/yumrepos/${name}/${tag}`)
       .then(response => {
         if (!response.ok) {
           response.json()
@@ -274,29 +317,34 @@ export class YumRepoChange extends Component {
           });
         };
       });
-  }
+  };
 
   componentDidMount() {
-    if (!this.addview) {
-      this.setState({loading: true});
-      this.backend.fetchYumRepoByName(this.name)
-        .then(json => {
+    this.setState({loading: true});
+    this.backend.fetchData('/api/v2/internal/ostags')
+      .then(tags => {
+        if (!this.addview) {
+          this.backend.fetchData(`/api/v2/internal/yumrepos/${this.name}/${this.tag}`)
+            .then(json => {
+              this.setState({
+                repo: json,
+                tagslist: tags,
+                write_perm: localStorage.getItem('authIsSuperuser') === 'true',
+                loading: false
+              });
+            });
+        } else {
           this.setState({
-            repo: json,
+            tagslist: tags,
             write_perm: localStorage.getItem('authIsSuperuser') === 'true',
             loading: false
           });
-        });
-    } else {
-      this.setState({
-        write_perm: localStorage.getItem('authIsSuperuser') === 'true',
-        loading: false
+        };
       });
-    };
   };
 
   render() {
-    const { repo, loading, write_perm } = this.state;
+    const { repo, tagslist, loading, write_perm } = this.state;
 
     if (loading)
       return <LoadingAnim/>
@@ -317,6 +365,7 @@ export class YumRepoChange extends Component {
             initialValues = {{
               id: repo.id,
               name: repo.name,
+              tag: repo.tag,
               content: repo.content,
               description: repo.description
             }}
@@ -326,13 +375,13 @@ export class YumRepoChange extends Component {
               <Form>
                 <FormGroup>
                   <Row>
-                    <Col md={8}>
+                    <Col md={6}>
                       <InputGroup>
                         <InputGroupAddon addonType='prepend'>Name</InputGroupAddon>
                         <Field
                           type='text'
                           name='name'
-                          className={props.errors.name ? 'form-control border-danger' : 'form-control'}
+                          className={`form-control ${props.errors.name && 'border-danger'}`}
                           id='name'
                           disabled={this.disabled}
                         />
@@ -345,6 +394,37 @@ export class YumRepoChange extends Component {
                         Name of YUM repo file.
                       </FormText>
                     </Col>
+                    <Col md={2}>
+                      <InputGroup>
+                        <InputGroupAddon addonType='prepend'>Tag</InputGroupAddon>
+                        {
+                          this.disabled ?
+                            <Field
+                              type='text'
+                              name='tag'
+                              className='form-control'
+                              id='tag'
+                              disabled={true}
+                            />
+                          :
+                            <Field
+                              component='select'
+                              name='tag'
+                              className='form-control'
+                              id='tag'
+                            >
+                              {
+                                tagslist.map((name, i) =>
+                                  <option key={i} value={name}>{name}</option>  
+                                )
+                              }
+                            </Field>
+                        }
+                      </InputGroup>
+                      <FormText color='muted'>
+                        OS tag.
+                      </FormText>
+                    </Col>
                   </Row>
                 </FormGroup>
                 <FormGroup>
@@ -355,7 +435,7 @@ export class YumRepoChange extends Component {
                         component='textarea'
                         name='content'
                         rows='20'
-                        className={props.errors.content ? 'form-control border-danger' : 'form-control'}
+                        className={`form-control ${props.errors.content && 'border-danger'}`}
                         id='content'
                         disabled={this.disabled}
                       />
@@ -377,7 +457,7 @@ export class YumRepoChange extends Component {
                         component='textarea'
                         name='description'
                         rows='5'
-                        className={props.errors.description ? 'form-control border-danger' : 'form-control'}
+                        className={`form-control ${props.errors.description && 'border-danger'}`}
                         id='description'
                         disabled={this.disabled}
                       />
@@ -402,7 +482,7 @@ export class YumRepoChange extends Component {
                             this.toggleAreYouSureSetModal(
                               'Are you sure you want to delete YUM repo?',
                               'Delete YUM repo',
-                              () => this.doDelete(props.values.name)
+                              () => this.doDelete(this.name, this.tag)
                             )
                           }}
                         >
@@ -424,4 +504,4 @@ export class YumRepoChange extends Component {
     } else
       return null;
   };
-}
+};

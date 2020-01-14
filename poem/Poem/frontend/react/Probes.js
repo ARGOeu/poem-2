@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { Backend } from './DataManager';
 import { Link } from 'react-router-dom';
-import { LoadingAnim, BaseArgoView, NotifyOk, Checkbox, FancyErrorMessage } from './UIElements';
+import { LoadingAnim, BaseArgoView, NotifyOk, Checkbox, FancyErrorMessage, AutocompleteField } from './UIElements';
 import ReactTable from 'react-table';
 import {
   FormGroup, 
@@ -22,20 +22,20 @@ export const ProbeHistory = HistoryComponent('probe')
 
 
 export const DiffElement = ({title, item1, item2}) => {
-  item1 = item1.split('\r\n')
-  item2 = item2.split('\r\n')
+  item1 = item1.split('\r\n');
+  item2 = item2.split('\r\n');
 
-  let n = Math.max(item1.length, item2.length)
+  let n = Math.max(item1.length, item2.length);
 
   if (item1.length > item2.length) {
     for (let i=item2.length; i < item1.length; i++) {
       item2.push(' ');
-    }
+    };
   } else if (item2.length > item1.length) {
     for (let i=item1.length; i < item2.length; i++) {
       item1.push(' ');
-    }
-  }
+    };
+  };
 
   const elements = [];
   for (let i = 0; i < n; i++) {
@@ -49,24 +49,23 @@ export const DiffElement = ({title, item1, item2}) => {
       disableWordDiff={true}
       key={'diff-' + i}
     />
-    )
-  }
+    );
+  };
 
   return (
   <div id='argo-contentwrap' className='ml-2 mb-2 mt-2 p-3 border rounded'>
     <h6 className='mt-4 font-weight-bold text-uppercase'>{title}</h6>
     {elements}
   </div>
-  )
-}
+  );
+};
 
 
 const ProbeSchema = Yup.object().shape({
   name: Yup.string()
     .matches(/^\S*$/, 'Name cannot contain white spaces')
     .required('Required'),
-  version: Yup.string()
-    .matches(/^\S*$/, 'Version cannot contain white spaces')
+  package: Yup.string()
     .required('Required'),
   repository: Yup.string()
     .url('Invalid url')
@@ -124,6 +123,20 @@ const ProbeForm = () =>
           <FormText color="muted">
             Version of the probe.
           </FormText>
+        </Col>
+      </Row>
+      <Row className='mt-3'>
+        <Col md={8}>
+          <InputGroup>
+            <InputGroupAddon addonType='prepend'>Package</InputGroupAddon>
+            <Field
+              type='text'
+              name='package'
+              className='form-control'
+              id='package'
+              disabled={true}
+            />
+          </InputGroup>
         </Col>
       </Row>
     </FormGroup>
@@ -220,8 +233,8 @@ export class ProbeList extends Component {
     this.setState({loading: true});
 
     Promise.all([
-      this.backend.fetchAllProbes(),
-      this.backend.fetchIsTenantSchema()
+      this.backend.fetchData('/api/v2/internal/probes'),
+      this.backend.isTenantSchema()
     ])
       .then(([json, isTenantSchema]) =>
         this.setState({
@@ -256,7 +269,7 @@ export class ProbeList extends Component {
           <input 
             value={this.state.search_name}
             onChange={e => this.setState({search_name: e.target.value})}
-            placeholder='Search probes by name'
+            placeholder='Search by name'
             style={{width: "100%"}}
           />
         )
@@ -282,7 +295,7 @@ export class ProbeList extends Component {
         Filter: (
           <input 
             type='text'
-            placeholder='Search probes by description'
+            placeholder='Search by description'
             value={this.state.search_description}
             onChange={e=> this.setState({search_description: e.target.value})}
             style={{width: '100%'}}
@@ -355,11 +368,20 @@ export class ProbeChange extends Component {
     this.backend = new Backend();
 
     this.state = {
-      probe: {},
+      probe: {
+        'id': '',
+        'name': '',
+        'version': '',
+        'package': '',
+        'repository': '',
+        'docurl': '',
+        'description': '',
+        'comment': ''
+      },
       isTenantSchema: null,
       metrictemplatelist: [],
+      list_packages: [],
       validationVisible: true,
-      new_version: true,
       update_metrics: false,
       loading: false,
       write_perm: false,
@@ -374,12 +396,13 @@ export class ProbeChange extends Component {
     this.onSubmitHandle = this.onSubmitHandle.bind(this);
     this.doDelete = this.doDelete.bind(this);
     this.onDismiss = this.onDismiss.bind(this);
-  }
+    this.onSelect = this.onSelect.bind(this);
+  };
 
   toggleAreYouSure() {
     this.setState(prevState => 
       ({areYouSureModal: !prevState.areYouSureModal}));
-  }
+  };
 
   toggleAreYouSureSetModal(msg, title, onyes) {
     this.setState(prevState => 
@@ -388,7 +411,7 @@ export class ProbeChange extends Component {
         modalMsg: msg,
         modalTitle: title,
       }));
-  }
+  };
 
   onSubmitHandle(values, actions) {
     let msg = undefined;
@@ -398,37 +421,29 @@ export class ProbeChange extends Component {
       msg = 'Are you sure you want to add Probe?';
       title = 'Add probe';
     } else {
-      if (values.new_version && values.version === this.state.probe.version) {
-        NotificationManager.error(
-          'Version number should be changed.',
-          'Version error'
-        )
-      } else {
         msg = 'Are you sure you want to change Probe?';
         title = 'Change probe';
-      }
-    }
+    };
 
-    if (msg && title) {
-      this.toggleAreYouSureSetModal(msg, title,
-        () => this.doChange(values, actions))
-    }
-  }
+    this.toggleAreYouSureSetModal(msg, title,
+      () => this.doChange(values, actions));
+  };
 
   doChange(values, actions) {
     if (!this.addview) {
-      this.backend.changeProbe({
-        id: values.id,
-        name: values.name,
-        version: values.version,
-        repository: values.repository,
-        docurl: values.docurl,
-        description: values.description,
-        comment: values.comment,
-        new_version: values.new_version,
-        update_metrics: values.update_metrics
-      })
-        .then(response => {
+      this.backend.changeObject(
+        '/api/v2/internal/probes/',
+        {
+          id: values.id,
+          name: values.name,
+          package: values.package,
+          repository: values.repository,
+          docurl: values.docurl,
+          description: values.description,
+          comment: values.comment,
+          update_metrics: values.update_metrics
+        }
+      ).then(response => {
           if (!response.ok) {
             response.json()
               .then(json => {
@@ -440,19 +455,20 @@ export class ProbeChange extends Component {
               title: 'Changed',
               callback: () => this.history.push('/ui/probes')
             });
-          }
-        })
-        .catch(err => alert('Something went wrong: ' + err))
+          };
+        });
     } else {
-      this.backend.addProbe({
-        name: values.name,
-        version: values.version,
-        repository: values.repository,
-        docurl: values.docurl,
-        description: values.description,
-        comment: values.comment
-      })
-        .then(response => {
+      this.backend.addObject(
+        '/api/v2/internal/probes/',
+        {
+          name: values.name,
+          package: values.package,
+          repository: values.repository,
+          docurl: values.docurl,
+          description: values.description,
+          comment: values.comment
+        }
+        ).then(response => {
           if (!response.ok) {
             response.json()
               .then(json => {
@@ -464,14 +480,13 @@ export class ProbeChange extends Component {
               title: 'Added',
               callback: () => this.history.push('/ui/probes')
             });
-          }
-        })
-        .catch(err => alert('Something went wrong: ' + err))
-    }
-  }
+          };
+        });
+    };
+  };
 
   doDelete(name) {
-    this.backend.deleteProbe(name)
+    this.backend.deleteObject(`/api/v2/internal/probes/${name}`)
       .then(response => {
         if (!response.ok) {
           response.json()
@@ -483,59 +498,61 @@ export class ProbeChange extends Component {
             msg: 'Probe successfully deleted',
             title: 'Deleted',
             callback: () => this.history.push('/ui/probes')
-          })
-        }
-      })
-      .catch(err => alert('Something went wrong: ' + err))
-  }
+          });
+        };
+      });
+  };
 
   onDismiss() {
     this.setState({ validationVisible: false });
-  }
+  };
+
+  onSelect(field, value) {
+    let probe = this.state.probe;
+    probe[field] = value;
+    probe['version'] = value.split(' ')[1].slice(1, -1);
+    this.setState({probe: probe});
+  };
 
   componentDidMount() {
     this.setState({loading: true});
 
-    if (!this.addview) {
-      Promise.all([
-        this.backend.fetchProbeByName(this.name),
-        this.backend.fetchIsTenantSchema()
-      ])
-          .then(([probe, isTenantSchema]) => {
-            this.backend.fetchMetricTemplatesByProbeVersion(probe.name + '(' + probe.version + ')')
-            .then(metrics => {
-              this.setState({
-                probe: probe,
-                isTenantSchema: isTenantSchema,
-                metrictemplatelist: metrics,
-                write_perm: localStorage.getItem('authIsSuperuser') === 'true',
-                loading: false
-              });
-            })
-          });
-    } else {
-      this.backend.fetchIsTenantSchema()
-        .then((isTenantSchema) => {
+    Promise.all([
+      this.backend.isTenantSchema(),
+      this.backend.fetchData('/api/v2/internal/packages')
+    ])
+      .then(([isTenantSchema, pkgs]) => {
+        let list_packages = [];
+        pkgs.forEach(e => list_packages.push(`${e.name} (${e.version})`));
+        if (!this.addview) {
+          this.backend.fetchData(`/api/v2/internal/probes/${this.name}`)
+            .then(probe => {
+              this.backend.fetchData(`/api/v2/internal/metricsforprobes/${probe.name}(${probe.version})`)
+                .then(metrics => {
+                  this.setState({
+                    probe: probe,
+                    list_packages: list_packages,
+                    isTenantSchema: isTenantSchema,
+                    metrictemplatelist: metrics,
+                    write_perm: localStorage.getItem('authIsSuperuser') === 'true',
+                    loading: false
+                  });
+                });
+            });
+        } else {
           this.setState({
-            probe: {
-              id: '',
-              name: '',
-              version: '',
-              repository: '',
-              docurl: '',
-              description: '',
-              comment: ''
-            },
+            list_packages: list_packages,
             isTenantSchema: isTenantSchema,
             write_perm: localStorage.getItem('authIsSuperuser') === 'true',
             loading: false
-          })
-        })
-    }
-  }
+          });
+        };
+      });
+  };
 
   render() {
-    const { probe, new_version, update_metrics, isTenantSchema, metrictemplatelist, write_perm, loading } = this.state;
+    const { probe, update_metrics, isTenantSchema, metrictemplatelist, 
+      list_packages, write_perm, loading } = this.state;
 
     if (loading)
       return(<LoadingAnim/>)
@@ -544,7 +561,7 @@ export class ProbeChange extends Component {
       if (!isTenantSchema) {
         return (
           <BaseArgoView
-            resourcename='Probes'
+            resourcename='probes'
             location={this.location}
             addview={this.addview}
             modal={true}
@@ -556,17 +573,17 @@ export class ProbeChange extends Component {
                 id: probe.id,
                 name: probe.name,
                 version: probe.version,
+                package: probe.package,
                 repository: probe.repository,
                 docurl: probe.docurl,
                 description: probe.description,
                 comment: probe.comment,
-                new_version: new_version,
                 update_metrics: update_metrics
               }}
               validationSchema={ProbeSchema}
               onSubmit = {(values, actions) => this.onSubmitHandle(values, actions)}
             >
-              {({errors, touched, values}) => (
+              {props => (
                 <Form>
                   <FormGroup>
                     <Row>
@@ -576,15 +593,13 @@ export class ProbeChange extends Component {
                           <Field
                             type='text'
                             name='name'
-                            className={errors.name ? 'form-control border-danger' : 'form-control'}
+                            className={`form-control ${props.errors.name && 'border-danger'}`}
                             id='name'
                           />          
                         </InputGroup>
                           {
-                            errors.name ? 
-                              FancyErrorMessage(errors.name)
-                            : 
-                              null
+                            props.errors.name &&
+                              FancyErrorMessage(props.errors.name)
                           }
                         <FormText color="muted">
                           Name of this probe.
@@ -596,49 +611,52 @@ export class ProbeChange extends Component {
                           <Field
                             type='text'
                             name='version'
-                            className={errors.version ? 'form-control border-danger' : 'form-control'}
+                            value={this.state.probe.version}
+                            className='form-control'
                             id='version'
+                            disabled={true}
                           />
                         </InputGroup>
-                          {
-                            errors.version ? 
-                              FancyErrorMessage(errors.version)
-                            : 
-                              null
-                          }
                         <FormText color="muted">
                           Version of the probe.
                         </FormText>
                       </Col>
                       {
                         !this.addview &&
-                          <>
-                            <Col md={2}>
-                              <Field
-                                component={Checkbox}
-                                name='new_version'
-                                className='form-control'
-                                id='checkbox-1'
-                                label='New version'
-                              />
-                              <FormText color='muted'>
-                                Create version for changes.
-                              </FormText>
-                            </Col>
-                            <Col md={2}>
-                              <Field
-                                component={Checkbox}
-                                name='update_metrics'
-                                className='form-control'
-                                id='checkbox-2'
-                                label='Update metric templates'
-                              />
-                              <FormText color='muted'>
-                                Update all associated metric templates.
-                              </FormText>
-                            </Col>
-                          </>
+                          <Col md={2}>
+                            <Field
+                              component={Checkbox}
+                              name='update_metrics'
+                              className='form-control'
+                              id='checkbox'
+                              label='Update metric templates'
+                            />
+                            <FormText color='muted'>
+                              Update all associated metric templates.
+                            </FormText>
+                          </Col>
                       }
+                    </Row>
+                    <Row className='mt-3'>
+                      <Col md={8}>
+                        <AutocompleteField
+                          {...props}
+                          lists={list_packages}
+                          icon='packages'
+                          field='package'
+                          val={props.values.package}
+                          onselect_handler={this.onSelect}
+                          req={props.errors.package}
+                          label={'Package'}
+                        />
+                        {
+                          props.errors.package &&
+                            FancyErrorMessage(props.errors.package)
+                        }
+                        <FormText color='muted'>
+                          Probe is part of selected package.
+                        </FormText>
+                      </Col>
                     </Row>
                   </FormGroup>
                   <FormGroup>
@@ -650,15 +668,13 @@ export class ProbeChange extends Component {
                           <Field
                             type='text'
                             name='repository'
-                            className={errors.repository ? 'form-control border-danger' : 'form-control'}
+                            className={`form-control ${props.errors.repository && 'border-danger'}`}
                             id='repository'
                           />
                         </InputGroup>
                           {
-                            errors.repository ? 
-                              FancyErrorMessage(errors.repository)
-                            : 
-                              null
+                            props.errors.repository &&
+                              FancyErrorMessage(props.errors.repository)
                           }
                         <FormText color='muted'>
                           Probe repository URL.
@@ -672,15 +688,13 @@ export class ProbeChange extends Component {
                           <Field
                             type='text'
                             name='docurl'
-                            className={errors.docurl ? 'form-control border-danger' : 'form-control'}
+                            className={`form-control ${props.errors.docurl && 'border-danger'}`}
                             id='docurl'
                           />
                         </InputGroup>
                           {
-                            errors.docurl ? 
-                              FancyErrorMessage(errors.docurl)
-                            : 
-                              null
+                            props.errors.docurl &&
+                              FancyErrorMessage(props.errors.docurl)
                           }
                         <FormText color='muted'>
                           Documentation URL.
@@ -694,14 +708,12 @@ export class ProbeChange extends Component {
                           component='textarea'
                           name='description'
                           rows='15'
-                          className={errors.description? 'form-control border-danger' : 'form-control'} 
+                          className={`form-control ${props.errors.description && 'border-danger'}`}
                           id='description'
                         />
                           {
-                            errors.description ? 
-                              FancyErrorMessage(errors.description)
-                            : 
-                              null
+                            props.errors.description &&
+                              FancyErrorMessage(props.errors.description)
                           }
                         <FormText color='muted'>
                           Free text description outlining the purpose of this probe.
@@ -715,14 +727,12 @@ export class ProbeChange extends Component {
                           component='textarea'
                           name='comment'
                           rows='5'
-                          className={errors.comment? 'form-control border-danger' : 'form-control'}
+                          className={`form-control ${props.errors.comment && 'border-danger'}`}
                           id='comment'
                         />
                           {
-                            errors.comment ? 
-                              FancyErrorMessage(errors.comment)
-                            : 
-                              null
+                            props.errors.comment &&
+                              FancyErrorMessage(props.errors.comment)
                           }
                         <FormText color='muted'>
                           Short comment about this version.
@@ -759,7 +769,7 @@ export class ProbeChange extends Component {
                           this.toggleAreYouSureSetModal(
                             'Are you sure you want to delete Probe?',
                             'Delete probe',
-                            () => this.doDelete(values.name)
+                            () => this.doDelete(props.values.name)
                           )
                         }}>
                           Delete
@@ -787,6 +797,7 @@ export class ProbeChange extends Component {
                   id: probe.id,
                   name: probe.name,
                   version: probe.version,
+                  package: probe.package,
                   repository: probe.repository,
                   docurl: probe.docurl,
                   description: probe.description,
@@ -798,11 +809,11 @@ export class ProbeChange extends Component {
               />
             </div>
           </React.Fragment>
-        )
-      }
-    }
-  }
-}
+        );
+      };
+    };
+  };
+};
 
 
 export function HistoryComponent(obj) {
@@ -825,8 +836,15 @@ export function HistoryComponent(obj) {
 
     componentDidMount() {
       this.setState({loading: true});
+      let url = undefined;
 
-      this.backend.fetchVersions(obj, this.name)
+      if (obj === 'metric')
+        url = '/api/v2/internal/tenantversion/'
+      
+      else
+        url = '/api/v2/internal/version/'
+
+      this.backend.fetchData(`${url}/${obj}/${this.name}`)
         .then((json) => {
           if (json.length > 1) {
             this.setState({
@@ -834,16 +852,16 @@ export function HistoryComponent(obj) {
               loading: false,
               compare1: json[0].version,
               compare2: json[1].version
-            })
+            });
           } else {
             this.setState({
               list_versions: json,
               loading: false
-            })
-          }
+            });
+          };
         }
       )
-    }
+    };
 
       render() {
         const { loading, list_versions } = this.state; 
@@ -875,7 +893,7 @@ export function HistoryComponent(obj) {
                           </Button>
                         </th>
                       }
-                      {obj === 'probe' && <th scope='col'>Version</th>}
+                      <th scope='col'>Version</th>
                       <th scope='col'>Date/time</th>
                       <th scope='col'>User</th>
                       <th scope='col'>Comment</th>
@@ -894,7 +912,7 @@ export function HistoryComponent(obj) {
                                 <input
                                   type='radio'
                                   name='radio-1'
-                                  value={obj === 'probe' ? e.version : e.date_created}
+                                  value={e.version}
                                   defaultChecked={true}
                                   onChange={e => this.setState({compare1: e.target.value})}
                                 />
@@ -904,42 +922,31 @@ export function HistoryComponent(obj) {
                                 <input
                                   type='radio'
                                   name='radio-1'
-                                  value={obj === 'probe' ? e.version : e.date_created}
+                                  value={e.version}
                                   onChange={e => this.setState({compare1: e.target.value})}
                                 /> 
                                 {' '}
                                 <input
                                   type='radio'
                                   name='radio-2'
-                                  value={obj === 'probe' ? e.version : e.date_created}
+                                  value={e.version}
                                   defaultChecked={i===1}
                                   onChange={e => this.setState({compare2: e.target.value})}
                                 />
                               </td>
                           }
                           {
-                            obj === 'probe' &&
-                              <td>
-                                {e.version ? <Link to={'/ui/' + obj +'s/' + this.name + '/history/' + e.version}>{e.version}</Link> : ''}
-                              </td>
+                            <td>
+                              {e.version ? <Link to={'/ui/' + obj +'s/' + this.name + '/history/' + e.version}>{e.version}</Link> : ''}
+                            </td>
                           }
                           <td>
-                            {e.date_created ? 
-                              (obj === 'metrictemplate') ? 
-                                  <Link to={'/ui/metrictemplates/' + this.name + '/history/' + e.version}>{e.date_created}</Link> 
-                                  : 
-                                    (obj === 'metric') ?
-                                      <Link to={'/ui/metrics/' + this.name + '/history/' + e.version}>{e.date_created}</Link>
-                                    :
-                                      e.date_created 
-                              : 
-                                ''
-                               }
+                            {e.date_created ? e.date_created : ''}
                           </td>
                           <td>
                             {e.user ? e.user : ''}
                           </td>
-                          <td className={obj === 'probe' ? 'col-md-6' : 'col-md-8'}>
+                          <td className='col-md-6'>
                             {e.comment ? e.comment : ''}
                           </td>
                         </tr>
@@ -948,13 +955,13 @@ export function HistoryComponent(obj) {
                   </tbody>
                 </table>
               </BaseArgoView>
-          )
+          );
         }
         else
-          return null
-      }
-    }
-}
+          return null;
+      };
+    };
+};
 
 
 
@@ -970,12 +977,14 @@ export class ProbeVersionCompare extends Component{
       loading: false,
       name1: '',
       version1: '',
+      package1: '',
       description1: '',
       repository1: '',
       docurl1: '',
       comment1: '',
       name2: '',
       version2: '',
+      package2: '',
       description2: '',
       repository2: '',
       docurl2: '',
@@ -988,16 +997,18 @@ export class ProbeVersionCompare extends Component{
   componentDidMount() {
     this.setState({loading: true});
 
-    this.backend.fetchVersions('probe', this.name)
+    this.backend.fetchData(`/api/v2/internal/version/probe/${this.name}`)
       .then((json) => {
         let name1 = '';
         let version1 = '';
+        let package1 = '';
         let description1 = '';
         let repository1 = '';
         let docurl1 = '';
         let comment1 = '';
         let name2 = ''
         let version2 = '';
+        let package2 = '';
         let description2 = '';
         let repository2 = '';
         let docurl2 = '';
@@ -1007,6 +1018,7 @@ export class ProbeVersionCompare extends Component{
           if (e.version == this.version1) {
             name1 = e.fields.name;
             version1 = e.fields.version;
+            package1 = e.fields.package;
             description1 = e.fields.description;
             repository1 = e.fields.repository;
             docurl1 = e.fields.docurl;
@@ -1014,35 +1026,39 @@ export class ProbeVersionCompare extends Component{
           } else if (e.version === this.version2) {
             name2 = e.fields.name;
             version2 = e.fields.version;
+            package2 = e.fields.package;
             description2 = e.fields.description;
             repository2 = e.fields.repository;
             docurl2 = e.fields.docurl;
             comment2 = e.fields.comment;
-          }
-        })
+          };
+        });
 
         this.setState({
           name1: name1,
           version1: version1,
+          package1: package1,
           description1: description1,
           repository1: repository1,
           docurl1: docurl1,
           comment1: comment1,
           name2: name2,
           version2: version2,
+          package2: package2,
           description2: description2,
           repository2: repository2,
           docurl2: docurl2,
           comment2: comment2,
           loading: false
-        })
+        });
       }
     )
-  }
+  };
 
   render() {
-    var { name1, name2, version1, version2, description1, description2,
-    repository1, repository2, docurl1, docurl2, comment1, comment2, loading } = this.state;
+    var { name1, name2, version1, version2, package1, package2, 
+      description1, description2, repository1, repository2, 
+      docurl1, docurl2, comment1, comment2, loading } = this.state;
 
     if (loading)
       return (<LoadingAnim/>);
@@ -1064,6 +1080,11 @@ export class ProbeVersionCompare extends Component{
           }
 
           {
+            (package1 !== package2) &&
+              <DiffElement title='package' item1={package1} item2={package2}/>
+          }
+
+          {
             (description1 !== description2) &&
               <DiffElement title='description' item1={description1} item2={description2}/>
           }
@@ -1082,12 +1103,12 @@ export class ProbeVersionCompare extends Component{
               <DiffElement title={'comment'} item1={comment1} item2={comment2}/>
           }
         </React.Fragment>
-      )
+      );
     }
     else
-      return null
-  }
-}
+      return null;
+  };
+};
 
 
 export class ProbeVersionDetails extends Component {
@@ -1102,24 +1123,26 @@ export class ProbeVersionDetails extends Component {
     this.state = {
       name: '',
       version: '',
+      pkg: '',
       description: '',
       repository: '',
       docurl: '',
       comment: '',
       loading: false
     };
-  }
+  };
 
   componentDidMount() {
     this.setState({loading: true});
 
-    this.backend.fetchVersions('probe', this.name)
+    this.backend.fetchData(`/api/v2/internal/version/probe/${this.name}`)
       .then((json) => {
         json.forEach((e) => {
           if (e.version === this.version) 
             this.setState({
               name: e.fields.name,
               version: e.fields.version,
+              pkg: e.fields.package,
               description: e.fields.description,
               repository: e.fields.repository,
               docurl: e.fields.docurl,
@@ -1129,41 +1152,39 @@ export class ProbeVersionDetails extends Component {
         });
       }
     )
-  }
+  };
 
   render() {
-    const { name, version, description, repository, docurl, comment, loading} = this.state;
+    const { name, version, pkg, description, repository, 
+      docurl, comment, loading} = this.state;
 
     if (loading)
       return (<LoadingAnim/>);
 
     else if (!loading && name) {
       return (
-        <React.Fragment>
-          <div className='d-flex align-items-center justify-content-between'>
-            <React.Fragment>
-              <h2 className='ml-3 mt-1 mb-4'>{name + ' (' + version + ')'}</h2>
-            </React.Fragment>
-          </div>
-          <div id='argo-contentwrap' className='ml-2 mb-2 mt-2 p-3 border rounded'>
-            <Formik
-              initialValues = {{
-                name: name,
-                version: version,
-                repository: repository,
-                docurl: docurl,
-                description: description,
-                comment: comment
-              }}
-              render = {props => (
-                <ProbeForm/>
-              )}
-              />
-          </div>
-        </React.Fragment>
-      )
+        <BaseArgoView
+          resourcename={name + ' (' + version + ')'}
+          infoview={true}
+        >
+          <Formik
+            initialValues = {{
+              name: name,
+              version: version,
+              package: pkg,
+              repository: repository,
+              docurl: docurl,
+              description: description,
+              comment: comment
+            }}
+            render = {props => (
+              <ProbeForm/>
+            )}
+          />
+        </BaseArgoView>
+      );
     }
     else
-      return null
-  }
-}
+      return null;
+  };
+};

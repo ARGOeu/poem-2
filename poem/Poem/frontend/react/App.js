@@ -10,18 +10,29 @@ import { AggregationProfilesChange, AggregationProfilesList } from './Aggregatio
 import Reports from './Reports';
 import Services from './Services';
 import { UsersList, UserChange, SuperAdminUserChange } from './Users';
-import { GroupOfMetricsList, GroupOfMetricsChange, GroupOfAggregationsList, GroupOfAggregationsChange, GroupOfMetricProfilesList, GroupOfMetricProfilesChange } from './GroupElements';
+import { 
+  GroupOfMetricsList, 
+  GroupOfMetricsChange, 
+  GroupOfAggregationsList, 
+  GroupOfAggregationsChange, 
+  GroupOfMetricProfilesList, 
+  GroupOfMetricProfilesChange,
+  GroupOfThresholdsProfilesList,
+  GroupOfThresholdsProfilesChange
+} from './GroupElements';
 import { APIKeyList, APIKeyChange } from './APIKey';
 import NotFound from './NotFound';
 import { Route, Switch, BrowserRouter, Redirect, withRouter } from 'react-router-dom';
-import { Container, Button, Row, Col } from 'reactstrap';
+import { Container, Row, Col } from 'reactstrap';
 import { NavigationBar, CustomBreadcrumb, NavigationLinks, Footer } from './UIElements';
-import { NotificationContainer, NotificationManager } from 'react-notifications';
+import { NotificationContainer } from 'react-notifications';
 import { Backend } from './DataManager';
 import { YumRepoList, YumRepoChange } from './YumRepos';
+import { ThresholdsProfilesList, ThresholdsProfilesChange } from './ThresholdProfiles';
 import Cookies from 'universal-cookie';
 
 import './App.css';
+import { PackageList, PackageChange } from './Package';
 
 
 const NavigationBarWithRouter = withRouter(NavigationBar);
@@ -29,7 +40,7 @@ const NavigationLinksWithRouter = withRouter(NavigationLinks);
 const CustomBreadcrumbWithRouter = withRouter(CustomBreadcrumb);
 
 
-const TenantRouteSwitch = ({webApiAggregation, webApiMetric, token, tenantName}) => (
+const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, token, tenantName}) => (
   <Switch>
     <Route exact path="/ui/login" render={() => <Redirect to="/ui/home" />}/>
     <Route exact path="/ui/home" component={Home} />
@@ -131,6 +142,31 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, token, tenantName})
     <Route exact path='/ui/administration/yumrepos/:name' 
       render={props => <YumRepoChange {...props} disabled={true}/>}
     />
+    <Route exact path="/ui/administration/groupofthresholdsprofiles" component={GroupOfThresholdsProfilesList} />
+    <Route exact path="/ui/administration/groupofthresholdsprofiles/add"
+      render={props => <GroupOfThresholdsProfilesChange
+        {...props}
+        addview={true}/>}
+    />
+    <Route exact path="/ui/administration/groupofthresholdsprofiles/:group"
+      render={props => <GroupOfThresholdsProfilesChange {...props}/>}
+    />
+    <Route exact path="/ui/thresholdsprofiles" component={ThresholdsProfilesList} />
+    <Route exact path="/ui/thresholdsprofiles/add" 
+      render={props => <ThresholdsProfilesChange 
+        {...props} 
+        webapithresholds={webApiThresholds}
+        webapitoken={token}
+        tenantname={tenantName}
+        addview={true}/>}
+    />
+    <Route exact path="/ui/thresholdsprofiles/:name" 
+      render={props => <ThresholdsProfilesChange 
+        {...props} 
+        webapithresholds={webApiThresholds}
+        webapitoken={token}
+        tenantname={tenantName}/>}
+    />
     <Route component={NotFound} />
   </Switch>
 )
@@ -156,6 +192,9 @@ const SuperAdminRouteSwitch = ({props}) => (
     <Route exact path='/ui/yumrepos/' render={props => <YumRepoList {...props}/>}/>
     <Route exact path='/ui/yumrepos/add' render={props => <YumRepoChange addview={true} {...props}/>}/>
     <Route exact path='/ui/yumrepos/:name' render={props => <YumRepoChange {...props}/>}/>
+    <Route exact path='/ui/packages/' render={props => <PackageList {...props}/>}/>
+    <Route exact path='/ui/packages/add' render={props => <PackageChange addview={true} {...props}/>}/>
+    <Route exact path='/ui/packages/:nameversion' render={props => <PackageChange {...props}/>}/>
     <Route exact path="/ui/administration" component={SuperAdminAdministration}/>
     <Route exact path="/ui/administration/users" component={UsersList} />
     <Route exact path="/ui/administration/users/add"
@@ -184,6 +223,7 @@ class App extends Component {
       areYouSureModal: false,
       webApiAggregation: undefined,
       webApiMetric: undefined,
+      webApiThresholds: undefined,
       tenantName: undefined,
       token: undefined,
       isTenantSchema: null
@@ -201,7 +241,7 @@ class App extends Component {
     localStorage.setItem('authFirstName', json.first_name);
     localStorage.setItem('authLastName', json.last_name);
     localStorage.setItem('authIsSuperuser', json.is_superuser);
-    this.backend.fetchIsTenantSchema().then((isTenantSchema) => 
+    this.backend.isTenantSchema().then((isTenantSchema) => 
       this.initalizeState(isTenantSchema, true, true)).then(
         setTimeout(() => {
           history.push('/ui/home');
@@ -254,6 +294,7 @@ class App extends Component {
             token: token,
             webApiMetric: options && options.result.webapimetric,
             webApiAggregation: options && options.result.webapiaggregation,
+            webApiThresholds: options && options.result.webapithresholds,
             tenantName: options && options.result.tenant_name,
           })
         })
@@ -268,7 +309,7 @@ class App extends Component {
   }
 
   componentDidMount() {
-    this.backend.fetchIsTenantSchema().then((isTenantSchema) => {
+    this.backend.isTenantSchema().then((isTenantSchema) => {
       this.state.isLogged && this.backend.isActiveSession().then(active => {
         if (active) {
           this.initalizeState(isTenantSchema, active, this.state.isLogged)
@@ -335,6 +376,7 @@ class App extends Component {
                   <TenantRouteSwitch 
                     webApiMetric={this.state.webApiMetric}
                     webApiAggregation={this.state.webApiAggregation}
+                    webApiThresholds={this.state.webApiThresholds}
                     token={this.state.token} 
                     tenantName={this.state.tenantName}/> 
                  :

@@ -38,7 +38,7 @@ export class APIKeyList extends Component {
   componentDidMount() {
     this.setState({ loading: true });
 
-    this.backend.fetchTokens()
+    this.backend.fetchData('/api/v2/internal/apikeys')
       .then(json => 
         this.setState({
           list_keys: json,
@@ -161,11 +161,14 @@ export class APIKeyChange extends Component {
 
   doChange(values, actions) {
     if (!this.addview) {
-      this.backend.changeToken({
-        id: this.state.key.id,
-        revoked: values.revoked,
-        name: values.name,
-      }).then(response => response.ok ? 
+      this.backend.changeObject(
+        '/api/v2/internal/apikeys/',
+        {
+          id: this.state.key.id,
+          revoked: values.revoked,
+          name: values.name,
+        }
+      ).then(response => response.ok ? 
         NotifyOk({
           msg: 'API key successfully changed',
           title: 'Changed',
@@ -173,9 +176,12 @@ export class APIKeyChange extends Component {
         }) 
         : alert('Something went wrong: ' + response.statusText))
     } else {
-      this.backend.addToken({
-        name: values.name
-      }).then(response => response.ok ?
+      this.backend.addObject(
+        '/api/v2/internal/apikeys/',
+        {
+          name: values.name
+        }
+      ).then(response => response.ok ?
         NotifyOk({
           msg: 'API key successfully added',
           title: 'Added',
@@ -187,7 +193,7 @@ export class APIKeyChange extends Component {
   }
 
   doDelete(name) {
-    this.backend.deleteToken(name)
+    this.backend.deleteObject(`/api/v2/internal/apikeys/${name}`)
       .then(response => response.ok
         ?
           NotifyOk({
@@ -204,7 +210,7 @@ export class APIKeyChange extends Component {
     this.setState({ loading: true });
 
     if (!this.addview) {
-      this.backend.fetchTokenByName(this.name)
+      this.backend.fetchData(`/api/v2/internal/apikeys/${this.name}`)
         .then((json) =>
           this.setState({
             key: json,

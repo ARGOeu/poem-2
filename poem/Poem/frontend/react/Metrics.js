@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { Backend } from './DataManager';
 import { Link } from 'react-router-dom';
-import { LoadingAnim, BaseArgoView, NotifyOk, FancyErrorMessage } from './UIElements';
+import { LoadingAnim, BaseArgoView, NotifyOk, FancyErrorMessage, DropdownFilterComponent } from './UIElements';
 import ReactTable from 'react-table';
 import { Formik, Form, Field, FieldArray } from 'formik';
 import {
@@ -32,21 +32,6 @@ const DefaultFilterComponent = ({value, onChange, field}) => (
     onChange={onChange}
     style={{width: '100%'}}
   />
-)
-
-const DropdownFilterComponent = ({value, onChange, data}) => (
-  <select
-    onChange={onChange}
-    style={{width: '100%'}}
-    value={value}
-  >
-    <option key={0} value=''>Show all</option>
-    {
-      data.map((name, i) => 
-        <option key={i + 1} value={name}>{name}</option>
-      )
-    }
-  </select>
 )
 
 
@@ -331,9 +316,9 @@ export function ListOfMetrics(type, imp=false) {
       this.setState({loading: true});
   
       if (type === 'metric') {
-        Promise.all([this.backend.fetchAllMetric(),
-          this.backend.fetchAllGroups(),
-          this.backend.fetchMetricTypes()
+        Promise.all([this.backend.fetchData('/api/v2/internal/metric'),
+          this.backend.fetchResult('/api/v2/internal/usergroups'),
+          this.backend.fetchData('/api/v2/internal/mtypes')
         ]).then(([metrics, groups, types]) =>
               this.setState({
                 list_metric: metrics,
@@ -347,8 +332,8 @@ export function ListOfMetrics(type, imp=false) {
               }));
         } else {
           Promise.all([
-            this.backend.fetchMetricTemplates(),
-            this.backend.fetchMetricTemplateTypes()
+            this.backend.fetchData('/api/v2/internal/metrictemplates'),
+            this.backend.fetchData('/api/v2/internal/mttypes')
         ]).then(([metrictemplates, types]) =>
             this.setState({
               list_metric: metrictemplates,
@@ -432,7 +417,7 @@ export function ListOfMetrics(type, imp=false) {
         }
       ];
 
-      if (imp) {
+      if (imp && localStorage.getItem('authIsSuperuser') === 'true') {
         columns.splice(
           0,
           0,
@@ -555,13 +540,16 @@ export function ListOfMetrics(type, imp=false) {
             return (
               <>
                 <div className="d-flex align-items-center justify-content-between">
-                  <h2 className="ml-3 mt-1 mb-4">{`Select Metric template(s) to import`}</h2>
-                  <Button 
-                  className='btn btn-secondary'
-                  onClick={() => this.importMetrics()}
-                    >
-                      Import
-                    </Button>
+                  <h2 className="ml-3 mt-1 mb-4">{`Select metric template${localStorage.getItem('authIsSuperuser') === 'true'  ? '(s) to import' : ' for details'}`}</h2>
+                  {
+                    localStorage.getItem('authIsSuperuser') === 'true' &&
+                      <Button 
+                      className='btn btn-secondary'
+                      onClick={() => this.importMetrics()}
+                        >
+                          Import
+                        </Button>
+                  }
                 </div>
                 <div id="argo-contentwrap" className="ml-2 mb-2 mt-2 p-3 border rounded">
                   <ReactTable
@@ -659,12 +647,14 @@ export class MetricChange extends Component {
   }
 
   doChange(values, actions) {
-    this.backend.changeMetric({
-      name: values.name,
-      group: values.group,
-      config: values.config
-    })
-      .then(() => NotifyOk({
+    this.backend.changeObject(
+      '/api/v2/internal/metric/',
+      {
+        name: values.name,
+        group: values.group,
+        config: values.config
+      }
+    ).then(() => NotifyOk({
         msg: 'Metric successfully changed',
         title: 'Changed',
         callback: () => this.history.push('/ui/metrics')
@@ -673,7 +663,7 @@ export class MetricChange extends Component {
   }
 
   doDelete(name) {
-    this.backend.deleteMetric(name)
+    this.backend.deleteObject(`/api/v2/internal/metric/${name}`)
       .then(() => NotifyOk({
         msg: 'Metric successfully deleted',
         title: 'Deleted',
@@ -686,40 +676,43 @@ export class MetricChange extends Component {
     this.setState({loading: true});
 
     if (!this.addview) {
-      Promise.all([this.backend.fetchMetricByName(this.name),
-        this.backend.fetchMetricUserGroups(),
-        this.backend.fetchAllGroups()
-      ]).then(([metrics, usergroups, groups]) => {
-        metrics.probekey ? 
-        this.backend.fetchVersions('probe', metrics.probeversion.split(' ')[0])
-          .then(probe => {
-            let fields = {};
-            probe.forEach((e) => {
-              if (e.id === metrics.probekey) {
-                fields = e.fields;
-              }
+      Promise.all([
+        this.backend.fetchData(`/api/v2/internal/metric/${this.name}`),
+        this.backend.fetchData('/api/v2/internal/groups/metrics')
+      ]).then(([metrics, usergroups]) => {
+        metrics.probeversion ? 
+          this.backend.fetchData(`/api/v2/internal/version/probe/${metrics.probeversion.split(' ')[0]}`)
+            .then(probe => {
+              let fields = {};
+              probe.forEach((e) => {
+                if (e.object_repr === metrics.probeversion) {
+                  fields = e.fields;
+                }
+              })
+              this.setState({
+                metric: metrics,
+                probe: fields,
+                groups: usergroups,
+                loading: false,
+                write_perm: localStorage.getItem('authIsSuperuser') === 'true' || usergroups.indexOf(metrics.group) >= 0,
+              })
             })
+          :
             this.setState({
               metric: metrics,
-              probe: fields,
-              groups: groups['metrics'],
+              groups: usergroups,
               loading: false,
               write_perm: localStorage.getItem('authIsSuperuser') === 'true' || usergroups.indexOf(metrics.group) >= 0,
             })
-          })
-          :
-          this.setState({
-            metric: metrics,
-            groups: groups['metrics'],
-            loading: false,
-            write_perm: localStorage.getItem('authIsSuperuser') === 'true' || usergroups.indexOf(metrics.group) >= 0,
-          })
       })
     }
   }
 
   render() {
     const { metric, groups, loading, write_perm } = this.state;
+
+    if (!groups.includes(metric.group))
+      groups.push(metric.group);
 
     if (loading)
       return (<LoadingAnim/>)
@@ -925,7 +918,7 @@ export class MetricVersonCompare extends Component {
   componentDidMount() {
     this.setState({loading: true});
 
-    this.backend.fetchVersions('metric', this.name)
+    this.backend.fetchData(`/api/v2/internal/tenantversion/metric/${this.name}`)
       .then (json => {
         let name1 = '';
         let probeversion1 = '';
@@ -1123,7 +1116,7 @@ export class MetricVersionDetails extends Component {
   componentDidMount() {
     this.setState({loading: true});
 
-    this.backend.fetchVersions('metric', this.name)
+    this.backend.fetchData(`/api/v2/internal/tenantversion/metric/${this.name}`)
       .then((json) => {
         json.forEach((e) => {
           if (e.version == this.version)

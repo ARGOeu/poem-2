@@ -230,21 +230,20 @@ export class MetricProfilesChange extends Component
   componentDidMount() {
     this.setState({loading: true})
 
-    if (!this.addview) {
-      this.backend.fetchMetricProfileIdFromName(this.profile_name).then(id =>
-        Promise.all([this.webapi.fetchMetricProfile(id),
-          this.backend.fetchMetricProfileUserGroups(),
-          this.backend.fetchServiceFlavoursAll(),
-          this.backend.fetchMetricsAll()
-        ])
-        .then(([metricp, usergroups, serviceflavoursall, metricsall]) => {
-          this.backend.fetchMetricProfileGroup(metricp.name)
-            .then(group => {
-              this.setState(
-                {
+    Promise.all([
+      this.backend.fetchData('/api/v2/internal/groups/metricprofiles'),      
+      this.backend.fetchListOfNames('/api/v2/internal/serviceflavoursall'),
+      this.backend.fetchListOfNames('/api/v2/internal/metricsall')
+    ])
+      .then(([usergroups, serviceflavoursall, metricsall]) => {
+        if (!this.addview) {
+          this.backend.fetchData(`/api/v2/internal/metricprofiles/${this.profile_name}`)
+            .then(json1 => this.webapi.fetchMetricProfile(json1.apiid)
+              .then(metricp => this.backend.fetchData(`/api/v2/internal/metricprofiles/${metricp.name}`)
+                .then(json2 => this.setState({
                   metric_profile: metricp,
                   metric_profile_name: metricp.name,
-                  groups_field: group,
+                  groups_field: json2['groupname'],
                   list_user_groups: usergroups,
                   write_perm: localStorage.getItem('authIsSuperuser') === 'true' || usergroups.indexOf(group) >= 0,
                   view_services: this.flattenServices(metricp.services).sort(this.sortServices),
@@ -252,36 +251,29 @@ export class MetricProfilesChange extends Component
                   metrics_all: metricsall,
                   list_services: this.flattenServices(metricp.services).sort(this.sortServices),
                   loading: false
-                });
-            }) 
-        }))
-    } 
-    else if (this.addview) {
-      let empty_metric_profile = {
-        id: '',
-        name: '',
-        services: [],
-      }
-      Promise.all([this.backend.fetchMetricProfileUserGroups(),
-        this.backend.fetchServiceFlavoursAll(),
-        this.backend.fetchMetricsAll()
-      ])
-      .then(([usergroups, serviceflavoursall, metricsall]) => {
-        this.setState(
-          {
+                }))
+              )
+            )
+        } else {
+          let empty_metric_profile = {
+            id: '',
+            name: '',
+            services: [],
+          }
+          this.setState({
             metric_profile: empty_metric_profile,
             metric_profile_name: '',
             groups_field: '',
             list_user_groups: usergroups,
-            write_perm: true,
+            write_perm: localStorage.getItem('authIsSuperuser') === 'true' || usergroups.length > 0,
             view_services: [{service: '', metric: '', index: 0, isNew: true}],
             serviceflavours_all: serviceflavoursall,
             metrics_all: metricsall,
             list_services: [{service: '', metric: '', index: 0, isNew: true}],
             loading: false
           })
-        })
-    }
+        }
+      })
   }
 
   insertSelectPlaceholder(data, text) {
@@ -474,11 +466,14 @@ export class MetricProfilesChange extends Component
         else {
           response.json()
           .then(r => {
-            this.backend.changeMetricProfile({ 
-              apiid: dataToSend.id, 
-              name: dataToSend.name, 
-              groupname: formValues.groups_field
-            })
+            this.backend.changeObject(
+              '/api/v2/internal/metricprofiles/',
+              { 
+                apiid: dataToSend.id, 
+                name: dataToSend.name, 
+                groupname: formValues.groups_field
+              }
+            )
               .then(() => NotifyOk({
                 msg: 'Metric profile succesfully changed',
                 title: 'Changed',
@@ -504,12 +499,14 @@ export class MetricProfilesChange extends Component
         else {
           response.json()
           .then(r => { 
-            this.backend.addMetricProfile({
-              apiid: r.data.id, 
-              name: dataToSend.name, 
-              groupname: formValues.groups_field 
-            })
-              .then(() => NotifyOk({
+            this.backend.addObject(
+              '/api/v2/internal/metricprofiles/',
+              {
+                apiid: r.data.id, 
+                name: dataToSend.name, 
+                groupname: formValues.groups_field 
+              }
+            ).then(() => NotifyOk({
                 msg: 'Metric profile successfully added',
                 title: 'Added',
                 callback: () => this.history.push('/ui/metricprofiles')
@@ -529,7 +526,7 @@ export class MetricProfilesChange extends Component
         alert(`Error: ${response.status}, ${response.statusText}`)
       } else {
         response.json()
-        .then(this.backend.deleteMetricProfile(idProfile))
+        .then(this.backend.deleteObject(`/api/v2/internal/metricprofiles/${idProfile}`))
         .then(
           () => NotifyOk({
             msg: 'Metric profile sucessfully deleted',
@@ -739,7 +736,7 @@ export class MetricProfilesList extends Component
 
   componentDidMount() {
     this.setState({loading: true})
-    this.backend.fetchMetricProfiles()
+    this.backend.fetchData('/api/v2/internal/metricprofiles')
       .then(json =>
         this.setState({
           list_metricprofiles: json, 

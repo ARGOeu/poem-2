@@ -48,4 +48,13 @@ class ProbeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Probe
-        exclude = ['nameversion']
+        fields = '__all__'
+
+
+class ThresholdsProfileSerializer(serializers.ModelSerializer):
+    def create(self, validated_data):
+        return models.ThresholdsProfiles.objects.create(**validated_data)
+
+    class Meta:
+        fields = ('name', 'apiid', 'groupname',)
+        model = models.ThresholdsProfiles

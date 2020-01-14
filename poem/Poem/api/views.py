@@ -1,14 +1,16 @@
-import json
+from Poem.api.internal_views.utils import one_value_inline, \
+    two_value_inline_dict
+from Poem.api.models import MyAPIKey
+from Poem.api.permissions import MyHasAPIKey
+from Poem.poem import models
+from Poem.poem_super_admin import models as admin_models
 
+import requests
+
+from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.exceptions import APIException
-
-from Poem.api.internal_views.utils import one_value_inline, \
-    two_value_inline_dict
-from Poem.api.permissions import MyHasAPIKey
-
-from Poem.poem import models
 
 
 class NotFound(APIException):
@@ -83,9 +85,9 @@ def build_metricconfigs():
             mdict[m.name].update({'parent': ''})
 
         if m.probekey:
-            version_fields = json.loads(m.probekey.serialized_data)
+            docurl_field = m.probekey.docurl
             mdict[m.name].update(
-                {'docurl': version_fields[0]['fields']['docurl']}
+                {'docurl': docurl_field}
             )
         else:
             mdict[m.name].update({'docurl': ''})
@@ -95,8 +97,105 @@ def build_metricconfigs():
     return ret
 
 
+def get_metrics_from_profile(profile):
+    token = MyAPIKey.objects.get(name='WEB-API')
+
+    headers = {'Accept': 'application/json', 'x-api-key': token.token}
+    response = requests.get(
+        'https://api.devel.argo.grnet.gr/api/v2/metric_profiles',
+        headers=headers, timeout=180
+    )
+    response.raise_for_status()
+    data = response.json()['data']
+
+    metrics = set()
+    if data:
+        if profile not in [p['name'] for p in data]:
+            raise NotFound(status=404, detail='Metric profile not found.')
+
+        else:
+            for p in data:
+                if p['name'] == profile:
+                    for s in p['services']:
+                        for m in s['metrics']:
+                            metrics.add(m)
+
+    return metrics
+
+
 class ListMetrics(APIView):
     permission_classes = (MyHasAPIKey,)
 
     def get(self, request):
         return Response(build_metricconfigs())
+
+
+class ListRepos(APIView):
+    permission_classes = (MyHasAPIKey,)
+
+    def get(self, request, profile=None, tag=None):
+        if not profile or not tag:
+            return Response(
+                {'detail': 'You must define profile and OS!'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        else:
+            metrics = get_metrics_from_profile(profile)
+            if tag == 'centos7':
+                ostag = admin_models.OSTag.objects.get(name='CentOS 7')
+            elif tag == 'centos6':
+                ostag = admin_models.OSTag.objects.get(name='CentOS 6')
+            else:
+                raise NotFound(status=404, detail='YUM repo tag not found.')
+
+            packages = set()
+            for metric in metrics:
+                try:
+                    m = models.Metric.objects.get(name=metric)
+                    if m.probekey:
+                        packages.add(m.probekey.object_id.package)
+
+                except models.Metric.DoesNotExist:
+                    pass
+
+            data = dict()
+            packagedict = dict()
+            for package in packages:
+                try:
+                    repo = package.repos.get(tag=ostag)
+
+                except admin_models.YumRepo.DoesNotExist:
+                    pass
+
+                else:
+                    packagedict.update({package: repo})
+
+            for key, value in packagedict.items():
+                if value.name not in data:
+                    data.update(
+                        {
+                            value.name: {
+                                'content': value.content,
+                                'packages': [
+                                    {
+                                        'name': key.name,
+                                        'version': key.version
+                                    }
+                                ]
+                            }
+                        }
+                    )
+
+                else:
+                    data[value.name]['packages'].append(
+                        {
+                            'name': key.name,
+                            'version': key.version
+                        }
+                    )
+
+        if data:
+            return Response([data])
+        else:
+            return Response([])

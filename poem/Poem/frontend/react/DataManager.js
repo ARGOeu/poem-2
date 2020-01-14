@@ -8,456 +8,50 @@ export class Backend {
         return active 
       })
       .catch(() => false);
-  }
+  };
 
-  fetchServices() {
-    return fetch('/api/v2/internal/services')
-      .then(response => response.json())
-      .catch(err => alert('Something went wrong: ' + err));
-  }
-
-  fetchAggregationUserGroups() {
-    return fetch('/api/v2/internal/groups/aggregations')
-      .then(response => response.json())
-      .catch(err => alert('Something went wrong: ' + err));
-  }
-
-  fetchAggregationGroup(aggregation_name) {
-    return fetch('/api/v2/internal/aggregations' + '/' + aggregation_name)
-      .then(response => response.json())
-      .then(json => json['groupname'])
-      .catch(err => alert('Something went wrong: ' + err));
-  }
-
-  fetchAggregationProfileIdFromName(aggregation_name) {
-    return fetch('/api/v2/internal/aggregations' + '/' + aggregation_name)
-      .then(response => response.json())
-      .then(json => json.apiid)
-      .catch(err => alert('Something went wrong: ' + err));
-  }
-
-  fetchAggregation() {
-    return fetch('/api/v2/internal/aggregations')
-      .then(response => response.json())
-      .catch(err => alert('Something went wrong: ' + err));
-  }
-
-  fetchMetricProfiles() {
-    return fetch('/api/v2/internal/metricprofiles')
-      .then(response => response.json())
-      .catch(err => alert('Something went wrong: ' + err));
-  }
-
-  fetchMetricProfileGroup(metricprofile_name) {
-    return fetch('/api/v2/internal/metricprofiles' + '/' + metricprofile_name)
-      .then(response => response.json())
-      .then(json => json['groupname'])
-      .catch(err => alert('Something went wrong: ' + err));
-  }
-
-  fetchMetricProfileIdFromName(metricprofile_name) {
-    return fetch('/api/v2/internal/metricprofiles' + '/' + metricprofile_name)
-      .then(response => response.json())
-      .then(json => json.apiid)
-      .catch(err => alert('Something went wrong: ' + err));
-  }
-
-  fetchMetricsAll() {
-    return fetch('/api/v2/internal/metricsall')
-      .then(response => response.json())
-      .then(json => {
-        let metrics = [];
-        json.forEach((e) => metrics.push(e.name));
-        return metrics;
-      })
-      .catch(err => alert('Something went wrong: ' + err));
-  }
-
-  fetchItemsInGroup(group, name) {
-    return fetch('/api/v2/internal/' + group + 'group/' + name)
-      .then(response => response.json())
-      .then(json => json['result'])
-      .catch(err => alert('Something went wrong: ' + err))
-  }
-  
-  fetchItemsNoGroup(group) {
-    return fetch('/api/v2/internal/' + group + 'group/')
-      .then(response => response.json())
-      .then(json => json['result'])
-      .catch(err => alert('Something went wrong: ' + err))
-  }
-
-  fetchServiceFlavoursAll() {
-    return fetch('/api/v2/internal/serviceflavoursall')
-      .then(response => response.json())
-      .then(json => {
-        let service_flavours = [];
-        json.forEach((e) => service_flavours.push(e.name));
-        return service_flavours;
-      })
-      .catch(err => alert('Something went wrong: ' + err));
-  }
-
-  fetchMetricProfileUserGroups() {
-    return fetch('/api/v2/internal/groups/metricprofiles')
-      .then(response => response.json())
-      .catch(err => alert('Something went wrong: ' + err));
-  }
-
-  fetchUsers() {
-    return fetch('/api/v2/internal/users')
-      .then(response => response.json())
-      .catch(err => alert('Something went wrong: ' + err));
-  }
-
-  fetchUserByUsername(username) {
-    return fetch('/api/v2/internal/users' + '/' + username)
-      .then(response => response.json())
-      .catch(err => alert('Something went wrong: ' + err));
-  }
-
-  fetchUserprofile(username) {
-    return fetch('/api/v2/internal/userprofile/' + username)
-      .then(response => response.json())
-      .catch(err => alert('Something went wrong: ' + err));
-  }
-
-  fetchGroupsForUser(username) {
-    return fetch('/api/v2/internal/usergroups/' + username)
-      .then(response => response.json())
-      .then(json => json['result'])
-      .catch(err => alert('Something went wrong: ' + err));
-  }
-
-  fetchAllGroups() {
-    return fetch('/api/v2/internal/usergroups/')
-      .then(response => response.json())
-      .then(json => json['result'])
-      .catch(err => alert('Something went wrong: ' + err));
-  }
-
-  fetchAllProbes() {
-    return fetch('/api/v2/internal/probes/')
-      .then(response => response.json())
-      .catch(err => alert('Something went wrong: ' + err))
-  }
-
-  fetchProbeByName(name) {
-    return fetch('/api/v2/internal/probes/' + name)
-      .then(response => response.json())
-      .catch(err => alert('Something went wrong: ' + err))
-  }
-
-  fetchAllMetric() {
-    return fetch('/api/v2/internal/metric/')
-      .then(response => response.json())
-      .catch(err => alert('Something went wrong: ' + err))
-  }
-
-  fetchMetricTypes() {
-    return fetch('/api/v2/internal/mtypes/')
-      .then(response => response.json())
-      .catch(err => alert("Something went wrong: " + err))
-  }
-
-  fetchMetricByName(name) {
-    return fetch('/api/v2/internal/metric/' + name)
-      .then(response => response.json())
-      .catch(err => alert('Something went wrong: ' + err))
-  }
-
-  fetchMetricUserGroups() {
-    return fetch('/api/v2/internal/groups/metrics')
-      .then(response => response.json())
-      .catch(err => alert('Something went wrong: ' + err))
-  }
-
-  fetchVersions(obj, name) {
-    if (obj === 'metric')
-      return fetch('/api/v2/internal/tenantversion/' + obj + '/' + name)
-        .then(response => response.json())
-        .catch(err => alert('Something went wrong: ' + err))
-    else
-      return fetch('/api/v2/internal/version/' + obj + '/' + name)
-        .then(response => response.json())
-        .catch(err => alert('Something went wrong: ' + err))
-  }
-
-  fetchTokens() {
-    return fetch('/api/v2/internal/apikeys/')
-      .then(response => response.json())
-      .catch(err => alert('Something went wrong: ' + err))
-  }
-
-  fetchTokenByName(name) {
-    return fetch('/api/v2/internal/apikeys/' + name)
-      .then(response => response.json())
-      .catch(err => alert('Something went wrong: ' + err))
-  }
-
-  fetchIsTenantSchema() {
+  isTenantSchema() {
     return fetch('/api/v2/internal/istenantschema')
       .then(response => response.ok ? response.json() : null)
       .then(json => json['isTenantSchema'])
-      .catch(err => alert('Something went wrong: ' + err))
-  }
+      .catch(err => alert(`Something went wrong: ${err}`))
+  };
 
-  fetchMetricTemplateTypes() {
-    return fetch('/api/v2/internal/mttypes')
+  fetchData(url) {
+    return fetch(url)
       .then(response => response.json())
-      .catch(err => alert('Something went wrong: ' + err))
-  }
+      .catch(err => alert(`Something went wrong: ${err}`));
+  };
 
-  fetchMetricTemplates() {
-    return fetch('/api/v2/internal/metrictemplates/')
+  fetchListOfNames(url) {
+    return fetch(url)
       .then(response => response.json())
-      .catch(err => alert('Something went wrong: ' + err))
-  }
+      .then(json => {
+        let list = [];
+        json.forEach((e) => list.push(e.name));
+        return list;
+      })
+      .catch(err => alert(`Something went wrong: ${err}`));
+  };
 
-  fetchMetricTemplateByName(name) {
-    return fetch('/api/v2/internal/metrictemplates/' + name)
+  fetchResult(url) {
+    return fetch(url)
       .then(response => response.json())
-      .catch(err => alert('Something went wrong: ' + err))
-  }
+      .then(json => json['result'])
+      .catch(err => alert(`Something went wrong: ${err}`));
+  };
 
-  fetchProbeVersions() {
-    return fetch('/api/v2/internal/version/probe')
-      .then(response => response.json())
-      .catch(err => alert('Something went wrong: ' + err))
-  }
+  changeObject(url, data) {
+    return this.send(url, 'PUT', data);
+  };
 
-  fetchMetricTemplatesByProbeVersion(probeversion) {
-    return fetch('/api/v2/internal/metricsforprobes/' + probeversion)
-      .then(response => response.json())
-      .catch(err => alert('Something went wrong: ' + err))
-  }
+  addObject(url, data) {
+    return this.send(url, 'POST', data);
+  };
 
-  fetchYumRepos() {
-    return fetch('/api/v2/internal/yumrepos/')
-      .then(response => response.json())
-      .catch(err => alert('Something went wrong: ' + err))
-  }
-
-  fetchYumRepoByName(name) {
-    return fetch('/api/v2/internal/yumrepos/' + name)
-      .then(response => response.json())
-      .catch(err => alert('Something went wrong: ' + err))
-  }
-
-  changeMetricProfile(profile) {
-    return this.send(
-      '/api/v2/internal/metricprofiles/',
-      'PUT',
-      profile
-    );
-  }
-
-  changeAggregation(profile) {
-    return this.send(
-      '/api/v2/internal/aggregations/',
-      'PUT',
-      profile
-    );
-  }
-
-  changeUser(user) {
-    return this.send(
-      '/api/v2/internal/users/',
-      'PUT',
-      user
-    );
-  }
-
-  changeUserProfile(user) {
-    return this.send(
-      '/api/v2/internal/userprofile/',
-      'PUT',
-      user
-    );
-  }
-
-  changeGroup(group, data) {
-    return this.send(
-      '/api/v2/internal/' + group + 'group/',
-      'PUT',
-      data
-    );
-  }
-
-  changeMetric(metric) {
-    return this.send(
-      '/api/v2/internal/metric/',
-      'PUT',
-      metric
-    )
-  }
-
-  changeToken(token) {
-    return this.send(
-      '/api/v2/internal/apikeys/',
-      'PUT',
-      token
-    )
-  }
-
-  changeProbe(probe) {
-    return this.send(
-      '/api/v2/internal/probes/',
-      'PUT',
-      probe
-    )
-  }
-
-  changeMetricTemplate(metric) {
-    return this.send(
-      '/api/v2/internal/metrictemplates/',
-      'PUT',
-      metric
-    )
-  }
-
-  changeYumRepo(repo) {
-    return this.send(
-      '/api/v2/internal/yumrepos/',
-      'PUT',
-      repo
-    );
-  }
-
-  addAggregation(profile) {
-    return this.send(
-      '/api/v2/internal/aggregations/',
-      'POST',
-      profile
-    );
-  }
-
-  addMetricProfile(profile) {
-    return this.send(
-      '/api/v2/internal/metricprofiles/',
-      'POST',
-      profile
-    );
-  }
-
-  addUser(user) {
-    return this.send(
-      '/api/v2/internal/users/',
-      'POST',
-      user
-    );
-  }
-
-  addUserProfile(user) {
-    return this.send(
-      '/api/v2/internal/userprofile/',
-      'POST',
-      user
-    );
-  }
-
-  addGroup(group, name) {
-    return this.send(
-      '/api/v2/internal/' + group + 'group/',
-      'POST',
-      name
-    );
-  }
-
-  addToken(token) {
-    return this.send(
-      '/api/v2/internal/apikeys/',
-      'POST',
-      token
-    );
-  }
-
-  addProbe(probe) {
-    return this.send(
-      '/api/v2/internal/probes/',
-      'POST',
-      probe
-    );
-  }
-
-  addMetricTemplate(metric) {
-    return this.send(
-      '/api/v2/internal/metrictemplates/',
-      'POST',
-      metric
-    );
-  }
-
-  addYumRepo(repo) {
-    return this.send(
-      '/api/v2/internal/yumrepos/',
-      'POST',
-      repo
-    );
-  }
-
-  deleteMetricProfile(id) {
-    return this.send(
-      '/api/v2/internal/metricprofiles/' + id,
-      'DELETE',
-    );
-  }
-
-  deleteAggregation(id) {
-    return this.send(
-      '/api/v2/internal/aggregations/' + id,
-      'DELETE'
-    );
-  }
-
-  deleteUser(id) {
-    return this.send(
-      '/api/v2/internal/users/' + id,
-      'DELETE'
-    );
-  }
-
-  deleteGroup(group, name) {
-    return this.send(
-      '/api/v2/internal/' + group + 'group/' + name,
-      'DELETE'
-    );
-  }
-
-  deleteMetric(name) {
-    return this.send(
-      '/api/v2/internal/metric/' + name,
-      'DELETE'
-    );
-  }
-
-  deleteToken(name) {
-    return this.send(
-      '/api/v2/internal/apikeys/' + name,
-      'DELETE'
-    );
-  }
-
-  deleteProbe(name) {
-    return this.send(
-      '/api/v2/internal/probes/' + name,
-      'DELETE'
-    );
-  }
-
-  deleteMetricTemplate(name) {
-    return this.send(
-      '/api/v2/internal/metrictemplates/' + name,
-      'DELETE'
-    );
-  }
-
-  deleteYumRepo(name) {
-    return this.send(
-      '/api/v2/internal/yumrepos/' + name,
-      'DELETE'
-    );
-  }
+  deleteObject(url) {
+    return this.send(url, 'DELETE');
+  };
 
   importMetrics(data) {
     return this.send(
@@ -493,12 +87,14 @@ export class WebApi {
       token=undefined, 
       metricProfiles=undefined,
       aggregationProfiles=undefined,
+      thresholdsProfiles=undefined,
       reportsConfigurations=undefined
     }) {
     this.token = token;
     this.metricprofiles = metricProfiles;
     this.aggregationprofiles = aggregationProfiles; 
-  }
+    this.thresholdsprofiles = thresholdsProfiles;
+  };
 
   fetchMetricProfiles() {
     return fetch(this.metricprofiles,
@@ -510,25 +106,59 @@ export class WebApi {
       })
       .then(response => response.json())
       .then(json => json['data']) 
-      .catch(err => alert('Something went wrong: ' + err));
-  }
+      .catch(err => alert(`Something went wrong: ${err}`));
+  };
 
   fetchMetricProfile(id) {
-    return fetch(this.metricprofiles + '/' + id, 
-      {headers: 
-        {
-          "Accept": "application/json",
-          "x-api-key": this.token
-        }
-      })
-      .then(response => response.json())
-      .then(json => json['data'])
-      .then(array => array[0])
-      .catch(err => alert('Something went wrong: ' + err));
-  }
+    return this.fetchProfile(`${this.metricprofiles}/${id}`);
+  };
 
   fetchAggregationProfile(id) {
-    return fetch(this.aggregationprofiles + '/' + id, 
+    return this.fetchProfile(`${this.aggregationprofiles}/${id}`);
+  };
+
+  fetchThresholdsProfile(id) {
+    return this.fetchProfile(`${this.thresholdsprofiles}/${id}`);
+  };
+
+  changeAggregation(profile) {
+    return this.changeProfile(this.aggregationprofiles, profile);
+  };
+
+  changeMetricProfile(profile) {
+    return this.changeProfile(this.metricprofiles, profile);
+  };
+
+  changeThresholdsProfile(profile) {
+    return this.changeProfile(this.thresholdsprofiles, profile);
+  };
+
+  addMetricProfile(profile) {
+    return this.addProfile(this.metricprofiles, profile);
+  };
+
+  addAggregation(profile) {
+    return this.addProfile(this.aggregationprofiles, profile);
+  };
+
+  addThresholdsProfile(profile) {
+    return this.addProfile(this.thresholdsprofiles, profile);
+  };
+
+  deleteMetricProfile(id) {
+    return this.deleteProfile(`${this.metricprofiles}/${id}`);
+  };
+
+  deleteAggregation(id) {
+    return this.deleteProfile(`${this.aggregationprofiles}/${id}`);
+  };
+
+  deleteThresholdsProfile(id) {
+    return this.deleteProfile(`${this.thresholdsprofiles}/${id}`);
+  };
+
+  fetchProfile(url) {
+    return fetch(url,
       {headers: 
         {
           "Accept": "application/json",
@@ -538,54 +168,20 @@ export class WebApi {
       .then(response => response.json())
       .then(json => json['data'])
       .then(array => array[0])
-      .catch(err => alert('Something went wrong: ' + err));
-  }
+      .catch(err => alert(`Something went wrong: ${err}`));
+  };
 
-  changeAggregation(profile) {
-    return this.send(
-      this.aggregationprofiles + '/' + profile.id,
-      'PUT',
-      profile
-    );
-  }
+  changeProfile(url, data) {
+    return this.send(`${url}/${data.id}`, 'PUT', data);
+  };
 
-  changeMetricProfile(profile) {
-    return this.send(
-      this.metricprofiles + '/' + profile.id,
-      'PUT',
-      profile
-    );
-  }
+  addProfile(url, data) {
+    return this.send(url, 'POST', data);
+  };
 
-  addMetricProfile(profile) {
-    return this.send(
-      this.metricprofiles,
-      'POST',
-      profile
-    );
-  }
-
-  addAggregation(profile) {
-    return this.send(
-      this.aggregationprofiles,
-      'POST',
-      profile
-    );
-  }
-
-  deleteMetricProfile(id) {
-    return this.send(
-      this.metricprofiles + '/' + id,
-      'DELETE'
-    );
-  }
-
-  deleteAggregation(id) {
-    return this.send(
-      this.aggregationprofiles + '/' + id,
-      'DELETE'
-    );
-  }
+  deleteProfile(url) {
+    return this.send(url, 'DELETE');
+  };
 
   send(url, method, values=null) {
     return fetch(url, {

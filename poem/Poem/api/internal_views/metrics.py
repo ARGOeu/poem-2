@@ -54,9 +54,9 @@ class ListMetric(APIView):
             fileparameter = two_value_inline(metric.fileparameter)
 
             if metric.probekey:
-                probekey = metric.probekey.id
+                probeversion = metric.probekey.__str__()
             else:
-                probekey = ''
+                probeversion = ''
 
             if metric.group:
                 group = metric.group.name
@@ -67,8 +67,7 @@ class ListMetric(APIView):
                 id=metric.id,
                 name=metric.name,
                 mtype=metric.mtype.name,
-                probeversion=metric.probeversion,
-                probekey=probekey,
+                probeversion=probeversion,
                 group=group,
                 parent=parent,
                 probeexecutable=probeexecutable,
@@ -153,15 +152,15 @@ class ImportMetrics(APIView):
             )
 
             try:
-                if metrictemplate.probeversion:
-                    ver = admin_models.History.objects.get(
-                        object_repr=metrictemplate.probeversion
+                if metrictemplate.probekey:
+                    ver = admin_models.ProbeHistory.objects.get(
+                        name=metrictemplate.probekey.name,
+                        package__version=metrictemplate.probekey.package.version
                     )
 
                     metric = poem_models.Metric.objects.create(
                         name=metrictemplate.name,
                         mtype=mt,
-                        probeversion=metrictemplate.probeversion,
                         probekey=ver,
                         parent=metrictemplate.parent,
                         group=gr,

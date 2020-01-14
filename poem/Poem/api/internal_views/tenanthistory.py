@@ -7,7 +7,7 @@ import json
 from Poem.api.internal_views.utils import one_value_inline, two_value_inline
 from Poem.api.views import NotFound
 from Poem.helpers.versioned_comments import new_comment
-from Poem.poem.models import Metric, TenantHistory, GroupOfMetrics, MetricType
+from Poem.poem import models as poem_models
 
 from rest_framework import status
 from rest_framework.authentication import SessionAuthentication
@@ -19,7 +19,7 @@ class ListTenantVersions(APIView):
     authentication_classes = (SessionAuthentication,)
 
     def get(self, request, obj, name=None):
-        models = {'metric': Metric}
+        models = {'metric': poem_models.Metric}
 
         ct = ContentType.objects.get_for_model(models[obj])
 
@@ -30,7 +30,7 @@ class ListTenantVersions(APIView):
                 raise NotFound(status=404,
                                detail='{} not found.'.format(obj.capitalize()))
 
-            vers = TenantHistory.objects.filter(
+            vers = poem_models.TenantHistory.objects.filter(
                 object_id=obj.id,
                 content_type=ct
             ).order_by('date_created')
@@ -41,7 +41,7 @@ class ListTenantVersions(APIView):
             else:
                 results = []
                 for ver in vers:
-                    if isinstance(obj, Metric):
+                    if isinstance(obj, poem_models.Metric):
                         version = datetime.datetime.strftime(
                             ver.date_created, '%Y%m%d-%H%M%S'
                         )
@@ -50,7 +50,10 @@ class ListTenantVersions(APIView):
                             'name': fields0['name'],
                             'mtype': fields0['mtype'][0],
                             'group': fields0['group'][0],
-                            'probeversion': fields0['probeversion'],
+                            'probeversion': '{} ({})'.format(
+                                fields0['probekey'][0],
+                                fields0['probekey'][1]
+                            ),
                             'parent': one_value_inline(fields0['parent']),
                             'probeexecutable': one_value_inline(
                                 fields0['probeexecutable']

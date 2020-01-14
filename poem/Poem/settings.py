@@ -53,6 +53,7 @@ try:
     SECRETKEY_PATH = config.get('SECURITY', 'SecretKeyPath')
     WEBAPI_METRIC = config.get('WEBAPI', 'MetricProfile')
     WEBAPI_AGGREGATION = config.get('WEBAPI', 'AggregationProfile')
+    WEBAPI_THRESHOLDS = config.get('WEBAPI', 'ThresholdsProfile')
 
 
 except NoSectionError as e:
@@ -204,6 +205,7 @@ LOGIN_REDIRECT_URL = '/ui/home'
 LOGOUT_REDIRECT_URL = '/ui/login'
 SAML_CONFIG_LOADER = 'Poem.poem.saml2.config.get_saml_config'
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_COOKIE_SAMESITE = None
 
 
 WEBPACK_LOADER = {

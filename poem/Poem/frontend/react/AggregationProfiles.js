@@ -364,11 +364,14 @@ export class AggregationProfilesChange extends Component
         else {
           response.json()
             .then(r => {
-              this.backend.changeAggregation({ 
-                apiid: values_send.id, 
-                name: values_send.name, 
-                groupname: values_send.groups_field
-              })
+              this.backend.changeObject(
+                '/api/v2/internal/aggregations/',
+                { 
+                  apiid: values_send.id, 
+                  name: values_send.name, 
+                  groupname: values_send.groups_field
+                }
+              )
                 .then(() => NotifyOk({
                   msg: 'Aggregation profile succesfully changed',
                   title: 'Changed',
@@ -392,12 +395,14 @@ export class AggregationProfilesChange extends Component
         else {
           response.json()
             .then(r => { 
-              this.backend.addAggregation({
-                apiid: r.data.id, 
-                name: values_send.name, 
-                groupname: values_send.groups_field
-              })
-                .then(() => NotifyOk({
+              this.backend.addObject(
+                '/api/v2/internal/aggregations/',
+                {
+                  apiid: r.data.id, 
+                  name: values_send.name, 
+                  groupname: values_send.groups_field
+                }
+              ).then(() => NotifyOk({
                   msg: 'Aggregation profile successfully added',
                   title: 'Added',
                   callback: () => this.history.push('/ui/aggregationprofiles')
@@ -417,7 +422,7 @@ export class AggregationProfilesChange extends Component
         alert(`Error: ${response.status}, ${response.statusText}`)
       } else {
         response.json()
-        .then(this.backend.deleteAggregation(idProfile))
+        .then(this.backend.deleteObject(`/api/v2/internal/aggregations/${idProfile}`))
         .then(
           () => NotifyOk({
             msg: 'Aggregation profile sucessfully deleted',
@@ -460,54 +465,51 @@ export class AggregationProfilesChange extends Component
   componentDidMount() {
     this.setState({loading: true})
 
-    if (!this.addview) {
-      this.backend.fetchAggregationProfileIdFromName(this.profile_name).then(id =>
-        Promise.all([this.webapi.fetchAggregationProfile(id), 
-          this.webapi.fetchMetricProfiles(),
-          this.backend.fetchAggregationUserGroups()])
-        .then(([aggregp, metricp, usergroups]) => {
-          this.backend.fetchAggregationGroup(aggregp.name)
-          .then(group =>
-            this.setState(
-            {
-              aggregation_profile: aggregp,
-              groups_field: group,
-              list_user_groups: usergroups,
-              write_perm: localStorage.getItem('authIsSuperuser') === 'true' || usergroups.indexOf(group) >= 0,
-              list_id_metric_profiles: this.extractListOfMetricsProfiles(metricp),
-              list_services: this.extractListOfServices(aggregp.metric_profile, metricp),
-              list_complete_metric_profiles: metricp,
-              loading: false
-            })
-          )
-        })
-      )
-    }
-    else {
-      let empty_aggregation_profile = {
-        id: '',
-        name: '',
-        metric_operation: '',
-        profile_operation: '',
-        endpoint_group: '',
-        metric_profile: {
-            name: ''
-        },
-        groups: []
-      }
-      Promise.all([this.webapi.fetchMetricProfiles(), this.backend.fetchAggregationUserGroups()])
-        .then(([metricp, usergroups]) => this.setState(
-      {
-        aggregation_profile: empty_aggregation_profile,
-        groups_field: '',
-        list_user_groups: usergroups,
-        write_perm: true,
-        list_id_metric_profiles: this.extractListOfMetricsProfiles(metricp),
-        list_complete_metric_profiles: metricp,
-        list_services: [],
-        loading: false
-      }))
-    }
+    Promise.all([
+      this.webapi.fetchMetricProfiles(),
+      this.backend.fetchData('/api/v2/internal/groups/aggregations')
+    ])
+      .then(([metricp, usergroups]) => {
+        if (!this.addview) {
+          this.backend.fetchData(`/api/v2/internal/aggregations/${this.profile_name}`)
+            .then(json1 => this.webapi.fetchAggregationProfile(json1.apiid)
+              .then(aggregp => this.backend.fetchData(`/api/v2/internal/aggregations/${aggregp.name}`)
+                .then(json2 => this.setState({
+                  aggregation_profile: aggregp,
+                  groups_field: json2['groupname'],
+                  list_user_groups: usergroups,
+                  write_perm: localStorage.getItem('authIsSuperuser') === 'true' || usergroups.indexOf(group) >= 0,
+                  list_id_metric_profiles: this.extractListOfMetricsProfiles(metricp),
+                  list_services: this.extractListOfServices(aggregp.metric_profile, metricp),
+                  list_complete_metric_profiles: metricp,
+                  loading: false
+                }))
+              )
+            )
+        } else {
+          let empty_aggregation_profile = {
+            id: '',
+            name: '',
+            metric_operation: '',
+            profile_operation: '',
+            endpoint_group: '',
+            metric_profile: {
+                name: ''
+            },
+            groups: []
+          }
+          this.setState({
+            aggregation_profile: empty_aggregation_profile,
+            groups_field: '',
+            list_user_groups: usergroups,
+            write_perm: localStorage.getItem('authIsSuperuser') === 'true' || usergroups.length > 0,
+            list_id_metric_profiles: this.extractListOfMetricsProfiles(metricp),
+            list_complete_metric_profiles: metricp,
+            list_services: [],
+            loading: false
+          })
+        }
+      })
   }
 
   render() {
@@ -766,7 +768,7 @@ export class AggregationProfilesList extends Component
 
   componentDidMount() {
     this.setState({loading: true})
-    this.backend.fetchAggregation()
+    this.backend.fetchData('/api/v2/internal/aggregations')
       .then(json =>
         this.setState({
           list_aggregations: json, 

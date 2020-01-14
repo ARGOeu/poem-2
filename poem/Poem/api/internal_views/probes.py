@@ -1,14 +1,13 @@
-from django.contrib.contenttypes.models import ContentType
+import datetime
+
 from django.db import IntegrityError
 
 import json
 
-from Poem.api import serializers
-from Poem.api.internal_views.metrictemplates import update_metrics
 from Poem.api.views import NotFound
 from Poem.helpers.history_helpers import create_history
-from Poem.poem_super_admin.models import Probe, ExtRevision, MetricTemplate, \
-    History
+from Poem.poem import models as poem_models
+from Poem.poem_super_admin import models as admin_models
 from Poem.tenants.models import Tenant
 
 from rest_framework import status
@@ -25,25 +24,48 @@ class ListProbes(APIView):
     def get(self, request, name=None):
         if name:
             try:
-                probe = Probe.objects.get(name=name)
-                serializer = serializers.ProbeSerializer(probe)
+                probe = admin_models.Probe.objects.get(name=name)
 
-                return Response(serializer.data)
+                if probe.datetime:
+                    probe_datetime = datetime.datetime.strftime(
+                        probe.datetime, '%Y-%m-%dT%H:%M:%S.%f'
+                    )
+                else:
+                    probe_datetime = ''
 
-            except Probe.DoesNotExist:
+                result = dict(
+                    id=probe.id,
+                    name=probe.name,
+                    version=probe.package.version,
+                    package=probe.package.__str__(),
+                    docurl=probe.docurl,
+                    description=probe.description,
+                    comment=probe.comment,
+                    repository=probe.repository,
+                    user=probe.user,
+                    datetime=probe_datetime
+                )
+
+                return Response(result)
+
+            except admin_models.Probe.DoesNotExist:
                 raise NotFound(status=404, detail='Probe not found')
 
         else:
-            probes = Probe.objects.all()
+            probes = admin_models.Probe.objects.all()
 
             results = []
             for probe in probes:
                 # number of probe revisions
-                nv = ExtRevision.objects.filter(probeid=probe.id).count()
+                nv = admin_models.ProbeHistory.objects.filter(
+                    object_id=probe
+                ).count()
+
                 results.append(
                     dict(
                         name=probe.name,
-                        version=probe.version,
+                        version=probe.package.version,
+                        package=probe.package.__str__(),
                         docurl=probe.docurl,
                         description=probe.description,
                         comment=probe.comment,
@@ -57,20 +79,24 @@ class ListProbes(APIView):
             return Response(results)
 
     def put(self, request):
-        probe = Probe.objects.get(id=request.data['id'])
-        nameversion = probe.nameversion
-        ct = ContentType.objects.get_for_model(Probe)
-        fields = []
+        schemas = list(
+            Tenant.objects.all().values_list('schema_name', flat=True)
+        )
+        schemas.remove(get_public_schema_name())
+
+        probe = admin_models.Probe.objects.get(id=request.data['id'])
+        old_name = probe.name
+        package_name = request.data['package'].split(' ')[0]
+        package_version = request.data['package'].split(' ')[1][1:-1]
+        package = admin_models.Package.objects.get(
+            name=package_name, version=package_version
+        )
+        old_version = probe.package.version
 
         try:
-            if request.data['new_version'] in [True, 'True', 'true']:
-                probe.version = request.data['version']
-                new_nameversion = '{} ({})'.format(
-                    request.data['name'], request.data['version']
-                )
-                fields.append('version')
-
+            if package.version != old_version:
                 probe.name = request.data['name']
+                probe.package = package
                 probe.repository = request.data['repository']
                 probe.docurl = request.data['docurl']
                 probe.description = request.data['description']
@@ -81,51 +107,68 @@ class ListProbes(APIView):
                 create_history(probe, probe.user)
 
                 if request.data['update_metrics'] in [True, 'true', 'True']:
-                    metrictemplates = MetricTemplate.objects.filter(
-                        probeversion=nameversion
-                    )
+                    metrictemplates = \
+                        admin_models.MetricTemplate.objects.filter(
+                            probekey__name=old_name,
+                            probekey__package__version=old_version
+                        )
 
                     for metrictemplate in metrictemplates:
-                        metrictemplate.probeversion = new_nameversion
-                        metrictemplate.probekey = History.objects.get(
-                            object_repr=new_nameversion
-                        )
+                        metrictemplate.probekey = \
+                            admin_models.ProbeHistory.objects.get(
+                                name=probe.name,
+                                package__version=probe.package.version
+                            )
                         metrictemplate.save()
                         create_history(metrictemplate, request.user.username)
-                        update_metrics(metrictemplate, metrictemplate.name)
 
             else:
-                history = History.objects.filter(object_repr=probe.__str__())
-                data = json.loads(history[0].serialized_data)
-                new_serialized_field = {
+                history = admin_models.ProbeHistory.objects.filter(
+                    name=old_name, package__version=old_version
+                )
+                probekey = history[0]
+                new_data = {
                             'name': request.data['name'],
-                            'version': request.data['version'],
-                            'nameversion': '{} ({})'.format(
-                                request.data['name'], request.data['version']
-                            ),
+                            'package': package,
                             'description': request.data['description'],
                             'comment': request.data['comment'],
                             'repository': request.data['repository'],
                             'docurl': request.data['docurl'],
                             'user': request.user.username
                         }
-                Probe.objects.filter(pk=probe.id).update(**new_serialized_field)
+                admin_models.Probe.objects.filter(pk=probe.id).update(
+                    **new_data
+                )
 
-                data[0]['fields'] = new_serialized_field
-                history.update(serialized_data=json.dumps(data))
+                del new_data['user']
+                history.update(**new_data)
 
-                if probe.name != request.data['name']:
-                    metrictemplates = MetricTemplate.objects.filter(
-                        probeversion=nameversion
-                    )
+                # update Metric history in case probekey name has changed:
+                if request.data['name'] != old_name:
+                    for schema in schemas:
+                        with schema_context(schema):
+                            metrics = poem_models.Metric.objects.filter(
+                                probekey=probekey
+                            )
 
-                    for metrictemplate in metrictemplates:
-                        metrictemplate.probeversion = '{} ({})'.format(
-                            request.data['name'], request.data['version']
-                        )
-                        metrictemplate.save()
-                        create_history(metrictemplate, request.user.username)
-                        update_metrics(metrictemplate, metrictemplate.name)
+                            for metric in metrics:
+                                vers = poem_models.TenantHistory.objects.filter(
+                                    object_id=metric.id
+                                )
+
+                                for ver in vers:
+                                    serialized_data = json.loads(
+                                        ver.serialized_data
+                                    )
+
+                                    serialized_data[0]['fields']['probekey'] = \
+                                        [request.data['name'],
+                                         package.version]
+
+                                    ver.serialized_data = json.dumps(
+                                        serialized_data
+                                    )
+                                    ver.save()
 
             return Response(status=status.HTTP_201_CREATED)
 
@@ -136,56 +179,50 @@ class ListProbes(APIView):
             )
 
     def post(self, request):
-        data = {
-            'name': request.data['name'],
-            'version': request.data['version'],
-            'repository': request.data['repository'],
-            'docurl': request.data['docurl'],
-            'description': request.data['description'],
-            'comment': request.data['comment'],
-            'user': request.user.username
-        }
-        serializer = serializers.ProbeSerializer(data=data)
+        package_name = request.data['package'].split(' ')[0]
+        package_version = request.data['package'].split(' ')[1][1:-1]
+        try:
+            probe = admin_models.Probe.objects.create(
+                name=request.data['name'],
+                package=admin_models.Package.objects.get(
+                    name=package_name, version=package_version
+                ),
+                repository=request.data['repository'],
+                docurl=request.data['docurl'],
+                description=request.data['description'],
+                comment=request.data['comment'],
+                user=request.user.username,
+                datetime=datetime.datetime.now()
+            )
 
-        if serializer.is_valid():
-            probe = serializer.save()
             create_history(probe, probe.user)
 
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(status=status.HTTP_201_CREATED)
 
-        else:
-            errors = []
-            for key, value in serializer.errors.items():
-                if serializer.errors[key]:
-                    detail = []
-                    for err in serializer.errors[key]:
-                        detail.append(err)
-                    detail = ' '.join(detail)
-                    errors.append(detail)
-
-            errors = '\\'.join(errors)
-            return Response({'detail': errors},
+        except IntegrityError:
+            return Response({'detail': 'Probe with this name already exists.'},
                             status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, name=None):
-        schemas = list(Tenant.objects.all().values_list('schema_name', flat=True))
+        schemas = list(
+            Tenant.objects.all().values_list('schema_name', flat=True)
+        )
         schemas.remove(get_public_schema_name())
         if name:
             try:
-                probe = Probe.objects.get(name=name)
-                mt = MetricTemplate.objects.filter(
-                    probeversion=probe.nameversion
+                probe = admin_models.Probe.objects.get(name=name)
+                mt = admin_models.MetricTemplate.objects.filter(
+                    probekey=admin_models.ProbeHistory.objects.get(
+                        name=probe.name, package__version=probe.package.version
+                    )
                 )
                 if len(mt) == 0:
-                    ExtRevision.objects.filter(probeid=probe.id).delete()
                     for schema in schemas:
-                        # need to iterate through schemase because of foreign
+                        # need to iterate through schemas because of foreign
                         # key in Metric model
                         with schema_context(schema):
-                            History.objects.filter(
-                                object_id=probe.id,
-                                content_type=
-                                ContentType.objects.get_for_model(probe)
+                            admin_models.ProbeHistory.objects.filter(
+                                object_id=probe
                             ).delete()
                     probe.delete()
                     return Response(status=status.HTTP_204_NO_CONTENT)
@@ -196,7 +233,7 @@ class ListProbes(APIView):
                         status=status.HTTP_400_BAD_REQUEST
                     )
 
-            except Probe.DoesNotExist:
+            except admin_models.Probe.DoesNotExist:
                 raise NotFound(status=404, detail='Probe not found')
 
         else:

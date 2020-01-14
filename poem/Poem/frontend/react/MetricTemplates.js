@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { ListOfMetrics, InlineFields, ProbeVersionLink } from './Metrics';
 import { Backend } from './DataManager';
-import { LoadingAnim, BaseArgoView, NotifyOk, FancyErrorMessage, Icon } from './UIElements';
+import { LoadingAnim, BaseArgoView, NotifyOk, FancyErrorMessage } from './UIElements';
 import { Formik, Form, Field } from 'formik';
 import {
   FormGroup,
@@ -15,12 +15,11 @@ import {
   PopoverHeader} from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
-import Autocomplete from 'react-autocomplete';
 import * as Yup from 'yup';
 import { NotificationManager } from 'react-notifications';
 import { HistoryComponent, DiffElement } from './Probes';
 import ReactDiffViewer from 'react-diff-viewer';
-import './MetricTemplates.css';
+import { AutocompleteField } from './UIElements';
 
 export const MetricTemplateList = ListOfMetrics('metrictemplate');
 export const TenantMetricTemplateList = ListOfMetrics('metrictemplate', true)
@@ -29,12 +28,6 @@ export const MetricTemplateChange = MetricTemplateComponent()
 export const MetricTemplateClone = MetricTemplateComponent(true)
 
 export const MetricTemplateHistory = HistoryComponent('metrictemplate');
-
-
-function matchItem(item, value) {
-  if (value)
-    return item.toLowerCase().indexOf(value.toLowerCase()) !== -1;
-}
 
 
 export const InlineDiffElement = ({title, item1, item2}) => {
@@ -94,41 +87,6 @@ export function arraysEqual(arr1, arr2) {
     }
 
     return true;
-}
-
-
-const AutocompleteField = ({lists, onselect_handler, field, setFieldValue, req, values}) => {
-  let classname = `form-control ${req && 'border-danger'}`;
-
-  return(
-    <Autocomplete
-      inputProps={{className: classname}}
-      getItemValue={(item) => item}
-      items={lists}
-      value={values[field]}
-      renderItem={(item, isHighlighted) =>
-        <div 
-          key={lists.indexOf(item)}
-          className={`metrictemplates-autocomplete-entries ${isHighlighted ? 
-            "metrictemplates-autocomplete-entries-highlighted" 
-            : ""}`
-        }
-        >
-          {item ? <Icon i='probes'/> : ''} {item}
-        </div>
-      }
-      onChange={(e) => {setFieldValue(field, e.target.value)}}
-      onSelect={(val) =>  {
-        setFieldValue(field, val)
-        onselect_handler(val);
-      }}
-      wrapperStyle={{}}
-      shouldItemRender={matchItem}
-      renderMenu={(items) =>
-        <div className='metrictemplates-autocomplete-menu' children={items}/>  
-      }
-    />
-  );
 }
 
 
@@ -236,22 +194,24 @@ function MetricTemplateComponent(cloneview=false) {
         } else {
           cloned_from = '';
         }
-        this.backend.addMetricTemplate({
-          cloned_from: cloned_from,
-          name: values.name,
-          probeversion: values.probeversion,
-          mtype: values.type,
-          probeexecutable: values.probeexecutable,
-          parent: values.parent,
-          config: values.config,
-          attribute: values.attributes,
-          dependency: values.dependency,
-          parameter: values.parameter,
-          flags: values.flags,
-          files: values.file_attributes,
-          fileparameter: values.file_parameters
-        })
-          .then(response => {
+        this.backend.addObject(
+          '/api/v2/internal/metrictemplates/',
+          {
+            cloned_from: cloned_from,
+            name: values.name,
+            probeversion: values.probeversion,
+            mtype: values.type,
+            probeexecutable: values.probeexecutable,
+            parent: values.parent,
+            config: values.config,
+            attribute: values.attributes,
+            dependency: values.dependency,
+            parameter: values.parameter,
+            flags: values.flags,
+            files: values.file_attributes,
+            fileparameter: values.file_parameters
+          }
+        ).then(response => {
             if (!response.ok) {
               response.json()
                 .then(json => {
@@ -267,22 +227,24 @@ function MetricTemplateComponent(cloneview=false) {
           })
           .catch(err => alert('Something went wrong: ' + err))
       } else {
-        this.backend.changeMetricTemplate({
-          id: values.id,
-          name: values.name,
-          probeversion: values.probeversion,
-          mtype: values.type,
-          probeexecutable: values.probeexecutable,
-          parent: values.parent,
-          config: values.config,
-          attribute: values.attributes,
-          dependency: values.dependency,
-          parameter: values.parameter,
-          flags: values.flags,
-          files: values.file_attributes,
-          fileparameter: values.file_parameters
-        })
-          .then(response => {
+        this.backend.changeObject(
+          '/api/v2/internal/metrictemplates/',
+          {
+            id: values.id,
+            name: values.name,
+            probeversion: values.probeversion,
+            mtype: values.type,
+            probeexecutable: values.probeexecutable,
+            parent: values.parent,
+            config: values.config,
+            attribute: values.attributes,
+            dependency: values.dependency,
+            parameter: values.parameter,
+            flags: values.flags,
+            files: values.file_attributes,
+            fileparameter: values.file_parameters
+          }
+        ).then(response => {
             if (!response.ok) {
               response.json()
                 .then(json => {
@@ -301,7 +263,7 @@ function MetricTemplateComponent(cloneview=false) {
     }
 
     doDelete(name) {
-      this.backend.deleteMetricTemplate(name)
+      this.backend.deleteObject(`/api/v2/internal/metrictemplates/${name}`)
         .then(() => NotifyOk({
           msg: 'Metric template successfully deleted',
           title: 'Deleted',
@@ -312,106 +274,97 @@ function MetricTemplateComponent(cloneview=false) {
 
     componentDidMount() {
       this.setState({loading: true});
-  
-      if (!this.addview) {
-        Promise.all([
-          this.backend.fetchMetricTemplateByName(this.name),
-          this.backend.fetchMetricTemplateTypes(),
-          this.backend.fetchProbeVersions(),
-          this.backend.fetchMetricTemplates()
-        ]).then(([metrictemplate, types, probeversions, metrictemplatelist]) => {
-            if (metrictemplate.attribute.length === 0) {
-              metrictemplate.attribute = [{'key': '', 'value': ''}];
-            }
-            if (metrictemplate.dependency.length === 0) {
-              metrictemplate.dependency = [{'key': '', 'value': ''}];
-            }
-            if (metrictemplate.parameter.length === 0) {
-              metrictemplate.parameter = [{'key': '', 'value': ''}];
-            }
-            if (metrictemplate.flags.length === 0) {
-              metrictemplate.flags = [{'key': '', 'value': ''}];
-            }
-            if (metrictemplate.files.length === 0) {
-              metrictemplate.files = [{'key': '', 'value': ''}];
-            }
-            if (metrictemplate.fileparameter.length === 0) {
-              metrictemplate.fileparameter = [{'key': '', 'value': ''}];
-            }
-  
-            let mlist = [];
-            metrictemplatelist.forEach((e) => {
-              mlist.push(e.name);
-            });
-  
-            metrictemplate.probekey ?
-              this.backend.fetchVersions('probe', metrictemplate.probeversion.split(' ')[0])
-                .then(probe => {
-                  let fields = {};
-                  probe.forEach((e) => {
-                    if (e.id === metrictemplate.probekey) {
-                      fields = e.fields;
-                    }
-                  });
+
+      Promise.all([
+        this.backend.fetchData('/api/v2/internal/mttypes'),
+        this.backend.fetchData('/api/v2/internal/version/probe'),
+        this.backend.fetchData('/api/v2/internal/metrictemplates')
+      ])
+        .then(([types, probeversions, metrictemplatelist]) => {
+          let mlist = [];
+          metrictemplatelist.forEach(e => mlist.push(e.name));
+
+          if (!this.addview) {
+            this.backend.fetchData(`/api/v2/internal/metrictemplates/${this.name}`)
+              .then(metrictemplate => {
+                if (metrictemplate.attribute.length === 0) {
+                  metrictemplate.attribute = [{'key': '', 'value': ''}];
+                }
+                if (metrictemplate.dependency.length === 0) {
+                  metrictemplate.dependency = [{'key': '', 'value': ''}];
+                }
+                if (metrictemplate.parameter.length === 0) {
+                  metrictemplate.parameter = [{'key': '', 'value': ''}];
+                }
+                if (metrictemplate.flags.length === 0) {
+                  metrictemplate.flags = [{'key': '', 'value': ''}];
+                }
+                if (metrictemplate.files.length === 0) {
+                  metrictemplate.files = [{'key': '', 'value': ''}];
+                }
+                if (metrictemplate.fileparameter.length === 0) {
+                  metrictemplate.fileparameter = [{'key': '', 'value': ''}];
+                }
+                
+                metrictemplate.probeversion ?
+                  this.backend.fetchData(`/api/v2/internal/version/probe/${metrictemplate.probeversion.split(' ')[0]}`)
+                    .then(probe => {
+                      let fields = {};
+                      probe.forEach((e) => {
+                        if (e.object_repr === metrictemplate.probeversion) {
+                          fields = e.fields;
+                        }
+                      });
+                      this.setState({
+                        metrictemplate: metrictemplate,
+                        probe: fields,
+                        probeversions: probeversions,
+                        metrictemplatelist: mlist,
+                        types: types,
+                        loading: false,
+                        write_perm: localStorage.getItem('authIsSuperuser') === 'true'
+                      });
+                    })
+                  :
                   this.setState({
                     metrictemplate: metrictemplate,
-                    probe: fields,
-                    probeversions: probeversions,
                     metrictemplatelist: mlist,
                     types: types,
                     loading: false,
                     write_perm: localStorage.getItem('authIsSuperuser') === 'true'
-                  })
-                })
-              :
-              this.setState({
-                metrictemplate: metrictemplate,
-                metrictemplatelist: mlist,
-                types: types,
-                loading: false,
-                write_perm: localStorage.getItem('authIsSuperuser') === 'true'
-              })
-          })
-      } else {
-        Promise.all([
-          this.backend.fetchMetricTemplateTypes(),
-          this.backend.fetchProbeVersions(),
-          this.backend.fetchMetricTemplates()
-        ]).then(([types, probeversions, mtlist]) => {
-          let mlist = [];
-          mtlist.forEach((e) => {
-            mlist.push(e.name);
-          });
-          this.setState({
-            metrictemplate: {
-              id: '',
-              name: '',
-              probeversion: '',
-              mtype: 'Active',
-              probeexecutable: '',
-              parent: '',
-              config: [
-                {'key': 'maxCheckAttempts', 'value': ''},
-                {'key': 'timeout', 'value': ''},
-                {'key': 'path', 'value': ''},
-                {'key': 'interval', 'value': ''},
-                {'key': 'retryInterval', 'value': ''}
-              ],
-              attribute: [{'key': '', 'value': ''}],
-              dependency: [{'key': '', 'value': ''}],
-              parameter: [{'key': '', 'value': ''}],
-              flags: [{'key': '', 'value': ''}],
-              files: [{'key': '', 'value': ''}],
-              fileparameter: [{'key': '', 'value': ''}]
-            },
-            metrictemplatelist: mlist,
-            probeversions: probeversions,
-            types: types,
-            loading: false,
-            write_perm: localStorage.getItem('authIsSuperuser') === 'true'
-          })
-        })
-      }
+                  });
+              });
+          } else {
+            this.setState({
+              metrictemplate: {
+                id: '',
+                name: '',
+                probeversion: '',
+                mtype: 'Active',
+                probeexecutable: '',
+                parent: '',
+                config: [
+                  {'key': 'maxCheckAttempts', 'value': ''},
+                  {'key': 'timeout', 'value': ''},
+                  {'key': 'path', 'value': ''},
+                  {'key': 'interval', 'value': ''},
+                  {'key': 'retryInterval', 'value': ''}
+                ],
+                attribute: [{'key': '', 'value': ''}],
+                dependency: [{'key': '', 'value': ''}],
+                parameter: [{'key': '', 'value': ''}],
+                flags: [{'key': '', 'value': ''}],
+                files: [{'key': '', 'value': ''}],
+                fileparameter: [{'key': '', 'value': ''}]
+              },
+              metrictemplatelist: mlist,
+              probeversions: probeversions,
+              types: types,
+              loading: false,
+              write_perm: localStorage.getItem('authIsSuperuser') === 'true'
+            });
+          };
+        });
     }
 
     render() {
@@ -493,7 +446,9 @@ function MetricTemplateComponent(cloneview=false) {
                             <AutocompleteField
                               {...props}
                               lists={probeversions}
+                              icon='probes'
                               field='probeversion'
+                              val={props.values.probeversion}
                               onselect_handler={this.onSelect}
                               req={props.errors.probeversion}
                             />
@@ -609,6 +564,8 @@ function MetricTemplateComponent(cloneview=false) {
                                 {...props}
                                 lists={metrictemplatelist}
                                 field='parent'
+                                val={props.values.parent}
+                                icon='metrics'
                                 className={`form-control ${props.errors.parent && 'border-danger'}`}
                                 onselect_handler={this.onSelect}
                                 req={props.errors.parent}
@@ -698,7 +655,7 @@ export class MetricTemplateVersionCompare extends Component {
   componentDidMount() {
     this.setState({loading: true});
 
-    this.backend.fetchVersions('metrictemplate', this.name)
+    this.backend.fetchData(`/api/v2/internal/version/metrictemplate/${this.name}`)
       .then (json => {
         let name1 = '';
         let probeversion1 = '';
@@ -886,7 +843,7 @@ export class MetricTemplateVersionDetails extends Component {
   componentDidMount() {
     this.setState({loading: true});
 
-    this.backend.fetchVersions('metrictemplate', this.name)
+    this.backend.fetchData(`/api/v2/internal/version/metrictemplate/${this.name}`)
       .then((json) => {
         json.forEach((e) => {
           if (e.version == this.version)
@@ -923,7 +880,7 @@ export class MetricTemplateVersionDetails extends Component {
         <React.Fragment>
           <div className='d-flex align-items-center justify-content-between'>
             <React.Fragment>
-              <h2 className='ml-3 mt-1 mb-4'>{name + ' (' + date_created + ')'}</h2>
+              <h2 className='ml-3 mt-1 mb-4'>{`${name} [${probeversion}]`}</h2>
             </React.Fragment>
           </div>
           <div id='argo-contentwrap' className='ml-2 mb-2 mt-2 p-3 border rounded'>

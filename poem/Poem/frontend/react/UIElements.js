@@ -39,14 +39,21 @@ import {
   faHighlighter,
   faTasks,
   faKey,
-  faBoxOpen} from '@fortawesome/free-solid-svg-icons';
+  faBoxOpen,
+  faExclamation,
+  faSquare,
+  faUser,
+  faBox} from '@fortawesome/free-solid-svg-icons';
 import { NotificationManager } from 'react-notifications';
 import { Field } from 'formik';
+import Autocomplete from 'react-autocomplete';
 
 
 var list_pages = ['administration','services', 'reports', 'probes',
-                  'metrics', 'metricprofiles', 'aggregationprofiles'];
-var admin_list_pages = ['administration', 'probes', 'yumrepos', 'metrictemplates'];
+                  'metrics', 'metricprofiles', 'aggregationprofiles',
+                  'thresholdsprofiles'];
+var admin_list_pages = ['administration', 'probes', 'yumrepos', 
+                        'packages', 'metrictemplates'];
 
 var link_title = new Map();
 link_title.set('administration', 'Administration');
@@ -63,6 +70,9 @@ link_title.set('users', 'Users');
 link_title.set('apikey', 'API key');
 link_title.set('metrictemplates', 'Metric templates');
 link_title.set('yumrepos', 'YUM repos');
+link_title.set('groupofthresholdsprofiles', 'Groups of thresholds profiles');
+link_title.set('thresholdsprofiles', 'Thresholds profiles');
+link_title.set('packages', 'Packages');
 
 export const Icon = props =>
 {
@@ -76,10 +86,23 @@ export const Icon = props =>
   link_icon.set('metrictemplates', faCog);
   link_icon.set('metricprofiles', faCogs);
   link_icon.set('aggregationprofiles', faTasks);
-  link_icon.set('apikey', faKey)
-  link_icon.set('yumrepos', faBoxOpen)
+  link_icon.set('apikey', faKey);
+  link_icon.set('yumrepos', faBoxOpen);
+  link_icon.set('thresholdsprofiles', faExclamation);
+  link_icon.set('users', faUser);
+  link_icon.set('packages', faBox);
 
-  return <FontAwesomeIcon icon={link_icon.get(props.i)} fixedWidth/>
+  if (props.i.startsWith('groupof'))
+    return (
+      <span className='fa-layers fa-fw'>
+        <FontAwesomeIcon icon={faSquare} color='white' fixedWidth/>
+        <FontAwesomeIcon icon={link_icon.get(props.i.replace('groupof', ''))} transform={`shrink-${props.i === 'groupofmetricprofiles' ? 9 : 8} up-3`}/>
+        <FontAwesomeIcon icon={link_icon.get(props.i.replace('groupof', ''))} transform={`shrink-${props.i === 'groupofmetricprofiles' ? 9 : 8} down-4.2 left-5`}/>
+        <FontAwesomeIcon icon={link_icon.get(props.i.replace('groupof', ''))} transform={`shrink-${props.i === 'groupofmetricprofiles' ? 9 : 8} down-4.2 right-5`}/>
+      </span>
+    )
+  else
+    return <FontAwesomeIcon icon={link_icon.get(props.i)} size={props.i === 'yumrepos' || props.i === 'metricprofiles' ? 'sm' : '1x'} fixedWidth/>
 }
 
 export const DropDown = ({field, data=[], prefix="", class_name="", isnew=false}) => 
@@ -437,4 +460,73 @@ export const Checkbox = ({
 
 export const FancyErrorMessage = (msg) => (
   <div style={{color: '#FF0000', fontSize: 'small'}}>{msg}</div>
+)
+
+
+function matchItem(item, value) {
+  if (value)
+    return item.toLowerCase().indexOf(value.toLowerCase()) !== -1;
+};
+
+
+export const AutocompleteField = ({lists, onselect_handler, field, val, icon, setFieldValue, req, label, values}) => {
+  let classname = `form-control ${req && 'border-danger'}`;
+
+  return(
+    <Autocomplete
+      inputProps={{className: classname}}
+      getItemValue={(item) => item}
+      items={lists}
+      value={val}
+      renderItem={(item, isHighlighted) =>
+        <div 
+          key={lists.indexOf(item)}
+          className={`argo-autocomplete-entries ${isHighlighted ? 
+            "argo-autocomplete-entries-highlighted" 
+            : ""}`
+        }
+        >
+          {item ? <Icon i={icon}/> : ''} {item}
+        </div>
+      }
+      renderInput={(props) => {
+        if (label)
+          return (
+            <div className='input-group mb-3'>
+              <div className='input-group-prepend'>
+                <span className='input-group-text' id='basic-addon1'>{label}</span>
+              </div>
+              <input {...props} type='text' className={classname} aria-label='label'/>
+            </div>
+          );
+        else
+          return <input {...props}/>;
+      }}
+      onChange={(e) => {setFieldValue(field, e.target.value)}}
+      onSelect={(val) =>  {
+        setFieldValue(field, val)
+        onselect_handler(field, val);
+      }}
+      wrapperStyle={{}}
+      shouldItemRender={matchItem}
+      renderMenu={(items) =>
+        <div className='argo-autocomplete-menu' children={items}/>  
+      }
+    />
+  );
+};
+
+export const DropdownFilterComponent = ({value, onChange, data}) => (
+  <select
+    onChange={onChange}
+    style={{width: '100%'}}
+    value={value}
+  >
+    <option key={0} value=''>Show all</option>
+    {
+      data.map((name, i) => 
+        <option key={i + 1} value={name}>{name}</option>
+      )
+    }
+  </select>
 )

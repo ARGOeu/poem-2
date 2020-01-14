@@ -12,27 +12,61 @@ from rest_framework.views import APIView
 
 
 def get_groups_for_user(user):
-    groupsofaggregations = user.userprofile.groupsofaggregations.all().values_list('name', flat=True)
+    groupsofaggregations = list(
+        user.userprofile.groupsofaggregations.all().values_list(
+            'name', flat=True
+        )
+    )
     results = {'aggregations': groupsofaggregations}
 
-    groupsofmetrics = user.userprofile.groupsofmetrics.all().values_list('name', flat=True)
+    groupsofmetrics = list(
+        user.userprofile.groupsofmetrics.all().values_list('name', flat=True)
+    )
     results.update({'metrics': groupsofmetrics})
 
-    groupsofmetricprofiles = user.userprofile.groupsofmetricprofiles.all().values_list('name', flat=True)
+    groupsofmetricprofiles = list(
+        user.userprofile.groupsofmetricprofiles.all().values_list(
+            'name', flat=True
+        )
+    )
     results.update({'metricprofiles': groupsofmetricprofiles})
+
+    groupsofthresholdsprofiles = list(
+        user.userprofile.groupsofthresholdsprofiles.all().values_list(
+            'name', flat=True
+        )
+    )
+    results.update({'thresholdsprofiles': groupsofthresholdsprofiles})
 
     return results
 
 
 def get_all_groups():
-    groupsofaggregations = poem_models.GroupOfAggregations.objects.all().values_list('name', flat=True)
+    groupsofaggregations = list(
+        poem_models.GroupOfAggregations.objects.all().values_list(
+            'name', flat=True
+        )
+    )
     results = {'aggregations': groupsofaggregations}
 
-    groupsofmetrics = poem_models.GroupOfMetrics.objects.all().values_list('name', flat=True)
+    groupsofmetrics = list(
+        poem_models.GroupOfMetrics.objects.all().values_list('name', flat=True)
+    )
     results.update({'metrics': groupsofmetrics})
 
-    groupsofmetricprofiles = poem_models.GroupOfMetricProfiles.objects.all().values_list('name', flat=True)
+    groupsofmetricprofiles = list(
+        poem_models.GroupOfMetricProfiles.objects.all().values_list(
+            'name', flat=True
+        )
+    )
     results.update({'metricprofiles': groupsofmetricprofiles})
+
+    groupsofthresholdsprofiles = list(
+        poem_models.GroupOfThresholdsProfiles.objects.all().values_list(
+            'name', flat=True
+        )
+    )
+    results.update({'thresholdsprofiles': groupsofthresholdsprofiles})
 
     return results
 
@@ -139,39 +173,56 @@ class GetUserprofileForUsername(APIView):
         userprofile.egiid = request.data['egiid']
         userprofile.save()
 
-        for group in request.data['groupsofaggregations']:
-            userprofile.groupsofaggregations.add(
-                poem_models.GroupOfAggregations.objects.get(name=group)
-            )
-
-        for group in request.data['groupsofmetrics']:
-            userprofile.groupsofmetrics.add(
-                poem_models.GroupOfMetrics.objects.get(name=group)
-            )
-
-        for group in request.data['groupsofmetricprofiles']:
-            userprofile.groupsofmetricprofiles.add(
-                poem_models.GroupOfMetricProfiles.objects.get(name=group)
-            )
-
-        # remove the groups that existed before, and now were removed:
-        for group in userprofile.groupsofaggregations.all():
-            if group.name not in request.data['groupsofaggregations']:
-                userprofile.groupsofaggregations.remove(
+        if 'groupsofaggregations' in dict(request.data):
+            for group in dict(request.data)['groupsofaggregations']:
+                userprofile.groupsofaggregations.add(
                     poem_models.GroupOfAggregations.objects.get(name=group)
                 )
 
-        for group in userprofile.groupsofmetrics.all():
-            if group.name not in request.data['groupsofmetrics']:
-                userprofile.groupsofmetrics.remove(
+        if 'groupsofmetrics' in dict(request.data):
+            for group in dict(request.data)['groupsofmetrics']:
+                userprofile.groupsofmetrics.add(
                     poem_models.GroupOfMetrics.objects.get(name=group)
                 )
 
-        for group in userprofile.groupsofmetricprofiles.all():
-            if group.name not in request.data['groupsofmetricprofiles']:
-                userprofile.groupsofmetricprofiles.remove(
+        if 'groupsofmetricprofiles' in dict(request.data):
+            for group in dict(request.data)['groupsofmetricprofiles']:
+                userprofile.groupsofmetricprofiles.add(
                     poem_models.GroupOfMetricProfiles.objects.get(name=group)
                 )
+
+        if 'groupsofthresholdsprofiles' in dict(request.data):
+            for group in dict(request.data)['groupsofthresholdsprofiles']:
+                userprofile.groupsofthresholdsprofiles.add(
+                    poem_models.GroupOfThresholdsProfiles.objects.get(
+                        name=group
+                    )
+                )
+
+        # remove the groups that existed before, and now were removed:
+        if 'groupsofaggregations' in dict(request.data):
+            for group in userprofile.groupsofaggregations.all():
+                if group.name not in dict(request.data)['groupsofaggregations']:
+                    userprofile.groupsofaggregations.remove(group)
+
+        if 'groupsofmetrics' in dict(request.data):
+            for group in userprofile.groupsofmetrics.all():
+                if group.name not in dict(request.data)['groupsofmetrics']:
+                    userprofile.groupsofmetrics.remove(group)
+
+        if 'groupsofmetricprofiles' in dict(request.data):
+            for group in userprofile.groupsofmetricprofiles.all():
+                if group.name not in dict(request.data)[
+                    'groupsofmetricprofiles'
+                ]:
+                    userprofile.groupsofmetricprofiles.remove(group)
+
+        if 'groupsofthresholdsprofiles' in dict(request.data):
+            for group in userprofile.groupsofthresholdsprofiles.all():
+                if group.name not in dict(request.data)[
+                    'groupsofthresholdsprofiles'
+                ]:
+                    userprofile.groupsofthresholdsprofiles.remove(group)
 
         return Response(status=status.HTTP_201_CREATED)
 
@@ -185,20 +236,31 @@ class GetUserprofileForUsername(APIView):
             egiid=request.data['egiid']
         )
 
-        for group in request.data['groupsofaggregations']:
-            userprofile.groupsofaggregations.add(
-                poem_models.GroupOfAggregations.objects.get(name=group)
-            )
+        if 'groupsofaggregations' in dict(request.data):
+            for group in dict(request.data)['groupsofaggregations']:
+                userprofile.groupsofaggregations.add(
+                    poem_models.GroupOfAggregations.objects.get(name=group)
+                )
 
-        for group in request.data['groupsofmetrics']:
-            userprofile.groupsofmetrics.add(
-                poem_models.GroupOfMetrics.objects.get(name=group)
-            )
+        if 'groupsofmetrics' in dict(request.data):
+            for group in dict(request.data)['groupsofmetrics']:
+                userprofile.groupsofmetrics.add(
+                    poem_models.GroupOfMetrics.objects.get(name=group)
+                )
 
-        for group in request.data['groupsofmetricprofiles']:
-            userprofile.groupsofmetricprofiles.add(
-                poem_models.GroupOfMetricProfiles.objects.get(name=group)
-            )
+        if 'groupsofmetricprofiles' in dict(request.data):
+            for group in dict(request.data)['groupsofmetricprofiles']:
+                userprofile.groupsofmetricprofiles.add(
+                    poem_models.GroupOfMetricProfiles.objects.get(name=group)
+                )
+
+        if 'groupsofthresholdsprofiles' in dict(request.data):
+            for group in dict(request.data)['groupsofthresholdsprofiles']:
+                userprofile.groupsofthresholdsprofiles.add(
+                    poem_models.GroupOfThresholdsProfiles.objects.get(
+                        name=group
+                    )
+                )
 
         return Response(status=status.HTTP_201_CREATED)
 
