@@ -174,7 +174,7 @@ const InlineFields = ({values, errors, field, addnew=false, readonly=false}) => 
                 </Col>
                 <Col md={2}>
                   {
-                    (addnew && field !== 'config' && (values[field][0]['key'] !== '' || values[field][0]['value'] !== '')) &&
+                    (addnew && field !== 'config' && (values[field][0]['key'] !== '' || values[field][0]['value'] !== '' || values[field].length > 1)) &&
                       <Button 
                         hidden={
                           (
