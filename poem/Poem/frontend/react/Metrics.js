@@ -29,10 +29,12 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faInfoCircle, faMinus, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { NotificationManager } from 'react-notifications';
-import { arraysEqual, InlineDiffElement } from './MetricTemplates';
+import ReactDiffViewer from 'react-diff-viewer';
 
 export const MetricList = ListOfMetrics('metric');
 export const MetricHistory = HistoryComponent('metric');
+
+export const MetricVersonCompare = CompareMetrics('metric');
 
 
 const DefaultFilterComponent = ({value, onChange, field}) => (
@@ -55,7 +57,67 @@ function validateConfig(value) {
 }
 
 
-export const InlineFields = ({values, errors, field, addnew=false, readonly=false}) => (
+const InlineDiffElement = ({title, item1, item2}) => {
+  let n = Math.max(item1.length, item2.length);
+
+  let elem1 = [];
+  for (let i = 0; i < item1.length; i++) {
+    elem1.push('key: ' + item1[i]['key'] + ', value: ' + item1[i]['value'])
+  }
+
+  let elem2 = [];
+  for (let i = 0; i < item2.length; i++) {
+    elem2.push('key: ' + item2[i]['key'] + ', value: ' + item2[i]['value'])
+  }
+
+  if (item1.length > item2.length) {
+    for (let i = item2.length; i < item1.length; i++) {
+      elem2.push(' ');
+    }
+  } else if (item2.length > item1.length) {
+    for (let i = item1.length; i < item2.length; i++) {
+      elem1.push(' ');
+    }
+  }
+
+  const elements = [];
+  for (let i = 0; i < n; i++) {
+    elements.push(
+      <ReactDiffViewer
+        oldValue={elem2[i]}
+        newValue={elem1[i]}
+        showDiffOnly={true}
+        splitView={false}
+        hideLineNumbers={true}
+        disableWordDiff={true}
+        key={'diff-' + i}
+      />
+    )
+  }
+
+  return (
+    <div id='argo-contentwrap' className='ml-2 mb-2 mt-2 p-3 border rounded'>
+      <h6 className='mt-4 font-weight-bold text-uppercase'>{title}</h6>
+      {elements}
+    </div>
+    )
+
+}
+
+
+function arraysEqual(arr1, arr2) {
+    if(arr1.length !== arr2.length)
+        return false;
+    for(var i = arr1.length; i--;) {
+        if(arr1[i]['key'] !== arr2[i]['key'] || arr1[i]['value'] !== arr2[i]['value'])
+            return false;
+    }
+
+    return true;
+}
+
+
+const InlineFields = ({values, errors, field, addnew=false, readonly=false}) => (
   <div>
     <h6 className='mt-4 font-weight-bold text-uppercase' hidden={values.type === 'Passive' && field !== 'flags'}>{field.replace('_', ' ')}</h6>
     <FieldArray
@@ -867,6 +929,233 @@ export const MetricForm =
   </>
 
 
+export function CompareMetrics(metrictype) {
+  return class extends Component {
+    constructor(props) {
+      super(props);
+
+      this.version1 = props.match.params.id1;
+      this.version2 = props.match.params.id2;
+      this.name = props.match.params.name;
+
+      this.state = {
+        loading: false,
+        name1: '',
+        probeversion1: '',
+        type1: '',
+        group1: '',
+        probeexecutable1: '',
+        parent1: '',
+        config1: '',
+        attribute1: '',
+        dependency1: '',
+        parameter1: '',
+        flags1: '',
+        files1: '',
+        fileparameter1: '',
+        name2: '',
+        probeversion2: '',
+        type2: '',
+        group2: '',
+        probeexecutable2: '',
+        parent2: '',
+        config2: '',
+        attribute2: '',
+        dependency2: '',
+        parameter2: '',
+        flags2: '',
+        files2: '',
+        fileparameter2: '',
+      };
+
+      this.backend = new Backend();
+    };
+
+    componentDidMount() {
+      this.setState({loading: true});
+
+      let url = undefined;
+
+      if (metrictype === 'metric')
+        url = `/api/v2/internal/tenantversion/metric/${this.name}`;
+
+      else 
+        url = `/api/v2/internal/version/metrictemplate/${this.name}`;
+
+      this.backend.fetchData(url)
+        .then(json => {
+          let name1 = '';
+          let probeversion1 = '';
+          let type1 = '';
+          let group1 = '';
+          let probeexecutable1 = '';
+          let parent1 = '';
+          let config1 = '';
+          let attribute1 = '';
+          let dependency1 = '';
+          let flags1 = '';
+          let files1 = '';
+          let parameter1 = '';
+          let fileparameter1 = '';
+          let name2 = '';
+          let probeversion2 = '';
+          let type2 = '';
+          let group2 = '';
+          let probeexecutable2 = '';
+          let parent2 = '';
+          let config2 = '';
+          let attribute2 = '';
+          let dependency2 = '';
+          let flags2 = '';
+          let files2 = '';
+          let parameter2 = '';
+          let fileparameter2 = '';
+
+          json.forEach((e) => {
+            if (e.version == this.version1) {
+              name1 = e.fields.name;
+              probeversion1 = e.fields.probeversion;
+              type1 = e.fields.mtype;
+              if (metrictype === 'metric') {
+                group1 = e.fields.group;
+                dependency1 = e.fields.dependancy; 
+              } else
+                dependency1 = e.fields.dependency;
+              probeexecutable1 = e.fields.probeexecutable; 
+              parent1 = e.fields.parent; 
+              config1 = e.fields.config; 
+              attribute1 = e.fields.attribute; 
+              parameter1 = e.fields.parameter; 
+              flags1 = e.fields.flags; files1 = e.fields.files; 
+              fileparameter1 = e.fields.fileparameter; 
+            } else if (e.version == this.version2) {
+                name2 = e.fields.name;
+                probeversion2 = e.fields.probeversion;
+                type2 = e.fields.mtype;
+                if (metrictype === 'metric') {
+                  group2 = e.fields.group;
+                  dependency2 = e.fields.dependancy;
+                } else
+                  dependency2 = e.fields.dependency;
+                probeexecutable2 = e.fields.probeexecutable;
+                parent2 = e.fields.parent;
+                config2 = e.fields.config;
+                attribute2 = e.fields.attribute;
+                flags2 = e.fields.flags;
+                files2 = e.fields.files;
+                parameter2 = e.fields.parameter;
+                fileparameter2 = e.fields.fileparameter;
+            };
+          });
+          this.setState({
+            name1: name1,
+            probeversion1: probeversion1,
+            type1: type1,
+            group1: group1,
+            probeexecutable1: probeexecutable1,
+            parent1: parent1,
+            config1: config1,
+            attribute1: attribute1,
+            dependency1: dependency1,
+            parameter1: parameter1,
+            flags1: flags1,
+            files1: files1,
+            fileparameter1: fileparameter1,
+            name2: name2,
+            probeversion2: probeversion2,
+            type2: type2,
+            group2: group2,
+            probeexecutable2: probeexecutable2,
+            parent2: parent2,
+            config2: config2,
+            attribute2: attribute2,
+            dependency2: dependency2,
+            parameter2: parameter2,
+            flags2: flags2,
+            files2: files2,
+            fileparameter2: fileparameter2,
+            loading: false
+          });
+        });
+    };
+
+    render() {
+      var { name1, name2, probeversion1, probeversion2, type1, type2, 
+        probeexecutable1, probeexecutable2, parent1, parent2, config1, 
+        config2, attribute1, attribute2, dependency1, dependency2,
+        parameter1, parameter2, flags1, flags2, files1, files2, 
+        fileparameter1, fileparameter2, group1, group2, loading } = this.state;
+      
+      if (loading)
+        return <LoadingAnim/>;
+
+      else if (!loading && name1 && name2) {
+        return (
+          <React.Fragment>
+            <div className='d-flex align-items-center justify-content-between'>
+              <h2 className='ml-3 mt-1 mb-4'>{`Compare ${this.name}`}</h2>
+            </div>
+            {
+              (name1 !== name2) &&
+                <DiffElement title='name' item1={name1} item2={name2}/>
+            }
+            {
+              (probeversion1 !== probeversion2) &&
+                <DiffElement title='probe version' item1={probeversion1} item2={probeversion2}/>
+            }
+            {
+              (type1 !== type2) &&
+                <DiffElement title='type' item1={type1} item2={type2}/>
+            }
+            {
+              (group1 && group2 && group1 !== group2) &&
+                <DiffElement title='group' item1={group1} item2={group2}/> 
+            }
+            {
+              (probeexecutable1 !== probeexecutable2) &&
+                <DiffElement title='probe executable' item1={probeexecutable1} item2={probeexecutable2}/>
+            }
+            {
+              (parent1 !== parent2) &&
+                <DiffElement title='parent' item1={parent1} item2={parent2}/>
+            }
+            {
+              (!arraysEqual(config1, config2)) &&
+                <InlineDiffElement title='config' item1={config1} item2={config2}/>
+            }
+            {
+              (!arraysEqual(attribute1, attribute2)) &&
+                <InlineDiffElement title='attribute' item1={attribute1} item2={attribute2}/>
+            }
+            {
+              (!arraysEqual(dependency1, dependency2)) &&
+                <InlineDiffElement title='dependency' item1={dependency1} item2={dependency1}/>
+            }
+            {
+              (!arraysEqual(parameter1, parameter2)) &&
+                <InlineDiffElement title='parameter' item1={parameter1} item2={parameter2}/>
+            }
+            {
+              (!arraysEqual(flags1, flags2)) &&
+                <InlineDiffElement title='flags' item1={flags1} item2={flags2}/>
+            }
+            {
+              (!arraysEqual(files1, files2)) &&
+                <InlineDiffElement title='file attributes' item1={files1} item2={files2}/>
+            }
+            {
+              (!arraysEqual(fileparameter1, fileparameter2)) &&
+                <InlineDiffElement title='file parameters' item1={fileparameter1} item2={fileparameter2}/>
+            }
+          </React.Fragment>
+        );
+      } else
+        return null;
+    };
+  };
+};
+
+
 export class MetricChange extends Component {
   constructor(props) {
     super(props);
@@ -1060,218 +1349,6 @@ export class MetricChange extends Component {
 }
 
 
-export class MetricVersonCompare extends Component {
-  constructor(props) {
-    super(props);
-
-    this.version1 = props.match.params.id1;
-    this.version2 = props.match.params.id2;
-    this.name = props.match.params.name;
-
-    this.state = {
-      loading: false,
-      name1: '',
-      probeversion1: '',
-      type1: '',
-      group1: '',
-      probeexecutable1: '',
-      parent1: '',
-      config1: '',
-      attribute1: '',
-      dependancy1: '',
-      parameter1: '',
-      flags1: '',
-      files1: '',
-      fileparameter1: '',
-      name2: '',
-      probeversion2: '',
-      type2: '',
-      group2: '',
-      probeexecutable2: '',
-      parent2: '',
-      config2: '',
-      attribute2: '',
-      dependancy2: '',
-      parameter2: '',
-      flags2: '',
-      files2: '',
-      fileparameter2: ''
-    };
-
-    this.backend = new Backend();
-  };
-
-  componentDidMount() {
-    this.setState({loading: true});
-
-    this.backend.fetchData(`/api/v2/internal/tenantversion/metric/${this.name}`)
-      .then (json => {
-        let name1 = '';
-        let probeversion1 = '';
-        let type1 = '';
-        let group1 = '';
-        let probeexecutable1 = '';
-        let parent1 = '';
-        let config1 = '';
-        let attribute1 = '';
-        let dependancy1 = '';
-        let flags1 = '';
-        let files1 = '';
-        let parameter1 = '';
-        let fileparameter1 = '';
-        let name2 = '';
-        let probeversion2 = '';
-        let type2 = '';
-        let group2 = '';
-        let probeexecutable2 = '';
-        let parent2 = '';
-        let config2 = '';
-        let attribute2 = '';
-        let dependancy2 = '';
-        let flags2 = '';
-        let files2 = '';
-        let parameter2 = '';
-        let fileparameter2 = '';
-
-        json.forEach((e) => {
-          if (e.version == this.version1) {
-            name1 = e.fields.name;
-            probeversion1 = e.fields.probeversion;
-            type1 = e.fields.mtype;
-            group1 = e.fields.group;
-            probeexecutable1 = e.fields.probeexecutable; 
-            parent1 = e.fields.parent; 
-            config1 = e.fields.config; 
-            attribute1 = e.fields.attribute; 
-            dependancy1 = e.fields.dependancy; 
-            parameter1 = e.fields.parameter; 
-            flags1 = e.fields.flags; files1 = e.fields.files; 
-            fileparameter1 = e.fields.fileparameter; 
-          } else if (e.version == this.version2) {
-              name2 = e.fields.name;
-              probeversion2 = e.fields.probeversion;
-              type2 = e.fields.mtype;
-              group2 = e.fields.group;
-              probeexecutable2 = e.fields.probeexecutable;
-              parent2 = e.fields.parent;
-              config2 = e.fields.config;
-              attribute2 = e.fields.attribute;
-              dependancy2 = e.fields.dependancy;
-              flags2 = e.fields.flags;
-              files2 = e.fields.files;
-              parameter2 = e.fields.parameter;
-              fileparameter2 = e.fields.fileparameter;
-          }
-        });
-
-        this.setState({
-          name1: name1,
-          probeversion1: probeversion1,
-          type1: type1,
-          group1: group1,
-          probeexecutable1: probeexecutable1,
-          parent1: parent1,
-          config1: config1,
-          attribute1: attribute1,
-          dependancy1: dependancy1,
-          parameter1: parameter1,
-          flags1: flags1,
-          files1: files1,
-          fileparameter1: fileparameter1,
-          name2: name2,
-          probeversion2: probeversion2,
-          type2: type2,
-          group2: group2,
-          probeexecutable2: probeexecutable2,
-          parent2: parent2,
-          config2: config2,
-          attribute2: attribute2,
-          dependancy2: dependancy2,
-          parameter2: parameter2,
-          flags2: flags2,
-          files2: files2,
-          fileparameter2: fileparameter2,
-          loading: false
-        });
-      });
-  };
-
-  render() {
-    var { name1, name2, probeversion1, probeversion2, type1, type2, 
-    probeexecutable1, probeexecutable2, parent1, parent2, config1, 
-    config2, attribute1, attribute2, dependancy1, dependancy2,
-    parameter1, parameter2, flags1, flags2, files1, files2, 
-    fileparameter1, fileparameter2, group1, group2, loading } = this.state;
-
-    if (loading)
-      return (<LoadingAnim/>);
-
-    else if (!loading && name1 && name2) {
-      return (
-        <React.Fragment>
-          <div className="d-flex align-items-center justify-content-between">
-            <h2 className='ml-3 mt-1 mb-4'>{'Compare ' + this.name}</h2>
-          </div>
-          {
-            (name1 !== name2) &&
-              <DiffElement title='name' item1={name1} item2={name2}/>
-          }
-          {
-            (probeversion1 !== probeversion2) &&
-              <DiffElement title='probe version' item1={probeversion1} item2={probeversion2}/>
-          }
-          {
-            (type1 !== type2) &&
-              <DiffElement title='type' item1={type1} item2={type2}/>
-          }
-          {
-            (group1 !== group2) &&
-              <DiffElement title='group' item1={group1} item2={group2}/>
-          }
-          {
-            (probeexecutable1 !== probeexecutable2) &&
-              <DiffElement title='probe executable' item1={probeexecutable1} item2={probeexecutable2}/>
-          }
-          {
-            (parent1 !== parent2) &&
-              <DiffElement title='parent' item1={parent1} item2={parent2}/>
-          }
-          {
-            (!arraysEqual(config1, config2)) &&
-              <InlineDiffElement title='config' item1={config1} item2={config2}/>
-          }
-          {
-            (!arraysEqual(attribute1, attribute2)) &&
-              <InlineDiffElement title='attribute' item1={attribute1} item2={attribute2}/>
-          }
-          {
-            (!arraysEqual(dependancy1, dependancy2)) &&
-              <InlineDiffElement title='dependency' item1={dependancy1} item2={dependancy2}/>
-          }
-          {
-            (!arraysEqual(parameter1, parameter2)) &&
-              <InlineDiffElement title='parameter' item1={parameter1} item2={parameter2}/>
-          }
-          {
-            (!arraysEqual(flags1, flags2)) &&
-              <InlineDiffElement title='flags' item1={flags1} item2={flags2}/>
-          }
-          {
-            (!arraysEqual(files1, files2)) &&
-              <InlineDiffElement title='file attributes' item1={files1} item2={files2}/>
-          }
-          {
-            (!arraysEqual(fileparameter1, fileparameter2)) &&
-              <InlineDiffElement title='file parameters' item1={fileparameter1} item2={fileparameter2}/>
-          }
-        </React.Fragment>
-      )
-    } else
-      return null
-  };
-}
-
-
 export class MetricVersionDetails extends Component {
   constructor(props) {
     super(props);
@@ -1345,7 +1422,7 @@ export class MetricVersionDetails extends Component {
             initialValues = {{
               name: name,
               probeversion: probeversion,
-              mtype: type,
+              type: type,
               group: group,
               probeexecutable: probeexecutable,
               parent: parent,
