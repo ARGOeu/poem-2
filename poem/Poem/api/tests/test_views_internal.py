@@ -3763,20 +3763,23 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
 
         self.ct = ContentType.objects.get_for_model(poem_models.Metric)
 
-        tag = admin_models.OSTag.objects.create(name='CentOS 6')
-        repo = admin_models.YumRepo.objects.create(name='repo-1', tag=tag)
+        tag1 = admin_models.OSTag.objects.create(name='CentOS 6')
+        tag2 = admin_models.OSTag.objects.create(name='CentOS 7')
+
+        repo1 = admin_models.YumRepo.objects.create(name='repo-1', tag=tag1)
+        repo2 = admin_models.YumRepo.objects.create(name='repo-2', tag=tag2)
 
         package1 = admin_models.Package.objects.create(
             name='nagios-plugins-argo',
             version='0.1.7'
         )
-        package1.repos.add(repo)
+        package1.repos.add(repo1)
 
         package2 = admin_models.Package.objects.create(
             name='nagios-plugins-argo',
             version='0.1.11'
         )
-        package2.repos.add(repo)
+        package2.repos.add(repo1, repo2)
 
         probe1 = admin_models.Probe.objects.create(
             name='ams-probe',
@@ -3950,6 +3953,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
                     'id': self.metrictemplate1.id,
                     'name': 'argo.AMS-Check',
                     'mtype': 'Active',
+                    'ostag': ['CentOS 6'],
                     'probeversion': 'ams-probe (0.1.7)',
                     'parent': '',
                     'probeexecutable': 'ams-probe',
@@ -4001,6 +4005,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
                     'id': self.metrictemplate2.id,
                     'name': 'org.apel.APEL-Pub',
                     'mtype': 'Passive',
+                    'ostag': [],
                     'probeversion': '',
                     'parent': '',
                     'probeexecutable': '',

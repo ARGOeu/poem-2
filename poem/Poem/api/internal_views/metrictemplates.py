@@ -107,6 +107,11 @@ class ListMetricTemplates(APIView):
             parameter = two_value_inline(metrictemplate.parameter)
             fileparameter = two_value_inline(metrictemplate.fileparameter)
 
+            ostag = []
+            if metrictemplate.probekey:
+                for repo in metrictemplate.probekey.package.repos.all():
+                    ostag.append(repo.tag.name)
+
             if metrictemplate.probekey:
                 probeversion = metrictemplate.probekey.__str__()
             else:
@@ -116,6 +121,7 @@ class ListMetricTemplates(APIView):
                 id=metrictemplate.id,
                 name=metrictemplate.name,
                 mtype=metrictemplate.mtype.name,
+                ostag=ostag,
                 probeversion=probeversion,
                 parent=parent,
                 probeexecutable=probeexecutable,
@@ -131,6 +137,7 @@ class ListMetricTemplates(APIView):
         results = sorted(results, key=lambda k: k['name'])
 
         if name:
+            del results[0]['ostag']
             return Response(results[0])
         else:
             return Response(results)
