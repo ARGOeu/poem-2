@@ -305,8 +305,10 @@ export function ListOfMetrics(type, imp=false) {
           loading: false,
           list_metric: null,
           list_types: null,
+          list_ostags: null,
           search_name: '',
           search_probeversion: '',
+          search_ostag: '',
           search_type: '',
           selected: {},
           selectAll: 0
@@ -348,6 +350,12 @@ export function ListOfMetrics(type, imp=false) {
   
       if (this.state.search_type) {
         list_metric = this.doFilter(list_metric, 'mtype', this.state.search_type)
+      }
+
+      if (this.state.search_ostag) {
+        list_metric = list_metric.filter(row =>
+          `${row.ostag.join(', ')}`.includes(this.state.search_ostag)
+        )
       }
  
       let newSelected = {};
@@ -404,15 +412,18 @@ export function ListOfMetrics(type, imp=false) {
         } else {
           Promise.all([
             this.backend.fetchData('/api/v2/internal/metrictemplates'),
-            this.backend.fetchData('/api/v2/internal/mttypes')
-        ]).then(([metrictemplates, types]) =>
+            this.backend.fetchData('/api/v2/internal/mttypes'),
+            this.backend.fetchData('/api/v2/internal/ostags')
+        ]).then(([metrictemplates, types, ostags]) =>
             this.setState({
               list_metric: metrictemplates,
               list_types: types,
+              list_ostags: ostags,
               loading: false,
               search_name: '',
               search_probeversion: '',
-              search_type: ''
+              search_type: '',
+              search_ostag: ''
             })
         )
         }
@@ -568,6 +579,30 @@ export function ListOfMetrics(type, imp=false) {
         )
       }
 
+      if (imp) {
+        columns.splice(
+          4,
+          0,
+          {
+            Header: 'OS',
+            minWidth: 30,
+            accessor: 'ostag',
+            Cell: row =>
+              <div style={{textAlign: 'center'}}>
+                {row.value.join(', ')}
+              </div>,
+            filterable: true,
+            Filter: (
+              <DropdownFilterComponent
+                value={this.state.ostag}
+                onChange={e => this.setState({search_ostag: e.target.value})}
+                data={this.state.list_ostags}
+              />
+            )
+          }
+        )
+      }
+
       var { loading, list_metric } = this.state;
 
       if (this.state.search_name) {
@@ -580,6 +615,12 @@ export function ListOfMetrics(type, imp=false) {
   
       if (this.state.search_type) {
         list_metric = this.doFilter(list_metric, 'mtype', this.state.search_type)
+      }
+
+      if (this.state.search_ostag) {
+        list_metric = list_metric.filter(row =>
+          `${row.ostag.join(', ')}`.toLowerCase().includes(this.state.search_ostag.toLowerCase())
+        )
       }
   
       if (type === 'metric' && this.state.search_group) {
