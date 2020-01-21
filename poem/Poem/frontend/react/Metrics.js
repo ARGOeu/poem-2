@@ -794,7 +794,7 @@ export const MetricForm =
                   />
                 </InputGroup>
               :
-                (isHistory) ?
+                (isHistory || (isTenantSchema && obj === 'metrictemplate')) ?
                   <InputGroup>
                     <InputGroupAddon addonType='prepend'>Probe</InputGroupAddon>
                     <Field
@@ -806,16 +806,34 @@ export const MetricForm =
                     />
                   </InputGroup>
                 :
-                  <AutocompleteField
-                    setFieldValue={setFieldValue}
-                    lists={probeversions}
-                    icon='probes'
-                    field='probeversion'
-                    val={values.probeversion}
-                    onselect_handler={onSelect}
-                    req={errors.probeversion}
-                    label='Probe'
-                  />
+                  (isTenantSchema && obj === 'metric') ?
+                    <InputGroup>
+                      <InputGroupAddon addonType='prepend'>Probe</InputGroupAddon>
+                      <Field
+                        component='select'
+                        name='probeversion'
+                        className='form-control'
+                        id='probeversion'
+                        onChange={e => onSelect('probeversion', e.target.value)}
+                      >
+                        {
+                          probeversions.map((name, i) => 
+                            <option key={i} value={name}>{name}</option>
+                          )
+                        }
+                      </Field>
+                    </InputGroup>
+                  :
+                    <AutocompleteField
+                      setFieldValue={setFieldValue}
+                      lists={probeversions}
+                      icon='probes'
+                      field='probeversion'
+                      val={values.probeversion}
+                      onselect_handler={onSelect}
+                      req={errors.probeversion}
+                      label='Probe'
+                    />
             }
           {
             errors.probeversion &&
@@ -1249,6 +1267,8 @@ export class MetricChange extends Component {
       metric: {},
       probe: {},
       groups: [],
+      probeversions: [],
+      metrictemplateversions: [],
       loading: false,
       popoverOpen: false,
       write_perm: false,
@@ -1289,10 +1309,30 @@ export class MetricChange extends Component {
 
   onSelect(field, value) {
     let metric = this.state.metric;
-    metric[field] = value;
-    this.setState({
-      metric: metric
-    });
+    let metrictemplateversions = this.state.metrictemplateversions;
+    metrictemplateversions.forEach(mt => {
+      if (mt.fields.probeversion === value) {
+        let updated_metric = {
+          name: mt.fields.name,
+          probeversion: mt.fields.probeversion,
+          group: metric.group,
+          mtype: mt.fields.mtype,
+          probeexecutable: mt.fields.probeexecutable,
+          parent: mt.fields.parent,
+          config: mt.fields.config,
+          attribute: mt.fields.attribute,
+          dependancy: mt.fields.dependency,
+          parameter: mt.fields.parameter,
+          flags: mt.fields.flags,
+          files: mt.fields.flags,
+          files: mt.fields.files,
+          fileparameter: mt.fields.fileparameter
+        };
+        this.setState({
+          metric: updated_metric
+        });
+      }
+    })
   }
 
   onSubmitHandle(values, actions) {
@@ -1335,8 +1375,9 @@ export class MetricChange extends Component {
     if (!this.addview) {
       Promise.all([
         this.backend.fetchData(`/api/v2/internal/metric/${this.name}`),
+        this.backend.fetchData(`/api/v2/internal/version/metrictemplate/${this.name}`),
         this.backend.fetchData('/api/v2/internal/groups/metrics')
-      ]).then(([metrics, usergroups]) => {
+      ]).then(([metrics, metrictemplateversions, usergroups]) => {
         metrics.probeversion ? 
           this.backend.fetchData(`/api/v2/internal/version/probe/${metrics.probeversion.split(' ')[0]}`)
             .then(probe => {
@@ -1352,6 +1393,7 @@ export class MetricChange extends Component {
                 metric: metrics,
                 probe: fields,
                 probeversions: probeversions,
+                metrictemplateversions: metrictemplateversions,
                 groups: usergroups,
                 loading: false,
                 write_perm: localStorage.getItem('authIsSuperuser') === 'true' || usergroups.indexOf(metrics.group) >= 0,
@@ -1388,6 +1430,7 @@ export class MetricChange extends Component {
           toggle={this.toggleAreYouSure}
           submitperm={write_perm}>
           <Formik
+            enableReinitialize={true}
             initialValues = {{
               name: metric.name,
               probeversion: metric.probeversion,
