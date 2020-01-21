@@ -794,7 +794,7 @@ export const MetricForm =
                   />
                 </InputGroup>
               :
-                (isTenantSchema || isHistory) ?
+                (isHistory) ?
                   <InputGroup>
                     <InputGroupAddon addonType='prepend'>Probe</InputGroupAddon>
                     <Field
@@ -1264,6 +1264,7 @@ export class MetricChange extends Component {
     this.doChange = this.doChange.bind(this);
     this.doDelete = this.doDelete.bind(this);
     this.togglePopOver = this.togglePopOver.bind(this);
+    this.onSelect = this.onSelect.bind(this);
   }
 
   togglePopOver() {
@@ -1284,6 +1285,14 @@ export class MetricChange extends Component {
         modalMsg: msg,
         modalTitle: title,
       }));
+  }
+
+  onSelect(field, value) {
+    let metric = this.state.metric;
+    metric[field] = value;
+    this.setState({
+      metric: metric
+    });
   }
 
   onSubmitHandle(values, actions) {
@@ -1332,7 +1341,9 @@ export class MetricChange extends Component {
           this.backend.fetchData(`/api/v2/internal/version/probe/${metrics.probeversion.split(' ')[0]}`)
             .then(probe => {
               let fields = {};
+              let probeversions = [];
               probe.forEach((e) => {
+                probeversions.push(e.object_repr);
                 if (e.object_repr === metrics.probeversion) {
                   fields = e.fields;
                 }
@@ -1340,6 +1351,7 @@ export class MetricChange extends Component {
               this.setState({
                 metric: metrics,
                 probe: fields,
+                probeversions: probeversions,
                 groups: usergroups,
                 loading: false,
                 write_perm: localStorage.getItem('authIsSuperuser') === 'true' || usergroups.indexOf(metrics.group) >= 0,
@@ -1357,7 +1369,7 @@ export class MetricChange extends Component {
   }
 
   render() {
-    const { metric, groups, loading, write_perm } = this.state;
+    const { metric, probeversions, groups, loading, write_perm } = this.state;
 
     if (!groups.includes(metric.group))
       groups.push(metric.group);
@@ -1399,7 +1411,9 @@ export class MetricChange extends Component {
                   obj='metric'
                   isTenantSchema={true}
                   state={this.state}
+                  onSelect={this.onSelect}
                   togglePopOver={this.togglePopOver}
+                  probeversions={probeversions}
                   groups={groups}
                 />
                 {
