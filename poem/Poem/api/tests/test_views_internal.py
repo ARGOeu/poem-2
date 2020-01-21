@@ -6495,3 +6495,355 @@ class ListOSTagsAPIViewTests(TenantTestCase):
             ]
         )
 
+
+class ListMetricTemplatesForImportTests(TenantTestCase):
+    def setUp(self):
+        self.factory = TenantRequestFactory(self.tenant)
+        self.view = views.ListMetricTemplatesForImport.as_view()
+        self.url = '/api/v2/internal/metrictemplates-import/'
+        self.user = CustUser.objects.create_user(username='testuser')
+
+        mtype1 = admin_models.MetricTemplateType.objects.create(name='Active')
+        mtype2 = admin_models.MetricTemplateType.objects.create(name='Passive')
+
+        tag1 = admin_models.OSTag.objects.create(name='CentOS 6')
+        tag2 = admin_models.OSTag.objects.create(name='CentOS 7')
+
+        repo1 = admin_models.YumRepo.objects.create(name='repo-1', tag=tag1)
+        repo2 = admin_models.YumRepo.objects.create(name='repo-2', tag=tag2)
+
+        package1 = admin_models.Package.objects.create(
+            name='nagios-plugins-argo',
+            version='0.1.7'
+        )
+        package1.repos.add(repo1)
+
+        package2 = admin_models.Package.objects.create(
+            name='nagios-plugins-argo',
+            version='0.1.11'
+        )
+        package2.repos.add(repo1, repo2)
+
+        package3 = admin_models.Package.objects.create(
+            name='nagios-plugins-nrpe',
+            version='3.2.0'
+        )
+        package3.repos.add(repo1)
+
+        package4 = admin_models.Package.objects.create(
+            name='nagios-plugins-nrpe',
+            version='3.2.1'
+        )
+        package4.repos.add(repo2)
+
+        package5 = admin_models.Package.objects.create(
+            name='sdc-nerc-sparql',
+            version='1.0.1'
+        )
+        package5.repos.add(repo2)
+
+        probe1 = admin_models.Probe.objects.create(
+            name='ams-probe',
+            package=package1,
+            description='Probe is inspecting AMS service.',
+            comment='Initial version.',
+            repository='https://github.com/ARGOeu/nagios-plugins-argo',
+            docurl='https://github.com/ARGOeu/nagios-plugins-argo/blob/master/'
+                   'README.md'
+        )
+
+        probe2 = admin_models.Probe.objects.create(
+            name='check_nrpe',
+            package=package3,
+            description='This is a plugin that is and is used to contact the '
+                        'NRPE process on remote hosts.',
+            comment='Initial version.',
+            repository='https://github.com/NagiosEnterprises/nrpe',
+            docurl='https://github.com/NagiosEnterprises/nrpe/blob/master/'
+                   'CHANGELOG.md'
+        )
+
+        probe3 = admin_models.Probe.objects.create(
+            name='sdc-nerq-sparq',
+            package=package5,
+            description='sparql endpoint nvs.',
+            comment='Initial version.',
+            repository='https://github.com/ARGOeu/sdc-nerc-spqrql',
+            docurl='https://github.com/ARGOeu/sdc-nerc-spqrql'
+        )
+
+        probeversion1 = admin_models.ProbeHistory.objects.create(
+            object_id=probe1,
+            name=probe1.name,
+            package=probe1.package,
+            description=probe1.description,
+            comment=probe1.comment,
+            repository=probe1.repository,
+            docurl=probe1.docurl,
+            date_created=datetime.datetime.now(),
+            version_comment='Initial version.',
+            version_user=self.user.username
+        )
+
+        probe1.package = package2
+        probe1.comment = 'Newer version.'
+        probe1.save()
+
+        probeversion2 = admin_models.ProbeHistory.objects.create(
+            object_id=probe1,
+            name=probe1.name,
+            package=probe1.package,
+            description=probe1.description,
+            comment=probe1.comment,
+            repository=probe1.repository,
+            docurl=probe1.docurl,
+            date_created=datetime.datetime.now(),
+            version_comment='Newer version.',
+            version_user=self.user.username
+        )
+
+        probeversion3 = admin_models.ProbeHistory.objects.create(
+            object_id=probe2,
+            name=probe2.name,
+            package=probe2.package,
+            description=probe2.description,
+            comment=probe2.comment,
+            repository=probe2.repository,
+            docurl=probe2.docurl,
+            date_created=datetime.datetime.now(),
+            version_comment='Initial version.',
+            version_user=self.user.username
+        )
+
+        probe2.package = package4
+        probe2.comment = 'Newer version.'
+        probe2.save()
+
+        probeversion4 = admin_models.ProbeHistory.objects.create(
+            object_id=probe2,
+            name=probe2.name,
+            package=probe2.package,
+            description=probe2.description,
+            comment=probe2.comment,
+            repository=probe2.repository,
+            docurl=probe2.docurl,
+            date_created=datetime.datetime.now(),
+            version_comment='Newer version.',
+            version_user=self.user.username
+        )
+
+        probeversion5 = admin_models.ProbeHistory.objects.create(
+            object_id=probe3,
+            name=probe3.name,
+            package=probe3.package,
+            description=probe3.description,
+            comment=probe3.comment,
+            repository=probe3.repository,
+            docurl=probe3.docurl,
+            date_created=datetime.datetime.now(),
+            version_comment='Initial version.',
+            version_user=self.user.username
+        )
+
+        metrictemplate1 = admin_models.MetricTemplate.objects.create(
+            name='argo.AMS-Check',
+            mtype=mtype1,
+            probekey=probeversion1,
+            probeexecutable='["ams-probe"]',
+            config='["maxCheckAttempts 3", "timeout 60", '
+                   '"path /usr/libexec/argo-monitoring/probes/argo", '
+                   '"interval 5", "retryInterval 3"]',
+            attribute='["argo.ams_TOKEN --token"]',
+            flags='["OBSESS 1"]',
+            parameter='["--project EGI"]'
+        )
+
+        self.mtversion1 = admin_models.MetricTemplateHistory.objects.create(
+            object_id=metrictemplate1,
+            name=metrictemplate1.name,
+            mtype=metrictemplate1.mtype,
+            probekey=metrictemplate1.probekey,
+            probeexecutable=metrictemplate1.probeexecutable,
+            config=metrictemplate1.config,
+            attribute=metrictemplate1.attribute,
+            dependency=metrictemplate1.dependency,
+            flags=metrictemplate1.flags,
+            files=metrictemplate1.files,
+            parameter=metrictemplate1.parameter,
+            fileparameter=metrictemplate1.fileparameter,
+            date_created=datetime.datetime.now(),
+            version_user=self.user.username,
+            version_comment='Initial version.'
+        )
+
+        metrictemplate1.probekey = probeversion2
+        metrictemplate1.save()
+
+        self.mtversion2 = admin_models.MetricTemplateHistory.objects.create(
+            object_id=metrictemplate1,
+            name=metrictemplate1.name,
+            mtype=metrictemplate1.mtype,
+            probekey=metrictemplate1.probekey,
+            probeexecutable=metrictemplate1.probeexecutable,
+            config=metrictemplate1.config,
+            attribute=metrictemplate1.attribute,
+            dependency=metrictemplate1.dependency,
+            flags=metrictemplate1.flags,
+            files=metrictemplate1.files,
+            parameter=metrictemplate1.parameter,
+            fileparameter=metrictemplate1.fileparameter,
+            date_created=datetime.datetime.now(),
+            version_user=self.user.username,
+            version_comment='Newer version.'
+        )
+
+        metrictemplate2 = admin_models.MetricTemplate.objects.create(
+            name='argo.EGI-Connectors-Check',
+            mtype=mtype1,
+            probekey=probeversion3,
+            probeexecutable='["check_nrpe"]',
+            config='["maxCheckAttempts 2", "timeout 60", '
+                   '"path /usr/lib64/nagios/plugins", '
+                   '"interval 720", "retryInterval 15"]',
+            parameter='["-c check_connectors_egi"]'
+        )
+
+        self.mtversion3 = admin_models.MetricTemplateHistory.objects.create(
+            object_id=metrictemplate2,
+            name=metrictemplate2.name,
+            mtype=metrictemplate2.mtype,
+            probekey=metrictemplate2.probekey,
+            probeexecutable=metrictemplate2.probeexecutable,
+            config=metrictemplate2.config,
+            attribute=metrictemplate2.attribute,
+            dependency=metrictemplate2.dependency,
+            flags=metrictemplate2.flags,
+            files=metrictemplate2.files,
+            parameter=metrictemplate2.parameter,
+            fileparameter=metrictemplate2.fileparameter,
+            date_created=datetime.datetime.now(),
+            version_user=self.user.username,
+            version_comment='Initial version.'
+        )
+
+        metrictemplate2.probekey = probeversion4
+        metrictemplate2.save()
+
+        self.mtversion4 = admin_models.MetricTemplateHistory.objects.create(
+            object_id=metrictemplate2,
+            name=metrictemplate2.name,
+            mtype=metrictemplate2.mtype,
+            probekey=metrictemplate2.probekey,
+            probeexecutable=metrictemplate2.probeexecutable,
+            config=metrictemplate2.config,
+            attribute=metrictemplate2.attribute,
+            dependency=metrictemplate2.dependency,
+            flags=metrictemplate2.flags,
+            files=metrictemplate2.files,
+            parameter=metrictemplate2.parameter,
+            fileparameter=metrictemplate2.fileparameter,
+            date_created=datetime.datetime.now(),
+            version_user=self.user.username,
+            version_comment='Newer version.'
+        )
+
+        metrictemplate3 = admin_models.MetricTemplate.objects.create(
+            name='org.apel.APEL-Pub',
+            flags='["OBSESS 1", "PASSIVE 1"]',
+            mtype=mtype2
+        )
+
+        self.mtversion5 = admin_models.MetricTemplateHistory.objects.create(
+            object_id=metrictemplate3,
+            name=metrictemplate3.name,
+            mtype=metrictemplate3.mtype,
+            probekey=metrictemplate3.probekey,
+            probeexecutable=metrictemplate3.probeexecutable,
+            config=metrictemplate3.config,
+            attribute=metrictemplate3.attribute,
+            dependency=metrictemplate3.dependency,
+            flags=metrictemplate3.flags,
+            files=metrictemplate3.files,
+            parameter=metrictemplate3.parameter,
+            fileparameter=metrictemplate3.fileparameter,
+            date_created=datetime.datetime.now(),
+            version_user=self.user.username,
+            version_comment='Initial version.'
+        )
+
+        metrictemplate4 = admin_models.MetricTemplate.objects.create(
+            name='eu.seadatanet.org.nerc-sparql-check',
+            mtype=mtype1,
+            probekey=probeversion5,
+            probeexecutable='sdc-nerq-sparql.sh',
+            config='["interval 15", "maxCheckAttempts 3", '
+                   '"path /usr/libexec/argo-monitoring/probes/'
+                   'sdc-nerc-sparql/", "retryInterval 3", "timeout 15"]',
+            attribute='["eu.seadatanet.org.nerc-sparql_URL -H"]',
+            flags='["OBSESS 1", "PNP 1"]'
+        )
+
+        self.mtversion6 = admin_models.MetricTemplateHistory.objects.create(
+            object_id=metrictemplate4,
+            name=metrictemplate4.name,
+            mtype=metrictemplate4.mtype,
+            probekey=metrictemplate4.probekey,
+            probeexecutable=metrictemplate4.probeexecutable,
+            config=metrictemplate4.config,
+            attribute=metrictemplate4.attribute,
+            dependency=metrictemplate4.dependency,
+            flags=metrictemplate4.flags,
+            files=metrictemplate4.files,
+            parameter=metrictemplate4.parameter,
+            fileparameter=metrictemplate4.fileparameter,
+            date_created=datetime.datetime.now(),
+            version_user=self.user.username,
+            version_comment='Initial version.'
+        )
+
+    def test_get_metrictemplates_for_import_fail_if_no_auth(self):
+        request = self.factory.get(self.url)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_get_metrictemplates_for_import_all(self):
+        request = self.factory.get(self.url)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(
+            response.data,
+            [
+                {
+                    'name': 'argo.AMS-Check',
+                    'mtype': 'Active',
+                    'ostag': ['CentOS 6', 'CentOS 7'],
+                    'probeversion': 'ams-probe (0.1.11)',
+                    'centos6_probeversion': 'ams-probe (0.1.11)',
+                    'centos7_probeversion': 'ams-probe (0.1.11)'
+                },
+                {
+                    'name': 'argo.EGI-Connectors-Check',
+                    'mtype': 'Active',
+                    'ostag': ['CentOS 6', 'CentOS 7'],
+                    'probeversion': 'check_nrpe (3.2.1)',
+                    'centos6_probeversion': 'check_nrpe (3.2.0)',
+                    'centos7_probeversion': 'check_nrpe (3.2.1)'
+                },
+                {
+                    'name': 'eu.seadatanet.org.nerc-sparql-check',
+                    'mtype': 'Active',
+                    'ostag': ['CentOS 7'],
+                    'probeversion': 'sdc-nerq-sparq (1.0.1)',
+                    'centos6_probeversion': '',
+                    'centos7_probeversion': 'sdc-nerq-sparq (1.0.1)'
+                },
+                {
+                    'name': 'org.apel.APEL-Pub',
+                    'mtype': 'Passive',
+                    'ostag': ['CentOS 6', 'CentOS 7'],
+                    'probeversion': '',
+                    'centos6_probeversion': '',
+                    'centos7_probeversion': ''
+                }
+            ]
+        )

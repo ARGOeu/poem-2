@@ -28,6 +28,7 @@ urlpatterns = [
     path('metricsgroup/<str:group>', views_internal.ListMetricsInGroup.as_view(), name='metrics'),
     path('metrictemplates/', views_internal.ListMetricTemplates.as_view(), name='metrictemplates'),
     path('metrictemplates/<str:name>', views_internal.ListMetricTemplates.as_view(), name='metrictemplates'),
+    path('metrictemplates-import/', views_internal.ListMetricTemplatesForImport.as_view(), name='metrictemplates-import'),
     path('mttypes/', views_internal.ListMetricTemplateTypes.as_view(), name='mttypes'),
     path('mtypes/', views_internal.ListMetricTypes.as_view(), name='mtypes'),
     path('ostags/', views_internal.ListOSTags.as_view(), name='ostags'),
