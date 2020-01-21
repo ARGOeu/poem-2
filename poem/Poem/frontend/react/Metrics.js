@@ -447,7 +447,20 @@ export function ListOfMetrics(type, imp=false) {
           id: 'name',
           minWidth: 100,
           accessor: e =>
-          <Link to={metriclink + e.name}>
+          <Link 
+            to={
+              imp ?
+                this.state.search_ostag === 'CentOS 6' && e.centos6_probeversion ?
+                  `${metriclink}${e.name}/history/${e.centos6_probeversion.split(' ')[1].substring(1, e.centos6_probeversion.split(' ')[1].length - 1)}`
+                :
+                  (this.state.search_ostag === 'CentOS 7' && e.centos7_probeversion) ?
+                    `${metriclink}${e.name}/history/${e.centos7_probeversion.split(' ')[1].substring(1, e.centos7_probeversion.split(' ')[1].length - 1)}`
+                  :
+                    `${metriclink}${e.name}`
+              :
+                `${metriclink}${e.name}`
+            }
+          >
             {e.name}
           </Link>,
           filterable: true,
