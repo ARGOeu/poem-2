@@ -412,7 +412,7 @@ export function ListOfMetrics(type, imp=false) {
               }));
         } else {
           Promise.all([
-            this.backend.fetchData('/api/v2/internal/metrictemplates'),
+            this.backend.fetchData(`/api/v2/internal/metrictemplates${imp ? '-import' : ''}`),
             this.backend.fetchData('/api/v2/internal/mttypes'),
             this.backend.fetchData('/api/v2/internal/ostags')
         ]).then(([metrictemplates, types, ostags]) =>
@@ -463,10 +463,24 @@ export function ListOfMetrics(type, imp=false) {
           Header: 'Probe version',
           id: 'probeversion',
           minWidth: 80,
-          accessor: e => (e.probeversion ?
-            <ProbeVersionLink probeversion={e.probeversion}/>
+          accessor: e => (
+            e.probeversion ?
+              <ProbeVersionLink 
+                probeversion={
+                  imp ? 
+                    (this.state.search_ostag === 'CentOS 6' && e.centos6_probeversion) ? 
+                      e.centos6_probeversion 
+                    :
+                      (this.state.search_ostag === 'CentOS 7' && e.centos7_probeversion) ?
+                        e.centos7_probeversion
+                      :
+                        e.probeversion
+                  :
+                    e.probeversion
+                }
+              />
             :
-            ""
+              ""
           ),
           Cell: row =>
             <div style={{textAlign: 'center'}}>
