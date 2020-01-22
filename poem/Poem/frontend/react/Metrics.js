@@ -14,6 +14,7 @@ import {
 import ReactTable from 'react-table';
 import { Formik, Form, Field, FieldArray } from 'formik';
 import {
+  Alert,
   FormGroup,
   Row,
   Col,
@@ -305,8 +306,10 @@ export function ListOfMetrics(type, imp=false) {
           loading: false,
           list_metric: null,
           list_types: null,
+          list_ostags: null,
           search_name: '',
           search_probeversion: '',
+          search_ostag: '',
           search_type: '',
           selected: {},
           selectAll: 0
@@ -348,6 +351,12 @@ export function ListOfMetrics(type, imp=false) {
   
       if (this.state.search_type) {
         list_metric = this.doFilter(list_metric, 'mtype', this.state.search_type)
+      }
+
+      if (this.state.search_ostag) {
+        list_metric = list_metric.filter(row =>
+          `${row.ostag.join(', ')}`.includes(this.state.search_ostag)
+        )
       }
  
       let newSelected = {};
@@ -403,16 +412,19 @@ export function ListOfMetrics(type, imp=false) {
               }));
         } else {
           Promise.all([
-            this.backend.fetchData('/api/v2/internal/metrictemplates'),
-            this.backend.fetchData('/api/v2/internal/mttypes')
-        ]).then(([metrictemplates, types]) =>
+            this.backend.fetchData(`/api/v2/internal/metrictemplates${imp ? '-import' : ''}`),
+            this.backend.fetchData('/api/v2/internal/mttypes'),
+            this.backend.fetchData('/api/v2/internal/ostags')
+        ]).then(([metrictemplates, types, ostags]) =>
             this.setState({
               list_metric: metrictemplates,
               list_types: types,
+              list_ostags: ostags,
               loading: false,
               search_name: '',
               search_probeversion: '',
-              search_type: ''
+              search_type: '',
+              search_ostag: ''
             })
         )
         }
@@ -435,7 +447,20 @@ export function ListOfMetrics(type, imp=false) {
           id: 'name',
           minWidth: 100,
           accessor: e =>
-          <Link to={metriclink + e.name}>
+          <Link 
+            to={
+              imp ?
+                this.state.search_ostag === 'CentOS 6' && e.centos6_probeversion ?
+                  `${metriclink}${e.name}/history/${e.centos6_probeversion.split(' ')[1].substring(1, e.centos6_probeversion.split(' ')[1].length - 1)}`
+                :
+                  (this.state.search_ostag === 'CentOS 7' && e.centos7_probeversion) ?
+                    `${metriclink}${e.name}/history/${e.centos7_probeversion.split(' ')[1].substring(1, e.centos7_probeversion.split(' ')[1].length - 1)}`
+                  :
+                    `${metriclink}${e.name}`
+              :
+                `${metriclink}${e.name}`
+            }
+          >
             {e.name}
           </Link>,
           filterable: true,
@@ -451,10 +476,24 @@ export function ListOfMetrics(type, imp=false) {
           Header: 'Probe version',
           id: 'probeversion',
           minWidth: 80,
-          accessor: e => (e.probeversion ?
-            <ProbeVersionLink probeversion={e.probeversion}/>
+          accessor: e => (
+            e.probeversion ?
+              <ProbeVersionLink 
+                probeversion={
+                  imp ? 
+                    (this.state.search_ostag === 'CentOS 6' && e.centos6_probeversion) ? 
+                      e.centos6_probeversion 
+                    :
+                      (this.state.search_ostag === 'CentOS 7' && e.centos7_probeversion) ?
+                        e.centos7_probeversion
+                      :
+                        e.probeversion
+                  :
+                    e.probeversion
+                }
+              />
             :
-            ""
+              ""
           ),
           Cell: row =>
             <div style={{textAlign: 'center'}}>
@@ -568,6 +607,30 @@ export function ListOfMetrics(type, imp=false) {
         )
       }
 
+      if (imp) {
+        columns.splice(
+          4,
+          0,
+          {
+            Header: 'OS',
+            minWidth: 30,
+            accessor: 'ostag',
+            Cell: row =>
+              <div style={{textAlign: 'center'}}>
+                {row.value.join(', ')}
+              </div>,
+            filterable: true,
+            Filter: (
+              <DropdownFilterComponent
+                value={this.state.ostag}
+                onChange={e => this.setState({search_ostag: e.target.value})}
+                data={this.state.list_ostags}
+              />
+            )
+          }
+        )
+      }
+
       var { loading, list_metric } = this.state;
 
       if (this.state.search_name) {
@@ -580,6 +643,12 @@ export function ListOfMetrics(type, imp=false) {
   
       if (this.state.search_type) {
         list_metric = this.doFilter(list_metric, 'mtype', this.state.search_type)
+      }
+
+      if (this.state.search_ostag) {
+        list_metric = list_metric.filter(row =>
+          `${row.ostag.join(', ')}`.toLowerCase().includes(this.state.search_ostag.toLowerCase())
+        )
       }
   
       if (type === 'metric' && this.state.search_group) {
@@ -616,6 +685,7 @@ export function ListOfMetrics(type, imp=false) {
                     localStorage.getItem('authIsSuperuser') === 'true' &&
                       <Button 
                       className='btn btn-secondary'
+                      disabled={!this.state.search_ostag}
                       onClick={() => this.importMetrics()}
                         >
                           Import
@@ -623,6 +693,15 @@ export function ListOfMetrics(type, imp=false) {
                   }
                 </div>
                 <div id="argo-contentwrap" className="ml-2 mb-2 mt-2 p-3 border rounded">
+                  {
+                    !this.state.search_ostag &&
+                      <Alert color='danger'>
+                        <center>
+                          <FontAwesomeIcon icon={faInfoCircle} size='lg' color='black'/> &nbsp;
+                          You should choose OS for import.
+                        </center>
+                      </Alert>
+                  }
                   <ReactTable
                     data={list_metric}
                     columns={columns}

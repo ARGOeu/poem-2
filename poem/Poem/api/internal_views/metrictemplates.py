@@ -107,6 +107,11 @@ class ListMetricTemplates(APIView):
             parameter = two_value_inline(metrictemplate.parameter)
             fileparameter = two_value_inline(metrictemplate.fileparameter)
 
+            ostag = []
+            if metrictemplate.probekey:
+                for repo in metrictemplate.probekey.package.repos.all():
+                    ostag.append(repo.tag.name)
+
             if metrictemplate.probekey:
                 probeversion = metrictemplate.probekey.__str__()
             else:
@@ -116,6 +121,7 @@ class ListMetricTemplates(APIView):
                 id=metrictemplate.id,
                 name=metrictemplate.name,
                 mtype=metrictemplate.mtype.name,
+                ostag=ostag,
                 probeversion=probeversion,
                 parent=parent,
                 probeexecutable=probeexecutable,
@@ -131,6 +137,7 @@ class ListMetricTemplates(APIView):
         results = sorted(results, key=lambda k: k['name'])
 
         if name:
+            del results[0]['ostag']
             return Response(results[0])
         else:
             return Response(results)
@@ -339,6 +346,68 @@ class ListMetricTemplates(APIView):
 
         else:
             return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+class ListMetricTemplatesForImport(APIView):
+    authentication_classes = (SessionAuthentication,)
+
+    def get(self, request):
+        metrictemplates = admin_models.MetricTemplate.objects.all().order_by(
+            'name'
+        )
+
+        results = []
+        for mt in metrictemplates:
+            vers = admin_models.MetricTemplateHistory.objects.filter(
+                object_id=mt
+            ).order_by('-date_created')
+            if mt.probekey:
+                probeversion = mt.probekey.__str__()
+                tags = set()
+                probeversion_dict = dict()
+                for ver in vers:
+                    for repo in ver.probekey.package.repos.all():
+                        tags.add(repo.tag.name)
+                        if repo.tag.name not in probeversion_dict:
+                            probeversion_dict.update(
+                                {
+                                    repo.tag.name: ver.probekey.__str__()
+                                }
+                            )
+
+                tags = list(tags)
+
+                if 'CentOS 6' in probeversion_dict:
+                    centos6_probeversion = probeversion_dict['CentOS 6']
+                else:
+                    centos6_probeversion = ''
+
+                if 'CentOS 7' in probeversion_dict:
+                    centos7_probeversion = probeversion_dict['CentOS 7']
+                else:
+                    centos7_probeversion = ''
+
+            else:
+                tags = list(admin_models.OSTag.objects.all().values_list(
+                    'name', flat=True
+                ))
+                probeversion = ''
+                centos6_probeversion = ''
+                centos7_probeversion = ''
+
+            tags.sort()
+            results.append(
+                dict(
+                    name=mt.name,
+                    mtype=mt.mtype.name,
+                    probeversion=probeversion,
+                    centos6_probeversion=centos6_probeversion,
+                    centos7_probeversion=centos7_probeversion,
+                    ostag=tags
+                )
+            )
+
+        return Response(results)
 
 
 class ListMetricTemplatesForProbeVersion(APIView):
