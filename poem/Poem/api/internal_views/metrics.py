@@ -89,15 +89,42 @@ class ListMetric(APIView):
 
     def put(self, request):
         metric = poem_models.Metric.objects.get(name=request.data['name'])
-        config = inline_metric_for_db(request.data['config'])
 
-        if request.data['group'] != metric.group.name:
-            metric.group = poem_models.GroupOfMetrics.objects.get(
-                name=request.data['group']
+        if request.data['parent']:
+            parent = json.dumps([request.data['parent']])
+        else:
+            parent = ''
+
+        if request.data['probeexecutable']:
+            probeexecutable = json.dumps([request.data['probeexecutable']])
+        else:
+            probeexecutable = ''
+
+        metric.name = request.data['name']
+        metric.mtype = poem_models.MetricType.objects.get(
+            name=request.data['mtype']
+        )
+        metric.group = poem_models.GroupOfMetrics.objects.get(
+            name=request.data['group']
+        )
+        metric.parent = parent
+        metric.flags = inline_metric_for_db(request.data['flags'])
+
+        if request.data['mtype'] == 'Active':
+            metric.probekey = admin_models.ProbeHistory.objects.get(
+                name=request.data['probeversion'].split(' ')[0],
+                package__version=request.data['probeversion'].split(' ')[1][
+                                 1:-1]
             )
-
-        if set(config) != set(json.loads(metric.config)):
-            metric.config = json.dumps(config)
+            metric.probeexecutable = probeexecutable
+            metric.config = inline_metric_for_db(request.data['config'])
+            metric.attribute = inline_metric_for_db(request.data['attribute'])
+            metric.dependancy = inline_metric_for_db(request.data['dependancy'])
+            metric.files = inline_metric_for_db(request.data['files'])
+            metric.parameter = inline_metric_for_db(request.data['parameter'])
+            metric.fileparameter = inline_metric_for_db(
+                request.data['fileparameter']
+            )
 
         metric.save()
         create_history(metric, request.user.username)
