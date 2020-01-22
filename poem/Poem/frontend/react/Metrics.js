@@ -8,7 +8,8 @@ import {
   FancyErrorMessage, 
   DropdownFilterComponent,
   HistoryComponent,
-  DiffElement
+  DiffElement,
+  AutocompleteField
  } from './UIElements';
 import ReactTable from 'react-table';
 import { Formik, Form, Field, FieldArray } from 'formik';
@@ -21,14 +22,19 @@ import {
   Button,
   Popover,
   PopoverBody,
-  PopoverHeader} from 'reactstrap';
+  PopoverHeader,
+  InputGroup,
+  InputGroupAddon
+} from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faInfoCircle, faMinus, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { NotificationManager } from 'react-notifications';
-import { arraysEqual, InlineDiffElement } from './MetricTemplates';
+import ReactDiffViewer from 'react-diff-viewer';
 
 export const MetricList = ListOfMetrics('metric');
 export const MetricHistory = HistoryComponent('metric');
+
+export const MetricVersonCompare = CompareMetrics('metric');
 
 
 const DefaultFilterComponent = ({value, onChange, field}) => (
@@ -51,7 +57,67 @@ function validateConfig(value) {
 }
 
 
-export const InlineFields = ({values, errors, field, addnew=false, readonly=false}) => (
+const InlineDiffElement = ({title, item1, item2}) => {
+  let n = Math.max(item1.length, item2.length);
+
+  let elem1 = [];
+  for (let i = 0; i < item1.length; i++) {
+    elem1.push('key: ' + item1[i]['key'] + ', value: ' + item1[i]['value'])
+  }
+
+  let elem2 = [];
+  for (let i = 0; i < item2.length; i++) {
+    elem2.push('key: ' + item2[i]['key'] + ', value: ' + item2[i]['value'])
+  }
+
+  if (item1.length > item2.length) {
+    for (let i = item2.length; i < item1.length; i++) {
+      elem2.push(' ');
+    }
+  } else if (item2.length > item1.length) {
+    for (let i = item1.length; i < item2.length; i++) {
+      elem1.push(' ');
+    }
+  }
+
+  const elements = [];
+  for (let i = 0; i < n; i++) {
+    elements.push(
+      <ReactDiffViewer
+        oldValue={elem2[i]}
+        newValue={elem1[i]}
+        showDiffOnly={true}
+        splitView={false}
+        hideLineNumbers={true}
+        disableWordDiff={true}
+        key={'diff-' + i}
+      />
+    )
+  }
+
+  return (
+    <div id='argo-contentwrap' className='ml-2 mb-2 mt-2 p-3 border rounded'>
+      <h6 className='mt-4 font-weight-bold text-uppercase'>{title}</h6>
+      {elements}
+    </div>
+    )
+
+}
+
+
+function arraysEqual(arr1, arr2) {
+    if(arr1.length !== arr2.length)
+        return false;
+    for(var i = arr1.length; i--;) {
+        if(arr1[i]['key'] !== arr2[i]['key'] || arr1[i]['value'] !== arr2[i]['value'])
+            return false;
+    }
+
+    return true;
+}
+
+
+const InlineFields = ({values, errors, field, addnew=false, readonly=false}) => (
   <div>
     <h6 className='mt-4 font-weight-bold text-uppercase' hidden={values.type === 'Passive' && field !== 'flags'}>{field.replace('_', ' ')}</h6>
     <FieldArray
@@ -62,10 +128,10 @@ export const InlineFields = ({values, errors, field, addnew=false, readonly=fals
             <React.Fragment key={`fragment.${field}.${index}`}>
               <Row>
                 <Col md={5}>
-                  {(index === 0) ? <Label hidden={values.type === 'Passive' && field !== 'flags'} for={`${field}.0.key`}>Key</Label> : null}
+                  {(index === 0) && <Label hidden={values.type === 'Passive' && field !== 'flags'} for={`${field}.0.key`}>Key</Label>}
                 </Col>
                 <Col md={5}>
-                  {(index === 0) ? <Label hidden={values.type === 'Passive' && field !== 'flags'} for={`${field}.0.value`}>Value</Label> : null}
+                  {(index === 0) && <Label hidden={values.type === 'Passive' && field !== 'flags'} for={`${field}.0.value`}>Value</Label>}
                 </Col>
               </Row>
               <Row>
@@ -101,16 +167,14 @@ export const InlineFields = ({values, errors, field, addnew=false, readonly=fals
                       />
                   }                  
                   {
-                    errors.config && field === 'config' ?
+                    errors.config && field === 'config' &&
                       errors.config[index] &&
                         FancyErrorMessage(errors.config[index].value)
-                      :
-                      null
                   }
                 </Col>
                 <Col md={2}>
                   {
-                    (addnew && field !== 'config' && values[field][0]['key'] !== '' && values[field][0]['value'] !== '') &&
+                    (addnew && field !== 'config' && (values[field][0]['key'] !== '' || values[field][0]['value'] !== '' || values[field].length > 1)) &&
                       <Button 
                         hidden={
                           (
@@ -594,6 +658,504 @@ export function ListOfMetrics(type, imp=false) {
 }
 
 
+export const MetricForm = 
+  ({
+    values=undefined, 
+    errors={
+      name: undefined, 
+      probeversion: undefined, 
+      probeexecutable: undefined
+    },
+    setFieldValue=undefined, 
+    handleChange, 
+    obj='', 
+    state=undefined, 
+    togglePopOver=undefined, 
+    onSelect=undefined, 
+    isHistory=false, 
+    isTenantSchema=false,
+    addview=false, 
+    probeversions=[], 
+    groups=[], 
+    metrictemplatelist=[], 
+    types=[],
+  }) => 
+  <>
+    <FormGroup>
+      <Row className='mb-3'>
+        <Col md={4}>
+          <InputGroup>
+            <InputGroupAddon addonType='prepend'>Name</InputGroupAddon>
+            <Field
+              type='text'
+              name='name'
+              className={`form-control ${errors.name && 'border-danger'}`}
+              id='name'
+              disabled={isHistory || isTenantSchema}
+            />
+          </InputGroup>
+          {
+            errors.name &&
+              FancyErrorMessage(errors.name)
+          }
+          <FormText color='muted'>
+            Metric name.
+          </FormText>
+        </Col>
+        <Col md={4}>
+            {
+              values.type === 'Passive' ?
+                <InputGroup>
+                  <InputGroupAddon addonType='prepend'>Probe</InputGroupAddon>
+                  <input 
+                    type='text'
+                    className='form-control'
+                    disabled={true}
+                    id='passive-probeversion'
+                  />
+                </InputGroup>
+              :
+                (isTenantSchema || isHistory) ?
+                  <InputGroup>
+                    <InputGroupAddon addonType='prepend'>Probe</InputGroupAddon>
+                    <Field
+                      type='text'
+                      name='probeversion'
+                      className='form-control'
+                      id='probeversion'
+                      disabled={true}
+                    />
+                  </InputGroup>
+                :
+                  <AutocompleteField
+                    setFieldValue={setFieldValue}
+                    lists={probeversions}
+                    icon='probes'
+                    field='probeversion'
+                    val={values.probeversion}
+                    onselect_handler={onSelect}
+                    req={errors.probeversion}
+                    label='Probe'
+                  />
+            }
+          {
+            errors.probeversion &&
+              FancyErrorMessage(errors.probeversion)
+          }
+          {
+            values.type === 'Active' &&
+              <FormText color='muted'>
+                Probe name and version 
+                {
+                  !isHistory &&
+                    <>
+                      <FontAwesomeIcon 
+                        id='probe-popover' 
+                        hidden={`state.${obj}.mtype` === 'Passive' || addview} 
+                        icon={faInfoCircle} 
+                        style={{color: '#416090'}}
+                      />
+                      <Popover 
+                        placement='bottom' 
+                        isOpen={state.popoverOpen} 
+                        target='probe-popover' 
+                        toggle={togglePopOver} 
+                        trigger='click'
+                      >
+                        <PopoverHeader>
+                          <ProbeVersionLink
+                            probeversion={obj === 'metric' ? state.metric.probeversion : state.metrictemplate.probeversion}
+                          />
+                        </PopoverHeader>
+                        <PopoverBody>{state.probe.description}</PopoverBody>
+                      </Popover>
+                    </>
+                }
+              </FormText>
+          }
+        </Col>
+        <Col md={2}>
+          <InputGroup>
+            <InputGroupAddon addonType='prepend'>Type</InputGroupAddon>
+            {
+              (isTenantSchema || isHistory) ?
+                <Field
+                  type='text'
+                  name='type'
+                  className='form-control'
+                  id='mtype'
+                  disabled={true}
+                />
+              :
+                <Field
+                  component='select'
+                  name='type'
+                  className='form-control'
+                  id='mtype'
+                  onChange={e => {
+                    handleChange(e);
+                    if (e.target.value === 'Passive') {
+                      let ind = values.flags.length;
+                      if (ind === 1 && values.flags[0].key === '') {
+                        setFieldValue('flags[0].key', 'PASSIVE');
+                        setFieldValue('flags[0].value', '1');
+                      } else {
+                        setFieldValue(`flags[${ind}].key`, 'PASSIVE')
+                        setFieldValue(`flags[${ind}].value`, '1')
+                      }
+                    } else if (e.target.value === 'Active') {
+                      let ind = undefined;
+                      values.flags.forEach((e, index) => {
+                        if (e.key === 'PASSIVE') {
+                          ind = index;
+                        }
+                      });
+                      if (values.flags.length === 1)
+                        values.flags.splice(ind, 1, {'key': '', 'value': ''})
+                      else
+                        values.flags.splice(ind, 1)
+                    }
+                  }}
+                >
+                  {
+                    types.map((name, i) =>
+                      <option key={i} value={name}>{name}</option>
+                    )
+                  }
+                </Field>
+            }
+          </InputGroup>
+          <FormText color='muted'>
+            Metric is of given type.
+          </FormText>
+        </Col>
+      </Row>
+      {
+        obj === 'metric' &&
+          <Row className='mb-4'>
+            <Col md={2}>
+              <InputGroup>
+                <InputGroupAddon addonType='prepend'>Group</InputGroupAddon>
+                {
+                  isHistory ?
+                    <Field
+                      type='text'
+                      name='group'
+                      className='form-control'
+                      disabled={true}
+                      id='group'
+                    />
+                  :
+                    <Field
+                      component='select'
+                      name='group'
+                      className='form-control'
+                      id='group'
+                    >
+                      {
+                        groups.map((name, i) =>
+                          <option key={i} value={name}>{name}</option>
+                        )
+                      }
+                    </Field>
+                }
+              </InputGroup>
+              <FormText color='muted'>
+                Metric is member of selected group.
+              </FormText>
+            </Col>
+          </Row>
+      }
+    </FormGroup>
+    <FormGroup>
+      <h4 className="mt-2 p-1 pl-3 text-light text-uppercase rounded" style={{"backgroundColor": "#416090"}}>Metric configuration</h4>
+      <h6 className='mt-4 font-weight-bold text-uppercase' hidden={values.type === 'Passive'}>probe executable</h6>
+      <Row>
+        <Col md={5}>
+          <Field
+            type='text'
+            name='probeexecutable'
+            id='probeexecutable'
+            className={`form-control ${errors.probeexecutable && 'border-danger'}`}
+            hidden={values.type === 'Passive'}
+            disabled={isTenantSchema || isHistory}
+          />
+          {
+            errors.probeexecutable &&
+              FancyErrorMessage(errors.probeexecutable)
+          }
+        </Col>
+      </Row>
+      <InlineFields values={values} errors={errors} field='config' addnew={!isTenantSchema && !isHistory} readonly={obj === 'metrictemplate' && isTenantSchema || isHistory}/>
+      <InlineFields values={values} errors={errors} field='attributes' addnew={!isTenantSchema && !isHistory}/>
+      <InlineFields values={values} errors={errors} field='dependency' addnew={!isTenantSchema && !isHistory}/>
+      <InlineFields values={values} errors={errors} field='parameter' addnew={!isTenantSchema && !isHistory}/>
+      <InlineFields values={values} errors={errors} field='flags' addnew={!isTenantSchema && !isHistory}/>
+      <InlineFields values={values} errors={errors} field='file_attributes' addnew={!isTenantSchema && !isHistory}/>
+      <InlineFields values={values} errors={errors} field='file_parameters' addnew={!isTenantSchema && !isHistory}/>
+      <h6 className='mt-4 font-weight-bold text-uppercase'>parent</h6>
+      <Row>
+        <Col md={5}>
+          {
+            (isTenantSchema || isHistory) ?
+              <Field 
+                type='text'
+                name='parent'
+                id='parent'
+                className='form-control'
+                disabled={true}
+              />
+            :
+              <>
+                <AutocompleteField
+                  setFieldValue={setFieldValue}
+                  lists={metrictemplatelist}
+                  field='parent'
+                  val={values.parent}
+                  icon='metrics'
+                  className={`form-control ${errors.parent && 'border-danger'}`}
+                  onselect_handler={onSelect}
+                  req={errors.parent}
+                />
+                {
+                  errors.parent &&
+                    FancyErrorMessage(errors.parent)
+                }
+              </>
+          }
+        </Col>
+      </Row>
+    </FormGroup>
+  </>
+
+
+export function CompareMetrics(metrictype) {
+  return class extends Component {
+    constructor(props) {
+      super(props);
+
+      this.version1 = props.match.params.id1;
+      this.version2 = props.match.params.id2;
+      this.name = props.match.params.name;
+
+      this.state = {
+        loading: false,
+        name1: '',
+        probeversion1: '',
+        type1: '',
+        group1: '',
+        probeexecutable1: '',
+        parent1: '',
+        config1: '',
+        attribute1: '',
+        dependency1: '',
+        parameter1: '',
+        flags1: '',
+        files1: '',
+        fileparameter1: '',
+        name2: '',
+        probeversion2: '',
+        type2: '',
+        group2: '',
+        probeexecutable2: '',
+        parent2: '',
+        config2: '',
+        attribute2: '',
+        dependency2: '',
+        parameter2: '',
+        flags2: '',
+        files2: '',
+        fileparameter2: '',
+      };
+
+      this.backend = new Backend();
+    };
+
+    componentDidMount() {
+      this.setState({loading: true});
+
+      let url = undefined;
+
+      if (metrictype === 'metric')
+        url = `/api/v2/internal/tenantversion/metric/${this.name}`;
+
+      else 
+        url = `/api/v2/internal/version/metrictemplate/${this.name}`;
+
+      this.backend.fetchData(url)
+        .then(json => {
+          let name1 = '';
+          let probeversion1 = '';
+          let type1 = '';
+          let group1 = '';
+          let probeexecutable1 = '';
+          let parent1 = '';
+          let config1 = '';
+          let attribute1 = '';
+          let dependency1 = '';
+          let flags1 = '';
+          let files1 = '';
+          let parameter1 = '';
+          let fileparameter1 = '';
+          let name2 = '';
+          let probeversion2 = '';
+          let type2 = '';
+          let group2 = '';
+          let probeexecutable2 = '';
+          let parent2 = '';
+          let config2 = '';
+          let attribute2 = '';
+          let dependency2 = '';
+          let flags2 = '';
+          let files2 = '';
+          let parameter2 = '';
+          let fileparameter2 = '';
+
+          json.forEach((e) => {
+            if (e.version == this.version1) {
+              name1 = e.fields.name;
+              probeversion1 = e.fields.probeversion;
+              type1 = e.fields.mtype;
+              if (metrictype === 'metric') {
+                group1 = e.fields.group;
+                dependency1 = e.fields.dependancy; 
+              } else
+                dependency1 = e.fields.dependency;
+              probeexecutable1 = e.fields.probeexecutable; 
+              parent1 = e.fields.parent; 
+              config1 = e.fields.config; 
+              attribute1 = e.fields.attribute; 
+              parameter1 = e.fields.parameter; 
+              flags1 = e.fields.flags; files1 = e.fields.files; 
+              fileparameter1 = e.fields.fileparameter; 
+            } else if (e.version == this.version2) {
+                name2 = e.fields.name;
+                probeversion2 = e.fields.probeversion;
+                type2 = e.fields.mtype;
+                if (metrictype === 'metric') {
+                  group2 = e.fields.group;
+                  dependency2 = e.fields.dependancy;
+                } else
+                  dependency2 = e.fields.dependency;
+                probeexecutable2 = e.fields.probeexecutable;
+                parent2 = e.fields.parent;
+                config2 = e.fields.config;
+                attribute2 = e.fields.attribute;
+                flags2 = e.fields.flags;
+                files2 = e.fields.files;
+                parameter2 = e.fields.parameter;
+                fileparameter2 = e.fields.fileparameter;
+            };
+          });
+          this.setState({
+            name1: name1,
+            probeversion1: probeversion1,
+            type1: type1,
+            group1: group1,
+            probeexecutable1: probeexecutable1,
+            parent1: parent1,
+            config1: config1,
+            attribute1: attribute1,
+            dependency1: dependency1,
+            parameter1: parameter1,
+            flags1: flags1,
+            files1: files1,
+            fileparameter1: fileparameter1,
+            name2: name2,
+            probeversion2: probeversion2,
+            type2: type2,
+            group2: group2,
+            probeexecutable2: probeexecutable2,
+            parent2: parent2,
+            config2: config2,
+            attribute2: attribute2,
+            dependency2: dependency2,
+            parameter2: parameter2,
+            flags2: flags2,
+            files2: files2,
+            fileparameter2: fileparameter2,
+            loading: false
+          });
+        });
+    };
+
+    render() {
+      var { name1, name2, probeversion1, probeversion2, type1, type2, 
+        probeexecutable1, probeexecutable2, parent1, parent2, config1, 
+        config2, attribute1, attribute2, dependency1, dependency2,
+        parameter1, parameter2, flags1, flags2, files1, files2, 
+        fileparameter1, fileparameter2, group1, group2, loading } = this.state;
+      
+      if (loading)
+        return <LoadingAnim/>;
+
+      else if (!loading && name1 && name2) {
+        return (
+          <React.Fragment>
+            <div className='d-flex align-items-center justify-content-between'>
+              <h2 className='ml-3 mt-1 mb-4'>{`Compare ${this.name}`}</h2>
+            </div>
+            {
+              (name1 !== name2) &&
+                <DiffElement title='name' item1={name1} item2={name2}/>
+            }
+            {
+              (probeversion1 !== probeversion2) &&
+                <DiffElement title='probe version' item1={probeversion1} item2={probeversion2}/>
+            }
+            {
+              (type1 !== type2) &&
+                <DiffElement title='type' item1={type1} item2={type2}/>
+            }
+            {
+              (group1 && group2 && group1 !== group2) &&
+                <DiffElement title='group' item1={group1} item2={group2}/> 
+            }
+            {
+              (probeexecutable1 !== probeexecutable2) &&
+                <DiffElement title='probe executable' item1={probeexecutable1} item2={probeexecutable2}/>
+            }
+            {
+              (parent1 !== parent2) &&
+                <DiffElement title='parent' item1={parent1} item2={parent2}/>
+            }
+            {
+              (!arraysEqual(config1, config2)) &&
+                <InlineDiffElement title='config' item1={config1} item2={config2}/>
+            }
+            {
+              (!arraysEqual(attribute1, attribute2)) &&
+                <InlineDiffElement title='attribute' item1={attribute1} item2={attribute2}/>
+            }
+            {
+              (!arraysEqual(dependency1, dependency2)) &&
+                <InlineDiffElement title='dependency' item1={dependency1} item2={dependency1}/>
+            }
+            {
+              (!arraysEqual(parameter1, parameter2)) &&
+                <InlineDiffElement title='parameter' item1={parameter1} item2={parameter2}/>
+            }
+            {
+              (!arraysEqual(flags1, flags2)) &&
+                <InlineDiffElement title='flags' item1={flags1} item2={flags2}/>
+            }
+            {
+              (!arraysEqual(files1, files2)) &&
+                <InlineDiffElement title='file attributes' item1={files1} item2={files2}/>
+            }
+            {
+              (!arraysEqual(fileparameter1, fileparameter2)) &&
+                <InlineDiffElement title='file parameters' item1={fileparameter1} item2={fileparameter2}/>
+            }
+          </React.Fragment>
+        );
+      } else
+        return null;
+    };
+  };
+};
+
+
 export class MetricChange extends Component {
   constructor(props) {
     super(props);
@@ -646,7 +1208,7 @@ export class MetricChange extends Component {
   }
 
   onSubmitHandle(values, actions) {
-    let msg = 'Are you sure you want to change Metric?';
+    let msg = 'Are you sure you want to change metric?';
     let title = 'Change metric';
 
     this.toggleAreYouSureSetModal(msg, title, 
@@ -727,7 +1289,7 @@ export class MetricChange extends Component {
     else if (!loading) {
       return (
         <BaseArgoView
-          resourcename='Metrics'
+          resourcename='metric'
           location={this.location}
           addview={this.addview}
           modal={true}
@@ -737,7 +1299,7 @@ export class MetricChange extends Component {
           <Formik
             initialValues = {{
               name: metric.name,
-              probe: metric.probeversion,
+              probeversion: metric.probeversion,
               type: metric.mtype,
               group: metric.group,
               probeexecutable: metric.probeexecutable,
@@ -753,108 +1315,14 @@ export class MetricChange extends Component {
             onSubmit = {(values, actions) => this.onSubmitHandle(values, actions)}
             render = {props => (
               <Form>
-                <FormGroup>
-                  <Row className='mb-3'>
-                    <Col md={4}>
-                      <Label to='name'>Name</Label>
-                      <Field
-                        type='text'
-                        name='name'
-                        className='form-control'
-                        id='name'
-                        disabled={true}
-                      />
-                      <FormText color='muted'>
-                        Metric name
-                      </FormText>
-                    </Col>
-                    <Col md={4}>
-                      <Label to='probeversion'>Probe</Label>
-                      <Field
-                        type='text'
-                        name='probe'
-                        className='form-control'
-                        id='probeversion'
-                        disabled={true}
-                      />
-                      <FormText color='muted'>
-                        Probe name and version <FontAwesomeIcon id='probe-popover' hidden={this.state.metric.mtype === 'Passive'} icon={faInfoCircle} style={{color: '#416090'}}/>
-                        <Popover placement='bottom' isOpen={this.state.popoverOpen} target='probe-popover' toggle={this.togglePopOver} trigger='hover'>
-                          <PopoverHeader><ProbeVersionLink probeversion={this.state.metric.probeversion}/></PopoverHeader>
-                          <PopoverBody>{this.state.probe.description}</PopoverBody>
-                        </Popover>
-                      </FormText>
-                    </Col>
-                    <Col md={2}>
-                      <Label to='mtype'>Type</Label>
-                      <Field
-                        type='text'
-                        name='type'
-                        className='form-control'
-                        id='mtype'
-                        disabled={true}
-                      />
-                      <FormText color='muted'>
-                        Metric is of given type
-                      </FormText>
-                    </Col>
-                  </Row>
-                  <Row className='mb-4'>
-                    <Col md={2}>
-                      <Label to='group'>Group</Label>
-                      <Field 
-                        component='select'
-                        name='group'
-                        className='form-control'
-                        id='group'
-                      >
-                        {
-                          groups.map((name, i) =>
-                            <option key={i} value={name}>{name}</option>
-                          )
-                        }
-                      </Field>
-                      <FormText color='muted'>
-                        Metric is member of selected group
-                      </FormText>
-                    </Col>
-                  </Row>
-                </FormGroup>
-                <FormGroup>
-                <h4 className="mt-2 p-1 pl-3 text-light text-uppercase rounded" style={{"backgroundColor": "#416090"}}>Metric configuration</h4>
-                <h6 className='mt-4 font-weight-bold text-uppercase' hidden={props.values.type === 'Passive'}>probe executable</h6>
-                <Row>
-                  <Col md={5}>
-                    <Field
-                      type='text'
-                      name='probeexecutable'
-                      id='probeexecutable'
-                      className='form-control'
-                      disabled={true}
-                      hidden={props.values.type === 'Passive'}
-                    />
-                  </Col>
-                </Row>
-                <InlineFields {...props} field='config'/>
-                <InlineFields {...props} field='attributes'/>
-                <InlineFields {...props} field='dependency'/>
-                <InlineFields {...props} field='parameter'/>
-                <InlineFields {...props} field='flags'/>
-                <InlineFields {...props} field='file_attributes'/>
-                <InlineFields {...props} field='file_parameters'/>
-                <h6 className='mt-4 font-weight-bold text-uppercase'>parent</h6>
-                <Row>
-                  <Col md={5}>
-                    <Field
-                      type='text'
-                      name='parent'
-                      id='parent'
-                      className='form-control'
-                      disabled={true}
-                    />
-                  </Col>
-                </Row>
-                </FormGroup>
+                <MetricForm
+                  {...props}
+                  obj='metric'
+                  isTenantSchema={true}
+                  state={this.state}
+                  togglePopOver={this.togglePopOver}
+                  groups={groups}
+                />
                 {
                   (write_perm) &&
                     <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
@@ -878,218 +1346,6 @@ export class MetricChange extends Component {
       )
     }
   }
-}
-
-
-export class MetricVersonCompare extends Component {
-  constructor(props) {
-    super(props);
-
-    this.version1 = props.match.params.id1;
-    this.version2 = props.match.params.id2;
-    this.name = props.match.params.name;
-
-    this.state = {
-      loading: false,
-      name1: '',
-      probeversion1: '',
-      type1: '',
-      group1: '',
-      probeexecutable1: '',
-      parent1: '',
-      config1: '',
-      attribute1: '',
-      dependancy1: '',
-      parameter1: '',
-      flags1: '',
-      files1: '',
-      fileparameter1: '',
-      name2: '',
-      probeversion2: '',
-      type2: '',
-      group2: '',
-      probeexecutable2: '',
-      parent2: '',
-      config2: '',
-      attribute2: '',
-      dependancy2: '',
-      parameter2: '',
-      flags2: '',
-      files2: '',
-      fileparameter2: ''
-    };
-
-    this.backend = new Backend();
-  };
-
-  componentDidMount() {
-    this.setState({loading: true});
-
-    this.backend.fetchData(`/api/v2/internal/tenantversion/metric/${this.name}`)
-      .then (json => {
-        let name1 = '';
-        let probeversion1 = '';
-        let type1 = '';
-        let group1 = '';
-        let probeexecutable1 = '';
-        let parent1 = '';
-        let config1 = '';
-        let attribute1 = '';
-        let dependancy1 = '';
-        let flags1 = '';
-        let files1 = '';
-        let parameter1 = '';
-        let fileparameter1 = '';
-        let name2 = '';
-        let probeversion2 = '';
-        let type2 = '';
-        let group2 = '';
-        let probeexecutable2 = '';
-        let parent2 = '';
-        let config2 = '';
-        let attribute2 = '';
-        let dependancy2 = '';
-        let flags2 = '';
-        let files2 = '';
-        let parameter2 = '';
-        let fileparameter2 = '';
-
-        json.forEach((e) => {
-          if (e.version == this.version1) {
-            name1 = e.fields.name;
-            probeversion1 = e.fields.probeversion;
-            type1 = e.fields.mtype;
-            group1 = e.fields.group;
-            probeexecutable1 = e.fields.probeexecutable; 
-            parent1 = e.fields.parent; 
-            config1 = e.fields.config; 
-            attribute1 = e.fields.attribute; 
-            dependancy1 = e.fields.dependancy; 
-            parameter1 = e.fields.parameter; 
-            flags1 = e.fields.flags; files1 = e.fields.files; 
-            fileparameter1 = e.fields.fileparameter; 
-          } else if (e.version == this.version2) {
-              name2 = e.fields.name;
-              probeversion2 = e.fields.probeversion;
-              type2 = e.fields.mtype;
-              group2 = e.fields.group;
-              probeexecutable2 = e.fields.probeexecutable;
-              parent2 = e.fields.parent;
-              config2 = e.fields.config;
-              attribute2 = e.fields.attribute;
-              dependancy2 = e.fields.dependancy;
-              flags2 = e.fields.flags;
-              files2 = e.fields.files;
-              parameter2 = e.fields.parameter;
-              fileparameter2 = e.fields.fileparameter;
-          }
-        });
-
-        this.setState({
-          name1: name1,
-          probeversion1: probeversion1,
-          type1: type1,
-          group1: group1,
-          probeexecutable1: probeexecutable1,
-          parent1: parent1,
-          config1: config1,
-          attribute1: attribute1,
-          dependancy1: dependancy1,
-          parameter1: parameter1,
-          flags1: flags1,
-          files1: files1,
-          fileparameter1: fileparameter1,
-          name2: name2,
-          probeversion2: probeversion2,
-          type2: type2,
-          group2: group2,
-          probeexecutable2: probeexecutable2,
-          parent2: parent2,
-          config2: config2,
-          attribute2: attribute2,
-          dependancy2: dependancy2,
-          parameter2: parameter2,
-          flags2: flags2,
-          files2: files2,
-          fileparameter2: fileparameter2,
-          loading: false
-        });
-      });
-  };
-
-  render() {
-    var { name1, name2, probeversion1, probeversion2, type1, type2, 
-    probeexecutable1, probeexecutable2, parent1, parent2, config1, 
-    config2, attribute1, attribute2, dependancy1, dependancy2,
-    parameter1, parameter2, flags1, flags2, files1, files2, 
-    fileparameter1, fileparameter2, group1, group2, loading } = this.state;
-
-    if (loading)
-      return (<LoadingAnim/>);
-
-    else if (!loading && name1 && name2) {
-      return (
-        <React.Fragment>
-          <div className="d-flex align-items-center justify-content-between">
-            <h2 className='ml-3 mt-1 mb-4'>{'Compare ' + this.name}</h2>
-          </div>
-          {
-            (name1 !== name2) &&
-              <DiffElement title='name' item1={name1} item2={name2}/>
-          }
-          {
-            (probeversion1 !== probeversion2) &&
-              <DiffElement title='probe version' item1={probeversion1} item2={probeversion2}/>
-          }
-          {
-            (type1 !== type2) &&
-              <DiffElement title='type' item1={type1} item2={type2}/>
-          }
-          {
-            (group1 !== group2) &&
-              <DiffElement title='group' item1={group1} item2={group2}/>
-          }
-          {
-            (probeexecutable1 !== probeexecutable2) &&
-              <DiffElement title='probe executable' item1={probeexecutable1} item2={probeexecutable2}/>
-          }
-          {
-            (parent1 !== parent2) &&
-              <DiffElement title='parent' item1={parent1} item2={parent2}/>
-          }
-          {
-            (!arraysEqual(config1, config2)) &&
-              <InlineDiffElement title='config' item1={config1} item2={config2}/>
-          }
-          {
-            (!arraysEqual(attribute1, attribute2)) &&
-              <InlineDiffElement title='attribute' item1={attribute1} item2={attribute2}/>
-          }
-          {
-            (!arraysEqual(dependancy1, dependancy2)) &&
-              <InlineDiffElement title='dependency' item1={dependancy1} item2={dependancy2}/>
-          }
-          {
-            (!arraysEqual(parameter1, parameter2)) &&
-              <InlineDiffElement title='parameter' item1={parameter1} item2={parameter2}/>
-          }
-          {
-            (!arraysEqual(flags1, flags2)) &&
-              <InlineDiffElement title='flags' item1={flags1} item2={flags2}/>
-          }
-          {
-            (!arraysEqual(files1, files2)) &&
-              <InlineDiffElement title='file attributes' item1={files1} item2={files2}/>
-          }
-          {
-            (!arraysEqual(fileparameter1, fileparameter2)) &&
-              <InlineDiffElement title='file parameters' item1={fileparameter1} item2={fileparameter2}/>
-          }
-        </React.Fragment>
-      )
-    } else
-      return null
-  };
 }
 
 
@@ -1158,123 +1414,38 @@ export class MetricVersionDetails extends Component {
 
     else if (!loading && name) {
       return (
-        <React.Fragment>
-          <div className='d-flex align-items-center justify-content-between'>
-            <React.Fragment>
-              <h2 className='ml-3 mt-1 mb-4'>{name + ' (' + date_created + ')'}</h2>
-            </React.Fragment>
-          </div>
-          <div id='argo-contentwrap' className='ml-2 mb-2 mt-2 p-3 border rounded'>
-            <Formik
-              initialValues = {{
-                name: name,
-                probeversion: probeversion,
-                mtype: type,
-                group: group,
-                probeexecutable: probeexecutable,
-                parent: parent,
-                config: config,
-                attributes: attribute,
-                dependency: dependancy,
-                parameter: parameter,
-                flags: flags,
-                files: files,
-                fileparameter: fileparameter
-              }}
-              render = {props => (
-                <Form>
-                  <FormGroup>
-                    <Row className='mb-3'>
-                      <Col md={4}>
-                        <Label to='name'>Name</Label>
-                        <Field
-                          type='text'
-                          name='name'
-                          className={'form-control'}
-                          id='name'
-                          disabled={true}
-                        />
-                        <FormText color='muted'>
-                          Metric name
-                        </FormText>
-                      </Col>
-                      <Col md={4}>
-                        <Label to='probeversion'>Probe</Label>
-                        <Field 
-                          type='text'
-                          name='probeversion'
-                          className='form-control'
-                          id='probeversion'
-                          disabled={true}
-                        />
-                      </Col>
-                      <Col md={2}>
-                        <Label to='mtype'>Type</Label>
-                        <Field
-                          type='text'
-                          name='mtype'
-                          className='form-control'
-                          id='mtype'
-                          disabled={true}
-                        />
-                        <FormText color='muted'>
-                          Metric is of given type
-                        </FormText>
-                      </Col>
-                    </Row>
-                    <Row className='mb-4'>
-                      <Col md={2}>
-                        <Label to='group'>Group</Label>
-                        <Field
-                          type='text'
-                          name='group'
-                          className='form-control'
-                          id='group'
-                          disabled={true}
-                        />
-                      </Col>
-                    </Row>
-                  </FormGroup>
-                  <FormGroup>
-                  <h4 className="mt-2 p-1 pl-3 text-light text-uppercase rounded" style={{"backgroundColor": "#416090"}}>Metric configuration</h4>
-                  <h6 className='mt-4 font-weight-bold text-uppercase' hidden={props.values.type === 'Passive'}>probe executable</h6>
-                  <Row>
-                    <Col md={5}>
-                      <Field
-                        type='text'
-                        name='probeexecutable'
-                        id='probeexecutable'
-                        className='form-control'
-                        hidden={props.values.type === 'Passive'}
-                        disabled={true}
-                      />
-                    </Col>
-                  </Row>
-                  <InlineFields {...props} field='config' readonly={true}/>
-                  <InlineFields {...props} field='attributes'/>
-                  <InlineFields {...props} field='dependency'/>
-                  <InlineFields {...props} field='parameter'/>
-                  <InlineFields {...props} field='flags'/>
-                  <InlineFields {...props} field='files'/>
-                  <InlineFields {...props} field='fileparameter'/>
-                  <h6 className='mt-4 font-weight-bold text-uppercase'>parent</h6>
-                  <Row>
-                    <Col md={5}>
-                      <Field
-                        type='text'
-                        name='parent'
-                        id='parent'
-                        className='form-control'
-                        disabled={true}
-                      />
-                    </Col>
-                  </Row>
-                  </FormGroup>
-                </Form>
-              )}
-              />
-          </div>
-        </React.Fragment>
+        <BaseArgoView
+          resourcename={`${name} (${date_created})`}
+          infoview={true}
+        >
+          <Formik
+            initialValues = {{
+              name: name,
+              probeversion: probeversion,
+              type: type,
+              group: group,
+              probeexecutable: probeexecutable,
+              parent: parent,
+              config: config,
+              attributes: attribute,
+              dependency: dependancy,
+              parameter: parameter,
+              flags: flags,
+              files: files,
+              fileparameter: fileparameter
+            }}
+            render = {props => (
+              <Form>
+                <MetricForm
+                  {...props}
+                  obj='metric'
+                  state={this.state}
+                  isHistory={true}
+                />
+              </Form>
+            )}
+            />
+        </BaseArgoView>
       )
     }
     else
