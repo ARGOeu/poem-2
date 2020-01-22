@@ -4,7 +4,16 @@ import { MetricProfilesChange, MetricProfilesList } from './MetricProfiles';
 import Home from './Home';
 import { ProbeList, ProbeChange, ProbeHistory, ProbeVersionCompare, ProbeVersionDetails } from './Probes';
 import { MetricList, MetricChange, MetricHistory, MetricVersonCompare, MetricVersionDetails } from './Metrics';
-import { MetricTemplateList, MetricTemplateChange, MetricTemplateClone, TenantMetricTemplateList, MetricTemplateHistory, MetricTemplateVersionCompare, MetricTemplateVersionDetails  } from './MetricTemplates';
+import { 
+  MetricTemplateList, 
+  MetricTemplateChange, 
+  MetricTemplateClone, 
+  TenantMetricTemplateList, 
+  MetricTemplateHistory, 
+  MetricTemplateVersionCompare, 
+  MetricTemplateVersionDetails,
+  TenantMetricTemplateHistory
+} from './MetricTemplates';
 import { TenantAdministration, SuperAdminAdministration } from './Administration';
 import { AggregationProfilesChange, AggregationProfilesList } from './AggregationProfiles';
 import Reports from './Reports';
@@ -133,8 +142,11 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, t
     />
     <Route exact path='/ui/administration/metrictemplates/' component={TenantMetricTemplateList}/>
     <Route exact path='/ui/administration/metrictemplates/:name'
-      render={props => <MetricTemplateChange {...props} infoview={true}/>}
+      render={props => <MetricTemplateChange {...props} tenantview={true}/>}
     />
+    <Route exact path='/ui/administration/metrictemplates/:name/history' render={props => <TenantMetricTemplateHistory {...props}/>}/>
+    <Route exact path='/ui/administration/metrictemplates/:name/history/compare/:id1/:id2' render={props => <MetricTemplateVersionCompare {...props}/>}/>
+    <Route exact path='/ui/administration/metrictemplates/:name/history/:version' render={props => <MetricTemplateVersionDetails {...props}/>}/>
     <Route exact path="/ui/administration/apikey/:name"  
       render={props => <APIKeyChange {...props} />}
     />

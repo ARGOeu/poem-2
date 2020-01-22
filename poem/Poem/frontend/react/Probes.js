@@ -1,7 +1,16 @@
 import React, { Component } from 'react';
 import { Backend } from './DataManager';
 import { Link } from 'react-router-dom';
-import { LoadingAnim, BaseArgoView, NotifyOk, Checkbox, FancyErrorMessage, AutocompleteField } from './UIElements';
+import { 
+  LoadingAnim, 
+  BaseArgoView, 
+  NotifyOk, 
+  Checkbox, 
+  FancyErrorMessage, 
+  AutocompleteField, 
+  HistoryComponent,
+  DiffElement
+} from './UIElements';
 import ReactTable from 'react-table';
 import {
   FormGroup, 
@@ -13,52 +22,11 @@ import {
   InputGroup, 
   InputGroupAddon } from 'reactstrap';
 import { Formik, Form, Field } from 'formik';
-import ReactDiffViewer from 'react-diff-viewer';
 import { NotificationManager } from 'react-notifications';
 import * as Yup from 'yup';
 
 
-export const ProbeHistory = HistoryComponent('probe')
-
-
-export const DiffElement = ({title, item1, item2}) => {
-  item1 = item1.split('\r\n');
-  item2 = item2.split('\r\n');
-
-  let n = Math.max(item1.length, item2.length);
-
-  if (item1.length > item2.length) {
-    for (let i=item2.length; i < item1.length; i++) {
-      item2.push(' ');
-    };
-  } else if (item2.length > item1.length) {
-    for (let i=item1.length; i < item2.length; i++) {
-      item1.push(' ');
-    };
-  };
-
-  const elements = [];
-  for (let i = 0; i < n; i++) {
-    elements.push(
-    <ReactDiffViewer 
-      oldValue={item2[i]}   
-      newValue={item1[i]}
-      showDiffOnly={true}
-      splitView={false}
-      hideLineNumbers={true}
-      disableWordDiff={true}
-      key={'diff-' + i}
-    />
-    );
-  };
-
-  return (
-  <div id='argo-contentwrap' className='ml-2 mb-2 mt-2 p-3 border rounded'>
-    <h6 className='mt-4 font-weight-bold text-uppercase'>{title}</h6>
-    {elements}
-  </div>
-  );
-};
+export const ProbeHistory = HistoryComponent('probe');
 
 
 const ProbeSchema = Yup.object().shape({
@@ -814,155 +782,6 @@ export class ProbeChange extends Component {
     };
   };
 };
-
-
-export function HistoryComponent(obj) {
-  return class extends Component {
-    constructor(props) {
-      super(props);
-
-      this.name = props.match.params.name;
-      this.history = props.history;
-
-      this.state = {
-        loading: false,
-        list_versions: null,
-        compare1: '',
-        compare2: ''
-      };
-
-      this.backend = new Backend();
-    }
-
-    componentDidMount() {
-      this.setState({loading: true});
-      let url = undefined;
-
-      if (obj === 'metric')
-        url = '/api/v2/internal/tenantversion/'
-      
-      else
-        url = '/api/v2/internal/version/'
-
-      this.backend.fetchData(`${url}/${obj}/${this.name}`)
-        .then((json) => {
-          if (json.length > 1) {
-            this.setState({
-              list_versions: json,
-              loading: false,
-              compare1: json[0].version,
-              compare2: json[1].version
-            });
-          } else {
-            this.setState({
-              list_versions: json,
-              loading: false
-            });
-          };
-        }
-      )
-    };
-
-      render() {
-        const { loading, list_versions } = this.state; 
-    
-        if (loading)
-          return (<LoadingAnim />);
-        
-        else if (!loading && list_versions) {
-          return (
-            <BaseArgoView
-              resourcename='Change history'
-              infoview={true}>
-                <table className='table table-sm'>
-                  <thead className='table-active'>
-                    <tr>
-                      { list_versions.length === 1 ?
-                        <th scope='col'>Compare</th>
-                      :
-                        <th scope='col'>
-                          <Button
-                            color='info'
-                            onClick={() => 
-                              this.history.push(
-                                '/ui/'+obj+'s/' + this.name + '/history/compare/' + this.state.compare1 + '/' + this.state.compare2,
-                              )
-                            }
-                          >
-                            Compare
-                          </Button>
-                        </th>
-                      }
-                      <th scope='col'>Version</th>
-                      <th scope='col'>Date/time</th>
-                      <th scope='col'>User</th>
-                      <th scope='col'>Comment</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {
-                      list_versions.map((e, i) =>
-                        <tr key={i}>
-                          {
-                            list_versions.length === 1 ?
-                              <td>-</td>
-                            :
-                              i === 0 ?
-                              <td>
-                                <input
-                                  type='radio'
-                                  name='radio-1'
-                                  value={e.version}
-                                  defaultChecked={true}
-                                  onChange={e => this.setState({compare1: e.target.value})}
-                                />
-                              </td>
-                              :
-                              <td>
-                                <input
-                                  type='radio'
-                                  name='radio-1'
-                                  value={e.version}
-                                  onChange={e => this.setState({compare1: e.target.value})}
-                                /> 
-                                {' '}
-                                <input
-                                  type='radio'
-                                  name='radio-2'
-                                  value={e.version}
-                                  defaultChecked={i===1}
-                                  onChange={e => this.setState({compare2: e.target.value})}
-                                />
-                              </td>
-                          }
-                          {
-                            <td>
-                              {e.version ? <Link to={'/ui/' + obj +'s/' + this.name + '/history/' + e.version}>{e.version}</Link> : ''}
-                            </td>
-                          }
-                          <td>
-                            {e.date_created ? e.date_created : ''}
-                          </td>
-                          <td>
-                            {e.user ? e.user : ''}
-                          </td>
-                          <td className='col-md-6'>
-                            {e.comment ? e.comment : ''}
-                          </td>
-                        </tr>
-                      )
-                    }
-                  </tbody>
-                </table>
-              </BaseArgoView>
-          );
-        }
-        else
-          return null;
-      };
-    };
-};
-
 
 
 export class ProbeVersionCompare extends Component{

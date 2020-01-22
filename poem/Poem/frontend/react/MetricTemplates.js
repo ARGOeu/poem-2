@@ -1,7 +1,14 @@
 import React, { Component } from 'react';
 import { ListOfMetrics, InlineFields, ProbeVersionLink } from './Metrics';
 import { Backend } from './DataManager';
-import { LoadingAnim, BaseArgoView, NotifyOk, FancyErrorMessage } from './UIElements';
+import { 
+  LoadingAnim, 
+  BaseArgoView, 
+  NotifyOk, 
+  FancyErrorMessage,
+  HistoryComponent,
+  DiffElement
+} from './UIElements';
 import { Formik, Form, Field } from 'formik';
 import {
   FormGroup,
@@ -17,7 +24,6 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import * as Yup from 'yup';
 import { NotificationManager } from 'react-notifications';
-import { HistoryComponent, DiffElement } from './Probes';
 import ReactDiffViewer from 'react-diff-viewer';
 import { AutocompleteField } from './UIElements';
 
@@ -28,6 +34,7 @@ export const MetricTemplateChange = MetricTemplateComponent()
 export const MetricTemplateClone = MetricTemplateComponent(true)
 
 export const MetricTemplateHistory = HistoryComponent('metrictemplate');
+export const TenantMetricTemplateHistory = HistoryComponent('metrictemplate', true);
 
 
 export const InlineDiffElement = ({title, item1, item2}) => {
@@ -114,7 +121,7 @@ function MetricTemplateComponent(cloneview=false) {
       this.name = props.match.params.name;
       this.location = props.location;
       this.addview = props.addview;
-      this.infoview = props.infoview;
+      this.tenantview = props.tenantview;
       this.history = props.history;
       this.backend = new Backend();
 
@@ -376,10 +383,10 @@ function MetricTemplateComponent(cloneview=false) {
       else if (!loading) {
         return (
           <BaseArgoView
-            resourcename='metric template'
+            resourcename={this.tenantview ? `${metrictemplate.name}` : 'metric template'}
             location={this.location}
             addview={this.addview}
-            infoview={this.infoview}
+            tenantview={this.tenantview}
             cloneview={cloneview}
             clone={true}
             modal={true}
@@ -416,13 +423,11 @@ function MetricTemplateComponent(cloneview=false) {
                           name='name'
                           className={`form-control ${props.errors.name && 'border-danger'}`}
                           id='name'
-                          disabled={this.infoview}
+                          disabled={this.tenantview}
                         />
                         {
-                          props.errors.name ?
+                          props.errors.name &&
                             FancyErrorMessage(props.errors.name)
-                          :
-                            null
                         }
                         <FormText color='muted'>
                           Metric name
@@ -434,7 +439,7 @@ function MetricTemplateComponent(cloneview=false) {
                           props.values.type === 'Passive' ?
                             <input type='text' className='form-control' disabled={true} id='passive-probeversion'/>
                           :
-                            this.infoview ?
+                            this.tenantview ?
                               <Field 
                                 type='text'
                                 name='probeversion'
@@ -454,10 +459,8 @@ function MetricTemplateComponent(cloneview=false) {
                             />
                         }
                         {
-                          props.errors.probeversion ?
+                          props.errors.probeversion &&
                             FancyErrorMessage(props.errors.probeversion)
-                          :
-                            null
                         }
                         {
                           props.values.type === 'Active' &&
@@ -475,43 +478,54 @@ function MetricTemplateComponent(cloneview=false) {
                       </Col>
                       <Col md={2}>
                         <Label to='mtype'>Type</Label>
-                        <Field
-                          component='select'
-                          name='type'
-                          className='form-control'
-                          id='mtype'
-                          disabled={this.infoview}
-                          onChange={e => {
-                            props.handleChange(e);
-                            if (e.target.value === 'Passive' && this.addview) {
-                              let ind = props.values.flags.length;
-                              if (ind === 1 && props.values.flags[0].key === '') {
-                                props.setFieldValue('flags[0].key', 'PASSIVE');
-                                props.setFieldValue('flags[0].value', '1');
-                              } else {
-                                props.setFieldValue(`flags[${ind}].key`, 'PASSIVE')
-                                props.setFieldValue(`flags[${ind}].value`, '1')
-                              }
-                            } else if (e.target.value === 'Active' && this.addview) {
-                              let ind = undefined;
-                              props.values.flags.forEach((e, index) => {
-                                if (e.key === 'PASSIVE') {
-                                  ind = index;
+                        {
+                          this.tenantview ?
+                            <Field
+                              type='text'
+                              name='type'
+                              className='form-control'
+                              id='mtype'
+                              disabled={true}
+                            />
+                          :
+                            <Field
+                              component='select'
+                              name='type'
+                              className='form-control'
+                              id='mtype'
+                              disabled={this.tenantview}
+                              onChange={e => {
+                                props.handleChange(e);
+                                if (e.target.value === 'Passive' && this.addview) {
+                                  let ind = props.values.flags.length;
+                                  if (ind === 1 && props.values.flags[0].key === '') {
+                                    props.setFieldValue('flags[0].key', 'PASSIVE');
+                                    props.setFieldValue('flags[0].value', '1');
+                                  } else {
+                                    props.setFieldValue(`flags[${ind}].key`, 'PASSIVE')
+                                    props.setFieldValue(`flags[${ind}].value`, '1')
+                                  }
+                                } else if (e.target.value === 'Active' && this.addview) {
+                                  let ind = undefined;
+                                  props.values.flags.forEach((e, index) => {
+                                    if (e.key === 'PASSIVE') {
+                                      ind = index;
+                                    }
+                                  });
+                                  if (props.values.flags.length === 1)
+                                    props.values.flags.splice(ind, 1, {'key': '', 'value': ''})
+                                  else
+                                    props.values.flags.splice(ind, 1)
                                 }
-                              });
-                              if (props.values.flags.length === 1)
-                                props.values.flags.splice(ind, 1, {'key': '', 'value': ''})
-                              else
-                                props.values.flags.splice(ind, 1)
-                            }
-                          }}
-                        >
-                          {
-                            types.map((name, i) =>
-                              <option key={i} value={name}>{name}</option>
-                            )
-                          }
-                        </Field>
+                              }}
+                            >
+                              {
+                                types.map((name, i) =>
+                                  <option key={i} value={name}>{name}</option>
+                                )
+                              }
+                            </Field>
+                        }
                         <FormText color='muted'>
                           Metric is of given type
                         </FormText>
@@ -529,28 +543,26 @@ function MetricTemplateComponent(cloneview=false) {
                         id='probeexecutable'
                         className={`form-control ${props.errors.probeexecutable && 'border-danger'}`}
                         hidden={props.values.type === 'Passive'}
-                        disabled={this.infoview}
+                        disabled={this.tenantview}
                       />
                       {
-                        props.errors.probeexecutable ?
+                        props.errors.probeexecutable &&
                           FancyErrorMessage(props.errors.probeexecutable)
-                        :
-                          null
                       }
                     </Col>
                   </Row>
-                  <InlineFields {...props} field='config' addnew={!this.infoview} readonly={this.infoview}/>
-                  <InlineFields {...props} field='attributes' addnew={!this.infoview}/>
-                  <InlineFields {...props} field='dependency' addnew={!this.infoview}/>
-                  <InlineFields {...props} field='parameter' addnew={!this.infoview}/>
-                  <InlineFields {...props} field='flags' addnew={!this.infoview}/>
-                  <InlineFields {...props} field='file_attributes' addnew={!this.infoview}/>
-                  <InlineFields {...props} field='file_parameters' addnew={!this.infoview}/>
+                  <InlineFields {...props} field='config' addnew={!this.tenantview} readonly={this.tenantview}/>
+                  <InlineFields {...props} field='attributes' addnew={!this.tenantview}/>
+                  <InlineFields {...props} field='dependency' addnew={!this.tenantview}/>
+                  <InlineFields {...props} field='parameter' addnew={!this.tenantview}/>
+                  <InlineFields {...props} field='flags' addnew={!this.tenantview}/>
+                  <InlineFields {...props} field='file_attributes' addnew={!this.tenantview}/>
+                  <InlineFields {...props} field='file_parameters' addnew={!this.tenantview}/>
                   <h6 className='mt-4 font-weight-bold text-uppercase'>parent</h6>
                   <Row>
                     <Col md={5}>
                       {
-                        this.infoview ?
+                        this.tenantview ?
                           <Field
                             type='text'
                             name='parent'
@@ -558,31 +570,29 @@ function MetricTemplateComponent(cloneview=false) {
                             className='form-control'
                             disabled={true}
                           />
-                          :
-                            <>
-                              <AutocompleteField
-                                {...props}
-                                lists={metrictemplatelist}
-                                field='parent'
-                                val={props.values.parent}
-                                icon='metrics'
-                                className={`form-control ${props.errors.parent && 'border-danger'}`}
-                                onselect_handler={this.onSelect}
-                                req={props.errors.parent}
-                              />
-                              {
-                                props.errors.parent ?
-                                  FancyErrorMessage(props.errors.parent)
-                                :
-                                  null
-                              }
-                            </>
+                        :
+                          <>
+                            <AutocompleteField
+                              {...props}
+                              lists={metrictemplatelist}
+                              field='parent'
+                              val={props.values.parent}
+                              icon='metrics'
+                              className={`form-control ${props.errors.parent && 'border-danger'}`}
+                              onselect_handler={this.onSelect}
+                              req={props.errors.parent}
+                            />
+                            {
+                              props.errors.parent &&
+                                FancyErrorMessage(props.errors.parent)
+                            }
+                          </>
                       }
                     </Col>
                   </Row>
                   </FormGroup>
                   {
-                    (write_perm && !this.infoview) &&
+                    (write_perm && !this.tenantview) &&
                       <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
                         {
                           (!this.addview && !cloneview) ?

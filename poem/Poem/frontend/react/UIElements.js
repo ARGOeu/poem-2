@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Component } from 'react';
 import Cookies from 'universal-cookie';
 import {
   Alert,
@@ -47,6 +47,8 @@ import {
 import { NotificationManager } from 'react-notifications';
 import { Field } from 'formik';
 import Autocomplete from 'react-autocomplete';
+import { Backend } from './DataManager';
+import ReactDiffViewer from 'react-diff-viewer';
 
 
 var list_pages = ['administration','services', 'reports', 'probes',
@@ -187,15 +189,21 @@ export const CustomBreadcrumb = ({location, history}) =>
   }
 
   if (spliturl.length > 4) {
-    var four_level = new Object({'url': three_level['url'] + '/history'});
+    var four_level = new Object({'url': three_level['url'] + '/' + spliturl[4]});
     four_level['title'] = spliturl[4];
     breadcrumb_elements.push(four_level)
   }
 
   if (spliturl.length > 5) {
-    var five_level = new Object({'url': four_level['url'] + spliturl[5]});
+    var five_level = new Object({'url': four_level['url'] + '/' + spliturl[5]});
     five_level['title'] = spliturl[5];
     breadcrumb_elements.push(five_level);
+  }
+
+  if (spliturl.length > 6 && five_level['title'] === 'history') {
+    var six_level = new Object({'url': five_level['url'] + '/' + spliturl[6]});
+    six_level['title'] = spliturl[6];
+    breadcrumb_elements.push(six_level);
   }
 
   return (
@@ -364,7 +372,7 @@ export const NotifyOk = ({msg='', title='', callback=undefined}) => {
 export const BaseArgoView = ({resourcename='', location=undefined, 
     infoview=false, addview=false, listview=false, modal=false, 
     state=undefined, toggle=undefined, submitperm=true, history=true, 
-    addnew=true, clone=false, cloneview=false, children}) => 
+    addnew=true, clone=false, cloneview=false, tenantview=false, children}) => 
 (
   <React.Fragment>
     {
@@ -403,19 +411,28 @@ export const BaseArgoView = ({resourcename='', location=undefined,
                   <h2 className="ml-3 mt-1 mb-4">{`Clone ${resourcename}`}</h2>
                 </React.Fragment>
               :
-                <React.Fragment>
-                  <h2 className="ml-3 mt-1 mb-4">{`Change ${resourcename}`}</h2>
-                    <ButtonToolbar>
-                      {
-                        clone &&
-                          <Link className="btn btn-secondary mr-2" to={location.pathname + "/clone"} role="button">Clone</Link>
-                      }
-                      {
-                        history &&
-                          <Link className="btn btn-secondary" to={location.pathname + "/history"} role="button">History</Link>
-                      }
-                    </ButtonToolbar>
-                </React.Fragment>
+                tenantview ?
+                  <React.Fragment>
+                    <h2 className="ml-3 mt-1 mb-4">{resourcename}</h2>
+                    {
+                      history &&
+                        <Link className="btn btn-secondary" to={location.pathname + "/history"} role="button">History</Link>
+                    }
+                  </React.Fragment>
+                :
+                  <React.Fragment>
+                    <h2 className="ml-3 mt-1 mb-4">{`Change ${resourcename}`}</h2>
+                      <ButtonToolbar>
+                        {
+                          clone &&
+                            <Link className="btn btn-secondary mr-2" to={location.pathname + "/clone"} role="button">Clone</Link>
+                        }
+                        {
+                          history &&
+                            <Link className="btn btn-secondary" to={location.pathname + "/history"} role="button">History</Link>
+                        }
+                      </ButtonToolbar>
+                  </React.Fragment>
       }
     </div>
     <div id="argo-contentwrap" className="ml-2 mb-2 mt-2 p-3 border rounded">
@@ -530,3 +547,198 @@ export const DropdownFilterComponent = ({value, onChange, data}) => (
     }
   </select>
 )
+
+
+export function HistoryComponent(obj, tenantview=false) {
+  return class extends Component {
+    constructor(props) {
+      super(props);
+
+      this.name = props.match.params.name;
+      this.history = props.history;
+
+      this.state = {
+        loading: false,
+        list_versions: null,
+        compare1: '',
+        compare2: ''
+      };
+
+      this.backend = new Backend();
+    }
+
+    componentDidMount() {
+      this.setState({loading: true});
+      let url = undefined;
+
+      if (obj === 'metric')
+        url = '/api/v2/internal/tenantversion/'
+      
+      else
+        url = '/api/v2/internal/version/'
+
+      this.backend.fetchData(`${url}/${obj}/${this.name}`)
+        .then((json) => {
+          if (json.length > 1) {
+            this.setState({
+              list_versions: json,
+              loading: false,
+              compare1: json[0].version,
+              compare2: json[1].version
+            });
+          } else {
+            this.setState({
+              list_versions: json,
+              loading: false
+            });
+          };
+        }
+      )
+    };
+
+      render() {
+        const { loading, list_versions } = this.state; 
+
+        let compareurl = undefined;
+        if (tenantview)
+          compareurl = `/ui/administration/${obj}s/${this.name}/history`;
+
+        else
+          compareurl = `/ui/${obj}s/${this.name}/history`;
+    
+        if (loading)
+          return (<LoadingAnim />);
+        
+        else if (!loading && list_versions) {
+          return (
+            <BaseArgoView
+              resourcename='Version history'
+              infoview={true}>
+                <table className='table table-sm'>
+                  <thead className='table-active'>
+                    <tr>
+                      { list_versions.length === 1 ?
+                        <th scope='col'>Compare</th>
+                      :
+                        <th scope='col'>
+                          <Button
+                            color='info'
+                            onClick={() => 
+                              this.history.push(
+                                `${compareurl}/compare/${this.state.compare1}/${this.state.compare2}`,
+                              )
+                            }
+                          >
+                            Compare
+                          </Button>
+                        </th>
+                      }
+                      <th scope='col'>Version</th>
+                      <th scope='col'>Date/time</th>
+                      <th scope='col'>User</th>
+                      <th scope='col'>Comment</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {
+                      list_versions.map((e, i) =>
+                        <tr key={i}>
+                          {
+                            list_versions.length === 1 ?
+                              <td>-</td>
+                            :
+                              i === 0 ?
+                              <td>
+                                <input
+                                  type='radio'
+                                  name='radio-1'
+                                  value={e.version}
+                                  defaultChecked={true}
+                                  onChange={e => this.setState({compare1: e.target.value})}
+                                />
+                              </td>
+                              :
+                              <td>
+                                <input
+                                  type='radio'
+                                  name='radio-1'
+                                  value={e.version}
+                                  onChange={e => this.setState({compare1: e.target.value})}
+                                /> 
+                                {' '}
+                                <input
+                                  type='radio'
+                                  name='radio-2'
+                                  value={e.version}
+                                  defaultChecked={i===1}
+                                  onChange={e => this.setState({compare2: e.target.value})}
+                                />
+                              </td>
+                          }
+                          {
+                            <td>
+                              {e.version ? <Link to={`${compareurl}/${e.version}`}>{e.version}</Link> : ''}
+                            </td>
+                          }
+                          <td>
+                            {e.date_created ? e.date_created : ''}
+                          </td>
+                          <td>
+                            {e.user ? e.user : ''}
+                          </td>
+                          <td className='col-md-6'>
+                            {e.comment ? e.comment : ''}
+                          </td>
+                        </tr>
+                      )
+                    }
+                  </tbody>
+                </table>
+              </BaseArgoView>
+          );
+        }
+        else
+          return null;
+      };
+    };
+};
+
+
+export const DiffElement = ({title, item1, item2}) => {
+  item1 = item1.split('\r\n');
+  item2 = item2.split('\r\n');
+
+  let n = Math.max(item1.length, item2.length);
+
+  if (item1.length > item2.length) {
+    for (let i=item2.length; i < item1.length; i++) {
+      item2.push(' ');
+    };
+  } else if (item2.length > item1.length) {
+    for (let i=item1.length; i < item2.length; i++) {
+      item1.push(' ');
+    };
+  };
+
+  const elements = [];
+  for (let i = 0; i < n; i++) {
+    elements.push(
+    <ReactDiffViewer 
+      oldValue={item2[i]}   
+      newValue={item1[i]}
+      showDiffOnly={true}
+      splitView={false}
+      hideLineNumbers={true}
+      disableWordDiff={true}
+      key={'diff-' + i}
+    />
+    );
+  };
+
+  return (
+  <div id='argo-contentwrap' className='ml-2 mb-2 mt-2 p-3 border rounded'>
+    <h6 className='mt-4 font-weight-bold text-uppercase'>{title}</h6>
+    {elements}
+  </div>
+  );
+};
