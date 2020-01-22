@@ -32,11 +32,11 @@ function GroupList(group, id, name) {
       this.state = {
         loading: false,
         list_groups: null
-      }
+      };
 
       this.location = props.location;
       this.backend = new Backend();
-  }
+  };
 
   componentDidMount() {
       this.setState({loading: true});
@@ -45,8 +45,9 @@ function GroupList(group, id, name) {
           this.setState({
             list_groups: json[group],
             loading: false
-          }))
-  }
+          })
+        );
+  };
 
   render() {
     const columns = [
@@ -54,7 +55,7 @@ function GroupList(group, id, name) {
         Header: name.charAt(0).toUpperCase() + name.slice(1),
         id: id,
         accessor: e =>
-          <Link to={'/ui/administration/' + id + '/' + e}>
+          <Link to={`/ui/administration/${id}/${e}`}>
             {e}
           </Link>
       }
@@ -75,16 +76,15 @@ function GroupList(group, id, name) {
               data={list_groups}
               columns={columns}
               className='-striped -highlight'
-              defaultPageSize={12}
+              defaultPageSize={20}
             />
         </BaseArgoView>
       );
-    }
-    else
+    } else
       return null;
-    }
-  }
-}
+    };
+  };
+};
 
 
 function GroupChange(gr, id, ttl) {
@@ -107,7 +107,7 @@ function GroupChange(gr, id, ttl) {
         modalFunc: undefined,
         modalTitle: undefined,
         modalMsg: undefined
-      }
+      };
   
       this.backend = new Backend();
   
@@ -118,7 +118,7 @@ function GroupChange(gr, id, ttl) {
       this.onSubmitHandle = this.onSubmitHandle.bind(this);
       this.doChange = this.doChange.bind(this);
       this.doDelete = this.doDelete.bind(this);
-    }
+    };
   
     handleDeselect(deSelectedItems) {
       var items = this.state.items.slice();
@@ -128,21 +128,21 @@ function GroupChange(gr, id, ttl) {
       });
       deSelectedItems.forEach(option => {
         if (nogroupitems.indexOf(option) === -1) {
-          nogroupitems.push(option)
-        }
+          nogroupitems.push(option);
+        };
       });
       this.setState({items, nogroupitems});
-    }
+    };
   
     handleSelect(items) {
-      items.sort((a, b) => a.id - b.id)
-      this.setState({items})
-    }
+      items.sort((a, b) => a.id - b.id);
+      this.setState({items});
+    };
   
     toggleAreYouSure() {
       this.setState(prevState => 
         ({areYouSureModal: !prevState.areYouSureModal}));
-    }
+    };
   
     toggleAreYouSureSetModal(msg, title, onyes) {
       this.setState(prevState => 
@@ -151,22 +151,22 @@ function GroupChange(gr, id, ttl) {
           modalMsg: msg,
           modalTitle: title,
         }));
-    }
+    };
   
     onSubmitHandle(values, action) {
       let msg = undefined;
       let title = undefined;
   
       if (this.addview) {
-        msg = 'Are you sure you want to add group of ' + ttl + '?';
-        title = 'Add group of ' + ttl;
+        msg = `Are you sure you want to add group of ${ttl}?`;
+        title = `Add group of ${ttl}`;
       } else {
-        msg = 'Are you sure you want to change group of ' + ttl + '?';
-        title = 'Change group of ' + ttl;
+        msg = `Are you sure you want to change group of ${ttl}?`;
+        title = `Change group of ${ttl}`;
       }
       this.toggleAreYouSureSetModal(msg, title, 
-        () => this.doChange(values, action))
-    }
+        () => this.doChange(values, action));
+    };
   
     doChange(values, action) {
       let items = [];
@@ -179,13 +179,12 @@ function GroupChange(gr, id, ttl) {
             name: values.name,
             items: items
           }
-        )
-        .then(() => NotifyOk({
-          msg: 'Group of ' + ttl + ' successfully changed',
+        ).then(() => NotifyOk({
+          msg: `Group of ${ttl} successfully changed`,
           title: 'Changed',
-          callback: () => this.history.push('/ui/administration/' + id)
+          callback: () => this.history.push(`/ui/administration/${id}`)
         }))
-        .catch(err => alert('Something went wrong: ' + err))
+        .catch(err => alert(`Something went wrong: ${err}`))
       } else {
         this.backend.addObject(
           `/api/v2/internal/${gr}group/`, 
@@ -195,22 +194,22 @@ function GroupChange(gr, id, ttl) {
           }
         )
         .then(() => NotifyOk({
-          msg:  'Group of ' + ttl + ' successfully added',
+          msg:  `Group of ${ttl} successfully added`,
           title: 'Added',
-          callback: () => this.history.push('/ui/administration/' + id)
+          callback: () => this.history.push(`/ui/administration/${id}`)
         }))
-        .catch(err => alert('Something went wrong: ' + err))
+        .catch(err => alert(`Something went wrong: ${err}`))
       }
     }
   
     doDelete(name) {
       this.backend.deleteObject(`/api/v2/internal/${gr}group/${name}`)
         .then(() => NotifyOk({
-          msg:  'Group of ' + ttl + ' successfully deleted',
+          msg:  `Group of ${ttl} successfully deleted`,
           title: 'Deleted',
-          callback: () => this.history.push('/ui/administration/' + id)
+          callback: () => this.history.push(`/ui/administration/${id}`)
         }))
-        .catch(err => alert('Something went wrong: ' + err))
+        .catch(err => alert(`Something went wrong: ${err}`))
     }
   
     componentDidMount() {
@@ -237,7 +236,7 @@ function GroupChange(gr, id, ttl) {
             });
           };
         });
-    }
+    };
   
     render() {
       const { name, items, write_perm, loading } = this.state;
@@ -247,15 +246,15 @@ function GroupChange(gr, id, ttl) {
         select: 'form-control',
         button: 'btn btn btn-block btn-primary',
         buttonActive: 'btn btn btn-block btn-primary'
-      }
+      };
   
       if (loading)
-        return(<LoadingAnim/>)
+        return(<LoadingAnim/>);
   
       else if (!loading) {
         return(
           <BaseArgoView
-            resourcename={'group of ' + ttl}
+            resourcename={`group of ${ttl}`}
             location={this.location}
             addview={this.addview}
             history={false}
@@ -322,25 +321,36 @@ function GroupChange(gr, id, ttl) {
                     {
                     (write_perm) &&
                       <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
+                        {
+                          !this.addview ?
+                            <Button 
+                              color="danger"
+                              onClick={() => {
+                                this.toggleAreYouSureSetModal(`Are you sure you want to delete group of ${gr}?`,
+                                `Delete group of ${gr}`,
+                                () => this.doDelete(props.values.name))
+                              }}
+                            >
+                              Delete
+                            </Button>
+                          :
+                            <div></div>
+                        }
                         <Button 
-                          color="danger"
-                          onClick={() => {
-                            this.toggleAreYouSureSetModal('Are you sure you want to delete group of ' + gr + '?',
-                            'Delete group of ' + gr,
-                            () => this.doDelete(props.values.name))
-                          }}
+                          color="success" 
+                          id="submit-button" 
+                          type="submit"
                         >
-                          Delete
+                          Save
                         </Button>
-                        <Button color="success" id="submit-button" type="submit">Save</Button>
                       </div>
                   }
                   </Form>
                 )}
               />
             </BaseArgoView>
-        )
-      }
-    }
-  }
-}
+        );
+      };
+    };
+  };
+};
