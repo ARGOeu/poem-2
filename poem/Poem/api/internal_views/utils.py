@@ -28,13 +28,18 @@ def two_value_inline(input):
     return results
 
 
-def inline_metric_for_db(input):
+def inline_metric_for_db(data):
     result = []
 
-    for item in input:
-        result.append('{} {}'.format(item['key'], item['value']))
+    for item in data:
+        if item['key']:
+            result.append('{} {}'.format(item['key'], item['value']))
 
-    return result
+    if result:
+        return json.dumps(result)
+
+    else:
+        return ''
 
 
 def two_value_inline_dict(input):

@@ -15,31 +15,24 @@ class ListVersions(APIView):
     authentication_classes = (SessionAuthentication,)
 
     def get(self, request, obj, name=None):
-        models = {
-            'probe': admin_models.Probe,
-            'metrictemplate': admin_models.MetricTemplate
-        }
-
         history_model = {
             'probe': admin_models.ProbeHistory,
             'metrictemplate': admin_models.MetricTemplateHistory
         }
 
         if name:
-            try:
-                instance = models[obj].objects.get(name=name)
-            except models[obj].DoesNotExist:
-                raise NotFound(status=404,
-                               detail='{} not found'.format(obj.capitalize()))
+            history_instance = history_model[obj].objects.filter(name=name)
 
-            vers = history_model[obj].objects.filter(
-                object_id=instance
-            ).order_by('-date_created')
-
-            if vers.count() == 0:
+            if history_instance.count() == 0:
                 raise NotFound(status=404, detail='Version not found')
 
             else:
+                instance = history_instance[0].object_id
+
+                vers = history_model[obj].objects.filter(
+                    object_id=instance
+                ).order_by('-date_created')
+
                 results = []
                 for ver in vers:
                     if isinstance(instance, admin_models.Probe):
