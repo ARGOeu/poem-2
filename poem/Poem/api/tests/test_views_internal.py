@@ -3633,11 +3633,151 @@ class ListVersionsAPIViewTests(TenantTestCase):
             ]
         )
 
+    def test_get_versions_of_probes_given_old_version_name(self):
+        request = self.factory.get(self.url + 'probe/poem-probe')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'probe', 'poem-probe')
+        self.assertEqual(
+            response.data,
+            [
+                {
+                    'id': self.ver2.id,
+                    'object_repr': 'poem-probe-new (0.1.11)',
+                    'fields': {
+                        'name': 'poem-probe-new',
+                        'version': '0.1.11',
+                        'package': 'nagios-plugins-argo (0.1.11)',
+                        'description': 'Probe inspects new POEM service.',
+                        'comment': 'This version added: Check POEM metric '
+                                   'configuration API',
+                        'repository': 'https://github.com/ARGOeu/nagios-'
+                                      'plugins-argo2',
+                        'docurl': 'https://github.com/ARGOeu/nagios-plugins-'
+                                  'argo2/blob/master/README.md'
+                    },
+                    'user': 'testuser',
+                    'date_created': datetime.datetime.strftime(
+                            self.ver2.date_created, '%Y-%m-%d %H:%M:%S'
+                        ),
+                    'comment': 'Changed name, comment, description, '
+                               'repository and docurl.',
+                    'version': '0.1.11'
+                },
+                {
+                    'id': self.ver1.id,
+                    'object_repr': 'poem-probe (0.1.7)',
+                    'fields': {
+                        'name': 'poem-probe',
+                        'version': '0.1.7',
+                        'package': 'nagios-plugins-argo (0.1.7)',
+                        'description': 'Probe inspects POEM service.',
+                        'comment': 'Initial version.',
+                        'repository': 'https://github.com/ARGOeu/nagios-'
+                                      'plugins-argo',
+                        'docurl': 'https://github.com/ARGOeu/nagios-plugins-'
+                                  'argo/blob/master/README.md'
+                    },
+                    'user': 'testuser',
+                    'date_created': datetime.datetime.strftime(
+                        self.ver1.date_created, '%Y-%m-%d %H:%M:%S'
+                    ),
+                    'comment': 'Initial version.',
+                    'version': '0.1.7'
+                }
+            ]
+        )
+
     def test_get_versions_of_metric_template(self):
         request = self.factory.get(self.url +
                                    'metrictemplate/argo.POEM-API-MON-new')
         force_authenticate(request, user=self.user)
         response = self.view(request, 'metrictemplate', 'argo.POEM-API-MON-new')
+        self.assertEqual(
+            response.data,
+            [
+                {
+                    'id': self.ver5.id,
+                    'object_repr':
+                        'argo.POEM-API-MON-new [poem-probe-new (0.1.11)]',
+                    'fields': {
+                        'name': 'argo.POEM-API-MON-new',
+                        'mtype': self.mtype1.name,
+                        'probeversion': 'poem-probe-new (0.1.11)',
+                        'parent': '',
+                        'probeexecutable': 'poem-probe',
+                        'config': [
+                            {'key': 'maxCheckAttempts', 'value': '3'},
+                            {'key': 'timeout', 'value': '60'},
+                            {'key': 'path',
+                             'value':
+                                 '/usr/libexec/argo-monitoring/probes/argo'},
+                            {'key': 'interval', 'value': '5'},
+                            {'key': 'retryInterval', 'value': '5'}
+                        ],
+                        'attribute': [
+                            {'key': 'POEM_PROFILE', 'value': '-r'},
+                            {'key': 'NAGIOS_HOST_CERT', 'value': '--cert'},
+                            {'key': 'NAGIOS_HOST_KEY', 'value': '--key'},
+                        ],
+                        'dependency': [],
+                        'flags': [],
+                        'files': [],
+                        'parameter': [],
+                        'fileparameter': []
+                    },
+                    'user': 'testuser',
+                    'date_created': datetime.datetime.strftime(
+                        self.ver5.date_created, '%Y-%m-%d %H:%M:%S'
+                    ),
+                    'comment': 'Changed name and probekey.',
+                    'version': '0.1.11'
+                },
+                {
+                    'id': self.ver4.id,
+                    'object_repr':
+                        'argo.POEM-API-MON [poem-probe (0.1.7)]',
+                    'fields': {
+                        'name': 'argo.POEM-API-MON',
+                        'mtype': self.mtype1.name,
+                        'probeversion': 'poem-probe (0.1.7)',
+                        'parent': '',
+                        'probeexecutable': 'poem-probe',
+                        'config': [
+                            {'key': 'maxCheckAttempts', 'value': '3'},
+                            {'key': 'timeout', 'value': '60'},
+                            {'key': 'path',
+                             'value':
+                                 '/usr/libexec/argo-monitoring/probes/argo'},
+                            {'key': 'interval', 'value': '5'},
+                            {'key': 'retryInterval', 'value': '5'}
+                        ],
+                        'attribute': [
+                            {'key': 'POEM_PROFILE', 'value': '-r'},
+                            {'key': 'NAGIOS_HOST_CERT', 'value': '--cert'},
+                            {'key': 'NAGIOS_HOST_KEY', 'value': '--key'},
+                        ],
+                        'dependency': [],
+                        'flags': [],
+                        'files': [],
+                        'parameter': [],
+                        'fileparameter': []
+                    },
+                    'user': 'testuser',
+                    'date_created': datetime.datetime.strftime(
+                        self.ver4.date_created, '%Y-%m-%d %H:%M:%S'
+                    ),
+                    'comment': 'Initial version.',
+                    'version': '0.1.7'
+                }
+            ]
+        )
+
+    def test_get_versions_of_metric_template_given_old_version_name(self):
+        request = self.factory.get(self.url +
+                                   'metrictemplate/argo.POEM-API-MON')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'metrictemplate',
+                             'argo.POEM-API-MON')
         self.assertEqual(
             response.data,
             [
@@ -3794,13 +3934,6 @@ class ListVersionsAPIViewTests(TenantTestCase):
         response = self.view(request, 'probe', 'ams-probe')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(response.data, {'detail': 'Version not found'})
-
-    def test_get_nonexisting_probe(self):
-        request = self.factory.get(self.url + 'probe/nonexisting')
-        force_authenticate(request, user=self.user)
-        response = self.view(request, 'probe', 'nonexisting')
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertEqual(response.data, {'detail': 'Probe not found'})
 
     def test_get_all_probe_versions(self):
         request = self.factory.get(self.url + 'probe/')
