@@ -1348,8 +1348,18 @@ export class MetricChange extends Component {
       '/api/v2/internal/metric/',
       {
         name: values.name,
+        mtype: values.type,
         group: values.group,
-        config: values.config
+        parent: values.parent,
+        probeversion: values.probeversion,
+        probeexecutable: values.probeexecutable,
+        config: values.config,
+        attribute: values.attributes,
+        dependancy: values.dependency,
+        flags: values.flags,
+        files: values.file_attributes,
+        parameter: values.parameter,
+        fileparameter: values.file_parameters
       }
     ).then(() => NotifyOk({
         msg: 'Metric successfully changed',
