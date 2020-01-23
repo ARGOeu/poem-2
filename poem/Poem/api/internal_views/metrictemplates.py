@@ -4,7 +4,8 @@ from django.db import IntegrityError
 
 import json
 
-from Poem.api.internal_views.utils import one_value_inline, two_value_inline
+from Poem.api.internal_views.utils import one_value_inline, two_value_inline, \
+    inline_metric_for_db
 from Poem.api.views import NotFound
 from Poem.helpers.history_helpers import create_history
 from Poem.poem.models import Metric, TenantHistory
@@ -17,19 +18,6 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from tenant_schemas.utils import get_public_schema_name, schema_context
-
-
-def inline_metric_for_db(data):
-    result = []
-
-    for item in data:
-        if item['key']:
-            result.append('{} {}'.format(item['key'], item['value']))
-
-    if result:
-        return json.dumps(result)
-    else:
-        return ''
 
 
 def update_metrics(metrictemplate, name):
