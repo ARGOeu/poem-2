@@ -1,10 +1,10 @@
 import React, { Component } from 'react';
 import { ListOfMetrics, MetricForm, CompareMetrics } from './Metrics';
 import { Backend } from './DataManager';
-import { 
-  LoadingAnim, 
-  BaseArgoView, 
-  NotifyOk, 
+import {
+  LoadingAnim,
+  BaseArgoView,
+  NotifyOk,
   HistoryComponent
 } from './UIElements';
 import { Formik, Form } from 'formik';
@@ -83,12 +83,12 @@ function MetricTemplateComponent(cloneview=false) {
     }
 
     toggleAreYouSure() {
-      this.setState(prevState => 
+      this.setState(prevState =>
         ({areYouSureModal: !prevState.areYouSureModal}));
     }
-  
+
     toggleAreYouSureSetModal(msg, title, onyes) {
-      this.setState(prevState => 
+      this.setState(prevState =>
         ({areYouSureModal: !prevState.areYouSureModal,
           modalFunc: onyes,
           modalMsg: msg,
@@ -100,7 +100,7 @@ function MetricTemplateComponent(cloneview=false) {
       let metrictemplate = this.state.metrictemplate;
       metrictemplate[field] = value;
       this.setState({
-        metrictemplate: metrictemplate      
+        metrictemplate: metrictemplate
       });
     }
 
@@ -115,7 +115,7 @@ function MetricTemplateComponent(cloneview=false) {
         msg = 'Are you sure you want to change metric template?';
         title = 'Change metric template';
       }
-  
+
       this.toggleAreYouSureSetModal(msg, title,
         () => this.doChange(values, actions))
     }
@@ -239,7 +239,7 @@ function MetricTemplateComponent(cloneview=false) {
                 if (metrictemplate.fileparameter.length === 0) {
                   metrictemplate.fileparameter = [{'key': '', 'value': ''}];
                 }
-                
+
                 metrictemplate.probeversion ?
                   this.backend.fetchData(`/api/v2/internal/version/probe/${metrictemplate.probeversion.split(' ')[0]}`)
                     .then(probe => {
@@ -303,10 +303,10 @@ function MetricTemplateComponent(cloneview=false) {
 
     render() {
       const { metrictemplate, types, probeversions, metrictemplatelist, loading, write_perm } = this.state;
-  
+
       if (loading)
         return (<LoadingAnim/>)
-      
+
       else if (!loading && metrictemplate) {
         return (
           <BaseArgoView
@@ -321,7 +321,7 @@ function MetricTemplateComponent(cloneview=false) {
             toggle={this.toggleAreYouSure}
             submitperm={write_perm}
           >
-            <Formik 
+            <Formik
               initialValues = {{
                 id: metrictemplate.id,
                 name: metrictemplate.name,
@@ -376,7 +376,7 @@ function MetricTemplateComponent(cloneview=false) {
                   }
                 </Form>
               )}
-            />        
+            />
           </BaseArgoView>
         )
       } else {
@@ -441,17 +441,17 @@ export class MetricTemplateVersionDetails extends Component {
   }
 
   render() {
-    const { name, probeversion, type, probeexecutable, parent, config, 
-      attribute, dependency, parameter, flags, files, fileparameter, 
+    const { name, probeversion, type, probeexecutable, parent, config,
+      attribute, dependency, parameter, flags, files, fileparameter,
       loading } = this.state;
-    
+
     if (loading)
     return (<LoadingAnim/>);
 
     else if (!loading && name) {
       return (
         <BaseArgoView
-          resourcename={`${name} [${probeversion}]`}
+          resourcename={`${name} ${probeversion && `[${probeversion}]`}`}
           infoview={true}
         >
           <Formik
