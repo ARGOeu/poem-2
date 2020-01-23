@@ -466,8 +466,8 @@ export class MetricTemplateVersionDetails extends Component {
               dependency: dependency,
               parameter: parameter,
               flags: flags,
-              files: files,
-              fileparameter: fileparameter
+              file_attributes: files,
+              file_parameters: fileparameter
             }}
             render = {props => (
               <Form>
