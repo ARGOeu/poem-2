@@ -20,14 +20,14 @@ from rest_framework.views import APIView
 from tenant_schemas.utils import get_public_schema_name, schema_context
 
 
-def update_metrics(metrictemplate, name):
+def update_metrics(metrictemplate, name, probekey):
     schemas = list(Tenant.objects.all().values_list('schema_name', flat=True))
     schemas.remove(get_public_schema_name())
 
     for schema in schemas:
         with schema_context(schema):
             try:
-                met = Metric.objects.get(name=name)
+                met = Metric.objects.get(name=name, probekey=probekey)
                 met.name = metrictemplate.name
                 met.probeexecutable = metrictemplate.probeexecutable
                 met.parent = metrictemplate.parent
@@ -290,7 +290,7 @@ class ListMetricTemplates(APIView):
                     pk=request.data['id']
                 )
 
-                update_metrics(mt, old_name)
+                update_metrics(mt, old_name, old_probekey)
 
             return Response(status=status.HTTP_201_CREATED)
 
