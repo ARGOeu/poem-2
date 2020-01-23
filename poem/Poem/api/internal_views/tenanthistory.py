@@ -46,14 +46,19 @@ class ListTenantVersions(APIView):
                             ver.date_created, '%Y%m%d-%H%M%S'
                         )
                         fields0 = json.loads(ver.serialized_data)[0]['fields']
+
+                        if fields0['probekey']:
+                            probeversion = '{} ({})'.format(
+                                fields0['probekey'][0], fields0['probekey'][1]
+                            )
+                        else:
+                            probeversion = ''
+
                         fields = {
                             'name': fields0['name'],
                             'mtype': fields0['mtype'][0],
                             'group': fields0['group'][0],
-                            'probeversion': '{} ({})'.format(
-                                fields0['probekey'][0],
-                                fields0['probekey'][1]
-                            ),
+                            'probeversion': probeversion,
                             'parent': one_value_inline(fields0['parent']),
                             'probeexecutable': one_value_inline(
                                 fields0['probeexecutable']

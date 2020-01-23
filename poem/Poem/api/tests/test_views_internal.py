@@ -5237,6 +5237,8 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
         )
 
         self.mtype1 = poem_models.MetricType.objects.create(name='Active')
+        self.mtype2 = poem_models.MetricType.objects.create(name='Passive')
+
         group1 = poem_models.GroupOfMetrics.objects.create(name='EGI')
         group2 = poem_models.GroupOfMetrics.objects.create(name='TEST')
 
@@ -5314,6 +5316,27 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
             content_type=ct_m,
             date_created=datetime.datetime.now(),
             comment=comment,
+            user=self.user.username
+        )
+
+        self.metric2 = poem_models.Metric.objects.create(
+            name='org.apel.APEL-Pub',
+            mtype=self.mtype2,
+            group=group1,
+            flags='["OBSESS 1", "PASSIVE 1"]'
+        )
+
+        self.ver3 = poem_models.TenantHistory.objects.create(
+            object_id=self.metric2.id,
+            serialized_data=serializers.serialize(
+                'json', [self.metric2],
+                use_natural_foreign_keys=True,
+                use_natural_primary_keys=True
+            ),
+            object_repr=self.metric2.__str__(),
+            content_type=ct_m,
+            date_created=datetime.datetime.now(),
+            comment='Initial version.',
             user=self.user.username
         )
 
@@ -5406,6 +5429,46 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
                     'comment': 'Initial version.',
                     'version': datetime.datetime.strftime(
                         self.ver1.date_created, '%Y%m%d-%H%M%S'
+                    )
+                }
+            ]
+        )
+
+    def test_get_passive_metric_version(self):
+        request = self.factory.get(self.url + 'metric/org.apel.APEL-Pub')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'metric', 'org.apel.APEL-Pub')
+        self.assertEqual(
+            response.data,
+            [
+                {
+                    'id': self.ver3.id,
+                    'object_repr': 'org.apel.APEL-Pub',
+                    'fields': {
+                        'name': 'org.apel.APEL-Pub',
+                        'mtype': self.mtype2.name,
+                        'group': 'EGI',
+                        'probeversion': '',
+                        'parent': '',
+                        'probeexecutable': '',
+                        'config': [],
+                        'attribute': [],
+                        'dependancy': [],
+                        'flags': [
+                            {'key': 'OBSESS', 'value': '1'},
+                            {'key': 'PASSIVE', 'value': '1'}
+                        ],
+                        'files': [],
+                        'parameter': [],
+                        'fileparameter': []
+                    },
+                    'user': 'testuser',
+                    'date_created': datetime.datetime.strftime(
+                        self.ver3.date_created, '%Y-%m-%d %H:%M:%S'
+                    ),
+                    'comment': 'Initial version.',
+                    'version': datetime.datetime.strftime(
+                        self.ver2.date_created, '%Y%m%d-%H%M%S'
                     )
                 }
             ]
