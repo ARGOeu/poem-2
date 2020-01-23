@@ -75,6 +75,47 @@ class ListTenantVersions(APIView):
                             )
                         }
 
+                    try:
+                        comment = []
+                        untracked_fields = [
+                            'name', 'mtype', 'parent', 'probeexecutable',
+                            'attribute', 'dependancy', 'flags', 'files',
+                            'parameter', 'fileparameter'
+                        ]
+                        for item in json.loads(ver.comment):
+                            if 'changed' in item:
+                                action = 'changed'
+
+                            elif 'added' in item:
+                                action = 'added'
+
+                            else:
+                                action = 'deleted'
+
+                            if 'object' not in item[action]:
+                                new_fields = []
+                                for field in item[action]['fields']:
+                                    if field not in untracked_fields:
+                                        new_fields.append(field)
+
+                                if new_fields:
+                                    comment.append(
+                                        {action: {'fields': new_fields}}
+                                    )
+
+                            else:
+                                if item[action]['fields'][0] not in \
+                                        untracked_fields:
+                                    if item[action]['fields'][0] == 'config':
+                                        if 'path' in item[action]['object']:
+                                            item[action]['object'].remove('path')
+                                    comment.append(item)
+
+                        comment = json.dumps(comment)
+
+                    except json.JSONDecodeError:
+                        comment = ver.comment
+
                     results.append(dict(
                         id=ver.id,
                         object_repr=ver.object_repr,
@@ -83,7 +124,7 @@ class ListTenantVersions(APIView):
                         date_created=datetime.datetime.strftime(
                             ver.date_created, '%Y-%m-%d %H:%M:%S'
                         ),
-                        comment=new_comment(ver.comment),
+                        comment=new_comment(comment),
                         version=version
                     ))
 

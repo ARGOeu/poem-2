@@ -8,7 +8,7 @@ from django.test.client import encode_multipart
 import json
 
 from Poem.api import views_internal as views
-from Poem.api.internal_views.metrics import inline_metric_for_db
+from Poem.api.internal_views.utils import inline_metric_for_db
 from Poem.api.models import MyAPIKey
 from Poem.helpers.history_helpers import create_comment
 from Poem.poem import models as poem_models
@@ -5056,6 +5056,12 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
         )
         package1.repos.add(repo)
 
+        package2 = admin_models.Package.objects.create(
+            name='nagios-plugins-argo',
+            version='0.1.11'
+        )
+        package2.repos.add(repo)
+
         probe1 = admin_models.Probe.objects.create(
             name='ams-probe',
             package=package1,
@@ -5068,7 +5074,7 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
 
         ct_m = ContentType.objects.get_for_model(poem_models.Metric)
 
-        self.ver1 = admin_models.ProbeHistory.objects.create(
+        self.probever1 = admin_models.ProbeHistory.objects.create(
             object_id=probe1,
             name=probe1.name,
             package=probe1.package,
@@ -5081,14 +5087,31 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
             version_user=self.user.username
         )
 
+        probe1.package = package2
+        probe1.save()
+
+        self.probever2 = admin_models.ProbeHistory.objects.create(
+            object_id=probe1,
+            name=probe1.name,
+            package=probe1.package,
+            description=probe1.description,
+            comment=probe1.comment,
+            repository=probe1.repository,
+            docurl=probe1.docurl,
+            date_created=datetime.datetime.now(),
+            version_comment='Changed package.',
+            version_user=self.user.username
+        )
+
         self.mtype1 = poem_models.MetricType.objects.create(name='Active')
         group1 = poem_models.GroupOfMetrics.objects.create(name='EGI')
+        group2 = poem_models.GroupOfMetrics.objects.create(name='TEST')
 
         self.metric1 = poem_models.Metric.objects.create(
             name='argo.AMS-Check',
             mtype=self.mtype1,
             group=group1,
-            probekey=self.ver1,
+            probekey=self.probever1,
             probeexecutable='["ams-probe"]',
             config='["maxCheckAttempts 3", "timeout 60",'
                    ' "path /usr/libexec/argo-monitoring/probes/argo",'
@@ -5102,7 +5125,7 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
             name='test.AMS-Check',
             mtype=self.mtype1,
             group=group1,
-            probekey=self.ver1,
+            probekey=self.probever1,
             probeexecutable='["ams-probe"]',
             config='["maxCheckAttempts 3", "timeout 60",'
                    ' "path /usr/libexec/argo-monitoring/probes/argo",'
@@ -5128,11 +5151,25 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
 
         self.metric1.name = 'argo.AMS-Check-new'
         self.metric1.probeexecutable = '["ams-probe-2"]'
-        self.metric1.config = '["maxCheckAttempts 4", "timeout 60",'\
-                              ' "path /usr/libexec/argo-monitoring/probes/' \
-                              'argo", "interval 5", "retryInterval 3"]'
+        self.metric1.probekey = self.probever2
+        self.metric1.group = group2
+        self.metric1.parent = '["new-parent"]'
+        self.metric1.config = '["maxCheckAttempts 4", "timeout 70", ' \
+                              '"path /usr/libexec/argo-monitoring/' \
+                              'probes/argo2", "interval 5", "retryInterval 4"]'
+        self.metric1.attribute = '["argo.ams_TOKEN2 --token"]'
+        self.metric1.dependancy = '["new-key new-value"]'
+        self.metric1.flags = ''
+        self.metric1.parameter = ''
+        self.metric1.fileparameter = '["new-key new-value"]'
         self.metric1.save()
 
+        comment = create_comment(
+            self.metric1, ct=ct_m, new_serialized_data=serializers.serialize(
+                'json', [self.metric1], use_natural_foreign_keys=True,
+                use_natural_primary_keys=True
+            )
+        )
         self.ver2 = poem_models.TenantHistory.objects.create(
             object_id=self.metric1.id,
             serialized_data=serializers.serialize(
@@ -5143,9 +5180,7 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
             object_repr=self.metric1.__str__(),
             content_type=ct_m,
             date_created=datetime.datetime.now(),
-            comment='[{"changed": {"fields": ["probeexecutable"]}}, '
-                    '{"changed": {"fields": ["config"], "object": '
-                    '["maxCheckAttempts"]}}]',
+            comment=comment,
             user=self.user.username
         )
 
@@ -5162,38 +5197,39 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
                     'fields': {
                         'name': 'argo.AMS-Check-new',
                         'mtype': self.mtype1.name,
-                        'group': 'EGI',
-                        'probeversion': 'ams-probe (0.1.7)',
-                        'parent': '',
+                        'group': 'TEST',
+                        'probeversion': 'ams-probe (0.1.11)',
+                        'parent': 'new-parent',
                         'probeexecutable': 'ams-probe-2',
                         'config': [
                             {'key': 'maxCheckAttempts', 'value': '4'},
-                            {'key': 'timeout', 'value': '60'},
+                            {'key': 'timeout', 'value': '70'},
                             {'key': 'path',
                              'value':
-                                 '/usr/libexec/argo-monitoring/probes/argo'},
+                                 '/usr/libexec/argo-monitoring/probes/argo2'},
                             {'key': 'interval', 'value': '5'},
-                            {'key': 'retryInterval', 'value': '3'}
+                            {'key': 'retryInterval', 'value': '4'}
                         ],
                         'attribute': [
-                            {'key': 'argo.ams_TOKEN', 'value': '--token'}
+                            {'key': 'argo.ams_TOKEN2', 'value': '--token'}
                         ],
-                        'dependancy': [],
-                        'flags': [
-                            {'key': 'OBSESS', 'value': '1'}
+                        'dependancy': [
+                            {'key': 'new-key', 'value': 'new-value'}
                         ],
+                        'flags': [],
                         'files': [],
-                        'parameter': [
-                            {'key': '--project', 'value': 'EGI'}
-                        ],
-                        'fileparameter': []
+                        'parameter': [],
+                        'fileparameter': [
+                            {'key': 'new-key', 'value': 'new-value'}
+                        ]
                     },
                     'user': 'testuser',
                     'date_created': datetime.datetime.strftime(
                         self.ver2.date_created, '%Y-%m-%d %H:%M:%S'
                     ),
-                    'comment': 'Changed probeexecutable. Changed '
-                               'config fields "maxCheckAttempts".',
+                    'comment': 'Changed config fields "maxCheckAttempts, '
+                               'timeout and retryInterval". Changed probekey '
+                               'and group.',
                     'version': datetime.datetime.strftime(
                         self.ver2.date_created, '%Y%m%d-%H%M%S'
                     )
