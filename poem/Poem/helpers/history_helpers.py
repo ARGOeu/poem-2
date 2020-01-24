@@ -232,3 +232,28 @@ def create_comment(instance, ct=None, new_serialized_data=None):
         old_data = ''
 
     return analyze_differences(old_data, new_data)
+
+
+def update_comment(instance):
+    if isinstance(instance, admin_models.Probe):
+        history_model = admin_models.ProbeHistory
+
+    else:
+        history_model = admin_models.MetricTemplateHistory
+
+    history = history_model.objects.filter(object_id=instance)\
+        .order_by('-date_created')
+
+    new_data = to_dict(instance)
+    if isinstance(instance, admin_models.Probe):
+        del new_data['user'], new_data['datetime']
+
+    if len(history) > 1:
+        old_data = to_dict(history[1])
+        del old_data['object_id'], old_data['version_comment'], \
+            old_data['version_user'], old_data['date_created']
+
+    else:
+        old_data = ''
+
+    return analyze_differences(old_data, new_data)

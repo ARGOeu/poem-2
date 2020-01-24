@@ -7,7 +7,8 @@ import json
 from Poem.api.internal_views.utils import one_value_inline, two_value_inline, \
     inline_metric_for_db
 from Poem.api.views import NotFound
-from Poem.helpers.history_helpers import create_history
+from Poem.helpers.history_helpers import create_history, create_comment, \
+    update_comment
 from Poem.poem.models import Metric, TenantHistory
 from Poem.poem_super_admin import models as admin_models
 from Poem.tenants.models import Tenant
@@ -281,6 +282,14 @@ class ListMetricTemplates(APIView):
                 admin_models.MetricTemplate.objects.filter(
                     id=request.data['id']
                 ).update(**new_data)
+
+                new_data.update({
+                    'version_comment': update_comment(
+                        admin_models.MetricTemplate.objects.get(
+                            id=request.data['id']
+                        )
+                    )
+                })
 
                 admin_models.MetricTemplateHistory.objects.filter(
                     name=old_name, probekey=old_probekey
