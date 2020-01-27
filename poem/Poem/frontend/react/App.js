@@ -2,15 +2,15 @@ import React, { Component } from 'react';
 import Login from './Login';
 import { MetricProfilesChange, MetricProfilesList } from './MetricProfiles';
 import Home from './Home';
-import { ProbeList, ProbeChange, ProbeHistory, ProbeVersionCompare, ProbeVersionDetails } from './Probes';
+import { ProbeList, ProbeChange, ProbeHistory, ProbeVersionCompare, ProbeVersionDetails, ProbeClone } from './Probes';
 import { MetricList, MetricChange, MetricHistory, MetricVersonCompare, MetricVersionDetails } from './Metrics';
-import { 
-  MetricTemplateList, 
-  MetricTemplateChange, 
-  MetricTemplateClone, 
-  TenantMetricTemplateList, 
-  MetricTemplateHistory, 
-  MetricTemplateVersionCompare, 
+import {
+  MetricTemplateList,
+  MetricTemplateChange,
+  MetricTemplateClone,
+  TenantMetricTemplateList,
+  MetricTemplateHistory,
+  MetricTemplateVersionCompare,
   MetricTemplateVersionDetails,
   TenantMetricTemplateHistory
 } from './MetricTemplates';
@@ -19,12 +19,12 @@ import { AggregationProfilesChange, AggregationProfilesList } from './Aggregatio
 import Reports from './Reports';
 import Services from './Services';
 import { UsersList, UserChange, SuperAdminUserChange } from './Users';
-import { 
-  GroupOfMetricsList, 
-  GroupOfMetricsChange, 
-  GroupOfAggregationsList, 
-  GroupOfAggregationsChange, 
-  GroupOfMetricProfilesList, 
+import {
+  GroupOfMetricsList,
+  GroupOfMetricsChange,
+  GroupOfAggregationsList,
+  GroupOfAggregationsChange,
+  GroupOfMetricProfilesList,
   GroupOfMetricProfilesChange,
   GroupOfThresholdsProfilesList,
   GroupOfThresholdsProfilesChange
@@ -66,16 +66,16 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, t
     <Route exact path="/ui/metrics/:name/history/:version" render={props => <MetricVersionDetails {...props}/>}/>
     <Route exact path="/ui/metrics/:name" render={props => <MetricChange {...props}/>}/>
     <Route exact path="/ui/metricprofiles" component={MetricProfilesList} />
-    <Route exact path="/ui/metricprofiles/add" 
-      render={props => <MetricProfilesChange 
+    <Route exact path="/ui/metricprofiles/add"
+      render={props => <MetricProfilesChange
         {...props}
         webapimetric={webApiMetric}
         webapitoken={token}
         tenantname={tenantName}
         addview={true}/>}
       />
-    <Route exact path="/ui/metricprofiles/:name" 
-      render={props => <MetricProfilesChange 
+    <Route exact path="/ui/metricprofiles/:name"
+      render={props => <MetricProfilesChange
         {...props}
         webapimetric={webApiMetric}
         webapitoken={token}
@@ -83,21 +83,21 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, t
       />
     <Route exact path="/ui/aggregationprofiles" component={AggregationProfilesList} />
     <Route exact path="/ui/aggregationprofiles/add"
-      render={props => <AggregationProfilesChange 
-        {...props} 
-        webapiaggregation={webApiAggregation} 
+      render={props => <AggregationProfilesChange
+        {...props}
+        webapiaggregation={webApiAggregation}
         webapimetric={webApiMetric}
         webapitoken={token}
         tenantname={tenantName}
-        addview={true}/>} 
+        addview={true}/>}
       />
-    <Route exact path="/ui/aggregationprofiles/:name" 
-      render={props => <AggregationProfilesChange 
-        {...props} 
-        webapiaggregation={webApiAggregation} 
+    <Route exact path="/ui/aggregationprofiles/:name"
+      render={props => <AggregationProfilesChange
+        {...props}
+        webapiaggregation={webApiAggregation}
         webapimetric={webApiMetric}
         webapitoken={token}
-        tenantname={tenantName}/>} 
+        tenantname={tenantName}/>}
       />
     <Route exact path="/ui/administration" component={TenantAdministration} />
     <Route exact path="/ui/administration/users" component={UsersList} />
@@ -137,7 +137,7 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, t
       render={props => <GroupOfMetricProfilesChange {...props}/>}
     />
     <Route exact path="/ui/administration/apikey" component={APIKeyList} />
-    <Route exact path="/ui/administration/apikey/add"  
+    <Route exact path="/ui/administration/apikey/add"
       render={props => <APIKeyChange {...props} addview={true}/>}
     />
     <Route exact path='/ui/administration/metrictemplates/' component={TenantMetricTemplateList}/>
@@ -147,11 +147,11 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, t
     <Route exact path='/ui/administration/metrictemplates/:name/history' render={props => <TenantMetricTemplateHistory {...props}/>}/>
     <Route exact path='/ui/administration/metrictemplates/:name/history/compare/:id1/:id2' render={props => <MetricTemplateVersionCompare {...props}/>}/>
     <Route exact path='/ui/administration/metrictemplates/:name/history/:version' render={props => <MetricTemplateVersionDetails {...props}/>}/>
-    <Route exact path="/ui/administration/apikey/:name"  
+    <Route exact path="/ui/administration/apikey/:name"
       render={props => <APIKeyChange {...props} />}
     />
     <Route exact path='/ui/administration/yumrepos/' component={YumRepoList}/>
-    <Route exact path='/ui/administration/yumrepos/:name' 
+    <Route exact path='/ui/administration/yumrepos/:name'
       render={props => <YumRepoChange {...props} disabled={true}/>}
     />
     <Route exact path="/ui/administration/groupofthresholdsprofiles" component={GroupOfThresholdsProfilesList} />
@@ -164,17 +164,17 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, t
       render={props => <GroupOfThresholdsProfilesChange {...props}/>}
     />
     <Route exact path="/ui/thresholdsprofiles" component={ThresholdsProfilesList} />
-    <Route exact path="/ui/thresholdsprofiles/add" 
-      render={props => <ThresholdsProfilesChange 
-        {...props} 
+    <Route exact path="/ui/thresholdsprofiles/add"
+      render={props => <ThresholdsProfilesChange
+        {...props}
         webapithresholds={webApiThresholds}
         webapitoken={token}
         tenantname={tenantName}
         addview={true}/>}
     />
-    <Route exact path="/ui/thresholdsprofiles/:name" 
-      render={props => <ThresholdsProfilesChange 
-        {...props} 
+    <Route exact path="/ui/thresholdsprofiles/:name"
+      render={props => <ThresholdsProfilesChange
+        {...props}
         webapithresholds={webApiThresholds}
         webapitoken={token}
         tenantname={tenantName}/>}
@@ -190,6 +190,7 @@ const SuperAdminRouteSwitch = ({props}) => (
     <Route exact path="/ui/home" component={Home} />
     <Route exact path="/ui/probes" component={ProbeList} />
     <Route exact path="/ui/probes/add" render={props => <ProbeChange {...props} addview={true}/>}/>
+    <Route exact path='/ui/probes/:name/clone' render={props => <ProbeClone {...props}/>}/>
     <Route exact path="/ui/probes/:name/history" render={props => <ProbeHistory {...props}/>}/>
     <Route exact path="/ui/probes/:name/history/compare/:id1/:id2" render={props => <ProbeVersionCompare {...props}/>}/>
     <Route exact path="/ui/probes/:name/history/:version" render={props => <ProbeVersionDetails {...props}/>}/>
@@ -231,7 +232,7 @@ class App extends Component {
 
     this.state = {
       isLogged: localStorage.getItem('authIsLogged') ? true : false,
-      isSessionActive: undefined, 
+      isSessionActive: undefined,
       areYouSureModal: false,
       webApiAggregation: undefined,
       webApiMetric: undefined,
@@ -253,13 +254,13 @@ class App extends Component {
     localStorage.setItem('authFirstName', json.first_name);
     localStorage.setItem('authLastName', json.last_name);
     localStorage.setItem('authIsSuperuser', json.is_superuser);
-    this.backend.isTenantSchema().then((isTenantSchema) => 
+    this.backend.isTenantSchema().then((isTenantSchema) =>
       this.initalizeState(isTenantSchema, true, true)).then(
         setTimeout(() => {
           history.push('/ui/home');
         }, 50
       )).then(this.cookies.set('poemActiveSession', true))
-  } 
+  }
 
   flushStorage() {
     localStorage.removeItem('authUsername');
@@ -273,10 +274,10 @@ class App extends Component {
   onLogout() {
     this.flushStorage()
     this.setState({isLogged: false, isSessionActive: false});
-  } 
+  }
 
   toggleAreYouSure() {
-    this.setState(prevState => 
+    this.setState(prevState =>
       ({areYouSureModal: !prevState.areYouSureModal}));
   }
 
@@ -325,7 +326,7 @@ class App extends Component {
       this.state.isLogged && this.backend.isActiveSession().then(active => {
         if (active) {
           this.initalizeState(isTenantSchema, active, this.state.isLogged)
-        } 
+        }
         else
           this.flushStorage()
       })
@@ -339,15 +340,15 @@ class App extends Component {
       return (
         <BrowserRouter>
           <Switch>
-            <Route 
-              exact 
+            <Route
+              exact
               path="/ui/login"
               render={props =>
                   <Login onLogin={this.onLogin} {...props} />
               }
             />
             <Route
-              exact 
+              exact
               path="/ui/(home|services|probes|reports|probes|metrics|metricprofiles|aggregationprofiles|administration|metrictemplates|yumrepos)"
               render={props => (
                 <Redirect to={{
@@ -363,13 +364,13 @@ class App extends Component {
     else if (this.state.isLogged && cookie &&
       this.state.isTenantSchema !== null) {
 
-      return ( 
+      return (
         <BrowserRouter>
           <Container fluid>
             <Row>
               <NotificationContainer />
               <Col>
-                <NavigationBarWithRouter 
+                <NavigationBarWithRouter
                   onLogout={this.onLogout}
                   isOpenModal={this.state.areYouSureModal}
                   toggle={this.toggleAreYouSure}
@@ -384,13 +385,13 @@ class App extends Component {
               </Col>
               <Col>
                 <CustomBreadcrumbWithRouter />
-                {this.state.isTenantSchema ? 
-                  <TenantRouteSwitch 
+                {this.state.isTenantSchema ?
+                  <TenantRouteSwitch
                     webApiMetric={this.state.webApiMetric}
                     webApiAggregation={this.state.webApiAggregation}
                     webApiThresholds={this.state.webApiThresholds}
-                    token={this.state.token} 
-                    tenantName={this.state.tenantName}/> 
+                    token={this.state.token}
+                    tenantName={this.state.tenantName}/>
                  :
                  <SuperAdminRouteSwitch/>
                 }
@@ -405,7 +406,7 @@ class App extends Component {
         </BrowserRouter>
       )
     }
-    else 
+    else
       return null
   }
 }

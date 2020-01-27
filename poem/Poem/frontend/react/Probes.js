@@ -28,6 +28,7 @@ import * as Yup from 'yup';
 
 export const ProbeHistory = HistoryComponent('probe');
 export const ProbeChange = ProbeComponent();
+export const ProbeClone = ProbeComponent(true);
 
 
 const ProbeSchema = Yup.object().shape({
@@ -61,7 +62,7 @@ const LinkField = ({
 
 const ProbeForm = ({isTenantSchema=false, isHistory=false,
   errors={name: undefined, package: undefined, repository: undefined, docurl: undefined, comment: undefined},
-  state=undefined, addview=false, list_packages=[], setFieldValue=undefined,
+  state=undefined, addview=false, cloneview=false, list_packages=[], setFieldValue=undefined,
   values=undefined, onSelect=undefined, metrictemplatelist=[]}) =>
   <>
     <FormGroup>
@@ -102,7 +103,7 @@ const ProbeForm = ({isTenantSchema=false, isHistory=false,
           </FormText>
         </Col>
         {
-          (!addview && !isTenantSchema && !isHistory) &&
+          (!addview && !cloneview && !isTenantSchema && !isHistory) &&
             <Col md={2}>
               <Field
                 component={Checkbox}
@@ -260,7 +261,7 @@ const ProbeForm = ({isTenantSchema=false, isHistory=false,
         </Col>
       </Row>
       {
-        (!isTenantSchema && !isHistory && !addview) &&
+        (!isTenantSchema && !isHistory && !addview && !cloneview) &&
           <Row>
             <Col md={8}>
               <div>
@@ -505,7 +506,8 @@ function ProbeComponent(cloneview=false) {
             repository: values.repository,
             docurl: values.docurl,
             description: values.description,
-            comment: values.comment
+            comment: values.comment,
+            cloned_from: cloned_from
           }
           ).then(response => {
             if (!response.ok) {
@@ -657,6 +659,7 @@ function ProbeComponent(cloneview=false) {
                       {...props}
                       state={this.state}
                       addview={this.addview}
+                      cloneview={cloneview}
                       list_packages={list_packages}
                       onSelect={this.onSelect}
                       metrictemplatelist={metrictemplatelist}
