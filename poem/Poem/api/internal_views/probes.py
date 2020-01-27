@@ -195,7 +195,17 @@ class ListProbes(APIView):
                 datetime=datetime.datetime.now()
             )
 
-            create_history(probe, probe.user)
+            if request.data['cloned_from']:
+                clone = admin_models.Probe.objects.get(
+                    id=request.data['cloned_from']
+                )
+                comment = 'Derived from {} ({}).'.format(
+                    clone.name, clone.package.version
+                )
+                create_history(probe, probe.user, comment=comment)
+
+            else:
+                create_history(probe, probe.user)
 
             return Response(status=status.HTTP_201_CREATED)
 

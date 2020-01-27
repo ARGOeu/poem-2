@@ -1077,7 +1077,8 @@ class ListProbesAPIViewTests(TenantTestCase):
             'docurl': 'https://github.com/ARGOeu/nagios-plugins-argo/blob/'
                       'master/README.md',
             'user': 'testuser',
-            'datetime': datetime.datetime.now()
+            'datetime': datetime.datetime.now(),
+            'cloned_from': ''
         }
         request = self.factory.post(self.url, data, format='json')
         force_authenticate(request, user=self.user)
@@ -1106,6 +1107,50 @@ class ListProbesAPIViewTests(TenantTestCase):
         self.assertEqual(version.docurl, probe.docurl)
         self.assertEqual(version.description, probe.description)
         self.assertEqual(version.repository, probe.repository)
+
+    def test_post_cloned_probe(self):
+        data = {
+            'name': 'poem-probe',
+            'package': 'nagios-plugins-argo (0.1.11)',
+            'description': 'Probe inspects POEM service.',
+            'comment': 'Initial version.',
+            'repository': 'https://github.com/ARGOeu/nagios-plugins-argo',
+            'docurl': 'https://github.com/ARGOeu/nagios-plugins-argo/blob/'
+                      'master/README.md',
+            'user': 'testuser',
+            'datetime': datetime.datetime.now(),
+            'cloned_from': self.probe1.id
+        }
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        probe = admin_models.Probe.objects.get(name='poem-probe')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(probe.package, self.package2)
+        self.assertEqual(probe.description, 'Probe inspects POEM service.')
+        self.assertEqual(probe.comment, 'Initial version.')
+        self.assertEqual(probe.repository,
+                         'https://github.com/ARGOeu/nagios-plugins-argo')
+        self.assertEqual(
+            probe.docurl,
+            'https://github.com/ARGOeu/nagios-plugins-argo/blob/'
+            'master/README.md'
+        )
+        self.assertEqual(
+            admin_models.ProbeHistory.objects.filter(object_id=probe).count(), 1
+        )
+        version = admin_models.ProbeHistory.objects.get(
+            name=probe.name, package__version=probe.package.version
+        )
+        self.assertEqual(version.name, probe.name)
+        self.assertEqual(version.package, probe.package)
+        self.assertEqual(version.comment, probe.comment)
+        self.assertEqual(version.docurl, probe.docurl)
+        self.assertEqual(version.description, probe.description)
+        self.assertEqual(version.repository, probe.repository)
+        self.assertEqual(
+            version.version_comment, 'Derived from ams-probe (0.1.7).'
+        )
 
     def test_post_probe_with_name_which_already_exists(self):
         data = {
