@@ -5,7 +5,7 @@ from django.db import IntegrityError
 import json
 
 from Poem.api.views import NotFound
-from Poem.helpers.history_helpers import create_history
+from Poem.helpers.history_helpers import create_history, update_comment
 from Poem.poem import models as poem_models
 from Poem.poem_super_admin import models as admin_models
 from Poem.tenants.models import Tenant
@@ -141,6 +141,13 @@ class ListProbes(APIView):
                 )
 
                 del new_data['user']
+                new_data.update({
+                    'version_comment': update_comment(
+                        admin_models.Probe.objects.get(
+                            id=request.data['id']
+                        )
+                    )
+                })
                 history.update(**new_data)
 
                 # update Metric history in case probekey name has changed:

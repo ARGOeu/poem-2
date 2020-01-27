@@ -457,6 +457,22 @@ class ListProbesAPIViewTests(TenantTestCase):
             version_user=self.user.username
         )
 
+        self.probe1.package = self.package2
+        self.probe1.comment = 'Newer version.'
+        self.probe1.save()
+
+        pv2 = admin_models.ProbeHistory.objects.create(
+            object_id=self.probe1,
+            name=self.probe1.name,
+            package=self.probe1.package,
+            description=self.probe1.description,
+            comment=self.probe1.comment,
+            repository=self.probe1.repository,
+            docurl=self.probe1.docurl,
+            version_comment='[{"changed": {"fields": ["package", "comment"]}}]',
+            version_user=self.user.username
+        )
+
         admin_models.ProbeHistory.objects.create(
             object_id=probe3,
             name=probe3.name,
@@ -491,7 +507,7 @@ class ListProbesAPIViewTests(TenantTestCase):
         admin_models.MetricTemplate.objects.create(
             name='argo.AMS-Check',
             mtype=mtype,
-            probekey=pv1,
+            probekey=pv2,
             probeexecutable='["ams-probe"]',
             config='["maxCheckAttempts 3", "timeout 60", '
                    '"path /usr/libexec/argo-monitoring/probes/argo", '
@@ -518,7 +534,7 @@ class ListProbesAPIViewTests(TenantTestCase):
             name='argo.AMS-Check',
             group=group,
             mtype=metrictype,
-            probekey=pv1,
+            probekey=pv2,
             probeexecutable='["ams-probe"]',
             config='["maxCheckAttempts 3", "timeout 60", '
                    '"path /usr/libexec/argo-monitoring/probes/argo", '
@@ -565,18 +581,18 @@ class ListProbesAPIViewTests(TenantTestCase):
             [
                 {
                     'name': 'ams-probe',
-                    'version': '0.1.7',
-                    'package': 'nagios-plugins-argo (0.1.7)',
+                    'version': '0.1.11',
+                    'package': 'nagios-plugins-argo (0.1.11)',
                     'docurl':
                         'https://github.com/ARGOeu/nagios-plugins-argo/blob/'
                         'master/README.md',
                     'description': 'Probe is inspecting AMS service by trying '
                                    'to publish and consume randomly generated '
                                    'messages.',
-                    'comment': 'Initial version.',
+                    'comment': 'Newer version.',
                     'repository': 'https://github.com/ARGOeu/nagios-plugins-'
                                   'argo',
-                    'nv': 1
+                    'nv': 2
                 },
                 {
                     'name': 'ams-publisher-probe',
@@ -617,15 +633,15 @@ class ListProbesAPIViewTests(TenantTestCase):
             {
                 'id': self.probe1.id,
                 'name': 'ams-probe',
-                'version': '0.1.7',
-                'package': 'nagios-plugins-argo (0.1.7)',
+                'version': '0.1.11',
+                'package': 'nagios-plugins-argo (0.1.11)',
                 'docurl':
                     'https://github.com/ARGOeu/nagios-plugins-argo/blob/master/'
                     'README.md',
                 'description': 'Probe is inspecting AMS service by trying to '
                                'publish and consume randomly generated '
                                'messages.',
-                'comment': 'Initial version.',
+                'comment': 'Newer version.',
                 'repository': 'https://github.com/ARGOeu/nagios-plugins-argo',
                 'user': 'testuser',
                 'datetime': datetime.datetime.strftime(
@@ -699,8 +715,8 @@ class ListProbesAPIViewTests(TenantTestCase):
         data = {
             'id': self.probe1.id,
             'name': 'ams-probe-new',
-            'package': 'nagios-plugins-argo (0.1.7)',
-            'comment': 'Initial version',
+            'package': 'nagios-plugins-argo (0.1.11)',
+            'comment': 'Newer version.',
             'docurl':
                 'https://github.com/ARGOeu/nagios-plugins-argo2/blob/'
                 'master/README.md',
@@ -719,8 +735,8 @@ class ListProbesAPIViewTests(TenantTestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(probe.name, 'ams-probe-new')
-        self.assertEqual(probe.package, self.package1)
-        self.assertEqual(probe.comment, 'Initial version')
+        self.assertEqual(probe.package, self.package2)
+        self.assertEqual(probe.comment, 'Newer version.')
         self.assertEqual(
             probe.docurl,
             'https://github.com/ARGOeu/nagios-plugins-argo2/blob/master/'
@@ -740,6 +756,11 @@ class ListProbesAPIViewTests(TenantTestCase):
         self.assertEqual(version.docurl, probe.docurl)
         self.assertEqual(version.description, probe.description)
         self.assertEqual(version.repository, probe.repository)
+        self.assertEqual(
+            version.version_comment,
+            '[{"changed": {"fields": ["name", "package", "description", '
+            '"comment", "repository", "docurl"]}}]'
+        )
         mt = admin_models.MetricTemplate.objects.get(name='argo.AMS-Check')
         self.assertEqual(mt.probekey, version)
         metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
@@ -770,7 +791,7 @@ class ListProbesAPIViewTests(TenantTestCase):
         self.assertEqual(serialized_data['name'], metric.name)
         self.assertEqual(serialized_data['mtype'], ['Active'])
         self.assertEqual(
-            serialized_data['probekey'], ['ams-probe-new', '0.1.7']
+            serialized_data['probekey'], ['ams-probe-new', '0.1.11']
         )
         self.assertEqual(serialized_data['group'], ['TEST'])
         self.assertEqual(serialized_data['parent'], metric.parent)
@@ -789,8 +810,8 @@ class ListProbesAPIViewTests(TenantTestCase):
         data = {
             'id': self.probe1.id,
             'name': 'ams-probe',
-            'package': 'nagios-plugins-argo (0.1.7)',
-            'comment': 'Initial version',
+            'package': 'nagios-plugins-argo (0.1.11)',
+            'comment': 'Newer version.',
             'docurl':
                 'https://github.com/ARGOeu/nagios-plugins-argo2/blob/'
                 'master/README.md',
@@ -809,8 +830,8 @@ class ListProbesAPIViewTests(TenantTestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(probe.name, 'ams-probe')
-        self.assertEqual(probe.package, self.package1)
-        self.assertEqual(probe.comment, 'Initial version')
+        self.assertEqual(probe.package, self.package2)
+        self.assertEqual(probe.comment, 'Newer version.')
         self.assertEqual(
             probe.docurl,
             'https://github.com/ARGOeu/nagios-plugins-argo2/blob/master/'
@@ -830,6 +851,11 @@ class ListProbesAPIViewTests(TenantTestCase):
         self.assertEqual(version.docurl, probe.docurl)
         self.assertEqual(version.description, probe.description)
         self.assertEqual(version.repository, probe.repository)
+        self.assertEqual(
+            version.version_comment,
+            '[{"changed": {"fields": ["package", "description", "comment", '
+            '"repository", "docurl"]}}]'
+        )
         mt = admin_models.MetricTemplate.objects.get(name='argo.AMS-Check')
         self.assertEqual(mt.probekey, version)
         metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
@@ -860,7 +886,7 @@ class ListProbesAPIViewTests(TenantTestCase):
         self.assertEqual(serialized_data['name'], metric.name)
         self.assertEqual(serialized_data['mtype'], ['Active'])
         self.assertEqual(
-            serialized_data['probekey'], ['ams-probe', '0.1.7']
+            serialized_data['probekey'], ['ams-probe', '0.1.11']
         )
         self.assertEqual(serialized_data['group'], ['TEST'])
         self.assertEqual(serialized_data['parent'], metric.parent)
@@ -877,14 +903,14 @@ class ListProbesAPIViewTests(TenantTestCase):
 
     def test_put_probe_with_new_version_without_metrictemplate_update(self):
         data = {
-            'id': self.probe1.id,
-            'name': 'ams-probe-new',
+            'id': self.probe2.id,
+            'name': 'web-api',
             'package': 'nagios-plugins-argo (0.1.11)',
             'comment': 'New version.',
             'docurl':
                 'https://github.com/ARGOeu/nagios-plugins-argo2/blob/'
                 'master/README.md',
-            'description': 'Probe is inspecting AMS service.',
+            'description': 'Probe is checking AR and status reports.',
             'repository': 'https://github.com/ARGOeu/nagios-plugins-'
                           'argo2',
             'update_metrics': False
@@ -893,14 +919,14 @@ class ListProbesAPIViewTests(TenantTestCase):
         request = self.factory.put(self.url, content, content_type=content_type)
         force_authenticate(request, user=self.user)
         response = self.view(request)
-        probe = admin_models.Probe.objects.get(id=self.probe1.id)
+        probe = admin_models.Probe.objects.get(id=self.probe2.id)
         self.assertEqual(
             admin_models.ProbeHistory.objects.filter(object_id=probe).count(), 2
         )
         version = admin_models.ProbeHistory.objects.get(
             name=probe.name, package__version=probe.package.version)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(probe.name, 'ams-probe-new')
+        self.assertEqual(probe.name, 'web-api')
         self.assertEqual(probe.package, self.package2)
         self.assertEqual(probe.comment, 'New version.')
         self.assertEqual(
@@ -910,7 +936,7 @@ class ListProbesAPIViewTests(TenantTestCase):
         )
         self.assertEqual(
             probe.description,
-            'Probe is inspecting AMS service.'
+            'Probe is checking AR and status reports.'
         )
         self.assertEqual(
             probe.repository,
@@ -922,33 +948,38 @@ class ListProbesAPIViewTests(TenantTestCase):
         self.assertEqual(version.docurl, probe.docurl)
         self.assertEqual(version.description, probe.description)
         self.assertEqual(version.repository, probe.repository)
-        mt = admin_models.MetricTemplate.objects.get(name='argo.AMS-Check')
+        self.assertEqual(
+            version.version_comment,
+            '[{"changed": {"fields": ["name", "package", "description", '
+            '"comment", "repository", "docurl"]}}]'
+        )
+        mt = admin_models.MetricTemplate.objects.get(name='argo.API-Check')
         self.assertEqual(
             mt.probekey,
             admin_models.ProbeHistory.objects.filter(object_id=probe)[1]
         )
-        metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
+        metric = poem_models.Metric.objects.get(name='argo.API-Check')
         self.assertEqual(metric.group.name, 'TEST')
         self.assertEqual(metric.parent, '')
-        self.assertEqual(metric.probeexecutable, '["ams-probe"]')
+        self.assertEqual(metric.probeexecutable, '["web-api"]')
         self.assertEqual(
             metric.probekey,
             admin_models.ProbeHistory.objects.filter(object_id=probe)[1]
         )
         self.assertEqual(
             metric.config,
-            '["maxCheckAttempts 3", "timeout 60", '
+            '["maxCheckAttempts 3", "timeout 120", '
             '"path /usr/libexec/argo-monitoring/probes/argo", '
             '"interval 5", "retryInterval 3"]'
         )
-        self.assertEqual(metric.attribute, '["argo.ams_TOKEN --token"]')
+        self.assertEqual(metric.attribute, '["argo.api_TOKEN --token"]')
         self.assertEqual(metric.dependancy, '')
         self.assertEqual(metric.flags, '["OBSESS 1"]')
         self.assertEqual(metric.files, '')
-        self.assertEqual(metric.parameter, '["--project EGI"]')
+        self.assertEqual(metric.parameter, '')
         self.assertEqual(metric.fileparameter, '')
         mt_history = poem_models.TenantHistory.objects.filter(
-            object_repr='argo.AMS-Check'
+            object_repr='argo.API-Check'
         ).order_by('-date_created')
         self.assertEqual(mt_history.count(), 1)
         self.assertEqual(
@@ -958,7 +989,7 @@ class ListProbesAPIViewTests(TenantTestCase):
         self.assertEqual(serialized_data['name'], metric.name)
         self.assertEqual(serialized_data['mtype'], ['Active'])
         self.assertEqual(
-            serialized_data['probekey'], ['ams-probe', '0.1.7']
+            serialized_data['probekey'], ['argo-web-api', '0.1.7']
         )
         self.assertEqual(serialized_data['group'], ['TEST'])
         self.assertEqual(serialized_data['parent'], metric.parent)
@@ -975,14 +1006,14 @@ class ListProbesAPIViewTests(TenantTestCase):
 
     def test_put_probe_with_new_version_with_metrictemplate_update(self):
         data = {
-            'id': self.probe1.id,
-            'name': 'ams-probe-new',
+            'id': self.probe2.id,
+            'name': 'web-api',
             'package': 'nagios-plugins-argo (0.1.11)',
             'comment': 'New version.',
             'docurl':
                 'https://github.com/ARGOeu/nagios-plugins-argo2/blob/'
                 'master/README.md',
-            'description': 'Probe is inspecting AMS service.',
+            'description': 'Probe is checking AR and status reports.',
             'repository': 'https://github.com/ARGOeu/nagios-plugins-'
                           'argo2',
             'update_metrics': True
@@ -992,15 +1023,15 @@ class ListProbesAPIViewTests(TenantTestCase):
                                    content_type=content_type)
         force_authenticate(request, user=self.user)
         response = self.view(request)
-        probe = admin_models.Probe.objects.get(id=self.probe1.id)
+        probe = admin_models.Probe.objects.get(id=self.probe2.id)
         self.assertEqual(
             admin_models.ProbeHistory.objects.filter(object_id=probe).count(), 2
         )
         version = admin_models.ProbeHistory.objects.filter(
-            object_id=self.probe1
+            object_id=self.probe2
         ).order_by('-date_created')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(probe.name, 'ams-probe-new')
+        self.assertEqual(probe.name, 'web-api')
         self.assertEqual(probe.package, self.package2)
         self.assertEqual(probe.comment, 'New version.')
         self.assertEqual(
@@ -1010,7 +1041,7 @@ class ListProbesAPIViewTests(TenantTestCase):
         )
         self.assertEqual(
             probe.description,
-            'Probe is inspecting AMS service.'
+            'Probe is checking AR and status reports.'
         )
         self.assertEqual(
             probe.repository,
@@ -1022,27 +1053,27 @@ class ListProbesAPIViewTests(TenantTestCase):
         self.assertEqual(version[0].docurl, probe.docurl)
         self.assertEqual(version[0].description, probe.description)
         self.assertEqual(version[0].repository, probe.repository)
-        mt = admin_models.MetricTemplate.objects.get(name='argo.AMS-Check')
+        mt = admin_models.MetricTemplate.objects.get(name='argo.API-Check')
         self.assertEqual(mt.probekey, version[0])
-        metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
+        metric = poem_models.Metric.objects.get(name='argo.API-Check')
         self.assertEqual(metric.group.name, 'TEST')
         self.assertEqual(metric.parent, '')
-        self.assertEqual(metric.probeexecutable, '["ams-probe"]')
+        self.assertEqual(metric.probeexecutable, '["web-api"]')
         self.assertEqual(metric.probekey, version[1])
         self.assertEqual(
             metric.config,
-            '["maxCheckAttempts 3", "timeout 60", '
+            '["maxCheckAttempts 3", "timeout 120", '
             '"path /usr/libexec/argo-monitoring/probes/argo", '
             '"interval 5", "retryInterval 3"]'
         )
-        self.assertEqual(metric.attribute, '["argo.ams_TOKEN --token"]')
+        self.assertEqual(metric.attribute, '["argo.api_TOKEN --token"]')
         self.assertEqual(metric.dependancy, '')
         self.assertEqual(metric.flags, '["OBSESS 1"]')
         self.assertEqual(metric.files, '')
-        self.assertEqual(metric.parameter, '["--project EGI"]')
+        self.assertEqual(metric.parameter, '')
         self.assertEqual(metric.fileparameter, '')
         mt_history = poem_models.TenantHistory.objects.filter(
-            object_repr='argo.AMS-Check'
+            object_repr='argo.API-Check'
         ).order_by('-date_created')
         self.assertEqual(mt_history.count(), 1)
         self.assertEqual(
@@ -1052,7 +1083,7 @@ class ListProbesAPIViewTests(TenantTestCase):
         self.assertEqual(serialized_data['name'], metric.name)
         self.assertEqual(serialized_data['mtype'], ['Active'])
         self.assertEqual(
-            serialized_data['probekey'], ['ams-probe', '0.1.7']
+            serialized_data['probekey'], ['argo-web-api', '0.1.7']
         )
         self.assertEqual(serialized_data['group'], ['TEST'])
         self.assertEqual(serialized_data['parent'], metric.parent)
@@ -1149,7 +1180,7 @@ class ListProbesAPIViewTests(TenantTestCase):
         self.assertEqual(version.description, probe.description)
         self.assertEqual(version.repository, probe.repository)
         self.assertEqual(
-            version.version_comment, 'Derived from ams-probe (0.1.7).'
+            version.version_comment, 'Derived from ams-probe (0.1.11).'
         )
 
     def test_post_probe_with_name_which_already_exists(self):
