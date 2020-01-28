@@ -10,7 +10,7 @@ import json
 from Poem.api import views_internal as views
 from Poem.api.internal_views.utils import inline_metric_for_db
 from Poem.api.models import MyAPIKey
-from Poem.helpers.history_helpers import create_comment
+from Poem.helpers.history_helpers import create_comment, update_comment
 from Poem.poem import models as poem_models
 from Poem.poem_super_admin import models as admin_models
 from Poem.tenants.models import Tenant
@@ -4005,9 +4005,15 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
 
         package2 = admin_models.Package.objects.create(
             name='nagios-plugins-argo',
-            version='0.1.11'
+            version='0.1.8'
         )
         package2.repos.add(repo1, repo2)
+
+        package3 = admin_models.Package.objects.create(
+            name='nagios-plugins-argo',
+            version='0.1.11'
+        )
+        package3.repos.add(repo2)
 
         probe1 = admin_models.Probe.objects.create(
             name='ams-probe',
@@ -4046,8 +4052,25 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             repository=probe1.repository,
             docurl=probe1.docurl,
             date_created=datetime.datetime.now(),
-            version_comment='Newer version.',
-            version_user=self.user.username,
+            version_comment='[{"changed": {"fields": ["package", "comment"]}}]',
+            version_user=self.user.username
+        )
+
+        probe1.package = package3
+        probe1.comment = 'Newest version.'
+        probe1.save()
+
+        self.probeversion3 = admin_models.ProbeHistory.objects.create(
+            object_id=probe1,
+            name=probe1.name,
+            package=probe1.package,
+            description=probe1.description,
+            comment=probe1.comment,
+            repository=probe1.repository,
+            docurl=probe1.docurl,
+            date_created=datetime.datetime.now(),
+            version_comment='[{"changed": {"fields": ["package", "comment"]}}]',
+            version_user=self.user.username
         )
 
         for schema in [self.tenant.schema_name, get_public_schema_name()]:
@@ -4082,6 +4105,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             mtype=self.metrictemplate1.mtype,
             probekey=self.metrictemplate1.probekey,
             probeexecutable=self.metrictemplate1.probeexecutable,
+            config=self.metrictemplate1.config,
             attribute=self.metrictemplate1.attribute,
             dependency=self.metrictemplate1.dependency,
             flags=self.metrictemplate1.flags,
@@ -4099,6 +4123,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             mtype=self.metrictemplate2.mtype,
             probekey=self.metrictemplate2.probekey,
             probeexecutable=self.metrictemplate2.probeexecutable,
+            config=self.metrictemplate2.config,
             attribute=self.metrictemplate2.attribute,
             dependency=self.metrictemplate2.dependency,
             flags=self.metrictemplate2.flags,
@@ -4108,6 +4133,30 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             date_created=datetime.datetime.now(),
             version_user=self.user.username,
             version_comment='Initial version.',
+        )
+
+        self.metrictemplate1.probekey = self.probeversion2
+        self.metrictemplate1.config = '["maxCheckAttempts 4", "timeout 70", ' \
+                                      '"path /usr/libexec/argo-monitoring/", ' \
+                                      '"interval 5", "retryInterval 3"]'
+        self.metrictemplate1.save()
+
+        admin_models.MetricTemplateHistory.objects.create(
+            object_id=self.metrictemplate1,
+            name=self.metrictemplate1.name,
+            mtype=self.metrictemplate1.mtype,
+            probekey=self.metrictemplate1.probekey,
+            probeexecutable=self.metrictemplate1.probeexecutable,
+            config=self.metrictemplate1.config,
+            attribute=self.metrictemplate1.attribute,
+            dependency=self.metrictemplate1.dependency,
+            flags=self.metrictemplate1.flags,
+            files=self.metrictemplate1.files,
+            parameter=self.metrictemplate1.parameter,
+            fileparameter=self.metrictemplate1.fileparameter,
+            date_created=datetime.datetime.now(),
+            version_user=self.user.username,
+            version_comment=create_comment(self.metrictemplate1)
         )
 
         group = poem_models.GroupOfMetrics.objects.create(name='TEST')
@@ -4181,22 +4230,22 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
                     'id': self.metrictemplate1.id,
                     'name': 'argo.AMS-Check',
                     'mtype': 'Active',
-                    'ostag': ['CentOS 6'],
-                    'probeversion': 'ams-probe (0.1.7)',
+                    'ostag': ['CentOS 6', 'CentOS 7'],
+                    'probeversion': 'ams-probe (0.1.8)',
                     'parent': '',
                     'probeexecutable': 'ams-probe',
                     'config': [
                         {
                             'key': 'maxCheckAttempts',
-                            'value': '3'
+                            'value': '4'
                         },
                         {
                             'key': 'timeout',
-                            'value': '60'
+                            'value': '70'
                         },
                         {
                             'key': 'path',
-                            'value': '/usr/libexec/argo-monitoring/probes/argo'
+                            'value': '/usr/libexec/argo-monitoring/'
                         },
                         {
                             'key': 'interval',
@@ -4267,21 +4316,21 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
                 'id': self.metrictemplate1.id,
                 'name': 'argo.AMS-Check',
                 'mtype': 'Active',
-                'probeversion': 'ams-probe (0.1.7)',
+                'probeversion': 'ams-probe (0.1.8)',
                 'parent': '',
                 'probeexecutable': 'ams-probe',
                 'config': [
                     {
                         'key': 'maxCheckAttempts',
-                        'value': '3'
+                        'value': '4'
                     },
                     {
                         'key': 'timeout',
-                        'value': '60'
+                        'value': '70'
                     },
                     {
                         'key': 'path',
-                        'value': '/usr/libexec/argo-monitoring/probes/argo'
+                        'value': '/usr/libexec/argo-monitoring/'
                     },
                     {
                         'key': 'interval',
@@ -4388,6 +4437,8 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].files, mt.files)
         self.assertEqual(versions[0].parameter, mt.parameter)
         self.assertEqual(versions[0].fileparameter, mt.fileparameter)
+        self.assertEqual(versions[0].version_user, 'testuser')
+        self.assertEqual(versions[0].version_comment, 'Initial version.')
 
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db',
            side_effect=mocked_inline_metric_for_db)
@@ -4428,6 +4479,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db',
            side_effect=mocked_inline_metric_for_db)
     def test_put_metrictemplate_without_changing_probekey(self, func):
+        self.maxDiff = None
         attr = [
             {'key': 'argo.ams_TOKEN2', 'value': '--token'}
         ]
@@ -4435,7 +4487,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             {'key': 'maxCheckAttempts', 'value': '4'},
             {'key': 'timeout', 'value': '70'},
             {'key': 'path', 'value':
-                '/usr/libexec/argo-monitoring2/probes/argo'},
+                '/usr/libexec/argo-monitoring/probes/argo'},
             {'key': 'interval', 'value': '6'},
             {'key': 'retryInterval', 'value': '4'}
         ]
@@ -4443,7 +4495,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'id': self.metrictemplate1.id,
             'name': 'argo.AMS-Check-new',
             'mtype': 'Active',
-            'probeversion': 'ams-probe (0.1.7)',
+            'probeversion': 'ams-probe (0.1.8)',
             'parent': 'argo.AMS-Check',
             'probeexecutable': 'ams-probe',
             'config': json.dumps(conf),
@@ -4463,14 +4515,92 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         metric = poem_models.Metric.objects.get(id=self.metric1.id)
         versions = admin_models.MetricTemplateHistory.objects.filter(
             object_id=mt
-        )
+        ).order_by('-date_created')
         metric_versions = poem_models.TenantHistory.objects.filter(
             object_id=metric.id, content_type=self.ct
         )
+
         serialized_data = json.loads(
             metric_versions[0].serialized_data
         )[0]['fields']
-        self.assertEqual(versions.count(), 1)
+        self.assertEqual(versions.count(), 2)
+        self.assertEqual(versions[1].version_comment, 'Initial version.')
+        self.assertEqual(
+            json.loads(versions[0].version_comment),
+            [
+                {
+                    'changed': {
+                        'fields': ['config'],
+                        'object': ['maxCheckAttempts', 'timeout', 'interval',
+                                   'retryInterval']
+                    }
+                },
+                {
+                    'deleted': {
+                        'fields': ['attribute'],
+                        'object': ['argo.ams_TOKEN']
+                    }
+                },
+                {
+                    'added': {
+                        'fields': ['attribute'],
+                        'object': ['argo.ams_TOKEN2']
+                    }
+                },
+                {
+                    'added': {
+                        'fields': ['dependency'],
+                        'object': ['dep-key']
+                    }
+                },
+                {
+                    'deleted': {
+                        'fields': ['flags'],
+                        'object': ['OBSESS']
+                    }
+                },
+                {
+                    'added': {
+                        'fields': ['flags'],
+                        'object': ['flag-key']
+                    }
+                },
+                {
+                    'added': {
+                        'fields': ['files'],
+                        'object': ['file-key']
+                    }
+                },
+                {
+                    'deleted': {
+                        'fields': ['parameter'],
+                        'object': ['--project']
+                    }
+                },
+                {
+                    'added': {
+                        'fields': ['parameter'],
+                        'object': ['par-key']
+                    }
+                },
+                {
+                    'added': {
+                        'fields': ['fileparameter'],
+                        'object': ['fp-key']
+                    }
+                },
+                {
+                    'added': {
+                        'fields': ['parent']
+                    }
+                },
+                {
+                    'changed': {
+                        'fields': ['name', 'probekey']
+                    }
+                }
+            ]
+        )
         self.assertEqual(metric_versions.count(), 1)
         self.assertEqual(mt.name, 'argo.AMS-Check-new')
         self.assertEqual(mt.mtype.name, 'Active')
@@ -4479,7 +4609,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(
             mt.config,
             '["maxCheckAttempts 4", "timeout 70", '
-            '"path /usr/libexec/argo-monitoring2/probes/argo", '
+            '"path /usr/libexec/argo-monitoring/probes/argo", '
             '"interval 6", "retryInterval 4"]'
         )
         self.assertEqual(mt.attribute, '["argo.ams_TOKEN2 --token"]')
@@ -4583,7 +4713,82 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         serialized_data = json.loads(
             metric_versions[0].serialized_data
         )[0]['fields']
-        self.assertEqual(versions.count(), 2)
+        self.assertEqual(versions.count(), 3)
+        self.assertEqual(
+            json.loads(versions[0].version_comment),
+            [
+                {
+                    'changed': {
+                        'fields': ['config'],
+                        'object': ['path', 'interval', 'retryInterval'],
+                    }
+                },
+                {
+                    'deleted': {
+                        'fields': ['attribute'],
+                        'object': ['argo.ams_TOKEN']
+                    }
+                },
+                {
+                    'added': {
+                        'fields': ['attribute'],
+                        'object': ['argo.ams_TOKEN2']
+                    }
+                },
+                {
+                    'added': {
+                        'fields': ['dependency'],
+                        'object': ['dep-key']
+                    }
+                },
+                {
+                    'deleted': {
+                        'fields': ['flags'],
+                        'object': ['OBSESS']
+                    }
+                },
+                {
+                    'added': {
+                        'fields': ['flags'],
+                        'object': ['flag-key']
+                    }
+                },
+                {
+                    'added': {
+                        'fields': ['files'],
+                        'object': ['file-key']
+                    }
+                },
+                {
+                    'deleted': {
+                        'fields': ['parameter'],
+                        'object': ['--project']
+                    }
+                },
+                {
+                    'added': {
+                        'fields': ['parameter'],
+                        'object': ['par-key']
+                    }
+                },
+                {
+                    'added': {
+                        'fields': ['fileparameter'],
+                        'object': ['fp-key']
+                    }
+                },
+                {
+                    'added': {
+                        'fields': ['parent']
+                    }
+                },
+                {
+                    'changed': {
+                        'fields': ['name', 'probekey', 'probeexecutable']
+                    }
+                }
+            ]
+        )
         self.assertEqual(metric_versions.count(), 1)
         self.assertEqual(mt.name, 'argo.AMS-Check-new')
         self.assertEqual(mt.mtype.name, 'Active')
@@ -4615,14 +4820,14 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].fileparameter, mt.fileparameter)
         self.assertEqual(metric.name, 'argo.AMS-Check')
         self.assertEqual(metric.mtype.name, 'Active')
-        self.assertEqual(metric.probekey, self.probeversion1)
+        self.assertEqual(metric.probekey, self.probeversion2)
         self.assertEqual(metric.group.name, 'TEST')
         self.assertEqual(metric.parent, '')
         self.assertEqual(metric.probeexecutable, '["ams-probe"]')
         self.assertEqual(
             metric.config,
-            '["maxCheckAttempts 3", "timeout 60", '
-            '"path /usr/libexec/argo-monitoring/probes/argo", '
+            '["maxCheckAttempts 4", "timeout 70", '
+            '"path /usr/libexec/argo-monitoring/", '
             '"interval 5", "retryInterval 3"]'
         )
         self.assertEqual(metric.attribute, '["argo.ams_TOKEN --token"]')
@@ -4741,7 +4946,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db',
            side_effect=mocked_inline_metric_for_db)
     def test_put_metrictemplate_without_updating_older_version_metric(self, f):
-        self.metrictemplate1.probekey = self.probeversion2
+        self.metrictemplate1.probekey = self.probeversion3
         self.metrictemplate1.save()
         admin_models.MetricTemplateHistory.objects.create(
             object_id=self.metrictemplate1,
@@ -4757,7 +4962,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             fileparameter=self.metrictemplate1.fileparameter,
             date_created=datetime.datetime.now(),
             version_user=self.user.username,
-            version_comment='Changed probekey.'
+            version_comment=create_comment(self.metrictemplate1)
         )
         attr = [
             {'key': 'argo.ams_TOKEN2', 'value': '--token'}
@@ -4801,7 +5006,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         serialized_data = json.loads(
             metric_versions[0].serialized_data
         )[0]['fields']
-        self.assertEqual(versions.count(), 2)
+        self.assertEqual(versions.count(), 3)
         self.assertEqual(metric_versions.count(), 1)
         self.assertEqual(mt.name, 'argo.AMS-Check-new')
         self.assertEqual(mt.mtype.name, 'Active')
@@ -4833,14 +5038,14 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].fileparameter, mt.fileparameter)
         self.assertEqual(metric.name, 'argo.AMS-Check')
         self.assertEqual(metric.mtype.name, 'Active')
-        self.assertEqual(metric.probekey, self.probeversion1)
+        self.assertEqual(metric.probekey, self.probeversion2)
         self.assertEqual(metric.group.name, 'TEST')
         self.assertEqual(metric.parent, '')
         self.assertEqual(metric.probeexecutable, '["ams-probe"]')
         self.assertEqual(
             metric.config,
-            '["maxCheckAttempts 3", "timeout 60", '
-            '"path /usr/libexec/argo-monitoring/probes/argo", '
+            '["maxCheckAttempts 4", "timeout 70", '
+            '"path /usr/libexec/argo-monitoring/", '
             '"interval 5", "retryInterval 3"]'
         )
         self.assertEqual(metric.attribute, '["argo.ams_TOKEN --token"]')
@@ -5689,11 +5894,11 @@ class HistoryHelpersTests(TenantTestCase):
         tag = admin_models.OSTag.objects.create(name='CentOS 6')
         self.repo = admin_models.YumRepo.objects.create(name='repo-1', tag=tag)
 
-        package1 = admin_models.Package.objects.create(
+        self.package1 = admin_models.Package.objects.create(
             name='package-1',
             version='1.0.0'
         )
-        package1.repos.add(self.repo)
+        self.package1.repos.add(self.repo)
 
         package2 = admin_models.Package.objects.create(
             name='package-1',
@@ -5701,9 +5906,14 @@ class HistoryHelpersTests(TenantTestCase):
         )
         package2.repos.add(self.repo)
 
+        package3 = admin_models.Package.objects.create(
+            name='package-1',
+            version='2.0.0'
+        )
+
         self.probe1 = admin_models.Probe.objects.create(
             name='probe-1',
-            package=package1,
+            package=self.package1,
             description='Some description.',
             comment='Some comment.',
             repository='https://repository.url',
@@ -5745,7 +5955,23 @@ class HistoryHelpersTests(TenantTestCase):
             comment=self.probe1.comment,
             repository=self.probe1.repository,
             docurl=self.probe1.docurl,
-            version_comment='New version.',
+            version_comment='[{"changed": {"fields": ["package", "comment"]}}]',
+            version_user='testuser'
+        )
+
+        self.probe1.package = package3
+        self.probe1.comment = 'Newest version.'
+        self.probe1.save()
+
+        self.probe_history3 = admin_models.ProbeHistory.objects.create(
+            object_id=self.probe1,
+            name=self.probe1.name,
+            package=self.probe1.package,
+            description=self.probe1.description,
+            comment=self.probe1.comment,
+            repository=self.probe1.repository,
+            docurl=self.probe1.docurl,
+            version_comment='[{"changed": {"fields": ["package", "comment"]}}]',
             version_user='testuser'
         )
 
@@ -5781,7 +6007,68 @@ class HistoryHelpersTests(TenantTestCase):
             fileparameter=self.mt1.fileparameter,
             date_created=datetime.datetime.now(),
             version_comment='Initial version.',
-            version_user='testuser',
+            version_user='testuser'
+        )
+
+        self.mt1.probekey = self.probe_history2
+        self.mt1.config = '["maxCheckAttempts 3", "timeout 70", ' \
+                          '"path $USER", "interval 5", "retryInterval 3"]'
+        self.mt1.save()
+
+        admin_models.MetricTemplateHistory.objects.create(
+            object_id=self.mt1,
+            name=self.mt1.name,
+            mtype=self.mt1.mtype,
+            probekey=self.mt1.probekey,
+            parent=self.mt1.parent,
+            probeexecutable=self.mt1.probeexecutable,
+            config=self.mt1.config,
+            attribute=self.mt1.attribute,
+            dependency=self.mt1.dependency,
+            flags=self.mt1.flags,
+            files=self.mt1.files,
+            parameter=self.mt1.parameter,
+            fileparameter=self.mt1.fileparameter,
+            date_created=datetime.datetime.now(),
+            version_comment='[{"changed": {"fields": ["config"], '
+                            '"object": ["timeout"]}}, {"changed": {"fields": '
+                            '["probekey"]}}]',
+            version_user='testuser'
+        )
+
+        self.mt2 = admin_models.MetricTemplate.objects.create(
+            name='metric-template-3',
+            parent='["parent"]',
+            config='["maxCheckAttempts 3", "timeout 60",'
+                   ' "path $USER", "interval 5", "retryInterval 3"]',
+            attribute='["attribute-key attribute-value"]',
+            dependency='["dependency-key1 dependency-value1", '
+                       '"dependency-key2 dependency-value2"]',
+            flags='["flags-key flags-value"]',
+            files='["files-key files-value"]',
+            parameter='["parameter-key parameter-value"]',
+            fileparameter='["fileparameter-key fileparameter-value"]',
+            mtype=self.active,
+            probekey=probe_history1
+        )
+
+        admin_models.MetricTemplateHistory.objects.create(
+            object_id=self.mt2,
+            name=self.mt2.name,
+            mtype=self.mt2.mtype,
+            probekey=self.mt2.probekey,
+            parent=self.mt2.parent,
+            probeexecutable=self.mt2.probeexecutable,
+            config=self.mt2.config,
+            attribute=self.mt2.attribute,
+            dependency=self.mt2.dependency,
+            flags=self.mt2.flags,
+            files=self.mt2.files,
+            parameter=self.mt2.parameter,
+            fileparameter=self.mt2.fileparameter,
+            date_created=datetime.datetime.now(),
+            version_comment='Initial version.',
+            version_user='testuser'
         )
 
         self.metric1 = poem_models.Metric.objects.create(
@@ -5815,7 +6102,7 @@ class HistoryHelpersTests(TenantTestCase):
 
     def test_create_comment_for_metric_template(self):
         self.mt1.name = 'metric-template-2'
-        self.mt1.probekey = self.probe_history2
+        self.mt1.probekey = self.probe_history3
         self.mt1.parent = ''
         self.mt1.probeexecutable = '["new-probeexecutable"]'
         self.mt1.dependency = '["dependency-key1 dependency-value1"]'
@@ -5875,10 +6162,69 @@ class HistoryHelpersTests(TenantTestCase):
         comment = create_comment(mt)
         self.assertEqual(comment, 'Initial version.')
 
+    def test_update_comment_for_metric_template(self):
+        self.mt1.name = 'metric-template-2'
+        self.mt1.parent = ''
+        self.mt1.probeexecutable = '["new-probeexecutable"]'
+        self.mt1.dependency = '["dependency-key1 dependency-value1"]'
+        self.mt1.flags = '["flags-key flags-value", "flags-key1 flags-value2"]'
+        self.mt1.save()
+        comment = update_comment(self.mt1)
+        self.assertEqual(
+            json.loads(comment),
+            [
+                {
+                    'changed': {
+                        'fields': ['config'],
+                        'object': ['timeout']
+                    }
+                },
+                {
+                    'deleted': {
+                        'fields': ['dependency'],
+                        'object': ['dependency-key2']
+                    }
+                },
+                {
+                    'added': {
+                        'fields': ['flags'],
+                        'object': ['flags-key1']
+                    }
+                },
+                {
+                    'added': {
+                        'fields': ['probeexecutable']
+                    }
+                },
+                {
+                    'changed': {
+                        'fields': [
+                            'name', 'probekey'
+                        ]
+                    }
+                },
+                {
+                    'deleted': {
+                        'fields': ['parent']
+                    }
+                }
+            ]
+        )
+
+    def test_do_not_update_comment_for_metric_template_if_initial(self):
+        self.mt2.name = 'metric-template-4'
+        self.mt2.parent = ''
+        self.mt2.probeexecutable = '["new-probeexecutable"]'
+        self.mt2.dependency = '["dependency-key1 dependency-value1"]'
+        self.mt2.flags = '["flags-key flags-value", "flags-key1 flags-value2"]'
+        self.mt2.save()
+        comment = update_comment(self.mt2)
+        self.assertEqual(comment, 'Initial version.')
+
     def test_create_comment_for_probe(self):
         package = admin_models.Package.objects.create(
             name='package',
-            version='1.0.2'
+            version='2.0.2'
         )
         package.repos.add(self.repo)
         self.probe1.name = 'probe-2'
@@ -5900,6 +6246,55 @@ class HistoryHelpersTests(TenantTestCase):
                 }}
             ]
         )
+
+    def test_update_comment_for_probe(self):
+        package = admin_models.Package.objects.create(
+            name='package',
+            version='2.0.2'
+        )
+        package.repos.add(self.repo)
+        self.probe1.name = 'probe-2'
+        self.probe1.package = package
+        self.probe1.save()
+
+        comment = update_comment(self.probe1)
+        self.assertEqual(
+            json.loads(comment),
+            [
+                {'changed': {
+                    'fields': [
+                        'name', 'package', 'comment'
+                    ]
+                }}
+            ]
+        )
+
+    def test_do_not_update_comment_for_probe_if_initial(self):
+        probe2 = admin_models.Probe.objects.create(
+            name='probe-3',
+            package=self.package1,
+            description='Some description.',
+            comment='Initial version.',
+            repository='https://repository.url',
+            docurl='https://doc.url',
+            user='testuser',
+            datetime=datetime.datetime.now()
+        )
+        admin_models.ProbeHistory.objects.create(
+            object_id=probe2,
+            name=probe2.name,
+            package=probe2.package,
+            description=probe2.description,
+            comment=probe2.comment,
+            repository=probe2.repository,
+            docurl=probe2.docurl,
+            version_comment='Initial version.',
+            version_user='testuser'
+        )
+        probe2.comment = 'Some comment.'
+        probe2.save()
+        comment = update_comment(probe2)
+        self.assertEqual(comment, 'Initial version.')
 
     def test_create_comment_for_probe_if_initial(self):
         package = admin_models.Package.objects.create(
