@@ -1769,19 +1769,65 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
         self.url = '/api/v2/internal/metricprofiles/'
         self.user = CustUser.objects.create(username='testuser')
 
-        poem_models.MetricProfiles.objects.create(
+        self.ct = ContentType.objects.get_for_model(poem_models.MetricProfiles)
+
+        mp1 = poem_models.MetricProfiles.objects.create(
             name='TEST_PROFILE',
             apiid='00000000-oooo-kkkk-aaaa-aaeekkccnnee',
             groupname='EGI'
         )
 
-        poem_models.MetricProfiles.objects.create(
+        self.mp2 = poem_models.MetricProfiles.objects.create(
             name='ANOTHER-PROFILE',
             apiid='12341234-oooo-kkkk-aaaa-aaeekkccnnee'
         )
 
         poem_models.GroupOfMetricProfiles.objects.create(name='EGI')
         poem_models.GroupOfMetricProfiles.objects.create(name='new-group')
+
+        data1 = json.loads(
+            serializers.serialize(
+                'json', [mp1],
+                use_natural_foreign_keys=True,
+                use_natural_primary_keys=True
+            )
+        )
+        data1[0]['fields'].update({
+            'metricinstances': [
+                ('AMGA', 'org.nagios.SAML-SP'),
+                ('APEL', 'org.apel.APEL-Pub'),
+                ('APEL', 'org.apel.APEL-Sync')
+            ]
+        })
+
+        data2 = json.loads(
+            serializers.serialize(
+                'json', [self.mp2],
+                use_natural_foreign_keys=True,
+                use_natural_primary_keys=True
+            )
+        )
+        data2[0]['fields'].update({
+            'metricinstances': []
+        })
+
+        poem_models.TenantHistory.objects.create(
+            object_id=mp1.id,
+            serialized_data=json.dumps(data1),
+            object_repr=mp1.__str__(),
+            comment='Initial version.',
+            user='testuser',
+            content_type=self.ct
+        )
+
+        poem_models.TenantHistory.objects.create(
+            object_id=self.mp2.id,
+            serialized_data=json.dumps(data2),
+            object_repr=self.mp2.__str__(),
+            comment='Initial version.',
+            user='testuser',
+            content_type=self.ct
+        )
 
     @patch('Poem.api.internal_views.metricprofiles.sync_webapi',
            side_effect=mocked_func)
@@ -1829,17 +1875,29 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_post_metric_profile(self):
-        data = {'apiid': '12341234-aaaa-kkkk-aaaa-aaeekkccnnee',
-                'name': 'new-profile',
-                'groupname': 'EGI'}
+        data = {
+            "apiid": "12341234-aaaa-kkkk-aaaa-aaeekkccnnee",
+            "name": "new-profile",
+            "groupname": "EGI",
+            "services": [
+                {"service": "AMGA", "metric": "org.nagios.SAML-SP"},
+                {"service": "APEL", "metric": "org.apel.APEL-Pub"},
+                {"service": "APEL", "metric": "org.apel.APEL-Sync"}
+            ]
+        }
         request = self.factory.post(self.url, data, format='json')
         force_authenticate(request, user=self.user)
         response = self.view(request)
         profile = poem_models.MetricProfiles.objects.get(name='new-profile')
+        history = poem_models.TenantHistory.objects.filter(
+            object_id=profile.id, content_type=self.ct
+        )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(profile.name, 'new-profile')
         self.assertEqual(profile.apiid, '12341234-aaaa-kkkk-aaaa-aaeekkccnnee')
         self.assertEqual(profile.groupname, 'EGI')
+        self.assertEqual(history.count(), 1)
+        self.assertEqual(history[0].comment, 'Initial version.')
 
     def test_post_metric_profile_invalid_data(self):
         data = {'name': 'new-profile'}
@@ -1849,17 +1907,43 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_put_metric_profile(self):
-        data = {'apiid': '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
-                'groupname': 'new-group'}
+        data = {
+            "apiid": "00000000-oooo-kkkk-aaaa-aaeekkccnnee",
+            "groupname": "new-group",
+            "services": [
+                {"service": "AMGA", "metric": "org.nagios.SAML-SP"},
+                {"service": "APEL", "metric": "org.apel.APEL-Pub"},
+                {"service": "APEL", "metric": "org.apel.APEL-Sync"}
+            ]
+        }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         profile = poem_models.MetricProfiles.objects.get(name='TEST_PROFILE')
+        history = poem_models.TenantHistory.objects.filter(
+            object_id=profile.id, content_type=self.ct
+        ).order_by('-date_created')
         self.assertEqual(profile.name, 'TEST_PROFILE')
         self.assertEqual(profile.apiid, '00000000-oooo-kkkk-aaaa-aaeekkccnnee')
         self.assertEqual(profile.groupname, 'new-group')
+        self.assertEqual(history.count(), 2)
+        serialized_data = json.loads(history[0].serialized_data)[0]['fields']
+        self.assertEqual(serialized_data['name'], profile.name)
+        self.assertEqual(serialized_data['apiid'], profile.apiid)
+        self.assertEqual(serialized_data['groupname'], profile.groupname)
+        self.assertEqual(
+            serialized_data['metricinstances'],
+            [
+                ['AMGA', 'org.nagios.SAML-SP'],
+                ['APEL', 'org.apel.APEL-Pub'],
+                ['APEL', 'org.apel.APEL-Sync']
+            ]
+        )
+        self.assertEqual(
+            history[0].comment, '[{"changed": {"fields": ["groupname"]}}]'
+        )
 
     def test_delete_metric_profile(self):
         request = self.factory.delete(self.url + 'ANOTHER-PROFILE')
@@ -1870,6 +1954,10 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse('ANOTHER-PROFILE' in all)
+        history = poem_models.TenantHistory.objects.filter(
+            object_id=self.mp2.id, content_type=self.ct
+        )
+        self.assertEqual(history.count(), 0)
 
     def test_delete_metric_profile_with_wrong_id(self):
         request = self.factory.delete(self.url + 'wrong_id')
@@ -6446,9 +6534,9 @@ class HistoryHelpersTests(TenantTestCase):
         ))
         data[0]['fields'].update({
             'metricinstances': [
-                ('AMGA', 'org.nagios.SAML-SP'),
-                ('APEL', 'org.apel.APEL-Pub'),
-                ('ARC-CE', 'org.nordugrid.ARC-CE-IGTF')
+                ['AMGA', 'org.nagios.SAML-SP'],
+                ['APEL', 'org.apel.APEL-Pub'],
+                ['ARC-CE', 'org.nordugrid.ARC-CE-IGTF']
             ]
         })
         comment = create_comment(self.mp1, self.ct_mp, json.dumps(data))
@@ -6479,9 +6567,9 @@ class HistoryHelpersTests(TenantTestCase):
         ))
         data[0]['fields'].update({
             'metricinstances': [
-                ('AMGA', 'org.nagios.SAML-SP'),
-                ('APEL', 'org.apel.APEL-Pub'),
-                ('ARC-CE', 'org.nordugrid.ARC-CE-IGTF')
+                ['AMGA', 'org.nagios.SAML-SP'],
+                ['APEL', 'org.apel.APEL-Pub'],
+                ['ARC-CE', 'org.nordugrid.ARC-CE-IGTF']
             ]
         })
         comment = create_comment(mp, self.ct_mp, json.dumps(data))
