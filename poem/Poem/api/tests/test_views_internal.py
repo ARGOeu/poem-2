@@ -758,8 +758,8 @@ class ListProbesAPIViewTests(TenantTestCase):
         self.assertEqual(version.repository, probe.repository)
         self.assertEqual(
             version.version_comment,
-            '[{"changed": {"fields": ["name", "package", "description", '
-            '"comment", "repository", "docurl"]}}]'
+            '[{"changed": {"fields": ["comment", "description", "docurl", '
+            '"name", "package", "repository"]}}]'
         )
         mt = admin_models.MetricTemplate.objects.get(name='argo.AMS-Check')
         self.assertEqual(mt.probekey, version)
@@ -853,8 +853,8 @@ class ListProbesAPIViewTests(TenantTestCase):
         self.assertEqual(version.repository, probe.repository)
         self.assertEqual(
             version.version_comment,
-            '[{"changed": {"fields": ["package", "description", "comment", '
-            '"repository", "docurl"]}}]'
+            '[{"changed": {"fields": ["comment", "description", "docurl", '
+            '"package", "repository"]}}]'
         )
         mt = admin_models.MetricTemplate.objects.get(name='argo.AMS-Check')
         self.assertEqual(mt.probekey, version)
@@ -950,8 +950,8 @@ class ListProbesAPIViewTests(TenantTestCase):
         self.assertEqual(version.repository, probe.repository)
         self.assertEqual(
             version.version_comment,
-            '[{"changed": {"fields": ["name", "package", "description", '
-            '"comment", "repository", "docurl"]}}]'
+            '[{"changed": {"fields": ["comment", "description", "docurl", '
+            '"name", "package", "repository"]}}]'
         )
         mt = admin_models.MetricTemplate.objects.get(name='argo.API-Check')
         self.assertEqual(
@@ -4555,7 +4555,6 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db',
            side_effect=mocked_inline_metric_for_db)
     def test_put_metrictemplate_without_changing_probekey(self, func):
-        self.maxDiff = None
         attr = [
             {'key': 'argo.ams_TOKEN2', 'value': '--token'}
         ]
@@ -4601,81 +4600,31 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         )[0]['fields']
         self.assertEqual(versions.count(), 2)
         self.assertEqual(versions[1].version_comment, 'Initial version.')
+        comment_set = set()
+        for item in json.loads(versions[0].version_comment):
+            comment_set.add(json.dumps(item))
         self.assertEqual(
-            json.loads(versions[0].version_comment),
-            [
-                {
-                    'changed': {
-                        'fields': ['config'],
-                        'object': ['maxCheckAttempts', 'timeout', 'interval',
-                                   'retryInterval']
-                    }
-                },
-                {
-                    'deleted': {
-                        'fields': ['attribute'],
-                        'object': ['argo.ams_TOKEN']
-                    }
-                },
-                {
-                    'added': {
-                        'fields': ['attribute'],
-                        'object': ['argo.ams_TOKEN2']
-                    }
-                },
-                {
-                    'added': {
-                        'fields': ['dependency'],
-                        'object': ['dep-key']
-                    }
-                },
-                {
-                    'deleted': {
-                        'fields': ['flags'],
-                        'object': ['OBSESS']
-                    }
-                },
-                {
-                    'added': {
-                        'fields': ['flags'],
-                        'object': ['flag-key']
-                    }
-                },
-                {
-                    'added': {
-                        'fields': ['files'],
-                        'object': ['file-key']
-                    }
-                },
-                {
-                    'deleted': {
-                        'fields': ['parameter'],
-                        'object': ['--project']
-                    }
-                },
-                {
-                    'added': {
-                        'fields': ['parameter'],
-                        'object': ['par-key']
-                    }
-                },
-                {
-                    'added': {
-                        'fields': ['fileparameter'],
-                        'object': ['fp-key']
-                    }
-                },
-                {
-                    'added': {
-                        'fields': ['parent']
-                    }
-                },
-                {
-                    'changed': {
-                        'fields': ['name', 'probekey']
-                    }
-                }
-            ]
+            comment_set,
+            {
+                '{"changed": {"fields": ["config"], '
+                '"object": ["interval", "maxCheckAttempts", "retryInterval", '
+                '"timeout"]}}',
+                '{"deleted": {"fields": ["attribute"], '
+                '"object": ["argo.ams_TOKEN"]}}',
+                '{"added": {"fields": ["attribute"], '
+                '"object": ["argo.ams_TOKEN2"]}}',
+                '{"added": {"fields": ["dependency"], "object": ["dep-key"]}}',
+                '{"deleted": {"fields": ["flags"], "object": ["OBSESS"]}}',
+                '{"added": {"fields": ["flags"], "object": ["flag-key"]}}',
+                '{"added": {"fields": ["files"], "object": ["file-key"]}}',
+                '{"deleted": {"fields": ["parameter"], '
+                '"object": ["--project"]}}',
+                '{"added": {"fields": ["parameter"], "object": ["par-key"]}}',
+                '{"added": {"fields": ["fileparameter"], '
+                '"object": ["fp-key"]}}',
+                '{"added": {"fields": ["parent"]}}',
+                '{"changed": {"fields": ["name", "probekey"]}}'
+            }
         )
         self.assertEqual(metric_versions.count(), 1)
         self.assertEqual(mt.name, 'argo.AMS-Check-new')
@@ -4790,80 +4739,31 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             metric_versions[0].serialized_data
         )[0]['fields']
         self.assertEqual(versions.count(), 3)
+        comment_set = set()
+        for item in json.loads(versions[0].version_comment):
+            comment_set.add(json.dumps(item))
         self.assertEqual(
-            json.loads(versions[0].version_comment),
-            [
-                {
-                    'changed': {
-                        'fields': ['config'],
-                        'object': ['path', 'interval', 'retryInterval'],
-                    }
-                },
-                {
-                    'deleted': {
-                        'fields': ['attribute'],
-                        'object': ['argo.ams_TOKEN']
-                    }
-                },
-                {
-                    'added': {
-                        'fields': ['attribute'],
-                        'object': ['argo.ams_TOKEN2']
-                    }
-                },
-                {
-                    'added': {
-                        'fields': ['dependency'],
-                        'object': ['dep-key']
-                    }
-                },
-                {
-                    'deleted': {
-                        'fields': ['flags'],
-                        'object': ['OBSESS']
-                    }
-                },
-                {
-                    'added': {
-                        'fields': ['flags'],
-                        'object': ['flag-key']
-                    }
-                },
-                {
-                    'added': {
-                        'fields': ['files'],
-                        'object': ['file-key']
-                    }
-                },
-                {
-                    'deleted': {
-                        'fields': ['parameter'],
-                        'object': ['--project']
-                    }
-                },
-                {
-                    'added': {
-                        'fields': ['parameter'],
-                        'object': ['par-key']
-                    }
-                },
-                {
-                    'added': {
-                        'fields': ['fileparameter'],
-                        'object': ['fp-key']
-                    }
-                },
-                {
-                    'added': {
-                        'fields': ['parent']
-                    }
-                },
-                {
-                    'changed': {
-                        'fields': ['name', 'probekey', 'probeexecutable']
-                    }
-                }
-            ]
+            comment_set,
+            {
+                '{"changed": {"fields": ["config"], '
+                '"object": ["interval", "path", "retryInterval"]}}',
+                '{"deleted": {"fields": ["attribute"], '
+                '"object": ["argo.ams_TOKEN"]}}',
+                '{"added": {"fields": ["attribute"], '
+                '"object": ["argo.ams_TOKEN2"]}}',
+                '{"added": {"fields": ["dependency"], "object": ["dep-key"]}}',
+                '{"deleted": {"fields": ["flags"], "object": ["OBSESS"]}}',
+                '{"added": {"fields": ["flags"], "object": ["flag-key"]}}',
+                '{"added": {"fields": ["files"], "object": ["file-key"]}}',
+                '{"deleted": {"fields": ["parameter"], '
+                '"object": ["--project"]}}',
+                '{"added": {"fields": ["parameter"], "object": ["par-key"]}}',
+                '{"added": {"fields": ["fileparameter"], '
+                '"object": ["fp-key"]}}',
+                '{"added": {"fields": ["parent"]}}',
+                '{"changed": {"fields": ["name", "probeexecutable", '
+                '"probekey"]}}'
+            }
         )
         self.assertEqual(metric_versions.count(), 1)
         self.assertEqual(mt.name, 'argo.AMS-Check-new')
@@ -5665,8 +5565,8 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
                         self.ver2.date_created, '%Y-%m-%d %H:%M:%S'
                     ),
                     'comment': 'Changed config fields "maxCheckAttempts, '
-                               'timeout and retryInterval". Changed probekey '
-                               'and group.',
+                               'retryInterval and timeout". Changed group '
+                               'and probekey.',
                     'version': datetime.datetime.strftime(
                         self.ver2.date_created, '%Y%m%d-%H%M%S'
                     )
@@ -5999,6 +5899,9 @@ class HistoryHelpersTests(TenantTestCase):
         )
 
         self.ct_metric = ContentType.objects.get_for_model(poem_models.Metric)
+        self.ct_mp = ContentType.objects.get_for_model(
+            poem_models.MetricProfiles
+        )
 
         self.active = admin_models.MetricTemplateType.objects.create(
             name='Active'
@@ -6176,6 +6079,37 @@ class HistoryHelpersTests(TenantTestCase):
             content_type=self.ct_metric
         )
 
+        poem_models.GroupOfMetricProfiles.objects.create(name='TEST')
+        poem_models.GroupOfMetricProfiles.objects.create(name='TEST2')
+
+        self.mp1 = poem_models.MetricProfiles.objects.create(
+            name='TEST_PROFILE',
+            apiid='00000000-oooo-kkkk-aaaa-aaeekkccnnee',
+            groupname='TEST'
+        )
+
+        data = json.loads(serializers.serialize(
+            'json', [self.mp1],
+            use_natural_foreign_keys=True,
+            use_natural_primary_keys=True
+        ))
+        data[0]['fields'].update({
+            'metricinstances': [
+                ('AMGA', 'org.nagios.SAML-SP'),
+                ('APEL', 'org.apel.APEL-Pub'),
+                ('APEL', 'org.apel.APEL-Sync')
+            ]
+        })
+
+        poem_models.TenantHistory.objects.create(
+            object_id=self.mp1.id,
+            serialized_data=json.dumps(data),
+            object_repr=self.mp1.__str__(),
+            comment='Initial version.',
+            user='testuser',
+            content_type=self.ct_mp
+        )
+
     def test_create_comment_for_metric_template(self):
         self.mt1.name = 'metric-template-2'
         self.mt1.probekey = self.probe_history3
@@ -6185,39 +6119,19 @@ class HistoryHelpersTests(TenantTestCase):
         self.mt1.flags = '["flags-key flags-value", "flags-key1 flags-value2"]'
         self.mt1.save()
         comment = create_comment(self.mt1)
+        comment_set = set()
+        for item in json.loads(comment):
+            comment_set.add(json.dumps(item))
         self.assertEqual(
-            json.loads(comment),
-            [
-                {
-                    'deleted': {
-                        'fields': ['dependency'],
-                        'object': ['dependency-key2']
-                    }
-                },
-                {
-                    'added': {
-                        'fields': ['flags'],
-                        'object': ['flags-key1']
-                    }
-                },
-                {
-                    'added': {
-                        'fields': ['probeexecutable']
-                    }
-                },
-                {
-                    'changed': {
-                        'fields': [
-                            'name', 'probekey'
-                        ]
-                    }
-                },
-                {
-                    'deleted': {
-                        'fields': ['parent']
-                    }
-                }
-            ]
+            comment_set,
+            {
+                '{"deleted": {"fields": ["dependency"], '
+                '"object": ["dependency-key2"]}}',
+                '{"added": {"fields": ["flags"], "object": ["flags-key1"]}}',
+                '{"added": {"fields": ["probeexecutable"]}}',
+                '{"changed": {"fields": ["name", "probekey"]}}',
+                '{"deleted": {"fields": ["parent"]}}'
+            }
         )
 
     def test_create_comment_for_metric_template_if_initial(self):
@@ -6246,45 +6160,20 @@ class HistoryHelpersTests(TenantTestCase):
         self.mt1.flags = '["flags-key flags-value", "flags-key1 flags-value2"]'
         self.mt1.save()
         comment = update_comment(self.mt1)
+        comment_set = set()
+        for item in json.loads(comment):
+            comment_set.add(json.dumps(item))
         self.assertEqual(
-            json.loads(comment),
-            [
-                {
-                    'changed': {
-                        'fields': ['config'],
-                        'object': ['timeout']
-                    }
-                },
-                {
-                    'deleted': {
-                        'fields': ['dependency'],
-                        'object': ['dependency-key2']
-                    }
-                },
-                {
-                    'added': {
-                        'fields': ['flags'],
-                        'object': ['flags-key1']
-                    }
-                },
-                {
-                    'added': {
-                        'fields': ['probeexecutable']
-                    }
-                },
-                {
-                    'changed': {
-                        'fields': [
-                            'name', 'probekey'
-                        ]
-                    }
-                },
-                {
-                    'deleted': {
-                        'fields': ['parent']
-                    }
-                }
-            ]
+            comment_set,
+            {
+                '{"changed": {"fields": ["config"], "object": ["timeout"]}}',
+                '{"deleted": {"fields": ["dependency"], '
+                '"object": ["dependency-key2"]}}',
+                '{"added": {"fields": ["flags"], "object": ["flags-key1"]}}',
+                '{"added": {"fields": ["probeexecutable"]}}',
+                '{"changed": {"fields": ["name", "probekey"]}}',
+                '{"deleted": {"fields": ["parent"]}}'
+            }
         )
 
     def test_do_not_update_comment_for_metric_template_if_initial(self):
@@ -6311,16 +6200,15 @@ class HistoryHelpersTests(TenantTestCase):
         self.probe1.docurl = 'https://doc2.url',
         self.probe1.save()
         comment = create_comment(self.probe1)
+        comment_set = set()
+        for item in json.loads(comment):
+            comment_set.add(json.dumps(item))
         self.assertEqual(
-            json.loads(comment),
-            [
-                {'changed': {
-                    'fields': [
-                        'name', 'package', 'description', 'comment',
-                        'repository', 'docurl'
-                    ]
-                }}
-            ]
+            comment_set,
+            {
+                '{"changed": {"fields": ["comment", "description", "docurl", '
+                '"name", "package", "repository"]}}'
+            }
         )
 
     def test_update_comment_for_probe(self):
@@ -6332,17 +6220,15 @@ class HistoryHelpersTests(TenantTestCase):
         self.probe1.name = 'probe-2'
         self.probe1.package = package
         self.probe1.save()
-
         comment = update_comment(self.probe1)
+        comment_set = set()
+        for item in json.loads(comment):
+            comment_set.add(json.dumps(item))
         self.assertEqual(
-            json.loads(comment),
-            [
-                {'changed': {
-                    'fields': [
-                        'name', 'package', 'comment'
-                    ]
-                }}
-            ]
+            comment_set,
+            {
+                '{"changed": {"fields": ["comment", "name", "package"]}}'
+            }
         )
 
     def test_do_not_update_comment_for_probe_if_initial(self):
@@ -6413,39 +6299,19 @@ class HistoryHelpersTests(TenantTestCase):
         )
         comment = create_comment(self.metric1, self.ct_metric,
                                  serialized_data)
+        comment_set = set()
+        for item in json.loads(comment):
+            comment_set.add(json.dumps(item))
         self.assertEqual(
-            json.loads(comment),
-            [
-                {
-                    'deleted': {
-                        'fields': ['dependancy'],
-                        'object': ['dependency-key2']
-                    }
-                },
-                {
-                    'added': {
-                        'fields': ['flags'],
-                        'object': ['flags-key1']
-                    }
-                },
-                {
-                    'added': {
-                        'fields': ['probeexecutable']
-                    }
-                },
-                {
-                    'changed': {
-                        'fields': [
-                            'name', 'probekey'
-                        ]
-                    }
-                },
-                {
-                    'deleted': {
-                        'fields': ['parent']
-                    }
-                }
-            ]
+            comment_set,
+            {
+                '{"deleted": {"fields": ["dependancy"], '
+                '"object": ["dependency-key2"]}}',
+                '{"added": {"fields": ["flags"], "object": ["flags-key1"]}}',
+                '{"added": {"fields": ["probeexecutable"]}}',
+                '{"changed": {"fields": ["name", "probekey"]}}',
+                '{"deleted": {"fields": ["parent"]}}'
+            }
         )
 
     def test_create_comment_for_metric_if_field_deleted_from_model(self):
@@ -6473,45 +6339,21 @@ class HistoryHelpersTests(TenantTestCase):
         new_serialized_data = json.dumps(dict_serialized)
         comment = create_comment(self.metric1, self.ct_metric,
                                  new_serialized_data)
+        comment_set = set()
+        for item in json.loads(comment):
+            comment_set.add(json.dumps(item))
         self.assertEqual(
-            json.loads(comment),
-            [
-                {
-                    'changed': {
-                        'fields': ['config'],
-                        'object': ['maxCheckAttempts']
-                    }
-                },
-                {
-                    'deleted': {
-                        'fields': ['dependancy'],
-                        'object': ['dependency-key2']
-                    }
-                },
-                {
-                    'added': {
-                        'fields': ['flags'],
-                        'object': ['flags-key1']
-                    }
-                },
-                {
-                    'added': {
-                        'fields': ['probeexecutable']
-                    }
-                },
-                {
-                    'changed': {
-                        'fields': [
-                            'name', 'probekey'
-                        ]
-                    }
-                },
-                {
-                    'deleted': {
-                        'fields': ['parent']
-                    }
-                }
-            ]
+            comment_set,
+            {
+                '{"changed": {"fields": ["config"], '
+                '"object": ["maxCheckAttempts"]}}',
+                '{"deleted": {"fields": ["dependancy"], '
+                '"object": ["dependency-key2"]}}',
+                '{"added": {"fields": ["flags"], "object": ["flags-key1"]}}',
+                '{"added": {"fields": ["probeexecutable"]}}',
+                '{"changed": {"fields": ["name", "probekey"]}}',
+                '{"deleted": {"fields": ["parent"]}}'
+            }
         )
 
     def test_create_comment_for_metric_if_field_added_to_model(self):
@@ -6538,48 +6380,23 @@ class HistoryHelpersTests(TenantTestCase):
         dict_serialized = json.loads(serialized_data)
         dict_serialized[0]['fields']['mock_field'] = 'mock_value'
         new_serialized_data = json.dumps(dict_serialized)
-
         comment = create_comment(self.metric1, self.ct_metric,
                                  new_serialized_data)
+        comment_set = set()
+        for item in json.loads(comment):
+            comment_set.add(json.dumps(item))
         self.assertEqual(
-            json.loads(comment),
-            [
-                {
-                    'changed': {
-                        'fields': ['config'],
-                        'object': ['maxCheckAttempts', 'retryInterval']
-                    }
-                },
-                {
-                    'deleted': {
-                        'fields': ['dependancy'],
-                        'object': ['dependency-key2']
-                    }
-                },
-                {
-                    'added': {
-                        'fields': ['flags'],
-                        'object': ['flags-key1']
-                    }
-                },
-                {
-                    'added': {
-                        'fields': ['probeexecutable', 'mock_field']
-                    }
-                },
-                {
-                    'changed': {
-                        'fields': [
-                            'name', 'probekey'
-                        ]
-                    }
-                },
-                {
-                    'deleted': {
-                        'fields': ['parent']
-                    }
-                }
-            ]
+            comment_set,
+            {
+                '{"changed": {"fields": ["config"], '
+                '"object": ["maxCheckAttempts", "retryInterval"]}}',
+                '{"deleted": {"fields": ["dependancy"], '
+                '"object": ["dependency-key2"]}}',
+                '{"added": {"fields": ["flags"], "object": ["flags-key1"]}}',
+                '{"added": {"fields": ["mock_field", "probeexecutable"]}}',
+                '{"changed": {"fields": ["name", "probekey"]}}',
+                '{"deleted": {"fields": ["parent"]}}'
+            }
         )
 
     def test_create_comment_for_metric_if_initial(self):
@@ -6615,10 +6432,60 @@ class HistoryHelpersTests(TenantTestCase):
             use_natural_foreign_keys=True,
             use_natural_primary_keys=True
         )
-
         comment = create_comment(m, self.ct_metric, serialized_data)
-
         self.assertEqual(comment, '[{"added": {"fields": ["group"]}}]')
+
+    def test_create_comment_for_metricprofile(self):
+        self.mp1.name = 'TEST_PROFILE2',
+        self.mp1.groupname = 'TEST2'
+        self.mp1.save()
+        data = json.loads(serializers.serialize(
+            'json', [self.mp1],
+            use_natural_foreign_keys=True,
+            use_natural_primary_keys=True
+        ))
+        data[0]['fields'].update({
+            'metricinstances': [
+                ('AMGA', 'org.nagios.SAML-SP'),
+                ('APEL', 'org.apel.APEL-Pub'),
+                ('ARC-CE', 'org.nordugrid.ARC-CE-IGTF')
+            ]
+        })
+        comment = create_comment(self.mp1, self.ct_mp, json.dumps(data))
+        comment_set = set()
+        for item in json.loads(comment):
+            comment_set.add(json.dumps(item))
+        self.assertEqual(
+            comment_set,
+            {
+                '{"changed": {"fields": ["groupname", "name"]}}',
+                '{"added": {"fields": ["metricinstances"], '
+                '"object": ["ARC-CE", "org.nordugrid.ARC-CE-IGTF"]}}',
+                '{"deleted": {"fields": ["metricinstances"], '
+                '"object": ["APEL", "org.apel.APEL-Sync"]}}'
+            }
+        )
+
+    def test_create_comment_for_metricprofile_if_initial(self):
+        mp = poem_models.MetricProfiles.objects.create(
+            name='TEST_PROFILE2',
+            groupname='TEST',
+            apiid='10000000-oooo-kkkk-aaaa-aaeekkccnnee'
+        )
+        data = json.loads(serializers.serialize(
+            'json', [mp],
+            use_natural_foreign_keys=True,
+            use_natural_primary_keys=True
+        ))
+        data[0]['fields'].update({
+            'metricinstances': [
+                ('AMGA', 'org.nagios.SAML-SP'),
+                ('APEL', 'org.apel.APEL-Pub'),
+                ('ARC-CE', 'org.nordugrid.ARC-CE-IGTF')
+            ]
+        })
+        comment = create_comment(mp, self.ct_mp, json.dumps(data))
+        self.assertEqual(comment, 'Initial version.')
 
 
 class ListThresholdsProfilesInGroupAPIViewTests(TenantTestCase):
