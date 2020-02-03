@@ -27,12 +27,12 @@ def create_metricprofile_history(instance, services, user):
         )
     )
 
-    mis = [
-        [
-            json.loads(item.replace('\'', '\"'))['service'],
-            json.loads(item.replace('\'', '\"'))['metric']
-        ] for item in services
-    ]
+    mis = []
+    for item in services:
+        if isinstance(item, str):
+            item = json.loads(item.replace('\'', '\"'))
+
+        mis.append([item['service'], item['metric']])
 
     serialized_data[0]['fields'].update({
         'metricinstances': mis
