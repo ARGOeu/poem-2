@@ -5475,6 +5475,7 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
         )
 
         ct_m = ContentType.objects.get_for_model(poem_models.Metric)
+        ct_mp = ContentType.objects.get_for_model(poem_models.MetricProfiles)
 
         self.probever1 = admin_models.ProbeHistory.objects.create(
             object_id=probe1,
@@ -5510,6 +5511,9 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
 
         group1 = poem_models.GroupOfMetrics.objects.create(name='EGI')
         group2 = poem_models.GroupOfMetrics.objects.create(name='TEST')
+
+        poem_models.GroupOfMetricProfiles.objects.create(name='EGI')
+        poem_models.GroupOfMetricProfiles.objects.create(name='NEW_GROUP')
 
         self.metric1 = poem_models.Metric.objects.create(
             name='argo.AMS-Check',
@@ -5607,6 +5611,67 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
             date_created=datetime.datetime.now(),
             comment='Initial version.',
             user=self.user.username
+        )
+
+        self.mp1 = poem_models.MetricProfiles.objects.create(
+            name='TEST_PROFILE',
+            apiid='00000000-oooo-kkkk-aaaa-aaeekkccnnee',
+            groupname='EGI'
+        )
+
+        data = json.loads(
+            serializers.serialize(
+                'json', [self.mp1],
+                use_natural_foreign_keys=True,
+                use_natural_primary_keys=True
+            )
+        )
+        data[0]["fields"].update({
+            "metricinstances": [
+                ['AMGA', 'org.nagios.SAML-SP'],
+                ['APEL', 'org.apel.APEL-Pub'],
+                ['APEL', 'org.apel.APEL-Sync']
+            ]
+        })
+
+        self.ver4 = poem_models.TenantHistory.objects.create(
+            object_id=self.mp1.id,
+            serialized_data=json.dumps(data),
+            object_repr=self.mp1.__str__(),
+            comment='Initial version.',
+            user='testuser',
+            content_type=ct_mp
+        )
+
+        self.mp1.groupname = 'NEW_GROUP'
+        self.mp1.name = 'TEST_PROFILE2'
+        self.mp1.save()
+
+        data = json.loads(
+            serializers.serialize(
+                'json', [self.mp1],
+                use_natural_foreign_keys=True,
+                use_natural_primary_keys=True
+            )
+        )
+        data[0]["fields"].update({
+            "metricinstances": [
+                ['AMGA', 'org.nagios.SAML-SP'],
+                ['APEL', 'org.apel.APEL-Pub'],
+            ]
+        })
+
+        comment = create_comment(
+            self.mp1, ct=ct_mp, new_serialized_data=json.dumps(data)
+        )
+
+        self.ver5 = poem_models.TenantHistory.objects.create(
+            object_id=self.mp1.id,
+            serialized_data=json.dumps(data),
+            object_repr=self.mp1.__str__(),
+            comment=comment,
+            user='testuser',
+            content_type=ct_mp
         )
 
     def test_get_versions_of_metrics(self):
@@ -5761,6 +5826,74 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
         request = self.factory.get(self.url + 'metric')
         force_authenticate(request, user=self.user)
         response = self.view(request, 'metric')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_get_metric_profile_versions(self):
+        request = self.factory.get(self.url + 'metricprofile/TEST_PROFILE2')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'metricprofile', 'TEST_PROFILE2')
+        self.assertEqual(
+            response.data,
+            [
+                {
+                    'id': self.ver5.id,
+                    'object_repr': 'TEST_PROFILE2',
+                    'fields': {
+                        'name': 'TEST_PROFILE2',
+                        'groupname': 'NEW_GROUP',
+                        'apiid': '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
+                        'metricinstances': [
+                            {'service': 'AMGA', 'metric': 'org.nagios.SAML-SP'},
+                            {'service': 'APEL', 'metric': 'org.apel.APEL-Pub'}
+                        ]
+                    },
+                    'user': 'testuser',
+                    'date_created': datetime.datetime.strftime(
+                        self.ver5.date_created, '%Y-%m-%d %H:%M:%S'
+                    ),
+                    'comment': 'Deleted metricinstances field '
+                               '"APEL org.apel.APEL-Sync". Changed groupname '
+                               'and name.',
+                    'version': datetime.datetime.strftime(
+                        self.ver5.date_created, '%Y%m%d-%H%M%S'
+                    )
+                },
+                {
+                    'id': self.ver4.id,
+                    'object_repr': 'TEST_PROFILE',
+                    'fields': {
+                        'name': 'TEST_PROFILE',
+                        'groupname': 'EGI',
+                        'apiid': '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
+                        'metricinstances': [
+                            {'service': 'AMGA', 'metric': 'org.nagios.SAML-SP'},
+                            {'service': 'APEL', 'metric': 'org.apel.APEL-Pub'},
+                            {'service': 'APEL', 'metric': 'org.apel.APEL-Sync'}
+                        ]
+                    },
+                    'user': 'testuser',
+                    'date_created': datetime.datetime.strftime(
+                        self.ver4.date_created, '%Y-%m-%d %H:%M:%S'
+                    ),
+                    'comment': 'Initial version.',
+                    'version': datetime.datetime.strftime(
+                        self.ver4.date_created, '%Y%m%d-%H%M%S'
+                    )
+                }
+            ]
+        )
+
+    def test_get_nonexisting_metricprofile(self):
+        request = self.factory.get(self.url + 'metricprofile/nonexisting')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'metricprofile', 'nonexisting')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data, {'detail': 'Metric profile not found.'})
+
+    def test_get_metric_version_without_specifying_name(self):
+        request = self.factory.get(self.url + 'metricprofile')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'metricprofile')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
 

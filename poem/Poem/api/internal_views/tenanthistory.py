@@ -19,7 +19,10 @@ class ListTenantVersions(APIView):
     authentication_classes = (SessionAuthentication,)
 
     def get(self, request, obj, name=None):
-        models = {'metric': poem_models.Metric}
+        models = {
+            'metric': poem_models.Metric,
+            'metricprofile': poem_models.MetricProfiles
+        }
 
         ct = ContentType.objects.get_for_model(models[obj])
 
@@ -27,8 +30,15 @@ class ListTenantVersions(APIView):
             try:
                 obj = models[obj].objects.get(name=name)
             except models[obj].DoesNotExist:
-                raise NotFound(status=404,
-                               detail='{} not found.'.format(obj.capitalize()))
+                if obj.endswith('profile'):
+                    ind = obj.find('profile')
+                    msg = '{} profile not found.'.format(
+                        obj[0:ind].capitalize()
+                    )
+                else:
+                    msg = '{} not found.'.format(obj.capitalize())
+
+                raise NotFound(status=404, detail=msg)
 
             vers = poem_models.TenantHistory.objects.filter(
                 object_id=obj.id,
@@ -41,12 +51,12 @@ class ListTenantVersions(APIView):
             else:
                 results = []
                 for ver in vers:
-                    if isinstance(obj, poem_models.Metric):
-                        version = datetime.datetime.strftime(
-                            ver.date_created, '%Y%m%d-%H%M%S'
-                        )
-                        fields0 = json.loads(ver.serialized_data)[0]['fields']
+                    version = datetime.datetime.strftime(
+                        ver.date_created, '%Y%m%d-%H%M%S'
+                    )
+                    fields0 = json.loads(ver.serialized_data)[0]['fields']
 
+                    if isinstance(obj, poem_models.Metric):
                         if fields0['probekey']:
                             probeversion = '{} ({})'.format(
                                 fields0['probekey'][0], fields0['probekey'][1]
@@ -80,13 +90,29 @@ class ListTenantVersions(APIView):
                             )
                         }
 
+                    elif isinstance(obj, poem_models.MetricProfiles):
+                        mi = [
+                            {
+                                'service': item[0], 'metric': item[1]
+                            } for item in fields0['metricinstances']
+                        ]
+                        fields = {
+                            'name': fields0['name'],
+                            'groupname': fields0['groupname'],
+                            'apiid': fields0['apiid'],
+                            'metricinstances': mi
+                        }
+
                     try:
                         comment = []
                         untracked_fields = [
-                            'name', 'mtype', 'parent', 'probeexecutable',
+                            'mtype', 'parent', 'probeexecutable',
                             'attribute', 'dependancy', 'flags', 'files',
                             'parameter', 'fileparameter'
                         ]
+                        if isinstance(obj, poem_models.Metric):
+                            untracked_fields.append('name')
+
                         for item in json.loads(ver.comment):
                             if 'changed' in item:
                                 action = 'changed'
