@@ -8,7 +8,8 @@ import {
   SearchField,
   DropDown,
   NotifyOk,
-  Icon } from './UIElements';
+  Icon,
+  HistoryComponent } from './UIElements';
 import ReactTable from 'react-table';
 import { Formik, Field, FieldArray, Form } from 'formik';
 import 'react-table/react-table.css';
@@ -23,6 +24,9 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faTimes, faSearch } from '@fortawesome/free-solid-svg-icons';
 
 import './MetricProfiles.css';
+
+
+export const MetricProfileHistory = HistoryComponent('metricprofile');
 
 
 function matchItem(item, value) {
