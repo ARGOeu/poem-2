@@ -917,3 +917,139 @@ export class MetricProfileVersionCompare extends Component {
       return null;
   };
 };
+
+
+export class MetricProfileVersionDetails extends Component {
+  constructor(props) {
+    super(props);
+
+    this.name = props.match.params.name;
+    this.version = props.match.params.version;
+
+    this.backend = new Backend();
+
+    this.state = {
+      name: '',
+      groupname: '',
+      date_created: '',
+      metricinstances: [],
+      loading: false
+    };
+  };
+
+  componentDidMount() {
+    this.setState({loading: true});
+
+    this.backend.fetchData(`/api/v2/internal/tenantversion/metricprofile/${this.name}`)
+      .then((json) => {
+        json.forEach((e) => {
+          if (e.version == this.version)
+            this.setState({
+              name: e.fields.name,
+              groupname: e.fields.groupname,
+              date_created: e.date_created,
+              metricinstances: e.fields.metricinstances,
+              loading: false
+            });
+        });
+      });
+  };
+
+  render() {
+    const { name, groupname, date_created, metricinstances,
+      loading } = this.state;
+
+    if (loading)
+      return (<LoadingAnim/>);
+
+    else if (!loading && name) {
+      return (
+        <BaseArgoView
+          resourcename={`${name} (${date_created})`}
+          infoview={true}
+        >
+          <Formik
+            initialValues = {{
+              name: name,
+              groupname: groupname,
+              metricinstances: metricinstances
+            }}
+            render = {props => (
+              <Form>
+                <FormGroup>
+                  <Row>
+                    <Col md={4}>
+                      <Label for='metricProfileName'>Metric profile name:</Label>
+                      <Field
+                        type='text'
+                        name='name'
+                        className='form-control form-control-lg'
+                        id='metricProfileName'
+                        disabled={true}
+                      />
+                    </Col>
+                  </Row>
+                </FormGroup>
+                <Row>
+                  <Col md={6}>
+                    <FormGroup>
+                      <Row>
+                        <Col md={6}>
+                          <Label>Group:</Label>
+                        </Col>
+                      </Row>
+                      <Row>
+                        <Col md={4}>
+                          <Field
+                            name='groupname'
+                            type='text'
+                            className='form-control'
+                            disabled={true}
+                          />
+                        </Col>
+                      </Row>
+                      <Row>
+                        <Col md={12}>
+                          <FormText>
+                            Metric profile is a member of a given group.
+                          </FormText>
+                        </Col>
+                      </Row>
+                    </FormGroup>
+                  </Col>
+                </Row>
+                <h4 className="mt-2 alert-info p-1 pl-3 text-light text-uppercase rounded" style={{'backgroundColor': "#416090"}}>Metric instances</h4>
+                <FieldArray
+                  name='metricinstances'
+                  render={arrayHelpers => (
+                    <table className='table table-bordered table-sm'>
+                      <thead className='table-active'>
+                        <tr>
+                          <th className='align-middle text-center' style={{width: '5%'}}>#</th>
+                          <th style={{width: '47.5%'}}><Icon i='serviceflavour'/>Service flavour</th>
+                          <th style={{width: '47.5%'}}><Icon i='metrics'/>Metric</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {
+                          props.values.metricinstances.map((service, index) =>
+                            <tr>
+                              <td className='align-middle text-center'>{index + 1}</td>
+                              <td>{service.service}</td>
+                              <td>{service.metric}</td>
+                            </tr>
+                          )
+                        }
+                      </tbody>
+                    </table>
+                  )}
+                />
+              </Form>
+            )}
+          />
+        </BaseArgoView>
+      )
+    } else
+      return null;
+  };
+};
