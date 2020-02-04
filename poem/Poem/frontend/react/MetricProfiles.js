@@ -9,7 +9,8 @@ import {
   DropDown,
   NotifyOk,
   Icon,
-  HistoryComponent } from './UIElements';
+  HistoryComponent,
+  DiffElement} from './UIElements';
 import ReactTable from 'react-table';
 import { Formik, Field, FieldArray, Form } from 'formik';
 import 'react-table/react-table.css';
@@ -22,6 +23,7 @@ import {
   FormText} from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faTimes, faSearch } from '@fortawesome/free-solid-svg-icons';
+import ReactDiffViewer from 'react-diff-viewer';
 
 import './MetricProfiles.css';
 
@@ -790,3 +792,128 @@ export class MetricProfilesList extends Component
       return null
   }
 }
+
+
+const ListDiffElement = ({title, item1, item2}) => {
+  let n = Math.max(item1.length, item2.length);
+  let list1 = [];
+  let list2 = [];
+  for (let i = 0; i < item1.length; i++) {
+    list1.push(`service: ${item1[i]['service']}, metric: ${item1[i]['metric']}`)
+  };
+
+  for (let i = 0; i < item2.length; i++) {
+    list2.push(`service: ${item2[i]['service']}, metric: ${item2[i]['metric']}`)
+  };
+
+  const elements = [];
+  for (let i = 0; i < n; i++) {
+    elements.push(
+      <ReactDiffViewer
+        oldValue={list2[i]}
+        newValue={list1[i]}
+        showDiffOnly={true}
+        splitView={false}
+        hideLineNumbers={true}
+        key={`diff-${i}`}
+      />
+    );
+  };
+
+  return (
+    <div id='argo-contentwrap' className='ml-2 mb-2 mt-2 p-3 border rounded'>
+      <h6 className='mt-4 font-weight-bold text-uppercase'>{title}</h6>
+      {elements}
+    </div>
+  )
+};
+
+
+export class MetricProfileVersionCompare extends Component {
+  constructor(props) {
+    super(props);
+
+    this.version1 = props.match.params.id1;
+    this.version2 = props.match.params.id2;
+    this.name = props.match.params.name;
+
+    this.state = {
+      loading: false,
+      name1: '',
+      groupname1: '',
+      metricinstances1: [],
+      name2: '',
+      groupname2: '',
+      metricinstances2: []
+    };
+
+    this.backend = new Backend();
+  };
+
+  componentDidMount() {
+    this.setState({loading: true});
+
+    this.backend.fetchData(`/api/v2/internal/tenantversion/metricprofile/${this.name}`)
+      .then((json) => {
+        let name1 = '';
+        let groupname1 = '';
+        let metricinstances1 = [];
+        let name2 = '';
+        let groupname2 = '';
+        let metricinstances2 = [];
+
+        json.forEach((e) => {
+          if (e.version == this.version1) {
+            name1 = e.fields.name;
+            groupname1 = e.fields.groupname;
+            metricinstances1 = e.fields.metricinstances;
+          } else if (e.version == this.version2) {
+            name2 = e.fields.name;
+            groupname2 = e.fields.groupname;
+            metricinstances2 = e.fields.metricinstances;
+          };
+        });
+
+        this.setState({
+          name1: name1,
+          groupname1: groupname1,
+          metricinstances1: metricinstances1,
+          name2: name2,
+          groupname2: groupname2,
+          metricinstances2: metricinstances2,
+          loading: false
+        });
+      });
+  };
+
+  render() {
+    const { name1, name2, groupname1, groupname2,
+      metricinstances1, metricinstances2, loading } = this.state;
+
+    if (loading)
+      return (<LoadingAnim/>);
+
+    else if (!loading && name1 && name2) {
+      return (
+        <React.Fragment>
+          <div className='d-flex align-items-center justify-content-between'>
+            <h2 className='ml-3 mt-1 mb-4'>{`Compare ${this.name}`}</h2>
+          </div>
+          {
+            (name1 !== name2) &&
+              <DiffElement title='name' item1={name1} item2={name2}/>
+          }
+          {
+            (groupname1 !== groupname2) &&
+              <DiffElement title='groupname' item1={groupname1} item2={groupname2}/>
+          }
+          {
+            (metricinstances1 !== metricinstances2) &&
+              <ListDiffElement title='metric instances' item1={metricinstances1} item2={metricinstances2}/>
+          }
+        </React.Fragment>
+      );
+    } else
+      return null;
+  };
+};

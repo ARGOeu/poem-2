@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import Login from './Login';
-import { MetricProfilesChange, MetricProfilesList, MetricProfileHistory } from './MetricProfiles';
+import { MetricProfilesChange, MetricProfilesList, MetricProfileHistory, MetricProfileVersionCompare } from './MetricProfiles';
 import Home from './Home';
 import { ProbeList, ProbeChange, ProbeHistory, ProbeVersionCompare, ProbeVersionDetails, ProbeClone } from './Probes';
 import { MetricList, MetricChange, MetricHistory, MetricVersonCompare, MetricVersionDetails } from './Metrics';
@@ -83,6 +83,9 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, t
       />
     <Route exact path="/ui/metricprofiles/:name/history"
       render={props => <MetricProfileHistory{...props}/>}
+    />
+    <Route exact path="/ui/metricprofiles/:name/history/compare/:id1/:id2"
+      render={props => <MetricProfileVersionCompare{...props}/>}
     />
     <Route exact path="/ui/aggregationprofiles" component={AggregationProfilesList} />
     <Route exact path="/ui/aggregationprofiles/add"
