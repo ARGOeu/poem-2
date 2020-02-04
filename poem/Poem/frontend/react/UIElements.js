@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import Cookies from 'universal-cookie';
 import {
   Alert,
-  Button, 
+  Button,
   Breadcrumb,
   BreadcrumbItem,
   ButtonToolbar,
@@ -28,12 +28,12 @@ import EOSCLogo from './eosc.png';
 import './UIElements.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  faSignOutAlt, 
-  faSearch, 
-  faWrench, 
-  faFileAlt, 
-  faSitemap, 
-  faCog, 
+  faSignOutAlt,
+  faSearch,
+  faWrench,
+  faFileAlt,
+  faSitemap,
+  faCog,
   faServer,
   faCogs,
   faHighlighter,
@@ -54,7 +54,7 @@ import ReactDiffViewer from 'react-diff-viewer';
 var list_pages = ['administration','services', 'reports', 'probes',
                   'metrics', 'metricprofiles', 'aggregationprofiles',
                   'thresholdsprofiles'];
-var admin_list_pages = ['administration', 'probes', 'yumrepos', 
+var admin_list_pages = ['administration', 'probes', 'yumrepos',
                         'packages', 'metrictemplates'];
 
 var link_title = new Map();
@@ -107,14 +107,14 @@ export const Icon = props =>
     return <FontAwesomeIcon icon={link_icon.get(props.i)} size={props.i === 'yumrepos' || props.i === 'metricprofiles' ? 'sm' : '1x'} fixedWidth/>
 }
 
-export const DropDown = ({field, data=[], prefix="", class_name="", isnew=false}) => 
+export const DropDown = ({field, data=[], prefix="", class_name="", isnew=false}) =>
   <Field component="select"
     name={prefix ? `${prefix}.${field.name}` : field.name}
     required={true}
     className={`form-control ${class_name} ${isnew ? 'border-success' : ''}`}
   >
     {
-      data.map((name, i) => 
+      data.map((name, i) =>
         i === 0 ?
         <option key={i} hidden>{name}</option> :
         <option key={i} value={name}>{name}</option>
@@ -123,7 +123,7 @@ export const DropDown = ({field, data=[], prefix="", class_name="", isnew=false}
   </Field>
 
 
-export const SearchField = ({form, field, ...rest}) => 
+export const SearchField = ({form, field, ...rest}) =>
   <div className="input-group">
     <input type="text" placeholder="Search" {...field} {...rest}/>
     <div className="input-group-append">
@@ -154,7 +154,7 @@ const doLogout = (history, onLogout) =>
 }
 
 
-export const ModalAreYouSure = ({isOpen, toggle, title, msg, onYes}) => 
+export const ModalAreYouSure = ({isOpen, toggle, title, msg, onYes}) =>
 (
   <Modal isOpen={isOpen} toggle={toggle}>
     <ModalHeader toggle={toggle}>{title}</ModalHeader>
@@ -172,7 +172,7 @@ export const ModalAreYouSure = ({isOpen, toggle, title, msg, onYes}) =>
 )
 
 
-export const CustomBreadcrumb = ({location, history}) => 
+export const CustomBreadcrumb = ({location, history}) =>
 {
   let spliturl = location.pathname.split('/');
   let breadcrumb_elements = new Array();
@@ -210,7 +210,7 @@ export const CustomBreadcrumb = ({location, history}) =>
     <Breadcrumb id='argo-breadcrumb' className="border-top rounded">
       {
         breadcrumb_elements.map((item, i) =>
-          i !== breadcrumb_elements.length - 1 
+          i !== breadcrumb_elements.length - 1
           ?
             <BreadcrumbItem key={i}>
               <Link to={item['url']}>{item['title']}</Link>
@@ -229,7 +229,7 @@ export const CustomBreadcrumb = ({location, history}) =>
 export const NavigationBar = ({history, onLogout, isOpenModal, toggle, titleModal, msgModal}) =>
 (
   <React.Fragment>
-    <ModalAreYouSure 
+    <ModalAreYouSure
       isOpen={isOpenModal}
       toggle={toggle}
       title={titleModal}
@@ -249,7 +249,7 @@ export const NavigationBar = ({history, onLogout, isOpenModal, toggle, titleModa
             Welcome, {localStorage.getItem('authUsername')}
           </NavItem>
           <NavItem className='m-2'>
-            <Button 
+            <Button
               id="argo-navbar-logout"
               size="sm"
               onClick={() => toggle()}>
@@ -270,7 +270,7 @@ export const NavigationLinks = ({location, isTenantSchema}) => {
   return (
     <Nav vertical pills id="argo-navlinks" className="border-left border-right border-top rounded-top sticky-top">
         {
-          data.map((item, i) =>  
+          data.map((item, i) =>
             item === 'administration'
               ?
                 localStorage.getItem('authIsSuperuser') === 'true'
@@ -278,7 +278,7 @@ export const NavigationLinks = ({location, isTenantSchema}) => {
                     <NavItem key={i}>
                       <NavLink
                         tag={Link}
-                        active={location.pathname.includes(item) ? true : false} 
+                        active={location.pathname.includes(item) ? true : false}
                         className={location.pathname.includes(item) ? "text-white bg-info" : "text-dark"}
                         to={'/ui/' + item}><Icon i={item}/> {link_title.get(item)}
                       </NavLink>
@@ -287,9 +287,9 @@ export const NavigationLinks = ({location, isTenantSchema}) => {
                     null
               :
                 <NavItem key={i}>
-                  <NavLink 
+                  <NavLink
                     tag={Link}
-                    active={location.pathname.split('/')[2] === item ? true : false} 
+                    active={location.pathname.split('/')[2] === item ? true : false}
                     className={location.pathname.split('/')[2] === item ? "text-white bg-info" : "text-dark"}
                     to={'/ui/' + item}><Icon i={item}/> {link_title.get(item)}
                   </NavLink>
@@ -313,15 +313,15 @@ const InnerFooter = ({border=false}) =>
     </div>
     <p className="text-center">
       <small>
-        <strong>ARGO POEM</strong> is a service jointly developed and maintained by &nbsp; 
-        <a href="http://www.cnrs.fr/" title="Centre national de la recherche scientifique">CNRS</a>, &nbsp; 
+        <strong>ARGO POEM</strong> is a service jointly developed and maintained by &nbsp;
+        <a href="http://www.cnrs.fr/" title="Centre national de la recherche scientifique">CNRS</a>, &nbsp;
         <a href="https://grnet.gr/" title="Greek Research and Technology Network">GRNET</a> and &nbsp;
         <a href="http://www.srce.unizg.hr/" title="University computing centre">SRCE</a>&nbsp;
         co-funded by <a href="https://www.eosc-hub.eu" title="EOSC-Hub">EOSC-Hub</a> and &nbsp;
         <a href="http://www.egi.eu/" title="EGI.eu">EGI.eu</a>
         <br/>
         <a href="http://argo.egi.eu/lavoisier/TermsofUse" title="Terms of use">Terms of use</a>
-        ,&nbsp; 
+        ,&nbsp;
         <a href="http://www.apache.org/licenses/LICENSE-2.0" title="License">License</a>
       </small>
     </p>
@@ -366,18 +366,18 @@ export const NotifyOk = ({msg='', title='', callback=undefined}) => {
     title,
     2000);
   setTimeout(callback, 2000);
-} 
+}
 
 
-export const BaseArgoView = ({resourcename='', location=undefined, 
-    infoview=false, addview=false, listview=false, modal=false, 
-    state=undefined, toggle=undefined, submitperm=true, history=true, 
-    addnew=true, clone=false, cloneview=false, tenantview=false, children}) => 
+export const BaseArgoView = ({resourcename='', location=undefined,
+    infoview=false, addview=false, listview=false, modal=false,
+    state=undefined, toggle=undefined, submitperm=true, history=true,
+    addnew=true, clone=false, cloneview=false, tenantview=false, children}) =>
 (
   <React.Fragment>
     {
-      modal && 
-      <ModalAreYouSure 
+      modal &&
+      <ModalAreYouSure
         isOpen={state.areYouSureModal}
         toggle={toggle}
         title={state.modalTitle}
@@ -389,7 +389,7 @@ export const BaseArgoView = ({resourcename='', location=undefined,
         infoview ?
           <h2 className="ml-3 mt-1 mb-4">{resourcename}</h2>
         :
-          addview ? 
+          addview ?
             <h2 className="ml-3 mt-1 mb-4">{`Add ${resourcename}`}</h2>
           :
             listview ?
@@ -441,7 +441,7 @@ export const BaseArgoView = ({resourcename='', location=undefined,
           <Alert color='danger'>
             <center>
               This is a read-only instance, please request the corresponding
-              permissions to perform any changes in this form. 
+              permissions to perform any changes in this form.
             </center>
           </Alert>
       }
@@ -496,10 +496,10 @@ export const AutocompleteField = ({lists, onselect_handler, field, val, icon, se
       items={lists}
       value={val}
       renderItem={(item, isHighlighted) =>
-        <div 
+        <div
           key={lists.indexOf(item)}
-          className={`argo-autocomplete-entries ${isHighlighted ? 
-            "argo-autocomplete-entries-highlighted" 
+          className={`argo-autocomplete-entries ${isHighlighted ?
+            "argo-autocomplete-entries-highlighted"
             : ""}`
         }
         >
@@ -527,7 +527,7 @@ export const AutocompleteField = ({lists, onselect_handler, field, val, icon, se
       wrapperStyle={{}}
       shouldItemRender={matchItem}
       renderMenu={(items) =>
-        <div className='argo-autocomplete-menu' children={items}/>  
+        <div className='argo-autocomplete-menu' children={items}/>
       }
     />
   );
@@ -541,7 +541,7 @@ export const DropdownFilterComponent = ({value, onChange, data}) => (
   >
     <option key={0} value=''>Show all</option>
     {
-      data.map((name, i) => 
+      data.map((name, i) =>
         <option key={i + 1} value={name}>{name}</option>
       )
     }
@@ -571,9 +571,9 @@ export function HistoryComponent(obj, tenantview=false) {
       this.setState({loading: true});
       let url = undefined;
 
-      if (obj === 'metric')
+      if (['metric', 'metricprofile'].includes(obj))
         url = '/api/v2/internal/tenantversion/'
-      
+
       else
         url = '/api/v2/internal/version/'
 
@@ -597,7 +597,7 @@ export function HistoryComponent(obj, tenantview=false) {
     };
 
       render() {
-        const { loading, list_versions } = this.state; 
+        const { loading, list_versions } = this.state;
 
         let compareurl = undefined;
         if (tenantview)
@@ -605,10 +605,10 @@ export function HistoryComponent(obj, tenantview=false) {
 
         else
           compareurl = `/ui/${obj}s/${this.name}/history`;
-    
+
         if (loading)
           return (<LoadingAnim />);
-        
+
         else if (!loading && list_versions) {
           return (
             <BaseArgoView
@@ -623,7 +623,7 @@ export function HistoryComponent(obj, tenantview=false) {
                         <th scope='col'>
                           <Button
                             color='info'
-                            onClick={() => 
+                            onClick={() =>
                               this.history.push(
                                 `${compareurl}/compare/${this.state.compare1}/${this.state.compare2}`,
                               )
@@ -664,7 +664,7 @@ export function HistoryComponent(obj, tenantview=false) {
                                   name='radio-1'
                                   value={e.version}
                                   onChange={e => this.setState({compare1: e.target.value})}
-                                /> 
+                                />
                                 {' '}
                                 <input
                                   type='radio'
@@ -723,8 +723,8 @@ export const DiffElement = ({title, item1, item2}) => {
   const elements = [];
   for (let i = 0; i < n; i++) {
     elements.push(
-    <ReactDiffViewer 
-      oldValue={item2[i]}   
+    <ReactDiffViewer
+      oldValue={item2[i]}
       newValue={item1[i]}
       showDiffOnly={true}
       splitView={false}
