@@ -1,11 +1,11 @@
 import React, { Component } from 'react';
 import { Backend } from './DataManager';
 import { Link } from 'react-router-dom';
-import { 
-  LoadingAnim, 
-  BaseArgoView, 
-  NotifyOk, 
-  FancyErrorMessage, 
+import {
+  LoadingAnim,
+  BaseArgoView,
+  NotifyOk,
+  FancyErrorMessage,
   DropdownFilterComponent,
   HistoryComponent,
   DiffElement,
@@ -39,7 +39,7 @@ export const MetricVersonCompare = CompareMetrics('metric');
 
 
 const DefaultFilterComponent = ({value, onChange, field}) => (
-  <input 
+  <input
     type='text'
     placeholder={'Search by ' + field}
     value={value}
@@ -137,9 +137,9 @@ const InlineFields = ({values, errors, field, addnew=false, readonly=false}) => 
               </Row>
               <Row>
                 <Col md={5}>
-                  <Field 
+                  <Field
                     type='text'
-                    name={`${field}.${index}.key`} 
+                    name={`${field}.${index}.key`}
                     id={`${field}.${index}.key`}
                     className={`form-control ${values[field][index].isNew && 'border-success'}`}
                     disabled={!addnew || field === 'config' || (values.type === 'Passive' && item.key === 'PASSIVE')}
@@ -149,10 +149,10 @@ const InlineFields = ({values, errors, field, addnew=false, readonly=false}) => 
                 <Col md={5}>
                   {
                     values.type === 'Active' && field === 'config' ?
-                      <Field 
+                      <Field
                         type='text'
-                        name={`${field}.${index}.value`} 
-                        id={`${field}.${index}.value`} 
+                        name={`${field}.${index}.value`}
+                        id={`${field}.${index}.value`}
                         className={`form-control ${(errors.config && errors.config[index]) && 'border-danger'}`}
                         disabled={readonly || (!addnew && field === 'config' && item.key === 'path')}
                         validate={validateConfig}
@@ -160,13 +160,13 @@ const InlineFields = ({values, errors, field, addnew=false, readonly=false}) => 
                     :
                       <Field
                         type='text'
-                        name={`${field}.${index}.value`} 
-                        id={`${field}.${index}.value`} 
+                        name={`${field}.${index}.value`}
+                        id={`${field}.${index}.value`}
                         className={`form-control ${values[field][index].isNew && 'border-success'}`}
                         disabled={readonly || (!addnew && (field !== 'config' || field === 'config' && item.key === 'path')) || values.type === 'Passive' && item.key === 'PASSIVE'}
                         hidden={values.type === 'Passive' && field !== 'flags'}
                       />
-                  }                  
+                  }
                   {
                     errors.config && field === 'config' &&
                       errors.config[index] &&
@@ -176,14 +176,14 @@ const InlineFields = ({values, errors, field, addnew=false, readonly=false}) => 
                 <Col md={2}>
                   {
                     (addnew && field !== 'config' && (values[field][0]['key'] !== '' || values[field][0]['value'] !== '' || values[field].length > 1)) &&
-                      <Button 
+                      <Button
                         hidden={
                           (
-                            values.type === 'Passive' && 
+                            values.type === 'Passive' &&
                             field !== 'flags'
-                          ) 
+                          )
                           || (
-                            field === 'flags' && 
+                            field === 'flags' &&
                             values.type === 'Passive' && (
                               values[field][index]['key'] === 'PASSIVE'
                               || (values[field][index]['key'] === '' &&
@@ -192,9 +192,9 @@ const InlineFields = ({values, errors, field, addnew=false, readonly=false}) => 
                             )
                             )
                           }
-                        size='sm' 
+                        size='sm'
                         color='danger'
-                        type='button' 
+                        type='button'
                         onClick={() => {
                           arrayHelpers.remove(index)
                           if (values[field].length === 1) {
@@ -212,11 +212,11 @@ const InlineFields = ({values, errors, field, addnew=false, readonly=false}) => 
                 (addnew && field !== 'config' && index === values[field].length - 1) &&
                 <Row className={values.type === 'Passive' ? 'mt-0' : 'mt-2'}>
                   <Col md={2}>
-                    <Button 
+                    <Button
                       hidden={values.type === 'Passive' && field !== 'flags'}
                       size='sm'
                       color='success'
-                      type='button' 
+                      type='button'
                       onClick={() => arrayHelpers.push({key: '', value: '', isNew: true})}
                     >
                       <FontAwesomeIcon icon={faPlus}/> Add another {field.slice(-1) === 's' ? field.slice(0, -1).replace('_', ' '): field.replace('_', ' ')}
@@ -231,7 +231,7 @@ const InlineFields = ({values, errors, field, addnew=false, readonly=false}) => 
             <Row>
               <Col md={5}>
                 <Label to={'empty-key'} hidden={values.type === 'Passive' && field !== 'flags'}>Key</Label>
-                <Field 
+                <Field
                   type='text'
                   className='form-control'
                   value=''
@@ -242,7 +242,7 @@ const InlineFields = ({values, errors, field, addnew=false, readonly=false}) => 
               </Col>
               <Col md={5}>
                 <Label to={'empty-value'} hidden={values.type === 'Passive' && field !== 'flags'}>Value</Label>
-                <Field 
+                <Field
                   type='text'
                   value=''
                   className='form-control'
@@ -256,11 +256,11 @@ const InlineFields = ({values, errors, field, addnew=false, readonly=false}) => 
               addnew &&
                 <Row className={values.type === 'Passive' ? 'mt-0' : 'mt-2'}>
                   <Col md={2}>
-                    <Button 
+                    <Button
                       hidden={values.type === 'Passive' && field !== 'flags'}
                       size='sm'
                       color='success'
-                      type='button' 
+                      type='button'
                       onClick={() => arrayHelpers.push({key: '', value: ''})}
                     >
                       <FontAwesomeIcon icon={faPlus}/> Add another {field.slice(-1) === 's' ? field.slice(0, -1).replace('_', ' ') : field.replace('_', ' ')}
@@ -324,7 +324,7 @@ export function ListOfMetrics(type, imp=false) {
 
     doFilter(list_metric, field, filter) {
       return (
-        list_metric.filter(row => 
+        list_metric.filter(row =>
           eval(`row.${field}`).toLowerCase().includes(filter.toLowerCase()))
       )
     }
@@ -344,11 +344,11 @@ export function ListOfMetrics(type, imp=false) {
       if (this.state.search_name) {
         list_metric = this.doFilter(list_metric, 'name', this.state.search_name)
       }
-  
+
       if (this.state.search_probeversion) {
         list_metric = this.doFilter(list_metric, 'probeversion', this.state.search_probeversion)
       }
-  
+
       if (this.state.search_type) {
         list_metric = this.doFilter(list_metric, 'mtype', this.state.search_type)
       }
@@ -358,7 +358,7 @@ export function ListOfMetrics(type, imp=false) {
           `${row.ostag.join(', ')}`.includes(this.state.search_ostag)
         )
       }
- 
+
       let newSelected = {};
       if (this.state.selectAll === 0) {
         list_metric.forEach(x => {
@@ -380,7 +380,7 @@ export function ListOfMetrics(type, imp=false) {
           .then(json => {
             if (json.imported)
               NotificationManager.success(json.imported, 'Imported');
-            
+
             if (json.err)
               NotificationManager.warning(json.err, 'Not imported')
           })
@@ -394,7 +394,7 @@ export function ListOfMetrics(type, imp=false) {
 
     componentDidMount() {
       this.setState({loading: true});
-  
+
       if (type === 'metric') {
         Promise.all([this.backend.fetchData('/api/v2/internal/metric'),
           this.backend.fetchResult('/api/v2/internal/usergroups'),
@@ -404,7 +404,7 @@ export function ListOfMetrics(type, imp=false) {
                 list_metric: metrics,
                 list_groups: groups['metrics'],
                 list_types: types,
-                loading: false, 
+                loading: false,
                 search_name: '',
                 search_probeversion: '',
                 search_group: '',
@@ -447,7 +447,7 @@ export function ListOfMetrics(type, imp=false) {
           id: 'name',
           minWidth: 100,
           accessor: e =>
-          <Link 
+          <Link
             to={
               imp ?
                 this.state.search_ostag === 'CentOS 6' && e.centos6_probeversion ?
@@ -478,11 +478,11 @@ export function ListOfMetrics(type, imp=false) {
           minWidth: 80,
           accessor: e => (
             e.probeversion ?
-              <ProbeVersionLink 
+              <ProbeVersionLink
                 probeversion={
-                  imp ? 
-                    (this.state.search_ostag === 'CentOS 6' && e.centos6_probeversion) ? 
-                      e.centos6_probeversion 
+                  imp ?
+                    (this.state.search_ostag === 'CentOS 6' && e.centos6_probeversion) ?
+                      e.centos6_probeversion
                     :
                       (this.state.search_ostag === 'CentOS 7' && e.centos7_probeversion) ?
                         e.centos7_probeversion
@@ -501,7 +501,7 @@ export function ListOfMetrics(type, imp=false) {
             </div>,
           filterable: true,
           Filter: (
-            <DefaultFilterComponent 
+            <DefaultFilterComponent
               field='probe version'
               value={this.state.search_probeversion}
               onChange={e => this.setState({search_probeversion: e.target.value})}
@@ -597,7 +597,7 @@ export function ListOfMetrics(type, imp=false) {
               </div>,
             filterable: true,
             Filter: (
-              <DropdownFilterComponent 
+              <DropdownFilterComponent
                 value={this.state.search_group}
                 onChange={e => this.setState({search_group: e.target.value})}
                 data={this.state.list_groups}
@@ -636,11 +636,11 @@ export function ListOfMetrics(type, imp=false) {
       if (this.state.search_name) {
         list_metric = this.doFilter(list_metric, 'name', this.state.search_name)
       }
-  
+
       if (this.state.search_probeversion) {
         list_metric = this.doFilter(list_metric, 'probeversion', this.state.search_probeversion)
       }
-  
+
       if (this.state.search_type) {
         list_metric = this.doFilter(list_metric, 'mtype', this.state.search_type)
       }
@@ -650,7 +650,7 @@ export function ListOfMetrics(type, imp=false) {
           `${row.ostag.join(', ')}`.toLowerCase().includes(this.state.search_ostag.toLowerCase())
         )
       }
-  
+
       if (type === 'metric' && this.state.search_group) {
         list_metric = this.doFilter(list_metric, 'group', this.state.search_group)
       }
@@ -683,7 +683,7 @@ export function ListOfMetrics(type, imp=false) {
                   <h2 className="ml-3 mt-1 mb-4">{`Select metric template${localStorage.getItem('authIsSuperuser') === 'true'  ? '(s) to import' : ' for details'}`}</h2>
                   {
                     localStorage.getItem('authIsSuperuser') === 'true' &&
-                      <Button 
+                      <Button
                       className='btn btn-secondary'
                       disabled={!this.state.search_ostag}
                       onClick={() => this.importMetrics()}
@@ -711,7 +711,7 @@ export function ListOfMetrics(type, imp=false) {
                 </div>
             </>
             )
-          else 
+          else
             return (
               <BaseArgoView
                 resourcename='metric template'
@@ -737,28 +737,28 @@ export function ListOfMetrics(type, imp=false) {
 }
 
 
-export const MetricForm = 
+export const MetricForm =
   ({
-    values=undefined, 
+    values=undefined,
     errors={
-      name: undefined, 
-      probeversion: undefined, 
+      name: undefined,
+      probeversion: undefined,
       probeexecutable: undefined
     },
-    setFieldValue=undefined, 
-    handleChange, 
-    obj='', 
-    state=undefined, 
-    togglePopOver=undefined, 
-    onSelect=undefined, 
-    isHistory=false, 
+    setFieldValue=undefined,
+    handleChange,
+    obj='',
+    state=undefined,
+    togglePopOver=undefined,
+    onSelect=undefined,
+    isHistory=false,
     isTenantSchema=false,
-    addview=false, 
-    probeversions=[], 
-    groups=[], 
-    metrictemplatelist=[], 
+    addview=false,
+    probeversions=[],
+    groups=[],
+    metrictemplatelist=[],
     types=[],
-  }) => 
+  }) =>
   <>
     <FormGroup>
       <Row className='mb-3'>
@@ -786,7 +786,7 @@ export const MetricForm =
               values.type === 'Passive' ?
                 <InputGroup>
                   <InputGroupAddon addonType='prepend'>Probe</InputGroupAddon>
-                  <input 
+                  <input
                     type='text'
                     className='form-control'
                     disabled={true}
@@ -817,7 +817,7 @@ export const MetricForm =
                         onChange={e => onSelect('probeversion', e.target.value)}
                       >
                         {
-                          probeversions.map((name, i) => 
+                          probeversions.map((name, i) =>
                             <option key={i} value={name}>{name}</option>
                           )
                         }
@@ -842,21 +842,21 @@ export const MetricForm =
           {
             values.type === 'Active' &&
               <FormText color='muted'>
-                Probe name and version 
+                Probe name and version
                 {
                   !isHistory &&
                     <>
-                      <FontAwesomeIcon 
-                        id='probe-popover' 
-                        hidden={`state.${obj}.mtype` === 'Passive' || addview} 
-                        icon={faInfoCircle} 
+                      <FontAwesomeIcon
+                        id='probe-popover'
+                        hidden={`state.${obj}.mtype` === 'Passive' || addview}
+                        icon={faInfoCircle}
                         style={{color: '#416090'}}
                       />
-                      <Popover 
-                        placement='bottom' 
-                        isOpen={state.popoverOpen} 
-                        target='probe-popover' 
-                        toggle={togglePopOver} 
+                      <Popover
+                        placement='bottom'
+                        isOpen={state.popoverOpen}
+                        target='probe-popover'
+                        toggle={togglePopOver}
                         trigger='click'
                       >
                         <PopoverHeader>
@@ -995,7 +995,7 @@ export const MetricForm =
         <Col md={5}>
           {
             (isTenantSchema || isHistory) ?
-              <Field 
+              <Field
                 type='text'
                 name='parent'
                 id='parent'
@@ -1076,7 +1076,7 @@ export function CompareMetrics(metrictype) {
       if (metrictype === 'metric')
         url = `/api/v2/internal/tenantversion/metric/${this.name}`;
 
-      else 
+      else
         url = `/api/v2/internal/version/metrictemplate/${this.name}`;
 
       this.backend.fetchData(url)
@@ -1115,16 +1115,16 @@ export function CompareMetrics(metrictype) {
               type1 = e.fields.mtype;
               if (metrictype === 'metric') {
                 group1 = e.fields.group;
-                dependency1 = e.fields.dependancy; 
+                dependency1 = e.fields.dependancy;
               } else
                 dependency1 = e.fields.dependency;
-              probeexecutable1 = e.fields.probeexecutable; 
-              parent1 = e.fields.parent; 
-              config1 = e.fields.config; 
-              attribute1 = e.fields.attribute; 
-              parameter1 = e.fields.parameter; 
-              flags1 = e.fields.flags; files1 = e.fields.files; 
-              fileparameter1 = e.fields.fileparameter; 
+              probeexecutable1 = e.fields.probeexecutable;
+              parent1 = e.fields.parent;
+              config1 = e.fields.config;
+              attribute1 = e.fields.attribute;
+              parameter1 = e.fields.parameter;
+              flags1 = e.fields.flags; files1 = e.fields.files;
+              fileparameter1 = e.fields.fileparameter;
             } else if (e.version == this.version2) {
                 name2 = e.fields.name;
                 probeversion2 = e.fields.probeversion;
@@ -1177,12 +1177,12 @@ export function CompareMetrics(metrictype) {
     };
 
     render() {
-      var { name1, name2, probeversion1, probeversion2, type1, type2, 
-        probeexecutable1, probeexecutable2, parent1, parent2, config1, 
+      var { name1, name2, probeversion1, probeversion2, type1, type2,
+        probeexecutable1, probeexecutable2, parent1, parent2, config1,
         config2, attribute1, attribute2, dependency1, dependency2,
-        parameter1, parameter2, flags1, flags2, files1, files2, 
+        parameter1, parameter2, flags1, flags2, files1, files2,
         fileparameter1, fileparameter2, group1, group2, loading } = this.state;
-      
+
       if (loading)
         return <LoadingAnim/>;
 
@@ -1206,7 +1206,7 @@ export function CompareMetrics(metrictype) {
             }
             {
               (group1 && group2 && group1 !== group2) &&
-                <DiffElement title='group' item1={group1} item2={group2}/> 
+                <DiffElement title='group' item1={group1} item2={group2}/>
             }
             {
               (probeexecutable1 !== probeexecutable2) &&
@@ -1226,7 +1226,7 @@ export function CompareMetrics(metrictype) {
             }
             {
               (!arraysEqual(dependency1, dependency2)) &&
-                <InlineDiffElement title='dependency' item1={dependency1} item2={dependency1}/>
+                <InlineDiffElement title='dependency' item1={dependency1} item2={dependency2}/>
             }
             {
               (!arraysEqual(parameter1, parameter2)) &&
@@ -1294,12 +1294,12 @@ export class MetricChange extends Component {
   }
 
   toggleAreYouSure() {
-    this.setState(prevState => 
+    this.setState(prevState =>
       ({areYouSureModal: !prevState.areYouSureModal}));
   }
 
   toggleAreYouSureSetModal(msg, title, onyes) {
-    this.setState(prevState => 
+    this.setState(prevState =>
       ({areYouSureModal: !prevState.areYouSureModal,
         modalFunc: onyes,
         modalMsg: msg,
@@ -1339,7 +1339,7 @@ export class MetricChange extends Component {
     let msg = 'Are you sure you want to change metric?';
     let title = 'Change metric';
 
-    this.toggleAreYouSureSetModal(msg, title, 
+    this.toggleAreYouSureSetModal(msg, title,
       () => this.doChange(values, actions))
   }
 
@@ -1388,7 +1388,7 @@ export class MetricChange extends Component {
         this.backend.fetchData(`/api/v2/internal/version/metrictemplate/${this.name}`),
         this.backend.fetchData('/api/v2/internal/groups/metrics')
       ]).then(([metrics, metrictemplateversions, usergroups]) => {
-        metrics.probeversion ? 
+        metrics.probeversion ?
           this.backend.fetchData(`/api/v2/internal/version/probe/${metrics.probeversion.split(' ')[0]}`)
             .then(probe => {
               let fields = {};
@@ -1428,7 +1428,7 @@ export class MetricChange extends Component {
 
     if (loading)
       return (<LoadingAnim/>)
-    
+
     else if (!loading) {
       return (
         <BaseArgoView
@@ -1551,10 +1551,10 @@ export class MetricVersionDetails extends Component {
   }
 
   render() {
-    const { name, probeversion, type, group, probeexecutable, parent, config, 
+    const { name, probeversion, type, group, probeexecutable, parent, config,
       attribute, dependancy, parameter, flags, files, fileparameter, date_created,
       loading } = this.state;
-    
+
     if (loading)
     return (<LoadingAnim/>);
 
