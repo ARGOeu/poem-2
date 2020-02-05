@@ -1,53 +1,16 @@
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
-from django.core import serializers as django_serializers
-
-import json
 
 from Poem.api import serializers
 from Poem.api.internal_views.aggregationprofiles import sync_webapi
 from Poem.api.views import NotFound
-from Poem.helpers.history_helpers import create_comment
+from Poem.helpers.history_helpers import create_metricprofile_history
 from Poem.poem import models as poem_models
 
 from rest_framework import status
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
-
-def create_metricprofile_history(instance, services, user):
-    ct = ContentType.objects.get_for_model(instance)
-
-    serialized_data = json.loads(
-        django_serializers.serialize(
-            'json', [instance],
-            use_natural_foreign_keys=True,
-            use_natural_primary_keys=True
-        )
-    )
-
-    mis = []
-    for item in services:
-        if isinstance(item, str):
-            item = json.loads(item.replace('\'', '\"'))
-
-        mis.append([item['service'], item['metric']])
-
-    serialized_data[0]['fields'].update({
-        'metricinstances': mis
-    })
-
-    comment = create_comment(instance, ct, json.dumps(serialized_data))
-
-    poem_models.TenantHistory.objects.create(
-        object_id=instance.id,
-        serialized_data=json.dumps(serialized_data),
-        object_repr=instance.__str__(),
-        comment=comment,
-        user=user.username,
-        content_type=ct
-    )
 
 
 class ListAllServiceFlavours(APIView):

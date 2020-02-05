@@ -307,3 +307,37 @@ def update_comment(instance):
         old_data = ''
 
     return analyze_differences(old_data, new_data)
+
+
+def create_metricprofile_history(instance, services, user):
+    ct = ContentType.objects.get_for_model(instance)
+
+    serialized_data = json.loads(
+        serializers.serialize(
+            'json', [instance],
+            use_natural_foreign_keys=True,
+            use_natural_primary_keys=True
+        )
+    )
+
+    mis = []
+    for item in services:
+        if isinstance(item, str):
+            item = json.loads(item.replace('\'', '\"'))
+
+        mis.append([item['service'], item['metric']])
+
+    serialized_data[0]['fields'].update({
+        'metricinstances': mis
+    })
+
+    comment = create_comment(instance, ct, json.dumps(serialized_data))
+
+    poem_models.TenantHistory.objects.create(
+        object_id=instance.id,
+        serialized_data=json.dumps(serialized_data),
+        object_repr=instance.__str__(),
+        comment=comment,
+        user=user.username,
+        content_type=ct
+    )
