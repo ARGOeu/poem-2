@@ -2,7 +2,7 @@ from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 
 from Poem.api import serializers
-from Poem.api.internal_views.aggregationprofiles import sync_webapi
+from Poem.api.internal_views.utils import sync_webapi
 from Poem.api.views import NotFound
 from Poem.helpers.history_helpers import create_metricprofile_history
 from Poem.poem import models as poem_models
