@@ -6,6 +6,7 @@ import json
 
 from Poem.poem import models as poem_models
 from Poem.poem_super_admin import models as admin_models
+from Poem.users.models import CustUser
 
 
 def to_dict(instance):
@@ -312,6 +313,11 @@ def update_comment(instance):
 def create_metricprofile_history(instance, services, user):
     ct = ContentType.objects.get_for_model(instance)
 
+    if isinstance(user, CustUser):
+        username = user.username
+    else:
+        username = user
+
     serialized_data = json.loads(
         serializers.serialize(
             'json', [instance],
@@ -338,6 +344,6 @@ def create_metricprofile_history(instance, services, user):
         serialized_data=json.dumps(serialized_data),
         object_repr=instance.__str__(),
         comment=comment,
-        user=user.username,
+        user=username,
         content_type=ct
     )
