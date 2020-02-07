@@ -17,6 +17,21 @@ from Poem.poem_super_admin import models as admin_models
 from unittest.mock import patch
 
 
+def mock_function(profile):
+    if profile == 'ARGO-MON':
+        return 'argo.AMS-Check', 'argo.AMSPublisher-Check'
+
+    if profile == 'MON-TEST':
+        return 'argo.AMS-Check', 'eu.seadatanet.org.downloadmanager-check', \
+               'eu.seadatanet.org.nvs2-check'
+
+    if profile == 'EMPTY':
+        return set()
+
+    if profile == 'TEST-NONEXISTING':
+        return 'nonexisting.metric'
+
+
 @factory.django.mute_signals(post_save)
 def mock_db_for_metrics_tests():
     metrictype = poem_models.MetricType.objects.create(name='Active')
@@ -456,22 +471,22 @@ class ListReposAPIViewTests(TenantTestCase):
 
     def test_list_repos_if_wrong_token(self):
         request = self.factory.get(
-            self.url + '/ARGO-MON/centos7', **{'HTTP_X_API_KEY': 'wrong_token'}
+            self.url + '/centos7',
+            **{'HTTP_X_API_KEY': 'wrong_token',
+               'HTTP_PROFILES': '[ARGO-MON, MON-TEST]'}
         )
-        response = self.view(request, 'ARGO-MON', 'centos7')
+        response = self.view(request, 'centos7')
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
-    @patch('Poem.api.views.get_metrics_from_profile')
+    @patch('Poem.api.views.get_metrics_from_profile',
+           side_effect=mock_function)
     def test_list_repos(self, func):
-        func.return_value = {
-            'argo.AMS-Check', 'argo.AMSPublisher-Check',
-            'eu.seadatanet.org.downloadmanager-check',
-            'eu.seadatanet.org.nvs2-check'
-        }
         request = self.factory.get(
-            self.url + '/ARGO-MON/centos7', **{'HTTP_X_API_KEY': self.token}
+            self.url + '/centos7',
+            **{'HTTP_X_API_KEY': self.token,
+               'HTTP_PROFILES': '[ARGO-MON, MON-TEST]'}
         )
-        response = self.view(request, 'ARGO-MON', 'centos7')
+        response = self.view(request, 'centos7')
         test_data = response.data
         test_data[0]['repo-1']['packages'] = sorted(
             test_data[0]['repo-1']['packages'], key=lambda k: k['name']
@@ -507,36 +522,37 @@ class ListReposAPIViewTests(TenantTestCase):
         )
 
     def test_list_repos_if_no_profile_or_tag(self):
-        request = self.factory.get(self.url, **{'HTTP_X_API_KEY': self.token})
-        response = self.view(request)
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(
-            response.data,
-            {'detail': 'You must define profile and OS!'}
-        )
-
-    def test_list_repos_if_only_profile_defined(self):
         request = self.factory.get(
-            self.url + 'PROFILE', **{'HTTP_X_API_KEY': self.token}
+            self.url, **{'HTTP_X_API_KEY': self.token,
+                         'HTTP_PROFILES': '[ARGO-MON, MON-TEST]'}
         )
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(
             response.data,
-            {'detail': 'You must define profile and OS!'}
+            {'detail': 'You must define OS!'}
         )
 
-    @patch('Poem.api.views.get_metrics_from_profile')
+    def test_list_repos_if_no_profile_defined(self):
+        request = self.factory.get(
+            self.url + '/centos7', **{'HTTP_X_API_KEY': self.token}
+        )
+        response = self.view(request, 'centos7')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data,
+            {'detail': 'You must define profile!'}
+        )
+
+    @patch('Poem.api.views.get_metrics_from_profile',
+           side_effect=mock_function)
     def test_list_repos_if_passive_metric_present(self, func):
-        func.return_value = {
-            'argo.AMS-Check', 'argo.AMSPublisher-Check',
-            'eu.seadatanet.org.downloadmanager-check',
-            'org.apel.APEL-Pub'
-        }
         request = self.factory.get(
-            self.url + '/ARGO-MON/centos6', **{'HTTP_X_API_KEY': self.token}
+            self.url + '/centos6',
+            **{'HTTP_X_API_KEY': self.token,
+               'HTTP_PROFILES': '[ARGO-MON, MON-TEST]'}
         )
-        response = self.view(request, 'ARGO-MON', 'centos6')
+        response = self.view(request, 'centos6')
         self.assertEqual(
             response.data,
             [
@@ -563,44 +579,41 @@ class ListReposAPIViewTests(TenantTestCase):
             ]
         )
 
-    @patch('Poem.api.views.get_metrics_from_profile')
+    @patch('Poem.api.views.get_metrics_from_profile',
+           side_effect=mock_function)
     def test_empty_repo_list(self, func):
-        func.return_value = {}
         request = self.factory.get(
-            self.url + '/ARGO-MON/centos6', **{'HTTP_X_API_KEY': self.token}
+            self.url + '/centos6',
+            **{'HTTP_X_API_KEY': self.token,
+               'HTTP_PROFILES': '[EMPTY]'}
         )
-        response = self.view(request, 'ARGO-MON', 'centos6')
+        response = self.view(request, 'centos6')
         self.assertEqual(response.data, [])
 
-    @patch('Poem.api.views.get_metrics_from_profile')
+    @patch('Poem.api.views.get_metrics_from_profile',
+           side_effect=mock_function)
     def test_list_repos_if_nonexisting_tag(self, func):
-        func.return_value = {
-            'argo.AMS-Check', 'argo.AMSPublisher-Check',
-            'eu.seadatanet.org.downloadmanager-check',
-            'org.apel.APEL-Pub'
-        }
         request = self.factory.get(
-            self.url + '/ARGO-MON/nonexisting',
-            **{'HTTP_X_API_KEY': self.token}
+            self.url + '/nonexisting',
+            **{'HTTP_X_API_KEY': self.token,
+               'HTTP_PROFILES': '[ARGO-MON, MON-TEST]'}
         )
-        response = self.view(request, 'ARGO-MON', 'nonexisgint')
+        response = self.view(request, 'nonexisgint')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(
             response.data,
             {'detail': 'YUM repo tag not found.'}
         )
 
-    @patch('Poem.api.views.get_metrics_from_profile')
+    @patch('Poem.api.views.get_metrics_from_profile',
+           side_effect=mock_function)
     def test_list_repos_if_function_return_metric_does_not_exist(self, func):
-        func.return_value = {
-            'argo.AMS-Check', 'argo.AMSPublisher-Check',
-            'eu.seadatanet.org.downloadmanager-check',
-            'nonexisting.metric'
-        }
         request = self.factory.get(
-            self.url + '/ARGO-MON/centos6', **{'HTTP_X_API_KEY': self.token}
+            self.url + '/centos6',
+            **{'HTTP_X_API_KEY': self.token,
+               'HTTP_PROFILES': '[ARGO-MON, MON-TEST, TEST-NONEXISTING]'}
         )
-        response = self.view(request, 'ARGO-MON', 'centos6')
+        response = self.view(request, 'centos6')
         self.assertEqual(
             response.data,
             [

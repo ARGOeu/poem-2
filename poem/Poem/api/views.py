@@ -111,7 +111,9 @@ def get_metrics_from_profile(profile):
     metrics = set()
     if data:
         if profile not in [p['name'] for p in data]:
-            raise NotFound(status=404, detail='Metric profile not found.')
+            raise NotFound(
+                status=404,
+                detail='Metric profile {} not found.'.format(profile))
 
         else:
             for p in data:
@@ -133,15 +135,25 @@ class ListMetrics(APIView):
 class ListRepos(APIView):
     permission_classes = (MyHasAPIKey,)
 
-    def get(self, request, profile=None, tag=None):
-        if not profile or not tag:
+    def get(self, request, tag=None):
+        if not tag:
             return Response(
-                {'detail': 'You must define profile and OS!'},
+                {'detail': 'You must define OS!'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        elif 'HTTP_PROFILES' not in request.META:
+            return Response(
+                {'detail': 'You must define profile!'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
         else:
-            metrics = get_metrics_from_profile(profile)
+            profiles = dict(request.META)['HTTP_PROFILES'][1:-1].split(', ')
+            metrics = set()
+            for profile in profiles:
+                metrics = metrics.union(get_metrics_from_profile(profile))
+
             if tag == 'centos7':
                 ostag = admin_models.OSTag.objects.get(name='CentOS 7')
             elif tag == 'centos6':
