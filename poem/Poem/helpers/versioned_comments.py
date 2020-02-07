@@ -6,11 +6,18 @@ import json
 from Poem.poem.models import *
 
 
+iterable_fields = ['metricinstances']
+
+
 def msg_with_object(msg, action):
-    return get_text_list(
-        [gettext(field) for field in msg[action]['object']],
-        gettext('and')
-    )
+    if msg[action]['fields'] in iterable_fields:
+        return ' '.join(msg[action]['object'])
+
+    else:
+        return get_text_list(
+            [gettext(field) for field in msg[action]['object']],
+            gettext('and')
+        )
 
 
 def msg_with_fields(msg, action):
@@ -38,7 +45,9 @@ def new_comment(comment):
                 )
 
                 if 'object' in submessage['added']:
-                    if len(submessage['added']['object']) > 1:
+                    if len(submessage['added']['object']) > 1 and \
+                            submessage['added']['fields'] not in \
+                            iterable_fields:
                         f = 'fields'
                     else:
                         f = 'field'
@@ -64,7 +73,9 @@ def new_comment(comment):
                 )
 
                 if 'object' in submessage['changed']:
-                    if len(submessage['changed']['object']) > 0:
+                    if len(submessage['changed']['object']) > 0 and \
+                            submessage['changed']['fields'] not in \
+                            iterable_fields:
                         f = 'fields'
                     else:
                         f = 'field'
@@ -90,7 +101,9 @@ def new_comment(comment):
                 )
 
                 if 'object' in submessage['deleted']:
-                    if len(submessage['deleted']['object']) > 0:
+                    if len(submessage['deleted']['object']) > 0 and \
+                            submessage['deleted']['fields'] not in \
+                            iterable_fields:
                         f = 'fields'
                     else:
                         f = 'field'

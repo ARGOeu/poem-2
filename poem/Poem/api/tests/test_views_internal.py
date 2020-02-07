@@ -8,6 +8,7 @@ from django.test.client import encode_multipart
 import json
 
 from Poem.api import views_internal as views
+from Poem.api.internal_views.utils import sync_webapi
 from Poem.api.internal_views.utils import inline_metric_for_db
 from Poem.api.models import MyAPIKey
 from Poem.helpers.history_helpers import create_comment, update_comment
@@ -49,6 +50,131 @@ def mocked_inline_metric_for_db(data):
         return json.dumps(result)
     else:
         return ''
+
+
+def mocked_web_api_request(*args, **kwargs):
+    class MockResponse:
+        def __init__(self, data, status_code):
+            self.data = data
+            self.status_code = status_code
+
+        def json(self):
+            return self.data
+
+        def raise_for_status(self):
+            return ''
+
+    if args[0] == 'metric_profiles':
+        return MockResponse(
+            {
+                'data': [
+                    {
+                        'id': '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
+                        'date': '2015-01-01',
+                        'name': 'TEST_PROFILE',
+                        'services': [
+                            {
+                                'service': 'dg.3GBridge',
+                                'metrics': [
+                                    'eu.egi.cloud.Swift-CRUD'
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        'id': '11110000-aaaa-kkkk-aaaa-aaeekkccnnee',
+                        'date': '2015-01-01',
+                        'name': 'NEW_PROFILE',
+                        'services': [
+                            {
+                                'service': 'dg.3GBridge',
+                                'metrics': [
+                                    'eu.egi.cloud.Swift-CRUD'
+                                ]
+                            }
+                        ]
+
+                    }
+                ]
+            }, 200
+        )
+
+    if args[0] == 'aggregation_profiles':
+        return MockResponse(
+            {
+                'data': [
+                    {
+                        'id': '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
+                        'date': '2015-01-01',
+                        'name': 'TEST_PROFILE',
+                        'namespace': 'egi',
+                        'endpoint_group': 'sites',
+                        'metric_operation': 'AND',
+                        'profile_operation': 'AND',
+                        'metric_profile': {
+                            'name': 'TEST_PROFILE',
+                            'id': '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
+                        },
+                        'groups': []
+                    },
+                    {
+                        'id': '11110000-aaaa-kkkk-aaaa-aaeekkccnnee',
+                        'date': '2015-01-01',
+                        'name': 'NEW_PROFILE',
+                        'namespace': 'egi',
+                        'endpoint_group': 'sites',
+                        'metric_operation': 'AND',
+                        'profile_operation': 'AND',
+                        'metric_profile': {
+                            'name': 'TEST_PROFILE',
+                            'id': '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
+                        },
+                        'groups': []
+
+                    }
+                ]
+            }, 200
+        )
+
+    if args[0] == 'thresholds_profiles':
+        return MockResponse(
+            {
+                'data': [
+                    {
+                        'id': '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
+                        'date': '2015-01-01',
+                        'name': 'TEST_PROFILE',
+                        'rules': [
+                            {
+                                'metric': 'httpd.ResponseTime',
+                                'thresholds': 'response=20ms;0:300;299:1000'
+                            },
+                            {
+                                'host': 'webserver01.example.foo',
+                                'metric': 'httpd.ResponseTime',
+                                'thresholds': 'response=20ms;0:200;199:300'
+                            },
+                            {
+                                'endpoint_group': 'TEST-SITE-51',
+                                'metric': 'httpd.ResponseTime',
+                                'thresholds': 'response=20ms;0:500;499:1000'
+                            }
+                        ]
+                    },
+                    {
+                        'id': '11110000-aaaa-kkkk-aaaa-aaeekkccnnee',
+                        'date': '2015-01-01',
+                        'name': 'NEW_PROFILE',
+                        'rules': [
+                            {
+                                'metric': 'httpd.ResponseTime',
+                                'thresholds': 'response=20ms;0:300;299:1000'
+                            }
+                        ]
+                    }
+                ]
+            }, 200
+        )
 
 
 class ListAPIKeysAPIViewTests(TenantTestCase):
@@ -758,8 +884,8 @@ class ListProbesAPIViewTests(TenantTestCase):
         self.assertEqual(version.repository, probe.repository)
         self.assertEqual(
             version.version_comment,
-            '[{"changed": {"fields": ["name", "package", "description", '
-            '"comment", "repository", "docurl"]}}]'
+            '[{"changed": {"fields": ["comment", "description", "docurl", '
+            '"name", "package", "repository"]}}]'
         )
         mt = admin_models.MetricTemplate.objects.get(name='argo.AMS-Check')
         self.assertEqual(mt.probekey, version)
@@ -853,8 +979,8 @@ class ListProbesAPIViewTests(TenantTestCase):
         self.assertEqual(version.repository, probe.repository)
         self.assertEqual(
             version.version_comment,
-            '[{"changed": {"fields": ["package", "description", "comment", '
-            '"repository", "docurl"]}}]'
+            '[{"changed": {"fields": ["comment", "description", "docurl", '
+            '"package", "repository"]}}]'
         )
         mt = admin_models.MetricTemplate.objects.get(name='argo.AMS-Check')
         self.assertEqual(mt.probekey, version)
@@ -950,8 +1076,8 @@ class ListProbesAPIViewTests(TenantTestCase):
         self.assertEqual(version.repository, probe.repository)
         self.assertEqual(
             version.version_comment,
-            '[{"changed": {"fields": ["name", "package", "description", '
-            '"comment", "repository", "docurl"]}}]'
+            '[{"changed": {"fields": ["comment", "description", "docurl", '
+            '"name", "package", "repository"]}}]'
         )
         mt = admin_models.MetricTemplate.objects.get(name='argo.API-Check')
         self.assertEqual(
@@ -1769,19 +1895,65 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
         self.url = '/api/v2/internal/metricprofiles/'
         self.user = CustUser.objects.create(username='testuser')
 
-        poem_models.MetricProfiles.objects.create(
+        self.ct = ContentType.objects.get_for_model(poem_models.MetricProfiles)
+
+        mp1 = poem_models.MetricProfiles.objects.create(
             name='TEST_PROFILE',
             apiid='00000000-oooo-kkkk-aaaa-aaeekkccnnee',
             groupname='EGI'
         )
 
-        poem_models.MetricProfiles.objects.create(
+        self.mp2 = poem_models.MetricProfiles.objects.create(
             name='ANOTHER-PROFILE',
             apiid='12341234-oooo-kkkk-aaaa-aaeekkccnnee'
         )
 
         poem_models.GroupOfMetricProfiles.objects.create(name='EGI')
         poem_models.GroupOfMetricProfiles.objects.create(name='new-group')
+
+        data1 = json.loads(
+            serializers.serialize(
+                'json', [mp1],
+                use_natural_foreign_keys=True,
+                use_natural_primary_keys=True
+            )
+        )
+        data1[0]['fields'].update({
+            'metricinstances': [
+                ['AMGA', 'org.nagios.SAML-SP'],
+                ['APEL', 'org.apel.APEL-Pub'],
+                ['APEL', 'org.apel.APEL-Sync']
+            ]
+        })
+
+        data2 = json.loads(
+            serializers.serialize(
+                'json', [self.mp2],
+                use_natural_foreign_keys=True,
+                use_natural_primary_keys=True
+            )
+        )
+        data2[0]['fields'].update({
+            'metricinstances': []
+        })
+
+        poem_models.TenantHistory.objects.create(
+            object_id=mp1.id,
+            serialized_data=json.dumps(data1),
+            object_repr=mp1.__str__(),
+            comment='Initial version.',
+            user='testuser',
+            content_type=self.ct
+        )
+
+        poem_models.TenantHistory.objects.create(
+            object_id=self.mp2.id,
+            serialized_data=json.dumps(data2),
+            object_repr=self.mp2.__str__(),
+            comment='Initial version.',
+            user='testuser',
+            content_type=self.ct
+        )
 
     @patch('Poem.api.internal_views.metricprofiles.sync_webapi',
            side_effect=mocked_func)
@@ -1829,17 +2001,29 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_post_metric_profile(self):
-        data = {'apiid': '12341234-aaaa-kkkk-aaaa-aaeekkccnnee',
-                'name': 'new-profile',
-                'groupname': 'EGI'}
+        data = {
+            "apiid": "12341234-aaaa-kkkk-aaaa-aaeekkccnnee",
+            "name": "new-profile",
+            "groupname": "EGI",
+            "services": [
+                {"service": "AMGA", "metric": "org.nagios.SAML-SP"},
+                {"service": "APEL", "metric": "org.apel.APEL-Pub"},
+                {"service": "APEL", "metric": "org.apel.APEL-Sync"}
+            ]
+        }
         request = self.factory.post(self.url, data, format='json')
         force_authenticate(request, user=self.user)
         response = self.view(request)
         profile = poem_models.MetricProfiles.objects.get(name='new-profile')
+        history = poem_models.TenantHistory.objects.filter(
+            object_id=profile.id, content_type=self.ct
+        )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(profile.name, 'new-profile')
         self.assertEqual(profile.apiid, '12341234-aaaa-kkkk-aaaa-aaeekkccnnee')
         self.assertEqual(profile.groupname, 'EGI')
+        self.assertEqual(history.count(), 1)
+        self.assertEqual(history[0].comment, 'Initial version.')
 
     def test_post_metric_profile_invalid_data(self):
         data = {'name': 'new-profile'}
@@ -1849,17 +2033,43 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_put_metric_profile(self):
-        data = {'apiid': '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
-                'groupname': 'new-group'}
+        data = {
+            "apiid": "00000000-oooo-kkkk-aaaa-aaeekkccnnee",
+            "groupname": "new-group",
+            "services": [
+                {"service": "AMGA", "metric": "org.nagios.SAML-SP"},
+                {"service": "APEL", "metric": "org.apel.APEL-Pub"},
+                {"service": "APEL", "metric": "org.apel.APEL-Sync"}
+            ]
+        }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         profile = poem_models.MetricProfiles.objects.get(name='TEST_PROFILE')
+        history = poem_models.TenantHistory.objects.filter(
+            object_id=profile.id, content_type=self.ct
+        ).order_by('-date_created')
         self.assertEqual(profile.name, 'TEST_PROFILE')
         self.assertEqual(profile.apiid, '00000000-oooo-kkkk-aaaa-aaeekkccnnee')
         self.assertEqual(profile.groupname, 'new-group')
+        self.assertEqual(history.count(), 2)
+        serialized_data = json.loads(history[0].serialized_data)[0]['fields']
+        self.assertEqual(serialized_data['name'], profile.name)
+        self.assertEqual(serialized_data['apiid'], profile.apiid)
+        self.assertEqual(serialized_data['groupname'], profile.groupname)
+        self.assertEqual(
+            serialized_data['metricinstances'],
+            [
+                ['AMGA', 'org.nagios.SAML-SP'],
+                ['APEL', 'org.apel.APEL-Pub'],
+                ['APEL', 'org.apel.APEL-Sync']
+            ]
+        )
+        self.assertEqual(
+            history[0].comment, '[{"changed": {"fields": ["groupname"]}}]'
+        )
 
     def test_delete_metric_profile(self):
         request = self.factory.delete(self.url + 'ANOTHER-PROFILE')
@@ -1870,6 +2080,10 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse('ANOTHER-PROFILE' in all)
+        history = poem_models.TenantHistory.objects.filter(
+            object_id=self.mp2.id, content_type=self.ct
+        )
+        self.assertEqual(history.count(), 0)
 
     def test_delete_metric_profile_with_wrong_id(self):
         request = self.factory.delete(self.url + 'wrong_id')
@@ -4555,7 +4769,6 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db',
            side_effect=mocked_inline_metric_for_db)
     def test_put_metrictemplate_without_changing_probekey(self, func):
-        self.maxDiff = None
         attr = [
             {'key': 'argo.ams_TOKEN2', 'value': '--token'}
         ]
@@ -4601,81 +4814,31 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         )[0]['fields']
         self.assertEqual(versions.count(), 2)
         self.assertEqual(versions[1].version_comment, 'Initial version.')
+        comment_set = set()
+        for item in json.loads(versions[0].version_comment):
+            comment_set.add(json.dumps(item))
         self.assertEqual(
-            json.loads(versions[0].version_comment),
-            [
-                {
-                    'changed': {
-                        'fields': ['config'],
-                        'object': ['maxCheckAttempts', 'timeout', 'interval',
-                                   'retryInterval']
-                    }
-                },
-                {
-                    'deleted': {
-                        'fields': ['attribute'],
-                        'object': ['argo.ams_TOKEN']
-                    }
-                },
-                {
-                    'added': {
-                        'fields': ['attribute'],
-                        'object': ['argo.ams_TOKEN2']
-                    }
-                },
-                {
-                    'added': {
-                        'fields': ['dependency'],
-                        'object': ['dep-key']
-                    }
-                },
-                {
-                    'deleted': {
-                        'fields': ['flags'],
-                        'object': ['OBSESS']
-                    }
-                },
-                {
-                    'added': {
-                        'fields': ['flags'],
-                        'object': ['flag-key']
-                    }
-                },
-                {
-                    'added': {
-                        'fields': ['files'],
-                        'object': ['file-key']
-                    }
-                },
-                {
-                    'deleted': {
-                        'fields': ['parameter'],
-                        'object': ['--project']
-                    }
-                },
-                {
-                    'added': {
-                        'fields': ['parameter'],
-                        'object': ['par-key']
-                    }
-                },
-                {
-                    'added': {
-                        'fields': ['fileparameter'],
-                        'object': ['fp-key']
-                    }
-                },
-                {
-                    'added': {
-                        'fields': ['parent']
-                    }
-                },
-                {
-                    'changed': {
-                        'fields': ['name', 'probekey']
-                    }
-                }
-            ]
+            comment_set,
+            {
+                '{"changed": {"fields": ["config"], '
+                '"object": ["interval", "maxCheckAttempts", "retryInterval", '
+                '"timeout"]}}',
+                '{"deleted": {"fields": ["attribute"], '
+                '"object": ["argo.ams_TOKEN"]}}',
+                '{"added": {"fields": ["attribute"], '
+                '"object": ["argo.ams_TOKEN2"]}}',
+                '{"added": {"fields": ["dependency"], "object": ["dep-key"]}}',
+                '{"deleted": {"fields": ["flags"], "object": ["OBSESS"]}}',
+                '{"added": {"fields": ["flags"], "object": ["flag-key"]}}',
+                '{"added": {"fields": ["files"], "object": ["file-key"]}}',
+                '{"deleted": {"fields": ["parameter"], '
+                '"object": ["--project"]}}',
+                '{"added": {"fields": ["parameter"], "object": ["par-key"]}}',
+                '{"added": {"fields": ["fileparameter"], '
+                '"object": ["fp-key"]}}',
+                '{"added": {"fields": ["parent"]}}',
+                '{"changed": {"fields": ["name", "probekey"]}}'
+            }
         )
         self.assertEqual(metric_versions.count(), 1)
         self.assertEqual(mt.name, 'argo.AMS-Check-new')
@@ -4790,80 +4953,31 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             metric_versions[0].serialized_data
         )[0]['fields']
         self.assertEqual(versions.count(), 3)
+        comment_set = set()
+        for item in json.loads(versions[0].version_comment):
+            comment_set.add(json.dumps(item))
         self.assertEqual(
-            json.loads(versions[0].version_comment),
-            [
-                {
-                    'changed': {
-                        'fields': ['config'],
-                        'object': ['path', 'interval', 'retryInterval'],
-                    }
-                },
-                {
-                    'deleted': {
-                        'fields': ['attribute'],
-                        'object': ['argo.ams_TOKEN']
-                    }
-                },
-                {
-                    'added': {
-                        'fields': ['attribute'],
-                        'object': ['argo.ams_TOKEN2']
-                    }
-                },
-                {
-                    'added': {
-                        'fields': ['dependency'],
-                        'object': ['dep-key']
-                    }
-                },
-                {
-                    'deleted': {
-                        'fields': ['flags'],
-                        'object': ['OBSESS']
-                    }
-                },
-                {
-                    'added': {
-                        'fields': ['flags'],
-                        'object': ['flag-key']
-                    }
-                },
-                {
-                    'added': {
-                        'fields': ['files'],
-                        'object': ['file-key']
-                    }
-                },
-                {
-                    'deleted': {
-                        'fields': ['parameter'],
-                        'object': ['--project']
-                    }
-                },
-                {
-                    'added': {
-                        'fields': ['parameter'],
-                        'object': ['par-key']
-                    }
-                },
-                {
-                    'added': {
-                        'fields': ['fileparameter'],
-                        'object': ['fp-key']
-                    }
-                },
-                {
-                    'added': {
-                        'fields': ['parent']
-                    }
-                },
-                {
-                    'changed': {
-                        'fields': ['name', 'probekey', 'probeexecutable']
-                    }
-                }
-            ]
+            comment_set,
+            {
+                '{"changed": {"fields": ["config"], '
+                '"object": ["interval", "path", "retryInterval"]}}',
+                '{"deleted": {"fields": ["attribute"], '
+                '"object": ["argo.ams_TOKEN"]}}',
+                '{"added": {"fields": ["attribute"], '
+                '"object": ["argo.ams_TOKEN2"]}}',
+                '{"added": {"fields": ["dependency"], "object": ["dep-key"]}}',
+                '{"deleted": {"fields": ["flags"], "object": ["OBSESS"]}}',
+                '{"added": {"fields": ["flags"], "object": ["flag-key"]}}',
+                '{"added": {"fields": ["files"], "object": ["file-key"]}}',
+                '{"deleted": {"fields": ["parameter"], '
+                '"object": ["--project"]}}',
+                '{"added": {"fields": ["parameter"], "object": ["par-key"]}}',
+                '{"added": {"fields": ["fileparameter"], '
+                '"object": ["fp-key"]}}',
+                '{"added": {"fields": ["parent"]}}',
+                '{"changed": {"fields": ["name", "probeexecutable", '
+                '"probekey"]}}'
+            }
         )
         self.assertEqual(metric_versions.count(), 1)
         self.assertEqual(mt.name, 'argo.AMS-Check-new')
@@ -5487,6 +5601,7 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
         )
 
         ct_m = ContentType.objects.get_for_model(poem_models.Metric)
+        ct_mp = ContentType.objects.get_for_model(poem_models.MetricProfiles)
 
         self.probever1 = admin_models.ProbeHistory.objects.create(
             object_id=probe1,
@@ -5522,6 +5637,9 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
 
         group1 = poem_models.GroupOfMetrics.objects.create(name='EGI')
         group2 = poem_models.GroupOfMetrics.objects.create(name='TEST')
+
+        poem_models.GroupOfMetricProfiles.objects.create(name='EGI')
+        poem_models.GroupOfMetricProfiles.objects.create(name='NEW_GROUP')
 
         self.metric1 = poem_models.Metric.objects.create(
             name='argo.AMS-Check',
@@ -5621,6 +5739,67 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
             user=self.user.username
         )
 
+        self.mp1 = poem_models.MetricProfiles.objects.create(
+            name='TEST_PROFILE',
+            apiid='00000000-oooo-kkkk-aaaa-aaeekkccnnee',
+            groupname='EGI'
+        )
+
+        data = json.loads(
+            serializers.serialize(
+                'json', [self.mp1],
+                use_natural_foreign_keys=True,
+                use_natural_primary_keys=True
+            )
+        )
+        data[0]["fields"].update({
+            "metricinstances": [
+                ['AMGA', 'org.nagios.SAML-SP'],
+                ['APEL', 'org.apel.APEL-Pub'],
+                ['APEL', 'org.apel.APEL-Sync']
+            ]
+        })
+
+        self.ver4 = poem_models.TenantHistory.objects.create(
+            object_id=self.mp1.id,
+            serialized_data=json.dumps(data),
+            object_repr=self.mp1.__str__(),
+            comment='Initial version.',
+            user='testuser',
+            content_type=ct_mp
+        )
+
+        self.mp1.groupname = 'NEW_GROUP'
+        self.mp1.name = 'TEST_PROFILE2'
+        self.mp1.save()
+
+        data = json.loads(
+            serializers.serialize(
+                'json', [self.mp1],
+                use_natural_foreign_keys=True,
+                use_natural_primary_keys=True
+            )
+        )
+        data[0]["fields"].update({
+            "metricinstances": [
+                ['AMGA', 'org.nagios.SAML-SP'],
+                ['APEL', 'org.apel.APEL-Pub'],
+            ]
+        })
+
+        comment = create_comment(
+            self.mp1, ct=ct_mp, new_serialized_data=json.dumps(data)
+        )
+
+        self.ver5 = poem_models.TenantHistory.objects.create(
+            object_id=self.mp1.id,
+            serialized_data=json.dumps(data),
+            object_repr=self.mp1.__str__(),
+            comment=comment,
+            user='testuser',
+            content_type=ct_mp
+        )
+
     def test_get_versions_of_metrics(self):
         request = self.factory.get(self.url + 'metric/argo.AMS-Check-new')
         force_authenticate(request, user=self.user)
@@ -5665,8 +5844,8 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
                         self.ver2.date_created, '%Y-%m-%d %H:%M:%S'
                     ),
                     'comment': 'Changed config fields "maxCheckAttempts, '
-                               'timeout and retryInterval". Changed probekey '
-                               'and group.',
+                               'retryInterval and timeout". Changed group '
+                               'and probekey.',
                     'version': datetime.datetime.strftime(
                         self.ver2.date_created, '%Y%m%d-%H%M%S'
                     )
@@ -5773,6 +5952,74 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
         request = self.factory.get(self.url + 'metric')
         force_authenticate(request, user=self.user)
         response = self.view(request, 'metric')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_get_metric_profile_versions(self):
+        request = self.factory.get(self.url + 'metricprofile/TEST_PROFILE2')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'metricprofile', 'TEST_PROFILE2')
+        self.assertEqual(
+            response.data,
+            [
+                {
+                    'id': self.ver5.id,
+                    'object_repr': 'TEST_PROFILE2',
+                    'fields': {
+                        'name': 'TEST_PROFILE2',
+                        'groupname': 'NEW_GROUP',
+                        'apiid': '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
+                        'metricinstances': [
+                            {'service': 'AMGA', 'metric': 'org.nagios.SAML-SP'},
+                            {'service': 'APEL', 'metric': 'org.apel.APEL-Pub'}
+                        ]
+                    },
+                    'user': 'testuser',
+                    'date_created': datetime.datetime.strftime(
+                        self.ver5.date_created, '%Y-%m-%d %H:%M:%S'
+                    ),
+                    'comment': 'Deleted metricinstances field '
+                               '"APEL org.apel.APEL-Sync". Changed groupname '
+                               'and name.',
+                    'version': datetime.datetime.strftime(
+                        self.ver5.date_created, '%Y%m%d-%H%M%S'
+                    )
+                },
+                {
+                    'id': self.ver4.id,
+                    'object_repr': 'TEST_PROFILE',
+                    'fields': {
+                        'name': 'TEST_PROFILE',
+                        'groupname': 'EGI',
+                        'apiid': '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
+                        'metricinstances': [
+                            {'service': 'AMGA', 'metric': 'org.nagios.SAML-SP'},
+                            {'service': 'APEL', 'metric': 'org.apel.APEL-Pub'},
+                            {'service': 'APEL', 'metric': 'org.apel.APEL-Sync'}
+                        ]
+                    },
+                    'user': 'testuser',
+                    'date_created': datetime.datetime.strftime(
+                        self.ver4.date_created, '%Y-%m-%d %H:%M:%S'
+                    ),
+                    'comment': 'Initial version.',
+                    'version': datetime.datetime.strftime(
+                        self.ver4.date_created, '%Y%m%d-%H%M%S'
+                    )
+                }
+            ]
+        )
+
+    def test_get_nonexisting_metricprofile(self):
+        request = self.factory.get(self.url + 'metricprofile/nonexisting')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'metricprofile', 'nonexisting')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data, {'detail': 'Metric profile not found.'})
+
+    def test_get_metric_version_without_specifying_name(self):
+        request = self.factory.get(self.url + 'metricprofile')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'metricprofile')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
 
@@ -5999,6 +6246,9 @@ class HistoryHelpersTests(TenantTestCase):
         )
 
         self.ct_metric = ContentType.objects.get_for_model(poem_models.Metric)
+        self.ct_mp = ContentType.objects.get_for_model(
+            poem_models.MetricProfiles
+        )
 
         self.active = admin_models.MetricTemplateType.objects.create(
             name='Active'
@@ -6176,6 +6426,37 @@ class HistoryHelpersTests(TenantTestCase):
             content_type=self.ct_metric
         )
 
+        poem_models.GroupOfMetricProfiles.objects.create(name='TEST')
+        poem_models.GroupOfMetricProfiles.objects.create(name='TEST2')
+
+        self.mp1 = poem_models.MetricProfiles.objects.create(
+            name='TEST_PROFILE',
+            apiid='00000000-oooo-kkkk-aaaa-aaeekkccnnee',
+            groupname='TEST'
+        )
+
+        data = json.loads(serializers.serialize(
+            'json', [self.mp1],
+            use_natural_foreign_keys=True,
+            use_natural_primary_keys=True
+        ))
+        data[0]['fields'].update({
+            'metricinstances': [
+                ('AMGA', 'org.nagios.SAML-SP'),
+                ('APEL', 'org.apel.APEL-Pub'),
+                ('APEL', 'org.apel.APEL-Sync')
+            ]
+        })
+
+        poem_models.TenantHistory.objects.create(
+            object_id=self.mp1.id,
+            serialized_data=json.dumps(data),
+            object_repr=self.mp1.__str__(),
+            comment='Initial version.',
+            user='testuser',
+            content_type=self.ct_mp
+        )
+
     def test_create_comment_for_metric_template(self):
         self.mt1.name = 'metric-template-2'
         self.mt1.probekey = self.probe_history3
@@ -6185,39 +6466,19 @@ class HistoryHelpersTests(TenantTestCase):
         self.mt1.flags = '["flags-key flags-value", "flags-key1 flags-value2"]'
         self.mt1.save()
         comment = create_comment(self.mt1)
+        comment_set = set()
+        for item in json.loads(comment):
+            comment_set.add(json.dumps(item))
         self.assertEqual(
-            json.loads(comment),
-            [
-                {
-                    'deleted': {
-                        'fields': ['dependency'],
-                        'object': ['dependency-key2']
-                    }
-                },
-                {
-                    'added': {
-                        'fields': ['flags'],
-                        'object': ['flags-key1']
-                    }
-                },
-                {
-                    'added': {
-                        'fields': ['probeexecutable']
-                    }
-                },
-                {
-                    'changed': {
-                        'fields': [
-                            'name', 'probekey'
-                        ]
-                    }
-                },
-                {
-                    'deleted': {
-                        'fields': ['parent']
-                    }
-                }
-            ]
+            comment_set,
+            {
+                '{"deleted": {"fields": ["dependency"], '
+                '"object": ["dependency-key2"]}}',
+                '{"added": {"fields": ["flags"], "object": ["flags-key1"]}}',
+                '{"added": {"fields": ["probeexecutable"]}}',
+                '{"changed": {"fields": ["name", "probekey"]}}',
+                '{"deleted": {"fields": ["parent"]}}'
+            }
         )
 
     def test_create_comment_for_metric_template_if_initial(self):
@@ -6246,45 +6507,20 @@ class HistoryHelpersTests(TenantTestCase):
         self.mt1.flags = '["flags-key flags-value", "flags-key1 flags-value2"]'
         self.mt1.save()
         comment = update_comment(self.mt1)
+        comment_set = set()
+        for item in json.loads(comment):
+            comment_set.add(json.dumps(item))
         self.assertEqual(
-            json.loads(comment),
-            [
-                {
-                    'changed': {
-                        'fields': ['config'],
-                        'object': ['timeout']
-                    }
-                },
-                {
-                    'deleted': {
-                        'fields': ['dependency'],
-                        'object': ['dependency-key2']
-                    }
-                },
-                {
-                    'added': {
-                        'fields': ['flags'],
-                        'object': ['flags-key1']
-                    }
-                },
-                {
-                    'added': {
-                        'fields': ['probeexecutable']
-                    }
-                },
-                {
-                    'changed': {
-                        'fields': [
-                            'name', 'probekey'
-                        ]
-                    }
-                },
-                {
-                    'deleted': {
-                        'fields': ['parent']
-                    }
-                }
-            ]
+            comment_set,
+            {
+                '{"changed": {"fields": ["config"], "object": ["timeout"]}}',
+                '{"deleted": {"fields": ["dependency"], '
+                '"object": ["dependency-key2"]}}',
+                '{"added": {"fields": ["flags"], "object": ["flags-key1"]}}',
+                '{"added": {"fields": ["probeexecutable"]}}',
+                '{"changed": {"fields": ["name", "probekey"]}}',
+                '{"deleted": {"fields": ["parent"]}}'
+            }
         )
 
     def test_do_not_update_comment_for_metric_template_if_initial(self):
@@ -6311,16 +6547,15 @@ class HistoryHelpersTests(TenantTestCase):
         self.probe1.docurl = 'https://doc2.url',
         self.probe1.save()
         comment = create_comment(self.probe1)
+        comment_set = set()
+        for item in json.loads(comment):
+            comment_set.add(json.dumps(item))
         self.assertEqual(
-            json.loads(comment),
-            [
-                {'changed': {
-                    'fields': [
-                        'name', 'package', 'description', 'comment',
-                        'repository', 'docurl'
-                    ]
-                }}
-            ]
+            comment_set,
+            {
+                '{"changed": {"fields": ["comment", "description", "docurl", '
+                '"name", "package", "repository"]}}'
+            }
         )
 
     def test_update_comment_for_probe(self):
@@ -6332,17 +6567,15 @@ class HistoryHelpersTests(TenantTestCase):
         self.probe1.name = 'probe-2'
         self.probe1.package = package
         self.probe1.save()
-
         comment = update_comment(self.probe1)
+        comment_set = set()
+        for item in json.loads(comment):
+            comment_set.add(json.dumps(item))
         self.assertEqual(
-            json.loads(comment),
-            [
-                {'changed': {
-                    'fields': [
-                        'name', 'package', 'comment'
-                    ]
-                }}
-            ]
+            comment_set,
+            {
+                '{"changed": {"fields": ["comment", "name", "package"]}}'
+            }
         )
 
     def test_do_not_update_comment_for_probe_if_initial(self):
@@ -6413,39 +6646,19 @@ class HistoryHelpersTests(TenantTestCase):
         )
         comment = create_comment(self.metric1, self.ct_metric,
                                  serialized_data)
+        comment_set = set()
+        for item in json.loads(comment):
+            comment_set.add(json.dumps(item))
         self.assertEqual(
-            json.loads(comment),
-            [
-                {
-                    'deleted': {
-                        'fields': ['dependancy'],
-                        'object': ['dependency-key2']
-                    }
-                },
-                {
-                    'added': {
-                        'fields': ['flags'],
-                        'object': ['flags-key1']
-                    }
-                },
-                {
-                    'added': {
-                        'fields': ['probeexecutable']
-                    }
-                },
-                {
-                    'changed': {
-                        'fields': [
-                            'name', 'probekey'
-                        ]
-                    }
-                },
-                {
-                    'deleted': {
-                        'fields': ['parent']
-                    }
-                }
-            ]
+            comment_set,
+            {
+                '{"deleted": {"fields": ["dependancy"], '
+                '"object": ["dependency-key2"]}}',
+                '{"added": {"fields": ["flags"], "object": ["flags-key1"]}}',
+                '{"added": {"fields": ["probeexecutable"]}}',
+                '{"changed": {"fields": ["name", "probekey"]}}',
+                '{"deleted": {"fields": ["parent"]}}'
+            }
         )
 
     def test_create_comment_for_metric_if_field_deleted_from_model(self):
@@ -6473,45 +6686,21 @@ class HistoryHelpersTests(TenantTestCase):
         new_serialized_data = json.dumps(dict_serialized)
         comment = create_comment(self.metric1, self.ct_metric,
                                  new_serialized_data)
+        comment_set = set()
+        for item in json.loads(comment):
+            comment_set.add(json.dumps(item))
         self.assertEqual(
-            json.loads(comment),
-            [
-                {
-                    'changed': {
-                        'fields': ['config'],
-                        'object': ['maxCheckAttempts']
-                    }
-                },
-                {
-                    'deleted': {
-                        'fields': ['dependancy'],
-                        'object': ['dependency-key2']
-                    }
-                },
-                {
-                    'added': {
-                        'fields': ['flags'],
-                        'object': ['flags-key1']
-                    }
-                },
-                {
-                    'added': {
-                        'fields': ['probeexecutable']
-                    }
-                },
-                {
-                    'changed': {
-                        'fields': [
-                            'name', 'probekey'
-                        ]
-                    }
-                },
-                {
-                    'deleted': {
-                        'fields': ['parent']
-                    }
-                }
-            ]
+            comment_set,
+            {
+                '{"changed": {"fields": ["config"], '
+                '"object": ["maxCheckAttempts"]}}',
+                '{"deleted": {"fields": ["dependancy"], '
+                '"object": ["dependency-key2"]}}',
+                '{"added": {"fields": ["flags"], "object": ["flags-key1"]}}',
+                '{"added": {"fields": ["probeexecutable"]}}',
+                '{"changed": {"fields": ["name", "probekey"]}}',
+                '{"deleted": {"fields": ["parent"]}}'
+            }
         )
 
     def test_create_comment_for_metric_if_field_added_to_model(self):
@@ -6538,48 +6727,23 @@ class HistoryHelpersTests(TenantTestCase):
         dict_serialized = json.loads(serialized_data)
         dict_serialized[0]['fields']['mock_field'] = 'mock_value'
         new_serialized_data = json.dumps(dict_serialized)
-
         comment = create_comment(self.metric1, self.ct_metric,
                                  new_serialized_data)
+        comment_set = set()
+        for item in json.loads(comment):
+            comment_set.add(json.dumps(item))
         self.assertEqual(
-            json.loads(comment),
-            [
-                {
-                    'changed': {
-                        'fields': ['config'],
-                        'object': ['maxCheckAttempts', 'retryInterval']
-                    }
-                },
-                {
-                    'deleted': {
-                        'fields': ['dependancy'],
-                        'object': ['dependency-key2']
-                    }
-                },
-                {
-                    'added': {
-                        'fields': ['flags'],
-                        'object': ['flags-key1']
-                    }
-                },
-                {
-                    'added': {
-                        'fields': ['probeexecutable', 'mock_field']
-                    }
-                },
-                {
-                    'changed': {
-                        'fields': [
-                            'name', 'probekey'
-                        ]
-                    }
-                },
-                {
-                    'deleted': {
-                        'fields': ['parent']
-                    }
-                }
-            ]
+            comment_set,
+            {
+                '{"changed": {"fields": ["config"], '
+                '"object": ["maxCheckAttempts", "retryInterval"]}}',
+                '{"deleted": {"fields": ["dependancy"], '
+                '"object": ["dependency-key2"]}}',
+                '{"added": {"fields": ["flags"], "object": ["flags-key1"]}}',
+                '{"added": {"fields": ["mock_field", "probeexecutable"]}}',
+                '{"changed": {"fields": ["name", "probekey"]}}',
+                '{"deleted": {"fields": ["parent"]}}'
+            }
         )
 
     def test_create_comment_for_metric_if_initial(self):
@@ -6615,10 +6779,60 @@ class HistoryHelpersTests(TenantTestCase):
             use_natural_foreign_keys=True,
             use_natural_primary_keys=True
         )
-
         comment = create_comment(m, self.ct_metric, serialized_data)
-
         self.assertEqual(comment, '[{"added": {"fields": ["group"]}}]')
+
+    def test_create_comment_for_metricprofile(self):
+        self.mp1.name = 'TEST_PROFILE2',
+        self.mp1.groupname = 'TEST2'
+        self.mp1.save()
+        data = json.loads(serializers.serialize(
+            'json', [self.mp1],
+            use_natural_foreign_keys=True,
+            use_natural_primary_keys=True
+        ))
+        data[0]['fields'].update({
+            'metricinstances': [
+                ['AMGA', 'org.nagios.SAML-SP'],
+                ['APEL', 'org.apel.APEL-Pub'],
+                ['ARC-CE', 'org.nordugrid.ARC-CE-IGTF']
+            ]
+        })
+        comment = create_comment(self.mp1, self.ct_mp, json.dumps(data))
+        comment_set = set()
+        for item in json.loads(comment):
+            comment_set.add(json.dumps(item))
+        self.assertEqual(
+            comment_set,
+            {
+                '{"changed": {"fields": ["groupname", "name"]}}',
+                '{"added": {"fields": ["metricinstances"], '
+                '"object": ["ARC-CE", "org.nordugrid.ARC-CE-IGTF"]}}',
+                '{"deleted": {"fields": ["metricinstances"], '
+                '"object": ["APEL", "org.apel.APEL-Sync"]}}'
+            }
+        )
+
+    def test_create_comment_for_metricprofile_if_initial(self):
+        mp = poem_models.MetricProfiles.objects.create(
+            name='TEST_PROFILE2',
+            groupname='TEST',
+            apiid='10000000-oooo-kkkk-aaaa-aaeekkccnnee'
+        )
+        data = json.loads(serializers.serialize(
+            'json', [mp],
+            use_natural_foreign_keys=True,
+            use_natural_primary_keys=True
+        ))
+        data[0]['fields'].update({
+            'metricinstances': [
+                ['AMGA', 'org.nagios.SAML-SP'],
+                ['APEL', 'org.apel.APEL-Pub'],
+                ['ARC-CE', 'org.nordugrid.ARC-CE-IGTF']
+            ]
+        })
+        comment = create_comment(mp, self.ct_mp, json.dumps(data))
+        self.assertEqual(comment, 'Initial version.')
 
 
 class ListThresholdsProfilesInGroupAPIViewTests(TenantTestCase):
@@ -7775,3 +7989,168 @@ class ListMetricTemplatesForImportTests(TenantTestCase):
                 }
             ]
         )
+
+
+class SyncWebApiTests(TenantTestCase):
+    def setUp(self):
+        ct_mp = ContentType.objects.get_for_model(poem_models.MetricProfiles)
+        MyAPIKey.objects.create(
+            name='WEB-API',
+            token='mocked_token'
+        )
+
+        self.mp1 = poem_models.MetricProfiles.objects.create(
+            name='TEST_PROFILE',
+            apiid='00000000-oooo-kkkk-aaaa-aaeekkccnnee',
+            groupname='EGI'
+        )
+
+        self.mp2 = poem_models.MetricProfiles.objects.create(
+            name='ANOTHER-PROFILE',
+            apiid='12341234-oooo-kkkk-aaaa-aaeekkccnnee',
+            groupname='EGI'
+        )
+
+        data = json.loads(
+            serializers.serialize(
+                'json', [self.mp1],
+                use_natural_foreign_keys=True,
+                use_natural_primary_keys=True
+            )
+        )
+        data[0]['fields'].update({
+            'metricinstances': [
+                ['AMGA', 'org.nagios.SAML-SP'],
+                ['APEL', 'org.apel.APEL-Pub'],
+                ['APEL', 'org.apel.APEL-Sync']
+            ]
+        })
+
+        poem_models.TenantHistory.objects.create(
+            object_id=self.mp1.id,
+            serialized_data=json.dumps(data),
+            object_repr=self.mp1.__str__(),
+            comment='Initial version.',
+            user='testuser',
+            content_type=ct_mp
+        )
+
+        data = json.loads(
+            serializers.serialize(
+                'json', [self.mp2],
+                use_natural_foreign_keys=True,
+                use_natural_primary_keys=True
+            )
+        )
+        data[0]['fields'].update({
+            'metricinstances': [
+                ['AMGA', 'org.nagios.SAML-SP'],
+                ['APEL', 'org.apel.APEL-Pub'],
+                ['APEL', 'org.apel.APEL-Sync']
+            ]
+        })
+
+        poem_models.TenantHistory.objects.create(
+            object_id=self.mp2.id,
+            serialized_data=json.dumps(data),
+            object_repr=self.mp2.__str__(),
+            comment='Initial version.',
+            user='testuser',
+            content_type=ct_mp
+        )
+
+        self.aggr1 = poem_models.Aggregation.objects.create(
+            name='TEST_PROFILE',
+            apiid='00000000-oooo-kkkk-aaaa-aaeekkccnnee',
+            groupname='EGI'
+        )
+
+        self.aggr2 = poem_models.Aggregation.objects.create(
+            name='ANOTHER-PROFILE',
+            apiid='12341234-oooo-kkkk-aaaa-aaeekkccnnee',
+            groupname='EGI'
+        )
+
+        self.tp1 = poem_models.ThresholdsProfiles.objects.create(
+            name='TEST_PROFILE',
+            apiid='00000000-oooo-kkkk-aaaa-aaeekkccnnee',
+            groupname='EGI'
+        )
+
+        self.tp2 = poem_models.ThresholdsProfiles.objects.create(
+            name='ANOTHER-PROFILE',
+            apiid='12341234-oooo-kkkk-aaaa-aaeekkccnnee',
+            groupname='EGI'
+        )
+
+    @patch('requests.get', side_effect=mocked_web_api_request)
+    def test_sync_webapi_metricprofiles(self, func):
+        self.assertEqual(poem_models.MetricProfiles.objects.all().count(), 2)
+        sync_webapi('metric_profiles', poem_models.MetricProfiles)
+        self.assertEqual(poem_models.MetricProfiles.objects.all().count(), 2)
+        self.assertEqual(
+            poem_models.MetricProfiles.objects.get(name='TEST_PROFILE'),
+            self.mp1
+        )
+        self.assertRaises(
+            poem_models.MetricProfiles.DoesNotExist,
+            poem_models.MetricProfiles.objects.get,
+            name='ANOTHER-PROFILE'
+        )
+        self.assertEqual(
+            poem_models.TenantHistory.objects.filter(
+                object_id=self.mp2.id
+            ).count(), 0
+        )
+        self.assertTrue(
+            poem_models.MetricProfiles.objects.get(name='NEW_PROFILE')
+        )
+        history = poem_models.TenantHistory.objects.filter(
+            object_repr='NEW_PROFILE'
+        )
+        self.assertEqual(history.count(), 1)
+        self.assertEqual(history[0].comment, 'Initial version.')
+        serialized_data = json.loads(history[0].serialized_data)[0]['fields']
+        self.assertEqual(serialized_data['name'], 'NEW_PROFILE')
+        self.assertEqual(
+            serialized_data['apiid'], '11110000-aaaa-kkkk-aaaa-aaeekkccnnee'
+        )
+        self.assertEqual(
+            serialized_data['metricinstances'],
+            [['dg.3GBridge', 'eu.egi.cloud.Swift-CRUD']]
+        )
+
+    @patch('requests.get', side_effect=mocked_web_api_request)
+    def test_sync_webapi_aggregationprofiles(self, func):
+        self.assertEqual(poem_models.Aggregation.objects.all().count(), 2)
+        sync_webapi('aggregation_profiles', poem_models.Aggregation)
+        self.assertEqual(poem_models.Aggregation.objects.all().count(), 2)
+        self.assertEqual(
+            poem_models.Aggregation.objects.get(name='TEST_PROFILE'), self.aggr1
+        )
+        self.assertRaises(
+            poem_models.Aggregation.DoesNotExist,
+            poem_models.Aggregation.objects.get,
+            name='ANOTHER-PROFILE'
+        )
+        self.assertTrue(poem_models.Aggregation.objects.get(name='NEW_PROFILE'))
+
+    @patch('requests.get', side_effect=mocked_web_api_request)
+    def test_sync_webapi_thresholdsprofile(self, func):
+        self.assertEqual(
+            poem_models.ThresholdsProfiles.objects.all().count(), 2
+        )
+        sync_webapi('thresholds_profiles', poem_models.ThresholdsProfiles)
+        self.assertEqual(
+            poem_models.ThresholdsProfiles.objects.all().count(), 2
+        )
+        self.assertEqual(
+            poem_models.ThresholdsProfiles.objects.get(name='TEST_PROFILE'),
+            self.tp1
+        )
+        self.assertRaises(
+            poem_models.ThresholdsProfiles.DoesNotExist,
+            poem_models.ThresholdsProfiles.objects.get,
+            name='ANOTHER-PROFILE'
+        )
+

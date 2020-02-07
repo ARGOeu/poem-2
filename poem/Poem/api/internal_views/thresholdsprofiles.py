@@ -1,7 +1,7 @@
 from django.conf import settings
 
 from Poem.api import serializers
-from Poem.api.internal_views.aggregationprofiles import sync_webapi
+from Poem.api.internal_views.utils import sync_webapi
 from Poem.api.views import NotFound
 from Poem.poem.models import ThresholdsProfiles, GroupOfThresholdsProfiles
 

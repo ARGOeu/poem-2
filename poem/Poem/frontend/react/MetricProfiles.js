@@ -3,26 +3,32 @@ import {Link} from 'react-router-dom';
 import {Backend, WebApi} from './DataManager';
 import Autocomplete from 'react-autocomplete';
 import {
-  LoadingAnim, 
-  BaseArgoView, 
-  SearchField, 
-  DropDown, 
+  LoadingAnim,
+  BaseArgoView,
+  SearchField,
+  DropDown,
   NotifyOk,
-  Icon } from './UIElements';
+  Icon,
+  HistoryComponent,
+  DiffElement} from './UIElements';
 import ReactTable from 'react-table';
 import { Formik, Field, FieldArray, Form } from 'formik';
 import 'react-table/react-table.css';
 import {
-  Button, 
-  Row, 
-  Col, 
+  Button,
+  Row,
+  Col,
   Label,
   FormGroup,
   FormText} from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faTimes, faSearch } from '@fortawesome/free-solid-svg-icons';
+import ReactDiffViewer from 'react-diff-viewer';
 
-import './MetricProfiles.css'; 
+import './MetricProfiles.css';
+
+
+export const MetricProfileHistory = HistoryComponent('metricprofile');
 
 
 function matchItem(item, value) {
@@ -47,9 +53,9 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
           <FontAwesomeIcon icon={faSearch}/>
         </td>
         <td>
-          <Field 
-            type="text" 
-            name="search_serviceflavour" 
+          <Field
+            type="text"
+            name="search_serviceflavour"
             required={false}
             className="form-control"
             id="searchServiceFlavour"
@@ -59,9 +65,9 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
           />
         </td>
         <td>
-          <Field 
-            type="text" 
-            name="search_metric" 
+          <Field
+            type="text"
+            name="search_metric"
             required={false}
             className="form-control"
             id="searchMetric"
@@ -88,11 +94,11 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
                 getItemValue={(item) => item}
                 items={serviceflavours_all}
                 value={service.service}
-                renderItem={(item, isHighlighted) => 
-                  <div 
-                    key={serviceflavours_all.indexOf(item)} 
-                    className={`metricprofiles-autocomplete-entries ${isHighlighted ? 
-                        "metricprofiles-autocomplete-entries-highlighted" 
+                renderItem={(item, isHighlighted) =>
+                  <div
+                    key={serviceflavours_all.indexOf(item)}
+                    className={`metricprofiles-autocomplete-entries ${isHighlighted ?
+                        "metricprofiles-autocomplete-entries-highlighted"
                         : ""}`
                     }>
                     {item ? <Icon i='serviceflavour'/> : ''} {item}
@@ -100,13 +106,13 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
                 onChange={(e) => form.setFieldValue(`view_services.${index}.service`, e.target.value)}
                 onSelect={(val) => {
                   form.setFieldValue(`view_services.${index}.service`, val)
-                  onselect_handler(form.values.view_services[index], 
-                    'service', 
+                  onselect_handler(form.values.view_services[index],
+                    'service',
                     val)
                 }}
                 wrapperStyle={{}}
                 shouldItemRender={matchItem}
-                renderMenu={(items) => 
+                renderMenu={(items) =>
                     <div className='metricprofiles-autocomplete-menu' children={items}/>}
               />
             </td>
@@ -118,11 +124,11 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
                 getItemValue={(item) => item}
                 items={metrics_all}
                 value={service.metric}
-                renderItem={(item, isHighlighted) => 
-                  <div 
-                    key={metrics_all.indexOf(item)} 
-                    className={`metricprofiles-autocomplete-entries ${isHighlighted ? 
-                        "metricprofiles-autocomplete-entries-highlighted" 
+                renderItem={(item, isHighlighted) =>
+                  <div
+                    key={metrics_all.indexOf(item)}
+                    className={`metricprofiles-autocomplete-entries ${isHighlighted ?
+                        "metricprofiles-autocomplete-entries-highlighted"
                         : ""}`
                     }>
                     {item ? <Icon i='metrics'/> : ''} {item}
@@ -131,12 +137,12 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
                 onSelect={(val) => {
                   form.setFieldValue(`view_services.${index}.metric`, val)
                   onselect_handler(form.values.view_services[index],
-                    'metric', 
+                    'metric',
                     val)
                 }}
                 wrapperStyle={{}}
                 shouldItemRender={matchItem}
-                renderMenu={(items) => 
+                renderMenu={(items) =>
                     <div className='metricprofiles-autocomplete-menu' children={items}/>}
               />
             </td>
@@ -144,7 +150,7 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
               <Button size="sm" color="light"
                 type="button"
                 onClick={() => {
-                  remove_handler(form.values.view_services[index]); 
+                  remove_handler(form.values.view_services[index]);
                   return remove(index)
                 }}>
                 <FontAwesomeIcon icon={faTimes}/>
@@ -166,7 +172,7 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
   </table>
 
 
-export class MetricProfilesChange extends Component 
+export class MetricProfilesChange extends Component
 {
   constructor(props) {
     super(props);
@@ -231,7 +237,7 @@ export class MetricProfilesChange extends Component
     this.setState({loading: true})
 
     Promise.all([
-      this.backend.fetchData('/api/v2/internal/groups/metricprofiles'),      
+      this.backend.fetchData('/api/v2/internal/groups/metricprofiles'),
       this.backend.fetchListOfNames('/api/v2/internal/serviceflavoursall'),
       this.backend.fetchListOfNames('/api/v2/internal/metricsall')
     ])
@@ -280,11 +286,11 @@ export class MetricProfilesChange extends Component
     if (data) {
       return [text, ...data]
     } else
-      return [text] 
+      return [text]
   }
 
   toggleAreYouSureSetModal(msg, title, onyes) {
-    this.setState(prevState => 
+    this.setState(prevState =>
       ({areYouSureModal: !prevState.areYouSureModal,
         modalFunc: onyes,
         modalMsg: msg,
@@ -293,7 +299,7 @@ export class MetricProfilesChange extends Component
   }
 
   toggleAreYouSure() {
-    this.setState(prevState => 
+    this.setState(prevState =>
       ({areYouSureModal: !prevState.areYouSureModal}));
   }
 
@@ -327,20 +333,20 @@ export class MetricProfilesChange extends Component
       tmp_list_services.sort(this.sortServices);
     }
     else if (e.target.value !== '') {
-      filtered = this.state[statefieldlist].filter((elem) => 
+      filtered = this.state[statefieldlist].filter((elem) =>
         matchItem(elem[formikfield], e.target.value))
     }
 
-    // handle multi search 
+    // handle multi search
     if (this.state[alternatestatefield].length) {
-      filtered = filtered.filter((elem) => 
+      filtered = filtered.filter((elem) =>
         matchItem(elem[alternateformikfield], this.state[alternatestatefield]))
     }
 
     filtered.sort(this.sortServices);
 
     this.setState({
-      [`${statefieldsearch}`]: e.target.value, 
+      [`${statefieldsearch}`]: e.target.value,
       [`${statefieldlist}`]: filtered,
       list_services: tmp_list_services
     })
@@ -348,7 +354,7 @@ export class MetricProfilesChange extends Component
 
   onInsert(element, i, group, name) {
     // full list of services
-    if (this.state.searchServiceFlavour === '' 
+    if (this.state.searchServiceFlavour === ''
       && this.state.searchMetric === '') {
       let service = element.service;
       let metric = element.metric;
@@ -360,7 +366,7 @@ export class MetricProfilesChange extends Component
 
       slice_left_tmp_list_services.push({index: i, service, metric, isNew: true});
 
-      // reindex first slice 
+      // reindex first slice
       let index_update = 0;
       slice_left_tmp_list_services.forEach((element) => {
         element.index = index_update;
@@ -383,7 +389,7 @@ export class MetricProfilesChange extends Component
         groups_field: group,
         metric_profile_name: name
       });
-    } 
+    }
     // subset of matched elements of list of services
     else {
       let tmp_view_services = [...this.state.view_services];
@@ -399,7 +405,7 @@ export class MetricProfilesChange extends Component
         element.index = index_update;
         index_update += 1;
       })
-      
+
       index_update = i + 1;
       slice_right_view_services.forEach((element) => {
         element.index = index_update;
@@ -410,7 +416,7 @@ export class MetricProfilesChange extends Component
 
       this.setState({
         view_services: [...slice_left_view_services, ...slice_right_view_services],
-        list_services: tmp_list_services, 
+        list_services: tmp_list_services,
       });
     }
   }
@@ -443,7 +449,7 @@ export class MetricProfilesChange extends Component
         })
       else
         service[0].metrics.push(element.metric)
-       
+
     })
     return services
   }
@@ -459,8 +465,8 @@ export class MetricProfilesChange extends Component
       this.webapi.changeMetricProfile(dataToSend)
       .then(response => {
         if (!response.ok) {
-          this.toggleAreYouSureSetModal(`Error: ${response.status}, ${response.statusText}`, 
-            'Error changing metric profile', 
+          this.toggleAreYouSureSetModal(`Error: ${response.status}, ${response.statusText}`,
+            'Error changing metric profile',
             undefined)
         }
         else {
@@ -468,10 +474,11 @@ export class MetricProfilesChange extends Component
           .then(r => {
             this.backend.changeObject(
               '/api/v2/internal/metricprofiles/',
-              { 
-                apiid: dataToSend.id, 
-                name: dataToSend.name, 
-                groupname: formValues.groups_field
+              {
+                apiid: dataToSend.id,
+                name: dataToSend.name,
+                groupname: formValues.groups_field,
+                services: formValues.view_services
               }
             )
               .then(() => NotifyOk({
@@ -485,7 +492,7 @@ export class MetricProfilesChange extends Component
           .catch(err => alert('Something went wrong: ' + err))
         }
       }).catch(err => alert('Something went wrong: ' + err))
-    } 
+    }
     else {
       services = this.groupMetricsByServices(servicesList);
       dataToSend = {name: formValues.name, services};
@@ -495,16 +502,17 @@ export class MetricProfilesChange extends Component
           this.toggleAreYouSureSetModal(`Error: ${response.status}, ${response.statusText}`,
             'Error adding metric profile',
             undefined)
-        } 
+        }
         else {
           response.json()
-          .then(r => { 
+          .then(r => {
             this.backend.addObject(
               '/api/v2/internal/metricprofiles/',
               {
-                apiid: r.data.id, 
-                name: dataToSend.name, 
-                groupname: formValues.groups_field 
+                apiid: r.data.id,
+                name: dataToSend.name,
+                groupname: formValues.groups_field,
+                services: formValues.view_services
               }
             ).then(() => NotifyOk({
                 msg: 'Metric profile successfully added',
@@ -541,10 +549,10 @@ export class MetricProfilesChange extends Component
     let index = element.index;
     let tmp_list_services = [...this.state.list_services];
     let tmp_view_services = [...this.state.view_services];
-    let new_element = tmp_list_services.findIndex(service => 
+    let new_element = tmp_list_services.findIndex(service =>
       service.index === index && service.isNew === true)
 
-    if (new_element >= 0 ) 
+    if (new_element >= 0 )
       tmp_list_services[new_element][field] = value;
     else
       tmp_list_services[index][field] = value;
@@ -561,12 +569,12 @@ export class MetricProfilesChange extends Component
 
   onRemove(element) {
     // XXX: this means no duplicate elements allowed
-    let index = this.state.list_services.findIndex(service => 
+    let index = this.state.list_services.findIndex(service =>
       element.index === service.index &&
       element.service === service.service &&
       element.metric === service.metric
     );
-    let index_tmp = this.state.view_services.findIndex(service => 
+    let index_tmp = this.state.view_services.findIndex(service =>
       element.index === service.index &&
       element.service === service.service &&
       element.metric === service.metric
@@ -599,11 +607,11 @@ export class MetricProfilesChange extends Component
   render() {
     const {write_perm, loading, metric_profile, metric_profile_name,
       view_services, groups_field, list_user_groups,
-      serviceflavours_all, metrics_all, 
+      serviceflavours_all, metrics_all,
       searchMetric, searchServiceFlavour} = this.state;
 
     if (loading)
-      return (<LoadingAnim />) 
+      return (<LoadingAnim />)
 
     else if (!loading && metric_profile && view_services) {
       return (
@@ -626,7 +634,7 @@ export class MetricProfilesChange extends Component
             }}
             onSubmit = {(values, actions) => this.onSubmitHandle({
               formValues: values,
-              servicesList: this.state.list_services 
+              servicesList: this.state.list_services
             }, actions)}
             enableReinitialize={true}
             render = {props => (
@@ -635,9 +643,9 @@ export class MetricProfilesChange extends Component
                   <Row>
                     <Col md={4}>
                       <Label for="metricProfileName">Metric profile name:</Label>
-                      <Field 
-                        type="text" 
-                        name="name" 
+                      <Field
+                        type="text"
+                        name="name"
                         placeholder="Name of metric profile"
                         required={true}
                         className="form-control form-control-lg"
@@ -656,9 +664,9 @@ export class MetricProfilesChange extends Component
                       </Row>
                       <Row>
                         <Col md={4}>
-                          <Field 
+                          <Field
                             name="groups_field"
-                            component={DropDown} 
+                            component={DropDown}
                             data={this.insertSelectPlaceholder(
                               (write_perm) ?
                                 list_user_groups :
@@ -666,13 +674,13 @@ export class MetricProfilesChange extends Component
                             )}
                             required={true}
                             class_name='custom-select'
-                          /> 
+                          />
                         </Col>
                       </Row>
                       <Row>
                         <Col md={12}>
                           <FormText>
-                            Metric profile is a member of a given group. 
+                            Metric profile is a member of a given group.
                           </FormText>
                         </Col>
                       </Row>
@@ -699,7 +707,7 @@ export class MetricProfilesChange extends Component
                       <Button
                         color="danger"
                         onClick={() => {
-                          this.toggleAreYouSureSetModal('Are you sure you want to delete Metric profile?', 
+                          this.toggleAreYouSureSetModal('Are you sure you want to delete Metric profile?',
                             'Delete metric profile',
                             () => this.doDelete(props.values.id))
                         }}>
@@ -709,12 +717,12 @@ export class MetricProfilesChange extends Component
                     </div>
                 }
               </Form>
-            )} 
+            )}
           />
         </BaseArgoView>
       )
     }
-    else 
+    else
       return null
   }
 }
@@ -739,7 +747,7 @@ export class MetricProfilesList extends Component
     this.backend.fetchData('/api/v2/internal/metricprofiles')
       .then(json =>
         this.setState({
-          list_metricprofiles: json, 
+          list_metricprofiles: json,
           loading: false})
       )
   }
@@ -749,7 +757,7 @@ export class MetricProfilesList extends Component
       {
         Header: 'Name',
         id: 'name',
-        accessor: e => 
+        accessor: e =>
         <Link to={'/ui/metricprofiles/' + e.name}>
           {e.name}
         </Link>
@@ -762,12 +770,12 @@ export class MetricProfilesList extends Component
     ]
     const {loading, list_metricprofiles} = this.state
 
-    if (loading) 
+    if (loading)
       return (<LoadingAnim />)
 
     else if (!loading && list_metricprofiles) {
       return (
-        <BaseArgoView 
+        <BaseArgoView
           resourcename='metric profile'
           location={this.location}
           listview={true}>
@@ -780,7 +788,268 @@ export class MetricProfilesList extends Component
         </BaseArgoView>
       )
     }
-    else 
+    else
       return null
   }
 }
+
+
+const ListDiffElement = ({title, item1, item2}) => {
+  let n = Math.max(item1.length, item2.length);
+  let list1 = [];
+  let list2 = [];
+  for (let i = 0; i < item1.length; i++) {
+    list1.push(`service: ${item1[i]['service']}, metric: ${item1[i]['metric']}`)
+  };
+
+  for (let i = 0; i < item2.length; i++) {
+    list2.push(`service: ${item2[i]['service']}, metric: ${item2[i]['metric']}`)
+  };
+
+  const elements = [];
+  for (let i = 0; i < n; i++) {
+    elements.push(
+      <ReactDiffViewer
+        oldValue={list2[i]}
+        newValue={list1[i]}
+        showDiffOnly={true}
+        splitView={false}
+        hideLineNumbers={true}
+        key={`diff-${i}`}
+      />
+    );
+  };
+
+  return (
+    <div id='argo-contentwrap' className='ml-2 mb-2 mt-2 p-3 border rounded'>
+      <h6 className='mt-4 font-weight-bold text-uppercase'>{title}</h6>
+      {elements}
+    </div>
+  )
+};
+
+
+export class MetricProfileVersionCompare extends Component {
+  constructor(props) {
+    super(props);
+
+    this.version1 = props.match.params.id1;
+    this.version2 = props.match.params.id2;
+    this.name = props.match.params.name;
+
+    this.state = {
+      loading: false,
+      name1: '',
+      groupname1: '',
+      metricinstances1: [],
+      name2: '',
+      groupname2: '',
+      metricinstances2: []
+    };
+
+    this.backend = new Backend();
+  };
+
+  componentDidMount() {
+    this.setState({loading: true});
+
+    this.backend.fetchData(`/api/v2/internal/tenantversion/metricprofile/${this.name}`)
+      .then((json) => {
+        let name1 = '';
+        let groupname1 = '';
+        let metricinstances1 = [];
+        let name2 = '';
+        let groupname2 = '';
+        let metricinstances2 = [];
+
+        json.forEach((e) => {
+          if (e.version == this.version1) {
+            name1 = e.fields.name;
+            groupname1 = e.fields.groupname;
+            metricinstances1 = e.fields.metricinstances;
+          } else if (e.version == this.version2) {
+            name2 = e.fields.name;
+            groupname2 = e.fields.groupname;
+            metricinstances2 = e.fields.metricinstances;
+          };
+        });
+
+        this.setState({
+          name1: name1,
+          groupname1: groupname1,
+          metricinstances1: metricinstances1,
+          name2: name2,
+          groupname2: groupname2,
+          metricinstances2: metricinstances2,
+          loading: false
+        });
+      });
+  };
+
+  render() {
+    const { name1, name2, groupname1, groupname2,
+      metricinstances1, metricinstances2, loading } = this.state;
+
+    if (loading)
+      return (<LoadingAnim/>);
+
+    else if (!loading && name1 && name2) {
+      return (
+        <React.Fragment>
+          <div className='d-flex align-items-center justify-content-between'>
+            <h2 className='ml-3 mt-1 mb-4'>{`Compare ${this.name}`}</h2>
+          </div>
+          {
+            (name1 !== name2) &&
+              <DiffElement title='name' item1={name1} item2={name2}/>
+          }
+          {
+            (groupname1 !== groupname2) &&
+              <DiffElement title='groupname' item1={groupname1} item2={groupname2}/>
+          }
+          {
+            (metricinstances1 !== metricinstances2) &&
+              <ListDiffElement title='metric instances' item1={metricinstances1} item2={metricinstances2}/>
+          }
+        </React.Fragment>
+      );
+    } else
+      return null;
+  };
+};
+
+
+export class MetricProfileVersionDetails extends Component {
+  constructor(props) {
+    super(props);
+
+    this.name = props.match.params.name;
+    this.version = props.match.params.version;
+
+    this.backend = new Backend();
+
+    this.state = {
+      name: '',
+      groupname: '',
+      date_created: '',
+      metricinstances: [],
+      loading: false
+    };
+  };
+
+  componentDidMount() {
+    this.setState({loading: true});
+
+    this.backend.fetchData(`/api/v2/internal/tenantversion/metricprofile/${this.name}`)
+      .then((json) => {
+        json.forEach((e) => {
+          if (e.version == this.version)
+            this.setState({
+              name: e.fields.name,
+              groupname: e.fields.groupname,
+              date_created: e.date_created,
+              metricinstances: e.fields.metricinstances,
+              loading: false
+            });
+        });
+      });
+  };
+
+  render() {
+    const { name, groupname, date_created, metricinstances,
+      loading } = this.state;
+
+    if (loading)
+      return (<LoadingAnim/>);
+
+    else if (!loading && name) {
+      return (
+        <BaseArgoView
+          resourcename={`${name} (${date_created})`}
+          infoview={true}
+        >
+          <Formik
+            initialValues = {{
+              name: name,
+              groupname: groupname,
+              metricinstances: metricinstances
+            }}
+            render = {props => (
+              <Form>
+                <FormGroup>
+                  <Row>
+                    <Col md={4}>
+                      <Label for='metricProfileName'>Metric profile name:</Label>
+                      <Field
+                        type='text'
+                        name='name'
+                        className='form-control form-control-lg'
+                        id='metricProfileName'
+                        disabled={true}
+                      />
+                    </Col>
+                  </Row>
+                </FormGroup>
+                <Row>
+                  <Col md={6}>
+                    <FormGroup>
+                      <Row>
+                        <Col md={6}>
+                          <Label>Group:</Label>
+                        </Col>
+                      </Row>
+                      <Row>
+                        <Col md={4}>
+                          <Field
+                            name='groupname'
+                            type='text'
+                            className='form-control'
+                            disabled={true}
+                          />
+                        </Col>
+                      </Row>
+                      <Row>
+                        <Col md={12}>
+                          <FormText>
+                            Metric profile is a member of a given group.
+                          </FormText>
+                        </Col>
+                      </Row>
+                    </FormGroup>
+                  </Col>
+                </Row>
+                <h4 className="mt-2 alert-info p-1 pl-3 text-light text-uppercase rounded" style={{'backgroundColor': "#416090"}}>Metric instances</h4>
+                <FieldArray
+                  name='metricinstances'
+                  render={arrayHelpers => (
+                    <table className='table table-bordered table-sm'>
+                      <thead className='table-active'>
+                        <tr>
+                          <th className='align-middle text-center' style={{width: '5%'}}>#</th>
+                          <th style={{width: '47.5%'}}><Icon i='serviceflavour'/>Service flavour</th>
+                          <th style={{width: '47.5%'}}><Icon i='metrics'/>Metric</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {
+                          props.values.metricinstances.map((service, index) =>
+                            <tr>
+                              <td className='align-middle text-center'>{index + 1}</td>
+                              <td>{service.service}</td>
+                              <td>{service.metric}</td>
+                            </tr>
+                          )
+                        }
+                      </tbody>
+                    </table>
+                  )}
+                />
+              </Form>
+            )}
+          />
+        </BaseArgoView>
+      )
+    } else
+      return null;
+  };
+};

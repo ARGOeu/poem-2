@@ -1,7 +1,7 @@
 from django.conf import settings
 
 from Poem.api import serializers
-from Poem.api.models import MyAPIKey
+from Poem.api.internal_views.utils import sync_webapi
 from Poem.api.views import NotFound
 from Poem.poem import models as poem_models
 
@@ -9,37 +9,6 @@ from rest_framework import status
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
-import requests
-
-
-def sync_webapi(api, model):
-    token = MyAPIKey.objects.get(name="WEB-API")
-
-    headers = dict()
-    headers = {'Accept': 'application/json', 'x-api-key': token.token}
-    response = requests.get(api,
-                            headers=headers,
-                            timeout=180)
-    response.raise_for_status()
-    data = response.json()['data']
-
-    data_api = set([p['id'] for p in data])
-    data_db = set(model.objects.all().values_list('apiid', flat=True))
-    entries_not_indb = data_api.difference(data_db)
-
-    new_entries = []
-    for p in data:
-        if p['id'] in entries_not_indb:
-            new_entries.append(
-                model(name=p['name'], apiid=p['id'], groupname='')
-            )
-    if new_entries:
-        model.objects.bulk_create(new_entries)
-
-    entries_deleted_onapi = data_db.difference(data_api)
-    for p in entries_deleted_onapi:
-        model.objects.get(apiid=p).delete()
 
 
 class ListAggregations(APIView):

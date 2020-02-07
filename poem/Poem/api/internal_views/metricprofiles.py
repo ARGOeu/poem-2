@@ -1,8 +1,10 @@
 from django.conf import settings
+from django.contrib.contenttypes.models import ContentType
 
 from Poem.api import serializers
-from Poem.api.internal_views.aggregationprofiles import sync_webapi
+from Poem.api.internal_views.utils import sync_webapi
 from Poem.api.views import NotFound
+from Poem.helpers.history_helpers import create_metricprofile_history
 from Poem.poem import models as poem_models
 
 from rest_framework import status
@@ -37,6 +39,10 @@ class ListMetricProfiles(APIView):
                 apiid=request.data['apiid']
             )
             groupprofile.metricprofiles.add(profile)
+
+            create_metricprofile_history(
+                profile, dict(request.data)['services'], request.user
+            )
 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
@@ -75,6 +81,10 @@ class ListMetricProfiles(APIView):
         )
         groupprofile.metricprofiles.add(profile)
 
+        create_metricprofile_history(
+            profile, dict(request.data)['services'], request.user
+        )
+
         return Response(status=status.HTTP_201_CREATED)
 
     def delete(self, request, profile_name=None):
@@ -83,7 +93,14 @@ class ListMetricProfiles(APIView):
                 profile = poem_models.MetricProfiles.objects.get(
                     name=profile_name
                 )
+
+                poem_models.TenantHistory.objects.filter(
+                    object_id=profile.id,
+                    content_type=ContentType.objects.get_for_model(profile)
+                ).delete()
+
                 profile.delete()
+
                 return Response(status=status.HTTP_204_NO_CONTENT)
 
             except poem_models.MetricProfiles.DoesNotExist:

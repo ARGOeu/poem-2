@@ -1,10 +1,12 @@
 from django.contrib.contenttypes.models import ContentType
 from django.core import serializers
 
+from deepdiff import DeepDiff
 import json
 
 from Poem.poem import models as poem_models
 from Poem.poem_super_admin import models as admin_models
+from Poem.users.models import CustUser
 
 
 def to_dict(instance):
@@ -112,117 +114,166 @@ def analyze_differences(old_data, new_data):
     inlines = ['config', 'attribute', 'dependency', 'flags', 'files',
                'parameter', 'fileparameter', 'dependancy']
 
-    single_value_inline = ['parent', 'probeexecutable']
+    foreignkeys = ['probekey', 'package', 'group']
 
     changed = []
     added = []
     deleted = []
     msg = []
     if old_data:
-        for key, value in old_data.items():
-            try:
-                if key in inlines:
-                    old = inline_models_to_dicts(old_data[key])
-                    new = inline_models_to_dicts(new_data[key])
+        res = DeepDiff(old_data, new_data, ignore_order=True)
 
-                    deleted_fields = []
-                    changed_fields = []
-                    added_fields = []
-                    for k, v in old.items():
-                        if k not in new:
-                            deleted_fields.append(k)
-
-                        elif old[k] != new[k]:
-                            changed_fields.append(k)
-
-                    for k, v in new.items():
-                        if k not in old:
-                            added_fields.append(k)
-
-                    if deleted_fields:
-                        msg.append(
-                            {'deleted': {
-                                'fields': [key], 'object': deleted_fields
-                            }}
-                        )
-
-                    if changed_fields:
-                        msg.append(
-                            {'changed': {
-                                'fields': [key], 'object': changed_fields
-                            }}
-                        )
-
-                    if added_fields:
-                        msg.append(
-                            {'added': {'fields': [key], 'object': added_fields}}
-                        )
-
-                elif key in single_value_inline:
-                    old = inline_one_to_dict(old_data[key])
-                    new = inline_one_to_dict(new_data[key])
-
-                    if old and new and old != new:
-                        changed.append(key)
-
-                    elif old and not new:
-                        deleted.append(key)
-
-                    elif not old and new:
-                        added.append(key)
-
+        # I'm numbering how many times the for loop has passed because foreign
+        # keys are serialized in lists
+        passed = 0
+        if 'iterable_item_removed' in res:
+            for key, value in res['iterable_item_removed'].items():
+                field = key.split('[')[1][0:-1].strip('\'')
+                if field in foreignkeys:
+                    passed += 1
+                    pass
                 else:
-                    if old_data[key] and old_data[key] != new_data[key]:
-                        changed.append(key)
+                    msg.append(
+                        {
+                            'deleted': {
+                                'fields': [field], 'object': value
+                            }
+                        }
+                    )
 
-                    elif not new_data[key] and old_data[key]:
-                        deleted.append(key)
+        if 'iterable_item_added' in res:
+            for key, value in res['iterable_item_added'].items():
+                field = key.split('[')[1][0:-1].strip('\'')
+                if field in foreignkeys:
+                    passed += 1
+                    pass
+                else:
+                    msg.append(
+                        {
+                            'added': {
+                                'fields': [field], 'object': value
+                            }
+                        }
+                    )
 
-            except KeyError:
-                pass
+        if passed > 0:
+            res = DeepDiff(old_data, new_data)
 
-        for key, value in new_data.items():
-            if key not in inlines and key not in single_value_inline:
+        if 'dictionary_item_added' in res:
+            for item in res['dictionary_item_added']:
+                added.append(item.split('[')[1][0:-1].strip('\''))
+
+        if 'type_changes' in res:
+            for key, value in res['type_changes'].items():
+                field = key.split('[')[1][0:-1].strip('\'')
+
+                if value['new_value'] is None:
+                    deleted.append(field)
+
+                if value['old_value'] is None:
+                    added.append(field)
+
+        if 'values_changed' in res:
+            for key, value in res['values_changed'].items():
+                field = key.split('[')[1][1:-2]
                 try:
-                    if not old_data[key] and new_data[key]:
-                        added.append(key)
+                    if field in inlines:
+                        old = inline_models_to_dicts(value['old_value'])
+                        new = inline_models_to_dicts(value['new_value'])
+                        deleted_fields = []
+                        changed_fields = []
+                        added_fields = []
+                        res = DeepDiff(old, new, ignore_order=True)
+                        if 'values_changed' in res:
+                            for k, v in res['values_changed'].items():
+                                changed_fields.append(
+                                    k.split('[')[1][0:-1].strip('\'')
+                                )
+
+                        if 'dictionary_item_added' in res:
+                            for item in res['dictionary_item_added']:
+                                added_fields.append(
+                                    item.split('[')[1][0:-1].strip('\'')
+                                )
+
+                        if 'dictionary_item_removed' in res:
+                            for item in res['dictionary_item_removed']:
+                                deleted_fields.append(
+                                    item.split('[')[1][0:-1].strip('\'')
+                                )
+
+                        if deleted_fields:
+                            msg.append(
+                                {'deleted': {
+                                    'fields': [field],
+                                    'object': sorted(deleted_fields)
+                                }}
+                            )
+
+                        if changed_fields:
+                            msg.append(
+                                {'changed': {
+                                    'fields': [field],
+                                    'object': sorted(changed_fields)
+                                }}
+                            )
+
+                        if added_fields:
+                            msg.append(
+                                {'added': {'fields': [field],
+                                           'object': sorted(added_fields)}}
+                            )
+
+                    else:
+                        if not value['new_value']:
+                            deleted.append(field)
+
+                        elif not value['old_value']:
+                            added.append(field)
+
+                        else:
+                            changed.append(field)
 
                 except KeyError:
-                    added.append(key)
+                    pass
 
         if added:
-            msg.append({'added': {'fields': added}})
+            msg.append({'added': {'fields': sorted(list(set(added)))}})
         if changed:
-            msg.append({'changed': {'fields': changed}})
+            msg.append({'changed': {'fields': sorted(list(set(changed)))}})
         if deleted:
-            msg.append({'deleted': {'fields': deleted}})
+            msg.append({'deleted': {'fields': sorted(list(set(deleted)))}})
+
         return json.dumps(msg)
     else:
         return 'Initial version.'
 
 
 def create_comment(instance, ct=None, new_serialized_data=None):
-    if isinstance(instance, poem_models.Metric):
-        history = poem_models.TenantHistory.objects.filter(
-            object_id=instance.id,
-            content_type=ct
-        ).order_by('-date_created')
-        new_data = serialized_data_to_dict(new_serialized_data)
-
-    else:
+    if isinstance(instance, (admin_models.Probe, admin_models.MetricTemplate)):
         if isinstance(instance, admin_models.Probe):
             history_model = admin_models.ProbeHistory
         else:
             history_model = admin_models.MetricTemplateHistory
-        history = history_model.objects.filter(object_id=instance)\
+
+        history = history_model.objects.filter(object_id=instance) \
             .order_by('-date_created')
 
         new_data = to_dict(instance)
         if isinstance(instance, admin_models.Probe):
             del new_data['user'], new_data['datetime']
 
+    else:
+        history = poem_models.TenantHistory.objects.filter(
+            object_id=instance.id,
+            content_type=ct
+        ).order_by('-date_created')
+        new_data = serialized_data_to_dict(new_serialized_data)
+
     if len(history) > 0:
-        if isinstance(instance, poem_models.Metric):
+        if isinstance(
+                instance, (poem_models.Metric, poem_models.MetricProfiles)
+        ):
             old_data = serialized_data_to_dict(history[0].serialized_data)
         else:
             old_data = to_dict(history[0])
@@ -257,3 +308,42 @@ def update_comment(instance):
         old_data = ''
 
     return analyze_differences(old_data, new_data)
+
+
+def create_metricprofile_history(instance, services, user):
+    ct = ContentType.objects.get_for_model(instance)
+
+    if isinstance(user, CustUser):
+        username = user.username
+    else:
+        username = user
+
+    serialized_data = json.loads(
+        serializers.serialize(
+            'json', [instance],
+            use_natural_foreign_keys=True,
+            use_natural_primary_keys=True
+        )
+    )
+
+    mis = []
+    for item in services:
+        if isinstance(item, str):
+            item = json.loads(item.replace('\'', '\"'))
+
+        mis.append([item['service'], item['metric']])
+
+    serialized_data[0]['fields'].update({
+        'metricinstances': mis
+    })
+
+    comment = create_comment(instance, ct, json.dumps(serialized_data))
+
+    poem_models.TenantHistory.objects.create(
+        object_id=instance.id,
+        serialized_data=json.dumps(serialized_data),
+        object_repr=instance.__str__(),
+        comment=comment,
+        user=username,
+        content_type=ct
+    )
