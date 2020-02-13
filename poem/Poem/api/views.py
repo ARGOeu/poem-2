@@ -166,7 +166,7 @@ class ListRepos(APIView):
                 try:
                     m = models.Metric.objects.get(name=metric)
                     if m.probekey:
-                        packages.add(m.probekey.object_id.package)
+                        packages.add(m.probekey.package)
 
                 except models.Metric.DoesNotExist:
                     pass
