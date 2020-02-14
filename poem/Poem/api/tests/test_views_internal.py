@@ -1671,19 +1671,95 @@ class ListAggregationsAPIViewTests(TenantTestCase):
         self.url = '/api/v2/internal/aggregations/'
         self.user = CustUser.objects.create(username='testuser')
 
-        poem_models.Aggregation.objects.create(
+        self.aggr1 = poem_models.Aggregation.objects.create(
             name='TEST_PROFILE',
             apiid='00000000-oooo-kkkk-aaaa-aaeekkccnnee',
             groupname='EGI'
         )
 
-        poem_models.Aggregation.objects.create(
+        self.aggr2 = poem_models.Aggregation.objects.create(
             name='ANOTHER-PROFILE',
             apiid='12341234-oooo-kkkk-aaaa-aaeekkccnnee'
         )
 
         self.group = poem_models.GroupOfAggregations.objects.create(name='EGI')
         poem_models.GroupOfAggregations.objects.create(name='new-group')
+
+        self.ct = ContentType.objects.get_for_model(poem_models.Aggregation)
+
+        data = json.loads(
+            serializers.serialize(
+                'json', [self.aggr1],
+                use_natural_foreign_keys = True,
+                use_natural_primary_keys = True
+            )
+        )
+        data[0]['fields'].update({
+            'endpoint_group': 'sites',
+            'metric_operation': 'AND',
+            'profile_operation': 'AND',
+            'metric_profile': 'TEST_PROFILE',
+            'groups': [
+                {
+                    'name': 'Group2',
+                    'operation': 'AND',
+                    'services': [
+                        {
+                            'name': 'VOMS',
+                            'operation': 'OR'
+                        }
+                    ]
+                }
+            ]
+        })
+
+        poem_models.TenantHistory.objects.create(
+            object_id=self.aggr1.id,
+            serialized_data=json.dumps(data),
+            object_repr=self.aggr1.__str__(),
+            comment='Initial version.',
+            user='testuser',
+            content_type=self.ct
+        )
+
+        data = json.loads(
+            serializers.serialize(
+                'json', [self.aggr2],
+                use_natural_foreign_keys=True,
+                use_natural_primary_keys=True
+            )
+        )
+        data[0]['fields'].update({
+            'endpoint_group': 'servicegroups',
+            'metric_operation': 'AND',
+            'profile_operation': 'AND',
+            'metric_profile': 'TEST_PROFILE',
+            'groups': [
+                {
+                    'name': 'Group3',
+                    'operation': 'AND',
+                    'services': [
+                        {
+                            'name': 'VOMS',
+                            'operation': 'OR'
+                        },
+                        {
+                            'name': 'argo.api',
+                            'operation': 'OR'
+                        }
+                    ]
+                }
+            ]
+        })
+
+        poem_models.TenantHistory.objects.create(
+            object_id=self.aggr2.id,
+            serialized_data=json.dumps(data),
+            object_repr=self.aggr2.__str__(),
+            comment='Initial version.',
+            user='testuser',
+            content_type=self.ct
+        )
 
     @patch('Poem.api.internal_views.aggregationprofiles.sync_webapi',
            side_effect=mocked_func)
@@ -1731,9 +1807,31 @@ class ListAggregationsAPIViewTests(TenantTestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_post_aggregation(self):
-        data = {'apiid': '12341234-aaaa-kkkk-aaaa-aaeekkccnnee',
-                'name': 'new-profile',
-                'groupname': 'EGI'}
+        data = {
+            'apiid': '12341234-aaaa-kkkk-aaaa-aaeekkccnnee',
+            'name': 'new-profile',
+            'groupname': 'EGI',
+            'endpoint_group': 'sites',
+            'metric_operation': 'AND',
+            'profile_operation': 'AND',
+            'metric_profile': 'TEST_PROFILE',
+            'groups': json.dumps([
+                {
+                    'name': 'Group1',
+                    'operation': 'AND',
+                    'services': [
+                        {
+                            'name': 'AMGA',
+                            'operation': 'OR'
+                        },
+                        {
+                            'name': 'APEL',
+                            'operation': 'OR'
+                        }
+                    ]
+                }
+            ])
+        }
         request = self.factory.post(self.url, data, format='json')
         force_authenticate(request, user=self.user)
         response = self.view(request)
@@ -1742,6 +1840,36 @@ class ListAggregationsAPIViewTests(TenantTestCase):
         self.assertEqual(profile.name, 'new-profile')
         self.assertEqual(profile.apiid, '12341234-aaaa-kkkk-aaaa-aaeekkccnnee')
         self.assertEqual(profile.groupname, 'EGI')
+        history = poem_models.TenantHistory.objects.filter(
+            object_id=profile.id, content_type=self.ct
+        ).order_by('-date_created')
+        self.assertEqual(history.count(), 1)
+        serialized_data = json.loads(history[0].serialized_data)[0]['fields']
+        self.assertEqual(serialized_data['name'], profile.name)
+        self.assertEqual(serialized_data['apiid'], profile.apiid)
+        self.assertEqual(serialized_data['groupname'], profile.groupname)
+        self.assertEqual(serialized_data['endpoint_group'], 'sites')
+        self.assertEqual(serialized_data['metric_operation'], 'AND')
+        self.assertEqual(serialized_data['profile_operation'], 'AND')
+        self.assertEqual(
+            serialized_data['groups'],
+            [
+                {
+                    'name': 'Group1',
+                    'operation': 'AND',
+                    'services': [
+                        {
+                            'name': 'AMGA',
+                            'operation': 'OR'
+                        },
+                        {
+                            'name': 'APEL',
+                            'operation': 'OR'
+                        }
+                    ]
+                }
+            ]
+        )
 
     def test_post_aggregations_invalid_data(self):
         data = {'name': 'new-profile'}
@@ -1751,28 +1879,84 @@ class ListAggregationsAPIViewTests(TenantTestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_put_aggregations(self):
-        data = {'apiid': '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
-                'groupname': 'new-group'}
+        data = {
+            'apiid': '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
+            'groupname': 'new-group',
+            'endpoint_group': 'servicegroups',
+            'metric_operation': 'OR',
+            'profile_operation': 'AND',
+            'metric_profile': 'PROFILE2',
+            'groups': json.dumps([
+                {
+                    'name': 'Group3',
+                    'operation': 'OR',
+                    'services': [
+                        {
+                            'name': 'VOMS',
+                            'operation': 'AND'
+                        }
+                    ]
+                }
+            ])
+        }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        profile = poem_models.Aggregation.objects.get(name='TEST_PROFILE')
+        profile = poem_models.Aggregation.objects.get(id=self.aggr1.id)
         self.assertEqual(profile.name, 'TEST_PROFILE')
         self.assertEqual(profile.apiid, '00000000-oooo-kkkk-aaaa-aaeekkccnnee')
         self.assertEqual(profile.groupname, 'new-group')
+        history = poem_models.TenantHistory.objects.filter(
+            object_id=profile.id, content_type=self.ct
+        ).order_by('-date_created')
+        self.assertEqual(history.count(), 2)
+        serialized_data = json.loads(history[0].serialized_data)[0]['fields']
+        self.assertEqual(serialized_data['name'], profile.name)
+        self.assertEqual(serialized_data['apiid'], profile.apiid)
+        self.assertEqual(serialized_data['groupname'], profile.groupname)
+        self.assertEqual(serialized_data['endpoint_group'], 'servicegroups')
+        self.assertEqual(serialized_data['metric_operation'], 'OR')
+        self.assertEqual(serialized_data['profile_operation'], 'AND')
+        self.assertEqual(serialized_data['metric_profile'], 'PROFILE2')
+        self.assertEqual(
+            serialized_data['groups'],
+            [
+                {
+                    'name': 'Group3',
+                    'operation': 'OR',
+                    'services': [
+                        {
+                            'name': 'VOMS',
+                            'operation': 'AND'
+                        }
+                    ]
+                }
+            ]
+        )
 
     def test_delete_aggregation(self):
-        request = self.factory.delete(self.url +
-                                      '12341234-oooo-kkkk-aaaa-aaeekkccnnee')
+        self.assertEqual(
+            poem_models.TenantHistory.objects.filter(
+                object_id=self.aggr2.id, content_type=self.ct
+            ).count(), 1
+        )
+        request = self.factory.delete(
+            self.url + '12341234-oooo-kkkk-aaaa-aaeekkccnnee'
+        )
         force_authenticate(request, user=self.user)
         response = self.view(request, '12341234-oooo-kkkk-aaaa-aaeekkccnnee')
-        all = poem_models.Aggregation.objects.all().values_list(
+        profiles = poem_models.Aggregation.objects.all().values_list(
             'name', flat=True
         )
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-        self.assertFalse('ANOTHER-PROFILE' in all)
+        self.assertFalse('ANOTHER-PROFILE' in profiles)
+        self.assertEqual(
+            poem_models.TenantHistory.objects.filter(
+                object_id=self.aggr2.id, content_type=self.ct
+            ).count(), 0
+        )
 
     def test_delete_aggregation_with_wrong_id(self):
         request = self.factory.delete(self.url + 'wrong_id')
