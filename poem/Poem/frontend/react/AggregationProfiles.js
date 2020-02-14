@@ -1,11 +1,12 @@
 import React, { Component } from 'react';
 import {Link} from 'react-router-dom';
 import {
-  LoadingAnim, 
-  BaseArgoView, 
-  NotifyOk, 
+  LoadingAnim,
+  BaseArgoView,
+  NotifyOk,
   DropDown,
-  Icon } from './UIElements';
+  Icon,
+  HistoryComponent} from './UIElements';
 import Autocomplete from 'react-autocomplete';
 import ReactTable from 'react-table';
 import 'react-table/react-table.css';
@@ -16,11 +17,11 @@ import FormikEffect from './FormikEffect.js';
 import {Backend, WebApi} from './DataManager';
 import {
   Alert,
-  Button, 
-  Row, 
-  Col, 
-  Card, 
-  CardHeader, 
+  Button,
+  Row,
+  Col,
+  Card,
+  CardHeader,
   CardBody,
   Label,
   CardFooter,
@@ -30,6 +31,8 @@ import {
 import "react-notifications/lib/notifications.css";
 import './AggregationProfiles.css';
 
+export const AggregationProfileHistory = HistoryComponent('aggregationprofile');
+
 
 function matchItem(item, value) {
   return item.toLowerCase().indexOf(value.toLowerCase()) !== -1;
@@ -37,7 +40,7 @@ function matchItem(item, value) {
 
 
 const GroupList = ({name, form, list_services, list_operations, last_service_operation, write_perm}) =>
-  <Row className="groups"> 
+  <Row className="groups">
   {
     form.values[name].map((group, i) =>
       <FieldArray
@@ -107,7 +110,7 @@ const Group = ({operation, services, list_operations, list_services,
             />
           </CardBody>
           <CardFooter className="p-1 d-flex justify-content-center">
-            <DropDown 
+            <DropDown
               field={{name: "operation", value: operation}}
               data={list_operations}
               prefix={`groups.${groupindex}`}
@@ -143,10 +146,10 @@ const ServiceList = ({services, list_services=[], list_operations=[], last_servi
         <Service
           {...props}
           key={i}
-          service={service} 
-          operation={service.operation} 
-          list_services={list_services} 
-          list_operations={list_operations} 
+          service={service}
+          operation={service.operation}
+          list_services={list_services}
+          list_operations={list_operations}
           last_service_operation={last_service_operation}
           groupindex={groupindex}
           groupnew={groupnew}
@@ -163,7 +166,7 @@ const ServiceList = ({services, list_services=[], list_operations=[], last_servi
 
 const Service = ({name, service, operation, list_services, list_operations,
   last_service_operation, groupindex, groupnew, index, remove, insert, form,
-  isnew, ismissing}) => 
+  isnew, ismissing}) =>
   <Row className="d-flex align-items-center service pt-1 pb-1 no-gutters" key={index}>
     <Col md={8}>
       <Autocomplete
@@ -173,11 +176,11 @@ const Service = ({name, service, operation, list_services, list_operations,
         getItemValue={(item) => item}
         items={list_services}
         value={service.name}
-        renderItem={(item, isHighlighted) => 
-          <div 
-            key={list_services.indexOf(item)} 
-            className={`aggregation-autocomplete-entries ${isHighlighted ? 
-                "aggregation-autocomplete-entries-highlighted" 
+        renderItem={(item, isHighlighted) =>
+          <div
+            key={list_services.indexOf(item)}
+            className={`aggregation-autocomplete-entries ${isHighlighted ?
+                "aggregation-autocomplete-entries-highlighted"
                 : ""}`
             }>
             {item ? <Icon i='serviceflavour'/> : ''} {item}
@@ -188,13 +191,13 @@ const Service = ({name, service, operation, list_services, list_operations,
         }}
         wrapperStyle={{}}
         shouldItemRender={matchItem}
-        renderMenu={(items) => 
+        renderMenu={(items) =>
             <div className='aggregation-autocomplete-menu' children={items}/>}
       />
     </Col>
     <Col md={2}>
       <div className="input-group">
-        <DropDown 
+        <DropDown
           field={{name: "operation", value: operation}}
           data={list_operations}
           prefix={`groups.${groupindex}.services.${index}`}
@@ -211,7 +214,7 @@ const Service = ({name, service, operation, list_services, list_operations,
       </Button>
       <Button size="sm" color="light"
         type="button"
-        onClick={() => insert(index + 1, {name: '', operation: 
+        onClick={() => insert(index + 1, {name: '', operation:
           last_service_operation(index, form.values.groups[groupindex].services), isnew: true})}>
         <FontAwesomeIcon icon={faPlus}/>
       </Button>
@@ -262,17 +265,17 @@ export class AggregationProfilesChange extends Component
     this.toggleAreYouSureSetModal = this.toggleAreYouSureSetModal.bind(this);
     this.onSubmitHandle = this.onSubmitHandle.bind(this);
 
-    this.logic_operations = ["OR", "AND"]; 
+    this.logic_operations = ["OR", "AND"];
     this.endpoint_groups = ["servicegroups", "sites"];
   }
 
   toggleAreYouSure() {
-    this.setState(prevState => 
+    this.setState(prevState =>
       ({areYouSureModal: !prevState.areYouSureModal}));
   }
 
   toggleAreYouSureSetModal(msg, title, onyes) {
-    this.setState(prevState => 
+    this.setState(prevState =>
       ({areYouSureModal: !prevState.areYouSureModal,
         modalFunc: onyes,
         modalMsg: msg,
@@ -313,7 +316,7 @@ export class AggregationProfilesChange extends Component
     if (data) {
       return [text, ...data]
     } else
-      return [text] 
+      return [text]
   }
 
   insertOperationFromPrevious(index, array) {
@@ -322,7 +325,7 @@ export class AggregationProfilesChange extends Component
 
       return array[last]['operation']
     }
-    else 
+    else
       return ''
   }
 
@@ -348,7 +351,7 @@ export class AggregationProfilesChange extends Component
 
     values_send.namespace = this.tenant_name
 
-    let match_profile = this.state.list_id_metric_profiles.filter((e) => 
+    let match_profile = this.state.list_id_metric_profiles.filter((e) =>
       values_send.metric_profile === e.name)
 
     values_send.metric_profile = match_profile[0]
@@ -357,8 +360,8 @@ export class AggregationProfilesChange extends Component
       this.webapi.changeAggregation(values_send)
       .then(response => {
         if (!response.ok) {
-          this.toggleAreYouSureSetModal(`Error: ${response.status}, ${response.statusText}`, 
-            'Error changing aggregation profile', 
+          this.toggleAreYouSureSetModal(`Error: ${response.status}, ${response.statusText}`,
+            'Error changing aggregation profile',
             undefined)
         }
         else {
@@ -366,9 +369,9 @@ export class AggregationProfilesChange extends Component
             .then(r => {
               this.backend.changeObject(
                 '/api/v2/internal/aggregations/',
-                { 
-                  apiid: values_send.id, 
-                  name: values_send.name, 
+                {
+                  apiid: values_send.id,
+                  name: values_send.name,
                   groupname: values_send.groups_field
                 }
               )
@@ -391,15 +394,15 @@ export class AggregationProfilesChange extends Component
           this.toggleAreYouSureSetModal(`Error: ${response.status}, ${response.statusText}`,
             'Error adding aggregation profile',
             undefined)
-        } 
+        }
         else {
           response.json()
-            .then(r => { 
+            .then(r => {
               this.backend.addObject(
                 '/api/v2/internal/aggregations/',
                 {
-                  apiid: r.data.id, 
-                  name: values_send.name, 
+                  apiid: r.data.id,
+                  name: values_send.name,
                   groupname: values_send.groups_field
                 }
               ).then(() => NotifyOk({
@@ -434,13 +437,13 @@ export class AggregationProfilesChange extends Component
   }
 
   insertDummyGroup(groups) {
-    return  [...groups, {name: 'dummy', operation: 'OR', services: [{name: 'dummy', operation: 'OR'}]}] 
+    return  [...groups, {name: 'dummy', operation: 'OR', services: [{name: 'dummy', operation: 'OR'}]}]
   }
 
   removeDummyGroup(values) {
     let last_group_element = values.groups[values.groups.length - 1]
 
-    if (last_group_element['name'] == 'dummy' && 
+    if (last_group_element['name'] == 'dummy' &&
       last_group_element.services[0]['name'] == 'dummy') {
       values.groups.pop()
     }
@@ -448,7 +451,7 @@ export class AggregationProfilesChange extends Component
 
   checkIfServiceMissingInMetricProfile(servicesMetricProfile, serviceGroupsAggregationProfile) {
     let servicesInMetricProfiles = new Set(servicesMetricProfile)
-    let isMissing = false 
+    let isMissing = false
 
     serviceGroupsAggregationProfile.forEach(group => {
       for (let service of group.services) {
@@ -458,7 +461,7 @@ export class AggregationProfilesChange extends Component
         }
       }
     })
-        
+
     return isMissing
   }
 
@@ -521,8 +524,8 @@ export class AggregationProfilesChange extends Component
     if (loading)
       return (<LoadingAnim />)
 
-    else if (!loading && aggregation_profile && 
-      aggregation_profile.metric_profile && list_user_groups 
+    else if (!loading && aggregation_profile &&
+      aggregation_profile.metric_profile && list_user_groups
       && this.token) {
 
       let is_service_missing = this.checkIfServiceMissingInMetricProfile(list_services, aggregation_profile.groups)
@@ -540,7 +543,7 @@ export class AggregationProfilesChange extends Component
             initialValues = {{
               id: aggregation_profile.id,
               name: aggregation_profile.name,
-              groups_field: groups_field, 
+              groups_field: groups_field,
               metric_operation: aggregation_profile.metric_operation,
               profile_operation: aggregation_profile.profile_operation,
               metric_profile: aggregation_profile.metric_profile.name,
@@ -548,7 +551,7 @@ export class AggregationProfilesChange extends Component
               groups: this.insertDummyGroup(
                 this.insertEmptyServiceForNoServices(aggregation_profile.groups)
               )
-            }}  
+            }}
             onSubmit = {(values, actions) => this.onSubmitHandle(values, actions)}
             render = {props => (
               <Form>
@@ -562,7 +565,7 @@ export class AggregationProfilesChange extends Component
                 }}
                 />
                 {
-                  is_service_missing && 
+                  is_service_missing &&
                   <Alert color='danger'>
                     <center>
                       <FontAwesomeIcon icon={faInfoCircle} size="lg" color="black"/> &nbsp;
@@ -574,9 +577,9 @@ export class AggregationProfilesChange extends Component
                   <Row>
                     <Col md={4}>
                       <Label for="aggregationName">Aggregation name:</Label>
-                      <Field 
-                        type="text" 
-                        name="name" 
+                      <Field
+                        type="text"
+                        name="name"
                         placeholder="Name of aggregation profile"
                         required={true}
                         className="form-control form-control-lg"
@@ -595,20 +598,20 @@ export class AggregationProfilesChange extends Component
                       </Row>
                       <Row>
                         <Col md={5}>
-                          <Field 
-                            name="metric_operation" 
-                            component={DropDown} 
+                          <Field
+                            name="metric_operation"
+                            component={DropDown}
                             data={this.insertSelectPlaceholder(this.logic_operations, '')}
                             required={true}
                             id="aggregationMetric"
                             class_name='custom-select'
-                          /> 
+                          />
                         </Col>
                       </Row>
                       <Row>
                         <Col md={12}>
                           <FormText>
-                            Logical operation that will be applied between metrics of each service flavour 
+                            Logical operation that will be applied between metrics of each service flavour
                           </FormText>
                         </Col>
                       </Row>
@@ -623,14 +626,14 @@ export class AggregationProfilesChange extends Component
                       </Row>
                       <Row>
                         <Col md={5}>
-                          <Field 
-                            name="profile_operation" 
-                            component={DropDown} 
+                          <Field
+                            name="profile_operation"
+                            component={DropDown}
                             data={this.insertSelectPlaceholder(this.logic_operations, '')}
                             required={true}
                             id="aggregationOperation"
                             class_name='custom-select'
-                          /> 
+                          />
                         </Col>
                       </Row>
                       <Row>
@@ -651,13 +654,13 @@ export class AggregationProfilesChange extends Component
                       </Row>
                       <Row>
                         <Col md={6}>
-                          <Field 
-                            name="endpoint_group" 
-                            component={DropDown} 
+                          <Field
+                            name="endpoint_group"
+                            component={DropDown}
                             data={this.insertSelectPlaceholder(this.endpoint_groups, '')}
                             required={true}
                             class_name='custom-select'
-                          /> 
+                          />
                         </Col>
                       </Row>
                     </FormGroup>
@@ -667,16 +670,16 @@ export class AggregationProfilesChange extends Component
                   <Col md={6}>
                     <FormGroup>
                       <Label>Metric profile: </Label>
-                      <Field 
-                        name="metric_profile" 
-                        component={DropDown} 
+                      <Field
+                        name="metric_profile"
+                        component={DropDown}
                         data={this.insertSelectPlaceholder(list_id_metric_profiles.map(e => e.name), '')}
                         required={true}
-                        id="metricProfile" 
+                        id="metricProfile"
                         class_name='custom-select'
                       />
                       <FormText>
-                        Metric profile associated to Aggregation profile. Service flavours defined in service flavour groups originate from selected metric profile. 
+                        Metric profile associated to Aggregation profile. Service flavours defined in service flavour groups originate from selected metric profile.
                       </FormText>
                     </FormGroup>
                   </Col>
@@ -691,9 +694,9 @@ export class AggregationProfilesChange extends Component
                       </Row>
                       <Row>
                         <Col md={4}>
-                          <Field 
+                          <Field
                             name="groups_field"
-                            component={DropDown} 
+                            component={DropDown}
                             data={this.insertSelectPlaceholder(
                               (write_perm) ?
                                 list_user_groups :
@@ -701,13 +704,13 @@ export class AggregationProfilesChange extends Component
                             )}
                             required={true}
                             class_name='custom-select'
-                          /> 
+                          />
                         </Col>
                       </Row>
                       <Row>
                         <Col md={12}>
                           <FormText>
-                            Aggregation profile is a member of a given group. 
+                            Aggregation profile is a member of a given group.
                           </FormText>
                         </Col>
                       </Row>
@@ -732,7 +735,7 @@ export class AggregationProfilesChange extends Component
                       <Button
                         color="danger"
                         onClick={() => {
-                          this.toggleAreYouSureSetModal('Are you sure you want to delete Aggregation profile?', 
+                          this.toggleAreYouSureSetModal('Are you sure you want to delete Aggregation profile?',
                             'Delete aggregation profile',
                             () => this.doDelete(props.values.id))
                         }}>
@@ -771,7 +774,7 @@ export class AggregationProfilesList extends Component
     this.backend.fetchData('/api/v2/internal/aggregations')
       .then(json =>
         this.setState({
-          list_aggregations: json, 
+          list_aggregations: json,
           loading: false})
       )
   }
@@ -781,7 +784,7 @@ export class AggregationProfilesList extends Component
       {
         Header: 'Name',
         id: 'name',
-        accessor: e => 
+        accessor: e =>
         <Link to={'/ui/aggregationprofiles/' + e.name}>
           {e.name}
         </Link>
@@ -794,12 +797,12 @@ export class AggregationProfilesList extends Component
     ]
     const {loading, list_aggregations} = this.state
 
-    if (loading) 
+    if (loading)
       return (<LoadingAnim />)
 
     else if (!loading && list_aggregations) {
       return (
-        <BaseArgoView 
+        <BaseArgoView
           resourcename='aggregation profile'
           location={this.location}
           listview={true}>
@@ -812,7 +815,7 @@ export class AggregationProfilesList extends Component
         </BaseArgoView>
       )
     }
-    else 
+    else
       return null
   }
 }
