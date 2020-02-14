@@ -101,7 +101,7 @@ def new_comment(comment):
                 )
 
                 if 'object' in submessage['deleted']:
-                    if len(submessage['deleted']['object']) > 0 and \
+                    if len(submessage['deleted']['object']) > 1 and \
                             submessage['deleted']['fields'] not in \
                             iterable_fields:
                         f = 'fields'
