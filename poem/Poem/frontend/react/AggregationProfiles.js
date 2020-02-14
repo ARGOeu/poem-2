@@ -372,7 +372,12 @@ export class AggregationProfilesChange extends Component
                 {
                   apiid: values_send.id,
                   name: values_send.name,
-                  groupname: values_send.groups_field
+                  groupname: values_send.groups_field,
+                  endpoint_group: values_send.endpoint_group,
+                  metric_operation: values_send.metric_operation,
+                  profile_operation: values_send.profile_operation,
+                  metric_profile: values.metric_profile,
+                  groups: JSON.stringify(values_send.groups)
                 }
               )
                 .then(() => NotifyOk({
@@ -403,7 +408,12 @@ export class AggregationProfilesChange extends Component
                 {
                   apiid: r.data.id,
                   name: values_send.name,
-                  groupname: values_send.groups_field
+                  groupname: values_send.groups_field,
+                  endpoint_group: values_send.endpoint_group,
+                  metric_operation: values_send.metric_operation,
+                  profile_operation: values_send.profile_operation,
+                  metric_profile: values.metric_profile,
+                  groups: JSON.stringify(values_send.groups)
                 }
               ).then(() => NotifyOk({
                   msg: 'Aggregation profile successfully added',
