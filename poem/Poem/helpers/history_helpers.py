@@ -348,7 +348,7 @@ def update_comment(instance):
     return analyze_differences(old_data, new_data)
 
 
-def create_metricprofile_history(instance, services, user):
+def create_profile_history(instance, data, user):
     ct = ContentType.objects.get_for_model(instance)
 
     if isinstance(user, CustUser):
@@ -364,16 +364,20 @@ def create_metricprofile_history(instance, services, user):
         )
     )
 
-    mis = []
-    for item in services:
-        if isinstance(item, str):
-            item = json.loads(item.replace('\'', '\"'))
+    if isinstance(instance, poem_models.MetricProfiles):
+        mis = []
+        for item in data:
+            if isinstance(item, str):
+                item = json.loads(item.replace('\'', '\"'))
 
-        mis.append([item['service'], item['metric']])
+            mis.append([item['service'], item['metric']])
 
-    serialized_data[0]['fields'].update({
-        'metricinstances': mis
-    })
+        serialized_data[0]['fields'].update({
+            'metricinstances': mis
+        })
+
+    elif isinstance(instance, poem_models.Aggregation):
+        serialized_data[0]['fields'].update(**data)
 
     comment = create_comment(instance, ct, json.dumps(serialized_data))
 
