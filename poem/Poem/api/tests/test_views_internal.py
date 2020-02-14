@@ -6249,6 +6249,9 @@ class HistoryHelpersTests(TenantTestCase):
         self.ct_mp = ContentType.objects.get_for_model(
             poem_models.MetricProfiles
         )
+        self.ct_aggr = ContentType.objects.get_for_model(
+            poem_models.Aggregation
+        )
 
         self.active = admin_models.MetricTemplateType.objects.create(
             name='Active'
@@ -6455,6 +6458,68 @@ class HistoryHelpersTests(TenantTestCase):
             comment='Initial version.',
             user='testuser',
             content_type=self.ct_mp
+        )
+
+        poem_models.GroupOfAggregations.objects.create(name='TEST')
+        poem_models.GroupOfAggregations.objects.create(name='TEST2')
+
+        self.aggr1 = poem_models.Aggregation.objects.create(
+            name='TEST_PROFILE',
+            apiid='00000000-oooo-kkkk-aaaa-aaeekkccnnee',
+            groupname='TEST'
+        )
+
+        data = json.loads(
+            serializers.serialize(
+                'json', [self.aggr1],
+                use_natural_foreign_keys=True,
+                use_natural_primary_keys=True
+            )
+        )
+        data[0]['fields'].update({
+            'endpoint_group': 'sites',
+            'metric_operation': 'AND',
+            'profile_operation': 'AND',
+            'metric_profile': 'TEST_PROFILE',
+            'groups': [
+                {
+                    'name': 'Group1',
+                    'operation': 'AND',
+                    'services': [
+                        {
+                            'name': 'AMGA',
+                            'operation': 'OR'
+                        },
+                        {
+                            'name': 'APEL',
+                            'operation': 'OR'
+                        }
+                    ]
+                },
+                {
+                    'name': 'Group2',
+                    'operation': 'AND',
+                    'services': [
+                        {
+                            'name': 'VOMS',
+                            'operation': 'OR'
+                        },
+                        {
+                            'name':'argo.api',
+                            'operation': 'OR'
+                        }
+                    ]
+                }
+            ]
+        })
+
+        poem_models.TenantHistory.objects.create(
+            object_id=self.aggr1.id,
+            serialized_data=json.dumps(data),
+            object_repr=self.aggr1.__str__(),
+            comment='Initial version.',
+            user='testuser',
+            content_type=self.ct_aggr
         )
 
     def test_create_comment_for_metric_template(self):
@@ -6832,6 +6897,99 @@ class HistoryHelpersTests(TenantTestCase):
             ]
         })
         comment = create_comment(mp, self.ct_mp, json.dumps(data))
+        self.assertEqual(comment, 'Initial version.')
+
+    def test_create_comment_for_aggregation_profile(self):
+        self.aggr1.name = 'TEST_PROFILE2'
+        self.aggr1.groupname = 'TEST2'
+        data = json.loads(serializers.serialize(
+            'json', [self.aggr1],
+            use_natural_foreign_keys=True,
+            use_natural_primary_keys=True
+        ))
+        data[0]['fields'].update({
+            'endpoint_group': 'servicegroups',
+            'metric_operation': 'OR',
+            'profile_operation': 'OR',
+            'metric_profile': 'TEST_PROFILE2',
+            'groups': [
+                {
+                    'name': 'Group1a',
+                    'operation': 'AND',
+                    'services': [
+                        {
+                            'name': 'AMGA',
+                            'operation': 'OR'
+                        },
+                        {
+                            'name': 'APEL',
+                            'operation': 'OR'
+                        }
+                    ]
+                },
+                {
+                    'name': 'Group2',
+                    'operation': 'OR',
+                    'services': [
+                        {
+                            'name': 'argo.api',
+                            'operation': 'OR'
+                        }
+                    ]
+                }
+            ]
+        })
+        comment = create_comment(self.aggr1, self.ct_aggr, json.dumps(data))
+        comment_set = set()
+        for item in json.loads(comment):
+            comment_set.add(json.dumps(item))
+        self.assertEqual(
+            comment_set,
+            {
+                '{"changed": {"fields": ["endpoint_group", "groupname", '
+                '"metric_operation", "metric_profile", "name", '
+                '"profile_operation"]}}',
+                '{"deleted": {"fields": ["groups"], "object": ["Group1"]}}',
+                '{"added": {"fields": ["groups"], "object": ["Group1a"]}}',
+                '{"changed": {"fields": ["groups"], "object": ["Group2"]}}'
+            }
+        )
+        self.aggr1.save()
+
+    def test_create_comment_for_aggregationprofile_if_initial(self):
+        aggr = poem_models.Aggregation.objects.create(
+            name='TEST_PROFILE2',
+            groupname='TEST',
+            apiid='10000000-oooo-kkkk-aaaa-aaeekkccnnee'
+        )
+        data = json.loads(serializers.serialize(
+            'json', [aggr],
+            use_natural_foreign_keys=True,
+            use_natural_primary_keys=True
+        ))
+        data[0]['fields'].update({
+            'endpoint_group': 'servicegroups',
+            'metric_operation': 'OR',
+            'profile_operation': 'OR',
+            'metric_profile': 'TEST_PROFILE2',
+            'groups': [
+                {
+                    'name': 'Group1a',
+                    'operation': 'AND',
+                    'services': [
+                        {
+                            'name': 'AMGA',
+                            'operation': 'OR'
+                        },
+                        {
+                            'name': 'APEL',
+                            'operation': 'OR'
+                        }
+                    ]
+                }
+            ]
+        })
+        comment = create_comment(aggr, self.ct_aggr, json.dumps(data))
         self.assertEqual(comment, 'Initial version.')
 
 

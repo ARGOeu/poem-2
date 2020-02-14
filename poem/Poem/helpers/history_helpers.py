@@ -126,12 +126,16 @@ def analyze_differences(old_data, new_data):
         # I'm numbering how many times the for loop has passed because foreign
         # keys are serialized in lists
         passed = 0
+        added_groups = list()
+        deleted_groups = list()
         if 'iterable_item_removed' in res:
             for key, value in res['iterable_item_removed'].items():
                 field = key.split('[')[1][0:-1].strip('\'')
                 if field in foreignkeys:
                     passed += 1
                     pass
+                elif field == 'groups':
+                    deleted_groups.append(value['name'])
                 else:
                     msg.append(
                         {
@@ -147,6 +151,8 @@ def analyze_differences(old_data, new_data):
                 if field in foreignkeys:
                     passed += 1
                     pass
+                elif field == 'groups':
+                    added_groups.append(value['name'])
                 else:
                     msg.append(
                         {
@@ -155,6 +161,36 @@ def analyze_differences(old_data, new_data):
                             }
                         }
                     )
+
+        if added_groups or deleted_groups:
+            for item in added_groups:
+                if item in deleted_groups:
+                    deleted_groups.remove(item)
+                    msg.append(
+                        {
+                            'changed': {
+                                'fields': ['groups'], 'object': [item]
+                            }
+                        }
+                    )
+
+                else:
+                    msg.append(
+                        {
+                            'added': {
+                                'fields': ['groups'], 'object': [item]
+                            }
+                        }
+                    )
+
+            for item in deleted_groups:
+                msg.append(
+                    {
+                        'deleted': {
+                            'fields': ['groups'], 'object': [item]
+                        }
+                    }
+                )
 
         if passed > 0:
             res = DeepDiff(old_data, new_data)
@@ -272,7 +308,9 @@ def create_comment(instance, ct=None, new_serialized_data=None):
 
     if len(history) > 0:
         if isinstance(
-                instance, (poem_models.Metric, poem_models.MetricProfiles)
+                instance,
+                (poem_models.Metric, poem_models.MetricProfiles,
+                 poem_models.Aggregation)
         ):
             old_data = serialized_data_to_dict(history[0].serialized_data)
         else:
