@@ -15,7 +15,7 @@ import {
   TenantMetricTemplateHistory
 } from './MetricTemplates';
 import { TenantAdministration, SuperAdminAdministration } from './Administration';
-import { AggregationProfilesChange, AggregationProfilesList, AggregationProfileHistory, AggregationProfileVersionCompare } from './AggregationProfiles';
+import { AggregationProfilesChange, AggregationProfilesList, AggregationProfileHistory, AggregationProfileVersionCompare, AggregationProfileVersionDetails } from './AggregationProfiles';
 import Reports from './Reports';
 import Services from './Services';
 import { UsersList, UserChange, SuperAdminUserChange } from './Users';
@@ -113,6 +113,9 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, t
     />
     <Route exact path="/ui/aggregationprofiles/:name/history/compare/:id1/:id2"
       render={props => <AggregationProfileVersionCompare {...props}/>}
+    />
+    <Route exact path="/ui/aggregationprofiles/:name/history/:version"
+      render={props => <AggregationProfileVersionDetails {...props}/>}
     />
     <Route exact path="/ui/administration" component={TenantAdministration} />
     <Route exact path="/ui/administration/users" component={UsersList} />

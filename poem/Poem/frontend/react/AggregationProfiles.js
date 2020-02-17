@@ -1026,3 +1026,270 @@ export class AggregationProfileVersionCompare extends Component {
       return null;
   };
 };
+
+
+export class AggregationProfileVersionDetails extends Component {
+  constructor(props) {
+    super(props);
+
+    this.name = props.match.params.name;
+    this.version = props.match.params.version;
+
+    this.backend = new Backend();
+
+    this.state = {
+      name: '',
+      groupname: '',
+      metric_operation: '',
+      profile_operation: '',
+      endpoint_group: '',
+      metric_profile: '',
+      groups: [],
+      date_created: '',
+      loading: false
+    };
+  };
+
+  componentDidMount() {
+    this.setState({loading: true});
+
+    this.backend.fetchData(`/api/v2/internal/tenantversion/aggregationprofile/${this.name}`)
+      .then((json) => {
+        json.forEach((e) => {
+          if (e.version == this.version)
+            this.setState({
+              name: e.fields.name,
+              groupname: e.fields.groupname,
+              metric_operation: e.fields.metric_operation,
+              profile_operation: e.fields.profile_operation,
+              endpoint_group: e.fields.endpoint_group,
+              metric_profile: e.fields.metric_profile,
+              groups: e.fields.groups,
+              date_created: e.date_created,
+              loading: false
+            });
+        });
+      });
+  };
+
+  render() {
+    const { name, groupname, metric_operation, profile_operation,
+    endpoint_group, metric_profile, groups, date_created, loading } = this.state;
+    if (loading)
+      return (<LoadingAnim/>);
+
+    else if (!loading && name) {
+      return (
+        <BaseArgoView
+          resourcename={`${name} (${date_created})`}
+          infoview={true}
+        >
+          <Formik
+            initialValues = {{
+              name: name,
+              groupname: groupname,
+              metric_operation: metric_operation,
+              profile_operation: profile_operation,
+              endpoint_group: endpoint_group,
+              metric_profile: metric_profile,
+              groups: groups
+            }}
+            render = {props => (
+              <Form>
+                <FormGroup>
+                  <Row>
+                    <Col md={4}>
+                      <Label for='name'>Aggregation name:</Label>
+                      <Field
+                        type='text'
+                        name='name'
+                        className='form-control'
+                        id='name'
+                        disabled={true}
+                      />
+                    </Col>
+                  </Row>
+                </FormGroup>
+                <Row>
+                  <Col md={4}>
+                    <FormGroup>
+                      <Row>
+                        <Col md={12}>
+                          <Label for='metric_operation'>Metric operation:</Label>
+                        </Col>
+                      </Row>
+                      <Row>
+                        <Col md={5}>
+                          <Field
+                            name='metric_operation'
+                            id="metric_operation"
+                            className='form-control'
+                            disabled={true}
+                          />
+                        </Col>
+                      </Row>
+                      <Row>
+                        <Col md={12}>
+                          <FormText>
+                            Logical operation that will be applied between metrics of each service flavour
+                          </FormText>
+                        </Col>
+                      </Row>
+                    </FormGroup>
+                  </Col>
+                  <Col md={4}>
+                    <FormGroup>
+                      <Row>
+                        <Col md={12}>
+                          <Label for='profile_operation'>Aggregation operation: </Label>
+                        </Col>
+                      </Row>
+                      <Row>
+                        <Col md={5}>
+                          <Field
+                            name='profile_operation'
+                            id='profile_operation'
+                            className='form-control'
+                            disabled={true}
+                          />
+                        </Col>
+                      </Row>
+                      <Row>
+                        <Col md={12}>
+                          <FormText>
+                            Logical operation that will be applied between defined service flavour groups
+                          </FormText>
+                        </Col>
+                      </Row>
+                    </FormGroup>
+                  </Col>
+                  <Col md={4}>
+                    <FormGroup>
+                      <Row>
+                        <Col md={12}>
+                          <Label>Endpoint group: </Label>
+                        </Col>
+                      </Row>
+                      <Row>
+                        <Col md={6}>
+                          <Field
+                            name='endpoint_group'
+                            className='form-control'
+                            disabled={true}
+                          />
+                        </Col>
+                      </Row>
+                    </FormGroup>
+                  </Col>
+                </Row>
+                <Row>
+                  <Col md={6}>
+                    <FormGroup>
+                      <Label>Metric profile: </Label>
+                      <Field
+                        name='metric_profile'
+                        id='metric_profile'
+                        className='form-control'
+                        disabled={true}
+                      />
+                      <FormText>
+                        Metric profile associated to Aggregation profile. Service flavours defined in service flavour groups originate from selected metric profile.
+                      </FormText>
+                    </FormGroup>
+                  </Col>
+                </Row>
+                <Row>
+                  <Col md={6}>
+                    <FormGroup>
+                      <Row>
+                        <Col md={6}>
+                          <Label>Group: </Label>
+                        </Col>
+                      </Row>
+                      <Row>
+                        <Col md={4}>
+                          <Field
+                            name='groupname'
+                            className='form-control'
+                            disabled={true}
+                          />
+                        </Col>
+                      </Row>
+                      <Row>
+                        <Col md={12}>
+                          <FormText>
+                            Aggregation profile is a member of a given group.
+                          </FormText>
+                        </Col>
+                      </Row>
+                    </FormGroup>
+                  </Col>
+                </Row>
+                <h4 className="mt-2 alert-info p-1 pl-3 text-light text-uppercase rounded" style={{'backgroundColor': "#416090"}}>Service flavour groups</h4>
+                <FieldArray
+                  name='groups'
+                  render={arrayHelpers => (
+                    <Row className='groups'>
+                      {
+                        props.values['groups'].map((group, i) =>
+                          <FieldArray
+                            key={i}
+                            name='groups'
+                            render={arrayHelpers => (
+                              <React.Fragment key={i}>
+                                <Col sm={{size: 8}} md={{size: 5}} className='mt-4 mb-2'>
+                                  <Card>
+                                    <CardHeader className='p-1' color='primary'>
+                                      <Row className='d-flex align-items-center no-gutters'>
+                                        <Col sm={{size: 10}} md={{size: 11}}>
+                                          {groups[i].name}
+                                        </Col>
+                                      </Row>
+                                    </CardHeader>
+                                    <CardBody className='p-1'>
+                                      {
+                                        group.services.map((service, j) =>
+                                          <FieldArray
+                                            key={j}
+                                            name={`groups.${i}.services`}
+                                            render={arrayHelpers => (
+                                              <Row className='d-flex align-items-center service pt-1 pb-1 no-gutters' key={j}>
+                                                <Col md={8}>
+                                                  {groups[i].services[j].name}
+                                                </Col>
+                                                <Col md={2}>
+                                                  {groups[i].services[j].operation}
+                                                </Col>
+                                              </Row>
+                                            )}
+                                          />
+                                        )
+                                      }
+                                    </CardBody>
+                                    <CardFooter className='p-1 d-flex justify-content-center'>
+                                      {groups[i].operation}
+                                    </CardFooter>
+                                  </Card>
+                                </Col>
+                                <Col sm={{size: 4}} md={{size: 1}} className='mt-5'>
+                                  <div className='group-operation' key={i}>
+                                    {props.values.profile_operation}
+                                  </div>
+                                </Col>
+                              </React.Fragment>
+                            )}
+                          />
+                        )
+                      }
+                    </Row>
+                  )}
+                />
+              </Form>
+            )}
+          />
+        </BaseArgoView>
+      );
+    } else
+      return null;
+  };
+};
