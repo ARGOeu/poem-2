@@ -4,7 +4,7 @@ from django.contrib.contenttypes.models import ContentType
 from Poem.api import serializers
 from Poem.api.internal_views.utils import sync_webapi
 from Poem.api.views import NotFound
-from Poem.helpers.history_helpers import create_metricprofile_history
+from Poem.helpers.history_helpers import create_profile_history
 from Poem.poem import models as poem_models
 
 from rest_framework import status
@@ -40,7 +40,7 @@ class ListMetricProfiles(APIView):
             )
             groupprofile.metricprofiles.add(profile)
 
-            create_metricprofile_history(
+            create_profile_history(
                 profile, dict(request.data)['services'], request.user
             )
 
@@ -81,7 +81,7 @@ class ListMetricProfiles(APIView):
         )
         groupprofile.metricprofiles.add(profile)
 
-        create_metricprofile_history(
+        create_profile_history(
             profile, dict(request.data)['services'], request.user
         )
 

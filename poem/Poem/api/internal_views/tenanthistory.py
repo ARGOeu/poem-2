@@ -21,7 +21,8 @@ class ListTenantVersions(APIView):
     def get(self, request, obj, name=None):
         models = {
             'metric': poem_models.Metric,
-            'metricprofile': poem_models.MetricProfiles
+            'metricprofile': poem_models.MetricProfiles,
+            'aggregationprofile': poem_models.Aggregation
         }
 
         ct = ContentType.objects.get_for_model(models[obj])
@@ -102,6 +103,9 @@ class ListTenantVersions(APIView):
                             'apiid': fields0['apiid'],
                             'metricinstances': mi
                         }
+
+                    else:
+                        fields = fields0
 
                     try:
                         comment = []

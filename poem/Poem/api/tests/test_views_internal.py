@@ -1671,19 +1671,95 @@ class ListAggregationsAPIViewTests(TenantTestCase):
         self.url = '/api/v2/internal/aggregations/'
         self.user = CustUser.objects.create(username='testuser')
 
-        poem_models.Aggregation.objects.create(
+        self.aggr1 = poem_models.Aggregation.objects.create(
             name='TEST_PROFILE',
             apiid='00000000-oooo-kkkk-aaaa-aaeekkccnnee',
             groupname='EGI'
         )
 
-        poem_models.Aggregation.objects.create(
+        self.aggr2 = poem_models.Aggregation.objects.create(
             name='ANOTHER-PROFILE',
             apiid='12341234-oooo-kkkk-aaaa-aaeekkccnnee'
         )
 
         self.group = poem_models.GroupOfAggregations.objects.create(name='EGI')
         poem_models.GroupOfAggregations.objects.create(name='new-group')
+
+        self.ct = ContentType.objects.get_for_model(poem_models.Aggregation)
+
+        data = json.loads(
+            serializers.serialize(
+                'json', [self.aggr1],
+                use_natural_foreign_keys=True,
+                use_natural_primary_keys=True
+            )
+        )
+        data[0]['fields'].update({
+            'endpoint_group': 'sites',
+            'metric_operation': 'AND',
+            'profile_operation': 'AND',
+            'metric_profile': 'TEST_PROFILE',
+            'groups': [
+                {
+                    'name': 'Group2',
+                    'operation': 'AND',
+                    'services': [
+                        {
+                            'name': 'VOMS',
+                            'operation': 'OR'
+                        }
+                    ]
+                }
+            ]
+        })
+
+        poem_models.TenantHistory.objects.create(
+            object_id=self.aggr1.id,
+            serialized_data=json.dumps(data),
+            object_repr=self.aggr1.__str__(),
+            comment='Initial version.',
+            user='testuser',
+            content_type=self.ct
+        )
+
+        data = json.loads(
+            serializers.serialize(
+                'json', [self.aggr2],
+                use_natural_foreign_keys=True,
+                use_natural_primary_keys=True
+            )
+        )
+        data[0]['fields'].update({
+            'endpoint_group': 'servicegroups',
+            'metric_operation': 'AND',
+            'profile_operation': 'AND',
+            'metric_profile': 'TEST_PROFILE',
+            'groups': [
+                {
+                    'name': 'Group3',
+                    'operation': 'AND',
+                    'services': [
+                        {
+                            'name': 'VOMS',
+                            'operation': 'OR'
+                        },
+                        {
+                            'name': 'argo.api',
+                            'operation': 'OR'
+                        }
+                    ]
+                }
+            ]
+        })
+
+        poem_models.TenantHistory.objects.create(
+            object_id=self.aggr2.id,
+            serialized_data=json.dumps(data),
+            object_repr=self.aggr2.__str__(),
+            comment='Initial version.',
+            user='testuser',
+            content_type=self.ct
+        )
 
     @patch('Poem.api.internal_views.aggregationprofiles.sync_webapi',
            side_effect=mocked_func)
@@ -1731,9 +1807,31 @@ class ListAggregationsAPIViewTests(TenantTestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_post_aggregation(self):
-        data = {'apiid': '12341234-aaaa-kkkk-aaaa-aaeekkccnnee',
-                'name': 'new-profile',
-                'groupname': 'EGI'}
+        data = {
+            'apiid': '12341234-aaaa-kkkk-aaaa-aaeekkccnnee',
+            'name': 'new-profile',
+            'groupname': 'EGI',
+            'endpoint_group': 'sites',
+            'metric_operation': 'AND',
+            'profile_operation': 'AND',
+            'metric_profile': 'TEST_PROFILE',
+            'groups': json.dumps([
+                {
+                    'name': 'Group1',
+                    'operation': 'AND',
+                    'services': [
+                        {
+                            'name': 'AMGA',
+                            'operation': 'OR'
+                        },
+                        {
+                            'name': 'APEL',
+                            'operation': 'OR'
+                        }
+                    ]
+                }
+            ])
+        }
         request = self.factory.post(self.url, data, format='json')
         force_authenticate(request, user=self.user)
         response = self.view(request)
@@ -1742,6 +1840,36 @@ class ListAggregationsAPIViewTests(TenantTestCase):
         self.assertEqual(profile.name, 'new-profile')
         self.assertEqual(profile.apiid, '12341234-aaaa-kkkk-aaaa-aaeekkccnnee')
         self.assertEqual(profile.groupname, 'EGI')
+        history = poem_models.TenantHistory.objects.filter(
+            object_id=profile.id, content_type=self.ct
+        ).order_by('-date_created')
+        self.assertEqual(history.count(), 1)
+        serialized_data = json.loads(history[0].serialized_data)[0]['fields']
+        self.assertEqual(serialized_data['name'], profile.name)
+        self.assertEqual(serialized_data['apiid'], profile.apiid)
+        self.assertEqual(serialized_data['groupname'], profile.groupname)
+        self.assertEqual(serialized_data['endpoint_group'], 'sites')
+        self.assertEqual(serialized_data['metric_operation'], 'AND')
+        self.assertEqual(serialized_data['profile_operation'], 'AND')
+        self.assertEqual(
+            serialized_data['groups'],
+            [
+                {
+                    'name': 'Group1',
+                    'operation': 'AND',
+                    'services': [
+                        {
+                            'name': 'AMGA',
+                            'operation': 'OR'
+                        },
+                        {
+                            'name': 'APEL',
+                            'operation': 'OR'
+                        }
+                    ]
+                }
+            ]
+        )
 
     def test_post_aggregations_invalid_data(self):
         data = {'name': 'new-profile'}
@@ -1751,28 +1879,84 @@ class ListAggregationsAPIViewTests(TenantTestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_put_aggregations(self):
-        data = {'apiid': '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
-                'groupname': 'new-group'}
+        data = {
+            'apiid': '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
+            'groupname': 'new-group',
+            'endpoint_group': 'servicegroups',
+            'metric_operation': 'OR',
+            'profile_operation': 'AND',
+            'metric_profile': 'PROFILE2',
+            'groups': json.dumps([
+                {
+                    'name': 'Group3',
+                    'operation': 'OR',
+                    'services': [
+                        {
+                            'name': 'VOMS',
+                            'operation': 'AND'
+                        }
+                    ]
+                }
+            ])
+        }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        profile = poem_models.Aggregation.objects.get(name='TEST_PROFILE')
+        profile = poem_models.Aggregation.objects.get(id=self.aggr1.id)
         self.assertEqual(profile.name, 'TEST_PROFILE')
         self.assertEqual(profile.apiid, '00000000-oooo-kkkk-aaaa-aaeekkccnnee')
         self.assertEqual(profile.groupname, 'new-group')
+        history = poem_models.TenantHistory.objects.filter(
+            object_id=profile.id, content_type=self.ct
+        ).order_by('-date_created')
+        self.assertEqual(history.count(), 2)
+        serialized_data = json.loads(history[0].serialized_data)[0]['fields']
+        self.assertEqual(serialized_data['name'], profile.name)
+        self.assertEqual(serialized_data['apiid'], profile.apiid)
+        self.assertEqual(serialized_data['groupname'], profile.groupname)
+        self.assertEqual(serialized_data['endpoint_group'], 'servicegroups')
+        self.assertEqual(serialized_data['metric_operation'], 'OR')
+        self.assertEqual(serialized_data['profile_operation'], 'AND')
+        self.assertEqual(serialized_data['metric_profile'], 'PROFILE2')
+        self.assertEqual(
+            serialized_data['groups'],
+            [
+                {
+                    'name': 'Group3',
+                    'operation': 'OR',
+                    'services': [
+                        {
+                            'name': 'VOMS',
+                            'operation': 'AND'
+                        }
+                    ]
+                }
+            ]
+        )
 
     def test_delete_aggregation(self):
-        request = self.factory.delete(self.url +
-                                      '12341234-oooo-kkkk-aaaa-aaeekkccnnee')
+        self.assertEqual(
+            poem_models.TenantHistory.objects.filter(
+                object_id=self.aggr2.id, content_type=self.ct
+            ).count(), 1
+        )
+        request = self.factory.delete(
+            self.url + '12341234-oooo-kkkk-aaaa-aaeekkccnnee'
+        )
         force_authenticate(request, user=self.user)
         response = self.view(request, '12341234-oooo-kkkk-aaaa-aaeekkccnnee')
-        all = poem_models.Aggregation.objects.all().values_list(
+        profiles = poem_models.Aggregation.objects.all().values_list(
             'name', flat=True
         )
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-        self.assertFalse('ANOTHER-PROFILE' in all)
+        self.assertFalse('ANOTHER-PROFILE' in profiles)
+        self.assertEqual(
+            poem_models.TenantHistory.objects.filter(
+                object_id=self.aggr2.id, content_type=self.ct
+            ).count(), 0
+        )
 
     def test_delete_aggregation_with_wrong_id(self):
         request = self.factory.delete(self.url + 'wrong_id')
@@ -5602,6 +5786,7 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
 
         ct_m = ContentType.objects.get_for_model(poem_models.Metric)
         ct_mp = ContentType.objects.get_for_model(poem_models.MetricProfiles)
+        ct_aggr = ContentType.objects.get_for_model(poem_models.Aggregation)
 
         self.probever1 = admin_models.ProbeHistory.objects.create(
             object_id=probe1,
@@ -5798,6 +5983,123 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
             comment=comment,
             user='testuser',
             content_type=ct_mp
+        )
+
+        self.aggr1 = poem_models.Aggregation.objects.create(
+            name='TEST_PROFILE',
+            apiid='00000000-oooo-kkkk-aaaa-aaeekkccnnee',
+            groupname='EGI'
+        )
+
+        data = json.loads(
+            serializers.serialize(
+                'json', [self.aggr1],
+                use_natural_foreign_keys=True,
+                use_natural_primary_keys=True
+            )
+        )
+        data[0]['fields'].update({
+            'endpoint_group': 'sites',
+            'metric_operation': 'AND',
+            'profile_operation': 'AND',
+            'metric_profile': 'TEST_PROFILE',
+            'groups': [
+                {
+                    'name': 'Group1',
+                    'operation': 'AND',
+                    'services': [
+                        {
+                            'name': 'AMGA',
+                            'operation': 'OR'
+                        },
+                        {
+                            'name': 'APEL',
+                            'operation': 'OR'
+                        }
+                    ]
+                },
+                {
+                    'name': 'Group2',
+                    'operation': 'AND',
+                    'services': [
+                        {
+                            'name': 'VOMS',
+                            'operation': 'OR'
+                        },
+                        {
+                            'name': 'argo.api',
+                            'operation': 'OR'
+                        }
+                    ]
+                }
+            ]
+        })
+
+        self.ver6 = poem_models.TenantHistory.objects.create(
+            object_id=self.aggr1.id,
+            serialized_data=json.dumps(data),
+            object_repr=self.aggr1.__str__(),
+            comment='Initial version.',
+            user='testuser',
+            content_type=ct_aggr
+        )
+
+        self.aggr1.name = 'TEST_PROFILE2'
+        self.aggr1.groupname = 'TEST2'
+        self.aggr1.save()
+
+        data = json.loads(
+            serializers.serialize(
+                'json', [self.aggr1],
+                use_natural_foreign_keys=True,
+                use_natural_primary_keys=True
+            )
+        )
+        data[0]['fields'].update({
+            'endpoint_group': 'servicegroups',
+            'metric_operation': 'OR',
+            'profile_operation': 'OR',
+            'metric_profile': 'TEST_PROFILE2',
+            'groups': [
+                {
+                    'name': 'Group1a',
+                    'operation': 'AND',
+                    'services': [
+                        {
+                            'name': 'AMGA',
+                            'operation': 'OR'
+                        },
+                        {
+                            'name': 'APEL',
+                            'operation': 'OR'
+                        }
+                    ]
+                },
+                {
+                    'name': 'Group2',
+                    'operation': 'OR',
+                    'services': [
+                        {
+                            'name': 'argo.api',
+                            'operation': 'OR'
+                        }
+                    ]
+                }
+            ]
+        })
+
+        self.ver7 = poem_models.TenantHistory.objects.create(
+            object_id=self.aggr1.id,
+            serialized_data=json.dumps(data),
+            object_repr=self.aggr1.__str__(),
+            comment='[{"changed": {"fields": ["endpoint_group", "groupname", '
+                    '"metric_operation", "metric_profile", "name", '
+                    '"profile_operation"]}}, {"deleted": {"fields": '
+                    '["groups"], "object": ["Group1"]}}, {"added": {"fields": '
+                    '["groups"], "object": ["Group1a"]}}, {"changed": '
+                    '{"fields": ["groups"], "object": ["Group2"]}}]',
+            user='testuser',
+            content_type=ct_aggr
         )
 
     def test_get_versions_of_metrics(self):
@@ -6020,6 +6322,135 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
         request = self.factory.get(self.url + 'metricprofile')
         force_authenticate(request, user=self.user)
         response = self.view(request, 'metricprofile')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_get_aggregation_profile_version(self):
+        request = self.factory.get(
+            self.url + 'aggregationprofile/TEST_PROFILE2'
+        )
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'aggregationprofile', 'TEST_PROFILE2')
+        self.assertEqual(
+            response.data,
+            [
+                {
+                    'id': self.ver7.id,
+                    'object_repr': 'TEST_PROFILE2',
+                    'fields': {
+                        'name': 'TEST_PROFILE2',
+                        'groupname': 'TEST2',
+                        'apiid': '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
+                        'endpoint_group': 'servicegroups',
+                        'metric_operation': 'OR',
+                        'profile_operation': 'OR',
+                        'metric_profile': 'TEST_PROFILE2',
+                        'groups': [
+                            {
+                                'name': 'Group1a',
+                                'operation': 'AND',
+                                'services': [
+                                    {
+                                        'name': 'AMGA',
+                                        'operation': 'OR'
+                                    },
+                                    {
+                                        'name': 'APEL',
+                                        'operation': 'OR'
+                                    }
+                                ]
+                            },
+                            {
+                                'name': 'Group2',
+                                'operation': 'OR',
+                                'services': [
+                                    {
+                                        'name': 'argo.api',
+                                        'operation': 'OR'
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    'user': 'testuser',
+                    'date_created': datetime.datetime.strftime(
+                        self.ver7.date_created, '%Y-%m-%d %H:%M:%S'
+                    ),
+                    'comment': 'Changed endpoint_group, groupname, '
+                               'metric_operation, metric_profile, name and '
+                               'profile_operation. Deleted groups field '
+                               '"Group1". Added groups field "Group1a". '
+                               'Changed groups field "Group2".',
+                    'version': datetime.datetime.strftime(
+                        self.ver7.date_created, '%Y%m%d-%H%M%S'
+                    )
+                },
+                {
+                    'id': self.ver6.id,
+                    'object_repr': 'TEST_PROFILE',
+                    'fields': {
+                        'name': 'TEST_PROFILE',
+                        'groupname': 'EGI',
+                        'apiid': '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
+                        'endpoint_group': 'sites',
+                        'metric_operation': 'AND',
+                        'profile_operation': 'AND',
+                        'metric_profile': 'TEST_PROFILE',
+                        'groups': [
+                            {
+                                'name': 'Group1',
+                                'operation': 'AND',
+                                'services': [
+                                    {
+                                        'name': 'AMGA',
+                                        'operation': 'OR'
+                                    },
+                                    {
+                                        'name': 'APEL',
+                                        'operation': 'OR'
+                                    }
+                                ]
+                            },
+                            {
+                                'name': 'Group2',
+                                'operation': 'AND',
+                                'services': [
+                                    {
+                                        'name': 'VOMS',
+                                        'operation': 'OR'
+                                    },
+                                    {
+                                        'name': 'argo.api',
+                                        'operation': 'OR'
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    'user': 'testuser',
+                    'date_created': datetime.datetime.strftime(
+                        self.ver6.date_created, '%Y-%m-%d %H:%M:%S'
+                    ),
+                    'comment': 'Initial version.',
+                    'version': datetime.datetime.strftime(
+                        self.ver6.date_created, '%Y%m%d-%H%M%S'
+                    )
+                }
+            ]
+        )
+
+    def test_get_nonexisting_aggregation_profile(self):
+        request = self.factory.get(self.url + 'aggregationprofile/nonexisting')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'aggregationprofile', 'nonexisting')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(
+            response.data, {'detail': 'Aggregation profile not found.'}
+        )
+
+    def test_get_aggregation_profile_version_without_specifying_name(self):
+        request = self.factory.get(self.url + 'aggregationprofile')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'aggregationprofile')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
 
@@ -6249,6 +6680,9 @@ class HistoryHelpersTests(TenantTestCase):
         self.ct_mp = ContentType.objects.get_for_model(
             poem_models.MetricProfiles
         )
+        self.ct_aggr = ContentType.objects.get_for_model(
+            poem_models.Aggregation
+        )
 
         self.active = admin_models.MetricTemplateType.objects.create(
             name='Active'
@@ -6455,6 +6889,68 @@ class HistoryHelpersTests(TenantTestCase):
             comment='Initial version.',
             user='testuser',
             content_type=self.ct_mp
+        )
+
+        poem_models.GroupOfAggregations.objects.create(name='TEST')
+        poem_models.GroupOfAggregations.objects.create(name='TEST2')
+
+        self.aggr1 = poem_models.Aggregation.objects.create(
+            name='TEST_PROFILE',
+            apiid='00000000-oooo-kkkk-aaaa-aaeekkccnnee',
+            groupname='TEST'
+        )
+
+        data = json.loads(
+            serializers.serialize(
+                'json', [self.aggr1],
+                use_natural_foreign_keys=True,
+                use_natural_primary_keys=True
+            )
+        )
+        data[0]['fields'].update({
+            'endpoint_group': 'sites',
+            'metric_operation': 'AND',
+            'profile_operation': 'AND',
+            'metric_profile': 'TEST_PROFILE',
+            'groups': [
+                {
+                    'name': 'Group1',
+                    'operation': 'AND',
+                    'services': [
+                        {
+                            'name': 'AMGA',
+                            'operation': 'OR'
+                        },
+                        {
+                            'name': 'APEL',
+                            'operation': 'OR'
+                        }
+                    ]
+                },
+                {
+                    'name': 'Group2',
+                    'operation': 'AND',
+                    'services': [
+                        {
+                            'name': 'VOMS',
+                            'operation': 'OR'
+                        },
+                        {
+                            'name':'argo.api',
+                            'operation': 'OR'
+                        }
+                    ]
+                }
+            ]
+        })
+
+        poem_models.TenantHistory.objects.create(
+            object_id=self.aggr1.id,
+            serialized_data=json.dumps(data),
+            object_repr=self.aggr1.__str__(),
+            comment='Initial version.',
+            user='testuser',
+            content_type=self.ct_aggr
         )
 
     def test_create_comment_for_metric_template(self):
@@ -6832,6 +7328,99 @@ class HistoryHelpersTests(TenantTestCase):
             ]
         })
         comment = create_comment(mp, self.ct_mp, json.dumps(data))
+        self.assertEqual(comment, 'Initial version.')
+
+    def test_create_comment_for_aggregation_profile(self):
+        self.aggr1.name = 'TEST_PROFILE2'
+        self.aggr1.groupname = 'TEST2'
+        data = json.loads(serializers.serialize(
+            'json', [self.aggr1],
+            use_natural_foreign_keys=True,
+            use_natural_primary_keys=True
+        ))
+        data[0]['fields'].update({
+            'endpoint_group': 'servicegroups',
+            'metric_operation': 'OR',
+            'profile_operation': 'OR',
+            'metric_profile': 'TEST_PROFILE2',
+            'groups': [
+                {
+                    'name': 'Group1a',
+                    'operation': 'AND',
+                    'services': [
+                        {
+                            'name': 'AMGA',
+                            'operation': 'OR'
+                        },
+                        {
+                            'name': 'APEL',
+                            'operation': 'OR'
+                        }
+                    ]
+                },
+                {
+                    'name': 'Group2',
+                    'operation': 'OR',
+                    'services': [
+                        {
+                            'name': 'argo.api',
+                            'operation': 'OR'
+                        }
+                    ]
+                }
+            ]
+        })
+        comment = create_comment(self.aggr1, self.ct_aggr, json.dumps(data))
+        comment_set = set()
+        for item in json.loads(comment):
+            comment_set.add(json.dumps(item))
+        self.assertEqual(
+            comment_set,
+            {
+                '{"changed": {"fields": ["endpoint_group", "groupname", '
+                '"metric_operation", "metric_profile", "name", '
+                '"profile_operation"]}}',
+                '{"deleted": {"fields": ["groups"], "object": ["Group1"]}}',
+                '{"added": {"fields": ["groups"], "object": ["Group1a"]}}',
+                '{"changed": {"fields": ["groups"], "object": ["Group2"]}}'
+            }
+        )
+        self.aggr1.save()
+
+    def test_create_comment_for_aggregationprofile_if_initial(self):
+        aggr = poem_models.Aggregation.objects.create(
+            name='TEST_PROFILE2',
+            groupname='TEST',
+            apiid='10000000-oooo-kkkk-aaaa-aaeekkccnnee'
+        )
+        data = json.loads(serializers.serialize(
+            'json', [aggr],
+            use_natural_foreign_keys=True,
+            use_natural_primary_keys=True
+        ))
+        data[0]['fields'].update({
+            'endpoint_group': 'servicegroups',
+            'metric_operation': 'OR',
+            'profile_operation': 'OR',
+            'metric_profile': 'TEST_PROFILE2',
+            'groups': [
+                {
+                    'name': 'Group1a',
+                    'operation': 'AND',
+                    'services': [
+                        {
+                            'name': 'AMGA',
+                            'operation': 'OR'
+                        },
+                        {
+                            'name': 'APEL',
+                            'operation': 'OR'
+                        }
+                    ]
+                }
+            ]
+        })
+        comment = create_comment(aggr, self.ct_aggr, json.dumps(data))
         self.assertEqual(comment, 'Initial version.')
 
 

@@ -3,7 +3,7 @@ from django.contrib.contenttypes.models import ContentType
 import json
 
 from Poem.api.models import MyAPIKey
-from Poem.helpers.history_helpers import create_metricprofile_history
+from Poem.helpers.history_helpers import create_profile_history
 from Poem.poem import models as poem_models
 
 import requests
@@ -103,7 +103,7 @@ def sync_webapi(api, model):
                                         metric=metric
                                     )
                                 )
-                create_metricprofile_history(instance, services, 'poem')
+                create_profile_history(instance, services, 'poem')
 
     entries_deleted_onapi = data_db.difference(data_api)
     for p in entries_deleted_onapi:
