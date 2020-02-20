@@ -6683,6 +6683,9 @@ class HistoryHelpersTests(TenantTestCase):
         self.ct_aggr = ContentType.objects.get_for_model(
             poem_models.Aggregation
         )
+        self.ct_tp = ContentType.objects.get_for_model(
+            poem_models.ThresholdsProfiles
+        )
 
         self.active = admin_models.MetricTemplateType.objects.create(
             name='Active'
@@ -6951,6 +6954,38 @@ class HistoryHelpersTests(TenantTestCase):
             comment='Initial version.',
             user='testuser',
             content_type=self.ct_aggr
+        )
+
+        self.tp1 = poem_models.ThresholdsProfiles.objects.create(
+            name='TEST_PROFILE',
+            apiid='00000000-oooo-kkkk-aaaa-aaeekkccnnee',
+            groupname='TEST'
+        )
+
+        data = json.loads(
+            serializers.serialize(
+                'json', [self.tp1],
+                use_natural_foreign_keys=True,
+                use_natural_primary_keys=True
+            )
+        )
+        data[0]['fields'].update({
+            'rules': [
+                {
+                    'host': 'hostFoo',
+                    'metric': 'metricA',
+                    'thresholds': 'freshness=1s;10;9:;0;25 entries=1;3;0:2;10'
+                }
+            ]
+        })
+
+        poem_models.TenantHistory.objects.create(
+            object_id=self.tp1.id,
+            serialized_data=json.dumps(data),
+            object_repr=self.tp1.__str__(),
+            comment='Initial version.',
+            user='testuser',
+            content_type=self.ct_tp
         )
 
     def test_create_comment_for_metric_template(self):
@@ -7421,6 +7456,71 @@ class HistoryHelpersTests(TenantTestCase):
             ]
         })
         comment = create_comment(aggr, self.ct_aggr, json.dumps(data))
+        self.assertEqual(comment, 'Initial version.')
+
+    def test_create_comment_for_thresholds_profile(self):
+        self.tp1.name = 'TEST_PROFILE2'
+        self.tp1.groupname = 'TEST2'
+        self.tp1.save()
+        data = json.loads(serializers.serialize(
+            'json', [self.tp1],
+            use_natural_foreign_keys=True,
+            use_natural_primary_keys=True
+        ))
+        data[0]['fields'].update({
+            'rules': [
+                {
+                    'host': 'hostBar',
+                    'endpoint_group': 'TEST-SITE-51',
+                    'metric': 'httpd.ResponseTime',
+                    'thresholds': 'response=20ms;0:500;499:1000'
+                },
+                {
+                    'metric': 'httpd.ResponseTime',
+                    'thresholds': 'response=20ms;0:300;299:1000'
+                }
+            ]
+        })
+        comment = create_comment(self.tp1, self.ct_tp, json.dumps(data))
+        comment_set = set()
+        for item in json.loads(comment):
+            comment_set.add(json.dumps(item))
+        self.assertEqual(
+            comment_set,
+            {
+                '{"changed": {"fields": ["groupname", "name"]}}',
+                '{"deleted": {"fields": ["rules"], "object": ["metricA"]}}',
+                '{"added": {"fields": ["rules"], '
+                '"object": ["httpd.ResponseTime"]}}'
+            }
+        )
+
+    def test_create_comment_for_thresholds_profile_if_initial(self):
+        tp = poem_models.ThresholdsProfiles.objects.create(
+            name='TEST_PROFILE2',
+            groupname='TEST',
+            apiid='10000000-oooo-kkkk-aaaa-aaeekkccnnee'
+        )
+        data = json.loads(serializers.serialize(
+            'json', [tp],
+            use_natural_foreign_keys=True,
+            use_natural_primary_keys=True
+        ))
+        data[0]['fields'].update({
+            'rules': [
+                {
+                    'host': 'hostBar',
+                    'endpoint_group': 'TEST-SITE-51',
+                    'metric': 'httpd.ResponseTime',
+                    'thresholds': 'response=20ms;0:500;499:1000'
+                },
+                {
+                    'metric': 'httpd.ResponseTime',
+                    'thresholds': 'response=20ms;0:300;299:1000'
+                }
+            ]
+        })
+        comment = create_comment(tp, self.ct_tp, json.dumps(data))
         self.assertEqual(comment, 'Initial version.')
 
 

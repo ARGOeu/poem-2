@@ -128,6 +128,8 @@ def analyze_differences(old_data, new_data):
         passed = 0
         added_groups = list()
         deleted_groups = list()
+        added_rules = list()
+        deleted_rules = list()
         if 'iterable_item_removed' in res:
             for key, value in res['iterable_item_removed'].items():
                 field = key.split('[')[1][0:-1].strip('\'')
@@ -136,6 +138,8 @@ def analyze_differences(old_data, new_data):
                     pass
                 elif field == 'groups':
                     deleted_groups.append(value['name'])
+                elif field == 'rules':
+                    deleted_rules.append(value['metric'])
                 else:
                     msg.append(
                         {
@@ -153,6 +157,8 @@ def analyze_differences(old_data, new_data):
                     pass
                 elif field == 'groups':
                     added_groups.append(value['name'])
+                elif field == 'rules':
+                    added_rules.append(value['metric'])
                 else:
                     msg.append(
                         {
@@ -188,6 +194,36 @@ def analyze_differences(old_data, new_data):
                     {
                         'deleted': {
                             'fields': ['groups'], 'object': [item]
+                        }
+                    }
+                )
+
+        if added_rules or deleted_rules:
+            for item in added_rules:
+                if item in deleted_rules:
+                    deleted_rules.remove(item)
+                    msg.append(
+                        {
+                            'changed': {
+                                'fields': ['rules'], 'object': [item]
+                            }
+                        }
+                    )
+
+                else:
+                    msg.append(
+                        {
+                            'added': {
+                                'fields': ['rules'], 'object': [item]
+                            }
+                        }
+                    )
+
+            for item in deleted_rules:
+                msg.append(
+                    {
+                        'deleted': {
+                            'fields': ['rules'], 'object': [item]
                         }
                     }
                 )
@@ -310,7 +346,7 @@ def create_comment(instance, ct=None, new_serialized_data=None):
         if isinstance(
                 instance,
                 (poem_models.Metric, poem_models.MetricProfiles,
-                 poem_models.Aggregation)
+                 poem_models.Aggregation, poem_models.ThresholdsProfiles)
         ):
             old_data = serialized_data_to_dict(history[0].serialized_data)
         else:
