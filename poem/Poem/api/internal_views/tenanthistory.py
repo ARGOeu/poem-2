@@ -22,7 +22,8 @@ class ListTenantVersions(APIView):
         models = {
             'metric': poem_models.Metric,
             'metricprofile': poem_models.MetricProfiles,
-            'aggregationprofile': poem_models.Aggregation
+            'aggregationprofile': poem_models.Aggregation,
+            'thresholdsprofile': poem_models.ThresholdsProfiles
         }
 
         ct = ContentType.objects.get_for_model(models[obj])

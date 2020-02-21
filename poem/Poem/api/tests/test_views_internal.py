@@ -5790,6 +5790,9 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
         ct_m = ContentType.objects.get_for_model(poem_models.Metric)
         ct_mp = ContentType.objects.get_for_model(poem_models.MetricProfiles)
         ct_aggr = ContentType.objects.get_for_model(poem_models.Aggregation)
+        ct_tp = ContentType.objects.get_for_model(
+            poem_models.ThresholdsProfiles
+        )
 
         self.probever1 = admin_models.ProbeHistory.objects.create(
             object_id=probe1,
@@ -6103,6 +6106,73 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
                     '{"fields": ["groups"], "object": ["Group2"]}}]',
             user='testuser',
             content_type=ct_aggr
+        )
+
+        self.tp1 = poem_models.ThresholdsProfiles.objects.create(
+            name='TEST_PROFILE',
+            apiid='00000000-oooo-kkkk-aaaa-aaeekkccnnee',
+            groupname='GROUP'
+        )
+
+        data = json.loads(
+            serializers.serialize(
+                'json', [self.tp1],
+                use_natural_foreign_keys=True,
+                use_natural_primary_keys=True
+            )
+        )
+        data[0]['fields'].update({
+            'rules': [
+                {
+                    'host': 'hostFoo',
+                    'metric': 'metricA',
+                    'thresholds': 'freshness=1s;10;9:;0;25 entries=1;3;0:2;10'
+                }
+            ]
+        })
+
+        self.ver8 = poem_models.TenantHistory.objects.create(
+            object_id=self.tp1.id,
+            serialized_data=json.dumps(data),
+            object_repr=self.tp1.__str__(),
+            comment='Initial version.',
+            user='testuser',
+            content_type=ct_tp
+        )
+
+        self.tp1.name = 'TEST_PROFILE2'
+        self.tp1.groupname = 'NEW_GROUP'
+        self.tp1.save()
+
+        data = json.loads(
+            serializers.serialize(
+                'json', [self.tp1],
+                use_natural_foreign_keys=True,
+                use_natural_primary_keys=True
+            )
+        )
+        data[0]['fields'].update({
+            'rules': [
+                {
+                    'host': 'hostFoo',
+                    'metric': 'newMetric',
+                    'endpoint_group': 'test',
+                    'thresholds': 'entries=1;3;0:2;10'
+                }
+            ]
+        })
+
+        self.ver9 = poem_models.TenantHistory.objects.create(
+            object_id=self.tp1.id,
+            serialized_data=json.dumps(data),
+            object_repr=self.tp1.__str__(),
+            comment='[{"changed": {"fields": ["name", "groupname"]}}, '
+                    '{"added": {"fields": ["rules"], '
+                    '"object": ["newMetric"]}}, '
+                    '{"deleted": {"fields": ["rules"], '
+                    '"object": ["metricA"]}}]',
+            user='testuser',
+            content_type=ct_tp
         )
 
     def test_get_versions_of_metrics(self):
@@ -6455,6 +6525,70 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
         force_authenticate(request, user=self.user)
         response = self.view(request, 'aggregationprofile')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_get_thresholds_profile_version(self):
+        request = self.factory.get(
+            self.url + 'thresholdsprofile/TEST_PROFILE2'
+        )
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'thresholdsprofile', 'TEST_PROFILE2')
+        self.assertEqual(
+            response.data,
+            [
+                {
+                    'id': self.ver9.id,
+                    'object_repr': 'TEST_PROFILE2',
+                    'fields': {
+                        'name': 'TEST_PROFILE2',
+                        'groupname': 'NEW_GROUP',
+                        'apiid': self.tp1.apiid,
+                        'rules': [
+                            {
+                                'host': 'hostFoo',
+                                'metric': 'newMetric',
+                                'endpoint_group': 'test',
+                                'thresholds': 'entries=1;3;0:2;10'
+                            }
+                        ]
+                    },
+                    'user': 'testuser',
+                    'date_created': datetime.datetime.strftime(
+                        self.ver9.date_created, '%Y-%m-%d %H:%M:%S'
+                    ),
+                    'comment': 'Changed name and groupname. '
+                               'Added rule for metric "newMetric". '
+                               'Deleted rule for metric "metricA".',
+                    'version': datetime.datetime.strftime(
+                        self.ver9.date_created, '%Y%m%d-%H%M%S'
+                    )
+                },
+                {
+                    'id': self.ver8.id,
+                    'object_repr': 'TEST_PROFILE',
+                    'fields': {
+                        'name': 'TEST_PROFILE',
+                        'groupname': 'GROUP',
+                        'apiid': self.tp1.apiid,
+                        'rules': [
+                            {
+                                'host': 'hostFoo',
+                                'metric': 'metricA',
+                                'thresholds': 'freshness=1s;10;9:;0;25 '
+                                              'entries=1;3;0:2;10'
+                            }
+                        ]
+                    },
+                    'user': 'testuser',
+                    'date_created': datetime.datetime.strftime(
+                        self.ver8.date_created, '%Y-%m-%d %H:%M:%S'
+                    ),
+                    'comment': 'Initial version.',
+                    'version': datetime.datetime.strftime(
+                        self.ver8.date_created, '%Y%m%d-%H%M%S'
+                    )
+                }
+            ]
+        )
 
 
 class ListYumReposAPIViewTests(TenantTestCase):
