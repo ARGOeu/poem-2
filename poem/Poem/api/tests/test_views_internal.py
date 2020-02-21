@@ -7607,6 +7607,11 @@ class HistoryHelpersTests(TenantTestCase):
         data[0]['fields'].update({
             'rules': [
                 {
+                    'host': 'hostFoo',
+                    'metric': 'metricA',
+                    'thresholds': 'freshness=1s;10;9:;0;25'
+                },
+                {
                     'host': 'hostBar',
                     'endpoint_group': 'TEST-SITE-51',
                     'metric': 'httpd.ResponseTime',
@@ -7626,9 +7631,9 @@ class HistoryHelpersTests(TenantTestCase):
             comment_set,
             {
                 '{"changed": {"fields": ["groupname", "name"]}}',
-                '{"deleted": {"fields": ["rules"], "object": ["metricA"]}}',
+                '{"changed": {"fields": ["rules"], "object": ["metricA"]}}',
                 '{"added": {"fields": ["rules"], '
-                '"object": ["httpd.ResponseTime"]}}'
+                '"object": ["httpd.ResponseTime"]}}',
             }
         )
 
