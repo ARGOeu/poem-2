@@ -31,10 +31,13 @@ import {
   PopoverHeader
 } from 'reactstrap';
 import * as Yup from 'yup';
-import { FancyErrorMessage } from './UIElements';
+import { FancyErrorMessage, HistoryComponent } from './UIElements';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes, faPlus, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import { NotificationManager } from 'react-notifications';
+
+
+export const ThresholdsProfilesHistory = HistoryComponent('thresholdsprofile');
 
 
 const ThresholdsSchema = Yup.object().shape({
@@ -551,7 +554,6 @@ export class ThresholdsProfilesChange extends Component {
           state={this.state}
           toggle={this.toggleAreYouSure}
           submitperm={write_perm}
-          history={false}
         >
           <Formik
             initialValues = {{

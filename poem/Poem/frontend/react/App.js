@@ -37,7 +37,7 @@ import { NavigationBar, CustomBreadcrumb, NavigationLinks, Footer } from './UIEl
 import { NotificationContainer } from 'react-notifications';
 import { Backend } from './DataManager';
 import { YumRepoList, YumRepoChange } from './YumRepos';
-import { ThresholdsProfilesList, ThresholdsProfilesChange } from './ThresholdProfiles';
+import { ThresholdsProfilesList, ThresholdsProfilesChange, ThresholdsProfilesHistory } from './ThresholdProfiles';
 import Cookies from 'universal-cookie';
 
 import './App.css';
@@ -196,6 +196,9 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, t
         webapithresholds={webApiThresholds}
         webapitoken={token}
         tenantname={tenantName}/>}
+    />
+    <Route exact path="/ui/thresholdsprofiles/:name/history"
+      render={props => <ThresholdsProfilesHistory {...props}/>}
     />
     <Route component={NotFound} />
   </Switch>
