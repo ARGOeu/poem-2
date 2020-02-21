@@ -8,9 +8,9 @@ import {
     NotifyOk
 } from './UIElements';
 import ReactTable from 'react-table';
-import { 
-  Formik, 
-  Form, 
+import {
+  Formik,
+  Form,
   Field,
   FieldArray
 } from 'formik';
@@ -56,11 +56,11 @@ const ThresholdsSchema = Yup.object().shape({
             .required('Required'),
           warn2: Yup.string()
             .matches(/^([-](?=\.?\d))?(\d+)?(\.\d+)?$/, 'Must be a number.')
-            .test('greater-than', 
-            'Should be greater than lower warning limit', 
+            .test('greater-than',
+            'Should be greater than lower warning limit',
             function(value) {
-              const lowerLimit = this.parent.warn1.charAt(0) === '@' ? 
-                this.parent.warn1.substr(1) : 
+              const lowerLimit = this.parent.warn1.charAt(0) === '@' ?
+                this.parent.warn1.substr(1) :
                 this.parent.warn1;
               if (!lowerLimit || !value) {
                 return true;
@@ -79,11 +79,11 @@ const ThresholdsSchema = Yup.object().shape({
             .required('Required'),
           crit2: Yup.string()
             .matches(/^([-](?=\.?\d))?(\d+)?(\.\d+)?$/, 'Must be a number.')
-            .test('greater-than', 
-            'Should be greater than lower critical limit', 
+            .test('greater-than',
+            'Should be greater than lower critical limit',
             function(value) {
-              const lowerLimit = this.parent.crit1.charAt(0) === '@' ? 
-                this.parent.crit1.substr(1) : 
+              const lowerLimit = this.parent.crit1.charAt(0) === '@' ?
+                this.parent.crit1.substr(1) :
                 this.parent.crit1;
               if (!lowerLimit || !value) {
                 return true;
@@ -136,7 +136,7 @@ export class ThresholdsProfilesList extends Component {
     this.setState({loading: true});
 
     this.backend.fetchData('/api/v2/internal/thresholdsprofiles')
-      .then(profiles => 
+      .then(profiles =>
         this.setState({
           list_thresholdsprofiles: profiles,
           loading: false
@@ -237,7 +237,7 @@ export class ThresholdsProfilesChange extends Component {
   };
 
   toggleAreYouSureSetModal(msg, title, onyes) {
-    this.setState(prevState => 
+    this.setState(prevState =>
       ({areYouSureModal: !prevState.areYouSureModal,
         modalFunc: onyes,
         modalMsg: msg,
@@ -246,7 +246,7 @@ export class ThresholdsProfilesChange extends Component {
   };
 
   toggleAreYouSure() {
-    this.setState(prevState => 
+    this.setState(prevState =>
       ({areYouSureModal: !prevState.areYouSureModal}));
   };
 
@@ -267,7 +267,7 @@ export class ThresholdsProfilesChange extends Component {
     let index = field.split('[')[1].split(']')[0]
     if (thresholds_rules.length == index) {
       thresholds_rules.push({'metric': '', thresholds: [], 'host': '', 'endpoint_group': ''})
-    } 
+    }
     thresholds_rules[index].metric = value;
     this.setState({
       thresholds_rules: thresholds_rules
@@ -307,16 +307,16 @@ export class ThresholdsProfilesChange extends Component {
 
     if (value.endsWith('s'))
       return 's';
-    
+
     if (value.endsWith('%'))
       return '%';
-    
+
     if (value.endsWith('KB'))
       return 'KB';
 
     if (value.endsWith('MB'))
       return 'MB';
-    
+
     if (value.endsWith('TB'))
       return ('TB');
 
@@ -334,13 +334,13 @@ export class ThresholdsProfilesChange extends Component {
       thresholds_strings.forEach((s => {
         let label = '';
         let value = '';
-        let uom = ''; 
+        let uom = '';
         let warn1 = '';
-        let warn2 = ''; 
-        let crit1 = ''; 
+        let warn2 = '';
+        let crit1 = '';
         let crit2 = '';
         let min = '';
-        let max = ''; 
+        let max = '';
         let tokens = s.split('=')
         if (tokens.length === 2) {
           label = tokens[0];
@@ -397,7 +397,7 @@ export class ThresholdsProfilesChange extends Component {
   onSubmitHandle(values, actions) {
     let msg = undefined;
     let title = undefined;
-    
+
     if (this.addview) {
       msg = 'Are you sure you want to add thresholds profile?';
       title = 'Add thresholds profile';
@@ -432,6 +432,7 @@ export class ThresholdsProfilesChange extends Component {
                   apiid: r.data.id,
                   name: values_send.name,
                   groupname: values.groupname,
+                  rules: values_send.rules
                 }
               ).then(() => NotifyOk({
                   msg: 'Thresholds profile successfully added',
@@ -461,7 +462,8 @@ export class ThresholdsProfilesChange extends Component {
                   {
                     apiid: values_send.id,
                     name: values_send.name,
-                    groupname: values.groupname
+                    groupname: values.groupname,
+                    rules: values_send.rules
                   }
                 ).then(() => NotifyOk({
                     msg: 'Thresholds profile successfully changed',
@@ -511,7 +513,7 @@ export class ThresholdsProfilesChange extends Component {
             });
         } else {
           this.backend.fetchData(`/api/v2/internal/thresholdsprofiles/${this.name}`)
-            .then(json => 
+            .then(json =>
               Promise.all([
                 this.webapi.fetchThresholdsProfile(json.apiid),
                 this.backend.fetchResult('/api/v2/internal/usergroups')
@@ -536,9 +538,9 @@ export class ThresholdsProfilesChange extends Component {
   render() {
     const { thresholds_profile, thresholds_rules, metrics_list, groups_list, loading, write_perm } = this.state;
 
-    if (loading) 
+    if (loading)
       return <LoadingAnim/>;
-    
+
     else if (!loading && thresholds_profile) {
       return (
         <BaseArgoView
@@ -551,7 +553,7 @@ export class ThresholdsProfilesChange extends Component {
           submitperm={write_perm}
           history={false}
         >
-          <Formik 
+          <Formik
             initialValues = {{
               id: thresholds_profile.apiid,
               name: thresholds_profile.name,
@@ -618,7 +620,7 @@ export class ThresholdsProfilesChange extends Component {
                       render={arrayHelpers => (
                         <div>
                           {props.values.rules && props.values.rules.length > 0 ? (
-                            props.values.rules.map((rule, index) => 
+                            props.values.rules.map((rule, index) =>
                               <React.Fragment key={`fragment.rules.${index}`}>
                                 <Card className={index === 0 ? 'mt-1' : 'mt-4'}>
                                   <CardHeader className='p-1 font-weight-bold text-uppercase'>
@@ -642,8 +644,8 @@ export class ThresholdsProfilesChange extends Component {
                                         <AutocompleteField
                                           {...props}
                                           req={
-                                            props.errors.rules && 
-                                            props.errors.rules.length > index && 
+                                            props.errors.rules &&
+                                            props.errors.rules.length > index &&
                                             props.errors.rules[index] &&
                                             props.errors.rules[index].metric
                                           }
@@ -656,8 +658,8 @@ export class ThresholdsProfilesChange extends Component {
                                         />
                                         {
                                           (
-                                            props.errors.rules && 
-                                            props.errors.rules.length > index && 
+                                            props.errors.rules &&
+                                            props.errors.rules.length > index &&
                                             props.errors.rules[index] &&
                                             props.errors.rules[index].metric
                                             ) &&
@@ -739,7 +741,7 @@ export class ThresholdsProfilesChange extends Component {
                                                       props.values.rules &&
                                                       props.values.rules.length > index &&
                                                       props.values.rules[index] &&
-                                                      props.values.rules[index].thresholds && 
+                                                      props.values.rules[index].thresholds &&
                                                       props.values.rules[index].thresholds.length > 0
                                                       ) ?
                                                       props.values.rules[index].thresholds.map((t, i) =>
@@ -1084,21 +1086,21 @@ export class ThresholdsProfilesChange extends Component {
                                       color='success'
                                       className='mt-4'
                                       onClick={() => arrayHelpers.push({
-                                        metric: '', 
+                                        metric: '',
                                         thresholds: [
                                           {
-                                            label: '', 
-                                            value: '', 
-                                            uom: '', 
-                                            warn1: '', 
-                                            warn2: '', 
-                                            crit1: '', 
-                                            crit2: '', 
-                                            min: '', 
+                                            label: '',
+                                            value: '',
+                                            uom: '',
+                                            warn1: '',
+                                            warn2: '',
+                                            crit1: '',
+                                            crit2: '',
+                                            min: '',
                                             max: ''
                                           }
-                                        ], 
-                                        host: '', 
+                                        ],
+                                        host: '',
                                         endpoint_group: ''
                                       })}
                                     >
@@ -1112,26 +1114,26 @@ export class ThresholdsProfilesChange extends Component {
                             <Button
                               color='success'
                               onClick={() => arrayHelpers.push({
-                                metric: '', 
+                                metric: '',
                                 thresholds: [
                                   {
-                                    label: '', 
-                                    value: '', 
-                                    uom: '', 
-                                    warn1: '', 
-                                    warn2: '', 
-                                    crit1: '', 
-                                    crit2: '', 
-                                    min: '', 
+                                    label: '',
+                                    value: '',
+                                    uom: '',
+                                    warn1: '',
+                                    warn2: '',
+                                    crit1: '',
+                                    crit2: '',
+                                    min: '',
                                     max: ''
                                   }
-                                ], 
-                                host: '', 
+                                ],
+                                host: '',
                                 endpoint_group: ''
                               })}
                             >
                               Add a rule
-                            </Button>                          
+                            </Button>
                           }
                         </div>
                       )}
@@ -1173,7 +1175,7 @@ export class ThresholdsProfilesChange extends Component {
           />
         </BaseArgoView>
       );
-    } else 
+    } else
       return null;
   };
 };
