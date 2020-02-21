@@ -12,6 +12,7 @@ from Poem.api.internal_views.utils import sync_webapi
 from Poem.api.internal_views.utils import inline_metric_for_db
 from Poem.api.models import MyAPIKey
 from Poem.helpers.history_helpers import create_comment, update_comment
+from Poem.helpers.versioned_comments import new_comment
 from Poem.poem import models as poem_models
 from Poem.poem_super_admin import models as admin_models
 from Poem.tenants.models import Tenant
@@ -1082,7 +1083,9 @@ class ListProbesAPIViewTests(TenantTestCase):
         mt = admin_models.MetricTemplate.objects.get(name='argo.API-Check')
         self.assertEqual(
             mt.probekey,
-            admin_models.ProbeHistory.objects.filter(object_id=probe)[1]
+            admin_models.ProbeHistory.objects.filter(
+                object_id=probe
+            ).order_by('-date_created')[1]
         )
         metric = poem_models.Metric.objects.get(name='argo.API-Check')
         self.assertEqual(metric.group.name, 'TEST')
@@ -6145,8 +6148,8 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
                     'date_created': datetime.datetime.strftime(
                         self.ver2.date_created, '%Y-%m-%d %H:%M:%S'
                     ),
-                    'comment': 'Changed config fields "maxCheckAttempts, '
-                               'retryInterval and timeout". Changed group '
+                    'comment': 'Changed config fields "maxCheckAttempts", '
+                               '"retryInterval" and "timeout". Changed group '
                                'and probekey.',
                     'version': datetime.datetime.strftime(
                         self.ver2.date_created, '%Y%m%d-%H%M%S'
@@ -6279,8 +6282,8 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
                     'date_created': datetime.datetime.strftime(
                         self.ver5.date_created, '%Y-%m-%d %H:%M:%S'
                     ),
-                    'comment': 'Deleted metricinstances field '
-                               '"APEL org.apel.APEL-Sync". Changed groupname '
+                    'comment': 'Deleted service-metric instance tuple '
+                               '(APEL, org.apel.APEL-Sync). Changed groupname '
                                'and name.',
                     'version': datetime.datetime.strftime(
                         self.ver5.date_created, '%Y%m%d-%H%M%S'
@@ -8843,3 +8846,92 @@ class SyncWebApiTests(TenantTestCase):
             name='ANOTHER-PROFILE'
         )
 
+
+class CommentsTests(TenantTestCase):
+    def test_new_comment_with_objects_change(self):
+        comment = '[{"changed": {"fields": ["config"], ' \
+                  '"object": ["maxCheckAttempts", "path", "timeout"]}}, ' \
+                  '{"changed": {"fields": ["attribute"], ' \
+                  '"object": ["attribute-key1", "attribute-key2"]}}, ' \
+                  '{"changed": {"fields": ["dependency"], ' \
+                  '"object": ["dependency-key"]}}]'
+        self.assertEqual(
+            new_comment(comment),
+            'Changed config fields "maxCheckAttempts", "path" and "timeout". '
+            'Changed attribute fields "attribute-key1" and "attribute-key2". '
+            'Changed dependency field "dependency-key".'
+        )
+
+    def test_new_comment_with_objects_add(self):
+        comment = '[{"added": {"fields": ["config"], ' \
+                  '"object": ["maxCheckAttempts", "path", "timeout"]}}, ' \
+                  '{"added": {"fields": ["attribute"], ' \
+                  '"object": ["attribute-key1", "attribute-key2"]}}, ' \
+                  '{"added": {"fields": ["dependency"], ' \
+                  '"object": ["dependency-key"]}}]'
+        self.assertEqual(
+            new_comment(comment),
+            'Added config fields "maxCheckAttempts", "path" and "timeout". '
+            'Added attribute fields "attribute-key1" and "attribute-key2". '
+            'Added dependency field "dependency-key".'
+        )
+
+    def test_new_comment_with_objects_delete(self):
+        comment = '[{"deleted": {"fields": ["config"], ' \
+                  '"object": ["maxCheckAttempts", "path", "timeout"]}}, ' \
+                  '{"deleted": {"fields": ["attribute"], ' \
+                  '"object": ["attribute-key1", "attribute-key2"]}}, ' \
+                  '{"deleted": {"fields": ["dependency"], ' \
+                  '"object": ["dependency-key"]}}]'
+        self.assertEqual(
+            new_comment(comment),
+            'Deleted config fields "maxCheckAttempts", "path" and "timeout". '
+            'Deleted attribute fields "attribute-key1" and "attribute-key2". '
+            'Deleted dependency field "dependency-key".'
+        )
+
+    def test_new_comment_with_fields(self):
+        comment = '[{"added": {"fields": ["docurl", "comment"]}}, ' \
+                  '{"changed": {"fields": ["name", "probeexecutable", ' \
+                  '"group"]}}, ' \
+                  '{"deleted": {"fields": ["version", "description"]}}]'
+        self.assertEqual(
+            new_comment(comment),
+            'Added docurl and comment. '
+            'Changed name, probeexecutable and group. '
+            'Deleted version and description.'
+        )
+
+    def test_new_comment_initial(self):
+        comment = 'Initial version.'
+        self.assertEqual(new_comment(comment), 'Initial version.')
+
+    def test_new_comment_no_changes(self):
+        comment = '[]'
+        self.assertEqual(new_comment(comment), 'No fields changed.')
+
+    def test_new_comment_for_thresholds_profiles_rules_field(self):
+        comment = '[{"changed": {"fields": ["rules"], ' \
+                  '"object": ["metricA"]}}, ' \
+                  '{"deleted": {"fields": ["rules"], ' \
+                  '"object": ["metricB"]}}, ' \
+                  '{"added": {"fields": ["rules"], "object": ["metricC"]}}]'
+        self.assertEqual(
+            new_comment(comment),
+            'Changed rule for metric "metricA". '
+            'Deleted rule for metric "metricB". '
+            'Added rule for metric "metricC".'
+        )
+
+    def test_new_comment_for_metric_profile_metricinstances(self):
+        comment = '[{"added": {"fields": ["metricinstances"], ' \
+                  '"object": ["ARC-CE", "org.nordugrid.ARC-CE-IGTF"]}}, ' \
+                  '{"deleted": {"fields": ["metricinstances"], ' \
+                  '"object": ["APEL", "org.apel.APEL-Sync"]}}]'
+        self.assertEqual(
+            new_comment(comment),
+            'Added service-metric instance tuple '
+            '(ARC-CE, org.nordugrid.ARC-CE-IGTF). '
+            'Deleted service-metric instance tuple '
+            '(APEL, org.apel.APEL-Sync).'
+        )
