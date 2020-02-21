@@ -7728,19 +7728,74 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
         self.url = '/api/v2/internal/thresholdsprofiles/'
         self.user = CustUser.objects.create_user(username='testuser')
 
-        poem_models.ThresholdsProfiles.objects.create(
+        self.tp1 = poem_models.ThresholdsProfiles.objects.create(
             name='TEST_PROFILE',
             apiid='00000000-oooo-kkkk-aaaa-aaeekkccnnee',
             groupname='GROUP'
         )
 
-        poem_models.ThresholdsProfiles.objects.create(
+        self.tp2 = poem_models.ThresholdsProfiles.objects.create(
             name='ANOTHER_PROFILE',
             apiid='12341234-oooo-kkkk-aaaa-aaeekkccnnee'
         )
 
         poem_models.GroupOfThresholdsProfiles.objects.create(name='GROUP')
         poem_models.GroupOfThresholdsProfiles.objects.create(name='NEWGROUP')
+
+        self.ct = ContentType.objects.get_for_model(
+            poem_models.ThresholdsProfiles
+        )
+
+        data = json.loads(
+            serializers.serialize(
+                'json', [self.tp1],
+                use_natural_foreign_keys=True,
+                use_natural_primary_keys=True
+            )
+        )
+        data[0]['fields'].update({
+            'rules': [
+                {
+                    'host': 'hostFoo',
+                    'metric': 'metricA',
+                    'thresholds': 'freshness=1s;10;9:;0;25 entries=1;3;0:2;10'
+                }
+            ]
+        })
+
+        poem_models.TenantHistory.objects.create(
+            object_id=self.tp1.id,
+            serialized_data=json.dumps(data),
+            object_repr=self.tp1.__str__(),
+            comment='Initial version.',
+            user='testuser',
+            content_type=self.ct
+        )
+
+        data = json.loads(
+            serializers.serialize(
+                'json', [self.tp2],
+                use_natural_foreign_keys=True,
+                use_natural_primary_keys=True
+            )
+        )
+        data[0]['fields'].update({
+            'rules': [
+                {
+                    'metric': 'metricB',
+                    'thresholds': 'freshness=1s;10;9:;0;25'
+                }
+            ]
+        })
+
+        poem_models.TenantHistory.objects.create(
+            object_id=self.tp2.id,
+            serialized_data=json.dumps(data),
+            object_repr=self.tp2.__str__(),
+            comment='Initial version.',
+            user='testuser',
+            content_type=self.ct
+        )
 
     @patch('Poem.api.internal_views.thresholdsprofiles.sync_webapi',
            side_effect=mocked_func)
@@ -7788,7 +7843,7 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
 
     @patch('Poem.api.internal_views.thresholdsprofiles.sync_webapi',
            side_effect=mocked_func)
-    def test_get_thresholds_profile_by_name(self, func):
+    def test_get_thresholds_profile_by_nonexisting_name(self, func):
         request = self.factory.get(self.url + 'nonexisting')
         force_authenticate(request, user=self.user)
         response = self.view(request, 'nonexisting')
@@ -7802,16 +7857,21 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
         data = {
             'name': 'NEW_TEST_PROFILE',
             'apiid': '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
-            'group': 'NEWGROUP'
+            'group': 'NEWGROUP',
+            'rules': json.dumps([
+                {
+                    'host': 'newHost',
+                    'metric': 'newMetric',
+                    'thresholds': 'entries=1;3;0:2;10'
+                }
+            ])
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        tp = poem_models.ThresholdsProfiles.objects.get(
-            apiid='00000000-oooo-kkkk-aaaa-aaeekkccnnee'
-        )
+        tp = poem_models.ThresholdsProfiles.objects.get(id=self.tp1.id)
         self.assertEqual(tp.name, 'NEW_TEST_PROFILE')
         self.assertEqual(tp.groupname, 'NEWGROUP')
         group1 = poem_models.GroupOfThresholdsProfiles.objects.get(
@@ -7830,6 +7890,35 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
                 apiid='00000000-oooo-kkkk-aaaa-aaeekkccnnee'
             ).exists()
         )
+        history = poem_models.TenantHistory.objects.filter(
+            object_id=tp.id, content_type=self.ct
+        ).order_by('-date_created')
+        self.assertEqual(history.count(), 2)
+        comment_set = set()
+        for item in json.loads(history[0].comment):
+            comment_set.add(json.dumps(item))
+        self.assertEqual(
+            comment_set,
+            {
+                '{"changed": {"fields": ["groupname", "name"]}}',
+                '{"deleted": {"fields": ["rules"], "object": ["metricA"]}}',
+                '{"added": {"fields": ["rules"], "object": ["newMetric"]}}'
+            }
+        )
+        serialized_data = json.loads(history[0].serialized_data)[0]['fields']
+        self.assertEqual(serialized_data['name'], tp.name)
+        self.assertEqual(serialized_data['groupname'], tp.groupname)
+        self.assertEqual(serialized_data['apiid'], tp.apiid)
+        self.assertEqual(
+            serialized_data['rules'],
+            [
+                {
+                    'host': 'newHost',
+                    'metric': 'newMetric',
+                    'thresholds': 'entries=1;3;0:2;10'
+                }
+            ]
+        )
 
     def post_thresholds_profile(self):
         self.assertEqual(
@@ -7838,7 +7927,14 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
         data = {
             'name': 'NEW_PROFILE',
             'apiid': '12341234-aaaa-kkkk-aaaa-aaeekkccnnee',
-            'groupname': 'GROUP'
+            'groupname': 'GROUP',
+            'rules': json.dumps([
+                {
+                    'host': 'newHost',
+                    'metric': 'newMetric',
+                    'thresholds': 'entries=1;3;0:2;10'
+                }
+            ])
         }
         request = self.factory.post(self.url, data, format='json')
         force_authenticate(request, user=self.user)
@@ -7858,20 +7954,50 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
                 apiid='12341234-aaaa-kkkk-aaaa-aaeekkccnnee'
             ).exists()
         )
+        history = poem_models.TenantHistory.objects.filter(
+            object_id=profile.id, content_type=self.ct
+        ).order_by('-date_created')
+        self.assertEqual(history.count(), 1)
+        self.assertEqual(history[0].comment, 'Initial version.')
+        serialized_data = json.loads(history[0].serialized_data)[0]['fields']
+        self.assertEqual(serialized_data['name'], profile.name)
+        self.assertEqual(serialized_data['apiid'], profile.apiid)
+        self.assertEqual(serialized_data['groupname'], profile.groupname)
+        self.assertEqual(
+            serialized_data['rules'],
+            [
+                {
+                    'host': 'newHost',
+                    'metric': 'newMetric',
+                    'thresholds': 'entries=1;3;0:2;10'
+                }
+            ]
+        )
 
     def delete_thresholds_profile(self):
         self.assertEqual(
             poem_models.ThresholdsProfiles.objects.all().count(), 2
         )
-        request = self.factory.delete(self.url +
-                                      '00000000-oooo-kkkk-aaaa-aaeekkccnnee')
+        self.assertEqual(
+            poem_models.TenantHistory.objects.filter(
+                object_id=self.tp1.id, content_type=self.ct
+            ).count(), 1
+        )
+        request = self.factory.delete(
+            self.url + '00000000-oooo-kkkk-aaaa-aaeekkccnnee'
+        )
         force_authenticate(request, user=self.user)
         response = self.view(request, '00000000-oooo-kkkk-aaaa-aaeekkccnnee')
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertRaises(
             poem_models.ThresholdsProfiles.DoesNotExist,
             poem_models.ThresholdsProfiles.objects.get,
-            apiid='00000000-oooo-kkkk-aaaa-aaeekkccnnee'
+            id=self.tp1.id
+        )
+        self.assertEqual(
+            poem_models.TenantHistory.objects.filter(
+                object_id=self.tp1.id, content_type=self.ct
+            ).count(), 0
         )
 
     def delete_nonexisting_thresholds_profile(self):

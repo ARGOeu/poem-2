@@ -3,6 +3,7 @@ from django.conf import settings
 from Poem.api import serializers
 from Poem.api.internal_views.utils import sync_webapi
 from Poem.api.views import NotFound
+from Poem.helpers.history_helpers import create_profile_history
 from Poem.poem.models import ThresholdsProfiles, GroupOfThresholdsProfiles
 
 from rest_framework import status
@@ -19,15 +20,14 @@ class ListThresholdsProfiles(APIView):
 
         if name:
             try:
-                profile = ThresholdsProfiles.objects.get(
-                    name=name
-                )
+                profile = ThresholdsProfiles.objects.get(name=name)
                 serializer = serializers.ThresholdsProfileSerializer(profile)
                 return Response(serializer.data)
 
             except ThresholdsProfiles.DoesNotExist:
-                raise NotFound(status=404,
-                               detail='Thresholds profile not found.')
+                raise NotFound(
+                    status=404, detail='Thresholds profile not found.'
+                )
 
         else:
             profiles = ThresholdsProfiles.objects.all()
@@ -47,6 +47,10 @@ class ListThresholdsProfiles(APIView):
         )
         group.thresholdsprofiles.add(profile)
 
+        data = {'rules': request.data['rules']}
+
+        create_profile_history(profile, data, request.user)
+
         return Response(status=status.HTTP_201_CREATED)
 
     def post(self, request):
@@ -59,6 +63,10 @@ class ListThresholdsProfiles(APIView):
                 name=request.data['groupname']
             )
             group.thresholdsprofiles.add(tp)
+
+            data = {'rules': request.data['rules']}
+
+            create_profile_history(tp, data, request.user)
 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 

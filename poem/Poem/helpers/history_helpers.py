@@ -412,7 +412,9 @@ def create_profile_history(instance, data, user):
             'metricinstances': mis
         })
 
-    elif isinstance(instance, poem_models.Aggregation):
+    elif isinstance(
+            instance, (poem_models.Aggregation, poem_models.ThresholdsProfiles)
+    ):
         serialized_data[0]['fields'].update(**data)
 
     comment = create_comment(instance, ct, json.dumps(serialized_data))
