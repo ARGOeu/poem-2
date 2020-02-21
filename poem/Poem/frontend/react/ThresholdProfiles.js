@@ -5,7 +5,10 @@ import {
     LoadingAnim,
     BaseArgoView,
     AutocompleteField,
-    NotifyOk
+    NotifyOk,
+    FancyErrorMessage,
+    HistoryComponent,
+    DiffElement
 } from './UIElements';
 import ReactTable from 'react-table';
 import {
@@ -31,10 +34,10 @@ import {
   PopoverHeader
 } from 'reactstrap';
 import * as Yup from 'yup';
-import { FancyErrorMessage, HistoryComponent } from './UIElements';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes, faPlus, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import { NotificationManager } from 'react-notifications';
+import ReactDiffViewer from 'react-diff-viewer';
 
 
 export const ThresholdsProfilesHistory = HistoryComponent('thresholdsprofile');
@@ -1176,6 +1179,144 @@ export class ThresholdsProfilesChange extends Component {
             )}
           />
         </BaseArgoView>
+      );
+    } else
+      return null;
+  };
+};
+
+
+const ListDiffElement = ({title, item1, item2}) => {
+  let n = Math.max(item1.length, item2.length);
+  let list1 = [];
+  let list2 = [];
+  for (let i = 0; i < item1.length; i++) {
+    let strng = `metric: ${item1[i]['metric']}, `;
+    if ('host' in item1[i])
+      strng += `host: ${item1[i]['host']}, `;
+
+    if ('endpoint_group' in item1[i])
+      strng += `endpoint_group: ${item1[i]['endpoint_group']}, `;
+
+    strng += `thresholds: ${item1[i]['thresholds']}`;
+    list1.push(strng);
+  };
+
+  for (let i = 0; i < item2.length; i++) {
+    let strng = `metric: ${item2[i]['metric']}, `;
+    if ('host' in item2[i])
+      strng += `host: ${item2[i]['host']}, `;
+
+    if ('endpoint_group' in item2[i])
+      strng += `endpoint_group: ${item2[i]['endpoint_group']}, `;
+
+    strng += `thresholds: ${item2[i]['thresholds']}`;
+    list2.push(strng);
+  };
+
+  const elements = [];
+  for (let i = 0; i < n; i++) {
+    elements.push(
+      <ReactDiffViewer
+        oldValue={list2[i]}
+        newValue={list1[i]}
+        showDiffOnly={true}
+        splitView={false}
+        hideLineNumbers={true}
+        key={`diff-${i}`}
+      />
+    );
+  };
+
+  return (
+    <div id='argo-contentwrap' className='ml-2 mb-2 mt-2 p-3 border rounded'>
+      <h6 className='mt-4 font-weight-bold text-uppercase'>{title}</h6>
+      {elements}
+    </div>
+  )
+};
+
+
+export class ThresholdsProfileVersionCompare extends Component {
+  constructor(props) {
+    super(props);
+
+    this.version1 = props.match.params.id1;
+    this.version2 = props.match.params.id2;
+    this.name = props.match.params.name;
+
+    this.state = {
+      loading: false,
+      name1: '',
+      groupname1: '',
+      rules1: [],
+      name2: '',
+      groupname2: '',
+      rules2: []
+    };
+
+    this.backend = new Backend();
+  };
+
+  componentDidMount() {
+    this.backend.fetchData(`/api/v2/internal/tenantversion/thresholdsprofile/${this.name}`)
+      .then((json) => {
+        let name1 = '';
+        let groupname1 = '';
+        let rules1 = [];
+        let name2 = '';
+        let groupname2 = '';
+        let rules2 = [];
+
+        json.forEach((e) => {
+          if (e.version == this.version1) {
+            name1 = e.fields.name;
+            groupname1 = e.fields.groupname;
+            rules1 = e.fields.rules;
+          } else if (e.version == this.version2) {
+            name2 = e.fields.name;
+            groupname2 = e.fields.groupname;
+            rules2 = e.fields.rules;
+          };
+        });
+
+        this.setState({
+          name1: name1,
+          groupname1: groupname1,
+          rules1: rules1,
+          name2: name2,
+          groupname2: groupname2,
+          rules2: rules2,
+          loading: false
+        });
+      });
+  };
+
+  render() {
+    const { name1, name2, groupname1, groupname2, rules1, rules2, loading } = this.state;
+
+    if (loading)
+      return (<LoadingAnim/>);
+
+    else if (!loading && name1 && name2) {
+      return (
+        <React.Fragment>
+          <div className='d-flex align-items-center justify-content-between'>
+            <h2 className='ml-3 mt-1 mb-4'>{`Compare ${this.name} versions`}</h2>
+          </div>
+          {
+            (name1 !== name2) &&
+              <DiffElement title='name' item1={name1} item2={name2}/>
+          }
+          {
+            (groupname1 !== groupname2) &&
+              <DiffElement name='group name' item1={groupname1} item2={groupname2}/>
+          }
+          {
+            (rules1 !== rules2) &&
+              <ListDiffElement title='rules' item1={rules1} item2={rules2}/>
+          }
+        </React.Fragment>
       );
     } else
       return null;
