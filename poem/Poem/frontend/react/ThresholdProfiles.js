@@ -125,6 +125,107 @@ const ThresholdsSchema = Yup.object().shape({
     }))
 });
 
+function getUOM(value) {
+  if (!isNaN(value.charAt(value.length - 1))) {
+    return '';
+  }
+
+  if (value.endsWith('us'))
+    return 'us';
+
+  if (value.endsWith('ms'))
+    return 'ms';
+
+  if (value.endsWith('s'))
+    return 's';
+
+  if (value.endsWith('%'))
+    return '%';
+
+  if (value.endsWith('KB'))
+    return 'KB';
+
+  if (value.endsWith('MB'))
+    return 'MB';
+
+  if (value.endsWith('TB'))
+    return ('TB');
+
+  if (value.endsWith('B'))
+    return 'B';
+
+  if (value.endsWith('c'))
+    return 'c';
+};
+
+
+function thresholdsToValues(rules) {
+  rules.forEach((r => {
+    let thresholds_strings = r.thresholds.split(' ');
+    let thresholds = [];
+    thresholds_strings.forEach((s => {
+      let label = '';
+      let value = '';
+      let uom = '';
+      let warn1 = '';
+      let warn2 = '';
+      let crit1 = '';
+      let crit2 = '';
+      let min = '';
+      let max = '';
+      let tokens = s.split('=')
+      if (tokens.length === 2) {
+        label = tokens[0];
+        let subtokens = tokens[1].split(';');
+        if (subtokens.length > 0) {
+          uom = getUOM(subtokens[0]);
+          value = subtokens[0].replace(uom, '');
+          if (subtokens.length > 1) {
+            for (let i = 1; i < subtokens.length; i++) {
+              if (i === 1) {
+                let warn = subtokens[i].split(':');
+                if (warn.length > 1) {
+                  warn1 = warn[0];
+                  warn2 = warn[1];
+                } else {
+                  warn1 = '0';
+                  warn2 = subtokens[i];
+                };
+              } else if (i === 2) {
+                let crit = subtokens[i].split(':');
+                if (crit.length > 1) {
+                  crit1 = crit[0];
+                  crit2 = crit[1];
+                } else {
+                  crit1 = '0';
+                  crit2 = subtokens[i];
+                };
+              } else if (i === 3) {
+                min = subtokens[i];
+              } else if (i === 4) {
+                max = subtokens[i];
+              };
+            };
+          };
+        };
+      };
+      thresholds.push({
+        label: label,
+        value: value,
+        uom: uom,
+        warn1: warn1,
+        warn2: warn2,
+        crit1: crit1,
+        crit2: crit2,
+        min: min,
+        max: max
+      });
+    }));
+    r.thresholds = thresholds;
+  }));
+  return rules;
+};
+
 
 export class ThresholdsProfilesList extends Component {
   constructor(props) {
@@ -235,8 +336,6 @@ export class ThresholdsProfilesChange extends Component {
     this.toggleWarningPopOver = this.toggleWarningPopOver.bind(this);
     this.toggleCriticalPopOver = this.toggleCriticalPopOver.bind(this);
     this.thresholdsToString = this.thresholdsToString.bind(this);
-    this.thresholdsToValues = this.thresholdsToValues.bind(this);
-    this.getUOM = this.getUOM.bind(this);
     this.onSubmitHandle = this.onSubmitHandle.bind(this);
     this.doChange = this.doChange.bind(this);
     this.doDelete = this.doDelete.bind(this);
@@ -296,106 +395,6 @@ export class ThresholdsProfilesChange extends Component {
       }));
       let th = thresholds.join(' ');
       r.thresholds = th;
-    }));
-    return rules;
-  };
-
-  getUOM(value) {
-    if (!isNaN(value.charAt(value.length - 1))) {
-      return '';
-    }
-
-    if (value.endsWith('us'))
-      return 'us';
-
-    if (value.endsWith('ms'))
-      return 'ms';
-
-    if (value.endsWith('s'))
-      return 's';
-
-    if (value.endsWith('%'))
-      return '%';
-
-    if (value.endsWith('KB'))
-      return 'KB';
-
-    if (value.endsWith('MB'))
-      return 'MB';
-
-    if (value.endsWith('TB'))
-      return ('TB');
-
-    if (value.endsWith('B'))
-      return 'B';
-
-    if (value.endsWith('c'))
-      return 'c';
-  };
-
-  thresholdsToValues(rules) {
-    rules.forEach((r => {
-      let thresholds_strings = r.thresholds.split(' ');
-      let thresholds = [];
-      thresholds_strings.forEach((s => {
-        let label = '';
-        let value = '';
-        let uom = '';
-        let warn1 = '';
-        let warn2 = '';
-        let crit1 = '';
-        let crit2 = '';
-        let min = '';
-        let max = '';
-        let tokens = s.split('=')
-        if (tokens.length === 2) {
-          label = tokens[0];
-          let subtokens = tokens[1].split(';');
-          if (subtokens.length > 0) {
-            uom = this.getUOM(subtokens[0]);
-            value = subtokens[0].replace(uom, '');
-            if (subtokens.length > 1) {
-              for (let i = 1; i < subtokens.length; i++) {
-                if (i === 1) {
-                  let warn = subtokens[i].split(':');
-                  if (warn.length > 1) {
-                    warn1 = warn[0];
-                    warn2 = warn[1];
-                  } else {
-                    warn1 = '0';
-                    warn2 = subtokens[i];
-                  };
-                } else if (i === 2) {
-                  let crit = subtokens[i].split(':');
-                  if (crit.length > 1) {
-                    crit1 = crit[0];
-                    crit2 = crit[1];
-                  } else {
-                    crit1 = '0';
-                    crit2 = subtokens[i];
-                  };
-                } else if (i === 3) {
-                  min = subtokens[i];
-                } else if (i === 4) {
-                  max = subtokens[i];
-                };
-              };
-            };
-          };
-        };
-        thresholds.push({
-          label: label,
-          value: value,
-          uom: uom,
-          warn1: warn1,
-          warn2: warn2,
-          crit1: crit1,
-          crit2: crit2,
-          min: min,
-          max: max
-        });
-      }));
-      r.thresholds = thresholds;
     }));
     return rules;
   };
@@ -530,7 +529,7 @@ export class ThresholdsProfilesChange extends Component {
                     'name': thresholdsprofile.name,
                     'groupname': json['groupname']
                   },
-                  thresholds_rules: this.thresholdsToValues(thresholdsprofile.rules),
+                  thresholds_rules: thresholdsToValues(thresholdsprofile.rules),
                   groups_list: groups['thresholdsprofiles'],
                   metrics_list: metricsall,
                   write_perm: localStorage.getItem('authIsSuperuser') === 'true' || usergroups.indexOf(group) >= 0,
@@ -1317,6 +1316,249 @@ export class ThresholdsProfileVersionCompare extends Component {
               <ListDiffElement title='rules' item1={rules1} item2={rules2}/>
           }
         </React.Fragment>
+      );
+    } else
+      return null;
+  };
+};
+
+
+export class ThresholdsProfileVersionDetail extends Component {
+  constructor(props) {
+    super(props);
+
+    this.name = props.match.params.name;
+    this.version = props.match.params.version;
+
+    this.backend = new Backend();
+
+    this.state = {
+      name: '',
+      groupname: '',
+      rules: [],
+      date_created: '',
+      loading: false
+    };
+  };
+
+  componentDidMount() {
+    this.setState({loading: true});
+
+    this.backend.fetchData(`/api/v2/internal/tenantversion/thresholdsprofile/${this.name}`)
+      .then((json) => {
+        json.forEach((e) => {
+          if (e.version == this.version)
+            this.setState({
+              name: e.fields.name,
+              groupname: e.fields.groupname,
+              rules: thresholdsToValues(e.fields.rules),
+              date_created: e.date_created,
+              loading: false
+            });
+        });
+      });
+  };
+
+  render() {
+    const { name, groupname, rules, date_created, loading } = this.state;
+
+    if (loading)
+      return (<LoadingAnim/>);
+
+    else if (!loading && name) {
+      return (
+        <BaseArgoView
+          resourcename={`${name} (${date_created})`}
+          infoview={true}
+        >
+          <Formik
+            initialValues = {{
+              name: name,
+              groupname: groupname,
+              rules: rules
+            }}
+            render = {props => (
+              <Form>
+                <FormGroup>
+                  <Row>
+                    <Col md={6}>
+                      <InputGroup>
+                        <InputGroupAddon addonType='prepend'>Name</InputGroupAddon>
+                        <Field
+                          type='text'
+                          name='name'
+                          className='form-control'
+                          disabled={true}
+                          id='name'
+                        />
+                      </InputGroup>
+                      <FormText color='muted'>
+                        Name of this thresholds profile.
+                      </FormText>
+                    </Col>
+                    <Col md={3}>
+                      <InputGroup>
+                        <InputGroupAddon addonType='prepend'>Group</InputGroupAddon>
+                        <Field
+                          type='text'
+                          name='groupname'
+                          id='groupname'
+                          className='form-control'
+                          disabled={true}
+                        />
+                      </InputGroup>
+                      <FormText color='muted'>
+                        Thresholds profile is a member of the selected group.
+                      </FormText>
+                    </Col>
+                  </Row>
+                </FormGroup>
+                <FormGroup>
+                  <h4 className='mt-2 p-1 pl-3 text-light text-uppercase rounded' style={{"backgroundColor": "#416090"}}>Thresholds rules</h4>
+                  <Row>
+                    <Col md={12}>
+                      <FieldArray
+                        name='rules'
+                        render={arrayHelpers => (
+                          <div>
+                            {
+                              props.values.rules && props.values.rules.length > 0 ? (
+                                props.values.rules.map((rule, index) =>
+                                  <React.Fragment key={`fragment.rules.${index}`}>
+                                    <Card className={`mt-${index === 0 ? '1' : '4'}`}>
+                                      <CardHeader className='p-1 font-weight-bold text-uppercase'>
+                                        Rule {index + 1}
+                                      </CardHeader>
+                                      <CardBody className='p-1'>
+                                        <Row className='d-flex align-items-center no-gutters'>
+                                          <Col md={12}>
+                                            <InputGroup>
+                                              <InputGroupAddon addonType='prepend'>Metric</InputGroupAddon>
+                                              <Field
+                                                name={`rules.${index}.metric`}
+                                                className='form-control'
+                                                disabled={true}
+                                              />
+                                            </InputGroup>
+                                          </Col>
+                                        </Row>
+                                        <Row className='mt-2'>
+                                          <Col md={12}>
+                                            <InputGroup>
+                                              <InputGroupAddon addonType='prepend'>Host</InputGroupAddon>
+                                              <Field
+                                                name={`rules.${index}.host`}
+                                                className='form-control'
+                                                disabled={true}
+                                              />
+                                            </InputGroup>
+                                          </Col>
+                                        </Row>
+                                        <Row className='mt-2'>
+                                          <Col md={12}>
+                                            <InputGroup>
+                                              <InputGroupAddon addonType='prepend'>Endpoint group</InputGroupAddon>
+                                              <Field
+                                                name={`rules.${index}.endpoint_group`}
+                                                className='form-control'
+                                                disabled={true}
+                                              />
+                                            </InputGroup>
+                                          </Col>
+                                        </Row>
+                                      </CardBody>
+                                      <CardFooter>
+                                        <Row className='mt-2'>
+                                          <Col md={12}>
+                                            <h6 className='text-uppercase rounded'>Thresholds</h6>
+                                            <FieldArray
+                                              name={`rules.${index}.thresholds`}
+                                              render={thresholdHelpers => (
+                                                <div>
+                                                  <table className='table table-bordered table-sm'>
+                                                    <thead className='table-active'>
+                                                      <tr className='align-middle text-center'>
+                                                        <th style={{width: '4%'}}>#</th>
+                                                        <th style={{width: '13%'}}>Label</th>
+                                                        <th colSpan={2} style={{width: '13%'}}>Value</th>
+                                                        <th colSpan={3} style={{width: '13%'}}>Warning</th>
+                                                        <th colSpan={3} style={{width: '13%'}}>Critical</th>
+                                                        <th style={{width: '12%'}}>min</th>
+                                                        <th style={{width: '12%'}}>max</th>
+                                                      </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                      {
+                                                        (props.values.rules[index].thresholds &&
+                                                          props.values.rules[index].thresholds.length > 0) ?
+                                                          props.values.rules[index].thresholds.map((t, i) =>
+                                                            <tr key={`rule-${index}-threshold=${i}`}>
+                                                              <td className='align-middle text-center'>
+                                                                {i + 1}
+                                                              </td>
+                                                              <td className='align-middle text-center'>
+                                                                {props.values.rules[index].thresholds[i].label}
+                                                              </td>
+                                                              <td className='align-middle text-center'>
+                                                                {props.values.rules[index].thresholds[i].value}
+                                                              </td>
+                                                              <td className='align-middle text-center'>
+                                                                {props.values.rules[index].thresholds[i].uom}
+                                                              </td>
+                                                              <td className='align-middle text-center'>
+                                                                {props.values.rules[index].thresholds[i].warn1}
+                                                              </td>
+                                                              <td className='align-middle text-center'>
+                                                                :
+                                                              </td>
+                                                              <td className='align-middle text-center'>
+                                                                {props.values.rules[index].thresholds[i].warn2}
+                                                              </td>
+                                                              <td className='align-middle text-center'>
+                                                                {props.values.rules[index].thresholds[i].crit1}
+                                                              </td>
+                                                              <td className='align-middle text-center'>
+                                                                :
+                                                              </td>
+                                                              <td className='align-middle text-center'>
+                                                                {props.values.rules[index].thresholds[i].crit2}
+                                                              </td>
+                                                              <td className='align-middle text-center'>
+                                                                {props.values.rules[index].thresholds[i].min}
+                                                              </td>
+                                                              <td className='align-middle text-center'>
+                                                                {props.values.rules[index].thresholds[i].max}
+                                                              </td>
+                                                            </tr>
+                                                          )
+                                                        :
+                                                          null
+                                                      }
+                                                    </tbody>
+                                                  </table>
+                                                </div>
+                                              )}
+                                            />
+                                          </Col>
+                                        </Row>
+                                      </CardFooter>
+                                    </Card>
+                                  </React.Fragment>
+                                )
+                              )
+                              :
+                                null
+                            }
+                          </div>
+                        )}
+                      />
+                    </Col>
+                  </Row>
+                </FormGroup>
+              </Form>
+            )}
+          />
+        </BaseArgoView>
       );
     } else
       return null;
