@@ -8,7 +8,9 @@ import {
     NotifyOk,
     FancyErrorMessage,
     HistoryComponent,
-    DiffElement
+    DiffElement,
+    ProfileMainInfo,
+    DropDown
 } from './UIElements';
 import ReactTable from 'react-table';
 import {
@@ -283,7 +285,7 @@ export class ThresholdsProfilesList extends Component {
             data={list_thresholdsprofiles}
             columns={columns}
             className='-striped -highlight'
-            defaultPageSize={20}
+            defaultPageSize={12}
           />
         </BaseArgoView>
       );
@@ -568,55 +570,9 @@ export class ThresholdsProfilesChange extends Component {
             onSubmit = {(values, actions) => this.onSubmitHandle(values, actions)}
             render = {props => (
               <Form>
+                <ProfileMainInfo {...props} grouplist={groups_list} profiletype='thresholds'/>
                 <FormGroup>
-                  <Row>
-                    <Col md={6}>
-                      <InputGroup>
-                        <InputGroupAddon addonType='prepend'>Name</InputGroupAddon>
-                        <Field
-                          type='text'
-                          name='name'
-                          className={`form-control ${props.errors.name && 'border-danger'}`}
-                          id='name'
-                        />
-                      </InputGroup>
-                      {
-                        props.errors.name &&
-                          FancyErrorMessage(props.errors.name)
-                      }
-                      <FormText color='muted'>
-                        Name of this thresholds profile.
-                      </FormText>
-                    </Col>
-                    <Col md={3}>
-                      <InputGroup>
-                      <InputGroupAddon addonType='prepend'>Group</InputGroupAddon>
-                        <Field
-                          component='select'
-                          name='groupname'
-                          className={props.errors.groupname ? 'form-control border-danger' : 'form-control'}
-                          id='groupname'
-                        >
-                          <option key={0} value={''}>Select group</option>
-                          {
-                            groups_list.map((name, i) =>
-                              <option key={i + 1} value={name}>{name}</option>
-                            )
-                          }
-                        </Field>
-                      </InputGroup>
-                      {
-                        props.errors.groupname &&
-                          FancyErrorMessage(props.errors.groupname)
-                      }
-                      <FormText color='muted'>
-                        Thresholds profile is a member of the selected group.
-                      </FormText>
-                    </Col>
-                  </Row>
-                </FormGroup>
-                <FormGroup>
-                <h4 className="mt-2 p-1 pl-3 text-light text-uppercase rounded" style={{"backgroundColor": "#416090"}}>Thresholds rules</h4>
+                <h4 className="mt-4 p-1 pl-3 text-light text-uppercase rounded" style={{"backgroundColor": "#416090"}}>Thresholds rules</h4>
                 <Row>
                   <Col md={12}>
                     <FieldArray
@@ -819,7 +775,7 @@ export class ThresholdsProfilesChange extends Component {
                                                         <td style={{width: '6%'}}>
                                                           <Field
                                                             component='select'
-                                                            className='form-control'
+                                                            className='form-control custom-select'
                                                             name={`rules.${index}.thresholds.${i}.uom`}
                                                             id={`props.values.rules.${index}.thresholds.${i}.uom`}
                                                           >
@@ -1379,42 +1335,13 @@ export class ThresholdsProfileVersionDetail extends Component {
             }}
             render = {props => (
               <Form>
+                <ProfileMainInfo
+                  {...props}
+                  profiletype='thresholds'
+                  fieldsdisable={true}
+                />
                 <FormGroup>
-                  <Row>
-                    <Col md={6}>
-                      <InputGroup>
-                        <InputGroupAddon addonType='prepend'>Name</InputGroupAddon>
-                        <Field
-                          type='text'
-                          name='name'
-                          className='form-control'
-                          disabled={true}
-                          id='name'
-                        />
-                      </InputGroup>
-                      <FormText color='muted'>
-                        Name of this thresholds profile.
-                      </FormText>
-                    </Col>
-                    <Col md={3}>
-                      <InputGroup>
-                        <InputGroupAddon addonType='prepend'>Group</InputGroupAddon>
-                        <Field
-                          type='text'
-                          name='groupname'
-                          id='groupname'
-                          className='form-control'
-                          disabled={true}
-                        />
-                      </InputGroup>
-                      <FormText color='muted'>
-                        Thresholds profile is a member of the selected group.
-                      </FormText>
-                    </Col>
-                  </Row>
-                </FormGroup>
-                <FormGroup>
-                  <h4 className='mt-2 p-1 pl-3 text-light text-uppercase rounded' style={{"backgroundColor": "#416090"}}>Thresholds rules</h4>
+                  <h4 className='mt-4 p-1 pl-3 text-light text-uppercase rounded' style={{"backgroundColor": "#416090"}}>Thresholds rules</h4>
                   <Row>
                     <Col md={12}>
                       <FieldArray
