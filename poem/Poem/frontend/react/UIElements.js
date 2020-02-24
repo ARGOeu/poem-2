@@ -19,7 +19,14 @@ import {
   ModalHeader,
   ModalBody,
   ModalFooter,
-  Collapse} from 'reactstrap';
+  Collapse,
+  FormGroup,
+  InputGroup,
+  InputGroupAddon,
+  FormText,
+  Row,
+  Col
+} from 'reactstrap';
 import {Link} from 'react-router-dom';
 import ArgoLogo from './argologo_color.svg';
 import ArgoLogoAnim from './argologo_anim.svg';
@@ -742,3 +749,66 @@ export const DiffElement = ({title, item1, item2}) => {
   </div>
   );
 };
+
+
+export const ProfileMainInfo = ({ errors, grouplist=undefined,
+  fieldsdisable=false, profiletype=undefined }) => (
+  <FormGroup>
+    <Row>
+      <Col md={6}>
+        <InputGroup>
+          <InputGroupAddon addonType='prepend'>Name</InputGroupAddon>
+          <Field
+            type='text'
+            name='name'
+            className={`form-control form-control-lg ${errors.name && 'border-danger'}`}
+            disabled={fieldsdisable}
+          />
+        </InputGroup>
+        {
+          errors.name &&
+            FancyErrorMessage(errors.name)
+        }
+        <FormText color='muted'>
+          {`Name of ${profiletype} profile`}
+        </FormText>
+      </Col>
+    </Row>
+    <Row className='mt-4'>
+      <Col md={3}>
+        <InputGroup>
+          <InputGroupAddon addonType='prepend'>Group</InputGroupAddon>
+          {
+            fieldsdisable ?
+              <Field
+                type='text'
+                name='groupname'
+                className='form-control'
+                disabled={true}
+              />
+            :
+              <Field
+                name='groupname'
+                component='select'
+                className={`form-control custom-select ${errors.groupname && 'border-danger'}`}
+              >
+                <option key={0} value='' hidden color='muted'>Select group</option>
+                {
+                  grouplist.map((group, i) =>
+                    <option key={i + 1} value={group}>{group}</option>
+                  )
+                }
+              </Field>
+          }
+        </InputGroup>
+        {
+          errors.groupname &&
+            FancyErrorMessage(errors.groupname)
+        }
+        <FormText color='muted'>
+          {`${profiletype.charAt(0).toUpperCase() + profiletype.slice(1)} profile is member of given group.`}
+        </FormText>
+      </Col>
+    </Row>
+  </FormGroup>
+);
