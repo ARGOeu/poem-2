@@ -102,7 +102,9 @@ class ListTenantVersions(APIView):
                             'name': fields0['name'],
                             'groupname': fields0['groupname'],
                             'apiid': fields0['apiid'],
-                            'metricinstances': mi
+                            'metricinstances': sorted(
+                                mi, key=lambda k: k['service'].lower()
+                            )
                         }
 
                     else:
