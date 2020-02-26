@@ -849,54 +849,41 @@ export class AggregationProfilesList extends Component
 
 
 const ListDiffElement = ({title, item1, item2}) => {
-  let n = Math.max(item1.length, item2.length);
   let list1 = [];
   let list2 = [];
   for (let i = 0; i < item1.length; i++) {
     let services = [];
     for (let j = 0; j < item1[i]['services'].length; j++) {
       services.push(
-        `{name: ${item1[i]['services'][j]['name']},
-        operation: ${item1[i]['services'][j]['operation']}}`
+        `{name: ${item1[i]['services'][j]['name']}, operation: ${item1[i]['services'][j]['operation']}}`
       );
     };
     list1.push(
-      `name: ${item1[i]['name']}, operation: ${item1[i]['operation']},
-      services: ${services.join(', ')}`
+      `name: ${item1[i]['name']},\noperation: ${item1[i]['operation']},\nservices: [\n${services.join('\n')}\n]`
       );
   };
   for (let i = 0; i < item2.length; i++) {
     let services = [];
     for (let j = 0; j < item2[i]['services'].length; j++) {
       services.push(
-        `{name: ${item2[i]['services'][j]['name']},
-        operation: ${item2[i]['services'][j]['operation']}}`
+        `{name: ${item2[i]['services'][j]['name']}, operation: ${item2[i]['services'][j]['operation']}}`
       );
     };
     list2.push(
-      `name: ${item2[i]['name']}, operation: ${item2[i]['operation']},
-      services: ${services.join(', ')}`
+      `name: ${item2[i]['name']},\noperation: ${item2[i]['operation']},\nservices: [\n${services.join('\n')}\n]`
       );
-  };
-
-  const elements = [];
-  for (let i = 0; i < n; i++) {
-    elements.push(
-      <ReactDiffViewer
-        oldValue={list2[i]}
-        newValue={list1[i]}
-        showDiffOnly={true}
-        splitView={false}
-        hideLineNumbers={true}
-        key={`diff-${i}`}
-      />
-    );
   };
 
   return (
     <div id='argo-contentwrap' className='ml-2 mb-2 mt-2 p-3 border rounded'>
       <h6 className='mt-4 font-weight-bold text-uppercase'>{title}</h6>
-      {elements}
+      <ReactDiffViewer
+        oldValue={list2.join('\n')}
+        newValue={list1.join('\n')}
+        showDiffOnly={true}
+        splitView={true}
+        hideLineNumbers={true}
+      />
     </div>
   );
 };
