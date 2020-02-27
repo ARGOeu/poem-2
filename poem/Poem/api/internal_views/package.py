@@ -4,15 +4,17 @@ from django.db.models import ProtectedError
 from Poem.api.views import NotFound
 from Poem.poem_super_admin import models as admin_models
 
-from re import compile
-
 from rest_framework import status
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 
-nv = compile('(\S+)-(.*)')
+def get_package_version(nameversion):
+    version = nameversion.split('-')[-1]
+    name = nameversion.split(version)[0][0:-1]
+
+    return name, version
 
 
 class ListPackages(APIView):
@@ -21,7 +23,7 @@ class ListPackages(APIView):
     def get(self, request, nameversion=None):
         if nameversion:
             try:
-                package_name, package_version = nv.match(nameversion).groups()
+                package_name, package_version = get_package_version(nameversion)
                 package = admin_models.Package.objects.get(
                     name=package_name, version=package_version
                 )
@@ -34,6 +36,7 @@ class ListPackages(APIView):
                     'id': package.id,
                     'name': package.name,
                     'version': package.version,
+                    'use_present_version': package.use_present_version,
                     'repos': repos
                 }
 
@@ -53,6 +56,7 @@ class ListPackages(APIView):
                 results.append({
                     'name': package.name,
                     'version': package.version,
+                    'use_present_version': package.use_present_version,
                     'repos': repos
                 })
 
@@ -62,9 +66,18 @@ class ListPackages(APIView):
 
     def post(self, request):
         try:
+            if request.data['use_present_version'] in [True, 'true', 'True']:
+                version = 'present'
+                use_present_version = True
+
+            else:
+                version = request.data['version']
+                use_present_version = False
+
             package = admin_models.Package.objects.create(
                 name=request.data['name'],
-                version=request.data['version']
+                version=version,
+                use_present_version=use_present_version
             )
 
             repos = dict(request.data)['repos']
@@ -104,6 +117,11 @@ class ListPackages(APIView):
         old_version = package.version
         try:
             package.name = request.data['name']
+            if request.data['use_present_version'] in [True, 'true', 'True']:
+                use_present_version = True
+            else:
+                use_present_version = False
+            package.use_present_version = use_present_version
             package.version = request.data['version']
             package.save()
 
@@ -155,7 +173,7 @@ class ListPackages(APIView):
             )
 
     def delete(self, request, nameversion):
-        package_name, package_version = nv.match(nameversion).groups()
+        package_name, package_version = get_package_version(nameversion)
         try:
             admin_models.Package.objects.get(
                 name=package_name, version=package_version
