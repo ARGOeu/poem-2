@@ -185,6 +185,10 @@ class ListRepos(APIView):
 
             for key, value in packagedict.items():
                 if value.name not in data:
+                    if key.use_present_version:
+                        version = 'present'
+                    else:
+                        version = key.version
                     data.update(
                         {
                             value.name: {
@@ -192,7 +196,7 @@ class ListRepos(APIView):
                                 'packages': [
                                     {
                                         'name': key.name,
-                                        'version': key.version
+                                        'version': version
                                     }
                                 ]
                             }

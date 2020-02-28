@@ -152,7 +152,8 @@ def mock_db_for_repos_tests():
 
     package2 = admin_models.Package.objects.create(
         name='nagios-plugins-http',
-        version='2.2.2'
+        version='2.2.2',
+        use_present_version=True
     )
     package2.repos.add(repo3, repo4)
 
@@ -609,7 +610,7 @@ class ListReposAPIViewTests(TenantTestCase):
                         'packages': [
                             {
                                 'name': 'nagios-plugins-http',
-                                'version': '2.2.2'
+                                'version': 'present'
                             }
                         ]
                     }
@@ -667,7 +668,7 @@ class ListReposAPIViewTests(TenantTestCase):
                         'packages': [
                             {
                                 'name': 'nagios-plugins-http',
-                                'version': '2.2.2'
+                                'version': 'present'
                             }
                         ]
                     }
@@ -694,7 +695,7 @@ class ListReposAPIViewTests(TenantTestCase):
             **{'HTTP_X_API_KEY': self.token,
                'HTTP_PROFILES': '[ARGO-MON, MON-TEST]'}
         )
-        response = self.view(request, 'nonexisgint')
+        response = self.view(request, 'nonexisting')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(
             response.data,
@@ -728,7 +729,7 @@ class ListReposAPIViewTests(TenantTestCase):
                         'packages': [
                             {
                                 'name': 'nagios-plugins-http',
-                                'version': '2.2.2'
+                                'version': 'present'
                             }
                         ]
                     }
