@@ -9,8 +9,7 @@ import {
     FancyErrorMessage,
     HistoryComponent,
     DiffElement,
-    ProfileMainInfo,
-    DropDown
+    ProfileMainInfo
 } from './UIElements';
 import ReactTable from 'react-table';
 import {
@@ -21,7 +20,6 @@ import {
 } from 'formik';
 import {
   FormGroup,
-  FormText,
   Row,
   Col,
   InputGroup,
@@ -1253,53 +1251,59 @@ export class ThresholdsProfilesChange extends Component {
 
 
 const ListDiffElement = ({title, item1, item2}) => {
-  let n = Math.max(item1.length, item2.length);
   let list1 = [];
   let list2 = [];
   for (let i = 0; i < item1.length; i++) {
-    let strng = `metric: ${item1[i]['metric']}, `;
+    let strng = `metric: ${item1[i]['metric']},\n`;
     if ('host' in item1[i])
-      strng += `host: ${item1[i]['host']}, `;
+      strng += `host: ${item1[i]['host']},\n`;
 
     if ('endpoint_group' in item1[i])
-      strng += `endpoint_group: ${item1[i]['endpoint_group']}, `;
+      strng += `endpoint_group: ${item1[i]['endpoint_group']},\n`;
 
     strng += `thresholds: ${item1[i]['thresholds']}`;
     list1.push(strng);
   };
 
   for (let i = 0; i < item2.length; i++) {
-    let strng = `metric: ${item2[i]['metric']}, `;
+    let strng = `metric: ${item2[i]['metric']},\n`;
     if ('host' in item2[i])
-      strng += `host: ${item2[i]['host']}, `;
+      strng += `host: ${item2[i]['host']},\n`;
 
     if ('endpoint_group' in item2[i])
-      strng += `endpoint_group: ${item2[i]['endpoint_group']}, `;
+      strng += `endpoint_group: ${item2[i]['endpoint_group']},\n`;
 
     strng += `thresholds: ${item2[i]['thresholds']}`;
     list2.push(strng);
   };
 
-  const elements = [];
-  for (let i = 0; i < n; i++) {
-    elements.push(
-      <ReactDiffViewer
-        oldValue={list2[i]}
-        newValue={list1[i]}
-        showDiffOnly={true}
-        splitView={false}
-        hideLineNumbers={true}
-        key={`diff-${i}`}
-      />
-    );
-  };
-
   return (
     <div id='argo-contentwrap' className='ml-2 mb-2 mt-2 p-3 border rounded'>
       <h6 className='mt-4 font-weight-bold text-uppercase'>{title}</h6>
-      {elements}
+      <ReactDiffViewer
+        oldValue={list2.join('\n')}
+        newValue={list1.join('\n')}
+        showDiffOnly={true}
+        splitView={true}
+        hideLineNumbers={true}
+      />
     </div>
   )
+};
+
+
+function arraysEqual(arr1, arr2) {
+  if(arr1.length !== arr2.length)
+      return false;
+  for(var i = arr1.length; i--;) {
+      if(arr1[i]['metric'] !== arr2[i]['metric'] ||
+      arr1[i]['thresholds'] !== arr2[i]['thresholds'] ||
+      arr1[i]['host'] !== arr2[i]['host'] ||
+      arr1[i]['endpoint_group'] !== arr2[i]['endpoint_group'])
+          return false;
+  };
+
+  return true;
 };
 
 
@@ -1376,10 +1380,10 @@ export class ThresholdsProfileVersionCompare extends Component {
           }
           {
             (groupname1 !== groupname2) &&
-              <DiffElement name='group name' item1={groupname1} item2={groupname2}/>
+              <DiffElement title='group name' item1={groupname1} item2={groupname2}/>
           }
           {
-            (rules1 !== rules2) &&
+            (!arraysEqual(rules1, rules2)) &&
               <ListDiffElement title='rules' item1={rules1} item2={rules2}/>
           }
         </React.Fragment>

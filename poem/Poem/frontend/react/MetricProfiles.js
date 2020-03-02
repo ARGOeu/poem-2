@@ -750,7 +750,6 @@ export class MetricProfilesList extends Component
 
 
 const ListDiffElement = ({title, item1, item2}) => {
-  let n = Math.max(item1.length, item2.length);
   let list1 = [];
   let list2 = [];
   for (let i = 0; i < item1.length; i++) {
@@ -761,24 +760,16 @@ const ListDiffElement = ({title, item1, item2}) => {
     list2.push(`service: ${item2[i]['service']}, metric: ${item2[i]['metric']}`)
   };
 
-  const elements = [];
-  for (let i = 0; i < n; i++) {
-    elements.push(
-      <ReactDiffViewer
-        oldValue={list2[i]}
-        newValue={list1[i]}
-        showDiffOnly={true}
-        splitView={false}
-        hideLineNumbers={true}
-        key={`diff-${i}`}
-      />
-    );
-  };
-
   return (
     <div id='argo-contentwrap' className='ml-2 mb-2 mt-2 p-3 border rounded'>
       <h6 className='mt-4 font-weight-bold text-uppercase'>{title}</h6>
-      {elements}
+      <ReactDiffViewer
+        oldValue={list2.join('\n')}
+        newValue={list1.join('\n')}
+        showDiffOnly={false}
+        splitView={true}
+        hideLineNumbers={true}
+      />
     </div>
   )
 };
@@ -852,7 +843,7 @@ export class MetricProfileVersionCompare extends Component {
       return (
         <React.Fragment>
           <div className='d-flex align-items-center justify-content-between'>
-            <h2 className='ml-3 mt-1 mb-4'>{`Compare ${this.name}`}</h2>
+            <h2 className='ml-3 mt-1 mb-4'>{`Compare ${this.name} versions`}</h2>
           </div>
           {
             (name1 !== name2) &&
