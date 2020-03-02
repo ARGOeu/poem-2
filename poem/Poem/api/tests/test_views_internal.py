@@ -12,6 +12,7 @@ from Poem.api.internal_views.utils import sync_webapi
 from Poem.api.internal_views.utils import inline_metric_for_db
 from Poem.api.models import MyAPIKey
 from Poem.helpers.history_helpers import create_comment, update_comment
+from Poem.helpers.versioned_comments import new_comment
 from Poem.poem import models as poem_models
 from Poem.poem_super_admin import models as admin_models
 from Poem.tenants.models import Tenant
@@ -1082,7 +1083,9 @@ class ListProbesAPIViewTests(TenantTestCase):
         mt = admin_models.MetricTemplate.objects.get(name='argo.API-Check')
         self.assertEqual(
             mt.probekey,
-            admin_models.ProbeHistory.objects.filter(object_id=probe)[1]
+            admin_models.ProbeHistory.objects.filter(
+                object_id=probe
+            ).order_by('-date_created')[1]
         )
         metric = poem_models.Metric.objects.get(name='argo.API-Check')
         self.assertEqual(metric.group.name, 'TEST')
@@ -5787,6 +5790,9 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
         ct_m = ContentType.objects.get_for_model(poem_models.Metric)
         ct_mp = ContentType.objects.get_for_model(poem_models.MetricProfiles)
         ct_aggr = ContentType.objects.get_for_model(poem_models.Aggregation)
+        ct_tp = ContentType.objects.get_for_model(
+            poem_models.ThresholdsProfiles
+        )
 
         self.probever1 = admin_models.ProbeHistory.objects.create(
             object_id=probe1,
@@ -6102,6 +6108,73 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
             content_type=ct_aggr
         )
 
+        self.tp1 = poem_models.ThresholdsProfiles.objects.create(
+            name='TEST_PROFILE',
+            apiid='00000000-oooo-kkkk-aaaa-aaeekkccnnee',
+            groupname='GROUP'
+        )
+
+        data = json.loads(
+            serializers.serialize(
+                'json', [self.tp1],
+                use_natural_foreign_keys=True,
+                use_natural_primary_keys=True
+            )
+        )
+        data[0]['fields'].update({
+            'rules': [
+                {
+                    'host': 'hostFoo',
+                    'metric': 'metricA',
+                    'thresholds': 'freshness=1s;10;9:;0;25 entries=1;3;0:2;10'
+                }
+            ]
+        })
+
+        self.ver8 = poem_models.TenantHistory.objects.create(
+            object_id=self.tp1.id,
+            serialized_data=json.dumps(data),
+            object_repr=self.tp1.__str__(),
+            comment='Initial version.',
+            user='testuser',
+            content_type=ct_tp
+        )
+
+        self.tp1.name = 'TEST_PROFILE2'
+        self.tp1.groupname = 'NEW_GROUP'
+        self.tp1.save()
+
+        data = json.loads(
+            serializers.serialize(
+                'json', [self.tp1],
+                use_natural_foreign_keys=True,
+                use_natural_primary_keys=True
+            )
+        )
+        data[0]['fields'].update({
+            'rules': [
+                {
+                    'host': 'hostFoo',
+                    'metric': 'newMetric',
+                    'endpoint_group': 'test',
+                    'thresholds': 'entries=1;3;0:2;10'
+                }
+            ]
+        })
+
+        self.ver9 = poem_models.TenantHistory.objects.create(
+            object_id=self.tp1.id,
+            serialized_data=json.dumps(data),
+            object_repr=self.tp1.__str__(),
+            comment='[{"changed": {"fields": ["name", "groupname"]}}, '
+                    '{"added": {"fields": ["rules"], '
+                    '"object": ["newMetric"]}}, '
+                    '{"deleted": {"fields": ["rules"], '
+                    '"object": ["metricA"]}}]',
+            user='testuser',
+            content_type=ct_tp
+        )
+
     def test_get_versions_of_metrics(self):
         request = self.factory.get(self.url + 'metric/argo.AMS-Check-new')
         force_authenticate(request, user=self.user)
@@ -6145,8 +6218,8 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
                     'date_created': datetime.datetime.strftime(
                         self.ver2.date_created, '%Y-%m-%d %H:%M:%S'
                     ),
-                    'comment': 'Changed config fields "maxCheckAttempts, '
-                               'retryInterval and timeout". Changed group '
+                    'comment': 'Changed config fields "maxCheckAttempts", '
+                               '"retryInterval" and "timeout". Changed group '
                                'and probekey.',
                     'version': datetime.datetime.strftime(
                         self.ver2.date_created, '%Y%m%d-%H%M%S'
@@ -6279,8 +6352,8 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
                     'date_created': datetime.datetime.strftime(
                         self.ver5.date_created, '%Y-%m-%d %H:%M:%S'
                     ),
-                    'comment': 'Deleted metricinstances field '
-                               '"APEL org.apel.APEL-Sync". Changed groupname '
+                    'comment': 'Deleted service-metric instance tuple '
+                               '(APEL, org.apel.APEL-Sync). Changed groupname '
                                'and name.',
                     'version': datetime.datetime.strftime(
                         self.ver5.date_created, '%Y%m%d-%H%M%S'
@@ -6452,6 +6525,70 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
         force_authenticate(request, user=self.user)
         response = self.view(request, 'aggregationprofile')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_get_thresholds_profile_version(self):
+        request = self.factory.get(
+            self.url + 'thresholdsprofile/TEST_PROFILE2'
+        )
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'thresholdsprofile', 'TEST_PROFILE2')
+        self.assertEqual(
+            response.data,
+            [
+                {
+                    'id': self.ver9.id,
+                    'object_repr': 'TEST_PROFILE2',
+                    'fields': {
+                        'name': 'TEST_PROFILE2',
+                        'groupname': 'NEW_GROUP',
+                        'apiid': self.tp1.apiid,
+                        'rules': [
+                            {
+                                'host': 'hostFoo',
+                                'metric': 'newMetric',
+                                'endpoint_group': 'test',
+                                'thresholds': 'entries=1;3;0:2;10'
+                            }
+                        ]
+                    },
+                    'user': 'testuser',
+                    'date_created': datetime.datetime.strftime(
+                        self.ver9.date_created, '%Y-%m-%d %H:%M:%S'
+                    ),
+                    'comment': 'Changed name and groupname. '
+                               'Added rule for metric "newMetric". '
+                               'Deleted rule for metric "metricA".',
+                    'version': datetime.datetime.strftime(
+                        self.ver9.date_created, '%Y%m%d-%H%M%S'
+                    )
+                },
+                {
+                    'id': self.ver8.id,
+                    'object_repr': 'TEST_PROFILE',
+                    'fields': {
+                        'name': 'TEST_PROFILE',
+                        'groupname': 'GROUP',
+                        'apiid': self.tp1.apiid,
+                        'rules': [
+                            {
+                                'host': 'hostFoo',
+                                'metric': 'metricA',
+                                'thresholds': 'freshness=1s;10;9:;0;25 '
+                                              'entries=1;3;0:2;10'
+                            }
+                        ]
+                    },
+                    'user': 'testuser',
+                    'date_created': datetime.datetime.strftime(
+                        self.ver8.date_created, '%Y-%m-%d %H:%M:%S'
+                    ),
+                    'comment': 'Initial version.',
+                    'version': datetime.datetime.strftime(
+                        self.ver8.date_created, '%Y%m%d-%H%M%S'
+                    )
+                }
+            ]
+        )
 
 
 class ListYumReposAPIViewTests(TenantTestCase):
@@ -6682,6 +6819,9 @@ class HistoryHelpersTests(TenantTestCase):
         )
         self.ct_aggr = ContentType.objects.get_for_model(
             poem_models.Aggregation
+        )
+        self.ct_tp = ContentType.objects.get_for_model(
+            poem_models.ThresholdsProfiles
         )
 
         self.active = admin_models.MetricTemplateType.objects.create(
@@ -6951,6 +7091,38 @@ class HistoryHelpersTests(TenantTestCase):
             comment='Initial version.',
             user='testuser',
             content_type=self.ct_aggr
+        )
+
+        self.tp1 = poem_models.ThresholdsProfiles.objects.create(
+            name='TEST_PROFILE',
+            apiid='00000000-oooo-kkkk-aaaa-aaeekkccnnee',
+            groupname='TEST'
+        )
+
+        data = json.loads(
+            serializers.serialize(
+                'json', [self.tp1],
+                use_natural_foreign_keys=True,
+                use_natural_primary_keys=True
+            )
+        )
+        data[0]['fields'].update({
+            'rules': [
+                {
+                    'host': 'hostFoo',
+                    'metric': 'metricA',
+                    'thresholds': 'freshness=1s;10;9:;0;25 entries=1;3;0:2;10'
+                }
+            ]
+        })
+
+        poem_models.TenantHistory.objects.create(
+            object_id=self.tp1.id,
+            serialized_data=json.dumps(data),
+            object_repr=self.tp1.__str__(),
+            comment='Initial version.',
+            user='testuser',
+            content_type=self.ct_tp
         )
 
     def test_create_comment_for_metric_template(self):
@@ -7423,6 +7595,76 @@ class HistoryHelpersTests(TenantTestCase):
         comment = create_comment(aggr, self.ct_aggr, json.dumps(data))
         self.assertEqual(comment, 'Initial version.')
 
+    def test_create_comment_for_thresholds_profile(self):
+        self.tp1.name = 'TEST_PROFILE2'
+        self.tp1.groupname = 'TEST2'
+        self.tp1.save()
+        data = json.loads(serializers.serialize(
+            'json', [self.tp1],
+            use_natural_foreign_keys=True,
+            use_natural_primary_keys=True
+        ))
+        data[0]['fields'].update({
+            'rules': [
+                {
+                    'host': 'hostFoo',
+                    'metric': 'metricA',
+                    'thresholds': 'freshness=1s;10;9:;0;25'
+                },
+                {
+                    'host': 'hostBar',
+                    'endpoint_group': 'TEST-SITE-51',
+                    'metric': 'httpd.ResponseTime',
+                    'thresholds': 'response=20ms;0:500;499:1000'
+                },
+                {
+                    'metric': 'httpd.ResponseTime',
+                    'thresholds': 'response=20ms;0:300;299:1000'
+                }
+            ]
+        })
+        comment = create_comment(self.tp1, self.ct_tp, json.dumps(data))
+        comment_set = set()
+        for item in json.loads(comment):
+            comment_set.add(json.dumps(item))
+        self.assertEqual(
+            comment_set,
+            {
+                '{"changed": {"fields": ["groupname", "name"]}}',
+                '{"changed": {"fields": ["rules"], "object": ["metricA"]}}',
+                '{"added": {"fields": ["rules"], '
+                '"object": ["httpd.ResponseTime"]}}',
+            }
+        )
+
+    def test_create_comment_for_thresholds_profile_if_initial(self):
+        tp = poem_models.ThresholdsProfiles.objects.create(
+            name='TEST_PROFILE2',
+            groupname='TEST',
+            apiid='10000000-oooo-kkkk-aaaa-aaeekkccnnee'
+        )
+        data = json.loads(serializers.serialize(
+            'json', [tp],
+            use_natural_foreign_keys=True,
+            use_natural_primary_keys=True
+        ))
+        data[0]['fields'].update({
+            'rules': [
+                {
+                    'host': 'hostBar',
+                    'endpoint_group': 'TEST-SITE-51',
+                    'metric': 'httpd.ResponseTime',
+                    'thresholds': 'response=20ms;0:500;499:1000'
+                },
+                {
+                    'metric': 'httpd.ResponseTime',
+                    'thresholds': 'response=20ms;0:300;299:1000'
+                }
+            ]
+        })
+        comment = create_comment(tp, self.ct_tp, json.dumps(data))
+        self.assertEqual(comment, 'Initial version.')
+
 
 class ListThresholdsProfilesInGroupAPIViewTests(TenantTestCase):
     def setUp(self):
@@ -7625,19 +7867,74 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
         self.url = '/api/v2/internal/thresholdsprofiles/'
         self.user = CustUser.objects.create_user(username='testuser')
 
-        poem_models.ThresholdsProfiles.objects.create(
+        self.tp1 = poem_models.ThresholdsProfiles.objects.create(
             name='TEST_PROFILE',
             apiid='00000000-oooo-kkkk-aaaa-aaeekkccnnee',
             groupname='GROUP'
         )
 
-        poem_models.ThresholdsProfiles.objects.create(
+        self.tp2 = poem_models.ThresholdsProfiles.objects.create(
             name='ANOTHER_PROFILE',
             apiid='12341234-oooo-kkkk-aaaa-aaeekkccnnee'
         )
 
         poem_models.GroupOfThresholdsProfiles.objects.create(name='GROUP')
         poem_models.GroupOfThresholdsProfiles.objects.create(name='NEWGROUP')
+
+        self.ct = ContentType.objects.get_for_model(
+            poem_models.ThresholdsProfiles
+        )
+
+        data = json.loads(
+            serializers.serialize(
+                'json', [self.tp1],
+                use_natural_foreign_keys=True,
+                use_natural_primary_keys=True
+            )
+        )
+        data[0]['fields'].update({
+            'rules': [
+                {
+                    'host': 'hostFoo',
+                    'metric': 'metricA',
+                    'thresholds': 'freshness=1s;10;9:;0;25 entries=1;3;0:2;10'
+                }
+            ]
+        })
+
+        poem_models.TenantHistory.objects.create(
+            object_id=self.tp1.id,
+            serialized_data=json.dumps(data),
+            object_repr=self.tp1.__str__(),
+            comment='Initial version.',
+            user='testuser',
+            content_type=self.ct
+        )
+
+        data = json.loads(
+            serializers.serialize(
+                'json', [self.tp2],
+                use_natural_foreign_keys=True,
+                use_natural_primary_keys=True
+            )
+        )
+        data[0]['fields'].update({
+            'rules': [
+                {
+                    'metric': 'metricB',
+                    'thresholds': 'freshness=1s;10;9:;0;25'
+                }
+            ]
+        })
+
+        poem_models.TenantHistory.objects.create(
+            object_id=self.tp2.id,
+            serialized_data=json.dumps(data),
+            object_repr=self.tp2.__str__(),
+            comment='Initial version.',
+            user='testuser',
+            content_type=self.ct
+        )
 
     @patch('Poem.api.internal_views.thresholdsprofiles.sync_webapi',
            side_effect=mocked_func)
@@ -7685,7 +7982,7 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
 
     @patch('Poem.api.internal_views.thresholdsprofiles.sync_webapi',
            side_effect=mocked_func)
-    def test_get_thresholds_profile_by_name(self, func):
+    def test_get_thresholds_profile_by_nonexisting_name(self, func):
         request = self.factory.get(self.url + 'nonexisting')
         force_authenticate(request, user=self.user)
         response = self.view(request, 'nonexisting')
@@ -7699,16 +7996,21 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
         data = {
             'name': 'NEW_TEST_PROFILE',
             'apiid': '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
-            'group': 'NEWGROUP'
+            'group': 'NEWGROUP',
+            'rules': json.dumps([
+                {
+                    'host': 'newHost',
+                    'metric': 'newMetric',
+                    'thresholds': 'entries=1;3;0:2;10'
+                }
+            ])
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        tp = poem_models.ThresholdsProfiles.objects.get(
-            apiid='00000000-oooo-kkkk-aaaa-aaeekkccnnee'
-        )
+        tp = poem_models.ThresholdsProfiles.objects.get(id=self.tp1.id)
         self.assertEqual(tp.name, 'NEW_TEST_PROFILE')
         self.assertEqual(tp.groupname, 'NEWGROUP')
         group1 = poem_models.GroupOfThresholdsProfiles.objects.get(
@@ -7727,6 +8029,35 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
                 apiid='00000000-oooo-kkkk-aaaa-aaeekkccnnee'
             ).exists()
         )
+        history = poem_models.TenantHistory.objects.filter(
+            object_id=tp.id, content_type=self.ct
+        ).order_by('-date_created')
+        self.assertEqual(history.count(), 2)
+        comment_set = set()
+        for item in json.loads(history[0].comment):
+            comment_set.add(json.dumps(item))
+        self.assertEqual(
+            comment_set,
+            {
+                '{"changed": {"fields": ["groupname", "name"]}}',
+                '{"deleted": {"fields": ["rules"], "object": ["metricA"]}}',
+                '{"added": {"fields": ["rules"], "object": ["newMetric"]}}'
+            }
+        )
+        serialized_data = json.loads(history[0].serialized_data)[0]['fields']
+        self.assertEqual(serialized_data['name'], tp.name)
+        self.assertEqual(serialized_data['groupname'], tp.groupname)
+        self.assertEqual(serialized_data['apiid'], tp.apiid)
+        self.assertEqual(
+            serialized_data['rules'],
+            [
+                {
+                    'host': 'newHost',
+                    'metric': 'newMetric',
+                    'thresholds': 'entries=1;3;0:2;10'
+                }
+            ]
+        )
 
     def post_thresholds_profile(self):
         self.assertEqual(
@@ -7735,7 +8066,14 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
         data = {
             'name': 'NEW_PROFILE',
             'apiid': '12341234-aaaa-kkkk-aaaa-aaeekkccnnee',
-            'groupname': 'GROUP'
+            'groupname': 'GROUP',
+            'rules': json.dumps([
+                {
+                    'host': 'newHost',
+                    'metric': 'newMetric',
+                    'thresholds': 'entries=1;3;0:2;10'
+                }
+            ])
         }
         request = self.factory.post(self.url, data, format='json')
         force_authenticate(request, user=self.user)
@@ -7755,20 +8093,50 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
                 apiid='12341234-aaaa-kkkk-aaaa-aaeekkccnnee'
             ).exists()
         )
+        history = poem_models.TenantHistory.objects.filter(
+            object_id=profile.id, content_type=self.ct
+        ).order_by('-date_created')
+        self.assertEqual(history.count(), 1)
+        self.assertEqual(history[0].comment, 'Initial version.')
+        serialized_data = json.loads(history[0].serialized_data)[0]['fields']
+        self.assertEqual(serialized_data['name'], profile.name)
+        self.assertEqual(serialized_data['apiid'], profile.apiid)
+        self.assertEqual(serialized_data['groupname'], profile.groupname)
+        self.assertEqual(
+            serialized_data['rules'],
+            [
+                {
+                    'host': 'newHost',
+                    'metric': 'newMetric',
+                    'thresholds': 'entries=1;3;0:2;10'
+                }
+            ]
+        )
 
     def delete_thresholds_profile(self):
         self.assertEqual(
             poem_models.ThresholdsProfiles.objects.all().count(), 2
         )
-        request = self.factory.delete(self.url +
-                                      '00000000-oooo-kkkk-aaaa-aaeekkccnnee')
+        self.assertEqual(
+            poem_models.TenantHistory.objects.filter(
+                object_id=self.tp1.id, content_type=self.ct
+            ).count(), 1
+        )
+        request = self.factory.delete(
+            self.url + '00000000-oooo-kkkk-aaaa-aaeekkccnnee'
+        )
         force_authenticate(request, user=self.user)
         response = self.view(request, '00000000-oooo-kkkk-aaaa-aaeekkccnnee')
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertRaises(
             poem_models.ThresholdsProfiles.DoesNotExist,
             poem_models.ThresholdsProfiles.objects.get,
-            apiid='00000000-oooo-kkkk-aaaa-aaeekkccnnee'
+            id=self.tp1.id
+        )
+        self.assertEqual(
+            poem_models.TenantHistory.objects.filter(
+                object_id=self.tp1.id, content_type=self.ct
+            ).count(), 0
         )
 
     def delete_nonexisting_thresholds_profile(self):
@@ -8743,3 +9111,92 @@ class SyncWebApiTests(TenantTestCase):
             name='ANOTHER-PROFILE'
         )
 
+
+class CommentsTests(TenantTestCase):
+    def test_new_comment_with_objects_change(self):
+        comment = '[{"changed": {"fields": ["config"], ' \
+                  '"object": ["maxCheckAttempts", "path", "timeout"]}}, ' \
+                  '{"changed": {"fields": ["attribute"], ' \
+                  '"object": ["attribute-key1", "attribute-key2"]}}, ' \
+                  '{"changed": {"fields": ["dependency"], ' \
+                  '"object": ["dependency-key"]}}]'
+        self.assertEqual(
+            new_comment(comment),
+            'Changed config fields "maxCheckAttempts", "path" and "timeout". '
+            'Changed attribute fields "attribute-key1" and "attribute-key2". '
+            'Changed dependency field "dependency-key".'
+        )
+
+    def test_new_comment_with_objects_add(self):
+        comment = '[{"added": {"fields": ["config"], ' \
+                  '"object": ["maxCheckAttempts", "path", "timeout"]}}, ' \
+                  '{"added": {"fields": ["attribute"], ' \
+                  '"object": ["attribute-key1", "attribute-key2"]}}, ' \
+                  '{"added": {"fields": ["dependency"], ' \
+                  '"object": ["dependency-key"]}}]'
+        self.assertEqual(
+            new_comment(comment),
+            'Added config fields "maxCheckAttempts", "path" and "timeout". '
+            'Added attribute fields "attribute-key1" and "attribute-key2". '
+            'Added dependency field "dependency-key".'
+        )
+
+    def test_new_comment_with_objects_delete(self):
+        comment = '[{"deleted": {"fields": ["config"], ' \
+                  '"object": ["maxCheckAttempts", "path", "timeout"]}}, ' \
+                  '{"deleted": {"fields": ["attribute"], ' \
+                  '"object": ["attribute-key1", "attribute-key2"]}}, ' \
+                  '{"deleted": {"fields": ["dependency"], ' \
+                  '"object": ["dependency-key"]}}]'
+        self.assertEqual(
+            new_comment(comment),
+            'Deleted config fields "maxCheckAttempts", "path" and "timeout". '
+            'Deleted attribute fields "attribute-key1" and "attribute-key2". '
+            'Deleted dependency field "dependency-key".'
+        )
+
+    def test_new_comment_with_fields(self):
+        comment = '[{"added": {"fields": ["docurl", "comment"]}}, ' \
+                  '{"changed": {"fields": ["name", "probeexecutable", ' \
+                  '"group"]}}, ' \
+                  '{"deleted": {"fields": ["version", "description"]}}]'
+        self.assertEqual(
+            new_comment(comment),
+            'Added docurl and comment. '
+            'Changed name, probeexecutable and group. '
+            'Deleted version and description.'
+        )
+
+    def test_new_comment_initial(self):
+        comment = 'Initial version.'
+        self.assertEqual(new_comment(comment), 'Initial version.')
+
+    def test_new_comment_no_changes(self):
+        comment = '[]'
+        self.assertEqual(new_comment(comment), 'No fields changed.')
+
+    def test_new_comment_for_thresholds_profiles_rules_field(self):
+        comment = '[{"changed": {"fields": ["rules"], ' \
+                  '"object": ["metricA"]}}, ' \
+                  '{"deleted": {"fields": ["rules"], ' \
+                  '"object": ["metricB"]}}, ' \
+                  '{"added": {"fields": ["rules"], "object": ["metricC"]}}]'
+        self.assertEqual(
+            new_comment(comment),
+            'Changed rule for metric "metricA". '
+            'Deleted rule for metric "metricB". '
+            'Added rule for metric "metricC".'
+        )
+
+    def test_new_comment_for_metric_profile_metricinstances(self):
+        comment = '[{"added": {"fields": ["metricinstances"], ' \
+                  '"object": ["ARC-CE", "org.nordugrid.ARC-CE-IGTF"]}}, ' \
+                  '{"deleted": {"fields": ["metricinstances"], ' \
+                  '"object": ["APEL", "org.apel.APEL-Sync"]}}]'
+        self.assertEqual(
+            new_comment(comment),
+            'Added service-metric instance tuple '
+            '(ARC-CE, org.nordugrid.ARC-CE-IGTF). '
+            'Deleted service-metric instance tuple '
+            '(APEL, org.apel.APEL-Sync).'
+        )

@@ -15,7 +15,7 @@ def msg_with_object(msg, action):
 
     else:
         return get_text_list(
-            [gettext(field) for field in msg[action]['object']],
+            ['"' + gettext(field) + '"' for field in msg[action]['object']],
             gettext('and')
         )
 
@@ -56,11 +56,24 @@ def new_comment(comment):
                         submessage, 'added'
                     )
 
-                    messages.append(
-                        gettext('Added {fields} ' + f + ' "{object}".').format(
-                            **submessage['added']
+                    if submessage['added']['fields'] == 'rules':
+                        messages.append(
+                            'Added rule for metric {object}.'.format(
+                                **submessage['added']
+                            )
                         )
-                    )
+                    elif submessage['added']['fields'] == 'metricinstances':
+                        messages.append(
+                            'Added service-metric instance tuple ({}).'.format(
+                                submessage['added']['object'].replace(' ', ', ')
+                            )
+                        )
+                    else:
+                        messages.append(
+                            gettext(
+                                'Added {fields} ' + f + ' {object}.'
+                            ).format(**submessage['added'])
+                        )
 
                 else:
                     messages.append(gettext(
@@ -84,11 +97,18 @@ def new_comment(comment):
                         submessage, 'changed'
                     )
 
-                    messages.append(
-                        gettext(
-                            'Changed {fields} ' + f + ' "{object}".'
-                        ).format(**submessage['changed'])
-                    )
+                    if submessage['changed']['fields'] == 'rules':
+                        messages.append(
+                            'Changed rule for metric {object}.'.format(
+                                **submessage['changed']
+                            )
+                        )
+                    else:
+                        messages.append(
+                            gettext(
+                                'Changed {fields} ' + f + ' {object}.'
+                            ).format(**submessage['changed'])
+                        )
 
                 else:
                     messages.append(gettext('Changed {fields}.').format(
@@ -112,11 +132,28 @@ def new_comment(comment):
                         submessage, 'deleted'
                     )
 
-                    messages.append(
-                        gettext(
-                            'Deleted {fields} ' + f + ' "{object}".'
-                        ).format(**submessage['deleted'])
-                    )
+                    if submessage['deleted']['fields'] == 'rules':
+                        messages.append(
+                            'Deleted rule for metric {object}.'.format(
+                                **submessage['deleted']
+                            )
+                        )
+
+                    elif submessage['deleted']['fields'] == 'metricinstances':
+                        messages.append(
+                            'Deleted service-metric instance '
+                            'tuple ({}).'.format(
+                                submessage['deleted']['object'].replace(
+                                    ' ', ', '
+                                )
+                            )
+                        )
+                    else:
+                        messages.append(
+                            gettext(
+                                'Deleted {fields} ' + f + ' {object}.'
+                            ).format(**submessage['deleted'])
+                        )
 
                 else:
                     messages.append(gettext('Deleted {fields}.').format(

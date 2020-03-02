@@ -571,7 +571,7 @@ export function HistoryComponent(obj, tenantview=false) {
       this.setState({loading: true});
       let url = undefined;
 
-      if (['metric', 'metricprofile', 'aggregationprofile'].includes(obj))
+      if (['metric', 'metricprofile', 'aggregationprofile', 'thresholdsprofile'].includes(obj))
         url = '/api/v2/internal/tenantversion/'
 
       else
