@@ -10,6 +10,19 @@ module.exports = {
     filename: "[name]-[hash].js",
     chunkFilename: "[name]-[hash].js"
   },
+  optimization: {
+    runtimeChunk: 'single',
+    moduleIds: 'hashed',
+    splitChunks: {
+      cacheGroups: {
+        vendor: {
+          test: /[\\/]node_modules[\\/]/,
+          name: 'vendors',
+          chunks: 'all'
+        }
+      }
+    }
+  },
   plugins: [
     new BundleTracker({filename: './webpack-stats.json'}),
   ],
