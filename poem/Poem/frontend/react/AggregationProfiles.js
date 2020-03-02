@@ -325,7 +325,7 @@ const AggregationProfilesForm = ({ values, errors, historyview=false, write_perm
       <Col md={4}>
         <FormGroup>
           <Row>
-            <Col md={6}>
+            <Col md={8}>
               <InputGroup>
                 <InputGroupAddon addonType='prepend'>Endpoint group</InputGroupAddon>
                 {
