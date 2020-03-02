@@ -6,21 +6,15 @@ import {
   LoadingAnim,
   BaseArgoView,
   SearchField,
-  DropDown,
   NotifyOk,
   Icon,
   HistoryComponent,
-  DiffElement} from './UIElements';
+  DiffElement,
+  ProfileMainInfo} from './UIElements';
 import ReactTable from 'react-table';
 import { Formik, Field, FieldArray, Form } from 'formik';
 import 'react-table/react-table.css';
-import {
-  Button,
-  Row,
-  Col,
-  Label,
-  FormGroup,
-  FormText} from 'reactstrap';
+import { Button } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faTimes, faSearch } from '@fortawesome/free-solid-svg-icons';
 import ReactDiffViewer from 'react-diff-viewer';
@@ -159,7 +153,7 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
                 type="button"
                 onClick={() => {
                   let new_element = {index: index + 1, service: '', metric: '', isNew: true}
-                  insert_handler(new_element, index + 1, form.values.groups_field, form.values.name )
+                  insert_handler(new_element, index + 1, form.values.groupname, form.values.name )
                   return insert(index + 1, new_element)
                 }}>
                 <FontAwesomeIcon icon={faPlus}/>
@@ -188,7 +182,7 @@ export class MetricProfilesChange extends Component
     this.state = {
       metric_profile: {},
       metric_profile_name: undefined,
-      groups_field: undefined,
+      groupname: undefined,
       list_user_groups: undefined,
       view_services: undefined,
       list_services: undefined,
@@ -249,7 +243,7 @@ export class MetricProfilesChange extends Component
                 .then(json2 => this.setState({
                   metric_profile: metricp,
                   metric_profile_name: metricp.name,
-                  groups_field: json2['groupname'],
+                  groupname: json2['groupname'],
                   list_user_groups: usergroups,
                   write_perm: localStorage.getItem('authIsSuperuser') === 'true' || usergroups.indexOf(group) >= 0,
                   view_services: this.flattenServices(metricp.services).sort(this.sortServices),
@@ -269,7 +263,7 @@ export class MetricProfilesChange extends Component
           this.setState({
             metric_profile: empty_metric_profile,
             metric_profile_name: '',
-            groups_field: '',
+            groupname: '',
             list_user_groups: usergroups,
             write_perm: localStorage.getItem('authIsSuperuser') === 'true' || usergroups.length > 0,
             view_services: [{service: '', metric: '', index: 0, isNew: true}],
@@ -386,7 +380,7 @@ export class MetricProfilesChange extends Component
       this.setState({
         list_services: tmp_list_services,
         view_services: tmp_list_services,
-        groups_field: group,
+        groupname: group,
         metric_profile_name: name
       });
     }
@@ -477,7 +471,7 @@ export class MetricProfilesChange extends Component
               {
                 apiid: dataToSend.id,
                 name: dataToSend.name,
-                groupname: formValues.groups_field,
+                groupname: formValues.groupname,
                 services: formValues.view_services
               }
             )
@@ -511,7 +505,7 @@ export class MetricProfilesChange extends Component
               {
                 apiid: r.data.id,
                 name: dataToSend.name,
-                groupname: formValues.groups_field,
+                groupname: formValues.groupname,
                 services: formValues.view_services
               }
             ).then(() => NotifyOk({
@@ -606,7 +600,7 @@ export class MetricProfilesChange extends Component
 
   render() {
     const {write_perm, loading, metric_profile, metric_profile_name,
-      view_services, groups_field, list_user_groups,
+      view_services, groupname, list_user_groups,
       serviceflavours_all, metrics_all,
       searchMetric, searchServiceFlavour} = this.state;
 
@@ -627,7 +621,7 @@ export class MetricProfilesChange extends Component
             initialValues = {{
               id: metric_profile.id,
               name: metric_profile_name,
-              groups_field: groups_field,
+              groupname: groupname,
               view_services: view_services,
               search_metric: searchMetric,
               search_serviceflavour: searchServiceFlavour
@@ -639,55 +633,16 @@ export class MetricProfilesChange extends Component
             enableReinitialize={true}
             render = {props => (
               <Form>
-                <FormGroup>
-                  <Row>
-                    <Col md={4}>
-                      <Label for="metricProfileName">Metric profile name:</Label>
-                      <Field
-                        type="text"
-                        name="name"
-                        placeholder="Name of metric profile"
-                        required={true}
-                        className="form-control form-control-lg"
-                        id="metricProfileName"
-                      />
-                    </Col>
-                  </Row>
-                </FormGroup>
-                <Row>
-                  <Col md={6}>
-                    <FormGroup>
-                      <Row>
-                        <Col md={6}>
-                          <Label>Group: </Label>
-                        </Col>
-                      </Row>
-                      <Row>
-                        <Col md={4}>
-                          <Field
-                            name="groups_field"
-                            component={DropDown}
-                            data={this.insertSelectPlaceholder(
-                              (write_perm) ?
-                                list_user_groups :
-                                [groups_field, ...list_user_groups]
-                            )}
-                            required={true}
-                            class_name='custom-select'
-                          />
-                        </Col>
-                      </Row>
-                      <Row>
-                        <Col md={12}>
-                          <FormText>
-                            Metric profile is a member of a given group.
-                          </FormText>
-                        </Col>
-                      </Row>
-                    </FormGroup>
-                  </Col>
-                </Row>
-                <h4 className="mt-2 alert-info p-1 pl-3 text-light text-uppercase rounded" style={{'backgroundColor': "#416090"}}>Metric instances</h4>
+                <ProfileMainInfo
+                  {...props}
+                  grouplist={
+                    (write_perm) ?
+                      list_user_groups :
+                      [groupname, ...list_user_groups]
+                  }
+                  profiletype='metric'
+                />
+                <h4 className="mt-4 alert-info p-1 pl-3 text-light text-uppercase rounded" style={{'backgroundColor': "#416090"}}>Metric instances</h4>
                 <FieldArray
                   name="view_services"
                   render={props => (
@@ -976,49 +931,12 @@ export class MetricProfileVersionDetails extends Component {
             }}
             render = {props => (
               <Form>
-                <FormGroup>
-                  <Row>
-                    <Col md={4}>
-                      <Label for='metricProfileName'>Metric profile name:</Label>
-                      <Field
-                        type='text'
-                        name='name'
-                        className='form-control form-control-lg'
-                        id='metricProfileName'
-                        disabled={true}
-                      />
-                    </Col>
-                  </Row>
-                </FormGroup>
-                <Row>
-                  <Col md={6}>
-                    <FormGroup>
-                      <Row>
-                        <Col md={6}>
-                          <Label>Group:</Label>
-                        </Col>
-                      </Row>
-                      <Row>
-                        <Col md={4}>
-                          <Field
-                            name='groupname'
-                            type='text'
-                            className='form-control'
-                            disabled={true}
-                          />
-                        </Col>
-                      </Row>
-                      <Row>
-                        <Col md={12}>
-                          <FormText>
-                            Metric profile is a member of a given group.
-                          </FormText>
-                        </Col>
-                      </Row>
-                    </FormGroup>
-                  </Col>
-                </Row>
-                <h4 className="mt-2 alert-info p-1 pl-3 text-light text-uppercase rounded" style={{'backgroundColor': "#416090"}}>Metric instances</h4>
+                <ProfileMainInfo
+                  {...props}
+                  fieldsdisable={true}
+                  profiletype='metric'
+                />
+                <h4 className="mt-4 alert-info p-1 pl-3 text-light text-uppercase rounded" style={{'backgroundColor': "#416090"}}>Metric instances</h4>
                 <FieldArray
                   name='metricinstances'
                   render={arrayHelpers => (
@@ -1033,7 +951,7 @@ export class MetricProfileVersionDetails extends Component {
                       <tbody>
                         {
                           props.values.metricinstances.map((service, index) =>
-                            <tr>
+                            <tr key={index}>
                               <td className='align-middle text-center'>{index + 1}</td>
                               <td>{service.service}</td>
                               <td>{service.metric}</td>
