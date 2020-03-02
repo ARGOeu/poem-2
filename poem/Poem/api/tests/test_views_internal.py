@@ -8159,10 +8159,12 @@ class ListPackagesAPIViewTests(TenantTestCase):
 
         self.tag1 = admin_models.OSTag.objects.create(name='CentOS 6')
         self.tag2 = admin_models.OSTag.objects.create(name='CentOS 7')
-        self.repo1 = admin_models.YumRepo.objects.create(name='repo-1',
-                                                         tag=self.tag1)
-        self.repo2 = admin_models.YumRepo.objects.create(name='repo-2',
-                                                         tag=self.tag2)
+        self.repo1 = admin_models.YumRepo.objects.create(
+            name='repo-1', tag=self.tag1
+        )
+        self.repo2 = admin_models.YumRepo.objects.create(
+            name='repo-2', tag=self.tag2
+        )
 
         self.package1 = admin_models.Package.objects.create(
             name='nagios-plugins-argo',
@@ -8181,6 +8183,12 @@ class ListPackagesAPIViewTests(TenantTestCase):
             version='0.5.0'
         )
         package3.repos.add(self.repo2)
+
+        self.package4 = admin_models.Package.objects.create(
+            name='nagios-plugins-http',
+            use_present_version=True
+        )
+        self.package4.repos.add(self.repo1, self.repo2)
 
         probe1 = admin_models.Probe.objects.create(
             name='ams-probe',
@@ -8284,17 +8292,26 @@ class ListPackagesAPIViewTests(TenantTestCase):
                 {
                     'name': 'nagios-plugins-argo',
                     'version': '0.1.11',
+                    'use_present_version': False,
                     'repos': ['repo-1 (CentOS 6)', 'repo-2 (CentOS 7)']
                 },
                 {
                     'name': 'nagios-plugins-fedcloud',
                     'version': '0.5.0',
+                    'use_present_version': False,
                     'repos': ['repo-2 (CentOS 7)']
                 },
                 {
                     'name': 'nagios-plugins-globus',
                     'version': '0.1.5',
+                    'use_present_version': False,
                     'repos': ['repo-2 (CentOS 7)']
+                },
+                {
+                    'name': 'nagios-plugins-http',
+                    'version': 'present',
+                    'use_present_version': True,
+                    'repos': ['repo-1 (CentOS 6)', 'repo-2 (CentOS 7)']
                 }
             ]
         )
@@ -8314,6 +8331,22 @@ class ListPackagesAPIViewTests(TenantTestCase):
                 'id': self.package1.id,
                 'name': 'nagios-plugins-argo',
                 'version': '0.1.11',
+                'use_present_version': False,
+                'repos': ['repo-1 (CentOS 6)', 'repo-2 (CentOS 7)']
+            }
+        )
+
+    def test_get_package_by_name_if_present_version(self):
+        request = self.factory.get(self.url + 'nagios-plugins-http-present')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'nagios-plugins-http-present')
+        self.assertEqual(
+            response.data,
+            {
+                'id': self.package4.id,
+                'name': 'nagios-plugins-http',
+                'version': 'present',
+                'use_present_version': True,
                 'repos': ['repo-1 (CentOS 6)', 'repo-2 (CentOS 7)']
             }
         )
@@ -8329,16 +8362,42 @@ class ListPackagesAPIViewTests(TenantTestCase):
         data = {
             'name': 'nagios-plugins-activemq',
             'version': '1.0.0',
+            'use_present_version': False,
             'repos': ['repo-1 (CentOS 6)', 'repo-2 (CentOS 7)']
         }
-        self.assertEqual(admin_models.Package.objects.all().count(), 3)
+        self.assertEqual(admin_models.Package.objects.all().count(), 4)
         request = self.factory.post(self.url, data, format='json')
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(admin_models.Package.objects.all().count(), 4)
+        self.assertEqual(admin_models.Package.objects.all().count(), 5)
         package = admin_models.Package.objects.get(
             name='nagios-plugins-activemq', version='1.0.0'
+        )
+        self.assertEqual(package.repos.all().count(), 2)
+        self.assertTrue(self.repo1 in package.repos.all())
+        self.assertTrue(self.repo2 in package.repos.all())
+
+    def test_post_package_with_present_version(self):
+        data = {
+            'name': 'nagios-plugins-tcp',
+            'version': '2.2.2',
+            'use_present_version': True,
+            'repos': ['repo-1 (CentOS 6)', 'repo-2 (CentOS 7)']
+        }
+        self.assertEqual(admin_models.Package.objects.all().count(), 4)
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(admin_models.Package.objects.all().count(), 5)
+        self.assertRaises(
+            admin_models.Package.DoesNotExist,
+            admin_models.Package.objects.get,
+            name='nagios-plugins-tcp', version='2.2.2'
+        )
+        package = admin_models.Package.objects.get(
+            name='nagios-plugins-tcp', version='present'
         )
         self.assertEqual(package.repos.all().count(), 2)
         self.assertTrue(self.repo1 in package.repos.all())
@@ -8348,6 +8407,7 @@ class ListPackagesAPIViewTests(TenantTestCase):
         data = {
             'name': 'nagios-plugins-argo',
             'version': '0.1.11',
+            'use_present_version': False,
             'repos': ['repo-1 (CentOS 6)']
         }
         request = self.factory.post(self.url, data, format='json')
@@ -8363,14 +8423,15 @@ class ListPackagesAPIViewTests(TenantTestCase):
         data = {
             'name': 'nagios-plugins-argo',
             'version': '0.1.7',
+            'use_present_version': False,
             'repos': ['repo-2 (CentOS 7)']
         }
-        self.assertEqual(admin_models.Package.objects.all().count(), 3)
+        self.assertEqual(admin_models.Package.objects.all().count(), 4)
         request = self.factory.post(self.url, data, format='json')
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(admin_models.Package.objects.all().count(), 4)
+        self.assertEqual(admin_models.Package.objects.all().count(), 5)
         package = admin_models.Package.objects.get(
             name='nagios-plugins-argo', version='0.1.7'
         )
@@ -8381,6 +8442,7 @@ class ListPackagesAPIViewTests(TenantTestCase):
         data = {
             'name': 'nagios-plugins-activemq',
             'version': '1.0.0',
+            'use_present_version': False,
             'repos': ['repo-1']
         }
         request = self.factory.post(self.url, data, format='json')
@@ -8395,6 +8457,7 @@ class ListPackagesAPIViewTests(TenantTestCase):
         data = {
             'name': 'nagios-plugins-activemq',
             'version': '1.0.0',
+            'use_present_version': False,
             'repos': ['nonexisting (CentOS 7)']
         }
         request = self.factory.post(self.url, data, format='json')
@@ -8410,6 +8473,7 @@ class ListPackagesAPIViewTests(TenantTestCase):
             'id': self.package1.id,
             'name': 'nagios-plugins-argo2',
             'version': '0.1.7',
+            'use_present_version': False,
             'repos': ['repo-2 (CentOS 7)']
         }
         content, content_type = encode_data(data)
@@ -8446,12 +8510,55 @@ class ListPackagesAPIViewTests(TenantTestCase):
             json.loads(metric_history[0].serialized_data)[0]['fields']
         self.assertEqual(serialized_data['probekey'], ['ams-probe', '0.1.7'])
 
+    def test_put_package_with_present_version(self):
+        data = {
+            'id': self.package1.id,
+            'name': 'nagios-plugins-argo2',
+            'version': '0.1.7',
+            'use_present_version': True,
+            'repos': ['repo-2 (CentOS 7)']
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        package = admin_models.Package.objects.get(id=self.package1.id)
+        self.assertEqual(package.name, 'nagios-plugins-argo2')
+        self.assertEqual(package.version, 'present')
+        self.assertEqual(package.repos.all().count(), 1)
+        self.assertTrue(self.repo2 in package.repos.all())
+        probe = admin_models.Probe.objects.get(name='ams-probe')
+        self.assertEqual(probe.package, package)
+        probe_history = admin_models.ProbeHistory.objects.filter(
+            object_id=probe
+        ).order_by('-date_created')
+        self.assertEqual(probe_history.count(), 1)
+        self.assertEqual(probe_history[0].package, probe.package)
+        mt = admin_models.MetricTemplate.objects.get(name='argo.AMS-Check')
+        self.assertEqual(mt.probekey, probe_history[0])
+        mt_history = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=mt
+        ).order_by('-date_created')
+        self.assertEqual(mt_history.count(), 1)
+        self.assertEqual(mt_history[0].probekey, probe_history[0])
+        metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
+        self.assertEqual(metric.probekey, probe_history[0])
+        metric_history = poem_models.TenantHistory.objects.filter(
+            object_repr=metric.__str__()
+        ).order_by('-date_created')
+        self.assertEqual(metric_history.count(), 1)
+        serialized_data = \
+            json.loads(metric_history[0].serialized_data)[0]['fields']
+        self.assertEqual(serialized_data['probekey'], ['ams-probe', 'present'])
+
     def test_put_package_with_new_repo(self):
         repo = admin_models.YumRepo.objects.create(name='repo-3', tag=self.tag1)
         data = {
             'id': self.package1.id,
             'name': 'nagios-plugins-argo2',
             'version': '0.1.7',
+            'use_present_version': False,
             'repos': ['repo-2 (CentOS 7)', 'repo-3 (CentOS 6)']
         }
         content, content_type = encode_data(data)
@@ -8494,6 +8601,7 @@ class ListPackagesAPIViewTests(TenantTestCase):
             'id': self.package1.id,
             'name': 'nagios-plugins-globus',
             'version': '0.1.5',
+            'use_present_version': False,
             'repos': ['repo-1 (CentOS 7)']
         }
         content, content_type = encode_data(data)
@@ -8511,6 +8619,7 @@ class ListPackagesAPIViewTests(TenantTestCase):
             'id': self.package1.id,
             'name': 'nagios-plugins-argo',
             'version': '0.1.12',
+            'use_present_version': False,
             'repos': ['repo-1']
         }
         content, content_type = encode_data(data)
@@ -8527,6 +8636,7 @@ class ListPackagesAPIViewTests(TenantTestCase):
             'id': self.package1.id,
             'name': 'nagios-plugins-argo',
             'version': '0.1.12',
+            'use_present_version': False,
             'repos': ['nonexisting (CentOS 7)']
         }
         content, content_type = encode_data(data)
@@ -8539,7 +8649,7 @@ class ListPackagesAPIViewTests(TenantTestCase):
         )
 
     def test_delete_package(self):
-        self.assertEqual(admin_models.Package.objects.all().count(), 3)
+        self.assertEqual(admin_models.Package.objects.all().count(), 4)
         request = self.factory.delete(self.url + 'nagios-plugins-globus-0.1.5')
         force_authenticate(request, user=self.user)
         response = self.view(request, 'nagios-plugins-globus-0.1.5')
@@ -8549,7 +8659,7 @@ class ListPackagesAPIViewTests(TenantTestCase):
             admin_models.Package.objects.get,
             name='nagios-plugins-globus'
         )
-        self.assertEqual(admin_models.Package.objects.all().count(), 2)
+        self.assertEqual(admin_models.Package.objects.all().count(), 3)
 
     def test_delete_package_with_associated_probe(self):
         request = self.factory.delete(self.url + 'nagios-plugins-argo-0.1.11')

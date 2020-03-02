@@ -1,7 +1,15 @@
 import React, { Component } from 'react';
 import { Backend } from './DataManager';
 import { Link } from 'react-router-dom';
-import{ LoadingAnim, BaseArgoView, DropdownFilterComponent, FancyErrorMessage, AutocompleteField, NotifyOk } from './UIElements';
+import{
+  LoadingAnim,
+  BaseArgoView,
+  DropdownFilterComponent,
+  FancyErrorMessage,
+  AutocompleteField,
+  NotifyOk,
+  Checkbox
+} from './UIElements';
 import ReactTable from 'react-table';
 import {
   FormGroup,
@@ -20,9 +28,13 @@ const PackageSchema = Yup.object().shape({
   name: Yup.string()
     .matches(/^\S*$/, 'Name cannot contain white spaces')
     .required('Required'),
+  present_version: Yup.boolean(),
   version: Yup.string()
     .matches(/^\S*$/, 'Version cannot contain white spaces')
-    .required('Required'),
+    .when('present_version', {
+      is: false,
+      then: Yup.string().required('Required')
+    }),
   repo_6: Yup.string(),
   repo_7: Yup.string()
 })
@@ -85,7 +97,7 @@ export class PackageList extends Component {
             <Link to={'/ui/packages/' + e.name + '-' + e.version}>{e.name + ' (' + e.version + ')'}</Link>,
           filterable: true,
           Filter: (
-            <input 
+            <input
               value={this.state.search_name}
               onChange={e => this.setState({search_name: e.target.value})}
               placeholder='Search by name and version'
@@ -102,7 +114,7 @@ export class PackageList extends Component {
               {row.value.join(', ')}
             </div>,
           filterable: true,
-          Filter: 
+          Filter:
             <DropdownFilterComponent
               value={this.state.repo}
               onChange={e => this.setState({search_repo: e.target.value})}
@@ -126,7 +138,7 @@ export class PackageList extends Component {
 
       if (loading)
         return <LoadingAnim/>;
-      
+
       else if (!loading && list_packages) {
         return (
           <BaseArgoView
@@ -142,7 +154,7 @@ export class PackageList extends Component {
             />
           </BaseArgoView>
         );
-      } else 
+      } else
         return null;
     };
 };
@@ -169,6 +181,7 @@ export class PackageChange extends Component {
       list_repos_6: [],
       list_repos_7: [],
       list_probes: [],
+      present_version: false,
       loading: false,
       write_perm: false,
       areYouSureModal: false,
@@ -183,15 +196,16 @@ export class PackageChange extends Component {
     this.onSubmitHandle = this.onSubmitHandle.bind(this);
     this.doChange = this.doChange.bind(this);
     this.doDelete = this.doDelete.bind(this);
+    this.toggleCheckbox = this.toggleCheckbox.bind(this);
   };
 
   toggleAreYouSure() {
-    this.setState(prevState => 
+    this.setState(prevState =>
       ({areYouSureModal: !prevState.areYouSureModal}));
   };
 
   toggleAreYouSureSetModal(msg, title, onyes) {
-    this.setState(prevState => 
+    this.setState(prevState =>
       ({areYouSureModal: !prevState.areYouSureModal,
         modalFunc: onyes,
         modalMsg: msg,
@@ -231,13 +245,14 @@ export class PackageChange extends Component {
 
     if (values.repo_7)
       repos.push(values.repo_7);
-   
+
     if (this.addview) {
       this.backend.addObject(
         '/api/v2/internal/packages/',
         {
           name: values.name,
           version: values.version,
+          use_present_version: values.present_version,
           repos: repos
         }
       ).then(response => {
@@ -261,6 +276,7 @@ export class PackageChange extends Component {
           id: values.id,
           name: values.name,
           version: values.version,
+          use_present_version: values.present_version,
           repos: repos
         }
       ).then(response => {
@@ -298,6 +314,10 @@ export class PackageChange extends Component {
       });
   };
 
+  toggleCheckbox(){
+    this.setState({present_version: !present_version});
+  };
+
   componentDidMount() {
     this.setState({loading: true});
     this.backend.fetchData('/api/v2/internal/yumrepos')
@@ -331,7 +351,7 @@ export class PackageChange extends Component {
                 for (let i = 0; i < pkg.repos.length; i++) {
                   if (pkg.repos[i].split('(')[1].slice(0, -1) === 'CentOS 6')
                     repo_6 = pkg.repos[i];
-                  
+
                   if (pkg.repos[i].split('(')[1].slice(0, -1) === 'CentOS 7')
                     repo_7 = pkg.repos[i];
                 }
@@ -356,7 +376,8 @@ export class PackageChange extends Component {
   };
 
   render() {
-    const { pkg, repo_6, repo_7, list_repos_6, list_repos_7, list_probes, write_perm, loading } = this.state;
+    const { pkg, repo_6, repo_7, list_repos_6, list_repos_7,
+      list_probes, write_perm, loading, present_version } = this.state;
 
     if (loading)
       return <LoadingAnim/>;
@@ -379,14 +400,16 @@ export class PackageChange extends Component {
               name: pkg.name,
               version: pkg.version,
               repo_6: repo_6,
-              repo_7: repo_7, 
+              repo_7: repo_7,
+              present_version: present_version
             }}
             onSubmit = {(values, actions) => this.onSubmitHandle(values, actions)}
             validationSchema={PackageSchema}
+            enableReinitialize={true}
             render = {props => (
               <Form>
                 <FormGroup>
-                  <Row>
+                  <Row className='align-items-center'>
                     <Col md={6}>
                       <InputGroup>
                         <InputGroupAddon addonType='prepend'>Name</InputGroupAddon>
@@ -406,11 +429,15 @@ export class PackageChange extends Component {
                       </FormText>
                     </Col>
                     <Col md={2}>
+                      <Row>
+                        <Col md={12}>
                       <InputGroup>
                         <InputGroupAddon addonType='prepend'>Version</InputGroupAddon>
                         <Field
                           type='text'
                           name='version'
+                          value={props.values.present_version ? 'present' : props.values.version}
+                          disabled={props.values.present_version}
                           className={`form-control ${props.errors.version && 'border-danger'}`}
                           id='version'
                         />
@@ -422,6 +449,18 @@ export class PackageChange extends Component {
                       <FormText color='muted'>
                         Package version.
                       </FormText>
+                    </Col>
+                  </Row>
+                    </Col>
+                    <Col md={3}>
+                      <Field
+                        component={Checkbox}
+                        name='present_version'
+                        className='form-control'
+                        id='checkbox'
+                        label='Use version which is present in repo'
+                        onChange={this.toggleCheckbox}
+                      />
                     </Col>
                   </Row>
                 </FormGroup>
@@ -514,7 +553,7 @@ export class PackageChange extends Component {
               </Form>
             )}
           />
-        </BaseArgoView> 
+        </BaseArgoView>
       )
     } else
       return null;
