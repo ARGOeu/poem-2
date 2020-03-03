@@ -812,7 +812,7 @@ export const MetricForm =
                       <Field
                         component='select'
                         name='probeversion'
-                        className='form-control'
+                        className='form-control custom-select'
                         id='probeversion'
                         onChange={e => onSelect('probeversion', e.target.value)}
                       >
@@ -887,7 +887,7 @@ export const MetricForm =
                 <Field
                   component='select'
                   name='type'
-                  className='form-control'
+                  className='form-control custom-select'
                   id='mtype'
                   onChange={e => {
                     handleChange(e);
@@ -946,7 +946,7 @@ export const MetricForm =
                     <Field
                       component='select'
                       name='group'
-                      className='form-control'
+                      className='form-control custom-select'
                       id='group'
                     >
                       {
@@ -1066,7 +1066,7 @@ export function CompareMetrics(metrictype) {
       };
 
       this.backend = new Backend();
-    };
+    }
 
     componentDidMount() {
       this.setState({loading: true});
@@ -1142,7 +1142,7 @@ export function CompareMetrics(metrictype) {
                 files2 = e.fields.files;
                 parameter2 = e.fields.parameter;
                 fileparameter2 = e.fields.fileparameter;
-            };
+            }
           });
           this.setState({
             name1: name1,
@@ -1174,7 +1174,7 @@ export function CompareMetrics(metrictype) {
             loading: false
           });
         });
-    };
+    }
 
     render() {
       var { name1, name2, probeversion1, probeversion2, type1, type2,
@@ -1248,9 +1248,9 @@ export function CompareMetrics(metrictype) {
         );
       } else
         return null;
-    };
+    }
   };
-};
+}
 
 
 export class MetricChange extends Component {
