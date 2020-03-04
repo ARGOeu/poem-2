@@ -65,7 +65,7 @@ function GroupList(group, id, name) {
 
     if (loading)
       return(<LoadingAnim/>);
-    
+
     else if (!loading && list_groups) {
       return (
         <BaseArgoView
@@ -91,12 +91,12 @@ function GroupChange(gr, id, ttl) {
   return class extends Component {
     constructor(props) {
       super(props);
-  
+
       this.group = props.match.params.group;
       this.addview = props.addview;
       this.location = props.location;
       this.history = props.history;
-  
+
       this.state = {
         name: '',
         items: [],
@@ -108,9 +108,9 @@ function GroupChange(gr, id, ttl) {
         modalTitle: undefined,
         modalMsg: undefined
       };
-  
+
       this.backend = new Backend();
-  
+
       this.handleDeselect = this.handleDeselect.bind(this);
       this.handleSelect = this.handleSelect.bind(this);
       this.toggleAreYouSure = this.toggleAreYouSure.bind(this);
@@ -119,7 +119,7 @@ function GroupChange(gr, id, ttl) {
       this.doChange = this.doChange.bind(this);
       this.doDelete = this.doDelete.bind(this);
     };
-  
+
     handleDeselect(deSelectedItems) {
       var items = this.state.items.slice();
       var nogroupitems = this.state.nogroupitems.slice();
@@ -133,30 +133,30 @@ function GroupChange(gr, id, ttl) {
       });
       this.setState({items, nogroupitems});
     };
-  
+
     handleSelect(items) {
       items.sort((a, b) => a.id - b.id);
       this.setState({items});
     };
-  
+
     toggleAreYouSure() {
-      this.setState(prevState => 
+      this.setState(prevState =>
         ({areYouSureModal: !prevState.areYouSureModal}));
     };
-  
+
     toggleAreYouSureSetModal(msg, title, onyes) {
-      this.setState(prevState => 
+      this.setState(prevState =>
         ({areYouSureModal: !prevState.areYouSureModal,
           modalFunc: onyes,
           modalMsg: msg,
           modalTitle: title,
         }));
     };
-  
+
     onSubmitHandle(values, action) {
       let msg = undefined;
       let title = undefined;
-  
+
       if (this.addview) {
         msg = `Are you sure you want to add group of ${ttl}?`;
         title = `Add group of ${ttl}`;
@@ -164,14 +164,14 @@ function GroupChange(gr, id, ttl) {
         msg = `Are you sure you want to change group of ${ttl}?`;
         title = `Change group of ${ttl}`;
       }
-      this.toggleAreYouSureSetModal(msg, title, 
+      this.toggleAreYouSureSetModal(msg, title,
         () => this.doChange(values, action));
     };
-  
+
     doChange(values, action) {
       let items = [];
       this.state.items.forEach((i) => items.push(i.name));
-  
+
       if (!this.addview) {
         this.backend.changeObject(
           `/api/v2/internal/${gr}group/`,
@@ -187,7 +187,7 @@ function GroupChange(gr, id, ttl) {
         .catch(err => alert(`Something went wrong: ${err}`))
       } else {
         this.backend.addObject(
-          `/api/v2/internal/${gr}group/`, 
+          `/api/v2/internal/${gr}group/`,
           {
             name: values.name,
             items: items
@@ -201,7 +201,7 @@ function GroupChange(gr, id, ttl) {
         .catch(err => alert(`Something went wrong: ${err}`))
       }
     }
-  
+
     doDelete(name) {
       this.backend.deleteObject(`/api/v2/internal/${gr}group/${name}`)
         .then(() => NotifyOk({
@@ -211,10 +211,10 @@ function GroupChange(gr, id, ttl) {
         }))
         .catch(err => alert(`Something went wrong: ${err}`))
     }
-  
+
     componentDidMount() {
       this.setState({loading: true});
-  
+
       this.backend.fetchResult(`/api/v2/internal/${gr}group`)
         .then(nogroupitems => {
           if (!this.addview) {
@@ -237,7 +237,7 @@ function GroupChange(gr, id, ttl) {
           };
         });
     };
-  
+
     render() {
       const { name, items, write_perm, loading } = this.state;
       var nogroupitems = this.state.nogroupitems;
@@ -247,10 +247,10 @@ function GroupChange(gr, id, ttl) {
         button: 'btn btn btn-block btn-primary',
         buttonActive: 'btn btn btn-block btn-primary'
       };
-  
+
       if (loading)
         return(<LoadingAnim/>);
-  
+
       else if (!loading) {
         return(
           <BaseArgoView
@@ -323,7 +323,7 @@ function GroupChange(gr, id, ttl) {
                       <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
                         {
                           !this.addview ?
-                            <Button 
+                            <Button
                               color="danger"
                               onClick={() => {
                                 this.toggleAreYouSureSetModal(`Are you sure you want to delete group of ${gr}?`,
@@ -336,9 +336,9 @@ function GroupChange(gr, id, ttl) {
                           :
                             <div></div>
                         }
-                        <Button 
-                          color="success" 
-                          id="submit-button" 
+                        <Button
+                          color="success"
+                          id="submit-button"
                           type="submit"
                         >
                           Save

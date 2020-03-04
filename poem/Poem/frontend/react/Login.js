@@ -2,11 +2,11 @@ import React, { Component } from 'react';
 import {
   Alert,
   Container,
-  Button, 
-  Row, 
-  Col, 
-  Card, 
-  CardHeader, 
+  Button,
+  Row,
+  Col,
+  Card,
+  CardHeader,
   CardBody,
   Label,
   CardFooter,
@@ -16,10 +16,10 @@ import ArgoLogo from './argologo_color.svg';
 import './Login.css';
 import {Footer} from './UIElements.js';
 import Cookies from 'universal-cookie';
+import {Backend} from './DataManager.js';
 
 
 class Login extends Component {
-
   constructor(props) {
     super(props);
 
@@ -31,6 +31,7 @@ class Login extends Component {
       isTenantSchema: null
     };
 
+    this.backend = new Backend()
     this.dismissLoginAlert = this.dismissLoginAlert.bind(this);
   }
 
@@ -62,7 +63,7 @@ class Login extends Component {
   fetchSamlButtonString() {
     return fetch('/api/v2/internal/config_options')
       .then(response => response.json())
-      .then(json => this._isMounted && 
+      .then(json => this._isMounted &&
         this.setState({samlIdpString: json.result.saml_login_string}))
       .catch(err => console.log('Something went wrong: ' + err));
   }
@@ -88,7 +89,7 @@ class Login extends Component {
               json => {
                 if (Object.keys(json).length > 0) {
                   this.flushSaml2Cache().then(
-                    response => response.ok && 
+                    response => response.ok &&
                       this.props.onLogin(json, this.props.history)
                   )
                 }
@@ -127,10 +128,10 @@ class Login extends Component {
         'Referer': 'same-origin'
       },
       body: JSON.stringify({
-        'username': username, 
+        'username': username,
         'password': password
       })
-    }).then(response => this.fetchUserDetails(username));
+    }).then(response => this.backend.isActiveSession());
   }
 
   dismissLoginAlert() {
@@ -145,8 +146,8 @@ class Login extends Component {
           <Row className="login-first-row">
             <Col sm={{size: 4, offset: 4}}>
               <Card>
-                <CardHeader 
-                  id='argo-loginheader' 
+                <CardHeader
+                  id='argo-loginheader'
                   className="d-sm-inline-flex align-items-center justify-content-around">
                   <img src={ArgoLogo} id="argologo" alt="ARGO logo"/>
                   <h4 className="text-light"><strong>ARGO</strong> POEM</h4>
@@ -156,13 +157,11 @@ class Login extends Component {
                     initialValues = {{username: '', password: ''}}
                     onSubmit = {
                       (values) => this.doUserPassLogin(values.username, values.password)
-                        .then(response => 
+                        .then(response =>
                           {
-                            if (response.ok) {
-                              response.json().then(
-                                json => this.props.onLogin(json, this.props.history)
-                              )
-                            } 
+                            if (response.active) {
+                              this.props.onLogin(response.userdetails, this.props.history)
+                            }
                             else {
                               this.setState({loginFailedVisible: true});
                             }
@@ -192,7 +191,7 @@ class Login extends Component {
                       </FormGroup>
                     </Form>
                   </Formik>
-                </CardBody> 
+                </CardBody>
                 <CardFooter id="argo-loginfooter">
                   <Footer loginPage={true}/>
                 </CardFooter>

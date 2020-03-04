@@ -1,8 +1,10 @@
 from django.conf import settings
 from django.db import connection
+from django.contrib.auth import get_user_model
 
 from Poem.api.internal_views.users import get_all_groups, get_groups_for_user
 from Poem.poem.saml2.config import tenant_from_request, saml_login_string
+from Poem.api import serializers
 
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
@@ -33,7 +35,12 @@ class IsSessionActive(APIView):
     authentication_classes = (SessionAuthentication,)
 
     def get(self, request):
-        return Response({'active': True})
+        userdetails = dict()
+        user = get_user_model().objects.get(id=self.request.user.id)
+        serializer = serializers.UsersSerializer(user)
+        userdetails.update(serializer.data)
+
+        return Response({'active': True, 'userdetails': userdetails})
 
 
 class GetConfigOptions(APIView):

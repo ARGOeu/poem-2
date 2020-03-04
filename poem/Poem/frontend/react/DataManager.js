@@ -4,8 +4,10 @@ export class Backend {
   isActiveSession() {
     return fetch('/api/v2/internal/sessionactive')
       .then(response => {
-        let active = response.ok ? true : false
-        return active 
+        if (response.ok)
+          return response.json()
+        else
+          return false
       })
       .catch(() => false);
   };
@@ -84,7 +86,7 @@ export class Backend {
 export class WebApi {
   constructor(
     {
-      token=undefined, 
+      token=undefined,
       metricProfiles=undefined,
       aggregationProfiles=undefined,
       thresholdsProfiles=undefined,
@@ -92,20 +94,20 @@ export class WebApi {
     }) {
     this.token = token;
     this.metricprofiles = metricProfiles;
-    this.aggregationprofiles = aggregationProfiles; 
+    this.aggregationprofiles = aggregationProfiles;
     this.thresholdsprofiles = thresholdsProfiles;
   };
 
   fetchMetricProfiles() {
     return fetch(this.metricprofiles,
-      {headers: 
+      {headers:
         {
           "Accept": "application/json",
           "x-api-key": this.token
         }
       })
       .then(response => response.json())
-      .then(json => json['data']) 
+      .then(json => json['data'])
       .catch(err => alert(`Something went wrong: ${err}`));
   };
 
@@ -159,7 +161,7 @@ export class WebApi {
 
   fetchProfile(url) {
     return fetch(url,
-      {headers: 
+      {headers:
         {
           "Accept": "application/json",
           "x-api-key": this.token
@@ -194,7 +196,7 @@ export class WebApi {
         'Content-Type': 'application/json',
         'x-api-key': this.token
       },
-      body: values && JSON.stringify(values) 
+      body: values && JSON.stringify(values)
     });
   }
 
