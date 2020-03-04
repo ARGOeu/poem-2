@@ -258,9 +258,9 @@ class App extends Component {
     this.backend = new Backend();
 
     this.state = {
-      isLogged: localStorage.getItem('authIsLogged') ? true : false,
       isSessionActive: undefined,
       areYouSureModal: false,
+      userDetails: undefined,
       webApiAggregation: undefined,
       webApiMetric: undefined,
       webApiThresholds: undefined,
@@ -276,17 +276,22 @@ class App extends Component {
   }
 
   onLogin(json, history) {
+    let response = new Object({
+      active: true,
+      userdetails: json
+    })
+
     localStorage.setItem('authUsername', json.username);
     localStorage.setItem('authIsLogged', true);
     localStorage.setItem('authFirstName', json.first_name);
     localStorage.setItem('authLastName', json.last_name);
     localStorage.setItem('authIsSuperuser', json.is_superuser);
     this.backend.isTenantSchema().then((isTenantSchema) =>
-      this.initalizeState(isTenantSchema, true, true)).then(
+      this.initalizeState(isTenantSchema, response)).then(
         setTimeout(() => {
           history.push('/ui/home');
         }, 50
-      )).then(this.cookies.set('poemActiveSession', true))
+      ))
   }
 
   flushStorage() {
@@ -300,7 +305,7 @@ class App extends Component {
 
   onLogout() {
     this.flushStorage()
-    this.setState({isLogged: false, isSessionActive: false});
+    this.setState({isSessionActive: false});
   }
 
   toggleAreYouSure() {
@@ -323,14 +328,14 @@ class App extends Component {
       .catch(err => alert('Something went wrong: ' + err))
   }
 
-  initalizeState(poemType, activeSession, isLogged) {
+  initalizeState(poemType, response) {
     if (poemType) {
       return Promise.all([this.fetchToken(), this.fetchConfigOptions()])
         .then(([token, options]) => {
           this.setState({
             isTenantSchema: poemType,
-            isSessionActive: activeSession,
-            isLogged: isLogged,
+            isSessionActive: response.active,
+            userDetails: response.userdetails,
             token: token,
             webApiMetric: options && options.result.webapimetric,
             webApiAggregation: options && options.result.webapiaggregation,
@@ -342,8 +347,8 @@ class App extends Component {
     else {
       this.setState({
         isTenantSchema: poemType,
-        isSessionActive: activeSession,
-        isLogged: isLogged,
+        isSessionActive: response.active,
+        userDetails: response.userdetails
       })
     }
   }
@@ -361,9 +366,9 @@ class App extends Component {
   }
 
   render() {
-    let cookie = this.cookies.get('poemActiveSession')
+    let {isSessionActive, userDetails} = this.state
 
-    if (!cookie || !this.state.isLogged) {
+    if (!isSessionActive) {
       return (
         <BrowserRouter>
           <Switch>
@@ -388,7 +393,7 @@ class App extends Component {
         </BrowserRouter>
       )
     }
-    else if (this.state.isLogged && cookie &&
+    else if (isSessionActive && userDetails &&
       this.state.isTenantSchema !== null) {
 
       return (
