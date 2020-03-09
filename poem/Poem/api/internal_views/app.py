@@ -38,7 +38,17 @@ class IsSessionActive(APIView):
         userdetails = dict()
         user = get_user_model().objects.get(id=self.request.user.id)
         serializer = serializers.UsersSerializer(user)
+        groupsofmetrics = user.userprofile.groupsofmetrics.all().values_list('name', flat=True)
+        groupsofmetricprofiles = user.userprofile.groupsofmetricprofiles.all().values_list('name', flat=True)
+        groupsofaggregations = user.userprofile.groupsofaggregations.all().values_list('name', flat=True)
+        groupsofthresholdsprofiles = user.userprofile.groupsofthresholdsprofiles.all().values_list('name', flat=True)
         userdetails.update(serializer.data)
+        userdetails['groups'] = {
+            'groupsofmetrics': groupsofmetrics,
+            'groupsofmetricprofiles': groupsofmetricprofiles,
+            'groupsofaggregations': groupsofaggregations,
+            'groupsofthresholdsprofiles': groupsofthresholdsprofiles
+        }
 
         return Response({'active': True, 'userdetails': userdetails})
 
