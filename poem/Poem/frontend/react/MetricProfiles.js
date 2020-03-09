@@ -238,22 +238,20 @@ export class MetricProfilesChange extends Component
         .then(([serviceflavoursall, metricsall]) => {
           if (!this.addview) {
             this.backend.fetchData(`/api/v2/internal/metricprofiles/${this.profile_name}`)
-              .then(json1 => this.webapi.fetchMetricProfile(json1.apiid)
-                .then(metricp => this.backend.fetchData(`/api/v2/internal/metricprofiles/${this.profile_name}`)
-                  .then(json2 => this.setState({
-                    metric_profile: metricp,
-                    metric_profile_name: metricp.name,
-                    groupname: json2['groupname'],
-                    list_user_groups: sessionActive.userdetails.groups.groupsofmetricprofiles,
-                    write_perm: sessionActive.userdetails.is_superuser ||
-                      sessionActive.userdetails.groups.groupsofmetricprofiles.indexOf(json2['groupname']) > 0,
-                    view_services: this.flattenServices(metricp.services).sort(this.sortServices),
-                    serviceflavours_all: serviceflavoursall,
-                    metrics_all: metricsall,
-                    list_services: this.flattenServices(metricp.services).sort(this.sortServices),
-                    loading: false
-                  }))
-                )
+              .then(json1 => Promise.all([this.webapi.fetchMetricProfile(json1.apiid)])
+                .then(([metricp]) => this.setState({
+                  metric_profile: metricp,
+                  metric_profile_name: metricp.name,
+                  groupname: json1['groupname'],
+                  list_user_groups: sessionActive.userdetails.groups.groupsofmetricprofiles,
+                  write_perm: sessionActive.userdetails.is_superuser ||
+                    sessionActive.userdetails.groups.groupsofmetricprofiles.indexOf(json1['groupname']) >= 0,
+                  view_services: this.flattenServices(metricp.services).sort(this.sortServices),
+                  serviceflavours_all: serviceflavoursall,
+                  metrics_all: metricsall,
+                  list_services: this.flattenServices(metricp.services).sort(this.sortServices),
+                  loading: false
+                }))
               )
           } else {
             let empty_metric_profile = {
@@ -266,8 +264,7 @@ export class MetricProfilesChange extends Component
               metric_profile_name: '',
               groupname: '',
               list_user_groups: sessionActive.userdetails.groups.groupsofmetricprofiles,
-              write_perm: sessionActive.userdetails.is_superuser ||
-                sessionActive.userdetails.groups.groupsofmetricprofiles.indexOf(json2['groupname']) > 0,
+              write_perm: sessionActive.userdetails.groups.groupsofmetricprofiles.length > 0,
               view_services: [{service: '', metric: '', index: 0, isNew: true}],
               serviceflavours_all: serviceflavoursall,
               metrics_all: metricsall,
