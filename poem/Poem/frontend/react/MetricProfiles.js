@@ -230,50 +230,53 @@ export class MetricProfilesChange extends Component
   componentDidMount() {
     this.setState({loading: true})
 
-    Promise.all([
-      this.backend.fetchData('/api/v2/internal/groups/metricprofiles'),
-      this.backend.fetchListOfNames('/api/v2/internal/serviceflavoursall'),
-      this.backend.fetchListOfNames('/api/v2/internal/metricsall')
-    ])
-      .then(([usergroups, serviceflavoursall, metricsall]) => {
-        if (!this.addview) {
-          this.backend.fetchData(`/api/v2/internal/metricprofiles/${this.profile_name}`)
-            .then(json1 => this.webapi.fetchMetricProfile(json1.apiid)
-              .then(metricp => this.backend.fetchData(`/api/v2/internal/metricprofiles/${metricp.name}`)
-                .then(json2 => this.setState({
-                  metric_profile: metricp,
-                  metric_profile_name: metricp.name,
-                  groupname: json2['groupname'],
-                  list_user_groups: usergroups,
-                  write_perm: localStorage.getItem('authIsSuperuser') === 'true' || usergroups.indexOf(group) >= 0,
-                  view_services: this.flattenServices(metricp.services).sort(this.sortServices),
-                  serviceflavours_all: serviceflavoursall,
-                  metrics_all: metricsall,
-                  list_services: this.flattenServices(metricp.services).sort(this.sortServices),
-                  loading: false
-                }))
+    this.backend.isActiveSession().then(sessionActive => {
+      sessionActive.active && Promise.all([
+        this.backend.fetchListOfNames('/api/v2/internal/serviceflavoursall'),
+        this.backend.fetchListOfNames('/api/v2/internal/metricsall')
+      ])
+        .then(([serviceflavoursall, metricsall]) => {
+          if (!this.addview) {
+            this.backend.fetchData(`/api/v2/internal/metricprofiles/${this.profile_name}`)
+              .then(json1 => this.webapi.fetchMetricProfile(json1.apiid)
+                .then(metricp => this.backend.fetchData(`/api/v2/internal/metricprofiles/${this.profile_name}`)
+                  .then(json2 => this.setState({
+                    metric_profile: metricp,
+                    metric_profile_name: metricp.name,
+                    groupname: json2['groupname'],
+                    list_user_groups: sessionActive.userdetails.groups.groupsofmetricprofiles,
+                    write_perm: sessionActive.userdetails.is_superuser ||
+                      sessionActive.userdetails.groups.groupsofmetricprofiles.indexOf(json2['groupname']) > 0,
+                    view_services: this.flattenServices(metricp.services).sort(this.sortServices),
+                    serviceflavours_all: serviceflavoursall,
+                    metrics_all: metricsall,
+                    list_services: this.flattenServices(metricp.services).sort(this.sortServices),
+                    loading: false
+                  }))
+                )
               )
-            )
-        } else {
-          let empty_metric_profile = {
-            id: '',
-            name: '',
-            services: [],
+          } else {
+            let empty_metric_profile = {
+              id: '',
+              name: '',
+              services: [],
+            }
+            this.setState({
+              metric_profile: empty_metric_profile,
+              metric_profile_name: '',
+              groupname: '',
+              list_user_groups: sessionActive.userdetails.groups.groupsofmetricprofiles,
+              write_perm: sessionActive.userdetails.is_superuser ||
+                sessionActive.userdetails.groups.groupsofmetricprofiles.indexOf(json2['groupname']) > 0,
+              view_services: [{service: '', metric: '', index: 0, isNew: true}],
+              serviceflavours_all: serviceflavoursall,
+              metrics_all: metricsall,
+              list_services: [{service: '', metric: '', index: 0, isNew: true}],
+              loading: false
+            })
           }
-          this.setState({
-            metric_profile: empty_metric_profile,
-            metric_profile_name: '',
-            groupname: '',
-            list_user_groups: usergroups,
-            write_perm: localStorage.getItem('authIsSuperuser') === 'true' || usergroups.length > 0,
-            view_services: [{service: '', metric: '', index: 0, isNew: true}],
-            serviceflavours_all: serviceflavoursall,
-            metrics_all: metricsall,
-            list_services: [{service: '', metric: '', index: 0, isNew: true}],
-            loading: false
-          })
-        }
-      })
+        })
+    })
   }
 
   insertSelectPlaceholder(data, text) {
