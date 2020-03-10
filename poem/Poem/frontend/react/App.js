@@ -339,9 +339,9 @@ class App extends Component {
 
   componentDidMount() {
     this.backend.isTenantSchema().then((isTenantSchema) => {
-       this.backend.isActiveSession().then(active => {
-          this.initalizeState(isTenantSchema, active)
-      })
+      this.backend.isActiveSession().then(response =>
+        response.active && this.initalizeState(isTenantSchema, response)
+      )
     })
   }
 
