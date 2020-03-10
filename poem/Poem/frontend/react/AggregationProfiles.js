@@ -633,51 +633,54 @@ export class AggregationProfilesChange extends Component
   componentDidMount() {
     this.setState({loading: true})
 
-    Promise.all([
-      this.webapi.fetchMetricProfiles(),
-      this.backend.fetchData('/api/v2/internal/groups/aggregations')
-    ])
-      .then(([metricp, usergroups]) => {
-        if (!this.addview) {
-          this.backend.fetchData(`/api/v2/internal/aggregations/${this.profile_name}`)
-            .then(json1 => this.webapi.fetchAggregationProfile(json1.apiid)
-              .then(aggregp => this.backend.fetchData(`/api/v2/internal/aggregations/${aggregp.name}`)
-                .then(json2 => this.setState({
-                  aggregation_profile: aggregp,
-                  groupname: json2['groupname'],
-                  list_user_groups: usergroups,
-                  write_perm: localStorage.getItem('authIsSuperuser') === 'true' || usergroups.indexOf(group) >= 0,
-                  list_id_metric_profiles: this.extractListOfMetricsProfiles(metricp),
-                  list_services: this.extractListOfServices(aggregp.metric_profile, metricp),
-                  list_complete_metric_profiles: metricp,
-                  loading: false
-                }))
+    this.backend.isActiveSession().then(sessionActive => {
+      sessionActive.active && Promise.all([
+        this.webapi.fetchMetricProfiles(),
+      ])
+        .then(([metricp]) => {
+          if (!this.addview) {
+            this.backend.fetchData(`/api/v2/internal/aggregations/${this.profile_name}`)
+              .then(json1 => this.webapi.fetchAggregationProfile(json1.apiid)
+                .then(aggregp => this.backend.fetchData(`/api/v2/internal/aggregations/${aggregp.name}`)
+                  .then(json2 => this.setState({
+                    aggregation_profile: aggregp,
+                    groupname: json2['groupname'],
+                    list_user_groups: sessionActive.userdetails.groups.groupsofaggregations,
+                    write_perm: sessionActive.userdetails.is_superuser ||
+                      sessionActive.userdetails.groups.groupsofaggregations.indexOf(json2['groupname']) >= 0,
+                    list_id_metric_profiles: this.extractListOfMetricsProfiles(metricp),
+                    list_services: this.extractListOfServices(aggregp.metric_profile, metricp),
+                    list_complete_metric_profiles: metricp,
+                    loading: false
+                  }))
+                )
               )
-            )
-        } else {
-          let empty_aggregation_profile = {
-            id: '',
-            name: '',
-            metric_operation: '',
-            profile_operation: '',
-            endpoint_group: '',
-            metric_profile: {
-                name: ''
-            },
-            groups: []
+          } else {
+            let empty_aggregation_profile = {
+              id: '',
+              name: '',
+              metric_operation: '',
+              profile_operation: '',
+              endpoint_group: '',
+              metric_profile: {
+                  name: ''
+              },
+              groups: []
+            }
+            this.setState({
+              aggregation_profile: empty_aggregation_profile,
+              groupname: '',
+              list_user_groups: usergroups,
+              write_perm: sessionActive.userdetails.is_superuser ||
+                sessionActive.userdetails.groups.groupsofaggregations.length > 0,
+              list_id_metric_profiles: this.extractListOfMetricsProfiles(metricp),
+              list_complete_metric_profiles: metricp,
+              list_services: [],
+              loading: false
+            })
           }
-          this.setState({
-            aggregation_profile: empty_aggregation_profile,
-            groupname: '',
-            list_user_groups: usergroups,
-            write_perm: localStorage.getItem('authIsSuperuser') === 'true' || usergroups.length > 0,
-            list_id_metric_profiles: this.extractListOfMetricsProfiles(metricp),
-            list_complete_metric_profiles: metricp,
-            list_services: [],
-            loading: false
-          })
-        }
-      })
+        })
+    })
   }
 
   render() {
