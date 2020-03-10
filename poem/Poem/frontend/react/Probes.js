@@ -299,7 +299,7 @@ export class ProbeList extends Component {
     };
 
     this.backend = new Backend();
-  };
+  }
 
   componentDidMount() {
     this.setState({loading: true});
@@ -314,7 +314,7 @@ export class ProbeList extends Component {
           loading: false,
           search_name: ''
         }))
-  };
+  }
 
   render() {
     const columns = [
@@ -384,13 +384,13 @@ export class ProbeList extends Component {
       list_probe = list_probe.filter(row =>
         row.name.toLowerCase().includes(this.state.search_name.toLowerCase())
       );
-    };
+    }
 
     if (this.state.search_description) {
       list_probe = list_probe.filter(row =>
         row.description.toLowerCase().includes(this.state.search_description.toLowerCase())
       );
-    };
+    }
 
     if (loading)
       return (<LoadingAnim />);
@@ -413,8 +413,8 @@ export class ProbeList extends Component {
       );
     } else
       return null;
-  };
-};
+  }
+}
 
 
 function ProbeComponent(cloneview=false) {
@@ -445,7 +445,6 @@ function ProbeComponent(cloneview=false) {
         validationVisible: true,
         update_metrics: false,
         loading: false,
-        write_perm: false,
         areYouSureModal: false,
         modalFunc: undefined,
         modalTitle: undefined,
@@ -458,12 +457,12 @@ function ProbeComponent(cloneview=false) {
       this.doDelete = this.doDelete.bind(this);
       this.onDismiss = this.onDismiss.bind(this);
       this.onSelect = this.onSelect.bind(this);
-    };
+    }
 
     toggleAreYouSure() {
       this.setState(prevState =>
         ({areYouSureModal: !prevState.areYouSureModal}));
-    };
+    }
 
     toggleAreYouSureSetModal(msg, title, onyes) {
       this.setState(prevState =>
@@ -472,7 +471,7 @@ function ProbeComponent(cloneview=false) {
           modalMsg: msg,
           modalTitle: title,
         }));
-    };
+    }
 
     onSubmitHandle(values, actions) {
       let msg = undefined;
@@ -484,11 +483,11 @@ function ProbeComponent(cloneview=false) {
       } else {
           msg = 'Are you sure you want to change probe?';
           title = 'Change probe';
-      };
+      }
 
       this.toggleAreYouSureSetModal(msg, title,
         () => this.doChange(values, actions));
-    };
+    }
 
     doChange(values, actions) {
       if (this.addview || cloneview) {
@@ -521,7 +520,7 @@ function ProbeComponent(cloneview=false) {
                 title: 'Added',
                 callback: () => this.history.push('/ui/probes')
               });
-            };
+            }
           });
       } else {
         this.backend.changeObject(
@@ -548,10 +547,10 @@ function ProbeComponent(cloneview=false) {
                 title: 'Changed',
                 callback: () => this.history.push('/ui/probes')
               });
-            };
+            }
           });
-      };
-    };
+      }
+    }
 
     doDelete(name) {
       this.backend.deleteObject(`/api/v2/internal/probes/${name}`)
@@ -567,20 +566,20 @@ function ProbeComponent(cloneview=false) {
               title: 'Deleted',
               callback: () => this.history.push('/ui/probes')
             });
-          };
+          }
         });
-    };
+    }
 
     onDismiss() {
       this.setState({ validationVisible: false });
-    };
+    }
 
     onSelect(field, value) {
       let probe = this.state.probe;
       probe[field] = value;
       probe['version'] = value.split(' ')[1].slice(1, -1);
       this.setState({probe: probe});
-    };
+    }
 
     componentDidMount() {
       this.setState({loading: true});
@@ -602,7 +601,6 @@ function ProbeComponent(cloneview=false) {
                       list_packages: list_packages,
                       isTenantSchema: isTenantSchema,
                       metrictemplatelist: metrics,
-                      write_perm: localStorage.getItem('authIsSuperuser') === 'true',
                       loading: false
                     });
                   });
@@ -611,16 +609,15 @@ function ProbeComponent(cloneview=false) {
             this.setState({
               list_packages: list_packages,
               isTenantSchema: isTenantSchema,
-              write_perm: localStorage.getItem('authIsSuperuser') === 'true',
               loading: false
             });
-          };
+          }
         });
-    };
+    }
 
     render() {
       const { probe, update_metrics, isTenantSchema, metrictemplatelist,
-        list_packages, write_perm, loading } = this.state;
+        list_packages, loading } = this.state;
 
       if (loading)
         return(<LoadingAnim/>)
@@ -636,8 +633,7 @@ function ProbeComponent(cloneview=false) {
               clone={true}
               modal={true}
               state={this.state}
-              toggle={this.toggleAreYouSure}
-              submitperm={write_perm}>
+              toggle={this.toggleAreYouSure}>
               <Formik
                 initialValues = {{
                   id: probe.id,
@@ -665,32 +661,31 @@ function ProbeComponent(cloneview=false) {
                       metrictemplatelist={metrictemplatelist}
                     />
                     {
-                      (write_perm) &&
-                        <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
-                          {
-                            (!this.addview && !cloneview) ?
-                              <Button
-                                color='danger'
-                                onClick={() => {
-                                  this.toggleAreYouSureSetModal(
-                                    'Are you sure you want to delete probe?',
-                                    'Delete probe',
-                                    () => this.doDelete(props.values.name)
-                                  )}}
-                              >
-                                Delete
-                              </Button>
-                            :
-                              <div></div>
-                          }
-                          <Button
-                            color='success'
-                            id='submit-button'
-                            type='submit'
-                          >
-                            Save
-                          </Button>
-                        </div>
+                      <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
+                        {
+                          (!this.addview && !cloneview) ?
+                            <Button
+                              color='danger'
+                              onClick={() => {
+                                this.toggleAreYouSureSetModal(
+                                  'Are you sure you want to delete probe?',
+                                  'Delete probe',
+                                  () => this.doDelete(props.values.name)
+                                )}}
+                            >
+                              Delete
+                            </Button>
+                          :
+                            <div></div>
+                        }
+                        <Button
+                          color='success'
+                          id='submit-button'
+                          type='submit'
+                        >
+                          Save
+                        </Button>
+                      </div>
                   }
                   </Form>
                 )}
@@ -726,11 +721,11 @@ function ProbeComponent(cloneview=false) {
               />
             </BaseArgoView>
           );
-        };
-      };
-    };
+        }
+      }
+    }
   };
-};
+}
 
 
 export class ProbeVersionCompare extends Component{
@@ -799,7 +794,7 @@ export class ProbeVersionCompare extends Component{
             repository2 = e.fields.repository;
             docurl2 = e.fields.docurl;
             comment2 = e.fields.comment;
-          };
+          }
         });
 
         this.setState({
@@ -821,7 +816,7 @@ export class ProbeVersionCompare extends Component{
         });
       }
     )
-  };
+  }
 
   render() {
     var { name1, name2, version1, version2, package1, package2,
@@ -875,8 +870,8 @@ export class ProbeVersionCompare extends Component{
     }
     else
       return null;
-  };
-};
+  }
+}
 
 
 export class ProbeVersionDetails extends Component {
@@ -898,7 +893,7 @@ export class ProbeVersionDetails extends Component {
       comment: '',
       loading: false
     };
-  };
+  }
 
   componentDidMount() {
     this.setState({loading: true});
@@ -920,7 +915,7 @@ export class ProbeVersionDetails extends Component {
         });
       }
     )
-  };
+  }
 
   render() {
     const { name, version, pkg, description, repository,
@@ -958,5 +953,5 @@ export class ProbeVersionDetails extends Component {
     }
     else
       return null;
-  };
-};
+  }
+}
