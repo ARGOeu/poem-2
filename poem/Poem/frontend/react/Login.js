@@ -131,7 +131,7 @@ class Login extends Component {
         'username': username,
         'password': password
       })
-    }).then(response => this.backend.isActiveSession());
+    }).then(response => this.backend.isActiveSession(this.state.isTenantSchema));
   }
 
   dismissLoginAlert() {
