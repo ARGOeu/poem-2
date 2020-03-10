@@ -1271,7 +1271,6 @@ export class MetricChange extends Component {
       metrictemplateversions: [],
       loading: false,
       popoverOpen: false,
-      write_perm: false,
       areYouSureModal: false,
       modalFunc: undefined,
       modalTitle: undefined,
@@ -1406,7 +1405,6 @@ export class MetricChange extends Component {
                 metrictemplateversions: metrictemplateversions,
                 groups: usergroups,
                 loading: false,
-                write_perm: localStorage.getItem('authIsSuperuser') === 'true' || usergroups.indexOf(metrics.group) >= 0,
               })
             })
           :
@@ -1414,14 +1412,13 @@ export class MetricChange extends Component {
               metric: metrics,
               groups: usergroups,
               loading: false,
-              write_perm: localStorage.getItem('authIsSuperuser') === 'true' || usergroups.indexOf(metrics.group) >= 0,
             })
       })
     }
   }
 
   render() {
-    const { metric, probeversions, groups, loading, write_perm } = this.state;
+    const { metric, probeversions, groups, loading } = this.state;
 
     if (!groups.includes(metric.group))
       groups.push(metric.group);
@@ -1437,8 +1434,7 @@ export class MetricChange extends Component {
           addview={this.addview}
           modal={true}
           state={this.state}
-          toggle={this.toggleAreYouSure}
-          submitperm={write_perm}>
+          toggle={this.toggleAreYouSure}>
           <Formik
             enableReinitialize={true}
             initialValues = {{
@@ -1470,20 +1466,19 @@ export class MetricChange extends Component {
                   groups={groups}
                 />
                 {
-                  (write_perm) &&
-                    <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
-                      <Button
-                        color="danger"
-                        onClick={() => {
-                          this.toggleAreYouSureSetModal('Are you sure you want to delete Metric?',
-                          'Delete metric',
-                          () => this.doDelete(props.values.name))
-                        }}
-                      >
-                        Delete
-                      </Button>
-                      <Button color="success" id="submit-button" type="submit">Save</Button>
-                    </div>
+                  <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
+                    <Button
+                      color="danger"
+                      onClick={() => {
+                        this.toggleAreYouSureSetModal('Are you sure you want to delete Metric?',
+                        'Delete metric',
+                        () => this.doDelete(props.values.name))
+                      }}
+                    >
+                      Delete
+                    </Button>
+                    <Button color="success" id="submit-button" type="submit">Save</Button>
+                  </div>
                 }
               </Form>
             )}
