@@ -60,7 +60,6 @@ function MetricTemplateComponent(cloneview=false) {
         metrictemplatelist: [],
         loading: false,
         popoverOpen: false,
-        write_perm: false,
         areYouSureModal: false,
         modalFunc: undefined,
         modalTitle: undefined,
@@ -256,7 +255,6 @@ function MetricTemplateComponent(cloneview=false) {
                         metrictemplatelist: mlist,
                         types: types,
                         loading: false,
-                        write_perm: localStorage.getItem('authIsSuperuser') === 'true'
                       });
                     })
                   :
@@ -265,7 +263,6 @@ function MetricTemplateComponent(cloneview=false) {
                     metrictemplatelist: mlist,
                     types: types,
                     loading: false,
-                    write_perm: localStorage.getItem('authIsSuperuser') === 'true'
                   });
               });
           } else {
@@ -295,14 +292,13 @@ function MetricTemplateComponent(cloneview=false) {
               probeversions: probeversions,
               types: types,
               loading: false,
-              write_perm: localStorage.getItem('authIsSuperuser') === 'true'
             });
           };
         });
     }
 
     render() {
-      const { metrictemplate, types, probeversions, metrictemplatelist, loading, write_perm } = this.state;
+      const { metrictemplate, types, probeversions, metrictemplatelist, loading} = this.state;
 
       if (loading)
         return (<LoadingAnim/>)
@@ -319,7 +315,6 @@ function MetricTemplateComponent(cloneview=false) {
             modal={true}
             state={this.state}
             toggle={this.toggleAreYouSure}
-            submitperm={write_perm}
           >
             <Formik
               initialValues = {{
@@ -354,7 +349,7 @@ function MetricTemplateComponent(cloneview=false) {
                     metrictemplatelist={metrictemplatelist}
                   />
                   {
-                    (write_perm && !this.tenantview) &&
+                    (!this.tenantview) &&
                       <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
                         {
                           (!this.addview && !cloneview) ?
