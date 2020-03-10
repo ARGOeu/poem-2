@@ -668,7 +668,7 @@ export class AggregationProfilesChange extends Component
             this.setState({
               aggregation_profile: empty_aggregation_profile,
               groupname: '',
-              list_user_groups: usergroups,
+              list_user_groups: sessionActive.userdetails.groups.groupsofaggregations,
               write_perm: sessionActive.userdetails.is_superuser ||
                 sessionActive.userdetails.groups.groupsofaggregations.length > 0,
               list_id_metric_profiles: this.extractListOfMetricsProfiles(metricp),
