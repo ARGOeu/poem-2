@@ -640,20 +640,18 @@ export class AggregationProfilesChange extends Component
         .then(([metricp]) => {
           if (!this.addview) {
             this.backend.fetchData(`/api/v2/internal/aggregations/${this.profile_name}`)
-              .then(json1 => this.webapi.fetchAggregationProfile(json1.apiid)
-                .then(aggregp => this.backend.fetchData(`/api/v2/internal/aggregations/${aggregp.name}`)
-                  .then(json2 => this.setState({
-                    aggregation_profile: aggregp,
-                    groupname: json2['groupname'],
-                    list_user_groups: sessionActive.userdetails.groups.groupsofaggregations,
-                    write_perm: sessionActive.userdetails.is_superuser ||
-                      sessionActive.userdetails.groups.groupsofaggregations.indexOf(json2['groupname']) >= 0,
-                    list_id_metric_profiles: this.extractListOfMetricsProfiles(metricp),
-                    list_services: this.extractListOfServices(aggregp.metric_profile, metricp),
-                    list_complete_metric_profiles: metricp,
-                    loading: false
-                  }))
-                )
+              .then(json => Promise.all([this.webapi.fetchAggregationProfile(json.apiid)])
+                .then(([aggregp]) => this.setState({
+                  aggregation_profile: aggregp,
+                  groupname: json['groupname'],
+                  list_user_groups: sessionActive.userdetails.groups.groupsofaggregations,
+                  write_perm: sessionActive.userdetails.is_superuser ||
+                    sessionActive.userdetails.groups.groupsofaggregations.indexOf(json['groupname']) >= 0,
+                  list_id_metric_profiles: this.extractListOfMetricsProfiles(metricp),
+                  list_services: this.extractListOfServices(aggregp.metric_profile, metricp),
+                  list_complete_metric_profiles: metricp,
+                  loading: false
+                }))
               )
           } else {
             let empty_aggregation_profile = {
