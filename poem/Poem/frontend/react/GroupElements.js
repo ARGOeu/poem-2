@@ -76,7 +76,7 @@ function GroupList(group, id, name) {
               data={list_groups}
               columns={columns}
               className='-striped -highlight'
-              defaultPageSize={20}
+              defaultPageSize={12}
             />
         </BaseArgoView>
       );
@@ -101,7 +101,6 @@ function GroupChange(gr, id, ttl) {
         name: '',
         items: [],
         nogroupitems: [],
-        write_perm: false,
         loading: false,
         areYouSureModal: false,
         modalFunc: undefined,
@@ -223,7 +222,6 @@ function GroupChange(gr, id, ttl) {
                 name: this.group,
                 items: items,
                 nogroupitems: nogroupitems,
-                write_perm: localStorage.getItem('authIsSuperuser') === 'true',
                 loading: false
               }));
           } else {
@@ -231,7 +229,6 @@ function GroupChange(gr, id, ttl) {
               name: '',
               items: [],
               nogroupitems: nogroupitems,
-              write_perm: localStorage.getItem('authIsSuperuser') === 'true',
               loading: false
             });
           };
@@ -239,7 +236,7 @@ function GroupChange(gr, id, ttl) {
     };
 
     render() {
-      const { name, items, write_perm, loading } = this.state;
+      const { name, items, loading } = this.state;
       var nogroupitems = this.state.nogroupitems;
       const BOOTSTRAP_CLASSES = {
         filter: 'form-control',
@@ -260,8 +257,7 @@ function GroupChange(gr, id, ttl) {
             history={false}
             modal={true}
             state={this.state}
-            toggle={this.toggleAreYouSure}
-            submitperm={write_perm}>
+            toggle={this.toggleAreYouSure}>
               <Formik
                 initialValues={{
                   name: name,
@@ -319,7 +315,6 @@ function GroupChange(gr, id, ttl) {
                       </Row>
                     </FormGroup>
                     {
-                    (write_perm) &&
                       <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
                         {
                           !this.addview ?
