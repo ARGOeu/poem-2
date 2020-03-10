@@ -1,7 +1,7 @@
 container_name = poem-react-c7
 
 place-new-bundle:
-	keep-latest-mainbundle.sh
+	keep-latest-bundle.sh
 	docker exec -t $(container_name) ./collectstatic.sh
 	docker exec -t $(container_name) ./restarthttpd.sh
 
