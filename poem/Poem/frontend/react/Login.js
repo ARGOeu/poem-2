@@ -15,7 +15,6 @@ import {Formik, Field, Form} from 'formik';
 import ArgoLogo from './argologo_color.svg';
 import './Login.css';
 import {Footer} from './UIElements.js';
-import Cookies from 'universal-cookie';
 import {Backend} from './DataManager.js';
 
 
@@ -33,73 +32,36 @@ class Login extends Component {
 
     this.backend = new Backend()
     this.dismissLoginAlert = this.dismissLoginAlert.bind(this);
-  }
-
-  isSaml2Logged() {
-    return fetch('/api/v2/internal/saml2login', {
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-      },
-    });
-  }
-
-  flushSaml2Cache() {
-    let cookies = new Cookies();
-
-    return fetch('/api/v2/internal/saml2login', {
-      method: 'DELETE',
-      mode: 'cors',
-      cache: 'no-cache',
-      credentials: 'same-origin',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'X-CSRFToken': cookies.get('csrftoken'),
-        'Referer': 'same-origin'
-      }});
+    this.AppOnLogin = props.onLogin
   }
 
   fetchSamlButtonString() {
     return fetch('/api/v2/internal/config_options')
       .then(response => response.json())
-      .then(json => this._isMounted &&
-        this.setState({samlIdpString: json.result.saml_login_string}))
-      .catch(err => console.log('Something went wrong: ' + err));
+      .catch(err => alert('Something went wrong: ' + err));
   }
 
   fetchIsTenantSchema() {
     return fetch('/api/v2/internal/istenantschema')
       .then(response => response.ok ? response.json() : null)
       .then(json => json['isTenantSchema'])
-      .catch(err => console.log('Something went wrong: ' + err))
+      .catch(err => alert('Something went wrong: ' + err))
   }
 
   componentDidMount() {
     this._isMounted = true;
 
     this.fetchIsTenantSchema().then(response => {
-      if (response !== null)
-        this._isMounted && this.setState({isTenantSchema: response})
-
-      if (response) {
-        this.fetchSamlButtonString().then(
-          this.isSaml2Logged().then(response => {
-            response.ok && response.json().then(
-              json => {
-                if (Object.keys(json).length > 0) {
-                  this.flushSaml2Cache().then(
-                    response => response.ok &&
-                      this.props.onLogin(json, this.props.history)
-                  )
-                }
-              }
-            )
+      if (response !== null) {
+        this.fetchSamlButtonString().then(json => {
+          this.setState({
+            isTenantSchema: response,
+            samlIdpString: json.result.saml_login_string
           })
-        )
+        })
       }
     })
-      .catch(err => console.log('Something went wrong: ' + err))
+      .catch(err => alert('Something went wrong: ' + err))
   }
 
   componentWillUnmount() {
@@ -131,7 +93,7 @@ class Login extends Component {
         'username': username,
         'password': password
       })
-    }).then(response => this.backend.isActiveSession(this.state.isTenantSchema));
+    }).then(() => this.backend.isActiveSession(this.state.isTenantSchema))
   }
 
   dismissLoginAlert() {
@@ -139,7 +101,6 @@ class Login extends Component {
   }
 
   render() {
-
     if (this.state.isTenantSchema !== null) {
       return (
         <Container>
@@ -160,7 +121,7 @@ class Login extends Component {
                         .then(response =>
                           {
                             if (response.active) {
-                              this.props.onLogin(response.userdetails, this.props.history)
+                              this.AppOnLogin(response.userdetails, this.props.history)
                             }
                             else {
                               this.setState({loginFailedVisible: true});
