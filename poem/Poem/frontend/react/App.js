@@ -377,12 +377,14 @@ class App extends Component {
                   isOpenModal={this.state.areYouSureModal}
                   toggle={this.toggleAreYouSure}
                   titleModal='Log out'
-                  msgModal='Are you sure you want to log out?'/>
+                  msgModal='Are you sure you want to log out?'
+                  userDetails={userDetails}
+                />
               </Col>
             </Row>
             <Row className="no-gutters">
               <Col sm={{size: 2}} md={{size: 2}} id="sidebar-col" className="d-flex flex-column">
-                <NavigationLinksWithRouter isTenantSchema={this.state.isTenantSchema}/>
+                <NavigationLinksWithRouter isTenantSchema={this.state.isTenantSchema} userDetails={userDetails}/>
                 <div id="sidebar-grow" className="flex-grow-1 border-left border-right rounded-bottom"/>
               </Col>
               <Col>
