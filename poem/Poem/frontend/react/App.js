@@ -272,7 +272,6 @@ class App extends Component {
     this.onLogin = this.onLogin.bind(this);
     this.onLogout = this.onLogout.bind(this);
     this.toggleAreYouSure = this.toggleAreYouSure.bind(this);
-    this.flushStorage = this.flushStorage.bind(this);
   }
 
   onLogin(json, history) {
@@ -281,11 +280,6 @@ class App extends Component {
       userdetails: json
     })
 
-    localStorage.setItem('authUsername', json.username);
-    localStorage.setItem('authIsLogged', true);
-    localStorage.setItem('authFirstName', json.first_name);
-    localStorage.setItem('authLastName', json.last_name);
-    localStorage.setItem('authIsSuperuser', json.is_superuser);
     this.backend.isTenantSchema().then((isTenantSchema) =>
       this.initalizeState(isTenantSchema, response)).then(
         setTimeout(() => {
@@ -294,17 +288,7 @@ class App extends Component {
       ))
   }
 
-  flushStorage() {
-    localStorage.removeItem('authUsername');
-    localStorage.removeItem('authIsLogged');
-    localStorage.removeItem('authFirstName');
-    localStorage.removeItem('authLastName');
-    localStorage.removeItem('authIsSuperuser');
-    this.cookies.remove('poemActiveSession')
-  }
-
   onLogout() {
-    this.flushStorage()
     this.setState({isSessionActive: false});
   }
 
@@ -355,12 +339,8 @@ class App extends Component {
 
   componentDidMount() {
     this.backend.isTenantSchema().then((isTenantSchema) => {
-      this.state.isLogged && this.backend.isActiveSession().then(active => {
-        if (active) {
-          this.initalizeState(isTenantSchema, active, this.state.isLogged)
-        }
-        else
-          this.flushStorage()
+       this.backend.isActiveSession().then(active => {
+          this.initalizeState(isTenantSchema, active)
       })
     })
   }
@@ -373,21 +353,11 @@ class App extends Component {
         <BrowserRouter>
           <Switch>
             <Route
-              exact
-              path="/ui/login"
+              path="/ui/"
               render={props =>
                   <Login onLogin={this.onLogin} {...props} />
               }
             />
-            <Route
-              exact
-              path="/ui/(home|services|probes|reports|probes|metrics|metricprofiles|aggregationprofiles|administration|metrictemplates|yumrepos)"
-              render={props => (
-                <Redirect to={{
-                  pathname: '/ui/login',
-                  state: {from: props.location}
-                }}/>
-              )}/>
             <Route component={NotFound} />
           </Switch>
         </BrowserRouter>

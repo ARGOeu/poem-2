@@ -755,11 +755,11 @@ const ListDiffElement = ({title, item1, item2}) => {
   let list2 = [];
   for (let i = 0; i < item1.length; i++) {
     list1.push(`service: ${item1[i]['service']}, metric: ${item1[i]['metric']}`)
-  };
+  }
 
   for (let i = 0; i < item2.length; i++) {
     list2.push(`service: ${item2[i]['service']}, metric: ${item2[i]['metric']}`)
-  };
+  }
 
   return (
     <div id='argo-contentwrap' className='ml-2 mb-2 mt-2 p-3 border rounded'>
@@ -795,7 +795,7 @@ export class MetricProfileVersionCompare extends Component {
     };
 
     this.backend = new Backend();
-  };
+  }
 
   componentDidMount() {
     this.setState({loading: true});
@@ -818,7 +818,7 @@ export class MetricProfileVersionCompare extends Component {
             name2 = e.fields.name;
             groupname2 = e.fields.groupname;
             metricinstances2 = e.fields.metricinstances;
-          };
+          }
         });
 
         this.setState({
@@ -831,7 +831,7 @@ export class MetricProfileVersionCompare extends Component {
           loading: false
         });
       });
-  };
+  }
 
   render() {
     const { name1, name2, groupname1, groupname2,
@@ -862,8 +862,8 @@ export class MetricProfileVersionCompare extends Component {
       );
     } else
       return null;
-  };
-};
+  }
+}
 
 
 export class MetricProfileVersionDetails extends Component {
@@ -882,7 +882,7 @@ export class MetricProfileVersionDetails extends Component {
       metricinstances: [],
       loading: false
     };
-  };
+  }
 
   componentDidMount() {
     this.setState({loading: true});
@@ -900,7 +900,7 @@ export class MetricProfileVersionDetails extends Component {
             });
         });
       });
-  };
+  }
 
   render() {
     const { name, groupname, date_created, metricinstances,
@@ -961,5 +961,5 @@ export class MetricProfileVersionDetails extends Component {
       )
     } else
       return null;
-  };
-};
+  }
+}
