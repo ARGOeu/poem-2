@@ -41,17 +41,10 @@ class Login extends Component {
       .catch(err => alert('Something went wrong: ' + err));
   }
 
-  fetchIsTenantSchema() {
-    return fetch('/api/v2/internal/istenantschema')
-      .then(response => response.ok ? response.json() : null)
-      .then(json => json['isTenantSchema'])
-      .catch(err => alert('Something went wrong: ' + err))
-  }
-
   componentDidMount() {
     this._isMounted = true;
 
-    this.fetchIsTenantSchema().then(response => {
+    this.backend.fetchIsTenantSchema().then(response => {
       if (response !== null) {
         this.fetchSamlButtonString().then(json => {
           this.setState({
@@ -66,15 +59,6 @@ class Login extends Component {
 
   componentWillUnmount() {
     this._isMounted = false;
-  }
-
-  fetchUserDetails(username) {
-    return fetch('/api/v2/internal/users/' + username, {
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-      },
-    });
   }
 
   doUserPassLogin(username, password)
