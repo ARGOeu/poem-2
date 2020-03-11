@@ -49,16 +49,6 @@ try:
         }
     }
 
-    CACHES = {
-        'default': {
-            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-            'TIMEOUT': 7200,
-            'OPTIONS': {
-                'MAX_ENTRIES': 8192
-            }
-        }
-    }
-
     HTTPAUTH = config.getboolean('SYNC', 'useplainhttpauth')
     HTTPUSER = config.get('SYNC', 'httpuser')
     HTTPPASS = config.get('SYNC', 'httppass')
