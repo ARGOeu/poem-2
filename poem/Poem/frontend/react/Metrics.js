@@ -287,7 +287,8 @@ export function ListOfMetrics(type, imp=false) {
     constructor(props) {
       super(props);
 
-      this.location = props.location;
+      this.location = props.location
+      this.userDetails = props.userDetails
 
       if (type === 'metric') {
         this.state = {
@@ -527,7 +528,7 @@ export function ListOfMetrics(type, imp=false) {
         }
       ];
 
-      if (imp && localStorage.getItem('authIsSuperuser') === 'true') {
+      if (imp && this.userDetails.is_superuser) {
         columns.splice(
           0,
           0,
@@ -680,7 +681,7 @@ export function ListOfMetrics(type, imp=false) {
             return (
               <>
                 <div className="d-flex align-items-center justify-content-between">
-                  <h2 className="ml-3 mt-1 mb-4">{`Select metric template${localStorage.getItem('authIsSuperuser') === 'true'  ? '(s) to import' : ' for details'}`}</h2>
+                  <h2 className="ml-3 mt-1 mb-4">{`Select metric template${this.userDetails.is_superuser ? '(s) to import' : ' for details'}`}</h2>
                   {
                     localStorage.getItem('authIsSuperuser') === 'true' &&
                       <Button

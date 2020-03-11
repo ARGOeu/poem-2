@@ -49,7 +49,7 @@ const NavigationLinksWithRouter = withRouter(NavigationLinks);
 const CustomBreadcrumbWithRouter = withRouter(CustomBreadcrumb);
 
 
-const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, token, tenantName}) => (
+const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, token, tenantName, userDetails}) => (
   <Switch>
     <Route exact path="/ui/login" render={() => <Redirect to="/ui/home" />}/>
     <Route exact path="/ui/home" component={Home} />
@@ -60,7 +60,7 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, t
     <Route exact path="/ui/probes/:name/history/compare/:id1/:id2" render={props => <ProbeVersionCompare {...props}/>}/>
     <Route exact path="/ui/probes/:name/history/:version" render={props => <ProbeVersionDetails {...props}/>}/>
     <Route exact path="/ui/probes/:name" render={props => <ProbeChange {...props}/>}/>
-    <Route exact path="/ui/metrics" component={MetricList} />
+    <Route exact path="/ui/metrics" render={props => <MetricList userDetails={userDetails} {...props}/>}/>
     <Route exact path="/ui/metrics/:name/history" render={props => <MetricHistory {...props}/>}/>
     <Route exact path="/ui/metrics/:name/history/compare/:id1/:id2" render={props => <MetricVersonCompare {...props}/>}/>
     <Route exact path="/ui/metrics/:name/history/:version" render={props => <MetricVersionDetails {...props}/>}/>
@@ -395,7 +395,8 @@ class App extends Component {
                     webApiAggregation={this.state.webApiAggregation}
                     webApiThresholds={this.state.webApiThresholds}
                     token={this.state.token}
-                    tenantName={this.state.tenantName}/>
+                    tenantName={this.state.tenantName}
+                    userDetails={userDetails}/>
                  :
                  <SuperAdminRouteSwitch/>
                 }
