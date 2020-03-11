@@ -293,7 +293,7 @@ function MetricTemplateComponent(cloneview=false) {
               types: types,
               loading: false,
             });
-          };
+          }
         });
     }
 

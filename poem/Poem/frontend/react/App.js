@@ -158,7 +158,7 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, t
     <Route exact path="/ui/administration/apikey/add"
       render={props => <APIKeyChange {...props} addview={true}/>}
     />
-    <Route exact path='/ui/administration/metrictemplates/' component={TenantMetricTemplateList}/>
+    <Route exact path='/ui/administration/metrictemplates/' render={props => <TenantMetricTemplateList userDetails={userDetails} {...props}/>}/>
     <Route exact path='/ui/administration/metrictemplates/:name'
       render={props => <MetricTemplateChange {...props} tenantview={true}/>}
     />
@@ -211,7 +211,7 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, t
 )
 
 
-const SuperAdminRouteSwitch = ({props}) => (
+const SuperAdminRouteSwitch = ({userDetails}) => (
   <Switch>
     <Route exact path="/ui/login" render={() => <Redirect to="/ui/home" />}/>
     <Route exact path="/ui/home" component={Home} />
@@ -222,7 +222,7 @@ const SuperAdminRouteSwitch = ({props}) => (
     <Route exact path="/ui/probes/:name/history/compare/:id1/:id2" render={props => <ProbeVersionCompare {...props}/>}/>
     <Route exact path="/ui/probes/:name/history/:version" render={props => <ProbeVersionDetails {...props}/>}/>
     <Route exact path="/ui/probes/:name" render={props => <ProbeChange {...props}/>}/>
-    <Route exact path='/ui/metrictemplates' component={MetricTemplateList}/>
+    <Route exact path='/ui/metrictemplates' render={props => <MetricTemplateList userDetails={userDetails} {...props}/>}/>
     <Route exact path='/ui/metrictemplates/add' render={props => <MetricTemplateChange {...props} addview={true}/>}/>
     <Route exact path='/ui/metrictemplates/:name/clone' render={props => <MetricTemplateClone {...props}/>}/>
     <Route exact path='/ui/metrictemplates/:name/history' render={props => <MetricTemplateHistory {...props}/>}/>
@@ -398,7 +398,7 @@ class App extends Component {
                     tenantName={this.state.tenantName}
                     userDetails={userDetails}/>
                  :
-                 <SuperAdminRouteSwitch/>
+                 <SuperAdminRouteSwitch userDetails={userDetails}/>
                 }
               </Col>
             </Row>
