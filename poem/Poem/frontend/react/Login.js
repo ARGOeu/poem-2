@@ -44,15 +44,18 @@ class Login extends Component {
   componentDidMount() {
     this._isMounted = true;
 
-    this.backend.fetchIsTenantSchema().then(response => {
-      if (response !== null) {
+    this.backend.isTenantSchema().then(response => {
+      if (response === true)
         this.fetchSamlButtonString().then(json => {
           this.setState({
             isTenantSchema: response,
             samlIdpString: json.result.saml_login_string
           })
         })
-      }
+      else if (response === false)
+        this.setState({
+          isTenantSchema: response,
+        })
     })
       .catch(err => alert('Something went wrong: ' + err))
   }
