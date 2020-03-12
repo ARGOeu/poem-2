@@ -40,16 +40,11 @@ class IsSessionActive(APIView):
         serializer = serializers.UsersSerializer(user)
         userdetails.update(serializer.data)
         if istenant == 'true':
-            groupsofmetrics = user.userprofile.groupsofmetrics.all().values_list('name', flat=True)
-            groupsofmetricprofiles = user.userprofile.groupsofmetricprofiles.all().values_list('name', flat=True)
-            groupsofaggregations = user.userprofile.groupsofaggregations.all().values_list('name', flat=True)
-            groupsofthresholdsprofiles = user.userprofile.groupsofthresholdsprofiles.all().values_list('name', flat=True)
-            userdetails['groups'] = {
-                'groupsofmetrics': groupsofmetrics,
-                'groupsofmetricprofiles': groupsofmetricprofiles,
-                'groupsofaggregations': groupsofaggregations,
-                'groupsofthresholdsprofiles': groupsofthresholdsprofiles
-            }
+            if user.is_superuser:
+                groups = get_all_groups()
+            else:
+                groups = get_groups_for_user(user)
+            userdetails['groups'] = groups
 
         return Response({'active': True, 'userdetails': userdetails})
 

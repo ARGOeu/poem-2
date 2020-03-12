@@ -1407,7 +1407,8 @@ export class MetricChange extends Component {
                 metrictemplateversions: metrictemplateversions,
                 groups: usergroups,
                 loading: false,
-                write_perm: localStorage.getItem('authIsSuperuser') === 'true' || usergroups.indexOf(metrics.group) >= 0,
+                write_perm: this.userDetails.is_superuser ||
+                  this.userDetails.groups.metrics.indexOf(metrics.group) >= 0,
               })
             })
           :
@@ -1416,7 +1417,7 @@ export class MetricChange extends Component {
               groups: usergroups,
               loading: false,
               write_perm: this.userDetails.is_superuser ||
-                this.userDetails.groups.groupsofmetrics.indexOf(metrics.group) >= 0,
+                this.userDetails.groups.metrics.indexOf(metrics.group) >= 0,
             })
       })
     }

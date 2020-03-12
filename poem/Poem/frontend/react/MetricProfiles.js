@@ -243,9 +243,9 @@ export class MetricProfilesChange extends Component
                   metric_profile: metricp,
                   metric_profile_name: metricp.name,
                   groupname: json['groupname'],
-                  list_user_groups: sessionActive.userdetails.groups.groupsofmetricprofiles,
+                  list_user_groups: sessionActive.userdetails.groups.metricprofiles,
                   write_perm: sessionActive.userdetails.is_superuser ||
-                    sessionActive.userdetails.groups.groupsofmetricprofiles.indexOf(json['groupname']) >= 0,
+                    sessionActive.userdetails.groups.metricprofiles.indexOf(json['groupname']) >= 0,
                   view_services: this.flattenServices(metricp.services).sort(this.sortServices),
                   serviceflavours_all: serviceflavoursall,
                   metrics_all: metricsall,
@@ -263,9 +263,9 @@ export class MetricProfilesChange extends Component
               metric_profile: empty_metric_profile,
               metric_profile_name: '',
               groupname: '',
-              list_user_groups: sessionActive.userdetails.groups.groupsofmetricprofiles,
+              list_user_groups: sessionActive.userdetails.groups.metricprofiles,
               write_perm: sessionActive.userdetails.is_superuser ||
-                sessionActive.userdetails.groups.groupsofmetricprofiles.length > 0,
+                sessionActive.userdetails.groups.metricprofiles.length > 0,
               view_services: [{service: '', metric: '', index: 0, isNew: true}],
               serviceflavours_all: serviceflavoursall,
               metrics_all: metricsall,
