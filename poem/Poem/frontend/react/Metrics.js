@@ -1385,40 +1385,41 @@ export class MetricChange extends Component {
 
     if (!this.addview) {
       Promise.all([
+        this.backend.isActiveSession(),
         this.backend.fetchData(`/api/v2/internal/metric/${this.name}`),
         this.backend.fetchData(`/api/v2/internal/version/metrictemplate/${this.name}`),
-        this.backend.fetchData('/api/v2/internal/groups/metrics')
-      ]).then(([metrics, metrictemplateversions, usergroups]) => {
-        metrics.probeversion ?
-          this.backend.fetchData(`/api/v2/internal/version/probe/${metrics.probeversion.split(' ')[0]}`)
-            .then(probe => {
-              let fields = {};
-              let probeversions = [];
-              probe.forEach((e) => {
-                probeversions.push(e.object_repr);
-                if (e.object_repr === metrics.probeversion) {
-                  fields = e.fields;
-                }
+      ]).then(([session, metrics, metrictemplateversions]) => {
+        if (session.active)
+          metrics.probeversion ?
+            this.backend.fetchData(`/api/v2/internal/version/probe/${metrics.probeversion.split(' ')[0]}`)
+              .then(probe => {
+                let fields = {};
+                let probeversions = [];
+                probe.forEach((e) => {
+                  probeversions.push(e.object_repr);
+                  if (e.object_repr === metrics.probeversion) {
+                    fields = e.fields;
+                  }
+                })
+                this.setState({
+                  metric: metrics,
+                  probe: fields,
+                  probeversions: probeversions,
+                  metrictemplateversions: metrictemplateversions,
+                  groups: session.userdetails.groups.metrics,
+                  loading: false,
+                  write_perm: session.userdetails.is_superuser ||
+                    session.userdetails.groups.metrics.indexOf(metrics.group) >= 0,
+                })
               })
+            :
               this.setState({
                 metric: metrics,
-                probe: fields,
-                probeversions: probeversions,
-                metrictemplateversions: metrictemplateversions,
-                groups: usergroups,
+                groups: session.userdetails.groups.metrics,
                 loading: false,
-                write_perm: this.userDetails.is_superuser ||
-                  this.userDetails.groups.metrics.indexOf(metrics.group) >= 0,
+                write_perm: session.userdetails.is_superuser ||
+                  session.userdetails.groups.metrics.indexOf(metrics.group) >= 0,
               })
-            })
-          :
-            this.setState({
-              metric: metrics,
-              groups: usergroups,
-              loading: false,
-              write_perm: this.userDetails.is_superuser ||
-                this.userDetails.groups.metrics.indexOf(metrics.group) >= 0,
-            })
       })
     }
   }
