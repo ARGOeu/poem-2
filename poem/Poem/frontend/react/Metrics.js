@@ -401,11 +401,12 @@ export function ListOfMetrics(type, imp=false) {
         if (sessionActive.active)
           if (type === 'metric') {
             Promise.all([this.backend.fetchData('/api/v2/internal/metric'),
+              this.backend.fetchResult('/api/v2/internal/usergroups'),
               this.backend.fetchData('/api/v2/internal/mtypes')
-            ]).then(([metrics, types]) =>
+            ]).then(([metrics, groups, types]) =>
                   this.setState({
                     list_metric: metrics,
-                    list_groups: sessionActive.userdetails.groups.metrics,
+                    list_groups: groups['metrics'],
                     list_types: types,
                     loading: false,
                     search_name: '',
