@@ -683,7 +683,7 @@ export function ListOfMetrics(type, imp=false) {
                 <div className="d-flex align-items-center justify-content-between">
                   <h2 className="ml-3 mt-1 mb-4">{`Select metric template${this.userDetails.is_superuser ? '(s) to import' : ' for details'}`}</h2>
                   {
-                    localStorage.getItem('authIsSuperuser') === 'true' &&
+                    this.userDetails.is_superuser &&
                       <Button
                       className='btn btn-secondary'
                       disabled={!this.state.search_ostag}
