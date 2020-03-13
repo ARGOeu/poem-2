@@ -1,12 +1,12 @@
 import React, { Component } from 'react';
 import { Backend } from './DataManager';
 import { Link } from 'react-router-dom';
-import { 
-  LoadingAnim, 
-  BaseArgoView, 
-  FancyErrorMessage, 
-  NotifyOk, 
-  DropdownFilterComponent 
+import {
+  LoadingAnim,
+  BaseArgoView,
+  FancyErrorMessage,
+  NotifyOk,
+  DropdownFilterComponent
 } from './UIElements';
 import ReactTable from 'react-table';
 import { Formik, Form, Field } from 'formik';
@@ -176,7 +176,7 @@ export class YumRepoList extends Component {
         </BaseArgoView>
       )
     }
-    else 
+    else
       return null;
   }
 }
@@ -205,7 +205,6 @@ export class YumRepoChange extends Component {
       },
       tagslist: [],
       loading: false,
-      write_perm: false,
       areYouSureModal: false,
       modalFunc: undefined,
       modalTitle: undefined,
@@ -220,12 +219,12 @@ export class YumRepoChange extends Component {
   };
 
   toggleAreYouSure() {
-    this.setState(prevState => 
+    this.setState(prevState =>
       ({areYouSureModal: !prevState.areYouSureModal}));
   };
 
   toggleAreYouSureSetModal(msg, title, onyes) {
-    this.setState(prevState => 
+    this.setState(prevState =>
       ({areYouSureModal: !prevState.areYouSureModal,
         modalFunc: onyes,
         modalMsg: msg,
@@ -329,14 +328,12 @@ export class YumRepoChange extends Component {
               this.setState({
                 repo: json,
                 tagslist: tags,
-                write_perm: localStorage.getItem('authIsSuperuser') === 'true',
                 loading: false
               });
             });
         } else {
           this.setState({
             tagslist: tags,
-            write_perm: localStorage.getItem('authIsSuperuser') === 'true',
             loading: false
           });
         };
@@ -344,7 +341,7 @@ export class YumRepoChange extends Component {
   };
 
   render() {
-    const { repo, tagslist, loading, write_perm } = this.state;
+    const { repo, tagslist, loading } = this.state;
 
     if (loading)
       return <LoadingAnim/>
@@ -358,7 +355,6 @@ export class YumRepoChange extends Component {
           modal={true}
           state={this.state}
           toggle={this.toggleAreYouSure}
-          submitperm={write_perm}
           history={false}
         >
           <Formik
@@ -415,7 +411,7 @@ export class YumRepoChange extends Component {
                             >
                               {
                                 tagslist.map((name, i) =>
-                                  <option key={i} value={name}>{name}</option>  
+                                  <option key={i} value={name}>{name}</option>
                                 )
                               }
                             </Field>
@@ -472,11 +468,11 @@ export class YumRepoChange extends Component {
                   </Row>
                 </FormGroup>
                 {
-                  (write_perm && !this.disabled) &&
+                  (!this.disabled) &&
                   <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
                     {
                       !this.addview ?
-                        <Button 
+                        <Button
                           color='danger'
                           onClick={() => {
                             this.toggleAreYouSureSetModal(
@@ -494,7 +490,7 @@ export class YumRepoChange extends Component {
                   <Button color='success' id='submit-button' type='submit'>
                     Save
                   </Button>
-                </div> 
+                </div>
                 }
               </Form>
             )}

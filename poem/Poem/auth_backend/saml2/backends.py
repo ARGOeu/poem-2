@@ -1,5 +1,3 @@
-from django.core.cache import cache
-
 from djangosaml2.backends import Saml2Backend
 from django.contrib.auth import get_user_model
 
@@ -105,11 +103,6 @@ class SAML2Backend(Saml2Backend):
             userpro.egiid = egiid
             userpro.save()
 
-            cache.set_many({'{}_saml2_username'.format(get_schemaname()): user.username,
-                            '{}_saml2_first_name'.format(get_schemaname()): user.first_name,
-                            '{}_saml2_last_name'.format(get_schemaname()): user.last_name,
-                            '{}_saml2_is_superuser'.format(get_schemaname()): user.is_superuser})
-
             return user
 
         elif userfound:
@@ -123,11 +116,6 @@ class SAML2Backend(Saml2Backend):
             userpro.egiid = egiid
             userpro.subject = certsub
             userpro.save()
-
-            cache.set_many({'{}_saml2_username'.format(get_schemaname()): userfound.username,
-                            '{}_saml2_first_name'.format(get_schemaname()): userfound.first_name,
-                            '{}_saml2_last_name'.format(get_schemaname()): userfound.last_name,
-                            '{}_saml2_is_superuser'.format(get_schemaname()): userfound.is_superuser})
 
             return userfound
 

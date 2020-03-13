@@ -39,11 +39,11 @@ export class APIKeyList extends Component {
     this.setState({ loading: true });
 
     this.backend.fetchData('/api/v2/internal/apikeys')
-      .then(json => 
+      .then(json =>
         this.setState({
           list_keys: json,
           loading: false
-        })  
+        })
       );
   }
 
@@ -93,7 +93,7 @@ export class APIKeyList extends Component {
             columns={columns}
             className='-striped -highlight'
             defaultPageSize={5}
-          />          
+          />
         </BaseArgoView>
       )
     }
@@ -115,7 +115,6 @@ export class APIKeyChange extends Component {
     this.state = {
       key: {},
       loading: false,
-      write_perm: false,
       areYouSureModal: false,
       modalFunc: undefined,
       modalTitle: undefined,
@@ -131,12 +130,12 @@ export class APIKeyChange extends Component {
   }
 
   toggleAreYouSure() {
-    this.setState(prevState => 
+    this.setState(prevState =>
       ({areYouSureModal: !prevState.areYouSureModal}));
   }
 
   toggleAreYouSureSetModal(msg, title, onyes) {
-    this.setState(prevState => 
+    this.setState(prevState =>
       ({areYouSureModal: !prevState.areYouSureModal,
         modalFunc: onyes,
         modalMsg: msg,
@@ -168,12 +167,12 @@ export class APIKeyChange extends Component {
           revoked: values.revoked,
           name: values.name,
         }
-      ).then(response => response.ok ? 
+      ).then(response => response.ok ?
         NotifyOk({
           msg: 'API key successfully changed',
           title: 'Changed',
           callback: () => this.history.push('/ui/administration/apikey')
-        }) 
+        })
         : alert('Something went wrong: ' + response.statusText))
     } else {
       this.backend.addObject(
@@ -187,7 +186,7 @@ export class APIKeyChange extends Component {
           title: 'Added',
           callback: () => this.history.push('/ui/administration/apikey')
         })
-        : 
+        :
         alert('Something went wrong: ' + response.statusText))
     }
   }
@@ -200,7 +199,7 @@ export class APIKeyChange extends Component {
             msg: 'API key successfully deleted',
             title: 'Deleted',
             callback: () => this.history.push('/ui/administration/apikey')
-          })  
+          })
         :
           alert('Something went wrong: ' + response.statusText)
       )
@@ -215,7 +214,6 @@ export class APIKeyChange extends Component {
           this.setState({
             key: json,
             loading: false,
-            write_perm: localStorage.getItem('authIsSuperuser') === 'true'
           })
         );
     } else {
@@ -226,13 +224,12 @@ export class APIKeyChange extends Component {
           token: ''
         },
         loading: false,
-        write_perm: localStorage.getItem('authIsSuperuser') === 'true'
       })
     }
   }
 
   render() {
-    const { key, loading, write_perm } = this.state;
+    const { key, loading } = this.state;
 
     if (loading)
       return (<LoadingAnim/>);
@@ -246,8 +243,7 @@ export class APIKeyChange extends Component {
           history={false}
           modal={true}
           state={this.state}
-          toggle={this.toggleAreYouSure}
-          submitperm={write_perm}>
+          toggle={this.toggleAreYouSure}>
             <Formik
               initialValues = {{
                 name: key.name,
@@ -261,7 +257,7 @@ export class APIKeyChange extends Component {
                     <Row>
                       <Col md={6}>
                         <Label for='name'>Name</Label>
-                        <Field 
+                        <Field
                           type='text'
                           name='name'
                           id='name'
@@ -320,31 +316,30 @@ export class APIKeyChange extends Component {
                   }
                   </FormGroup>
                   {
-                    (write_perm) &&
-                      <div className={!this.addview ? "submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5" : "submit-row d-flex align-items-center justify-content-end bg-light p-3 mt-5"}>
-                        {
-                          (!this.addview) &&
-                          <Button 
-                            color='danger'
-                            onClick={() => {
-                              this.toggleAreYouSureSetModal(
-                                'Are you sure you want to delete API key?',
-                                'Delete API key',
-                                () => this.doDelete(props.values.name)
-                              )
-                            }}
-                          >
-                            Delete
-                          </Button>
-                        }
-                        <Button 
-                          color='success' 
-                          id='submit-button' 
-                          type='submit'
+                    <div className={!this.addview ? "submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5" : "submit-row d-flex align-items-center justify-content-end bg-light p-3 mt-5"}>
+                      {
+                        (!this.addview) &&
+                        <Button
+                          color='danger'
+                          onClick={() => {
+                            this.toggleAreYouSureSetModal(
+                              'Are you sure you want to delete API key?',
+                              'Delete API key',
+                              () => this.doDelete(props.values.name)
+                            )
+                          }}
                         >
-                          Save
+                          Delete
                         </Button>
-                      </div>
+                      }
+                      <Button
+                        color='success'
+                        id='submit-button'
+                        type='submit'
+                      >
+                        Save
+                      </Button>
+                    </div>
                   }
                 </Form>
               )}

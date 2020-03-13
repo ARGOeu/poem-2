@@ -258,9 +258,9 @@ class App extends Component {
     this.backend = new Backend();
 
     this.state = {
-      isLogged: localStorage.getItem('authIsLogged') ? true : false,
       isSessionActive: undefined,
       areYouSureModal: false,
+      userDetails: undefined,
       webApiAggregation: undefined,
       webApiMetric: undefined,
       webApiThresholds: undefined,
@@ -272,35 +272,24 @@ class App extends Component {
     this.onLogin = this.onLogin.bind(this);
     this.onLogout = this.onLogout.bind(this);
     this.toggleAreYouSure = this.toggleAreYouSure.bind(this);
-    this.flushStorage = this.flushStorage.bind(this);
   }
 
   onLogin(json, history) {
-    localStorage.setItem('authUsername', json.username);
-    localStorage.setItem('authIsLogged', true);
-    localStorage.setItem('authFirstName', json.first_name);
-    localStorage.setItem('authLastName', json.last_name);
-    localStorage.setItem('authIsSuperuser', json.is_superuser);
+    let response = new Object({
+      active: true,
+      userdetails: json
+    })
+
     this.backend.isTenantSchema().then((isTenantSchema) =>
-      this.initalizeState(isTenantSchema, true, true)).then(
+      this.initalizeState(isTenantSchema, response)).then(
         setTimeout(() => {
           history.push('/ui/home');
         }, 50
-      )).then(this.cookies.set('poemActiveSession', true))
-  }
-
-  flushStorage() {
-    localStorage.removeItem('authUsername');
-    localStorage.removeItem('authIsLogged');
-    localStorage.removeItem('authFirstName');
-    localStorage.removeItem('authLastName');
-    localStorage.removeItem('authIsSuperuser');
-    this.cookies.remove('poemActiveSession')
+      ))
   }
 
   onLogout() {
-    this.flushStorage()
-    this.setState({isLogged: false, isSessionActive: false});
+    this.setState({isSessionActive: false});
   }
 
   toggleAreYouSure() {
@@ -323,14 +312,14 @@ class App extends Component {
       .catch(err => alert('Something went wrong: ' + err))
   }
 
-  initalizeState(poemType, activeSession, isLogged) {
+  initalizeState(poemType, response) {
     if (poemType) {
       return Promise.all([this.fetchToken(), this.fetchConfigOptions()])
         .then(([token, options]) => {
           this.setState({
             isTenantSchema: poemType,
-            isSessionActive: activeSession,
-            isLogged: isLogged,
+            isSessionActive: response.active,
+            userDetails: response.userdetails,
             token: token,
             webApiMetric: options && options.result.webapimetric,
             webApiAggregation: options && options.result.webapiaggregation,
@@ -342,53 +331,39 @@ class App extends Component {
     else {
       this.setState({
         isTenantSchema: poemType,
-        isSessionActive: activeSession,
-        isLogged: isLogged,
+        isSessionActive: response.active,
+        userDetails: response.userdetails
       })
     }
   }
 
   componentDidMount() {
     this.backend.isTenantSchema().then((isTenantSchema) => {
-      this.state.isLogged && this.backend.isActiveSession().then(active => {
-        if (active) {
-          this.initalizeState(isTenantSchema, active, this.state.isLogged)
-        }
-        else
-          this.flushStorage()
-      })
+      this.backend.isActiveSession().then(response =>
+        response.active && this.initalizeState(isTenantSchema, response)
+      )
     })
   }
 
   render() {
-    let cookie = this.cookies.get('poemActiveSession')
+    let {isSessionActive, userDetails} = this.state
 
-    if (!cookie || !this.state.isLogged) {
+    if (!isSessionActive) {
       return (
         <BrowserRouter>
           <Switch>
             <Route
-              exact
-              path="/ui/login"
+              path="/ui/"
               render={props =>
                   <Login onLogin={this.onLogin} {...props} />
               }
             />
-            <Route
-              exact
-              path="/ui/(home|services|probes|reports|probes|metrics|metricprofiles|aggregationprofiles|administration|metrictemplates|yumrepos)"
-              render={props => (
-                <Redirect to={{
-                  pathname: '/ui/login',
-                  state: {from: props.location}
-                }}/>
-              )}/>
             <Route component={NotFound} />
           </Switch>
         </BrowserRouter>
       )
     }
-    else if (this.state.isLogged && cookie &&
+    else if (isSessionActive && userDetails &&
       this.state.isTenantSchema !== null) {
 
       return (
@@ -402,12 +377,14 @@ class App extends Component {
                   isOpenModal={this.state.areYouSureModal}
                   toggle={this.toggleAreYouSure}
                   titleModal='Log out'
-                  msgModal='Are you sure you want to log out?'/>
+                  msgModal='Are you sure you want to log out?'
+                  userDetails={userDetails}
+                />
               </Col>
             </Row>
             <Row className="no-gutters">
               <Col sm={{size: 2}} md={{size: 2}} id="sidebar-col" className="d-flex flex-column">
-                <NavigationLinksWithRouter isTenantSchema={this.state.isTenantSchema}/>
+                <NavigationLinksWithRouter isTenantSchema={this.state.isTenantSchema} userDetails={userDetails}/>
                 <div id="sidebar-grow" className="flex-grow-1 border-left border-right rounded-bottom"/>
               </Col>
               <Col>

@@ -183,7 +183,6 @@ export class PackageChange extends Component {
       list_probes: [],
       present_version: false,
       loading: false,
-      write_perm: false,
       areYouSureModal: false,
       modalFunc: undefined,
       modalTitle: undefined,
@@ -335,7 +334,6 @@ export class PackageChange extends Component {
             this.setState({
               list_repos_6: list_repos_6,
               list_repos_7: list_repos_7,
-              write_perm: localStorage.getItem('authIsSuperuser') === 'true',
               loading: false
             });
           } else {
@@ -367,7 +365,6 @@ export class PackageChange extends Component {
                   repo_6: repo_6,
                   repo_7: repo_7,
                   list_probes: list_probes,
-                  write_perm: localStorage.getItem('authIsSuperuser') === 'true',
                   loading: false
                 });
               });
@@ -377,7 +374,7 @@ export class PackageChange extends Component {
 
   render() {
     const { pkg, repo_6, repo_7, list_repos_6, list_repos_7,
-      list_probes, write_perm, loading, present_version } = this.state;
+      list_probes, loading, present_version } = this.state;
 
     if (loading)
       return <LoadingAnim/>;
@@ -391,7 +388,6 @@ export class PackageChange extends Component {
           modal={true}
           state={this.state}
           toggle={this.toggleAreYouSure}
-          submitperm={write_perm}
           history={false}
         >
           <Formik
@@ -528,7 +524,6 @@ export class PackageChange extends Component {
                   }
                 </FormGroup>
                 {
-                  write_perm &&
                   <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
                   {
                     !this.addview ?

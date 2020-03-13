@@ -2,4 +2,3 @@ coverage
 mock
 discover
 factory-boy
-python-memcached

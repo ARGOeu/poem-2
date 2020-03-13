@@ -233,7 +233,7 @@ export const CustomBreadcrumb = ({location, history}) =>
 }
 
 
-export const NavigationBar = ({history, onLogout, isOpenModal, toggle, titleModal, msgModal}) =>
+export const NavigationBar = ({history, onLogout, isOpenModal, toggle, titleModal, msgModal, userDetails}) =>
 (
   <React.Fragment>
     <ModalAreYouSure
@@ -253,7 +253,7 @@ export const NavigationBar = ({history, onLogout, isOpenModal, toggle, titleModa
       <Collapse navbar className='justify-content-end'>
         <Nav navbar >
           <NavItem className='m-2 text-light'>
-            Welcome, {localStorage.getItem('authUsername')}
+            Welcome, {userDetails.username}
           </NavItem>
           <NavItem className='m-2'>
             <Button
@@ -270,7 +270,7 @@ export const NavigationBar = ({history, onLogout, isOpenModal, toggle, titleModa
 )
 
 
-export const NavigationLinks = ({location, isTenantSchema}) => {
+export const NavigationLinks = ({location, isTenantSchema, userDetails}) => {
   var data = undefined;
   !isTenantSchema ? data = admin_list_pages : data = list_pages
 
@@ -280,7 +280,7 @@ export const NavigationLinks = ({location, isTenantSchema}) => {
           data.map((item, i) =>
             item === 'administration'
               ?
-                localStorage.getItem('authIsSuperuser') === 'true'
+                userDetails.is_superuser
                   ?
                     <NavItem key={i}>
                       <NavLink
@@ -490,7 +490,7 @@ export const FancyErrorMessage = (msg) => (
 function matchItem(item, value) {
   if (value)
     return item.toLowerCase().indexOf(value.toLowerCase()) !== -1;
-};
+}
 
 
 export const AutocompleteField = ({lists, onselect_handler, field, val, icon, setFieldValue, req, label, values}) => {
@@ -598,10 +598,10 @@ export function HistoryComponent(obj, tenantview=false) {
               list_versions: json,
               loading: false
             });
-          };
+          }
         }
       )
-    };
+    }
 
       render() {
         const { loading, list_versions } = this.state;
@@ -706,9 +706,9 @@ export function HistoryComponent(obj, tenantview=false) {
         }
         else
           return null;
-      };
+      }
     };
-};
+}
 
 
 export const DiffElement = ({title, item1, item2}) => {
@@ -720,12 +720,12 @@ export const DiffElement = ({title, item1, item2}) => {
   if (item1.length > item2.length) {
     for (let i=item2.length; i < item1.length; i++) {
       item2.push(' ');
-    };
+    }
   } else if (item2.length > item1.length) {
     for (let i=item1.length; i < item2.length; i++) {
       item1.push(' ');
-    };
-  };
+    }
+  }
 
   const elements = [];
   for (let i = 0; i < n; i++) {
@@ -740,7 +740,7 @@ export const DiffElement = ({title, item1, item2}) => {
       key={'diff-' + i}
     />
     );
-  };
+  }
 
   return (
   <div id='argo-contentwrap' className='ml-2 mb-2 mt-2 p-3 border rounded'>

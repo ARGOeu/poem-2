@@ -2,11 +2,11 @@ import React, { Component } from 'react';
 import {
   Alert,
   Container,
-  Button, 
-  Row, 
-  Col, 
-  Card, 
-  CardHeader, 
+  Button,
+  Row,
+  Col,
+  Card,
+  CardHeader,
   CardBody,
   Label,
   CardFooter,
@@ -15,11 +15,10 @@ import {Formik, Field, Form} from 'formik';
 import ArgoLogo from './argologo_color.svg';
 import './Login.css';
 import {Footer} from './UIElements.js';
-import Cookies from 'universal-cookie';
+import {Backend} from './DataManager.js';
 
 
 class Login extends Component {
-
   constructor(props) {
     super(props);
 
@@ -31,87 +30,38 @@ class Login extends Component {
       isTenantSchema: null
     };
 
+    this.backend = new Backend()
     this.dismissLoginAlert = this.dismissLoginAlert.bind(this);
-  }
-
-  isSaml2Logged() {
-    return fetch('/api/v2/internal/saml2login', {
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-      },
-    });
-  }
-
-  flushSaml2Cache() {
-    let cookies = new Cookies();
-
-    return fetch('/api/v2/internal/saml2login', {
-      method: 'DELETE',
-      mode: 'cors',
-      cache: 'no-cache',
-      credentials: 'same-origin',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'X-CSRFToken': cookies.get('csrftoken'),
-        'Referer': 'same-origin'
-      }});
+    this.AppOnLogin = props.onLogin
   }
 
   fetchSamlButtonString() {
     return fetch('/api/v2/internal/config_options')
       .then(response => response.json())
-      .then(json => this._isMounted && 
-        this.setState({samlIdpString: json.result.saml_login_string}))
-      .catch(err => console.log('Something went wrong: ' + err));
-  }
-
-  fetchIsTenantSchema() {
-    return fetch('/api/v2/internal/istenantschema')
-      .then(response => response.ok ? response.json() : null)
-      .then(json => json['isTenantSchema'])
-      .catch(err => console.log('Something went wrong: ' + err))
+      .catch(err => alert('Something went wrong: ' + err));
   }
 
   componentDidMount() {
     this._isMounted = true;
 
-    this.fetchIsTenantSchema().then(response => {
-      if (response !== null)
-        this._isMounted && this.setState({isTenantSchema: response})
-
-      if (response) {
-        this.fetchSamlButtonString().then(
-          this.isSaml2Logged().then(response => {
-            response.ok && response.json().then(
-              json => {
-                if (Object.keys(json).length > 0) {
-                  this.flushSaml2Cache().then(
-                    response => response.ok && 
-                      this.props.onLogin(json, this.props.history)
-                  )
-                }
-              }
-            )
+    this.backend.isTenantSchema().then(response => {
+      if (response === true)
+        this.fetchSamlButtonString().then(json => {
+          this.setState({
+            isTenantSchema: response,
+            samlIdpString: json.result.saml_login_string
           })
-        )
-      }
+        })
+      else if (response === false)
+        this.setState({
+          isTenantSchema: response,
+        })
     })
-      .catch(err => console.log('Something went wrong: ' + err))
+      .catch(err => alert('Something went wrong: ' + err))
   }
 
   componentWillUnmount() {
     this._isMounted = false;
-  }
-
-  fetchUserDetails(username) {
-    return fetch('/api/v2/internal/users/' + username, {
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-      },
-    });
   }
 
   doUserPassLogin(username, password)
@@ -127,10 +77,10 @@ class Login extends Component {
         'Referer': 'same-origin'
       },
       body: JSON.stringify({
-        'username': username, 
+        'username': username,
         'password': password
       })
-    }).then(response => this.fetchUserDetails(username));
+    }).then(() => this.backend.isActiveSession(this.state.isTenantSchema))
   }
 
   dismissLoginAlert() {
@@ -138,15 +88,14 @@ class Login extends Component {
   }
 
   render() {
-
     if (this.state.isTenantSchema !== null) {
       return (
         <Container>
           <Row className="login-first-row">
             <Col sm={{size: 4, offset: 4}}>
               <Card>
-                <CardHeader 
-                  id='argo-loginheader' 
+                <CardHeader
+                  id='argo-loginheader'
                   className="d-sm-inline-flex align-items-center justify-content-around">
                   <img src={ArgoLogo} id="argologo" alt="ARGO logo"/>
                   <h4 className="text-light"><strong>ARGO</strong> POEM</h4>
@@ -156,13 +105,11 @@ class Login extends Component {
                     initialValues = {{username: '', password: ''}}
                     onSubmit = {
                       (values) => this.doUserPassLogin(values.username, values.password)
-                        .then(response => 
+                        .then(response =>
                           {
-                            if (response.ok) {
-                              response.json().then(
-                                json => this.props.onLogin(json, this.props.history)
-                              )
-                            } 
+                            if (response.active) {
+                              this.AppOnLogin(response.userdetails, this.props.history)
+                            }
                             else {
                               this.setState({loginFailedVisible: true});
                             }
@@ -192,7 +139,7 @@ class Login extends Component {
                       </FormGroup>
                     </Form>
                   </Formik>
-                </CardBody> 
+                </CardBody>
                 <CardFooter id="argo-loginfooter">
                   <Footer loginPage={true}/>
                 </CardFooter>

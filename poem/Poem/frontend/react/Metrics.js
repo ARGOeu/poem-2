@@ -287,7 +287,7 @@ export function ListOfMetrics(type, imp=false) {
     constructor(props) {
       super(props);
 
-      this.location = props.location;
+      this.location = props.location
 
       if (type === 'metric') {
         this.state = {
@@ -299,7 +299,8 @@ export function ListOfMetrics(type, imp=false) {
           search_name: '',
           search_probeversion: '',
           search_type: '',
-          search_group: ''
+          search_group: '',
+          userDetails: undefined
         }
       } else {
         this.state = {
@@ -312,7 +313,8 @@ export function ListOfMetrics(type, imp=false) {
           search_ostag: '',
           search_type: '',
           selected: {},
-          selectAll: 0
+          selectAll: 0,
+          userDetails: undefined
         }
       }
 
@@ -395,39 +397,45 @@ export function ListOfMetrics(type, imp=false) {
     componentDidMount() {
       this.setState({loading: true});
 
-      if (type === 'metric') {
-        Promise.all([this.backend.fetchData('/api/v2/internal/metric'),
-          this.backend.fetchResult('/api/v2/internal/usergroups'),
-          this.backend.fetchData('/api/v2/internal/mtypes')
-        ]).then(([metrics, groups, types]) =>
-              this.setState({
-                list_metric: metrics,
-                list_groups: groups['metrics'],
-                list_types: types,
-                loading: false,
-                search_name: '',
-                search_probeversion: '',
-                search_group: '',
-                search_type: ''
-              }));
-        } else {
-          Promise.all([
-            this.backend.fetchData(`/api/v2/internal/metrictemplates${imp ? '-import' : ''}`),
-            this.backend.fetchData('/api/v2/internal/mttypes'),
-            this.backend.fetchData('/api/v2/internal/ostags')
-        ]).then(([metrictemplates, types, ostags]) =>
-            this.setState({
-              list_metric: metrictemplates,
-              list_types: types,
-              list_ostags: ostags,
-              loading: false,
-              search_name: '',
-              search_probeversion: '',
-              search_type: '',
-              search_ostag: ''
-            })
-        )
-        }
+      this.backend.isTenantSchema().then(response => {
+        this.backend.isActiveSession(response).then(sessionActive => {
+          if (sessionActive.active)
+            if (type === 'metric') {
+              Promise.all([this.backend.fetchData('/api/v2/internal/metric'),
+                this.backend.fetchResult('/api/v2/internal/usergroups'),
+                this.backend.fetchData('/api/v2/internal/mtypes')
+              ]).then(([metrics, groups, types]) =>
+                  this.setState({
+                    list_metric: metrics,
+                    list_groups: groups['metrics'],
+                    list_types: types,
+                    loading: false,
+                    search_name: '',
+                    search_probeversion: '',
+                    search_group: '',
+                    search_type: '',
+                    userDetails: sessionActive.userdetails
+                  }));
+            } else {
+              Promise.all([
+                this.backend.fetchData(`/api/v2/internal/metrictemplates${imp ? '-import' : ''}`),
+                this.backend.fetchData('/api/v2/internal/mttypes'),
+                this.backend.fetchData('/api/v2/internal/ostags')
+            ]).then(([metrictemplates, types, ostags]) =>
+                this.setState({
+                  list_metric: metrictemplates,
+                  list_types: types,
+                  list_ostags: ostags,
+                  loading: false,
+                  search_name: '',
+                  search_probeversion: '',
+                  search_type: '',
+                  search_ostag: '',
+                  userDetails: sessionActive.userdetails
+                }))
+            }
+        })
+      })
     }
 
     render() {
@@ -527,7 +535,7 @@ export function ListOfMetrics(type, imp=false) {
         }
       ];
 
-      if (imp && localStorage.getItem('authIsSuperuser') === 'true') {
+      if (imp && this.state.userDetails.is_superuser) {
         columns.splice(
           0,
           0,
@@ -680,9 +688,9 @@ export function ListOfMetrics(type, imp=false) {
             return (
               <>
                 <div className="d-flex align-items-center justify-content-between">
-                  <h2 className="ml-3 mt-1 mb-4">{`Select metric template${localStorage.getItem('authIsSuperuser') === 'true'  ? '(s) to import' : ' for details'}`}</h2>
+                  <h2 className="ml-3 mt-1 mb-4">{`Select metric template${this.state.userDetails.is_superuser ? '(s) to import' : ' for details'}`}</h2>
                   {
-                    localStorage.getItem('authIsSuperuser') === 'true' &&
+                    this.state.userDetails.is_superuser &&
                       <Button
                       className='btn btn-secondary'
                       disabled={!this.state.search_ostag}
@@ -1384,38 +1392,41 @@ export class MetricChange extends Component {
 
     if (!this.addview) {
       Promise.all([
+        this.backend.isActiveSession(),
         this.backend.fetchData(`/api/v2/internal/metric/${this.name}`),
         this.backend.fetchData(`/api/v2/internal/version/metrictemplate/${this.name}`),
-        this.backend.fetchData('/api/v2/internal/groups/metrics')
-      ]).then(([metrics, metrictemplateversions, usergroups]) => {
-        metrics.probeversion ?
-          this.backend.fetchData(`/api/v2/internal/version/probe/${metrics.probeversion.split(' ')[0]}`)
-            .then(probe => {
-              let fields = {};
-              let probeversions = [];
-              probe.forEach((e) => {
-                probeversions.push(e.object_repr);
-                if (e.object_repr === metrics.probeversion) {
-                  fields = e.fields;
-                }
+      ]).then(([session, metrics, metrictemplateversions]) => {
+        if (session.active)
+          metrics.probeversion ?
+            this.backend.fetchData(`/api/v2/internal/version/probe/${metrics.probeversion.split(' ')[0]}`)
+              .then(probe => {
+                let fields = {};
+                let probeversions = [];
+                probe.forEach((e) => {
+                  probeversions.push(e.object_repr);
+                  if (e.object_repr === metrics.probeversion) {
+                    fields = e.fields;
+                  }
+                })
+                this.setState({
+                  metric: metrics,
+                  probe: fields,
+                  probeversions: probeversions,
+                  metrictemplateversions: metrictemplateversions,
+                  groups: session.userdetails.groups.metrics,
+                  loading: false,
+                  write_perm: session.userdetails.is_superuser ||
+                    session.userdetails.groups.metrics.indexOf(metrics.group) >= 0,
+                })
               })
+            :
               this.setState({
                 metric: metrics,
-                probe: fields,
-                probeversions: probeversions,
-                metrictemplateversions: metrictemplateversions,
-                groups: usergroups,
+                groups: session.userdetails.groups.metrics,
                 loading: false,
-                write_perm: localStorage.getItem('authIsSuperuser') === 'true' || usergroups.indexOf(metrics.group) >= 0,
+                write_perm: session.userdetails.is_superuser ||
+                  session.userdetails.groups.metrics.indexOf(metrics.group) >= 0,
               })
-            })
-          :
-            this.setState({
-              metric: metrics,
-              groups: usergroups,
-              loading: false,
-              write_perm: localStorage.getItem('authIsSuperuser') === 'true' || usergroups.indexOf(metrics.group) >= 0,
-            })
       })
     }
   }

@@ -118,7 +118,7 @@ const ThresholdsSchema = Yup.object().shape({
                   return Number(lowerLimit) < Number(value);
                 else
                   return true;
-              };
+              }
             }
             )
         }))
@@ -156,7 +156,7 @@ function getUOM(value) {
 
   if (value.endsWith('c'))
     return 'c';
-};
+}
 
 
 function thresholdsToValues(rules) {
@@ -190,7 +190,7 @@ function thresholdsToValues(rules) {
                 } else {
                   warn1 = '0';
                   warn2 = subtokens[i];
-                };
+                }
               } else if (i === 2) {
                 let crit = subtokens[i].split(':');
                 if (crit.length > 1) {
@@ -199,16 +199,16 @@ function thresholdsToValues(rules) {
                 } else {
                   crit1 = '0';
                   crit2 = subtokens[i];
-                };
+                }
               } else if (i === 3) {
                 min = subtokens[i];
               } else if (i === 4) {
                 max = subtokens[i];
-              };
-            };
-          };
-        };
-      };
+              }
+            }
+          }
+        }
+      }
       thresholds.push({
         label: label,
         value: value,
@@ -224,7 +224,7 @@ function thresholdsToValues(rules) {
     r.thresholds = thresholds;
   }));
   return rules;
-};
+}
 
 
 const ThresholdsProfilesForm = ({
@@ -754,7 +754,7 @@ const ThresholdsProfilesForm = ({
                                                           min: '',
                                                           max: ''
                                                         });
-                                                      };
+                                                      }
                                                     }}
                                                   >
                                                     <FontAwesomeIcon icon={faTimes}/>
@@ -869,7 +869,7 @@ export class ThresholdsProfilesList extends Component {
       loading: false,
       list_thresholdsprofiles: null
     };
-  };
+  }
 
   componentDidMount() {
     this.setState({loading: true});
@@ -881,7 +881,7 @@ export class ThresholdsProfilesList extends Component {
           loading: false
         })
       );
-  };
+  }
 
   render() {
     const columns = [
@@ -921,8 +921,8 @@ export class ThresholdsProfilesList extends Component {
       );
     } else
       return null;
-  };
-};
+  }
+}
 
 
 export class ThresholdsProfilesChange extends Component {
@@ -971,7 +971,7 @@ export class ThresholdsProfilesChange extends Component {
     this.onSubmitHandle = this.onSubmitHandle.bind(this);
     this.doChange = this.doChange.bind(this);
     this.doDelete = this.doDelete.bind(this);
-  };
+  }
 
   toggleAreYouSureSetModal(msg, title, onyes) {
     this.setState(prevState =>
@@ -980,12 +980,12 @@ export class ThresholdsProfilesChange extends Component {
         modalMsg: msg,
         modalTitle: title,
       }));
-  };
+  }
 
   toggleAreYouSure() {
     this.setState(prevState =>
       ({areYouSureModal: !prevState.areYouSureModal}));
-  };
+  }
 
   toggleWarningPopOver() {
     this.setState({
@@ -1009,7 +1009,7 @@ export class ThresholdsProfilesChange extends Component {
     this.setState({
       thresholds_rules: thresholds_rules
     });
-  };
+  }
 
   thresholdsToString(rules) {
     rules.forEach((r => {
@@ -1029,7 +1029,7 @@ export class ThresholdsProfilesChange extends Component {
       r.thresholds = th;
     }));
     return rules;
-  };
+  }
 
   onSubmitHandle(values, actions) {
     let msg = undefined;
@@ -1041,11 +1041,11 @@ export class ThresholdsProfilesChange extends Component {
     } else {
       msg = 'Are you sure you want to change thresholds profile?';
       title = 'Change thresholds profile';
-    };
+    }
 
     this.toggleAreYouSureSetModal(msg, title,
       () => this.doChange(values, actions));
-  };
+  }
 
   doChange(values, actions) {
     let values_send = JSON.parse(JSON.stringify(values));
@@ -1077,7 +1077,7 @@ export class ThresholdsProfilesChange extends Component {
                   callback: () => this.history.push('/ui/thresholdsprofiles')
                 }))
             });
-        };
+        }
       });
     } else {
       this.webapi.changeThresholdsProfile({
@@ -1108,10 +1108,10 @@ export class ThresholdsProfilesChange extends Component {
                     callback: () => this.history.push('/ui/thresholdsprofiles')
                   }));
               });
-          };
+          }
         });
-    };
-  };
+    }
+  }
 
   doDelete(profileId) {
     this.webapi.deleteThresholdsProfile(profileId)
@@ -1129,48 +1129,46 @@ export class ThresholdsProfilesChange extends Component {
               title: 'Deleted',
               callback: () => this.history.push('/ui/thresholdsprofiles')
             }));
-        };
+        }
       });
-  };
+  }
 
   componentDidMount() {
     this.setState({loading: true});
 
-    Promise.all([
-      this.backend.fetchData('/api/v2/internal/groups/thresholdsprofiles'),
-      this.backend.fetchListOfNames('/api/v2/internal/metricsall')
-    ])
-      .then(([usergroups, metricsall]) => {
-        if (this.addview) {
+    this.backend.isActiveSession().then(sessionActive => {
+      Promise.all([
+        this.backend.fetchListOfNames('/api/v2/internal/metricsall'),
+        this.backend.fetchData(`/api/v2/internal/thresholdsprofiles/${this.name}`)
+      ])
+        .then(([metricsall, json]) => {
+          if (this.addview) {
             this.setState({
               loading: false,
-              groups_list: usergroups,
+              groups_list: sessionActive.userdetails.groups.thresholdsprofiles,
               metrics_list: metricsall,
-              write_perm: localStorage.getItem('authIsSuperuser') === 'true' || groups.length > 0
+              write_perm: sessionActive.userdetails.is_superuser ||
+                sessionActive.userdetails.groups.thresholdsprofiles.indexOf(json['groupname']) >= 0,
             });
-        } else {
-          this.backend.fetchData(`/api/v2/internal/thresholdsprofiles/${this.name}`)
-            .then(json =>
-              Promise.all([
-                this.webapi.fetchThresholdsProfile(json.apiid),
-                this.backend.fetchResult('/api/v2/internal/usergroups')
-              ])
-                .then(([thresholdsprofile, groups]) => this.setState({
-                  thresholds_profile: {
-                    'apiid': thresholdsprofile.id,
-                    'name': thresholdsprofile.name,
-                    'groupname': json['groupname']
-                  },
-                  thresholds_rules: thresholdsToValues(thresholdsprofile.rules),
-                  groups_list: groups['thresholdsprofiles'],
-                  metrics_list: metricsall,
-                  write_perm: localStorage.getItem('authIsSuperuser') === 'true' || usergroups.indexOf(group) >= 0,
-                  loading: false
-                }))
-            );
-        };
-      });
-  };
+          } else {
+            this.webapi.fetchThresholdsProfile(json.apiid)
+              .then(thresholdsprofile => this.setState({
+                thresholds_profile: {
+                  'apiid': thresholdsprofile.id,
+                  'name': thresholdsprofile.name,
+                  'groupname': json['groupname']
+                },
+                thresholds_rules: thresholdsToValues(thresholdsprofile.rules),
+                groups_list: sessionActive.userdetails.groups.thresholdsprofiles,
+                metrics_list: metricsall,
+                write_perm: sessionActive.userdetails.is_superuser ||
+                  sessionActive.userdetails.groups.thresholdsprofiles.length > 0,
+                loading: false
+            }))
+          }
+        });
+    })
+  }
 
   render() {
     const { thresholds_profile, thresholds_rules, metrics_list, groups_list, loading, write_perm } = this.state;
@@ -1246,8 +1244,8 @@ export class ThresholdsProfilesChange extends Component {
       );
     } else
       return null;
-  };
-};
+  }
+}
 
 
 const ListDiffElement = ({title, item1, item2}) => {
@@ -1263,7 +1261,7 @@ const ListDiffElement = ({title, item1, item2}) => {
 
     strng += `thresholds: ${item1[i]['thresholds']}`;
     list1.push(strng);
-  };
+  }
 
   for (let i = 0; i < item2.length; i++) {
     let strng = `metric: ${item2[i]['metric']},\n`;
@@ -1275,7 +1273,7 @@ const ListDiffElement = ({title, item1, item2}) => {
 
     strng += `thresholds: ${item2[i]['thresholds']}`;
     list2.push(strng);
-  };
+  }
 
   return (
     <div id='argo-contentwrap' className='ml-2 mb-2 mt-2 p-3 border rounded'>
@@ -1301,10 +1299,10 @@ function arraysEqual(arr1, arr2) {
       arr1[i]['host'] !== arr2[i]['host'] ||
       arr1[i]['endpoint_group'] !== arr2[i]['endpoint_group'])
           return false;
-  };
+  }
 
   return true;
-};
+}
 
 
 export class ThresholdsProfileVersionCompare extends Component {
@@ -1326,7 +1324,7 @@ export class ThresholdsProfileVersionCompare extends Component {
     };
 
     this.backend = new Backend();
-  };
+  }
 
   componentDidMount() {
     this.backend.fetchData(`/api/v2/internal/tenantversion/thresholdsprofile/${this.name}`)
@@ -1347,7 +1345,7 @@ export class ThresholdsProfileVersionCompare extends Component {
             name2 = e.fields.name;
             groupname2 = e.fields.groupname;
             rules2 = e.fields.rules;
-          };
+          }
         });
 
         this.setState({
@@ -1360,7 +1358,7 @@ export class ThresholdsProfileVersionCompare extends Component {
           loading: false
         });
       });
-  };
+  }
 
   render() {
     const { name1, name2, groupname1, groupname2, rules1, rules2, loading } = this.state;
@@ -1390,8 +1388,8 @@ export class ThresholdsProfileVersionCompare extends Component {
       );
     } else
       return null;
-  };
-};
+  }
+}
 
 
 export class ThresholdsProfileVersionDetail extends Component {
@@ -1410,7 +1408,7 @@ export class ThresholdsProfileVersionDetail extends Component {
       date_created: '',
       loading: false
     };
-  };
+  }
 
   componentDidMount() {
     this.setState({loading: true});
@@ -1428,7 +1426,7 @@ export class ThresholdsProfileVersionDetail extends Component {
             });
         });
       });
-  };
+  }
 
   render() {
     const { name, groupname, rules, date_created, loading } = this.state;
@@ -1461,5 +1459,5 @@ export class ThresholdsProfileVersionDetail extends Component {
       );
     } else
       return null;
-  };
-};
+  }
+}

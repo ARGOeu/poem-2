@@ -24,8 +24,8 @@ class Services extends Component {
     this.backend.fetchData('/api/v2/internal/services')
       .then(json =>
         this.setState({
-          rows: json.result.rows, 
-          rowspan: json.result.rowspan, 
+          rows: json.result.rows,
+          rowspan: json.result.rowspan,
           loading: false})
       );
   }
@@ -41,7 +41,7 @@ class Services extends Component {
     if (loading) {
       return (<LoadingAnim />)
 
-    } 
+    }
     else if (!loading && rows) {
       return (
         <BaseArgoView
@@ -62,31 +62,31 @@ class Services extends Component {
                 rows.map((e, i) =>
                   <tr key={i}>
                     {
-                      e.service_category && 
+                      e.service_category &&
                         <td id='argo-td' className="table-light" rowSpan={this.getRowSpan(rowspan.service_category, e.service_category)}>
                           {e.service_category}
                         </td>
                     }
                     {
-                      e.service_name && 
+                      e.service_name &&
                         <td id='argo-td' className="table-light" rowSpan={this.getRowSpan(rowspan.service_name, e.service_name)}>
                           {e.service_name}
                         </td>
                     }
                     {
-                      e.service_type && 
+                      e.service_type &&
                         <td id='argo-td' className="table-light" rowSpan={this.getRowSpan(rowspan.service_type, e.service_type)}>
                           <Icon i='serviceflavour'/> {e.service_type}
                         </td>
                     }
                     {
-                      e.metric && 
+                      e.metric &&
                         <td id='argo-td' className="table-light" rowSpan={this.getRowSpan(rowspan.metric, e.metric)}>
                           <Icon i='metrics'/> <Link to={'/ui/metrics/' + e.metric}>{e.metric}</Link>
                         </td>
                     }
                     {
-                      e.probe && 
+                      e.probe &&
                         <td id='argo-td' className="table-light" rowSpan={this.getRowSpan(rowspan.probe, e.probe)}>
                           <Icon i='probes'/> <ProbeVersionLink probeversion={e.probe}/>
                         </td>
@@ -99,7 +99,7 @@ class Services extends Component {
         </BaseArgoView>
       )
     }
-    else 
+    else
       return null
   }
 }

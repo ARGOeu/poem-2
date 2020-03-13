@@ -633,51 +633,52 @@ export class AggregationProfilesChange extends Component
   componentDidMount() {
     this.setState({loading: true})
 
-    Promise.all([
-      this.webapi.fetchMetricProfiles(),
-      this.backend.fetchData('/api/v2/internal/groups/aggregations')
-    ])
-      .then(([metricp, usergroups]) => {
-        if (!this.addview) {
-          this.backend.fetchData(`/api/v2/internal/aggregations/${this.profile_name}`)
-            .then(json1 => this.webapi.fetchAggregationProfile(json1.apiid)
-              .then(aggregp => this.backend.fetchData(`/api/v2/internal/aggregations/${aggregp.name}`)
-                .then(json2 => this.setState({
+    this.backend.isActiveSession().then(sessionActive => {
+      sessionActive.active && Promise.all([
+        this.webapi.fetchMetricProfiles(),
+      ])
+        .then(([metricp]) => {
+          if (!this.addview) {
+            this.backend.fetchData(`/api/v2/internal/aggregations/${this.profile_name}`)
+              .then(json => Promise.all([this.webapi.fetchAggregationProfile(json.apiid)])
+                .then(([aggregp]) => this.setState({
                   aggregation_profile: aggregp,
-                  groupname: json2['groupname'],
-                  list_user_groups: usergroups,
-                  write_perm: localStorage.getItem('authIsSuperuser') === 'true' || usergroups.indexOf(group) >= 0,
+                  groupname: json['groupname'],
+                  list_user_groups: sessionActive.userdetails.groups.aggregations,
+                  write_perm: sessionActive.userdetails.is_superuser ||
+                    sessionActive.userdetails.groups.aggregations.indexOf(json['groupname']) >= 0,
                   list_id_metric_profiles: this.extractListOfMetricsProfiles(metricp),
                   list_services: this.extractListOfServices(aggregp.metric_profile, metricp),
                   list_complete_metric_profiles: metricp,
                   loading: false
                 }))
               )
-            )
-        } else {
-          let empty_aggregation_profile = {
-            id: '',
-            name: '',
-            metric_operation: '',
-            profile_operation: '',
-            endpoint_group: '',
-            metric_profile: {
-                name: ''
-            },
-            groups: []
+          } else {
+            let empty_aggregation_profile = {
+              id: '',
+              name: '',
+              metric_operation: '',
+              profile_operation: '',
+              endpoint_group: '',
+              metric_profile: {
+                  name: ''
+              },
+              groups: []
+            }
+            this.setState({
+              aggregation_profile: empty_aggregation_profile,
+              groupname: '',
+              list_user_groups: sessionActive.userdetails.groups.aggregations,
+              write_perm: sessionActive.userdetails.is_superuser ||
+                sessionActive.userdetails.groups.aggregations.length > 0,
+              list_id_metric_profiles: this.extractListOfMetricsProfiles(metricp),
+              list_complete_metric_profiles: metricp,
+              list_services: [],
+              loading: false
+            })
           }
-          this.setState({
-            aggregation_profile: empty_aggregation_profile,
-            groupname: '',
-            list_user_groups: usergroups,
-            write_perm: localStorage.getItem('authIsSuperuser') === 'true' || usergroups.length > 0,
-            list_id_metric_profiles: this.extractListOfMetricsProfiles(metricp),
-            list_complete_metric_profiles: metricp,
-            list_services: [],
-            loading: false
-          })
-        }
-      })
+        })
+    })
   }
 
   render() {
@@ -857,22 +858,22 @@ const ListDiffElement = ({title, item1, item2}) => {
       services.push(
         `{name: ${item1[i]['services'][j]['name']}, operation: ${item1[i]['services'][j]['operation']}}`
       );
-    };
+    }
     list1.push(
       `name: ${item1[i]['name']},\noperation: ${item1[i]['operation']},\nservices: [\n${services.join('\n')}\n]`
       );
-  };
+  }
   for (let i = 0; i < item2.length; i++) {
     let services = [];
     for (let j = 0; j < item2[i]['services'].length; j++) {
       services.push(
         `{name: ${item2[i]['services'][j]['name']}, operation: ${item2[i]['services'][j]['operation']}}`
       );
-    };
+    }
     list2.push(
       `name: ${item2[i]['name']},\noperation: ${item2[i]['operation']},\nservices: [\n${services.join('\n')}\n]`
       );
-  };
+  }
 
   return (
     <div id='argo-contentwrap' className='ml-2 mb-2 mt-2 p-3 border rounded'>
@@ -916,7 +917,7 @@ export class AggregationProfileVersionCompare extends Component {
     };
 
     this.backend = new Backend();
-  };
+  }
 
   componentDidMount() {
     this.backend.fetchData(`/api/v2/internal/tenantversion/aggregationprofile/${this.name}`)
@@ -953,7 +954,7 @@ export class AggregationProfileVersionCompare extends Component {
             endpoint_group2 = e.fields.endpoint_group;
             metric_profile2 = e.fields.metric_profile;
             groups2 = e.fields.groups;
-          };
+          }
         });
 
         this.setState({
@@ -974,7 +975,7 @@ export class AggregationProfileVersionCompare extends Component {
           loading: false,
         });
       });
-  };
+  }
 
   render() {
     const {
@@ -1025,8 +1026,8 @@ export class AggregationProfileVersionCompare extends Component {
       );
     } else
       return null;
-  };
-};
+  }
+}
 
 
 export class AggregationProfileVersionDetails extends Component {
@@ -1049,7 +1050,7 @@ export class AggregationProfileVersionDetails extends Component {
       date_created: '',
       loading: false
     };
-  };
+  }
 
   componentDidMount() {
     this.setState({loading: true});
@@ -1071,7 +1072,7 @@ export class AggregationProfileVersionDetails extends Component {
             });
         });
       });
-  };
+  }
 
   render() {
     const { name, groupname, metric_operation, profile_operation,
@@ -1166,5 +1167,5 @@ export class AggregationProfileVersionDetails extends Component {
       );
     } else
       return null;
-  };
-};
+  }
+}

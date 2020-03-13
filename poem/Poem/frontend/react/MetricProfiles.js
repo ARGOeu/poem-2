@@ -230,22 +230,22 @@ export class MetricProfilesChange extends Component
   componentDidMount() {
     this.setState({loading: true})
 
-    Promise.all([
-      this.backend.fetchData('/api/v2/internal/groups/metricprofiles'),
-      this.backend.fetchListOfNames('/api/v2/internal/serviceflavoursall'),
-      this.backend.fetchListOfNames('/api/v2/internal/metricsall')
-    ])
-      .then(([usergroups, serviceflavoursall, metricsall]) => {
-        if (!this.addview) {
-          this.backend.fetchData(`/api/v2/internal/metricprofiles/${this.profile_name}`)
-            .then(json1 => this.webapi.fetchMetricProfile(json1.apiid)
-              .then(metricp => this.backend.fetchData(`/api/v2/internal/metricprofiles/${metricp.name}`)
-                .then(json2 => this.setState({
+    this.backend.isActiveSession().then(sessionActive => {
+      sessionActive.active && Promise.all([
+        this.backend.fetchListOfNames('/api/v2/internal/serviceflavoursall'),
+        this.backend.fetchListOfNames('/api/v2/internal/metricsall')
+      ])
+        .then(([serviceflavoursall, metricsall]) => {
+          if (!this.addview) {
+            this.backend.fetchData(`/api/v2/internal/metricprofiles/${this.profile_name}`)
+              .then(json => Promise.all([this.webapi.fetchMetricProfile(json.apiid)])
+                .then(([metricp]) => this.setState({
                   metric_profile: metricp,
                   metric_profile_name: metricp.name,
-                  groupname: json2['groupname'],
-                  list_user_groups: usergroups,
-                  write_perm: localStorage.getItem('authIsSuperuser') === 'true' || usergroups.indexOf(group) >= 0,
+                  groupname: json['groupname'],
+                  list_user_groups: sessionActive.userdetails.groups.metricprofiles,
+                  write_perm: sessionActive.userdetails.is_superuser ||
+                    sessionActive.userdetails.groups.metricprofiles.indexOf(json['groupname']) >= 0,
                   view_services: this.flattenServices(metricp.services).sort(this.sortServices),
                   serviceflavours_all: serviceflavoursall,
                   metrics_all: metricsall,
@@ -253,27 +253,28 @@ export class MetricProfilesChange extends Component
                   loading: false
                 }))
               )
-            )
-        } else {
-          let empty_metric_profile = {
-            id: '',
-            name: '',
-            services: [],
+          } else {
+            let empty_metric_profile = {
+              id: '',
+              name: '',
+              services: [],
+            }
+            this.setState({
+              metric_profile: empty_metric_profile,
+              metric_profile_name: '',
+              groupname: '',
+              list_user_groups: sessionActive.userdetails.groups.metricprofiles,
+              write_perm: sessionActive.userdetails.is_superuser ||
+                sessionActive.userdetails.groups.metricprofiles.length > 0,
+              view_services: [{service: '', metric: '', index: 0, isNew: true}],
+              serviceflavours_all: serviceflavoursall,
+              metrics_all: metricsall,
+              list_services: [{service: '', metric: '', index: 0, isNew: true}],
+              loading: false
+            })
           }
-          this.setState({
-            metric_profile: empty_metric_profile,
-            metric_profile_name: '',
-            groupname: '',
-            list_user_groups: usergroups,
-            write_perm: localStorage.getItem('authIsSuperuser') === 'true' || usergroups.length > 0,
-            view_services: [{service: '', metric: '', index: 0, isNew: true}],
-            serviceflavours_all: serviceflavoursall,
-            metrics_all: metricsall,
-            list_services: [{service: '', metric: '', index: 0, isNew: true}],
-            loading: false
-          })
-        }
-      })
+        })
+    })
   }
 
   insertSelectPlaceholder(data, text) {
@@ -754,11 +755,11 @@ const ListDiffElement = ({title, item1, item2}) => {
   let list2 = [];
   for (let i = 0; i < item1.length; i++) {
     list1.push(`service: ${item1[i]['service']}, metric: ${item1[i]['metric']}`)
-  };
+  }
 
   for (let i = 0; i < item2.length; i++) {
     list2.push(`service: ${item2[i]['service']}, metric: ${item2[i]['metric']}`)
-  };
+  }
 
   return (
     <div id='argo-contentwrap' className='ml-2 mb-2 mt-2 p-3 border rounded'>
@@ -794,7 +795,7 @@ export class MetricProfileVersionCompare extends Component {
     };
 
     this.backend = new Backend();
-  };
+  }
 
   componentDidMount() {
     this.setState({loading: true});
@@ -817,7 +818,7 @@ export class MetricProfileVersionCompare extends Component {
             name2 = e.fields.name;
             groupname2 = e.fields.groupname;
             metricinstances2 = e.fields.metricinstances;
-          };
+          }
         });
 
         this.setState({
@@ -830,7 +831,7 @@ export class MetricProfileVersionCompare extends Component {
           loading: false
         });
       });
-  };
+  }
 
   render() {
     const { name1, name2, groupname1, groupname2,
@@ -861,8 +862,8 @@ export class MetricProfileVersionCompare extends Component {
       );
     } else
       return null;
-  };
-};
+  }
+}
 
 
 export class MetricProfileVersionDetails extends Component {
@@ -881,7 +882,7 @@ export class MetricProfileVersionDetails extends Component {
       metricinstances: [],
       loading: false
     };
-  };
+  }
 
   componentDidMount() {
     this.setState({loading: true});
@@ -899,7 +900,7 @@ export class MetricProfileVersionDetails extends Component {
             });
         });
       });
-  };
+  }
 
   render() {
     const { name, groupname, date_created, metricinstances,
@@ -960,5 +961,5 @@ export class MetricProfileVersionDetails extends Component {
       )
     } else
       return null;
-  };
-};
+  }
+}

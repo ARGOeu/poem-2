@@ -1,23 +1,23 @@
 import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
 import { Backend } from './DataManager';
-import { 
-  LoadingAnim, 
-  BaseArgoView, 
-  Checkbox, 
-  NotifyOk, 
+import {
+  LoadingAnim,
+  BaseArgoView,
+  Checkbox,
+  NotifyOk,
   FancyErrorMessage
 } from './UIElements';
 import ReactTable from 'react-table';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
 import { Formik, Form, Field } from 'formik';
-import { 
-  FormGroup, 
-  Row, 
-  Col, 
-  Label, 
-  FormText, 
+import {
+  FormGroup,
+  Row,
+  Col,
+  Label,
+  FormText,
   Button,
   InputGroup,
   InputGroupAddon
@@ -56,7 +56,7 @@ export const UserChange = UserChangeComponent(true);
 export const SuperAdminUserChange = UserChangeComponent();
 
 
-const CommonUser = ({add, errors}) => 
+const CommonUser = ({add, errors}) =>
   <>
     {
       (add) ?
@@ -212,7 +212,7 @@ const CommonUser = ({add, errors}) =>
       </Row>
       <Row>
         <Col md={6}>
-          <Field 
+          <Field
             component={Checkbox}
             name="is_active"
             className="form-control"
@@ -240,7 +240,7 @@ export class UsersList extends Component
 
     this.location = props.location;
     this.backend = new Backend();
-  };
+  }
 
   componentDidMount() {
     this.setState({loading: true})
@@ -250,7 +250,7 @@ export class UsersList extends Component
           list_users: json,
           loading: false
         }))
-  };
+  }
 
   render() {
     const columns = [
@@ -292,10 +292,10 @@ export class UsersList extends Component
         Cell: row =>
           <div style={{textAlign: "center"}}
           >{row.value}</div>,
-        accessor: d => 
-        d.is_superuser ? 
-          <FontAwesomeIcon icon={faCheckCircle} style={{color: "#339900"}}/> 
-        : 
+        accessor: d =>
+        d.is_superuser ?
+          <FontAwesomeIcon icon={faCheckCircle} style={{color: "#339900"}}/>
+        :
           <FontAwesomeIcon icon={faTimesCircle} style={{color: "#CC0000"}}/>
       },
       {
@@ -304,9 +304,9 @@ export class UsersList extends Component
         Cell: row =>
           <div style={{textAlign: "center"}}
           >{row.value}</div>,
-        accessor: d => 
+        accessor: d =>
           d.is_staff ?
-            <FontAwesomeIcon icon={faCheckCircle} style={{color: "#339900"}}/> 
+            <FontAwesomeIcon icon={faCheckCircle} style={{color: "#339900"}}/>
           :
             <FontAwesomeIcon icon={faTimesCircle} style={{color: "#CC0000"}}/>
       }
@@ -315,7 +315,7 @@ export class UsersList extends Component
 
     if (loading)
       return (<LoadingAnim />);
-    
+
     else if (!loading && list_users) {
       return (
         <BaseArgoView
@@ -333,25 +333,25 @@ export class UsersList extends Component
     }
     else
       return null;
-  };
-};
+  }
+}
 
 
 function UserChangeComponent(isTenantSchema=false) {
   return class extends Component {
     constructor(props) {
       super(props);
-  
+
       this.user_name = props.match.params.user_name;
       this.addview = props.addview;
       this.location = props.location;
       this.history = props.history;
-  
+
       this.state = {
         custuser: {
           'pk': '',
-          'first_name': '', 
-          'last_name': '', 
+          'first_name': '',
+          'last_name': '',
           'username': '',
           'is_active': true,
           'is_superuser': false,
@@ -371,46 +371,45 @@ function UserChangeComponent(isTenantSchema=false) {
           'thresholdsprofiles': []
         },
         allgroups: {
-          'metrics': [], 
-          'aggregations': [], 
+          'metrics': [],
+          'aggregations': [],
           'metricprofiles': [],
           'thresholdsprofiles': []
         },
-        write_perm: false,
         loading: false,
         areYouSureModal: false,
         modalFunc: undefined,
         modalTitle: undefined,
         modalMsg: undefined
       }
-  
+
       this.backend = new Backend();
-  
+
       this.toggleAreYouSure = this.toggleAreYouSure.bind(this);
       this.toggleAreYouSureSetModal = this.toggleAreYouSureSetModal.bind(this);
       this.onSubmitHandle = this.onSubmitHandle.bind(this);
       this.doChange = this.doChange.bind(this);
       this.doDelete = this.doDelete.bind(this);
-    };
+    }
 
     toggleAreYouSure() {
-      this.setState(prevState => 
+      this.setState(prevState =>
         ({areYouSureModal: !prevState.areYouSureModal}));
-    };
-  
+    }
+
     toggleAreYouSureSetModal(msg, title, onyes) {
-      this.setState(prevState => 
+      this.setState(prevState =>
         ({areYouSureModal: !prevState.areYouSureModal,
           modalFunc: onyes,
           modalMsg: msg,
           modalTitle: title,
         }));
-    };
-  
+    }
+
     onSubmitHandle(values, action) {
       let msg = undefined;
       let title = undefined;
-  
+
       if (this.addview) {
         msg = 'Are you sure you want to add user?';
         title = 'Add user';
@@ -421,7 +420,7 @@ function UserChangeComponent(isTenantSchema=false) {
       }
       this.toggleAreYouSureSetModal(msg, title,
         () => this.doChange(values, action));
-    };
+    }
 
     doChange(values, action) {
       if (!this.addview) {
@@ -470,7 +469,7 @@ function UserChangeComponent(isTenantSchema=false) {
                 title: 'Changed',
                 callback: () => this.history.push('/ui/administration/users')
               });
-          };
+          }
         });
       } else {
         this.backend.addObject(
@@ -517,10 +516,10 @@ function UserChangeComponent(isTenantSchema=false) {
                   title: 'Added',
                   callback: () => this.history.push('/ui/administration/users')
                 });
-            };
+            }
           });
-        };
-    };
+        }
+    }
 
     doDelete(username) {
       this.backend.deleteObject(`/api/v2/internal/users/${username}`)
@@ -529,11 +528,11 @@ function UserChangeComponent(isTenantSchema=false) {
           title: 'Deleted',
           callback: () => this.history.push('/ui/administration/users')
         }));
-    };
+    }
 
     componentDidMount() {
       this.setState({loading: true})
-  
+
       if (!this.addview) {
         isTenantSchema ?
           Promise.all([
@@ -547,7 +546,6 @@ function UserChangeComponent(isTenantSchema=false) {
               userprofile: userprofile,
               usergroups: usergroups,
               allgroups: allgroups,
-              write_perm: localStorage.getItem('authIsSuperuser') === 'true',
               loading: false
               });
             })
@@ -556,32 +554,29 @@ function UserChangeComponent(isTenantSchema=false) {
             .then((user) => {
               this.setState({
                 custuser: user,
-                write_perm: localStorage.getItem('authIsSuperuser') === 'true',
                 loading: false
               });
             });
       } else {
         isTenantSchema ?
-          this.backend.fetchResult('/api/v2/internal/usergroups').then(groups => 
+          this.backend.fetchResult('/api/v2/internal/usergroups').then(groups =>
             this.setState({
                 allgroups: groups,
-                write_perm: localStorage.getItem('authIsSuperuser') === 'true',
                 loading: false
             }))
         :
           this.setState({
-            write_perm: localStorage.getItem('authIsSuperuser') === 'true',
             loading: false
           });
-      };
-    };
+      }
+    }
 
     render() {
-      const { custuser, userprofile, usergroups, allgroups, loading, write_perm } = this.state;
-  
+      const { custuser, userprofile, usergroups, allgroups, loading } = this.state;
+
       if (loading)
         return(<LoadingAnim />)
-  
+
       else if (!loading) {
         return (
           <BaseArgoView
@@ -591,8 +586,7 @@ function UserChangeComponent(isTenantSchema=false) {
             history={false}
             modal={true}
             state={this.state}
-            toggle={this.toggleAreYouSure}
-            submitperm={write_perm}>
+            toggle={this.toggleAreYouSure}>
             <Formik
               initialValues = {{
                 addview: this.addview,
@@ -617,7 +611,7 @@ function UserChangeComponent(isTenantSchema=false) {
               validationSchema={UserSchema}
               onSubmit = {(values, actions) => this.onSubmitHandle(values, actions)}
               render = {props => (
-                <Form> 
+                <Form>
                   <CommonUser
                     {...props}
                     add={this.addview}
@@ -746,7 +740,7 @@ function UserChangeComponent(isTenantSchema=false) {
                             <Col md={12}>
                               <InputGroup>
                                 <InputGroupAddon addonType='prepend'>distinguishedName</InputGroupAddon>
-                                <Field 
+                                <Field
                                   type="text"
                                   name="subject"
                                   required={false}
@@ -762,7 +756,7 @@ function UserChangeComponent(isTenantSchema=false) {
                             <Col md={8}>
                               <InputGroup>
                                 <InputGroupAddon addonType="prepend">eduPersonUniqueId</InputGroupAddon>
-                                <Field 
+                                <Field
                                   type="text"
                                   name="egiid"
                                   required={false}
@@ -778,7 +772,7 @@ function UserChangeComponent(isTenantSchema=false) {
                             <Col md={6}>
                               <InputGroup>
                                 <InputGroupAddon addonType="prepend">displayName</InputGroupAddon>
-                                <Field 
+                                <Field
                                   type="text"
                                   name="displayname"
                                   required={false}
@@ -792,38 +786,37 @@ function UserChangeComponent(isTenantSchema=false) {
                       </>
                   }
                   {
-                    (write_perm) &&
-                      <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
-                        {
-                          !this.addview ?
-                            <Button
-                              color="danger"
-                              onClick={() => {
-                                this.toggleAreYouSureSetModal('Are you sure you want to delete User?',
-                                'Delete user',
-                                () => this.doDelete(props.values.username))
-                              }}
-                            >
-                              Delete
-                            </Button>
-                          :
-                            <div></div>
-                        }
-                        <Button 
-                          color="success" 
-                          id="submit-button" 
-                          type="submit"
-                        >
-                          Save
-                        </Button>
-                      </div>
+                    <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
+                      {
+                        !this.addview ?
+                          <Button
+                            color="danger"
+                            onClick={() => {
+                              this.toggleAreYouSureSetModal('Are you sure you want to delete User?',
+                              'Delete user',
+                              () => this.doDelete(props.values.username))
+                            }}
+                          >
+                            Delete
+                          </Button>
+                        :
+                          <div></div>
+                      }
+                      <Button
+                        color="success"
+                        id="submit-button"
+                        type="submit"
+                      >
+                        Save
+                      </Button>
+                    </div>
                   }
                 </Form>
               )}
             />
           </BaseArgoView>
         );
-      };
-    };
+      }
+    }
   };
-};
+}
