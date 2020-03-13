@@ -397,13 +397,14 @@ export function ListOfMetrics(type, imp=false) {
     componentDidMount() {
       this.setState({loading: true});
 
-      this.backend.isActiveSession().then(sessionActive => {
-        if (sessionActive.active)
-          if (type === 'metric') {
-            Promise.all([this.backend.fetchData('/api/v2/internal/metric'),
-              this.backend.fetchResult('/api/v2/internal/usergroups'),
-              this.backend.fetchData('/api/v2/internal/mtypes')
-            ]).then(([metrics, groups, types]) =>
+      this.backend.isTenantSchema().then(response => {
+        this.backend.isActiveSession(response).then(sessionActive => {
+          if (sessionActive.active)
+            if (type === 'metric') {
+              Promise.all([this.backend.fetchData('/api/v2/internal/metric'),
+                this.backend.fetchResult('/api/v2/internal/usergroups'),
+                this.backend.fetchData('/api/v2/internal/mtypes')
+              ]).then(([metrics, groups, types]) =>
                   this.setState({
                     list_metric: metrics,
                     list_groups: groups['metrics'],
@@ -415,24 +416,25 @@ export function ListOfMetrics(type, imp=false) {
                     search_type: '',
                     userDetails: sessionActive.userdetails
                   }));
-          } else {
-            Promise.all([
-              this.backend.fetchData(`/api/v2/internal/metrictemplates${imp ? '-import' : ''}`),
-              this.backend.fetchData('/api/v2/internal/mttypes'),
-              this.backend.fetchData('/api/v2/internal/ostags')
-          ]).then(([metrictemplates, types, ostags]) =>
-              this.setState({
-                list_metric: metrictemplates,
-                list_types: types,
-                list_ostags: ostags,
-                loading: false,
-                search_name: '',
-                search_probeversion: '',
-                search_type: '',
-                search_ostag: '',
-                userDetails: sessionActive.userdetails
-              }))
-          }
+            } else {
+              Promise.all([
+                this.backend.fetchData(`/api/v2/internal/metrictemplates${imp ? '-import' : ''}`),
+                this.backend.fetchData('/api/v2/internal/mttypes'),
+                this.backend.fetchData('/api/v2/internal/ostags')
+            ]).then(([metrictemplates, types, ostags]) =>
+                this.setState({
+                  list_metric: metrictemplates,
+                  list_types: types,
+                  list_ostags: ostags,
+                  loading: false,
+                  search_name: '',
+                  search_probeversion: '',
+                  search_type: '',
+                  search_ostag: '',
+                  userDetails: sessionActive.userdetails
+                }))
+            }
+        })
       })
     }
 
