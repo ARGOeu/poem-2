@@ -18,4 +18,4 @@ In case user has no permission to modify the probe, there is going to appear a w
 ![Tenant Metric Readonly](tenant_figs/metric_readonly.png)
 
 ##Adding new metrics
-Tenant users cannot add new metrics by themselves. Metrics can be imported from available metric templates. If none of the metric templates is satisfying, the user will have to ask a super admin to add new metric template to SuperAdmin POEM.
+Tenant users cannot add new metrics by themselves. Metrics can be imported from available metric templates by superuser on [Metric Template Page](tenant_metric_templates.md). If none of the metric templates is satisfying, the user will have to ask a super admin to add new metric template to SuperAdmin POEM.
