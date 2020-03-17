@@ -94,7 +94,6 @@ class SAML2Backend(Saml2Backend):
         if created:
             user.set_unusable_password()
             user.is_active = True
-            user.is_staff = True
             user.save()
 
             userpro, upcreated = UserProfile.objects.get_or_create(user=user)
