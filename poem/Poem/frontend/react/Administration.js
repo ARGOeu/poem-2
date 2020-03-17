@@ -59,7 +59,7 @@ export const TenantAdministration = (props) =>
     </Card>
     <Card>
       <CardHeader className="mt-2 p-2 text-light text-uppercase rounded" style={{'backgroundColor': "#416090"}}>
-        Available data
+        SuperAdmin POEM data
       </CardHeader>
       <CardBody>
         <Row className="p-1 align-items-center">
