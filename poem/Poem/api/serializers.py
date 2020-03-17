@@ -26,7 +26,7 @@ class ServiceFlavourSerializer(serializers.ModelSerializer):
 class UsersSerializer(serializers.ModelSerializer):
     class Meta:
         fields = ('first_name', 'last_name', 'username', 'is_active',
-                  'is_superuser', 'is_staff', 'email', 'date_joined', 'pk')
+                  'is_superuser', 'email', 'date_joined', 'pk')
         model = CustUser
 
 
