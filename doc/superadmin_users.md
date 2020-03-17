@@ -7,7 +7,7 @@ By clicking user's name, one can access its details, shown in the image below.
 
 ![SuperAdmin User Details](superadmin_figs/superadmin_user_details.png)
 
-The first four fields are self-explanatory. There are three checkboxes in Permissions section. First checkbox sets superuser status - only users with this permission can access Administration page and make changes to users. By removing Active status from user, that user is no longer able to log in to POEM.
+The first four fields are self-explanatory. There are two checkboxes in Permissions section. First checkbox sets superuser status - only users with this permission can access Administration page and make changes to users. By removing Active status from user, that user is no longer able to log in to POEM.
 
 When adding a new user (shown in the image below), there are 3 mandatory fields:
 * **Username**:
