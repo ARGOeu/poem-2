@@ -10,7 +10,7 @@ All of the groups of resources pages look similar. By clicking the name of group
 
 Once the page of the particular group of resource is opened, there are two sections. In the first section, the name is defined, and once it's defined, it is no longer possible to change it.
 
-Second section consists of two windows. The left one shows the resources not assigned to any group. Among those resources, user can select those he wants to add to the group. The right one shows resources that belong to the group, and in that window, user may change the ones (s)he wants to remove from the group.
+Second section consists of two windows. The left one shows the resources not assigned to any group. Among those resources, user can select those he wants to add to the group. The right one shows resources that belong to the group, and in that window, user may select the ones (s)he wants to remove from the group.
 
 Images of groups of resources are shown below in respective sections.
 

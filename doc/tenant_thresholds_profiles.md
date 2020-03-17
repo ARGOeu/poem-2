@@ -10,6 +10,6 @@ By clicking on profile's name, user can access the particular profile's details 
 
 The first part is the same for all the profiles: **Name** and **Group** fields. **Group** field is a drop down select field and the user can choose among the existing groups. Since the field is required, there should be at least one group of thresholds profiles created beforehand.
 
-In section **Thresholds Rules** user can add new rules. **Metric** field is required. In defining the thresholds, **Label**, **Value**, **Warning** and **Critical** fields are required. By hovering over blue info symbol, user can see the information how to define warning and critical ranges. Thresholds may be added by clicking the "+" symbol, and existing thresholds may be removed by clicking "x" symbol next to them. If the user wants to remove whole rule, it can be done by clicking the red "x" symbol.
+In section **Thresholds Rules** user can add new rules. **Metric** field is required. In defining the thresholds, **Label**, **Value**, **Warning** and **Critical** fields are required. By hovering over blue info symbol, user can see the information on how to define warning and critical ranges. Thresholds may be added by clicking the button with "+" symbol, and existing thresholds may be removed by clicking button with "x" symbol next to them. If the user wants to remove whole rule, it can be done by clicking the red button with "x" symbol.
 
 By clicking **History** button, user can see the changes made to the profile, the time they were made, and by whom they were made.

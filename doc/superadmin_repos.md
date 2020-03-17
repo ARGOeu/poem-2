@@ -8,9 +8,9 @@ YUM repos may be filtered by OS tag. By clicking on the YUM repo name, user can 
 ![Superadmin YUM repo details](superadmin_figs/superadmin_repos_detail.png)
 
 Mandatory fields:
-* **Name** - name of YUM repo (without file extension)
-* **Tag** - tag which marks for which OS the repo is defined 
-    * CentOS 6    
-    * CentOS 7
-* **File content** - content of the YUM repo file
-* **Description** - short free text description, shown in the YUM repo list
+* **Name** - name of YUM repo (without file extension);
+* **Tag** - tag which marks for which OS the repo is defined:
+    * CentOS 6,
+    * CentOS 7;
+* **File content** - content of the YUM repo file;
+* **Description** - short free text description, shown in the YUM repo list.

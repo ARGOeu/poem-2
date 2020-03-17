@@ -4,7 +4,7 @@ Aggregations profiles page is accessible from the menu on the left side. It is s
 
 ![Tenant Aggregation Profiles](tenant_figs/aggregation_profiles.png)
 
-By clicking the profile name, the page of that particular profile is opened. It is shown in the image below.
+By clicking the profile name, the page of that particular profile is opened. Example is shown in the image below.
 
 ![Tenant Aggregation Profile Details](tenant_figs/aggregation_profile_details.png)
 
@@ -12,7 +12,7 @@ The first part is the same for all the profiles: **Name** and **Group** fields. 
 
 Sections **Operations and Group** and **Metric Profile** are all drop down select fields. The user can choose among the existing metric profiles. 
 
-In **Service Flavour Groups** section, the user can create new groups, and delete and modify the existing ones. For adding one uses the "+" signs, for deleting the "x" sign. Whole group is deleted by clicking the red "x" sign.
+In **Service Flavour Groups** section, the user can create new groups, and delete and modify the existing ones. For adding one uses buttons with "+" sign, for deleting buttons with "x" sign. Whole group is deleted by clicking the red "x" button.
 
 There is a validation which checks if service flavours mentioned in aggregation profile exist in the associated metric profile, and if they do not, the warning message is displayed, and the missing service flavours are marked red (like shown in the image above).
 

@@ -16,11 +16,11 @@ All the fields but the checkbox are mandatory:
 * **Description** - text description describing the probe's purpose;
 * **Comment** - free text comment on the probe's version.
 
-If **Update metric templates** is checked, and probe version is changed, associated metric templates are going to automatically be updated to the newer version of the probe, and corresponding metric template history entries is going to be created.
+If **Update metric templates** is checked, and probe version is changed, associated metric templates are going to automatically be updated to the newer version of the probe, and corresponding metric template history entry is going to be created.
 
 At the bottom of the page is shown a list of metric templates associated to the chosen probe.
 
-If **Clone** button is clicked, a new form is opened with fields filled according to the values in the probe being cloned. The version comment of probe created by cloning contains the name of the probe it was cloned from (example in figure below).
+If **Clone** button is clicked, a new form is opened with fields filled according to the values in the source probe. The version comment of probe created by cloning contains the name of the probe it was cloned from (example in figure below).
 
 ![Cloned Probe History](superadmin_figs/cloned_probe.png)
 

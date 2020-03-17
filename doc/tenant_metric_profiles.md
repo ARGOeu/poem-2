@@ -10,7 +10,7 @@ By clicking the profile name, user can see the particular profile's details (sho
 
 In the upper part of the page, there are **Name** and **Group** fields. Every profile must be assigned to a group, which means the group should be created beforehand.
 
-In the **Metric Instances** section, user may add new , or delete the existing service type - metric pairs. New empty fields are created by clicking the "+" sign, and by clicking "x" next to the service type - metric pair, that pair is removed from the metric profile. All the fields are autocomplete, so when the user starts typing, existing service types/metrics are suggested.
+In the **Metric Instances** section, user may add new, or delete the existing service type - metric pairs. New empty fields are created by clicking the button with "+" sign, and by clicking "x" next to the service type - metric pair, that pair is removed from the metric profile. All the fields are autocomplete, so when the user starts typing, existing service types/metrics are suggested.
 
 Same as for other resources, only users with appropriate permission may modify metric profile. That is, users that have metric group the profile belongs to assigned to them, or users with superuser permission.
 

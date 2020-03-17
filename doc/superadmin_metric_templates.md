@@ -1,9 +1,9 @@
-#Metric templates
+#Metric Templates
 Metric templates page is accessible from the menu on the left side. The page is shown in the image below.
 
 ![SuperAdmin metric templates](superadmin_figs/superadmin_metric_template.png)
 
-Metric templates may be searched by name and probe, and filtered by tag (active or passive). By clicking on the metric template name, user can access particular metric template page. It is also possible to access particular probe version by clicking on its name.
+Metric templates may be filtered by name, probe, and tag (active or passive). By clicking on the metric template name, user can access particular metric template page. It is also possible to access particular probe version by clicking on its name.
 
 Depending on metric template type, pages for particular metric templates are a bit different. Active metric template's page is shown in the image below.
 
@@ -24,9 +24,9 @@ Mandatory fields in case of passive metric template:
 * **Name** - metric template name;
 * **Type** - type (active or passive; passive in this example);
 * **Flags** 
-    * **PASSIVE** flag is mandatory for passive metrics - it is added automatically when passive type is chosen through the UI and it is disabled to prevent users to accidentally delete it.
+    * **PASSIVE** flag is mandatory for passive metrics - it is added automatically when passive type is chosen through the UI and it is disabled to prevent users from accidentally deleting it.
     
-Metric template can be cloned by clicking **Clone** button. Then a new form is opened with fields filled with values as they are defined in metric template being cloned. 
+Metric template can be cloned by clicking **Clone** button. Then a new form is opened with fields filled with values as they are defined in source metric template.
 
 By clicking **History** button, one may see all the versions of metric template as is shown in image below.
 

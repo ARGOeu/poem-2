@@ -11,9 +11,9 @@ Particular metric's page is shown in the image below.
 
 Most of the fields is disabled. Tenant users are only allowed to modify four of the configuration values, group and probe version. User may only choose among groups that are associated to him. Exception to this rule is user with superuser permission, (s)he can pick any existing group. In case of probes, users can only choose among versions of the same probe in a drop down menu. Metric configuration is then going to automatically be updated, if necessary.
 
-By clicking **History** button, user can see all the changes made to the metric.
+By clicking **History** button, user can see all the changes made to the metric, when they were made and by whom.
 
-In case user has no permission to modify the probe, there is going to appear a warning message on top of page, as shown in image below.
+In case user has no permission to modify the metric, there is going to appear a warning message on top of page, as shown in image below.
 
 ![Tenant Metric Readonly](tenant_figs/metric_readonly.png)
 
