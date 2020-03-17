@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  Row, 
+  Row,
   Card,
   CardHeader,
   CardBody} from 'reactstrap';
@@ -30,15 +30,18 @@ export const TenantAdministration = (props) =>
         <Row className="p-1 align-items-center">
           <Icon i="aggregationprofiles"/> <Link className='pl-1' to={'/ui/aggregationprofiles'}>Aggregation profiles</Link>
         </Row>
+        <Row className="p-1 align-items-center">
+          <Icon i="thresholdsprofiles"/> <Link className='pl-1' to={'/ui/thresholdsprofiles'}>Thresholds profiles</Link>
+        </Row>
       </CardBody>
     </Card>
     <Card className='mb-2'>
       <CardHeader className="mt-2 p-2 text-light text-uppercase rounded" style={{'backgroundColor': "#416090"}}>
         Authentication and authorization
       </CardHeader>
-      <CardBody> 
+      <CardBody>
         <Row className="p-1 align-items-center">
-          <Icon i="groupofaggregationprofiles"/> <Link to={'/ui/administration/groupofaggregations'}>Groups of aggregations</Link> 
+          <Icon i="groupofaggregationprofiles"/> <Link to={'/ui/administration/groupofaggregations'}>Groups of aggregations</Link>
         </Row>
         <Row className="p-1 align-items-center">
           <Icon i="groupofmetrics"/> <Link to={'/ui/administration/groupofmetrics'}>Groups of metrics</Link>
@@ -58,7 +61,7 @@ export const TenantAdministration = (props) =>
       <CardHeader className="mt-2 p-2 text-light text-uppercase rounded" style={{'backgroundColor': "#416090"}}>
         Available data
       </CardHeader>
-      <CardBody> 
+      <CardBody>
         <Row className="p-1 align-items-center">
           <Icon i="metrics"/> <Link to={'/ui/administration/metrictemplates'}>Metric templates</Link>
         </Row>
@@ -71,7 +74,7 @@ export const TenantAdministration = (props) =>
       <CardHeader className="mt-2 p-2 text-light text-uppercase rounded" style={{'backgroundColor': "#416090"}}>
         API key permissions
       </CardHeader>
-      <CardBody> 
+      <CardBody>
         <Row className="p-1 align-items-center">
           <Icon i="apikey"/> <Link to={'/ui/administration/apikey'}>API keys</Link>
         </Row>
@@ -108,7 +111,7 @@ export const SuperAdminAdministration = (props) =>
       <CardHeader className="mt-2 p-2 text-light text-uppercase rounded" style={{'backgroundColor': "#416090"}}>
         Authentication and authorization
       </CardHeader>
-      <CardBody> 
+      <CardBody>
         <Row className="p-1 align-items-center">
           <Icon i='users'/> <Link to={'/ui/administration/users'}>Users</Link>
         </Row>
