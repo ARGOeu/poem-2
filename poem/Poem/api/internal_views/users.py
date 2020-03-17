@@ -101,7 +101,6 @@ class ListUsers(APIView):
             user.last_name = request.data['last_name']
             user.email = request.data['email']
             user.is_superuser = request.data['is_superuser']
-            user.is_staff = request.data['is_staff']
             user.is_active = request.data['is_active']
             user.save()
 
@@ -122,7 +121,6 @@ class ListUsers(APIView):
                 first_name=request.data['first_name'],
                 last_name=request.data['last_name'],
                 is_superuser=request.data['is_superuser'],
-                is_staff=request.data['is_staff'],
                 is_active=request.data['is_active']
             )
 

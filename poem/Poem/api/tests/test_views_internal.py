@@ -343,7 +343,6 @@ class ListUsersAPIViewTests(TenantTestCase):
                              ('username', 'another_user'),
                              ('is_active', True),
                              ('is_superuser', False),
-                             ('is_staff', False),
                              ('email', 'otheruser@example.com'),
                              ('date_joined', '2015-01-02T00:00:00'),
                              ('pk', self.user2.pk)]),
@@ -352,7 +351,6 @@ class ListUsersAPIViewTests(TenantTestCase):
                              ('username', 'testuser'),
                              ('is_active', True),
                              ('is_superuser', False),
-                             ('is_staff', False),
                              ('email', 'testuser@example.com'),
                              ('date_joined', '2015-01-01T00:00:00'),
                              ('pk', self.user.pk)])
@@ -375,7 +373,6 @@ class ListUsersAPIViewTests(TenantTestCase):
                          ('username', 'testuser'),
                          ('is_active', True),
                          ('is_superuser', False),
-                         ('is_staff', False),
                          ('email', 'testuser@example.com'),
                          ('date_joined', '2015-01-01T00:00:00'),
                          ('pk', self.user.pk)])
@@ -395,7 +392,6 @@ class ListUsersAPIViewTests(TenantTestCase):
             'last_name': 'Newuser',
             'email': 'testuser@example.com',
             'is_superuser': False,
-            'is_staff': False,
             'is_active': True
         }
         content, content_type = encode_data(data)
@@ -408,7 +404,6 @@ class ListUsersAPIViewTests(TenantTestCase):
         self.assertEqual(user.first_name, 'Test')
         self.assertEqual(user.last_name, 'Newuser')
         self.assertFalse(user.is_superuser)
-        self.assertFalse(user.is_staff)
         self.assertTrue(user.is_active)
 
     def test_put_user_with_already_existing_name(self):
@@ -419,7 +414,6 @@ class ListUsersAPIViewTests(TenantTestCase):
             'last_name': 'Newuser',
             'email': 'testuser@example.com',
             'is_superuser': False,
-            'is_staff': False,
             'is_active': True
         }
         content, content_type = encode_data(data)
@@ -439,7 +433,6 @@ class ListUsersAPIViewTests(TenantTestCase):
             'last_name': 'User',
             'email': 'newuser@example.com',
             'is_superuser': True,
-            'is_staff': True,
             'is_active': True,
             'password': 'blablabla',
         }
@@ -453,7 +446,6 @@ class ListUsersAPIViewTests(TenantTestCase):
         self.assertEqual(user.last_name, 'User')
         self.assertEqual(user.email, 'newuser@example.com')
         self.assertTrue(user.is_superuser)
-        self.assertTrue(user.is_staff)
         self.assertTrue(user.is_active)
 
     def test_post_user_with_already_existing_username(self):
@@ -463,7 +455,6 @@ class ListUsersAPIViewTests(TenantTestCase):
             'last_name': 'User',
             'email': 'newuser@example.com',
             'is_superuser': True,
-            'is_staff': True,
             'is_active': True,
             'password': 'blablabla',
         }
@@ -2291,7 +2282,6 @@ class GetUserProfileForUsernameAPIViewTests(TenantTestCase):
             first_name='First',
             last_name='User',
             email='fuser@example.com',
-            is_staff=True,
             is_active=True,
             is_superuser=False
         )
@@ -2427,7 +2417,6 @@ class GetUserProfileForUsernameAPIViewTests(TenantTestCase):
             first_name='Second',
             last_name='User',
             email='suser@example.com',
-            is_staff=True,
             is_active=True,
             is_superuser=False
         )
@@ -2483,7 +2472,6 @@ class ListGroupsForGivenUserAPIViewTests(TenantTestCase):
             first_name='First',
             last_name='User',
             email='fuser@example.com',
-            is_staff=True,
             is_active=True,
             is_superuser=False
         )

@@ -200,20 +200,6 @@ const CommonUser = ({add, errors}) =>
         <Col md={6}>
           <Field
             component={Checkbox}
-            name="is_staff"
-            className="form-control"
-            id="checkbox"
-            label="Staff status"
-          />
-          <FormText color="muted">
-            Designates whether the user can log into this admin site.
-          </FormText>
-        </Col>
-      </Row>
-      <Row>
-        <Col md={6}>
-          <Field
-            component={Checkbox}
             name="is_active"
             className="form-control"
             id="checkbox"
@@ -299,13 +285,13 @@ export class UsersList extends Component
           <FontAwesomeIcon icon={faTimesCircle} style={{color: "#CC0000"}}/>
       },
       {
-        Header: 'Staff status',
-        id: 'is_staff',
+        Header: 'Active status',
+        id: 'is_active',
         Cell: row =>
           <div style={{textAlign: "center"}}
           >{row.value}</div>,
         accessor: d =>
-          d.is_staff ?
+          d.is_active ?
             <FontAwesomeIcon icon={faCheckCircle} style={{color: "#339900"}}/>
           :
             <FontAwesomeIcon icon={faTimesCircle} style={{color: "#CC0000"}}/>
@@ -355,7 +341,6 @@ function UserChangeComponent(isTenantSchema=false) {
           'username': '',
           'is_active': true,
           'is_superuser': false,
-          'is_staff': true,
           'email': ''
         },
         password: '',
@@ -433,7 +418,6 @@ function UserChangeComponent(isTenantSchema=false) {
             last_name: values.last_name,
             email: values.email,
             is_superuser: values.is_superuser,
-            is_staff: values.is_staff,
             is_active: values.is_active
           }
         ).then(response => {
@@ -481,7 +465,6 @@ function UserChangeComponent(isTenantSchema=false) {
             last_name: values.last_name,
             email: values.email,
             is_superuser: values.is_superuser,
-            is_staff: values.is_staff,
             is_active: values.is_active
           }
         ).then(response => {
@@ -598,7 +581,6 @@ function UserChangeComponent(isTenantSchema=false) {
                 confirm_password: '',
                 is_active: custuser.is_active,
                 is_superuser: custuser.is_superuser,
-                is_staff: custuser.is_staff,
                 email: custuser.email,
                 groupsofaggregations: usergroups.aggregations,
                 groupsofmetrics: usergroups.metrics,
