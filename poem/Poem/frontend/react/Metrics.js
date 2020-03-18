@@ -535,7 +535,7 @@ export function ListOfMetrics(type, imp=false) {
         }
       ];
 
-      if (imp && this.state.userDetails.is_superuser) {
+      if (imp && this.state.userDetails && this.state.userDetails.is_superuser) {
         columns.splice(
           0,
           0,
@@ -666,7 +666,7 @@ export function ListOfMetrics(type, imp=false) {
       if (loading)
       return (<LoadingAnim />);
 
-      else if (!loading && list_metric) {
+      else if (!loading && list_metric && this.state.userDetails) {
         if (type === 'metric') {
           return (
             <BaseArgoView
