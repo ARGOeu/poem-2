@@ -39,6 +39,7 @@ class ListThresholdsProfiles(APIView):
         profile = ThresholdsProfiles.objects.get(
             apiid=request.data['apiid']
         )
+        profile.name = request.data['name']
         profile.groupname = request.data['groupname']
         profile.save()
 
