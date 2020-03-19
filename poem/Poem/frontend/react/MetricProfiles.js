@@ -76,7 +76,7 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
       </tr>
       {
         form.values.view_services.map((service, index) =>
-          <tr>
+          <tr key={index}>
             <td className={service.isNew ? "bg-light align-middle text-center" : "align-middle text-center"}>
               {index + 1}
             </td>
@@ -107,7 +107,9 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
                 wrapperStyle={{}}
                 shouldItemRender={matchItem}
                 renderMenu={(items) =>
-                    <div className='metricprofiles-autocomplete-menu' children={items}/>}
+                    <div className='metricprofiles-autocomplete-menu'>
+                      {items}
+                    </div>}
               />
             </td>
             <td className={service.isNew ? "bg-light" : ""}>
@@ -137,7 +139,9 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
                 wrapperStyle={{}}
                 shouldItemRender={matchItem}
                 renderMenu={(items) =>
-                    <div className='metricprofiles-autocomplete-menu' children={items}/>}
+                  <div className='metricprofiles-autocomplete-menu'>
+                    {items}
+                  </div>}
               />
             </td>
             <td className="align-middle pl-3">
@@ -449,12 +453,14 @@ export class MetricProfilesChange extends Component
     return services
   }
 
+
   doChange({formValues, servicesList}, actions) {
     let services = [];
     let dataToSend = [];
 
     if (!this.addview) {
-      const {id, name} = this.state.metric_profile
+      const { id } = this.state.metric_profile
+      const name = formValues.name
       services = this.groupMetricsByServices(servicesList);
       dataToSend = {id, name, services};
       this.webapi.changeMetricProfile(dataToSend)

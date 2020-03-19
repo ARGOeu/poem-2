@@ -73,6 +73,7 @@ class ListMetricProfiles(APIView):
         profile = poem_models.MetricProfiles.objects.get(
             apiid=request.data['apiid']
         )
+        profile.name = request.data['name']
         profile.groupname = request.data['groupname']
         profile.save()
 
