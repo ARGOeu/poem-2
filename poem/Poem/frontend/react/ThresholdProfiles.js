@@ -1148,7 +1148,7 @@ export class ThresholdsProfilesChange extends Component {
               groups_list: sessionActive.userdetails.groups.thresholdsprofiles,
               metrics_list: metricsall,
               write_perm: sessionActive.userdetails.is_superuser ||
-                sessionActive.userdetails.groups.thresholdsprofiles.indexOf(json['groupname']) >= 0,
+                sessionActive.userdetails.groups.thresholdsprofiles.length > 0,
             });
           } else {
             this.webapi.fetchThresholdsProfile(json.apiid)
@@ -1162,7 +1162,7 @@ export class ThresholdsProfilesChange extends Component {
                 groups_list: sessionActive.userdetails.groups.thresholdsprofiles,
                 metrics_list: metricsall,
                 write_perm: sessionActive.userdetails.is_superuser ||
-                  sessionActive.userdetails.groups.thresholdsprofiles.length > 0,
+                  sessionActive.userdetails.groups.thresholdsprofiles.indexOf(json['groupname']) >= 0,
                 loading: false
             }))
           }
