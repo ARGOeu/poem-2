@@ -524,6 +524,7 @@ export class MetricProfilesChange extends Component
                 apiid: r.data.id,
                 name: dataToSend.name,
                 groupname: formValues.groupname,
+                description: formValues.description,
                 services: formValues.view_services
               }
             ).then(() => NotifyOk({
