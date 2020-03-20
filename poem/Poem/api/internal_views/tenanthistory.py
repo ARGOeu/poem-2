@@ -101,6 +101,7 @@ class ListTenantVersions(APIView):
                         fields = {
                             'name': fields0['name'],
                             'groupname': fields0['groupname'],
+                            'description': fields0.get('description', ''),
                             'apiid': fields0['apiid'],
                             'metricinstances': sorted(
                                 mi, key=lambda k: k['service'].lower()

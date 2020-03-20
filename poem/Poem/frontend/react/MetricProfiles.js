@@ -824,19 +824,23 @@ export class MetricProfileVersionCompare extends Component {
       .then((json) => {
         let name1 = '';
         let groupname1 = '';
+        let description1 = '';
         let metricinstances1 = [];
         let name2 = '';
         let groupname2 = '';
+        let description2 = '';
         let metricinstances2 = [];
 
         json.forEach((e) => {
           if (e.version == this.version1) {
             name1 = e.fields.name;
+            description1 = e.fields.description;
             groupname1 = e.fields.groupname;
             metricinstances1 = e.fields.metricinstances;
           } else if (e.version == this.version2) {
             name2 = e.fields.name;
             groupname2 = e.fields.groupname;
+            description2 = e.fields.description;
             metricinstances2 = e.fields.metricinstances;
           }
         });
@@ -898,6 +902,7 @@ export class MetricProfileVersionDetails extends Component {
     this.state = {
       name: '',
       groupname: '',
+      description: '',
       date_created: '',
       metricinstances: [],
       loading: false
@@ -914,6 +919,7 @@ export class MetricProfileVersionDetails extends Component {
             this.setState({
               name: e.fields.name,
               groupname: e.fields.groupname,
+              description: e.fields.description,
               date_created: e.date_created,
               metricinstances: e.fields.metricinstances,
               loading: false
@@ -923,7 +929,7 @@ export class MetricProfileVersionDetails extends Component {
   }
 
   render() {
-    const { name, groupname, date_created, metricinstances,
+    const { name, description, groupname, date_created, metricinstances,
       loading } = this.state;
 
     if (loading)
@@ -938,6 +944,7 @@ export class MetricProfileVersionDetails extends Component {
           <Formik
             initialValues = {{
               name: name,
+              description: description,
               groupname: groupname,
               metricinstances: metricinstances
             }}
@@ -946,6 +953,7 @@ export class MetricProfileVersionDetails extends Component {
                 <ProfileMainInfo
                   {...props}
                   fieldsdisable={true}
+                  description='description'
                   profiletype='metric'
                 />
                 <h4 className="mt-4 alert-info p-1 pl-3 text-light text-uppercase rounded" style={{'backgroundColor': "#416090"}}>Metric instances</h4>

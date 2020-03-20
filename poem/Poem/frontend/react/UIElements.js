@@ -780,7 +780,12 @@ export const ProfileMainInfo = ({errors, grouplist=undefined, description=undefi
         <Row className='mt-3'>
           <Col md={10}>
             <Label for="profileDescription">Description</Label>
-            <Field className="form-control" component="textarea" labelFor="profileDescription" name={description}/>
+            <Field
+              className="form-control"
+              component="textarea"
+              labelFor="profileDescription"
+              name={description}
+              disabled={fieldsdisable}/>
             <FormText color='muted'>
               Free text description outlining the purpose of this profile.
             </FormText>
