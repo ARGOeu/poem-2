@@ -49,7 +49,15 @@ const NavigationLinksWithRouter = withRouter(NavigationLinks);
 const CustomBreadcrumbWithRouter = withRouter(CustomBreadcrumb);
 
 
-const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, token, tenantName}) => (
+const SuperUserRoute = ({isSuperUser, ...props}) => (
+  isSuperUser ?
+    <Route {...props} />
+  :
+    <Route component={NotFound} />
+)
+
+
+const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, token, tenantName, isSuperUser}) => (
   <Switch>
     <Route exact path="/ui/login" render={() => <Redirect to="/ui/home" />}/>
     <Route exact path="/ui/home" component={Home} />
@@ -117,68 +125,68 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, t
     <Route exact path="/ui/aggregationprofiles/:name/history/:version"
       render={props => <AggregationProfileVersionDetails {...props}/>}
     />
-    <Route exact path="/ui/administration" component={TenantAdministration} />
-    <Route exact path="/ui/administration/users" component={UsersList} />
-    <Route exact path="/ui/administration/users/add"
+    <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration" component={TenantAdministration} />
+    <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/users" component={UsersList} />
+    <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/users/add"
       render={props => <UserChange
         {...props}
         addview={true}/>}
     />
-    <Route exact path="/ui/administration/users/:user_name"
+    <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/users/:user_name"
       render={props => <UserChange {...props}/>}
     />
-    <Route exact path="/ui/administration/groupofmetrics" component={GroupOfMetricsList} />
-    <Route exact path="/ui/administration/groupofmetrics/add"
+    <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/groupofmetrics" component={GroupOfMetricsList} />
+    <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/groupofmetrics/add"
       render={props => <GroupOfMetricsChange
         {...props}
         addview={true}/>}
     />
-    <Route exact path="/ui/administration/groupofmetrics/:group"
+    <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/groupofmetrics/:group"
       render={props => <GroupOfMetricsChange {...props}/>}
     />
-    <Route exact path="/ui/administration/groupofaggregations" component={GroupOfAggregationsList} />
-    <Route exact path="/ui/administration/groupofaggregations/add"
+    <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/groupofaggregations" component={GroupOfAggregationsList} />
+    <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/groupofaggregations/add"
       render={props => <GroupOfAggregationsChange
         {...props}
         addview={true}/>}
     />
-    <Route exact path="/ui/administration/groupofaggregations/:group"
+    <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/groupofaggregations/:group"
       render={props => <GroupOfAggregationsChange {...props}/>}
     />
-    <Route exact path="/ui/administration/groupofmetricprofiles" component={GroupOfMetricProfilesList} />
-    <Route exact path="/ui/administration/groupofmetricprofiles/add"
+    <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/groupofmetricprofiles" component={GroupOfMetricProfilesList} />
+    <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/groupofmetricprofiles/add"
       render={props => <GroupOfMetricProfilesChange
         {...props}
         addview={true}/>}
     />
-    <Route exact path="/ui/administration/groupofmetricprofiles/:group"
+    <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/groupofmetricprofiles/:group"
       render={props => <GroupOfMetricProfilesChange {...props}/>}
     />
-    <Route exact path="/ui/administration/apikey" component={APIKeyList} />
-    <Route exact path="/ui/administration/apikey/add"
+    <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/apikey" component={APIKeyList} />
+    <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/apikey/add"
       render={props => <APIKeyChange {...props} addview={true}/>}
     />
-    <Route exact path='/ui/administration/metrictemplates/' component={TenantMetricTemplateList}/>
-    <Route exact path='/ui/administration/metrictemplates/:name'
+    <SuperUserRoute isSuperUser={isSuperUser} exact path='/ui/administration/metrictemplates/' component={TenantMetricTemplateList}/>
+    <SuperUserRoute isSuperUser={isSuperUser} exact path='/ui/administration/metrictemplates/:name'
       render={props => <MetricTemplateChange {...props} tenantview={true}/>}
     />
-    <Route exact path='/ui/administration/metrictemplates/:name/history' render={props => <TenantMetricTemplateHistory {...props}/>}/>
-    <Route exact path='/ui/administration/metrictemplates/:name/history/compare/:id1/:id2' render={props => <MetricTemplateVersionCompare {...props}/>}/>
-    <Route exact path='/ui/administration/metrictemplates/:name/history/:version' render={props => <MetricTemplateVersionDetails {...props}/>}/>
-    <Route exact path="/ui/administration/apikey/:name"
+    <SuperUserRoute isSuperUser={isSuperUser} exact path='/ui/administration/metrictemplates/:name/history' render={props => <TenantMetricTemplateHistory {...props}/>}/>
+    <SuperUserRoute isSuperUser={isSuperUser} exact path='/ui/administration/metrictemplates/:name/history/compare/:id1/:id2' render={props => <MetricTemplateVersionCompare {...props}/>}/>
+    <SuperUserRoute isSuperUser={isSuperUser} exact path='/ui/administration/metrictemplates/:name/history/:version' render={props => <MetricTemplateVersionDetails {...props}/>}/>
+    <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/apikey/:name"
       render={props => <APIKeyChange {...props} />}
     />
-    <Route exact path='/ui/administration/yumrepos/' component={YumRepoList}/>
-    <Route exact path='/ui/administration/yumrepos/:name'
+    <SuperUserRoute isSuperUser={isSuperUser} exact path='/ui/administration/yumrepos/' component={YumRepoList}/>
+    <SuperUserRoute isSuperUser={isSuperUser} exact path='/ui/administration/yumrepos/:name'
       render={props => <YumRepoChange {...props} disabled={true}/>}
     />
-    <Route exact path="/ui/administration/groupofthresholdsprofiles" component={GroupOfThresholdsProfilesList} />
-    <Route exact path="/ui/administration/groupofthresholdsprofiles/add"
+    <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/groupofthresholdsprofiles" component={GroupOfThresholdsProfilesList} />
+    <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/groupofthresholdsprofiles/add"
       render={props => <GroupOfThresholdsProfilesChange
         {...props}
         addview={true}/>}
     />
-    <Route exact path="/ui/administration/groupofthresholdsprofiles/:group"
+    <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/groupofthresholdsprofiles/:group"
       render={props => <GroupOfThresholdsProfilesChange {...props}/>}
     />
     <Route exact path="/ui/thresholdsprofiles" component={ThresholdsProfilesList} />
@@ -395,7 +403,8 @@ class App extends Component {
                     webApiAggregation={this.state.webApiAggregation}
                     webApiThresholds={this.state.webApiThresholds}
                     token={this.state.token}
-                    tenantName={this.state.tenantName}/>
+                    tenantName={this.state.tenantName}
+                    isSuperUser={userDetails.is_superuser}/>
                  :
                  <SuperAdminRouteSwitch/>
                 }
