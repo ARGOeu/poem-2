@@ -1,18 +1,15 @@
 import os
+
 import django
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'Poem.settings')
 django.setup()
 
-import Poem.django_logging
-import base64
 import logging
 import os
 import requests
 
-from requests.auth import HTTPBasicAuth
-
-from Poem import settings
+from django.conf import settings
 from Poem.poem import models
 from Poem.tenants.models import Tenant
 from xml.etree import ElementTree
@@ -20,7 +17,10 @@ from configparser import ConfigParser
 
 from tenant_schemas.utils import schema_context, get_public_schema_name
 
-logging.basicConfig(format='%(filename)s[%(process)s]: %(levelname)s %(message)s', level=logging.INFO)
+logging.basicConfig(
+    format='%(filename)s[%(process)s]: %(levelname)s %(message)s',
+    level=logging.INFO
+)
 logger = logging.getLogger("POEM")
 
 
@@ -38,7 +38,7 @@ def tenant_servtype_data(tenant):
 
 
 def main():
-    "Parses service flavours list from GOCDB"
+    """Parses service flavours list from GOCDB"""
 
     schemas = list(Tenant.objects.all().values_list('schema_name', flat=True))
     schemas.remove(get_public_schema_name())
@@ -48,13 +48,11 @@ def main():
             tenant = Tenant.objects.get(schema_name=schema)
             data = tenant_servtype_data(tenant.name)
 
-            Feed_List = None
             fos = []
-
             try:
                 for fp in [settings.HOST_CERT, settings.HOST_KEY]:
                     if not os.path.exists(fp):
-                        raise IOError("invalid path %s" % (fp))
+                        raise IOError("invalid path %s" % fp)
                     else:
                         fos.append(open(fp))
             except IOError as e:
@@ -67,10 +65,9 @@ def main():
 
             try:
                 if data['HTTPAUTH']:
-                    req = requests.get(url, cert=(settings.HOST_CERT,
-                                                 settings.HOST_KEY),
-                                      auth=(data['HTTPUSER'], data['HTTPPASS']),
-                                      timeout=60)
+                    req = requests.get(
+                        url, auth=(data['HTTPUSER'], data['HTTPPASS'])
+                    )
 
                 else:
                     if url.startswith('https'):
@@ -85,30 +82,34 @@ def main():
                 ret = req.content
 
             except Exception as e:
+                print("%s: Error service flavours feed - %s" % (
+                    schema.upper(), repr(e)))
                 logger.error("%s: Error service flavours feed - %s" % (
                     schema.upper(), repr(e)))
                 continue
 
             try:
-                Root = ElementTree.XML(ret)
+                root = ElementTree.XML(ret)
             except Exception as e:
                 logger.error("%s: Error parsing service flavours - %s" % (
                     schema.upper(), e))
                 continue
 
-            elements = Root.findall("SERVICE_TYPE")
+            elements = root.findall("SERVICE_TYPE")
             if not elements:
-                logger.error("%s: Error parsing service flavours"
-                             % schema.upper())
+                logger.error(
+                    "%s: Error parsing service flavours" % schema.upper()
+                )
                 continue
 
-            Feed_List = []
+            feed_list = []
             for element in elements:
-                Element_List = {}
-                if element.getchildren():
-                    for child_element in element.getchildren():
-                        Element_List[str(child_element.tag).lower()] = (child_element.text)
-                Feed_List.append(Element_List)
+                element_list = {}
+                if list(element):
+                    for child_element in list(element):
+                        element_list[str(child_element.tag).lower()] = \
+                            child_element.text
+                feed_list.append(element_list)
 
             sfindb = set(
                 [
@@ -125,13 +126,16 @@ def main():
                         feed['service_type_name'],
                         feed['service_type_desc']
                     )
-                    for feed in Feed_List
+                    for feed in feed_list
                 ]
             )
             if sfindb != sfs:
                 for s in sfs.difference(sfindb):
                     try:
-                        service_flavour, created = models.ServiceFlavour.objects.get_or_create(name=s[0])
+                        service_flavour, created = \
+                            models.ServiceFlavour.objects.get_or_create(
+                                name=s[0]
+                            )
                         if not created:
                             service_flavour.description = s[1]
                             service_flavour.save()
@@ -144,8 +148,12 @@ def main():
                 logger.info(
                     "%s: Added/updated %d service flavours"
                     % (schema.upper(), len(sfs.difference(sfindb))))
+
             else:
-                logger.info("%s: Service Flavours database is up to date"
-                            % schema.upper())
+                logger.info(
+                    "%s: Service Flavours database is up to date"
+                    % schema.upper()
+                )
+
 
 main()
