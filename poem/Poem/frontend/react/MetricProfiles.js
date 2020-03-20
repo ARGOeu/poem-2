@@ -485,6 +485,7 @@ export class MetricProfilesChange extends Component
               {
                 apiid: dataToSend.id,
                 name: dataToSend.name,
+                description: dataToSend.description,
                 groupname: formValues.groupname,
                 services: formValues.view_services
               }
@@ -848,8 +849,10 @@ export class MetricProfileVersionCompare extends Component {
         this.setState({
           name1: name1,
           groupname1: groupname1,
+          description1: description1,
           metricinstances1: metricinstances1,
           name2: name2,
+          description2: description2,
           groupname2: groupname2,
           metricinstances2: metricinstances2,
           loading: false
@@ -858,7 +861,7 @@ export class MetricProfileVersionCompare extends Component {
   }
 
   render() {
-    const { name1, name2, groupname1, groupname2,
+    const { name1, name2, description1, description2, groupname1, groupname2,
       metricinstances1, metricinstances2, loading } = this.state;
 
     if (loading)
@@ -873,6 +876,14 @@ export class MetricProfileVersionCompare extends Component {
           {
             (name1 !== name2) &&
               <DiffElement title='name' item1={name1} item2={name2}/>
+          }
+          {
+            (name1 !== name2) &&
+              <DiffElement title='name' item1={name1} item2={name2}/>
+          }
+          {
+            (description1 !== description2) &&
+              <DiffElement title='name' item1={description1} item2={description2}/>
           }
           {
             (groupname1 !== groupname2) &&
