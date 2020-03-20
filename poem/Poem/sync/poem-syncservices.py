@@ -1,16 +1,16 @@
-import os
-import django
 import logging
-import requests
-import json
+import os
 from configparser import ConfigParser
+
+import django
+import requests
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'Poem.settings')
 django.setup()
 
 from Poem.poem.models import Service
 from Poem.tenants.models import Tenant
-from Poem import settings
+from django.conf import settings
 
 from tenant_schemas.utils import schema_context, get_public_schema_name
 
@@ -42,9 +42,9 @@ def main():
                 logger.error('%s: Request - %s' % (schema.upper(), repr(e)))
                 continue
             try:
-                feed = json.loads(r.text)
-            except json.JSONDecodeError:
-                logger.error('%s: Decoding JSON has failed.' % schema.upper())
+                feed = r.json()
+            except Exception as e:
+                logger.error('%s: Error parsing data: %s' % (schema.upper(), e))
                 continue
 
             feedset = set()
@@ -70,6 +70,28 @@ def main():
 
             if servindbset != feedset:
                 try:
+                    if len(servindbset.difference(feedset)):
+                        for serv in servindbset.difference(feedset):
+                            Service.objects.filter(
+                                id=serv[0],
+                                service_id=serv[1],
+                                service_name=serv[2],
+                                service_category=serv[3],
+                                service_version=serv[4],
+                                service_type=serv[5],
+                                component_version=serv[6],
+                                component_name=serv[7],
+                                visible_to_marketplace=serv[8],
+                                in_catalogue=serv[9],
+                                external_service=serv[10],
+                                internal_service=serv[11]
+                            ).delete()
+                        logger.info(
+                            "%s: Deleted %d services."
+                            % (schema.upper(),
+                               len(servindbset.difference(feedset)))
+                        )
+
                     if len(feedset.difference(servindbset)) > 0:
                         for serv in feedset.difference(servindbset):
                             Service.objects.create(
@@ -92,27 +114,6 @@ def main():
                                len(feedset.difference(servindbset)))
                         )
 
-                    if len(servindbset.difference(feedset)):
-                        for serv in servindbset.difference(feedset):
-                            Service.objects.filter(
-                                id=serv[0],
-                                service_id=serv[1],
-                                service_name=serv[2],
-                                service_category=serv[3],
-                                service_version=serv[4],
-                                service_type=serv[5],
-                                component_version=serv[6],
-                                component_name=serv[7],
-                                visible_to_marketplace=serv[8],
-                                in_catalogue=serv[9],
-                                external_service=serv[10],
-                                internal_service=serv[11]
-                            ).delete()
-                        logger.info(
-                            "%s: Deleted %d services."
-                            % (schema.upper(),
-                               len(servindbset.difference(feedset)))
-                        )
                 except Exception as e:
                     logger.error(
                         "%s: database operations failed - %s"
