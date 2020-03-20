@@ -157,7 +157,7 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
                 type="button"
                 onClick={() => {
                   let new_element = {index: index + 1, service: '', metric: '', isNew: true}
-                  insert_handler(new_element, index + 1, form.values.groupname, form.values.name )
+                  insert_handler(new_element, index + 1, form.values.groupname, form.values.name, form.values.description)
                   return insert(index + 1, new_element)
                 }}>
                 <FontAwesomeIcon icon={faPlus}/>
@@ -354,7 +354,7 @@ export class MetricProfilesChange extends Component
     })
   }
 
-  onInsert(element, i, group, name) {
+  onInsert(element, i, group, name, description) {
     // full list of services
     if (this.state.searchServiceFlavour === ''
       && this.state.searchMetric === '') {
@@ -389,7 +389,8 @@ export class MetricProfilesChange extends Component
         list_services: tmp_list_services,
         view_services: tmp_list_services,
         groupname: group,
-        metric_profile_name: name
+        metric_profile_name: name,
+        metric_profile_description: description
       });
     }
     // subset of matched elements of list of services
@@ -458,13 +459,17 @@ export class MetricProfilesChange extends Component
 
   doChange({formValues, servicesList}, actions) {
     let services = [];
-    let dataToSend = [];
+    let dataToSend = new Object()
 
     if (!this.addview) {
       const { id } = this.state.metric_profile
-      const name = formValues.name
       services = this.groupMetricsByServices(servicesList);
-      dataToSend = {id, name, services};
+      dataToSend = {
+        id,
+        name: formValues.name,
+        description: formValues.description,
+        services
+      };
       this.webapi.changeMetricProfile(dataToSend)
       .then(response => {
         if (!response.ok) {
@@ -498,7 +503,11 @@ export class MetricProfilesChange extends Component
     }
     else {
       services = this.groupMetricsByServices(servicesList);
-      dataToSend = {name: formValues.name, services};
+      dataToSend = {
+        name: formValues.name,
+        description: formValues.description,
+        services
+      }
       this.webapi.addMetricProfile(dataToSend)
       .then(response => {
         if (!response.ok) {
