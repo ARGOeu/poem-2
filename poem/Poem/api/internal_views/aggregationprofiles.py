@@ -49,6 +49,7 @@ class ListAggregations(APIView):
     def put(self, request):
         aggr = poem_models.Aggregation.objects.get(apiid=request.data['apiid'])
         aggr.groupname = request.data['groupname']
+        aggr.name = request.data['name']
         aggr.save()
 
         groupaggr = poem_models.GroupOfAggregations.objects.get(

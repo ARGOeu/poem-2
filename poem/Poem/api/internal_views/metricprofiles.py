@@ -41,7 +41,8 @@ class ListMetricProfiles(APIView):
             groupprofile.metricprofiles.add(profile)
 
             create_profile_history(
-                profile, dict(request.data)['services'], request.user
+                profile, dict(request.data)['services'],
+                request.data['description'], request.user
             )
 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -73,6 +74,7 @@ class ListMetricProfiles(APIView):
         profile = poem_models.MetricProfiles.objects.get(
             apiid=request.data['apiid']
         )
+        profile.name = request.data['name']
         profile.groupname = request.data['groupname']
         profile.save()
 
@@ -82,7 +84,8 @@ class ListMetricProfiles(APIView):
         groupprofile.metricprofiles.add(profile)
 
         create_profile_history(
-            profile, dict(request.data)['services'], request.user
+            profile, dict(request.data)['services'],
+            request.data['description'], request.user
         )
 
         return Response(status=status.HTTP_201_CREATED)

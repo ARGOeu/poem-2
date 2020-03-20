@@ -2,30 +2,31 @@ import React, { Component } from 'react';
 import Cookies from 'universal-cookie';
 import {
   Alert,
-  Button,
   Breadcrumb,
   BreadcrumbItem,
+  Button,
   ButtonToolbar,
   Card,
-  CardHeader,
   CardBody,
-  Nav,
-  NavLink,
-  NavItem,
-  NavbarBrand,
-  Navbar,
-  NavbarToggler,
-  Modal,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
+  CardHeader,
+  Col,
   Collapse,
   FormGroup,
+  FormText,
   InputGroup,
   InputGroupAddon,
-  FormText,
+  Label,
+  Modal,
+  ModalBody,
+  ModalFooter,
+  ModalHeader,
+  Nav,
+  NavItem,
+  NavLink,
+  Navbar,
+  NavbarBrand,
+  NavbarToggler,
   Row,
-  Col
 } from 'reactstrap';
 import {Link} from 'react-router-dom';
 import ArgoLogo from './argologo_color.svg';
@@ -751,7 +752,7 @@ export const DiffElement = ({title, item1, item2}) => {
 };
 
 
-export const ProfileMainInfo = ({ errors, grouplist=undefined,
+export const ProfileMainInfo = ({errors, grouplist=undefined, description=undefined,
   fieldsdisable=false, profiletype=undefined }) => (
   <FormGroup>
     <Row>
@@ -774,6 +775,23 @@ export const ProfileMainInfo = ({ errors, grouplist=undefined,
         </FormText>
       </Col>
     </Row>
+    {
+      description &&
+        <Row className='mt-3'>
+          <Col md={10}>
+            <Label for="profileDescription">Description</Label>
+            <Field
+              className="form-control"
+              component="textarea"
+              labelFor="profileDescription"
+              name={description}
+              disabled={fieldsdisable}/>
+            <FormText color='muted'>
+              Free text description outlining the purpose of this profile.
+            </FormText>
+          </Col>
+        </Row>
+    }
     <Row className='mt-4'>
       <Col md={3}>
         <InputGroup>
