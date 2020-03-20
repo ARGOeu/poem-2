@@ -186,6 +186,7 @@ export class MetricProfilesChange extends Component
     this.state = {
       metric_profile: {},
       metric_profile_name: undefined,
+      metric_profile_description: undefined,
       groupname: undefined,
       list_user_groups: undefined,
       view_services: undefined,
@@ -246,6 +247,7 @@ export class MetricProfilesChange extends Component
                 .then(([metricp]) => this.setState({
                   metric_profile: metricp,
                   metric_profile_name: metricp.name,
+                  metric_profile_description: metricp.description,
                   groupname: json['groupname'],
                   list_user_groups: sessionActive.userdetails.groups.metricprofiles,
                   write_perm: sessionActive.userdetails.is_superuser ||
@@ -266,6 +268,7 @@ export class MetricProfilesChange extends Component
             this.setState({
               metric_profile: empty_metric_profile,
               metric_profile_name: '',
+              metric_profile_description: '',
               groupname: '',
               list_user_groups: sessionActive.userdetails.groups.metricprofiles,
               write_perm: sessionActive.userdetails.is_superuser ||
@@ -453,7 +456,6 @@ export class MetricProfilesChange extends Component
     return services
   }
 
-
   doChange({formValues, servicesList}, actions) {
     let services = [];
     let dataToSend = [];
@@ -607,9 +609,9 @@ export class MetricProfilesChange extends Component
 
   render() {
     const {write_perm, loading, metric_profile, metric_profile_name,
-      view_services, groupname, list_user_groups,
-      serviceflavours_all, metrics_all,
-      searchMetric, searchServiceFlavour} = this.state;
+      metric_profile_description, view_services, groupname, list_user_groups,
+      serviceflavours_all, metrics_all, searchMetric, searchServiceFlavour} =
+      this.state;
 
     if (loading)
       return (<LoadingAnim />)
@@ -628,6 +630,7 @@ export class MetricProfilesChange extends Component
             initialValues = {{
               id: metric_profile.id,
               name: metric_profile_name,
+              description: metric_profile_description,
               groupname: groupname,
               view_services: view_services,
               search_metric: searchMetric,
@@ -642,6 +645,7 @@ export class MetricProfilesChange extends Component
               <Form>
                 <ProfileMainInfo
                   {...props}
+                  description="description"
                   grouplist={
                     (write_perm) ?
                       list_user_groups :
