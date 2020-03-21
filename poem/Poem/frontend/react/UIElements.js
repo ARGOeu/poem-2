@@ -273,35 +273,23 @@ export const NavigationBar = ({history, onLogout, isOpenModal, toggle, titleModa
 
 export const NavigationLinks = ({location, isTenantSchema, userDetails}) => {
   var data = undefined;
+
   !isTenantSchema ? data = admin_list_pages : data = list_pages
+  if (!userDetails.is_superuser)
+    data = data.filter(e => e !== 'administration')
 
   return (
     <Nav vertical pills id="argo-navlinks" className="border-left border-right border-top rounded-top sticky-top">
         {
           data.map((item, i) =>
-            item === 'administration'
-              ?
-                userDetails.is_superuser
-                  ?
-                    <NavItem key={i}>
-                      <NavLink
-                        tag={Link}
-                        active={location.pathname.includes(item) ? true : false}
-                        className={location.pathname.includes(item) ? "text-white bg-info" : "text-dark"}
-                        to={'/ui/' + item}><Icon i={item}/> {link_title.get(item)}
-                      </NavLink>
-                    </NavItem>
-                  :
-                    null
-              :
-                <NavItem key={i}>
-                  <NavLink
-                    tag={Link}
-                    active={location.pathname.split('/')[2] === item ? true : false}
-                    className={location.pathname.split('/')[2] === item ? "text-white bg-info" : "text-dark"}
-                    to={'/ui/' + item}><Icon i={item}/> {link_title.get(item)}
-                  </NavLink>
-                </NavItem>
+            <NavItem key={i}>
+              <NavLink
+                tag={Link}
+                active={location.pathname.split('/')[2] === item ? true : false}
+                className={location.pathname.split('/')[2] === item ? "text-white bg-info" : "text-dark"}
+                to={'/ui/' + item}><Icon i={item}/> {link_title.get(item)}
+              </NavLink>
+            </NavItem>
           )
         }
       </Nav>
