@@ -29,7 +29,10 @@ class ListAPIKeys(APIView):
                 raise NotFound(status=404, detail='API key not found')
 
         else:
-            apikeys = MyAPIKey.objects.all()
+            if request.user.is_superuser:
+                apikeys = MyAPIKey.objects.all()
+            else:
+                apikeys = MyAPIKey.objects.filter(name__startswith='WEB-API')
             api_format = [
                 dict(id=e.id,
                      name=e.name,
