@@ -384,7 +384,7 @@ def update_comment(instance):
     return analyze_differences(old_data, new_data)
 
 
-def create_profile_history(instance, data, description, user):
+def create_profile_history(instance, data, user, description=None):
     ct = ContentType.objects.get_for_model(instance)
 
     if isinstance(user, CustUser):

@@ -295,7 +295,8 @@ export class ProbeList extends Component {
       list_probe: null,
       isTenantSchema: null,
       search_name: '',
-      search_description: ''
+      search_description: '',
+      search_package: ''
     };
 
     this.backend = new Backend();
@@ -359,8 +360,26 @@ export class ProbeList extends Component {
           </div>
       },
       {
+        Header: 'Package',
+        minWidth: 120,
+        accessor: 'package',
+        filterable: true,
+        Filter: (
+          <input
+            type='text'
+            placeholder='Search by package'
+            value={this.state.search_package}
+            onChange={e => this.setState({search_package: e.target.value})}
+            style={{width: '100%'}}
+          />
+        ),
+        filterMethod:
+          (filter, row) =>
+            row[filter.id] !== undefined ? String(row[filter.id]).toLowerCase().includes(filter.value.toLowerCase()) : true
+      },
+      {
         Header: 'Description',
-        minWidth: 300,
+        minWidth: 200,
         accessor: 'description',
         filterable: true,
         Filter: (
@@ -389,6 +408,12 @@ export class ProbeList extends Component {
     if (this.state.search_description) {
       list_probe = list_probe.filter(row =>
         row.description.toLowerCase().includes(this.state.search_description.toLowerCase())
+      );
+    }
+
+    if (this.state.search_package) {
+      list_probe = list_probe.filter(row =>
+        row.package.toLowerCase().includes(this.state.search_package.toLowerCase())
       );
     }
 
