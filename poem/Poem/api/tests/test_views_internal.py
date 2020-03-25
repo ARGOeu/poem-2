@@ -1874,6 +1874,7 @@ class ListAggregationsAPIViewTests(TenantTestCase):
 
     def test_put_aggregations(self):
         data = {
+            'name': 'TEST_PROFILE',
             'apiid': '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
             'groupname': 'new-group',
             'endpoint_group': 'servicegroups',
@@ -2183,6 +2184,7 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
             "apiid": "12341234-aaaa-kkkk-aaaa-aaeekkccnnee",
             "name": "new-profile",
             "groupname": "EGI",
+            "description": "New profile description.",
             "services": [
                 {"service": "AMGA", "metric": "org.nagios.SAML-SP"},
                 {"service": "APEL", "metric": "org.apel.APEL-Pub"},
@@ -2212,8 +2214,10 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
 
     def test_put_metric_profile(self):
         data = {
+            "name": "TEST_PROFILE",
             "apiid": "00000000-oooo-kkkk-aaaa-aaeekkccnnee",
             "groupname": "new-group",
+            "description": "New profile description.",
             "services": [
                 {"service": "AMGA", "metric": "org.nagios.SAML-SP"},
                 {"service": "APEL", "metric": "org.apel.APEL-Pub"},
@@ -2246,7 +2250,9 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
             ]
         )
         self.assertEqual(
-            history[0].comment, '[{"changed": {"fields": ["groupname"]}}]'
+            history[0].comment,
+            '[{"added": {"fields": ["description"]}}, '
+            '{"changed": {"fields": ["groupname"]}}]'
         )
 
     def test_delete_metric_profile(self):
@@ -6330,6 +6336,7 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
                     'fields': {
                         'name': 'TEST_PROFILE2',
                         'groupname': 'NEW_GROUP',
+                        'description': '',
                         'apiid': '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
                         'metricinstances': [
                             {'service': 'AMGA', 'metric': 'org.nagios.SAML-SP'},
@@ -6353,6 +6360,7 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
                     'fields': {
                         'name': 'TEST_PROFILE',
                         'groupname': 'EGI',
+                        'description': '',
                         'apiid': '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
                         'metricinstances': [
                             {'service': 'AMGA', 'metric': 'org.nagios.SAML-SP'},
