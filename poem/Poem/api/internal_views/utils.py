@@ -103,7 +103,26 @@ def sync_webapi(api, model):
                                         metric=metric
                                     )
                                 )
-                create_profile_history(instance, services, 'poem')
+                        description = item['description']
+                create_profile_history(instance, services, 'poem', description)
+
+            if isinstance(instance, poem_models.Aggregation):
+                for item in data:
+                    if item['id'] == instance.apiid:
+                        aggr_data = {
+                            'endpoint_group': item['endpoint_group'],
+                            'metric_operation': item['metric_operation'],
+                            'profile_operation': item['profile_operation'],
+                            'metric_profile': item['metric_profile']['name'],
+                            'groups': item['groups']
+                        }
+                create_profile_history(instance, aggr_data, 'poem')
+
+            if isinstance(instance, poem_models.ThresholdsProfiles):
+                for item in data:
+                    if item['id'] == instance.apiid:
+                        tp_data = {'rules': item['rules']}
+                create_profile_history(instance, tp_data, 'poem')
 
     entries_deleted_onapi = data_db.difference(data_api)
     for p in entries_deleted_onapi:
