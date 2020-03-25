@@ -183,7 +183,9 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
         self.factory = TenantRequestFactory(self.tenant)
         self.view = views.ListAPIKeys.as_view()
         self.url = '/api/v2/internal/apikeys/'
-        self.user = CustUser.objects.create_user(username='testuser')
+        self.user = CustUser.objects.create_user(
+            username='testuser', is_superuser=True
+        )
 
         key1, k1 = MyAPIKey.objects.create_key(name='EGI')
         self.id1 = key1.id
@@ -322,18 +324,24 @@ class ListUsersAPIViewTests(TenantTestCase):
             first_name='Another',
             last_name='User',
             email='otheruser@example.com',
+            is_superuser=True,
             date_joined=datetime.datetime(2015, 1, 2, 0, 0, 0)
         )
 
         poem_models.UserProfile.objects.create(user=self.user2)
 
-        self.groupofmetrics = poem_models.GroupOfMetrics.objects.create(name='Metric1')
-        self.groupofmetricprofiles = poem_models.GroupOfMetricProfiles.objects.create(name='MP1')
-        self.groupofaggregations = poem_models.GroupOfAggregations.objects.create(name='Aggr1')
+        self.groupofmetrics = poem_models.GroupOfMetrics.objects.create(
+            name='Metric1'
+        )
+        self.groupofmetricprofiles = \
+            poem_models.GroupOfMetricProfiles.objects.create(name='MP1')
+        self.groupofaggregations = \
+            poem_models.GroupOfAggregations.objects.create(name='Aggr1')
 
     def test_get_users(self):
+        self.maxDiff = None
         request = self.factory.get(self.url)
-        force_authenticate(request, user=self.user)
+        force_authenticate(request, user=self.user2)
         response = self.view(request)
         self.assertEqual(
             response.data,
@@ -342,7 +350,7 @@ class ListUsersAPIViewTests(TenantTestCase):
                              ('last_name', 'User'),
                              ('username', 'another_user'),
                              ('is_active', True),
-                             ('is_superuser', False),
+                             ('is_superuser', True),
                              ('email', 'otheruser@example.com'),
                              ('date_joined', '2015-01-02T00:00:00'),
                              ('pk', self.user2.pk)]),
@@ -364,7 +372,7 @@ class ListUsersAPIViewTests(TenantTestCase):
 
     def test_get_user_by_username(self):
         request = self.factory.get(self.url + 'testuser')
-        force_authenticate(request, user=self.user)
+        force_authenticate(request, user=self.user2)
         response = self.view(request, 'testuser')
         self.assertEqual(
             response.data,
@@ -396,7 +404,7 @@ class ListUsersAPIViewTests(TenantTestCase):
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
-        force_authenticate(request, user=self.user)
+        force_authenticate(request, user=self.user2)
         response = self.view(request)
         user = CustUser.objects.get(username='testuser')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -418,7 +426,7 @@ class ListUsersAPIViewTests(TenantTestCase):
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
-        force_authenticate(request, user=self.user)
+        force_authenticate(request, user=self.user2)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(
@@ -437,7 +445,7 @@ class ListUsersAPIViewTests(TenantTestCase):
             'password': 'blablabla',
         }
         request = self.factory.post(self.url, data, format='json')
-        force_authenticate(request, user=self.user)
+        force_authenticate(request, user=self.user2)
         response = self.view(request)
         user = CustUser.objects.get(username='newuser')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -459,7 +467,7 @@ class ListUsersAPIViewTests(TenantTestCase):
             'password': 'blablabla',
         }
         request = self.factory.post(self.url, data, format='json')
-        force_authenticate(request, user=self.user)
+        force_authenticate(request, user=self.user2)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(
@@ -469,19 +477,19 @@ class ListUsersAPIViewTests(TenantTestCase):
 
     def test_delete_user(self):
         request = self.factory.delete(self.url + 'another_user')
-        force_authenticate(request, user=self.user)
+        force_authenticate(request, user=self.user2)
         response = self.view(request, 'another_user')
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
     def test_delete_nonexisting_user(self):
         request = self.factory.delete(self.url + 'nonexisting')
-        force_authenticate(request, user=self.user)
+        force_authenticate(request, user=self.user2)
         response = self.view(request, 'nonexisting')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_delete_user_without_specifying_username(self):
         request = self.factory.delete(self.url)
-        force_authenticate(request, user=self.user)
+        force_authenticate(request, user=self.user2)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
