@@ -86,7 +86,10 @@ class ListUsers(APIView):
                                detail='User not found')
 
         else:
-            users = CustUser.objects.all()
+            if request.user.is_superuser:
+                users = CustUser.objects.all()
+            else:
+                users = CustUser.objects.filter(username=request.user.username)
             serializer = serializers.UsersSerializer(users, many=True)
 
             data = sorted(serializer.data, key=lambda k: k['username'].lower())
