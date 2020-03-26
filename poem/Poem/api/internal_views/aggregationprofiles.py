@@ -87,7 +87,7 @@ class ListAggregations(APIView):
                                detail='Aggregation not found')
 
         else:
-            aggregations = poem_models.Aggregation.objects.all()
+            aggregations = poem_models.Aggregation.objects.all().order_by('name')
             serializer = serializers.AggregationProfileSerializer(
                 aggregations, many=True
             )

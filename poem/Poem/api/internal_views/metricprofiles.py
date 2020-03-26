@@ -65,7 +65,7 @@ class ListMetricProfiles(APIView):
                                detail='Metric profile not found')
 
         else:
-            profiles = poem_models.MetricProfiles.objects.all()
+            profiles = poem_models.MetricProfiles.objects.all().order_by('name')
             serializer = serializers.MetricProfileSerializer(profiles,
                                                              many=True)
             return Response(serializer.data)

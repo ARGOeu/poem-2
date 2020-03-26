@@ -30,9 +30,9 @@ class ListAPIKeys(APIView):
 
         else:
             if request.user.is_superuser:
-                apikeys = MyAPIKey.objects.all()
+                apikeys = MyAPIKey.objects.all().order_by('name')
             else:
-                apikeys = MyAPIKey.objects.filter(name__startswith='WEB-API')
+                apikeys = MyAPIKey.objects.filter(name__startswith='WEB-API').order_by('name')
             api_format = [
                 dict(id=e.id,
                      name=e.name,
