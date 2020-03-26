@@ -212,7 +212,6 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
         request = self.factory.get(self.url)
         force_authenticate(request, user=self.user)
         response = self.view(request)
-        # those created later are listed first
         self.assertEqual(
             response.data,
             [
@@ -224,17 +223,17 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
                     'revoked': False
                 },
                 {
-                    'id': self.id2,
-                    'name': 'EUDAT',
-                    'token': self.token2,
-                    'created': self.created2,
-                    'revoked': False
-                },
-                {
                     'id': self.id1,
                     'name': 'EGI',
                     'token': self.token1,
                     'created': self.created1,
+                    'revoked': False
+                },
+                {
+                    'id': self.id2,
+                    'name': 'EUDAT',
+                    'token': self.token2,
+                    'created': self.created2,
                     'revoked': False
                 }
             ]
@@ -1773,15 +1772,17 @@ class ListAggregationsAPIViewTests(TenantTestCase):
             response.data,
             [
                 OrderedDict([
+                    ('name', 'ANOTHER-PROFILE'),
+                    ('description', ''),
+                    ('apiid', '12341234-oooo-kkkk-aaaa-aaeekkccnnee'),
+                    ('groupname', '')
+                ]),
+                OrderedDict([
                     ('name', 'TEST_PROFILE'),
+                    ('description', ''),
                     ('apiid', '00000000-oooo-kkkk-aaaa-aaeekkccnnee'),
                     ('groupname', 'EGI')
                 ]),
-                OrderedDict([
-                    ('name', 'ANOTHER-PROFILE'),
-                    ('apiid', '12341234-oooo-kkkk-aaaa-aaeekkccnnee'),
-                    ('groupname', '')
-                ])
             ]
         )
 
@@ -1795,6 +1796,7 @@ class ListAggregationsAPIViewTests(TenantTestCase):
             response.data,
             OrderedDict([
                 ('name', 'TEST_PROFILE'),
+                ('description', ''),
                 ('apiid', '00000000-oooo-kkkk-aaaa-aaeekkccnnee'),
                 ('groupname', 'EGI')
             ])
@@ -2152,15 +2154,17 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
             response.data,
             [
                 OrderedDict([
+                    ('name', 'ANOTHER-PROFILE'),
+                    ('description', ''),
+                    ('apiid', '12341234-oooo-kkkk-aaaa-aaeekkccnnee'),
+                    ('groupname', '')
+                ]),
+                OrderedDict([
                     ('name', 'TEST_PROFILE'),
+                    ('description', ''),
                     ('apiid', '00000000-oooo-kkkk-aaaa-aaeekkccnnee'),
                     ('groupname', 'EGI')
                 ]),
-                OrderedDict([
-                    ('name', 'ANOTHER-PROFILE'),
-                    ('apiid', '12341234-oooo-kkkk-aaaa-aaeekkccnnee'),
-                    ('groupname', '')
-                ])
             ]
         )
 
@@ -2174,6 +2178,7 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
             response.data,
             OrderedDict([
                 ('name', 'TEST_PROFILE'),
+                ('description', ''),
                 ('apiid', '00000000-oooo-kkkk-aaaa-aaeekkccnnee'),
                 ('groupname', 'EGI')
             ])
@@ -3536,7 +3541,7 @@ class ListMetricAPIViewTests(TenantTestCase):
         self.assertEqual(
             metric.config,
             '["maxCheckAttempts 4", "timeout 70", '
-            '"path /usr/libexec/argo-monitoring/probes/argo", ' 
+            '"path /usr/libexec/argo-monitoring/probes/argo", '
             '"interval 6", "retryInterval 4"]')
         self.assertEqual(
             metric.attribute,
@@ -6415,6 +6420,7 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
                     'object_repr': 'TEST_PROFILE2',
                     'fields': {
                         'name': 'TEST_PROFILE2',
+                        'description': '',
                         'groupname': 'TEST2',
                         'apiid': '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
                         'endpoint_group': 'servicegroups',
@@ -6466,6 +6472,7 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
                     'object_repr': 'TEST_PROFILE',
                     'fields': {
                         'name': 'TEST_PROFILE',
+                        'description': '',
                         'groupname': 'EGI',
                         'apiid': '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
                         'endpoint_group': 'sites',
@@ -6544,6 +6551,7 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
                     'object_repr': 'TEST_PROFILE2',
                     'fields': {
                         'name': 'TEST_PROFILE2',
+                        'description': '',
                         'groupname': 'NEW_GROUP',
                         'apiid': self.tp1.apiid,
                         'rules': [
@@ -6571,6 +6579,7 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
                     'object_repr': 'TEST_PROFILE',
                     'fields': {
                         'name': 'TEST_PROFILE',
+                        'description': '',
                         'groupname': 'GROUP',
                         'apiid': self.tp1.apiid,
                         'rules': [
@@ -7950,14 +7959,16 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
             response.data,
             [
                 OrderedDict([
-                    ('name', 'TEST_PROFILE'),
-                    ('apiid', '00000000-oooo-kkkk-aaaa-aaeekkccnnee'),
-                    ('groupname', 'GROUP')
-                ]),
-                OrderedDict([
                     ('name', 'ANOTHER_PROFILE'),
+                    ('description', ''),
                     ('apiid', '12341234-oooo-kkkk-aaaa-aaeekkccnnee'),
                     ('groupname', '')
+                ]),
+                OrderedDict([
+                    ('name', 'TEST_PROFILE'),
+                    ('description', ''),
+                    ('apiid', '00000000-oooo-kkkk-aaaa-aaeekkccnnee'),
+                    ('groupname', 'GROUP')
                 ])
             ]
         )
@@ -7979,6 +7990,7 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
             response.data,
             OrderedDict([
                 ('name', 'TEST_PROFILE'),
+                ('description', ''),
                 ('apiid', '00000000-oooo-kkkk-aaaa-aaeekkccnnee'),
                 ('groupname', 'GROUP')
             ])
