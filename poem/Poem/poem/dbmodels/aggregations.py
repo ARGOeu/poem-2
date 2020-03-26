@@ -5,6 +5,7 @@ from django.utils.translation import ugettext_lazy as _
 class Aggregation(models.Model):
     name = models.CharField(max_length=128, null=False,
                             help_text='Name of the Aggregation profile.')
+    description = models.CharField(max_length=1024, default='')
     apiid = models.CharField(max_length=128, help_text='WEB-API ID of Aggregation profile')
     groupname = models.CharField(max_length=128, default='')
 
