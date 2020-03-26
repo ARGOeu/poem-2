@@ -7,13 +7,13 @@ from Poem.users.models import CustUser
 
 class AggregationProfileSerializer(serializers.ModelSerializer):
     class Meta:
-        fields = ('name', 'apiid', 'groupname')
+        fields = ('name', 'description', 'apiid', 'groupname')
         model = models.Aggregation
 
 
 class MetricProfileSerializer(serializers.ModelSerializer):
     class Meta:
-        fields = ('name', 'apiid', 'groupname', )
+        fields = ('name', 'description', 'apiid', 'groupname', )
         model = models.MetricProfiles
 
 
@@ -56,5 +56,5 @@ class ThresholdsProfileSerializer(serializers.ModelSerializer):
         return models.ThresholdsProfiles.objects.create(**validated_data)
 
     class Meta:
-        fields = ('name', 'apiid', 'groupname',)
+        fields = ('name', 'description', 'apiid', 'groupname',)
         model = models.ThresholdsProfiles
