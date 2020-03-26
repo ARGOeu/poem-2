@@ -5,6 +5,7 @@ from django.utils.translation import ugettext_lazy as _
 
 class ThresholdsProfiles(models.Model):
     name = models.CharField(max_length=128, null=False)
+    description = models.CharField(max_length=1024, default='')
     apiid = models.CharField(max_length=128)
     groupname = models.CharField(max_length=128, default='')
 

@@ -311,8 +311,10 @@ export class UsersList extends Component
             <ReactTable
               data={list_users}
               columns={columns}
-              className="-striped -highlight"
+              className="-highlight"
               defaultPageSize={20}
+              rowsText='users'
+              getTheadThProps={() => ({className: 'table-active font-weight-bold p-2'})}
             />
           </BaseArgoView>
       );

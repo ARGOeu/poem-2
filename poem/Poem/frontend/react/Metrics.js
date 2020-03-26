@@ -678,8 +678,10 @@ export function ListOfMetrics(type, imp=false) {
               <ReactTable
                 data={list_metric}
                 columns={columns}
-                className='-striped -highlight'
+                className='-highlight'
                 defaultPageSize={50}
+                rowsText='metrics'
+                getTheadThProps={() => ({className: 'table-active font-weight-bold p-2'})}
               />
             </BaseArgoView>
           )
@@ -713,8 +715,10 @@ export function ListOfMetrics(type, imp=false) {
                   <ReactTable
                     data={list_metric}
                     columns={columns}
-                    className='-striped -highlight'
+                    className='-highlight'
                     defaultPageSize={50}
+                    rowsText='metrics'
+                    getTheadThProps={() => ({className: 'table-active font-weight-bold p-2'})}
                   />
                 </div>
             </>
@@ -733,6 +737,8 @@ export function ListOfMetrics(type, imp=false) {
                   columns={columns}
                   className='-striped -highlight'
                   defaultPageSize={50}
+                  rowsText='metrics'
+                  getTheadThProps={() => ({className: 'table-active font-weight-bold p-2'})}
                 />
               </BaseArgoView>
             )

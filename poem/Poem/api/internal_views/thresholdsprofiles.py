@@ -30,7 +30,7 @@ class ListThresholdsProfiles(APIView):
                 )
 
         else:
-            profiles = ThresholdsProfiles.objects.all()
+            profiles = ThresholdsProfiles.objects.all().order_by('name')
             serializer = serializers.ThresholdsProfileSerializer(profiles,
                                                                  many=True)
             return Response(serializer.data)

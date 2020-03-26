@@ -84,7 +84,8 @@ def sync_webapi(api, model):
     for p in data:
         if p['id'] in entries_not_indb:
             new_entries.append(
-                dict(name=p['name'], apiid=p['id'], groupname='')
+                dict(name=p['name'], description=p.get('description', ''),
+                     apiid=p['id'], groupname='')
             )
 
     if new_entries:
@@ -103,7 +104,7 @@ def sync_webapi(api, model):
                                         metric=metric
                                     )
                                 )
-                        description = item['description']
+                        description = item.get('description', '')
                 create_profile_history(instance, services, 'poem', description)
 
             if isinstance(instance, poem_models.Aggregation):

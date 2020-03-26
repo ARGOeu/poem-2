@@ -734,14 +734,20 @@ export class MetricProfilesList extends Component
       {
         Header: 'Name',
         id: 'name',
+        maxWidth: 350,
         accessor: e =>
         <Link to={'/ui/metricprofiles/' + e.name}>
           {e.name}
         </Link>
       },
       {
+        Header: 'Description',
+        accessor: 'description',
+      },
+      {
         Header: 'Group',
         accessor: 'groupname',
+        className: 'text-center',
         maxWidth: 150,
       }
     ]
@@ -759,8 +765,10 @@ export class MetricProfilesList extends Component
           <ReactTable
             data={list_metricprofiles}
             columns={columns}
-            className="-striped -highlight"
+            className="-highlight"
             defaultPageSize={12}
+            rowsText='profiles'
+            getTheadThProps={() => ({className: 'table-active font-weight-bold p-2'})}
           />
         </BaseArgoView>
       )

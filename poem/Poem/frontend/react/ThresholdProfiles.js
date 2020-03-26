@@ -888,10 +888,15 @@ export class ThresholdsProfilesList extends Component {
       {
         Header: 'Name',
         id: 'name',
+        maxWidth: 350,
         accessor: e =>
           <Link to={'/ui/thresholdsprofiles/' + e.name}>
             {e.name}
           </Link>
+      },
+      {
+        Header: 'Description',
+        accessor: 'description',
       },
       {
         Header: 'Group',
@@ -914,8 +919,10 @@ export class ThresholdsProfilesList extends Component {
           <ReactTable
             data={list_thresholdsprofiles}
             columns={columns}
-            className='-striped -highlight'
+            className='-highlight'
             defaultPageSize={12}
+            rowsText='profiles'
+            getTheadThProps={() => ({className: 'table-active font-weight-bold p-2'})}
           />
         </BaseArgoView>
       );

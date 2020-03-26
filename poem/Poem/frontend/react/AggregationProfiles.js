@@ -812,14 +812,20 @@ export class AggregationProfilesList extends Component
       {
         Header: 'Name',
         id: 'name',
+        maxWidth: 350,
         accessor: e =>
         <Link to={'/ui/aggregationprofiles/' + e.name}>
           {e.name}
         </Link>
       },
       {
+        Header: 'Description',
+        accessor: 'description',
+      },
+      {
         Header: 'Group',
         accessor: 'groupname',
+        className: 'text-center',
         maxWidth: 150,
       }
     ]
@@ -837,8 +843,10 @@ export class AggregationProfilesList extends Component
           <ReactTable
             data={list_aggregations}
             columns={columns}
-            className="-striped -highlight"
+            className="-highlight"
             defaultPageSize={12}
+            rowsText='profiles'
+            getTheadThProps={() => ({className: 'table-active font-weight-bold p-2'})}
           />
         </BaseArgoView>
       )

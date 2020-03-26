@@ -291,7 +291,10 @@ class App extends Component {
     this.backend.isTenantSchema().then((isTenantSchema) =>
       this.initalizeState(isTenantSchema, response)).then(
         setTimeout(() => {
-          history.push('/ui/home');
+          response.userdetails.is_superuser ?
+            history.push('/ui/administration')
+          :
+            history.push('/ui/metricprofiles')
         }, 50
       ))
   }

@@ -91,8 +91,10 @@ export class APIKeyList extends Component {
           <ReactTable
             data={list_keys}
             columns={columns}
-            className='-striped -highlight'
+            className='-highlight'
             defaultPageSize={5}
+            rowsText='keys'
+            getTheadThProps={() => ({className: 'table-active font-weight-bold p-2'})}
           />
         </BaseArgoView>
       )
