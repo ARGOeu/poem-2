@@ -36,7 +36,7 @@ function GroupList(group, id, name) {
 
       this.location = props.location;
       this.backend = new Backend();
-  };
+  }
 
   componentDidMount() {
       this.setState({loading: true});
@@ -47,7 +47,7 @@ function GroupList(group, id, name) {
             loading: false
           })
         );
-  };
+  }
 
   render() {
     const columns = [
@@ -75,16 +75,18 @@ function GroupList(group, id, name) {
             <ReactTable
               data={list_groups}
               columns={columns}
-              className='-striped -highlight'
+              className='-highlight'
               defaultPageSize={12}
+              rowsText='groups'
+              getTheadThProps={() => ({className: 'table-active font-weight-bold p-2'})}
             />
         </BaseArgoView>
       );
     } else
       return null;
-    };
+    }
   };
-};
+}
 
 
 function GroupChange(gr, id, ttl) {
@@ -117,7 +119,7 @@ function GroupChange(gr, id, ttl) {
       this.onSubmitHandle = this.onSubmitHandle.bind(this);
       this.doChange = this.doChange.bind(this);
       this.doDelete = this.doDelete.bind(this);
-    };
+    }
 
     handleDeselect(deSelectedItems) {
       var items = this.state.items.slice();
@@ -128,20 +130,20 @@ function GroupChange(gr, id, ttl) {
       deSelectedItems.forEach(option => {
         if (nogroupitems.indexOf(option) === -1) {
           nogroupitems.push(option);
-        };
+        }
       });
       this.setState({items, nogroupitems});
-    };
+    }
 
     handleSelect(items) {
       items.sort((a, b) => a.id - b.id);
       this.setState({items});
-    };
+    }
 
     toggleAreYouSure() {
       this.setState(prevState =>
         ({areYouSureModal: !prevState.areYouSureModal}));
-    };
+    }
 
     toggleAreYouSureSetModal(msg, title, onyes) {
       this.setState(prevState =>
@@ -150,7 +152,7 @@ function GroupChange(gr, id, ttl) {
           modalMsg: msg,
           modalTitle: title,
         }));
-    };
+    }
 
     onSubmitHandle(values, action) {
       let msg = undefined;
@@ -165,7 +167,7 @@ function GroupChange(gr, id, ttl) {
       }
       this.toggleAreYouSureSetModal(msg, title,
         () => this.doChange(values, action));
-    };
+    }
 
     doChange(values, action) {
       let items = [];
@@ -231,9 +233,9 @@ function GroupChange(gr, id, ttl) {
               nogroupitems: nogroupitems,
               loading: false
             });
-          };
+          }
         });
-    };
+    }
 
     render() {
       const { name, items, loading } = this.state;
@@ -345,7 +347,7 @@ function GroupChange(gr, id, ttl) {
               />
             </BaseArgoView>
         );
-      };
-    };
+      }
+    }
   };
-};
+}

@@ -431,8 +431,10 @@ export class ProbeList extends Component {
           <ReactTable
             data={list_probe}
             columns={columns}
-            className='-striped -highlight'
+            className='-highlight'
             defaultPageSize={50}
+            rowsText='probes'
+            getTheadThProps={() => ({className: 'table-active font-weight-bold p-2'})}
           />
         </BaseArgoView>
       );
