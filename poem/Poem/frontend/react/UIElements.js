@@ -59,7 +59,7 @@ import { Backend } from './DataManager';
 import ReactDiffViewer from 'react-diff-viewer';
 
 
-var list_pages = ['administration','services', 'reports', 'probes',
+var list_pages = ['administration','services', 'probes',
                   'metrics', 'metricprofiles', 'aggregationprofiles',
                   'thresholdsprofiles'];
 var admin_list_pages = ['administration', 'probes', 'yumrepos',
