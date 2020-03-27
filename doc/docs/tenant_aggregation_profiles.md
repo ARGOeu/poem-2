@@ -2,11 +2,11 @@
 
 Aggregations profiles page is accessible from the menu on the left side. It is shown in the image below.
 
-![Tenant Aggregation Profiles](tenant_figs/aggregation_profiles.png)
+![Tenant Aggregation Profiles](figures/tenant_aggregation_profiles.png)
 
 By clicking the profile name, the page of that particular profile is opened. Example is shown in the image below.
 
-![Tenant Aggregation Profile Details](tenant_figs/aggregation_profile_details.png)
+![Tenant Aggregation Profile Details](figures/tenant_aggregation_profile_details.png)
 
 The first part is the same for all the profiles: **Name** and **Group** fields. **Group** field is a drop down select field and it is required, so the group of aggregations must be created beforehand.
 

@@ -1,7 +1,7 @@
 #Administration
 Tenant POEM administration page is shown in the image below.
 
-![Tenant Administration](tenant_figs/administration.png)
+![Tenant Administration](figures/tenant_administration.png)
 
 First section are links to component pages users are allowed to modify. They are all also accessible from the menu of the left side.
 

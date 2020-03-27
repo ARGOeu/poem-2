@@ -1,11 +1,11 @@
 #YUM repos
 YUM repos page is accessible from the menu on the left side. It is shown in the image below.
 
-![SuperAdmin YUM repos](superadmin_figs/superadmin_repos.png)
+![SuperAdmin YUM repos](figures/superadmin_repos.png)
 
 YUM repos may be filtered by OS tag. By clicking on the YUM repo name, user can access particular YUM repo page (shown on the image below). 
 
-![Superadmin YUM repo details](superadmin_figs/superadmin_repos_detail.png)
+![Superadmin YUM repo details](figures/superadmin_repos_detail.png)
 
 Mandatory fields:
 * **Name** - name of YUM repo (without file extension);

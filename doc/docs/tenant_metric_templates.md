@@ -1,7 +1,7 @@
 #Metric Templates
 Metric templates page is only accessible through Administration page. It is used for importing metric from metric templates, and only superusers have necessary permissions to perform metric imports. The page is shown in image below.
 
-![Tenant Metric templates](tenant_figs/metric_templates.png)
+![Tenant Metric templates](figures/tenant_metric_templates.png)
 
 The list shows all the available metric templates defined in POEM. User can select metric templates by clicking the checkbox next to its name, or select all metric templates by checking **Select all** checkbox. 
 
@@ -13,4 +13,4 @@ Note that when metric templates are filtered by any condition, **Select all** ch
 
 Once the user selects all the metric templates (s)he wants to import as metrics, (s)he should press **Import** button. The user will then be notified if the import has been successful. The example in the image below shows the success and warning notification.
 
-![Tenant Metric Templates Notification](tenant_figs/metric_templates_notification.png)
+![Tenant Metric Templates Notification](figures/tenant_metric_templates_notification.png)

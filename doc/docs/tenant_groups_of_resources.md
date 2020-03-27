@@ -15,14 +15,14 @@ Second section consists of two windows. The left one shows the resources not ass
 Images of groups of resources are shown below in respective sections.
 
 ##Group of Aggregations
-![Tenant Group of aggregations](tenant_figs/group_of_aggregations.png)
+![Tenant Group of aggregations](figures/tenant_group_of_aggregations.png)
 
 ## Group of Metrics
-![Tenant Group of metrics](tenant_figs/group_of_metrics.png)
+![Tenant Group of metrics](figures/tenant_group_of_metrics.png)
 
 ## Group of Metric Profiles
-![Tenant Group of metric profiles](tenant_figs/group_of_metric_profiles.png)
+![Tenant Group of metric profiles](figures/tenant_group_of_metric_profiles.png)
 
 ## Group of Thresholds Profiles
-![Tenant Group of thresholds profiles](tenant_figs/group_of_thresholds_profiles.png)
+![Tenant Group of thresholds profiles](figures/tenant_group_of_thresholds_profiles.png)
 

@@ -2,11 +2,11 @@
 
 Thresholds profiles page is accessible through the menu on the left side. It is shown in the image below.
 
-![Tenant Thresholds Profile](tenant_figs/thresholds_profiles.png)
+![Tenant Thresholds Profile](figures/tenant_thresholds_profiles.png)
 
 By clicking on profile's name, user can access the particular profile's details (shown in the image below).
 
-![Tenant Thresholds Profile Details](tenant_figs/thresholds_profile_details.png)
+![Tenant Thresholds Profile Details](figures/tenant_thresholds_profile_details.png)
 
 The first part is the same for all the profiles: **Name** and **Group** fields. **Group** field is a drop down select field and the user can choose among the existing groups. Since the field is required, there should be at least one group of thresholds profiles created beforehand.
 

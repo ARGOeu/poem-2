@@ -1,13 +1,13 @@
 #Metric Templates
 Metric templates page is accessible from the menu on the left side. The page is shown in the image below.
 
-![SuperAdmin metric templates](superadmin_figs/superadmin_metric_template.png)
+![SuperAdmin metric templates](figures/superadmin_metric_template.png)
 
 Metric templates may be filtered by name, probe, and tag (active or passive). By clicking on the metric template name, user can access particular metric template page. It is also possible to access particular probe version by clicking on its name.
 
 Depending on metric template type, pages for particular metric templates are a bit different. Active metric template's page is shown in the image below.
 
-![SuperAdmin active metric template](superadmin_figs/superadmin_metric_template_active.png)
+![SuperAdmin active metric template](figures/superadmin_metric_template_active.png)
 
 Mandatory fields in case of active metric template:
 * **Name** - metric template name;
@@ -18,7 +18,7 @@ Mandatory fields in case of active metric template:
 
 Page for particular **passive** metric template is considerably reduced and it is shown in the image below.
 
-![SuperAdmin passive metric template](superadmin_figs/superadmin_metric_template_passive.png)
+![SuperAdmin passive metric template](figures/superadmin_metric_template_passive.png)
 
 Mandatory fields in case of passive metric template:
 * **Name** - metric template name;
@@ -30,6 +30,6 @@ Metric template can be cloned by clicking **Clone** button. Then a new form is o
 
 By clicking **History** button, one may see all the versions of metric template as is shown in image below.
 
-![SuperAdmin metric template history](superadmin_figs/superadmin_metric_template_history.png)
+![SuperAdmin metric template history](figures/superadmin_metric_template_history.png)
 
 The user may see particular version of the metric template by clicking on its version, and see the differences between two versions by choosing the versions and clicking **Compare** button.

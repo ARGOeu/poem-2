@@ -2,11 +2,11 @@
 
 Metric profiles page is shown in the image below. It is accessible from the menu on the left side.
 
-![Tenant Metric Profiles](tenant_figs/metric_profiles.png)
+![Tenant Metric Profiles](figures/tenant_metric_profiles.png)
 
 By clicking the profile name, user can see the particular profile's details (shown in the image below).
 
-![Tenant Metric Profile Details](tenant_figs/metric_profiles_details.png)
+![Tenant Metric Profile Details](figures/tenant_metric_profiles_details.png)
 
 In the upper part of the page, there are **Name** and **Group** fields. Every profile must be assigned to a group, which means the group should be created beforehand.
 
@@ -16,4 +16,4 @@ Same as for other resources, only users with appropriate permission may modify m
 
 By clicking the **History** button, the user can see all the changes made to the profile, when they were made and by whom (image below).
 
-![Tenant Metric Profile History](tenant_figs/metric_profiles_history.png)
+![Tenant Metric Profile History](figures/tenant_metric_profiles_history.png)
