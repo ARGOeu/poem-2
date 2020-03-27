@@ -18,6 +18,7 @@ import { Button } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faTimes, faSearch } from '@fortawesome/free-solid-svg-icons';
 import ReactDiffViewer from 'react-diff-viewer';
+import * as Yup from 'yup';
 
 import './MetricProfiles.css';
 
@@ -28,6 +29,12 @@ export const MetricProfileHistory = HistoryComponent('metricprofile');
 function matchItem(item, value) {
   return item.toLowerCase().indexOf(value.toLowerCase()) !== -1;
 }
+
+
+const MetricProfilesSchema = Yup.object().shape({
+  name: Yup.string().required('Required'),
+  groupname: Yup.string().required('Required'),
+})
 
 
 const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
@@ -652,16 +659,13 @@ export class MetricProfilesChange extends Component
               servicesList: this.state.list_services
             }, actions)}
             enableReinitialize={true}
+            validationSchema={MetricProfilesSchema}
             render = {props => (
               <Form>
                 <ProfileMainInfo
                   {...props}
                   description="description"
-                  grouplist={
-                    (write_perm) ?
-                      list_user_groups :
-                      [groupname, ...list_user_groups]
-                  }
+                  grouplist={list_user_groups}
                   profiletype='metric'
                 />
                 <h4 className="mt-4 alert-info p-1 pl-3 text-light text-uppercase rounded" style={{'backgroundColor': "#416090"}}>Metric instances</h4>
