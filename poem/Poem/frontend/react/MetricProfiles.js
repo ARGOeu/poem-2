@@ -291,13 +291,6 @@ export class MetricProfilesChange extends Component
     })
   }
 
-  insertSelectPlaceholder(data, text) {
-    if (data) {
-      return [text, ...data]
-    } else
-      return [text]
-  }
-
   toggleAreYouSureSetModal(msg, title, onyes) {
     this.setState(prevState =>
       ({areYouSureModal: !prevState.areYouSureModal,
@@ -674,8 +667,8 @@ export class MetricProfilesChange extends Component
                   render={props => (
                     <ServicesList
                       {...props}
-                      serviceflavours_all={this.insertSelectPlaceholder(serviceflavours_all, '')}
-                      metrics_all={this.insertSelectPlaceholder(metrics_all, '')}
+                      serviceflavours_all={serviceflavours_all}
+                      metrics_all={metrics_all}
                       search_handler={this.handleSearch}
                       remove_handler={this.onRemove}
                       insert_handler={this.onInsert}
