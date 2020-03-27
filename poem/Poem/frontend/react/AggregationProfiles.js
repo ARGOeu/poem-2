@@ -30,6 +30,7 @@ import {
   FormText,
   InputGroup,
   InputGroupAddon} from 'reactstrap';
+import * as Yup from 'yup';
 
 import ReactDiffViewer from 'react-diff-viewer';
 
@@ -42,6 +43,12 @@ export const AggregationProfileHistory = HistoryComponent('aggregationprofile');
 function matchItem(item, value) {
   return item.toLowerCase().indexOf(value.toLowerCase()) !== -1;
 }
+
+
+const AggregationProfilesSchema = Yup.object().shape({
+  name: Yup.string().required('Required'),
+  groupname: Yup.string().required('Required'),
+})
 
 
 function insertSelectPlaceholder(data, text) {
@@ -246,9 +253,10 @@ const AggregationProfilesForm = ({ values, errors, historyview=false, write_perm
         historyview ?
           undefined
         :
-          (write_perm) ?
-            list_user_groups :
-            [values.groupname, ...list_user_groups]
+          write_perm ?
+            list_user_groups
+          :
+            [values.groupname]
       }
       profiletype='aggregation'
     />
@@ -718,7 +726,8 @@ export class AggregationProfilesChange extends Component
                 this.insertEmptyServiceForNoServices(aggregation_profile.groups)
               )
             }}
-            onSubmit = {(values, actions) => this.onSubmitHandle(values, actions)}
+            onSubmit={(values, actions) => this.onSubmitHandle(values, actions)}
+            validationSchema={AggregationProfilesSchema}
             render = {props => (
               <Form>
                 <FormikEffect onChange={(current, prev) => {
@@ -745,6 +754,7 @@ export class AggregationProfilesChange extends Component
                   logic_operations={this.logic_operations}
                   endpoint_groups={this.endpoint_groups}
                   list_id_metric_profiles={list_id_metric_profiles}
+                  write_perm={write_perm}
                 />
                 <FieldArray
                   name="groups"
