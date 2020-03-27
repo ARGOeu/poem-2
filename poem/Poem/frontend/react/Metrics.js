@@ -163,6 +163,7 @@ const InlineFields = ({values, errors, field, addnew=false, readonly=false}) => 
                         name={`${field}.${index}.value`}
                         id={`${field}.${index}.value`}
                         className={`form-control ${values[field][index].isNew && 'border-success'}`}
+                        style={{overflowX : 'auto'}}
                         readOnly={readonly || (!addnew && (field !== 'config' || field === 'config' && item.key === 'path')) || values.type === 'Passive' && item.key === 'PASSIVE'}
                         hidden={values.type === 'Passive' && field !== 'flags'}
                       />
