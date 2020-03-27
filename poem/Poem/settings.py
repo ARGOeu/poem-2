@@ -194,7 +194,7 @@ STATIC_URL = '/static/'
 STATIC_ROOT = '{}/usr/share/poem/static/'.format(VENV)
 
 # load SAML settings
-LOGIN_REDIRECT_URL = '/ui/home'
+LOGIN_REDIRECT_URL = '/ui/login'
 LOGOUT_REDIRECT_URL = '/ui/login'
 SAML_CONFIG_LOADER = 'Poem.poem.saml2.config.get_saml_config'
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True

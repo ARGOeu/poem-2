@@ -59,7 +59,12 @@ const SuperUserRoute = ({isSuperUser, ...props}) => (
 
 const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, token, tenantName, isSuperUser}) => (
   <Switch>
-    <Route exact path="/ui/login" render={() => <Redirect to="/ui/home" />}/>
+    <Route exact path="/ui/login" render={() => (
+      isSuperUser ?
+        <Redirect to="/ui/administration"/>
+      :
+        <Redirect to="/ui/metricprofiles"/>
+    )}/>
     <Route exact path="/ui/home" component={Home} />
     <Route exact path="/ui/services" component={Services} />
     <Route exact path="/ui/reports" component={Reports} />
@@ -221,7 +226,7 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, t
 
 const SuperAdminRouteSwitch = ({props}) => (
   <Switch>
-    <Route exact path="/ui/login" render={() => <Redirect to="/ui/home" />}/>
+    <Route exact path="/ui/login" render={() => <Redirect to="/ui/administration" />}/>
     <Route exact path="/ui/home" component={Home} />
     <Route exact path="/ui/probes" component={ProbeList} />
     <Route exact path="/ui/probes/add" render={props => <ProbeChange {...props} addview={true}/>}/>
