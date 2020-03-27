@@ -658,7 +658,12 @@ export class MetricProfilesChange extends Component
                 <ProfileMainInfo
                   {...props}
                   description="description"
-                  grouplist={list_user_groups}
+                  grouplist={
+                    write_perm ?
+                      list_user_groups
+                    :
+                      [groupname]
+                  }
                   profiletype='metric'
                 />
                 <h4 className="mt-4 alert-info p-1 pl-3 text-light text-uppercase rounded" style={{'backgroundColor': "#416090"}}>Metric instances</h4>

@@ -769,9 +769,9 @@ export const ProfileMainInfo = ({errors, grouplist=undefined, description=undefi
           <Col md={10}>
             <Label for="profileDescription">Description</Label>
             <Field
+              id="profileDescription"
               className="form-control"
               component="textarea"
-              labelFor="profileDescription"
               name={description}
               disabled={fieldsdisable}/>
             <FormText color='muted'>
