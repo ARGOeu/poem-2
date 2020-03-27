@@ -1,6 +1,7 @@
-#Groups of Resources
+# Groups of Resources
 
 All the groups of resources are available through Administration page. There are 4 groups of resources:
+
 * Groups of aggregations,
 * Groups of metrics,
 * Groups of metric profiles,
@@ -14,7 +15,7 @@ Second section consists of two windows. The left one shows the resources not ass
 
 Images of groups of resources are shown below in respective sections.
 
-##Group of Aggregations
+## Group of Aggregations
 ![Tenant Group of aggregations](figures/tenant_group_of_aggregations.png)
 
 ## Group of Metrics

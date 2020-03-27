@@ -1,5 +1,8 @@
-#Metric Templates
-Metric templates page is only accessible through Administration page. It is used for importing metric from metric templates, and only superusers have necessary permissions to perform metric imports. The page is shown in image below.
+# Metric Templates
+
+## List of Metric Templates
+
+Metric templates page is only accessible through Administration page. It is used for importing [metrics](tenant_metrics.md) from metric templates, and only superusers have necessary permissions to perform metric imports. The page is shown in image below.
 
 ![Tenant Metric templates](figures/tenant_metric_templates.png)
 
