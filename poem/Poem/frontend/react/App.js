@@ -1,6 +1,13 @@
 import React, { Component } from 'react';
 import Login from './Login';
-import { MetricProfilesChange, MetricProfilesList, MetricProfileHistory, MetricProfileVersionCompare, MetricProfileVersionDetails } from './MetricProfiles';
+import {
+  MetricProfileHistory,
+  MetricProfileVersionCompare,
+  MetricProfileVersionDetails,
+  MetricProfilesChange,
+  MetricProfilesClone,
+  MetricProfilesList
+} from './MetricProfiles';
 import Home from './Home';
 import { ProbeList, ProbeChange, ProbeHistory, ProbeVersionCompare, ProbeVersionDetails, ProbeClone } from './Probes';
 import { MetricList, MetricChange, MetricHistory, MetricVersonCompare, MetricVersionDetails } from './Metrics';
@@ -93,7 +100,14 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, t
         webapimetric={webApiMetric}
         webapitoken={token}
         tenantname={tenantName}/>}
-      />
+    />
+    <Route exact path="/ui/metricprofiles/:name/clone"
+      render={props => <MetricProfilesClone
+        {...props}
+        webapimetric={webApiMetric}
+        webapitoken={token}
+        tenantname={tenantName}/>}
+    />
     <Route exact path="/ui/metricprofiles/:name/history"
       render={props => <MetricProfileHistory {...props}/>}
     />
@@ -371,7 +385,7 @@ class App extends Component {
             <Route
               path="/ui/"
               render={props =>
-                  <Login onLogin={this.onLogin} {...props} />
+                <Login onLogin={this.onLogin} {...props} />
               }
             />
             <Route component={NotFound} />
@@ -414,7 +428,7 @@ class App extends Component {
                     tenantName={this.state.tenantName}
                     isSuperUser={userDetails.is_superuser}/>
                  :
-                 <SuperAdminRouteSwitch/>
+                  <SuperAdminRouteSwitch/>
                 }
               </Col>
             </Row>
