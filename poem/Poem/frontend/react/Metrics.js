@@ -142,7 +142,7 @@ const InlineFields = ({values, errors, field, addnew=false, readonly=false}) => 
                     name={`${field}.${index}.key`}
                     id={`${field}.${index}.key`}
                     className={`form-control ${values[field][index].isNew && 'border-success'}`}
-                    disabled={!addnew || field === 'config' || (values.type === 'Passive' && item.key === 'PASSIVE')}
+                    readOnly={!addnew || field === 'config' || (values.type === 'Passive' && item.key === 'PASSIVE')}
                     hidden={values.type === 'Passive' && field !== 'flags'}
                   />
                 </Col>
@@ -154,7 +154,7 @@ const InlineFields = ({values, errors, field, addnew=false, readonly=false}) => 
                         name={`${field}.${index}.value`}
                         id={`${field}.${index}.value`}
                         className={`form-control ${(errors.config && errors.config[index]) && 'border-danger'}`}
-                        disabled={readonly || (!addnew && field === 'config' && item.key === 'path')}
+                        readOnly={readonly || (!addnew && field === 'config' && item.key === 'path')}
                         validate={validateConfig}
                       />
                     :
@@ -163,7 +163,8 @@ const InlineFields = ({values, errors, field, addnew=false, readonly=false}) => 
                         name={`${field}.${index}.value`}
                         id={`${field}.${index}.value`}
                         className={`form-control ${values[field][index].isNew && 'border-success'}`}
-                        disabled={readonly || (!addnew && (field !== 'config' || field === 'config' && item.key === 'path')) || values.type === 'Passive' && item.key === 'PASSIVE'}
+                        style={{overflowX : 'auto'}}
+                        readOnly={readonly || (!addnew && (field !== 'config' || field === 'config' && item.key === 'path')) || values.type === 'Passive' && item.key === 'PASSIVE'}
                         hidden={values.type === 'Passive' && field !== 'flags'}
                       />
                   }
@@ -236,7 +237,7 @@ const InlineFields = ({values, errors, field, addnew=false, readonly=false}) => 
                   className='form-control'
                   value=''
                   id='empty-key'
-                  disabled={!addnew}
+                  readOnly={!addnew}
                   hidden={values.type === 'Passive' && field !== 'flags'}
                 />
               </Col>
@@ -247,7 +248,7 @@ const InlineFields = ({values, errors, field, addnew=false, readonly=false}) => 
                   value=''
                   className='form-control'
                   id='empty-value'
-                  disabled={!addnew}
+                  readOnly={!addnew}
                   hidden={values.type === 'Passive' && field !== 'flags'}
                 />
               </Col>
@@ -784,7 +785,7 @@ export const MetricForm =
               name='name'
               className={`form-control ${errors.name && 'border-danger'}`}
               id='name'
-              disabled={isHistory || isTenantSchema}
+              readOnly={isHistory || isTenantSchema}
             />
           </InputGroup>
           {
@@ -895,7 +896,7 @@ export const MetricForm =
                   name='type'
                   className='form-control'
                   id='mtype'
-                  disabled={true}
+                  readOnly={true}
                 />
               :
                 <Field
@@ -989,7 +990,7 @@ export const MetricForm =
             id='probeexecutable'
             className={`form-control ${errors.probeexecutable && 'border-danger'}`}
             hidden={values.type === 'Passive'}
-            disabled={isTenantSchema || isHistory}
+            readOnly={isTenantSchema || isHistory}
           />
           {
             errors.probeexecutable &&
@@ -1014,7 +1015,7 @@ export const MetricForm =
                 name='parent'
                 id='parent'
                 className='form-control'
-                disabled={true}
+                readOnly={true}
               />
             :
               <>
