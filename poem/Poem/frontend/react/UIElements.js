@@ -124,8 +124,8 @@ export const DropDown = ({field, data=[], prefix="", class_name="", isnew=false}
     {
       data.map((name, i) =>
         i === 0 ?
-        <option key={i} hidden>{name}</option> :
-        <option key={i} value={name}>{name}</option>
+          <option key={i} hidden>{name}</option> :
+          <option key={i} value={name}>{name}</option>
       )
     }
   </Field>
@@ -280,7 +280,7 @@ export const NavigationLinks = ({location, isTenantSchema, userDetails}) => {
 
   return (
     <Nav vertical pills id="argo-navlinks" className="border-left border-right border-top rounded-top sticky-top">
-        {
+      {
           data.map((item, i) =>
             <NavItem key={i}>
               <NavLink
@@ -292,7 +292,7 @@ export const NavigationLinks = ({location, isTenantSchema, userDetails}) => {
             </NavItem>
           )
         }
-      </Nav>
+    </Nav>
     )
 }
 
@@ -418,16 +418,16 @@ export const BaseArgoView = ({resourcename='', location=undefined,
                 :
                   <React.Fragment>
                     <h2 className="ml-3 mt-1 mb-4">{`Change ${resourcename}`}</h2>
-                      <ButtonToolbar>
-                        {
+                    <ButtonToolbar>
+                      {
                           clone &&
                             <Link className="btn btn-secondary mr-2" to={location.pathname + "/clone"} role="button">Clone</Link>
                         }
-                        {
+                      {
                           history &&
                             <Link className="btn btn-secondary" to={location.pathname + "/history"} role="button">History</Link>
                         }
-                      </ButtonToolbar>
+                    </ButtonToolbar>
                   </React.Fragment>
       }
     </div>
@@ -445,6 +445,7 @@ export const BaseArgoView = ({resourcename='', location=undefined,
     </div>
   </React.Fragment>
 )
+
 
 export const Checkbox = ({
   field: { name, value, onChange, onBlur },
@@ -529,6 +530,7 @@ export const AutocompleteField = ({lists, onselect_handler, field, val, icon, se
   );
 };
 
+
 export const DropdownFilterComponent = ({value, onChange, data}) => (
   <select
     onChange={onChange}
@@ -610,33 +612,33 @@ export function HistoryComponent(obj, tenantview=false) {
             <BaseArgoView
               resourcename='Version history'
               infoview={true}>
-                <table className='table table-sm'>
-                  <thead className='table-active'>
-                    <tr>
-                      { list_versions.length === 1 ?
-                        <th scope='col'>Compare</th>
+              <table className='table table-sm'>
+                <thead className='table-active'>
+                  <tr>
+                    { list_versions.length === 1 ?
+                      <th scope='col'>Compare</th>
                       :
-                        <th scope='col'>
-                          <Button
+                      <th scope='col'>
+                        <Button
                             color='info'
                             onClick={() =>
                               this.history.push(
                                 `${compareurl}/compare/${this.state.compare1}/${this.state.compare2}`,
-                              )
+                            )
                             }
                           >
                             Compare
-                          </Button>
-                        </th>
+                        </Button>
+                      </th>
                       }
-                      <th scope='col'>Version</th>
-                      <th scope='col'>Date/time</th>
-                      <th scope='col'>User</th>
-                      <th scope='col'>Comment</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {
+                    <th scope='col'>Version</th>
+                    <th scope='col'>Date/time</th>
+                    <th scope='col'>User</th>
+                    <th scope='col'>Comment</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {
                       list_versions.map((e, i) =>
                         <tr key={i}>
                           {
@@ -644,32 +646,32 @@ export function HistoryComponent(obj, tenantview=false) {
                               <td>-</td>
                             :
                               i === 0 ?
-                              <td>
-                                <input
+                                <td>
+                                  <input
                                   type='radio'
                                   name='radio-1'
                                   value={e.version}
                                   defaultChecked={true}
                                   onChange={e => this.setState({compare1: e.target.value})}
                                 />
-                              </td>
+                                </td>
                               :
-                              <td>
-                                <input
+                                <td>
+                                  <input
                                   type='radio'
                                   name='radio-1'
                                   value={e.version}
                                   onChange={e => this.setState({compare1: e.target.value})}
                                 />
-                                {' '}
-                                <input
+                                  {' '}
+                                  <input
                                   type='radio'
                                   name='radio-2'
                                   value={e.version}
                                   defaultChecked={i===1}
                                   onChange={e => this.setState({compare2: e.target.value})}
                                 />
-                              </td>
+                                </td>
                           }
                           {
                             <td>
@@ -688,9 +690,9 @@ export function HistoryComponent(obj, tenantview=false) {
                         </tr>
                       )
                     }
-                  </tbody>
-                </table>
-              </BaseArgoView>
+                </tbody>
+              </table>
+            </BaseArgoView>
           );
         }
         else
@@ -719,7 +721,7 @@ export const DiffElement = ({title, item1, item2}) => {
   const elements = [];
   for (let i = 0; i < n; i++) {
     elements.push(
-    <ReactDiffViewer
+      <ReactDiffViewer
       oldValue={item2[i]}
       newValue={item1[i]}
       showDiffOnly={true}
@@ -732,42 +734,42 @@ export const DiffElement = ({title, item1, item2}) => {
   }
 
   return (
-  <div id='argo-contentwrap' className='ml-2 mb-2 mt-2 p-3 border rounded'>
-    <h6 className='mt-4 font-weight-bold text-uppercase'>{title}</h6>
-    {elements}
-  </div>
+    <div id='argo-contentwrap' className='ml-2 mb-2 mt-2 p-3 border rounded'>
+      <h6 className='mt-4 font-weight-bold text-uppercase'>{title}</h6>
+      {elements}
+    </div>
   );
 };
 
 
 export const ProfileMainInfo = ({errors, grouplist=undefined, description=undefined,
   fieldsdisable=false, profiletype=undefined }) => (
-  <FormGroup>
-    <Row>
-      <Col md={6}>
-        <InputGroup>
-          <InputGroupAddon addonType='prepend'>Name</InputGroupAddon>
-          <Field
+    <FormGroup>
+      <Row>
+        <Col md={6}>
+          <InputGroup>
+            <InputGroupAddon addonType='prepend'>Name</InputGroupAddon>
+            <Field
             type='text'
             name='name'
             className={`form-control form-control-lg ${errors.name && 'border-danger'}`}
             disabled={fieldsdisable}
           />
-        </InputGroup>
-        {
+          </InputGroup>
+          {
           errors.name &&
             FancyErrorMessage(errors.name)
         }
-        <FormText color='muted'>
-          {`Name of ${profiletype} profile`}
-        </FormText>
-      </Col>
-    </Row>
-    {
+          <FormText color='muted'>
+            {`Name of ${profiletype} profile`}
+          </FormText>
+        </Col>
+      </Row>
+      {
       description &&
         <Row className='mt-3'>
           <Col md={10}>
-            <Label for="profileDescription">Description</Label>
+            <Label for="profileDescription">Description:</Label>
             <Field
               id="profileDescription"
               className="form-control"
@@ -780,11 +782,11 @@ export const ProfileMainInfo = ({errors, grouplist=undefined, description=undefi
           </Col>
         </Row>
     }
-    <Row className='mt-4'>
-      <Col md={3}>
-        <InputGroup>
-          <InputGroupAddon addonType='prepend'>Group</InputGroupAddon>
-          {
+      <Row className='mt-4'>
+        <Col md={3}>
+          <InputGroup>
+            <InputGroupAddon addonType='prepend'>Group</InputGroupAddon>
+            {
             fieldsdisable ?
               <Field
                 type='text'
@@ -806,15 +808,15 @@ export const ProfileMainInfo = ({errors, grouplist=undefined, description=undefi
                 }
               </Field>
           }
-        </InputGroup>
-        {
+          </InputGroup>
+          {
           errors.groupname &&
             FancyErrorMessage(errors.groupname)
         }
-        <FormText color='muted'>
-          {`${profiletype.charAt(0).toUpperCase() + profiletype.slice(1)} profile is member of given group.`}
-        </FormText>
-      </Col>
-    </Row>
-  </FormGroup>
+          <FormText color='muted'>
+            {`${profiletype.charAt(0).toUpperCase() + profiletype.slice(1)} profile is member of given group.`}
+          </FormText>
+        </Col>
+      </Row>
+    </FormGroup>
 );
