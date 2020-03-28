@@ -464,6 +464,12 @@ export class AggregationProfilesChange extends Component
     return targetProfile[0].services.map(s => s.service)
   }
 
+  sortMetricProfiles(a, b) {
+    if (a.name.toLowerCase() < b.name.toLowerCase()) return -1;
+    if (a.name.toLowerCase() > b.name.toLowerCase()) return 1;
+    if (a.name.toLowerCase() === b.name.toLowerCase()) return 0;
+  }
+
   extractListOfMetricsProfiles(allProfiles) {
     var list_profiles = []
 
@@ -475,7 +481,7 @@ export class AggregationProfilesChange extends Component
       i += 1
     })
 
-    return list_profiles
+    return list_profiles.sort(this.sortMetricProfiles)
   }
 
   insertEmptyServiceForNoServices(groups) {
