@@ -458,8 +458,17 @@ export class AggregationProfilesChange extends Component
       }));
   }
 
+  correctMetricProfileName(metricProfileId, listMetricProfilesWebApi) {
+    let targetProfile = listMetricProfilesWebApi.filter(p => p.id === metricProfileId)
+
+    return targetProfile[0].name
+  }
+
   extractListOfServices(profileFromAggregation, listMetricProfiles) {
     let targetProfile = listMetricProfiles.filter(p => p.name === profileFromAggregation.name)
+
+    if (targetProfile.length === 0)
+      targetProfile = listMetricProfiles.filter(p => p.id === profileFromAggregation.id)
 
     return targetProfile[0].services.map(s => s.service)
   }
@@ -731,7 +740,7 @@ export class AggregationProfilesChange extends Component
               groupname: groupname,
               metric_operation: aggregation_profile.metric_operation,
               profile_operation: aggregation_profile.profile_operation,
-              metric_profile: aggregation_profile.metric_profile.name,
+              metric_profile: this.correctMetricProfileName(aggregation_profile.metric_profile.id, list_id_metric_profiles),
               endpoint_group: aggregation_profile.endpoint_group,
               groups: this.insertDummyGroup(
                 this.insertEmptyServiceForNoServices(aggregation_profile.groups)
