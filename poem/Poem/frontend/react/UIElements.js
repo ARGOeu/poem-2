@@ -254,7 +254,10 @@ export const NavigationBar = ({history, onLogout, isOpenModal, toggle, titleModa
       <Collapse navbar className='justify-content-end'>
         <Nav navbar >
           <NavItem className='m-2 text-light'>
-            Welcome, {userDetails.username}
+            Welcome,&nbsp;
+            <span className='font-weight-bold'>
+              {userDetails.first_name ? userDetails.first_name : userDetails.username}
+            </span>
           </NavItem>
           <NavItem className='m-2'>
             <Button
