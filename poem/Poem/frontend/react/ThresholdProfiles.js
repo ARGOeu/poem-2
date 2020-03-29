@@ -244,7 +244,12 @@ const ThresholdsProfilesForm = ({
     <ProfileMainInfo
       values={values}
       errors={errors}
-      grouplist={groups_list}
+      grouplist={
+        write_perm ?
+          groups_list
+        :
+          [values.groupname]
+      }
       fieldsdisable={historyview}
       profiletype='thresholds'
     />

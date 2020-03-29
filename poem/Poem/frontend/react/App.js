@@ -1,6 +1,13 @@
 import React, { Component } from 'react';
 import Login from './Login';
-import { MetricProfilesChange, MetricProfilesList, MetricProfileHistory, MetricProfileVersionCompare, MetricProfileVersionDetails } from './MetricProfiles';
+import {
+  MetricProfileHistory,
+  MetricProfileVersionCompare,
+  MetricProfileVersionDetails,
+  MetricProfilesChange,
+  MetricProfilesClone,
+  MetricProfilesList
+} from './MetricProfiles';
 import Home from './Home';
 import { ProbeList, ProbeChange, ProbeHistory, ProbeVersionCompare, ProbeVersionDetails, ProbeClone } from './Probes';
 import { MetricList, MetricChange, MetricHistory, MetricVersonCompare, MetricVersionDetails } from './Metrics';
@@ -59,7 +66,12 @@ const SuperUserRoute = ({isSuperUser, ...props}) => (
 
 const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, token, tenantName, isSuperUser}) => (
   <Switch>
-    <Route exact path="/ui/login" render={() => <Redirect to="/ui/home" />}/>
+    <Route exact path="/ui/login" render={() => (
+      isSuperUser ?
+        <Redirect to="/ui/administration"/>
+      :
+        <Redirect to="/ui/metricprofiles"/>
+    )}/>
     <Route exact path="/ui/home" component={Home} />
     <Route exact path="/ui/services" component={Services} />
     <Route exact path="/ui/reports" component={Reports} />
@@ -88,7 +100,14 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, t
         webapimetric={webApiMetric}
         webapitoken={token}
         tenantname={tenantName}/>}
-      />
+    />
+    <Route exact path="/ui/metricprofiles/:name/clone"
+      render={props => <MetricProfilesClone
+        {...props}
+        webapimetric={webApiMetric}
+        webapitoken={token}
+        tenantname={tenantName}/>}
+    />
     <Route exact path="/ui/metricprofiles/:name/history"
       render={props => <MetricProfileHistory {...props}/>}
     />
@@ -221,7 +240,7 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, t
 
 const SuperAdminRouteSwitch = ({props}) => (
   <Switch>
-    <Route exact path="/ui/login" render={() => <Redirect to="/ui/home" />}/>
+    <Route exact path="/ui/login" render={() => <Redirect to="/ui/administration" />}/>
     <Route exact path="/ui/home" component={Home} />
     <Route exact path="/ui/probes" component={ProbeList} />
     <Route exact path="/ui/probes/add" render={props => <ProbeChange {...props} addview={true}/>}/>
@@ -366,7 +385,7 @@ class App extends Component {
             <Route
               path="/ui/"
               render={props =>
-                  <Login onLogin={this.onLogin} {...props} />
+                <Login onLogin={this.onLogin} {...props} />
               }
             />
             <Route component={NotFound} />
@@ -409,7 +428,7 @@ class App extends Component {
                     tenantName={this.state.tenantName}
                     isSuperUser={userDetails.is_superuser}/>
                  :
-                 <SuperAdminRouteSwitch/>
+                  <SuperAdminRouteSwitch/>
                 }
               </Col>
             </Row>
