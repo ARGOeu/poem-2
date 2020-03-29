@@ -627,7 +627,7 @@ function MetricProfilesComponent(cloneview=false) {
         searchMetric, searchServiceFlavour} = this.state;
       let {metric_profile, metric_profile_name} = this.state
 
-      if (this.cloneview && metric_profile && metric_profile_name) {
+      if (this.cloneview && metric_profile && metric_profile_name && metric_profile.id) {
         metric_profile.id = ''
         metric_profile_name = 'Cloned ' + metric_profile_name
       }
