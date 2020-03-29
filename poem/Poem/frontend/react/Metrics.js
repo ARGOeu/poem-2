@@ -191,7 +191,7 @@ const InlineFields = ({values, errors, field, addnew=false, readonly=false}) => 
                                 values[field][index]['value'] === ''
                               )
                             )
-                            )
+                        )
                           }
                         size='sm'
                         color='danger'
@@ -456,7 +456,7 @@ export function ListOfMetrics(type, imp=false) {
           id: 'name',
           minWidth: 100,
           accessor: e =>
-          <Link
+            <Link
             to={
               imp ?
                 this.state.search_ostag === 'CentOS 6' && e.centos6_probeversion ?
@@ -470,8 +470,8 @@ export function ListOfMetrics(type, imp=false) {
                 `${metriclink}${e.name}`
             }
           >
-            {e.name}
-          </Link>,
+              {e.name}
+            </Link>,
           filterable: true,
           Filter: (
             <DefaultFilterComponent
@@ -722,7 +722,7 @@ export function ListOfMetrics(type, imp=false) {
                     getTheadThProps={() => ({className: 'table-active font-weight-bold p-2'})}
                   />
                 </div>
-            </>
+              </>
             )
           else
             return (
@@ -774,29 +774,29 @@ export const MetricForm =
     metrictemplatelist=[],
     types=[],
   }) =>
-  <>
-    <FormGroup>
-      <Row className='mb-3'>
-        <Col md={4}>
-          <InputGroup>
-            <InputGroupAddon addonType='prepend'>Name</InputGroupAddon>
-            <Field
+    <>
+      <FormGroup>
+        <Row className='mb-3'>
+          <Col md={4}>
+            <InputGroup>
+              <InputGroupAddon addonType='prepend'>Name</InputGroupAddon>
+              <Field
               type='text'
               name='name'
               className={`form-control ${errors.name && 'border-danger'}`}
               id='name'
               readOnly={isHistory || isTenantSchema}
             />
-          </InputGroup>
-          {
+            </InputGroup>
+            {
             errors.name &&
               FancyErrorMessage(errors.name)
           }
-          <FormText color='muted'>
+            <FormText color='muted'>
             Metric name.
-          </FormText>
-        </Col>
-        <Col md={4}>
+            </FormText>
+          </Col>
+          <Col md={4}>
             {
               values.type === 'Passive' ?
                 <InputGroup>
@@ -850,11 +850,11 @@ export const MetricForm =
                       label='Probe'
                     />
             }
-          {
+            {
             errors.probeversion &&
               FancyErrorMessage(errors.probeversion)
           }
-          {
+            {
             values.type === 'Active' &&
               <FormText color='muted'>
                 Probe name and version
@@ -885,11 +885,11 @@ export const MetricForm =
                 }
               </FormText>
           }
-        </Col>
-        <Col md={2}>
-          <InputGroup>
-            <InputGroupAddon addonType='prepend'>Type</InputGroupAddon>
-            {
+          </Col>
+          <Col md={2}>
+            <InputGroup>
+              <InputGroupAddon addonType='prepend'>Type</InputGroupAddon>
+              {
               (isTenantSchema || isHistory) ?
                 <Field
                   type='text'
@@ -936,16 +936,16 @@ export const MetricForm =
                   }
                 </Field>
             }
-          </InputGroup>
-          <FormText color='muted'>
+            </InputGroup>
+            <FormText color='muted'>
             Metric is of given type.
-          </FormText>
-        </Col>
-      </Row>
-      {
+            </FormText>
+          </Col>
+        </Row>
+        {
         obj === 'metric' &&
           <Row className='mb-4'>
-            <Col md={2}>
+            <Col md={3}>
               <InputGroup>
                 <InputGroupAddon addonType='prepend'>Group</InputGroupAddon>
                 {
@@ -978,13 +978,13 @@ export const MetricForm =
             </Col>
           </Row>
       }
-    </FormGroup>
-    <FormGroup>
-      <h4 className="mt-2 p-1 pl-3 text-light text-uppercase rounded" style={{"backgroundColor": "#416090"}}>Metric configuration</h4>
-      <h6 className='mt-4 font-weight-bold text-uppercase' hidden={values.type === 'Passive'}>probe executable</h6>
-      <Row>
-        <Col md={5}>
-          <Field
+      </FormGroup>
+      <FormGroup>
+        <h4 className="mt-2 p-1 pl-3 text-light text-uppercase rounded" style={{"backgroundColor": "#416090"}}>Metric configuration</h4>
+        <h6 className='mt-4 font-weight-bold text-uppercase' hidden={values.type === 'Passive'}>probe executable</h6>
+        <Row>
+          <Col md={5}>
+            <Field
             type='text'
             name='probeexecutable'
             id='probeexecutable'
@@ -992,23 +992,23 @@ export const MetricForm =
             hidden={values.type === 'Passive'}
             readOnly={isTenantSchema || isHistory}
           />
-          {
+            {
             errors.probeexecutable &&
               FancyErrorMessage(errors.probeexecutable)
           }
-        </Col>
-      </Row>
-      <InlineFields values={values} errors={errors} field='config' addnew={!isTenantSchema && !isHistory} readonly={obj === 'metrictemplate' && isTenantSchema || isHistory}/>
-      <InlineFields values={values} errors={errors} field='attributes' addnew={!isTenantSchema && !isHistory}/>
-      <InlineFields values={values} errors={errors} field='dependency' addnew={!isTenantSchema && !isHistory}/>
-      <InlineFields values={values} errors={errors} field='parameter' addnew={!isTenantSchema && !isHistory}/>
-      <InlineFields values={values} errors={errors} field='flags' addnew={!isTenantSchema && !isHistory}/>
-      <InlineFields values={values} errors={errors} field='file_attributes' addnew={!isTenantSchema && !isHistory}/>
-      <InlineFields values={values} errors={errors} field='file_parameters' addnew={!isTenantSchema && !isHistory}/>
-      <h6 className='mt-4 font-weight-bold text-uppercase'>parent</h6>
-      <Row>
-        <Col md={5}>
-          {
+          </Col>
+        </Row>
+        <InlineFields values={values} errors={errors} field='config' addnew={!isTenantSchema && !isHistory} readonly={obj === 'metrictemplate' && isTenantSchema || isHistory}/>
+        <InlineFields values={values} errors={errors} field='attributes' addnew={!isTenantSchema && !isHistory}/>
+        <InlineFields values={values} errors={errors} field='dependency' addnew={!isTenantSchema && !isHistory}/>
+        <InlineFields values={values} errors={errors} field='parameter' addnew={!isTenantSchema && !isHistory}/>
+        <InlineFields values={values} errors={errors} field='flags' addnew={!isTenantSchema && !isHistory}/>
+        <InlineFields values={values} errors={errors} field='file_attributes' addnew={!isTenantSchema && !isHistory}/>
+        <InlineFields values={values} errors={errors} field='file_parameters' addnew={!isTenantSchema && !isHistory}/>
+        <h6 className='mt-4 font-weight-bold text-uppercase'>parent</h6>
+        <Row>
+          <Col md={5}>
+            {
             (isTenantSchema || isHistory) ?
               <Field
                 type='text'
@@ -1035,10 +1035,10 @@ export const MetricForm =
                 }
               </>
           }
-        </Col>
-      </Row>
-    </FormGroup>
-  </>
+          </Col>
+        </Row>
+      </FormGroup>
+    </>
 
 
 export function CompareMetrics(metrictype) {
@@ -1506,7 +1506,7 @@ export class MetricChange extends Component {
               </Form>
             )}
           />
-          </BaseArgoView>
+        </BaseArgoView>
       )
     }
   }
