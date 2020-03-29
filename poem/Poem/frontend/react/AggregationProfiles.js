@@ -461,10 +461,14 @@ export class AggregationProfilesChange extends Component
   correctMetricProfileName(metricProfileId, listMetricProfilesWebApi) {
     let targetProfile = listMetricProfilesWebApi.filter(p => p.id === metricProfileId)
 
-    return targetProfile[0].name
+    if (targetProfile.length)
+      return targetProfile[0].name
+    else
+      return ''
   }
 
   extractListOfServices(profileFromAggregation, listMetricProfiles) {
+    console.log(profileFromAggregation, listMetricProfiles)
     let targetProfile = listMetricProfiles.filter(p => p.name === profileFromAggregation.name)
 
     if (targetProfile.length === 0)
