@@ -468,13 +468,15 @@ export class AggregationProfilesChange extends Component
   }
 
   extractListOfServices(profileFromAggregation, listMetricProfiles) {
-    console.log(profileFromAggregation, listMetricProfiles)
     let targetProfile = listMetricProfiles.filter(p => p.name === profileFromAggregation.name)
 
     if (targetProfile.length === 0)
       targetProfile = listMetricProfiles.filter(p => p.id === profileFromAggregation.id)
 
-    return targetProfile[0].services.map(s => s.service)
+    if (targetProfile.length)
+      return targetProfile[0].services.map(s => s.service)
+    else
+      return []
   }
 
   sortMetricProfiles(a, b) {
