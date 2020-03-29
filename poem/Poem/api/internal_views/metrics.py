@@ -20,7 +20,7 @@ class ListAllMetrics(APIView):
     authentication_classes = (SessionAuthentication,)
 
     def get(self, request):
-        metrics = poem_models.Metric.objects.all()
+        metrics = poem_models.Metric.objects.all().order_by('name')
 
         results = []
         for metric in metrics:
