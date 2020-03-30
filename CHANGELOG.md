@@ -1,5 +1,67 @@
 # Changelog
 
+## [3.1.0] - 2020-03-30
+### Added
+
+* ARGO-1805 History of changes for Aggregation profiles
+* ARGO-1811 Add validation logic for services missing in metric but presented in aggregation profile
+* ARGO-1855 Clone feature for Metric profiles
+* ARGO-1856 History of changes for Metric profiles
+* ARGO-1993 Clone functionality for probes
+* ARGO-1994 Expand metrics so that tenants can pick a version of the probe
+* ARGO-2029 Introduce packages
+* ARGO-2052 Introduce thresholds profiles
+* ARGO-2077 border-success for newly created tuples in metric templates
+* ARGO-2171 Metric template page on tenant POEM should show metric template history
+* ARGO-2172 Filter metric templates by OS on tenant POEM
+* ARGO-2208 Update version_comment if history entry is updated on super POEM
+* ARGO-2232 History of changes for thresholds profiles
+* ARGO-2249 Add description field to metric profiles
+* ARGO-2265 Tag for packages to use it's present version from repo
+* ARGO-2273 Introduce webpack watch mode
+* ARGO-2286 React routes should be defined according to type of user
+* ARGO-2289 Add link to thresholds profiles to administration page
+* ARGO-2323 Add column with package name to probe list
+
+### Fixed
+
+* ARGO-2041 Use natural keys for serialization instead of primary keys
+* ARGO-2044 Refactor history_helpers to properly handle missing fields in serialized_data
+* ARGO-2073 Refactor tenant POEM internal code check
+* ARGO-2074 Probe/metric template history breaks if the name is changed
+* ARGO-2075 Load data from jsons not working when using natural keys for some models
+* ARGO-2081 Multiple tuples delete does not work on Metric profiles
+* ARGO-2083 Remove history button from groups of resources
+* ARGO-2089 Tenant users should be able to add resources to groups associated to them
+* ARGO-2091 Fix SAML2 login with Django 2.2
+* ARGO-2231 Wrong probe version for certain metrics in repo API view
+* ARGO-2252 Fix potential security issue as user can easily promote himself
+* ARGO-2310 Super POEM session inspect should be properly called
+* ARGO-2313 Metric templates states must be all set when render is triggered
+* ARGO-2315 Fix syncers
+* ARGO-2327 Metric configuration parameters should be clickable
+
+### Changed
+
+* ARGO-1960 Additional active session check next to isLogged localStorage key
+* ARGO-2028 Refine Fontawesome icons
+* ARGO-2072 Slimmer sidebar and footer
+* ARGO-2078 Change title and remove unnecessary buttons from metric template clone view
+* ARGO-2087 User without superuser permissions should not be able to add resources
+* ARGO-2128 Refactor and simplify WEB-API and Backend API class and methods
+* ARGO-2138 Change how probe and metric template history is handled in backend
+* ARGO-2173 Remove button on metric templates not appearing properly
+* ARGO-2174 Remove delete button from user addview
+* ARGO-2175 Remove delete button from probe addview
+* ARGO-2176 Remove delete button from group of resources addview
+* ARGO-2218 Refactor token protected repo API view
+* ARGO-2246 Harmonize profile change pages
+* ARGO-2255 Refine version compare page for profiles
+* ARGO-2284 API walk-through should filter and match content only for logged in user
+* ARGO-2288 Remove "Staff status" checkbox from User UI
+* ARGO-2290 Consistent table look across all pages
+* ARGO-2324 Refactor sync_webapi function to create initial history entries
+
 ## [3.0.0] - 2019-11-08
 ### Added
 * ARGO-1797 User/Pass and SAML2 Login and base UI structure
