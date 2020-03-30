@@ -2,7 +2,7 @@ deepdiff==4.0.9
 django-rest-auth==0.9.5
 django-tenant-schemas==1.9.0
 django-webpack-loader==0.6.0
-django==2.2.5
+django==2.2.10
 djangorestframework==3.10.3
 djangorestframework-api-key==1.4.1
 djangosaml2==0.17.2
