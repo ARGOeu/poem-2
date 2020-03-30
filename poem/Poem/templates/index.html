@@ -1,0 +1,16 @@
+{% load render_bundle from webpack_loader %}
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>ARGO POEM</title>
+  </head>
+  <body class="bodyreact">
+    <div id="react"></div>
+    {% render_bundle 'main' %}
+    {% render_bundle 'runtime' %}
+    {% render_bundle 'vendors' %}
+  </body>
+</html>

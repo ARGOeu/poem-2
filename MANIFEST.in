@@ -1,0 +1,22 @@
+include README.md
+include LICENSE
+include setup.py
+
+include etc/*
+include poem/apache/*
+include cron/*
+include bin/*
+
+recursive-include poem/Poem/templates *.html
+recursive-include poem/Poem/poem/fixtures/ *.json
+recursive-include poem/Poem/ *.json
+recursive-include poem/Poem/ *.js
+
+exclude etc/was.*
+exclude etc/*.devel.*
+exclude etc/metadata*
+exclude etc/secret_key
+exclude **/*.eslintrc.js
+
+recursive-exclude poem/Poem/node_modules/* *
+recursive-exclude poem/static/admin/* *

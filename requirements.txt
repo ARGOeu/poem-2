@@ -1,0 +1,12 @@
+deepdiff==4.0.9
+django-rest-auth==0.9.5
+django-tenant-schemas==1.9.0
+django-webpack-loader==0.6.0
+django==2.2.5
+djangorestframework==3.10.3
+djangorestframework-api-key==1.4.1
+djangosaml2==0.17.2
+ndg-httpsclient==0.5.1
+psycopg2-binary==2.8.3
+requests==2.22.0
+unidecode==1.1.1

@@ -1,0 +1,22 @@
+#argo-contentwrap {
+  background-color: white;
+}
+#sidebar-grow {
+  background-color: white;
+  margin-bottom: 1px;
+}
+#argo-nav {
+  background-color: #416090;
+}
+
+#argo-breadcrumb {
+  background-color: #ecf0f5;
+}
+
+#sidebar-col {
+  max-width: 215px;
+}
+
+#argo-breadcrumb > ol {
+  background-color: #ecf0f5;
+}

@@ -1,0 +1,54 @@
+#!/bin/sh
+
+RUNASUSER="apache"
+SITEPACK=$(python -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")
+
+usage()
+{
+	printf "Usage: %s -t <tenant name> [-d <hostname>] \n" $(basename $0) >&2
+	printf "       [-t] - tenant name\n" >&2
+	printf "       [-d] - hostname\n" >&2
+    exit 2
+}
+
+if [[ $# == 0 ]]
+then
+    usage
+fi
+
+while getopts 't:d:h' OPTION
+do
+    case $OPTION in
+        t)
+            name=$OPTARG
+            ;;
+        d)
+            hostname=$OPTARG
+            ;;
+        h)
+            usage
+            ;;
+        ?)
+            usage
+            ;;
+    esac
+done
+
+if [ -z "$hostname" ]
+then
+    su -m -s /bin/sh $RUNASUSER -c \
+    "export DJANGO_SETTINGS_MODULE=Poem.settings && \
+    python $SITEPACK/Poem/manage.py create_tenant --name $name"
+else
+    su -m -s /bin/sh $RUNASUSER -c \
+    "export DJANGO_SETTINGS_MODULE=Poem.settings && \
+    python $SITEPACK/Poem/manage.py create_tenant --name $name --hostname $hostname"
+fi
+
+if [[ $name != 'all' ]]
+then
+    schema=$(echo "$name" | tr '[:upper:]' '[:lower:]')
+    su -m -s /bin/sh $RUNASUSER -c \
+    "export DJANGO_SETTINGS_MODULE=Poem.settings && \
+    python $SITEPACK/Poem/manage.py tenant_command loaddata initial_data.json --schema=$schema"
+fi

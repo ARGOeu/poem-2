@@ -1,0 +1,16 @@
+[
+  {
+    "model": "poem.MetricType",
+    "pk": 1,
+    "fields": {
+      "name": "Active"
+     }
+  },
+  {
+    "model": "poem.MetricType",
+    "pk": 2,
+    "fields": {
+      "name": "Passive"
+     }
+  }
+]

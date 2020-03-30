@@ -1,0 +1,4 @@
+coverage
+mock
+discover
+factory-boy
