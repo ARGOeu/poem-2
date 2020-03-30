@@ -254,10 +254,10 @@ const ThresholdsProfilesForm = ({
       profiletype='thresholds'
     />
     <FormGroup>
-    <h4 className="mt-4 p-1 pl-3 text-light text-uppercase rounded" style={{"backgroundColor": "#416090"}}>Thresholds rules</h4>
-    <Row>
-      <Col md={12}>
-        <FieldArray
+      <h4 className="mt-4 p-1 pl-3 text-light text-uppercase rounded" style={{"backgroundColor": "#416090"}}>Thresholds rules</h4>
+      <Row>
+        <Col md={12}>
+          <FieldArray
           name='rules'
           render={arrayHelpers => (
             <div>
@@ -348,8 +348,8 @@ const ThresholdsProfilesForm = ({
                             </InputGroup>
                           </Col>
                         </Row>
-                        </CardBody>
-                        <CardFooter>
+                      </CardBody>
+                      <CardFooter>
                         <Row className='mt-2'>
                           <Col md={12}>
                             <h6 className="text-uppercase rounded">Thresholds</h6>
@@ -415,12 +415,12 @@ const ThresholdsProfilesForm = ({
                                           values.rules[index].thresholds.length > 0
                                           ) ?
                                           values.rules[index].thresholds.map((t, i) =>
-                                          <tr key={`rule-${index}-threshold-${i}`}>
-                                            <td className='align-middle text-center'>
-                                              {i + 1}
-                                            </td>
-                                            <td>
-                                              {
+                                            <tr key={`rule-${index}-threshold-${i}`}>
+                                              <td className='align-middle text-center'>
+                                                {i + 1}
+                                              </td>
+                                              <td>
+                                                {
                                                 historyview ?
                                                   values.rules[index].thresholds[i].label
                                                 :
@@ -437,13 +437,13 @@ const ThresholdsProfilesForm = ({
                                                         errors.rules[index].thresholds[i].label
                                                       ) &&
                                                         'border-danger'
-                                                      }`
+                                                    }`
                                                     }
                                                     name={`rules[${index}].thresholds[${i}].label`}
                                                     id={`values.rules.${index}.thresholds.${i}.label`}
                                                   />
                                               }
-                                              {
+                                                {
                                                 (
                                                   errors.rules &&
                                                   errors.rules.length > index &&
@@ -455,9 +455,9 @@ const ThresholdsProfilesForm = ({
                                                 ) &&
                                                   FancyErrorMessage(errors.rules[index].thresholds[i].label)
                                               }
-                                            </td>
-                                            <td>
-                                              {
+                                              </td>
+                                              <td>
+                                                {
                                                 historyview ?
                                                   values.rules[index].thresholds[i].value
                                                 :
@@ -479,7 +479,7 @@ const ThresholdsProfilesForm = ({
                                                     id={`values.rules.${index}.thresholds.${i}.value`}
                                                   />
                                               }
-                                              {
+                                                {
                                                 (
                                                   errors.rules &&
                                                   errors.rules.length > index &&
@@ -491,9 +491,9 @@ const ThresholdsProfilesForm = ({
                                                 ) &&
                                                   FancyErrorMessage(errors.rules[index].thresholds[i].value)
                                               }
-                                            </td>
-                                            <td style={{width: '6%'}}>
-                                              {
+                                              </td>
+                                              <td style={{width: '6%'}}>
+                                                {
                                                 historyview ?
                                                   values.rules[index].thresholds[i].uom
                                                 :
@@ -515,9 +515,9 @@ const ThresholdsProfilesForm = ({
                                                     <option key='option-9' value='c'>c</option>
                                                   </Field>
                                               }
-                                            </td>
-                                            <td>
-                                              {
+                                              </td>
+                                              <td>
+                                                {
                                                 historyview ?
                                                   values.rules[index].thresholds[i].warn1
                                                 :
@@ -539,7 +539,7 @@ const ThresholdsProfilesForm = ({
                                                     id={`values.rules.${index}.thresholds.${i}.warn1`}
                                                   />
                                               }
-                                              {
+                                                {
                                                 (
                                                   errors.rules &&
                                                   errors.rules.length > index &&
@@ -551,12 +551,12 @@ const ThresholdsProfilesForm = ({
                                                 ) &&
                                                   FancyErrorMessage(errors.rules[index].thresholds[i].warn1)
                                               }
-                                            </td>
-                                            <td>
+                                              </td>
+                                              <td>
                                               :
-                                            </td>
-                                            <td>
-                                              {
+                                              </td>
+                                              <td>
+                                                {
                                                 historyview ?
                                                   values.rules[index].thresholds[i].warn2
                                                 :
@@ -578,7 +578,7 @@ const ThresholdsProfilesForm = ({
                                                     id={`values.rules.${index}.thresholds.${i}.warn2`}
                                                   />
                                               }
-                                              {
+                                                {
                                                 (
                                                   errors.rules &&
                                                   errors.rules.length > index &&
@@ -590,9 +590,9 @@ const ThresholdsProfilesForm = ({
                                                 ) &&
                                                   FancyErrorMessage(errors.rules[index].thresholds[i].warn2)
                                               }
-                                            </td>
-                                            <td>
-                                              {
+                                              </td>
+                                              <td>
+                                                {
                                                 historyview ?
                                                   values.rules[index].thresholds[i].crit1
                                                 :
@@ -614,7 +614,7 @@ const ThresholdsProfilesForm = ({
                                                     id={`values.rules.${index}.thresholds.${i}.crit1`}
                                                   />
                                               }
-                                              {
+                                                {
                                                 (
                                                   errors.rules &&
                                                   errors.rules.length > index &&
@@ -626,12 +626,12 @@ const ThresholdsProfilesForm = ({
                                                 ) &&
                                                   FancyErrorMessage(errors.rules[index].thresholds[i].crit1)
                                               }
-                                            </td>
-                                            <td>
+                                              </td>
+                                              <td>
                                               :
-                                            </td>
-                                            <td>
-                                              {
+                                              </td>
+                                              <td>
+                                                {
                                                 historyview ?
                                                   values.rules[index].thresholds[i].crit2
                                                 :
@@ -653,7 +653,7 @@ const ThresholdsProfilesForm = ({
                                                     id={`values.rules.${index}.thresholds.${i}.crit2`}
                                                   />
                                               }
-                                              {
+                                                {
                                                 (
                                                   errors.rules &&
                                                   errors.rules.length > index &&
@@ -665,9 +665,9 @@ const ThresholdsProfilesForm = ({
                                                 ) &&
                                                   FancyErrorMessage(errors.rules[index].thresholds[i].crit2)
                                               }
-                                            </td>
-                                            <td>
-                                              {
+                                              </td>
+                                              <td>
+                                                {
                                                 historyview ?
                                                   values.rules[index].thresholds[i].min
                                                 :
@@ -689,7 +689,7 @@ const ThresholdsProfilesForm = ({
                                                     id={`values.rules.${index}.thresholds.${i}.min`}
                                                   />
                                               }
-                                              {
+                                                {
                                                 (
                                                   errors.rules &&
                                                   errors.rules.length > index &&
@@ -701,9 +701,9 @@ const ThresholdsProfilesForm = ({
                                                 ) &&
                                                   FancyErrorMessage(errors.rules[index].thresholds[i].min)
                                               }
-                                            </td>
-                                            <td>
-                                              {
+                                              </td>
+                                              <td>
+                                                {
                                                 historyview ?
                                                   values.rules[index].thresholds[i].max
                                                 :
@@ -725,7 +725,7 @@ const ThresholdsProfilesForm = ({
                                                     id={`values.rules.${index}.thresholds.${i}.max`}
                                                   />
                                               }
-                                              {
+                                                {
                                                 (
                                                   errors.rules &&
                                                   errors.rules.length > index &&
@@ -737,8 +737,8 @@ const ThresholdsProfilesForm = ({
                                                 ) &&
                                                   FancyErrorMessage(errors.rules[index].thresholds[i].max)
                                               }
-                                            </td>
-                                            {
+                                              </td>
+                                              {
                                               !historyview &&
                                                 <td className='align-middle d-flex justify-content-center align-items-center'>
                                                   <Button
@@ -784,7 +784,7 @@ const ThresholdsProfilesForm = ({
                                                   </Button>
                                                 </td>
                                             }
-                                          </tr>
+                                            </tr>
                                         )
                                         :
                                         null
@@ -857,8 +857,8 @@ const ThresholdsProfilesForm = ({
             </div>
           )}
         />
-      </Col>
-    </Row>
+        </Col>
+      </Row>
     </FormGroup>
   </>
 )
@@ -906,6 +906,7 @@ export class ThresholdsProfilesList extends Component {
       {
         Header: 'Group',
         accessor: 'groupname',
+        className: 'text-center',
         maxWidth: 150,
       }
     ];

@@ -594,7 +594,7 @@ export function ListOfMetrics(type, imp=false) {
 
       if (type === 'metric') {
         columns.splice(
-          3,
+          4,
           0,
           {
             Header: 'Group',
