@@ -60,6 +60,7 @@ class MetricTemplateHistory(models.Model):
     mtype = models.ForeignKey(MetricTemplateType, on_delete=models.CASCADE)
     probekey = models.ForeignKey(ProbeHistory, null=True,
                                  on_delete=models.SET_NULL)
+    description = models.TextField(default='')
     parent = models.CharField(max_length=128)
     probeexecutable = models.CharField(max_length=128)
     config = models.CharField(max_length=1024)
