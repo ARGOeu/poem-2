@@ -11,10 +11,10 @@ distlib==0.3.0
 Django==2.2.12
 django-rest-auth==0.9.5
 django-tenant-schemas==1.10.0
-django-webpack-loader==0.6.0
-djangorestframework==3.10.3
+django-webpack-loader==0.7.0
+djangorestframework==3.11.0
 djangorestframework-api-key==1.4.1
-djangosaml2==0.17.2
+djangosaml2==0.18.1
 dparse==0.5.0
 filelock==3.0.12
 idna==2.8
@@ -34,7 +34,7 @@ pysaml2==5.0.0
 python-dateutil==2.8.1
 pytz==2019.3
 PyYAML==5.3.1
-requests==2.22.0
+requests==2.23.0
 safety==1.8.7
 six==1.14.0
 sqlparse==0.3.1
