@@ -50,5 +50,5 @@ then
     schema=$(echo "$name" | tr '[:upper:]' '[:lower:]')
     su -m -s /bin/sh $RUNASUSER -c \
     "export DJANGO_SETTINGS_MODULE=Poem.settings && \
-    python $SITEPACK/Poem/manage.py tenant_command loaddata initial_data.json --schema=$schema"
+    python $SITEPACK/Poem/manage.py tenant_command --schema=$schema loaddata initial_data.json "
 fi

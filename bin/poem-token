@@ -42,9 +42,9 @@ if [ -z "$token" ]
 then
     su -m -s /bin/sh $RUNASUSER -c \
     "export DJANGO_SETTINGS_MODULE=Poem.settings && \
-    python $SITEPACK/Poem/manage.py tenant_command api_token --tenant $tenant --schema $schema"
+    python $SITEPACK/Poem/manage.py tenant_command --schema $schema api_token --tenant $tenant "
 else
     su -m -s /bin/sh $RUNASUSER -c \
     "export DJANGO_SETTINGS_MODULE=Poem.settings && \
-    python $SITEPACK/Poem/manage.py tenant_command api_token --tenant $tenant --token $token --schema $schema"
+    python $SITEPACK/Poem/manage.py tenant_command --schema $schema api_token --tenant $tenant --token $token "
 fi
