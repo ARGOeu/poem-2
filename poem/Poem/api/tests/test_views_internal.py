@@ -6941,6 +6941,7 @@ class HistoryHelpersTests(TenantTestCase):
 
         self.mt1 = admin_models.MetricTemplate.objects.create(
             name='metric-template-1',
+            description='Description of metric-template-1.',
             parent='["parent"]',
             config='["maxCheckAttempts 3", "timeout 60",'
                    ' "path $USER", "interval 5", "retryInterval 3"]',
@@ -6960,6 +6961,7 @@ class HistoryHelpersTests(TenantTestCase):
             name=self.mt1.name,
             mtype=self.mt1.mtype,
             probekey=self.mt1.probekey,
+            description=self.mt1.description,
             parent=self.mt1.parent,
             probeexecutable=self.mt1.probeexecutable,
             config=self.mt1.config,
@@ -6984,6 +6986,7 @@ class HistoryHelpersTests(TenantTestCase):
             name=self.mt1.name,
             mtype=self.mt1.mtype,
             probekey=self.mt1.probekey,
+            description=self.mt1.description,
             parent=self.mt1.parent,
             probeexecutable=self.mt1.probeexecutable,
             config=self.mt1.config,
@@ -7002,6 +7005,7 @@ class HistoryHelpersTests(TenantTestCase):
 
         self.mt2 = admin_models.MetricTemplate.objects.create(
             name='metric-template-3',
+            description='Description of metric-template-3.',
             parent='["parent"]',
             config='["maxCheckAttempts 3", "timeout 60",'
                    ' "path $USER", "interval 5", "retryInterval 3"]',
@@ -7021,6 +7025,7 @@ class HistoryHelpersTests(TenantTestCase):
             name=self.mt2.name,
             mtype=self.mt2.mtype,
             probekey=self.mt2.probekey,
+            description=self.mt2.description,
             parent=self.mt2.parent,
             probeexecutable=self.mt2.probeexecutable,
             config=self.mt2.config,
@@ -7037,6 +7042,7 @@ class HistoryHelpersTests(TenantTestCase):
 
         self.metric1 = poem_models.Metric.objects.create(
             name='metric-1',
+            description='Description of metric-1.',
             parent='["parent"]',
             config='["maxCheckAttempts 3", "timeout 60",'
                    ' "path $USER", "interval 5", "retryInterval 3"]',
@@ -7191,6 +7197,7 @@ class HistoryHelpersTests(TenantTestCase):
 
     def test_create_comment_for_metric_template(self):
         self.mt1.name = 'metric-template-2'
+        self.mt1.description = 'New description for metric-template-2.'
         self.mt1.probekey = self.probe_history3
         self.mt1.parent = ''
         self.mt1.probeexecutable = '["new-probeexecutable"]'
@@ -7208,7 +7215,7 @@ class HistoryHelpersTests(TenantTestCase):
                 '"object": ["dependency-key2"]}}',
                 '{"added": {"fields": ["flags"], "object": ["flags-key1"]}}',
                 '{"added": {"fields": ["probeexecutable"]}}',
-                '{"changed": {"fields": ["name", "probekey"]}}',
+                '{"changed": {"fields": ["description", "name", "probekey"]}}',
                 '{"deleted": {"fields": ["parent"]}}'
             }
         )
@@ -7216,6 +7223,7 @@ class HistoryHelpersTests(TenantTestCase):
     def test_create_comment_for_metric_template_if_initial(self):
         mt = admin_models.MetricTemplate.objects.create(
             name='metric-template-2',
+            description='Description for metric-template-2.',
             probekey=self.probe_history2,
             probeexecutable='["new-probeexecutable"]',
             config='["maxCheckAttempts 4", "timeout 60",'
@@ -7257,6 +7265,7 @@ class HistoryHelpersTests(TenantTestCase):
 
     def test_do_not_update_comment_for_metric_template_if_initial(self):
         self.mt2.name = 'metric-template-4'
+        self.mt2.description = 'Description for metric-template-4.'
         self.mt2.parent = ''
         self.mt2.probeexecutable = '["new-probeexecutable"]'
         self.mt2.dependency = '["dependency-key1 dependency-value1"]'
@@ -7359,6 +7368,7 @@ class HistoryHelpersTests(TenantTestCase):
     def test_create_comment_for_metric(self):
         metric = poem_models.Metric(
             name='metric-2',
+            description='Description for metric-2.',
             probekey=self.probe_history2,
             probeexecutable='["new-probeexecutable"]',
             config='["maxCheckAttempts 3", "timeout 60",'
@@ -7388,7 +7398,7 @@ class HistoryHelpersTests(TenantTestCase):
                 '"object": ["dependency-key2"]}}',
                 '{"added": {"fields": ["flags"], "object": ["flags-key1"]}}',
                 '{"added": {"fields": ["probeexecutable"]}}',
-                '{"changed": {"fields": ["name", "probekey"]}}',
+                '{"changed": {"fields": ["description", "name", "probekey"]}}',
                 '{"deleted": {"fields": ["parent"]}}'
             }
         )
@@ -7396,6 +7406,7 @@ class HistoryHelpersTests(TenantTestCase):
     def test_create_comment_for_metric_if_field_deleted_from_model(self):
         mt = poem_models.Metric(
             name='metric-2',
+            description='Description of metric-1.',
             probekey=self.probe_history2,
             probeexecutable='["new-probeexecutable"]',
             config='["maxCheckAttempts 4", "timeout 60",'
@@ -7438,6 +7449,7 @@ class HistoryHelpersTests(TenantTestCase):
     def test_create_comment_for_metric_if_field_added_to_model(self):
         mt = poem_models.Metric(
             name='metric-2',
+            description='Description of metric-1.',
             probekey=self.probe_history2,
             probeexecutable='["new-probeexecutable"]',
             config='["maxCheckAttempts 4", "timeout 60",'
@@ -7481,6 +7493,7 @@ class HistoryHelpersTests(TenantTestCase):
     def test_create_comment_for_metric_if_initial(self):
         mt = poem_models.Metric.objects.create(
             name='metric-template-2',
+            description='Description for metric-2.',
             probekey=self.probe_history2,
             probeexecutable='["new-probeexecutable"]',
             config='["maxCheckAttempts 4", "timeout 60",'
