@@ -31,6 +31,7 @@ def update_metrics(metrictemplate, name, probekey):
                 met = Metric.objects.get(name=name, probekey=probekey)
                 met.name = metrictemplate.name
                 met.probeexecutable = metrictemplate.probeexecutable
+                met.description = metrictemplate.description
                 met.parent = metrictemplate.parent
                 met.attribute = metrictemplate.attribute
                 met.dependancy = metrictemplate.dependency
@@ -112,6 +113,7 @@ class ListMetricTemplates(APIView):
                 mtype=metrictemplate.mtype.name,
                 ostag=ostag,
                 probeversion=probeversion,
+                description=metrictemplate.description,
                 parent=parent,
                 probeexecutable=probeexecutable,
                 config=config,
@@ -155,6 +157,7 @@ class ListMetricTemplates(APIView):
                             ' '
                         )[1][1:-1]
                     ),
+                    description=request.data['description'],
                     parent=parent,
                     probeexecutable=probeexecutable,
                     config=inline_metric_for_db(request.data['config']),
@@ -173,6 +176,7 @@ class ListMetricTemplates(APIView):
                     mtype=admin_models.MetricTemplateType.objects.get(
                         name=request.data['mtype']
                     ),
+                    description=request.data['description'],
                     parent=parent,
                     flags=inline_metric_for_db(request.data['flags'])
                 )
@@ -227,6 +231,7 @@ class ListMetricTemplates(APIView):
                     old_probekey != new_probekey:
                 metrictemplate.name = request.data['name']
                 metrictemplate.probekey = new_probekey
+                metrictemplate.description = request.data['description']
                 metrictemplate.parent = parent
                 metrictemplate.probeexecutable = probeexecutable
                 metrictemplate.config = inline_metric_for_db(
@@ -261,6 +266,7 @@ class ListMetricTemplates(APIView):
                     'mtype': admin_models.MetricTemplateType.objects.get(
                         name=request.data['mtype']
                     ),
+                    'description': request.data['description'],
                     'parent': parent,
                     'probeexecutable': probeexecutable,
                     'config': inline_metric_for_db(request.data['config']),
@@ -334,7 +340,7 @@ class ListMetricTemplates(APIView):
                             m.delete()
                         except Metric.DoesNotExist:
                             pass
-                        
+
                 mt.delete()
                 return Response(status=status.HTTP_204_NO_CONTENT)
 
