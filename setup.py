@@ -34,7 +34,7 @@ setup(name=NAME,
           "Operating System :: POSIX :: Linux",
       ),
       scripts=['bin/poem-syncmetricinstances', 'bin/poem-syncservtype',
-               'bin/poem-db', 'bin/poem-genseckey',
+               'bin/poem-db', 'bin/poem-genseckey', 'bin/poem-manage',
                'bin/poem-token', 'bin/poem-syncservices', 'bin/poem-tenant'],
       data_files=[
           ('etc/poem', ['etc/poem.conf.template', 'etc/poem_logging.conf']),
