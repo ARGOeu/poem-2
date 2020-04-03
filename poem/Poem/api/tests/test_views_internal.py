@@ -1091,7 +1091,9 @@ class ListProbesAPIViewTests(TenantTestCase):
         self.assertEqual(metric.probeexecutable, '["web-api"]')
         self.assertEqual(
             metric.probekey,
-            admin_models.ProbeHistory.objects.filter(object_id=probe)[1]
+            admin_models.ProbeHistory.objects.filter(
+                object_id=probe
+            ).order_by('-date_created')[1]
         )
         self.assertEqual(
             metric.config,
@@ -5909,6 +5911,7 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
             mtype=self.mtype1,
             group=group1,
             probekey=self.probever1,
+            description='Description of test.AMS-Check.',
             probeexecutable='["ams-probe"]',
             config='["maxCheckAttempts 3", "timeout 60",'
                    ' "path /usr/libexec/argo-monitoring/probes/argo",'
@@ -5935,6 +5938,7 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
         self.metric1.name = 'argo.AMS-Check-new'
         self.metric1.probeexecutable = '["ams-probe-2"]'
         self.metric1.probekey = self.probever2
+        self.metric1.description = 'Description of argo.AMS-Check-new.'
         self.metric1.group = group2
         self.metric1.parent = '["new-parent"]'
         self.metric1.config = '["maxCheckAttempts 4", "timeout 70", ' \
@@ -5949,7 +5953,8 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
 
         comment = create_comment(
             self.metric1, ct=ct_m, new_serialized_data=serializers.serialize(
-                'json', [self.metric1], use_natural_foreign_keys=True,
+                'json', [self.metric1],
+                use_natural_foreign_keys=True,
                 use_natural_primary_keys=True
             )
         )
@@ -5969,6 +5974,7 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
 
         self.metric2 = poem_models.Metric.objects.create(
             name='org.apel.APEL-Pub',
+            description='Description of org.apel.APEL-Pub.',
             mtype=self.mtype2,
             group=group1,
             flags='["OBSESS 1", "PASSIVE 1"]'
@@ -6248,6 +6254,7 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
                         'mtype': self.mtype1.name,
                         'group': 'TEST',
                         'probeversion': 'ams-probe (0.1.11)',
+                        'description': 'Description of argo.AMS-Check-new.',
                         'parent': 'new-parent',
                         'probeexecutable': 'ams-probe-2',
                         'config': [
@@ -6277,8 +6284,8 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
                         self.ver2.date_created, '%Y-%m-%d %H:%M:%S'
                     ),
                     'comment': 'Changed config fields "maxCheckAttempts", '
-                               '"retryInterval" and "timeout". Changed group '
-                               'and probekey.',
+                               '"retryInterval" and "timeout". Added '
+                               'description. Changed group and probekey.',
                     'version': datetime.datetime.strftime(
                         self.ver2.date_created, '%Y%m%d-%H%M%S'
                     )
@@ -6291,6 +6298,7 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
                         'mtype': self.mtype1.name,
                         'group': 'EGI',
                         'probeversion': 'ams-probe (0.1.7)',
+                        'description': '',
                         'parent': '',
                         'probeexecutable': 'ams-probe',
                         'config': [
@@ -6342,6 +6350,7 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
                         'mtype': self.mtype2.name,
                         'group': 'EGI',
                         'probeversion': '',
+                        'description': 'Description of org.apel.APEL-Pub.',
                         'parent': '',
                         'probeexecutable': '',
                         'config': [],

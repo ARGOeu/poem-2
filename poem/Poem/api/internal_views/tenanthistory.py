@@ -66,11 +66,17 @@ class ListTenantVersions(APIView):
                         else:
                             probeversion = ''
 
+                        if fields0['description']:
+                            description = fields0['description']
+                        else:
+                            description = ''
+
                         fields = {
                             'name': fields0['name'],
                             'mtype': fields0['mtype'][0],
                             'group': fields0['group'][0],
                             'probeversion': probeversion,
+                            'description': description,
                             'parent': one_value_inline(fields0['parent']),
                             'probeexecutable': one_value_inline(
                                 fields0['probeexecutable']
