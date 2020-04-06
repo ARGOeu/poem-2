@@ -66,7 +66,7 @@ class ListTenantVersions(APIView):
                         else:
                             probeversion = ''
 
-                        if fields0['description']:
+                        if 'description' in fields0:
                             description = fields0['description']
                         else:
                             description = ''
