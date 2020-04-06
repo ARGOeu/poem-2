@@ -942,41 +942,53 @@ export const MetricForm =
             </FormText>
           </Col>
         </Row>
+      <Row className='mb-4'>
+        <Col md={10}>
+          <Label for='description'>Description:</Label>
+          <Field
+            id='description'
+            className='form-control'
+            component='textarea'
+            name='description'
+            disabled={isTenantSchema || isHistory}
+          />
+        </Col>
+      </Row>
         {
-        obj === 'metric' &&
-          <Row className='mb-4'>
-            <Col md={3}>
-              <InputGroup>
-                <InputGroupAddon addonType='prepend'>Group</InputGroupAddon>
-                {
-                  isHistory ?
-                    <Field
-                      type='text'
-                      name='group'
-                      className='form-control'
-                      disabled={true}
-                      id='group'
-                    />
-                  :
-                    <Field
-                      component='select'
-                      name='group'
-                      className='form-control custom-select'
-                      id='group'
-                    >
-                      {
-                        groups.map((name, i) =>
-                          <option key={i} value={name}>{name}</option>
-                        )
-                      }
-                    </Field>
-                }
-              </InputGroup>
-              <FormText color='muted'>
-                Metric is member of selected group.
-              </FormText>
-            </Col>
-          </Row>
+          obj === 'metric' &&
+            <Row className='mb-4'>
+              <Col md={3}>
+                <InputGroup>
+                  <InputGroupAddon addonType='prepend'>Group</InputGroupAddon>
+                  {
+                    isHistory ?
+                      <Field
+                        type='text'
+                        name='group'
+                        className='form-control'
+                        disabled={true}
+                        id='group'
+                      />
+                    :
+                      <Field
+                        component='select'
+                        name='group'
+                        className='form-control custom-select'
+                        id='group'
+                      >
+                        {
+                          groups.map((name, i) =>
+                            <option key={i} value={name}>{name}</option>
+                          )
+                        }
+                      </Field>
+                  }
+                </InputGroup>
+                <FormText color='muted'>
+                  Metric is member of selected group.
+                </FormText>
+              </Col>
+            </Row>
       }
       </FormGroup>
       <FormGroup>
@@ -1056,6 +1068,7 @@ export function CompareMetrics(metrictype) {
         probeversion1: '',
         type1: '',
         group1: '',
+        description1: '',
         probeexecutable1: '',
         parent1: '',
         config1: '',
@@ -1069,6 +1082,7 @@ export function CompareMetrics(metrictype) {
         probeversion2: '',
         type2: '',
         group2: '',
+        description2: '',
         probeexecutable2: '',
         parent2: '',
         config2: '',
@@ -1100,6 +1114,7 @@ export function CompareMetrics(metrictype) {
           let probeversion1 = '';
           let type1 = '';
           let group1 = '';
+          let description1 = '';
           let probeexecutable1 = '';
           let parent1 = '';
           let config1 = '';
@@ -1113,6 +1128,7 @@ export function CompareMetrics(metrictype) {
           let probeversion2 = '';
           let type2 = '';
           let group2 = '';
+          let description2 = '';
           let probeexecutable2 = '';
           let parent2 = '';
           let config2 = '';
@@ -1133,6 +1149,7 @@ export function CompareMetrics(metrictype) {
                 dependency1 = e.fields.dependancy;
               } else
                 dependency1 = e.fields.dependency;
+              description1 = e.fields.description;
               probeexecutable1 = e.fields.probeexecutable;
               parent1 = e.fields.parent;
               config1 = e.fields.config;
@@ -1149,6 +1166,7 @@ export function CompareMetrics(metrictype) {
                   dependency2 = e.fields.dependancy;
                 } else
                   dependency2 = e.fields.dependency;
+                description2 = e.fields.description;
                 probeexecutable2 = e.fields.probeexecutable;
                 parent2 = e.fields.parent;
                 config2 = e.fields.config;
@@ -1164,6 +1182,7 @@ export function CompareMetrics(metrictype) {
             probeversion1: probeversion1,
             type1: type1,
             group1: group1,
+            description1: description1,
             probeexecutable1: probeexecutable1,
             parent1: parent1,
             config1: config1,
@@ -1177,6 +1196,7 @@ export function CompareMetrics(metrictype) {
             probeversion2: probeversion2,
             type2: type2,
             group2: group2,
+            description2: description2,
             probeexecutable2: probeexecutable2,
             parent2: parent2,
             config2: config2,
@@ -1196,7 +1216,8 @@ export function CompareMetrics(metrictype) {
         probeexecutable1, probeexecutable2, parent1, parent2, config1,
         config2, attribute1, attribute2, dependency1, dependency2,
         parameter1, parameter2, flags1, flags2, files1, files2,
-        fileparameter1, fileparameter2, group1, group2, loading } = this.state;
+        fileparameter1, fileparameter2, group1, group2, loading,
+        description1, description2 } = this.state;
 
       if (loading)
         return <LoadingAnim/>;
@@ -1222,6 +1243,10 @@ export function CompareMetrics(metrictype) {
             {
               (group1 && group2 && group1 !== group2) &&
                 <DiffElement title='group' item1={group1} item2={group2}/>
+            }
+            {
+              (description1 !== description2) &&
+                <DiffElement title='description' item1={description1} item2={description2}/>
             }
             {
               (probeexecutable1 !== probeexecutable2) &&
@@ -1330,6 +1355,7 @@ export class MetricChange extends Component {
         let updated_metric = {
           name: mt.fields.name,
           probeversion: mt.fields.probeversion,
+          description: mt.fields.description,
           group: metric.group,
           mtype: mt.fields.mtype,
           probeexecutable: mt.fields.probeexecutable,
@@ -1365,6 +1391,7 @@ export class MetricChange extends Component {
         name: values.name,
         mtype: values.type,
         group: values.group,
+        description: values.description,
         parent: values.parent,
         probeversion: values.probeversion,
         probeexecutable: values.probeexecutable,
@@ -1462,6 +1489,7 @@ export class MetricChange extends Component {
             initialValues = {{
               name: metric.name,
               probeversion: metric.probeversion,
+              description: metric.description,
               type: metric.mtype,
               group: metric.group,
               probeexecutable: metric.probeexecutable,
@@ -1525,6 +1553,7 @@ export class MetricVersionDetails extends Component {
     this.state = {
       name: '',
       probeversion: '',
+      description: '',
       mtype: '',
       group: '',
       probeexecutable: '',
@@ -1550,6 +1579,7 @@ export class MetricVersionDetails extends Component {
             this.setState({
               name: e.fields.name,
               probeversion: e.fields.probeversion,
+              description: e.fields.description,
               type: e.fields.mtype,
               group: e.fields.group,
               probeexecutable: e.fields.probeexecutable,
@@ -1571,7 +1601,7 @@ export class MetricVersionDetails extends Component {
   render() {
     const { name, probeversion, type, group, probeexecutable, parent, config,
       attribute, dependancy, parameter, flags, files, fileparameter, date_created,
-      loading } = this.state;
+      loading, description } = this.state;
 
     if (loading)
     return (<LoadingAnim/>);
@@ -1588,6 +1618,7 @@ export class MetricVersionDetails extends Component {
               probeversion: probeversion,
               type: type,
               group: group,
+              description: description,
               probeexecutable: probeexecutable,
               parent: parent,
               config: config,
