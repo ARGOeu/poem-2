@@ -3274,6 +3274,7 @@ class ListMetricAPIViewTests(TenantTestCase):
             name='argo.AMS-Check',
             mtype=mtype1,
             probekey=self.probeversion1,
+            description='Description of argo.AMS-Check',
             group=group,
             probeexecutable='["ams-probe"]',
             config='["maxCheckAttempts 3", "timeout 60",'
@@ -3334,6 +3335,7 @@ class ListMetricAPIViewTests(TenantTestCase):
                     'mtype': 'Active',
                     'probeversion': 'ams-probe (0.1.7)',
                     'group': 'EGI',
+                    'description': 'Description of argo.AMS-Check',
                     'parent': '',
                     'probeexecutable': 'ams-probe',
                     'config': [
@@ -3386,6 +3388,7 @@ class ListMetricAPIViewTests(TenantTestCase):
                     'mtype': 'Passive',
                     'probeversion': '',
                     'group': 'EGI',
+                    'description': '',
                     'parent': '',
                     'probeexecutable': '',
                     'config': [],
@@ -3420,6 +3423,7 @@ class ListMetricAPIViewTests(TenantTestCase):
                 'mtype': 'Active',
                 'probeversion': 'ams-probe (0.1.7)',
                 'group': 'EGI',
+                'description': 'Description of argo.AMS-Check',
                 'parent': '',
                 'probeexecutable': 'ams-probe',
                 'config': [
@@ -3511,6 +3515,7 @@ class ListMetricAPIViewTests(TenantTestCase):
             'name': 'argo.AMS-Check',
             'mtype': 'Active',
             'group': 'EUDAT',
+            'description': 'New description of argo.AMS-Check',
             'parent': '',
             'probeversion': 'ams-probe (0.1.11)',
             'probeexecutable': 'ams-probe',
@@ -3538,6 +3543,9 @@ class ListMetricAPIViewTests(TenantTestCase):
         self.assertEqual(metric.mtype.name, 'Active')
         self.assertEqual(metric.probekey, self.probeversion2)
         self.assertEqual(metric.group.name, 'EUDAT')
+        self.assertEqual(
+            metric.description, 'New description of argo.AMS-Check'
+        )
         self.assertEqual(metric.parent, '')
         self.assertEqual(metric.probeexecutable, '["ams-probe"]')
         self.assertEqual(
@@ -3556,6 +3564,7 @@ class ListMetricAPIViewTests(TenantTestCase):
         self.assertEqual(metric.fileparameter, '')
         self.assertEqual(serialized_data['name'], metric.name)
         self.assertEqual(serialized_data['mtype'], [metric.mtype.name])
+        self.assertEqual(serialized_data['description'], metric.description)
         self.assertEqual(
             serialized_data['probekey'],
             [metric.probekey.name, metric.probekey.package.version]
@@ -3580,6 +3589,7 @@ class ListMetricAPIViewTests(TenantTestCase):
             'mtype': 'Passive',
             'probeversion': '',
             'group': 'EUDAT',
+            'description': 'Description of passive metric org.apel.APEL-Pub.',
             'parent': 'test-parent',
             'probeexecutable': 'ams-probe',
             'config': '[{"key": "", "value": ""}]',
@@ -3606,6 +3616,10 @@ class ListMetricAPIViewTests(TenantTestCase):
         self.assertEqual(metric.mtype.name, 'Passive')
         self.assertEqual(metric.probekey, None)
         self.assertEqual(metric.group.name, 'EUDAT')
+        self.assertEqual(
+            metric.description,
+            'Description of passive metric org.apel.APEL-Pub.'
+        )
         self.assertEqual(metric.parent, '["test-parent"]')
         self.assertEqual(metric.probeexecutable, '')
         self.assertEqual(metric.config, '')
@@ -3618,6 +3632,10 @@ class ListMetricAPIViewTests(TenantTestCase):
         self.assertEqual(serialized_data['name'], metric.name)
         self.assertEqual(serialized_data['mtype'], [metric.mtype.name])
         self.assertEqual(serialized_data['probekey'], None)
+        self.assertEqual(
+            serialized_data['description'],
+            'Description of passive metric org.apel.APEL-Pub.'
+        )
         self.assertEqual(serialized_data['parent'], metric.parent)
         self.assertEqual(
             serialized_data['probeexecutable'], metric.probeexecutable

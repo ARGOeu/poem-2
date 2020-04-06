@@ -69,6 +69,7 @@ class ListMetric(APIView):
                 mtype=metric.mtype.name,
                 probeversion=probeversion,
                 group=group,
+                description=metric.description,
                 parent=parent,
                 probeexecutable=probeexecutable,
                 config=config,
@@ -100,6 +101,11 @@ class ListMetric(APIView):
         else:
             probeexecutable = ''
 
+        if request.data['description']:
+            description = request.data['description']
+        else:
+            description = ''
+
         metric.name = request.data['name']
         metric.mtype = poem_models.MetricType.objects.get(
             name=request.data['mtype']
@@ -107,6 +113,7 @@ class ListMetric(APIView):
         metric.group = poem_models.GroupOfMetrics.objects.get(
             name=request.data['group']
         )
+        metric.description = description
         metric.parent = parent
         metric.flags = inline_metric_for_db(request.data['flags'])
 
