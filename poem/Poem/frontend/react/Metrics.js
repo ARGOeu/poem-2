@@ -978,6 +978,18 @@ export const MetricForm =
             </Col>
           </Row>
       }
+      <Row className='mb-4'>
+        <Col md={10}>
+          <Label for='description'>Description:</Label>
+          <Field
+            id='description'
+            className='form-control'
+            component='textarea'
+            name='description'
+            disabled={isTenantSchema || isHistory}
+          />
+        </Col>
+      </Row>
       </FormGroup>
       <FormGroup>
         <h4 className="mt-2 p-1 pl-3 text-light text-uppercase rounded" style={{"backgroundColor": "#416090"}}>Metric configuration</h4>
@@ -1330,6 +1342,7 @@ export class MetricChange extends Component {
         let updated_metric = {
           name: mt.fields.name,
           probeversion: mt.fields.probeversion,
+          description: mt.fields.description,
           group: metric.group,
           mtype: mt.fields.mtype,
           probeexecutable: mt.fields.probeexecutable,
@@ -1365,6 +1378,7 @@ export class MetricChange extends Component {
         name: values.name,
         mtype: values.type,
         group: values.group,
+        description: values.description,
         parent: values.parent,
         probeversion: values.probeversion,
         probeexecutable: values.probeexecutable,
@@ -1462,6 +1476,7 @@ export class MetricChange extends Component {
             initialValues = {{
               name: metric.name,
               probeversion: metric.probeversion,
+              description: metric.description,
               type: metric.mtype,
               group: metric.group,
               probeexecutable: metric.probeexecutable,
@@ -1525,6 +1540,7 @@ export class MetricVersionDetails extends Component {
     this.state = {
       name: '',
       probeversion: '',
+      description: '',
       mtype: '',
       group: '',
       probeexecutable: '',
@@ -1550,6 +1566,7 @@ export class MetricVersionDetails extends Component {
             this.setState({
               name: e.fields.name,
               probeversion: e.fields.probeversion,
+              description: e.fields.description,
               type: e.fields.mtype,
               group: e.fields.group,
               probeexecutable: e.fields.probeexecutable,
@@ -1571,7 +1588,7 @@ export class MetricVersionDetails extends Component {
   render() {
     const { name, probeversion, type, group, probeexecutable, parent, config,
       attribute, dependancy, parameter, flags, files, fileparameter, date_created,
-      loading } = this.state;
+      loading, description } = this.state;
 
     if (loading)
     return (<LoadingAnim/>);
@@ -1588,6 +1605,7 @@ export class MetricVersionDetails extends Component {
               probeversion: probeversion,
               type: type,
               group: group,
+              description: description,
               probeexecutable: probeexecutable,
               parent: parent,
               config: config,
