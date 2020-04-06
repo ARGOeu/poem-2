@@ -3997,6 +3997,8 @@ class ListVersionsAPIViewTests(TenantTestCase):
         )
 
         self.metrictemplate1.name = 'argo.POEM-API-MON-new'
+        self.metrictemplate1.description = \
+            'Description of argo.POEM-API-MON-new'
         self.metrictemplate1.probekey = self.ver2
         self.metrictemplate1.save()
 
@@ -4005,6 +4007,7 @@ class ListVersionsAPIViewTests(TenantTestCase):
             name=self.metrictemplate1.name,
             mtype=self.metrictemplate1.mtype,
             probekey=self.metrictemplate1.probekey,
+            description=self.metrictemplate1.description,
             probeexecutable=self.metrictemplate1.probeexecutable,
             config=self.metrictemplate1.config,
             attribute=self.metrictemplate1.attribute,
@@ -4015,13 +4018,17 @@ class ListVersionsAPIViewTests(TenantTestCase):
             fileparameter=self.metrictemplate1.fileparameter,
             date_created=datetime.datetime.now(),
             version_comment=json.dumps(
-                [{'changed': {'fields': ['name', 'probekey']}}]
+                [
+                    {'added': {'fields': ['description']}},
+                    {'changed': {'fields': ['name', 'probekey']}}
+                ]
             ),
             version_user=self.user.username
         )
 
         self.metrictemplate2 = admin_models.MetricTemplate.objects.create(
             name='org.apel.APEL-Pub',
+            description='Description of org.apel.APEL-Pub',
             mtype=self.mtype2,
             flags='["OBSESS 1", "PASSIVE 1"]'
         )
@@ -4030,6 +4037,7 @@ class ListVersionsAPIViewTests(TenantTestCase):
             object_id=self.metrictemplate2,
             name=self.metrictemplate2.name,
             mtype=self.metrictemplate2.mtype,
+            description=self.metrictemplate2.description,
             probekey=self.metrictemplate2.probekey,
             probeexecutable=self.metrictemplate2.probeexecutable,
             config=self.metrictemplate2.config,
@@ -4052,6 +4060,7 @@ class ListVersionsAPIViewTests(TenantTestCase):
             name=self.metrictemplate2.name,
             mtype=self.metrictemplate2.mtype,
             probekey=self.metrictemplate2.probekey,
+            description=self.metrictemplate2.description,
             probeexecutable=self.metrictemplate2.probeexecutable,
             config=self.metrictemplate2.config,
             attribute=self.metrictemplate2.attribute,
@@ -4189,6 +4198,7 @@ class ListVersionsAPIViewTests(TenantTestCase):
                         'name': 'argo.POEM-API-MON-new',
                         'mtype': self.mtype1.name,
                         'probeversion': 'poem-probe-new (0.1.11)',
+                        'description': 'Description of argo.POEM-API-MON-new',
                         'parent': '',
                         'probeexecutable': 'poem-probe',
                         'config': [
@@ -4215,7 +4225,7 @@ class ListVersionsAPIViewTests(TenantTestCase):
                     'date_created': datetime.datetime.strftime(
                         self.ver5.date_created, '%Y-%m-%d %H:%M:%S'
                     ),
-                    'comment': 'Changed name and probekey.',
+                    'comment': 'Added description. Changed name and probekey.',
                     'version': '0.1.11'
                 },
                 {
@@ -4226,6 +4236,7 @@ class ListVersionsAPIViewTests(TenantTestCase):
                         'name': 'argo.POEM-API-MON',
                         'mtype': self.mtype1.name,
                         'probeversion': 'poem-probe (0.1.7)',
+                        'description': '',
                         'parent': '',
                         'probeexecutable': 'poem-probe',
                         'config': [
@@ -4275,6 +4286,7 @@ class ListVersionsAPIViewTests(TenantTestCase):
                         'name': 'argo.POEM-API-MON-new',
                         'mtype': self.mtype1.name,
                         'probeversion': 'poem-probe-new (0.1.11)',
+                        'description': 'Description of argo.POEM-API-MON-new',
                         'parent': '',
                         'probeexecutable': 'poem-probe',
                         'config': [
@@ -4301,7 +4313,7 @@ class ListVersionsAPIViewTests(TenantTestCase):
                     'date_created': datetime.datetime.strftime(
                         self.ver5.date_created, '%Y-%m-%d %H:%M:%S'
                     ),
-                    'comment': 'Changed name and probekey.',
+                    'comment': 'Added description. Changed name and probekey.',
                     'version': '0.1.11'
                 },
                 {
@@ -4312,6 +4324,7 @@ class ListVersionsAPIViewTests(TenantTestCase):
                         'name': 'argo.POEM-API-MON',
                         'mtype': self.mtype1.name,
                         'probeversion': 'poem-probe (0.1.7)',
+                        'description': '',
                         'parent': '',
                         'probeexecutable': 'poem-probe',
                         'config': [
@@ -4359,6 +4372,7 @@ class ListVersionsAPIViewTests(TenantTestCase):
                         'name': 'org.apel.APEL-Pub-new',
                         'mtype': self.mtype2.name,
                         'probeversion': '',
+                        'description': 'Description of org.apel.APEL-Pub',
                         'parent': '',
                         'probeexecutable': '',
                         'config': [],
@@ -4389,6 +4403,7 @@ class ListVersionsAPIViewTests(TenantTestCase):
                         'name': 'org.apel.APEL-Pub',
                         'mtype': self.mtype2.name,
                         'probeversion': '',
+                        'description': 'Description of org.apel.APEL-Pub',
                         'parent': '',
                         'probeexecutable': '',
                         'config': [],
