@@ -942,42 +942,6 @@ export const MetricForm =
             </FormText>
           </Col>
         </Row>
-        {
-        obj === 'metric' &&
-          <Row className='mb-4'>
-            <Col md={3}>
-              <InputGroup>
-                <InputGroupAddon addonType='prepend'>Group</InputGroupAddon>
-                {
-                  isHistory ?
-                    <Field
-                      type='text'
-                      name='group'
-                      className='form-control'
-                      disabled={true}
-                      id='group'
-                    />
-                  :
-                    <Field
-                      component='select'
-                      name='group'
-                      className='form-control custom-select'
-                      id='group'
-                    >
-                      {
-                        groups.map((name, i) =>
-                          <option key={i} value={name}>{name}</option>
-                        )
-                      }
-                    </Field>
-                }
-              </InputGroup>
-              <FormText color='muted'>
-                Metric is member of selected group.
-              </FormText>
-            </Col>
-          </Row>
-      }
       <Row className='mb-4'>
         <Col md={10}>
           <Label for='description'>Description:</Label>
@@ -990,6 +954,42 @@ export const MetricForm =
           />
         </Col>
       </Row>
+        {
+          obj === 'metric' &&
+            <Row className='mb-4'>
+              <Col md={3}>
+                <InputGroup>
+                  <InputGroupAddon addonType='prepend'>Group</InputGroupAddon>
+                  {
+                    isHistory ?
+                      <Field
+                        type='text'
+                        name='group'
+                        className='form-control'
+                        disabled={true}
+                        id='group'
+                      />
+                    :
+                      <Field
+                        component='select'
+                        name='group'
+                        className='form-control custom-select'
+                        id='group'
+                      >
+                        {
+                          groups.map((name, i) =>
+                            <option key={i} value={name}>{name}</option>
+                          )
+                        }
+                      </Field>
+                  }
+                </InputGroup>
+                <FormText color='muted'>
+                  Metric is member of selected group.
+                </FormText>
+              </Col>
+            </Row>
+      }
       </FormGroup>
       <FormGroup>
         <h4 className="mt-2 p-1 pl-3 text-light text-uppercase rounded" style={{"backgroundColor": "#416090"}}>Metric configuration</h4>
