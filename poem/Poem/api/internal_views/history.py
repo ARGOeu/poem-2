@@ -59,6 +59,7 @@ class ListVersions(APIView):
                             'name': ver.name,
                             'mtype': ver.mtype.name,
                             'probeversion': probekey,
+                            'description': ver.description,
                             'parent': one_value_inline(ver.parent),
                             'probeexecutable': one_value_inline(
                                 ver.probeexecutable
