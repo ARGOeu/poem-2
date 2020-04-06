@@ -5699,6 +5699,7 @@ class ImportMetricsAPIViewTests(TenantTestCase):
 
         self.template2 = admin_models.MetricTemplate.objects.create(
             name='argo.AMSPublisher-Check',
+            description='Description of argo.AMSPublisher-Check.',
             probeexecutable='["ams-publisher-probe"]',
             config='["interval 180", "maxCheckAttempts 1", '
                    '"path /usr/libexec/argo-monitoring/probes/argo", '
@@ -5725,6 +5726,7 @@ class ImportMetricsAPIViewTests(TenantTestCase):
         self.assertEqual(poem_models.Metric.objects.all().count(), 2)
         mt1 = poem_models.Metric.objects.get(name='argo.AMS-Check')
         mt2 = poem_models.Metric.objects.get(name='argo.AMSPublisher-Check')
+        self.assertEqual(mt1.description, self.template1.description)
         self.assertEqual(mt1.parent, self.template1.parent)
         self.assertEqual(mt1.probeexecutable, self.template1.probeexecutable)
         self.assertEqual(mt1.config, self.template1.config)
@@ -5735,6 +5737,7 @@ class ImportMetricsAPIViewTests(TenantTestCase):
         self.assertEqual(mt1.parameter, self.template1.parameter)
         self.assertEqual(mt1.fileparameter, self.template1.fileparameter)
         self.assertEqual(mt1.probekey, self.template1.probekey)
+        self.assertEqual(mt2.description, self.template2.description)
         self.assertEqual(mt2.parent, self.template2.parent)
         self.assertEqual(mt2.probeexecutable, self.template2.probeexecutable)
         self.assertEqual(mt2.config, self.template2.config)

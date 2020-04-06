@@ -189,6 +189,7 @@ class ImportMetrics(APIView):
                         name=metrictemplate.name,
                         mtype=mt,
                         probekey=ver,
+                        description=metrictemplate.description,
                         parent=metrictemplate.parent,
                         group=gr,
                         probeexecutable=metrictemplate.probeexecutable,
@@ -204,6 +205,7 @@ class ImportMetrics(APIView):
                     metric = poem_models.Metric.objects.create(
                         name=metrictemplate.name,
                         mtype=mt,
+                        description=metrictemplate.description,
                         parent=metrictemplate.parent,
                         flags=metrictemplate.flags,
                         group=gr
