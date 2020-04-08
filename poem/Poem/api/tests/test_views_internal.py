@@ -315,7 +315,7 @@ class ListUsersAPIViewTests(TenantTestCase):
             first_name='Test',
             last_name='User',
             email='testuser@example.com',
-            date_joined=datetime.datetime(2015, 1, 1, 0, 0, 0)
+            date_joined=datetime.datetime(2015, 1, 1, 0, 0, 0),
         )
 
         self.user2 = CustUser.objects.create_user(
@@ -338,29 +338,34 @@ class ListUsersAPIViewTests(TenantTestCase):
             poem_models.GroupOfAggregations.objects.create(name='Aggr1')
 
     def test_get_users(self):
-        self.maxDiff = None
         request = self.factory.get(self.url)
         force_authenticate(request, user=self.user2)
         response = self.view(request)
         self.assertEqual(
             response.data,
             [
-                OrderedDict([('first_name', 'Another'),
-                             ('last_name', 'User'),
-                             ('username', 'another_user'),
-                             ('is_active', True),
-                             ('is_superuser', True),
-                             ('email', 'otheruser@example.com'),
-                             ('date_joined', '2015-01-02T00:00:00'),
-                             ('pk', self.user2.pk)]),
-                OrderedDict([('first_name', 'Test'),
-                             ('last_name', 'User'),
-                             ('username', 'testuser'),
-                             ('is_active', True),
-                             ('is_superuser', False),
-                             ('email', 'testuser@example.com'),
-                             ('date_joined', '2015-01-01T00:00:00'),
-                             ('pk', self.user.pk)])
+                {
+                    'first_name': 'Another',
+                    'last_name': 'User',
+                    'username': 'another_user',
+                    'is_active': True,
+                    'is_superuser': True,
+                    'email': 'otheruser@example.com',
+                    'date_joined': '2015-01-02 00:00:00',
+                    'last_login': '',
+                    'pk': self.user2.pk
+                },
+                {
+                    'first_name': 'Test',
+                    'last_name': 'User',
+                    'username': 'testuser',
+                    'is_active': True,
+                    'is_superuser': False,
+                    'email': 'testuser@example.com',
+                    'date_joined': '2015-01-01 00:00:00',
+                    'last_login': '',
+                    'pk': self.user.pk
+                }
             ]
         )
 
@@ -375,14 +380,17 @@ class ListUsersAPIViewTests(TenantTestCase):
         response = self.view(request, 'testuser')
         self.assertEqual(
             response.data,
-            OrderedDict([('first_name', 'Test'),
-                         ('last_name', 'User'),
-                         ('username', 'testuser'),
-                         ('is_active', True),
-                         ('is_superuser', False),
-                         ('email', 'testuser@example.com'),
-                         ('date_joined', '2015-01-01T00:00:00'),
-                         ('pk', self.user.pk)])
+            {
+                'first_name': 'Test',
+                'last_name': 'User',
+                'username': 'testuser',
+                'is_active': True,
+                'is_superuser': False,
+                'email': 'testuser@example.com',
+                'date_joined': '2015-01-01 00:00:00',
+                'last_login': '',
+                'pk': self.user.pk
+            }
         )
 
     def test_get_user_by_username_if_username_does_not_exist(self):
