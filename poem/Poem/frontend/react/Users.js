@@ -56,7 +56,7 @@ export const UserChange = UserChangeComponent(true);
 export const SuperAdminUserChange = UserChangeComponent();
 
 
-const CommonUser = ({add, errors}) =>
+const CommonUser = ({add, errors, values}) =>
   <>
     {
       (add) ?
@@ -179,6 +179,37 @@ const CommonUser = ({add, errors}) =>
           }
         </Col>
       </Row>
+      {
+        (!add) &&
+          <>
+            <Row>
+              <Col md={6}>
+                <InputGroup>
+                  <InputGroupAddon addonType='prepend'>Last login</InputGroupAddon>
+                  <Field
+                    type='text'
+                    name='last_login'
+                    className='form-control'
+                    readOnly
+                  />
+                </InputGroup>
+              </Col>
+            </Row>
+            <Row>
+              <Col md={6}>
+                <InputGroup>
+                  <InputGroupAddon addonType='prepend'>Date joined</InputGroupAddon>
+                  <Field
+                    type='text'
+                    name='date_joined'
+                    className='form-control'
+                    readOnly
+                  />
+                </InputGroup>
+              </Col>
+            </Row>
+          </>
+      }
     </FormGroup>
     <FormGroup>
       <h4 className="mt-2 p-1 pl-3 text-light text-uppercase rounded" style={{"backgroundColor": "#416090"}}>Permissions</h4>
@@ -343,7 +374,9 @@ function UserChangeComponent(isTenantSchema=false) {
           'username': '',
           'is_active': true,
           'is_superuser': false,
-          'email': ''
+          'email': '',
+          'last_login': '',
+          'date_joined': ''
         },
         password: '',
         userprofile: {
@@ -584,6 +617,8 @@ function UserChangeComponent(isTenantSchema=false) {
                 is_active: custuser.is_active,
                 is_superuser: custuser.is_superuser,
                 email: custuser.email,
+                last_login: custuser.last_login,
+                date_joined: custuser.date_joined,
                 groupsofaggregations: usergroups.aggregations,
                 groupsofmetrics: usergroups.metrics,
                 groupsofmetricprofiles: usergroups.metricprofiles,
