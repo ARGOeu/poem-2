@@ -1,4 +1,5 @@
 from django.db import IntegrityError
+import datetime
 
 from Poem.api import serializers
 from Poem.api.views import NotFound
@@ -76,25 +77,45 @@ class ListUsers(APIView):
 
     def get(self, request, username=None):
         if username:
-            try:
-                user = CustUser.objects.get(username=username)
-                serializer = serializers.UsersSerializer(user)
-                return Response(serializer.data)
-
-            except CustUser.DoesNotExist:
-                raise NotFound(status=404,
-                               detail='User not found')
+            users = CustUser.objects.filter(username=username)
+            if users.count() == 0:
+                raise NotFound(status=404, detail='User not found')
 
         else:
             if request.user.is_superuser:
                 users = CustUser.objects.all()
             else:
                 users = CustUser.objects.filter(username=request.user.username)
-            serializer = serializers.UsersSerializer(users, many=True)
 
-            data = sorted(serializer.data, key=lambda k: k['username'].lower())
+        results = []
+        for user in users:
+            if user.last_login:
+                last_login = datetime.datetime.strftime(
+                    user.last_login, '%Y-%m-%d %H:%M:%S'
+                )
+            else:
+                last_login = ''
 
-            return Response(data)
+            results.append(dict(
+                pk=user.pk,
+                username=user.username,
+                first_name=user.first_name,
+                last_name=user.last_name,
+                is_active=user.is_active,
+                is_superuser=user.is_superuser,
+                email=user.email,
+                date_joined=datetime.datetime.strftime(
+                    user.date_joined, '%Y-%m-%d %H:%M:%S'
+                ),
+                last_login=last_login
+            ))
+
+        results = sorted(results, key=lambda k: k['username'])
+
+        if username:
+            return Response(results[0])
+        else:
+            return Response(results)
 
     def put(self, request):
         try:
