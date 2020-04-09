@@ -17,8 +17,11 @@ prod:
 	rm -rf frontend/bundles/reactbundle/* ; \
 		node_modules/.bin/webpack --config webpack.config.js --progress --mode production
 
-audit-view:
+py-audit-view:
+	docker exec -t $(container_name) ./safety.sh
+
+js-audit-view:
 	npm audit
 
-audit-fix:
+js-audit-fix:
 	npm audit fix
