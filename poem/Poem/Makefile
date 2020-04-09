@@ -16,3 +16,9 @@ devel:
 prod:
 	rm -rf frontend/bundles/reactbundle/* ; \
 		node_modules/.bin/webpack --config webpack.config.js --progress --mode production
+
+audit-view:
+	npm audit
+
+audit-fix:
+	npm audit fix
