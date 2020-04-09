@@ -134,7 +134,7 @@ class Login extends Component {
                       <div className="pt-3">
                       </div>
                       <FormGroup>
-                        <Button color="success" type="submit" block>Log in using username and password</Button>
+                        <Button color="success" type="submit" block>Login using username and password</Button>
                         {this.state.isTenantSchema && <a className="btn btn-success btn-block" role="button" href="/saml2/login">{this.state.samlIdpString}</a>}
                       </FormGroup>
                     </Form>
