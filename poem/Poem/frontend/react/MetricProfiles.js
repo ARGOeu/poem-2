@@ -158,7 +158,9 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
                 type="button"
                 onClick={() => {
                   remove_handler(form.values.view_services[index]);
-                  if (index > 0)
+                  // prevent removal of last tuple
+                  if (index > 0 &&
+                    form.values.view_services.length > 1)
                     return remove(index)
                 }}>
                 <FontAwesomeIcon icon={faTimes}/>
@@ -601,6 +603,7 @@ function MetricProfilesComponent(cloneview=false) {
         element.metric === service.metric
       );
 
+      // don't remove last tuple, just reset it to empty values
       if (this.state.view_services.length === 1
         && this.state.list_services.length === 1) {
         tmp_list_services = [{
@@ -614,7 +617,7 @@ function MetricProfilesComponent(cloneview=false) {
           metric: ""
         }]
       }
-      else if (index > 0 && index_tmp > 0) {
+      else if (index >= 0 && index_tmp >= 0) {
         tmp_list_services = [...this.state.list_services]
         tmp_view_services = [...this.state.view_services]
         tmp_list_services.splice(index, 1)
