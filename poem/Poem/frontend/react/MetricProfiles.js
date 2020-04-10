@@ -158,7 +158,10 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
                 type="button"
                 onClick={() => {
                   remove_handler(form.values.view_services[index]);
-                  return remove(index)
+                  // prevent removal of last tuple
+                  if (index > 0 &&
+                    form.values.view_services.length > 1)
+                    return remove(index)
                 }}>
                 <FontAwesomeIcon icon={faTimes}/>
               </Button>
@@ -585,6 +588,9 @@ function MetricProfilesComponent(cloneview=false) {
     }
 
     onRemove(element) {
+      let tmp_view_services = []
+      let tmp_list_services = []
+
       // XXX: this means no duplicate elements allowed
       let index = this.state.list_services.findIndex(service =>
         element.index === service.index &&
@@ -597,9 +603,23 @@ function MetricProfilesComponent(cloneview=false) {
         element.metric === service.metric
       );
 
-      if (index >= 0 && index_tmp >= 0) {
-        let tmp_list_services = [...this.state.list_services]
-        let tmp_view_services = [...this.state.view_services]
+      // don't remove last tuple, just reset it to empty values
+      if (this.state.view_services.length === 1
+        && this.state.list_services.length === 1) {
+        tmp_list_services = [{
+          index: 0,
+          service: "",
+          metric: ""
+        }]
+        tmp_view_services = [{
+          index: 0,
+          service: "",
+          metric: ""
+        }]
+      }
+      else if (index >= 0 && index_tmp >= 0) {
+        tmp_list_services = [...this.state.list_services]
+        tmp_view_services = [...this.state.view_services]
         tmp_list_services.splice(index, 1)
         tmp_view_services.splice(index_tmp, 1)
 
@@ -613,12 +633,11 @@ function MetricProfilesComponent(cloneview=false) {
           let element_index = tmp_view_services[i].index
           tmp_view_services[i].index = element_index - 1;
         }
-
-        this.setState({
-          list_services: tmp_list_services,
-          view_services: tmp_view_services
-        });
       }
+      this.setState({
+        list_services: tmp_list_services,
+        view_services: tmp_view_services
+      });
     }
 
     render() {

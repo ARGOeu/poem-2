@@ -33,7 +33,7 @@ Email =
 
 [GENERAL_EGI]
 Namespace = hr.cro-ngi.TEST
-SamlLoginString = Log in using EGI CHECK-IN
+SamlLoginString = Login using EGI CHECK-IN
 SamlServiceName = ARGO POEM EGI-CheckIN
 
 [SUPERUSER_EGI]
