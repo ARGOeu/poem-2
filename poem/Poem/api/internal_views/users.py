@@ -313,3 +313,24 @@ class ListPublicGroupsForGivenUser(APIView):
 
     def get(self, request, username=None):
         return Response({'result': get_all_groups()})
+
+
+class ChangePassword(APIView):
+    authentication_classes = (SessionAuthentication,)
+
+    def put(self, request):
+        try:
+            user = CustUser.objects.get(username=request.data['username'])
+            if user == request.user:
+                user.set_password(request.data['new_password'])
+                user.save()
+                return Response(status=status.HTTP_201_CREATED)
+
+            else:
+                return Response(
+                    {'detail': 'Trying to change password for another user.'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+
+        except CustUser.DoesNotExist:
+            raise NotFound(status=404, detail='User not found.')
