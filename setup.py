@@ -16,9 +16,6 @@ def get_files(install_prefix, directory):
     return files
 
 
-poem_media_files = get_files("usr/share", "poem/media") + get_files("usr/share/", "poem/static")
-
-
 setup(name=NAME,
       version='3.1.0',
       description='Profiles, Probes and Metric Configuration Management (POEM) for ARGO Monitoring framework.',
@@ -44,7 +41,7 @@ setup(name=NAME,
           ('usr/share/poem/apache', ['poem/apache/poem.wsgi']),
           ('var/log/poem', ['helpers/empty']),
           ('var/lib/poem', ['helpers/empty']),
-      ] + poem_media_files,
+      ],
       include_package_data=True,
       package_dir={'Poem': 'poem/Poem'},
       packages=find_packages('poem/'),
