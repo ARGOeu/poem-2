@@ -15,14 +15,14 @@ try:
         raise ImproperlyConfigured('Unable to parse config file %s' % CONFIG_FILE)
 
     # General
-    DEBUG = bool(config.get('GENERAL', 'debug'))
+    DEBUG = bool(config.getboolean('GENERAL', 'debug'))
     TIME_ZONE = config.get('GENERAL', 'timezone')
 
     DBNAME = config.get('DATABASE', 'name')
     DBUSER = config.get('DATABASE', 'user')
     DBPASSWORD = config.get('DATABASE', 'password')
     DBHOST = config.get('DATABASE', 'host')
-    DBPORT = config.get('DATABASE', 'port')
+    DBPORT = config.getint('DATABASE', 'port')
 
     if not all([DBNAME, DBHOST, DBPORT, DBUSER, DBPASSWORD]):
         raise ImproperlyConfigured('Missing database settings in %s' % CONFIG_FILE)

@@ -1,10 +1,12 @@
 {% load render_bundle from webpack_loader %}
+{% load static %}
 
 <!DOCTYPE html>
 <html>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <link rel="shortcut icon" type="image/png" href="{% static 'argo-poem.ico'%}"}/>
     <title>ARGO POEM</title>
   </head>
   <body class="bodyreact">
