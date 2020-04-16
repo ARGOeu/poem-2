@@ -534,7 +534,7 @@ export class AggregationProfilesChange extends Component
       () => this.doChange(values, action));
   }
 
-  doChange(values, actions) {
+  async doChange(values, actions) {
     let values_send = JSON.parse(JSON.stringify(values));
     this.removeDummyGroup(values_send)
 
@@ -546,93 +546,101 @@ export class AggregationProfilesChange extends Component
     values_send.metric_profile = match_profile[0]
 
     if (!this.addview) {
-      this.webapi.changeAggregation(values_send)
-      .then(response => {
-        if (!response.ok) {
-          this.toggleAreYouSureSetModal(`Error: ${response.status}, ${response.statusText}`,
-            'Error changing aggregation profile',
-            undefined)
-        }
-        else {
-          response.json()
-            .then(r => {
-              this.backend.changeObject(
-                '/api/v2/internal/aggregations/',
-                {
-                  apiid: values_send.id,
-                  name: values_send.name,
-                  groupname: values_send.groupname,
-                  endpoint_group: values_send.endpoint_group,
-                  metric_operation: values_send.metric_operation,
-                  profile_operation: values_send.profile_operation,
-                  metric_profile: values.metric_profile,
-                  groups: JSON.stringify(values_send.groups)
-                }
-              )
-                .then(() => NotifyOk({
-                  msg: 'Aggregation profile succesfully changed',
-                  title: 'Changed',
-                  callback: () => this.history.push('/ui/aggregationprofiles')
-                },
-                ))
-                .catch(err => alert('Something went wrong: ' + err))
-            })
-          .catch(err => alert('Something went wrong: ' + err))
-        }
-      }).catch(err => alert('Something went wrong: ' + err))
-    }
-    else {
-      this.webapi.addAggregation(values_send)
-      .then(response => {
-        if (!response.ok) {
-          this.toggleAreYouSureSetModal(`Error: ${response.status}, ${response.statusText}`,
-            'Error adding aggregation profile',
-            undefined)
-        }
-        else {
-          response.json()
-            .then(r => {
-              this.backend.addObject(
-                '/api/v2/internal/aggregations/',
-                {
-                  apiid: r.data.id,
-                  name: values_send.name,
-                  groupname: values_send.groupname,
-                  endpoint_group: values_send.endpoint_group,
-                  metric_operation: values_send.metric_operation,
-                  profile_operation: values_send.profile_operation,
-                  metric_profile: values.metric_profile,
-                  groups: JSON.stringify(values_send.groups)
-                }
-              ).then(() => NotifyOk({
-                  msg: 'Aggregation profile successfully added',
-                  title: 'Added',
-                  callback: () => this.history.push('/ui/aggregationprofiles')
-                }))
-                .catch(err => alert('Something went wrong: ' + err))
-            })
-            .catch(err => alert('Something went wrong: ' + err))
-        }
-      }).catch(err => alert('Something went wrong: ' + err))
-    }
+      let response = await this.webapi.changeAggregation(values_send);
+      if (!response.ok) {
+        this.toggleAreYouSureSetModal(`Error: ${response.status}, ${response.statusText}`,
+          'Web API error changing aggregation profile',
+          undefined)
+      }
+      else {
+        let r_internal = await this.backend.changeObject(
+          '/api/v2/internal/aggregations/',
+          {
+            apiid: values_send.id,
+            name: values_send.name,
+            groupname: values_send.groupname,
+            endpoint_group: values_send.endpoint_group,
+            metric_operation: values_send.metric_operation,
+            profile_operation: values_send.profile_operation,
+            metric_profile: values.metric_profile,
+            groups: JSON.stringify(values_send.groups)
+          }
+        )
+        if (r_internal.ok)
+          NotifyOk({
+            msg: 'Aggregation profile succesfully changed',
+            title: 'Changed',
+            callback: () => this.history.push('/ui/aggregationprofiles')
+          })
+        else
+          this.toggleAreYouSureSetModal(
+            `Error: ${r_internal.status} ${r_internal.statusText}`,
+            'Internal API error changing aggregation profile',
+            undefined
+          );
+      };
+    } else {
+      let response = await this.webapi.addAggregation(values_send);
+      if (!response.ok) {
+        this.toggleAreYouSureSetModal(
+          `Error: ${response.status}, ${response.statusText}`,
+          'Web API error adding aggregation profile',
+          undefined)
+      }
+      else {
+        let r = await response.json();
+        let r_internal = await this.backend.addObject(
+          '/api/v2/internal/aggregations/',
+          {
+            apiid: r.data.id,
+            name: values_send.name,
+            groupname: values_send.groupname,
+            endpoint_group: values_send.endpoint_group,
+            metric_operation: values_send.metric_operation,
+            profile_operation: values_send.profile_operation,
+            metric_profile: values.metric_profile,
+            groups: JSON.stringify(values_send.groups)
+          }
+        );
+        if (r_internal.ok)
+          NotifyOk({
+            msg: 'Aggregation profile successfully added',
+            title: 'Added',
+            callback: () => this.history.push('/ui/aggregationprofiles')
+          })
+        else
+          this.toggleAreYouSureSetModal(
+            `Error: ${r_internal.status} ${r_internal.statusText}`,
+            'Internal API error adding aggregation profile',
+            undefined
+          );
+      };
+    };
   }
 
-  doDelete(idProfile) {
-    this.webapi.deleteAggregation(idProfile)
-    .then(response => {
-      if (!response.ok) {
-        alert(`Error: ${response.status}, ${response.statusText}`)
-      } else {
-        response.json()
-        .then(this.backend.deleteObject(`/api/v2/internal/aggregations/${idProfile}`))
-        .then(
-          () => NotifyOk({
-            msg: 'Aggregation profile sucessfully deleted',
-            title: 'Deleted',
-            callback: () => this.history.push('/ui/aggregationprofiles')
-          }))
-      }
-    }).catch(err => alert('Something went wrong: ' + err))
+  async doDelete(idProfile) {
+    let response = await this.webapi.deleteAggregation(idProfile);
+    if (!response.ok) {
+      this.toggleAreYouSureSetModal(
+        `Error: ${response.status} ${response.statusText}`,
+        'Web API error deleting aggregation profile',
+        undefined
+      )
+    } else {
+      let r = await this.backend.deleteObject(`/api/v2/internal/aggregations/${idProfile}`);
+      if (r.ok)
+        NotifyOk({
+          msg: 'Aggregation profile sucessfully deleted',
+          title: 'Deleted',
+          callback: () => this.history.push('/ui/aggregationprofiles')
+        });
+      else
+        this.toggleAreYouSureSetModal(
+          `Error: ${r.status} ${r.statusText}`,
+          'Internal API error deleting aggregation profile',
+          undefined
+        )
+    };
   }
 
   insertDummyGroup(groups) {
@@ -664,55 +672,51 @@ export class AggregationProfilesChange extends Component
     return isMissing
   }
 
-  componentDidMount() {
+  async componentDidMount() {
     this.setState({loading: true})
 
-    this.backend.isActiveSession().then(sessionActive => {
-      sessionActive.active && Promise.all([
-        this.webapi.fetchMetricProfiles(),
-      ])
-        .then(([metricp]) => {
-          if (!this.addview) {
-            this.backend.fetchData(`/api/v2/internal/aggregations/${this.profile_name}`)
-              .then(json => Promise.all([this.webapi.fetchAggregationProfile(json.apiid)])
-                .then(([aggregp]) => this.setState({
-                  aggregation_profile: aggregp,
-                  groupname: json['groupname'],
-                  list_user_groups: sessionActive.userdetails.groups.aggregations,
-                  write_perm: sessionActive.userdetails.is_superuser ||
-                    sessionActive.userdetails.groups.aggregations.indexOf(json['groupname']) >= 0,
-                  list_id_metric_profiles: this.extractListOfMetricsProfiles(metricp),
-                  list_services: this.extractListOfServices(aggregp.metric_profile, metricp),
-                  list_complete_metric_profiles: metricp,
-                  loading: false
-                }))
-              )
-          } else {
-            let empty_aggregation_profile = {
-              id: '',
-              name: '',
-              metric_operation: '',
-              profile_operation: '',
-              endpoint_group: '',
-              metric_profile: {
-                  name: ''
-              },
-              groups: []
-            }
-            this.setState({
-              aggregation_profile: empty_aggregation_profile,
-              groupname: '',
-              list_user_groups: sessionActive.userdetails.groups.aggregations,
-              write_perm: sessionActive.userdetails.is_superuser ||
-                sessionActive.userdetails.groups.aggregations.length > 0,
-              list_id_metric_profiles: this.extractListOfMetricsProfiles(metricp),
-              list_complete_metric_profiles: metricp,
-              list_services: [],
-              loading: false
-            })
-          }
-        })
-    })
+    let sessionActive = await this.backend.isActiveSession();
+    if (sessionActive.active) {
+      let metricp = await this.webapi.fetchMetricProfiles();
+      if (!this.addview) {
+        let json = await this.backend.fetchData(`/api/v2/internal/aggregations/${this.profile_name}`);
+        let aggregp = await this.webapi.fetchAggregationProfile(json.apiid);
+        this.setState({
+          aggregation_profile: aggregp,
+          groupname: json['groupname'],
+          list_user_groups: sessionActive.userdetails.groups.aggregations,
+          write_perm: sessionActive.userdetails.is_superuser ||
+            sessionActive.userdetails.groups.aggregations.indexOf(json['groupname']) >= 0,
+          list_id_metric_profiles: this.extractListOfMetricsProfiles(metricp),
+          list_services: this.extractListOfServices(aggregp.metric_profile, metricp),
+          list_complete_metric_profiles: metricp,
+          loading: false
+        });
+      } else {
+        let empty_aggregation_profile = {
+          id: '',
+          name: '',
+          metric_operation: '',
+          profile_operation: '',
+          endpoint_group: '',
+          metric_profile: {
+              name: ''
+          },
+          groups: []
+        }
+        this.setState({
+          aggregation_profile: empty_aggregation_profile,
+          groupname: '',
+          list_user_groups: sessionActive.userdetails.groups.aggregations,
+          write_perm: sessionActive.userdetails.is_superuser ||
+            sessionActive.userdetails.groups.aggregations.length > 0,
+          list_id_metric_profiles: this.extractListOfMetricsProfiles(metricp),
+          list_complete_metric_profiles: metricp,
+          list_services: [],
+          loading: false
+        });
+      };
+    };
   }
 
   render() {
@@ -834,14 +838,13 @@ export class AggregationProfilesList extends Component
     this.backend = new Backend();
   }
 
-  componentDidMount() {
+  async componentDidMount() {
     this.setState({loading: true})
-    this.backend.fetchData('/api/v2/internal/aggregations')
-      .then(json =>
-        this.setState({
-          list_aggregations: json,
-          loading: false})
-      )
+    let json = await this.backend.fetchData('/api/v2/internal/aggregations');
+    this.setState({
+      list_aggregations: json,
+      loading: false
+    });
   }
 
   render() {
@@ -964,62 +967,60 @@ export class AggregationProfileVersionCompare extends Component {
     this.backend = new Backend();
   }
 
-  componentDidMount() {
-    this.backend.fetchData(`/api/v2/internal/tenantversion/aggregationprofile/${this.name}`)
-      .then((json) => {
-        let name1 = '';
-        let groupname1 = '';
-        let metric_operation1 = '';
-        let profile_operation1 = '';
-        let endpoint_group1 = '';
-        let metric_profile1 = '';
-        let groups1 = [];
-        let name2 = '';
-        let groupname2 = '';
-        let metric_operation2 = '';
-        let profile_operation2 = '';
-        let endpoint_group2 = '';
-        let metric_profile2 = '';
-        let groups2 = [];
+  async componentDidMount() {
+    let json = await this.backend.fetchData(`/api/v2/internal/tenantversion/aggregationprofile/${this.name}`);
+    let name1 = '';
+    let groupname1 = '';
+    let metric_operation1 = '';
+    let profile_operation1 = '';
+    let endpoint_group1 = '';
+    let metric_profile1 = '';
+    let groups1 = [];
+    let name2 = '';
+    let groupname2 = '';
+    let metric_operation2 = '';
+    let profile_operation2 = '';
+    let endpoint_group2 = '';
+    let metric_profile2 = '';
+    let groups2 = [];
 
-        json.forEach((e) => {
-          if (e.version == this.version1) {
-            name1 = e.fields.name;
-            groupname1 = e.fields.groupname;
-            metric_operation1 = e.fields.metric_operation;
-            profile_operation1 = e.fields.profile_operation;
-            endpoint_group1 = e.fields.endpoint_group;
-            metric_profile1 = e.fields.metric_profile;
-            groups1 = e.fields.groups;
-          } else if (e.version == this.version2) {
-            name2 = e.fields.name;
-            groupname2 = e.fields.groupname;
-            metric_operation2 = e.fields.metric_operation;
-            profile_operation2 = e.fields.profile_operation;
-            endpoint_group2 = e.fields.endpoint_group;
-            metric_profile2 = e.fields.metric_profile;
-            groups2 = e.fields.groups;
-          }
-        });
+    json.forEach((e) => {
+      if (e.version == this.version1) {
+        name1 = e.fields.name;
+        groupname1 = e.fields.groupname;
+        metric_operation1 = e.fields.metric_operation;
+        profile_operation1 = e.fields.profile_operation;
+        endpoint_group1 = e.fields.endpoint_group;
+        metric_profile1 = e.fields.metric_profile;
+        groups1 = e.fields.groups;
+      } else if (e.version == this.version2) {
+        name2 = e.fields.name;
+        groupname2 = e.fields.groupname;
+        metric_operation2 = e.fields.metric_operation;
+        profile_operation2 = e.fields.profile_operation;
+        endpoint_group2 = e.fields.endpoint_group;
+        metric_profile2 = e.fields.metric_profile;
+        groups2 = e.fields.groups;
+      };
 
-        this.setState({
-          name1: name1,
-          groupname1: groupname1,
-          metric_operation1: metric_operation1,
-          profile_operation1: profile_operation1,
-          endpoint_group1: endpoint_group1,
-          metric_profile1: metric_profile1,
-          groups1: groups1,
-          name2: name2,
-          groupname2: groupname2,
-          metric_operation2: metric_operation2,
-          profile_operation2: profile_operation2,
-          endpoint_group2: endpoint_group2,
-          metric_profile2: metric_profile2,
-          groups2: groups2,
-          loading: false,
-        });
+      this.setState({
+        name1: name1,
+        groupname1: groupname1,
+        metric_operation1: metric_operation1,
+        profile_operation1: profile_operation1,
+        endpoint_group1: endpoint_group1,
+        metric_profile1: metric_profile1,
+        groups1: groups1,
+        name2: name2,
+        groupname2: groupname2,
+        metric_operation2: metric_operation2,
+        profile_operation2: profile_operation2,
+        endpoint_group2: endpoint_group2,
+        metric_profile2: metric_profile2,
+        groups2: groups2,
+        loading: false,
       });
+    });
   }
 
   render() {
@@ -1097,26 +1098,24 @@ export class AggregationProfileVersionDetails extends Component {
     };
   }
 
-  componentDidMount() {
+  async componentDidMount() {
     this.setState({loading: true});
 
-    this.backend.fetchData(`/api/v2/internal/tenantversion/aggregationprofile/${this.name}`)
-      .then((json) => {
-        json.forEach((e) => {
-          if (e.version == this.version)
-            this.setState({
-              name: e.fields.name,
-              groupname: e.fields.groupname,
-              metric_operation: e.fields.metric_operation,
-              profile_operation: e.fields.profile_operation,
-              endpoint_group: e.fields.endpoint_group,
-              metric_profile: e.fields.metric_profile,
-              groups: e.fields.groups,
-              date_created: e.date_created,
-              loading: false
-            });
+    let json = await this.backend.fetchData(`/api/v2/internal/tenantversion/aggregationprofile/${this.name}`);
+    json.forEach((e) => {
+      if (e.version == this.version)
+        this.setState({
+          name: e.fields.name,
+          groupname: e.fields.groupname,
+          metric_operation: e.fields.metric_operation,
+          profile_operation: e.fields.profile_operation,
+          endpoint_group: e.fields.endpoint_group,
+          metric_profile: e.fields.metric_profile,
+          groups: e.fields.groups,
+          date_created: e.date_created,
+          loading: false
         });
-      });
+    });
   }
 
   render() {
