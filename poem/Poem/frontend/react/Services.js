@@ -19,15 +19,14 @@ class Services extends Component {
     this.backend = new Backend();
   }
 
-  componentDidMount() {
+  async componentDidMount() {
     this.setState({loading: true});
-    this.backend.fetchData('/api/v2/internal/services')
-      .then(json =>
-        this.setState({
-          rows: json.result.rows,
-          rowspan: json.result.rowspan,
-          loading: false})
-      );
+    let json = await this.backend.fetchData('/api/v2/internal/services');
+    this.setState({
+      rows: json.result.rows,
+      rowspan: json.result.rowspan,
+      loading: false
+    });
   }
 
   getRowSpan(re, match) {

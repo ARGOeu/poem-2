@@ -302,19 +302,17 @@ export class ProbeList extends Component {
     this.backend = new Backend();
   }
 
-  componentDidMount() {
+  async componentDidMount() {
     this.setState({loading: true});
 
-    Promise.all([
-      this.backend.fetchData('/api/v2/internal/probes'),
-      this.backend.isTenantSchema()
-    ]).then(([json, isTenantSchema]) =>
-        this.setState({
-          list_probe: json,
-          isTenantSchema: isTenantSchema,
-          loading: false,
-          search_name: ''
-        }))
+    let json = await this.backend.fetchData('/api/v2/internal/probes');
+    let isTenantSchema = await this.backend.isTenantSchema();
+    this.setState({
+      list_probe: json,
+      isTenantSchema: isTenantSchema,
+      loading: false,
+      search_name: ''
+    });
   }
 
   render() {
@@ -516,7 +514,7 @@ function ProbeComponent(cloneview=false) {
         () => this.doChange(values, actions));
     }
 
-    doChange(values, actions) {
+    async doChange(values, actions) {
       if (this.addview || cloneview) {
         let cloned_from = undefined;
         if (cloneview) {
@@ -524,7 +522,7 @@ function ProbeComponent(cloneview=false) {
         } else {
           cloned_from = '';
         }
-        this.backend.addObject(
+        let response = await this.backend.addObject(
           '/api/v2/internal/probes/',
           {
             name: values.name,
@@ -535,22 +533,19 @@ function ProbeComponent(cloneview=false) {
             comment: values.comment,
             cloned_from: cloned_from
           }
-          ).then(response => {
-            if (!response.ok) {
-              response.json()
-                .then(json => {
-                  NotificationManager.error(json.detail, 'Error');
-                });
-            } else {
-              NotifyOk({
-                msg: 'Probe successfully added',
-                title: 'Added',
-                callback: () => this.history.push('/ui/probes')
-              });
-            }
-          });
+          );
+          if (!response.ok) {
+            let json = await response.json();
+            NotificationManager.error(json.detail, 'Error');
+          } else {
+            NotifyOk({
+              msg: 'Probe successfully added',
+              title: 'Added',
+              callback: () => this.history.push('/ui/probes')
+            });
+          };
       } else {
-        this.backend.changeObject(
+        let response = await this.backend.changeObject(
           '/api/v2/internal/probes/',
           {
             id: values.id,
@@ -562,39 +557,32 @@ function ProbeComponent(cloneview=false) {
             comment: values.comment,
             update_metrics: values.update_metrics
           }
-        ).then(response => {
-            if (!response.ok) {
-              response.json()
-                .then(json => {
-                  NotificationManager.error(json.detail, 'Error');
-                });
-            } else {
-              NotifyOk({
-                msg: 'Probe successfully changed',
-                title: 'Changed',
-                callback: () => this.history.push('/ui/probes')
-              });
-            }
+        );
+        if (!response.ok) {
+          let json = await response.json();
+          NotificationManager.error(json.detail, 'Error');
+        } else {
+          NotifyOk({
+            msg: 'Probe successfully changed',
+            title: 'Changed',
+            callback: () => this.history.push('/ui/probes')
           });
-      }
+        };
+      };
     }
 
-    doDelete(name) {
-      this.backend.deleteObject(`/api/v2/internal/probes/${name}`)
-        .then(response => {
-          if (!response.ok) {
-            response.json()
-              .then(json => {
-                NotificationManager.error(json.detail, 'Error');
-              });
-          } else {
-            NotifyOk({
-              msg: 'Probe successfully deleted',
-              title: 'Deleted',
-              callback: () => this.history.push('/ui/probes')
-            });
-          }
+    async doDelete(name) {
+      let response = await this.backend.deleteObject(`/api/v2/internal/probes/${name}`);
+      if (!response.ok) {
+        let json = await response.json();
+        NotificationManager.error(json.detail, 'Error');
+      } else {
+        NotifyOk({
+          msg: 'Probe successfully deleted',
+          title: 'Deleted',
+          callback: () => this.history.push('/ui/probes')
         });
+      };
     }
 
     onDismiss() {
@@ -608,38 +596,30 @@ function ProbeComponent(cloneview=false) {
       this.setState({probe: probe});
     }
 
-    componentDidMount() {
+    async componentDidMount() {
       this.setState({loading: true});
 
-      Promise.all([
-        this.backend.isTenantSchema(),
-        this.backend.fetchData('/api/v2/internal/packages')
-      ])
-        .then(([isTenantSchema, pkgs]) => {
-          let list_packages = [];
-          pkgs.forEach(e => list_packages.push(`${e.name} (${e.version})`));
-          if (!this.addview) {
-            this.backend.fetchData(`/api/v2/internal/probes/${this.name}`)
-              .then(probe => {
-                this.backend.fetchData(`/api/v2/internal/metricsforprobes/${probe.name}(${probe.version})`)
-                  .then(metrics => {
-                    this.setState({
-                      probe: probe,
-                      list_packages: list_packages,
-                      isTenantSchema: isTenantSchema,
-                      metrictemplatelist: metrics,
-                      loading: false
-                    });
-                  });
-              });
-          } else {
-            this.setState({
-              list_packages: list_packages,
-              isTenantSchema: isTenantSchema,
-              loading: false
-            });
-          }
+      let isTenantSchema = await this.backend.isTenantSchema();
+      let pkgs = await this.backend.fetchData('/api/v2/internal/packages');
+      let list_packages = [];
+      pkgs.forEach(e => list_packages.push(`${e.name} (${e.version})`));
+      if (!this.addview) {
+        let probe = await this.backend.fetchData(`/api/v2/internal/probes/${this.name}`);
+        let metrics = await this.backend.fetchData(`/api/v2/internal/metricsforprobes/${probe.name}(${probe.version})`);
+        this.setState({
+          probe: probe,
+          list_packages: list_packages,
+          isTenantSchema: isTenantSchema,
+          metrictemplatelist: metrics,
+          loading: false
         });
+      } else {
+        this.setState({
+          list_packages: list_packages,
+          isTenantSchema: isTenantSchema,
+          loading: false
+        });
+      };
     }
 
     render() {
@@ -784,65 +764,62 @@ export class ProbeVersionCompare extends Component{
     this.backend = new Backend();
   }
 
-  componentDidMount() {
+  async componentDidMount() {
     this.setState({loading: true});
 
-    this.backend.fetchData(`/api/v2/internal/version/probe/${this.name}`)
-      .then((json) => {
-        let name1 = '';
-        let version1 = '';
-        let package1 = '';
-        let description1 = '';
-        let repository1 = '';
-        let docurl1 = '';
-        let comment1 = '';
-        let name2 = ''
-        let version2 = '';
-        let package2 = '';
-        let description2 = '';
-        let repository2 = '';
-        let docurl2 = '';
-        let comment2 = '';
+    let json = await this.backend.fetchData(`/api/v2/internal/version/probe/${this.name}`);
+    let name1 = '';
+    let version1 = '';
+    let package1 = '';
+    let description1 = '';
+    let repository1 = '';
+    let docurl1 = '';
+    let comment1 = '';
+    let name2 = ''
+    let version2 = '';
+    let package2 = '';
+    let description2 = '';
+    let repository2 = '';
+    let docurl2 = '';
+    let comment2 = '';
 
-        json.forEach((e) => {
-          if (e.version == this.version1) {
-            name1 = e.fields.name;
-            version1 = e.fields.version;
-            package1 = e.fields.package;
-            description1 = e.fields.description;
-            repository1 = e.fields.repository;
-            docurl1 = e.fields.docurl;
-            comment1 = e.fields.comment;
-          } else if (e.version === this.version2) {
-            name2 = e.fields.name;
-            version2 = e.fields.version;
-            package2 = e.fields.package;
-            description2 = e.fields.description;
-            repository2 = e.fields.repository;
-            docurl2 = e.fields.docurl;
-            comment2 = e.fields.comment;
-          }
-        });
-
-        this.setState({
-          name1: name1,
-          version1: version1,
-          package1: package1,
-          description1: description1,
-          repository1: repository1,
-          docurl1: docurl1,
-          comment1: comment1,
-          name2: name2,
-          version2: version2,
-          package2: package2,
-          description2: description2,
-          repository2: repository2,
-          docurl2: docurl2,
-          comment2: comment2,
-          loading: false
-        });
+    json.forEach((e) => {
+      if (e.version == this.version1) {
+        name1 = e.fields.name;
+        version1 = e.fields.version;
+        package1 = e.fields.package;
+        description1 = e.fields.description;
+        repository1 = e.fields.repository;
+        docurl1 = e.fields.docurl;
+        comment1 = e.fields.comment;
+      } else if (e.version === this.version2) {
+        name2 = e.fields.name;
+        version2 = e.fields.version;
+        package2 = e.fields.package;
+        description2 = e.fields.description;
+        repository2 = e.fields.repository;
+        docurl2 = e.fields.docurl;
+        comment2 = e.fields.comment;
       }
-    )
+    });
+
+    this.setState({
+      name1: name1,
+      version1: version1,
+      package1: package1,
+      description1: description1,
+      repository1: repository1,
+      docurl1: docurl1,
+      comment1: comment1,
+      name2: name2,
+      version2: version2,
+      package2: package2,
+      description2: description2,
+      repository2: repository2,
+      docurl2: docurl2,
+      comment2: comment2,
+      loading: false
+    });
   }
 
   render() {
@@ -922,26 +899,23 @@ export class ProbeVersionDetails extends Component {
     };
   }
 
-  componentDidMount() {
+  async componentDidMount() {
     this.setState({loading: true});
 
-    this.backend.fetchData(`/api/v2/internal/version/probe/${this.name}`)
-      .then((json) => {
-        json.forEach((e) => {
-          if (e.version === this.version)
-            this.setState({
-              name: e.fields.name,
-              version: e.fields.version,
-              pkg: e.fields.package,
-              description: e.fields.description,
-              repository: e.fields.repository,
-              docurl: e.fields.docurl,
-              comment: e.fields.comment,
-              loading: false
-            });
+    let json = await this.backend.fetchData(`/api/v2/internal/version/probe/${this.name}`);
+    json.forEach((e) => {
+      if (e.version === this.version)
+        this.setState({
+          name: e.fields.name,
+          version: e.fields.version,
+          pkg: e.fields.package,
+          description: e.fields.description,
+          repository: e.fields.repository,
+          docurl: e.fields.docurl,
+          comment: e.fields.comment,
+          loading: false
         });
-      }
-    )
+    });
   }
 
   render() {

@@ -35,38 +35,40 @@ class Login extends Component {
     this.AppOnLogin = props.onLogin
   }
 
-  fetchSamlButtonString() {
-    return fetch('/api/v2/internal/config_options')
-      .then(response => response.json())
-      .catch(err => alert('Something went wrong: ' + err));
+  async fetchSamlButtonString() {
+    try {
+      let response = await fetch('/api/v2/internal/config_options');
+      let json = await response.json();
+      return json;
+    } catch(err) {
+      alert(`Something went wrong: ${err}`);
+    }
   }
 
-  componentDidMount() {
+  async componentDidMount() {
     this._isMounted = true;
 
-    this.backend.isTenantSchema().then(response => {
-      if (response === true)
-        this.fetchSamlButtonString().then(json => {
-          this.setState({
-            isTenantSchema: response,
-            samlIdpString: json.result.saml_login_string
-          })
-        })
-      else if (response === false)
+    let response = await this.backend.isTenantSchema();
+    if (response === true) {
+      let json = await this.fetchSamlButtonString();
+      if (this._isMounted)
         this.setState({
           isTenantSchema: response,
+          samlIdpString: json.result.saml_login_string
         })
-    })
-      .catch(err => alert('Something went wrong: ' + err))
+    } else if (response === false)
+      if (this._isMounted)
+        this.setState({
+          isTenantSchema: response,
+        });
   }
 
   componentWillUnmount() {
     this._isMounted = false;
   }
 
-  doUserPassLogin(username, password)
-  {
-    return fetch('/rest-auth/login/', {
+  async doUserPassLogin(username, password) {
+    let response = await fetch('/rest-auth/login/', {
       method: 'POST',
       mode: 'cors',
       cache: 'no-cache',
@@ -80,7 +82,8 @@ class Login extends Component {
         'username': username,
         'password': password
       })
-    }).then(() => this.backend.isActiveSession(this.state.isTenantSchema))
+    });
+    return this.backend.isActiveSession(this.state.isTenantSchema);
   }
 
   dismissLoginAlert() {
@@ -104,16 +107,15 @@ class Login extends Component {
                   <Formik
                     initialValues = {{username: '', password: ''}}
                     onSubmit = {
-                      (values) => this.doUserPassLogin(values.username, values.password)
-                        .then(response =>
-                          {
-                            if (response.active) {
-                              this.AppOnLogin(response.userdetails, this.props.history)
-                            }
-                            else {
-                              this.setState({loginFailedVisible: true});
-                            }
-                          })
+                      async (values) => {
+                        let response = await this.doUserPassLogin(values.username, values.password);
+                        if (response.active) {
+                          this.AppOnLogin(response.userdetails, this.props.history)
+                        }
+                        else {
+                          this.setState({loginFailedVisible: true});
+                        };
+                      }
                     }>
                     <Form>
                       <FormGroup>
@@ -156,4 +158,3 @@ class Login extends Component {
 }
 
 export default Login;
-

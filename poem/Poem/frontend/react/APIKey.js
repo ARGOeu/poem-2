@@ -35,16 +35,14 @@ export class APIKeyList extends Component {
     this.backend = new Backend();
   }
 
-  componentDidMount() {
+  async componentDidMount() {
     this.setState({ loading: true });
 
-    this.backend.fetchData('/api/v2/internal/apikeys')
-      .then(json =>
-        this.setState({
-          list_keys: json,
-          loading: false
-        })
-      );
+    let json = await this.backend.fetchData('/api/v2/internal/apikeys');
+    this.setState({
+      list_keys: json,
+      loading: false
+    });
   }
 
   render() {
@@ -160,64 +158,75 @@ export class APIKeyChange extends Component {
       () => this.doChange(values, actions))
   }
 
-  doChange(values, actions) {
+  async doChange(values, actions) {
     if (!this.addview) {
-      this.backend.changeObject(
+      let response = await this.backend.changeObject(
         '/api/v2/internal/apikeys/',
         {
           id: this.state.key.id,
           revoked: values.revoked,
           name: values.name,
         }
-      ).then(response => response.ok ?
+      );
+      response.ok ?
         NotifyOk({
           msg: 'API key successfully changed',
           title: 'Changed',
           callback: () => this.history.push('/ui/administration/apikey')
         })
-        : alert('Something went wrong: ' + response.statusText))
+      :
+        this.toggleAreYouSureSetModal(
+          `Error: ${response.status} ${response.statusText}`,
+          'Error changing API key',
+          undefined
+        );
     } else {
-      this.backend.addObject(
+      let response = await this.backend.addObject(
         '/api/v2/internal/apikeys/',
         {
           name: values.name
         }
-      ).then(response => response.ok ?
+      );
+      response.ok ?
         NotifyOk({
           msg: 'API key successfully added',
           title: 'Added',
           callback: () => this.history.push('/ui/administration/apikey')
         })
         :
-        alert('Something went wrong: ' + response.statusText))
-    }
+          this.toggleAreYouSureSetModal(
+            `Error: ${response.status} ${response.statusText}`,
+            'Error adding API key',
+            undefined
+          );
+    };
   }
 
-  doDelete(name) {
-    this.backend.deleteObject(`/api/v2/internal/apikeys/${name}`)
-      .then(response => response.ok
-        ?
-          NotifyOk({
-            msg: 'API key successfully deleted',
-            title: 'Deleted',
-            callback: () => this.history.push('/ui/administration/apikey')
-          })
-        :
-          alert('Something went wrong: ' + response.statusText)
-      )
+  async doDelete(name) {
+    let response = await this.backend.deleteObject(`/api/v2/internal/apikeys/${name}`);
+    response.ok?
+      NotifyOk({
+        msg: 'API key successfully deleted',
+        title: 'Deleted',
+        callback: () => this.history.push('/ui/administration/apikey')
+      })
+    :
+      this.toggleAreYouSureSetModal(
+        `Error: ${response.status} ${response.statusText}`,
+        'Error deleting API key',
+        undefined
+      );
   }
 
-  componentDidMount() {
+  async componentDidMount() {
     this.setState({ loading: true });
 
     if (!this.addview) {
-      this.backend.fetchData(`/api/v2/internal/apikeys/${this.name}`)
-        .then((json) =>
-          this.setState({
-            key: json,
-            loading: false,
-          })
-        );
+      let json = await this.backend.fetchData(`/api/v2/internal/apikeys/${this.name}`);
+      this.setState({
+        key: json,
+        loading: false,
+      });
     } else {
       this.setState({
         key: {
@@ -226,8 +235,8 @@ export class APIKeyChange extends Component {
           token: ''
         },
         loading: false,
-      })
-    }
+      });
+    };
   }
 
   render() {

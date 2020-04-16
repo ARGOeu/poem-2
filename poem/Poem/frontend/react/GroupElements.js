@@ -38,15 +38,14 @@ function GroupList(group, id, name) {
       this.backend = new Backend();
   }
 
-  componentDidMount() {
+  async componentDidMount() {
       this.setState({loading: true});
-      this.backend.fetchResult('/api/v2/internal/usergroups')
-        .then(json =>
-          this.setState({
-            list_groups: json[group],
-            loading: false
-          })
-        );
+
+      let json = await this.backend.fetchResult('/api/v2/internal/usergroups');
+      this.setState({
+        list_groups: json[group],
+        loading: false
+      });
   }
 
   render() {
@@ -169,72 +168,90 @@ function GroupChange(gr, id, ttl) {
         () => this.doChange(values, action));
     }
 
-    doChange(values, action) {
+    async doChange(values, action) {
       let items = [];
       this.state.items.forEach((i) => items.push(i.name));
 
       if (!this.addview) {
-        this.backend.changeObject(
+        let response = await this.backend.changeObject(
           `/api/v2/internal/${gr}group/`,
           {
             name: values.name,
             items: items
           }
-        ).then(() => NotifyOk({
-          msg: `Group of ${ttl} successfully changed`,
-          title: 'Changed',
-          callback: () => this.history.push(`/ui/administration/${id}`)
-        }))
-        .catch(err => alert(`Something went wrong: ${err}`))
+        );
+
+        if (response.ok)
+          NotifyOk({
+            msg: `Group of ${ttl} successfully changed`,
+            title: 'Changed',
+            callback: () => this.history.push(`/ui/administration/${id}`)
+          });
+        else
+          this.toggleAreYouSureSetModal(
+            `Error: ${response.status} ${response.statusText}`,
+            `Error changing group of ${ttl}`,
+            undefined
+          );
       } else {
-        this.backend.addObject(
+        let response = await this.backend.addObject(
           `/api/v2/internal/${gr}group/`,
           {
             name: values.name,
             items: items
           }
-        )
-        .then(() => NotifyOk({
-          msg:  `Group of ${ttl} successfully added`,
-          title: 'Added',
-          callback: () => this.history.push(`/ui/administration/${id}`)
-        }))
-        .catch(err => alert(`Something went wrong: ${err}`))
+        );
+        if (response.ok)
+          NotifyOk({
+            msg:  `Group of ${ttl} successfully added`,
+            title: 'Added',
+            callback: () => this.history.push(`/ui/administration/${id}`)
+          });
+        else
+          this.toggleAreYouSureSetModal(
+            `Error: ${response.status} ${response.statusText}`,
+            `Error adding group of ${ttl}`,
+            undefined
+          );
       }
     }
 
-    doDelete(name) {
-      this.backend.deleteObject(`/api/v2/internal/${gr}group/${name}`)
-        .then(() => NotifyOk({
+    async doDelete(name) {
+      let response = await this.backend.deleteObject(`/api/v2/internal/${gr}group/${name}`);
+      if (response.ok)
+        NotifyOk({
           msg:  `Group of ${ttl} successfully deleted`,
           title: 'Deleted',
           callback: () => this.history.push(`/ui/administration/${id}`)
-        }))
-        .catch(err => alert(`Something went wrong: ${err}`))
+        });
+      else
+        this.toggleAreYouSureSetModal(
+          `Error: ${response.status} ${response.statusText}`,
+          `Error deleting group of ${ttl}`,
+          undefined
+        );
     }
 
-    componentDidMount() {
+    async componentDidMount() {
       this.setState({loading: true});
 
-      this.backend.fetchResult(`/api/v2/internal/${gr}group`)
-        .then(nogroupitems => {
-          if (!this.addview) {
-            this.backend.fetchResult(`/api/v2/internal/${gr}group/${this.group}`)
-              .then(items => this.setState({
-                name: this.group,
-                items: items,
-                nogroupitems: nogroupitems,
-                loading: false
-              }));
-          } else {
-            this.setState({
-              name: '',
-              items: [],
-              nogroupitems: nogroupitems,
-              loading: false
-            });
-          }
+      let nogroupitems = await this.backend.fetchResult(`/api/v2/internal/${gr}group`);
+      if (!this.addview) {
+        let items = await this.backend.fetchResult(`/api/v2/internal/${gr}group/${this.group}`);
+        this.setState({
+          name: this.group,
+          items: items,
+          nogroupitems: nogroupitems,
+          loading: false
         });
+      } else {
+        this.setState({
+          name: '',
+          items: [],
+          nogroupitems: nogroupitems,
+          loading: false
+        });
+      };
     }
 
     render() {
