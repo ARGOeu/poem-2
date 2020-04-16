@@ -301,21 +301,21 @@ class App extends Component {
     this.toggleAreYouSure = this.toggleAreYouSure.bind(this);
   }
 
-  onLogin(json, history) {
+  async onLogin(json, history) {
     let response = new Object({
       active: true,
       userdetails: json
     })
 
-    this.backend.isTenantSchema().then((isTenantSchema) =>
-      this.initalizeState(isTenantSchema, response)).then(
-        setTimeout(() => {
-          response.userdetails.is_superuser ?
-            history.push('/ui/administration')
-          :
-            history.push('/ui/metricprofiles')
-        }, 50
-      ))
+    let isTenantSchema = await this.backend.isTenantSchema();
+    let initialState = await this.initalizeState(isTenantSchema, response);
+    setTimeout(() => {
+      response.userdetails.is_superuser ?
+        history.push('/ui/administration')
+      :
+        history.push('/ui/metricprofiles')
+      }, 50
+    );
   }
 
   onLogout() {
@@ -327,52 +327,54 @@ class App extends Component {
       ({areYouSureModal: !prevState.areYouSureModal}));
   }
 
-  fetchConfigOptions() {
-    return fetch('/api/v2/internal/config_options')
-      .then(response => {
-        if (response.ok)
-          return response.json();
-      })
+  async fetchConfigOptions() {
+    let response = await fetch('/api/v2/internal/config_options');
+    if (response.ok) {
+      let json = await response.json();
+      return json;
+    };
   }
 
-  fetchToken() {
-    return fetch('/api/v2/internal/apikeys/WEB-API')
-      .then(response => response.ok ? response.json() : null)
-      .then(json => json['token'])
-      .catch(err => alert('Something went wrong: ' + err))
+  async fetchToken() {
+    try {
+      let response = await fetch('/api/v2/internal/apikeys/WEB-API');
+      if (response.ok) {
+        let json = await response.json();
+        return json['token'];
+      } else
+        return null;
+    } catch(err) {
+      alert(`Something went wrong: ${err}`)
+    };
   }
 
-  initalizeState(poemType, response) {
+  async initalizeState(poemType, response) {
     if (poemType) {
-      return Promise.all([this.fetchToken(), this.fetchConfigOptions()])
-        .then(([token, options]) => {
-          this.setState({
-            isTenantSchema: poemType,
-            isSessionActive: response.active,
-            userDetails: response.userdetails,
-            token: token,
-            webApiMetric: options && options.result.webapimetric,
-            webApiAggregation: options && options.result.webapiaggregation,
-            webApiThresholds: options && options.result.webapithresholds,
-            tenantName: options && options.result.tenant_name,
-          })
-        })
-    }
-    else {
+      let token = await this.fetchToken();
+      let options = await this.fetchConfigOptions();
+      this.setState({
+        isTenantSchema: poemType,
+        isSessionActive: response.active,
+        userDetails: response.userdetails,
+        token: token,
+        webApiMetric: options && options.result.webapimetric,
+        webApiAggregation: options && options.result.webapiaggregation,
+        webApiThresholds: options && options.result.webapithresholds,
+        tenantName: options && options.result.tenant_name,
+      });
+    } else {
       this.setState({
         isTenantSchema: poemType,
         isSessionActive: response.active,
         userDetails: response.userdetails
-      })
-    }
+      });
+    };
   }
 
-  componentDidMount() {
-    this.backend.isTenantSchema().then((isTenantSchema) => {
-      this.backend.isActiveSession(isTenantSchema).then(response =>
-        response.active && this.initalizeState(isTenantSchema, response)
-      )
-    })
+  async componentDidMount() {
+    let isTenantSchema = await this.backend.isTenantSchema();
+    let response = await this.backend.isActiveSession(isTenantSchema);
+    response.active && this.initalizeState(isTenantSchema, response);
   }
 
   render() {

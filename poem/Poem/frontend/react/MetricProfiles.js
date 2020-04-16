@@ -245,57 +245,53 @@ function MetricProfilesComponent(cloneview=false) {
       return flat_services
     }
 
-    componentDidMount() {
+    async componentDidMount() {
       this.setState({loading: true})
 
-      this.backend.isActiveSession().then(sessionActive => {
-        sessionActive.active && Promise.all([
-          this.backend.fetchListOfNames('/api/v2/internal/serviceflavoursall'),
-          this.backend.fetchListOfNames('/api/v2/internal/metricsall')
-        ])
-          .then(([serviceflavoursall, metricsall]) => {
-            if (!this.addview || this.cloneview) {
-              this.backend.fetchData(`/api/v2/internal/metricprofiles/${this.profile_name}`)
-                .then(json => Promise.all([this.webapi.fetchMetricProfile(json.apiid)])
-                  .then(([metricp]) => this.setState({
-                    metric_profile: metricp,
-                    metric_profile_name: metricp.name,
-                    metric_profile_description: metricp.description,
-                    groupname: json['groupname'],
-                    list_user_groups: sessionActive.userdetails.groups.metricprofiles,
-                    write_perm: sessionActive.userdetails.is_superuser ||
-                      sessionActive.userdetails.groups.metricprofiles.indexOf(json['groupname']) >= 0,
-                    view_services: this.flattenServices(metricp.services).sort(this.sortServices),
-                    serviceflavours_all: serviceflavoursall,
-                    metrics_all: metricsall,
-                    list_services: this.flattenServices(metricp.services).sort(this.sortServices),
-                    loading: false
-                  }))
-                )
-            } else {
-              let empty_metric_profile = {
-                id: '',
-                name: '',
-                services: [],
-              }
-              this.setState({
-                metric_profile: empty_metric_profile,
-                metric_profile_name: '',
-                metric_profile_description: '',
-                groupname: '',
-                list_user_groups: sessionActive.userdetails.groups.metricprofiles,
-                write_perm: sessionActive.userdetails.is_superuser ||
-                  sessionActive.userdetails.groups.metricprofiles.length > 0,
-                view_services: [{service: '', metric: '', index: 0, isNew: true}],
-                serviceflavours_all: serviceflavoursall,
-                metrics_all: metricsall,
-                list_services: [{service: '', metric: '', index: 0, isNew: true}],
-                loading: false
-              })
-            }
-          })
-      })
-    }
+      let sessionActive = await this.backend.isActiveSession();
+      if (sessionActive.active) {
+        let serviceflavoursall = await this.backend.fetchListOfNames('/api/v2/internal/serviceflavoursall');
+        let metricsall = await this.backend.fetchListOfNames('/api/v2/internal/metricsall');
+        if (!this.addview || this.cloneview) {
+          let json = await this.backend.fetchData(`/api/v2/internal/metricprofiles/${this.profile_name}`);
+          let metricp = await this.webapi.fetchMetricProfile(json.apiid);
+          this.setState({
+            metric_profile: metricp,
+            metric_profile_name: metricp.name,
+            metric_profile_description: metricp.description,
+            groupname: json['groupname'],
+            list_user_groups: sessionActive.userdetails.groups.metricprofiles,
+            write_perm: sessionActive.userdetails.is_superuser ||
+              sessionActive.userdetails.groups.metricprofiles.indexOf(json['groupname']) >= 0,
+            view_services: this.flattenServices(metricp.services).sort(this.sortServices),
+            serviceflavours_all: serviceflavoursall,
+            metrics_all: metricsall,
+            list_services: this.flattenServices(metricp.services).sort(this.sortServices),
+            loading: false
+          });
+        } else {
+          let empty_metric_profile = {
+            id: '',
+            name: '',
+            services: [],
+          };
+          this.setState({
+            metric_profile: empty_metric_profile,
+            metric_profile_name: '',
+            metric_profile_description: '',
+            groupname: '',
+            list_user_groups: sessionActive.userdetails.groups.metricprofiles,
+            write_perm: sessionActive.userdetails.is_superuser ||
+              sessionActive.userdetails.groups.metricprofiles.length > 0,
+            view_services: [{service: '', metric: '', index: 0, isNew: true}],
+            serviceflavours_all: serviceflavoursall,
+            metrics_all: metricsall,
+            list_services: [{service: '', metric: '', index: 0, isNew: true}],
+            loading: false
+          });
+        };
+    };
+  }
 
     toggleAreYouSureSetModal(msg, title, onyes) {
       this.setState(prevState =>
@@ -463,7 +459,7 @@ function MetricProfilesComponent(cloneview=false) {
       return services
     }
 
-    doChange({formValues, servicesList}, actions) {
+    async doChange({formValues, servicesList}, actions) {
       let services = [];
       let dataToSend = new Object()
 
@@ -476,93 +472,101 @@ function MetricProfilesComponent(cloneview=false) {
           description: formValues.description,
           services
         };
-        this.webapi.changeMetricProfile(dataToSend)
-        .then(response => {
-          if (!response.ok) {
-            this.toggleAreYouSureSetModal(`Error: ${response.status}, ${response.statusText}`,
-              'Error changing metric profile',
-              undefined)
-          }
-          else {
-            response.json()
-            .then(r => {
-              this.backend.changeObject(
-                '/api/v2/internal/metricprofiles/',
-                {
-                  apiid: dataToSend.id,
-                  name: dataToSend.name,
-                  description: dataToSend.description,
-                  groupname: formValues.groupname,
-                  services: formValues.view_services
-                }
-              )
-                .then(() => NotifyOk({
-                  msg: 'Metric profile succesfully changed',
-                  title: 'Changed',
-                  callback: () => this.history.push('/ui/metricprofiles')
-                },
-                ))
-                .catch(err => alert('Something went wrong: ' + err))
-            })
-            .catch(err => alert('Something went wrong: ' + err))
-          }
-        }).catch(err => alert('Something went wrong: ' + err))
-      }
-      else {
+        let response = await this.webapi.changeMetricProfile(dataToSend);
+        if (!response.ok) {
+          this.toggleAreYouSureSetModal(
+            `Error: ${response.status}, ${response.statusText}`,
+            'Web API error changing metric profile',
+            undefined)
+        } else {
+          let r = await this.backend.changeObject(
+            '/api/v2/internal/metricprofiles/',
+            {
+              apiid: dataToSend.id,
+              name: dataToSend.name,
+              description: dataToSend.description,
+              groupname: formValues.groupname,
+              services: formValues.view_services
+            }
+          );
+          if (r.ok)
+            NotifyOk({
+              msg: 'Metric profile succesfully changed',
+              title: 'Changed',
+              callback: () => this.history.push('/ui/metricprofiles')
+            });
+          else
+            this.toggleAreYouSureSetModal(
+              `Error: ${response.status} ${response.statusText}`,
+              'Internal API error changing metric profile',
+              undefined
+            );
+        };
+      } else {
         services = this.groupMetricsByServices(servicesList);
         dataToSend = {
           name: formValues.name,
           description: formValues.description,
           services
         }
-        this.webapi.addMetricProfile(dataToSend)
-        .then(response => {
-          if (!response.ok) {
-            this.toggleAreYouSureSetModal(`Error: ${response.status}, ${response.statusText}`,
-              'Error adding metric profile',
-              undefined)
-          }
-          else {
-            response.json()
-            .then(r => {
-              this.backend.addObject(
-                '/api/v2/internal/metricprofiles/',
-                {
-                  apiid: r.data.id,
-                  name: dataToSend.name,
-                  groupname: formValues.groupname,
-                  description: formValues.description,
-                  services: formValues.view_services
-                }
-              ).then(() => NotifyOk({
-                  msg: 'Metric profile successfully added',
-                  title: 'Added',
-                  callback: () => this.history.push('/ui/metricprofiles')
-                }))
-                .catch(err => alert('Something went wrong: ' + err))
-            })
-            .catch(err => alert('Something went wrong: ' + err))
-          }
-        }).catch(err => alert('Something went wrong: ' + err))
-      }
+        let response = await this.webapi.addMetricProfile(dataToSend);
+        if (!response.ok) {
+          this.toggleAreYouSureSetModal(
+            `Error: ${response.status}, ${response.statusText}`,
+            'Web API error adding metric profile',
+            undefined
+          );
+        } else {
+          let r_json = await response.json();
+          let r_internal = await this.backend.addObject(
+            '/api/v2/internal/metricprofiles/',
+            {
+              apiid: r_json.data.id,
+              name: dataToSend.name,
+              groupname: formValues.groupname,
+              description: formValues.description,
+              services: formValues.view_services
+            }
+          );
+          if (r_internal.ok)
+            NotifyOk({
+              msg: 'Metric profile successfully added',
+              title: 'Added',
+              callback: () => this.history.push('/ui/metricprofiles')
+            });
+          else
+            this.toggleAreYouSureSetModal(
+              `Error: ${r_internal.status} ${r_internal.statusText}`,
+              'Internal API error adding metric profile',
+              undefined
+            );
+        };
+      };
     }
 
-    doDelete(idProfile) {
-      this.webapi.deleteMetricProfile(idProfile)
-      .then(response => {
-        if (!response.ok) {
-          alert(`Error: ${response.status}, ${response.statusText}`)
-        } else {
-          response.json()
-          .then(this.backend.deleteObject(`/api/v2/internal/metricprofiles/${idProfile}`))
-          .then(
-            () => NotifyOk({
-              msg: 'Metric profile sucessfully deleted',
-              title: 'Deleted',
-              callback: () => this.history.push('/ui/metricprofiles')
-            }))
-        }
-      }).catch(err => alert('Something went wrong: ' + err))
+    async doDelete(idProfile) {
+      let response = await this.webapi.deleteMetricProfile(idProfile);
+      if (!response.ok) {
+        this.toggleAreYouSureSetModal(
+         `Error: ${response.status} ${response.statusText}`,
+         'Web API error deleting metric profile',
+         undefined
+        );
+      } else {
+        let r_internal = await this.backend.deleteObject(`/api/v2/internal/metricprofiles/${idProfile}`);
+        if (r_internal.ok)
+          NotifyOk({
+            msg: 'Metric profile sucessfully deleted',
+            title: 'Deleted',
+            callback: () => this.history.push('/ui/metricprofiles')
+          });
+        else
+          this.toggleAreYouSureSetModal(
+            `Error: ${r_internal.status} ${r_internal.statusText}`,
+            'Internal API error deleting metric profile',
+            undefined
+          );
+      };
     }
 
     onSelect(element, field, value) {
@@ -750,14 +754,13 @@ export class MetricProfilesList extends Component
     this.backend = new Backend();
   }
 
-  componentDidMount() {
+  async componentDidMount() {
     this.setState({loading: true})
-    this.backend.fetchData('/api/v2/internal/metricprofiles')
-      .then(json =>
-        this.setState({
-          list_metricprofiles: json,
-          loading: false})
-      )
+    let json = await this.backend.fetchData('/api/v2/internal/metricprofiles');
+    this.setState({
+      list_metricprofiles: json,
+      loading: false}
+    );
   }
 
   render() {
@@ -857,46 +860,44 @@ export class MetricProfileVersionCompare extends Component {
     this.backend = new Backend();
   }
 
-  componentDidMount() {
+  async componentDidMount() {
     this.setState({loading: true});
 
-    this.backend.fetchData(`/api/v2/internal/tenantversion/metricprofile/${this.name}`)
-      .then((json) => {
-        let name1 = '';
-        let groupname1 = '';
-        let description1 = '';
-        let metricinstances1 = [];
-        let name2 = '';
-        let groupname2 = '';
-        let description2 = '';
-        let metricinstances2 = [];
+    let json = await this.backend.fetchData(`/api/v2/internal/tenantversion/metricprofile/${this.name}`);
+    let name1 = '';
+    let groupname1 = '';
+    let description1 = '';
+    let metricinstances1 = [];
+    let name2 = '';
+    let groupname2 = '';
+    let description2 = '';
+    let metricinstances2 = [];
 
-        json.forEach((e) => {
-          if (e.version == this.version1) {
-            name1 = e.fields.name;
-            description1 = e.fields.description;
-            groupname1 = e.fields.groupname;
-            metricinstances1 = e.fields.metricinstances;
-          } else if (e.version == this.version2) {
-            name2 = e.fields.name;
-            groupname2 = e.fields.groupname;
-            description2 = e.fields.description;
-            metricinstances2 = e.fields.metricinstances;
-          }
-        });
+    json.forEach((e) => {
+      if (e.version == this.version1) {
+        name1 = e.fields.name;
+        description1 = e.fields.description;
+        groupname1 = e.fields.groupname;
+        metricinstances1 = e.fields.metricinstances;
+      } else if (e.version == this.version2) {
+        name2 = e.fields.name;
+        groupname2 = e.fields.groupname;
+        description2 = e.fields.description;
+        metricinstances2 = e.fields.metricinstances;
+      }
+    });
 
-        this.setState({
-          name1: name1,
-          groupname1: groupname1,
-          description1: description1,
-          metricinstances1: metricinstances1,
-          name2: name2,
-          description2: description2,
-          groupname2: groupname2,
-          metricinstances2: metricinstances2,
-          loading: false
-        });
-      });
+    this.setState({
+      name1: name1,
+      groupname1: groupname1,
+      description1: description1,
+      metricinstances1: metricinstances1,
+      name2: name2,
+      description2: description2,
+      groupname2: groupname2,
+      metricinstances2: metricinstances2,
+      loading: false
+    });
   }
 
   render() {
@@ -959,23 +960,21 @@ export class MetricProfileVersionDetails extends Component {
     };
   }
 
-  componentDidMount() {
+  async componentDidMount() {
     this.setState({loading: true});
 
-    this.backend.fetchData(`/api/v2/internal/tenantversion/metricprofile/${this.name}`)
-      .then((json) => {
-        json.forEach((e) => {
-          if (e.version == this.version)
-            this.setState({
-              name: e.fields.name,
-              groupname: e.fields.groupname,
-              description: e.fields.description,
-              date_created: e.date_created,
-              metricinstances: e.fields.metricinstances,
-              loading: false
-            });
+    let json = await this.backend.fetchData(`/api/v2/internal/tenantversion/metricprofile/${this.name}`);
+    json.forEach((e) => {
+      if (e.version == this.version)
+        this.setState({
+          name: e.fields.name,
+          groupname: e.fields.groupname,
+          description: e.fields.description,
+          date_created: e.date_created,
+          metricinstances: e.fields.metricinstances,
+          loading: false
         });
-      });
+    });
   }
 
   render() {
@@ -1041,5 +1040,3 @@ export class MetricProfileVersionDetails extends Component {
       return null;
   }
 }
-
-

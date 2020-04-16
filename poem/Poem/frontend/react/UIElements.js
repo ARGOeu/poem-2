@@ -142,13 +142,13 @@ export const SearchField = ({form, field, ...rest}) =>
   </div>
 
 
-const doLogout = (history, onLogout) =>
+const doLogout = async (history, onLogout) =>
 {
   let cookies = new Cookies();
 
   onLogout();
 
-  return fetch('/rest-auth/logout/', {
+  let response = await fetch('/rest-auth/logout/', {
     method: 'POST',
     mode: 'cors',
     cache: 'no-cache',
@@ -158,7 +158,9 @@ const doLogout = (history, onLogout) =>
       'Content-Type': 'application/json',
       'X-CSRFToken': cookies.get('csrftoken'),
       'Referer': 'same-origin'
-    }}).then((response) => history.push('/ui/login'));
+    }});
+    if (response.ok)
+      history.push('/ui/login');
 }
 
 
@@ -568,7 +570,7 @@ export function HistoryComponent(obj, tenantview=false) {
       this.backend = new Backend();
     }
 
-    componentDidMount() {
+    async componentDidMount() {
       this.setState({loading: true});
       let url = undefined;
 
@@ -578,130 +580,127 @@ export function HistoryComponent(obj, tenantview=false) {
       else
         url = '/api/v2/internal/version/'
 
-      this.backend.fetchData(`${url}/${obj}/${this.name}`)
-        .then((json) => {
-          if (json.length > 1) {
-            this.setState({
-              list_versions: json,
-              loading: false,
-              compare1: json[0].version,
-              compare2: json[1].version
-            });
-          } else {
-            this.setState({
-              list_versions: json,
-              loading: false
-            });
-          }
-        }
-      )
+      let json = await this.backend.fetchData(`${url}/${obj}/${this.name}`);
+      if (json.length > 1) {
+        this.setState({
+          list_versions: json,
+          loading: false,
+          compare1: json[0].version,
+          compare2: json[1].version
+        });
+      } else {
+        this.setState({
+          list_versions: json,
+          loading: false
+        });
+      };
     }
 
-      render() {
-        const { loading, list_versions } = this.state;
+    render() {
+      const { loading, list_versions } = this.state;
 
-        let compareurl = undefined;
-        if (tenantview)
-          compareurl = `/ui/administration/${obj}s/${this.name}/history`;
+      let compareurl = undefined;
+      if (tenantview)
+        compareurl = `/ui/administration/${obj}s/${this.name}/history`;
 
-        else
-          compareurl = `/ui/${obj}s/${this.name}/history`;
+      else
+        compareurl = `/ui/${obj}s/${this.name}/history`;
 
-        if (loading)
-          return (<LoadingAnim />);
+      if (loading)
+        return (<LoadingAnim />);
 
-        else if (!loading && list_versions) {
-          return (
-            <BaseArgoView
-              resourcename='Version history'
-              infoview={true}>
-              <table className='table table-sm'>
-                <thead className='table-active'>
-                  <tr>
-                    { list_versions.length === 1 ?
-                      <th scope='col'>Compare</th>
-                      :
-                      <th scope='col'>
-                        <Button
-                            color='info'
-                            onClick={() =>
-                              this.history.push(
-                                `${compareurl}/compare/${this.state.compare1}/${this.state.compare2}`,
-                            )
-                            }
-                          >
-                            Compare
-                        </Button>
-                      </th>
-                      }
-                    <th scope='col'>Version</th>
-                    <th scope='col'>Date/time</th>
-                    <th scope='col'>User</th>
-                    <th scope='col'>Comment</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {
-                      list_versions.map((e, i) =>
-                        <tr key={i}>
-                          {
-                            list_versions.length === 1 ?
-                              <td>-</td>
-                            :
-                              i === 0 ?
-                                <td>
-                                  <input
-                                  type='radio'
-                                  name='radio-1'
-                                  value={e.version}
-                                  defaultChecked={true}
-                                  onChange={e => this.setState({compare1: e.target.value})}
-                                />
-                                </td>
-                              :
-                                <td>
-                                  <input
-                                  type='radio'
-                                  name='radio-1'
-                                  value={e.version}
-                                  onChange={e => this.setState({compare1: e.target.value})}
-                                />
-                                  {' '}
-                                  <input
-                                  type='radio'
-                                  name='radio-2'
-                                  value={e.version}
-                                  defaultChecked={i===1}
-                                  onChange={e => this.setState({compare2: e.target.value})}
-                                />
-                                </td>
+      else if (!loading && list_versions) {
+        return (
+          <BaseArgoView
+            resourcename='Version history'
+            infoview={true}>
+            <table className='table table-sm'>
+              <thead className='table-active'>
+                <tr>
+                  { list_versions.length === 1 ?
+                    <th scope='col'>Compare</th>
+                    :
+                    <th scope='col'>
+                      <Button
+                          color='info'
+                          onClick={() =>
+                            this.history.push(
+                              `${compareurl}/compare/${this.state.compare1}/${this.state.compare2}`,
+                          )
                           }
-                          {
-                            <td>
-                              {e.version ? <Link to={`${compareurl}/${e.version}`}>{e.version}</Link> : ''}
-                            </td>
-                          }
-                          <td>
-                            {e.date_created ? e.date_created : ''}
-                          </td>
-                          <td>
-                            {e.user ? e.user : ''}
-                          </td>
-                          <td className='col-md-6'>
-                            {e.comment ? e.comment : ''}
-                          </td>
-                        </tr>
-                      )
+                        >
+                          Compare
+                      </Button>
+                    </th>
                     }
-                </tbody>
-              </table>
-            </BaseArgoView>
-          );
-        }
-        else
-          return null;
+                  <th scope='col'>Version</th>
+                  <th scope='col'>Date/time</th>
+                  <th scope='col'>User</th>
+                  <th scope='col'>Comment</th>
+                </tr>
+              </thead>
+              <tbody>
+                {
+                    list_versions.map((e, i) =>
+                      <tr key={i}>
+                        {
+                          list_versions.length === 1 ?
+                            <td>-</td>
+                          :
+                            i === 0 ?
+                              <td>
+                                <input
+                                type='radio'
+                                name='radio-1'
+                                value={e.version}
+                                defaultChecked={true}
+                                onChange={e => this.setState({compare1: e.target.value})}
+                              />
+                              </td>
+                            :
+                              <td>
+                                <input
+                                type='radio'
+                                name='radio-1'
+                                value={e.version}
+                                onChange={e => this.setState({compare1: e.target.value})}
+                              />
+                                {' '}
+                                <input
+                                type='radio'
+                                name='radio-2'
+                                value={e.version}
+                                defaultChecked={i===1}
+                                onChange={e => this.setState({compare2: e.target.value})}
+                              />
+                              </td>
+                        }
+                        {
+                          <td>
+                            {e.version ? <Link to={`${compareurl}/${e.version}`}>{e.version}</Link> : ''}
+                          </td>
+                        }
+                        <td>
+                          {e.date_created ? e.date_created : ''}
+                        </td>
+                        <td>
+                          {e.user ? e.user : ''}
+                        </td>
+                        <td className='col-md-6'>
+                          {e.comment ? e.comment : ''}
+                        </td>
+                      </tr>
+                    )
+                  }
+              </tbody>
+            </table>
+          </BaseArgoView>
+        );
       }
-    };
+      else
+        return null;
+    }
+  }
 }
 
 

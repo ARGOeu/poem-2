@@ -259,14 +259,13 @@ export class UsersList extends Component
     this.backend = new Backend();
   }
 
-  componentDidMount() {
+  async componentDidMount() {
     this.setState({loading: true})
-    this.backend.fetchData('/api/v2/internal/users')
-      .then(json =>
-        this.setState({
-          list_users: json,
-          loading: false
-        }))
+    let json = await this.backend.fetchData('/api/v2/internal/users');
+    this.setState({
+      list_users: json,
+      loading: false
+    });
   }
 
   render() {
@@ -442,9 +441,9 @@ function UserChangeComponent(isTenantSchema=false) {
         () => this.doChange(values, action));
     }
 
-    doChange(values, action) {
+    async doChange(values, action) {
       if (!this.addview) {
-        this.backend.changeObject(
+        let response = await this.backend.changeObject(
           '/api/v2/internal/users/',
           {
             pk: values.pk,
@@ -455,43 +454,46 @@ function UserChangeComponent(isTenantSchema=false) {
             is_superuser: values.is_superuser,
             is_active: values.is_active
           }
-        ).then(response => {
-          if (!response.ok) {
-            response.json()
-              .then(json => {
-                NotificationManager.error(json.detail, 'Error');
-              });
-          } else {
-            isTenantSchema ?
-              this.backend.changeObject(
-                '/api/v2/internal/userprofile/',
-                {
-                  username: values.username,
-                  displayname: values.displayname,
-                  subject: values.subject,
-                  egiid: values.egiid,
-                  groupsofaggregations: values.groupsofaggregations,
-                  groupsofmetrics: values.groupsofmetrics,
-                  groupsofmetricprofiles: values.groupsofmetricprofiles,
-                  groupsofthresholdsprofiles: values.groupsofthresholdsprofiles
-                }
-              ).then(() =>
-                NotifyOk({
-                  msg: 'User successfully changed',
-                  title: 'Changed',
-                  callback: () => this.history.push('/ui/administration/users')
-                })
-              )
-            :
+        );
+        if (!response.ok) {
+          let json = await response.json();
+          NotificationManager.error(json.detail, 'Error');
+        } else {
+          if (isTenantSchema) {
+            let profile_response = await this.backend.changeObject(
+              '/api/v2/internal/userprofile/',
+              {
+                username: values.username,
+                displayname: values.displayname,
+                subject: values.subject,
+                egiid: values.egiid,
+                groupsofaggregations: values.groupsofaggregations,
+                groupsofmetrics: values.groupsofmetrics,
+                groupsofmetricprofiles: values.groupsofmetricprofiles,
+                groupsofthresholdsprofiles: values.groupsofthresholdsprofiles
+              }
+            );
+            profile_response.ok ?
               NotifyOk({
                 msg: 'User successfully changed',
                 title: 'Changed',
                 callback: () => this.history.push('/ui/administration/users')
-              });
+              })
+            :
+              NotificationManager.error(
+                'Error changing user',
+                `Error: ${profile_response.status} ${profile_response.statusText}`
+              )
+          } else {
+            NotifyOk({
+              msg: 'User successfully changed',
+              title: 'Changed',
+              callback: () => this.history.push('/ui/administration/users')
+            });
           }
-        });
+        };
       } else {
-        this.backend.addObject(
+        let response = await this.backend.addObject(
           '/api/v2/internal/users/',
           {
             username: values.username,
@@ -502,91 +504,97 @@ function UserChangeComponent(isTenantSchema=false) {
             is_superuser: values.is_superuser,
             is_active: values.is_active
           }
-        ).then(response => {
-            if (!response.ok) {
-              response.json()
-                .then(json => {
-                  NotificationManager.error(json.detail, 'Error');
-                });
-            } else {
-              isTenantSchema ?
-                this.backend.addObject(
-                  '/api/v2/internal/userprofile/',
-                  {
-                    username: values.username,
-                    displayname: values.displayname,
-                    subject: values.subject,
-                    egiid: values.egiid,
-                    groupsofaggregations: values.groupsofaggregations,
-                    groupsofmetrics: values.groupsofmetrics,
-                    groupsofmetricprofiles: values.groupsofmetricprofiles,
-                    groupsofthresholdsprofiles: values.groupsofthresholdsprofiles
-                  }
-                ).then(() => NotifyOk({
-                  msg: 'User successfully added',
-                  title: 'Added',
-                  callback: () => this.history.push('/ui/administration/users')
-                })
-                )
-              :
-                NotifyOk({
-                  msg: 'User successfully added',
-                  title: 'Added',
-                  callback: () => this.history.push('/ui/administration/users')
-                });
-            }
-          });
-        }
+        );
+        if (!response.ok) {
+          let json = await response.json();
+          NotificationManager.error(json.detail, 'Error');
+        } else {
+          if (isTenantSchema) {
+            let profile_response = await this.backend.addObject(
+              '/api/v2/internal/userprofile/',
+              {
+                username: values.username,
+                displayname: values.displayname,
+                subject: values.subject,
+                egiid: values.egiid,
+                groupsofaggregations: values.groupsofaggregations,
+                groupsofmetrics: values.groupsofmetrics,
+                groupsofmetricprofiles: values.groupsofmetricprofiles,
+                groupsofthresholdsprofiles: values.groupsofthresholdsprofiles
+              }
+            );
+            profile_response.ok ?
+              NotifyOk({
+                msg: 'User successfully added',
+                title: 'Added',
+                callback: () => this.history.push('/ui/administration/users')
+              })
+            :
+              NotificationManager.error(
+                'Error adding user',
+                `Error: ${profile_response.status} ${profile_response.statusText}`
+              )
+          } else {
+            NotifyOk({
+              msg: 'User successfully added',
+              title: 'Added',
+              callback: () => this.history.push('/ui/administration/users')
+            });
+          };
+        };
+      };
     }
 
-    doDelete(username) {
-      this.backend.deleteObject(`/api/v2/internal/users/${username}`)
-        .then(() => NotifyOk({
+    async doDelete(username) {
+      let response = await this.backend.deleteObject(`/api/v2/internal/users/${username}`);
+      response.ok ?
+        NotifyOk({
           msg: 'User successfully deleted',
           title: 'Deleted',
           callback: () => this.history.push('/ui/administration/users')
-        }));
+        })
+      :
+        NotificationManager.error(
+          'Error deleting user',
+          `Error: ${response.status} ${response.statusText}`
+        );
     }
 
-    componentDidMount() {
+    async componentDidMount() {
       this.setState({loading: true})
 
       if (!this.addview) {
-        isTenantSchema ?
-          Promise.all([
-            this.backend.fetchData(`/api/v2/internal/users/${this.user_name}`),
-            this.backend.fetchData(`/api/v2/internal/userprofile/${this.user_name}`),
-            this.backend.fetchResult(`/api/v2/internal/usergroups/${this.user_name}`),
-            this.backend.fetchResult('/api/v2/internal/usergroups')
-          ]).then(([user, userprofile, usergroups, allgroups]) => {
-            this.setState({
-              custuser: user,
-              userprofile: userprofile,
-              usergroups: usergroups,
-              allgroups: allgroups,
-              loading: false
-              });
-            })
-        :
-          this.backend.fetchData(`/api/v2/internal/users/${this.user_name}`)
-            .then((user) => {
-              this.setState({
-                custuser: user,
-                loading: false
-              });
+        let user = await this.backend.fetchData(`/api/v2/internal/users/${this.user_name}`);
+        if (isTenantSchema) {
+          let userprofile = await this.backend.fetchData(`/api/v2/internal/userprofile/${this.user_name}`);
+          let usergroups = await this.backend.fetchResult(`/api/v2/internal/usergroups/${this.user_name}`);
+          let allgroups = await this.backend.fetchResult('/api/v2/internal/usergroups');
+          this.setState({
+            custuser: user,
+            userprofile: userprofile,
+            usergroups: usergroups,
+            allgroups: allgroups,
+            loading: false
             });
+        } else {
+          this.setState({
+            custuser: user,
+            loading: false
+          });
+        }
       } else {
-        isTenantSchema ?
-          this.backend.fetchResult('/api/v2/internal/usergroups').then(groups =>
-            this.setState({
-                allgroups: groups,
-                loading: false
-            }))
-        :
+        if (isTenantSchema) {
+          let groups = await this.backend.fetchResult('/api/v2/internal/usergroups');
+          this.setState({
+              allgroups: groups,
+              loading: false
+          });
+        } else {
           this.setState({
             loading: false
           });
-      }
+        };
+      };
     }
 
     render() {

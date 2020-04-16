@@ -58,22 +58,18 @@ export class PackageList extends Component {
       };
     };
 
-    componentDidMount() {
+    async componentDidMount() {
       this.setState({loading: true});
 
-      Promise.all([
-        this.backend.fetchData('/api/v2/internal/packages'),
-        this.backend.fetchData('/api/v2/internal/yumrepos')
-      ])
-        .then(([pkgs, repos]) => {
-          let list_repos = [];
-          repos.forEach(e => list_repos.push(e.name + ' (' + e.tag + ')'));
-          this.setState({
-            list_packages: pkgs,
-            list_repos: list_repos,
-            loading: false
-          });
-        });
+      let pkgs = await this.backend.fetchData('/api/v2/internal/packages');
+      let repos = await this.backend.fetchData('/api/v2/internal/yumrepos');
+      let list_repos = [];
+      repos.forEach(e => list_repos.push(e.name + ' (' + e.tag + ')'));
+      this.setState({
+        list_packages: pkgs,
+        list_repos: list_repos,
+        loading: false
+      });
     };
 
     render() {
@@ -237,7 +233,7 @@ export class PackageChange extends Component {
     );
   };
 
-  doChange(values, actions) {
+  async doChange(values, actions) {
     let repos = [];
     if (values.repo_6)
       repos.push(values.repo_6);
@@ -246,7 +242,7 @@ export class PackageChange extends Component {
       repos.push(values.repo_7);
 
     if (this.addview) {
-      this.backend.addObject(
+      let response = await this.backend.addObject(
         '/api/v2/internal/packages/',
         {
           name: values.name,
@@ -254,22 +250,19 @@ export class PackageChange extends Component {
           use_present_version: values.present_version,
           repos: repos
         }
-      ).then(response => {
-          if (!response.ok) {
-            response.json()
-              .then(json => {
-                NotificationManager.error(json.detail, 'Error');
-              });
-          } else {
-            NotifyOk({
-              msg: 'Package successfully added',
-              title: 'Added',
-              callback: () => this.history.push('/ui/packages')
-            });
-          };
+      );
+      if (!response.ok) {
+        let json = await response.json();
+        NotificationManager.error(json.detail, 'Error');
+      } else {
+        NotifyOk({
+          msg: 'Package successfully added',
+          title: 'Added',
+          callback: () => this.history.push('/ui/packages')
         });
+      };
     } else {
-      this.backend.changeObject(
+      let response = await this.backend.changeObject(
         '/api/v2/internal/packages/',
         {
           id: values.id,
@@ -278,98 +271,85 @@ export class PackageChange extends Component {
           use_present_version: values.present_version,
           repos: repos
         }
-      ).then(response => {
-          if (!response.ok) {
-            response.json()
-              .then(json => {
-                NotificationManager.error(json.detail, 'Erro');
-              });
-          } else {
-            NotifyOk({
-              msg: 'Package successfully changed',
-              title: 'Changed',
-              callback: () => this.history.push('/ui/packages')
-            });
-          };
+      );
+      if (!response.ok) {
+        let json = await response.json();
+        NotificationManager.error(json.detail, 'Error');
+      } else {
+        NotifyOk({
+          msg: 'Package successfully changed',
+          title: 'Changed',
+          callback: () => this.history.push('/ui/packages')
         });
+      };
     };
   };
 
-  doDelete(nameversion) {
-    this.backend.deleteObject(`/api/v2/internal/packages/${nameversion}`)
-      .then(response => {
-        if (!response.ok) {
-          response.json()
-            .then(json => {
-              NotificationManager.error(json.detail, 'Error');
-            });
-        } else {
-          NotifyOk({
-            msg: 'Package successfully deleted',
-            title: 'Deleted',
-            callback: () => this.history.push('/ui/packages')
-          });
-        };
+  async doDelete(nameversion) {
+    let response = await this.backend.deleteObject(`/api/v2/internal/packages/${nameversion}`);
+    if (!response.ok) {
+      let json = await response.json();
+      NotificationManager.error(json.detail, 'Error');
+    } else {
+      NotifyOk({
+        msg: 'Package successfully deleted',
+        title: 'Deleted',
+        callback: () => this.history.push('/ui/packages')
       });
+    };
   };
 
   toggleCheckbox(){
     this.setState({present_version: !present_version});
   };
 
-  componentDidMount() {
+  async componentDidMount() {
     this.setState({loading: true});
-    this.backend.fetchData('/api/v2/internal/yumrepos')
-      .then(repos => {
-          let list_repos_6 = [];
-          let list_repos_7 = [];
-          repos.forEach(e => {
-            if (e.tag === 'CentOS 6')
-              list_repos_6.push(e.name + ' (' + e.tag + ')');
-            else if (e.tag === 'CentOS 7')
-              list_repos_7.push(e.name + ' (' + e.tag + ')');
-          });
+    let repos = await this.backend.fetchData('/api/v2/internal/yumrepos');
+    let list_repos_6 = [];
+    let list_repos_7 = [];
+    repos.forEach(e => {
+      if (e.tag === 'CentOS 6')
+        list_repos_6.push(e.name + ' (' + e.tag + ')');
+      else if (e.tag === 'CentOS 7')
+        list_repos_7.push(e.name + ' (' + e.tag + ')');
+    });
 
-          if (this.addview) {
-            this.setState({
-              list_repos_6: list_repos_6,
-              list_repos_7: list_repos_7,
-              loading: false
-            });
-          } else {
-            Promise.all([
-              this.backend.fetchData(`/api/v2/internal/packages/${this.nameversion}`),
-              this.backend.fetchData('/api/v2/internal/probes')
-            ])
-              .then(([pkg, probes]) => {
-                let list_probes = [];
-                let repo_6 = '';
-                let repo_7 = '';
-
-                for (let i = 0; i < pkg.repos.length; i++) {
-                  if (pkg.repos[i].split('(')[1].slice(0, -1) === 'CentOS 6')
-                    repo_6 = pkg.repos[i];
-
-                  if (pkg.repos[i].split('(')[1].slice(0, -1) === 'CentOS 7')
-                    repo_7 = pkg.repos[i];
-                }
-
-                probes.forEach(e => {
-                  if (e.package === `${pkg.name} (${pkg.version})`)
-                    list_probes.push(e.name);
-                });
-                this.setState({
-                  pkg: pkg,
-                  list_repos_6: list_repos_6,
-                  list_repos_7: list_repos_7,
-                  repo_6: repo_6,
-                  repo_7: repo_7,
-                  list_probes: list_probes,
-                  loading: false
-                });
-              });
-          };
+    if (this.addview) {
+      this.setState({
+        list_repos_6: list_repos_6,
+        list_repos_7: list_repos_7,
+        loading: false
       });
+    } else {
+      let pkg = await this.backend.fetchData(`/api/v2/internal/packages/${this.nameversion}`);
+      let probes = await this.backend.fetchData('/api/v2/internal/probes');
+      let list_probes = [];
+      let repo_6 = '';
+      let repo_7 = '';
+
+      for (let i = 0; i < pkg.repos.length; i++) {
+        if (pkg.repos[i].split('(')[1].slice(0, -1) === 'CentOS 6')
+          repo_6 = pkg.repos[i];
+
+        if (pkg.repos[i].split('(')[1].slice(0, -1) === 'CentOS 7')
+          repo_7 = pkg.repos[i];
+      }
+
+      probes.forEach(e => {
+        if (e.package === `${pkg.name} (${pkg.version})`)
+          list_probes.push(e.name);
+      });
+      this.setState({
+        pkg: pkg,
+        list_repos_6: list_repos_6,
+        list_repos_7: list_repos_7,
+        repo_6: repo_6,
+        repo_7: repo_7,
+        list_probes: list_probes,
+        loading: false
+      });
+    };
   };
 
   render() {
