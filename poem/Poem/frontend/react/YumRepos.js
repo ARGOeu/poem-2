@@ -52,22 +52,18 @@ export class YumRepoList extends Component {
     this.backend = new Backend();
   };
 
-  componentDidMount() {
+  async componentDidMount() {
     this.setState({loading: true});
 
-    Promise.all([
-      this.backend.fetchData('/api/v2/internal/yumrepos'),
-      this.backend.fetchData('/api/v2/internal/ostags'),
-      this.backend.isTenantSchema()
-    ])
-      .then(([repos, tags, isTenantSchema]) => {
-        this.setState({
-          list_repos: repos,
-          list_tags: tags,
-          isTenantSchema: isTenantSchema,
-          loading: false
-        });
-      });
+    let repos = await this.backend.fetchData('/api/v2/internal/yumrepos');
+    let tags = await this.backend.fetchData('/api/v2/internal/ostags');
+    let isTenantSchema = await this.backend.isTenantSchema();
+    this.setState({
+      list_repos: repos,
+      list_tags: tags,
+      isTenantSchema: isTenantSchema,
+      loading: false
+    });
   };
 
   render() {
@@ -249,9 +245,9 @@ export class YumRepoChange extends Component {
     )
   };
 
-  doChange(values, actions) {
+  async doChange(values, actions) {
     if (!this.addview) {
-      this.backend.changeObject(
+      let response = await this.backend.changeObject(
         '/api/v2/internal/yumrepos/',
         {
           id: values.id,
@@ -260,22 +256,19 @@ export class YumRepoChange extends Component {
           content: values.content,
           description: values.description
         }
-      ).then(response => {
-          if (!response.ok) {
-            response.json()
-              .then(json => {
-                NotificationManager.error(json.detail, 'Error');
-              });
-          } else {
-            NotifyOk({
-              msg: 'YUM repo successfully changed',
-              title: 'Changed',
-              callback: () => this.history.push('/ui/yumrepos')
-            });
-          }
-        })
+      );
+      if (!response.ok) {
+        let json = await response.json();
+        NotificationManager.error(json.detail, 'Error');
+      } else {
+        NotifyOk({
+          msg: 'YUM repo successfully changed',
+          title: 'Changed',
+          callback: () => this.history.push('/ui/yumrepos')
+        });
+      };
     } else {
-      this.backend.addObject(
+      let response = await this.backend.addObject(
         '/api/v2/internal/yumrepos/',
         {
           name: values.name,
@@ -283,61 +276,50 @@ export class YumRepoChange extends Component {
           content: values.content,
           description: values.description
         }
-      ).then(response => {
-          if (!response.ok) {
-            response.json()
-              .then(json => {
-                NotificationManager.error(json.detail, 'Error');
-              });
-          } else {
-            NotifyOk({
-              msg: 'YUM repo successfully added',
-              title: 'Added',
-              callback: () => this.history.push('/ui/yumrepos')
-            });
-          };
+      );
+      if (!response.ok) {
+        let json = await response.json();
+        NotificationManager.error(json.detail, 'Error');
+      } else {
+        NotifyOk({
+          msg: 'YUM repo successfully added',
+          title: 'Added',
+          callback: () => this.history.push('/ui/yumrepos')
         });
+      };
     };
   };
 
-  doDelete(name, tag) {
-    this.backend.deleteObject(`/api/v2/internal/yumrepos/${name}/${tag}`)
-      .then(response => {
-        if (!response.ok) {
-          response.json()
-            .then(json => {
-              NotificationManager.error(json.detail, 'Error');
-            });
-        } else {
-          NotifyOk({
-            msg: 'YUM repo successfully deleted',
-            title: 'Deleted',
-            callback: () => this.history.push('/ui/yumrepos')
-          });
-        };
+  async doDelete(name, tag) {
+    let response = await this.backend.deleteObject(`/api/v2/internal/yumrepos/${name}/${tag}`);
+    if (!response.ok) {
+      let json = await response.json();
+      NotificationManager.error(json.detail, 'Error');
+    } else {
+      NotifyOk({
+        msg: 'YUM repo successfully deleted',
+        title: 'Deleted',
+        callback: () => this.history.push('/ui/yumrepos')
       });
+    };
   };
 
-  componentDidMount() {
+  async componentDidMount() {
     this.setState({loading: true});
-    this.backend.fetchData('/api/v2/internal/ostags')
-      .then(tags => {
-        if (!this.addview) {
-          this.backend.fetchData(`/api/v2/internal/yumrepos/${this.name}/${this.tag}`)
-            .then(json => {
-              this.setState({
-                repo: json,
-                tagslist: tags,
-                loading: false
-              });
-            });
-        } else {
-          this.setState({
-            tagslist: tags,
-            loading: false
-          });
-        };
+    let tags = await this.backend.fetchData('/api/v2/internal/ostags');
+    if (!this.addview) {
+      let json = await this.backend.fetchData(`/api/v2/internal/yumrepos/${this.name}/${this.tag}`);
+      this.setState({
+        repo: json,
+        tagslist: tags,
+        loading: false
       });
+    } else {
+      this.setState({
+        tagslist: tags,
+        loading: false
+      });
+    };
   };
 
   render() {
