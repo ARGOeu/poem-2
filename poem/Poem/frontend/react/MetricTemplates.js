@@ -388,6 +388,7 @@ export class MetricTemplateVersionDetails extends Component {
       mtype: '',
       probeexecutable: '',
       parent: '',
+      description: '',
       config: [],
       attribute: [],
       dependency: [],
@@ -410,6 +411,7 @@ export class MetricTemplateVersionDetails extends Component {
           probeversion: e.fields.probeversion,
           type: e.fields.mtype,
           probeexecutable: e.fields.probeexecutable,
+          description: e.fields.description,
           parent: e.fields.parent,
           config: e.fields.config,
           attribute: e.fields.attribute,
@@ -427,7 +429,7 @@ export class MetricTemplateVersionDetails extends Component {
   render() {
     const { name, probeversion, type, probeexecutable, parent, config,
       attribute, dependency, parameter, flags, files, fileparameter,
-      loading } = this.state;
+      loading, description } = this.state;
 
     if (loading)
     return (<LoadingAnim/>);
@@ -444,6 +446,7 @@ export class MetricTemplateVersionDetails extends Component {
               probeversion: probeversion,
               type: type,
               probeexecutable: probeexecutable,
+              description: description,
               parent: parent,
               config: config,
               attributes: attribute,
