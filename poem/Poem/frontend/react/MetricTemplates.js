@@ -119,7 +119,7 @@ function MetricTemplateComponent(cloneview=false) {
         () => this.doChange(values, actions))
     }
 
-    doChange(values, actions){
+    async doChange(values, actions){
       if (this.addview || cloneview) {
         let cloned_from = undefined;
         if (cloneview) {
@@ -127,7 +127,7 @@ function MetricTemplateComponent(cloneview=false) {
         } else {
           cloned_from = '';
         }
-        this.backend.addObject(
+        let response = await this.backend.addObject(
           '/api/v2/internal/metrictemplates/',
           {
             cloned_from: cloned_from,
@@ -145,23 +145,19 @@ function MetricTemplateComponent(cloneview=false) {
             files: values.file_attributes,
             fileparameter: values.file_parameters
           }
-        ).then(response => {
-            if (!response.ok) {
-              response.json()
-                .then(json => {
-                  NotificationManager.error(json.detail, 'Error');
-                });
-            } else {
-              NotifyOk({
-                msg: 'Metric template successfully added',
-                title: 'Added',
-                callback: () => this.history.push('/ui/metrictemplates')
-              })
-            }
-          })
-          .catch(err => alert('Something went wrong: ' + err))
+        );
+        if (!response.ok) {
+          let json = await response.json();
+          NotificationManager.error(json.detail, 'Error');
+        } else {
+          NotifyOk({
+            msg: 'Metric template successfully added',
+            title: 'Added',
+            callback: () => this.history.push('/ui/metrictemplates')
+          });
+        }
       } else {
-        this.backend.changeObject(
+        let response = await this.backend.changeObject(
           '/api/v2/internal/metrictemplates/',
           {
             id: values.id,
@@ -179,125 +175,116 @@ function MetricTemplateComponent(cloneview=false) {
             files: values.file_attributes,
             fileparameter: values.file_parameters
           }
-        ).then(response => {
-            if (!response.ok) {
-              response.json()
-                .then(json => {
-                  NotificationManager.error(json.detail, 'Error');
-                });
-            } else {
-              NotifyOk({
-                msg: 'Metric template successfully changed',
-                title: 'Changed',
-                callback: () => this.history.push('/ui/metrictemplates')
-              })
-            }
-          })
-          .catch(err => alert('Something went wrong: ' + err))
-      }
+        );
+        if (!response.ok) {
+          let json = await response.json();
+          NotificationManager.error(json.detail, 'Error');
+        } else {
+          NotifyOk({
+            msg: 'Metric template successfully changed',
+            title: 'Changed',
+            callback: () => this.history.push('/ui/metrictemplates')
+          });
+        };
+      };
     }
 
-    doDelete(name) {
-      this.backend.deleteObject(`/api/v2/internal/metrictemplates/${name}`)
-        .then(() => NotifyOk({
+    async doDelete(name) {
+      let response = await this.backend.deleteObject(`/api/v2/internal/metrictemplates/${name}`);
+      if (response.ok)
+        NotifyOk({
           msg: 'Metric template successfully deleted',
           title: 'Deleted',
           callback: () => this.history.push('/ui/metrictemplates')
-        }))
-        .catch(err => alert('Something went wrong: ' + err))
+        });
+      else
+        NotificationManager.error(`Error deleting metric template ${name}: ${response.status} ${response.statusText}`)
     }
 
-    componentDidMount() {
+    async componentDidMount() {
       this.setState({loading: true});
 
-      Promise.all([
-        this.backend.fetchData('/api/v2/internal/mttypes'),
-        this.backend.fetchData('/api/v2/internal/version/probe'),
-        this.backend.fetchData('/api/v2/internal/metrictemplates')
-      ])
-        .then(([types, probeversions, metrictemplatelist]) => {
-          let mlist = [];
-          metrictemplatelist.forEach(e => mlist.push(e.name));
+      let types = await this.backend.fetchData('/api/v2/internal/mttypes');
+      let probeversions = await this.backend.fetchData('/api/v2/internal/version/probe');
+      let metrictemplatelist = await this.backend.fetchData('/api/v2/internal/metrictemplates');
+      let mlist = [];
+      metrictemplatelist.forEach(e => mlist.push(e.name));
 
-          if (!this.addview) {
-            this.backend.fetchData(`/api/v2/internal/metrictemplates/${this.name}`)
-              .then(metrictemplate => {
-                if (metrictemplate.attribute.length === 0) {
-                  metrictemplate.attribute = [{'key': '', 'value': ''}];
-                }
-                if (metrictemplate.dependency.length === 0) {
-                  metrictemplate.dependency = [{'key': '', 'value': ''}];
-                }
-                if (metrictemplate.parameter.length === 0) {
-                  metrictemplate.parameter = [{'key': '', 'value': ''}];
-                }
-                if (metrictemplate.flags.length === 0) {
-                  metrictemplate.flags = [{'key': '', 'value': ''}];
-                }
-                if (metrictemplate.files.length === 0) {
-                  metrictemplate.files = [{'key': '', 'value': ''}];
-                }
-                if (metrictemplate.fileparameter.length === 0) {
-                  metrictemplate.fileparameter = [{'key': '', 'value': ''}];
-                }
+      if (!this.addview) {
+        let metrictemplate = await this.backend.fetchData(`/api/v2/internal/metrictemplates/${this.name}`);
+        if (metrictemplate.attribute.length === 0) {
+          metrictemplate.attribute = [{'key': '', 'value': ''}];
+        }
+        if (metrictemplate.dependency.length === 0) {
+          metrictemplate.dependency = [{'key': '', 'value': ''}];
+        }
+        if (metrictemplate.parameter.length === 0) {
+          metrictemplate.parameter = [{'key': '', 'value': ''}];
+        }
+        if (metrictemplate.flags.length === 0) {
+          metrictemplate.flags = [{'key': '', 'value': ''}];
+        }
+        if (metrictemplate.files.length === 0) {
+          metrictemplate.files = [{'key': '', 'value': ''}];
+        }
+        if (metrictemplate.fileparameter.length === 0) {
+          metrictemplate.fileparameter = [{'key': '', 'value': ''}];
+        }
 
-                metrictemplate.probeversion ?
-                  this.backend.fetchData(`/api/v2/internal/version/probe/${metrictemplate.probeversion.split(' ')[0]}`)
-                    .then(probe => {
-                      let fields = {};
-                      probe.forEach((e) => {
-                        if (e.object_repr === metrictemplate.probeversion) {
-                          fields = e.fields;
-                        }
-                      });
-                      this.setState({
-                        metrictemplate: metrictemplate,
-                        probe: fields,
-                        probeversions: probeversions,
-                        metrictemplatelist: mlist,
-                        types: types,
-                        loading: false,
-                      });
-                    })
-                  :
-                  this.setState({
-                    metrictemplate: metrictemplate,
-                    metrictemplatelist: mlist,
-                    types: types,
-                    loading: false,
-                  });
-              });
-          } else {
-            this.setState({
-              metrictemplate: {
-                id: '',
-                name: '',
-                probeversion: '',
-                mtype: 'Active',
-                description: '',
-                probeexecutable: '',
-                parent: '',
-                config: [
-                  {'key': 'maxCheckAttempts', 'value': ''},
-                  {'key': 'timeout', 'value': ''},
-                  {'key': 'path', 'value': ''},
-                  {'key': 'interval', 'value': ''},
-                  {'key': 'retryInterval', 'value': ''}
-                ],
-                attribute: [{'key': '', 'value': ''}],
-                dependency: [{'key': '', 'value': ''}],
-                parameter: [{'key': '', 'value': ''}],
-                flags: [{'key': '', 'value': ''}],
-                files: [{'key': '', 'value': ''}],
-                fileparameter: [{'key': '', 'value': ''}]
-              },
-              metrictemplatelist: mlist,
-              probeversions: probeversions,
-              types: types,
-              loading: false,
-            });
-          }
+        if (metrictemplate.probeversion) {
+          let probe = await this.backend.fetchData(`/api/v2/internal/version/probe/${metrictemplate.probeversion.split(' ')[0]}`);
+          let fields = {};
+          probe.forEach((e) => {
+            if (e.object_repr === metrictemplate.probeversion) {
+              fields = e.fields;
+            }
+          });
+          this.setState({
+            metrictemplate: metrictemplate,
+            probe: fields,
+            probeversions: probeversions,
+            metrictemplatelist: mlist,
+            types: types,
+            loading: false,
+          });
+        } else {
+          this.setState({
+            metrictemplate: metrictemplate,
+            metrictemplatelist: mlist,
+            types: types,
+            loading: false,
+          });
+        }
+      } else {
+        this.setState({
+          metrictemplate: {
+            id: '',
+            name: '',
+            probeversion: '',
+            mtype: 'Active',
+            description: '',
+            probeexecutable: '',
+            parent: '',
+            config: [
+              {'key': 'maxCheckAttempts', 'value': ''},
+              {'key': 'timeout', 'value': ''},
+              {'key': 'path', 'value': ''},
+              {'key': 'interval', 'value': ''},
+              {'key': 'retryInterval', 'value': ''}
+            ],
+            attribute: [{'key': '', 'value': ''}],
+            dependency: [{'key': '', 'value': ''}],
+            parameter: [{'key': '', 'value': ''}],
+            flags: [{'key': '', 'value': ''}],
+            files: [{'key': '', 'value': ''}],
+            fileparameter: [{'key': '', 'value': ''}]
+          },
+          metrictemplatelist: mlist,
+          probeversions: probeversions,
+          types: types,
+          loading: false,
         });
+      }
     }
 
     render() {
@@ -412,31 +399,29 @@ export class MetricTemplateVersionDetails extends Component {
     };
   }
 
-  componentDidMount() {
+  async componentDidMount() {
     this.setState({loading: true});
 
-    this.backend.fetchData(`/api/v2/internal/version/metrictemplate/${this.name}`)
-      .then((json) => {
-        json.forEach((e) => {
-          if (e.version == this.version)
-            this.setState({
-              name: e.fields.name,
-              probeversion: e.fields.probeversion,
-              type: e.fields.mtype,
-              probeexecutable: e.fields.probeexecutable,
-              parent: e.fields.parent,
-              config: e.fields.config,
-              attribute: e.fields.attribute,
-              dependency: e.fields.dependency,
-              parameter: e.fields.parameter,
-              flags: e.fields.flags,
-              files: e.fields.files,
-              fileparameter: e.fields.fileparameter,
-              date_created: e.date_created,
-              loading: false
-            });
+    let json = await this.backend.fetchData(`/api/v2/internal/version/metrictemplate/${this.name}`);
+    json.forEach((e) => {
+      if (e.version == this.version)
+        this.setState({
+          name: e.fields.name,
+          probeversion: e.fields.probeversion,
+          type: e.fields.mtype,
+          probeexecutable: e.fields.probeexecutable,
+          parent: e.fields.parent,
+          config: e.fields.config,
+          attribute: e.fields.attribute,
+          dependency: e.fields.dependency,
+          parameter: e.fields.parameter,
+          flags: e.fields.flags,
+          files: e.fields.files,
+          fileparameter: e.fields.fileparameter,
+          date_created: e.date_created,
+          loading: false
         });
-      })
+    });
   }
 
   render() {
