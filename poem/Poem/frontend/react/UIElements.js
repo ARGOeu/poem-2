@@ -369,6 +369,15 @@ export const NotifyOk = ({msg='', title='', callback=undefined}) => {
   setTimeout(callback, 2000);
 }
 
+export const NotifyError = ({msg='', title=''}) => {
+  NotificationManager.error(msg, title);
+};
+
+
+export const NotifyWarn = ({msg='', title=''}) => {
+  NotificationManager.warning(msg, title);
+};
+
 
 export const BaseArgoView = ({resourcename='', location=undefined,
     infoview=false, addview=false, listview=false, modal=false,
