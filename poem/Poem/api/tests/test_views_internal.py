@@ -8578,9 +8578,11 @@ class ListPackagesAPIViewTests(TenantTestCase):
             'use_present_version': False,
             'repos': ['repo-1']
         }
+        self.assertEqual(admin_models.Package.objects.all().count(), 4)
         request = self.factory.post(self.url, data, format='json')
         force_authenticate(request, user=self.user)
         response = self.view(request)
+        self.assertEqual(admin_models.Package.objects.all().count(), 4)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(
             response.data, {'detail': 'You should specify YUM repo tag!'}
@@ -8593,9 +8595,11 @@ class ListPackagesAPIViewTests(TenantTestCase):
             'use_present_version': False,
             'repos': ['nonexisting (CentOS 7)']
         }
+        self.assertEqual(admin_models.Package.objects.all().count(), 4)
         request = self.factory.post(self.url, data, format='json')
         force_authenticate(request, user=self.user)
         response = self.view(request)
+        self.assertEqual(admin_models.Package.objects.all().count(), 4)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(
             response.data, {'detail': 'YUM repo not found.'}
