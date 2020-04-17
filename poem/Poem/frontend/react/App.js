@@ -40,7 +40,7 @@ import { APIKeyList, APIKeyChange } from './APIKey';
 import NotFound from './NotFound';
 import { Route, Switch, BrowserRouter, Redirect, withRouter } from 'react-router-dom';
 import { Container, Row, Col } from 'reactstrap';
-import { NavigationBar, CustomBreadcrumb, NavigationLinks, Footer } from './UIElements';
+import { NavigationBar, CustomBreadcrumb, NavigationLinks, Footer, PublicPage} from './UIElements';
 import { NotificationContainer } from 'react-notifications';
 import { Backend } from './DataManager';
 import { YumRepoList, YumRepoChange } from './YumRepos';
@@ -385,11 +385,12 @@ class App extends Component {
         <BrowserRouter>
           <Switch>
             <Route
-              exact
-              path="/ui/public_probes"
-              render={props =>
-                <ProbeList publicView={true} {...props} />
-              }
+              exact path="/ui/public_probes"
+              render={props => (
+                <PublicPage>
+                  <ProbeList publicView={true} {...props} />
+                </PublicPage>
+              )}
             />
             <Route
               path="/ui/"

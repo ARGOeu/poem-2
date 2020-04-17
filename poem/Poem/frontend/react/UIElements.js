@@ -11,6 +11,7 @@ import {
   CardHeader,
   Col,
   Collapse,
+  Container,
   FormGroup,
   FormText,
   InputGroup,
@@ -367,6 +368,41 @@ export const NotifyOk = ({msg='', title='', callback=undefined}) => {
     title,
     2000);
   setTimeout(callback, 2000);
+}
+
+
+export const PublicPage = ({children}) => {
+  let userDetails = {
+    username: 'Anonymous'
+  }
+
+  return (
+    <Container fluid>
+      <Row>
+        <Col>
+          <NavigationBar
+            history={undefined}
+            onLogout={undefined}
+            isOpenModal={undefined}
+            toggle={() => {}}
+            titleModal='Log out'
+            msgModal='Are you sure you want to log out?'
+            userDetails={userDetails}
+          />
+        </Col>
+      </Row>
+      <Row className="no-gutters">
+        <Col>
+          {children}
+        </Col>
+      </Row>
+      <Row>
+        <Col>
+          <Footer loginPage={false}/>
+        </Col>
+      </Row>
+    </Container>
+  )
 }
 
 
