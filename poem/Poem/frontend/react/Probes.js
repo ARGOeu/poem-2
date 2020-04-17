@@ -757,7 +757,6 @@ export class ProbeVersionCompare extends Component{
   constructor(props) {
     super(props);
 
-    this.version1 = props.match.params.id1;
     this.version2 = props.match.params.id2;
     this.name = props.match.params.name;
     this.publicView = props.publicView
@@ -780,13 +779,18 @@ export class ProbeVersionCompare extends Component{
       comment2: ''
     };
 
+    if (this.publicView)
+      this.apiUrl = '/api/v2/internal/public_version/probe/'
+    else
+      this.apiUrl = '/api/v2/internal/version/probe/'
+
     this.backend = new Backend();
   }
 
   async componentDidMount() {
     this.setState({loading: true});
 
-    let json = await this.backend.fetchData(`/api/v2/internal/version/probe/${this.name}`);
+    let json = await this.backend.fetchData(`${this.apiUrl}/${this.name}`);
     let name1 = '';
     let version1 = '';
     let package1 = '';
@@ -907,6 +911,11 @@ export class ProbeVersionDetails extends Component {
 
     this.backend = new Backend();
 
+    if (this.publicView)
+      this.apiUrl = '/api/v2/internal/public_version/probe/'
+    else
+      this.apiUrl = '/api/v2/internal/version/probe/'
+
     this.state = {
       name: '',
       version: '',
@@ -922,7 +931,7 @@ export class ProbeVersionDetails extends Component {
   async componentDidMount() {
     this.setState({loading: true});
 
-    let json = await this.backend.fetchData(`/api/v2/internal/version/probe/${this.name}`);
+    let json = await this.backend.fetchData(`${this.apiUrl}/${this.name}`);
     json.forEach((e) => {
       if (e.version === this.version)
         this.setState({

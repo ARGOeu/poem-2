@@ -610,8 +610,6 @@ export function HistoryComponent(obj, tenantview=false) {
     constructor(props) {
       super(props);
 
-      let url = undefined;
-
       this.name = props.match.params.name;
       this.history = props.history;
       this.publicView = props.publicView
@@ -625,21 +623,27 @@ export function HistoryComponent(obj, tenantview=false) {
 
       if (!this.publicView) {
         if (['metric', 'metricprofile', 'aggregationprofile', 'thresholdsprofile'].includes(obj))
-          url = '/api/v2/internal/tenantversion/'
-
+          this.apiUrl = '/api/v2/internal/tenantversion/'
         else
-          url = '/api/v2/internal/version/'
+          this.apiUrl = '/api/v2/internal/version/'
       }
       else {
         if (['metric', 'metricprofile', 'aggregationprofile', 'thresholdsprofile'].includes(obj))
-          url = '/api/v2/internal/public_tenantversion/'
-
+          this.apiUrl = '/api/v2/internal/public_tenantversion/'
         else
-          url = '/api/v2/internal/public_version/'
+          this.apiUrl = '/api/v2/internal/public_version/'
+      }
+
+      if (tenantview)
+        this.compareUrl = `/ui/administration/${obj}s/${this.name}/history`;
+      else {
+        if (this.publicView)
+          this.compareUrl = `/ui/public_${obj}s/${this.name}/history`;
+        else
+          this.compareUrl = `/ui/${obj}s/${this.name}/history`;
       }
 
       this.backend = new Backend();
-      this.apiUrl = url
     }
 
     async componentDidMount() {
@@ -664,13 +668,6 @@ export function HistoryComponent(obj, tenantview=false) {
     render() {
       const { loading, list_versions } = this.state;
 
-      let compareurl = undefined;
-      if (tenantview)
-        compareurl = `/ui/administration/${obj}s/${this.name}/history`;
-
-      else
-        compareurl = `/ui/${obj}s/${this.name}/history`;
-
       if (loading)
         return (<LoadingAnim />);
 
@@ -690,7 +687,7 @@ export function HistoryComponent(obj, tenantview=false) {
                           color='info'
                           onClick={() =>
                             this.history.push(
-                              `${compareurl}/compare/${this.state.compare1}/${this.state.compare2}`,
+                              `${this.compareUrl}/compare/${this.state.compare1}/${this.state.compare2}`,
                           )
                           }
                         >
@@ -742,7 +739,7 @@ export function HistoryComponent(obj, tenantview=false) {
                         }
                         {
                           <td>
-                            {e.version ? <Link to={`${compareurl}/${e.version}`}>{e.version}</Link> : ''}
+                            {e.version ? <Link to={`${this.compareUrl}/${e.version}`}>{e.version}</Link> : ''}
                           </td>
                         }
                         <td>
