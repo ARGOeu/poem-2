@@ -71,6 +71,7 @@ link_title.set('administration', 'Administration');
 link_title.set('services', 'Services');
 link_title.set('reports', 'Reports');
 link_title.set('probes', 'Probes');
+link_title.set('public_probes', 'Public probes');
 link_title.set('metrics', 'Metrics');
 link_title.set('metricprofiles', 'Metric profiles');
 link_title.set('aggregationprofiles', 'Aggregation profiles');
@@ -183,15 +184,30 @@ export const ModalAreYouSure = ({isOpen, toggle, title, msg, onYes}) =>
 )
 
 
-export const CustomBreadcrumb = ({location, history}) =>
+export const CustomBreadcrumb = ({location, history, publicView=false}) =>
 {
-  let spliturl = location.pathname.split('/');
-  let breadcrumb_elements = new Array();
+  let spliturl = new Array()
+  let breadcrumb_elements = new Array()
+  let two_level = new Object()
 
-  breadcrumb_elements.push({'url': '/ui/home', 'title': 'Home'});
-  let two_level = new Object({'url': '/ui/' + spliturl[2]});
-  two_level['title'] = link_title.get(spliturl[2]);
-  breadcrumb_elements.push(two_level);
+  if (!publicView) {
+    breadcrumb_elements.push({'url': '/ui/home', 'title': 'Home'});
+    spliturl = location.pathname.split('/');
+
+    two_level['url'] = '/ui/' + spliturl[2];
+    two_level['title'] = link_title.get(spliturl[2]);
+    breadcrumb_elements.push(two_level);
+  }
+  else {
+    spliturl = window.location.pathname.split('/');
+    two_level['url'] = '/ui/' + spliturl[2];
+    two_level['title'] = link_title.get(spliturl[2]);
+
+    breadcrumb_elements.push({
+      'url': two_level['url'],
+      'title': two_level['title']
+    });
+  }
 
   if (spliturl.length > 3) {
     var three_level = new Object({'url': two_level['url'] + '/' + spliturl[3]});
@@ -393,6 +409,7 @@ export const PublicPage = ({children}) => {
       </Row>
       <Row className="no-gutters">
         <Col>
+          <CustomBreadcrumb publicView={true}/>
           {children}
         </Col>
       </Row>
