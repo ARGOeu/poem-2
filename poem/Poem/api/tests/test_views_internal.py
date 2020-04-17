@@ -270,7 +270,11 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
         request = self.factory.put(self.url, content, content_type=content_type)
         force_authenticate(request, user=self.user)
         response = self.view(request)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data['detail'],
+            'API key with this name already exists'
+        )
 
     def test_post_apikey(self):
         data = {'name': 'test', 'revoked': False}
@@ -284,7 +288,11 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
         request = self.factory.post(self.url, data, format='json')
         force_authenticate(request, user=self.user)
         response = self.view(request)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data['detail'],
+            'API key with this name already exists'
+        )
 
     def test_delete_apikey(self):
         request = self.factory.delete(self.url + 'DELETABLE')
@@ -297,12 +305,16 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
         force_authenticate(request, user=self.user)
         response = self.view(request, 'nonexisting')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data['detail'], 'API key not found')
 
     def test_delete_no_apikey_name(self):
         request = self.factory.delete(self.url)
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data['detail'], 'API key name must be defined'
+        )
 
 
 class ListUsersAPIViewTests(TenantTestCase):
