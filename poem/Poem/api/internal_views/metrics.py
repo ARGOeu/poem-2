@@ -158,6 +158,11 @@ class ListMetric(APIView):
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
+class ListPublicMetric(ListMetric):
+    authentication_classes = ()
+    permission_classes = ()
+
+
 class ListMetricTypes(APIView):
     authentication_classes = (SessionAuthentication,)
 
@@ -166,6 +171,11 @@ class ListMetricTypes(APIView):
             'name', flat=True
         )
         return Response(types)
+
+
+class ListPublicMetricTypes(ListMetricTypes):
+    authentication_classes = ()
+    permission_classes = ()
 
 
 class ImportMetrics(APIView):

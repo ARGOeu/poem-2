@@ -305,3 +305,13 @@ class ListGroupsForGivenUser(APIView):
             results = get_all_groups()
 
         return Response({'result': results})
+
+
+class ListPublicGroupsForGivenUser(APIView):
+    authentication_classes = ()
+    permission_classes = ()
+
+    def get(self, request, username=None):
+        return Response({'result': {
+            'metrics': []
+        }})

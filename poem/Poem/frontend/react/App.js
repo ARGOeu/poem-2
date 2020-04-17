@@ -427,6 +427,13 @@ class App extends Component {
                 </PublicPage>
               }
             />
+            <Route exact path="/ui/public_metrics"
+              render={props =>
+                <PublicPage>
+                  <MetricList publicView={true} {...props}/>
+                </PublicPage>
+              }
+            />
           </Switch>
         </BrowserRouter>
       )

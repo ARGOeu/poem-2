@@ -276,8 +276,8 @@ const InlineFields = ({values, errors, field, addnew=false, readonly=false}) => 
   </div>
 )
 
-export const ProbeVersionLink = ({probeversion}) => (
-  <Link to={'/ui/probes/' + probeversion.split(' ')[0] + '/history/' + probeversion.split(' ')[1].substring(1, probeversion.split(' ')[1].length - 1)}>
+export const ProbeVersionLink = ({probeversion, publicView=false}) => (
+  <Link to={`/ui/${publicView && 'public_'}probes/` + probeversion.split(' ')[0] + '/history/' + probeversion.split(' ')[1].substring(1, probeversion.split(' ')[1].length - 1)}>
     {probeversion}
   </Link>
 )
@@ -320,6 +320,7 @@ export function ListOfMetrics(type, imp=false) {
       }
 
       this.backend = new Backend();
+      this.publicView = props.publicView
       this.doFilter = this.doFilter.bind(this);
       this.toggleRow = this.toggleRow.bind(this);
       this.importMetrics = this.importMetrics.bind(this);
@@ -397,45 +398,66 @@ export function ListOfMetrics(type, imp=false) {
       this.setState({loading: true});
 
       let response = await this.backend.isTenantSchema();
-      let sessionActive = await this.backend.isActiveSession(response);
-      if (sessionActive.active)
-        if (type === 'metric') {
-          let metrics = await this.backend.fetchData('/api/v2/internal/metric');
-          let groups = await this.backend.fetchResult('/api/v2/internal/usergroups');
-          let types = await this.backend.fetchData('/api/v2/internal/mtypes');
-          this.setState({
-            list_metric: metrics,
-            list_groups: groups['metrics'],
-            list_types: types,
-            loading: false,
-            search_name: '',
-            search_probeversion: '',
-            search_group: '',
-            search_type: '',
-            userDetails: sessionActive.userdetails
-          });
-        } else {
-          let metrictemplates = await this.backend.fetchData(`/api/v2/internal/metrictemplates${imp ? '-import' : ''}`);
-          let types = await this.backend.fetchData('/api/v2/internal/mttypes');
-          let ostags = await this.backend.fetchData('/api/v2/internal/ostags');
-          this.setState({
-            list_metric: metrictemplates,
-            list_types: types,
-            list_ostags: ostags,
-            loading: false,
-            search_name: '',
-            search_probeversion: '',
-            search_type: '',
-            search_ostag: '',
-            userDetails: sessionActive.userdetails
-          });
-        };
+      if (!this.publicView) {
+        let sessionActive = await this.backend.isActiveSession(response);
+        if (sessionActive.active)
+          if (type === 'metric') {
+            let metrics = await this.backend.fetchData('/api/v2/internal/metric');
+            let groups = await this.backend.fetchResult('/api/v2/internal/usergroups');
+            let types = await this.backend.fetchData('/api/v2/internal/mtypes');
+            this.setState({
+              list_metric: metrics,
+              list_groups: groups['metrics'],
+              list_types: types,
+              loading: false,
+              search_name: '',
+              search_probeversion: '',
+              search_group: '',
+              search_type: '',
+              userDetails: sessionActive.userdetails
+            });
+          } else {
+            let metrictemplates = await this.backend.fetchData(`/api/v2/internal/metrictemplates${imp ? '-import' : ''}`);
+            let types = await this.backend.fetchData('/api/v2/internal/mttypes');
+            let ostags = await this.backend.fetchData('/api/v2/internal/ostags');
+            this.setState({
+              list_metric: metrictemplates,
+              list_types: types,
+              list_ostags: ostags,
+              loading: false,
+              search_name: '',
+              search_probeversion: '',
+              search_type: '',
+              search_ostag: '',
+              userDetails: sessionActive.userdetails
+            });
+          };
+      }
+      else {
+        let metrics = await this.backend.fetchData('/api/v2/internal/public_metric');
+        let groups = await this.backend.fetchResult('/api/v2/internal/public_usergroups');
+        let types = await this.backend.fetchData('/api/v2/internal/public_mtypes');
+        this.setState({
+          list_metric: metrics,
+          list_groups: groups['metrics'],
+          list_types: types,
+          loading: false,
+          search_name: '',
+          search_probeversion: '',
+          search_group: '',
+          search_type: '',
+          userDetails: {username: 'Anonymous'}
+        });
+      }
     }
 
     render() {
       let metriclink = undefined;
       if (type === 'metric') {
-        metriclink = '/ui/metrics/'
+        if (this.publicView)
+          metriclink = '/ui/public_metrics/'
+        else
+          metriclink = '/ui/metrics/'
       } else {
         if (imp)
           metriclink = '/ui/administration/metrictemplates/'
@@ -481,6 +503,7 @@ export function ListOfMetrics(type, imp=false) {
           accessor: e => (
             e.probeversion ?
               <ProbeVersionLink
+                publicView={this.publicView}
                 probeversion={
                   imp ?
                     (this.state.search_ostag === 'CentOS 6' && e.centos6_probeversion) ?
