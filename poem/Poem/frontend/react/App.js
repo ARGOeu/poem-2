@@ -385,6 +385,13 @@ class App extends Component {
         <BrowserRouter>
           <Switch>
             <Route
+              exact
+              path="/ui/public_probes"
+              render={props =>
+                <ProbeList publicView={true} {...props} />
+              }
+            />
+            <Route
               path="/ui/"
               render={props =>
                 <Login onLogin={this.onLogin} {...props} />

@@ -289,6 +289,7 @@ export class ProbeList extends Component {
     super(props);
 
     this.location = props.location;
+    this.publicView = props.publicView
 
     this.state = {
       loading: false,
@@ -300,12 +301,17 @@ export class ProbeList extends Component {
     };
 
     this.backend = new Backend();
+
+    if (this.publicView)
+      this.apiListProbes = '/api/v2/internal/public_probes'
+    else
+      this.apiListProbes = '/api/v2/internal/probes'
   }
 
   async componentDidMount() {
     this.setState({loading: true});
 
-    let json = await this.backend.fetchData('/api/v2/internal/probes');
+    let json = await this.backend.fetchData(this.apiListProbes);
     let isTenantSchema = await this.backend.isTenantSchema();
     this.setState({
       list_probe: json,

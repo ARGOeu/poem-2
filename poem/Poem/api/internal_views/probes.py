@@ -255,3 +255,8 @@ class ListProbes(APIView):
 
         else:
             return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+class ListPublicProbes(ListProbes):
+    authentication_classes = ()
+    permission_classes = ()

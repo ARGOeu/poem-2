@@ -35,6 +35,7 @@ urlpatterns = [
     path('packages/', views_internal.ListPackages.as_view(), name='packages'),
     path('packages/<str:nameversion>', views_internal.ListPackages.as_view(), name='packages'),
     path('probes/', views_internal.ListProbes.as_view(), name='probes'),
+    path('public_probes/', views_internal.ListPublicProbes.as_view(), name='probes'),
     path('probes/<str:name>', views_internal.ListProbes.as_view(), name='probes'),
     path('saml2login', views_internal.Saml2Login.as_view(), name='saml2login'),
     path('serviceflavoursall/', views_internal.ListAllServiceFlavours.as_view(), name='serviceflavoursall'),
