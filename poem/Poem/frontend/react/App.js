@@ -402,7 +402,28 @@ class App extends Component {
               exact path="/ui/public_probes/:name"
               render={props =>
                 <PublicPage>
-                  <ProbeChange publicView={true} {...props}/>}
+                  <ProbeChange publicView={true} {...props}/>
+                </PublicPage>
+              }
+            />
+            <Route exact path="/ui/public_probes/:name/history"
+              render={props =>
+                <PublicPage>
+                  <ProbeHistory publicView={true} {...props}/>
+                </PublicPage>
+              }
+            />
+            <Route exact path="/ui/public_probes/:name/history/compare/:id1/:id2"
+              render={props =>
+                <PublicPage>
+                  <ProbeVersionCompare publicView={true} {...props}/>
+                </PublicPage>
+              }
+            />
+            <Route exact path="/ui/public_probes/:name/history/:version"
+              render={props =>
+                <PublicPage>
+                  <ProbeVersionDetails publicView={true} {...props}/>
                 </PublicPage>
               }
             />

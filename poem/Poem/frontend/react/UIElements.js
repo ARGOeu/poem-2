@@ -610,8 +610,11 @@ export function HistoryComponent(obj, tenantview=false) {
     constructor(props) {
       super(props);
 
+      let url = undefined;
+
       this.name = props.match.params.name;
       this.history = props.history;
+      this.publicView = props.publicView
 
       this.state = {
         loading: false,
@@ -620,20 +623,29 @@ export function HistoryComponent(obj, tenantview=false) {
         compare2: ''
       };
 
+      if (!this.publicView) {
+        if (['metric', 'metricprofile', 'aggregationprofile', 'thresholdsprofile'].includes(obj))
+          url = '/api/v2/internal/tenantversion/'
+
+        else
+          url = '/api/v2/internal/version/'
+      }
+      else {
+        if (['metric', 'metricprofile', 'aggregationprofile', 'thresholdsprofile'].includes(obj))
+          url = '/api/v2/internal/public_tenantversion/'
+
+        else
+          url = '/api/v2/internal/public_version/'
+      }
+
       this.backend = new Backend();
+      this.apiUrl = url
     }
 
     async componentDidMount() {
       this.setState({loading: true});
-      let url = undefined;
 
-      if (['metric', 'metricprofile', 'aggregationprofile', 'thresholdsprofile'].includes(obj))
-        url = '/api/v2/internal/tenantversion/'
-
-      else
-        url = '/api/v2/internal/version/'
-
-      let json = await this.backend.fetchData(`${url}/${obj}/${this.name}`);
+      let json = await this.backend.fetchData(`${this.apiUrl}/${obj}/${this.name}`);
       if (json.length > 1) {
         this.setState({
           list_versions: json,

@@ -760,6 +760,7 @@ export class ProbeVersionCompare extends Component{
     this.version1 = props.match.params.id1;
     this.version2 = props.match.params.id2;
     this.name = props.match.params.name;
+    this.publicView = props.publicView
 
     this.state = {
       loading: false,
@@ -902,6 +903,7 @@ export class ProbeVersionDetails extends Component {
 
     this.name = props.match.params.name;
     this.version = props.match.params.version;
+    this.publicView = props.publicView
 
     this.backend = new Backend();
 
