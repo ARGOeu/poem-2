@@ -200,3 +200,7 @@ class ListPackages(APIView):
                 {'detail': 'You cannot delete package with associated probes!'},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+class ListPublicPackages(ListPackages):
+    authentication_classes = ()
+    permission_classes = ()

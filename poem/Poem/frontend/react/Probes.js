@@ -337,7 +337,7 @@ export class ProbeList extends Component {
         id: 'name',
         minWidth: 80,
         accessor: e =>
-          <Link to={`/ui/probes/${e.name}`}>
+          <Link to={`/ui/${this.publicView && 'public_'}probes/${e.name}`}>
             {e.name}
           </Link>,
         filterable: true,
@@ -355,7 +355,7 @@ export class ProbeList extends Component {
         id: 'nv',
         minWidth: 25,
         accessor: e =>
-          <Link to={`/ui/probes/${e.name}/history`}>
+          <Link to={`/ui/${this.publicView && 'public_'}probes/${e.name}/history`}>
             {e.nv}
           </Link>,
         Cell: row =>
@@ -458,6 +458,18 @@ function ProbeComponent(cloneview=false) {
       this.location = props.location;
       this.history = props.history;
       this.backend = new Backend();
+      this.publicView = props.publicView
+
+      if (this.publicView) {
+        this.apiListPackages = '/api/v2/internal/public_packages'
+        this.apiProbeName = '/api/v2/internal/public_probes'
+        this.apiMetricsForProbes = '/api/v2/internal/public_metricsforprobes'
+      }
+      else {
+        this.apiListPackages = '/api/v2/internal/packages'
+        this.apiProbeName = '/api/v2/internal/probes'
+        this.apiMetricsForProbes = '/api/v2/internal/metricsforprobes'
+      }
 
       this.state = {
         probe: {
@@ -606,12 +618,12 @@ function ProbeComponent(cloneview=false) {
       this.setState({loading: true});
 
       let isTenantSchema = await this.backend.isTenantSchema();
-      let pkgs = await this.backend.fetchData('/api/v2/internal/packages');
+      let pkgs = await this.backend.fetchData(this.apiListPackages);
       let list_packages = [];
       pkgs.forEach(e => list_packages.push(`${e.name} (${e.version})`));
       if (!this.addview) {
-        let probe = await this.backend.fetchData(`/api/v2/internal/probes/${this.name}`);
-        let metrics = await this.backend.fetchData(`/api/v2/internal/metricsforprobes/${probe.name}(${probe.version})`);
+        let probe = await this.backend.fetchData(`${this.apiProbeName}/${this.name}`);
+        let metrics = await this.backend.fetchData(`${this.apiMetricsForProbes}/${probe.name}(${probe.version})`);
         this.setState({
           probe: probe,
           list_packages: list_packages,

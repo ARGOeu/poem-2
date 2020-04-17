@@ -392,11 +392,19 @@ class App extends Component {
           <Switch>
             <Route
               exact path="/ui/public_probes"
-              render={props => (
+              render={props =>
                 <PublicPage>
                   <ProbeList publicView={true} {...props} />
                 </PublicPage>
-              )}
+              }
+            />
+            <Route
+              exact path="/ui/public_probes/:name"
+              render={props =>
+                <PublicPage>
+                  <ProbeChange publicView={true} {...props}/>}
+                </PublicPage>
+              }
             />
           </Switch>
         </BrowserRouter>
