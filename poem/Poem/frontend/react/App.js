@@ -371,6 +371,12 @@ class App extends Component {
     };
   }
 
+  isPublicUrl () {
+    const pathname = window.location.pathname
+
+    return pathname.includes('public_')
+  }
+
   async componentDidMount() {
     let isTenantSchema = await this.backend.isTenantSchema();
     let response = await this.backend.isActiveSession(isTenantSchema);
@@ -380,7 +386,7 @@ class App extends Component {
   render() {
     let {isSessionActive, userDetails} = this.state
 
-    if (!isSessionActive) {
+    if (this.isPublicUrl()) {
       return (
         <BrowserRouter>
           <Switch>
@@ -392,6 +398,15 @@ class App extends Component {
                 </PublicPage>
               )}
             />
+          </Switch>
+        </BrowserRouter>
+      )
+    }
+
+    else if (!this.isPublicUrl() && !isSessionActive) {
+      return (
+        <BrowserRouter>
+          <Switch>
             <Route
               path="/ui/"
               render={props =>
