@@ -1316,6 +1316,7 @@ export class MetricChange extends Component {
     this.location = props.location;
     this.history = props.history;
     this.backend = new Backend();
+    this.publicView = props.publicView;
 
     this.state = {
       metric: {},
@@ -1452,12 +1453,46 @@ export class MetricChange extends Component {
     this.setState({loading: true});
 
     if (!this.addview) {
-      let session = await this.backend.isActiveSession();
-      let metrics = await this.backend.fetchData(`/api/v2/internal/metric/${this.name}`);
-      let metrictemplateversions = await this.backend.fetchData(`/api/v2/internal/version/metrictemplate/${this.name}`);
-      if (session.active)
+      if (!this.publicView) {
+        let session = await this.backend.isActiveSession();
+        let metrics = await this.backend.fetchData(`/api/v2/internal/metric/${this.name}`);
+        let metrictemplateversions = await this.backend.fetchData(`/api/v2/internal/version/metrictemplate/${this.name}`);
+        if (session.active)
+          if (metrics.probeversion) {
+            let probe = await this.backend.fetchData(`/api/v2/internal/version/probe/${metrics.probeversion.split(' ')[0]}`);
+            let fields = {};
+            let probeversions = [];
+            probe.forEach((e) => {
+              probeversions.push(e.object_repr);
+              if (e.object_repr === metrics.probeversion) {
+                fields = e.fields;
+              }
+            })
+            this.setState({
+              metric: metrics,
+              probe: fields,
+              probeversions: probeversions,
+              metrictemplateversions: metrictemplateversions,
+              groups: session.userdetails.groups.metrics,
+              loading: false,
+              write_perm: session.userdetails.is_superuser ||
+                session.userdetails.groups.metrics.indexOf(metrics.group) >= 0,
+            });
+          } else {
+            this.setState({
+              metric: metrics,
+              groups: session.userdetails.groups.metrics,
+              loading: false,
+              write_perm: session.userdetails.is_superuser ||
+                session.userdetails.groups.metrics.indexOf(metrics.group) >= 0,
+            });
+          };
+      }
+      else {
+        let metrics = await this.backend.fetchData(`/api/v2/internal/public_metric/${this.name}`);
+        let metrictemplateversions = await this.backend.fetchData(`/api/v2/internal/public_version/metrictemplate/${this.name}`);
         if (metrics.probeversion) {
-          let probe = await this.backend.fetchData(`/api/v2/internal/version/probe/${metrics.probeversion.split(' ')[0]}`);
+          let probe = await this.backend.fetchData(`/api/v2/internal/public_version/probe/${metrics.probeversion.split(' ')[0]}`);
           let fields = {};
           let probeversions = [];
           probe.forEach((e) => {
@@ -1471,20 +1506,19 @@ export class MetricChange extends Component {
             probe: fields,
             probeversions: probeversions,
             metrictemplateversions: metrictemplateversions,
-            groups: session.userdetails.groups.metrics,
+            groups: [],
             loading: false,
-            write_perm: session.userdetails.is_superuser ||
-              session.userdetails.groups.metrics.indexOf(metrics.group) >= 0,
+            write_perm: false,
           });
         } else {
           this.setState({
             metric: metrics,
-            groups: session.userdetails.groups.metrics,
+            groups: [],
             loading: false,
-            write_perm: session.userdetails.is_superuser ||
-              session.userdetails.groups.metrics.indexOf(metrics.group) >= 0,
+            write_perm: false,
           });
         };
+      }
     };
   }
 
