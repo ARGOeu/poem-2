@@ -312,6 +312,4 @@ class ListPublicGroupsForGivenUser(APIView):
     permission_classes = ()
 
     def get(self, request, username=None):
-        return Response({'result': {
-            'metrics': []
-        }})
+        return Response({'result': get_all_groups()})
