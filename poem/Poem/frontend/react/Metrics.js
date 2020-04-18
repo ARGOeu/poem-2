@@ -277,7 +277,7 @@ const InlineFields = ({values, errors, field, addnew=false, readonly=false}) => 
 )
 
 export const ProbeVersionLink = ({probeversion, publicView=false}) => (
-  <Link to={`/ui/${publicView && 'public_'}probes/` + probeversion.split(' ')[0] + '/history/' + probeversion.split(' ')[1].substring(1, probeversion.split(' ')[1].length - 1)}>
+  <Link to={`/ui/${publicView ? 'public_' : ''}probes/` + probeversion.split(' ')[0] + '/history/' + probeversion.split(' ')[1].substring(1, probeversion.split(' ')[1].length - 1)}>
     {probeversion}
   </Link>
 )

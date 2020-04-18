@@ -442,6 +442,15 @@ class App extends Component {
               }
             />
           </Switch>
+          <Route exact path="/ui/public_services"
+            render={props =>
+              <PublicPage>
+                <Services publicView={true} {...props}/>
+              </PublicPage>
+            }
+
+          />
+
         </BrowserRouter>
       )
     }
