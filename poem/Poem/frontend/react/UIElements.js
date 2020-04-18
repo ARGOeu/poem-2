@@ -425,9 +425,9 @@ export const PublicPage = ({children}) => {
 
 
 export const BaseArgoView = ({resourcename='', location=undefined,
-    infoview=false, addview=false, listview=false, modal=false,
-    state=undefined, toggle=undefined, submitperm=true, history=true,
-    addnew=true, clone=false, cloneview=false, tenantview=false, children}) =>
+  infoview=false, addview=false, listview=false, modal=false, state=undefined,
+  toggle=undefined, submitperm=true, history=true, addnew=true, clone=false,
+  cloneview=false, tenantview=false, publicview=false, children}) =>
 (
   <React.Fragment>
     {
@@ -481,18 +481,18 @@ export const BaseArgoView = ({resourcename='', location=undefined,
                       {
                           clone &&
                             <Link className="btn btn-secondary mr-2" to={location.pathname + "/clone"} role="button">Clone</Link>
-                        }
+                      }
                       {
-                          history &&
+                          history && !publicview &&
                             <Link className="btn btn-secondary" to={location.pathname + "/history"} role="button">History</Link>
-                        }
+                      }
                     </ButtonToolbar>
                   </React.Fragment>
       }
     </div>
     <div id="argo-contentwrap" className="ml-2 mb-2 mt-2 p-3 border rounded">
       {
-        !submitperm && !infoview && !listview &&
+        !submitperm && !infoview && !listview && !publicview &&
           <Alert color='danger'>
             <center>
               This is a read-only instance, please request the corresponding

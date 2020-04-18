@@ -1540,6 +1540,7 @@ export class MetricChange extends Component {
           modal={true}
           state={this.state}
           toggle={this.toggleAreYouSure}
+          publicview={this.publicView}
           submitperm={write_perm}>
           <Formik
             enableReinitialize={true}
