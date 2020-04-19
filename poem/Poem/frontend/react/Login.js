@@ -33,7 +33,6 @@ class Login extends Component {
     this.backend = new Backend()
     this.dismissLoginAlert = this.dismissLoginAlert.bind(this);
     this.AppOnLogin = props.onLogin
-    this.referrer = props.location.pathname
   }
 
   async fetchSamlButtonString() {
@@ -111,7 +110,7 @@ class Login extends Component {
                       async (values) => {
                         let response = await this.doUserPassLogin(values.username, values.password);
                         if (response.active) {
-                          this.AppOnLogin(response.userdetails, this.props.history, this.referrer)
+                          this.AppOnLogin(response.userdetails)
                         }
                         else {
                           this.setState({loginFailedVisible: true});
