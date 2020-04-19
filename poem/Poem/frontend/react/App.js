@@ -65,15 +65,33 @@ const SuperUserRoute = ({isSuperUser, ...props}) => (
 
 
 const RedirectAfterLogin = ({isSuperUser, ...props}) => {
+  let last = ''
+  let before_last = ''
   let destination = ''
+  let referrer = localStorage.getItem('referrer')
 
   if (isSuperUser)
     destination = "/ui/administration"
   else
     destination = "/ui/metricprofiles"
 
-  if (props.location.state)
-    destination = props.location.state.referrer
+  if (referrer) {
+    let urls = JSON.parse(referrer)
+
+    if (urls.length === 1) {
+      last = urls.pop()
+      before_last = last
+    }
+    else {
+      last = urls.pop()
+      before_last = urls.pop()
+    }
+  }
+
+  if (last !== before_last)
+    destination = before_last
+
+  localStorage.removeItem('referrer')
 
   return <Redirect to={destination}/>
 }
@@ -325,6 +343,7 @@ class App extends Component {
 
   onLogout() {
     this.setState({isSessionActive: false});
+    localStorage.removeItem('referrer')
   }
 
   toggleAreYouSure() {
@@ -379,6 +398,21 @@ class App extends Component {
     return pathname.includes('public_')
   }
 
+  getAndSetReferrer() {
+    let referrer = localStorage.getItem('referrer')
+
+    if (referrer) {
+      let stackUrls = JSON.parse(referrer)
+      stackUrls.push(window.location.pathname)
+      localStorage.setItem('referrer', JSON.stringify(stackUrls))
+    }
+    else {
+      let stackUrls = new Array()
+      stackUrls.push(window.location.pathname)
+      localStorage.setItem('referrer', JSON.stringify(stackUrls))
+    }
+  }
+
   async componentDidMount() {
     if (this.isPublicUrl()) {
       this.initalizePublicState()
@@ -388,6 +422,8 @@ class App extends Component {
       let response = await this.backend.isActiveSession(isTenantSchema);
       response.active && this.initalizeState(isTenantSchema, response);
     }
+
+    this.getAndSetReferrer()
   }
 
   render() {
@@ -479,17 +515,15 @@ class App extends Component {
       )
     }
     else if (!publicView && !isSessionActive) {
+
       return (
         <BrowserRouter>
           <Switch>
             <Route
               path="/ui/"
-              render={props => {
-                props.location.state = {
-                  referrer: props.location.pathname
-                }
-                return <Login onLogin={this.onLogin} {...props} />
-              }}
+              render={props =>
+                <Login onLogin={this.onLogin} {...props} />
+              }
             />
             <Route component={NotFound} />
           </Switch>
