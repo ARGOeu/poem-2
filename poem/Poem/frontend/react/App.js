@@ -64,14 +64,42 @@ const SuperUserRoute = ({isSuperUser, ...props}) => (
 )
 
 
+const RedirectAfterLogin = ({isSuperUser, ...props}) => {
+  let last = ''
+  let before_last = ''
+  let destination = ''
+  let referrer = localStorage.getItem('referrer')
+
+  if (isSuperUser)
+    destination = "/ui/administration"
+  else
+    destination = "/ui/metricprofiles"
+
+  if (referrer) {
+    let urls = JSON.parse(referrer)
+
+    if (urls.length === 1) {
+      last = urls.pop()
+      before_last = last
+    }
+    else {
+      last = urls.pop()
+      before_last = urls.pop()
+    }
+  }
+
+  if (last !== before_last)
+    destination = before_last
+
+  localStorage.removeItem('referrer')
+
+  return <Redirect to={destination}/>
+}
+
+
 const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, token, tenantName, isSuperUser}) => (
   <Switch>
-    <Route exact path="/ui/login" render={() => (
-      isSuperUser ?
-        <Redirect to="/ui/administration"/>
-      :
-        <Redirect to="/ui/metricprofiles"/>
-    )}/>
+    <Route exact path="/ui/login" render={props => <RedirectAfterLogin isSuperUser={isSuperUser} {...props}/>}/>
     <Route exact path="/ui/home" component={Home} />
     <Route exact path="/ui/services" component={Services} />
     <Route exact path="/ui/reports" component={Reports} />
@@ -302,7 +330,7 @@ class App extends Component {
     this.toggleAreYouSure = this.toggleAreYouSure.bind(this);
   }
 
-  async onLogin(json, history) {
+  async onLogin(json, history, referrer) {
     let response = new Object({
       active: true,
       userdetails: json
@@ -310,17 +338,12 @@ class App extends Component {
 
     let isTenantSchema = await this.backend.isTenantSchema();
     let initialState = await this.initalizeState(isTenantSchema, response);
-    setTimeout(() => {
-      response.userdetails.is_superuser ?
-        history.push('/ui/administration')
-      :
-        history.push('/ui/metricprofiles')
-      }, 50
-    );
+    setTimeout(() => history.push(this.referrer), 50);
   }
 
   onLogout() {
     this.setState({isSessionActive: false});
+    localStorage.removeItem('referrer')
   }
 
   toggleAreYouSure() {
@@ -375,6 +398,21 @@ class App extends Component {
     return pathname.includes('public_')
   }
 
+  getAndSetReferrer() {
+    let referrer = localStorage.getItem('referrer')
+
+    if (referrer) {
+      let stackUrls = JSON.parse(referrer)
+      stackUrls.push(window.location.pathname)
+      localStorage.setItem('referrer', JSON.stringify(stackUrls))
+    }
+    else {
+      let stackUrls = new Array()
+      stackUrls.push(window.location.pathname)
+      localStorage.setItem('referrer', JSON.stringify(stackUrls))
+    }
+  }
+
   async componentDidMount() {
     if (this.isPublicUrl()) {
       this.initalizePublicState()
@@ -384,6 +422,8 @@ class App extends Component {
       let response = await this.backend.isActiveSession(isTenantSchema);
       response.active && this.initalizeState(isTenantSchema, response);
     }
+
+    this.getAndSetReferrer()
   }
 
   render() {
@@ -475,6 +515,7 @@ class App extends Component {
       )
     }
     else if (!publicView && !isSessionActive) {
+
       return (
         <BrowserRouter>
           <Switch>
