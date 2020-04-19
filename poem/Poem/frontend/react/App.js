@@ -330,7 +330,7 @@ class App extends Component {
     this.toggleAreYouSure = this.toggleAreYouSure.bind(this);
   }
 
-  async onLogin(json, history, referrer) {
+  async onLogin(json) {
     let response = new Object({
       active: true,
       userdetails: json
@@ -338,7 +338,6 @@ class App extends Component {
 
     let isTenantSchema = await this.backend.isTenantSchema();
     let initialState = await this.initalizeState(isTenantSchema, response);
-    setTimeout(() => history.push(this.referrer), 50);
   }
 
   onLogout() {
