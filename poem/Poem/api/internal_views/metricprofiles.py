@@ -119,4 +119,14 @@ class ListPublicMetricProfiles(ListMetricProfiles):
     authentication_classes = ()
     permission_classes = ()
 
+    def _denied(self):
+        return Response(status=status.HTTP_403_FORBIDDEN)
 
+    def post(self, request):
+        return self._denied()
+
+    def put(self, request, profile_name):
+        return self._denied()
+
+    def delete(self, request, profile_name):
+        return self._denied()

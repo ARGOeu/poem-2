@@ -260,3 +260,19 @@ class ListProbes(APIView):
 class ListPublicProbes(ListProbes):
     authentication_classes = ()
     permission_classes = ()
+
+    def _denied(self):
+        return Response(status=status.HTTP_403_FORBIDDEN)
+
+    def post(self, request):
+        return self._denied()
+
+    def put(self, request):
+        return self._denied()
+
+    def post(self, request):
+        return self._denied()
+
+    def delete(self, request, name):
+        return self._denied()
+

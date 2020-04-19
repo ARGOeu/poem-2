@@ -204,3 +204,15 @@ class ListPackages(APIView):
 class ListPublicPackages(ListPackages):
     authentication_classes = ()
     permission_classes = ()
+
+    def _denied(self):
+        return Response(status=status.HTTP_403_FORBIDDEN)
+
+    def post(self, request):
+        return self._denied()
+
+    def put(self, request):
+        return self._denied()
+
+    def delete(self, request, nameversion):
+        return self._denied()
