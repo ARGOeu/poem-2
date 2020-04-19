@@ -451,9 +451,14 @@ class App extends Component {
                 <Services publicView={true} {...props}/>
               </PublicPage>
             }
-
           />
-
+          <Route exact path="/ui/public_metricprofiles"
+            render={props =>
+              <PublicPage>
+                <MetricProfilesList publicView={true} {...props} />
+              </PublicPage>
+            }
+          />
         </BrowserRouter>
       )
     }

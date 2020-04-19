@@ -113,3 +113,10 @@ class ListMetricProfiles(APIView):
 
         else:
             return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+class ListPublicMetricProfiles(ListMetricProfiles):
+    authentication_classes = ()
+    permission_classes = ()
+
+

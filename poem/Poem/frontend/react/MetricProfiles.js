@@ -752,11 +752,17 @@ export class MetricProfilesList extends Component
 
     this.location = props.location;
     this.backend = new Backend();
+    this.publicView = props.publicView
+
+    if (this.publicView)
+      this.apiUrl = '/api/v2/internal/public_metricprofiles'
+    else
+      this.apiUrl = '/api/v2/internal/metricprofiles'
   }
 
   async componentDidMount() {
     this.setState({loading: true})
-    let json = await this.backend.fetchData('/api/v2/internal/metricprofiles');
+    let json = await this.backend.fetchData(this.apiUrl);
     this.setState({
       list_metricprofiles: json,
       loading: false}
@@ -770,7 +776,7 @@ export class MetricProfilesList extends Component
         id: 'name',
         maxWidth: 350,
         accessor: e =>
-          <Link to={'/ui/metricprofiles/' + e.name}>
+          <Link to={`/ui/${this.publicView ? 'public_' : ''}metricprofiles/` + e.name}>
             {e.name}
           </Link>
       },
@@ -795,7 +801,9 @@ export class MetricProfilesList extends Component
         <BaseArgoView
           resourcename='metric profile'
           location={this.location}
-          listview={true}>
+          listview={true}
+          addnew={!this.publicView}
+          publicview={this.publicView}>
           <ReactTable
             data={list_metricprofiles}
             columns={columns}
