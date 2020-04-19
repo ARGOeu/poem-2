@@ -10,6 +10,7 @@ urlpatterns = [
     path('aggregationsgroup/', views_internal.ListAggregationsInGroup.as_view(), name='aggregationprofiles'),
     path('aggregationsgroup/<str:group>', views_internal.ListAggregationsInGroup.as_view(), name='aggregationprofiles'),
     path('apikeys/', views_internal.ListAPIKeys.as_view(), name='tokens'),
+    path('public_apikey/', views_internal.ListPublicAPIKey.as_view(), name='tokens'),
     path('apikeys/<str:name>', views_internal.ListAPIKeys.as_view(), name='tokens'),
     path('config_options/', views_internal.GetConfigOptions.as_view(), name='config_options'),
     path('groups/', views_internal.ListGroupsForUser.as_view(), name='groups'),

@@ -291,6 +291,7 @@ class App extends Component {
       webApiAggregation: undefined,
       webApiMetric: undefined,
       webApiThresholds: undefined,
+      publicView: undefined,
       tenantName: undefined,
       token: undefined,
       isTenantSchema: null
@@ -327,31 +328,10 @@ class App extends Component {
       ({areYouSureModal: !prevState.areYouSureModal}));
   }
 
-  async fetchConfigOptions() {
-    let response = await fetch('/api/v2/internal/config_options');
-    if (response.ok) {
-      let json = await response.json();
-      return json;
-    };
-  }
-
-  async fetchToken() {
-    try {
-      let response = await fetch('/api/v2/internal/apikeys/WEB-API');
-      if (response.ok) {
-        let json = await response.json();
-        return json['token'];
-      } else
-        return null;
-    } catch(err) {
-      alert(`Something went wrong: ${err}`)
-    };
-  }
-
   async initalizeState(poemType, response) {
     if (poemType) {
-      let token = await this.fetchToken();
-      let options = await this.fetchConfigOptions();
+      let token = await this.backend.fetchToken();
+      let options = await this.backend.fetchConfigOptions();
       this.setState({
         isTenantSchema: poemType,
         isSessionActive: response.active,
@@ -361,14 +341,32 @@ class App extends Component {
         webApiAggregation: options && options.result.webapiaggregation,
         webApiThresholds: options && options.result.webapithresholds,
         tenantName: options && options.result.tenant_name,
+        publicView: false,
       });
     } else {
       this.setState({
         isTenantSchema: poemType,
         isSessionActive: response.active,
-        userDetails: response.userdetails
+        userDetails: response.userdetails,
+        publicView: false,
       });
     };
+  }
+
+  async initalizePublicState() {
+    let token = await this.backend.fetchPublicToken()
+    let options = await this.backend.fetchConfigOptions();
+    this.setState({
+      isTenantSchema: true,
+      isSessionActive: false,
+      userDetails: {username: 'Anonymous'},
+      token: token,
+      webApiMetric: options && options.result.webapimetric,
+      webApiAggregation: options && options.result.webapiaggregation,
+      webApiThresholds: options && options.result.webapithresholds,
+      tenantName: options && options.result.tenant_name,
+      publicView: true,
+    })
   }
 
   isPublicUrl () {
@@ -378,15 +376,20 @@ class App extends Component {
   }
 
   async componentDidMount() {
-    let isTenantSchema = await this.backend.isTenantSchema();
-    let response = await this.backend.isActiveSession(isTenantSchema);
-    response.active && this.initalizeState(isTenantSchema, response);
+    if (this.isPublicUrl()) {
+      this.initalizePublicState()
+    }
+    else {
+      let isTenantSchema = await this.backend.isTenantSchema();
+      let response = await this.backend.isActiveSession(isTenantSchema);
+      response.active && this.initalizeState(isTenantSchema, response);
+    }
   }
 
   render() {
-    let {isSessionActive, userDetails} = this.state
+    let {isSessionActive, userDetails, publicView} = this.state
 
-    if (this.isPublicUrl()) {
+    if (publicView) {
       return (
         <BrowserRouter>
           <Switch>
@@ -454,8 +457,7 @@ class App extends Component {
         </BrowserRouter>
       )
     }
-
-    else if (!this.isPublicUrl() && !isSessionActive) {
+    else if (!publicView && !isSessionActive) {
       return (
         <BrowserRouter>
           <Switch>
