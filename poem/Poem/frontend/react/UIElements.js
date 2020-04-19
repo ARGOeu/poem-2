@@ -75,6 +75,7 @@ link_title.set('public_probes', 'Public probes');
 link_title.set('metrics', 'Metrics');
 link_title.set('public_metrics', 'Public metrics');
 link_title.set('metricprofiles', 'Metric profiles');
+link_title.set('public_metricprofiles', 'Metric profiles');
 link_title.set('aggregationprofiles', 'Aggregation profiles');
 link_title.set('groupofaggregations', 'Groups of aggregations');
 link_title.set('groupofmetrics', 'Groups of metrics');
@@ -479,7 +480,7 @@ export const BaseArgoView = ({resourcename='', location=undefined,
                     <h2 className="ml-3 mt-1 mb-4">{`Change ${resourcename}`}</h2>
                     <ButtonToolbar>
                       {
-                          clone &&
+                          clone && !publicview &&
                             <Link className="btn btn-secondary mr-2" to={location.pathname + "/clone"} role="button">Clone</Link>
                       }
                       {

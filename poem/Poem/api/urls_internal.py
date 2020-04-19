@@ -23,6 +23,7 @@ urlpatterns = [
     path('public_metric/<str:name>', views_internal.ListPublicMetric.as_view(), name='metric'),
     path('public_metricprofiles/', views_internal.ListPublicMetricProfiles.as_view(), name='metricprofiles'),
     path('metricprofiles/', views_internal.ListMetricProfiles.as_view(), name='metricprofiles'),
+    path('public_metricprofiles/<str:profile_name>', views_internal.ListPublicMetricProfiles.as_view(), name='metricprofiles'),
     path('metricprofiles/<str:profile_name>', views_internal.ListMetricProfiles.as_view(), name='metricprofiles'),
     path('metricprofilesgroup/', views_internal.ListMetricProfilesInGroup.as_view(), name='metricprofilesgroup'),
     path('metricprofilesgroup/<str:group>', views_internal.ListMetricProfilesInGroup.as_view(), name='metricprofilesgroup'),

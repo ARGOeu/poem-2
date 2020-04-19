@@ -459,6 +459,18 @@ class App extends Component {
               </PublicPage>
             }
           />
+          <Route exact path="/ui/public_metricprofiles/:name"
+            render={props =>
+              <PublicPage>
+                <MetricProfilesChange {...props}
+                  webapimetric={this.state.webApiMetric}
+                  webapitoken={this.state.token}
+                  tenantname={this.state.tenantName}
+                  publicView={true}
+                />
+              </PublicPage>
+            }
+          />
         </BrowserRouter>
       )
     }
