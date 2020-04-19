@@ -64,14 +64,24 @@ const SuperUserRoute = ({isSuperUser, ...props}) => (
 )
 
 
+const RedirectAfterLogin = ({isSuperUser, ...props}) => {
+  let destination = ''
+
+  if (isSuperUser)
+    destination = "/ui/administration"
+  else
+    destination = "/ui/metricprofiles"
+
+  if (props.location.state)
+    destination = props.location.state.referrer
+
+  return <Redirect to={destination}/>
+}
+
+
 const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, token, tenantName, isSuperUser}) => (
   <Switch>
-    <Route exact path="/ui/login" render={() => (
-      isSuperUser ?
-        <Redirect to="/ui/administration"/>
-      :
-        <Redirect to="/ui/metricprofiles"/>
-    )}/>
+    <Route exact path="/ui/login" render={props => <RedirectAfterLogin isSuperUser={isSuperUser} {...props}/>}/>
     <Route exact path="/ui/home" component={Home} />
     <Route exact path="/ui/services" component={Services} />
     <Route exact path="/ui/reports" component={Reports} />
@@ -302,7 +312,7 @@ class App extends Component {
     this.toggleAreYouSure = this.toggleAreYouSure.bind(this);
   }
 
-  async onLogin(json, history) {
+  async onLogin(json, history, referrer) {
     let response = new Object({
       active: true,
       userdetails: json
@@ -310,13 +320,7 @@ class App extends Component {
 
     let isTenantSchema = await this.backend.isTenantSchema();
     let initialState = await this.initalizeState(isTenantSchema, response);
-    setTimeout(() => {
-      response.userdetails.is_superuser ?
-        history.push('/ui/administration')
-      :
-        history.push('/ui/metricprofiles')
-      }, 50
-    );
+    setTimeout(() => history.push(this.referrer), 50);
   }
 
   onLogout() {
@@ -480,9 +484,12 @@ class App extends Component {
           <Switch>
             <Route
               path="/ui/"
-              render={props =>
-                <Login onLogin={this.onLogin} {...props} />
-              }
+              render={props => {
+                props.location.state = {
+                  referrer: props.location.pathname
+                }
+                return <Login onLogin={this.onLogin} {...props} />
+              }}
             />
             <Route component={NotFound} />
           </Switch>
