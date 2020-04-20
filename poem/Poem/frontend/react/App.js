@@ -520,6 +520,7 @@ class App extends Component {
               <PublicPage>
                 <AggregationProfilesChange {...props}
                   webapimetric={this.state.webApiMetric}
+                  webapiaggregation={this.state.webApiAggregation}
                   webapitoken={this.state.token}
                   tenantname={this.state.tenantName}
                   publicView={true}

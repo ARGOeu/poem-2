@@ -7,6 +7,7 @@ app_name = 'poem'
 urlpatterns = [
     path('public_aggregations/', views_internal.ListPublicAggregations.as_view(), name='aggregations'),
     path('aggregations/', views_internal.ListAggregations.as_view(), name='aggregations'),
+    path('public_aggregations/<str:aggregation_name>', views_internal.ListPublicAggregations.as_view(), name='aggregations'),
     path('aggregations/<str:aggregation_name>', views_internal.ListAggregations.as_view(), name='aggregations'),
     path('aggregationsgroup/', views_internal.ListAggregationsInGroup.as_view(), name='aggregationprofiles'),
     path('aggregationsgroup/<str:group>', views_internal.ListAggregationsInGroup.as_view(), name='aggregationprofiles'),
