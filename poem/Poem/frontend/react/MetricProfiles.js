@@ -195,6 +195,7 @@ function MetricProfilesComponent(cloneview=false) {
       this.history = props.history;
       this.location = props.location;
       this.cloneview = cloneview;
+      this.publicView = props.publicView;
 
       this.state = {
         metric_profile: {},
@@ -248,50 +249,69 @@ function MetricProfilesComponent(cloneview=false) {
     async componentDidMount() {
       this.setState({loading: true})
 
-      let sessionActive = await this.backend.isActiveSession();
-      if (sessionActive.active) {
-        let serviceflavoursall = await this.backend.fetchListOfNames('/api/v2/internal/serviceflavoursall');
-        let metricsall = await this.backend.fetchListOfNames('/api/v2/internal/metricsall');
-        if (!this.addview || this.cloneview) {
-          let json = await this.backend.fetchData(`/api/v2/internal/metricprofiles/${this.profile_name}`);
-          let metricp = await this.webapi.fetchMetricProfile(json.apiid);
-          this.setState({
-            metric_profile: metricp,
-            metric_profile_name: metricp.name,
-            metric_profile_description: metricp.description,
-            groupname: json['groupname'],
-            list_user_groups: sessionActive.userdetails.groups.metricprofiles,
-            write_perm: sessionActive.userdetails.is_superuser ||
-              sessionActive.userdetails.groups.metricprofiles.indexOf(json['groupname']) >= 0,
-            view_services: this.flattenServices(metricp.services).sort(this.sortServices),
-            serviceflavours_all: serviceflavoursall,
-            metrics_all: metricsall,
-            list_services: this.flattenServices(metricp.services).sort(this.sortServices),
-            loading: false
-          });
-        } else {
-          let empty_metric_profile = {
-            id: '',
-            name: '',
-            services: [],
+      if (this.publicView) {
+        let json = await this.backend.fetchData(`/api/v2/internal/public_metricprofiles/${this.profile_name}`);
+        let metricp = await this.webapi.fetchMetricProfile(json.apiid);
+        this.setState({
+          metric_profile: metricp,
+          metric_profile_name: metricp.name,
+          metric_profile_description: metricp.description,
+          groupname: json['groupname'],
+          list_user_groups: [],
+          write_perm: false,
+          view_services: this.flattenServices(metricp.services).sort(this.sortServices),
+          serviceflavours_all: [],
+          metrics_all: [],
+          list_services: this.flattenServices(metricp.services).sort(this.sortServices),
+          loading: false
+        });
+      }
+      else {
+        let sessionActive = await this.backend.isActiveSession();
+        if (sessionActive.active) {
+          let serviceflavoursall = await this.backend.fetchListOfNames('/api/v2/internal/serviceflavoursall');
+          let metricsall = await this.backend.fetchListOfNames('/api/v2/internal/metricsall');
+          if (!this.addview || this.cloneview) {
+            let json = await this.backend.fetchData(`/api/v2/internal/metricprofiles/${this.profile_name}`);
+            let metricp = await this.webapi.fetchMetricProfile(json.apiid);
+            this.setState({
+              metric_profile: metricp,
+              metric_profile_name: metricp.name,
+              metric_profile_description: metricp.description,
+              groupname: json['groupname'],
+              list_user_groups: sessionActive.userdetails.groups.metricprofiles,
+              write_perm: sessionActive.userdetails.is_superuser ||
+                sessionActive.userdetails.groups.metricprofiles.indexOf(json['groupname']) >= 0,
+              view_services: this.flattenServices(metricp.services).sort(this.sortServices),
+              serviceflavours_all: serviceflavoursall,
+              metrics_all: metricsall,
+              list_services: this.flattenServices(metricp.services).sort(this.sortServices),
+              loading: false
+            });
+          } else {
+            let empty_metric_profile = {
+              id: '',
+              name: '',
+              services: [],
+            };
+            this.setState({
+              metric_profile: empty_metric_profile,
+              metric_profile_name: '',
+              metric_profile_description: '',
+              groupname: '',
+              list_user_groups: sessionActive.userdetails.groups.metricprofiles,
+              write_perm: sessionActive.userdetails.is_superuser ||
+                sessionActive.userdetails.groups.metricprofiles.length > 0,
+              view_services: [{service: '', metric: '', index: 0, isNew: true}],
+              serviceflavours_all: serviceflavoursall,
+              metrics_all: metricsall,
+              list_services: [{service: '', metric: '', index: 0, isNew: true}],
+              loading: false
+            });
           };
-          this.setState({
-            metric_profile: empty_metric_profile,
-            metric_profile_name: '',
-            metric_profile_description: '',
-            groupname: '',
-            list_user_groups: sessionActive.userdetails.groups.metricprofiles,
-            write_perm: sessionActive.userdetails.is_superuser ||
-              sessionActive.userdetails.groups.metricprofiles.length > 0,
-            view_services: [{service: '', metric: '', index: 0, isNew: true}],
-            serviceflavours_all: serviceflavoursall,
-            metrics_all: metricsall,
-            list_services: [{service: '', metric: '', index: 0, isNew: true}],
-            loading: false
-          });
-        };
-    };
-  }
+        }
+      };
+    }
 
     toggleAreYouSureSetModal(msg, title, onyes) {
       this.setState(prevState =>
@@ -669,6 +689,8 @@ function MetricProfilesComponent(cloneview=false) {
             clone={true}
             state={this.state}
             toggle={this.toggleAreYouSure}
+            addview={!this.publicView}
+            publicview={this.publicView}
             submitperm={write_perm}>
             <Formik
               initialValues = {{
@@ -752,11 +774,17 @@ export class MetricProfilesList extends Component
 
     this.location = props.location;
     this.backend = new Backend();
+    this.publicView = props.publicView
+
+    if (this.publicView)
+      this.apiUrl = '/api/v2/internal/public_metricprofiles'
+    else
+      this.apiUrl = '/api/v2/internal/metricprofiles'
   }
 
   async componentDidMount() {
     this.setState({loading: true})
-    let json = await this.backend.fetchData('/api/v2/internal/metricprofiles');
+    let json = await this.backend.fetchData(this.apiUrl);
     this.setState({
       list_metricprofiles: json,
       loading: false}
@@ -770,7 +798,7 @@ export class MetricProfilesList extends Component
         id: 'name',
         maxWidth: 350,
         accessor: e =>
-          <Link to={'/ui/metricprofiles/' + e.name}>
+          <Link to={`/ui/${this.publicView ? 'public_' : ''}metricprofiles/` + e.name}>
             {e.name}
           </Link>
       },
@@ -795,7 +823,9 @@ export class MetricProfilesList extends Component
         <BaseArgoView
           resourcename='metric profile'
           location={this.location}
-          listview={true}>
+          listview={true}
+          addnew={!this.publicView}
+          publicview={this.publicView}>
           <ReactTable
             data={list_metricprofiles}
             columns={columns}

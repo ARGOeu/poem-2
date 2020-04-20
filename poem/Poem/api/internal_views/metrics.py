@@ -29,6 +29,11 @@ class ListAllMetrics(APIView):
         return Response(results)
 
 
+class ListPublicAllMetrics(ListAllMetrics):
+    authentication_classes = ()
+    permission_classes = ()
+
+
 class ListMetric(APIView):
     authentication_classes = (SessionAuthentication,)
 
@@ -158,6 +163,23 @@ class ListMetric(APIView):
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
+class ListPublicMetric(ListMetric):
+    authentication_classes = ()
+    permission_classes = ()
+
+    def _denied(self):
+        return Response(status=status.HTTP_403_FORBIDDEN)
+
+    def post(self, request):
+        return self._denied()
+
+    def put(self, request):
+        return self._denied()
+
+    def delete(self, request, name):
+        return self._denied()
+
+
 class ListMetricTypes(APIView):
     authentication_classes = (SessionAuthentication,)
 
@@ -166,6 +188,11 @@ class ListMetricTypes(APIView):
             'name', flat=True
         )
         return Response(types)
+
+
+class ListPublicMetricTypes(ListMetricTypes):
+    authentication_classes = ()
+    permission_classes = ()
 
 
 class ImportMetrics(APIView):

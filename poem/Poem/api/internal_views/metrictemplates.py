@@ -455,6 +455,11 @@ class ListMetricTemplatesForProbeVersion(APIView):
                 )
 
 
+class ListPublicMetricTemplatesForProbeVersion(ListMetricTemplatesForProbeVersion):
+    authentication_classes = ()
+    permission_classes = ()
+
+
 class ListMetricTemplateTypes(APIView):
     authentication_classes = (SessionAuthentication,)
 

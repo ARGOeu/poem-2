@@ -94,3 +94,25 @@ class ListAPIKeys(APIView):
                 {'detail': 'API key name must be defined'},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+
+class ListPublicAPIKey(APIView):
+    authentication_classes = ()
+    permission_classes = ()
+
+    def get(self, request):
+        try:
+            apikey = MyAPIKey.objects.get(name='WEB-API-RO')
+            api_format = dict(
+                id=apikey.id,
+                name=apikey.name,
+                token=apikey.token,
+                created=datetime.datetime.strftime(apikey.created,
+                                                   '%Y-%m-%d %H:%M:%S'),
+                revoked=apikey.revoked
+            )
+
+        except MyAPIKey.DoesNotExist:
+            raise NotFound(status=404, detail='API key not found')
+
+        return Response(api_format)

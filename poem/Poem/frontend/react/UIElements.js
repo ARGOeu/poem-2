@@ -11,6 +11,7 @@ import {
   CardHeader,
   Col,
   Collapse,
+  Container,
   FormGroup,
   FormText,
   InputGroup,
@@ -70,8 +71,12 @@ link_title.set('administration', 'Administration');
 link_title.set('services', 'Services');
 link_title.set('reports', 'Reports');
 link_title.set('probes', 'Probes');
+link_title.set('public_probes', 'Public probes');
 link_title.set('metrics', 'Metrics');
+link_title.set('public_metrics', 'Public metrics');
 link_title.set('metricprofiles', 'Metric profiles');
+link_title.set('public_metricprofiles', 'Metric profiles');
+link_title.set('public_aggregationprofiles', 'Aggregation profiles');
 link_title.set('aggregationprofiles', 'Aggregation profiles');
 link_title.set('groupofaggregations', 'Groups of aggregations');
 link_title.set('groupofmetrics', 'Groups of metrics');
@@ -81,6 +86,7 @@ link_title.set('apikey', 'API key');
 link_title.set('metrictemplates', 'Metric templates');
 link_title.set('yumrepos', 'YUM repos');
 link_title.set('groupofthresholdsprofiles', 'Groups of thresholds profiles');
+link_title.set('public_thresholdsprofiles', 'Thresholds profiles');
 link_title.set('thresholdsprofiles', 'Thresholds profiles');
 link_title.set('packages', 'Packages');
 
@@ -182,15 +188,30 @@ export const ModalAreYouSure = ({isOpen, toggle, title, msg, onYes}) =>
 )
 
 
-export const CustomBreadcrumb = ({location, history}) =>
+export const CustomBreadcrumb = ({location, history, publicView=false}) =>
 {
-  let spliturl = location.pathname.split('/');
-  let breadcrumb_elements = new Array();
+  let spliturl = new Array()
+  let breadcrumb_elements = new Array()
+  let two_level = new Object()
 
-  breadcrumb_elements.push({'url': '/ui/home', 'title': 'Home'});
-  let two_level = new Object({'url': '/ui/' + spliturl[2]});
-  two_level['title'] = link_title.get(spliturl[2]);
-  breadcrumb_elements.push(two_level);
+  if (!publicView) {
+    breadcrumb_elements.push({'url': '/ui/home', 'title': 'Home'});
+    spliturl = location.pathname.split('/');
+
+    two_level['url'] = '/ui/' + spliturl[2];
+    two_level['title'] = link_title.get(spliturl[2]);
+    breadcrumb_elements.push(two_level);
+  }
+  else {
+    spliturl = window.location.pathname.split('/');
+    two_level['url'] = '/ui/' + spliturl[2];
+    two_level['title'] = link_title.get(spliturl[2]);
+
+    breadcrumb_elements.push({
+      'url': two_level['url'],
+      'title': two_level['title']
+    });
+  }
 
   if (spliturl.length > 3) {
     var three_level = new Object({'url': two_level['url'] + '/' + spliturl[3]});
@@ -379,10 +400,46 @@ export const NotifyWarn = ({msg='', title=''}) => {
 };
 
 
+export const PublicPage = ({children}) => {
+  let userDetails = {
+    username: 'Anonymous'
+  }
+
+  return (
+    <Container fluid>
+      <Row>
+        <Col>
+          <NavigationBar
+            history={undefined}
+            onLogout={undefined}
+            isOpenModal={undefined}
+            toggle={() => {}}
+            titleModal='Log out'
+            msgModal='Are you sure you want to log out?'
+            userDetails={userDetails}
+          />
+        </Col>
+      </Row>
+      <Row className="no-gutters">
+        <Col>
+          <CustomBreadcrumb publicView={true}/>
+          {children}
+        </Col>
+      </Row>
+      <Row>
+        <Col>
+          <Footer loginPage={false}/>
+        </Col>
+      </Row>
+    </Container>
+  )
+}
+
+
 export const BaseArgoView = ({resourcename='', location=undefined,
-    infoview=false, addview=false, listview=false, modal=false,
-    state=undefined, toggle=undefined, submitperm=true, history=true,
-    addnew=true, clone=false, cloneview=false, tenantview=false, children}) =>
+  infoview=false, addview=false, listview=false, modal=false, state=undefined,
+  toggle=undefined, submitperm=true, history=true, addnew=true, clone=false,
+  cloneview=false, tenantview=false, publicview=false, children}) =>
 (
   <React.Fragment>
     {
@@ -434,20 +491,20 @@ export const BaseArgoView = ({resourcename='', location=undefined,
                     <h2 className="ml-3 mt-1 mb-4">{`Change ${resourcename}`}</h2>
                     <ButtonToolbar>
                       {
-                          clone &&
+                          clone && !publicview &&
                             <Link className="btn btn-secondary mr-2" to={location.pathname + "/clone"} role="button">Clone</Link>
-                        }
+                      }
                       {
-                          history &&
+                          history && !publicview &&
                             <Link className="btn btn-secondary" to={location.pathname + "/history"} role="button">History</Link>
-                        }
+                      }
                     </ButtonToolbar>
                   </React.Fragment>
       }
     </div>
     <div id="argo-contentwrap" className="ml-2 mb-2 mt-2 p-3 border rounded">
       {
-        !submitperm && !infoview && !listview &&
+        !submitperm && !infoview && !listview && !publicview &&
           <Alert color='danger'>
             <center>
               This is a read-only instance, please request the corresponding
@@ -568,6 +625,7 @@ export function HistoryComponent(obj, tenantview=false) {
 
       this.name = props.match.params.name;
       this.history = props.history;
+      this.publicView = props.publicView
 
       this.state = {
         loading: false,
@@ -576,20 +634,35 @@ export function HistoryComponent(obj, tenantview=false) {
         compare2: ''
       };
 
+      if (!this.publicView) {
+        if (['metric', 'metricprofile', 'aggregationprofile', 'thresholdsprofile'].includes(obj))
+          this.apiUrl = '/api/v2/internal/tenantversion/'
+        else
+          this.apiUrl = '/api/v2/internal/version/'
+      }
+      else {
+        if (['metric', 'metricprofile', 'aggregationprofile', 'thresholdsprofile'].includes(obj))
+          this.apiUrl = '/api/v2/internal/public_tenantversion/'
+        else
+          this.apiUrl = '/api/v2/internal/public_version/'
+      }
+
+      if (tenantview)
+        this.compareUrl = `/ui/administration/${obj}s/${this.name}/history`;
+      else {
+        if (this.publicView)
+          this.compareUrl = `/ui/public_${obj}s/${this.name}/history`;
+        else
+          this.compareUrl = `/ui/${obj}s/${this.name}/history`;
+      }
+
       this.backend = new Backend();
     }
 
     async componentDidMount() {
       this.setState({loading: true});
-      let url = undefined;
 
-      if (['metric', 'metricprofile', 'aggregationprofile', 'thresholdsprofile'].includes(obj))
-        url = '/api/v2/internal/tenantversion/'
-
-      else
-        url = '/api/v2/internal/version/'
-
-      let json = await this.backend.fetchData(`${url}/${obj}/${this.name}`);
+      let json = await this.backend.fetchData(`${this.apiUrl}/${obj}/${this.name}`);
       if (json.length > 1) {
         this.setState({
           list_versions: json,
@@ -607,13 +680,6 @@ export function HistoryComponent(obj, tenantview=false) {
 
     render() {
       const { loading, list_versions } = this.state;
-
-      let compareurl = undefined;
-      if (tenantview)
-        compareurl = `/ui/administration/${obj}s/${this.name}/history`;
-
-      else
-        compareurl = `/ui/${obj}s/${this.name}/history`;
 
       if (loading)
         return (<LoadingAnim />);
@@ -634,7 +700,7 @@ export function HistoryComponent(obj, tenantview=false) {
                           color='info'
                           onClick={() =>
                             this.history.push(
-                              `${compareurl}/compare/${this.state.compare1}/${this.state.compare2}`,
+                              `${this.compareUrl}/compare/${this.state.compare1}/${this.state.compare2}`,
                           )
                           }
                         >
@@ -686,7 +752,7 @@ export function HistoryComponent(obj, tenantview=false) {
                         }
                         {
                           <td>
-                            {e.version ? <Link to={`${compareurl}/${e.version}`}>{e.version}</Link> : ''}
+                            {e.version ? <Link to={`${this.compareUrl}/${e.version}`}>{e.version}</Link> : ''}
                           </td>
                         }
                         <td>

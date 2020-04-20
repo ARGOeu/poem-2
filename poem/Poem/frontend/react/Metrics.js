@@ -35,7 +35,6 @@ import ReactDiffViewer from 'react-diff-viewer';
 
 export const MetricList = ListOfMetrics('metric');
 export const MetricHistory = HistoryComponent('metric');
-
 export const MetricVersonCompare = CompareMetrics('metric');
 
 
@@ -277,8 +276,9 @@ const InlineFields = ({values, errors, field, addnew=false, readonly=false}) => 
   </div>
 )
 
-export const ProbeVersionLink = ({probeversion}) => (
-  <Link to={'/ui/probes/' + probeversion.split(' ')[0] + '/history/' + probeversion.split(' ')[1].substring(1, probeversion.split(' ')[1].length - 1)}>
+
+export const ProbeVersionLink = ({probeversion, publicView=false}) => (
+  <Link to={`/ui/${publicView ? 'public_' : ''}probes/` + probeversion.split(' ')[0] + '/history/' + probeversion.split(' ')[1].substring(1, probeversion.split(' ')[1].length - 1)}>
     {probeversion}
   </Link>
 )
@@ -321,6 +321,7 @@ export function ListOfMetrics(type, imp=false) {
       }
 
       this.backend = new Backend();
+      this.publicView = props.publicView
       this.doFilter = this.doFilter.bind(this);
       this.toggleRow = this.toggleRow.bind(this);
       this.importMetrics = this.importMetrics.bind(this);
@@ -397,45 +398,66 @@ export function ListOfMetrics(type, imp=false) {
       this.setState({loading: true});
 
       let response = await this.backend.isTenantSchema();
-      let sessionActive = await this.backend.isActiveSession(response);
-      if (sessionActive.active)
-        if (type === 'metric') {
-          let metrics = await this.backend.fetchData('/api/v2/internal/metric');
-          let groups = await this.backend.fetchResult('/api/v2/internal/usergroups');
-          let types = await this.backend.fetchData('/api/v2/internal/mtypes');
-          this.setState({
-            list_metric: metrics,
-            list_groups: groups['metrics'],
-            list_types: types,
-            loading: false,
-            search_name: '',
-            search_probeversion: '',
-            search_group: '',
-            search_type: '',
-            userDetails: sessionActive.userdetails
-          });
-        } else {
-          let metrictemplates = await this.backend.fetchData(`/api/v2/internal/metrictemplates${imp ? '-import' : ''}`);
-          let types = await this.backend.fetchData('/api/v2/internal/mttypes');
-          let ostags = await this.backend.fetchData('/api/v2/internal/ostags');
-          this.setState({
-            list_metric: metrictemplates,
-            list_types: types,
-            list_ostags: ostags,
-            loading: false,
-            search_name: '',
-            search_probeversion: '',
-            search_type: '',
-            search_ostag: '',
-            userDetails: sessionActive.userdetails
-          });
-        };
+      if (!this.publicView) {
+        let sessionActive = await this.backend.isActiveSession(response);
+        if (sessionActive.active)
+          if (type === 'metric') {
+            let metrics = await this.backend.fetchData('/api/v2/internal/metric');
+            let groups = await this.backend.fetchResult('/api/v2/internal/usergroups');
+            let types = await this.backend.fetchData('/api/v2/internal/mtypes');
+            this.setState({
+              list_metric: metrics,
+              list_groups: groups['metrics'],
+              list_types: types,
+              loading: false,
+              search_name: '',
+              search_probeversion: '',
+              search_group: '',
+              search_type: '',
+              userDetails: sessionActive.userdetails
+            });
+          } else {
+            let metrictemplates = await this.backend.fetchData(`/api/v2/internal/metrictemplates${imp ? '-import' : ''}`);
+            let types = await this.backend.fetchData('/api/v2/internal/mttypes');
+            let ostags = await this.backend.fetchData('/api/v2/internal/ostags');
+            this.setState({
+              list_metric: metrictemplates,
+              list_types: types,
+              list_ostags: ostags,
+              loading: false,
+              search_name: '',
+              search_probeversion: '',
+              search_type: '',
+              search_ostag: '',
+              userDetails: sessionActive.userdetails
+            });
+          };
+      }
+      else {
+        let metrics = await this.backend.fetchData('/api/v2/internal/public_metric');
+        let groups = await this.backend.fetchResult('/api/v2/internal/public_usergroups');
+        let types = await this.backend.fetchData('/api/v2/internal/public_mtypes');
+        this.setState({
+          list_metric: metrics,
+          list_groups: groups['metrics'],
+          list_types: types,
+          loading: false,
+          search_name: '',
+          search_probeversion: '',
+          search_group: '',
+          search_type: '',
+          userDetails: {username: 'Anonymous'}
+        });
+      }
     }
 
     render() {
       let metriclink = undefined;
       if (type === 'metric') {
-        metriclink = '/ui/metrics/'
+        if (this.publicView)
+          metriclink = '/ui/public_metrics/'
+        else
+          metriclink = '/ui/metrics/'
       } else {
         if (imp)
           metriclink = '/ui/administration/metrictemplates/'
@@ -481,6 +503,7 @@ export function ListOfMetrics(type, imp=false) {
           accessor: e => (
             e.probeversion ?
               <ProbeVersionLink
+                publicView={this.publicView}
                 probeversion={
                   imp ?
                     (this.state.search_ostag === 'CentOS 6' && e.centos6_probeversion) ?
@@ -766,6 +789,7 @@ export const MetricForm =
     groups=[],
     metrictemplatelist=[],
     types=[],
+    publicView=false
   }) =>
     <>
       <FormGroup>
@@ -870,6 +894,7 @@ export const MetricForm =
                         <PopoverHeader>
                           <ProbeVersionLink
                             probeversion={obj === 'metric' ? state.metric.probeversion : state.metrictemplate.probeversion}
+                            publicView={publicView}
                           />
                         </PopoverHeader>
                         <PopoverBody>{state.probe.description}</PopoverBody>
@@ -1293,6 +1318,7 @@ export class MetricChange extends Component {
     this.location = props.location;
     this.history = props.history;
     this.backend = new Backend();
+    this.publicView = props.publicView;
 
     this.state = {
       metric: {},
@@ -1443,12 +1469,46 @@ export class MetricChange extends Component {
     this.setState({loading: true});
 
     if (!this.addview) {
-      let session = await this.backend.isActiveSession();
-      let metrics = await this.backend.fetchData(`/api/v2/internal/metric/${this.name}`);
-      let metrictemplateversions = await this.backend.fetchData(`/api/v2/internal/version/metrictemplate/${this.name}`);
-      if (session.active)
+      if (!this.publicView) {
+        let session = await this.backend.isActiveSession();
+        let metrics = await this.backend.fetchData(`/api/v2/internal/metric/${this.name}`);
+        let metrictemplateversions = await this.backend.fetchData(`/api/v2/internal/version/metrictemplate/${this.name}`);
+        if (session.active)
+          if (metrics.probeversion) {
+            let probe = await this.backend.fetchData(`/api/v2/internal/version/probe/${metrics.probeversion.split(' ')[0]}`);
+            let fields = {};
+            let probeversions = [];
+            probe.forEach((e) => {
+              probeversions.push(e.object_repr);
+              if (e.object_repr === metrics.probeversion) {
+                fields = e.fields;
+              }
+            })
+            this.setState({
+              metric: metrics,
+              probe: fields,
+              probeversions: probeversions,
+              metrictemplateversions: metrictemplateversions,
+              groups: session.userdetails.groups.metrics,
+              loading: false,
+              write_perm: session.userdetails.is_superuser ||
+                session.userdetails.groups.metrics.indexOf(metrics.group) >= 0,
+            });
+          } else {
+            this.setState({
+              metric: metrics,
+              groups: session.userdetails.groups.metrics,
+              loading: false,
+              write_perm: session.userdetails.is_superuser ||
+                session.userdetails.groups.metrics.indexOf(metrics.group) >= 0,
+            });
+          };
+      }
+      else {
+        let metrics = await this.backend.fetchData(`/api/v2/internal/public_metric/${this.name}`);
+        let metrictemplateversions = await this.backend.fetchData(`/api/v2/internal/public_version/metrictemplate/${this.name}`);
         if (metrics.probeversion) {
-          let probe = await this.backend.fetchData(`/api/v2/internal/version/probe/${metrics.probeversion.split(' ')[0]}`);
+          let probe = await this.backend.fetchData(`/api/v2/internal/public_version/probe/${metrics.probeversion.split(' ')[0]}`);
           let fields = {};
           let probeversions = [];
           probe.forEach((e) => {
@@ -1462,20 +1522,19 @@ export class MetricChange extends Component {
             probe: fields,
             probeversions: probeversions,
             metrictemplateversions: metrictemplateversions,
-            groups: session.userdetails.groups.metrics,
+            groups: [],
             loading: false,
-            write_perm: session.userdetails.is_superuser ||
-              session.userdetails.groups.metrics.indexOf(metrics.group) >= 0,
+            write_perm: false,
           });
         } else {
           this.setState({
             metric: metrics,
-            groups: session.userdetails.groups.metrics,
+            groups: [],
             loading: false,
-            write_perm: session.userdetails.is_superuser ||
-              session.userdetails.groups.metrics.indexOf(metrics.group) >= 0,
+            write_perm: false,
           });
         };
+      }
     };
   }
 
@@ -1497,6 +1556,7 @@ export class MetricChange extends Component {
           modal={true}
           state={this.state}
           toggle={this.toggleAreYouSure}
+          publicview={this.publicView}
           submitperm={write_perm}>
           <Formik
             enableReinitialize={true}
@@ -1528,6 +1588,7 @@ export class MetricChange extends Component {
                   togglePopOver={this.togglePopOver}
                   probeversions={probeversions}
                   groups={groups}
+                  publicView={this.publicView}
                 />
                 {
                   (write_perm) &&

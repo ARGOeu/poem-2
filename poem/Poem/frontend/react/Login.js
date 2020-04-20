@@ -110,7 +110,7 @@ class Login extends Component {
                       async (values) => {
                         let response = await this.doUserPassLogin(values.username, values.password);
                         if (response.active) {
-                          this.AppOnLogin(response.userdetails, this.props.history)
+                          this.AppOnLogin(response.userdetails)
                         }
                         else {
                           this.setState({loginFailedVisible: true});
