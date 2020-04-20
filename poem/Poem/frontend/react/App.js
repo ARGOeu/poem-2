@@ -528,6 +528,26 @@ class App extends Component {
               </PublicPage>
             }
           />
+          <Route exact path="/ui/public_thresholdsprofiles"
+            render={props =>
+              <PublicPage>
+                <ThresholdsProfilesList publicView={true} {...props} />
+              </PublicPage>
+            }
+          />
+          <Route exact path="/ui/public_thresholdsprofiles/:name"
+            render={props =>
+              <PublicPage>
+                <ThresholdsProfilesChange {...props}
+                  webapithresholds={this.state.webApiThresholds}
+                  webapiaggregation={this.state.webApiAggregation}
+                  webapitoken={this.state.token}
+                  tenantname={this.state.tenantName}
+                  publicView={true}
+                />
+              </PublicPage>
+            }
+          />
         </BrowserRouter>
       )
     }

@@ -868,6 +868,12 @@ export class ThresholdsProfilesList extends Component {
     super(props);
     this.location = props.location;
     this.backend = new Backend();
+    this.publicView = props.publicView
+
+    if (this.publicView)
+      this.apiUrl = '/api/v2/internal/public_thresholdsprofiles'
+    else
+      this.apiUrl = '/api/v2/internal/thresholdsprofiles'
 
     this.state = {
       loading: false,
@@ -878,7 +884,7 @@ export class ThresholdsProfilesList extends Component {
   async componentDidMount() {
     this.setState({loading: true});
 
-    let profiles = await this.backend.fetchData('/api/v2/internal/thresholdsprofiles');
+    let profiles = await this.backend.fetchData(this.apiUrl);
     this.setState({
       list_thresholdsprofiles: profiles,
       loading: false
@@ -892,7 +898,7 @@ export class ThresholdsProfilesList extends Component {
         id: 'name',
         maxWidth: 350,
         accessor: e =>
-          <Link to={'/ui/thresholdsprofiles/' + e.name}>
+          <Link to={`/ui/${this.publicView ? 'public_' : ''}thresholdsprofiles/` + e.name}>
             {e.name}
           </Link>
       },
@@ -918,6 +924,8 @@ export class ThresholdsProfilesList extends Component {
           resourcename='thresholds profile'
           location={this.location}
           listview={true}
+          addnew={!this.publicView}
+          publicview={this.publicView}
         >
           <ReactTable
             data={list_thresholdsprofiles}
