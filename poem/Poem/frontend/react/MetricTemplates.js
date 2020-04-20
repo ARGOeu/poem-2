@@ -5,7 +5,8 @@ import {
   LoadingAnim,
   BaseArgoView,
   NotifyOk,
-  HistoryComponent
+  HistoryComponent,
+  NotifyError
 } from './UIElements';
 import { Formik, Form } from 'formik';
 import { Button } from 'reactstrap';
@@ -147,15 +148,24 @@ function MetricTemplateComponent(cloneview=false) {
           }
         );
         if (!response.ok) {
-          let json = await response.json();
-          NotificationManager.error(json.detail, 'Error');
+          let add_msg = '';
+          try {
+            let json = await response.json();
+            add_msg = `${json.detail ? json.detail : 'Error adding metric template'}`;
+          } catch(err) {
+            add_msg = `Error adding metric template: ${err}`;
+          };
+          NotifyError({
+            title: `Error: ${response.status} ${response.statusText}`,
+            msg: add_msg
+          });
         } else {
           NotifyOk({
             msg: 'Metric template successfully added',
             title: 'Added',
             callback: () => this.history.push('/ui/metrictemplates')
           });
-        }
+        };
       } else {
         let response = await this.backend.changeObject(
           '/api/v2/internal/metrictemplates/',
@@ -177,8 +187,17 @@ function MetricTemplateComponent(cloneview=false) {
           }
         );
         if (!response.ok) {
-          let json = await response.json();
-          NotificationManager.error(json.detail, 'Error');
+          let change_msg = '';
+          try {
+            let json = await response.json();
+            change_msg = `${json.detail ? json.detail : 'Error changing metric template'}`;
+          } catch(err) {
+            change_msg = `Error changing metric template: ${err}`;
+          };
+          NotifyError({
+            title: `Error: ${response.status} ${response.statusText}`,
+            msg: change_msg
+          })
         } else {
           NotifyOk({
             msg: 'Metric template successfully changed',
@@ -197,8 +216,19 @@ function MetricTemplateComponent(cloneview=false) {
           title: 'Deleted',
           callback: () => this.history.push('/ui/metrictemplates')
         });
-      else
-        NotificationManager.error(`Error deleting metric template ${name}: ${response.status} ${response.statusText}`)
+      else {
+        let msg = '';
+        try {
+          let json = await response.json();
+          msg = `${json.detail ? json.detail : 'Error deleting metric template'}`;
+        } catch(err) {
+          msg = `Error deleting metric template: ${err}`;
+        };
+        NotifyError({
+          title: `Error: ${response.status} ${response.statusText}`,
+          msg: msg
+        });
+      };
     }
 
     async componentDidMount() {
