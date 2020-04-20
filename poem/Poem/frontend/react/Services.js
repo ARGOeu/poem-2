@@ -17,11 +17,17 @@ class Services extends Component {
     };
 
     this.backend = new Backend();
+    this.publicView = props.publicView
+
+    if (this.publicView)
+      this.apiUrl = '/api/v2/internal/public_services'
+    else
+      this.apiUrl = '/api/v2/internal/services'
   }
 
   async componentDidMount() {
     this.setState({loading: true});
-    let json = await this.backend.fetchData('/api/v2/internal/services');
+    let json = await this.backend.fetchData(this.apiUrl);
     this.setState({
       rows: json.result.rows,
       rowspan: json.result.rowspan,
@@ -81,13 +87,13 @@ class Services extends Component {
                     {
                       e.metric &&
                         <td id='argo-td' className="table-light" rowSpan={this.getRowSpan(rowspan.metric, e.metric)}>
-                          <Icon i='metrics'/> <Link to={'/ui/metrics/' + e.metric}>{e.metric}</Link>
+                          <Icon i='metrics'/> <Link to={`/ui/${this.publicView ? 'public_': ''}metrics/` + e.metric}>{e.metric}</Link>
                         </td>
                     }
                     {
                       e.probe &&
                         <td id='argo-td' className="table-light" rowSpan={this.getRowSpan(rowspan.probe, e.probe)}>
-                          <Icon i='probes'/> <ProbeVersionLink probeversion={e.probe}/>
+                          <Icon i='probes'/> <ProbeVersionLink publicView={true} probeversion={e.probe}/>
                         </td>
                     }
                   </tr>

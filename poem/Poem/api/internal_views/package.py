@@ -200,3 +200,19 @@ class ListPackages(APIView):
                 {'detail': 'You cannot delete package with associated probes!'},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+class ListPublicPackages(ListPackages):
+    authentication_classes = ()
+    permission_classes = ()
+
+    def _denied(self):
+        return Response(status=status.HTTP_403_FORBIDDEN)
+
+    def post(self, request):
+        return self._denied()
+
+    def put(self, request):
+        return self._denied()
+
+    def delete(self, request, nameversion):
+        return self._denied()

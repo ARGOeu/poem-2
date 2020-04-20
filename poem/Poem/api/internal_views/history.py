@@ -93,3 +93,8 @@ class ListVersions(APIView):
             results = sorted([ver.__str__() for ver in vers], key=str.lower)
 
             return Response(results)
+
+
+class ListPublicVersions(ListVersions):
+    authentication_classes = ()
+    permission_classes = ()
