@@ -34,7 +34,6 @@ import ReactDiffViewer from 'react-diff-viewer';
 
 export const MetricList = ListOfMetrics('metric');
 export const MetricHistory = HistoryComponent('metric');
-
 export const MetricVersonCompare = CompareMetrics('metric');
 
 
@@ -275,6 +274,7 @@ const InlineFields = ({values, errors, field, addnew=false, readonly=false}) => 
     />
   </div>
 )
+
 
 export const ProbeVersionLink = ({probeversion, publicView=false}) => (
   <Link to={`/ui/${publicView ? 'public_' : ''}probes/` + probeversion.split(' ')[0] + '/history/' + probeversion.split(' ')[1].substring(1, probeversion.split(' ')[1].length - 1)}>
@@ -789,6 +789,7 @@ export const MetricForm =
     groups=[],
     metrictemplatelist=[],
     types=[],
+    publicView=false
   }) =>
     <>
       <FormGroup>
@@ -893,6 +894,7 @@ export const MetricForm =
                         <PopoverHeader>
                           <ProbeVersionLink
                             probeversion={obj === 'metric' ? state.metric.probeversion : state.metrictemplate.probeversion}
+                            publicView={publicView}
                           />
                         </PopoverHeader>
                         <PopoverBody>{state.probe.description}</PopoverBody>
@@ -1572,6 +1574,7 @@ export class MetricChange extends Component {
                   togglePopOver={this.togglePopOver}
                   probeversions={probeversions}
                   groups={groups}
+                  publicView={this.publicView}
                 />
                 {
                   (write_perm) &&
