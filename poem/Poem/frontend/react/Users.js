@@ -6,7 +6,8 @@ import {
   BaseArgoView,
   Checkbox,
   NotifyOk,
-  FancyErrorMessage
+  FancyErrorMessage,
+  NotifyError
 } from './UIElements';
 import ReactTable from 'react-table';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -49,7 +50,6 @@ const UserSchema  = Yup.object().shape({
 })
 
 import './Users.css';
-import { NotificationManager } from 'react-notifications';
 
 
 export const UserChange = UserChangeComponent(true);
@@ -456,8 +456,17 @@ function UserChangeComponent(isTenantSchema=false) {
           }
         );
         if (!response.ok) {
-          let json = await response.json();
-          NotificationManager.error(json.detail, 'Error');
+          let change_msg = '';
+          try {
+            let json = await response.json();
+            change_msg = `${json.detail ? json.detail : 'Error changing user'}`;
+          } catch(err) {
+            change_msg = `Error changing user: ${err}`;
+          };
+          NotifyError({
+            title: `Error: ${response.status} ${response.statusText}`,
+            msg: change_msg
+          });
         } else {
           if (isTenantSchema) {
             let profile_response = await this.backend.changeObject(
@@ -473,17 +482,25 @@ function UserChangeComponent(isTenantSchema=false) {
                 groupsofthresholdsprofiles: values.groupsofthresholdsprofiles
               }
             );
-            profile_response.ok ?
+            if (profile_response.ok) {
               NotifyOk({
                 msg: 'User successfully changed',
                 title: 'Changed',
                 callback: () => this.history.push('/ui/administration/users')
               })
-            :
-              NotificationManager.error(
-                'Error changing user',
-                `Error: ${profile_response.status} ${profile_response.statusText}`
-              )
+            } else {
+              let change_msg = '';
+              try {
+                let json = await profile_response.json();
+                change_msg = `${json.detail ? json.detail : 'Error changing user profile'}`;
+              } catch(err) {
+                change_msg = `Error changing user profile: ${err}`
+              };
+              NotifyError({
+                title: `Error: ${profile_response.status} ${profile_response.statusText}`,
+                msg: change_msg
+              });
+            };
           } else {
             NotifyOk({
               msg: 'User successfully changed',
@@ -506,8 +523,17 @@ function UserChangeComponent(isTenantSchema=false) {
           }
         );
         if (!response.ok) {
-          let json = await response.json();
-          NotificationManager.error(json.detail, 'Error');
+          let add_msg = '';
+          try {
+            let json = await response.json();
+            add_msg = `${json.detail ? json.detail : 'Error adding user'}`;
+          } catch(err) {
+            add_msg = `Error adding user: ${err}`;
+          };
+          NotifyError({
+            title: `Error: ${response.status} ${response.statusText}`,
+            msg: add_msg
+          });
         } else {
           if (isTenantSchema) {
             let profile_response = await this.backend.addObject(
@@ -523,17 +549,25 @@ function UserChangeComponent(isTenantSchema=false) {
                 groupsofthresholdsprofiles: values.groupsofthresholdsprofiles
               }
             );
-            profile_response.ok ?
+            if (profile_response.ok) {
               NotifyOk({
                 msg: 'User successfully added',
                 title: 'Added',
                 callback: () => this.history.push('/ui/administration/users')
               })
-            :
-              NotificationManager.error(
-                'Error adding user',
-                `Error: ${profile_response.status} ${profile_response.statusText}`
-              )
+            } else {
+              let add_msg = '';
+              try {
+                let json = await profile_response.json();
+                add_msg = `${json.detail ? json.detail : 'Error adding user profile'}`;
+              } catch(err) {
+                add_msg = `Error adding user profile: ${err}`;
+              };
+              NotifyError({
+                title: `Error: ${profile_response.status} ${profile_response.statusText}`,
+                msg: add_msg
+              });
+            };
           } else {
             NotifyOk({
               msg: 'User successfully added',
@@ -547,17 +581,25 @@ function UserChangeComponent(isTenantSchema=false) {
 
     async doDelete(username) {
       let response = await this.backend.deleteObject(`/api/v2/internal/users/${username}`);
-      response.ok ?
+      if (response.ok) {
         NotifyOk({
           msg: 'User successfully deleted',
           title: 'Deleted',
           callback: () => this.history.push('/ui/administration/users')
         })
-      :
-        NotificationManager.error(
-          'Error deleting user',
-          `Error: ${response.status} ${response.statusText}`
-        );
+      } else {
+        let msg = '';
+        try {
+          let json = await response.json();
+          msg = `${json.detail ? json.detail : 'Error deleting user'}`;
+        } catch(err) {
+          msg = `Error deleting user: ${err}`;
+        };
+        NotifyError({
+          title: `Error: ${response.status} ${response.statusText}`,
+          msg: msg
+        });
+      };
     }
 
     async componentDidMount() {
