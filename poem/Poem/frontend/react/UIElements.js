@@ -76,6 +76,7 @@ link_title.set('metrics', 'Metrics');
 link_title.set('public_metrics', 'Public metrics');
 link_title.set('metricprofiles', 'Metric profiles');
 link_title.set('public_metricprofiles', 'Metric profiles');
+link_title.set('public_aggregationprofiles', 'Aggregation profiles');
 link_title.set('aggregationprofiles', 'Aggregation profiles');
 link_title.set('groupofaggregations', 'Groups of aggregations');
 link_title.set('groupofmetrics', 'Groups of metrics');

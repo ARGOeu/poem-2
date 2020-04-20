@@ -399,17 +399,15 @@ class App extends Component {
 
   getAndSetReferrer() {
     let referrer = localStorage.getItem('referrer')
+    let stackUrls = undefined
 
-    if (referrer) {
-      let stackUrls = JSON.parse(referrer)
-      stackUrls.push(window.location.pathname)
-      localStorage.setItem('referrer', JSON.stringify(stackUrls))
-    }
-    else {
-      let stackUrls = new Array()
-      stackUrls.push(window.location.pathname)
-      localStorage.setItem('referrer', JSON.stringify(stackUrls))
-    }
+    if (referrer)
+      stackUrls = JSON.parse(referrer)
+    else
+      stackUrls = new Array()
+
+    stackUrls.push(window.location.pathname)
+    localStorage.setItem('referrer', JSON.stringify(stackUrls))
   }
 
   async componentDidMount() {
@@ -502,6 +500,25 @@ class App extends Component {
             render={props =>
               <PublicPage>
                 <MetricProfilesChange {...props}
+                  webapimetric={this.state.webApiMetric}
+                  webapitoken={this.state.token}
+                  tenantname={this.state.tenantName}
+                  publicView={true}
+                />
+              </PublicPage>
+            }
+          />
+          <Route exact path="/ui/public_aggregationprofiles"
+            render={props =>
+              <PublicPage>
+                <AggregationProfilesList publicView={true} {...props} />
+              </PublicPage>
+            }
+          />
+          <Route exact path="/ui/public_aggregationprofiles/:name"
+            render={props =>
+              <PublicPage>
+                <AggregationProfilesChange {...props}
                   webapimetric={this.state.webApiMetric}
                   webapitoken={this.state.token}
                   tenantname={this.state.tenantName}

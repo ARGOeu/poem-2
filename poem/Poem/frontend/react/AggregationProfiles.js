@@ -836,11 +836,18 @@ export class AggregationProfilesList extends Component
 
     this.location = props.location;
     this.backend = new Backend();
+    this.publicView = props.publicView
+
+    if (this.publicView)
+      this.apiUrl = '/api/v2/internal/public_aggregations'
+    else
+      this.apiUrl = '/api/v2/internal/aggregations'
+
   }
 
   async componentDidMount() {
     this.setState({loading: true})
-    let json = await this.backend.fetchData('/api/v2/internal/aggregations');
+    let json = await this.backend.fetchData(this.apiUrl);
     this.setState({
       list_aggregations: json,
       loading: false
@@ -854,7 +861,7 @@ export class AggregationProfilesList extends Component
         id: 'name',
         maxWidth: 350,
         accessor: e =>
-          <Link to={'/ui/aggregationprofiles/' + e.name}>
+          <Link to={`/ui/${this.publicView ? 'public_' : ''}aggregationprofiles/` + e.name}>
             {e.name}
           </Link>
       },
@@ -879,7 +886,9 @@ export class AggregationProfilesList extends Component
         <BaseArgoView
           resourcename='aggregation profile'
           location={this.location}
-          listview={true}>
+          listview={true}
+          addnew={!this.publicView}
+          publicview={this.publicView}>
           <ReactTable
             data={list_aggregations}
             columns={columns}
