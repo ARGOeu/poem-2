@@ -337,7 +337,7 @@ export class ProbeList extends Component {
         id: 'name',
         minWidth: 80,
         accessor: e =>
-          <Link to={`/ui/${this.publicView && 'public_'}probes/${e.name}`}>
+          <Link to={`/ui/${this.publicView ? 'public_' : ''}probes/${e.name}`}>
             {e.name}
           </Link>,
         filterable: true,
