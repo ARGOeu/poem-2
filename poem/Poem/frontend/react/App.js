@@ -40,7 +40,7 @@ import { APIKeyList, APIKeyChange } from './APIKey';
 import NotFound from './NotFound';
 import { Route, Switch, BrowserRouter, Redirect, withRouter } from 'react-router-dom';
 import { Container, Row, Col } from 'reactstrap';
-import { NavigationBar, CustomBreadcrumb, NavigationLinks, Footer } from './UIElements';
+import { NavigationBar, CustomBreadcrumb, NavigationLinks, Footer, PublicPage} from './UIElements';
 import { NotificationContainer } from 'react-notifications';
 import { Backend } from './DataManager';
 import { YumRepoList, YumRepoChange } from './YumRepos';
@@ -64,14 +64,42 @@ const SuperUserRoute = ({isSuperUser, ...props}) => (
 )
 
 
+const RedirectAfterLogin = ({isSuperUser, ...props}) => {
+  let last = ''
+  let before_last = ''
+  let destination = ''
+  let referrer = localStorage.getItem('referrer')
+
+  if (isSuperUser)
+    destination = "/ui/administration"
+  else
+    destination = "/ui/metricprofiles"
+
+  if (referrer) {
+    let urls = JSON.parse(referrer)
+
+    if (urls.length === 1) {
+      last = urls.pop()
+      before_last = last
+    }
+    else {
+      last = urls.pop()
+      before_last = urls.pop()
+    }
+  }
+
+  if (last !== before_last)
+    destination = before_last
+
+  localStorage.removeItem('referrer')
+
+  return <Redirect to={destination}/>
+}
+
+
 const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, token, tenantName, isSuperUser}) => (
   <Switch>
-    <Route exact path="/ui/login" render={() => (
-      isSuperUser ?
-        <Redirect to="/ui/administration"/>
-      :
-        <Redirect to="/ui/metricprofiles"/>
-    )}/>
+    <Route exact path="/ui/login" render={props => <RedirectAfterLogin isSuperUser={isSuperUser} {...props}/>}/>
     <Route exact path="/ui/home" component={Home} />
     <Route exact path="/ui/services" component={Services} />
     <Route exact path="/ui/reports" component={Reports} />
@@ -291,6 +319,7 @@ class App extends Component {
       webApiAggregation: undefined,
       webApiMetric: undefined,
       webApiThresholds: undefined,
+      publicView: undefined,
       tenantName: undefined,
       token: undefined,
       isTenantSchema: null
@@ -301,7 +330,7 @@ class App extends Component {
     this.toggleAreYouSure = this.toggleAreYouSure.bind(this);
   }
 
-  async onLogin(json, history) {
+  async onLogin(json) {
     let response = new Object({
       active: true,
       userdetails: json
@@ -309,17 +338,11 @@ class App extends Component {
 
     let isTenantSchema = await this.backend.isTenantSchema();
     let initialState = await this.initalizeState(isTenantSchema, response);
-    setTimeout(() => {
-      response.userdetails.is_superuser ?
-        history.push('/ui/administration')
-      :
-        history.push('/ui/metricprofiles')
-      }, 50
-    );
   }
 
   onLogout() {
     this.setState({isSessionActive: false});
+    localStorage.removeItem('referrer')
   }
 
   toggleAreYouSure() {
@@ -327,31 +350,10 @@ class App extends Component {
       ({areYouSureModal: !prevState.areYouSureModal}));
   }
 
-  async fetchConfigOptions() {
-    let response = await fetch('/api/v2/internal/config_options');
-    if (response.ok) {
-      let json = await response.json();
-      return json;
-    };
-  }
-
-  async fetchToken() {
-    try {
-      let response = await fetch('/api/v2/internal/apikeys/WEB-API');
-      if (response.ok) {
-        let json = await response.json();
-        return json['token'];
-      } else
-        return null;
-    } catch(err) {
-      alert(`Something went wrong: ${err}`)
-    };
-  }
-
   async initalizeState(poemType, response) {
     if (poemType) {
-      let token = await this.fetchToken();
-      let options = await this.fetchConfigOptions();
+      let token = await this.backend.fetchToken();
+      let options = await this.backend.fetchConfigOptions();
       this.setState({
         isTenantSchema: poemType,
         isSessionActive: response.active,
@@ -361,26 +363,196 @@ class App extends Component {
         webApiAggregation: options && options.result.webapiaggregation,
         webApiThresholds: options && options.result.webapithresholds,
         tenantName: options && options.result.tenant_name,
+        publicView: false,
       });
     } else {
       this.setState({
         isTenantSchema: poemType,
         isSessionActive: response.active,
-        userDetails: response.userdetails
+        userDetails: response.userdetails,
+        publicView: false,
       });
     };
   }
 
+  async initalizePublicState() {
+    let token = await this.backend.fetchPublicToken()
+    let options = await this.backend.fetchConfigOptions();
+    this.setState({
+      isTenantSchema: true,
+      isSessionActive: false,
+      userDetails: {username: 'Anonymous'},
+      token: token,
+      webApiMetric: options && options.result.webapimetric,
+      webApiAggregation: options && options.result.webapiaggregation,
+      webApiThresholds: options && options.result.webapithresholds,
+      tenantName: options && options.result.tenant_name,
+      publicView: true,
+    })
+  }
+
+  isPublicUrl () {
+    const pathname = window.location.pathname
+
+    return pathname.includes('public_')
+  }
+
+  getAndSetReferrer() {
+    let referrer = localStorage.getItem('referrer')
+    let stackUrls = undefined
+
+    if (referrer)
+      stackUrls = JSON.parse(referrer)
+    else
+      stackUrls = new Array()
+
+    stackUrls.push(window.location.pathname)
+    localStorage.setItem('referrer', JSON.stringify(stackUrls))
+  }
+
   async componentDidMount() {
-    let isTenantSchema = await this.backend.isTenantSchema();
-    let response = await this.backend.isActiveSession(isTenantSchema);
-    response.active && this.initalizeState(isTenantSchema, response);
+    if (this.isPublicUrl()) {
+      this.initalizePublicState()
+    }
+    else {
+      let isTenantSchema = await this.backend.isTenantSchema();
+      let response = await this.backend.isActiveSession(isTenantSchema);
+      response.active && this.initalizeState(isTenantSchema, response);
+    }
+
+    this.getAndSetReferrer()
   }
 
   render() {
-    let {isSessionActive, userDetails} = this.state
+    let {isSessionActive, userDetails, publicView} = this.state
 
-    if (!isSessionActive) {
+    if (publicView) {
+      return (
+        <BrowserRouter>
+          <Switch>
+            <Route
+              exact path="/ui/public_probes"
+              render={props =>
+                <PublicPage>
+                  <ProbeList publicView={true} {...props} />
+                </PublicPage>
+              }
+            />
+            <Route
+              exact path="/ui/public_probes/:name"
+              render={props =>
+                <PublicPage>
+                  <ProbeChange publicView={true} {...props}/>
+                </PublicPage>
+              }
+            />
+            <Route exact path="/ui/public_probes/:name/history"
+              render={props =>
+                <PublicPage>
+                  <ProbeHistory publicView={true} {...props}/>
+                </PublicPage>
+              }
+            />
+            <Route exact path="/ui/public_probes/:name/history/compare/:id1/:id2"
+              render={props =>
+                <PublicPage>
+                  <ProbeVersionCompare publicView={true} {...props}/>
+                </PublicPage>
+              }
+            />
+            <Route exact path="/ui/public_probes/:name/history/:version"
+              render={props =>
+                <PublicPage>
+                  <ProbeVersionDetails publicView={true} {...props}/>
+                </PublicPage>
+              }
+            />
+            <Route exact path="/ui/public_metrics"
+              render={props =>
+                <PublicPage>
+                  <MetricList publicView={true} {...props}/>
+                </PublicPage>
+              }
+            />
+            <Route exact path="/ui/public_metrics/:name"
+              render={props =>
+                <PublicPage>
+                  <MetricChange publicView={true} {...props}/>
+                </PublicPage>
+              }
+            />
+          </Switch>
+          <Route exact path="/ui/public_services"
+            render={props =>
+              <PublicPage>
+                <Services publicView={true} {...props}/>
+              </PublicPage>
+            }
+          />
+          <Route exact path="/ui/public_metricprofiles"
+            render={props =>
+              <PublicPage>
+                <MetricProfilesList publicView={true} {...props} />
+              </PublicPage>
+            }
+          />
+          <Route exact path="/ui/public_metricprofiles/:name"
+            render={props =>
+              <PublicPage>
+                <MetricProfilesChange {...props}
+                  webapimetric={this.state.webApiMetric}
+                  webapitoken={this.state.token}
+                  tenantname={this.state.tenantName}
+                  publicView={true}
+                />
+              </PublicPage>
+            }
+          />
+          <Route exact path="/ui/public_aggregationprofiles"
+            render={props =>
+              <PublicPage>
+                <AggregationProfilesList publicView={true} {...props} />
+              </PublicPage>
+            }
+          />
+          <Route exact path="/ui/public_aggregationprofiles/:name"
+            render={props =>
+              <PublicPage>
+                <AggregationProfilesChange {...props}
+                  webapimetric={this.state.webApiMetric}
+                  webapiaggregation={this.state.webApiAggregation}
+                  webapitoken={this.state.token}
+                  tenantname={this.state.tenantName}
+                  publicView={true}
+                />
+              </PublicPage>
+            }
+          />
+          <Route exact path="/ui/public_thresholdsprofiles"
+            render={props =>
+              <PublicPage>
+                <ThresholdsProfilesList publicView={true} {...props} />
+              </PublicPage>
+            }
+          />
+          <Route exact path="/ui/public_thresholdsprofiles/:name"
+            render={props =>
+              <PublicPage>
+                <ThresholdsProfilesChange {...props}
+                  webapithresholds={this.state.webApiThresholds}
+                  webapiaggregation={this.state.webApiAggregation}
+                  webapitoken={this.state.token}
+                  tenantname={this.state.tenantName}
+                  publicView={true}
+                />
+              </PublicPage>
+            }
+          />
+        </BrowserRouter>
+      )
+    }
+    else if (!publicView && !isSessionActive) {
+
       return (
         <BrowserRouter>
           <Switch>

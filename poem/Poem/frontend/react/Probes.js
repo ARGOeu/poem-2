@@ -289,6 +289,7 @@ export class ProbeList extends Component {
     super(props);
 
     this.location = props.location;
+    this.publicView = props.publicView
 
     this.state = {
       loading: false,
@@ -300,12 +301,17 @@ export class ProbeList extends Component {
     };
 
     this.backend = new Backend();
+
+    if (this.publicView)
+      this.apiListProbes = '/api/v2/internal/public_probes'
+    else
+      this.apiListProbes = '/api/v2/internal/probes'
   }
 
   async componentDidMount() {
     this.setState({loading: true});
 
-    let json = await this.backend.fetchData('/api/v2/internal/probes');
+    let json = await this.backend.fetchData(this.apiListProbes);
     let isTenantSchema = await this.backend.isTenantSchema();
     this.setState({
       list_probe: json,
@@ -331,7 +337,7 @@ export class ProbeList extends Component {
         id: 'name',
         minWidth: 80,
         accessor: e =>
-          <Link to={`/ui/probes/${e.name}`}>
+          <Link to={`/ui/${this.publicView ? 'public_' : ''}probes/${e.name}`}>
             {e.name}
           </Link>,
         filterable: true,
@@ -349,7 +355,7 @@ export class ProbeList extends Component {
         id: 'nv',
         minWidth: 25,
         accessor: e =>
-          <Link to={`/ui/probes/${e.name}/history`}>
+          <Link to={`/ui/${this.publicView && 'public_'}probes/${e.name}/history`}>
             {e.nv}
           </Link>,
         Cell: row =>
@@ -452,6 +458,18 @@ function ProbeComponent(cloneview=false) {
       this.location = props.location;
       this.history = props.history;
       this.backend = new Backend();
+      this.publicView = props.publicView
+
+      if (this.publicView) {
+        this.apiListPackages = '/api/v2/internal/public_packages'
+        this.apiProbeName = '/api/v2/internal/public_probes'
+        this.apiMetricsForProbes = '/api/v2/internal/public_metricsforprobes'
+      }
+      else {
+        this.apiListPackages = '/api/v2/internal/packages'
+        this.apiProbeName = '/api/v2/internal/probes'
+        this.apiMetricsForProbes = '/api/v2/internal/metricsforprobes'
+      }
 
       this.state = {
         probe: {
@@ -600,12 +618,12 @@ function ProbeComponent(cloneview=false) {
       this.setState({loading: true});
 
       let isTenantSchema = await this.backend.isTenantSchema();
-      let pkgs = await this.backend.fetchData('/api/v2/internal/packages');
+      let pkgs = await this.backend.fetchData(this.apiListPackages);
       let list_packages = [];
       pkgs.forEach(e => list_packages.push(`${e.name} (${e.version})`));
       if (!this.addview) {
-        let probe = await this.backend.fetchData(`/api/v2/internal/probes/${this.name}`);
-        let metrics = await this.backend.fetchData(`/api/v2/internal/metricsforprobes/${probe.name}(${probe.version})`);
+        let probe = await this.backend.fetchData(`${this.apiProbeName}/${this.name}`);
+        let metrics = await this.backend.fetchData(`${this.apiMetricsForProbes}/${probe.name}(${probe.version})`);
         this.setState({
           probe: probe,
           list_packages: list_packages,
@@ -739,9 +757,9 @@ export class ProbeVersionCompare extends Component{
   constructor(props) {
     super(props);
 
-    this.version1 = props.match.params.id1;
     this.version2 = props.match.params.id2;
     this.name = props.match.params.name;
+    this.publicView = props.publicView
 
     this.state = {
       loading: false,
@@ -761,13 +779,18 @@ export class ProbeVersionCompare extends Component{
       comment2: ''
     };
 
+    if (this.publicView)
+      this.apiUrl = '/api/v2/internal/public_version/probe/'
+    else
+      this.apiUrl = '/api/v2/internal/version/probe/'
+
     this.backend = new Backend();
   }
 
   async componentDidMount() {
     this.setState({loading: true});
 
-    let json = await this.backend.fetchData(`/api/v2/internal/version/probe/${this.name}`);
+    let json = await this.backend.fetchData(`${this.apiUrl}/${this.name}`);
     let name1 = '';
     let version1 = '';
     let package1 = '';
@@ -884,8 +907,14 @@ export class ProbeVersionDetails extends Component {
 
     this.name = props.match.params.name;
     this.version = props.match.params.version;
+    this.publicView = props.publicView
 
     this.backend = new Backend();
+
+    if (this.publicView)
+      this.apiUrl = '/api/v2/internal/public_version/probe/'
+    else
+      this.apiUrl = '/api/v2/internal/version/probe/'
 
     this.state = {
       name: '',
@@ -902,7 +931,7 @@ export class ProbeVersionDetails extends Component {
   async componentDidMount() {
     this.setState({loading: true});
 
-    let json = await this.backend.fetchData(`/api/v2/internal/version/probe/${this.name}`);
+    let json = await this.backend.fetchData(`${this.apiUrl}/${this.name}`);
     json.forEach((e) => {
       if (e.version === this.version)
         this.setState({

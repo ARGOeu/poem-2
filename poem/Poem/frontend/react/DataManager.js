@@ -10,7 +10,7 @@ export class Backend {
         return false;
     } catch(err) {
       return false;
-    };
+    }
   }
 
   async isTenantSchema() {
@@ -23,7 +23,43 @@ export class Backend {
         return null;
     } catch(err) {
       alert(`Something went wrong: ${err}`);
-    };
+    }
+  }
+
+  async fetchToken() {
+    try {
+      let response = await fetch('/api/v2/internal/apikeys/WEB-API');
+      if (response.ok) {
+        let json = await response.json();
+        return json['token'];
+      } else
+        return null;
+    } catch(err) {
+      alert(`Something went wrong: ${err}`)
+    }
+  }
+
+  async fetchPublicToken() {
+    // this one fetch token with predefined name WEB-API-RO
+    // API is not protected and is used for public views
+    try {
+      let response = await fetch('/api/v2/internal/public_apikey');
+      if (response.ok) {
+        let json = await response.json();
+        return json['token'];
+      } else
+        return null;
+    } catch(err) {
+      alert(`Something went wrong: ${err}`)
+    }
+  }
+
+  async fetchConfigOptions() {
+    let response = await fetch('/api/v2/internal/config_options');
+    if (response.ok) {
+      let json = await response.json();
+      return json;
+    }
   }
 
   async fetchData(url) {
@@ -32,7 +68,7 @@ export class Backend {
       return response.json();
     } catch(err) {
       alert(`Something went wrong: ${err}`);
-    };
+    }
   }
 
   async fetchListOfNames(url) {
@@ -44,7 +80,7 @@ export class Backend {
       return list;
     } catch(err) {
       alert(`Something went wrong: ${err}`);
-    };
+    }
   }
 
   async fetchResult(url) {
@@ -54,7 +90,7 @@ export class Backend {
       return json['result'];
     } catch(err) {
       alert(`Something went wrong: ${err}`);
-    };
+    }
   }
 
   changeObject(url, data) {
@@ -94,7 +130,6 @@ export class Backend {
       body: values && JSON.stringify(values)
     });
   }
-
 }
 
 export class WebApi {
@@ -127,7 +162,7 @@ export class WebApi {
       return json['data'];
     } catch(err) {
       alert(`Something went wrong: ${err}`);
-    };
+    }
   }
 
   fetchMetricProfile(id) {
@@ -193,7 +228,7 @@ export class WebApi {
       return json['data'][0];
     } catch(err) {
       alert(`Something went wrong: ${err}`);
-    };
+    }
   }
 
   changeProfile(url, data) {
@@ -222,5 +257,4 @@ export class WebApi {
       body: values && JSON.stringify(values)
     });
   }
-
 }

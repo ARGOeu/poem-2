@@ -230,3 +230,8 @@ class ListServices(APIView):
             'rows': table_rows,
             'rowspan': nleaves_perelem
         }})
+
+
+class ListPublicServices(ListServices):
+    authentication_classes = ()
+    permission_classes = ()
