@@ -5031,6 +5031,80 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
 
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db',
            side_effect=mocked_inline_metric_for_db)
+    def test_post_metric_template_with_nonexisting_probeversion(self, func):
+        conf = [
+            {'key': 'maxCheckAttempts', 'value': '4'},
+            {'key': 'timeout', 'value': '70'},
+            {'key': 'path',
+             'value': '/usr/libexec/argo-monitoring/probes/argo'},
+            {'key': 'interval', 'value': '6'},
+            {'key': 'retryInterval', 'value': '4'}
+        ]
+        data = {
+            'name': 'test.AMS-Check',
+            'probeversion': 'nonexisting (0.1.1)',
+            'mtype': 'Active',
+            'description': 'Description of argo.AMS-Check metric template.',
+            'probeexecutable': 'ams-probe',
+            'parent': '',
+            'config': json.dumps(conf),
+            'attribute': json.dumps([{'key': '', 'value': ''}]),
+            'dependency': json.dumps([{'key': '', 'value': ''}]),
+            'parameter': json.dumps([{'key': '', 'value': ''}]),
+            'flags': json.dumps([{'key': '', 'value': ''}]),
+            'files': json.dumps([{'key': '', 'value': ''}]),
+            'fileparameter': json.dumps([{'key': '', 'value': ''}])
+        }
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data,
+            {
+                'detail': 'You should choose existing probe version!'
+            }
+        )
+
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db',
+           side_effect=mocked_inline_metric_for_db)
+    def test_post_metric_template_without_specifying_probes_version(self, func):
+        conf = [
+            {'key': 'maxCheckAttempts', 'value': '4'},
+            {'key': 'timeout', 'value': '70'},
+            {'key': 'path',
+             'value': '/usr/libexec/argo-monitoring/probes/argo'},
+            {'key': 'interval', 'value': '6'},
+            {'key': 'retryInterval', 'value': '4'}
+        ]
+        data = {
+            'name': 'test.AMS-Check',
+            'probeversion': 'nonexisting',
+            'mtype': 'Active',
+            'description': 'Description of argo.AMS-Check metric template.',
+            'probeexecutable': 'ams-probe',
+            'parent': '',
+            'config': json.dumps(conf),
+            'attribute': json.dumps([{'key': '', 'value': ''}]),
+            'dependency': json.dumps([{'key': '', 'value': ''}]),
+            'parameter': json.dumps([{'key': '', 'value': ''}]),
+            'flags': json.dumps([{'key': '', 'value': ''}]),
+            'files': json.dumps([{'key': '', 'value': ''}]),
+            'fileparameter': json.dumps([{'key': '', 'value': ''}])
+        }
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data,
+            {
+                'detail': 'You should specify the version of the probe!'
+            }
+        )
+
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db',
+           side_effect=mocked_inline_metric_for_db)
     def test_put_metrictemplate_without_changing_probekey(self, func):
         attr = [
             {'key': 'argo.ams_TOKEN2', 'value': '--token'}
@@ -5600,6 +5674,86 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(
             response.data,
             {'detail': 'Metric template with this name already exists.'}
+        )
+
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db',
+           side_effect=mocked_inline_metric_for_db)
+    def test_put_metrictemplate_with_nonexisting_probeversion(self, func):
+        attr = [
+            {'key': 'argo.ams_TOKEN', 'value': '--token'}
+        ]
+        conf = [
+            {'key': 'maxCheckAttempts', 'value': '3'},
+            {'key': 'timeout', 'value': '60'},
+            {'key': 'path', 'value':
+                '/usr/libexec/argo-monitoring/probes/argo'},
+            {'key': 'interval', 'value': '5'},
+            {'key': 'retryInterval', 'value': '3'}
+        ]
+        data = {
+            'id': self.metrictemplate1.id,
+            'name': 'test.apel.APEL-Pub',
+            'mtype': self.mtype1,
+            'probeversion': 'nonexisting (1.0.0)',
+            'description': self.metrictemplate1.description,
+            'parent': '',
+            'probeexecutable': 'ams-probe',
+            'config': json.dumps(conf),
+            'attribute': json.dumps(attr),
+            'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
+            'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
+            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
+            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data,
+            {'detail': 'You should choose existing probe version!'}
+        )
+
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db',
+           side_effect=mocked_inline_metric_for_db)
+    def test_put_metrictemplate_without_specifying_probes_version(self, func):
+        attr = [
+            {'key': 'argo.ams_TOKEN', 'value': '--token'}
+        ]
+        conf = [
+            {'key': 'maxCheckAttempts', 'value': '3'},
+            {'key': 'timeout', 'value': '60'},
+            {'key': 'path', 'value':
+                '/usr/libexec/argo-monitoring/probes/argo'},
+            {'key': 'interval', 'value': '5'},
+            {'key': 'retryInterval', 'value': '3'}
+        ]
+        data = {
+            'id': self.metrictemplate1.id,
+            'name': 'test.apel.APEL-Pub',
+            'mtype': self.mtype1,
+            'probeversion': 'nonexisting',
+            'description': self.metrictemplate1.description,
+            'parent': '',
+            'probeexecutable': 'ams-probe',
+            'config': json.dumps(conf),
+            'attribute': json.dumps(attr),
+            'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
+            'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
+            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
+            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data,
+            {'detail': 'You should specify the version of the probe!'}
         )
 
     def test_delete_metric_template(self):
