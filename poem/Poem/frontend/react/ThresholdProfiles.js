@@ -954,12 +954,12 @@ export class ThresholdsProfilesChange extends Component {
     this.tenant_name = props.tenantname;
     this.webapithresholds = props.webapithresholds;
     this.token = props.webapitoken;
-
     this.backend = new Backend();
     this.webapi = new WebApi({
       token: this.token,
       thresholdsProfiles: this.webapithresholds
     })
+    this.publicView = props.publicView;
 
     this.state = {
       thresholds_profile: {
@@ -1169,18 +1169,8 @@ export class ThresholdsProfilesChange extends Component {
   async componentDidMount() {
     this.setState({loading: true});
 
-    let sessionActive = await this.backend.isActiveSession();
-    let metricsall = await this.backend.fetchListOfNames('/api/v2/internal/metricsall');
-    let json = await this.backend.fetchData(`/api/v2/internal/thresholdsprofiles/${this.name}`);
-    if (this.addview) {
-      this.setState({
-        loading: false,
-        groups_list: sessionActive.userdetails.groups.thresholdsprofiles,
-        metrics_list: metricsall,
-        write_perm: sessionActive.userdetails.is_superuser ||
-          sessionActive.userdetails.groups.thresholdsprofiles.length > 0,
-      });
-    } else {
+    if (this.publicView) {
+      let json = await this.backend.fetchData(`/api/v2/internal/public_thresholdsprofiles/${this.name}`);
       let thresholdsprofile = await this.webapi.fetchThresholdsProfile(json.apiid);
       this.setState({
         thresholds_profile: {
@@ -1189,13 +1179,41 @@ export class ThresholdsProfilesChange extends Component {
           'groupname': json['groupname']
         },
         thresholds_rules: thresholdsToValues(thresholdsprofile.rules),
-        groups_list: sessionActive.userdetails.groups.thresholdsprofiles,
-        metrics_list: metricsall,
-        write_perm: sessionActive.userdetails.is_superuser ||
-          sessionActive.userdetails.groups.thresholdsprofiles.indexOf(json['groupname']) >= 0,
+        groups_list: [],
+        metrics_list: await this.backend.fetchListOfNames('/api/v2/internal/public_metricsall'),
+        write_perm: false,
         loading: false
       });
-    };
+    }
+    else {
+      let sessionActive = await this.backend.isActiveSession();
+      let metricsall = await this.backend.fetchListOfNames('/api/v2/internal/metricsall');
+      let json = await this.backend.fetchData(`/api/v2/internal/thresholdsprofiles/${this.name}`);
+      if (this.addview) {
+        this.setState({
+          loading: false,
+          groups_list: sessionActive.userdetails.groups.thresholdsprofiles,
+          metrics_list: metricsall,
+          write_perm: sessionActive.userdetails.is_superuser ||
+            sessionActive.userdetails.groups.thresholdsprofiles.length > 0,
+        });
+      } else {
+        let thresholdsprofile = await this.webapi.fetchThresholdsProfile(json.apiid);
+        this.setState({
+          thresholds_profile: {
+            'apiid': thresholdsprofile.id,
+            'name': thresholdsprofile.name,
+            'groupname': json['groupname']
+          },
+          thresholds_rules: thresholdsToValues(thresholdsprofile.rules),
+          groups_list: sessionActive.userdetails.groups.thresholdsprofiles,
+          metrics_list: metricsall,
+          write_perm: sessionActive.userdetails.is_superuser ||
+            sessionActive.userdetails.groups.thresholdsprofiles.indexOf(json['groupname']) >= 0,
+          loading: false
+        });
+      };
+    }
   }
 
   render() {
@@ -1209,11 +1227,12 @@ export class ThresholdsProfilesChange extends Component {
         <BaseArgoView
           resourcename='thresholds profile'
           location={this.location}
-          addview={this.addview}
           modal={true}
           state={this.state}
           toggle={this.toggleAreYouSure}
           submitperm={write_perm}
+          addview={!this.publicView}
+          publicview={this.publicView}
         >
           <Formik
             initialValues = {{

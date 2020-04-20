@@ -29,6 +29,11 @@ class ListAllMetrics(APIView):
         return Response(results)
 
 
+class ListPublicAllMetrics(ListAllMetrics):
+    authentication_classes = ()
+    permission_classes = ()
+
+
 class ListMetric(APIView):
     authentication_classes = (SessionAuthentication,)
 
