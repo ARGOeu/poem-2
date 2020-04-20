@@ -8,7 +8,8 @@ import{
   FancyErrorMessage,
   AutocompleteField,
   NotifyOk,
-  Checkbox
+  Checkbox,
+  NotifyError
 } from './UIElements';
 import ReactTable from 'react-table';
 import {
@@ -252,8 +253,17 @@ export class PackageChange extends Component {
         }
       );
       if (!response.ok) {
-        let json = await response.json();
-        NotificationManager.error(json.detail, 'Error');
+        let add_msg = '';
+        try {
+          let json = await response.json();
+          add_msg = `${json.detail ? json.detail : 'Error adding package'}`;
+        } catch(err) {
+          add_msg = `Error adding package: ${err}`;
+        }
+        NotifyError({
+          title: `Error: ${response.status} ${response.statusText}`,
+          msg: add_msg
+        });
       } else {
         NotifyOk({
           msg: 'Package successfully added',
@@ -273,8 +283,17 @@ export class PackageChange extends Component {
         }
       );
       if (!response.ok) {
-        let json = await response.json();
-        NotificationManager.error(json.detail, 'Error');
+        let change_msg = '';
+        try {
+          let json = await response.json();
+          change_msg = `${json.detail ? json.detail : 'Error changing package'}`;
+        } catch(err) {
+          change_msg = `Error changing package: ${err}`;
+        }
+        NotifyError({
+          title: `Error: ${response.status} ${response.statusText}`,
+          msg: change_msg
+        });
       } else {
         NotifyOk({
           msg: 'Package successfully changed',
@@ -288,8 +307,17 @@ export class PackageChange extends Component {
   async doDelete(nameversion) {
     let response = await this.backend.deleteObject(`/api/v2/internal/packages/${nameversion}`);
     if (!response.ok) {
-      let json = await response.json();
-      NotificationManager.error(json.detail, 'Error');
+      let msg = '';
+      try {
+        let json = await response.json();
+        msg = `${json.detail ? json.detail : 'Error deleting package'}`;
+      } catch(err) {
+        msg = `Error deleting package: ${err}`;
+      };
+      NotifyError({
+        title: `Error: ${response.status} ${response.statusText}`,
+        msg: msg
+      });
     } else {
       NotifyOk({
         msg: 'Package successfully deleted',
