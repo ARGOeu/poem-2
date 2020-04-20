@@ -856,6 +856,62 @@ class ListProbesAPIViewTests(TenantTestCase):
             {'detail': 'Probe with this name already exists.'}
         )
 
+    def test_put_probe_with_nonexisting_package(self):
+        self.assertEqual(admin_models.Probe.objects.all().count(), 3)
+        data = {
+            'id': self.probe1.id,
+            'name': 'argo-web-api',
+            'package': 'nonexisting (1.0.0)',
+            'comment': 'New version.',
+            'docurl':
+                'https://github.com/ARGOeu/nagios-plugins-argo/blob/'
+                'master/README.md',
+            'description': 'Probe is inspecting AMS service by trying '
+                           'to publish and consume randomly generated '
+                           'messages.',
+            'repository': 'https://github.com/ARGOeu/nagios-plugins-'
+                          'argo',
+            'update_metrics': False
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(admin_models.Probe.objects.all().count(), 3)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data,
+            {'detail': 'You should choose existing package.'}
+        )
+
+    def test_put_probe_with_no_package_version(self):
+        self.assertEqual(admin_models.Probe.objects.all().count(), 3)
+        data = {
+            'id': self.probe1.id,
+            'name': 'argo-web-api',
+            'package': 'nonexisting',
+            'comment': 'New version.',
+            'docurl':
+                'https://github.com/ARGOeu/nagios-plugins-argo/blob/'
+                'master/README.md',
+            'description': 'Probe is inspecting AMS service by trying '
+                           'to publish and consume randomly generated '
+                           'messages.',
+            'repository': 'https://github.com/ARGOeu/nagios-plugins-'
+                          'argo',
+            'update_metrics': False
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(admin_models.Probe.objects.all().count(), 3)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data,
+            {'detail': 'You should specify package version.'}
+        )
+
     def test_put_probe_without_new_version(self):
         data = {
             'id': self.probe1.id,
@@ -1352,6 +1408,56 @@ class ListProbesAPIViewTests(TenantTestCase):
             response.data,
             {
                 'detail': 'Probe with this name already exists.'
+            }
+        )
+
+    def test_post_probe_with_nonexisting_package(self):
+        self.assertEqual(admin_models.Probe.objects.all().count(), 3)
+        data = {
+            'name': 'ams-probe',
+            'package': 'nonexisting (0.1.11)',
+            'description': 'Probe inspects POEM service.',
+            'comment': 'Initial version.',
+            'repository': 'https://github.com/ARGOeu/nagios-plugins-argo',
+            'docurl': 'https://github.com/ARGOeu/nagios-plugins-argo/blob/'
+                      'master/README.md',
+            'user': 'testuser',
+            'datetime': datetime.datetime.now()
+        }
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(admin_models.Probe.objects.all().count(), 3)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data,
+            {
+                'detail': 'You should choose existing package.'
+            }
+        )
+
+    def test_post_probe_with_package_without_version(self):
+        self.assertEqual(admin_models.Probe.objects.all().count(), 3)
+        data = {
+            'name': 'ams-probe',
+            'package': 'nonexisting',
+            'description': 'Probe inspects POEM service.',
+            'comment': 'Initial version.',
+            'repository': 'https://github.com/ARGOeu/nagios-plugins-argo',
+            'docurl': 'https://github.com/ARGOeu/nagios-plugins-argo/blob/'
+                      'master/README.md',
+            'user': 'testuser',
+            'datetime': datetime.datetime.now()
+        }
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(admin_models.Probe.objects.all().count(), 3)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data,
+            {
+                'detail': 'You should specify package version.'
             }
         )
 
