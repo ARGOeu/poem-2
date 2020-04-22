@@ -2009,6 +2009,9 @@ class ListAggregationsAPIViewTests(TenantTestCase):
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data, {'detail': 'apiid: This field is required.'}
+        )
 
     def test_put_aggregations(self):
         data = {
@@ -2069,6 +2072,37 @@ class ListAggregationsAPIViewTests(TenantTestCase):
             ]
         )
 
+    def test_put_aggregations_no_apiid(self):
+        data = {
+            'name': 'TEST_PROFILE',
+            'apiid': '',
+            'groupname': 'new-group',
+            'endpoint_group': 'servicegroups',
+            'metric_operation': 'OR',
+            'profile_operation': 'AND',
+            'metric_profile': 'PROFILE2',
+            'groups': json.dumps([
+                {
+                    'name': 'Group3',
+                    'operation': 'OR',
+                    'services': [
+                        {
+                            'name': 'VOMS',
+                            'operation': 'AND'
+                        }
+                    ]
+                }
+            ])
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data, {'detail': 'Apiid field undefined!'}
+        )
+
     def test_delete_aggregation(self):
         self.assertEqual(
             poem_models.TenantHistory.objects.filter(
@@ -2096,6 +2130,18 @@ class ListAggregationsAPIViewTests(TenantTestCase):
         force_authenticate(request, user=self.user)
         response = self.view(request, 'wrong_id')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(
+            response.data, {'detail': 'Aggregation not found'}
+        )
+
+    def test_delete_aggregation_without_specifying_apiid(self):
+        request = self.factory.delete(self.url)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data, {'detail': 'Aggregation profile not specified!'}
+        )
 
 
 class ListServiceFlavoursAPIViewTests(TenantTestCase):

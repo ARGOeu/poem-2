@@ -44,30 +44,48 @@ class ListAggregations(APIView):
 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            details = []
+            for error in serializer.errors:
+                details.append(
+                    '{}: {}'.format(error, serializer.errors[error][0])
+                )
+
+            return Response(
+                {'detail': ' '.join(details)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
     def put(self, request):
-        aggr = poem_models.Aggregation.objects.get(apiid=request.data['apiid'])
-        aggr.groupname = request.data['groupname']
-        aggr.name = request.data['name']
-        aggr.save()
+        if request.data['apiid']:
+            aggr = poem_models.Aggregation.objects.get(
+                apiid=request.data['apiid']
+            )
+            aggr.groupname = request.data['groupname']
+            aggr.save()
 
-        groupaggr = poem_models.GroupOfAggregations.objects.get(
-            name=request.data['groupname']
-        )
-        groupaggr.aggregations.add(aggr)
+            groupaggr = poem_models.GroupOfAggregations.objects.get(
+                name=request.data['groupname']
+            )
+            groupaggr.aggregations.add(aggr)
 
-        data = {
-            'endpoint_group': request.data['endpoint_group'],
-            'metric_operation': request.data['metric_operation'],
-            'profile_operation': request.data['profile_operation'],
-            'metric_profile': request.data['metric_profile'],
-            'groups': json.loads(request.data['groups'])
-        }
+            data = {
+                'endpoint_group': request.data['endpoint_group'],
+                'metric_operation': request.data['metric_operation'],
+                'profile_operation': request.data['profile_operation'],
+                'metric_profile': request.data['metric_profile'],
+                'groups': json.loads(request.data['groups'])
+            }
 
-        create_profile_history(aggr, data, request.user)
+            create_profile_history(aggr, data, request.user)
 
-        return Response(status=status.HTTP_201_CREATED)
+            return Response(status=status.HTTP_201_CREATED)
+
+        else:
+            return Response(
+                {'detail': 'Apiid field undefined!'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
     def get(self, request, aggregation_name=None):
         sync_webapi(settings.WEBAPI_AGGREGATION, poem_models.Aggregation)
@@ -93,7 +111,7 @@ class ListAggregations(APIView):
             )
             return Response(serializer.data)
 
-    def delete(self, request, aggregation_name):
+    def delete(self, request, aggregation_name=None):
         if aggregation_name:
             try:
                 aggregation = poem_models.Aggregation.objects.get(
@@ -111,7 +129,10 @@ class ListAggregations(APIView):
                                detail='Aggregation not found')
 
         else:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {'detail': 'Aggregation profile not specified!'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
 
 class ListPublicAggregations(ListAggregations):
