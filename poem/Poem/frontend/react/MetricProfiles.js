@@ -10,7 +10,8 @@ import {
   Icon,
   HistoryComponent,
   DiffElement,
-  ProfileMainInfo} from './UIElements';
+  ProfileMainInfo,
+  NotifyError} from './UIElements';
 import ReactTable from 'react-table';
 import { Formik, Field, FieldArray, Form } from 'formik';
 import 'react-table/react-table.css';
@@ -494,10 +495,19 @@ function MetricProfilesComponent(cloneview=false) {
         };
         let response = await this.webapi.changeMetricProfile(dataToSend);
         if (!response.ok) {
-          this.toggleAreYouSureSetModal(
-            `Error: ${response.status}, ${response.statusText}`,
-            'Web API error changing metric profile',
-            undefined)
+          let change_msg = '';
+          try {
+            let json = await response.json();
+            let msg_list = [];
+            json.errors.forEach(e => msg_list.push(e.details));
+            change_msg = msg_list.join(' ');
+          } catch(err) {
+            change_msg = 'Web API error changing metric profile';
+          };
+          NotifyError({
+            title: `Web API error: ${response.status} ${response.statusText}`,
+            msg: change_msg
+          });
         } else {
           let r = await this.backend.changeObject(
             '/api/v2/internal/metricprofiles/',
@@ -515,12 +525,19 @@ function MetricProfilesComponent(cloneview=false) {
               title: 'Changed',
               callback: () => this.history.push('/ui/metricprofiles')
             });
-          else
-            this.toggleAreYouSureSetModal(
-              `Error: ${response.status} ${response.statusText}`,
-              'Internal API error changing metric profile',
-              undefined
-            );
+          else {
+            let change_msg = '';
+            try {
+              let json = await r.json();
+              change_msg = json.detail;
+            } catch(err) {
+              change_msg = 'Internal API error changing metric profile';
+            };
+            NotifyError({
+              title: `Internal API error: ${r.status} ${r.statusText}`,
+              msg: change_msg
+            });
+          };
         };
       } else {
         services = this.groupMetricsByServices(servicesList);
@@ -531,11 +548,19 @@ function MetricProfilesComponent(cloneview=false) {
         }
         let response = await this.webapi.addMetricProfile(dataToSend);
         if (!response.ok) {
-          this.toggleAreYouSureSetModal(
-            `Error: ${response.status}, ${response.statusText}`,
-            'Web API error adding metric profile',
-            undefined
-          );
+          let add_msg = '';
+          try {
+            let json = await response.json();
+            let msg_list = [];
+            json.errors.forEach(e => msg_list.push(e.details));
+            add_msg = msg_list.join(' ');
+          } catch(err) {
+            add_msg = 'Web API error adding metric profile';
+          };
+          NotifyError({
+            title: `Web API error: ${response.status} ${response.statusText}`,
+            msg: add_msg
+          });
         } else {
           let r_json = await response.json();
           let r_internal = await this.backend.addObject(
@@ -554,12 +579,19 @@ function MetricProfilesComponent(cloneview=false) {
               title: 'Added',
               callback: () => this.history.push('/ui/metricprofiles')
             });
-          else
-            this.toggleAreYouSureSetModal(
-              `Error: ${r_internal.status} ${r_internal.statusText}`,
-              'Internal API error adding metric profile',
-              undefined
-            );
+          else {
+            let add_msg = '';
+            try {
+              let json = await r_internal.json();
+              add_msg = json.detail;
+            } catch(err) {
+              add_msg = 'Internal API error adding metric profile';
+            };
+            NotifyError({
+              title: `Internal API error: ${r_internal.status} ${r_internal.statusText}`,
+              msg: add_msg
+            });
+          }
         };
       };
     }
@@ -567,11 +599,19 @@ function MetricProfilesComponent(cloneview=false) {
     async doDelete(idProfile) {
       let response = await this.webapi.deleteMetricProfile(idProfile);
       if (!response.ok) {
-        this.toggleAreYouSureSetModal(
-         `Error: ${response.status} ${response.statusText}`,
-         'Web API error deleting metric profile',
-         undefined
-        );
+        let msg = '';
+        try {
+          let json = await response.json();
+          let msg_list = [];
+          json.errors.forEach(e => msg_list.push(e.details));
+          msg = msg_list.join(' ');
+        } catch(err) {
+          msg = 'Web API error deleting metric profile';
+        };
+        NotifyError({
+          title: `Web API error: ${response.status} ${response.statusText}`,
+          msg: msg
+        });
       } else {
         let r_internal = await this.backend.deleteObject(`/api/v2/internal/metricprofiles/${idProfile}`);
         if (r_internal.ok)
@@ -580,12 +620,19 @@ function MetricProfilesComponent(cloneview=false) {
             title: 'Deleted',
             callback: () => this.history.push('/ui/metricprofiles')
           });
-        else
-          this.toggleAreYouSureSetModal(
-            `Error: ${r_internal.status} ${r_internal.statusText}`,
-            'Internal API error deleting metric profile',
-            undefined
-          );
+        else {
+          let msg = '';
+          try {
+            let json = await r_internal.json();
+            msg = json.detail;
+          } catch(err) {
+            msg = 'Internal API error deleting metric profile';
+          };
+          NotifyError({
+            title: `Internal API error: ${r_internal.status} ${r_internal.statusText}`,
+            msg: msg
+          });
+        };
       };
     }
 
