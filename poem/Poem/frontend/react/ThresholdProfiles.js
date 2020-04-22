@@ -9,7 +9,8 @@ import {
     FancyErrorMessage,
     HistoryComponent,
     DiffElement,
-    ProfileMainInfo
+    ProfileMainInfo,
+    NotifyError
 } from './UIElements';
 import ReactTable from 'react-table';
 import {
@@ -1073,11 +1074,19 @@ export class ThresholdsProfilesChange extends Component {
         rules: this.thresholdsToString(values_send.rules)
       });
       if (!response.ok) {
-        this.toggleAreYouSureSetModal(
-          `Error: ${response.status} ${response.statusText}`,
-          'Web API error adding thresholds profile',
-          undefined
-        );
+        let add_msg = '';
+        try {
+          let json = await response.json();
+          let msg_list = [];
+          json.errors.forEach(e => msg_list.push(e.details));
+          add_msg = msg_list.join(' ');
+        } catch(err) {
+          add_msg = 'Web API error adding thresholds profile';
+        };
+        NotifyError({
+          title: `Web API error: ${response.status} ${response.statusText}`,
+          msg: add_msg
+        });
       } else {
         let r = await response.json();
         let r_internal = await this.backend.addObject(
@@ -1089,18 +1098,25 @@ export class ThresholdsProfilesChange extends Component {
             rules: values_send.rules
           }
         );
-        r_internal.ok ?
+        if (r_internal.ok)
           NotifyOk({
             msg: 'Thresholds profile successfully added',
             title: 'Added',
             callback: () => this.history.push('/ui/thresholdsprofiles')
           })
-        :
-          this.toggleAreYouSureSetModal(
-            `Error: ${r_internal.status} ${r_internal.statusText}`,
-            'Internal API error adding thresholds profile',
-            undefined
-          );
+        else {
+          let add_msg = '';
+          try {
+            let json = await r_internal.json();
+            add_msg = json.detail;
+          } catch(err) {
+            add_msg = 'Internal API error adding thresholds profile';
+          };
+          NotifyError({
+            title: `Internal API error: ${r_internal.status} ${r_internal.statusText}`,
+            msg: add_msg
+          });
+        };
       };
     } else {
       let response = await this.webapi.changeThresholdsProfile({
@@ -1109,11 +1125,19 @@ export class ThresholdsProfilesChange extends Component {
         rules: this.thresholdsToString(values_send.rules)
       });
       if (!response.ok) {
-        this.toggleAreYouSureSetModal(
-          `Error: ${response.status} ${response.statusText}`,
-          'Web API error changing thresholds profile',
-          undefined
-        );
+        let change_msg = '';
+        try {
+          let json = response.json();
+          let msg_list = [];
+          json.errors.forEach(e => msg_list.push(e.details));
+          change_msg = msg_list.join(' ');
+        } catch(err) {
+          change_msg = 'Web API error changing thresholds profile';
+        };
+        NotifyError({
+          title: `Web API error: ${response.status} ${response.statusText}`,
+          msg: change_msg
+        });
       } else {
         let r = await response.json();
         let r_internal = await this.backend.changeObject(
@@ -1125,18 +1149,25 @@ export class ThresholdsProfilesChange extends Component {
             rules: values_send.rules
           }
         );
-        r_internal.ok ?
+        if (r_internal.ok)
           NotifyOk({
             msg: 'Thresholds profile successfully changed',
             title: 'Changed',
             callback: () => this.history.push('/ui/thresholdsprofiles')
           })
-        :
-          this.toggleAreYouSureSetModal(
-            `Error: ${r_internal.status} ${r_internal.statusText}`,
-            'Internal API error changing thresholds profile',
-            undefined
-          );
+        else {
+          let change_msg = '';
+          try {
+            let json = await r_internal.json();
+            change_msg = json.detail;
+          } catch(err) {
+            change_msg = 'Internal API error changing thresholds profile';
+          };
+          NotifyError({
+            title: `Internal API error: ${r_internal.status} ${r_internal.statusText}`,
+            msg: change_msg
+          });
+        };
       };
     }
   }
@@ -1144,25 +1175,40 @@ export class ThresholdsProfilesChange extends Component {
   async doDelete(profileId) {
     let response = await this.webapi.deleteThresholdsProfile(profileId);
     if (!response.ok) {
-      this.toggleAreYouSureSetModal(
-        `Error: ${response.status} ${response.statusText}`,
-        'Web API error deleting thresholds profile',
-        undefined
-      );
+      let msg = '';
+      try {
+        let json = await response.json();
+        let msg_list = [];
+        json.errors.forEach(e => msg_list.push(e.details));
+        msg = msg_list.join(' ');
+      } catch(err) {
+        msg = 'Web API error deleting thresholds profile';
+      };
+      NotifyError({
+        title: `Web API error: ${response.status} ${response.statusText}`,
+        msg: msg
+      });
     } else {
       let r_internal = await this.backend.deleteObject(`/api/v2/internal/thresholdsprofiles/${profileId}`);
-      r_internal ?
+      if (r_internal)
         NotifyOk({
           msg: 'Thresholds profile successfully deleted',
           title: 'Deleted',
           callback: () => this.history.push('/ui/thresholdsprofiles')
         })
-      :
-        this.toggleAreYouSureSetModal(
-          `Error: ${r_internal.status} ${r_internal.statusText}`,
-          'Internal API error deleting thresholds profile',
-          undefined
-        );
+      else {
+        let msg = '';
+        try {
+          let json = await r_internal.json();
+          msg = json.detail;
+        } catch(err) {
+          msg = 'Internal API error deleting thresholds profile';
+        };
+        NotifyError({
+          title: `Internal API error: ${r_internal.status} ${r_internal.statusText}`,
+          msg: msg
+        });
+      };
     };
   }
 
