@@ -2392,12 +2392,42 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
         self.assertEqual(history.count(), 1)
         self.assertEqual(history[0].comment, 'Initial version.')
 
+    def test_post_metric_profile_without_description(self):
+        data = {
+            "apiid": "12341234-aaaa-kkkk-aaaa-aaeekkccnnee",
+            "name": "new-profile",
+            "groupname": "EGI",
+            "description": "",
+            "services": [
+                {"service": "AMGA", "metric": "org.nagios.SAML-SP"},
+                {"service": "APEL", "metric": "org.apel.APEL-Pub"},
+                {"service": "APEL", "metric": "org.apel.APEL-Sync"}
+            ]
+        }
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        profile = poem_models.MetricProfiles.objects.get(name='new-profile')
+        history = poem_models.TenantHistory.objects.filter(
+            object_id=profile.id, content_type=self.ct
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(profile.name, 'new-profile')
+        self.assertEqual(profile.apiid, '12341234-aaaa-kkkk-aaaa-aaeekkccnnee')
+        self.assertEqual(profile.groupname, 'EGI')
+        self.assertEqual(profile.description, '')
+        self.assertEqual(history.count(), 1)
+        self.assertEqual(history[0].comment, 'Initial version.')
+
     def test_post_metric_profile_invalid_data(self):
         data = {'name': 'new-profile'}
         request = self.factory.post(self.url, data, format='json')
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data, {'detail': 'apiid: This field is required.'}
+        )
 
     def test_put_metric_profile(self):
         data = {
@@ -2442,15 +2472,82 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
             '{"changed": {"fields": ["groupname"]}}]'
         )
 
-    def test_delete_metric_profile(self):
-        request = self.factory.delete(self.url + 'ANOTHER-PROFILE')
+    def test_put_metric_profile_without_description(self):
+        data = {
+            "name": "TEST_PROFILE",
+            "apiid": "00000000-oooo-kkkk-aaaa-aaeekkccnnee",
+            "groupname": "new-group",
+            "description": "",
+            "services": [
+                {"service": "AMGA", "metric": "org.nagios.SAML-SP"},
+                {"service": "APEL", "metric": "org.apel.APEL-Pub"},
+                {"service": "APEL", "metric": "org.apel.APEL-Sync"}
+            ]
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
         force_authenticate(request, user=self.user)
-        response = self.view(request, 'ANOTHER-PROFILE')
-        all = poem_models.MetricProfiles.objects.all().values_list(
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        profile = poem_models.MetricProfiles.objects.get(name='TEST_PROFILE')
+        history = poem_models.TenantHistory.objects.filter(
+            object_id=profile.id, content_type=self.ct
+        ).order_by('-date_created')
+        self.assertEqual(profile.name, 'TEST_PROFILE')
+        self.assertEqual(profile.apiid, '00000000-oooo-kkkk-aaaa-aaeekkccnnee')
+        self.assertEqual(profile.groupname, 'new-group')
+        self.assertEqual(profile.description, '')
+        self.assertEqual(history.count(), 2)
+        serialized_data = json.loads(history[0].serialized_data)[0]['fields']
+        self.assertEqual(serialized_data['name'], profile.name)
+        self.assertEqual(serialized_data['apiid'], profile.apiid)
+        self.assertEqual(serialized_data['groupname'], profile.groupname)
+        self.assertEqual(serialized_data['description'], profile.description)
+        self.assertEqual(
+            serialized_data['metricinstances'],
+            [
+                ['AMGA', 'org.nagios.SAML-SP'],
+                ['APEL', 'org.apel.APEL-Pub'],
+                ['APEL', 'org.apel.APEL-Sync']
+            ]
+        )
+        self.assertEqual(
+            history[0].comment,
+            '[{"changed": {"fields": ["groupname"]}}]'
+        )
+
+    def test_put_metric_profile_without_apiid(self):
+        data = {
+            "name": "TEST_PROFILE",
+            "apiid": "",
+            "groupname": "new-group",
+            "description": "New profile description.",
+            "services": [
+                {"service": "AMGA", "metric": "org.nagios.SAML-SP"},
+                {"service": "APEL", "metric": "org.apel.APEL-Pub"},
+                {"service": "APEL", "metric": "org.apel.APEL-Sync"}
+            ]
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data, {'detail': 'Apiid field undefined!'}
+        )
+
+    def test_delete_metric_profile(self):
+        request = self.factory.delete(
+            self.url + '12341234-oooo-kkkk-aaaa-aaeekkccnnee'
+        )
+        force_authenticate(request, user=self.user)
+        response = self.view(request, '12341234-oooo-kkkk-aaaa-aaeekkccnnee')
+        all_profiles = poem_models.MetricProfiles.objects.all().values_list(
             'name', flat=True
         )
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-        self.assertFalse('ANOTHER-PROFILE' in all)
+        self.assertFalse('ANOTHER-PROFILE' in all_profiles)
         history = poem_models.TenantHistory.objects.filter(
             object_id=self.mp2.id, content_type=self.ct
         )
@@ -2461,6 +2558,18 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
         force_authenticate(request, user=self.user)
         response = self.view(request, 'wrong_id')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(
+            response.data, {'detail': 'Metric profile not found'}
+        )
+
+    def test_delete_metric_profile_without_specifying_apiid(self):
+        request = self.factory.delete(self.url)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data, {'detail': 'Metric profile not specified!'}
+        )
 
 
 class GetUserProfileForUsernameAPIViewTests(TenantTestCase):
