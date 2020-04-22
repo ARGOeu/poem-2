@@ -556,9 +556,9 @@ function ProbeComponent(cloneview=false) {
             let add_msg = '';
             try {
               let json = await response.json();
-              add_msg = `${json.detail ? json.detail : 'Error adding probe'}`;
+              add_msg = json.detail;
             } catch(err) {
-              add_msg = `Error adding probe: ${err}`;
+              add_msg = 'Error adding probe';
             }
             NotifyError({
               title: `Error: ${response.status} ${response.statusText}`,
@@ -589,9 +589,9 @@ function ProbeComponent(cloneview=false) {
           let change_msg = '';
           try {
             let json = await response.json();
-            change_msg = `${json.detail ? json.detail : 'Error changing probe'}`;
+            change_msg = json.detail;
           } catch(err) {
-            change_msg = `Error changing probe: ${err}`;
+            change_msg = 'Error changing probe';
           };
           NotifyError({
             title: `Error: ${response.status} ${response.statusText}`,
@@ -613,9 +613,9 @@ function ProbeComponent(cloneview=false) {
         let msg = '';
         try {
           let json = await response.json();
-          msg = `${json.detail ? json.detail : 'Error deleting probe'}`;
+          msg = json.detail;
         } catch(err) {
-          msg = `Error deleting probe: ${err}`;
+          msg = 'Error deleting probe';
         };
         NotifyError({
           title: `Error: ${response.status} ${response.statusText}`,

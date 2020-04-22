@@ -459,9 +459,9 @@ function UserChangeComponent(isTenantSchema=false) {
           let change_msg = '';
           try {
             let json = await response.json();
-            change_msg = `${json.detail ? json.detail : 'Error changing user'}`;
+            change_msg = json.detail;
           } catch(err) {
-            change_msg = `Error changing user: ${err}`;
+            change_msg = 'Error changing user';
           };
           NotifyError({
             title: `Error: ${response.status} ${response.statusText}`,
@@ -492,9 +492,9 @@ function UserChangeComponent(isTenantSchema=false) {
               let change_msg = '';
               try {
                 let json = await profile_response.json();
-                change_msg = `${json.detail ? json.detail : 'Error changing user profile'}`;
+                change_msg = json.detail;
               } catch(err) {
-                change_msg = `Error changing user profile: ${err}`
+                change_msg = 'Error changing user profile'
               };
               NotifyError({
                 title: `Error: ${profile_response.status} ${profile_response.statusText}`,
@@ -526,9 +526,9 @@ function UserChangeComponent(isTenantSchema=false) {
           let add_msg = '';
           try {
             let json = await response.json();
-            add_msg = `${json.detail ? json.detail : 'Error adding user'}`;
+            add_msg = json.detail;
           } catch(err) {
-            add_msg = `Error adding user: ${err}`;
+            add_msg = 'Error adding user';
           };
           NotifyError({
             title: `Error: ${response.status} ${response.statusText}`,
@@ -559,9 +559,9 @@ function UserChangeComponent(isTenantSchema=false) {
               let add_msg = '';
               try {
                 let json = await profile_response.json();
-                add_msg = `${json.detail ? json.detail : 'Error adding user profile'}`;
+                add_msg = json.detail;
               } catch(err) {
-                add_msg = `Error adding user profile: ${err}`;
+                add_msg = 'Error adding user profile';
               };
               NotifyError({
                 title: `Error: ${profile_response.status} ${profile_response.statusText}`,
@@ -591,9 +591,9 @@ function UserChangeComponent(isTenantSchema=false) {
         let msg = '';
         try {
           let json = await response.json();
-          msg = `${json.detail ? json.detail : 'Error deleting user'}`;
+          msg = json.detail;
         } catch(err) {
-          msg = `Error deleting user: ${err}`;
+          msg = 'Error deleting user';
         };
         NotifyError({
           title: `Error: ${response.status} ${response.statusText}`,

@@ -151,9 +151,9 @@ function MetricTemplateComponent(cloneview=false) {
           let add_msg = '';
           try {
             let json = await response.json();
-            add_msg = `${json.detail ? json.detail : 'Error adding metric template'}`;
+            add_msg = json.detail;
           } catch(err) {
-            add_msg = `Error adding metric template: ${err}`;
+            add_msg = 'Error adding metric template';
           };
           NotifyError({
             title: `Error: ${response.status} ${response.statusText}`,
@@ -190,9 +190,9 @@ function MetricTemplateComponent(cloneview=false) {
           let change_msg = '';
           try {
             let json = await response.json();
-            change_msg = `${json.detail ? json.detail : 'Error changing metric template'}`;
+            change_msg = json.detail;
           } catch(err) {
-            change_msg = `Error changing metric template: ${err}`;
+            change_msg = 'Error changing metric template';
           };
           NotifyError({
             title: `Error: ${response.status} ${response.statusText}`,
@@ -220,9 +220,9 @@ function MetricTemplateComponent(cloneview=false) {
         let msg = '';
         try {
           let json = await response.json();
-          msg = `${json.detail ? json.detail : 'Error deleting metric template'}`;
+          msg = json.detail;
         } catch(err) {
-          msg = `Error deleting metric template: ${err}`;
+          msg = 'Error deleting metric template';
         };
         NotifyError({
           title: `Error: ${response.status} ${response.statusText}`,

@@ -1431,9 +1431,9 @@ export class MetricChange extends Component {
       let change_msg = '';
       try {
         let json = await response.json();
-        change_msg = `${json.detail ? json.detail : 'Error changing metric'}`;
+        change_msg = json.detail;
       } catch(err) {
-        change_msg = `Error changing metric: ${err}`;
+        change_msg = 'Error changing metric';
       };
       NotifyError({
         title: `Error: ${response.status} ${response.statusText}`,
@@ -1454,9 +1454,9 @@ export class MetricChange extends Component {
       let msg = '';
       try {
         let json = await response.json();
-        msg = `${json.detail ? json.detail : 'Error deleting metric'}`;
+        msg = json.detail;
       } catch(err) {
-        msg = `Error deleting metric: ${err}`;
+        msg = 'Error deleting metric';
       }
       NotifyError({
         title: `Error: ${response.status} ${response.statusText}`,

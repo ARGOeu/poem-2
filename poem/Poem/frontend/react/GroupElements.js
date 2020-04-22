@@ -191,7 +191,7 @@ function GroupChange(gr, id, ttl) {
           let change_msg = '';
           try {
             let json = await response.json();
-            change_msg = `${json.detail ? json.detail : `Error changing group of ${ttl}`}`
+            change_msg = json.detail;
           } catch {
             change_msg = `Error changing group of ${ttl}`;
           };
@@ -218,7 +218,7 @@ function GroupChange(gr, id, ttl) {
           let add_msg = '';
           try {
             let json = await response.json();
-            add_msg = `${json.detail ? json.detail : `Error adding group of ${ttl}`}`;
+            add_msg = json.detail;
           } catch(err) {
             add_msg = `Error adding group of ${ttl}`;
           };
@@ -242,7 +242,7 @@ function GroupChange(gr, id, ttl) {
         let msg = '';
         try {
           let json = await response.json();
-          msg = `${json.detail ? json.detail : `Error deleting group of ${ttl}`}`;
+          msg = json.detail;
         } catch(err) {
           msg = `Error deleting group of ${ttl}`;
         };

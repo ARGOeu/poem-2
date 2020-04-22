@@ -23,7 +23,7 @@ import {
 } from 'reactstrap';
 import { Formik, Form, Field } from 'formik';
 import * as Yup from 'yup';
-import { NotificationManager } from 'react-notifications';
+
 
 const PackageSchema = Yup.object().shape({
   name: Yup.string()
@@ -256,9 +256,9 @@ export class PackageChange extends Component {
         let add_msg = '';
         try {
           let json = await response.json();
-          add_msg = `${json.detail ? json.detail : 'Error adding package'}`;
+          add_msg = json.detail;
         } catch(err) {
-          add_msg = `Error adding package: ${err}`;
+          add_msg = 'Error adding package';
         }
         NotifyError({
           title: `Error: ${response.status} ${response.statusText}`,
@@ -286,9 +286,9 @@ export class PackageChange extends Component {
         let change_msg = '';
         try {
           let json = await response.json();
-          change_msg = `${json.detail ? json.detail : 'Error changing package'}`;
+          change_msg = json.detail;
         } catch(err) {
-          change_msg = `Error changing package: ${err}`;
+          change_msg = 'Error changing package';
         }
         NotifyError({
           title: `Error: ${response.status} ${response.statusText}`,
@@ -310,9 +310,9 @@ export class PackageChange extends Component {
       let msg = '';
       try {
         let json = await response.json();
-        msg = `${json.detail ? json.detail : 'Error deleting package'}`;
+        msg = json.detail;
       } catch(err) {
-        msg = `Error deleting package: ${err}`;
+        msg = 'Error deleting package';
       };
       NotifyError({
         title: `Error: ${response.status} ${response.statusText}`,

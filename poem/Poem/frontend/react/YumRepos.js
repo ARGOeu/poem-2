@@ -22,7 +22,6 @@ import {
   InputGroupAddon
 } from 'reactstrap';
 import * as Yup from 'yup';
-import { NotificationManager } from 'react-notifications';
 
 
 const RepoSchema = Yup.object().shape({
@@ -262,9 +261,9 @@ export class YumRepoChange extends Component {
         let change_msg = '';
         try {
           let json = await response.json();
-          change_msg = `${json.detail ? json.detail : 'Error changing YUM repo'}`;
+          change_msg = json.detail;
         } catch(err) {
-          change_msg = `Error changing YUM repo: ${err}`;
+          change_msg = 'Error changing YUM repo';
         };
         NotifyError({
           title: `Error: ${response.status} ${response.statusText}`,
@@ -291,9 +290,9 @@ export class YumRepoChange extends Component {
         let add_msg = '';
         try {
           let json = await response.json();
-          add_msg = `${json.detail ? json.detail : 'Error adding YUM repo'}`;
+          add_msg = json.detail;
         } catch(err) {
-          add_msg = `Error adding YUM repo: ${err}`;
+          add_msg = 'Error adding YUM repo';
         };
         NotifyError({
           title: `Error: ${response.status} ${response.statusText}`,
@@ -315,9 +314,9 @@ export class YumRepoChange extends Component {
       let msg = '';
       try {
         let json = await response.json();
-        msg = `${json.detail ? json.detail : 'Error deleting YUM repo'}`;
+        msg = json.detail;
       } catch(err) {
-        msg = `Error deleting YUM repo: ${err}`;
+        msg = 'Error deleting YUM repo';
       };
       NotifyError({
         title: `Error: ${response.status} ${response.statusText}`,
