@@ -8552,11 +8552,14 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
             {'detail': 'Thresholds profile not found.'}
         )
 
-    def put_thresholds_profile(self):
+    def test_put_thresholds_profile(self):
+        self.assertEqual(
+            poem_models.ThresholdsProfiles.objects.all().count(), 2
+        )
         data = {
             'name': 'NEW_TEST_PROFILE',
             'apiid': '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
-            'group': 'NEWGROUP',
+            'groupname': 'NEWGROUP',
             'rules': json.dumps([
                 {
                     'host': 'newHost',
@@ -8569,6 +8572,9 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
         request = self.factory.put(self.url, content, content_type=content_type)
         force_authenticate(request, user=self.user)
         response = self.view(request)
+        self.assertEqual(
+            poem_models.ThresholdsProfiles.objects.all().count(), 2
+        )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         tp = poem_models.ThresholdsProfiles.objects.get(id=self.tp1.id)
         self.assertEqual(tp.name, 'NEW_TEST_PROFILE')
@@ -8598,11 +8604,7 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
             comment_set.add(json.dumps(item))
         self.assertEqual(
             comment_set,
-            {
-                '{"changed": {"fields": ["groupname", "name"]}}',
-                '{"deleted": {"fields": ["rules"], "object": ["metricA"]}}',
-                '{"added": {"fields": ["rules"], "object": ["newMetric"]}}'
-            }
+            {'{"changed": {"fields": ["groupname", "name", "rules"]}}'}
         )
         serialized_data = json.loads(history[0].serialized_data)[0]['fields']
         self.assertEqual(serialized_data['name'], tp.name)
@@ -8610,16 +8612,42 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
         self.assertEqual(serialized_data['apiid'], tp.apiid)
         self.assertEqual(
             serialized_data['rules'],
-            [
+            json.dumps([
                 {
                     'host': 'newHost',
                     'metric': 'newMetric',
                     'thresholds': 'entries=1;3;0:2;10'
                 }
-            ]
+            ])
         )
 
-    def post_thresholds_profile(self):
+    def test_put_thresholds_profile_with_invalid_data(self):
+        self.assertEqual(
+            poem_models.ThresholdsProfiles.objects.all().count(), 2
+        )
+        data = {
+            'name': 'NEW_TEST_PROFILE',
+            'apiid': '',
+            'groupname': 'GROUP',
+            'rules': json.dumps([
+                {
+                    'host': 'newHost',
+                    'metric': 'newMetric',
+                    'thresholds': 'entries=1;3;0:2;10'
+                }
+            ])
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(
+            poem_models.ThresholdsProfiles.objects.all().count(), 2
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data, {'detail': 'Apiid field undefined!'})
+
+    def test_post_thresholds_profile(self):
         self.assertEqual(
             poem_models.ThresholdsProfiles.objects.all().count(), 2
         )
@@ -8664,16 +8692,41 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
         self.assertEqual(serialized_data['groupname'], profile.groupname)
         self.assertEqual(
             serialized_data['rules'],
-            [
+            '[{"host": "newHost", "metric": "newMetric", '
+            '"thresholds": "entries=1;3;0:2;10"}]'
+        )
+
+    def test_post_thresholds_profile_with_invalid_data(self):
+        self.assertEqual(
+            poem_models.ThresholdsProfiles.objects.all().count(), 2
+        )
+        data = {
+            'name': 'NEW_PROFILE',
+            'apiid': '',
+            'groupname': 'GROUP',
+            'rules': json.dumps([
                 {
                     'host': 'newHost',
                     'metric': 'newMetric',
                     'thresholds': 'entries=1;3;0:2;10'
                 }
-            ]
+            ])
+        }
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(
+            poem_models.ThresholdsProfiles.objects.all().count(), 2
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data,
+            {
+                'detail': 'apiid: This field may not be blank.'
+            }
         )
 
-    def delete_thresholds_profile(self):
+    def test_delete_thresholds_profile(self):
         self.assertEqual(
             poem_models.ThresholdsProfiles.objects.all().count(), 2
         )
@@ -8699,11 +8752,23 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
             ).count(), 0
         )
 
-    def delete_nonexisting_thresholds_profile(self):
+    def test_delete_nonexisting_thresholds_profile(self):
         request = self.factory.delete(self.url + 'nonexisting')
         force_authenticate(request, user=self.user)
+        response = self.view(request, 'nonexisting')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(
+            response.data, {'detail': 'Thresholds profile not found.'}
+        )
+
+    def test_delete_thresholds_profile_without_specifying_apiid(self):
+        request = self.factory.delete(self.url)
+        force_authenticate(request, user=self.user)
         response = self.view(request)
-        self.assertEqual(response.status.code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data, {'detail': 'Thresholds profile not specified!'}
+        )
 
 
 class ListPackagesAPIViewTests(TenantTestCase):
