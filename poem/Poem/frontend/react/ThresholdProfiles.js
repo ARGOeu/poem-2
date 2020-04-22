@@ -1277,7 +1277,7 @@ export class ThresholdsProfilesChange extends Component {
           state={this.state}
           toggle={this.toggleAreYouSure}
           submitperm={write_perm}
-          addview={!this.publicView}
+          addview={this.publicView ? !this.publicView : this.addview}
           publicview={this.publicView}
         >
           <Formik

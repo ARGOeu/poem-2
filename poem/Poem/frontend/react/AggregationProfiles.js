@@ -806,7 +806,7 @@ export class AggregationProfilesChange extends Component
           modal={true}
           state={this.state}
           toggle={this.toggleAreYouSure}
-          addview={!this.publicView}
+          addview={this.publicView ? !this.publicView : this.addview}
           publicview={this.publicView}
           submitperm={write_perm}>
           <Formik

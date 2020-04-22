@@ -736,7 +736,7 @@ function MetricProfilesComponent(cloneview=false) {
             clone={true}
             state={this.state}
             toggle={this.toggleAreYouSure}
-            addview={!this.publicView}
+            addview={this.publicView ? !this.publicView : this.addview}
             publicview={this.publicView}
             submitperm={write_perm}>
             <Formik
