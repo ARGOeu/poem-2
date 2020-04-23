@@ -899,7 +899,7 @@ export class ThresholdsProfilesList extends Component {
         id: 'name',
         maxWidth: 350,
         accessor: e =>
-          <Link to={`/ui/${this.publicView ? 'public_' : ''}thresholdsprofiles/` + e.name}>
+          <Link to={`/ui/${this.publicView ? 'public_' : ''}thresholdsprofiles/` + e.apiid}>
             {e.name}
           </Link>
       },
@@ -948,7 +948,7 @@ export class ThresholdsProfilesChange extends Component {
   constructor(props) {
     super(props);
 
-    this.name = props.match.params.name;
+    this.profile = props.match.params.apiid;
     this.addview = props.addview;
     this.history = props.history;
     this.location = props.location;
@@ -1216,7 +1216,7 @@ export class ThresholdsProfilesChange extends Component {
     this.setState({loading: true});
 
     if (this.publicView) {
-      let json = await this.backend.fetchData(`/api/v2/internal/public_thresholdsprofiles/${this.name}`);
+      let json = await this.backend.fetchData(`/api/v2/internal/public_thresholdsprofiles/${this.profile}`);
       let thresholdsprofile = await this.webapi.fetchThresholdsProfile(json.apiid);
       this.setState({
         thresholds_profile: {
@@ -1234,7 +1234,7 @@ export class ThresholdsProfilesChange extends Component {
     else {
       let sessionActive = await this.backend.isActiveSession();
       let metricsall = await this.backend.fetchListOfNames('/api/v2/internal/metricsall');
-      let json = await this.backend.fetchData(`/api/v2/internal/thresholdsprofiles/${this.name}`);
+      let json = await this.backend.fetchData(`/api/v2/internal/thresholdsprofiles/${this.profile}`);
       if (this.addview) {
         this.setState({
           loading: false,
@@ -1404,7 +1404,7 @@ export class ThresholdsProfileVersionCompare extends Component {
 
     this.version1 = props.match.params.id1;
     this.version2 = props.match.params.id2;
-    this.name = props.match.params.name;
+    this.profile = props.match.params.apiid;
 
     this.state = {
       loading: false,
@@ -1420,7 +1420,7 @@ export class ThresholdsProfileVersionCompare extends Component {
   }
 
   async componentDidMount() {
-    let json = await this.backend.fetchData(`/api/v2/internal/tenantversion/thresholdsprofile/${this.name}`);
+    let json = await this.backend.fetchData(`/api/v2/internal/tenantversion/thresholdsprofile/${this.profile}`);
     let name1 = '';
     let groupname1 = '';
     let rules1 = [];
@@ -1461,7 +1461,7 @@ export class ThresholdsProfileVersionCompare extends Component {
       return (
         <React.Fragment>
           <div className='d-flex align-items-center justify-content-between'>
-            <h2 className='ml-3 mt-1 mb-4'>{`Compare ${this.name} versions`}</h2>
+            <h2 className='ml-3 mt-1 mb-4'>{`Compare ${name2} versions`}</h2>
           </div>
           {
             (name1 !== name2) &&
@@ -1487,7 +1487,7 @@ export class ThresholdsProfileVersionDetail extends Component {
   constructor(props) {
     super(props);
 
-    this.name = props.match.params.name;
+    this.profile = props.match.params.apiid;
     this.version = props.match.params.version;
 
     this.backend = new Backend();
@@ -1504,7 +1504,7 @@ export class ThresholdsProfileVersionDetail extends Component {
   async componentDidMount() {
     this.setState({loading: true});
 
-    let json = await this.backend.fetchData(`/api/v2/internal/tenantversion/thresholdsprofile/${this.name}`);
+    let json = await this.backend.fetchData(`/api/v2/internal/tenantversion/thresholdsprofile/${this.profile}`);
     json.forEach((e) => {
       if (e.version == this.version)
         this.setState({

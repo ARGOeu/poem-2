@@ -623,7 +623,11 @@ export function HistoryComponent(obj, tenantview=false) {
     constructor(props) {
       super(props);
 
-      this.name = props.match.params.name;
+      if (obj.endsWith('profile'))
+        this.object_id = props.match.params.apiid;
+      else
+        this.object_id = props.match.params.name;
+
       this.history = props.history;
       this.publicView = props.publicView
 
@@ -648,12 +652,12 @@ export function HistoryComponent(obj, tenantview=false) {
       }
 
       if (tenantview)
-        this.compareUrl = `/ui/administration/${obj}s/${this.name}/history`;
+        this.compareUrl = `/ui/administration/${obj}s/${this.object_id}/history`;
       else {
         if (this.publicView)
-          this.compareUrl = `/ui/public_${obj}s/${this.name}/history`;
+          this.compareUrl = `/ui/public_${obj}s/${this.object_id}/history`;
         else
-          this.compareUrl = `/ui/${obj}s/${this.name}/history`;
+          this.compareUrl = `/ui/${obj}s/${this.object_id}/history`;
       }
 
       this.backend = new Backend();
@@ -662,7 +666,7 @@ export function HistoryComponent(obj, tenantview=false) {
     async componentDidMount() {
       this.setState({loading: true});
 
-      let json = await this.backend.fetchData(`${this.apiUrl}/${obj}/${this.name}`);
+      let json = await this.backend.fetchData(`${this.apiUrl}/${obj}/${this.object_id}`);
       if (json.length > 1) {
         this.setState({
           list_versions: json,
