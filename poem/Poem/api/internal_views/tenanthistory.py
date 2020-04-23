@@ -30,7 +30,10 @@ class ListTenantVersions(APIView):
 
         if name:
             try:
-                obj = models[obj].objects.get(name=name)
+                if obj.endswith('profile'):
+                    obj = models[obj].objects.get(apiid=name)
+                else:
+                    obj = models[obj].objects.get(name=name)
             except models[obj].DoesNotExist:
                 if obj.endswith('profile'):
                     ind = obj.find('profile')

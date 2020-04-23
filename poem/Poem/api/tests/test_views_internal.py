@@ -1916,10 +1916,14 @@ class ListAggregationsAPIViewTests(TenantTestCase):
 
     @patch('Poem.api.internal_views.aggregationprofiles.sync_webapi',
            side_effect=mocked_func)
-    def test_get_aggregation_by_name(self, func):
-        request = self.factory.get(self.url + 'TEST_PROFILE')
+    def test_get_aggregation_by_apiid(self, func):
+        request = self.factory.get(
+            self.url + '00000000-oooo-kkkk-aaaa-aaeekkccnnee'
+        )
         force_authenticate(request, user=self.user)
-        response = self.view(request, 'TEST_PROFILE')
+        response = self.view(
+            request, '00000000-oooo-kkkk-aaaa-aaeekkccnnee'
+        )
         self.assertEqual(
             response.data,
             OrderedDict([
@@ -1932,11 +1936,12 @@ class ListAggregationsAPIViewTests(TenantTestCase):
 
     @patch('Poem.api.internal_views.aggregationprofiles.sync_webapi',
            side_effect=mocked_func)
-    def test_get_aggregation_if_wrong_name(self, func):
+    def test_get_aggregation_if_wrong_apiid(self, func):
         request = self.factory.get(self.url + 'nonexisting')
         force_authenticate(request, user=self.user)
         response = self.view(request, 'nonexisting')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data, {'detail': 'Aggregation not found'})
 
     def test_post_aggregation(self):
         data = {
@@ -1967,7 +1972,9 @@ class ListAggregationsAPIViewTests(TenantTestCase):
         request = self.factory.post(self.url, data, format='json')
         force_authenticate(request, user=self.user)
         response = self.view(request)
-        profile = poem_models.Aggregation.objects.get(name='new-profile')
+        profile = poem_models.Aggregation.objects.get(
+            apiid='12341234-aaaa-kkkk-aaaa-aaeekkccnnee'
+        )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(profile.name, 'new-profile')
         self.assertEqual(profile.apiid, '12341234-aaaa-kkkk-aaaa-aaeekkccnnee')
@@ -2344,10 +2351,14 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
 
     @patch('Poem.api.internal_views.metricprofiles.sync_webapi',
            side_effect=mocked_func)
-    def test_get_metric_profile_by_name(self, func):
-        request = self.factory.get(self.url + 'TEST_PROFILE')
+    def test_get_metric_profile_by_apiid(self, func):
+        request = self.factory.get(
+            self.url + '00000000-oooo-kkkk-aaaa-aaeekkccnnee'
+        )
         force_authenticate(request, user=self.user)
-        response = self.view(request, 'TEST_PROFILE')
+        response = self.view(
+            request, '00000000-oooo-kkkk-aaaa-aaeekkccnnee'
+        )
         self.assertEqual(
             response.data,
             OrderedDict([
@@ -2365,6 +2376,7 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
         force_authenticate(request, user=self.user)
         response = self.view(request, 'nonexisting')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data, {'detail': 'Metric profile not found'})
 
     def test_post_metric_profile(self):
         data = {
@@ -6868,9 +6880,13 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_get_metric_profile_versions(self):
-        request = self.factory.get(self.url + 'metricprofile/TEST_PROFILE2')
+        request = self.factory.get(
+            self.url + 'metricprofile/00000000-oooo-kkkk-aaaa-aaeekkccnnee'
+        )
         force_authenticate(request, user=self.user)
-        response = self.view(request, 'metricprofile', 'TEST_PROFILE2')
+        response = self.view(
+            request, 'metricprofile', '00000000-oooo-kkkk-aaaa-aaeekkccnnee'
+        )
         self.assertEqual(
             response.data,
             [
@@ -6931,7 +6947,7 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(response.data, {'detail': 'Metric profile not found.'})
 
-    def test_get_metric_version_without_specifying_name(self):
+    def test_get_metric_version_without_specifying_apiid(self):
         request = self.factory.get(self.url + 'metricprofile')
         force_authenticate(request, user=self.user)
         response = self.view(request, 'metricprofile')
@@ -6939,10 +6955,13 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
 
     def test_get_aggregation_profile_version(self):
         request = self.factory.get(
-            self.url + 'aggregationprofile/TEST_PROFILE2'
+            self.url + 'aggregationprofile/00000000-oooo-kkkk-aaaa-aaeekkccnnee'
         )
         force_authenticate(request, user=self.user)
-        response = self.view(request, 'aggregationprofile', 'TEST_PROFILE2')
+        response = self.view(
+            request, 'aggregationprofile',
+            '00000000-oooo-kkkk-aaaa-aaeekkccnnee'
+        )
         self.assertEqual(
             response.data,
             [
@@ -7062,7 +7081,7 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
             response.data, {'detail': 'Aggregation profile not found.'}
         )
 
-    def test_get_aggregation_profile_version_without_specifying_name(self):
+    def test_get_aggregation_profile_version_without_specifying_apiid(self):
         request = self.factory.get(self.url + 'aggregationprofile')
         force_authenticate(request, user=self.user)
         response = self.view(request, 'aggregationprofile')
@@ -7070,10 +7089,10 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
 
     def test_get_thresholds_profile_version(self):
         request = self.factory.get(
-            self.url + 'thresholdsprofile/TEST_PROFILE2'
+            self.url + 'thresholdsprofile/' + self.tp1.apiid
         )
         force_authenticate(request, user=self.user)
-        response = self.view(request, 'thresholdsprofile', 'TEST_PROFILE2')
+        response = self.view(request, 'thresholdsprofile', self.tp1.apiid)
         self.assertEqual(
             response.data,
             [
@@ -8526,10 +8545,14 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
 
     @patch('Poem.api.internal_views.thresholdsprofiles.sync_webapi',
            side_effect=mocked_func)
-    def test_get_thresholds_profile_by_name(self, func):
-        request = self.factory.get(self.url + 'TEST_PROFILE')
+    def test_get_thresholds_profile_by_apiid(self, func):
+        request = self.factory.get(
+            self.url + '00000000-oooo-kkkk-aaaa-aaeekkccnnee'
+        )
         force_authenticate(request, user=self.user)
-        response = self.view(request, 'TEST_PROFILE')
+        response = self.view(
+            request, '00000000-oooo-kkkk-aaaa-aaeekkccnnee'
+        )
         self.assertEqual(
             response.data,
             OrderedDict([

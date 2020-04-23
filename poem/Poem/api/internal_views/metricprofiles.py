@@ -58,20 +58,21 @@ class ListMetricProfiles(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-    def get(self, request, profile_name=None):
+    def get(self, request, profile_apiid=None):
         sync_webapi(settings.WEBAPI_METRIC, poem_models.MetricProfiles)
 
-        if profile_name:
+        if profile_apiid:
             try:
                 profile = poem_models.MetricProfiles.objects.get(
-                    name=profile_name
+                    apiid=profile_apiid
                 )
                 serializer = serializers.MetricProfileSerializer(profile)
                 return Response(serializer.data)
 
             except poem_models.MetricProfiles.DoesNotExist:
-                raise NotFound(status=404,
-                               detail='Metric profile not found')
+                raise NotFound(
+                    status=404, detail='Metric profile not found'
+                )
 
         else:
             profiles = poem_models.MetricProfiles.objects.all().order_by('name')
@@ -107,11 +108,11 @@ class ListMetricProfiles(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-    def delete(self, request, profile_name=None):
-        if profile_name:
+    def delete(self, request, profile_apiid=None):
+        if profile_apiid:
             try:
                 profile = poem_models.MetricProfiles.objects.get(
-                    apiid=profile_name
+                    apiid=profile_apiid
                 )
 
                 poem_models.TenantHistory.objects.filter(
@@ -124,8 +125,9 @@ class ListMetricProfiles(APIView):
                 return Response(status=status.HTTP_204_NO_CONTENT)
 
             except poem_models.MetricProfiles.DoesNotExist:
-                raise NotFound(status=404,
-                               detail='Metric profile not found')
+                raise NotFound(
+                    status=404, detail='Metric profile not found'
+                )
 
         else:
             return Response(
@@ -144,8 +146,8 @@ class ListPublicMetricProfiles(ListMetricProfiles):
     def post(self, request):
         return self._denied()
 
-    def put(self, request, profile_name):
+    def put(self, request, profile_apiid):
         return self._denied()
 
-    def delete(self, request, profile_name):
+    def delete(self, request, profile_apiid):
         return self._denied()
