@@ -261,7 +261,7 @@ const ProbeForm = ({isTenantSchema=false, isHistory=false,
         </Col>
       </Row>
       {
-        (!isTenantSchema && !isHistory && !addview && !cloneview) &&
+        (!isHistory && !addview && !cloneview) &&
           <Row>
             <Col md={8}>
               <div>
@@ -271,8 +271,17 @@ const ProbeForm = ({isTenantSchema=false, isHistory=false,
                     <div>
                       {
                         metrictemplatelist
-                          .map((e, i) => <Link key={i} to={`/ui/metrictemplates/${e}`}>{e}</Link>)
-                          .reduce((prev, curr) => [prev, ', ', curr])
+                          .map((e, i) => <Link
+                            key={i}
+                            to={
+                              isTenantSchema ?
+                                `/ui/probes/${values.name}/${e}`
+                              :
+                                `/ui/metrictemplates/${e}`
+                            }>
+                              {e}
+                            </Link>
+                          ).reduce((prev, curr) => [prev, ', ', curr])
                       }
                     </div>
                 }
@@ -768,6 +777,7 @@ function ProbeComponent(cloneview=false) {
                     {...props}
                     isTenantSchema={true}
                     state={this.state}
+                    metrictemplatelist={metrictemplatelist}
                   />
                 )}
               />
@@ -783,7 +793,7 @@ function ProbeComponent(cloneview=false) {
 export class ProbeVersionCompare extends Component{
   constructor(props) {
     super(props);
-
+    this.version1 = props.match.params.id1;
     this.version2 = props.match.params.id2;
     this.name = props.match.params.name;
     this.publicView = props.publicView
