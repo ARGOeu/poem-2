@@ -17,7 +17,7 @@ def get_files(install_prefix, directory):
 
 
 setup(name=NAME,
-      version='3.1.0',
+      version='3.2.0',
       description='Profiles, Probes and Metric Configuration Management (POEM) for ARGO Monitoring framework.',
       author='SRCE',
       author_email='dvrcic@srce.hr, kzailac@srce.hr',
