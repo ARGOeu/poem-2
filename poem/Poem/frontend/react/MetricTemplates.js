@@ -6,7 +6,8 @@ import {
   BaseArgoView,
   NotifyOk,
   HistoryComponent,
-  NotifyError
+  NotifyError,
+  NotifyWarn
 } from './UIElements';
 import { Formik, Form } from 'formik';
 import { Button } from 'reactstrap';
@@ -194,10 +195,16 @@ function MetricTemplateComponent(cloneview=false) {
           } catch(err) {
             change_msg = 'Error changing metric template';
           };
-          NotifyError({
-            title: `Error: ${response.status} ${response.statusText}`,
-            msg: change_msg
-          })
+          (response.status == '418') ?
+            NotifyWarn({
+              title: `Warning: ${response.status} ${response.statusText}`,
+              msg: change_msg
+            })
+          :
+            NotifyError({
+              title: `Error: ${response.status} ${response.statusText}`,
+              msg: change_msg
+            })
         } else {
           NotifyOk({
             msg: 'Metric template successfully changed',
