@@ -47,7 +47,11 @@ function MetricTemplateComponent(cloneview=false) {
     constructor(props) {
       super(props);
 
-      this.name = props.match.params.name;
+      this.probeview = props.probeview;
+      if (this.probeview)
+        this.name = props.match.params.metrictemplatename;
+      else
+        this.name = props.match.params.name;
       this.location = props.location;
       this.addview = props.addview;
       this.tenantview = props.tenantview;
@@ -337,6 +341,7 @@ function MetricTemplateComponent(cloneview=false) {
             location={this.location}
             addview={this.addview}
             tenantview={this.tenantview}
+            history={!this.probeview}
             cloneview={cloneview}
             clone={true}
             modal={true}
