@@ -439,7 +439,7 @@ export const PublicPage = ({children}) => {
 export const BaseArgoView = ({resourcename='', location=undefined,
   infoview=false, addview=false, listview=false, modal=false, state=undefined,
   toggle=undefined, submitperm=true, history=true, addnew=true, clone=false,
-  cloneview=false, tenantview=false, publicview=false, children}) =>
+  cloneview=false, tenantview=false, publicview=false, addperm=true, children}) =>
 (
   <React.Fragment>
     {
@@ -469,7 +469,18 @@ export const BaseArgoView = ({resourcename='', location=undefined,
                 }
                 {
                   addnew &&
-                    <Link className="btn btn-secondary" to={location.pathname + "/add"} role="button">Add</Link>
+                    addperm ?
+                      <Link className="btn btn-secondary" to={location.pathname + "/add"} role="button">Add</Link>
+                    :
+                      <Button
+                        className='btn btn-secondary'
+                        onClick={() => NotifyError({
+                          title: 'Not allowed',
+                          msg: `You do not have permission to add ${resourcename}.`
+                        })}
+                      >
+                        Add
+                      </Button>
                 }
               </React.Fragment>
             :
