@@ -816,7 +816,8 @@ export class MetricProfilesList extends Component
 
     this.state = {
       loading: false,
-      list_metricprofiles: null
+      list_metricprofiles: null,
+      write_perm: false
     }
 
     this.location = props.location;
@@ -832,10 +833,19 @@ export class MetricProfilesList extends Component
   async componentDidMount() {
     this.setState({loading: true})
     let json = await this.backend.fetchData(this.apiUrl);
-    this.setState({
-      list_metricprofiles: json,
-      loading: false}
-    );
+    if (!this.publicView) {
+      let session = await this.backend.isActiveSession();
+      this.setState({
+        list_metricprofiles: json,
+        loading: false,
+        write_perm: session.userdetails.is_superuser || session.userdetails.groups.metricprofiles.length > 0
+      });
+    } else {
+      this.setState({
+        list_metricprofiles: json,
+        loading: false
+      })
+    }
   }
 
   render() {
@@ -860,7 +870,7 @@ export class MetricProfilesList extends Component
         maxWidth: 150,
       }
     ]
-    const {loading, list_metricprofiles} = this.state
+    const {loading, list_metricprofiles, write_perm} = this.state;
 
     if (loading)
       return (<LoadingAnim />)
@@ -872,6 +882,7 @@ export class MetricProfilesList extends Component
           location={this.location}
           listview={true}
           addnew={!this.publicView}
+          addperm={write_perm}
           publicview={this.publicView}>
           <ReactTable
             data={list_metricprofiles}

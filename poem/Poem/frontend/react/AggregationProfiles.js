@@ -29,7 +29,7 @@ import {
   FormGroup,
   FormText,
   Label,
-  Row,
+  Row
 } from 'reactstrap';
 import * as Yup from 'yup';
 
@@ -897,7 +897,8 @@ export class AggregationProfilesList extends Component
 
     this.state = {
       loading: false,
-      list_aggregations: null
+      list_aggregations: null,
+      write_perm: false
     }
 
     this.location = props.location;
@@ -914,10 +915,19 @@ export class AggregationProfilesList extends Component
   async componentDidMount() {
     this.setState({loading: true})
     let json = await this.backend.fetchData(this.apiUrl);
-    this.setState({
-      list_aggregations: json,
-      loading: false
-    });
+    if (!this.publicView) {
+      let session = await this.backend.isActiveSession();
+      this.setState({
+        write_perm: session.userdetails.is_superuser || session.userdetails.groups.aggregations.length > 0,
+        list_aggregations: json,
+        loading: false
+      })
+    } else {
+      this.setState({
+        list_aggregations: json,
+        loading: false
+      })
+    }
   }
 
   render() {
@@ -942,7 +952,7 @@ export class AggregationProfilesList extends Component
         maxWidth: 150,
       }
     ]
-    const {loading, list_aggregations} = this.state
+    const {loading, list_aggregations, write_perm} = this.state;
 
     if (loading)
       return (<LoadingAnim />)
@@ -954,6 +964,7 @@ export class AggregationProfilesList extends Component
           location={this.location}
           listview={true}
           addnew={!this.publicView}
+          addperm={write_perm}
           publicview={this.publicView}>
           <ReactTable
             data={list_aggregations}
