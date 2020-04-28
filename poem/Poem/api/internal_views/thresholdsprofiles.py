@@ -17,12 +17,12 @@ from rest_framework.views import APIView
 class ListThresholdsProfiles(APIView):
     authentication_classes = (SessionAuthentication,)
 
-    def get(self, request, profile_apiid=None):
+    def get(self, request, name=None):
         sync_webapi(settings.WEBAPI_THRESHOLDS, ThresholdsProfiles)
 
-        if profile_apiid:
+        if name:
             try:
-                profile = ThresholdsProfiles.objects.get(apiid=profile_apiid)
+                profile = ThresholdsProfiles.objects.get(name=name)
                 serializer = serializers.ThresholdsProfileSerializer(profile)
                 return Response(serializer.data)
 
@@ -33,9 +33,8 @@ class ListThresholdsProfiles(APIView):
 
         else:
             profiles = ThresholdsProfiles.objects.all().order_by('name')
-            serializer = serializers.ThresholdsProfileSerializer(
-                profiles, many=True
-            )
+            serializer = serializers.ThresholdsProfileSerializer(profiles,
+                                                                 many=True)
             return Response(serializer.data)
 
     def put(self, request):
@@ -92,10 +91,10 @@ class ListThresholdsProfiles(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-    def delete(self, request, profile_apiid=None):
-        if profile_apiid:
+    def delete(self, request, apiid=None):
+        if apiid:
             try:
-                tp = ThresholdsProfiles.objects.get(apiid=profile_apiid)
+                tp = ThresholdsProfiles.objects.get(apiid=apiid)
                 TenantHistory.objects.filter(
                     object_id=tp.id,
                     content_type=ContentType.objects.get_for_model(tp)
@@ -105,9 +104,8 @@ class ListThresholdsProfiles(APIView):
                 return Response(status=status.HTTP_204_NO_CONTENT)
 
             except ThresholdsProfiles.DoesNotExist:
-                raise NotFound(
-                    status=404, detail='Thresholds profile not found.'
-                )
+                raise NotFound(status=404,
+                               detail='Thresholds profile not found.')
 
         else:
             return Response(
@@ -129,5 +127,5 @@ class ListPublicThresholdsProfiles(ListThresholdsProfiles):
     def put(self, request):
         return self._denied()
 
-    def delete(self, request, profile_apiid=None):
+    def delete(self, request, apiid=None):
         return self._denied()
