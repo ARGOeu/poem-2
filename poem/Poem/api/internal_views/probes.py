@@ -86,11 +86,25 @@ class ListProbes(APIView):
 
         probe = admin_models.Probe.objects.get(id=request.data['id'])
         old_name = probe.name
-        package_name = request.data['package'].split(' ')[0]
-        package_version = request.data['package'].split(' ')[1][1:-1]
-        package = admin_models.Package.objects.get(
-            name=package_name, version=package_version
-        )
+        try:
+            package_name = request.data['package'].split(' ')[0]
+            package_version = request.data['package'].split(' ')[1][1:-1]
+            package = admin_models.Package.objects.get(
+                name=package_name, version=package_version
+            )
+
+        except IndexError:
+            return Response(
+                {'detail': 'You should specify package version.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        except admin_models.Package.DoesNotExist:
+            return Response(
+                {'detail': 'You should choose existing package.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         old_version = probe.package.version
 
         try:
@@ -186,9 +200,9 @@ class ListProbes(APIView):
             )
 
     def post(self, request):
-        package_name = request.data['package'].split(' ')[0]
-        package_version = request.data['package'].split(' ')[1][1:-1]
         try:
+            package_name = request.data['package'].split(' ')[0]
+            package_version = request.data['package'].split(' ')[1][1:-1]
             probe = admin_models.Probe.objects.create(
                 name=request.data['name'],
                 package=admin_models.Package.objects.get(
@@ -219,6 +233,18 @@ class ListProbes(APIView):
         except IntegrityError:
             return Response({'detail': 'Probe with this name already exists.'},
                             status=status.HTTP_400_BAD_REQUEST)
+
+        except admin_models.Package.DoesNotExist:
+            return Response(
+                {'detail': 'You should choose existing package.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        except IndexError:
+            return Response(
+                {'detail': 'You should specify package version.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
     def delete(self, request, name=None):
         schemas = list(

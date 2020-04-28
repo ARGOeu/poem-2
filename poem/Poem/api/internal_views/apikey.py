@@ -53,7 +53,10 @@ class ListAPIKeys(APIView):
                 obj.save()
 
             else:
-                return Response(status=status.HTTP_403_FORBIDDEN)
+                return Response(
+                    {'detail': 'API key with this name already exists'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
 
             return Response(status=status.HTTP_201_CREATED)
 
@@ -71,7 +74,10 @@ class ListAPIKeys(APIView):
             return Response(status=status.HTTP_201_CREATED)
 
         else:
-            return Response(status=status.HTTP_403_FORBIDDEN)
+            return Response(
+                {'detail': 'API key with this name already exists'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
     def delete(self, request, name=None):
         if name:
@@ -84,7 +90,10 @@ class ListAPIKeys(APIView):
                 raise NotFound(status=404, detail='API key not found')
 
         else:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {'detail': 'API key name must be defined'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
 
 class ListPublicAPIKey(APIView):

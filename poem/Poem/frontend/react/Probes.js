@@ -9,7 +9,8 @@ import {
   FancyErrorMessage,
   AutocompleteField,
   HistoryComponent,
-  DiffElement
+  DiffElement,
+  NotifyError
 } from './UIElements';
 import ReactTable from 'react-table';
 import {
@@ -22,7 +23,6 @@ import {
   InputGroup,
   InputGroupAddon } from 'reactstrap';
 import { Formik, Form, Field } from 'formik';
-import { NotificationManager } from 'react-notifications';
 import * as Yup from 'yup';
 
 
@@ -54,8 +54,8 @@ const LinkField = ({
   field: { value },
   ...props
 }) => (
-  <div className='form-control' style={{backgroundColor: '#e9ecef'}}>
-    <a href={value}>{value}</a>
+  <div className='form-control' style={{backgroundColor: '#e9ecef', overflow: 'hidden', textOverflow: 'ellipsis'}}>
+    <a href={value} style={{'whiteSpace': 'nowrap'}}>{value}</a>
   </div>
 )
 
@@ -261,7 +261,7 @@ const ProbeForm = ({isTenantSchema=false, isHistory=false,
         </Col>
       </Row>
       {
-        (!isTenantSchema && !isHistory && !addview && !cloneview) &&
+        (!isHistory && !addview && !cloneview) &&
           <Row>
             <Col md={8}>
               <div>
@@ -271,8 +271,17 @@ const ProbeForm = ({isTenantSchema=false, isHistory=false,
                     <div>
                       {
                         metrictemplatelist
-                          .map((e, i) => <Link key={i} to={`/ui/metrictemplates/${e}`}>{e}</Link>)
-                          .reduce((prev, curr) => [prev, ', ', curr])
+                          .map((e, i) => <Link
+                            key={i}
+                            to={
+                              isTenantSchema ?
+                                `/ui/probes/${values.name}/${e}`
+                              :
+                                `/ui/metrictemplates/${e}`
+                            }>
+                              {e}
+                            </Link>
+                          ).reduce((prev, curr) => [prev, ', ', curr])
                       }
                     </div>
                 }
@@ -553,8 +562,17 @@ function ProbeComponent(cloneview=false) {
           }
           );
           if (!response.ok) {
-            let json = await response.json();
-            NotificationManager.error(json.detail, 'Error');
+            let add_msg = '';
+            try {
+              let json = await response.json();
+              add_msg = json.detail;
+            } catch(err) {
+              add_msg = 'Error adding probe';
+            }
+            NotifyError({
+              title: `Error: ${response.status} ${response.statusText}`,
+              msg: add_msg
+            });
           } else {
             NotifyOk({
               msg: 'Probe successfully added',
@@ -577,8 +595,17 @@ function ProbeComponent(cloneview=false) {
           }
         );
         if (!response.ok) {
-          let json = await response.json();
-          NotificationManager.error(json.detail, 'Error');
+          let change_msg = '';
+          try {
+            let json = await response.json();
+            change_msg = json.detail;
+          } catch(err) {
+            change_msg = 'Error changing probe';
+          };
+          NotifyError({
+            title: `Error: ${response.status} ${response.statusText}`,
+            msg: change_msg
+          });
         } else {
           NotifyOk({
             msg: 'Probe successfully changed',
@@ -592,8 +619,17 @@ function ProbeComponent(cloneview=false) {
     async doDelete(name) {
       let response = await this.backend.deleteObject(`/api/v2/internal/probes/${name}`);
       if (!response.ok) {
-        let json = await response.json();
-        NotificationManager.error(json.detail, 'Error');
+        let msg = '';
+        try {
+          let json = await response.json();
+          msg = json.detail;
+        } catch(err) {
+          msg = 'Error deleting probe';
+        };
+        NotifyError({
+          title: `Error: ${response.status} ${response.statusText}`,
+          msg: msg
+        });
       } else {
         NotifyOk({
           msg: 'Probe successfully deleted',
@@ -741,6 +777,7 @@ function ProbeComponent(cloneview=false) {
                     {...props}
                     isTenantSchema={true}
                     state={this.state}
+                    metrictemplatelist={metrictemplatelist}
                   />
                 )}
               />
@@ -756,7 +793,7 @@ function ProbeComponent(cloneview=false) {
 export class ProbeVersionCompare extends Component{
   constructor(props) {
     super(props);
-
+    this.version1 = props.match.params.id1;
     this.version2 = props.match.params.id2;
     this.name = props.match.params.name;
     this.publicView = props.publicView

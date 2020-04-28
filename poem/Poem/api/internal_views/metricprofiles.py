@@ -18,9 +18,15 @@ class ListAllServiceFlavours(APIView):
 
     def get(self, request):
         service_flavours = poem_models.ServiceFlavour.objects.all()
-        serializer = serializers.ServiceFlavourSerializer(service_flavours,
-                                                          many=True)
-        return Response(serializer.data)
+        serializer = serializers.ServiceFlavourSerializer(
+            service_flavours, many=True
+        )
+        data = []
+        for item in serializer.data:
+            data.append(
+                {'name': item['name'], 'description': item['description']}
+            )
+        return Response(sorted(data, key=lambda k: k['name'].lower()))
 
 
 class ListMetricProfiles(APIView):
@@ -47,22 +53,32 @@ class ListMetricProfiles(APIView):
 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            details = []
+            for error in serializer.errors:
+                details.append(
+                    '{}: {}'.format(error, serializer.errors[error][0])
+                )
+            return Response(
+                {'detail': ' '.join(details)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
-    def get(self, request, profile_name=None):
+    def get(self, request, profile_apiid=None):
         sync_webapi(settings.WEBAPI_METRIC, poem_models.MetricProfiles)
 
-        if profile_name:
+        if profile_apiid:
             try:
                 profile = poem_models.MetricProfiles.objects.get(
-                    name=profile_name
+                    apiid=profile_apiid
                 )
                 serializer = serializers.MetricProfileSerializer(profile)
                 return Response(serializer.data)
 
             except poem_models.MetricProfiles.DoesNotExist:
-                raise NotFound(status=404,
-                               detail='Metric profile not found')
+                raise NotFound(
+                    status=404, detail='Metric profile not found'
+                )
 
         else:
             profiles = poem_models.MetricProfiles.objects.all().order_by('name')
@@ -71,31 +87,38 @@ class ListMetricProfiles(APIView):
             return Response(serializer.data)
 
     def put(self, request):
-        profile = poem_models.MetricProfiles.objects.get(
-            apiid=request.data['apiid']
-        )
-        profile.name = request.data['name']
-        profile.description = request.data['description']
-        profile.groupname = request.data['groupname']
-        profile.save()
+        if request.data['apiid']:
+            profile = poem_models.MetricProfiles.objects.get(
+                apiid=request.data['apiid']
+            )
+            profile.name = request.data['name']
+            profile.description = request.data['description']
+            profile.groupname = request.data['groupname']
+            profile.save()
 
-        groupprofile = poem_models.GroupOfMetricProfiles.objects.get(
-            name=request.data['groupname']
-        )
-        groupprofile.metricprofiles.add(profile)
+            groupprofile = poem_models.GroupOfMetricProfiles.objects.get(
+                name=request.data['groupname']
+            )
+            groupprofile.metricprofiles.add(profile)
 
-        create_profile_history(
-            profile, dict(request.data)['services'],
-            request.user, request.data['description']
-        )
+            create_profile_history(
+                profile, dict(request.data)['services'],
+                request.user, request.data['description']
+            )
 
-        return Response(status=status.HTTP_201_CREATED)
+            return Response(status=status.HTTP_201_CREATED)
 
-    def delete(self, request, profile_name=None):
-        if profile_name:
+        else:
+            return Response(
+                {'detail': 'Apiid field undefined!'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+    def delete(self, request, profile_apiid=None):
+        if profile_apiid:
             try:
                 profile = poem_models.MetricProfiles.objects.get(
-                    name=profile_name
+                    apiid=profile_apiid
                 )
 
                 poem_models.TenantHistory.objects.filter(
@@ -108,11 +131,15 @@ class ListMetricProfiles(APIView):
                 return Response(status=status.HTTP_204_NO_CONTENT)
 
             except poem_models.MetricProfiles.DoesNotExist:
-                raise NotFound(status=404,
-                               detail='Metric profile not found')
+                raise NotFound(
+                    status=404, detail='Metric profile not found'
+                )
 
         else:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {'detail': 'Metric profile not specified!'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
 
 class ListPublicMetricProfiles(ListMetricProfiles):
@@ -125,8 +152,8 @@ class ListPublicMetricProfiles(ListMetricProfiles):
     def post(self, request):
         return self._denied()
 
-    def put(self, request, profile_name):
+    def put(self, request, profile_apiid):
         return self._denied()
 
-    def delete(self, request, profile_name):
+    def delete(self, request, profile_apiid):
         return self._denied()

@@ -63,8 +63,8 @@ import ReactDiffViewer from 'react-diff-viewer';
 var list_pages = ['administration','services', 'probes',
                   'metrics', 'metricprofiles', 'aggregationprofiles',
                   'thresholdsprofiles'];
-var admin_list_pages = ['administration', 'probes', 'yumrepos',
-                        'packages', 'metrictemplates'];
+var admin_list_pages = ['administration', 'yumrepos', 'packages',
+                        'probes', 'metrictemplates'];
 
 var link_title = new Map();
 link_title.set('administration', 'Administration');
@@ -390,6 +390,15 @@ export const NotifyOk = ({msg='', title='', callback=undefined}) => {
   setTimeout(callback, 2000);
 }
 
+export const NotifyError = ({msg='', title=''}) => {
+  NotificationManager.error(msg, title);
+};
+
+
+export const NotifyWarn = ({msg='', title=''}) => {
+  NotificationManager.warning(msg, title);
+};
+
 
 export const PublicPage = ({children}) => {
   let userDetails = {
@@ -430,7 +439,7 @@ export const PublicPage = ({children}) => {
 export const BaseArgoView = ({resourcename='', location=undefined,
   infoview=false, addview=false, listview=false, modal=false, state=undefined,
   toggle=undefined, submitperm=true, history=true, addnew=true, clone=false,
-  cloneview=false, tenantview=false, publicview=false, children}) =>
+  cloneview=false, tenantview=false, publicview=false, addperm=true, children}) =>
 (
   <React.Fragment>
     {
@@ -460,7 +469,18 @@ export const BaseArgoView = ({resourcename='', location=undefined,
                 }
                 {
                   addnew &&
-                    <Link className="btn btn-secondary" to={location.pathname + "/add"} role="button">Add</Link>
+                    addperm ?
+                      <Link className="btn btn-secondary" to={location.pathname + "/add"} role="button">Add</Link>
+                    :
+                      <Button
+                        className='btn btn-secondary'
+                        onClick={() => NotifyError({
+                          title: 'Not allowed',
+                          msg: `You do not have permission to add ${resourcename}.`
+                        })}
+                      >
+                        Add
+                      </Button>
                 }
               </React.Fragment>
             :
@@ -614,7 +634,11 @@ export function HistoryComponent(obj, tenantview=false) {
     constructor(props) {
       super(props);
 
-      this.name = props.match.params.name;
+      if (obj.endsWith('profile'))
+        this.object_id = props.match.params.apiid;
+      else
+        this.object_id = props.match.params.name;
+
       this.history = props.history;
       this.publicView = props.publicView
 
@@ -639,12 +663,12 @@ export function HistoryComponent(obj, tenantview=false) {
       }
 
       if (tenantview)
-        this.compareUrl = `/ui/administration/${obj}s/${this.name}/history`;
+        this.compareUrl = `/ui/administration/${obj}s/${this.object_id}/history`;
       else {
         if (this.publicView)
-          this.compareUrl = `/ui/public_${obj}s/${this.name}/history`;
+          this.compareUrl = `/ui/public_${obj}s/${this.object_id}/history`;
         else
-          this.compareUrl = `/ui/${obj}s/${this.name}/history`;
+          this.compareUrl = `/ui/${obj}s/${this.object_id}/history`;
       }
 
       this.backend = new Backend();
@@ -653,7 +677,7 @@ export function HistoryComponent(obj, tenantview=false) {
     async componentDidMount() {
       this.setState({loading: true});
 
-      let json = await this.backend.fetchData(`${this.apiUrl}/${obj}/${this.name}`);
+      let json = await this.backend.fetchData(`${this.apiUrl}/${obj}/${this.object_id}`);
       if (json.length > 1) {
         this.setState({
           list_versions: json,

@@ -9,7 +9,8 @@ import {
     FancyErrorMessage,
     HistoryComponent,
     DiffElement,
-    ProfileMainInfo
+    ProfileMainInfo,
+    NotifyError
 } from './UIElements';
 import ReactTable from 'react-table';
 import {
@@ -877,7 +878,8 @@ export class ThresholdsProfilesList extends Component {
 
     this.state = {
       loading: false,
-      list_thresholdsprofiles: null
+      list_thresholdsprofiles: null,
+      write_perm: false
     };
   }
 
@@ -885,10 +887,19 @@ export class ThresholdsProfilesList extends Component {
     this.setState({loading: true});
 
     let profiles = await this.backend.fetchData(this.apiUrl);
-    this.setState({
-      list_thresholdsprofiles: profiles,
-      loading: false
-    });
+    if (!this.publicView) {
+      let session = await this.backend.isActiveSession();
+      this.setState({
+        list_thresholdsprofiles: profiles,
+        loading: false,
+        write_perm: session.userdetails.is_superuser || session.userdetails.groups.thresholdsprofiles.length > 0
+      });
+    } else {
+      this.setState({
+        list_thresholdsprofiles: profiles,
+        loading: false
+      });
+    };
   }
 
   render() {
@@ -898,7 +909,7 @@ export class ThresholdsProfilesList extends Component {
         id: 'name',
         maxWidth: 350,
         accessor: e =>
-          <Link to={`/ui/${this.publicView ? 'public_' : ''}thresholdsprofiles/` + e.name}>
+          <Link to={`/ui/${this.publicView ? 'public_' : ''}thresholdsprofiles/` + e.apiid}>
             {e.name}
           </Link>
       },
@@ -913,7 +924,7 @@ export class ThresholdsProfilesList extends Component {
         maxWidth: 150,
       }
     ];
-    const { loading, list_thresholdsprofiles } = this.state;
+    const { loading, list_thresholdsprofiles, write_perm } = this.state;
 
     if (loading)
       return <LoadingAnim/>
@@ -925,6 +936,7 @@ export class ThresholdsProfilesList extends Component {
           location={this.location}
           listview={true}
           addnew={!this.publicView}
+          addperm={write_perm}
           publicview={this.publicView}
         >
           <ReactTable
@@ -947,7 +959,7 @@ export class ThresholdsProfilesChange extends Component {
   constructor(props) {
     super(props);
 
-    this.name = props.match.params.name;
+    this.profile = props.match.params.apiid;
     this.addview = props.addview;
     this.history = props.history;
     this.location = props.location;
@@ -1073,11 +1085,19 @@ export class ThresholdsProfilesChange extends Component {
         rules: this.thresholdsToString(values_send.rules)
       });
       if (!response.ok) {
-        this.toggleAreYouSureSetModal(
-          `Error: ${response.status} ${response.statusText}`,
-          'Web API error adding thresholds profile',
-          undefined
-        );
+        let add_msg = '';
+        try {
+          let json = await response.json();
+          let msg_list = [];
+          json.errors.forEach(e => msg_list.push(e.details));
+          add_msg = msg_list.join(' ');
+        } catch(err) {
+          add_msg = 'Web API error adding thresholds profile';
+        };
+        NotifyError({
+          title: `Web API error: ${response.status} ${response.statusText}`,
+          msg: add_msg
+        });
       } else {
         let r = await response.json();
         let r_internal = await this.backend.addObject(
@@ -1089,18 +1109,25 @@ export class ThresholdsProfilesChange extends Component {
             rules: values_send.rules
           }
         );
-        r_internal.ok ?
+        if (r_internal.ok)
           NotifyOk({
             msg: 'Thresholds profile successfully added',
             title: 'Added',
             callback: () => this.history.push('/ui/thresholdsprofiles')
           })
-        :
-          this.toggleAreYouSureSetModal(
-            `Error: ${r_internal.status} ${r_internal.statusText}`,
-            'Internal API error adding thresholds profile',
-            undefined
-          );
+        else {
+          let add_msg = '';
+          try {
+            let json = await r_internal.json();
+            add_msg = json.detail;
+          } catch(err) {
+            add_msg = 'Internal API error adding thresholds profile';
+          };
+          NotifyError({
+            title: `Internal API error: ${r_internal.status} ${r_internal.statusText}`,
+            msg: add_msg
+          });
+        };
       };
     } else {
       let response = await this.webapi.changeThresholdsProfile({
@@ -1109,11 +1136,19 @@ export class ThresholdsProfilesChange extends Component {
         rules: this.thresholdsToString(values_send.rules)
       });
       if (!response.ok) {
-        this.toggleAreYouSureSetModal(
-          `Error: ${response.status} ${response.statusText}`,
-          'Web API error changing thresholds profile',
-          undefined
-        );
+        let change_msg = '';
+        try {
+          let json = response.json();
+          let msg_list = [];
+          json.errors.forEach(e => msg_list.push(e.details));
+          change_msg = msg_list.join(' ');
+        } catch(err) {
+          change_msg = 'Web API error changing thresholds profile';
+        };
+        NotifyError({
+          title: `Web API error: ${response.status} ${response.statusText}`,
+          msg: change_msg
+        });
       } else {
         let r = await response.json();
         let r_internal = await this.backend.changeObject(
@@ -1125,18 +1160,25 @@ export class ThresholdsProfilesChange extends Component {
             rules: values_send.rules
           }
         );
-        r_internal.ok ?
+        if (r_internal.ok)
           NotifyOk({
             msg: 'Thresholds profile successfully changed',
             title: 'Changed',
             callback: () => this.history.push('/ui/thresholdsprofiles')
           })
-        :
-          this.toggleAreYouSureSetModal(
-            `Error: ${r_internal.status} ${r_internal.statusText}`,
-            'Internal API error changing thresholds profile',
-            undefined
-          );
+        else {
+          let change_msg = '';
+          try {
+            let json = await r_internal.json();
+            change_msg = json.detail;
+          } catch(err) {
+            change_msg = 'Internal API error changing thresholds profile';
+          };
+          NotifyError({
+            title: `Internal API error: ${r_internal.status} ${r_internal.statusText}`,
+            msg: change_msg
+          });
+        };
       };
     }
   }
@@ -1144,25 +1186,40 @@ export class ThresholdsProfilesChange extends Component {
   async doDelete(profileId) {
     let response = await this.webapi.deleteThresholdsProfile(profileId);
     if (!response.ok) {
-      this.toggleAreYouSureSetModal(
-        `Error: ${response.status} ${response.statusText}`,
-        'Web API error deleting thresholds profile',
-        undefined
-      );
+      let msg = '';
+      try {
+        let json = await response.json();
+        let msg_list = [];
+        json.errors.forEach(e => msg_list.push(e.details));
+        msg = msg_list.join(' ');
+      } catch(err) {
+        msg = 'Web API error deleting thresholds profile';
+      };
+      NotifyError({
+        title: `Web API error: ${response.status} ${response.statusText}`,
+        msg: msg
+      });
     } else {
       let r_internal = await this.backend.deleteObject(`/api/v2/internal/thresholdsprofiles/${profileId}`);
-      r_internal ?
+      if (r_internal)
         NotifyOk({
           msg: 'Thresholds profile successfully deleted',
           title: 'Deleted',
           callback: () => this.history.push('/ui/thresholdsprofiles')
         })
-      :
-        this.toggleAreYouSureSetModal(
-          `Error: ${r_internal.status} ${r_internal.statusText}`,
-          'Internal API error deleting thresholds profile',
-          undefined
-        );
+      else {
+        let msg = '';
+        try {
+          let json = await r_internal.json();
+          msg = json.detail;
+        } catch(err) {
+          msg = 'Internal API error deleting thresholds profile';
+        };
+        NotifyError({
+          title: `Internal API error: ${r_internal.status} ${r_internal.statusText}`,
+          msg: msg
+        });
+      };
     };
   }
 
@@ -1170,7 +1227,7 @@ export class ThresholdsProfilesChange extends Component {
     this.setState({loading: true});
 
     if (this.publicView) {
-      let json = await this.backend.fetchData(`/api/v2/internal/public_thresholdsprofiles/${this.name}`);
+      let json = await this.backend.fetchData(`/api/v2/internal/public_thresholdsprofiles/${this.profile}`);
       let thresholdsprofile = await this.webapi.fetchThresholdsProfile(json.apiid);
       this.setState({
         thresholds_profile: {
@@ -1188,7 +1245,7 @@ export class ThresholdsProfilesChange extends Component {
     else {
       let sessionActive = await this.backend.isActiveSession();
       let metricsall = await this.backend.fetchListOfNames('/api/v2/internal/metricsall');
-      let json = await this.backend.fetchData(`/api/v2/internal/thresholdsprofiles/${this.name}`);
+      let json = await this.backend.fetchData(`/api/v2/internal/thresholdsprofiles/${this.profile}`);
       if (this.addview) {
         this.setState({
           loading: false,
@@ -1231,7 +1288,7 @@ export class ThresholdsProfilesChange extends Component {
           state={this.state}
           toggle={this.toggleAreYouSure}
           submitperm={write_perm}
-          addview={!this.publicView}
+          addview={this.publicView ? !this.publicView : this.addview}
           publicview={this.publicView}
         >
           <Formik
@@ -1358,7 +1415,7 @@ export class ThresholdsProfileVersionCompare extends Component {
 
     this.version1 = props.match.params.id1;
     this.version2 = props.match.params.id2;
-    this.name = props.match.params.name;
+    this.profile = props.match.params.apiid;
 
     this.state = {
       loading: false,
@@ -1374,7 +1431,7 @@ export class ThresholdsProfileVersionCompare extends Component {
   }
 
   async componentDidMount() {
-    let json = await this.backend.fetchData(`/api/v2/internal/tenantversion/thresholdsprofile/${this.name}`);
+    let json = await this.backend.fetchData(`/api/v2/internal/tenantversion/thresholdsprofile/${this.profile}`);
     let name1 = '';
     let groupname1 = '';
     let rules1 = [];
@@ -1415,7 +1472,7 @@ export class ThresholdsProfileVersionCompare extends Component {
       return (
         <React.Fragment>
           <div className='d-flex align-items-center justify-content-between'>
-            <h2 className='ml-3 mt-1 mb-4'>{`Compare ${this.name} versions`}</h2>
+            <h2 className='ml-3 mt-1 mb-4'>{`Compare ${name2} versions`}</h2>
           </div>
           {
             (name1 !== name2) &&
@@ -1441,7 +1498,7 @@ export class ThresholdsProfileVersionDetail extends Component {
   constructor(props) {
     super(props);
 
-    this.name = props.match.params.name;
+    this.profile = props.match.params.apiid;
     this.version = props.match.params.version;
 
     this.backend = new Backend();
@@ -1458,7 +1515,7 @@ export class ThresholdsProfileVersionDetail extends Component {
   async componentDidMount() {
     this.setState({loading: true});
 
-    let json = await this.backend.fetchData(`/api/v2/internal/tenantversion/thresholdsprofile/${this.name}`);
+    let json = await this.backend.fetchData(`/api/v2/internal/tenantversion/thresholdsprofile/${this.profile}`);
     json.forEach((e) => {
       if (e.version == this.version)
         this.setState({

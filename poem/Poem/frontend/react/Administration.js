@@ -96,16 +96,16 @@ export const SuperAdminAdministration = (props) =>
       </CardHeader>
       <CardBody>
         <Row className="p-1 align-items-center">
-          <Icon i="probes"/> <Link className='pl-1' to={'/ui/probes'}>Probes</Link>
-        </Row>
-        <Row className="p-1 align-items-center">
-          <Icon i="metrictemplates"/> <Link className='pl-1' to={'/ui/metrictemplates'}>Metric templates</Link>
-        </Row>
-        <Row className="p-1 align-items-center">
           <Icon i="yumrepos"/> <Link className='pl-1' to={'/ui/yumrepos'}>YUM repos</Link>
         </Row>
         <Row className="p-1 align-items-center">
           <Icon i="packages"/> <Link className='pl-1' to={'/ui/packages'}>Packages</Link>
+        </Row>
+        <Row className="p-1 align-items-center">
+          <Icon i="probes"/> <Link className='pl-1' to={'/ui/probes'}>Probes</Link>
+        </Row>
+        <Row className="p-1 align-items-center">
+          <Icon i="metrictemplates"/> <Link className='pl-1' to={'/ui/metrictemplates'}>Metric templates</Link>
         </Row>
       </CardBody>
     </Card>

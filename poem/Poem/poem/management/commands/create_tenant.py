@@ -3,6 +3,19 @@ from django.conf import settings
 from django.core.management.base import BaseCommand
 
 from Poem.tenants.models import Tenant
+from Poem.poem import models as poem_models
+
+from tenant_schemas.utils import schema_context
+
+
+def create_groups_of_resources(tenant_name):
+    schema = tenant_name.lower()
+    group = tenant_name.upper()
+    with schema_context(schema):
+        poem_models.GroupOfAggregations.objects.create(name=group)
+        poem_models.GroupOfMetrics.objects.create(name=group)
+        poem_models.GroupOfMetricProfiles.objects.create(name=group)
+        poem_models.GroupOfThresholdsProfiles.objects.create(name=group)
 
 
 def create_tenant(name, hostname):
@@ -14,6 +27,8 @@ def create_tenant(name, hostname):
         schema = name.lower()
     tenant = Tenant(domain_url=hostname, schema_name=schema, name=name)
     tenant.save()
+    
+    create_groups_of_resources(name)
 
 
 def get_public_schema_hostname():

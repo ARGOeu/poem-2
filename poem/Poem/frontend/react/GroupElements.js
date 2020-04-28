@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { Backend } from './DataManager';
-import { LoadingAnim, BaseArgoView, NotifyOk } from './UIElements';
+import { LoadingAnim, BaseArgoView, NotifyOk, NotifyError } from './UIElements';
 import ReactTable from 'react-table';
 import { Link } from 'react-router-dom';
 import { Formik, Form, Field } from 'formik';
@@ -187,12 +187,19 @@ function GroupChange(gr, id, ttl) {
             title: 'Changed',
             callback: () => this.history.push(`/ui/administration/${id}`)
           });
-        else
-          this.toggleAreYouSureSetModal(
-            `Error: ${response.status} ${response.statusText}`,
-            `Error changing group of ${ttl}`,
-            undefined
-          );
+        else {
+          let change_msg = '';
+          try {
+            let json = await response.json();
+            change_msg = json.detail;
+          } catch {
+            change_msg = `Error changing group of ${ttl}`;
+          };
+          NotifyError({
+            title: `Error: ${response.status} ${response.statusText}`,
+            msg: change_msg
+          });
+        }
       } else {
         let response = await this.backend.addObject(
           `/api/v2/internal/${gr}group/`,
@@ -207,12 +214,19 @@ function GroupChange(gr, id, ttl) {
             title: 'Added',
             callback: () => this.history.push(`/ui/administration/${id}`)
           });
-        else
-          this.toggleAreYouSureSetModal(
-            `Error: ${response.status} ${response.statusText}`,
-            `Error adding group of ${ttl}`,
-            undefined
-          );
+        else {
+          let add_msg = '';
+          try {
+            let json = await response.json();
+            add_msg = json.detail;
+          } catch(err) {
+            add_msg = `Error adding group of ${ttl}`;
+          };
+          NotifyError({
+            msg: add_msg,
+            title: `Error: ${response.status} ${response.statusText}`
+          });
+        };
       }
     }
 
@@ -224,12 +238,19 @@ function GroupChange(gr, id, ttl) {
           title: 'Deleted',
           callback: () => this.history.push(`/ui/administration/${id}`)
         });
-      else
-        this.toggleAreYouSureSetModal(
-          `Error: ${response.status} ${response.statusText}`,
-          `Error deleting group of ${ttl}`,
-          undefined
-        );
+      else {
+        let msg = '';
+        try {
+          let json = await response.json();
+          msg = json.detail;
+        } catch(err) {
+          msg = `Error deleting group of ${ttl}`;
+        };
+        NotifyError({
+          msg: msg,
+          title: `Error: ${response.status} ${response.statusText}`
+        });
+      };
     }
 
     async componentDidMount() {
