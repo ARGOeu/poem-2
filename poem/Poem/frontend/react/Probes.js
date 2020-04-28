@@ -54,8 +54,8 @@ const LinkField = ({
   field: { value },
   ...props
 }) => (
-  <div className='form-control' style={{backgroundColor: '#e9ecef'}}>
-    <a href={value}>{value}</a>
+  <div className='form-control' style={{backgroundColor: '#e9ecef', overflow: 'hidden', textOverflow: 'ellipsis'}}>
+    <a href={value} style={{'whiteSpace': 'nowrap'}}>{value}</a>
   </div>
 )
 
