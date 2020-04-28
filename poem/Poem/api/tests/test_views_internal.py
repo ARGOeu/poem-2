@@ -4840,12 +4840,75 @@ class ListVersionsAPIViewTests(TenantTestCase):
         request = self.factory.get(self.url + 'probe/')
         force_authenticate(request, user=self.user)
         response = self.view(request, 'probe')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(
-            [r for r in response.data],
+            response.data,
             [
-                'ams-publisher-probe (0.1.11)',
-                'poem-probe (0.1.7)',
-                'poem-probe-new (0.1.11)'
+                {
+                    'id': self.ver3.id,
+                    'object_repr': 'ams-publisher-probe (0.1.11)',
+                    'fields': {
+                        'name': 'ams-publisher-probe',
+                        'version': '0.1.11',
+                        'package': 'nagios-plugins-argo (0.1.11)',
+                        'description': 'Probe is inspecting AMS publisher',
+                        'comment': 'Initial version',
+                        'repository': 'https://github.com/ARGOeu/nagios-'
+                                      'plugins-argo',
+                        'docurl': 'https://github.com/ARGOeu/nagios-plugins-'
+                                  'argo/blob/master/README.md'
+                    },
+                    'user': 'testuser',
+                    'date_created': datetime.datetime.strftime(
+                        self.ver3.date_created, '%Y-%m-%d %H:%M:%S'
+                    ),
+                    'comment': 'Initial version.',
+                    'version': '0.1.11'
+                },
+                {
+                    'id': self.ver1.id,
+                    'object_repr': 'poem-probe (0.1.7)',
+                    'fields': {
+                        'name': 'poem-probe',
+                        'version': '0.1.7',
+                        'package': 'nagios-plugins-argo (0.1.7)',
+                        'description': 'Probe inspects POEM service.',
+                        'comment': 'Initial version.',
+                        'repository': 'https://github.com/ARGOeu/'
+                                      'nagios-plugins-argo',
+                        'docurl': 'https://github.com/ARGOeu/'
+                                  'nagios-plugins-argo/blob/master/README.md',
+                    },
+                    'user': 'testuser',
+                    'date_created': datetime.datetime.strftime(
+                        self.ver1.date_created, '%Y-%m-%d %H:%M:%S'
+                    ),
+                    'comment': 'Initial version.',
+                    'version': '0.1.7'
+                },
+                {
+                    'id': self.ver2.id,
+                    'object_repr': 'poem-probe-new (0.1.11)',
+                    'fields': {
+                        'name': 'poem-probe-new',
+                        'version': '0.1.11',
+                        'package': 'nagios-plugins-argo (0.1.11)',
+                        'description': 'Probe inspects new POEM service.',
+                        'comment': 'This version added: Check POEM metric '
+                                   'configuration API',
+                        'repository': 'https://github.com/ARGOeu/nagios-'
+                                      'plugins-argo2',
+                        'docurl': 'https://github.com/ARGOeu/nagios-plugins-'
+                                  'argo2/blob/master/README.md'
+                    },
+                    'user': 'testuser',
+                    'date_created': datetime.datetime.strftime(
+                        self.ver2.date_created, '%Y-%m-%d %H:%M:%S'
+                    ),
+                    'comment': 'Changed name, comment, description, '
+                               'repository and docurl.',
+                    'version': '0.1.11'
+                }
             ]
         )
 

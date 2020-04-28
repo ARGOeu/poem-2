@@ -12,7 +12,6 @@ import {
 import { Formik, Form } from 'formik';
 import { Button } from 'reactstrap';
 import * as Yup from 'yup';
-import { NotificationManager } from 'react-notifications';
 
 export const MetricTemplateList = ListOfMetrics('metrictemplate');
 export const TenantMetricTemplateList = ListOfMetrics('metrictemplate', true)
@@ -60,9 +59,10 @@ function MetricTemplateComponent(cloneview=false) {
 
       this.state = {
         metrictemplate: {},
-        probe: {},
+        probe: {'package': ''},
         types: [],
         probeversions: [],
+        allprobeversions: [],
         metrictemplatelist: [],
         loading: false,
         popoverOpen: false,
@@ -103,9 +103,16 @@ function MetricTemplateComponent(cloneview=false) {
 
     onSelect(field, value) {
       let metrictemplate = this.state.metrictemplate;
+      let probe = {};
+      this.state.allprobeversions.forEach((e) => {
+        if (e.object_repr === value) {
+          probe = e.fields;
+        };
+      });
       metrictemplate[field] = value;
       this.setState({
-        metrictemplate: metrictemplate
+        metrictemplate: metrictemplate,
+        probe: probe
       });
     }
 
@@ -246,10 +253,12 @@ function MetricTemplateComponent(cloneview=false) {
       this.setState({loading: true});
 
       let types = await this.backend.fetchData('/api/v2/internal/mttypes');
-      let probeversions = await this.backend.fetchData('/api/v2/internal/version/probe');
+      let allprobeversions = await this.backend.fetchData('/api/v2/internal/version/probe');
       let metrictemplatelist = await this.backend.fetchData('/api/v2/internal/metrictemplates');
       let mlist = [];
       metrictemplatelist.forEach(e => mlist.push(e.name));
+      let probeversions = [];
+      allprobeversions.forEach(e => probeversions.push(e.object_repr));
 
       if (!this.addview) {
         let metrictemplate = await this.backend.fetchData(`/api/v2/internal/metrictemplates/${this.name}`);
@@ -273,9 +282,8 @@ function MetricTemplateComponent(cloneview=false) {
         }
 
         if (metrictemplate.probeversion) {
-          let probe = await this.backend.fetchData(`/api/v2/internal/version/probe/${metrictemplate.probeversion.split(' ')[0]}`);
           let fields = {};
-          probe.forEach((e) => {
+          allprobeversions.forEach((e) => {
             if (e.object_repr === metrictemplate.probeversion) {
               fields = e.fields;
             }
@@ -284,6 +292,7 @@ function MetricTemplateComponent(cloneview=false) {
             metrictemplate: metrictemplate,
             probe: fields,
             probeversions: probeversions,
+            allprobeversions: allprobeversions,
             metrictemplatelist: mlist,
             types: types,
             loading: false,
@@ -292,6 +301,7 @@ function MetricTemplateComponent(cloneview=false) {
           this.setState({
             metrictemplate: metrictemplate,
             metrictemplatelist: mlist,
+            allprobeversions: allprobeversions,
             types: types,
             loading: false,
           });
@@ -322,6 +332,7 @@ function MetricTemplateComponent(cloneview=false) {
           },
           metrictemplatelist: mlist,
           probeversions: probeversions,
+          allprobeversions: allprobeversions,
           types: types,
           loading: false,
         });
@@ -329,7 +340,7 @@ function MetricTemplateComponent(cloneview=false) {
     }
 
     render() {
-      const { metrictemplate, types, probeversions, metrictemplatelist, loading} = this.state;
+      const { metrictemplate, types, probeversions, metrictemplatelist, loading } = this.state;
 
       if (loading)
         return (<LoadingAnim/>)
@@ -427,6 +438,7 @@ export class MetricTemplateVersionDetails extends Component {
     this.state = {
       name: '',
       probeversion: '',
+      probe: {'package': ''},
       mtype: '',
       probeexecutable: '',
       parent: '',
@@ -446,11 +458,18 @@ export class MetricTemplateVersionDetails extends Component {
     this.setState({loading: true});
 
     let json = await this.backend.fetchData(`/api/v2/internal/version/metrictemplate/${this.name}`);
-    json.forEach((e) => {
-      if (e.version == this.version)
+    json.forEach(async (e) => {
+      if (e.version == this.version) {
+        let probes = await this.backend.fetchData(`/api/v2/internal/version/probe/${e.fields.probeversion.split(' ')[0]}`);
+        let probe = {};
+        probes.forEach(p => {
+          if (p.object_repr === e.fields.probeversion)
+            probe = p.fields;
+        });
         this.setState({
           name: e.fields.name,
           probeversion: e.fields.probeversion,
+          probe: probe,
           type: e.fields.mtype,
           probeexecutable: e.fields.probeexecutable,
           description: e.fields.description,
@@ -465,6 +484,7 @@ export class MetricTemplateVersionDetails extends Component {
           date_created: e.date_created,
           loading: false
         });
+      }
     });
   }
 

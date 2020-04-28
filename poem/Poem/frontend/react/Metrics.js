@@ -794,7 +794,7 @@ export const MetricForm =
     <>
       <FormGroup>
         <Row className='mb-3'>
-          <Col md={4}>
+          <Col md={6}>
             <InputGroup>
               <InputGroupAddon addonType='prepend'>Name</InputGroupAddon>
               <Field
@@ -806,14 +806,71 @@ export const MetricForm =
             />
             </InputGroup>
             {
-            errors.name &&
-              FancyErrorMessage(errors.name)
-          }
+              errors.name &&
+                FancyErrorMessage(errors.name)
+            }
             <FormText color='muted'>
             Metric name.
             </FormText>
           </Col>
-          <Col md={4}>
+          <Col md={4} className='mt-1'>
+            <InputGroup>
+              <InputGroupAddon addonType='prepend'>Type</InputGroupAddon>
+              {
+                (isTenantSchema || isHistory) ?
+                  <Field
+                    type='text'
+                    name='type'
+                    className='form-control'
+                    id='mtype'
+                    readOnly={true}
+                  />
+                :
+                  <Field
+                    component='select'
+                    name='type'
+                    className='form-control custom-select'
+                    id='mtype'
+                    onChange={e => {
+                      handleChange(e);
+                      if (e.target.value === 'Passive') {
+                        let ind = values.flags.length;
+                        if (ind === 1 && values.flags[0].key === '') {
+                          setFieldValue('flags[0].key', 'PASSIVE');
+                          setFieldValue('flags[0].value', '1');
+                        } else {
+                          setFieldValue(`flags[${ind}].key`, 'PASSIVE')
+                          setFieldValue(`flags[${ind}].value`, '1')
+                        }
+                      } else if (e.target.value === 'Active') {
+                        let ind = undefined;
+                        values.flags.forEach((e, index) => {
+                          if (e.key === 'PASSIVE') {
+                            ind = index;
+                          }
+                        });
+                        if (values.flags.length === 1)
+                          values.flags.splice(ind, 1, {'key': '', 'value': ''})
+                        else
+                          values.flags.splice(ind, 1)
+                      }
+                    }}
+                  >
+                    {
+                      types.map((name, i) =>
+                        <option key={i} value={name}>{name}</option>
+                      )
+                    }
+                  </Field>
+              }
+            </InputGroup>
+            <FormText color='muted'>
+            Metric is of given type.
+            </FormText>
+          </Col>
+        </Row>
+        <Row>
+          <Col md={6}>
             {
               values.type === 'Passive' ?
                 <InputGroup>
@@ -868,99 +925,58 @@ export const MetricForm =
                     />
             }
             {
-            errors.probeversion &&
-              FancyErrorMessage(errors.probeversion)
-          }
+              errors.probeversion &&
+                FancyErrorMessage(errors.probeversion)
+            }
             {
-            values.type === 'Active' &&
-              <FormText color='muted'>
-                Probe name and version
-                {
-                  !isHistory &&
-                    <>
-                      <FontAwesomeIcon
-                        id='probe-popover'
-                        hidden={`state.${obj}.mtype` === 'Passive' || addview}
-                        icon={faInfoCircle}
-                        style={{color: '#416090'}}
-                      />
-                      <Popover
-                        placement='bottom'
-                        isOpen={state.popoverOpen}
-                        target='probe-popover'
-                        toggle={togglePopOver}
-                        trigger='click'
-                      >
-                        <PopoverHeader>
-                          <ProbeVersionLink
-                            probeversion={obj === 'metric' ? state.metric.probeversion : state.metrictemplate.probeversion}
-                            publicView={publicView}
-                          />
-                        </PopoverHeader>
-                        <PopoverBody>{state.probe.description}</PopoverBody>
-                      </Popover>
-                    </>
-                }
-              </FormText>
+              values.type === 'Active' &&
+                <FormText color='muted'>
+                  Probe name and version&nbsp;
+                  {
+                    !isHistory &&
+                      <>
+                        <FontAwesomeIcon
+                          id='probe-popover'
+                          hidden={`state.${obj}.mtype` === 'Passive' || addview}
+                          icon={faInfoCircle}
+                          style={{color: '#416090'}}
+                        />
+                        <Popover
+                          placement='bottom'
+                          isOpen={state.popoverOpen}
+                          target='probe-popover'
+                          toggle={togglePopOver}
+                          trigger='click'
+                        >
+                          <PopoverHeader>
+                            <ProbeVersionLink
+                              probeversion={obj === 'metric' ? state.metric.probeversion : state.metrictemplate.probeversion}
+                              publicView={publicView}
+                            />
+                          </PopoverHeader>
+                          <PopoverBody>{state.probe.description}</PopoverBody>
+                        </Popover>
+                      </>
+                  }
+                </FormText>
           }
           </Col>
-          <Col md={2}>
+          <Col md={4} className='mt-1'>
             <InputGroup>
-              <InputGroupAddon addonType='prepend'>Type</InputGroupAddon>
-              {
-              (isTenantSchema || isHistory) ?
-                <Field
-                  type='text'
-                  name='type'
-                  className='form-control'
-                  id='mtype'
-                  readOnly={true}
-                />
-              :
-                <Field
-                  component='select'
-                  name='type'
-                  className='form-control custom-select'
-                  id='mtype'
-                  onChange={e => {
-                    handleChange(e);
-                    if (e.target.value === 'Passive') {
-                      let ind = values.flags.length;
-                      if (ind === 1 && values.flags[0].key === '') {
-                        setFieldValue('flags[0].key', 'PASSIVE');
-                        setFieldValue('flags[0].value', '1');
-                      } else {
-                        setFieldValue(`flags[${ind}].key`, 'PASSIVE')
-                        setFieldValue(`flags[${ind}].value`, '1')
-                      }
-                    } else if (e.target.value === 'Active') {
-                      let ind = undefined;
-                      values.flags.forEach((e, index) => {
-                        if (e.key === 'PASSIVE') {
-                          ind = index;
-                        }
-                      });
-                      if (values.flags.length === 1)
-                        values.flags.splice(ind, 1, {'key': '', 'value': ''})
-                      else
-                        values.flags.splice(ind, 1)
-                    }
-                  }}
-                >
-                  {
-                    types.map((name, i) =>
-                      <option key={i} value={name}>{name}</option>
-                    )
-                  }
-                </Field>
-            }
+              <InputGroupAddon addonType='prepend'>Package</InputGroupAddon>
+              <Field
+                type='text'
+                className='form-control'
+                value={state.probe.package}
+                disabled={true}
+              />
             </InputGroup>
             <FormText color='muted'>
-            Metric is of given type.
+              Package which contains probe.
             </FormText>
           </Col>
         </Row>
-      <Row className='mb-4'>
+      <Row className='mb-4 mt-2'>
         <Col md={10}>
           <Label for='description'>Description:</Label>
           <Field
@@ -1325,6 +1341,7 @@ export class MetricChange extends Component {
       probe: {},
       groups: [],
       probeversions: [],
+      allprobeversions: [],
       metrictemplateversions: [],
       loading: false,
       popoverOpen: false,
@@ -1386,8 +1403,15 @@ export class MetricChange extends Component {
           files: mt.fields.files,
           fileparameter: mt.fields.fileparameter
         };
+        let probe = {};
+        this.state.allprobeversions.forEach((e) => {
+          if (e.object_repr === value) {
+            probe = e.fields;
+          };
+        });
         this.setState({
-          metric: updated_metric
+          metric: updated_metric,
+          probe: probe
         });
       }
     })
@@ -1488,6 +1512,7 @@ export class MetricChange extends Component {
               metric: metrics,
               probe: fields,
               probeversions: probeversions,
+              allprobeversions: probe,
               metrictemplateversions: metrictemplateversions,
               groups: session.userdetails.groups.metrics,
               loading: false,
@@ -1503,8 +1528,7 @@ export class MetricChange extends Component {
                 session.userdetails.groups.metrics.indexOf(metrics.group) >= 0,
             });
           };
-      }
-      else {
+      } else {
         let metrics = await this.backend.fetchData(`/api/v2/internal/public_metric/${this.name}`);
         let metrictemplateversions = await this.backend.fetchData(`/api/v2/internal/public_version/metrictemplate/${this.name}`);
         if (metrics.probeversion) {
@@ -1521,6 +1545,7 @@ export class MetricChange extends Component {
             metric: metrics,
             probe: fields,
             probeversions: probeversions,
+            allprobeversions: probe,
             metrictemplateversions: metrictemplateversions,
             groups: [],
             loading: false,
@@ -1628,6 +1653,7 @@ export class MetricVersionDetails extends Component {
     this.state = {
       name: '',
       probeversion: '',
+      probe: {'package': ''},
       description: '',
       mtype: '',
       group: '',
@@ -1648,11 +1674,18 @@ export class MetricVersionDetails extends Component {
     this.setState({loading: true});
 
     let json = await this.backend.fetchData(`/api/v2/internal/tenantversion/metric/${this.name}`);
-    json.forEach((e) => {
-      if (e.version == this.version)
+    json.forEach(async (e) => {
+      if (e.version == this.version) {
+        let probes = await this.backend.fetchData(`/api/v2/internal/version/probe/${e.fields.probeversion.split(' ')[0]}`);
+        let probe = {};
+        probes.forEach(p => {
+          if (p.object_repr === e.fields.probeversion)
+            probe = p.fields;
+        });
         this.setState({
           name: e.fields.name,
           probeversion: e.fields.probeversion,
+          probe: probe,
           description: e.fields.description,
           type: e.fields.mtype,
           group: e.fields.group,
@@ -1668,6 +1701,7 @@ export class MetricVersionDetails extends Component {
           date_created: e.date_created,
           loading: false
         });
+      };
     });
   }
 
