@@ -6,7 +6,8 @@ import {
   BaseArgoView,
   FancyErrorMessage,
   NotifyOk,
-  DropdownFilterComponent
+  DropdownFilterComponent,
+  NotifyError
 } from './UIElements';
 import ReactTable from 'react-table';
 import { Formik, Form, Field } from 'formik';
@@ -21,7 +22,6 @@ import {
   InputGroupAddon
 } from 'reactstrap';
 import * as Yup from 'yup';
-import { NotificationManager } from 'react-notifications';
 
 
 const RepoSchema = Yup.object().shape({
@@ -258,8 +258,17 @@ export class YumRepoChange extends Component {
         }
       );
       if (!response.ok) {
-        let json = await response.json();
-        NotificationManager.error(json.detail, 'Error');
+        let change_msg = '';
+        try {
+          let json = await response.json();
+          change_msg = json.detail;
+        } catch(err) {
+          change_msg = 'Error changing YUM repo';
+        };
+        NotifyError({
+          title: `Error: ${response.status} ${response.statusText}`,
+          msg: change_msg
+        });
       } else {
         NotifyOk({
           msg: 'YUM repo successfully changed',
@@ -278,8 +287,17 @@ export class YumRepoChange extends Component {
         }
       );
       if (!response.ok) {
-        let json = await response.json();
-        NotificationManager.error(json.detail, 'Error');
+        let add_msg = '';
+        try {
+          let json = await response.json();
+          add_msg = json.detail;
+        } catch(err) {
+          add_msg = 'Error adding YUM repo';
+        };
+        NotifyError({
+          title: `Error: ${response.status} ${response.statusText}`,
+          msg: add_msg
+        });
       } else {
         NotifyOk({
           msg: 'YUM repo successfully added',
@@ -293,8 +311,17 @@ export class YumRepoChange extends Component {
   async doDelete(name, tag) {
     let response = await this.backend.deleteObject(`/api/v2/internal/yumrepos/${name}/${tag}`);
     if (!response.ok) {
-      let json = await response.json();
-      NotificationManager.error(json.detail, 'Error');
+      let msg = '';
+      try {
+        let json = await response.json();
+        msg = json.detail;
+      } catch(err) {
+        msg = 'Error deleting YUM repo';
+      };
+      NotifyError({
+        title: `Error: ${response.status} ${response.statusText}`,
+        msg: msg
+      });
     } else {
       NotifyOk({
         msg: 'YUM repo successfully deleted',

@@ -146,16 +146,15 @@ class ListMetricTemplates(APIView):
 
         try:
             if request.data['mtype'] == 'Active':
+                probe_name = request.data['probeversion'].split(' ')[0]
+                probe_version = request.data['probeversion'].split(' ')[1][1:-1]
                 mt = admin_models.MetricTemplate.objects.create(
                     name=request.data['name'],
                     mtype=admin_models.MetricTemplateType.objects.get(
                         name=request.data['mtype']
                     ),
                     probekey=admin_models.ProbeHistory.objects.get(
-                        name=request.data['probeversion'].split(' ')[0],
-                        package__version=request.data['probeversion'].split(
-                            ' '
-                        )[1][1:-1]
+                        name=probe_name,  package__version=probe_version
                     ),
                     description=request.data['description'],
                     parent=parent,
@@ -199,6 +198,18 @@ class ListMetricTemplates(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+        except admin_models.ProbeHistory.DoesNotExist:
+            return Response(
+                {'detail': 'You should choose existing probe version!'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        except IndexError:
+            return Response(
+                {'detail': 'You should specify the version of the probe!'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
     def put(self, request):
         metrictemplate = admin_models.MetricTemplate.objects.get(
             id=request.data['id']
@@ -217,12 +228,25 @@ class ListMetricTemplates(APIView):
             probeexecutable = ''
 
         if request.data['probeversion']:
-            new_probekey = admin_models.ProbeHistory.objects.get(
-                name=request.data['probeversion'].split(' ')[0],
-                package__version=request.data['probeversion'].split(
-                    ' '
-                )[1][1:-1]
-            )
+            try:
+                probe_name = request.data['probeversion'].split(' ')[0]
+                probe_version = request.data['probeversion'].split(' ')[1][1:-1]
+                new_probekey = admin_models.ProbeHistory.objects.get(
+                    name= probe_name,
+                    package__version=probe_version
+                )
+
+            except admin_models.ProbeHistory.DoesNotExist:
+                return Response(
+                    {'detail': 'You should choose existing probe version!'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            except IndexError:
+                return Response(
+                    {'detail': 'You should specify the version of the probe!'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
         else:
             new_probekey = None
 

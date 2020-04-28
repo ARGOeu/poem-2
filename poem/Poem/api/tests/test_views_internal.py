@@ -270,7 +270,11 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
         request = self.factory.put(self.url, content, content_type=content_type)
         force_authenticate(request, user=self.user)
         response = self.view(request)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data['detail'],
+            'API key with this name already exists'
+        )
 
     def test_post_apikey(self):
         data = {'name': 'test', 'revoked': False}
@@ -284,7 +288,11 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
         request = self.factory.post(self.url, data, format='json')
         force_authenticate(request, user=self.user)
         response = self.view(request)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data['detail'],
+            'API key with this name already exists'
+        )
 
     def test_delete_apikey(self):
         request = self.factory.delete(self.url + 'DELETABLE')
@@ -297,12 +305,16 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
         force_authenticate(request, user=self.user)
         response = self.view(request, 'nonexisting')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data['detail'], 'API key not found')
 
     def test_delete_no_apikey_name(self):
         request = self.factory.delete(self.url)
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data['detail'], 'API key name must be defined'
+        )
 
 
 class ListUsersAPIViewTests(TenantTestCase):
@@ -844,6 +856,62 @@ class ListProbesAPIViewTests(TenantTestCase):
             {'detail': 'Probe with this name already exists.'}
         )
 
+    def test_put_probe_with_nonexisting_package(self):
+        self.assertEqual(admin_models.Probe.objects.all().count(), 3)
+        data = {
+            'id': self.probe1.id,
+            'name': 'argo-web-api',
+            'package': 'nonexisting (1.0.0)',
+            'comment': 'New version.',
+            'docurl':
+                'https://github.com/ARGOeu/nagios-plugins-argo/blob/'
+                'master/README.md',
+            'description': 'Probe is inspecting AMS service by trying '
+                           'to publish and consume randomly generated '
+                           'messages.',
+            'repository': 'https://github.com/ARGOeu/nagios-plugins-'
+                          'argo',
+            'update_metrics': False
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(admin_models.Probe.objects.all().count(), 3)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data,
+            {'detail': 'You should choose existing package.'}
+        )
+
+    def test_put_probe_with_no_package_version(self):
+        self.assertEqual(admin_models.Probe.objects.all().count(), 3)
+        data = {
+            'id': self.probe1.id,
+            'name': 'argo-web-api',
+            'package': 'nonexisting',
+            'comment': 'New version.',
+            'docurl':
+                'https://github.com/ARGOeu/nagios-plugins-argo/blob/'
+                'master/README.md',
+            'description': 'Probe is inspecting AMS service by trying '
+                           'to publish and consume randomly generated '
+                           'messages.',
+            'repository': 'https://github.com/ARGOeu/nagios-plugins-'
+                          'argo',
+            'update_metrics': False
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(admin_models.Probe.objects.all().count(), 3)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data,
+            {'detail': 'You should specify package version.'}
+        )
+
     def test_put_probe_without_new_version(self):
         data = {
             'id': self.probe1.id,
@@ -1340,6 +1408,56 @@ class ListProbesAPIViewTests(TenantTestCase):
             response.data,
             {
                 'detail': 'Probe with this name already exists.'
+            }
+        )
+
+    def test_post_probe_with_nonexisting_package(self):
+        self.assertEqual(admin_models.Probe.objects.all().count(), 3)
+        data = {
+            'name': 'ams-probe',
+            'package': 'nonexisting (0.1.11)',
+            'description': 'Probe inspects POEM service.',
+            'comment': 'Initial version.',
+            'repository': 'https://github.com/ARGOeu/nagios-plugins-argo',
+            'docurl': 'https://github.com/ARGOeu/nagios-plugins-argo/blob/'
+                      'master/README.md',
+            'user': 'testuser',
+            'datetime': datetime.datetime.now()
+        }
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(admin_models.Probe.objects.all().count(), 3)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data,
+            {
+                'detail': 'You should choose existing package.'
+            }
+        )
+
+    def test_post_probe_with_package_without_version(self):
+        self.assertEqual(admin_models.Probe.objects.all().count(), 3)
+        data = {
+            'name': 'ams-probe',
+            'package': 'nonexisting',
+            'description': 'Probe inspects POEM service.',
+            'comment': 'Initial version.',
+            'repository': 'https://github.com/ARGOeu/nagios-plugins-argo',
+            'docurl': 'https://github.com/ARGOeu/nagios-plugins-argo/blob/'
+                      'master/README.md',
+            'user': 'testuser',
+            'datetime': datetime.datetime.now()
+        }
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(admin_models.Probe.objects.all().count(), 3)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data,
+            {
+                'detail': 'You should specify package version.'
             }
         )
 
@@ -1891,6 +2009,9 @@ class ListAggregationsAPIViewTests(TenantTestCase):
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data, {'detail': 'apiid: This field is required.'}
+        )
 
     def test_put_aggregations(self):
         data = {
@@ -1951,6 +2072,37 @@ class ListAggregationsAPIViewTests(TenantTestCase):
             ]
         )
 
+    def test_put_aggregations_no_apiid(self):
+        data = {
+            'name': 'TEST_PROFILE',
+            'apiid': '',
+            'groupname': 'new-group',
+            'endpoint_group': 'servicegroups',
+            'metric_operation': 'OR',
+            'profile_operation': 'AND',
+            'metric_profile': 'PROFILE2',
+            'groups': json.dumps([
+                {
+                    'name': 'Group3',
+                    'operation': 'OR',
+                    'services': [
+                        {
+                            'name': 'VOMS',
+                            'operation': 'AND'
+                        }
+                    ]
+                }
+            ])
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data, {'detail': 'Apiid field undefined!'}
+        )
+
     def test_delete_aggregation(self):
         self.assertEqual(
             poem_models.TenantHistory.objects.filter(
@@ -1978,6 +2130,18 @@ class ListAggregationsAPIViewTests(TenantTestCase):
         force_authenticate(request, user=self.user)
         response = self.view(request, 'wrong_id')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(
+            response.data, {'detail': 'Aggregation not found'}
+        )
+
+    def test_delete_aggregation_without_specifying_apiid(self):
+        request = self.factory.delete(self.url)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data, {'detail': 'Aggregation profile not specified!'}
+        )
 
 
 class ListServiceFlavoursAPIViewTests(TenantTestCase):
@@ -2228,12 +2392,42 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
         self.assertEqual(history.count(), 1)
         self.assertEqual(history[0].comment, 'Initial version.')
 
+    def test_post_metric_profile_without_description(self):
+        data = {
+            "apiid": "12341234-aaaa-kkkk-aaaa-aaeekkccnnee",
+            "name": "new-profile",
+            "groupname": "EGI",
+            "description": "",
+            "services": [
+                {"service": "AMGA", "metric": "org.nagios.SAML-SP"},
+                {"service": "APEL", "metric": "org.apel.APEL-Pub"},
+                {"service": "APEL", "metric": "org.apel.APEL-Sync"}
+            ]
+        }
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        profile = poem_models.MetricProfiles.objects.get(name='new-profile')
+        history = poem_models.TenantHistory.objects.filter(
+            object_id=profile.id, content_type=self.ct
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(profile.name, 'new-profile')
+        self.assertEqual(profile.apiid, '12341234-aaaa-kkkk-aaaa-aaeekkccnnee')
+        self.assertEqual(profile.groupname, 'EGI')
+        self.assertEqual(profile.description, '')
+        self.assertEqual(history.count(), 1)
+        self.assertEqual(history[0].comment, 'Initial version.')
+
     def test_post_metric_profile_invalid_data(self):
         data = {'name': 'new-profile'}
         request = self.factory.post(self.url, data, format='json')
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data, {'detail': 'apiid: This field is required.'}
+        )
 
     def test_put_metric_profile(self):
         data = {
@@ -2278,15 +2472,82 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
             '{"changed": {"fields": ["groupname"]}}]'
         )
 
-    def test_delete_metric_profile(self):
-        request = self.factory.delete(self.url + 'ANOTHER-PROFILE')
+    def test_put_metric_profile_without_description(self):
+        data = {
+            "name": "TEST_PROFILE",
+            "apiid": "00000000-oooo-kkkk-aaaa-aaeekkccnnee",
+            "groupname": "new-group",
+            "description": "",
+            "services": [
+                {"service": "AMGA", "metric": "org.nagios.SAML-SP"},
+                {"service": "APEL", "metric": "org.apel.APEL-Pub"},
+                {"service": "APEL", "metric": "org.apel.APEL-Sync"}
+            ]
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
         force_authenticate(request, user=self.user)
-        response = self.view(request, 'ANOTHER-PROFILE')
-        all = poem_models.MetricProfiles.objects.all().values_list(
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        profile = poem_models.MetricProfiles.objects.get(name='TEST_PROFILE')
+        history = poem_models.TenantHistory.objects.filter(
+            object_id=profile.id, content_type=self.ct
+        ).order_by('-date_created')
+        self.assertEqual(profile.name, 'TEST_PROFILE')
+        self.assertEqual(profile.apiid, '00000000-oooo-kkkk-aaaa-aaeekkccnnee')
+        self.assertEqual(profile.groupname, 'new-group')
+        self.assertEqual(profile.description, '')
+        self.assertEqual(history.count(), 2)
+        serialized_data = json.loads(history[0].serialized_data)[0]['fields']
+        self.assertEqual(serialized_data['name'], profile.name)
+        self.assertEqual(serialized_data['apiid'], profile.apiid)
+        self.assertEqual(serialized_data['groupname'], profile.groupname)
+        self.assertEqual(serialized_data['description'], profile.description)
+        self.assertEqual(
+            serialized_data['metricinstances'],
+            [
+                ['AMGA', 'org.nagios.SAML-SP'],
+                ['APEL', 'org.apel.APEL-Pub'],
+                ['APEL', 'org.apel.APEL-Sync']
+            ]
+        )
+        self.assertEqual(
+            history[0].comment,
+            '[{"changed": {"fields": ["groupname"]}}]'
+        )
+
+    def test_put_metric_profile_without_apiid(self):
+        data = {
+            "name": "TEST_PROFILE",
+            "apiid": "",
+            "groupname": "new-group",
+            "description": "New profile description.",
+            "services": [
+                {"service": "AMGA", "metric": "org.nagios.SAML-SP"},
+                {"service": "APEL", "metric": "org.apel.APEL-Pub"},
+                {"service": "APEL", "metric": "org.apel.APEL-Sync"}
+            ]
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data, {'detail': 'Apiid field undefined!'}
+        )
+
+    def test_delete_metric_profile(self):
+        request = self.factory.delete(
+            self.url + '12341234-oooo-kkkk-aaaa-aaeekkccnnee'
+        )
+        force_authenticate(request, user=self.user)
+        response = self.view(request, '12341234-oooo-kkkk-aaaa-aaeekkccnnee')
+        all_profiles = poem_models.MetricProfiles.objects.all().values_list(
             'name', flat=True
         )
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-        self.assertFalse('ANOTHER-PROFILE' in all)
+        self.assertFalse('ANOTHER-PROFILE' in all_profiles)
         history = poem_models.TenantHistory.objects.filter(
             object_id=self.mp2.id, content_type=self.ct
         )
@@ -2297,6 +2558,18 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
         force_authenticate(request, user=self.user)
         response = self.view(request, 'wrong_id')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(
+            response.data, {'detail': 'Metric profile not found'}
+        )
+
+    def test_delete_metric_profile_without_specifying_apiid(self):
+        request = self.factory.delete(self.url)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data, {'detail': 'Metric profile not specified!'}
+        )
 
 
 class GetUserProfileForUsernameAPIViewTests(TenantTestCase):
@@ -5019,6 +5292,80 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
 
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db',
            side_effect=mocked_inline_metric_for_db)
+    def test_post_metric_template_with_nonexisting_probeversion(self, func):
+        conf = [
+            {'key': 'maxCheckAttempts', 'value': '4'},
+            {'key': 'timeout', 'value': '70'},
+            {'key': 'path',
+             'value': '/usr/libexec/argo-monitoring/probes/argo'},
+            {'key': 'interval', 'value': '6'},
+            {'key': 'retryInterval', 'value': '4'}
+        ]
+        data = {
+            'name': 'test.AMS-Check',
+            'probeversion': 'nonexisting (0.1.1)',
+            'mtype': 'Active',
+            'description': 'Description of argo.AMS-Check metric template.',
+            'probeexecutable': 'ams-probe',
+            'parent': '',
+            'config': json.dumps(conf),
+            'attribute': json.dumps([{'key': '', 'value': ''}]),
+            'dependency': json.dumps([{'key': '', 'value': ''}]),
+            'parameter': json.dumps([{'key': '', 'value': ''}]),
+            'flags': json.dumps([{'key': '', 'value': ''}]),
+            'files': json.dumps([{'key': '', 'value': ''}]),
+            'fileparameter': json.dumps([{'key': '', 'value': ''}])
+        }
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data,
+            {
+                'detail': 'You should choose existing probe version!'
+            }
+        )
+
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db',
+           side_effect=mocked_inline_metric_for_db)
+    def test_post_metric_template_without_specifying_probes_version(self, func):
+        conf = [
+            {'key': 'maxCheckAttempts', 'value': '4'},
+            {'key': 'timeout', 'value': '70'},
+            {'key': 'path',
+             'value': '/usr/libexec/argo-monitoring/probes/argo'},
+            {'key': 'interval', 'value': '6'},
+            {'key': 'retryInterval', 'value': '4'}
+        ]
+        data = {
+            'name': 'test.AMS-Check',
+            'probeversion': 'nonexisting',
+            'mtype': 'Active',
+            'description': 'Description of argo.AMS-Check metric template.',
+            'probeexecutable': 'ams-probe',
+            'parent': '',
+            'config': json.dumps(conf),
+            'attribute': json.dumps([{'key': '', 'value': ''}]),
+            'dependency': json.dumps([{'key': '', 'value': ''}]),
+            'parameter': json.dumps([{'key': '', 'value': ''}]),
+            'flags': json.dumps([{'key': '', 'value': ''}]),
+            'files': json.dumps([{'key': '', 'value': ''}]),
+            'fileparameter': json.dumps([{'key': '', 'value': ''}])
+        }
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data,
+            {
+                'detail': 'You should specify the version of the probe!'
+            }
+        )
+
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db',
+           side_effect=mocked_inline_metric_for_db)
     def test_put_metrictemplate_without_changing_probekey(self, func):
         attr = [
             {'key': 'argo.ams_TOKEN2', 'value': '--token'}
@@ -5588,6 +5935,86 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(
             response.data,
             {'detail': 'Metric template with this name already exists.'}
+        )
+
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db',
+           side_effect=mocked_inline_metric_for_db)
+    def test_put_metrictemplate_with_nonexisting_probeversion(self, func):
+        attr = [
+            {'key': 'argo.ams_TOKEN', 'value': '--token'}
+        ]
+        conf = [
+            {'key': 'maxCheckAttempts', 'value': '3'},
+            {'key': 'timeout', 'value': '60'},
+            {'key': 'path', 'value':
+                '/usr/libexec/argo-monitoring/probes/argo'},
+            {'key': 'interval', 'value': '5'},
+            {'key': 'retryInterval', 'value': '3'}
+        ]
+        data = {
+            'id': self.metrictemplate1.id,
+            'name': 'test.apel.APEL-Pub',
+            'mtype': self.mtype1,
+            'probeversion': 'nonexisting (1.0.0)',
+            'description': self.metrictemplate1.description,
+            'parent': '',
+            'probeexecutable': 'ams-probe',
+            'config': json.dumps(conf),
+            'attribute': json.dumps(attr),
+            'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
+            'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
+            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
+            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data,
+            {'detail': 'You should choose existing probe version!'}
+        )
+
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db',
+           side_effect=mocked_inline_metric_for_db)
+    def test_put_metrictemplate_without_specifying_probes_version(self, func):
+        attr = [
+            {'key': 'argo.ams_TOKEN', 'value': '--token'}
+        ]
+        conf = [
+            {'key': 'maxCheckAttempts', 'value': '3'},
+            {'key': 'timeout', 'value': '60'},
+            {'key': 'path', 'value':
+                '/usr/libexec/argo-monitoring/probes/argo'},
+            {'key': 'interval', 'value': '5'},
+            {'key': 'retryInterval', 'value': '3'}
+        ]
+        data = {
+            'id': self.metrictemplate1.id,
+            'name': 'test.apel.APEL-Pub',
+            'mtype': self.mtype1,
+            'probeversion': 'nonexisting',
+            'description': self.metrictemplate1.description,
+            'parent': '',
+            'probeexecutable': 'ams-probe',
+            'config': json.dumps(conf),
+            'attribute': json.dumps(attr),
+            'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
+            'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
+            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
+            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data,
+            {'detail': 'You should specify the version of the probe!'}
         )
 
     def test_delete_metric_template(self):
@@ -8125,11 +8552,14 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
             {'detail': 'Thresholds profile not found.'}
         )
 
-    def put_thresholds_profile(self):
+    def test_put_thresholds_profile(self):
+        self.assertEqual(
+            poem_models.ThresholdsProfiles.objects.all().count(), 2
+        )
         data = {
             'name': 'NEW_TEST_PROFILE',
             'apiid': '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
-            'group': 'NEWGROUP',
+            'groupname': 'NEWGROUP',
             'rules': json.dumps([
                 {
                     'host': 'newHost',
@@ -8142,6 +8572,9 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
         request = self.factory.put(self.url, content, content_type=content_type)
         force_authenticate(request, user=self.user)
         response = self.view(request)
+        self.assertEqual(
+            poem_models.ThresholdsProfiles.objects.all().count(), 2
+        )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         tp = poem_models.ThresholdsProfiles.objects.get(id=self.tp1.id)
         self.assertEqual(tp.name, 'NEW_TEST_PROFILE')
@@ -8171,11 +8604,7 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
             comment_set.add(json.dumps(item))
         self.assertEqual(
             comment_set,
-            {
-                '{"changed": {"fields": ["groupname", "name"]}}',
-                '{"deleted": {"fields": ["rules"], "object": ["metricA"]}}',
-                '{"added": {"fields": ["rules"], "object": ["newMetric"]}}'
-            }
+            {'{"changed": {"fields": ["groupname", "name", "rules"]}}'}
         )
         serialized_data = json.loads(history[0].serialized_data)[0]['fields']
         self.assertEqual(serialized_data['name'], tp.name)
@@ -8183,16 +8612,42 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
         self.assertEqual(serialized_data['apiid'], tp.apiid)
         self.assertEqual(
             serialized_data['rules'],
-            [
+            json.dumps([
                 {
                     'host': 'newHost',
                     'metric': 'newMetric',
                     'thresholds': 'entries=1;3;0:2;10'
                 }
-            ]
+            ])
         )
 
-    def post_thresholds_profile(self):
+    def test_put_thresholds_profile_with_invalid_data(self):
+        self.assertEqual(
+            poem_models.ThresholdsProfiles.objects.all().count(), 2
+        )
+        data = {
+            'name': 'NEW_TEST_PROFILE',
+            'apiid': '',
+            'groupname': 'GROUP',
+            'rules': json.dumps([
+                {
+                    'host': 'newHost',
+                    'metric': 'newMetric',
+                    'thresholds': 'entries=1;3;0:2;10'
+                }
+            ])
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(
+            poem_models.ThresholdsProfiles.objects.all().count(), 2
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data, {'detail': 'Apiid field undefined!'})
+
+    def test_post_thresholds_profile(self):
         self.assertEqual(
             poem_models.ThresholdsProfiles.objects.all().count(), 2
         )
@@ -8237,16 +8692,41 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
         self.assertEqual(serialized_data['groupname'], profile.groupname)
         self.assertEqual(
             serialized_data['rules'],
-            [
+            '[{"host": "newHost", "metric": "newMetric", '
+            '"thresholds": "entries=1;3;0:2;10"}]'
+        )
+
+    def test_post_thresholds_profile_with_invalid_data(self):
+        self.assertEqual(
+            poem_models.ThresholdsProfiles.objects.all().count(), 2
+        )
+        data = {
+            'name': 'NEW_PROFILE',
+            'apiid': '',
+            'groupname': 'GROUP',
+            'rules': json.dumps([
                 {
                     'host': 'newHost',
                     'metric': 'newMetric',
                     'thresholds': 'entries=1;3;0:2;10'
                 }
-            ]
+            ])
+        }
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(
+            poem_models.ThresholdsProfiles.objects.all().count(), 2
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data,
+            {
+                'detail': 'apiid: This field may not be blank.'
+            }
         )
 
-    def delete_thresholds_profile(self):
+    def test_delete_thresholds_profile(self):
         self.assertEqual(
             poem_models.ThresholdsProfiles.objects.all().count(), 2
         )
@@ -8272,11 +8752,23 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
             ).count(), 0
         )
 
-    def delete_nonexisting_thresholds_profile(self):
+    def test_delete_nonexisting_thresholds_profile(self):
         request = self.factory.delete(self.url + 'nonexisting')
         force_authenticate(request, user=self.user)
+        response = self.view(request, 'nonexisting')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(
+            response.data, {'detail': 'Thresholds profile not found.'}
+        )
+
+    def test_delete_thresholds_profile_without_specifying_apiid(self):
+        request = self.factory.delete(self.url)
+        force_authenticate(request, user=self.user)
         response = self.view(request)
-        self.assertEqual(response.status.code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data, {'detail': 'Thresholds profile not specified!'}
+        )
 
 
 class ListPackagesAPIViewTests(TenantTestCase):

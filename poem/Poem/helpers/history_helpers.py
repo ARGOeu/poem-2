@@ -246,6 +246,10 @@ def analyze_differences(old_data, new_data):
                 if value['old_value'] is None:
                     added.append(field)
 
+                if not value['new_value'] is None and \
+                        not value['old_value'] is None:
+                    changed.append(field)
+
         if 'values_changed' in res:
             for key, value in res['values_changed'].items():
                 field = key.split('[')[1][1:-2]

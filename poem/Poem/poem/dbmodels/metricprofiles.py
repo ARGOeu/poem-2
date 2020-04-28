@@ -6,7 +6,7 @@ from django.utils.translation import ugettext_lazy as _
 class MetricProfiles(models.Model):
     name = models.CharField(max_length=128, null=False,
                             help_text='Name of the Metric profile.')
-    description = models.CharField(max_length=1024, default='')
+    description = models.CharField(max_length=1024, blank=True, default='')
     apiid = models.CharField(max_length=128, help_text='WEB-API ID of Metric profile')
     groupname = models.CharField(max_length=128, default='')
 

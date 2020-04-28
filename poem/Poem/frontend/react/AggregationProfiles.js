@@ -8,7 +8,8 @@ import {
   Icon,
   HistoryComponent,
   DiffElement,
-  ProfileMainInfo} from './UIElements';
+  ProfileMainInfo,
+  NotifyError} from './UIElements';
 import Autocomplete from 'react-autocomplete';
 import ReactTable from 'react-table';
 import 'react-table/react-table.css';
@@ -549,11 +550,20 @@ export class AggregationProfilesChange extends Component
     if (!this.addview) {
       let response = await this.webapi.changeAggregation(values_send);
       if (!response.ok) {
-        this.toggleAreYouSureSetModal(`Error: ${response.status}, ${response.statusText}`,
-          'Web API error changing aggregation profile',
-          undefined)
-      }
-      else {
+        let change_msg = '';
+        try {
+          let json = await response.json();
+          let msg_list = [];
+          json.errors.forEach(e => msg_list.push(e.details));
+          change_msg = msg_list.join(' ');
+        } catch(err) {
+          change_msg = 'Web API error changing aggregation profile';
+        };
+        NotifyError({
+          title: `Web API error: ${response.status} ${response.statusText}`,
+          msg: change_msg
+        });
+      } else {
         let r_internal = await this.backend.changeObject(
           '/api/v2/internal/aggregations/',
           {
@@ -573,22 +583,37 @@ export class AggregationProfilesChange extends Component
             title: 'Changed',
             callback: () => this.history.push('/ui/aggregationprofiles')
           })
-        else
-          this.toggleAreYouSureSetModal(
-            `Error: ${r_internal.status} ${r_internal.statusText}`,
-            'Internal API error changing aggregation profile',
-            undefined
-          );
+        else {
+          let change_msg = '';
+          try {
+            let json = await r_internal.json();
+            change_msg = json.detail;
+          } catch(err) {
+            change_msg = 'Internal API error changing aggregation profile';
+          };
+          NotifyError({
+            title: `Internal API error: ${r_internal.status} ${r_internal.statusText}`,
+            msg: change_msg
+          });
+        };
       };
     } else {
       let response = await this.webapi.addAggregation(values_send);
       if (!response.ok) {
-        this.toggleAreYouSureSetModal(
-          `Error: ${response.status}, ${response.statusText}`,
-          'Web API error adding aggregation profile',
-          undefined)
-      }
-      else {
+        let add_msg = '';
+        try {
+          let json = await response.json();
+          let msg_list = [];
+          json.errors.forEach(e => msg_list.push(e.details));
+          add_msg = msg_list.join(' ');
+        } catch(err) {
+          add_msg = `Web API error adding aggregation profile: ${err}`;
+        };
+        NotifyError({
+          title: `Web API error: ${response.status} ${response.statusText}`,
+          msg: add_msg
+        });
+      } else {
         let r = await response.json();
         let r_internal = await this.backend.addObject(
           '/api/v2/internal/aggregations/',
@@ -609,12 +634,19 @@ export class AggregationProfilesChange extends Component
             title: 'Added',
             callback: () => this.history.push('/ui/aggregationprofiles')
           })
-        else
-          this.toggleAreYouSureSetModal(
-            `Error: ${r_internal.status} ${r_internal.statusText}`,
-            'Internal API error adding aggregation profile',
-            undefined
-          );
+        else {
+          let add_msg = '';
+          try {
+            let json = await r_internal.json();
+            add_msg = json.detail;
+          } catch(err) {
+            add_msg = 'Internal API error adding aggregation profile';
+          };
+          NotifyError({
+            title: `Internal API error: ${r_internal.status} ${r_internal.statusText}`,
+            msg: add_msg
+          });
+        };
       };
     };
   }
@@ -622,11 +654,19 @@ export class AggregationProfilesChange extends Component
   async doDelete(idProfile) {
     let response = await this.webapi.deleteAggregation(idProfile);
     if (!response.ok) {
-      this.toggleAreYouSureSetModal(
-        `Error: ${response.status} ${response.statusText}`,
-        'Web API error deleting aggregation profile',
-        undefined
-      )
+      let msg = '';
+      try {
+        let json = await response.json();
+        let msg_list = [];
+        json.errors.forEach(e => msg_list.push(e.details));
+        msg = msg_list.join(' ');
+      } catch(err) {
+        msg = 'Web API error deleting aggregation profile';
+      };
+      NotifyError({
+        title: `Web API error: ${response.status} ${response.statusText}`,
+        msg: msg
+      });
     } else {
       let r = await this.backend.deleteObject(`/api/v2/internal/aggregations/${idProfile}`);
       if (r.ok)
@@ -635,12 +675,19 @@ export class AggregationProfilesChange extends Component
           title: 'Deleted',
           callback: () => this.history.push('/ui/aggregationprofiles')
         });
-      else
-        this.toggleAreYouSureSetModal(
-          `Error: ${r.status} ${r.statusText}`,
-          'Internal API error deleting aggregation profile',
-          undefined
-        )
+      else {
+        let msg = '';
+        try {
+          let json = await r.json();
+          msg = json.detail;
+        } catch(err) {
+          msg = 'Internal API error deleting aggregation profile';
+        };
+        NotifyError({
+          title: `Internal API error: ${r.status} ${r.statusText}`,
+          msg: msg
+        });
+      };
     };
   }
 
@@ -759,7 +806,7 @@ export class AggregationProfilesChange extends Component
           modal={true}
           state={this.state}
           toggle={this.toggleAreYouSure}
-          addview={!this.publicView}
+          addview={this.publicView ? !this.publicView : this.addview}
           publicview={this.publicView}
           submitperm={write_perm}>
           <Formik

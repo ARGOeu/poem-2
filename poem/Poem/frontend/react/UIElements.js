@@ -390,6 +390,15 @@ export const NotifyOk = ({msg='', title='', callback=undefined}) => {
   setTimeout(callback, 2000);
 }
 
+export const NotifyError = ({msg='', title=''}) => {
+  NotificationManager.error(msg, title);
+};
+
+
+export const NotifyWarn = ({msg='', title=''}) => {
+  NotificationManager.warning(msg, title);
+};
+
 
 export const PublicPage = ({children}) => {
   let userDetails = {

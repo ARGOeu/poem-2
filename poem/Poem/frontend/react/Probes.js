@@ -9,7 +9,8 @@ import {
   FancyErrorMessage,
   AutocompleteField,
   HistoryComponent,
-  DiffElement
+  DiffElement,
+  NotifyError
 } from './UIElements';
 import ReactTable from 'react-table';
 import {
@@ -22,7 +23,6 @@ import {
   InputGroup,
   InputGroupAddon } from 'reactstrap';
 import { Formik, Form, Field } from 'formik';
-import { NotificationManager } from 'react-notifications';
 import * as Yup from 'yup';
 
 
@@ -553,8 +553,17 @@ function ProbeComponent(cloneview=false) {
           }
           );
           if (!response.ok) {
-            let json = await response.json();
-            NotificationManager.error(json.detail, 'Error');
+            let add_msg = '';
+            try {
+              let json = await response.json();
+              add_msg = json.detail;
+            } catch(err) {
+              add_msg = 'Error adding probe';
+            }
+            NotifyError({
+              title: `Error: ${response.status} ${response.statusText}`,
+              msg: add_msg
+            });
           } else {
             NotifyOk({
               msg: 'Probe successfully added',
@@ -577,8 +586,17 @@ function ProbeComponent(cloneview=false) {
           }
         );
         if (!response.ok) {
-          let json = await response.json();
-          NotificationManager.error(json.detail, 'Error');
+          let change_msg = '';
+          try {
+            let json = await response.json();
+            change_msg = json.detail;
+          } catch(err) {
+            change_msg = 'Error changing probe';
+          };
+          NotifyError({
+            title: `Error: ${response.status} ${response.statusText}`,
+            msg: change_msg
+          });
         } else {
           NotifyOk({
             msg: 'Probe successfully changed',
@@ -592,8 +610,17 @@ function ProbeComponent(cloneview=false) {
     async doDelete(name) {
       let response = await this.backend.deleteObject(`/api/v2/internal/probes/${name}`);
       if (!response.ok) {
-        let json = await response.json();
-        NotificationManager.error(json.detail, 'Error');
+        let msg = '';
+        try {
+          let json = await response.json();
+          msg = json.detail;
+        } catch(err) {
+          msg = 'Error deleting probe';
+        };
+        NotifyError({
+          title: `Error: ${response.status} ${response.statusText}`,
+          msg: msg
+        });
       } else {
         NotifyOk({
           msg: 'Probe successfully deleted',

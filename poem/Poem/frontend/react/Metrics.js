@@ -9,7 +9,9 @@ import {
   DropdownFilterComponent,
   HistoryComponent,
   DiffElement,
-  AutocompleteField
+  AutocompleteField,
+  NotifyWarn,
+  NotifyError
  } from './UIElements';
 import ReactTable from 'react-table';
 import { Formik, Form, Field, FieldArray } from 'formik';
@@ -29,7 +31,6 @@ import {
 } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faInfoCircle, faMinus, faPlus } from '@fortawesome/free-solid-svg-icons';
-import { NotificationManager } from 'react-notifications';
 import ReactDiffViewer from 'react-diff-viewer';
 
 export const MetricList = ListOfMetrics('metric');
@@ -382,15 +383,14 @@ export function ListOfMetrics(type, imp=false) {
         let response = await this.backend.importMetrics({'metrictemplates': Object.keys(selectedMetrics)});
         let json = await response.json();
         if (json.imported)
-          NotificationManager.success(json.imported, 'Imported');
+          NotifyOk({msg: json.imported, title: 'Imported'})
 
         if (json.err)
-          NotificationManager.warning(json.err, 'Not imported');
+          NotifyWarn({msg: json.err, title: 'Not imported'});
       } else {
-        NotificationManager.error(
-          'No metric templates were selected!',
-          'Error'
-        );
+        NotifyError({
+          msg: 'No metric templates were selected!',
+          title: 'Error'});
       };
     }
 
@@ -1421,34 +1421,48 @@ export class MetricChange extends Component {
         fileparameter: values.file_parameters
       }
     );
-    response.ok ?
+    if (response.ok) {
       NotifyOk({
         msg: 'Metric successfully changed',
         title: 'Changed',
         callback: () => this.history.push('/ui/metrics')
       })
-    :
-      this.toggleAreYouSureSetModal(
-        `Error: ${response.status} ${response.statusText}`,
-        'Error changing metric',
-        undefined
-      );
+    } else {
+      let change_msg = '';
+      try {
+        let json = await response.json();
+        change_msg = json.detail;
+      } catch(err) {
+        change_msg = 'Error changing metric';
+      };
+      NotifyError({
+        title: `Error: ${response.status} ${response.statusText}`,
+        msg: change_msg
+      });
+    };
   }
 
   async doDelete(name) {
     let response = await this.backend.deleteObject(`/api/v2/internal/metric/${name}`);
-    response.ok ?
+    if (response.ok) {
       NotifyOk({
         msg: 'Metric successfully deleted',
         title: 'Deleted',
         callback: () => this.history.push('/ui/metrics')
-      })
-    :
-      this.toggleAreYouSureSetModal(
-        `Error: ${response.status} ${response.statusText}`,
-        'Error deleting metric',
-        undefined
-      );
+      });
+    } else {
+      let msg = '';
+      try {
+        let json = await response.json();
+        msg = json.detail;
+      } catch(err) {
+        msg = 'Error deleting metric';
+      }
+      NotifyError({
+        title: `Error: ${response.status} ${response.statusText}`,
+        msg: msg
+      });
+    };
   }
 
   async componentDidMount() {
