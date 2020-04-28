@@ -87,13 +87,13 @@ class ListAggregations(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-    def get(self, request, aggregation_name=None):
+    def get(self, request, aggregation_apiid=None):
         sync_webapi(settings.WEBAPI_AGGREGATION, poem_models.Aggregation)
 
-        if aggregation_name:
+        if aggregation_apiid:
             try:
                 aggregation = poem_models.Aggregation.objects.get(
-                    name=aggregation_name
+                    apiid=aggregation_apiid
                 )
                 serializer = serializers.AggregationProfileSerializer(
                     aggregation
@@ -101,21 +101,24 @@ class ListAggregations(APIView):
                 return Response(serializer.data)
 
             except poem_models.Aggregation.DoesNotExist:
-                raise NotFound(status=404,
-                               detail='Aggregation not found')
+                raise NotFound(
+                    status=404, detail='Aggregation not found'
+                )
 
         else:
-            aggregations = poem_models.Aggregation.objects.all().order_by('name')
+            aggregations = poem_models.Aggregation.objects.all().order_by(
+                'name'
+            )
             serializer = serializers.AggregationProfileSerializer(
                 aggregations, many=True
             )
             return Response(serializer.data)
 
-    def delete(self, request, aggregation_name=None):
-        if aggregation_name:
+    def delete(self, request, aggregation_apiid=None):
+        if aggregation_apiid:
             try:
                 aggregation = poem_models.Aggregation.objects.get(
-                    apiid=aggregation_name
+                    apiid=aggregation_apiid
                 )
                 poem_models.TenantHistory.objects.filter(
                     object_id=aggregation.id,
@@ -145,8 +148,8 @@ class ListPublicAggregations(ListAggregations):
     def post(self, request):
         return self._denied()
 
-    def put(self, request, profile_name):
+    def put(self, request, profile_apiid):
         return self._denied()
 
-    def delete(self, request, profile_name):
+    def delete(self, request, profile_apiid):
         return self._denied()

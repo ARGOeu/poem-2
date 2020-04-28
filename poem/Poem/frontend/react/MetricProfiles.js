@@ -191,7 +191,7 @@ function MetricProfilesComponent(cloneview=false) {
       this.tenant_name = props.tenant_name;
       this.token = props.webapitoken;
       this.webapimetric = props.webapimetric;
-      this.profile_name = props.match.params.name;
+      this.profile = props.match.params.apiid;
       this.addview = props.addview
       this.history = props.history;
       this.location = props.location;
@@ -251,7 +251,7 @@ function MetricProfilesComponent(cloneview=false) {
       this.setState({loading: true})
 
       if (this.publicView) {
-        let json = await this.backend.fetchData(`/api/v2/internal/public_metricprofiles/${this.profile_name}`);
+        let json = await this.backend.fetchData(`/api/v2/internal/public_metricprofiles/${this.profile}`);
         let metricp = await this.webapi.fetchMetricProfile(json.apiid);
         this.setState({
           metric_profile: metricp,
@@ -273,7 +273,7 @@ function MetricProfilesComponent(cloneview=false) {
           let serviceflavoursall = await this.backend.fetchListOfNames('/api/v2/internal/serviceflavoursall');
           let metricsall = await this.backend.fetchListOfNames('/api/v2/internal/metricsall');
           if (!this.addview || this.cloneview) {
-            let json = await this.backend.fetchData(`/api/v2/internal/metricprofiles/${this.profile_name}`);
+            let json = await this.backend.fetchData(`/api/v2/internal/metricprofiles/${this.profile}`);
             let metricp = await this.webapi.fetchMetricProfile(json.apiid);
             this.setState({
               metric_profile: metricp,
@@ -845,7 +845,7 @@ export class MetricProfilesList extends Component
         id: 'name',
         maxWidth: 350,
         accessor: e =>
-          <Link to={`/ui/${this.publicView ? 'public_' : ''}metricprofiles/` + e.name}>
+          <Link to={`/ui/${this.publicView ? 'public_' : ''}metricprofiles/` + e.apiid}>
             {e.name}
           </Link>
       },
@@ -922,7 +922,7 @@ export class MetricProfileVersionCompare extends Component {
 
     this.version1 = props.match.params.id1;
     this.version2 = props.match.params.id2;
-    this.name = props.match.params.name;
+    this.profile = props.match.params.apiid;
 
     this.state = {
       loading: false,
@@ -940,7 +940,7 @@ export class MetricProfileVersionCompare extends Component {
   async componentDidMount() {
     this.setState({loading: true});
 
-    let json = await this.backend.fetchData(`/api/v2/internal/tenantversion/metricprofile/${this.name}`);
+    let json = await this.backend.fetchData(`/api/v2/internal/tenantversion/metricprofile/${this.profile}`);
     let name1 = '';
     let groupname1 = '';
     let description1 = '';
@@ -995,12 +995,8 @@ export class MetricProfileVersionCompare extends Component {
               <DiffElement title='name' item1={name1} item2={name2}/>
           }
           {
-            (name1 !== name2) &&
-              <DiffElement title='name' item1={name1} item2={name2}/>
-          }
-          {
             (description1 !== description2) &&
-              <DiffElement title='name' item1={description1} item2={description2}/>
+              <DiffElement title='description' item1={description1} item2={description2}/>
           }
           {
             (groupname1 !== groupname2) &&
@@ -1022,7 +1018,7 @@ export class MetricProfileVersionDetails extends Component {
   constructor(props) {
     super(props);
 
-    this.name = props.match.params.name;
+    this.profile = props.match.params.apiid;
     this.version = props.match.params.version;
 
     this.backend = new Backend();
@@ -1040,7 +1036,7 @@ export class MetricProfileVersionDetails extends Component {
   async componentDidMount() {
     this.setState({loading: true});
 
-    let json = await this.backend.fetchData(`/api/v2/internal/tenantversion/metricprofile/${this.name}`);
+    let json = await this.backend.fetchData(`/api/v2/internal/tenantversion/metricprofile/${this.profile}`);
     json.forEach((e) => {
       if (e.version == this.version)
         this.setState({

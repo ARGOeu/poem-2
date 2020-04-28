@@ -407,7 +407,7 @@ export class AggregationProfilesChange extends Component
     this.token = props.webapitoken;
     this.webapiaggregation = props.webapiaggregation;
     this.webapimetric = props.webapimetric;
-    this.profile_name = props.match.params.name;
+    this.profile = props.match.params.apiid;
     this.addview = props.addview
     this.history = props.history;
     this.location = props.location;
@@ -725,7 +725,7 @@ export class AggregationProfilesChange extends Component
 
     if (this.publicView) {
       let metricp = await this.webapi.fetchMetricProfiles();
-      let json = await this.backend.fetchData(`/api/v2/internal/public_aggregations/${this.profile_name}`);
+      let json = await this.backend.fetchData(`/api/v2/internal/public_aggregations/${this.profile}`);
       let aggregp = await this.webapi.fetchAggregationProfile(json.apiid);
       this.setState({
         aggregation_profile: aggregp,
@@ -743,7 +743,7 @@ export class AggregationProfilesChange extends Component
       if (sessionActive.active) {
         let metricp = await this.webapi.fetchMetricProfiles();
         if (!this.addview) {
-          let json = await this.backend.fetchData(`/api/v2/internal/aggregations/${this.profile_name}`);
+          let json = await this.backend.fetchData(`/api/v2/internal/aggregations/${this.profile}`);
           let aggregp = await this.webapi.fetchAggregationProfile(json.apiid);
           this.setState({
             aggregation_profile: aggregp,
@@ -927,7 +927,7 @@ export class AggregationProfilesList extends Component
         id: 'name',
         maxWidth: 350,
         accessor: e =>
-          <Link to={`/ui/${this.publicView ? 'public_' : ''}aggregationprofiles/` + e.name}>
+          <Link to={`/ui/${this.publicView ? 'public_' : ''}aggregationprofiles/` + e.apiid}>
             {e.name}
           </Link>
       },
@@ -1019,7 +1019,7 @@ export class AggregationProfileVersionCompare extends Component {
 
     this.version1 = props.match.params.id1;
     this.version2 = props.match.params.id2;
-    this.name = props.match.params.name;
+    this.profile = props.match.params.apiid;
 
     this.state = {
       loading: false,
@@ -1043,7 +1043,7 @@ export class AggregationProfileVersionCompare extends Component {
   }
 
   async componentDidMount() {
-    let json = await this.backend.fetchData(`/api/v2/internal/tenantversion/aggregationprofile/${this.name}`);
+    let json = await this.backend.fetchData(`/api/v2/internal/tenantversion/aggregationprofile/${this.profile}`);
     let name1 = '';
     let groupname1 = '';
     let metric_operation1 = '';
@@ -1155,7 +1155,7 @@ export class AggregationProfileVersionDetails extends Component {
   constructor(props) {
     super(props);
 
-    this.name = props.match.params.name;
+    this.profile = props.match.params.apiid;
     this.version = props.match.params.version;
 
     this.backend = new Backend();
@@ -1176,7 +1176,7 @@ export class AggregationProfileVersionDetails extends Component {
   async componentDidMount() {
     this.setState({loading: true});
 
-    let json = await this.backend.fetchData(`/api/v2/internal/tenantversion/aggregationprofile/${this.name}`);
+    let json = await this.backend.fetchData(`/api/v2/internal/tenantversion/aggregationprofile/${this.profile}`);
     json.forEach((e) => {
       if (e.version == this.version)
         this.setState({
