@@ -133,27 +133,27 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, t
         tenantname={tenantName}
         addview={true}/>}
       />
-    <Route exact path="/ui/metricprofiles/:apiid"
+    <Route exact path="/ui/metricprofiles/:name"
       render={props => <MetricProfilesChange
         {...props}
         webapimetric={webApiMetric}
         webapitoken={token}
         tenantname={tenantName}/>}
     />
-    <Route exact path="/ui/metricprofiles/:apiid/clone"
+    <Route exact path="/ui/metricprofiles/:name/clone"
       render={props => <MetricProfilesClone
         {...props}
         webapimetric={webApiMetric}
         webapitoken={token}
         tenantname={tenantName}/>}
     />
-    <Route exact path="/ui/metricprofiles/:apiid/history"
+    <Route exact path="/ui/metricprofiles/:name/history"
       render={props => <MetricProfileHistory {...props}/>}
     />
-    <Route exact path="/ui/metricprofiles/:apiid/history/compare/:id1/:id2"
+    <Route exact path="/ui/metricprofiles/:name/history/compare/:id1/:id2"
       render={props => <MetricProfileVersionCompare {...props}/>}
     />
-    <Route exact path="/ui/metricprofiles/:apiid/history/:version"
+    <Route exact path="/ui/metricprofiles/:name/history/:version"
       render={props => <MetricProfileVersionDetails {...props}/>}
     />
     <Route exact path="/ui/aggregationprofiles" component={AggregationProfilesList} />
@@ -166,7 +166,7 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, t
         tenantname={tenantName}
         addview={true}/>}
       />
-    <Route exact path="/ui/aggregationprofiles/:apiid"
+    <Route exact path="/ui/aggregationprofiles/:name"
       render={props => <AggregationProfilesChange
         {...props}
         webapiaggregation={webApiAggregation}
@@ -174,13 +174,13 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, t
         webapitoken={token}
         tenantname={tenantName}/>}
       />
-    <Route exact path="/ui/aggregationprofiles/:apiid/history"
+    <Route exact path="/ui/aggregationprofiles/:name/history"
       render={props => <AggregationProfileHistory {...props}/>}
     />
-    <Route exact path="/ui/aggregationprofiles/:apiid/history/compare/:id1/:id2"
+    <Route exact path="/ui/aggregationprofiles/:name/history/compare/:id1/:id2"
       render={props => <AggregationProfileVersionCompare {...props}/>}
     />
-    <Route exact path="/ui/aggregationprofiles/:apiid/history/:version"
+    <Route exact path="/ui/aggregationprofiles/:name/history/:version"
       render={props => <AggregationProfileVersionDetails {...props}/>}
     />
     <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration" component={TenantAdministration} />
@@ -256,20 +256,20 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, t
         tenantname={tenantName}
         addview={true}/>}
     />
-    <Route exact path="/ui/thresholdsprofiles/:apiid"
+    <Route exact path="/ui/thresholdsprofiles/:name"
       render={props => <ThresholdsProfilesChange
         {...props}
         webapithresholds={webApiThresholds}
         webapitoken={token}
         tenantname={tenantName}/>}
     />
-    <Route exact path="/ui/thresholdsprofiles/:apiid/history"
+    <Route exact path="/ui/thresholdsprofiles/:name/history"
       render={props => <ThresholdsProfilesHistory {...props}/>}
     />
-    <Route exact path="/ui/thresholdsprofiles/:apiid/history/compare/:id1/:id2"
+    <Route exact path="/ui/thresholdsprofiles/:name/history/compare/:id1/:id2"
       render={props => <ThresholdsProfileVersionCompare {...props}/>}
     />
-    <Route exact path="/ui/thresholdsprofiles/:apiid/history/:version"
+    <Route exact path="/ui/thresholdsprofiles/:name/history/:version"
       render={props => <ThresholdsProfileVersionDetail {...props}/>}
     />
     <Route component={NotFound} />
