@@ -18,9 +18,15 @@ class ListAllServiceFlavours(APIView):
 
     def get(self, request):
         service_flavours = poem_models.ServiceFlavour.objects.all()
-        serializer = serializers.ServiceFlavourSerializer(service_flavours,
-                                                          many=True)
-        return Response(serializer.data)
+        serializer = serializers.ServiceFlavourSerializer(
+            service_flavours, many=True
+        )
+        data = []
+        for item in serializer.data:
+            data.append(
+                {'name': item['name'], 'description': item['description']}
+            )
+        return Response(sorted(data, key=lambda k: k['name'].lower()))
 
 
 class ListMetricProfiles(APIView):

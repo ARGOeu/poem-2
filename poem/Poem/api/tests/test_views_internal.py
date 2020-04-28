@@ -2248,13 +2248,19 @@ class ListServiceFlavoursAPIViewTests(TenantTestCase):
         self.user = CustUser.objects.create(username='testuser')
 
         poem_models.ServiceFlavour.objects.create(
+            name='SRM',
+            description='Storage Resource Manager.'
+        )
+
+        poem_models.ServiceFlavour.objects.create(
             name='org.onedata.oneprovider',
             description='Oneprovider is a Onedata component...'
         )
 
         poem_models.ServiceFlavour.objects.create(
-            name='SRM',
-            description='Storage Resource Manager.'
+            name='CREAM-CE',
+            description='[Site service] The CREAM Compute Element is the new '
+                        'CE within the gLite middleware stack.'
         )
 
     def test_get_service_flavours(self):
@@ -2264,14 +2270,20 @@ class ListServiceFlavoursAPIViewTests(TenantTestCase):
         self.assertEqual(
             response.data,
             [
-                OrderedDict([
-                    ('name', 'org.onedata.oneprovider'),
-                    ('description', 'Oneprovider is a Onedata component...')
-                ]),
-                OrderedDict([
-                    ('name', 'SRM'),
-                    ('description', 'Storage Resource Manager.')
-                ])
+                {
+                    'name': 'CREAM-CE',
+                    'description': '[Site service] The CREAM Compute Element '
+                                   'is the new CE within the gLite middleware '
+                                   'stack.'
+                },
+                {
+                    'name': 'org.onedata.oneprovider',
+                    'description': 'Oneprovider is a Onedata component...'
+                },
+                {
+                    'name': 'SRM',
+                    'description': 'Storage Resource Manager.'
+                }
             ]
         )
 

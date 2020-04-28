@@ -878,7 +878,8 @@ export class ThresholdsProfilesList extends Component {
 
     this.state = {
       loading: false,
-      list_thresholdsprofiles: null
+      list_thresholdsprofiles: null,
+      write_perm: false
     };
   }
 
@@ -886,10 +887,19 @@ export class ThresholdsProfilesList extends Component {
     this.setState({loading: true});
 
     let profiles = await this.backend.fetchData(this.apiUrl);
-    this.setState({
-      list_thresholdsprofiles: profiles,
-      loading: false
-    });
+    if (!this.publicView) {
+      let session = await this.backend.isActiveSession();
+      this.setState({
+        list_thresholdsprofiles: profiles,
+        loading: false,
+        write_perm: session.userdetails.is_superuser || session.userdetails.groups.thresholdsprofiles.length > 0
+      });
+    } else {
+      this.setState({
+        list_thresholdsprofiles: profiles,
+        loading: false
+      });
+    };
   }
 
   render() {
@@ -914,7 +924,7 @@ export class ThresholdsProfilesList extends Component {
         maxWidth: 150,
       }
     ];
-    const { loading, list_thresholdsprofiles } = this.state;
+    const { loading, list_thresholdsprofiles, write_perm } = this.state;
 
     if (loading)
       return <LoadingAnim/>
@@ -926,6 +936,7 @@ export class ThresholdsProfilesList extends Component {
           location={this.location}
           listview={true}
           addnew={!this.publicView}
+          addperm={write_perm}
           publicview={this.publicView}
         >
           <ReactTable

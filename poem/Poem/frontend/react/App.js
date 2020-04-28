@@ -64,6 +64,14 @@ const SuperUserRoute = ({isSuperUser, ...props}) => (
 )
 
 
+const AddRoute = ({usergroups, ...props}) => (
+  usergroups.length > 0 ?
+    <Route {...props} />
+  :
+    <Route component={NotFound} />
+);
+
+
 const RedirectAfterLogin = ({isSuperUser, ...props}) => {
   let last = ''
   let before_last = ''
@@ -97,7 +105,7 @@ const RedirectAfterLogin = ({isSuperUser, ...props}) => {
 }
 
 
-const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, token, tenantName, isSuperUser}) => (
+const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, token, tenantName, isSuperUser, userGroups}) => (
   <Switch>
     <Route exact path="/ui/login" render={props => <RedirectAfterLogin isSuperUser={isSuperUser} {...props}/>}/>
     <Route exact path="/ui/home" component={Home} />
@@ -117,7 +125,7 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, t
     <Route exact path="/ui/metrics/:name/history/:version" render={props => <MetricVersionDetails {...props}/>}/>
     <Route exact path="/ui/metrics/:name" render={props => <MetricChange {...props}/>}/>
     <Route exact path="/ui/metricprofiles" component={MetricProfilesList} />
-    <Route exact path="/ui/metricprofiles/add"
+    <AddRoute usergroups={userGroups.metricprofiles} exact path="/ui/metricprofiles/add"
       render={props => <MetricProfilesChange
         {...props}
         webapimetric={webApiMetric}
@@ -149,7 +157,7 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, t
       render={props => <MetricProfileVersionDetails {...props}/>}
     />
     <Route exact path="/ui/aggregationprofiles" component={AggregationProfilesList} />
-    <Route exact path="/ui/aggregationprofiles/add"
+    <AddRoute usergroups={userGroups.aggregations} exact path="/ui/aggregationprofiles/add"
       render={props => <AggregationProfilesChange
         {...props}
         webapiaggregation={webApiAggregation}
@@ -240,7 +248,7 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, t
       render={props => <GroupOfThresholdsProfilesChange {...props}/>}
     />
     <Route exact path="/ui/thresholdsprofiles" component={ThresholdsProfilesList} />
-    <Route exact path="/ui/thresholdsprofiles/add"
+    <AddRoute usergroups={userGroups.thresholdsprofiles} exact path="/ui/thresholdsprofiles/add"
       render={props => <ThresholdsProfilesChange
         {...props}
         webapithresholds={webApiThresholds}
@@ -603,7 +611,8 @@ class App extends Component {
                     webApiThresholds={this.state.webApiThresholds}
                     token={this.state.token}
                     tenantName={this.state.tenantName}
-                    isSuperUser={userDetails.is_superuser}/>
+                    isSuperUser={userDetails.is_superuser}
+                    userGroups={userDetails.groups}/>
                  :
                   <SuperAdminRouteSwitch/>
                 }
