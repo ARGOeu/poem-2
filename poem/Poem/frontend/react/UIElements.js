@@ -63,8 +63,8 @@ import ReactDiffViewer from 'react-diff-viewer';
 var list_pages = ['administration','services', 'probes',
                   'metrics', 'metricprofiles', 'aggregationprofiles',
                   'thresholdsprofiles'];
-var admin_list_pages = ['administration', 'probes', 'yumrepos',
-                        'packages', 'metrictemplates'];
+var admin_list_pages = ['administration', 'yumrepos', 'packages',
+                        'probes', 'metrictemplates'];
 
 var link_title = new Map();
 link_title.set('administration', 'Administration');
