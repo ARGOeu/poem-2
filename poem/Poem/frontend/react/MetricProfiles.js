@@ -158,7 +158,10 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
                 type="button"
                 onClick={() => {
                   remove_handler(form.values.view_services[index]);
-                  return remove(index)
+                  // prevent removal of last tuple
+                  if (index > 0 &&
+                    form.values.view_services.length > 1)
+                    return remove(index)
                 }}>
                 <FontAwesomeIcon icon={faTimes}/>
               </Button>
@@ -192,6 +195,7 @@ function MetricProfilesComponent(cloneview=false) {
       this.history = props.history;
       this.location = props.location;
       this.cloneview = cloneview;
+      this.publicView = props.publicView;
 
       this.state = {
         metric_profile: {},
@@ -242,56 +246,71 @@ function MetricProfilesComponent(cloneview=false) {
       return flat_services
     }
 
-    componentDidMount() {
+    async componentDidMount() {
       this.setState({loading: true})
 
-      this.backend.isActiveSession().then(sessionActive => {
-        sessionActive.active && Promise.all([
-          this.backend.fetchListOfNames('/api/v2/internal/serviceflavoursall'),
-          this.backend.fetchListOfNames('/api/v2/internal/metricsall')
-        ])
-          .then(([serviceflavoursall, metricsall]) => {
-            if (!this.addview || this.cloneview) {
-              this.backend.fetchData(`/api/v2/internal/metricprofiles/${this.profile_name}`)
-                .then(json => Promise.all([this.webapi.fetchMetricProfile(json.apiid)])
-                  .then(([metricp]) => this.setState({
-                    metric_profile: metricp,
-                    metric_profile_name: metricp.name,
-                    metric_profile_description: metricp.description,
-                    groupname: json['groupname'],
-                    list_user_groups: sessionActive.userdetails.groups.metricprofiles,
-                    write_perm: sessionActive.userdetails.is_superuser ||
-                      sessionActive.userdetails.groups.metricprofiles.indexOf(json['groupname']) >= 0,
-                    view_services: this.flattenServices(metricp.services).sort(this.sortServices),
-                    serviceflavours_all: serviceflavoursall,
-                    metrics_all: metricsall,
-                    list_services: this.flattenServices(metricp.services).sort(this.sortServices),
-                    loading: false
-                  }))
-                )
-            } else {
-              let empty_metric_profile = {
-                id: '',
-                name: '',
-                services: [],
-              }
-              this.setState({
-                metric_profile: empty_metric_profile,
-                metric_profile_name: '',
-                metric_profile_description: '',
-                groupname: '',
-                list_user_groups: sessionActive.userdetails.groups.metricprofiles,
-                write_perm: sessionActive.userdetails.is_superuser ||
-                  sessionActive.userdetails.groups.metricprofiles.length > 0,
-                view_services: [{service: '', metric: '', index: 0, isNew: true}],
-                serviceflavours_all: serviceflavoursall,
-                metrics_all: metricsall,
-                list_services: [{service: '', metric: '', index: 0, isNew: true}],
-                loading: false
-              })
-            }
-          })
-      })
+      if (this.publicView) {
+        let json = await this.backend.fetchData(`/api/v2/internal/public_metricprofiles/${this.profile_name}`);
+        let metricp = await this.webapi.fetchMetricProfile(json.apiid);
+        this.setState({
+          metric_profile: metricp,
+          metric_profile_name: metricp.name,
+          metric_profile_description: metricp.description,
+          groupname: json['groupname'],
+          list_user_groups: [],
+          write_perm: false,
+          view_services: this.flattenServices(metricp.services).sort(this.sortServices),
+          serviceflavours_all: [],
+          metrics_all: [],
+          list_services: this.flattenServices(metricp.services).sort(this.sortServices),
+          loading: false
+        });
+      }
+      else {
+        let sessionActive = await this.backend.isActiveSession();
+        if (sessionActive.active) {
+          let serviceflavoursall = await this.backend.fetchListOfNames('/api/v2/internal/serviceflavoursall');
+          let metricsall = await this.backend.fetchListOfNames('/api/v2/internal/metricsall');
+          if (!this.addview || this.cloneview) {
+            let json = await this.backend.fetchData(`/api/v2/internal/metricprofiles/${this.profile_name}`);
+            let metricp = await this.webapi.fetchMetricProfile(json.apiid);
+            this.setState({
+              metric_profile: metricp,
+              metric_profile_name: metricp.name,
+              metric_profile_description: metricp.description,
+              groupname: json['groupname'],
+              list_user_groups: sessionActive.userdetails.groups.metricprofiles,
+              write_perm: sessionActive.userdetails.is_superuser ||
+                sessionActive.userdetails.groups.metricprofiles.indexOf(json['groupname']) >= 0,
+              view_services: this.flattenServices(metricp.services).sort(this.sortServices),
+              serviceflavours_all: serviceflavoursall,
+              metrics_all: metricsall,
+              list_services: this.flattenServices(metricp.services).sort(this.sortServices),
+              loading: false
+            });
+          } else {
+            let empty_metric_profile = {
+              id: '',
+              name: '',
+              services: [],
+            };
+            this.setState({
+              metric_profile: empty_metric_profile,
+              metric_profile_name: '',
+              metric_profile_description: '',
+              groupname: '',
+              list_user_groups: sessionActive.userdetails.groups.metricprofiles,
+              write_perm: sessionActive.userdetails.is_superuser ||
+                sessionActive.userdetails.groups.metricprofiles.length > 0,
+              view_services: [{service: '', metric: '', index: 0, isNew: true}],
+              serviceflavours_all: serviceflavoursall,
+              metrics_all: metricsall,
+              list_services: [{service: '', metric: '', index: 0, isNew: true}],
+              loading: false
+            });
+          };
+        }
+      };
     }
 
     toggleAreYouSureSetModal(msg, title, onyes) {
@@ -460,7 +479,7 @@ function MetricProfilesComponent(cloneview=false) {
       return services
     }
 
-    doChange({formValues, servicesList}, actions) {
+    async doChange({formValues, servicesList}, actions) {
       let services = [];
       let dataToSend = new Object()
 
@@ -473,93 +492,101 @@ function MetricProfilesComponent(cloneview=false) {
           description: formValues.description,
           services
         };
-        this.webapi.changeMetricProfile(dataToSend)
-        .then(response => {
-          if (!response.ok) {
-            this.toggleAreYouSureSetModal(`Error: ${response.status}, ${response.statusText}`,
-              'Error changing metric profile',
-              undefined)
-          }
-          else {
-            response.json()
-            .then(r => {
-              this.backend.changeObject(
-                '/api/v2/internal/metricprofiles/',
-                {
-                  apiid: dataToSend.id,
-                  name: dataToSend.name,
-                  description: dataToSend.description,
-                  groupname: formValues.groupname,
-                  services: formValues.view_services
-                }
-              )
-                .then(() => NotifyOk({
-                  msg: 'Metric profile succesfully changed',
-                  title: 'Changed',
-                  callback: () => this.history.push('/ui/metricprofiles')
-                },
-                ))
-                .catch(err => alert('Something went wrong: ' + err))
-            })
-            .catch(err => alert('Something went wrong: ' + err))
-          }
-        }).catch(err => alert('Something went wrong: ' + err))
-      }
-      else {
+        let response = await this.webapi.changeMetricProfile(dataToSend);
+        if (!response.ok) {
+          this.toggleAreYouSureSetModal(
+            `Error: ${response.status}, ${response.statusText}`,
+            'Web API error changing metric profile',
+            undefined)
+        } else {
+          let r = await this.backend.changeObject(
+            '/api/v2/internal/metricprofiles/',
+            {
+              apiid: dataToSend.id,
+              name: dataToSend.name,
+              description: dataToSend.description,
+              groupname: formValues.groupname,
+              services: formValues.view_services
+            }
+          );
+          if (r.ok)
+            NotifyOk({
+              msg: 'Metric profile succesfully changed',
+              title: 'Changed',
+              callback: () => this.history.push('/ui/metricprofiles')
+            });
+          else
+            this.toggleAreYouSureSetModal(
+              `Error: ${response.status} ${response.statusText}`,
+              'Internal API error changing metric profile',
+              undefined
+            );
+        };
+      } else {
         services = this.groupMetricsByServices(servicesList);
         dataToSend = {
           name: formValues.name,
           description: formValues.description,
           services
         }
-        this.webapi.addMetricProfile(dataToSend)
-        .then(response => {
-          if (!response.ok) {
-            this.toggleAreYouSureSetModal(`Error: ${response.status}, ${response.statusText}`,
-              'Error adding metric profile',
-              undefined)
-          }
-          else {
-            response.json()
-            .then(r => {
-              this.backend.addObject(
-                '/api/v2/internal/metricprofiles/',
-                {
-                  apiid: r.data.id,
-                  name: dataToSend.name,
-                  groupname: formValues.groupname,
-                  description: formValues.description,
-                  services: formValues.view_services
-                }
-              ).then(() => NotifyOk({
-                  msg: 'Metric profile successfully added',
-                  title: 'Added',
-                  callback: () => this.history.push('/ui/metricprofiles')
-                }))
-                .catch(err => alert('Something went wrong: ' + err))
-            })
-            .catch(err => alert('Something went wrong: ' + err))
-          }
-        }).catch(err => alert('Something went wrong: ' + err))
-      }
+        let response = await this.webapi.addMetricProfile(dataToSend);
+        if (!response.ok) {
+          this.toggleAreYouSureSetModal(
+            `Error: ${response.status}, ${response.statusText}`,
+            'Web API error adding metric profile',
+            undefined
+          );
+        } else {
+          let r_json = await response.json();
+          let r_internal = await this.backend.addObject(
+            '/api/v2/internal/metricprofiles/',
+            {
+              apiid: r_json.data.id,
+              name: dataToSend.name,
+              groupname: formValues.groupname,
+              description: formValues.description,
+              services: formValues.view_services
+            }
+          );
+          if (r_internal.ok)
+            NotifyOk({
+              msg: 'Metric profile successfully added',
+              title: 'Added',
+              callback: () => this.history.push('/ui/metricprofiles')
+            });
+          else
+            this.toggleAreYouSureSetModal(
+              `Error: ${r_internal.status} ${r_internal.statusText}`,
+              'Internal API error adding metric profile',
+              undefined
+            );
+        };
+      };
     }
 
-    doDelete(idProfile) {
-      this.webapi.deleteMetricProfile(idProfile)
-      .then(response => {
-        if (!response.ok) {
-          alert(`Error: ${response.status}, ${response.statusText}`)
-        } else {
-          response.json()
-          .then(this.backend.deleteObject(`/api/v2/internal/metricprofiles/${idProfile}`))
-          .then(
-            () => NotifyOk({
-              msg: 'Metric profile sucessfully deleted',
-              title: 'Deleted',
-              callback: () => this.history.push('/ui/metricprofiles')
-            }))
-        }
-      }).catch(err => alert('Something went wrong: ' + err))
+    async doDelete(idProfile) {
+      let response = await this.webapi.deleteMetricProfile(idProfile);
+      if (!response.ok) {
+        this.toggleAreYouSureSetModal(
+         `Error: ${response.status} ${response.statusText}`,
+         'Web API error deleting metric profile',
+         undefined
+        );
+      } else {
+        let r_internal = await this.backend.deleteObject(`/api/v2/internal/metricprofiles/${idProfile}`);
+        if (r_internal.ok)
+          NotifyOk({
+            msg: 'Metric profile sucessfully deleted',
+            title: 'Deleted',
+            callback: () => this.history.push('/ui/metricprofiles')
+          });
+        else
+          this.toggleAreYouSureSetModal(
+            `Error: ${r_internal.status} ${r_internal.statusText}`,
+            'Internal API error deleting metric profile',
+            undefined
+          );
+      };
     }
 
     onSelect(element, field, value) {
@@ -585,6 +612,9 @@ function MetricProfilesComponent(cloneview=false) {
     }
 
     onRemove(element) {
+      let tmp_view_services = []
+      let tmp_list_services = []
+
       // XXX: this means no duplicate elements allowed
       let index = this.state.list_services.findIndex(service =>
         element.index === service.index &&
@@ -597,9 +627,23 @@ function MetricProfilesComponent(cloneview=false) {
         element.metric === service.metric
       );
 
-      if (index >= 0 && index_tmp >= 0) {
-        let tmp_list_services = [...this.state.list_services]
-        let tmp_view_services = [...this.state.view_services]
+      // don't remove last tuple, just reset it to empty values
+      if (this.state.view_services.length === 1
+        && this.state.list_services.length === 1) {
+        tmp_list_services = [{
+          index: 0,
+          service: "",
+          metric: ""
+        }]
+        tmp_view_services = [{
+          index: 0,
+          service: "",
+          metric: ""
+        }]
+      }
+      else if (index >= 0 && index_tmp >= 0) {
+        tmp_list_services = [...this.state.list_services]
+        tmp_view_services = [...this.state.view_services]
         tmp_list_services.splice(index, 1)
         tmp_view_services.splice(index_tmp, 1)
 
@@ -613,12 +657,11 @@ function MetricProfilesComponent(cloneview=false) {
           let element_index = tmp_view_services[i].index
           tmp_view_services[i].index = element_index - 1;
         }
-
-        this.setState({
-          list_services: tmp_list_services,
-          view_services: tmp_view_services
-        });
       }
+      this.setState({
+        list_services: tmp_list_services,
+        view_services: tmp_view_services
+      });
     }
 
     render() {
@@ -646,6 +689,8 @@ function MetricProfilesComponent(cloneview=false) {
             clone={true}
             state={this.state}
             toggle={this.toggleAreYouSure}
+            addview={!this.publicView}
+            publicview={this.publicView}
             submitperm={write_perm}>
             <Formik
               initialValues = {{
@@ -729,16 +774,21 @@ export class MetricProfilesList extends Component
 
     this.location = props.location;
     this.backend = new Backend();
+    this.publicView = props.publicView
+
+    if (this.publicView)
+      this.apiUrl = '/api/v2/internal/public_metricprofiles'
+    else
+      this.apiUrl = '/api/v2/internal/metricprofiles'
   }
 
-  componentDidMount() {
+  async componentDidMount() {
     this.setState({loading: true})
-    this.backend.fetchData('/api/v2/internal/metricprofiles')
-      .then(json =>
-        this.setState({
-          list_metricprofiles: json,
-          loading: false})
-      )
+    let json = await this.backend.fetchData(this.apiUrl);
+    this.setState({
+      list_metricprofiles: json,
+      loading: false}
+    );
   }
 
   render() {
@@ -748,7 +798,7 @@ export class MetricProfilesList extends Component
         id: 'name',
         maxWidth: 350,
         accessor: e =>
-          <Link to={'/ui/metricprofiles/' + e.name}>
+          <Link to={`/ui/${this.publicView ? 'public_' : ''}metricprofiles/` + e.name}>
             {e.name}
           </Link>
       },
@@ -773,7 +823,9 @@ export class MetricProfilesList extends Component
         <BaseArgoView
           resourcename='metric profile'
           location={this.location}
-          listview={true}>
+          listview={true}
+          addnew={!this.publicView}
+          publicview={this.publicView}>
           <ReactTable
             data={list_metricprofiles}
             columns={columns}
@@ -838,46 +890,44 @@ export class MetricProfileVersionCompare extends Component {
     this.backend = new Backend();
   }
 
-  componentDidMount() {
+  async componentDidMount() {
     this.setState({loading: true});
 
-    this.backend.fetchData(`/api/v2/internal/tenantversion/metricprofile/${this.name}`)
-      .then((json) => {
-        let name1 = '';
-        let groupname1 = '';
-        let description1 = '';
-        let metricinstances1 = [];
-        let name2 = '';
-        let groupname2 = '';
-        let description2 = '';
-        let metricinstances2 = [];
+    let json = await this.backend.fetchData(`/api/v2/internal/tenantversion/metricprofile/${this.name}`);
+    let name1 = '';
+    let groupname1 = '';
+    let description1 = '';
+    let metricinstances1 = [];
+    let name2 = '';
+    let groupname2 = '';
+    let description2 = '';
+    let metricinstances2 = [];
 
-        json.forEach((e) => {
-          if (e.version == this.version1) {
-            name1 = e.fields.name;
-            description1 = e.fields.description;
-            groupname1 = e.fields.groupname;
-            metricinstances1 = e.fields.metricinstances;
-          } else if (e.version == this.version2) {
-            name2 = e.fields.name;
-            groupname2 = e.fields.groupname;
-            description2 = e.fields.description;
-            metricinstances2 = e.fields.metricinstances;
-          }
-        });
+    json.forEach((e) => {
+      if (e.version == this.version1) {
+        name1 = e.fields.name;
+        description1 = e.fields.description;
+        groupname1 = e.fields.groupname;
+        metricinstances1 = e.fields.metricinstances;
+      } else if (e.version == this.version2) {
+        name2 = e.fields.name;
+        groupname2 = e.fields.groupname;
+        description2 = e.fields.description;
+        metricinstances2 = e.fields.metricinstances;
+      }
+    });
 
-        this.setState({
-          name1: name1,
-          groupname1: groupname1,
-          description1: description1,
-          metricinstances1: metricinstances1,
-          name2: name2,
-          description2: description2,
-          groupname2: groupname2,
-          metricinstances2: metricinstances2,
-          loading: false
-        });
-      });
+    this.setState({
+      name1: name1,
+      groupname1: groupname1,
+      description1: description1,
+      metricinstances1: metricinstances1,
+      name2: name2,
+      description2: description2,
+      groupname2: groupname2,
+      metricinstances2: metricinstances2,
+      loading: false
+    });
   }
 
   render() {
@@ -940,23 +990,21 @@ export class MetricProfileVersionDetails extends Component {
     };
   }
 
-  componentDidMount() {
+  async componentDidMount() {
     this.setState({loading: true});
 
-    this.backend.fetchData(`/api/v2/internal/tenantversion/metricprofile/${this.name}`)
-      .then((json) => {
-        json.forEach((e) => {
-          if (e.version == this.version)
-            this.setState({
-              name: e.fields.name,
-              groupname: e.fields.groupname,
-              description: e.fields.description,
-              date_created: e.date_created,
-              metricinstances: e.fields.metricinstances,
-              loading: false
-            });
+    let json = await this.backend.fetchData(`/api/v2/internal/tenantversion/metricprofile/${this.name}`);
+    json.forEach((e) => {
+      if (e.version == this.version)
+        this.setState({
+          name: e.fields.name,
+          groupname: e.fields.groupname,
+          description: e.fields.description,
+          date_created: e.date_created,
+          metricinstances: e.fields.metricinstances,
+          loading: false
         });
-      });
+    });
   }
 
   render() {
@@ -1022,5 +1070,3 @@ export class MetricProfileVersionDetails extends Component {
       return null;
   }
 }
-
-

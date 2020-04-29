@@ -29,6 +29,11 @@ class ListAllMetrics(APIView):
         return Response(results)
 
 
+class ListPublicAllMetrics(ListAllMetrics):
+    authentication_classes = ()
+    permission_classes = ()
+
+
 class ListMetric(APIView):
     authentication_classes = (SessionAuthentication,)
 
@@ -69,6 +74,7 @@ class ListMetric(APIView):
                 mtype=metric.mtype.name,
                 probeversion=probeversion,
                 group=group,
+                description=metric.description,
                 parent=parent,
                 probeexecutable=probeexecutable,
                 config=config,
@@ -100,6 +106,11 @@ class ListMetric(APIView):
         else:
             probeexecutable = ''
 
+        if request.data['description']:
+            description = request.data['description']
+        else:
+            description = ''
+
         metric.name = request.data['name']
         metric.mtype = poem_models.MetricType.objects.get(
             name=request.data['mtype']
@@ -107,6 +118,7 @@ class ListMetric(APIView):
         metric.group = poem_models.GroupOfMetrics.objects.get(
             name=request.data['group']
         )
+        metric.description = description
         metric.parent = parent
         metric.flags = inline_metric_for_db(request.data['flags'])
 
@@ -151,6 +163,23 @@ class ListMetric(APIView):
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
+class ListPublicMetric(ListMetric):
+    authentication_classes = ()
+    permission_classes = ()
+
+    def _denied(self):
+        return Response(status=status.HTTP_403_FORBIDDEN)
+
+    def post(self, request):
+        return self._denied()
+
+    def put(self, request):
+        return self._denied()
+
+    def delete(self, request, name):
+        return self._denied()
+
+
 class ListMetricTypes(APIView):
     authentication_classes = (SessionAuthentication,)
 
@@ -159,6 +188,11 @@ class ListMetricTypes(APIView):
             'name', flat=True
         )
         return Response(types)
+
+
+class ListPublicMetricTypes(ListMetricTypes):
+    authentication_classes = ()
+    permission_classes = ()
 
 
 class ImportMetrics(APIView):
@@ -189,6 +223,7 @@ class ImportMetrics(APIView):
                         name=metrictemplate.name,
                         mtype=mt,
                         probekey=ver,
+                        description=metrictemplate.description,
                         parent=metrictemplate.parent,
                         group=gr,
                         probeexecutable=metrictemplate.probeexecutable,
@@ -204,6 +239,7 @@ class ImportMetrics(APIView):
                     metric = poem_models.Metric.objects.create(
                         name=metrictemplate.name,
                         mtype=mt,
+                        description=metrictemplate.description,
                         parent=metrictemplate.parent,
                         flags=metrictemplate.flags,
                         group=gr

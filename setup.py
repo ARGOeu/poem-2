@@ -16,26 +16,24 @@ def get_files(install_prefix, directory):
     return files
 
 
-poem_media_files = get_files("usr/share", "poem/media") + get_files("usr/share/", "poem/static")
-
-
 setup(name=NAME,
-      version='3.1.0',
+      version='3.2.0',
       description='Profiles, Probes and Metric Configuration Management (POEM) for ARGO Monitoring framework.',
       author='SRCE',
       author_email='dvrcic@srce.hr, kzailac@srce.hr',
       license='Apache License 2.0',
       long_description=open('README.md').read(),
       long_description_content_type='text/markdown',
-      url='https://github.com/ARGOeu/poem',
+      url='https://github.com/ARGOeu/poem-2',
       classifiers=(
           "Programming Language :: Python :: 3",
           "License :: OSI Approved :: Apache Software License",
           "Operating System :: POSIX :: Linux",
       ),
       scripts=['bin/poem-syncmetricinstances', 'bin/poem-syncservtype',
-               'bin/poem-db', 'bin/poem-genseckey',
-               'bin/poem-token', 'bin/poem-syncservices', 'bin/poem-tenant'],
+               'bin/poem-db', 'bin/poem-genseckey', 'bin/poem-manage',
+               'bin/poem-token', 'bin/poem-syncservices', 'bin/poem-tenant',
+               'bin/poem-clearsessions'],
       data_files=[
           ('etc/poem', ['etc/poem.conf.template', 'etc/poem_logging.conf']),
           ('etc/cron.d/', ['cron/poem-sync', 'cron/poem-clearsessions']),
@@ -43,7 +41,7 @@ setup(name=NAME,
           ('usr/share/poem/apache', ['poem/apache/poem.wsgi']),
           ('var/log/poem', ['helpers/empty']),
           ('var/lib/poem', ['helpers/empty']),
-      ] + poem_media_files,
+      ] + get_files('usr/share/', 'poem/static'),
       include_package_data=True,
       package_dir={'Poem': 'poem/Poem'},
       packages=find_packages('poem/'),

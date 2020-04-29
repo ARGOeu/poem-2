@@ -1,0 +1,8 @@
+#!/bin/bash
+
+SITEPACK=$(python -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")
+PYTHON=$(which python)
+DJANGO_SETTINGS="export DJANGO_SETTINGS_MODULE=Poem.settings"
+MANAGEPY=$SITEPACK/Poem/manage.py
+
+$DJANGO_SETTINGS && $PYTHON $MANAGEPY $*

@@ -75,6 +75,7 @@ def create_history_entry(instance, user, comment):
             name=instance.name,
             mtype=instance.mtype,
             probekey=instance.probekey,
+            description=instance.description,
             parent=instance.parent,
             probeexecutable=instance.probeexecutable,
             config=instance.config,

@@ -10,7 +10,7 @@ include bin/*
 recursive-include poem/Poem/templates *.html
 recursive-include poem/Poem/poem/fixtures/ *.json
 recursive-include poem/Poem/ *.json
-recursive-include poem/Poem/ *.js
+recursive-include poem/static/ *
 
 exclude etc/was.*
 exclude etc/*.devel.*
