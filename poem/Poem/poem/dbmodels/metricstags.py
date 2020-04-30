@@ -51,6 +51,7 @@ class Metric(models.Model):
     mtype = models.ForeignKey(MetricType, on_delete=models.CASCADE)
     probekey = models.ForeignKey(ProbeHistory, blank=True, null=True,
                                  on_delete=models.SET_NULL)
+    description = models.TextField(default='')
     group = models.ForeignKey(GroupOfMetrics, null=True,
                               on_delete=models.SET_NULL)
     parent = models.CharField(max_length=128)

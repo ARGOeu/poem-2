@@ -5,9 +5,10 @@ SITEPACK=$(python -c "from distutils.sysconfig import get_python_lib; print(get_
 
 usage()
 {
-	printf "Usage: %s -t <tenant name> [-d <hostname>] \n" $(basename $0) >&2
+	printf "Usage: %s -t <tenant name> [-d <hostname>] [-l]\n" $(basename $0) >&2
 	printf "       [-t] - tenant name\n" >&2
 	printf "       [-d] - hostname\n" >&2
+	printf "       [-l] - list all tenants\n" >&2
     exit 2
 }
 
@@ -16,7 +17,7 @@ then
     usage
 fi
 
-while getopts 't:d:h' OPTION
+while getopts 't:d:hl' OPTION
 do
     case $OPTION in
         t)
@@ -28,6 +29,11 @@ do
         h)
             usage
             ;;
+        l)
+            su -m -s /bin/sh $RUNASUSER -c \
+            "poem-manage list_tenants" | awk '{print $1}' | tr '\n' ' '
+            exit 0
+            ;;
         ?)
             usage
             ;;
@@ -37,18 +43,15 @@ done
 if [ -z "$hostname" ]
 then
     su -m -s /bin/sh $RUNASUSER -c \
-    "export DJANGO_SETTINGS_MODULE=Poem.settings && \
-    python $SITEPACK/Poem/manage.py create_tenant --name $name"
+    "poem-manage create_tenant --name $name"
 else
     su -m -s /bin/sh $RUNASUSER -c \
-    "export DJANGO_SETTINGS_MODULE=Poem.settings && \
-    python $SITEPACK/Poem/manage.py create_tenant --name $name --hostname $hostname"
+    "poem-manage create_tenant --name $name --hostname $hostname"
 fi
 
 if [[ $name != 'all' ]]
 then
     schema=$(echo "$name" | tr '[:upper:]' '[:lower:]')
     su -m -s /bin/sh $RUNASUSER -c \
-    "export DJANGO_SETTINGS_MODULE=Poem.settings && \
-    python $SITEPACK/Poem/manage.py tenant_command loaddata initial_data.json --schema=$schema"
+    "poem-manage tenant_command --schema=$schema loaddata initial_data.json "
 fi

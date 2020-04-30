@@ -1,46 +1,96 @@
 import Cookies from 'universal-cookie';
 
 export class Backend {
-  isActiveSession(isTenant=true) {
-    return fetch(`/api/v2/internal/sessionactive/${isTenant}`)
-      .then(response => {
-        if (response.ok)
-          return response.json()
-        else
-          return false
-      })
-      .catch(() => false);
+  async isActiveSession(isTenant=true) {
+    try {
+      let response = await fetch(`/api/v2/internal/sessionactive/${isTenant}`);
+      if (response.ok)
+        return response.json();
+      else
+        return false;
+    } catch(err) {
+      return false;
+    }
   }
 
-  isTenantSchema() {
-    return fetch('/api/v2/internal/istenantschema')
-      .then(response => response.ok ? response.json() : null)
-      .then(json => json['isTenantSchema'])
-      .catch(err => alert(`Something went wrong: ${err}`))
+  async isTenantSchema() {
+    try {
+      let response = await fetch('/api/v2/internal/istenantschema');
+      if (response.ok) {
+        let json = await response.json();
+        return json['isTenantSchema'];
+      } else
+        return null;
+    } catch(err) {
+      alert(`Something went wrong: ${err}`);
+    }
   }
 
-  fetchData(url) {
-    return fetch(url)
-      .then(response => response.json())
-      .catch(err => alert(`Something went wrong: ${err}`));
+  async fetchToken() {
+    try {
+      let response = await fetch('/api/v2/internal/apikeys/WEB-API');
+      if (response.ok) {
+        let json = await response.json();
+        return json['token'];
+      } else
+        return null;
+    } catch(err) {
+      alert(`Something went wrong: ${err}`)
+    }
   }
 
-  fetchListOfNames(url) {
-    return fetch(url)
-      .then(response => response.json())
-      .then(json => {
-        let list = [];
-        json.forEach((e) => list.push(e.name));
-        return list;
-      })
-      .catch(err => alert(`Something went wrong: ${err}`));
+  async fetchPublicToken() {
+    // this one fetch token with predefined name WEB-API-RO
+    // API is not protected and is used for public views
+    try {
+      let response = await fetch('/api/v2/internal/public_apikey');
+      if (response.ok) {
+        let json = await response.json();
+        return json['token'];
+      } else
+        return null;
+    } catch(err) {
+      alert(`Something went wrong: ${err}`)
+    }
   }
 
-  fetchResult(url) {
-    return fetch(url)
-      .then(response => response.json())
-      .then(json => json['result'])
-      .catch(err => alert(`Something went wrong: ${err}`));
+  async fetchConfigOptions() {
+    let response = await fetch('/api/v2/internal/config_options');
+    if (response.ok) {
+      let json = await response.json();
+      return json;
+    }
+  }
+
+  async fetchData(url) {
+    try {
+      let response = await fetch(url);
+      return response.json();
+    } catch(err) {
+      alert(`Something went wrong: ${err}`);
+    }
+  }
+
+  async fetchListOfNames(url) {
+    try {
+      let response = await fetch(url);
+      let json = await response.json();
+      let list = [];
+      json.forEach(e => list.push(e.name));
+      return list;
+    } catch(err) {
+      alert(`Something went wrong: ${err}`);
+    }
+  }
+
+  async fetchResult(url) {
+    try {
+      let response = await fetch(url);
+      let json = await response.json();
+      return json['result'];
+    } catch(err) {
+      alert(`Something went wrong: ${err}`);
+    }
   }
 
   changeObject(url, data) {
@@ -80,7 +130,6 @@ export class Backend {
       body: values && JSON.stringify(values)
     });
   }
-
 }
 
 export class WebApi {
@@ -98,17 +147,22 @@ export class WebApi {
     this.thresholdsprofiles = thresholdsProfiles;
   }
 
-  fetchMetricProfiles() {
-    return fetch(this.metricprofiles,
-      {headers:
+  async fetchMetricProfiles() {
+    try {
+      let response = await fetch(
+        this.metricprofiles,
         {
-          "Accept": "application/json",
-          "x-api-key": this.token
+          headers: {
+            "Accept": "application/json",
+            "x-api-key": this.token
+          }
         }
-      })
-      .then(response => response.json())
-      .then(json => json['data'])
-      .catch(err => alert(`Something went wrong: ${err}`));
+      );
+      let json = await response.json();
+      return json['data'];
+    } catch(err) {
+      alert(`Something went wrong: ${err}`);
+    }
   }
 
   fetchMetricProfile(id) {
@@ -159,18 +213,22 @@ export class WebApi {
     return this.deleteProfile(`${this.thresholdsprofiles}/${id}`);
   }
 
-  fetchProfile(url) {
-    return fetch(url,
-      {headers:
+  async fetchProfile(url) {
+    try {
+      let response = await fetch(
+        url,
         {
-          "Accept": "application/json",
-          "x-api-key": this.token
+          headers: {
+            "Accept": "application/json",
+            "x-api-key": this.token
+          }
         }
-      })
-      .then(response => response.json())
-      .then(json => json['data'])
-      .then(array => array[0])
-      .catch(err => alert(`Something went wrong: ${err}`));
+      );
+      let json = await response.json();
+      return json['data'][0];
+    } catch(err) {
+      alert(`Something went wrong: ${err}`);
+    }
   }
 
   changeProfile(url, data) {
@@ -199,5 +257,4 @@ export class WebApi {
       body: values && JSON.stringify(values)
     });
   }
-
 }

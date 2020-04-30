@@ -315,7 +315,7 @@ class ListUsersAPIViewTests(TenantTestCase):
             first_name='Test',
             last_name='User',
             email='testuser@example.com',
-            date_joined=datetime.datetime(2015, 1, 1, 0, 0, 0)
+            date_joined=datetime.datetime(2015, 1, 1, 0, 0, 0),
         )
 
         self.user2 = CustUser.objects.create_user(
@@ -338,29 +338,34 @@ class ListUsersAPIViewTests(TenantTestCase):
             poem_models.GroupOfAggregations.objects.create(name='Aggr1')
 
     def test_get_users(self):
-        self.maxDiff = None
         request = self.factory.get(self.url)
         force_authenticate(request, user=self.user2)
         response = self.view(request)
         self.assertEqual(
             response.data,
             [
-                OrderedDict([('first_name', 'Another'),
-                             ('last_name', 'User'),
-                             ('username', 'another_user'),
-                             ('is_active', True),
-                             ('is_superuser', True),
-                             ('email', 'otheruser@example.com'),
-                             ('date_joined', '2015-01-02T00:00:00'),
-                             ('pk', self.user2.pk)]),
-                OrderedDict([('first_name', 'Test'),
-                             ('last_name', 'User'),
-                             ('username', 'testuser'),
-                             ('is_active', True),
-                             ('is_superuser', False),
-                             ('email', 'testuser@example.com'),
-                             ('date_joined', '2015-01-01T00:00:00'),
-                             ('pk', self.user.pk)])
+                {
+                    'first_name': 'Another',
+                    'last_name': 'User',
+                    'username': 'another_user',
+                    'is_active': True,
+                    'is_superuser': True,
+                    'email': 'otheruser@example.com',
+                    'date_joined': '2015-01-02 00:00:00',
+                    'last_login': '',
+                    'pk': self.user2.pk
+                },
+                {
+                    'first_name': 'Test',
+                    'last_name': 'User',
+                    'username': 'testuser',
+                    'is_active': True,
+                    'is_superuser': False,
+                    'email': 'testuser@example.com',
+                    'date_joined': '2015-01-01 00:00:00',
+                    'last_login': '',
+                    'pk': self.user.pk
+                }
             ]
         )
 
@@ -375,14 +380,17 @@ class ListUsersAPIViewTests(TenantTestCase):
         response = self.view(request, 'testuser')
         self.assertEqual(
             response.data,
-            OrderedDict([('first_name', 'Test'),
-                         ('last_name', 'User'),
-                         ('username', 'testuser'),
-                         ('is_active', True),
-                         ('is_superuser', False),
-                         ('email', 'testuser@example.com'),
-                         ('date_joined', '2015-01-01T00:00:00'),
-                         ('pk', self.user.pk)])
+            {
+                'first_name': 'Test',
+                'last_name': 'User',
+                'username': 'testuser',
+                'is_active': True,
+                'is_superuser': False,
+                'email': 'testuser@example.com',
+                'date_joined': '2015-01-01 00:00:00',
+                'last_login': '',
+                'pk': self.user.pk
+            }
         )
 
     def test_get_user_by_username_if_username_does_not_exist(self):
@@ -1091,7 +1099,9 @@ class ListProbesAPIViewTests(TenantTestCase):
         self.assertEqual(metric.probeexecutable, '["web-api"]')
         self.assertEqual(
             metric.probekey,
-            admin_models.ProbeHistory.objects.filter(object_id=probe)[1]
+            admin_models.ProbeHistory.objects.filter(
+                object_id=probe
+            ).order_by('-date_created')[1]
         )
         self.assertEqual(
             metric.config,
@@ -3272,6 +3282,7 @@ class ListMetricAPIViewTests(TenantTestCase):
             name='argo.AMS-Check',
             mtype=mtype1,
             probekey=self.probeversion1,
+            description='Description of argo.AMS-Check',
             group=group,
             probeexecutable='["ams-probe"]',
             config='["maxCheckAttempts 3", "timeout 60",'
@@ -3332,6 +3343,7 @@ class ListMetricAPIViewTests(TenantTestCase):
                     'mtype': 'Active',
                     'probeversion': 'ams-probe (0.1.7)',
                     'group': 'EGI',
+                    'description': 'Description of argo.AMS-Check',
                     'parent': '',
                     'probeexecutable': 'ams-probe',
                     'config': [
@@ -3384,6 +3396,7 @@ class ListMetricAPIViewTests(TenantTestCase):
                     'mtype': 'Passive',
                     'probeversion': '',
                     'group': 'EGI',
+                    'description': '',
                     'parent': '',
                     'probeexecutable': '',
                     'config': [],
@@ -3418,6 +3431,7 @@ class ListMetricAPIViewTests(TenantTestCase):
                 'mtype': 'Active',
                 'probeversion': 'ams-probe (0.1.7)',
                 'group': 'EGI',
+                'description': 'Description of argo.AMS-Check',
                 'parent': '',
                 'probeexecutable': 'ams-probe',
                 'config': [
@@ -3509,6 +3523,7 @@ class ListMetricAPIViewTests(TenantTestCase):
             'name': 'argo.AMS-Check',
             'mtype': 'Active',
             'group': 'EUDAT',
+            'description': 'New description of argo.AMS-Check',
             'parent': '',
             'probeversion': 'ams-probe (0.1.11)',
             'probeexecutable': 'ams-probe',
@@ -3536,6 +3551,9 @@ class ListMetricAPIViewTests(TenantTestCase):
         self.assertEqual(metric.mtype.name, 'Active')
         self.assertEqual(metric.probekey, self.probeversion2)
         self.assertEqual(metric.group.name, 'EUDAT')
+        self.assertEqual(
+            metric.description, 'New description of argo.AMS-Check'
+        )
         self.assertEqual(metric.parent, '')
         self.assertEqual(metric.probeexecutable, '["ams-probe"]')
         self.assertEqual(
@@ -3554,6 +3572,7 @@ class ListMetricAPIViewTests(TenantTestCase):
         self.assertEqual(metric.fileparameter, '')
         self.assertEqual(serialized_data['name'], metric.name)
         self.assertEqual(serialized_data['mtype'], [metric.mtype.name])
+        self.assertEqual(serialized_data['description'], metric.description)
         self.assertEqual(
             serialized_data['probekey'],
             [metric.probekey.name, metric.probekey.package.version]
@@ -3578,6 +3597,7 @@ class ListMetricAPIViewTests(TenantTestCase):
             'mtype': 'Passive',
             'probeversion': '',
             'group': 'EUDAT',
+            'description': 'Description of passive metric org.apel.APEL-Pub.',
             'parent': 'test-parent',
             'probeexecutable': 'ams-probe',
             'config': '[{"key": "", "value": ""}]',
@@ -3604,6 +3624,10 @@ class ListMetricAPIViewTests(TenantTestCase):
         self.assertEqual(metric.mtype.name, 'Passive')
         self.assertEqual(metric.probekey, None)
         self.assertEqual(metric.group.name, 'EUDAT')
+        self.assertEqual(
+            metric.description,
+            'Description of passive metric org.apel.APEL-Pub.'
+        )
         self.assertEqual(metric.parent, '["test-parent"]')
         self.assertEqual(metric.probeexecutable, '')
         self.assertEqual(metric.config, '')
@@ -3616,6 +3640,10 @@ class ListMetricAPIViewTests(TenantTestCase):
         self.assertEqual(serialized_data['name'], metric.name)
         self.assertEqual(serialized_data['mtype'], [metric.mtype.name])
         self.assertEqual(serialized_data['probekey'], None)
+        self.assertEqual(
+            serialized_data['description'],
+            'Description of passive metric org.apel.APEL-Pub.'
+        )
         self.assertEqual(serialized_data['parent'], metric.parent)
         self.assertEqual(
             serialized_data['probeexecutable'], metric.probeexecutable
@@ -3995,6 +4023,8 @@ class ListVersionsAPIViewTests(TenantTestCase):
         )
 
         self.metrictemplate1.name = 'argo.POEM-API-MON-new'
+        self.metrictemplate1.description = \
+            'Description of argo.POEM-API-MON-new'
         self.metrictemplate1.probekey = self.ver2
         self.metrictemplate1.save()
 
@@ -4003,6 +4033,7 @@ class ListVersionsAPIViewTests(TenantTestCase):
             name=self.metrictemplate1.name,
             mtype=self.metrictemplate1.mtype,
             probekey=self.metrictemplate1.probekey,
+            description=self.metrictemplate1.description,
             probeexecutable=self.metrictemplate1.probeexecutable,
             config=self.metrictemplate1.config,
             attribute=self.metrictemplate1.attribute,
@@ -4013,13 +4044,17 @@ class ListVersionsAPIViewTests(TenantTestCase):
             fileparameter=self.metrictemplate1.fileparameter,
             date_created=datetime.datetime.now(),
             version_comment=json.dumps(
-                [{'changed': {'fields': ['name', 'probekey']}}]
+                [
+                    {'added': {'fields': ['description']}},
+                    {'changed': {'fields': ['name', 'probekey']}}
+                ]
             ),
             version_user=self.user.username
         )
 
         self.metrictemplate2 = admin_models.MetricTemplate.objects.create(
             name='org.apel.APEL-Pub',
+            description='Description of org.apel.APEL-Pub',
             mtype=self.mtype2,
             flags='["OBSESS 1", "PASSIVE 1"]'
         )
@@ -4028,6 +4063,7 @@ class ListVersionsAPIViewTests(TenantTestCase):
             object_id=self.metrictemplate2,
             name=self.metrictemplate2.name,
             mtype=self.metrictemplate2.mtype,
+            description=self.metrictemplate2.description,
             probekey=self.metrictemplate2.probekey,
             probeexecutable=self.metrictemplate2.probeexecutable,
             config=self.metrictemplate2.config,
@@ -4050,6 +4086,7 @@ class ListVersionsAPIViewTests(TenantTestCase):
             name=self.metrictemplate2.name,
             mtype=self.metrictemplate2.mtype,
             probekey=self.metrictemplate2.probekey,
+            description=self.metrictemplate2.description,
             probeexecutable=self.metrictemplate2.probeexecutable,
             config=self.metrictemplate2.config,
             attribute=self.metrictemplate2.attribute,
@@ -4187,6 +4224,7 @@ class ListVersionsAPIViewTests(TenantTestCase):
                         'name': 'argo.POEM-API-MON-new',
                         'mtype': self.mtype1.name,
                         'probeversion': 'poem-probe-new (0.1.11)',
+                        'description': 'Description of argo.POEM-API-MON-new',
                         'parent': '',
                         'probeexecutable': 'poem-probe',
                         'config': [
@@ -4213,7 +4251,7 @@ class ListVersionsAPIViewTests(TenantTestCase):
                     'date_created': datetime.datetime.strftime(
                         self.ver5.date_created, '%Y-%m-%d %H:%M:%S'
                     ),
-                    'comment': 'Changed name and probekey.',
+                    'comment': 'Added description. Changed name and probekey.',
                     'version': '0.1.11'
                 },
                 {
@@ -4224,6 +4262,7 @@ class ListVersionsAPIViewTests(TenantTestCase):
                         'name': 'argo.POEM-API-MON',
                         'mtype': self.mtype1.name,
                         'probeversion': 'poem-probe (0.1.7)',
+                        'description': '',
                         'parent': '',
                         'probeexecutable': 'poem-probe',
                         'config': [
@@ -4273,6 +4312,7 @@ class ListVersionsAPIViewTests(TenantTestCase):
                         'name': 'argo.POEM-API-MON-new',
                         'mtype': self.mtype1.name,
                         'probeversion': 'poem-probe-new (0.1.11)',
+                        'description': 'Description of argo.POEM-API-MON-new',
                         'parent': '',
                         'probeexecutable': 'poem-probe',
                         'config': [
@@ -4299,7 +4339,7 @@ class ListVersionsAPIViewTests(TenantTestCase):
                     'date_created': datetime.datetime.strftime(
                         self.ver5.date_created, '%Y-%m-%d %H:%M:%S'
                     ),
-                    'comment': 'Changed name and probekey.',
+                    'comment': 'Added description. Changed name and probekey.',
                     'version': '0.1.11'
                 },
                 {
@@ -4310,6 +4350,7 @@ class ListVersionsAPIViewTests(TenantTestCase):
                         'name': 'argo.POEM-API-MON',
                         'mtype': self.mtype1.name,
                         'probeversion': 'poem-probe (0.1.7)',
+                        'description': '',
                         'parent': '',
                         'probeexecutable': 'poem-probe',
                         'config': [
@@ -4357,6 +4398,7 @@ class ListVersionsAPIViewTests(TenantTestCase):
                         'name': 'org.apel.APEL-Pub-new',
                         'mtype': self.mtype2.name,
                         'probeversion': '',
+                        'description': 'Description of org.apel.APEL-Pub',
                         'parent': '',
                         'probeexecutable': '',
                         'config': [],
@@ -4387,6 +4429,7 @@ class ListVersionsAPIViewTests(TenantTestCase):
                         'name': 'org.apel.APEL-Pub',
                         'mtype': self.mtype2.name,
                         'probeversion': '',
+                        'description': 'Description of org.apel.APEL-Pub',
                         'parent': '',
                         'probeexecutable': '',
                         'config': [],
@@ -4568,6 +4611,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             name='argo.AMS-Check',
             mtype=self.mtype1,
             probekey=self.probeversion1,
+            description='Some description of argo.AMS-Check metric template.',
             probeexecutable='["ams-probe"]',
             config='["maxCheckAttempts 3", "timeout 60",'
                    ' "path /usr/libexec/argo-monitoring/probes/argo",'
@@ -4588,6 +4632,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             name=self.metrictemplate1.name,
             mtype=self.metrictemplate1.mtype,
             probekey=self.metrictemplate1.probekey,
+            description=self.metrictemplate1.description,
             probeexecutable=self.metrictemplate1.probeexecutable,
             config=self.metrictemplate1.config,
             attribute=self.metrictemplate1.attribute,
@@ -4605,6 +4650,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             object_id=self.metrictemplate2,
             name=self.metrictemplate2.name,
             mtype=self.metrictemplate2.mtype,
+            description=self.metrictemplate2.description,
             probekey=self.metrictemplate2.probekey,
             probeexecutable=self.metrictemplate2.probeexecutable,
             config=self.metrictemplate2.config,
@@ -4629,6 +4675,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             object_id=self.metrictemplate1,
             name=self.metrictemplate1.name,
             mtype=self.metrictemplate1.mtype,
+            description=self.metrictemplate1.description,
             probekey=self.metrictemplate1.probekey,
             probeexecutable=self.metrictemplate1.probeexecutable,
             config=self.metrictemplate1.config,
@@ -4649,6 +4696,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             name=self.metrictemplate1.name,
             group=group,
             mtype=self.mtype3,
+            description=self.metrictemplate1.description,
             probekey=self.metrictemplate1.probekey,
             probeexecutable=self.metrictemplate1.probeexecutable,
             config=self.metrictemplate1.config,
@@ -4678,6 +4726,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             name=self.metrictemplate2.name,
             group=group,
             mtype=mtype4,
+            description=self.metrictemplate2.description,
             probekey=self.metrictemplate2.probekey,
             probeexecutable=self.metrictemplate2.probeexecutable,
             config=self.metrictemplate2.config,
@@ -4714,6 +4763,8 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
                     'id': self.metrictemplate1.id,
                     'name': 'argo.AMS-Check',
                     'mtype': 'Active',
+                    'description': 'Some description of argo.AMS-Check metric '
+                                   'template.',
                     'ostag': ['CentOS 6', 'CentOS 7'],
                     'probeversion': 'ams-probe (0.1.8)',
                     'parent': '',
@@ -4766,6 +4817,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
                     'id': self.metrictemplate2.id,
                     'name': 'org.apel.APEL-Pub',
                     'mtype': 'Passive',
+                    'description': '',
                     'ostag': [],
                     'probeversion': '',
                     'parent': '',
@@ -4800,6 +4852,8 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
                 'id': self.metrictemplate1.id,
                 'name': 'argo.AMS-Check',
                 'mtype': 'Active',
+                'description': 'Some description of argo.AMS-Check metric '
+                               'template.',
                 'probeversion': 'ams-probe (0.1.8)',
                 'parent': '',
                 'probeexecutable': 'ams-probe',
@@ -4872,6 +4926,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'name': 'new-template',
             'probeversion': 'ams-probe (0.1.7)',
             'mtype': 'Active',
+            'description': 'New description for new-template.',
             'probeexecutable': 'ams-probe',
             'parent': '',
             'config': json.dumps(conf),
@@ -4893,6 +4948,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions.count(), 1)
         self.assertEqual(mt.mtype, self.mtype1)
         self.assertEqual(mt.probekey, self.probeversion1)
+        self.assertEqual(mt.description, 'New description for new-template.')
         self.assertEqual(mt.parent, '')
         self.assertEqual(mt.probeexecutable, '["ams-probe"]')
         self.assertEqual(
@@ -4939,6 +4995,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'name': 'argo.AMS-Check',
             'probeversion': 'ams-probe (0.1.7)',
             'mtype': 'Active',
+            'description': 'Description of argo.AMS-Check metric template.',
             'probeexecutable': 'ams-probe',
             'parent': '',
             'config': json.dumps(conf),
@@ -4978,6 +5035,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'id': self.metrictemplate1.id,
             'name': 'argo.AMS-Check-new',
             'mtype': 'Active',
+            'description': 'New description for the metric template.',
             'probeversion': 'ams-probe (0.1.8)',
             'parent': 'argo.AMS-Check',
             'probeexecutable': 'ams-probe',
@@ -5031,12 +5089,15 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
                 '{"added": {"fields": ["fileparameter"], '
                 '"object": ["fp-key"]}}',
                 '{"added": {"fields": ["parent"]}}',
-                '{"changed": {"fields": ["name", "probekey"]}}'
+                '{"changed": {"fields": ["description", "name", "probekey"]}}'
             }
         )
         self.assertEqual(metric_versions.count(), 1)
         self.assertEqual(mt.name, 'argo.AMS-Check-new')
         self.assertEqual(mt.mtype.name, 'Active')
+        self.assertEqual(
+            mt.description, 'New description for the metric template.'
+        )
         self.assertEqual(mt.parent, '["argo.AMS-Check"]')
         self.assertEqual(mt.probeexecutable, '["ams-probe"]')
         self.assertEqual(
@@ -5066,6 +5127,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(metric.name, mt.name)
         self.assertEqual(metric.mtype.name, mt.mtype.name)
         self.assertEqual(metric.probekey, mt.probekey)
+        self.assertEqual(metric.description, mt.description)
         self.assertEqual(metric.group.name, 'TEST')
         self.assertEqual(metric.parent, mt.parent)
         self.assertEqual(metric.probeexecutable, mt.probeexecutable)
@@ -5084,6 +5146,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(metric.fileparameter, mt.fileparameter)
         self.assertEqual(serialized_data['name'], metric.name)
         self.assertEqual(serialized_data['mtype'], [metric.mtype.name])
+        self.assertEqual(serialized_data['description'], metric.description)
         self.assertEqual(
             serialized_data['probekey'],
             [metric.probekey.name, metric.probekey.package.version]
@@ -5119,6 +5182,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'id': self.metrictemplate1.id,
             'name': 'argo.AMS-Check-new',
             'mtype': 'Active',
+            'description': 'New description.',
             'probeversion': 'ams-probe (0.1.11)',
             'parent': 'argo.AMS-Check',
             'probeexecutable': 'ams-probe-new',
@@ -5169,14 +5233,15 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
                 '{"added": {"fields": ["fileparameter"], '
                 '"object": ["fp-key"]}}',
                 '{"added": {"fields": ["parent"]}}',
-                '{"changed": {"fields": ["name", "probeexecutable", '
-                '"probekey"]}}'
+                '{"changed": {"fields": ["description", "name", '
+                '"probeexecutable", "probekey"]}}'
             }
         )
         self.assertEqual(metric_versions.count(), 1)
         self.assertEqual(mt.name, 'argo.AMS-Check-new')
         self.assertEqual(mt.mtype.name, 'Active')
         self.assertEqual(mt.probeexecutable, '["ams-probe-new"]')
+        self.assertEqual(mt.description, 'New description.')
         self.assertEqual(mt.parent, '["argo.AMS-Check"]')
         self.assertEqual(
             mt.config,
@@ -5193,6 +5258,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].name, mt.name)
         self.assertEqual(versions[0].mtype, mt.mtype)
         self.assertEqual(versions[0].probekey, mt.probekey)
+        self.assertEqual(versions[0].description, mt.description)
         self.assertEqual(versions[0].parent, mt.parent)
         self.assertEqual(versions[0].probeexecutable, mt.probeexecutable)
         self.assertEqual(versions[0].config, mt.config)
@@ -5205,6 +5271,10 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(metric.name, 'argo.AMS-Check')
         self.assertEqual(metric.mtype.name, 'Active')
         self.assertEqual(metric.probekey, self.probeversion2)
+        self.assertEqual(
+            metric.description,
+            'Some description of argo.AMS-Check metric template.'
+        )
         self.assertEqual(metric.group.name, 'TEST')
         self.assertEqual(metric.parent, '')
         self.assertEqual(metric.probeexecutable, '["ams-probe"]')
@@ -5226,6 +5296,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             serialized_data['probekey'],
             [metric.probekey.name, metric.probekey.package.version]
         )
+        self.assertEqual(serialized_data['description'], metric.description)
         self.assertEqual(serialized_data['group'], ['TEST'])
         self.assertEqual(serialized_data['parent'], metric.parent)
         self.assertEqual(
@@ -5246,6 +5317,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'id': self.metrictemplate2.id,
             'name': 'org.apel.APEL-Pub-new',
             'probeversion': '',
+            'description': 'Added description for org.apel.APEL-Pub-new.',
             'mtype': 'Passive',
             'probeexecutable': '',
             'parent': '',
@@ -5277,6 +5349,9 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(metric_versions.count(), 1)
         self.assertEqual(mt.name, 'org.apel.APEL-Pub-new')
         self.assertEqual(mt.mtype.name, 'Passive')
+        self.assertEqual(
+            mt.description, 'Added description for org.apel.APEL-Pub-new.'
+        )
         self.assertEqual(mt.probeexecutable, '')
         self.assertEqual(mt.parent, '')
         self.assertEqual(mt.config, '')
@@ -5289,6 +5364,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].name, mt.name)
         self.assertEqual(versions[0].mtype, mt.mtype)
         self.assertEqual(versions[0].probekey, mt.probekey)
+        self.assertEqual(versions[0].description, mt.description)
         self.assertEqual(versions[0].parent, mt.parent)
         self.assertEqual(versions[0].probeexecutable, mt.probeexecutable)
         self.assertEqual(versions[0].config, mt.config)
@@ -5301,6 +5377,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(metric.name, mt.name)
         self.assertEqual(metric.mtype.name, mt.mtype.name)
         self.assertEqual(metric.probekey, mt.probekey)
+        self.assertEqual(metric.description, mt.description)
         self.assertEqual(metric.group.name, 'TEST')
         self.assertEqual(metric.parent, mt.parent)
         self.assertEqual(metric.probeexecutable, mt.probeexecutable)
@@ -5314,6 +5391,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(serialized_data['name'], metric.name)
         self.assertEqual(serialized_data['mtype'], [metric.mtype.name])
         self.assertEqual(serialized_data['probekey'], None)
+        self.assertEqual(serialized_data['description'], metric.description)
         self.assertEqual(serialized_data['group'], ['TEST'])
         self.assertEqual(serialized_data['parent'], metric.parent)
         self.assertEqual(
@@ -5337,6 +5415,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             name=self.metrictemplate1.name,
             mtype=self.metrictemplate1.mtype,
             probekey=self.metrictemplate1.probekey,
+            description=self.metrictemplate1.description,
             probeexecutable=self.metrictemplate1.probeexecutable,
             attribute=self.metrictemplate1.attribute,
             dependency=self.metrictemplate1.dependency,
@@ -5364,6 +5443,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'name': 'argo.AMS-Check-new',
             'mtype': 'Active',
             'probeversion': 'ams-probe (0.1.11)',
+            'description': self.metrictemplate1.description,
             'parent': 'argo.AMS-Check',
             'probeexecutable': 'ams-probe',
             'config': json.dumps(conf),
@@ -5394,6 +5474,10 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(metric_versions.count(), 1)
         self.assertEqual(mt.name, 'argo.AMS-Check-new')
         self.assertEqual(mt.mtype.name, 'Active')
+        self.assertEqual(
+            mt.description,
+            'Some description of argo.AMS-Check metric template.'
+        )
         self.assertEqual(mt.parent, '["argo.AMS-Check"]')
         self.assertEqual(mt.probeexecutable, '["ams-probe"]')
         self.assertEqual(
@@ -5411,6 +5495,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].name, mt.name)
         self.assertEqual(versions[0].mtype, mt.mtype)
         self.assertEqual(versions[0].probekey, mt.probekey)
+        self.assertEqual(versions[0].description, mt.description)
         self.assertEqual(versions[0].parent, mt.parent)
         self.assertEqual(versions[0].probeexecutable, mt.probeexecutable)
         self.assertEqual(versions[0].config, mt.config)
@@ -5423,6 +5508,10 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(metric.name, 'argo.AMS-Check')
         self.assertEqual(metric.mtype.name, 'Active')
         self.assertEqual(metric.probekey, self.probeversion2)
+        self.assertEqual(
+            metric.description,
+            'Some description of argo.AMS-Check metric template.'
+        )
         self.assertEqual(metric.group.name, 'TEST')
         self.assertEqual(metric.parent, '')
         self.assertEqual(metric.probeexecutable, '["ams-probe"]')
@@ -5443,6 +5532,10 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(
             serialized_data['probekey'],
             [metric.probekey.name, metric.probekey.package.version]
+        )
+        self.assertEqual(
+            serialized_data['description'],
+            'Some description of argo.AMS-Check metric template.'
         )
         self.assertEqual(serialized_data['group'], ['TEST'])
         self.assertEqual(serialized_data['parent'], metric.parent)
@@ -5476,6 +5569,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'name': 'org.apel.APEL-Pub',
             'mtype': self.mtype1,
             'probeversion': 'ams-probe (0.1.7)',
+            'description': self.metrictemplate1.description,
             'parent': '',
             'probeexecutable': 'ams-probe',
             'config': json.dumps(conf),
@@ -5631,6 +5725,7 @@ class ImportMetricsAPIViewTests(TenantTestCase):
 
         self.template2 = admin_models.MetricTemplate.objects.create(
             name='argo.AMSPublisher-Check',
+            description='Description of argo.AMSPublisher-Check.',
             probeexecutable='["ams-publisher-probe"]',
             config='["interval 180", "maxCheckAttempts 1", '
                    '"path /usr/libexec/argo-monitoring/probes/argo", '
@@ -5657,6 +5752,7 @@ class ImportMetricsAPIViewTests(TenantTestCase):
         self.assertEqual(poem_models.Metric.objects.all().count(), 2)
         mt1 = poem_models.Metric.objects.get(name='argo.AMS-Check')
         mt2 = poem_models.Metric.objects.get(name='argo.AMSPublisher-Check')
+        self.assertEqual(mt1.description, self.template1.description)
         self.assertEqual(mt1.parent, self.template1.parent)
         self.assertEqual(mt1.probeexecutable, self.template1.probeexecutable)
         self.assertEqual(mt1.config, self.template1.config)
@@ -5667,6 +5763,7 @@ class ImportMetricsAPIViewTests(TenantTestCase):
         self.assertEqual(mt1.parameter, self.template1.parameter)
         self.assertEqual(mt1.fileparameter, self.template1.fileparameter)
         self.assertEqual(mt1.probekey, self.template1.probekey)
+        self.assertEqual(mt2.description, self.template2.description)
         self.assertEqual(mt2.parent, self.template2.parent)
         self.assertEqual(mt2.probeexecutable, self.template2.probeexecutable)
         self.assertEqual(mt2.config, self.template2.config)
@@ -5858,6 +5955,7 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
             mtype=self.mtype1,
             group=group1,
             probekey=self.probever1,
+            description='Description of test.AMS-Check.',
             probeexecutable='["ams-probe"]',
             config='["maxCheckAttempts 3", "timeout 60",'
                    ' "path /usr/libexec/argo-monitoring/probes/argo",'
@@ -5884,6 +5982,7 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
         self.metric1.name = 'argo.AMS-Check-new'
         self.metric1.probeexecutable = '["ams-probe-2"]'
         self.metric1.probekey = self.probever2
+        self.metric1.description = 'Description of argo.AMS-Check-new.'
         self.metric1.group = group2
         self.metric1.parent = '["new-parent"]'
         self.metric1.config = '["maxCheckAttempts 4", "timeout 70", ' \
@@ -5898,7 +5997,8 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
 
         comment = create_comment(
             self.metric1, ct=ct_m, new_serialized_data=serializers.serialize(
-                'json', [self.metric1], use_natural_foreign_keys=True,
+                'json', [self.metric1],
+                use_natural_foreign_keys=True,
                 use_natural_primary_keys=True
             )
         )
@@ -5918,6 +6018,7 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
 
         self.metric2 = poem_models.Metric.objects.create(
             name='org.apel.APEL-Pub',
+            description='Description of org.apel.APEL-Pub.',
             mtype=self.mtype2,
             group=group1,
             flags='["OBSESS 1", "PASSIVE 1"]'
@@ -6197,6 +6298,7 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
                         'mtype': self.mtype1.name,
                         'group': 'TEST',
                         'probeversion': 'ams-probe (0.1.11)',
+                        'description': 'Description of argo.AMS-Check-new.',
                         'parent': 'new-parent',
                         'probeexecutable': 'ams-probe-2',
                         'config': [
@@ -6226,8 +6328,8 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
                         self.ver2.date_created, '%Y-%m-%d %H:%M:%S'
                     ),
                     'comment': 'Changed config fields "maxCheckAttempts", '
-                               '"retryInterval" and "timeout". Changed group '
-                               'and probekey.',
+                               '"retryInterval" and "timeout". Added '
+                               'description. Changed group and probekey.',
                     'version': datetime.datetime.strftime(
                         self.ver2.date_created, '%Y%m%d-%H%M%S'
                     )
@@ -6240,6 +6342,7 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
                         'mtype': self.mtype1.name,
                         'group': 'EGI',
                         'probeversion': 'ams-probe (0.1.7)',
+                        'description': '',
                         'parent': '',
                         'probeexecutable': 'ams-probe',
                         'config': [
@@ -6291,6 +6394,7 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
                         'mtype': self.mtype2.name,
                         'group': 'EGI',
                         'probeversion': '',
+                        'description': 'Description of org.apel.APEL-Pub.',
                         'parent': '',
                         'probeexecutable': '',
                         'config': [],
@@ -6890,6 +6994,7 @@ class HistoryHelpersTests(TenantTestCase):
 
         self.mt1 = admin_models.MetricTemplate.objects.create(
             name='metric-template-1',
+            description='Description of metric-template-1.',
             parent='["parent"]',
             config='["maxCheckAttempts 3", "timeout 60",'
                    ' "path $USER", "interval 5", "retryInterval 3"]',
@@ -6909,6 +7014,7 @@ class HistoryHelpersTests(TenantTestCase):
             name=self.mt1.name,
             mtype=self.mt1.mtype,
             probekey=self.mt1.probekey,
+            description=self.mt1.description,
             parent=self.mt1.parent,
             probeexecutable=self.mt1.probeexecutable,
             config=self.mt1.config,
@@ -6933,6 +7039,7 @@ class HistoryHelpersTests(TenantTestCase):
             name=self.mt1.name,
             mtype=self.mt1.mtype,
             probekey=self.mt1.probekey,
+            description=self.mt1.description,
             parent=self.mt1.parent,
             probeexecutable=self.mt1.probeexecutable,
             config=self.mt1.config,
@@ -6951,6 +7058,7 @@ class HistoryHelpersTests(TenantTestCase):
 
         self.mt2 = admin_models.MetricTemplate.objects.create(
             name='metric-template-3',
+            description='Description of metric-template-3.',
             parent='["parent"]',
             config='["maxCheckAttempts 3", "timeout 60",'
                    ' "path $USER", "interval 5", "retryInterval 3"]',
@@ -6970,6 +7078,7 @@ class HistoryHelpersTests(TenantTestCase):
             name=self.mt2.name,
             mtype=self.mt2.mtype,
             probekey=self.mt2.probekey,
+            description=self.mt2.description,
             parent=self.mt2.parent,
             probeexecutable=self.mt2.probeexecutable,
             config=self.mt2.config,
@@ -6986,6 +7095,7 @@ class HistoryHelpersTests(TenantTestCase):
 
         self.metric1 = poem_models.Metric.objects.create(
             name='metric-1',
+            description='Description of metric-1.',
             parent='["parent"]',
             config='["maxCheckAttempts 3", "timeout 60",'
                    ' "path $USER", "interval 5", "retryInterval 3"]',
@@ -7140,6 +7250,7 @@ class HistoryHelpersTests(TenantTestCase):
 
     def test_create_comment_for_metric_template(self):
         self.mt1.name = 'metric-template-2'
+        self.mt1.description = 'New description for metric-template-2.'
         self.mt1.probekey = self.probe_history3
         self.mt1.parent = ''
         self.mt1.probeexecutable = '["new-probeexecutable"]'
@@ -7157,7 +7268,7 @@ class HistoryHelpersTests(TenantTestCase):
                 '"object": ["dependency-key2"]}}',
                 '{"added": {"fields": ["flags"], "object": ["flags-key1"]}}',
                 '{"added": {"fields": ["probeexecutable"]}}',
-                '{"changed": {"fields": ["name", "probekey"]}}',
+                '{"changed": {"fields": ["description", "name", "probekey"]}}',
                 '{"deleted": {"fields": ["parent"]}}'
             }
         )
@@ -7165,6 +7276,7 @@ class HistoryHelpersTests(TenantTestCase):
     def test_create_comment_for_metric_template_if_initial(self):
         mt = admin_models.MetricTemplate.objects.create(
             name='metric-template-2',
+            description='Description for metric-template-2.',
             probekey=self.probe_history2,
             probeexecutable='["new-probeexecutable"]',
             config='["maxCheckAttempts 4", "timeout 60",'
@@ -7206,6 +7318,7 @@ class HistoryHelpersTests(TenantTestCase):
 
     def test_do_not_update_comment_for_metric_template_if_initial(self):
         self.mt2.name = 'metric-template-4'
+        self.mt2.description = 'Description for metric-template-4.'
         self.mt2.parent = ''
         self.mt2.probeexecutable = '["new-probeexecutable"]'
         self.mt2.dependency = '["dependency-key1 dependency-value1"]'
@@ -7308,6 +7421,7 @@ class HistoryHelpersTests(TenantTestCase):
     def test_create_comment_for_metric(self):
         metric = poem_models.Metric(
             name='metric-2',
+            description='Description for metric-2.',
             probekey=self.probe_history2,
             probeexecutable='["new-probeexecutable"]',
             config='["maxCheckAttempts 3", "timeout 60",'
@@ -7337,7 +7451,7 @@ class HistoryHelpersTests(TenantTestCase):
                 '"object": ["dependency-key2"]}}',
                 '{"added": {"fields": ["flags"], "object": ["flags-key1"]}}',
                 '{"added": {"fields": ["probeexecutable"]}}',
-                '{"changed": {"fields": ["name", "probekey"]}}',
+                '{"changed": {"fields": ["description", "name", "probekey"]}}',
                 '{"deleted": {"fields": ["parent"]}}'
             }
         )
@@ -7345,6 +7459,7 @@ class HistoryHelpersTests(TenantTestCase):
     def test_create_comment_for_metric_if_field_deleted_from_model(self):
         mt = poem_models.Metric(
             name='metric-2',
+            description='Description of metric-1.',
             probekey=self.probe_history2,
             probeexecutable='["new-probeexecutable"]',
             config='["maxCheckAttempts 4", "timeout 60",'
@@ -7387,6 +7502,7 @@ class HistoryHelpersTests(TenantTestCase):
     def test_create_comment_for_metric_if_field_added_to_model(self):
         mt = poem_models.Metric(
             name='metric-2',
+            description='Description of metric-1.',
             probekey=self.probe_history2,
             probeexecutable='["new-probeexecutable"]',
             config='["maxCheckAttempts 4", "timeout 60",'
@@ -7430,6 +7546,7 @@ class HistoryHelpersTests(TenantTestCase):
     def test_create_comment_for_metric_if_initial(self):
         mt = poem_models.Metric.objects.create(
             name='metric-template-2',
+            description='Description for metric-2.',
             probekey=self.probe_history2,
             probeexecutable='["new-probeexecutable"]',
             config='["maxCheckAttempts 4", "timeout 60",'
@@ -8461,9 +8578,11 @@ class ListPackagesAPIViewTests(TenantTestCase):
             'use_present_version': False,
             'repos': ['repo-1']
         }
+        self.assertEqual(admin_models.Package.objects.all().count(), 4)
         request = self.factory.post(self.url, data, format='json')
         force_authenticate(request, user=self.user)
         response = self.view(request)
+        self.assertEqual(admin_models.Package.objects.all().count(), 4)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(
             response.data, {'detail': 'You should specify YUM repo tag!'}
@@ -8476,9 +8595,11 @@ class ListPackagesAPIViewTests(TenantTestCase):
             'use_present_version': False,
             'repos': ['nonexisting (CentOS 7)']
         }
+        self.assertEqual(admin_models.Package.objects.all().count(), 4)
         request = self.factory.post(self.url, data, format='json')
         force_authenticate(request, user=self.user)
         response = self.view(request)
+        self.assertEqual(admin_models.Package.objects.all().count(), 4)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(
             response.data, {'detail': 'YUM repo not found.'}

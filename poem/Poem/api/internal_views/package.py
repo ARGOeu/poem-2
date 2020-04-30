@@ -74,13 +74,36 @@ class ListPackages(APIView):
                 version = request.data['version']
                 use_present_version = False
 
+            # check if repos exist
+            repos = dict(request.data)['repos']
+
+            try:
+                for repo in repos:
+                    repo_name = repo.split(' ')[0]
+                    repo_tag = admin_models.OSTag.objects.get(
+                        name=repo.split('(')[1][0:-1]
+                    )
+                    admin_models.YumRepo.objects.get(
+                        name=repo_name, tag=repo_tag
+                    )
+
+            except admin_models.YumRepo.DoesNotExist:
+                return Response(
+                    {'detail': 'YUM repo not found.'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+            except IndexError:
+                return Response(
+                    {'detail': 'You should specify YUM repo tag!'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
             package = admin_models.Package.objects.create(
                 name=request.data['name'],
                 version=version,
                 use_present_version=use_present_version
             )
-
-            repos = dict(request.data)['repos']
 
             for repo in repos:
                 repo_name = repo.split(' ')[0]
@@ -97,18 +120,6 @@ class ListPackages(APIView):
             return Response(
                 {'detail':
                      'Package with this name and version already exists.'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        except admin_models.YumRepo.DoesNotExist:
-            return Response(
-                {'detail': 'YUM repo not found.'},
-                status=status.HTTP_404_NOT_FOUND
-            )
-
-        except IndexError:
-            return Response(
-                {'detail': 'You should specify YUM repo tag!'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -189,3 +200,19 @@ class ListPackages(APIView):
                 {'detail': 'You cannot delete package with associated probes!'},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+class ListPublicPackages(ListPackages):
+    authentication_classes = ()
+    permission_classes = ()
+
+    def _denied(self):
+        return Response(status=status.HTTP_403_FORBIDDEN)
+
+    def post(self, request):
+        return self._denied()
+
+    def put(self, request):
+        return self._denied()
+
+    def delete(self, request, nameversion):
+        return self._denied()

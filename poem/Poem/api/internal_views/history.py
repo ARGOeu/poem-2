@@ -59,6 +59,7 @@ class ListVersions(APIView):
                             'name': ver.name,
                             'mtype': ver.mtype.name,
                             'probeversion': probekey,
+                            'description': ver.description,
                             'parent': one_value_inline(ver.parent),
                             'probeexecutable': one_value_inline(
                                 ver.probeexecutable
@@ -92,3 +93,8 @@ class ListVersions(APIView):
             results = sorted([ver.__str__() for ver in vers], key=str.lower)
 
             return Response(results)
+
+
+class ListPublicVersions(ListVersions):
+    authentication_classes = ()
+    permission_classes = ()
