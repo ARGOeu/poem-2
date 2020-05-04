@@ -2863,6 +2863,70 @@ class GetUserProfileForUsernameAPIViewTests(TenantTestCase):
         self.assertEqual(userprofile.groupsofthresholdsprofiles.count(), 0)
 
 
+class GetSessionDetailsAPIViewTests(TenantTestCase):
+    def setUp(self):
+        self.factory = TenantRequestFactory(self.tenant)
+        self.view = views.IsSessionActive.as_view()
+        self.url = '/api/v2/internal/sessionactive/'
+        self.user = CustUser.objects.create(username='testuser')
+
+        self.gm = poem_models.GroupOfMetrics.objects.create(
+            name='GROUP-metrics'
+        )
+        self.ga = poem_models.GroupOfAggregations.objects.create(
+            name='GROUP-aggregations'
+        )
+        self.gmp = poem_models.GroupOfMetricProfiles.objects.create(
+            name='GROUP-metricprofiles'
+        )
+        self.gtp = poem_models.GroupOfThresholdsProfiles.objects.create(
+            name='GROUP-thresholds'
+        )
+        self.userprofile = poem_models.UserProfile.objects.create(
+            user=self.user,
+            subject='subject',
+            displayname='First_User',
+            egiid='blablabla'
+        )
+        self.userprofile.groupsofmetrics.add(self.gm)
+        self.userprofile.groupsofaggregations.add(self.ga)
+        self.userprofile.groupsofmetricprofiles.add(self.gmp)
+        self.userprofile.groupsofthresholdsprofiles.add(self.gtp)
+        MyAPIKey.objects.create(
+            id=1,
+            name='WEB-API',
+            prefix='foo',
+            token='mocked_token_rw'
+        )
+        MyAPIKey.objects.create(
+            id=2,
+            name='WEB-API-RO',
+            token='mocked_token_ro',
+            prefix='bar'
+        )
+
+    def test_unauth(self):
+        request = self.factory.get(self.url + 'true')
+        response = self.view(request)
+        self.assertEqual(response.status_code, 403)
+
+    def test_auth(self):
+        request = self.factory.get(self.url + 'true')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'true')
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.data['active'])
+        self.assertFalse(response.data['userdetails']['is_superuser'])
+        self.assertEqual(response.data['userdetails']['username'], 'testuser')
+        self.assertEqual(response.data['userdetails']['groups'], OrderedDict([
+            ('aggregations', ['GROUP-aggregations']),
+            ('metricprofiles', ['GROUP-metricprofiles']),
+            ('metrics', ['GROUP-metrics']),
+            ('thresholdsprofiles', ['GROUP-thresholds'])]
+        ))
+        self.assertEqual(response.data['userdetails']['token'], 'mocked_token_rw')
+
+
 class ListGroupsForGivenUserAPIViewTests(TenantTestCase):
     def setUp(self):
         self.factory = TenantRequestFactory(self.tenant)
