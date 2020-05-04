@@ -26,19 +26,6 @@ export class Backend {
     }
   }
 
-  async fetchToken() {
-    try {
-      let response = await fetch('/api/v2/internal/apikeys/WEB-API');
-      if (response.ok) {
-        let json = await response.json();
-        return json['token'];
-      } else
-        return null;
-    } catch(err) {
-      alert(`Something went wrong: ${err}`)
-    }
-  }
-
   async fetchPublicToken() {
     // this one fetch token with predefined name WEB-API-RO
     // API is not protected and is used for public views
