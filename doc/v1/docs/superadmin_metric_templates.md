@@ -25,11 +25,11 @@ Mandatory fields in case of active metric template:
 * **Type** - type (active or passive; active in this example);
 * **Probe executable** - executable file;
 * **Config** 
-    * **maxCheckAttempts**,
-    * **timeout**,
-    * **path**,
-    * **interval**,
-    * **retryInterval**.
+    * **maxCheckAttempts** - used to define the number of times that Nagios will retry the service check command if it returns any state other than an OK state; setting this value to 1 will cause Nagios to generate an alert without retrying the service check again;
+    * **timeout** - timeout (in seconds) for probe,
+    * **path** - path to executable file,
+    * **interval** -  used to define the time (in minutes) to wait before scheduling the next "regular" check of the service; "regular" checks are those that occur when the service is in an OK state or when the service is in a non-OK state, but has already been rechecked **maxCheckAttempts** number of times;
+    * **retryInterval** - used to define the time (in minutes) to wait before scheduling a re-check of the service; services are rescheduled at the retry interval when they have changed to a non-OK state; once the service has been retried **maxCheckAttempts** times without a change in its status, it will revert to being scheduled at its "normal" rate as defined by the **interval** value.
 
 #### Attributes
 
