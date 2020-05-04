@@ -47,17 +47,26 @@ Description of attributes is given in the table below.
 | `FTS_PORT` | FTS port. |
 | `GRIDFTP_PORT` | GridFTP port. |
 | `GRAM_PORT` | GRAM Gatekeeper port. |
+| `HOST_NAME` | Hostname of the monitored box. Do not use this attribute for parameter `-H` because it is set automatically. |
+| `KEYSTORE` | Location of Java keystore with host certificate. Default value is `/etc/nagios/globus/keystore.jks`.
 | `LL_PORT` | LocalLogger port. |
 | `MYPROXY_PORT` | MYPROXY port. |
 | `NAGIOS_HOST_CERT` | Location of host certificate with nagios user ownership. Value is `/etc/nagios/globus/hostcert.pem`. |
 | `NAGIOS_HOST_KEY` | Location of host certificate key with nagios user ownership. Value is `/etc/nagios/globus/hostkey.pem`. |
+| `PATH` | Path extracted from URL. |
+| `PORT` | Port extracted from URL. |
 | `RGMA_PORT` | RGMA port. |
 | `SE_PATH` | Storage element path for a given VO. |
+| `<serviceType>_URL` | URL extracted topology database (e.g. GOCDB attribute URL); serviceType prefix is used in order to avoid collision in case of multiple serviceTypes on a same host. |
 | `SITE_BDII` | Hostname of Site BDII. |
 | `SITENAME` | Site name. |
 | `SRM1_PORT` | SRM1 port. |
 | `SRM2_PORT` | SRM2.2 port. |
+| `SSL` | Attribute is set if URL scheme is `https://`. |
 | `TOMCAT_PORT` | TOMCAT port. |
+| `TOP_BDII` | Hostname of Top BDII used for generating configuration. |
+| `TRUSTSTORE` | Location of Java truststore with all IGTF CA bundle. Default value is `/etc/nagios/globus/truststore.ts`. |
+| `URL` | URL extracted topology database (e.g. GOCDB attribute URL). |
 | `VOBOX_PORT` | VOBOX port. |
 | `WMPROXY_PORT` | WMPROXY port. |
 
