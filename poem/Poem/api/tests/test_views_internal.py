@@ -2870,28 +2870,12 @@ class GetSessionDetailsAPIViewTests(TenantTestCase):
         self.url = '/api/v2/internal/sessionactive/'
         self.user = CustUser.objects.create(username='testuser')
 
-        self.gm = poem_models.GroupOfMetrics.objects.create(
-            name='GROUP-metrics'
-        )
-        self.ga = poem_models.GroupOfAggregations.objects.create(
-            name='GROUP-aggregations'
-        )
-        self.gmp = poem_models.GroupOfMetricProfiles.objects.create(
-            name='GROUP-metricprofiles'
-        )
-        self.gtp = poem_models.GroupOfThresholdsProfiles.objects.create(
-            name='GROUP-thresholds'
-        )
         self.userprofile = poem_models.UserProfile.objects.create(
             user=self.user,
             subject='subject',
             displayname='First_User',
             egiid='blablabla'
         )
-        self.userprofile.groupsofmetrics.add(self.gm)
-        self.userprofile.groupsofaggregations.add(self.ga)
-        self.userprofile.groupsofmetricprofiles.add(self.gmp)
-        self.userprofile.groupsofthresholdsprofiles.add(self.gtp)
         MyAPIKey.objects.create(
             id=1,
             name='WEB-API',
@@ -2910,7 +2894,25 @@ class GetSessionDetailsAPIViewTests(TenantTestCase):
         response = self.view(request)
         self.assertEqual(response.status_code, 403)
 
-    def test_auth(self):
+    def test_auth_crud(self):
+        gm = poem_models.GroupOfMetrics.objects.create(
+            name='GROUP-metrics'
+        )
+        ga = poem_models.GroupOfAggregations.objects.create(
+            name='GROUP-aggregations'
+        )
+        gmp = poem_models.GroupOfMetricProfiles.objects.create(
+            name='GROUP-metricprofiles'
+        )
+        gtp = poem_models.GroupOfThresholdsProfiles.objects.create(
+            name='GROUP-thresholds'
+        )
+
+        self.userprofile.groupsofmetrics.add(gm)
+        self.userprofile.groupsofaggregations.add(ga)
+        self.userprofile.groupsofmetricprofiles.add(gmp)
+        self.userprofile.groupsofthresholdsprofiles.add(gtp)
+
         request = self.factory.get(self.url + 'true')
         force_authenticate(request, user=self.user)
         response = self.view(request, 'true')
@@ -2925,6 +2927,12 @@ class GetSessionDetailsAPIViewTests(TenantTestCase):
             ('thresholdsprofiles', ['GROUP-thresholds'])]
         ))
         self.assertEqual(response.data['userdetails']['token'], 'mocked_token_rw')
+
+    def test_auth_readonly(self):
+        request = self.factory.get(self.url + 'true')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'true')
+        self.assertEqual(response.data['userdetails']['token'], 'mocked_token_ro')
 
 
 class ListGroupsForGivenUserAPIViewTests(TenantTestCase):
