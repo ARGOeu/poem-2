@@ -60,15 +60,19 @@ class IsSessionActive(APIView):
 
     def get(self, request, istenant):
         userdetails = dict()
+        token = None
+
         user = get_user_model().objects.get(id=self.request.user.id)
         serializer = serializers.UsersSerializer(user)
         userdetails.update(serializer.data)
+
         if istenant == 'true':
             if user.is_superuser:
                 groups = get_all_groups()
             else:
                 groups = get_groups_for_user(user)
             userdetails['groups'] = groups
+
             if self._have_rwperm(groups):
                 token = self._get_token('WEB-API')
             else:
