@@ -93,7 +93,7 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
             <td className={service.isNew ? "bg-light" : ""}>
               <Autocomplete
                 inputProps={{
-                  className: `"form-control custom-select " ${service.isNew ? "border border-success" : ""}`
+                  className: `"form-control custom-select " ${service.isNew ? "border border-success" : service.serviceChanged ? "border border-danger" : ""}`
                 }}
                 getItemValue={(item) => item}
                 items={serviceflavours_all}
@@ -125,7 +125,7 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
             <td className={service.isNew ? "bg-light" : ""}>
               <Autocomplete
                 inputProps={{
-                  className: `"form-control custom-select " ${service.isNew ? "border border-success" : ""}`
+                  className: `"form-control custom-select " ${service.isNew ? "border border-success" : service.metricChanged  ? "border border-danger" : ""}`
                 }}
                 getItemValue={(item) => item}
                 items={metrics_all}
@@ -643,14 +643,20 @@ function MetricProfilesComponent(cloneview=false) {
       let new_element = tmp_list_services.findIndex(service =>
         service.index === index && service.isNew === true)
 
-      if (new_element >= 0 )
+      if (new_element >= 0 ) {
         tmp_list_services[new_element][field] = value;
-      else
+        tmp_list_services[new_element][field + 'Changed'] = value;
+      }
+      else {
         tmp_list_services[index][field] = value;
+        tmp_list_services[index][field + 'Changed'] = value;
+      }
 
       for (var i = 0; i < tmp_view_services.length; i++)
-        if (tmp_view_services[i].index === index)
+        if (tmp_view_services[i].index === index) {
           tmp_view_services[i][field] = value
+          tmp_view_services[i][field + 'Changed'] = true
+        }
 
       this.setState({
         list_services: tmp_list_services,
@@ -808,6 +814,7 @@ function MetricProfilesComponent(cloneview=false) {
     }
   }
 }
+
 
 export class MetricProfilesList extends Component
 {
