@@ -364,13 +364,12 @@ class App extends Component {
 
   async initalizeState(poemType, response) {
     if (poemType) {
-      let token = await this.backend.fetchToken();
       let options = await this.backend.fetchConfigOptions();
       this.setState({
         isTenantSchema: poemType,
         isSessionActive: response.active,
         userDetails: response.userdetails,
-        token: token,
+        token: response.userdetails.token,
         webApiMetric: options && options.result.webapimetric,
         webApiAggregation: options && options.result.webapiaggregation,
         webApiThresholds: options && options.result.webapithresholds,
@@ -564,7 +563,6 @@ class App extends Component {
       )
     }
     else if (!publicView && !isSessionActive) {
-
       return (
         <BrowserRouter>
           <Switch>

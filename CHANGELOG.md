@@ -1,5 +1,23 @@
 # Changelog
 
+## [3.2.0] - 2020-04-24
+### Added
+* ARGO-2278 Create user manual for POEM
+* ARGO-1935 Add description to metrics 
+* ARGO-2361 Expose last_login on user detail view 
+* ARGO-2400 Public pages in React POEM 
+
+### Fixed
+* ARGO-2359 Fix tenant_command parsing introduced in newer django-tenant-schemas
+* ARGO-2348 Clearance of staled sessions does not work 
+* ARGO-2366 Correctly handle empty metric profiles 
+* ARGO-2368 Fix parsing of DEBUG option
+* ARGO-2397 [packages] - add a new package 
+
+### Changed
+* ARGO-2347 Resolve security issues
+* ARGO-2282 Get rid of Promises spaghetti code and use async/await 
+
 ## [3.1.0] - 2020-03-30
 ### Added
 
