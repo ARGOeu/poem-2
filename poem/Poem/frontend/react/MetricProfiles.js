@@ -110,6 +110,7 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
                 onChange={(e) => form.setFieldValue(`view_services.${index}.service`, e.target.value)}
                 onSelect={(val) => {
                   form.setFieldValue(`view_services.${index}.service`, val)
+                  form.setFieldValue(`view_services.${index}.serviceChanged`, true)
                   onselect_handler(form.values.view_services[index],
                     'service',
                     val)
@@ -142,6 +143,7 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
                 onChange={(e) => form.setFieldValue(`view_services.${index}.metric`, e.target.value)}
                 onSelect={(val) => {
                   form.setFieldValue(`view_services.${index}.metric`, val)
+                  form.setFieldValue(`view_services.${index}.metricChanged`, true)
                   onselect_handler(form.values.view_services[index],
                     'metric',
                     val)
