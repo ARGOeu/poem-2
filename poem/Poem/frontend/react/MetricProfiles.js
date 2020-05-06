@@ -255,11 +255,10 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
                         <td className="bg-light"></td>
                       </tr>
                     : null
-                  : null
-            }
-          </React.Fragment>
-        )
-      }
+              }
+            </React.Fragment>
+          )
+        }
       </tbody>
     </table>
 
