@@ -49,9 +49,13 @@ else
     "poem-manage create_tenant --name $name --hostname $hostname"
 fi
 
+schema=$(echo "$name" | tr '[:upper:]' '[:lower:]')
+
+su -m -s /bin/sh $RUNASUSER -c \
+"poem-manage tenant_command --schema $schema poem_superuser"
+
 if [[ $name != 'all' ]]
 then
-    schema=$(echo "$name" | tr '[:upper:]' '[:lower:]')
     su -m -s /bin/sh $RUNASUSER -c \
     "poem-manage tenant_command --schema=$schema loaddata initial_data.json "
 fi
