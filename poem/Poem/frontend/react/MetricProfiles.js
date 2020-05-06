@@ -36,22 +36,10 @@ function matchItem(item, value) {
 }
 
 
-const MetricProfilesSchema = Yup.object().shape({
-  name: Yup.string().required('Required'),
-  groupname: Yup.string().required('Required'),
-  view_services: Yup.array()
-    .of(
-      Yup.object().shape({
-        service: Yup.string().required('Required'),
-        metric: Yup.string().required('Required')
-      })
-    )
-})
-
-
-const MetricProfileTupleValidate = ({view_services}) => {
+const MetricProfileTupleValidate = ({view_services, name, groupname}) => {
   let errors = new Object()
   let found = false
+  let empty = false
   errors.view_services = new Array(view_services.length)
 
   // find duplicates
@@ -67,10 +55,37 @@ const MetricProfileTupleValidate = ({view_services}) => {
         found = true
       }
 
-  if (found)
+  // empty essential metadata
+  if (!name) {
+    errors.name = 'Required'
+    empty = true
+  }
+  if (!groupname) {
+    errors.groupname = 'Required'
+    empty = true
+  }
+
+  // find new empty tuples
+  for (var i of view_services) {
+    let obj = undefined
+    if (!errors.view_services[i.index])
+      errors.view_services[i.index] = new Object()
+    obj = errors.view_services[i.index]
+
+    if (!i.service && i.isNew) {
+      obj.service = "Required"
+      empty = true
+    }
+    if (!i.metric && i.isNew) {
+      obj.metric = "Required"
+      empty = true
+    }
+  }
+
+  if (found || empty)
     return errors
   else
-    return false
+    return new Object()
 }
 
 
@@ -826,7 +841,6 @@ function MetricProfilesComponent(cloneview=false) {
                 servicesList: this.state.list_services
               }, actions)}
               enableReinitialize={true}
-              validationSchema={MetricProfilesSchema}
               validate={MetricProfileTupleValidate}
               render = {props => (
                 <Form>
