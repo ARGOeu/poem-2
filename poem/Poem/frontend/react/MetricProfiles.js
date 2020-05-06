@@ -60,7 +60,8 @@ const MetricProfileTupleValidate = ({view_services}) => {
       if (i.index !== j.index &&
           i.service === j.service &&
           i.metric === j.metric &&
-          i.isNew) {
+          (i.isNew || i.serviceChanged
+           || i.metricChanged)) {
         errors.view_services[i.index] = new Object()
         errors.view_services[i.index].dup = "Duplicated"
         found = true
