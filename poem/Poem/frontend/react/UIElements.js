@@ -265,14 +265,41 @@ export const CustomBreadcrumb = ({location, history, publicView=false}) =>
 
 const UserDetailsToolTip = ({userDetails}) =>
 (
-  <Card body inverse style={{ backgroundColor: '#333', borderColor: '#333' }}>
-    <CardHeader>
-      User details
-    </CardHeader>
-    <CardText>
-      {userDetails.first_name ? userDetails.first_name : userDetails.username}
-    </CardText>
-  </Card>
+  <React.Fragment>
+    <span>
+      {
+        userDetails.is_superuser ?
+          <Badge color="danger">
+            Tenant Admin
+          </Badge>
+          :
+          <Badge color="success">
+            Tenant User
+          </Badge>
+      }
+    </span>
+    <div>
+      <small>
+        {userDetails.username}
+      </small>
+    </div>
+    {
+      userDetails.first_name &&
+      <div>
+        <small>
+          {userDetails.first_name}{' '}{userDetails.last_name}
+        </small>
+      </div>
+    }
+    <div>
+      <small>
+        {userDetails.email}
+      </small>
+    </div>
+    <div>
+      <hr style={{'borderTop': '1px solid white'}}/>
+    </div>
+  </React.Fragment>
 )
 
 
@@ -299,7 +326,7 @@ export const NavigationBar = ({history, onLogout, isOpenModal, toggle, titleModa
         <NavbarToggler/>
         <Collapse navbar className='justify-content-end'>
           <Nav navbar >
-            <NavItem className='m-2 text-light'>
+            <NavItem className='m-2 ml-5 text-light'>
               Welcome,&nbsp;
               <span className='font-weight-bold' href="#" id="userToolTip">
                 <Badge href="#" color="dark" style={{fontSize: '100%'}}>
