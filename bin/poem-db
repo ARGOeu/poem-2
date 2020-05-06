@@ -117,7 +117,12 @@ do
                         filename=$OPTARG ;;
                 esac
             done
-            poem-manage tenant_command --schema=$schema dumpdata --indent 2 --natural-foreign --natural-primary  > $filename
+            if [[ $schema == 'public' ]]
+            then
+              poem-manage tenant_command --schema=$schema dumpdata --indent 2 --natural-foreign --natural-primary --exclude tenants.tenant > $filename
+            else
+              poem-manage tenant_command --schema=$schema dumpdata --indent 2 --natural-foreign --natural-primary  > $filename
+            fi
             ;;
         h)
             usage
