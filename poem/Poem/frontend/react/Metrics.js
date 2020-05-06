@@ -1049,8 +1049,6 @@ export const MetricForm =
         <InlineFields values={values} errors={errors} field='dependency' addnew={!isTenantSchema && !isHistory}/>
         <InlineFields values={values} errors={errors} field='parameter' addnew={!isTenantSchema && !isHistory}/>
         <InlineFields values={values} errors={errors} field='flags' addnew={!isTenantSchema && !isHistory}/>
-        <InlineFields values={values} errors={errors} field='file_attributes' addnew={!isTenantSchema && !isHistory}/>
-        <InlineFields values={values} errors={errors} field='file_parameters' addnew={!isTenantSchema && !isHistory}/>
         <h6 className='mt-4 font-weight-bold text-uppercase'>parent</h6>
         <Row>
           <Col md={5}>
