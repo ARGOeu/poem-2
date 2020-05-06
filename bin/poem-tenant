@@ -32,6 +32,7 @@ do
         l)
             su -m -s /bin/sh $RUNASUSER -c \
             "poem-manage list_tenants" | awk '{print $1}' | tr '\n' ' '
+            echo
             exit 0
             ;;
         ?)
