@@ -1,12 +1,12 @@
-# Metric Templates
+# Metric templates
 
-## List of Metric Templates
+## List of metric templates
 
 Metric templates page is only accessible through Administration page. It is used for importing [metrics](tenant_metrics.md) from metric templates, and only superusers have necessary permissions to perform metric imports. The page is shown in image below.
 
 ![Tenant Metric templates](figures/tenant_metric_templates.png)
 
-The list shows all the available metric templates defined in POEM. User can select metric templates by clicking the checkbox next to its name, or select all metric templates by checking **Select all** checkbox. 
+The list shows all the available metric templates defined in POEM. User can select metric templates by clicking the checkbox next to their names, or select all metric templates by checking **Select all** checkbox. 
 
 Before user can even start importing metrics, (s)he must choose OS. It is possible to choose between CentOS 6 and CentOS 7. It is the OS installed in tenant's monitoring box. When the appropriate OS is selected from the drop down menu, only metric templates available for that OS are shown.
 

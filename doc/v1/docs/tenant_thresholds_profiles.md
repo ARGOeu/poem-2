@@ -1,12 +1,12 @@
-# Thresholds Profiles
+# Thresholds profiles
 
-## List of Thresholds Profiles
+## List of thresholds profiles
 
 Thresholds profiles page is accessible through the menu on the left side. It is shown in the image below.
 
 ![Tenant Thresholds Profile](figures/tenant_thresholds_profiles.png)
 
-## Thresholds Profile Details
+## Thresholds profile details
 
 By clicking on profile's name, user can access the particular profile's details (shown in the image below).
 

@@ -10,7 +10,7 @@ Administration page is only available to authenticated users with superuser stat
 
 ### POEM
 
-The pages in the first section (Probes, Metric templates, YUM repos and Packages) are available to all users from the menu on the left side. 
+The pages in the first section (**YUM repos**, **Packages**, **Probes**, and **Metric templates**) are also available to all users from the menu on the left side. 
 
 ### Authentication and Authorization Page
 
