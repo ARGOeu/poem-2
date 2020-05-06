@@ -58,4 +58,6 @@ if [[ $name != 'all' ]]
 then
     su -m -s /bin/sh $RUNASUSER -c \
     "poem-manage tenant_command --schema=$schema loaddata initial_data.json "
+    su -m -s /bin/sh $RUNASUSER -c \
+    "poem-manage tenant_command --schema=$schema import_internal_metrics"
 fi
