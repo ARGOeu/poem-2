@@ -27,7 +27,7 @@ def create_tenant(name, hostname):
         schema = name.lower()
     tenant = Tenant(domain_url=hostname, schema_name=schema, name=name)
     tenant.save()
-    
+
     create_groups_of_resources(name)
 
 
@@ -49,8 +49,6 @@ class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
         name = kwargs['name']
-        # since there is no public page (yet), in case of creating public
-        # tenant, no hostname is required and a dummy value is used
         if kwargs['hostname']:
             hostname = kwargs['hostname']
         else:
