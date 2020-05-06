@@ -256,10 +256,10 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
                       </tr>
                     : null
                   : null
-              }
-            </React.Fragment>
-          )
-        }
+            }
+          </React.Fragment>
+        )
+      }
       </tbody>
     </table>
 
