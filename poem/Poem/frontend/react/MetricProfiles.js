@@ -6,12 +6,14 @@ import {
   LoadingAnim,
   BaseArgoView,
   SearchField,
+  FancyErrorMessage,
   NotifyOk,
   Icon,
   HistoryComponent,
   DiffElement,
   ProfileMainInfo,
-  NotifyError} from './UIElements';
+  NotifyError
+} from './UIElements';
 import ReactTable from 'react-table';
 import { Formik, Field, FieldArray, Form } from 'formik';
 import 'react-table/react-table.css';
@@ -37,6 +39,13 @@ function matchItem(item, value) {
 const MetricProfilesSchema = Yup.object().shape({
   name: Yup.string().required('Required'),
   groupname: Yup.string().required('Required'),
+  view_services: Yup.array()
+    .of(
+      Yup.object().shape({
+        service: Yup.string().required('Required'),
+        metric: Yup.string().required('Required')
+      })
+    )
 })
 
 
@@ -122,6 +131,13 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
                     {items}
                   </div>}
               />
+              {
+                form.errors && form.errors.view_services && form.errors.view_services[index]
+                  ? form.errors.view_services[index].service
+                    ? FancyErrorMessage(form.errors.view_services[index].service)
+                    : null
+                  : null
+              }
             </td>
             <td className={service.isNew ? "bg-light" : ""}>
               <Autocomplete
@@ -155,6 +171,13 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
                     {items}
                   </div>}
               />
+              {
+                form.errors && form.errors.view_services && form.errors.view_services[index]
+                  ? form.errors.view_services[index].metric
+                    ? FancyErrorMessage(form.errors.view_services[index].metric)
+                    : null
+                  : null
+              }
             </td>
             <td className="align-middle pl-3">
               <Button size="sm" color="light"
