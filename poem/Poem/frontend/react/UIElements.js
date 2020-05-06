@@ -1,7 +1,8 @@
-import React, { Component } from 'react';
+import React, { Component, useState } from 'react';
 import Cookies from 'universal-cookie';
 import {
   Alert,
+  Badge,
   Breadcrumb,
   BreadcrumbItem,
   Button,
@@ -9,6 +10,7 @@ import {
   Card,
   CardBody,
   CardHeader,
+  CardText,
   Col,
   Collapse,
   Container,
@@ -28,6 +30,10 @@ import {
   NavbarBrand,
   NavbarToggler,
   Row,
+  Toast,
+  ToastBody,
+  ToastHeader,
+  Tooltip,
 } from 'reactstrap';
 import {Link} from 'react-router-dom';
 import ArgoLogo from './argologo_color.svg';
@@ -257,44 +263,67 @@ export const CustomBreadcrumb = ({location, history, publicView=false}) =>
 }
 
 
-export const NavigationBar = ({history, onLogout, isOpenModal, toggle, titleModal, msgModal, userDetails}) =>
+const UserDetailsToolTip = ({userDetails}) =>
 (
-  <React.Fragment>
-    <ModalAreYouSure
-      isOpen={isOpenModal}
-      toggle={toggle}
-      title={titleModal}
-      msg={msgModal}
-      onYes={() => doLogout(history, onLogout)} />
-    <Navbar expand="md" id="argo-nav" className="border rounded">
-      <NavbarBrand className="text-light">
-        <img src={ArgoLogo} alt="ARGO logo" className="img-responsive"/>
-        <span className="pl-3">
-          <strong>ARGO</strong> POEM
-        </span>
-      </NavbarBrand>
-      <NavbarToggler/>
-      <Collapse navbar className='justify-content-end'>
-        <Nav navbar >
-          <NavItem className='m-2 text-light'>
-            Welcome,&nbsp;
-            <span className='font-weight-bold'>
-              {userDetails.first_name ? userDetails.first_name : userDetails.username}
-            </span>
-          </NavItem>
-          <NavItem className='m-2'>
-            <Button
-              id="argo-navbar-logout"
-              size="sm"
-              onClick={() => toggle()}>
-              <FontAwesomeIcon icon={faSignOutAlt} />
-            </Button>
-          </NavItem>
-        </Nav>
-      </Collapse>
-    </Navbar>
-  </React.Fragment>
+  <Card body inverse style={{ backgroundColor: '#333', borderColor: '#333' }}>
+    <CardHeader>
+      User details
+    </CardHeader>
+    <CardText>
+      {userDetails.first_name ? userDetails.first_name : userDetails.username}
+    </CardText>
+  </Card>
 )
+
+
+export const NavigationBar = ({history, onLogout, isOpenModal, toggle, titleModal, msgModal, userDetails}) =>
+{
+  const [tooltipOpen, setTooltipOpen] = useState(false);
+  const toggleTooltip = () => setTooltipOpen(!tooltipOpen);
+
+  return (
+    <React.Fragment>
+      <ModalAreYouSure
+        isOpen={isOpenModal}
+        toggle={toggle}
+        title={titleModal}
+        msg={msgModal}
+        onYes={() => doLogout(history, onLogout)} />
+      <Navbar expand="md" id="argo-nav" className="border rounded">
+        <NavbarBrand className="text-light">
+          <img src={ArgoLogo} alt="ARGO logo" className="img-responsive"/>
+          <span className="pl-3">
+            <strong>ARGO</strong> POEM
+          </span>
+        </NavbarBrand>
+        <NavbarToggler/>
+        <Collapse navbar className='justify-content-end'>
+          <Nav navbar >
+            <NavItem className='m-2 text-light'>
+              Welcome,&nbsp;
+              <span className='font-weight-bold' href="#" id="userToolTip">
+                <Badge href="#" color="dark" style={{fontSize: '100%'}}>
+                  {userDetails.first_name ? userDetails.first_name : userDetails.username}
+                </Badge>
+              </span>
+              <Tooltip placement="bottom" isOpen={tooltipOpen} target="userToolTip" toggle={toggleTooltip}>
+                <UserDetailsToolTip userDetails={userDetails}/>
+              </Tooltip>
+            </NavItem>
+            <NavItem className='m-2'>
+              <Button
+                id="argo-navbar-logout"
+                size="sm"
+                onClick={() => toggle()}>
+                <FontAwesomeIcon icon={faSignOutAlt} />
+              </Button>
+            </NavItem>
+          </Nav>
+        </Collapse>
+      </Navbar>
+    </React.Fragment>
+  )
+}
 
 
 export const NavigationLinks = ({location, isTenantSchema, userDetails}) => {
