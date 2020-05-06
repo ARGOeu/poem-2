@@ -18,6 +18,7 @@ usage()
 	printf "       [-u] -n <schema name>                 - create superuser\n" >&2
 	printf "       [-d] -n <schema name> -f <file path>  - load data from file\n" >&2
 	printf "       [-p] -n <schema name> -f <file path>  - dump data to file\n" >&2
+	printf "       [-i] -n <schema name>                 - import internal metrics\n" >&2
     exit 2
 }
 
@@ -26,7 +27,7 @@ then
     usage
 fi
 
-while getopts 'cafmlhsoxun:dp' OPTION
+while getopts 'cafmlhsoxun:dpi' OPTION
 do
     case $OPTION in
         n)
@@ -122,6 +123,22 @@ do
               poem-manage tenant_command --schema=$schema dumpdata --indent 2 --natural-foreign --natural-primary --exclude tenants.tenant > $filename
             else
               poem-manage tenant_command --schema=$schema dumpdata --indent 2 --natural-foreign --natural-primary  > $filename
+            fi
+            ;;
+        i)
+            while getopts 'n:' OPTION2
+            do
+                case $OPTION2 in
+                    n) schema=$OPTARG ;;
+                esac
+            done
+            if [[ $schema == 'public' ]]
+            then
+              echo "You cannot import metrics to public schema!!"
+              exit 1
+            else
+              su -m -s /bin/sh $RUNASUSER -c \
+              "poem-manage tenant_command --schema=$schema import_internal_metrics"
             fi
             ;;
         h)
