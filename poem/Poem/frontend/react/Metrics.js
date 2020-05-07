@@ -752,7 +752,7 @@ export function ListOfMetrics(type, imp=false) {
                 <ReactTable
                   data={list_metric}
                   columns={columns}
-                  className='-striped -highlight'
+                  className='-highlight'
                   defaultPageSize={50}
                   rowsText='metrics'
                   getTheadThProps={() => ({className: 'table-active font-weight-bold p-2'})}

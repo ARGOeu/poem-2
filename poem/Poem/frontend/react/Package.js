@@ -146,8 +146,10 @@ export class PackageList extends Component {
             <ReactTable
               data={list_packages}
               columns={columns}
-              className='-striped -highlight'
+              className='-highlight'
               defaultPageSize={50}
+              rowsText='packages'
+              getTheadThProps={() => ({className: 'table-active font-weight-bold p-2'})}
             />
           </BaseArgoView>
         );
