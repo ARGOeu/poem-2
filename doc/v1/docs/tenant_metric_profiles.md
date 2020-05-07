@@ -52,3 +52,7 @@ Adding or editing of pairs in _filtered view_ is also allowed, but what should b
 By clicking the **History** button, the user can see all the changes made to the profile, when they were made and by whom (image below).
 
 ![Tenant Metric Profile History](figures/tenant_metric_profiles_history.png)
+
+### Metric profile clone
+
+By clicking the **Clone** button, the user can easily derive new profile from existing one meaning that description and metric instances tuples will be copied, while profile name will be changed to `Cloned <original_profile_name>`. User is free to change the name of profile to his needs.
