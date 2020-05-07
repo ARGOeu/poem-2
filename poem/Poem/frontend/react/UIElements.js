@@ -296,9 +296,95 @@ const UserDetailsToolTip = ({userDetails}) =>
         {userDetails.email}
       </small>
     </div>
-    <div>
-      <hr style={{'borderTop': '1px solid white'}}/>
-    </div>
+    {
+      !userDetails.is_superuser &&
+      <React.Fragment>
+        <div>
+          <hr style={{'borderTop': '1px solid white'}}/>
+        </div>
+        <div className="text-left">
+          <small>
+            Aggregations:{' '}
+          </small>
+          {
+            userDetails.groups.aggregations.length > 0
+              ?
+                userDetails.groups.aggregations.map((group, index) => (
+                  <span>
+                    <Badge key={index} color="primary">
+                      {group}
+                    </Badge>{' '}
+                  </span>
+                ))
+              :
+                <Badge color="secondary">
+                  None
+                </Badge>
+          }
+        </div>
+        <div className="text-left">
+          <small>
+            Metrics:{' '}
+          </small>
+          {
+            userDetails.groups.metrics.length > 0
+              ?
+                userDetails.groups.metrics.map((group, index) => (
+                  <span>
+                    <Badge key={index} color="primary">
+                      {group}
+                    </Badge>{' '}
+                  </span>
+                ))
+              :
+                <Badge color="secondary">
+                  None
+                </Badge>
+          }
+        </div>
+        <div className="text-left">
+          <small>
+            Metric profiles:{' '}
+          </small>
+          {
+            userDetails.groups.metricprofiles.length > 0
+              ?
+                userDetails.groups.metricprofiles.map((group, index) => (
+                  <span>
+                    <Badge key={index} color="primary">
+                      {group}
+                    </Badge>{' '}
+                  </span>
+                ))
+              :
+                <Badge color="secondary">
+                  None
+                </Badge>
+          }
+        </div>
+        <div className="text-left">
+          <small>
+            Thresholds:{' '}
+          </small>
+          {
+            userDetails.groups.thresholdsprofiles.length > 0
+              ?
+                userDetails.groups.thresholdsprofiles.map((group, index) => (
+                  <span>
+                    <Badge key={index} color="primary">
+                      {group}
+                    </Badge>{' '}
+                  </span>
+                ))
+              :
+                <Badge color="secondary">
+                  None
+                </Badge>
+          }
+        </div>
+
+      </React.Fragment>
+    }
   </React.Fragment>
 )
 
