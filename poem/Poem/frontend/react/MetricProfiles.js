@@ -6,12 +6,14 @@ import {
   LoadingAnim,
   BaseArgoView,
   SearchField,
+  FancyErrorMessage,
   NotifyOk,
   Icon,
   HistoryComponent,
   DiffElement,
   ProfileMainInfo,
-  NotifyError} from './UIElements';
+  NotifyError
+} from './UIElements';
 import ReactTable from 'react-table';
 import { Formik, Field, FieldArray, Form } from 'formik';
 import 'react-table/react-table.css';
@@ -34,10 +36,57 @@ function matchItem(item, value) {
 }
 
 
-const MetricProfilesSchema = Yup.object().shape({
-  name: Yup.string().required('Required'),
-  groupname: Yup.string().required('Required'),
-})
+const MetricProfileTupleValidate = ({view_services, name, groupname}) => {
+  let errors = new Object()
+  let found = false
+  let empty = false
+  errors.view_services = new Array(view_services.length)
+
+  // find duplicates
+  for (var i of view_services)
+    for (var j of view_services)
+      if (i.index !== j.index &&
+          i.service === j.service &&
+          i.metric === j.metric &&
+          (i.isNew || i.serviceChanged
+           || i.metricChanged)) {
+        errors.view_services[i.index] = new Object()
+        errors.view_services[i.index].dup = "Duplicated"
+        found = true
+      }
+
+  // empty essential metadata
+  if (!name) {
+    errors.name = 'Required'
+    empty = true
+  }
+  if (!groupname) {
+    errors.groupname = 'Required'
+    empty = true
+  }
+
+  // find new empty tuples
+  for (var i of view_services) {
+    let obj = undefined
+    if (!errors.view_services[i.index])
+      errors.view_services[i.index] = new Object()
+    obj = errors.view_services[i.index]
+
+    if (!i.service && i.isNew) {
+      obj.service = "Required"
+      empty = true
+    }
+    if (!i.metric && i.isNew) {
+      obj.metric = "Required"
+      empty = true
+    }
+  }
+
+  if (found || empty)
+    return errors
+  else
+    return new Object()
+}
 
 
 const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
@@ -85,100 +134,132 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
           </td>
         </tr>
         {
-        form.values.view_services.map((service, index) =>
-          <tr key={index}>
-            <td className={service.isNew ? "bg-light align-middle text-center" : "align-middle text-center"}>
-              {index + 1}
-            </td>
-            <td className={service.isNew ? "bg-light" : ""}>
-              <Autocomplete
-                inputProps={{
-                  className: `"form-control custom-select " ${service.isNew ? "border border-success" : ""}`
-                }}
-                getItemValue={(item) => item}
-                items={serviceflavours_all}
-                value={service.service}
-                renderItem={(item, isHighlighted) =>
-                  <div
-                    key={serviceflavours_all.indexOf(item)}
-                    className={`metricprofiles-autocomplete-entries ${isHighlighted ?
-                        "metricprofiles-autocomplete-entries-highlighted"
-                        : ""}`
-                    }>
-                    {item ? <Icon i='serviceflavour'/> : ''} {item}
-                  </div>}
-                onChange={(e) => form.setFieldValue(`view_services.${index}.service`, e.target.value)}
-                onSelect={(val) => {
-                  form.setFieldValue(`view_services.${index}.service`, val)
-                  onselect_handler(form.values.view_services[index],
-                    'service',
-                    val)
-                }}
-                wrapperStyle={{}}
-                shouldItemRender={matchItem}
-                renderMenu={(items) =>
-                  <div className='metricprofiles-autocomplete-menu'>
-                    {items}
-                  </div>}
-              />
-            </td>
-            <td className={service.isNew ? "bg-light" : ""}>
-              <Autocomplete
-                inputProps={{
-                  className: `"form-control custom-select " ${service.isNew ? "border border-success" : ""}`
-                }}
-                getItemValue={(item) => item}
-                items={metrics_all}
-                value={service.metric}
-                renderItem={(item, isHighlighted) =>
-                  <div
-                    key={metrics_all.indexOf(item)}
-                    className={`metricprofiles-autocomplete-entries ${isHighlighted ?
-                        "metricprofiles-autocomplete-entries-highlighted"
-                        : ""}`
-                    }>
-                    {item ? <Icon i='metrics'/> : ''} {item}
-                  </div>}
-                onChange={(e) => form.setFieldValue(`view_services.${index}.metric`, e.target.value)}
-                onSelect={(val) => {
-                  form.setFieldValue(`view_services.${index}.metric`, val)
-                  onselect_handler(form.values.view_services[index],
-                    'metric',
-                    val)
-                }}
-                wrapperStyle={{}}
-                shouldItemRender={matchItem}
-                renderMenu={(items) =>
-                  <div className='metricprofiles-autocomplete-menu'>
-                    {items}
-                  </div>}
-              />
-            </td>
-            <td className="align-middle pl-3">
-              <Button size="sm" color="light"
-                type="button"
-                onClick={() => {
-                  remove_handler(form.values.view_services[index]);
-                  // prevent removal of last tuple
-                  if (index > 0 &&
-                    form.values.view_services.length > 1)
-                    return remove(index)
-                }}>
-                <FontAwesomeIcon icon={faTimes}/>
-              </Button>
-              <Button size="sm" color="light"
-                type="button"
-                onClick={() => {
-                  let new_element = {index: index + 1, service: '', metric: '', isNew: true}
-                  insert_handler(new_element, index + 1, form.values.groupname, form.values.name, form.values.description)
-                  return insert(index + 1, new_element)
-                }}>
-                <FontAwesomeIcon icon={faPlus}/>
-              </Button>
-            </td>
-          </tr>
-        )
-      }
+          form.values.view_services.map((service, index) =>
+            <React.Fragment key={index}>
+              <tr key={index}>
+                <td className={service.isNew ? "bg-light align-middle text-center" : "align-middle text-center"}>
+                  {index + 1}
+                </td>
+                <td className={service.isNew ? "bg-light" : ""}>
+                  <Autocomplete
+                    inputProps={{
+                      className: `"form-control custom-select " ${service.isNew ? "border border-success" : service.serviceChanged ? "border border-danger" : ""}`
+                    }}
+                    getItemValue={(item) => item}
+                    items={serviceflavours_all}
+                    value={service.service}
+                    renderItem={(item, isHighlighted) =>
+                      <div
+                        key={serviceflavours_all.indexOf(item)}
+                        className={`metricprofiles-autocomplete-entries ${isHighlighted ?
+                            "metricprofiles-autocomplete-entries-highlighted"
+                            : ""}`
+                        }>
+                        {item ? <Icon i='serviceflavour'/> : ''} {item}
+                      </div>}
+                    onChange={(e) => form.setFieldValue(`view_services.${index}.service`, e.target.value)}
+                    onSelect={(val) => {
+                      form.setFieldValue(`view_services.${index}.service`, val)
+                      form.setFieldValue(`view_services.${index}.serviceChanged`, true)
+                      onselect_handler(form.values.view_services[index],
+                        'service',
+                        val)
+                    }}
+                    wrapperStyle={{}}
+                    shouldItemRender={matchItem}
+                    renderMenu={(items) =>
+                      <div className='metricprofiles-autocomplete-menu'>
+                        {items}
+                      </div>}
+                  />
+                  {
+                    form.errors && form.errors.view_services && form.errors.view_services[index]
+                      ? form.errors.view_services[index].service
+                        ? FancyErrorMessage(form.errors.view_services[index].service)
+                        : null
+                      : null
+                  }
+                </td>
+                <td className={service.isNew ? "bg-light" : ""}>
+                  <Autocomplete
+                    inputProps={{
+                      className: `"form-control custom-select " ${service.isNew ? "border border-success" : service.metricChanged  ? "border border-danger" : ""}`
+                    }}
+                    getItemValue={(item) => item}
+                    items={metrics_all}
+                    value={service.metric}
+                    renderItem={(item, isHighlighted) =>
+                      <div
+                        key={metrics_all.indexOf(item)}
+                        className={`metricprofiles-autocomplete-entries ${isHighlighted ?
+                            "metricprofiles-autocomplete-entries-highlighted"
+                            : ""}`
+                        }>
+                        {item ? <Icon i='metrics'/> : ''} {item}
+                      </div>}
+                    onChange={(e) => form.setFieldValue(`view_services.${index}.metric`, e.target.value)}
+                    onSelect={(val) => {
+                      form.setFieldValue(`view_services.${index}.metric`, val)
+                      form.setFieldValue(`view_services.${index}.metricChanged`, true)
+                      onselect_handler(form.values.view_services[index],
+                        'metric',
+                        val)
+                    }}
+                    wrapperStyle={{}}
+                    shouldItemRender={matchItem}
+                    renderMenu={(items) =>
+                      <div className='metricprofiles-autocomplete-menu'>
+                        {items}
+                      </div>}
+                  />
+                  {
+                    form.errors && form.errors.view_services && form.errors.view_services[index]
+                      ? form.errors.view_services[index].metric
+                        ? FancyErrorMessage(form.errors.view_services[index].metric)
+                        : null
+                      : null
+                  }
+                </td>
+                <td className={service.isNew ? "bg-light align-middle pl-3" : "align-middle pl-3"}>
+                  <Button size="sm" color="light"
+                    type="button"
+                    onClick={() => {
+                      remove_handler(form.values.view_services[index]);
+                      // prevent removal of last tuple
+                      if (index > 0 &&
+                        form.values.view_services.length > 1)
+                        return remove(index)
+                    }}>
+                    <FontAwesomeIcon icon={faTimes}/>
+                  </Button>
+                  <Button size="sm" color="light"
+                    type="button"
+                    onClick={() => {
+                      let new_element = {index: index + 1, service: '', metric: '', isNew: true}
+                      insert_handler(new_element, index + 1, form.values.groupname, form.values.name, form.values.description)
+                      return insert(index + 1, new_element)
+                    }}>
+                    <FontAwesomeIcon icon={faPlus}/>
+                  </Button>
+                </td>
+              </tr>
+              {
+                form.errors && form.errors.view_services && form.errors.view_services[index]
+                  ? form.errors.view_services[index].dup
+                    ?
+                      <tr key={index + form.values.view_services.length}>
+                        <td className="bg-light"></td>
+                        <td colSpan="2" className="bg-light text-center">
+                          {FancyErrorMessage(form.errors.view_services[index].dup)}
+                        </td>
+                        <td className="bg-light"></td>
+                      </tr>
+                    : null
+                  : null
+              }
+            </React.Fragment>
+          )
+        }
       </tbody>
     </table>
 
@@ -643,14 +724,20 @@ function MetricProfilesComponent(cloneview=false) {
       let new_element = tmp_list_services.findIndex(service =>
         service.index === index && service.isNew === true)
 
-      if (new_element >= 0 )
+      if (new_element >= 0 ) {
         tmp_list_services[new_element][field] = value;
-      else
+        tmp_list_services[new_element][field + 'Changed'] = value;
+      }
+      else {
         tmp_list_services[index][field] = value;
+        tmp_list_services[index][field + 'Changed'] = value;
+      }
 
       for (var i = 0; i < tmp_view_services.length; i++)
-        if (tmp_view_services[i].index === index)
+        if (tmp_view_services[i].index === index) {
           tmp_view_services[i][field] = value
+          tmp_view_services[i][field + 'Changed'] = true
+        }
 
       this.setState({
         list_services: tmp_list_services,
@@ -754,7 +841,7 @@ function MetricProfilesComponent(cloneview=false) {
                 servicesList: this.state.list_services
               }, actions)}
               enableReinitialize={true}
-              validationSchema={MetricProfilesSchema}
+              validate={MetricProfileTupleValidate}
               render = {props => (
                 <Form>
                   <ProfileMainInfo
@@ -808,6 +895,7 @@ function MetricProfilesComponent(cloneview=false) {
     }
   }
 }
+
 
 export class MetricProfilesList extends Component
 {
