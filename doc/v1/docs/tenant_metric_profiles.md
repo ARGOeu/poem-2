@@ -55,4 +55,4 @@ By clicking the **History** button, the user can see all the changes made to the
 
 ### Metric profile clone
 
-By clicking the **Clone** button, the user can easily derive new profile from existing one meaning that description and metric instances tuples will be copied, while profile name will be changed to `Cloned <original_profile_name>`. User is free to change the name of profile to his needs.
+By clicking the **Clone** button, the user can easily derive new profile from existing one meaning that description and metric instances tuples will be copied, while profile name will be changed to `Cloned <original_profile_name>`. User is free to change the name of profile to his/her needs.
