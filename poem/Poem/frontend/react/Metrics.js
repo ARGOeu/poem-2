@@ -752,7 +752,7 @@ export function ListOfMetrics(type, imp=false) {
                 <ReactTable
                   data={list_metric}
                   columns={columns}
-                  className='-striped -highlight'
+                  className='-highlight'
                   defaultPageSize={50}
                   rowsText='metrics'
                   getTheadThProps={() => ({className: 'table-active font-weight-bold p-2'})}
@@ -1049,8 +1049,6 @@ export const MetricForm =
         <InlineFields values={values} errors={errors} field='dependency' addnew={!isTenantSchema && !isHistory}/>
         <InlineFields values={values} errors={errors} field='parameter' addnew={!isTenantSchema && !isHistory}/>
         <InlineFields values={values} errors={errors} field='flags' addnew={!isTenantSchema && !isHistory}/>
-        <InlineFields values={values} errors={errors} field='file_attributes' addnew={!isTenantSchema && !isHistory}/>
-        <InlineFields values={values} errors={errors} field='file_parameters' addnew={!isTenantSchema && !isHistory}/>
         <h6 className='mt-4 font-weight-bold text-uppercase'>parent</h6>
         <Row>
           <Col md={5}>
@@ -1247,8 +1245,7 @@ export function CompareMetrics(metrictype) {
       var { name1, name2, probeversion1, probeversion2, type1, type2,
         probeexecutable1, probeexecutable2, parent1, parent2, config1,
         config2, attribute1, attribute2, dependency1, dependency2,
-        parameter1, parameter2, flags1, flags2, files1, files2,
-        fileparameter1, fileparameter2, group1, group2, loading,
+        parameter1, parameter2, flags1, flags2, group1, group2, loading,
         description1, description2 } = this.state;
 
       if (loading)
@@ -1307,14 +1304,6 @@ export function CompareMetrics(metrictype) {
             {
               (!arraysEqual(flags1, flags2)) &&
                 <InlineDiffElement title='flags' item1={flags1} item2={flags2}/>
-            }
-            {
-              (!arraysEqual(files1, files2)) &&
-                <InlineDiffElement title='file attributes' item1={files1} item2={files2}/>
-            }
-            {
-              (!arraysEqual(fileparameter1, fileparameter2)) &&
-                <InlineDiffElement title='file parameters' item1={fileparameter1} item2={fileparameter2}/>
             }
           </React.Fragment>
         );

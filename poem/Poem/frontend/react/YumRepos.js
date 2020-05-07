@@ -170,8 +170,10 @@ export class YumRepoList extends Component {
           <ReactTable
             data={list_repos}
             columns={columns}
-            className='-striped -highlight'
+            className='-highlight'
             defaultPageSize={20}
+            rowsText='repos'
+            getTheadThProps={() => ({className: 'table-active font-weight-bold p-2'})}
           />
         </BaseArgoView>
       )
