@@ -219,9 +219,6 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
                       ? FancyErrorMessage(form.errors.view_services[index].metric)
                       : null
                     : null
-<<<<<<< metric-profiles-duplicates
-                  : null
-=======
                 }
               </td>
               <td className={service.isNew ? "bg-light align-middle pl-3" : "align-middle pl-3"}>
@@ -260,19 +257,13 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
                     </tr>
                   : null
                 : null
->>>>>>> correct indent for ServicesList
             }
           </React.Fragment>
         )
       }
-<<<<<<< metric-profiles-duplicates
-      </tbody>
-    </table>
-=======
     </tbody>
   </table>
 )
->>>>>>> correct indent for ServicesList
 
 
 function MetricProfilesComponent(cloneview=false) {
