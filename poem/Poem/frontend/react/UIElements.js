@@ -304,8 +304,9 @@ const UserDetailsToolTip = ({userDetails}) =>
         </div>
         <div className="text-left">
           <small>
-            Aggregations:{' '}
+            Aggregation profiles:
           </small>
+          <br/>
           {
             userDetails.groups.aggregations.length > 0
               ?
@@ -317,15 +318,16 @@ const UserDetailsToolTip = ({userDetails}) =>
                   </span>
                 ))
               :
-                <Badge color="secondary">
+                <Badge color="dark">
                   None
                 </Badge>
           }
         </div>
         <div className="text-left">
           <small>
-            Metrics:{' '}
+            Metrics:
           </small>
+          <br/>
           {
             userDetails.groups.metrics.length > 0
               ?
@@ -337,15 +339,16 @@ const UserDetailsToolTip = ({userDetails}) =>
                   </span>
                 ))
               :
-                <Badge color="secondary">
+                <Badge color="dark">
                   None
                 </Badge>
           }
         </div>
         <div className="text-left">
           <small>
-            Metric profiles:{' '}
+            Metric profiles:
           </small>
+          <br/>
           {
             userDetails.groups.metricprofiles.length > 0
               ?
@@ -357,15 +360,16 @@ const UserDetailsToolTip = ({userDetails}) =>
                   </span>
                 ))
               :
-                <Badge color="secondary">
+                <Badge color="dark">
                   None
                 </Badge>
           }
         </div>
         <div className="text-left">
           <small>
-            Thresholds:{' '}
+            Thresholds profiles:
           </small>
+          <br/>
           {
             userDetails.groups.thresholdsprofiles.length > 0
               ?
@@ -377,12 +381,11 @@ const UserDetailsToolTip = ({userDetails}) =>
                   </span>
                 ))
               :
-                <Badge color="secondary">
+                <Badge color="dark">
                   None
                 </Badge>
           }
         </div>
-
       </React.Fragment>
     }
   </React.Fragment>
