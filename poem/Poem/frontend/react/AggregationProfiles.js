@@ -9,7 +9,9 @@ import {
   HistoryComponent,
   DiffElement,
   ProfileMainInfo,
-  NotifyError} from './UIElements';
+  NotifyError,
+  ErrorComponent
+} from './UIElements';
 import Autocomplete from 'react-autocomplete';
 import ReactTable from 'react-table';
 import 'react-table/react-table.css';
@@ -426,6 +428,7 @@ export class AggregationProfilesChange extends Component
       modalFunc: undefined,
       modalTitle: undefined,
       modalMsg: undefined,
+      error: null
     }
 
     this.backend = new Backend();
@@ -723,75 +726,87 @@ export class AggregationProfilesChange extends Component
   async componentDidMount() {
     this.setState({loading: true})
 
-    if (this.publicView) {
-      let metricp = await this.webapi.fetchMetricProfiles();
-      let json = await this.backend.fetchData(`/api/v2/internal/public_aggregations/${this.profile_name}`);
-      let aggregp = await this.webapi.fetchAggregationProfile(json.apiid);
+    try {
+      if (this.publicView) {
+        let metricp = await this.webapi.fetchMetricProfiles();
+        let json = await this.backend.fetchData(`/api/v2/internal/public_aggregations/${this.profile_name}`);
+        let aggregp = await this.webapi.fetchAggregationProfile(json.apiid);
+        this.setState({
+          aggregation_profile: aggregp,
+          groupname: json['groupname'],
+          list_user_groups: [],
+          write_perm: false,
+          list_id_metric_profiles: this.extractListOfMetricsProfiles(metricp),
+          list_services: this.extractListOfServices(aggregp.metric_profile, metricp),
+          list_complete_metric_profiles: metricp,
+          loading: false
+        });
+      }
+      else {
+        let sessionActive = await this.backend.isActiveSession();
+        if (sessionActive.active) {
+          let metricp = await this.webapi.fetchMetricProfiles();
+          if (!this.addview) {
+            let json = await this.backend.fetchData(`/api/v2/internal/aggregations/${this.profile_name}`);
+            let aggregp = await this.webapi.fetchAggregationProfile(json.apiid);
+            this.setState({
+              aggregation_profile: aggregp,
+              groupname: json['groupname'],
+              list_user_groups: sessionActive.userdetails.groups.aggregations,
+              write_perm: sessionActive.userdetails.is_superuser ||
+                sessionActive.userdetails.groups.aggregations.indexOf(json['groupname']) >= 0,
+              list_id_metric_profiles: this.extractListOfMetricsProfiles(metricp),
+              list_services: this.extractListOfServices(aggregp.metric_profile, metricp),
+              list_complete_metric_profiles: metricp,
+              loading: false
+            });
+          } else {
+            let empty_aggregation_profile = {
+              id: '',
+              name: '',
+              metric_operation: '',
+              profile_operation: '',
+              endpoint_group: '',
+              metric_profile: {
+                  name: ''
+              },
+              groups: []
+            }
+            this.setState({
+              aggregation_profile: empty_aggregation_profile,
+              groupname: '',
+              list_user_groups: sessionActive.userdetails.groups.aggregations,
+              write_perm: sessionActive.userdetails.is_superuser ||
+                sessionActive.userdetails.groups.aggregations.length > 0,
+              list_id_metric_profiles: this.extractListOfMetricsProfiles(metricp),
+              list_complete_metric_profiles: metricp,
+              list_services: [],
+              loading: false
+            });
+          };
+        };
+      }
+    } catch(err) {
       this.setState({
-        aggregation_profile: aggregp,
-        groupname: json['groupname'],
-        list_user_groups: [],
-        write_perm: false,
-        list_id_metric_profiles: this.extractListOfMetricsProfiles(metricp),
-        list_services: this.extractListOfServices(aggregp.metric_profile, metricp),
-        list_complete_metric_profiles: metricp,
+        error: err,
         loading: false
       });
-    }
-    else {
-      let sessionActive = await this.backend.isActiveSession();
-      if (sessionActive.active) {
-        let metricp = await this.webapi.fetchMetricProfiles();
-        if (!this.addview) {
-          let json = await this.backend.fetchData(`/api/v2/internal/aggregations/${this.profile_name}`);
-          let aggregp = await this.webapi.fetchAggregationProfile(json.apiid);
-          this.setState({
-            aggregation_profile: aggregp,
-            groupname: json['groupname'],
-            list_user_groups: sessionActive.userdetails.groups.aggregations,
-            write_perm: sessionActive.userdetails.is_superuser ||
-              sessionActive.userdetails.groups.aggregations.indexOf(json['groupname']) >= 0,
-            list_id_metric_profiles: this.extractListOfMetricsProfiles(metricp),
-            list_services: this.extractListOfServices(aggregp.metric_profile, metricp),
-            list_complete_metric_profiles: metricp,
-            loading: false
-          });
-        } else {
-          let empty_aggregation_profile = {
-            id: '',
-            name: '',
-            metric_operation: '',
-            profile_operation: '',
-            endpoint_group: '',
-            metric_profile: {
-                name: ''
-            },
-            groups: []
-          }
-          this.setState({
-            aggregation_profile: empty_aggregation_profile,
-            groupname: '',
-            list_user_groups: sessionActive.userdetails.groups.aggregations,
-            write_perm: sessionActive.userdetails.is_superuser ||
-              sessionActive.userdetails.groups.aggregations.length > 0,
-            list_id_metric_profiles: this.extractListOfMetricsProfiles(metricp),
-            list_complete_metric_profiles: metricp,
-            list_services: [],
-            loading: false
-          });
-        };
-      };
-    }
+    };
   }
 
   render() {
     const {aggregation_profile, list_id_metric_profiles,
         list_complete_metric_profiles, list_user_groups, groupname,
-        list_services, write_perm, loading} = this.state
+        list_services, write_perm, loading, error} = this.state
 
 
     if (loading)
       return (<LoadingAnim />)
+
+    else if (error)
+      return (
+        <ErrorComponent error={error}/>
+      )
 
     else if (!loading && aggregation_profile &&
       aggregation_profile.metric_profile && list_user_groups
@@ -898,7 +913,8 @@ export class AggregationProfilesList extends Component
     this.state = {
       loading: false,
       list_aggregations: null,
-      write_perm: false
+      write_perm: false,
+      error: null
     }
 
     this.location = props.location;
@@ -914,20 +930,28 @@ export class AggregationProfilesList extends Component
 
   async componentDidMount() {
     this.setState({loading: true})
-    let json = await this.backend.fetchData(this.apiUrl);
-    if (!this.publicView) {
-      let session = await this.backend.isActiveSession();
+    try {
+      let json = await this.backend.fetchData(this.apiUrl);
+      if (!this.publicView) {
+        let session = await this.backend.isActiveSession();
+        this.setState({
+          write_perm: session.userdetails.is_superuser || session.userdetails.groups.aggregations.length > 0,
+          list_aggregations: json,
+          loading: false
+        })
+      } else {
+        this.setState({
+          list_aggregations: json,
+          loading: false
+        })
+      }
+    } catch(err) {
       this.setState({
-        write_perm: session.userdetails.is_superuser || session.userdetails.groups.aggregations.length > 0,
-        list_aggregations: json,
+        error: err,
         loading: false
-      })
-    } else {
-      this.setState({
-        list_aggregations: json,
-        loading: false
-      })
+      });
     }
+
   }
 
   render() {
@@ -952,10 +976,15 @@ export class AggregationProfilesList extends Component
         maxWidth: 150,
       }
     ]
-    const {loading, list_aggregations, write_perm} = this.state;
+    const {loading, list_aggregations, write_perm, error} = this.state;
 
     if (loading)
       return (<LoadingAnim />)
+
+    else if (error)
+      return (
+        <ErrorComponent error={error}/>
+      )
 
     else if (!loading && list_aggregations) {
       return (
@@ -1047,66 +1076,74 @@ export class AggregationProfileVersionCompare extends Component {
       profile_operation2: '',
       endpoint_group2: '',
       metric_profile2: '',
-      groups2: []
+      groups2: [],
+      error: null
     };
 
     this.backend = new Backend();
   }
 
   async componentDidMount() {
-    let json = await this.backend.fetchData(`/api/v2/internal/tenantversion/aggregationprofile/${this.name}`);
-    let name1 = '';
-    let groupname1 = '';
-    let metric_operation1 = '';
-    let profile_operation1 = '';
-    let endpoint_group1 = '';
-    let metric_profile1 = '';
-    let groups1 = [];
-    let name2 = '';
-    let groupname2 = '';
-    let metric_operation2 = '';
-    let profile_operation2 = '';
-    let endpoint_group2 = '';
-    let metric_profile2 = '';
-    let groups2 = [];
+    try {
+      let json = await this.backend.fetchData(`/api/v2/internal/tenantversion/aggregationprofile/${this.name}`);
+      let name1 = '';
+      let groupname1 = '';
+      let metric_operation1 = '';
+      let profile_operation1 = '';
+      let endpoint_group1 = '';
+      let metric_profile1 = '';
+      let groups1 = [];
+      let name2 = '';
+      let groupname2 = '';
+      let metric_operation2 = '';
+      let profile_operation2 = '';
+      let endpoint_group2 = '';
+      let metric_profile2 = '';
+      let groups2 = [];
 
-    json.forEach((e) => {
-      if (e.version == this.version1) {
-        name1 = e.fields.name;
-        groupname1 = e.fields.groupname;
-        metric_operation1 = e.fields.metric_operation;
-        profile_operation1 = e.fields.profile_operation;
-        endpoint_group1 = e.fields.endpoint_group;
-        metric_profile1 = e.fields.metric_profile;
-        groups1 = e.fields.groups;
-      } else if (e.version == this.version2) {
-        name2 = e.fields.name;
-        groupname2 = e.fields.groupname;
-        metric_operation2 = e.fields.metric_operation;
-        profile_operation2 = e.fields.profile_operation;
-        endpoint_group2 = e.fields.endpoint_group;
-        metric_profile2 = e.fields.metric_profile;
-        groups2 = e.fields.groups;
-      };
+      json.forEach((e) => {
+        if (e.version == this.version1) {
+          name1 = e.fields.name;
+          groupname1 = e.fields.groupname;
+          metric_operation1 = e.fields.metric_operation;
+          profile_operation1 = e.fields.profile_operation;
+          endpoint_group1 = e.fields.endpoint_group;
+          metric_profile1 = e.fields.metric_profile;
+          groups1 = e.fields.groups;
+        } else if (e.version == this.version2) {
+          name2 = e.fields.name;
+          groupname2 = e.fields.groupname;
+          metric_operation2 = e.fields.metric_operation;
+          profile_operation2 = e.fields.profile_operation;
+          endpoint_group2 = e.fields.endpoint_group;
+          metric_profile2 = e.fields.metric_profile;
+          groups2 = e.fields.groups;
+        };
 
-      this.setState({
-        name1: name1,
-        groupname1: groupname1,
-        metric_operation1: metric_operation1,
-        profile_operation1: profile_operation1,
-        endpoint_group1: endpoint_group1,
-        metric_profile1: metric_profile1,
-        groups1: groups1,
-        name2: name2,
-        groupname2: groupname2,
-        metric_operation2: metric_operation2,
-        profile_operation2: profile_operation2,
-        endpoint_group2: endpoint_group2,
-        metric_profile2: metric_profile2,
-        groups2: groups2,
-        loading: false,
+        this.setState({
+          name1: name1,
+          groupname1: groupname1,
+          metric_operation1: metric_operation1,
+          profile_operation1: profile_operation1,
+          endpoint_group1: endpoint_group1,
+          metric_profile1: metric_profile1,
+          groups1: groups1,
+          name2: name2,
+          groupname2: groupname2,
+          metric_operation2: metric_operation2,
+          profile_operation2: profile_operation2,
+          endpoint_group2: endpoint_group2,
+          metric_profile2: metric_profile2,
+          groups2: groups2,
+          loading: false,
+        });
       });
-    });
+    } catch(err) {
+      this.setState({
+        error: err,
+        loading: false
+      });
+    }
   }
 
   render() {
@@ -1114,11 +1151,16 @@ export class AggregationProfileVersionCompare extends Component {
       name1, name2, groupname1, groupname2, metric_operation1,
       metric_operation2, profile_operation1, profile_operation2,
       endpoint_group1, endpoint_group2, metric_profile1, metric_profile2,
-      groups1, groups2, loading
+      groups1, groups2, loading, error
     } = this.state;
 
     if (loading)
       return (<LoadingAnim/>);
+
+    else if (error)
+      return (
+        <ErrorComponent error={error}/>
+      )
 
     else if (!loading && name1 && name2) {
       return (
@@ -1180,35 +1222,46 @@ export class AggregationProfileVersionDetails extends Component {
       metric_profile: '',
       groups: [],
       date_created: '',
-      loading: false
+      loading: false,
+      error: null
     };
   }
 
   async componentDidMount() {
     this.setState({loading: true});
 
-    let json = await this.backend.fetchData(`/api/v2/internal/tenantversion/aggregationprofile/${this.name}`);
-    json.forEach((e) => {
-      if (e.version == this.version)
-        this.setState({
-          name: e.fields.name,
-          groupname: e.fields.groupname,
-          metric_operation: e.fields.metric_operation,
-          profile_operation: e.fields.profile_operation,
-          endpoint_group: e.fields.endpoint_group,
-          metric_profile: e.fields.metric_profile,
-          groups: e.fields.groups,
-          date_created: e.date_created,
-          loading: false
-        });
-    });
+    try {
+      let json = await this.backend.fetchData(`/api/v2/internal/tenantversion/aggregationprofile/${this.name}`);
+      json.forEach((e) => {
+        if (e.version == this.version)
+          this.setState({
+            name: e.fields.name,
+            groupname: e.fields.groupname,
+            metric_operation: e.fields.metric_operation,
+            profile_operation: e.fields.profile_operation,
+            endpoint_group: e.fields.endpoint_group,
+            metric_profile: e.fields.metric_profile,
+            groups: e.fields.groups,
+            date_created: e.date_created,
+            loading: false
+          });
+      });
+    } catch(err) {
+      this.setState({
+        error: err,
+        loading: false
+      });
+    }
   }
 
   render() {
     const { name, groupname, metric_operation, profile_operation,
-    endpoint_group, metric_profile, groups, date_created, loading } = this.state;
+    endpoint_group, metric_profile, groups, date_created, loading, error } = this.state;
     if (loading)
       return (<LoadingAnim/>);
+
+    else if (error)
+      return (<ErrorComponent error={error}/>)
 
     else if (!loading && name) {
       return (
