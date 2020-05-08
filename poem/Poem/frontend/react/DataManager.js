@@ -50,12 +50,25 @@ export class Backend {
   }
 
   async fetchData(url) {
+    let error_msg = '';
     try {
       let response = await fetch(url);
-      return response.json();
-    } catch(err) {
-      alert(`Something went wrong: ${err}`);
-    }
+      if (response.ok)
+        return response.json();
+
+      else {
+        try {
+          let json = await response.json();
+          error_msg = `Fetch ${url}: ${response.status} ${response.statusText}: ${json.detail}`;
+        } catch(err1) {
+          error_msg = `Fetch ${url}: ${response.status} ${response.statusText}`;
+        }
+      }
+    } catch (err) {
+      error_msg = `Fetch ${url}: ${err}`;
+    };
+    if (error_msg)
+      throw Error(error_msg);
   }
 
   async fetchListOfNames(url) {
