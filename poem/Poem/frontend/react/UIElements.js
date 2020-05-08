@@ -1085,3 +1085,11 @@ export const ProfileMainInfo = ({errors, grouplist=undefined, description=undefi
       </Row>
     </FormGroup>
 );
+
+
+export const ErrorComponent = ({error}) => (
+  <React.Fragment>
+    <h1>Something went wrong</h1>
+    <p>{error.toString()}</p>
+  </React.Fragment>
+)
