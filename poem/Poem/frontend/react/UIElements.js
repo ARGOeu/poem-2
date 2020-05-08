@@ -819,7 +819,8 @@ export function HistoryComponent(obj, tenantview=false) {
         loading: false,
         list_versions: null,
         compare1: '',
-        compare2: ''
+        compare2: '',
+        error: null
       };
 
       if (!this.publicView) {
@@ -850,27 +851,37 @@ export function HistoryComponent(obj, tenantview=false) {
     async componentDidMount() {
       this.setState({loading: true});
 
-      let json = await this.backend.fetchData(`${this.apiUrl}/${obj}/${this.name}`);
-      if (json.length > 1) {
+      try {
+        let json = await this.backend.fetchData(`${this.apiUrl}/${obj}/${this.name}`);
+        if (json.length > 1) {
+          this.setState({
+            list_versions: json,
+            loading: false,
+            compare1: json[0].version,
+            compare2: json[1].version
+          });
+        } else {
+          this.setState({
+            list_versions: json,
+            loading: false
+          });
+        };
+      } catch(err) {
         this.setState({
-          list_versions: json,
-          loading: false,
-          compare1: json[0].version,
-          compare2: json[1].version
-        });
-      } else {
-        this.setState({
-          list_versions: json,
+          error: err,
           loading: false
         });
       };
     }
 
     render() {
-      const { loading, list_versions } = this.state;
+      const { loading, list_versions, error } = this.state;
 
       if (loading)
         return (<LoadingAnim />);
+
+      else if (error)
+        return (<ErrorComponent error={error}/>);
 
       else if (!loading && list_versions) {
         return (
