@@ -265,6 +265,24 @@ export const CustomBreadcrumb = ({location, history, publicView=false}) =>
 
 const UserDetailsToolTip = ({userDetails, isTenantSchema, publicView}) =>
 {
+  const NoPermBadge = () =>
+    <Badge color="dark">
+      No permissions
+    </Badge>
+
+  const GroupBadge = ({name, index}) =>
+    <span>
+      <Badge key={index} color="primary">
+        {name}
+      </Badge>{' '}
+    </span>
+
+  const WhiteRuler = () =>
+    <div>
+      <hr style={{'borderTop': '1px solid white'}}/>
+    </div>
+
+
   return (
     publicView ?
       <React.Fragment>
@@ -278,12 +296,8 @@ const UserDetailsToolTip = ({userDetails, isTenantSchema, publicView}) =>
             Anonymous
           </small>
         </div>
-        <div>
-          <hr style={{'borderTop': '1px solid white'}}/>
-        </div>
-        <Badge color="dark">
-          No permissions
-        </Badge>
+        <WhiteRuler/>
+        <NoPermBadge/>
       </React.Fragment>
     :
       <React.Fragment>
@@ -324,9 +338,7 @@ const UserDetailsToolTip = ({userDetails, isTenantSchema, publicView}) =>
         {
           !userDetails.is_superuser &&
           <React.Fragment>
-            <div>
-              <hr style={{'borderTop': '1px solid white'}}/>
-            </div>
+            <WhiteRuler/>
             <div className="text-left">
               <small>
                 Aggregation profiles:
@@ -336,16 +348,10 @@ const UserDetailsToolTip = ({userDetails, isTenantSchema, publicView}) =>
                 userDetails.groups.aggregations.length > 0
                   ?
                     userDetails.groups.aggregations.map((group, index) => (
-                      <span>
-                        <Badge key={index} color="primary">
-                          {group}
-                        </Badge>{' '}
-                      </span>
+                      <GroupBadge name={group} index={index}/>
                     ))
                   :
-                    <Badge color="dark">
-                      No permissions
-                    </Badge>
+                    <NoPermBadge/>
               }
             </div>
             <div className="text-left">
@@ -357,16 +363,10 @@ const UserDetailsToolTip = ({userDetails, isTenantSchema, publicView}) =>
                 userDetails.groups.metrics.length > 0
                   ?
                     userDetails.groups.metrics.map((group, index) => (
-                      <span>
-                        <Badge key={index} color="primary">
-                          {group}
-                        </Badge>{' '}
-                      </span>
+                      <GroupBadge name={group} index={index}/>
                     ))
                   :
-                    <Badge color="dark">
-                      No permissions
-                    </Badge>
+                    <NoPermBadge/>
               }
             </div>
             <div className="text-left">
@@ -378,16 +378,10 @@ const UserDetailsToolTip = ({userDetails, isTenantSchema, publicView}) =>
                 userDetails.groups.metricprofiles.length > 0
                   ?
                     userDetails.groups.metricprofiles.map((group, index) => (
-                      <span>
-                        <Badge key={index} color="primary">
-                          {group}
-                        </Badge>{' '}
-                      </span>
+                      <GroupBadge name={group} index={index}/>
                     ))
                   :
-                    <Badge color="dark">
-                      No permissions
-                    </Badge>
+                    <NoPermBadge/>
               }
             </div>
             <div className="text-left">
@@ -399,16 +393,10 @@ const UserDetailsToolTip = ({userDetails, isTenantSchema, publicView}) =>
                 userDetails.groups.thresholdsprofiles.length > 0
                   ?
                     userDetails.groups.thresholdsprofiles.map((group, index) => (
-                      <span>
-                        <Badge key={index} color="primary">
-                          {group}
-                        </Badge>{' '}
-                      </span>
+                      <GroupBadge name={group} index={index}/>
                     ))
                   :
-                    <Badge color="dark">
-                      No permissions
-                    </Badge>
+                    <NoPermBadge/>
               }
             </div>
           </React.Fragment>
