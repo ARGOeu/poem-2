@@ -263,14 +263,18 @@ export const CustomBreadcrumb = ({location, history, publicView=false}) =>
 }
 
 
-const UserDetailsToolTip = ({userDetails}) =>
+const UserDetailsToolTip = ({userDetails, isTenantSchema}) =>
 (
   <React.Fragment>
     <span>
       {
         userDetails.is_superuser ?
           <Badge color="danger">
-            Tenant Admin
+            {
+              isTenantSchema
+                ? 'Tenant Admin'
+                : 'Super Admin'
+            }
           </Badge>
           :
           <Badge color="success">
@@ -392,7 +396,7 @@ const UserDetailsToolTip = ({userDetails}) =>
 )
 
 
-export const NavigationBar = ({history, onLogout, isOpenModal, toggle, titleModal, msgModal, userDetails}) =>
+export const NavigationBar = ({history, onLogout, isOpenModal, toggle, titleModal, msgModal, userDetails, isTenantSchema}) =>
 {
   const [tooltipOpen, setTooltipOpen] = useState(false);
   const toggleTooltip = () => setTooltipOpen(!tooltipOpen);
@@ -423,7 +427,7 @@ export const NavigationBar = ({history, onLogout, isOpenModal, toggle, titleModa
                 </Badge>
               </span>
               <Tooltip placement="bottom" isOpen={tooltipOpen} target="userToolTip" toggle={toggleTooltip}>
-                <UserDetailsToolTip userDetails={userDetails}/>
+                <UserDetailsToolTip userDetails={userDetails} isTenantSchema={isTenantSchema}/>
               </Tooltip>
             </NavItem>
             <NavItem className='m-2'>
