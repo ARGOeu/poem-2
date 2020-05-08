@@ -7,7 +7,8 @@ import {
   NotifyOk,
   HistoryComponent,
   NotifyError,
-  NotifyWarn
+  NotifyWarn,
+  ErrorComponent
 } from './UIElements';
 import { Formik, Form } from 'formik';
 import { Button } from 'reactstrap';
@@ -69,7 +70,8 @@ function MetricTemplateComponent(cloneview=false) {
         areYouSureModal: false,
         modalFunc: undefined,
         modalTitle: undefined,
-        modalMsg: undefined
+        modalMsg: undefined,
+        error: null
       };
 
       this.toggleAreYouSure = this.toggleAreYouSure.bind(this);
@@ -252,98 +254,109 @@ function MetricTemplateComponent(cloneview=false) {
     async componentDidMount() {
       this.setState({loading: true});
 
-      let types = await this.backend.fetchData('/api/v2/internal/mttypes');
-      let allprobeversions = await this.backend.fetchData('/api/v2/internal/version/probe');
-      let metrictemplatelist = await this.backend.fetchData('/api/v2/internal/metrictemplates');
-      let mlist = [];
-      metrictemplatelist.forEach(e => mlist.push(e.name));
-      let probeversions = [];
-      allprobeversions.forEach(e => probeversions.push(e.object_repr));
+      try {
+        let types = await this.backend.fetchData('/api/v2/internal/mttypes');
+        let allprobeversions = await this.backend.fetchData('/api/v2/internal/version/probe');
+        let metrictemplatelist = await this.backend.fetchData('/api/v2/internal/metrictemplates');
+        let mlist = [];
+        metrictemplatelist.forEach(e => mlist.push(e.name));
+        let probeversions = [];
+        allprobeversions.forEach(e => probeversions.push(e.object_repr));
 
-      if (!this.addview) {
-        let metrictemplate = await this.backend.fetchData(`/api/v2/internal/metrictemplates/${this.name}`);
-        if (metrictemplate.attribute.length === 0) {
-          metrictemplate.attribute = [{'key': '', 'value': ''}];
-        }
-        if (metrictemplate.dependency.length === 0) {
-          metrictemplate.dependency = [{'key': '', 'value': ''}];
-        }
-        if (metrictemplate.parameter.length === 0) {
-          metrictemplate.parameter = [{'key': '', 'value': ''}];
-        }
-        if (metrictemplate.flags.length === 0) {
-          metrictemplate.flags = [{'key': '', 'value': ''}];
-        }
-        if (metrictemplate.files.length === 0) {
-          metrictemplate.files = [{'key': '', 'value': ''}];
-        }
-        if (metrictemplate.fileparameter.length === 0) {
-          metrictemplate.fileparameter = [{'key': '', 'value': ''}];
-        }
+        if (!this.addview) {
+          let metrictemplate = await this.backend.fetchData(`/api/v2/internal/metrictemplates/${this.name}`);
+          if (metrictemplate.attribute.length === 0) {
+            metrictemplate.attribute = [{'key': '', 'value': ''}];
+          }
+          if (metrictemplate.dependency.length === 0) {
+            metrictemplate.dependency = [{'key': '', 'value': ''}];
+          }
+          if (metrictemplate.parameter.length === 0) {
+            metrictemplate.parameter = [{'key': '', 'value': ''}];
+          }
+          if (metrictemplate.flags.length === 0) {
+            metrictemplate.flags = [{'key': '', 'value': ''}];
+          }
+          if (metrictemplate.files.length === 0) {
+            metrictemplate.files = [{'key': '', 'value': ''}];
+          }
+          if (metrictemplate.fileparameter.length === 0) {
+            metrictemplate.fileparameter = [{'key': '', 'value': ''}];
+          }
 
-        if (metrictemplate.probeversion) {
-          let fields = {};
-          allprobeversions.forEach((e) => {
-            if (e.object_repr === metrictemplate.probeversion) {
-              fields = e.fields;
-            }
-          });
-          this.setState({
-            metrictemplate: metrictemplate,
-            probe: fields,
-            probeversions: probeversions,
-            allprobeversions: allprobeversions,
-            metrictemplatelist: mlist,
-            types: types,
-            loading: false,
-          });
+          if (metrictemplate.probeversion) {
+            let fields = {};
+            allprobeversions.forEach((e) => {
+              if (e.object_repr === metrictemplate.probeversion) {
+                fields = e.fields;
+              }
+            });
+            this.setState({
+              metrictemplate: metrictemplate,
+              probe: fields,
+              probeversions: probeversions,
+              allprobeversions: allprobeversions,
+              metrictemplatelist: mlist,
+              types: types,
+              loading: false,
+            });
+          } else {
+            this.setState({
+              metrictemplate: metrictemplate,
+              metrictemplatelist: mlist,
+              allprobeversions: allprobeversions,
+              types: types,
+              loading: false,
+            });
+          }
         } else {
           this.setState({
-            metrictemplate: metrictemplate,
+            metrictemplate: {
+              id: '',
+              name: '',
+              probeversion: '',
+              mtype: 'Active',
+              description: '',
+              probeexecutable: '',
+              parent: '',
+              config: [
+                {'key': 'maxCheckAttempts', 'value': ''},
+                {'key': 'timeout', 'value': ''},
+                {'key': 'path', 'value': ''},
+                {'key': 'interval', 'value': ''},
+                {'key': 'retryInterval', 'value': ''}
+              ],
+              attribute: [{'key': '', 'value': ''}],
+              dependency: [{'key': '', 'value': ''}],
+              parameter: [{'key': '', 'value': ''}],
+              flags: [{'key': '', 'value': ''}],
+              files: [{'key': '', 'value': ''}],
+              fileparameter: [{'key': '', 'value': ''}]
+            },
             metrictemplatelist: mlist,
+            probeversions: probeversions,
             allprobeversions: allprobeversions,
             types: types,
             loading: false,
           });
         }
-      } else {
+      } catch(err) {
         this.setState({
-          metrictemplate: {
-            id: '',
-            name: '',
-            probeversion: '',
-            mtype: 'Active',
-            description: '',
-            probeexecutable: '',
-            parent: '',
-            config: [
-              {'key': 'maxCheckAttempts', 'value': ''},
-              {'key': 'timeout', 'value': ''},
-              {'key': 'path', 'value': ''},
-              {'key': 'interval', 'value': ''},
-              {'key': 'retryInterval', 'value': ''}
-            ],
-            attribute: [{'key': '', 'value': ''}],
-            dependency: [{'key': '', 'value': ''}],
-            parameter: [{'key': '', 'value': ''}],
-            flags: [{'key': '', 'value': ''}],
-            files: [{'key': '', 'value': ''}],
-            fileparameter: [{'key': '', 'value': ''}]
-          },
-          metrictemplatelist: mlist,
-          probeversions: probeversions,
-          allprobeversions: allprobeversions,
-          types: types,
-          loading: false,
+          error: err,
+          loading: false
         });
-      }
+      };
     }
 
     render() {
-      const { metrictemplate, types, probeversions, metrictemplatelist, loading } = this.state;
+      const { metrictemplate, types, probeversions, metrictemplatelist,
+        loading, error } = this.state;
 
       if (loading)
         return (<LoadingAnim/>)
+
+      else if (error)
+        return (<ErrorComponent error={error}/>);
 
       else if (!loading && metrictemplate) {
         return (
@@ -450,51 +463,62 @@ export class MetricTemplateVersionDetails extends Component {
       flags: [],
       files: [],
       fileparameter: [],
-      loading: false
+      loading: false,
+      error: null
     };
   }
 
   async componentDidMount() {
     this.setState({loading: true});
 
-    let json = await this.backend.fetchData(`/api/v2/internal/version/metrictemplate/${this.name}`);
-    json.forEach(async (e) => {
-      if (e.version == this.version) {
-        let probes = await this.backend.fetchData(`/api/v2/internal/version/probe/${e.fields.probeversion.split(' ')[0]}`);
-        let probe = {};
-        probes.forEach(p => {
-          if (p.object_repr === e.fields.probeversion)
-            probe = p.fields;
-        });
-        this.setState({
-          name: e.fields.name,
-          probeversion: e.fields.probeversion,
-          probe: probe,
-          type: e.fields.mtype,
-          probeexecutable: e.fields.probeexecutable,
-          description: e.fields.description,
-          parent: e.fields.parent,
-          config: e.fields.config,
-          attribute: e.fields.attribute,
-          dependency: e.fields.dependency,
-          parameter: e.fields.parameter,
-          flags: e.fields.flags,
-          files: e.fields.files,
-          fileparameter: e.fields.fileparameter,
-          date_created: e.date_created,
-          loading: false
-        });
-      }
-    });
+    try {
+      let json = await this.backend.fetchData(`/api/v2/internal/version/metrictemplate/${this.name}`);
+      json.forEach(async (e) => {
+        if (e.version == this.version) {
+          let probes = await this.backend.fetchData(`/api/v2/internal/version/probe/${e.fields.probeversion.split(' ')[0]}`);
+          let probe = {};
+          probes.forEach(p => {
+            if (p.object_repr === e.fields.probeversion)
+              probe = p.fields;
+          });
+          this.setState({
+            name: e.fields.name,
+            probeversion: e.fields.probeversion,
+            probe: probe,
+            type: e.fields.mtype,
+            probeexecutable: e.fields.probeexecutable,
+            description: e.fields.description,
+            parent: e.fields.parent,
+            config: e.fields.config,
+            attribute: e.fields.attribute,
+            dependency: e.fields.dependency,
+            parameter: e.fields.parameter,
+            flags: e.fields.flags,
+            files: e.fields.files,
+            fileparameter: e.fields.fileparameter,
+            date_created: e.date_created,
+            loading: false
+          });
+        }
+      });
+    } catch(err) {
+      this.setState({
+        error: err,
+        loading: false
+      });
+    };
   }
 
   render() {
     const { name, probeversion, type, probeexecutable, parent, config,
       attribute, dependency, parameter, flags, files, fileparameter,
-      loading, description } = this.state;
+      loading, description, error } = this.state;
 
     if (loading)
-    return (<LoadingAnim/>);
+      return (<LoadingAnim/>);
+
+    else if (error)
+      return (<ErrorComponent error={error}/>);
 
     else if (!loading && name) {
       return (
