@@ -593,6 +593,8 @@ class App extends Component {
                   titleModal='Log out'
                   msgModal='Are you sure you want to log out?'
                   userDetails={userDetails}
+                  isTenantSchema={this.state.isTenantSchema}
+                  publicView={publicView}
                 />
               </Col>
             </Row>

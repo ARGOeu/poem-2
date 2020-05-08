@@ -1,7 +1,8 @@
-import React, { Component } from 'react';
+import React, { Component, useState } from 'react';
 import Cookies from 'universal-cookie';
 import {
   Alert,
+  Badge,
   Breadcrumb,
   BreadcrumbItem,
   Button,
@@ -9,6 +10,7 @@ import {
   Card,
   CardBody,
   CardHeader,
+  CardText,
   Col,
   Collapse,
   Container,
@@ -28,6 +30,10 @@ import {
   NavbarBrand,
   NavbarToggler,
   Row,
+  Toast,
+  ToastBody,
+  ToastHeader,
+  Tooltip,
 } from 'reactstrap';
 import {Link} from 'react-router-dom';
 import ArgoLogo from './argologo_color.svg';
@@ -257,44 +263,218 @@ export const CustomBreadcrumb = ({location, history, publicView=false}) =>
 }
 
 
-export const NavigationBar = ({history, onLogout, isOpenModal, toggle, titleModal, msgModal, userDetails}) =>
-(
-  <React.Fragment>
-    <ModalAreYouSure
-      isOpen={isOpenModal}
-      toggle={toggle}
-      title={titleModal}
-      msg={msgModal}
-      onYes={() => doLogout(history, onLogout)} />
-    <Navbar expand="md" id="argo-nav" className="border rounded">
-      <NavbarBrand className="text-light">
-        <img src={ArgoLogo} alt="ARGO logo" className="img-responsive"/>
-        <span className="pl-3">
-          <strong>ARGO</strong> POEM
+const UserDetailsToolTip = ({userDetails, isTenantSchema, publicView}) =>
+{
+  const NoPermBadge = () =>
+    <Badge color="dark">
+      No permissions
+    </Badge>
+
+  const GroupBadge = ({name, index}) =>
+    <span>
+      <Badge key={index} color="primary">
+        {name}
+      </Badge>{' '}
+    </span>
+
+  const WhiteRuler = () =>
+    <div>
+      <hr style={{'borderTop': '1px solid white'}}/>
+    </div>
+
+  const HaveAnyPerm = (groups) => {
+    let havePerm = false
+
+    for (var group in groups) {
+      if (groups[group].length > 0) {
+        havePerm = true
+        break
+      }
+    }
+    return havePerm
+  }
+
+
+  return (
+    publicView ?
+      <React.Fragment>
+        <span>
+          <Badge color="warning">
+            Anonymous User
+          </Badge>
         </span>
-      </NavbarBrand>
-      <NavbarToggler/>
-      <Collapse navbar className='justify-content-end'>
-        <Nav navbar >
-          <NavItem className='m-2 text-light'>
-            Welcome,&nbsp;
-            <span className='font-weight-bold'>
-              {userDetails.first_name ? userDetails.first_name : userDetails.username}
-            </span>
-          </NavItem>
-          <NavItem className='m-2'>
-            <Button
-              id="argo-navbar-logout"
-              size="sm"
-              onClick={() => toggle()}>
-              <FontAwesomeIcon icon={faSignOutAlt} />
-            </Button>
-          </NavItem>
-        </Nav>
-      </Collapse>
-    </Navbar>
-  </React.Fragment>
-)
+        <div>
+          <small>
+            Anonymous
+          </small>
+        </div>
+        <WhiteRuler/>
+        <NoPermBadge/>
+      </React.Fragment>
+    :
+      <React.Fragment>
+        <span>
+          {
+            userDetails.is_superuser ?
+              <Badge color="danger">
+                {
+                  isTenantSchema
+                    ? 'Tenant Admin'
+                    : 'Super Admin'
+                }
+              </Badge>
+              :
+              <Badge color="success">
+                Tenant User
+              </Badge>
+          }
+        </span>
+        <div>
+          <small>
+            {userDetails.username}
+          </small>
+        </div>
+        {
+          userDetails.first_name &&
+          <div>
+            <small>
+              {userDetails.first_name}{' '}{userDetails.last_name}
+            </small>
+          </div>
+        }
+        <div>
+          <small>
+            {userDetails.email}
+          </small>
+        </div>
+        {
+          userDetails.is_superuser ?
+            null
+          :
+            HaveAnyPerm(userDetails.groups) ?
+              <React.Fragment>
+                <WhiteRuler/>
+                <div className="text-left">
+                  <small>
+                    Aggregation profiles:
+                  </small>
+                  <br/>
+                  {
+                    userDetails.groups.aggregations.length > 0
+                      ?
+                        userDetails.groups.aggregations.map((group, index) => (
+                          <GroupBadge name={group} index={index}/>
+                        ))
+                      :
+                        <NoPermBadge/>
+                  }
+                </div>
+                <div className="text-left">
+                  <small>
+                    Metrics:
+                  </small>
+                  <br/>
+                  {
+                    userDetails.groups.metrics.length > 0
+                      ?
+                        userDetails.groups.metrics.map((group, index) => (
+                          <GroupBadge name={group} index={index}/>
+                        ))
+                      :
+                        <NoPermBadge/>
+                  }
+                </div>
+                <div className="text-left">
+                  <small>
+                    Metric profiles:
+                  </small>
+                  <br/>
+                  {
+                    userDetails.groups.metricprofiles.length > 0
+                      ?
+                        userDetails.groups.metricprofiles.map((group, index) => (
+                          <GroupBadge name={group} index={index}/>
+                        ))
+                      :
+                        <NoPermBadge/>
+                  }
+                </div>
+                <div className="text-left">
+                  <small>
+                    Thresholds profiles:
+                  </small>
+                  <br/>
+                  {
+                    userDetails.groups.thresholdsprofiles.length > 0
+                      ?
+                        userDetails.groups.thresholdsprofiles.map((group, index) => (
+                          <GroupBadge name={group} index={index}/>
+                        ))
+                      :
+                        <NoPermBadge/>
+                  }
+                </div>
+              </React.Fragment>
+            :
+              <React.Fragment>
+                <WhiteRuler/>
+                <NoPermBadge/>
+              </React.Fragment>
+        }
+      </React.Fragment>
+  )
+}
+
+
+export const NavigationBar = ({history, onLogout, isOpenModal, toggle,
+  titleModal, msgModal, userDetails, isTenantSchema, publicView}) =>
+{
+  const [tooltipOpen, setTooltipOpen] = useState(false);
+  const toggleTooltip = () => setTooltipOpen(!tooltipOpen);
+
+  return (
+    <React.Fragment>
+      <ModalAreYouSure
+        isOpen={isOpenModal}
+        toggle={toggle}
+        title={titleModal}
+        msg={msgModal}
+        onYes={() => doLogout(history, onLogout)} />
+      <Navbar expand="md" id="argo-nav" className="border rounded">
+        <NavbarBrand className="text-light">
+          <img src={ArgoLogo} alt="ARGO logo" className="img-responsive"/>
+          <span className="pl-3">
+            <strong>ARGO</strong> POEM
+          </span>
+        </NavbarBrand>
+        <NavbarToggler/>
+        <Collapse navbar className='justify-content-end'>
+          <Nav navbar >
+            <NavItem className='m-2 ml-5 text-light'>
+              Welcome,&nbsp;
+              <span className='font-weight-bold' href="#" id="userToolTip">
+                <Badge href="#" color="dark" style={{fontSize: '100%'}}>
+                  {userDetails.first_name ? userDetails.first_name : userDetails.username}
+                </Badge>
+              </span>
+              <Tooltip placement="bottom" isOpen={tooltipOpen} target="userToolTip" toggle={toggleTooltip}>
+                <UserDetailsToolTip userDetails={userDetails} isTenantSchema={isTenantSchema} publicView={publicView}/>
+              </Tooltip>
+            </NavItem>
+            <NavItem className='m-2'>
+              <Button
+                id="argo-navbar-logout"
+                size="sm"
+                onClick={() => toggle()}>
+                <FontAwesomeIcon icon={faSignOutAlt} />
+              </Button>
+            </NavItem>
+          </Nav>
+        </Collapse>
+      </Navbar>
+    </React.Fragment>
+  )
+}
 
 
 export const NavigationLinks = ({location, isTenantSchema, userDetails}) => {
@@ -417,6 +597,7 @@ export const PublicPage = ({children}) => {
             titleModal='Log out'
             msgModal='Are you sure you want to log out?'
             userDetails={userDetails}
+            publicView={true}
           />
         </Col>
       </Row>
