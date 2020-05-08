@@ -263,140 +263,163 @@ export const CustomBreadcrumb = ({location, history, publicView=false}) =>
 }
 
 
-const UserDetailsToolTip = ({userDetails, isTenantSchema}) =>
-(
-  <React.Fragment>
-    <span>
-      {
-        userDetails.is_superuser ?
-          <Badge color="danger">
-            {
-              isTenantSchema
-                ? 'Tenant Admin'
-                : 'Super Admin'
-            }
-          </Badge>
-          :
-          <Badge color="success">
-            Tenant User
-          </Badge>
-      }
-    </span>
-    <div>
-      <small>
-        {userDetails.username}
-      </small>
-    </div>
-    {
-      userDetails.first_name &&
-      <div>
-        <small>
-          {userDetails.first_name}{' '}{userDetails.last_name}
-        </small>
-      </div>
-    }
-    <div>
-      <small>
-        {userDetails.email}
-      </small>
-    </div>
-    {
-      !userDetails.is_superuser &&
+const UserDetailsToolTip = ({userDetails, isTenantSchema, publicView}) =>
+{
+  return (
+    publicView ?
       <React.Fragment>
+        <span>
+          <Badge color="warning">
+            Anonymous User
+          </Badge>
+        </span>
+        <div>
+          <small>
+            Anonymous
+          </small>
+        </div>
         <div>
           <hr style={{'borderTop': '1px solid white'}}/>
         </div>
-        <div className="text-left">
-          <small>
-            Aggregation profiles:
-          </small>
-          <br/>
-          {
-            userDetails.groups.aggregations.length > 0
-              ?
-                userDetails.groups.aggregations.map((group, index) => (
-                  <span>
-                    <Badge key={index} color="primary">
-                      {group}
-                    </Badge>{' '}
-                  </span>
-                ))
-              :
-                <Badge color="dark">
-                  None
-                </Badge>
-          }
-        </div>
-        <div className="text-left">
-          <small>
-            Metrics:
-          </small>
-          <br/>
-          {
-            userDetails.groups.metrics.length > 0
-              ?
-                userDetails.groups.metrics.map((group, index) => (
-                  <span>
-                    <Badge key={index} color="primary">
-                      {group}
-                    </Badge>{' '}
-                  </span>
-                ))
-              :
-                <Badge color="dark">
-                  None
-                </Badge>
-          }
-        </div>
-        <div className="text-left">
-          <small>
-            Metric profiles:
-          </small>
-          <br/>
-          {
-            userDetails.groups.metricprofiles.length > 0
-              ?
-                userDetails.groups.metricprofiles.map((group, index) => (
-                  <span>
-                    <Badge key={index} color="primary">
-                      {group}
-                    </Badge>{' '}
-                  </span>
-                ))
-              :
-                <Badge color="dark">
-                  None
-                </Badge>
-          }
-        </div>
-        <div className="text-left">
-          <small>
-            Thresholds profiles:
-          </small>
-          <br/>
-          {
-            userDetails.groups.thresholdsprofiles.length > 0
-              ?
-                userDetails.groups.thresholdsprofiles.map((group, index) => (
-                  <span>
-                    <Badge key={index} color="primary">
-                      {group}
-                    </Badge>{' '}
-                  </span>
-                ))
-              :
-                <Badge color="dark">
-                  None
-                </Badge>
-          }
-        </div>
+        <Badge color="dark">
+          No permissions
+        </Badge>
       </React.Fragment>
-    }
-  </React.Fragment>
-)
+    :
+      <React.Fragment>
+        <span>
+          {
+            userDetails.is_superuser ?
+              <Badge color="danger">
+                {
+                  isTenantSchema
+                    ? 'Tenant Admin'
+                    : 'Super Admin'
+                }
+              </Badge>
+              :
+              <Badge color="success">
+                Tenant User
+              </Badge>
+          }
+        </span>
+        <div>
+          <small>
+            {userDetails.username}
+          </small>
+        </div>
+        {
+          userDetails.first_name &&
+          <div>
+            <small>
+              {userDetails.first_name}{' '}{userDetails.last_name}
+            </small>
+          </div>
+        }
+        <div>
+          <small>
+            {userDetails.email}
+          </small>
+        </div>
+        {
+          !userDetails.is_superuser &&
+          <React.Fragment>
+            <div>
+              <hr style={{'borderTop': '1px solid white'}}/>
+            </div>
+            <div className="text-left">
+              <small>
+                Aggregation profiles:
+              </small>
+              <br/>
+              {
+                userDetails.groups.aggregations.length > 0
+                  ?
+                    userDetails.groups.aggregations.map((group, index) => (
+                      <span>
+                        <Badge key={index} color="primary">
+                          {group}
+                        </Badge>{' '}
+                      </span>
+                    ))
+                  :
+                    <Badge color="dark">
+                      No permissions
+                    </Badge>
+              }
+            </div>
+            <div className="text-left">
+              <small>
+                Metrics:
+              </small>
+              <br/>
+              {
+                userDetails.groups.metrics.length > 0
+                  ?
+                    userDetails.groups.metrics.map((group, index) => (
+                      <span>
+                        <Badge key={index} color="primary">
+                          {group}
+                        </Badge>{' '}
+                      </span>
+                    ))
+                  :
+                    <Badge color="dark">
+                      No permissions
+                    </Badge>
+              }
+            </div>
+            <div className="text-left">
+              <small>
+                Metric profiles:
+              </small>
+              <br/>
+              {
+                userDetails.groups.metricprofiles.length > 0
+                  ?
+                    userDetails.groups.metricprofiles.map((group, index) => (
+                      <span>
+                        <Badge key={index} color="primary">
+                          {group}
+                        </Badge>{' '}
+                      </span>
+                    ))
+                  :
+                    <Badge color="dark">
+                      No permissions
+                    </Badge>
+              }
+            </div>
+            <div className="text-left">
+              <small>
+                Thresholds profiles:
+              </small>
+              <br/>
+              {
+                userDetails.groups.thresholdsprofiles.length > 0
+                  ?
+                    userDetails.groups.thresholdsprofiles.map((group, index) => (
+                      <span>
+                        <Badge key={index} color="primary">
+                          {group}
+                        </Badge>{' '}
+                      </span>
+                    ))
+                  :
+                    <Badge color="dark">
+                      No permissions
+                    </Badge>
+              }
+            </div>
+          </React.Fragment>
+        }
+      </React.Fragment>
+  )
+}
 
 
-export const NavigationBar = ({history, onLogout, isOpenModal, toggle, titleModal, msgModal, userDetails, isTenantSchema}) =>
+export const NavigationBar = ({history, onLogout, isOpenModal, toggle,
+  titleModal, msgModal, userDetails, isTenantSchema, publicView}) =>
 {
   const [tooltipOpen, setTooltipOpen] = useState(false);
   const toggleTooltip = () => setTooltipOpen(!tooltipOpen);
@@ -427,7 +450,7 @@ export const NavigationBar = ({history, onLogout, isOpenModal, toggle, titleModa
                 </Badge>
               </span>
               <Tooltip placement="bottom" isOpen={tooltipOpen} target="userToolTip" toggle={toggleTooltip}>
-                <UserDetailsToolTip userDetails={userDetails} isTenantSchema={isTenantSchema}/>
+                <UserDetailsToolTip userDetails={userDetails} isTenantSchema={isTenantSchema} publicView={publicView}/>
               </Tooltip>
             </NavItem>
             <NavItem className='m-2'>
@@ -566,6 +589,7 @@ export const PublicPage = ({children}) => {
             titleModal='Log out'
             msgModal='Are you sure you want to log out?'
             userDetails={userDetails}
+            publicView={true}
           />
         </Col>
       </Row>
