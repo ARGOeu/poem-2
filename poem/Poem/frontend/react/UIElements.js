@@ -282,6 +282,18 @@ const UserDetailsToolTip = ({userDetails, isTenantSchema, publicView}) =>
       <hr style={{'borderTop': '1px solid white'}}/>
     </div>
 
+  const HaveAnyPerm = (groups) => {
+    let havePerm = false
+
+    for (var group in groups) {
+      if (groups[group].length > 0) {
+        havePerm = true
+        break
+      }
+    }
+    return havePerm
+  }
+
 
   return (
     publicView ?
@@ -336,70 +348,78 @@ const UserDetailsToolTip = ({userDetails, isTenantSchema, publicView}) =>
           </small>
         </div>
         {
-          !userDetails.is_superuser &&
-          <React.Fragment>
-            <WhiteRuler/>
-            <div className="text-left">
-              <small>
-                Aggregation profiles:
-              </small>
-              <br/>
-              {
-                userDetails.groups.aggregations.length > 0
-                  ?
-                    userDetails.groups.aggregations.map((group, index) => (
-                      <GroupBadge name={group} index={index}/>
-                    ))
-                  :
-                    <NoPermBadge/>
-              }
-            </div>
-            <div className="text-left">
-              <small>
-                Metrics:
-              </small>
-              <br/>
-              {
-                userDetails.groups.metrics.length > 0
-                  ?
-                    userDetails.groups.metrics.map((group, index) => (
-                      <GroupBadge name={group} index={index}/>
-                    ))
-                  :
-                    <NoPermBadge/>
-              }
-            </div>
-            <div className="text-left">
-              <small>
-                Metric profiles:
-              </small>
-              <br/>
-              {
-                userDetails.groups.metricprofiles.length > 0
-                  ?
-                    userDetails.groups.metricprofiles.map((group, index) => (
-                      <GroupBadge name={group} index={index}/>
-                    ))
-                  :
-                    <NoPermBadge/>
-              }
-            </div>
-            <div className="text-left">
-              <small>
-                Thresholds profiles:
-              </small>
-              <br/>
-              {
-                userDetails.groups.thresholdsprofiles.length > 0
-                  ?
-                    userDetails.groups.thresholdsprofiles.map((group, index) => (
-                      <GroupBadge name={group} index={index}/>
-                    ))
-                  :
-                    <NoPermBadge/>
-              }
-            </div>
-          </React.Fragment>
+          userDetails.is_superuser ?
+            null
+          :
+            HaveAnyPerm(userDetails.groups) ?
+              <React.Fragment>
+                <WhiteRuler/>
+                <div className="text-left">
+                  <small>
+                    Aggregation profiles:
+                  </small>
+                  <br/>
+                  {
+                    userDetails.groups.aggregations.length > 0
+                      ?
+                        userDetails.groups.aggregations.map((group, index) => (
+                          <GroupBadge name={group} index={index}/>
+                        ))
+                      :
+                        <NoPermBadge/>
+                  }
+                </div>
+                <div className="text-left">
+                  <small>
+                    Metrics:
+                  </small>
+                  <br/>
+                  {
+                    userDetails.groups.metrics.length > 0
+                      ?
+                        userDetails.groups.metrics.map((group, index) => (
+                          <GroupBadge name={group} index={index}/>
+                        ))
+                      :
+                        <NoPermBadge/>
+                  }
+                </div>
+                <div className="text-left">
+                  <small>
+                    Metric profiles:
+                  </small>
+                  <br/>
+                  {
+                    userDetails.groups.metricprofiles.length > 0
+                      ?
+                        userDetails.groups.metricprofiles.map((group, index) => (
+                          <GroupBadge name={group} index={index}/>
+                        ))
+                      :
+                        <NoPermBadge/>
+                  }
+                </div>
+                <div className="text-left">
+                  <small>
+                    Thresholds profiles:
+                  </small>
+                  <br/>
+                  {
+                    userDetails.groups.thresholdsprofiles.length > 0
+                      ?
+                        userDetails.groups.thresholdsprofiles.map((group, index) => (
+                          <GroupBadge name={group} index={index}/>
+                        ))
+                      :
+                        <NoPermBadge/>
+                  }
+                </div>
+              </React.Fragment>
+            :
+              <React.Fragment>
+                <WhiteRuler/>
+                <NoPermBadge/>
+              </React.Fragment>
         }
       </React.Fragment>
   )
