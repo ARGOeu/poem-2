@@ -34,6 +34,9 @@ import {
   ToastBody,
   ToastHeader,
   Tooltip,
+  Popover,
+  PopoverHeader,
+  PopoverBody
 } from 'reactstrap';
 import {Link} from 'react-router-dom';
 import ArgoLogo from './argologo_color.svg';
@@ -42,6 +45,7 @@ import EULogo from './eu.png';
 import EOSCLogo from './eosc.png';
 import './UIElements.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { v4 as uuidv4 } from 'uuid';
 import {
   faSignOutAlt,
   faSearch,
@@ -265,21 +269,28 @@ export const CustomBreadcrumb = ({location, history, publicView=false}) =>
 
 const UserDetailsToolTip = ({userDetails, isTenantSchema, publicView}) =>
 {
-  const NoPermBadge = () =>
-    <Badge color="dark">
-      No permissions
-    </Badge>
+  const NoPermBadge = ({only=false}) =>
+    only ?
+      <div className="text-center">
+         <Badge color="dark" className="mb-1 mt-1" style={{fontSize: '100%'}}>
+          No permissions
+        </Badge>
+      </div>
+    :
+      <Badge color="dark" className="mb-1 mt-1">
+        No permissions
+      </Badge>
 
-  const GroupBadge = ({name, index}) =>
+  const GroupBadge = ({name}) =>
     <span>
-      <Badge key={index} color="primary">
+      <Badge color="primary" className="mb-1 mt-1">
         {name}
       </Badge>{' '}
     </span>
 
   const WhiteRuler = () =>
     <div>
-      <hr style={{'borderTop': '1px solid white'}}/>
+      <hr style={{'borderTop': '1px solid black'}}/>
     </div>
 
   const HaveAnyPerm = (groups) => {
@@ -297,26 +308,21 @@ const UserDetailsToolTip = ({userDetails, isTenantSchema, publicView}) =>
 
   return (
     publicView ?
-      <React.Fragment>
-        <span>
-          <Badge color="warning">
+      <div>
+        <div>
+          <Badge color="warning" style={{fontSize: "100%"}} pill>
             Anonymous User
           </Badge>
-        </span>
-        <div>
-          <small>
-            Anonymous
-          </small>
         </div>
         <WhiteRuler/>
-        <NoPermBadge/>
-      </React.Fragment>
+        <NoPermBadge only={true}/>
+      </div>
     :
-      <React.Fragment>
-        <span>
+      <div>
+        <div className="text-center">
           {
             userDetails.is_superuser ?
-              <Badge color="danger">
+              <Badge color="danger" className="mt-2 mb-2" style={{fontSize: "100%"}} pill>
                 {
                   isTenantSchema
                     ? 'Tenant Admin'
@@ -324,104 +330,95 @@ const UserDetailsToolTip = ({userDetails, isTenantSchema, publicView}) =>
                 }
               </Badge>
               :
-              <Badge color="success">
+              <Badge color="success" className="mt-2 mb-2" style={{fontSize: "100%"}} pill>
                 Tenant User
               </Badge>
           }
-        </span>
-        <div>
-          <small>
-            {userDetails.username}
-          </small>
         </div>
         {
           userDetails.first_name &&
-          <div>
-            <small>
-              {userDetails.first_name}{' '}{userDetails.last_name}
-            </small>
+          <div className="text-center">
+            <b>{userDetails.first_name}{' '}{userDetails.last_name}</b>
           </div>
         }
-        <div>
-          <small>
+        {
+          <div className="text-center text-primary">
+            {
+              !userDetails.first_name ?
+                <br/>
+              :
+                null
+            }
             {userDetails.email}
-          </small>
-        </div>
+          </div>
+        }
         {
           userDetails.is_superuser ?
             null
           :
             HaveAnyPerm(userDetails.groups) ?
-              <React.Fragment>
+              <div>
                 <WhiteRuler/>
                 <div className="text-left">
-                  <small>
-                    Aggregation profiles:
-                  </small>
+                  Aggregation profiles:
                   <br/>
                   {
                     userDetails.groups.aggregations.length > 0
                       ?
                         userDetails.groups.aggregations.map((group, index) => (
-                          <GroupBadge name={group} index={index}/>
+                          <GroupBadge name={group} key={index}/>
                         ))
                       :
                         <NoPermBadge/>
                   }
                 </div>
                 <div className="text-left">
-                  <small>
-                    Metrics:
-                  </small>
+                  Metrics:
                   <br/>
                   {
                     userDetails.groups.metrics.length > 0
                       ?
                         userDetails.groups.metrics.map((group, index) => (
-                          <GroupBadge name={group} index={index}/>
+                          <GroupBadge name={group} key={index}/>
                         ))
                       :
                         <NoPermBadge/>
                   }
                 </div>
                 <div className="text-left">
-                  <small>
-                    Metric profiles:
-                  </small>
+                  Metric profiles:
                   <br/>
                   {
                     userDetails.groups.metricprofiles.length > 0
                       ?
                         userDetails.groups.metricprofiles.map((group, index) => (
-                          <GroupBadge name={group} index={index}/>
+                          <GroupBadge name={group} key={index}/>
                         ))
                       :
                         <NoPermBadge/>
                   }
                 </div>
                 <div className="text-left">
-                  <small>
-                    Thresholds profiles:
-                  </small>
+                  Thresholds profiles:
                   <br/>
                   {
                     userDetails.groups.thresholdsprofiles.length > 0
                       ?
                         userDetails.groups.thresholdsprofiles.map((group, index) => (
-                          <GroupBadge name={group} index={index}/>
+                          <GroupBadge name={group} key={index}/>
                         ))
                       :
                         <NoPermBadge/>
                   }
                 </div>
-              </React.Fragment>
+              </div>
             :
-              <React.Fragment>
+              <div>
                 <WhiteRuler/>
-                <NoPermBadge/>
-              </React.Fragment>
+                <NoPermBadge only={true}/>
+              </div>
         }
-      </React.Fragment>
+      </div>
   )
 }
 
@@ -430,7 +427,6 @@ export const NavigationBar = ({history, onLogout, isOpenModal, toggle,
   titleModal, msgModal, userDetails, isTenantSchema, publicView}) =>
 {
   const [tooltipOpen, setTooltipOpen] = useState(false);
-  const toggleTooltip = () => setTooltipOpen(!tooltipOpen);
 
   return (
     <React.Fragment>
@@ -452,14 +448,19 @@ export const NavigationBar = ({history, onLogout, isOpenModal, toggle,
           <Nav navbar >
             <NavItem className='m-2 ml-5 text-light'>
               Welcome,&nbsp;
-              <span className='font-weight-bold' href="#" id="userToolTip">
+              <span onMouseEnter={() => setTooltipOpen(true)}
+                onMouseLeave={() => setTooltipOpen(false)}
+                className='font-weight-bold' href="#" id="userToolTip">
                 <Badge href="#" color="dark" style={{fontSize: '100%'}}>
                   {userDetails.first_name ? userDetails.first_name : userDetails.username}
                 </Badge>
               </span>
-              <Tooltip placement="bottom" isOpen={tooltipOpen} target="userToolTip" toggle={toggleTooltip}>
-                <UserDetailsToolTip userDetails={userDetails} isTenantSchema={isTenantSchema} publicView={publicView}/>
-              </Tooltip>
+              <Popover style={{opacity: 0.9}} placement="bottom" isOpen={tooltipOpen}
+                target="userToolTip" toggle={() => setTooltipOpen(!tooltipOpen)}>
+                <PopoverBody>
+                  <UserDetailsToolTip userDetails={userDetails} isTenantSchema={isTenantSchema} publicView={publicView}/>
+                </PopoverBody>
+              </Popover>
             </NavItem>
             <NavItem className='m-2'>
               <Button
