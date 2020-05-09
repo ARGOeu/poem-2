@@ -30,10 +30,6 @@ import {
   NavbarBrand,
   NavbarToggler,
   Row,
-  Toast,
-  ToastBody,
-  ToastHeader,
-  Tooltip,
   Popover,
   PopoverHeader,
   PopoverBody
@@ -45,7 +41,6 @@ import EULogo from './eu.png';
 import EOSCLogo from './eosc.png';
 import './UIElements.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { v4 as uuidv4 } from 'uuid';
 import {
   faSignOutAlt,
   faSearch,
