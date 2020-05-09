@@ -92,7 +92,7 @@ const MetricProfileTupleValidate = ({view_services, name, groupname}) => {
 const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
   remove_handler, insert_handler, onselect_handler, form, remove, insert}) =>
 (
-  <table className="table table-bordered table-sm">
+  <table className="table table-bordered table-sm table-hover">
     <thead className="table-active">
       <tr>
         <th className="align-middle text-center" style={{width: "5%"}}>#</th>
