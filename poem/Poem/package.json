@@ -51,7 +51,7 @@
     "url-loader": "^1.1.2",
     "webpack": "^4.29.5",
     "webpack-bundle-tracker": "^0.4.3",
-    "webpack-cli": "^3.2.3",
+    "webpack-cli": "^3.3.11",
     "yup": "^0.27.0"
   },
   "dependencies": {
