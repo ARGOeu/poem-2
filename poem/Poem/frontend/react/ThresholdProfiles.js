@@ -1243,6 +1243,7 @@ export class ThresholdsProfilesChange extends Component {
       if (this.publicView) {
         let json = await this.backend.fetchData(`/api/v2/internal/public_thresholdsprofiles/${this.name}`);
         let thresholdsprofile = await this.webapi.fetchThresholdsProfile(json.apiid);
+        let metricslist =await this.backend.fetchListOfNames('/api/v2/internal/public_metricsall');
         this.setState({
           thresholds_profile: {
             'apiid': thresholdsprofile.id,
@@ -1251,7 +1252,7 @@ export class ThresholdsProfilesChange extends Component {
           },
           thresholds_rules: thresholdsToValues(thresholdsprofile.rules),
           groups_list: [],
-          metrics_list: await this.backend.fetchListOfNames('/api/v2/internal/public_metricsall'),
+          metrics_list: metricslist,
           write_perm: false,
           loading: false
         });
