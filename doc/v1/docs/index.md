@@ -1,6 +1,7 @@
 # Index
 
 ## SuperAdmin POEM
+- [User Interface](superadmin_ui.md)
 - [Administration](superadmin_administration.md)
     - [Users](superadmin_users.md)
 - [Probes](superadmin_probe.md)
