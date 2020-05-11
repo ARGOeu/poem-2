@@ -72,15 +72,27 @@ export class Backend {
   }
 
   async fetchListOfNames(url) {
+    let error_msg = '';
     try {
       let response = await fetch(url);
-      let json = await response.json();
-      let list = [];
-      json.forEach(e => list.push(e.name));
-      return list;
+      if (response.ok) {
+        let json = await response.json();
+        let list = [];
+        json.forEach(e => list.push(e.name));
+        return list;
+      } else {
+        try {
+          let json = await response.json();
+          error_msg = `Fetch ${url}: ${response.status} ${response.statusText}: ${json.detail}`;
+        } catch(err1) {
+          error_msg = `Fetch ${url}: ${response.status} ${response.statusText}`
+        }
+      }
     } catch(err) {
-      alert(`Something went wrong: ${err}`);
-    }
+      error_msg = `Fetch ${url}: ${err}`;
+    };
+    if (error_msg)
+      throw Error(error_msg);
   }
 
   async fetchResult(url) {
