@@ -23,7 +23,7 @@ Tenant POEM users cannot add metrics by themselves, they can only import one of 
 Importing metrics is described in detail in [metric templates documentation](tenant_metric_templates.md).
 
 ## Adding aggregation profile
-**Step 1:** Make sure you have the permissions to add aggregation profile.
+**Step 1:** Make sure you have the permissions to add aggregation profile. The user can check his/her permissions by hovering over his/her name in the top bar (described in [tenant ui documentation](tenant_ui.md)).
 
 **Step 2:** Go to [aggregations page](tenant_aggregation_profiles.md#list-of-aggregation-profiles).
 
@@ -32,7 +32,7 @@ Importing metrics is described in detail in [metric templates documentation](ten
 **Step 4:** Fill in the necessary information. Details on aggregation profiles fields is given in [aggregation profile documentation](tenant_aggregation_profiles.md#aggregation-profile-details).
 
 ## Adding metric profile
-**Step 1:** Make sure you have the permissions to add metric profile.
+**Step 1:** Make sure you have the permissions to add metric profile. The user can check his/her permissions by hovering over his/her name in the top bar (described in [tenant ui documentation](tenant_ui.md)).
 
 **Step 2:** Go to [metric profile page](tenant_metric_profiles.md#list-of-metric-profiles).
 
@@ -41,7 +41,7 @@ Importing metrics is described in detail in [metric templates documentation](ten
 **Step 4:** Fill in the necessary information. Details are given in [metric profile documentation](tenant_metric_profiles.md#metric-profile-details).
 
 ## Adding thresholds profile
-**Step 1:** Make sure you have the permissions to add thresholds profile.
+**Step 1:** Make sure you have the permissions to add thresholds profile. The user can check his/her permissions by hovering over his/her name in the top bar (described in [tenant ui documentation](tenant_ui.md)).
 
 **Step 2:** Go to [thresholds profile page](tenant_thresholds_profiles.md#list-of-thresholds-profiles).
 
