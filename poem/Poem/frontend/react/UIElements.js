@@ -1098,9 +1098,20 @@ export const ProfileMainInfo = ({errors, grouplist=undefined, description=undefi
 );
 
 
-export const ErrorComponent = ({error}) => (
-  <React.Fragment>
-    <h1>Something went wrong</h1>
-    <p>{error.toString()}</p>
-  </React.Fragment>
-)
+export const ErrorComponent = ({error}) => {
+  let errors = [];
+  error.toString().split('; ').forEach((e, i) => {
+    if (i === 0)
+      errors.push(<h3 key={i}>{e}</h3>)
+    else
+      errors.push(<p key={i}>{e}</p>)
+
+  })
+
+  return (
+    <React.Fragment>
+      <h1>Something went wrong</h1>
+      {errors}
+    </React.Fragment>
+  )
+}
