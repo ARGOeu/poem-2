@@ -59,13 +59,13 @@ export class Backend {
       else {
         try {
           let json = await response.json();
-          error_msg = `Fetch ${url}: ${response.status} ${response.statusText}: ${json.detail}`;
+          error_msg = `${response.status} ${response.statusText}; in fetch ${url}; ${json.detail}`;
         } catch(err1) {
-          error_msg = `Fetch ${url}: ${response.status} ${response.statusText}`;
+          error_msg = `${response.status} ${response.statusText}; in fetch ${url}`;
         }
       }
     } catch (err) {
-      error_msg = `Fetch ${url}: ${err}`;
+      error_msg = `${err}; in fetch ${url}`;
     };
     if (error_msg)
       throw Error(error_msg);
@@ -83,13 +83,13 @@ export class Backend {
       } else {
         try {
           let json = await response.json();
-          error_msg = `Fetch ${url}: ${response.status} ${response.statusText}: ${json.detail}`;
+          error_msg = `${response.status} ${response.statusText}; in fetch ${url}; ${json.detail}`;
         } catch(err1) {
-          error_msg = `Fetch ${url}: ${response.status} ${response.statusText}`
+          error_msg = `${response.status} ${response.statusText}; in fetch ${url}`;
         }
       }
     } catch(err) {
-      error_msg = `Fetch ${url}: ${err}`;
+      error_msg = `${err}; in fetch ${url}`;
     };
     if (error_msg)
       throw Error(error_msg);
@@ -105,13 +105,13 @@ export class Backend {
       } else {
         try {
           let json = await response.json();
-          error_msg = `Fetch ${url}: ${response.status} ${response.statusText}: ${json.detail}`;
+          error_msg = `${response.status} ${response.statusText}; in fetch ${url}; ${json.detail}`;
         } catch(err1) {
-          error_msg = `Fetch ${url}: ${response.status} ${response.statusText}`;
+          error_msg = `${response.status} ${response.statusText}; in fetch ${url}`;
         };
       }
     } catch(err) {
-      error_msg = `Fetch ${url}: ${err}`;
+      error_msg = `${err}; in fetch ${url}`;
     };
     if (error_msg)
       throw Error(error_msg);
@@ -179,7 +179,7 @@ export class WebApi {
         {
           headers: {
             "Accept": "application/json",
-            "x-api-key": 'mock-token'
+            "x-api-key": this.token
           }
         }
       );
@@ -189,13 +189,13 @@ export class WebApi {
       } else {
         try {
           let json = await response.json();
-          err_msg = `Fetch ${this.metricprofiles}: ${response.status} ${response.statusText}: ${json.status.details}`;
+          err_msg = `${response.status} ${response.statusText}; in fetch ${this.metricprofiles}; ${json.status.details}`;
         } catch(err) {
-          err_msg = `Fetch ${this.metricprofiles}: ${response.status} ${response.statusText}`;
+          err_msg = `${response.status} ${response.statusText}; in fetch ${this.metricprofiles}`;
         };
       };
     } catch(err) {
-      err_msg = `Fetch ${this.metricprofiles}: ${err}`;
+      err_msg = `${err}; in fetch ${this.metricprofiles}`;
     };
     if (err_msg)
       throw Error(err_msg);
@@ -268,19 +268,19 @@ export class WebApi {
         try {
           let json = await response.json();
           if (json.status.details)
-            err_msg = `Fetch ${url}: ${response.status} ${response.statusText}: ${json.status.details}`;
+            err_msg = `${response.status} ${response.statusText}; in fetch ${url}; ${json.status.details}`;
 
           else if (json.errors[0].details)
-            err_msg = `Fetch ${url}: ${response.status} ${response.statusText}: ${json.errors[0].details}`;
+            err_msg = `${response.status} ${response.statusText}; in fetch ${url}; ${json.errors[0].details}`;
 
           else
-            err_msg = `Fetch ${url}: ${response.status} ${response.statusText}`;
+            err_msg = `${response.status} ${response.statusText}; in fetch ${url}`;
         } catch(err1) {
-          err_msg = `Fetch ${url}: ${response.status} ${response.statusText}`;
+          err_msg = `${response.status} ${response.statusText}; in fetch ${url}`;
         };
       };
     } catch(err) {
-      err_msg = `Fetch ${url}: ${err}`;
+      err_msg = `${err}; in fetch ${url}`;
     };
     if (err_msg)
       throw Error(err_msg);
