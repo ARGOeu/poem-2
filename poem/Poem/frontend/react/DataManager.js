@@ -172,6 +172,7 @@ export class WebApi {
   }
 
   async fetchMetricProfiles() {
+    let err_msg = '';
     try {
       let response = await fetch(
         this.metricprofiles,
@@ -182,11 +183,22 @@ export class WebApi {
           }
         }
       );
-      let json = await response.json();
-      return json['data'];
+      if (response.ok) {
+        let json = await response.json();
+        return json['data'];
+      } else {
+        try {
+          let json = await response.json();
+          err_msg = `Fetch ${this.metricprofiles}: ${response.status} ${response.statusText}: ${json.status.details}`;
+        } catch(err) {
+          err_msg = `Fetch ${this.metricprofiles}: ${response.status} ${response.statusText}`;
+        };
+      };
     } catch(err) {
-      alert(`Something went wrong: ${err}`);
-    }
+      err_msg = `Fetch ${this.metricprofiles}: ${err}`;
+    };
+    if (err_msg)
+      throw Error(err_msg);
   }
 
   fetchMetricProfile(id) {
