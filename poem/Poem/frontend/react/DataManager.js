@@ -179,7 +179,7 @@ export class WebApi {
         {
           headers: {
             "Accept": "application/json",
-            "x-api-key": this.token
+            "x-api-key": 'mock-token'
           }
         }
       );
@@ -250,6 +250,7 @@ export class WebApi {
   }
 
   async fetchProfile(url) {
+    let err_msg = '';
     try {
       let response = await fetch(
         url,
@@ -260,11 +261,29 @@ export class WebApi {
           }
         }
       );
-      let json = await response.json();
-      return json['data'][0];
+      if (response.ok) {
+        let json = await response.json();
+        return json['data'][0];
+      } else {
+        try {
+          let json = await response.json();
+          if (json.status.details)
+            err_msg = `Fetch ${url}: ${response.status} ${response.statusText}: ${json.status.details}`;
+
+          else if (json.errors[0].details)
+            err_msg = `Fetch ${url}: ${response.status} ${response.statusText}: ${json.errors[0].details}`;
+
+          else
+            err_msg = `Fetch ${url}: ${response.status} ${response.statusText}`;
+        } catch(err1) {
+          err_msg = `Fetch ${url}: ${response.status} ${response.statusText}`;
+        };
+      };
     } catch(err) {
-      alert(`Something went wrong: ${err}`);
-    }
+      err_msg = `Fetch ${url}: ${err}`;
+    };
+    if (err_msg)
+      throw Error(err_msg);
   }
 
   changeProfile(url, data) {
