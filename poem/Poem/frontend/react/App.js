@@ -25,7 +25,7 @@ import { TenantAdministration, SuperAdminAdministration } from './Administration
 import { AggregationProfilesChange, AggregationProfilesList, AggregationProfileHistory, AggregationProfileVersionCompare, AggregationProfileVersionDetails } from './AggregationProfiles';
 import Reports from './Reports';
 import Services from './Services';
-import { UsersList, UserChange, SuperAdminUserChange } from './Users';
+import { UsersList, UserChange, SuperAdminUserChange, ChangePassword } from './Users';
 import {
   GroupOfMetricsList,
   GroupOfMetricsChange,
@@ -308,6 +308,9 @@ const SuperAdminRouteSwitch = ({props}) => (
       render={props => <SuperAdminUserChange
         {...props}
         addview={true}/>}
+    />
+    <Route exact path="/ui/administration/users/:user_name/change_password"
+      render={props => <ChangePassword {...props}/>}
     />
     <Route exact path="/ui/administration/users/:user_name"
       render={props => <SuperAdminUserChange {...props}/>}
