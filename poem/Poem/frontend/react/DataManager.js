@@ -22,7 +22,7 @@ export class Backend {
       } else
         return null;
     } catch(err) {
-      alert(`Something went wrong: ${err}`);
+      return null;
     }
   }
 
@@ -37,7 +37,7 @@ export class Backend {
       } else
         return null;
     } catch(err) {
-      alert(`Something went wrong: ${err}`)
+      return null;
     }
   }
 
