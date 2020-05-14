@@ -1,4 +1,5 @@
 import os
+
 import django
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'Poem.settings')
@@ -13,7 +14,7 @@ from Poem.tenants.models import Tenant
 import requests
 from requests.exceptions import HTTPError
 
-from rest_framework_api_key.models import APIKey
+from Poem.api.models import MyAPIKey
 
 from tenant_schemas.utils import schema_context, get_public_schema_name
 
@@ -30,7 +31,7 @@ def main():
 
     for schema in schemas:
         with schema_context(schema):
-            token = APIKey.objects.get(client_id='WEB-API')
+            token = MyAPIKey.objects.get(name='WEB-API')
 
             headers = {'Accept': 'application/json', 'x-api-key': token.token}
 

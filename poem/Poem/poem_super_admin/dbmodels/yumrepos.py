@@ -1,4 +1,6 @@
 from django.db import models
+from django.db.models.signals import pre_save
+from django.dispatch import receiver
 
 
 class PackageManager(models.Manager):
@@ -50,6 +52,7 @@ class YumRepo(models.Model):
 class Package(models.Model):
     name = models.TextField(null=False)
     version = models.TextField(null=False)
+    use_present_version = models.BooleanField(default=False)
     repos = models.ManyToManyField(YumRepo)
 
     objects = PackageManager()
@@ -63,3 +66,9 @@ class Package(models.Model):
 
     def natural_key(self):
         return (self.name, self.version)
+
+
+@receiver(pre_save, sender=Package)
+def version_handler(sender, instance, **kwargs):
+    if instance.use_present_version:
+        instance.version = 'present'

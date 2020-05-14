@@ -19,7 +19,12 @@ class ListTenantVersions(APIView):
     authentication_classes = (SessionAuthentication,)
 
     def get(self, request, obj, name=None):
-        models = {'metric': poem_models.Metric}
+        models = {
+            'metric': poem_models.Metric,
+            'metricprofile': poem_models.MetricProfiles,
+            'aggregationprofile': poem_models.Aggregation,
+            'thresholdsprofile': poem_models.ThresholdsProfiles
+        }
 
         ct = ContentType.objects.get_for_model(models[obj])
 
@@ -27,8 +32,15 @@ class ListTenantVersions(APIView):
             try:
                 obj = models[obj].objects.get(name=name)
             except models[obj].DoesNotExist:
-                raise NotFound(status=404,
-                               detail='{} not found.'.format(obj.capitalize()))
+                if obj.endswith('profile'):
+                    ind = obj.find('profile')
+                    msg = '{} profile not found.'.format(
+                        obj[0:ind].capitalize()
+                    )
+                else:
+                    msg = '{} not found.'.format(obj.capitalize())
+
+                raise NotFound(status=404, detail=msg)
 
             vers = poem_models.TenantHistory.objects.filter(
                 object_id=obj.id,
@@ -41,19 +53,30 @@ class ListTenantVersions(APIView):
             else:
                 results = []
                 for ver in vers:
+                    version = datetime.datetime.strftime(
+                        ver.date_created, '%Y%m%d-%H%M%S'
+                    )
+                    fields0 = json.loads(ver.serialized_data)[0]['fields']
+
                     if isinstance(obj, poem_models.Metric):
-                        version = datetime.datetime.strftime(
-                            ver.date_created, '%Y%m%d-%H%M%S'
-                        )
-                        fields0 = json.loads(ver.serialized_data)[0]['fields']
+                        if fields0['probekey']:
+                            probeversion = '{} ({})'.format(
+                                fields0['probekey'][0], fields0['probekey'][1]
+                            )
+                        else:
+                            probeversion = ''
+
+                        if 'description' in fields0:
+                            description = fields0['description']
+                        else:
+                            description = ''
+
                         fields = {
                             'name': fields0['name'],
                             'mtype': fields0['mtype'][0],
                             'group': fields0['group'][0],
-                            'probeversion': '{} ({})'.format(
-                                fields0['probekey'][0],
-                                fields0['probekey'][1]
-                            ),
+                            'probeversion': probeversion,
+                            'description': description,
                             'parent': one_value_inline(fields0['parent']),
                             'probeexecutable': one_value_inline(
                                 fields0['probeexecutable']
@@ -75,6 +98,69 @@ class ListTenantVersions(APIView):
                             )
                         }
 
+                    elif isinstance(obj, poem_models.MetricProfiles):
+                        mi = [
+                            {
+                                'service': item[0], 'metric': item[1]
+                            } for item in fields0['metricinstances']
+                        ]
+                        fields = {
+                            'name': fields0['name'],
+                            'groupname': fields0['groupname'],
+                            'description': fields0.get('description', ''),
+                            'apiid': fields0['apiid'],
+                            'metricinstances': sorted(
+                                mi, key=lambda k: k['service'].lower()
+                            )
+                        }
+
+                    else:
+                        fields = fields0
+
+                    try:
+                        comment = []
+                        untracked_fields = [
+                            'mtype', 'parent', 'probeexecutable',
+                            'attribute', 'dependancy', 'flags', 'files',
+                            'parameter', 'fileparameter'
+                        ]
+                        if isinstance(obj, poem_models.Metric):
+                            untracked_fields.append('name')
+
+                        for item in json.loads(ver.comment):
+                            if 'changed' in item:
+                                action = 'changed'
+
+                            elif 'added' in item:
+                                action = 'added'
+
+                            else:
+                                action = 'deleted'
+
+                            if 'object' not in item[action]:
+                                new_fields = []
+                                for field in item[action]['fields']:
+                                    if field not in untracked_fields:
+                                        new_fields.append(field)
+
+                                if new_fields:
+                                    comment.append(
+                                        {action: {'fields': new_fields}}
+                                    )
+
+                            else:
+                                if item[action]['fields'][0] not in \
+                                        untracked_fields:
+                                    if item[action]['fields'][0] == 'config':
+                                        if 'path' in item[action]['object']:
+                                            item[action]['object'].remove('path')
+                                    comment.append(item)
+
+                        comment = json.dumps(comment)
+
+                    except json.JSONDecodeError:
+                        comment = ver.comment
+
                     results.append(dict(
                         id=ver.id,
                         object_repr=ver.object_repr,
@@ -83,7 +169,7 @@ class ListTenantVersions(APIView):
                         date_created=datetime.datetime.strftime(
                             ver.date_created, '%Y-%m-%d %H:%M:%S'
                         ),
-                        comment=new_comment(ver.comment),
+                        comment=new_comment(comment),
                         version=version
                     ))
 

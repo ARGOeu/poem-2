@@ -1,15 +1,13 @@
-from django.contrib.contenttypes.models import ContentType
-from django.db import IntegrityError
-
 import json
 
 from Poem.api.internal_views.utils import one_value_inline, two_value_inline, \
     inline_metric_for_db
 from Poem.api.views import NotFound
 from Poem.helpers.history_helpers import create_history
+from Poem.helpers.metrics_helpers import import_metrics
 from Poem.poem import models as poem_models
 from Poem.poem_super_admin import models as admin_models
-
+from django.contrib.contenttypes.models import ContentType
 from rest_framework import status
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
@@ -20,13 +18,18 @@ class ListAllMetrics(APIView):
     authentication_classes = (SessionAuthentication,)
 
     def get(self, request):
-        metrics = poem_models.Metric.objects.all()
+        metrics = poem_models.Metric.objects.all().order_by('name')
 
         results = []
         for metric in metrics:
             results.append({'name': metric.name})
 
         return Response(results)
+
+
+class ListPublicAllMetrics(ListAllMetrics):
+    authentication_classes = ()
+    permission_classes = ()
 
 
 class ListMetric(APIView):
@@ -69,6 +72,7 @@ class ListMetric(APIView):
                 mtype=metric.mtype.name,
                 probeversion=probeversion,
                 group=group,
+                description=metric.description,
                 parent=parent,
                 probeexecutable=probeexecutable,
                 config=config,
@@ -89,15 +93,48 @@ class ListMetric(APIView):
 
     def put(self, request):
         metric = poem_models.Metric.objects.get(name=request.data['name'])
-        config = inline_metric_for_db(request.data['config'])
 
-        if request.data['group'] != metric.group.name:
-            metric.group = poem_models.GroupOfMetrics.objects.get(
-                name=request.data['group']
+        if request.data['parent']:
+            parent = json.dumps([request.data['parent']])
+        else:
+            parent = ''
+
+        if request.data['probeexecutable']:
+            probeexecutable = json.dumps([request.data['probeexecutable']])
+        else:
+            probeexecutable = ''
+
+        if request.data['description']:
+            description = request.data['description']
+        else:
+            description = ''
+
+        metric.name = request.data['name']
+        metric.mtype = poem_models.MetricType.objects.get(
+            name=request.data['mtype']
+        )
+        metric.group = poem_models.GroupOfMetrics.objects.get(
+            name=request.data['group']
+        )
+        metric.description = description
+        metric.parent = parent
+        metric.flags = inline_metric_for_db(request.data['flags'])
+
+        if request.data['mtype'] == 'Active':
+            metric.probekey = admin_models.ProbeHistory.objects.get(
+                name=request.data['probeversion'].split(' ')[0],
+                package__version=request.data['probeversion'].split(' ')[1][
+                                 1:-1]
             )
-
-        if set(config) != set(json.loads(metric.config)):
-            metric.config = json.dumps(config)
+            metric.probeexecutable = probeexecutable
+            metric.config = inline_metric_for_db(request.data['config'])
+            metric.attribute = inline_metric_for_db(request.data['attribute'])
+            metric.dependancy = inline_metric_for_db(request.data['dependancy'])
+            metric.files = inline_metric_for_db(request.data['files'])
+            metric.parameter = inline_metric_for_db(request.data['parameter'])
+            metric.fileparameter = inline_metric_for_db(
+                request.data['fileparameter']
+            )
 
         metric.save()
         create_history(metric, request.user.username)
@@ -124,6 +161,23 @@ class ListMetric(APIView):
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
+class ListPublicMetric(ListMetric):
+    authentication_classes = ()
+    permission_classes = ()
+
+    def _denied(self):
+        return Response(status=status.HTTP_403_FORBIDDEN)
+
+    def post(self, request):
+        return self._denied()
+
+    def put(self, request):
+        return self._denied()
+
+    def delete(self, request, name):
+        return self._denied()
+
+
 class ListMetricTypes(APIView):
     authentication_classes = (SessionAuthentication,)
 
@@ -134,63 +188,21 @@ class ListMetricTypes(APIView):
         return Response(types)
 
 
+class ListPublicMetricTypes(ListMetricTypes):
+    authentication_classes = ()
+    permission_classes = ()
+
+
 class ImportMetrics(APIView):
     authentication_classes = (SessionAuthentication,)
 
     def post(self, request):
-        imported = []
-        err = []
-        for template in dict(request.data)['metrictemplates']:
-            metrictemplate = admin_models.MetricTemplate.objects.get(
-                name=template
-            )
-            mt = poem_models.MetricType.objects.get(
-                name=metrictemplate.mtype.name
-            )
-            gr = poem_models.GroupOfMetrics.objects.get(
-                name=request.tenant.name.upper()
-            )
+        imported, err = import_metrics(
+            metrictemplates=dict(request.data)['metrictemplates'],
+            tenant=request.tenant, user=request.user
+        )
 
-            try:
-                if metrictemplate.probekey:
-                    ver = admin_models.ProbeHistory.objects.get(
-                        name=metrictemplate.probekey.name,
-                        package__version=metrictemplate.probekey.package.version
-                    )
-
-                    metric = poem_models.Metric.objects.create(
-                        name=metrictemplate.name,
-                        mtype=mt,
-                        probekey=ver,
-                        parent=metrictemplate.parent,
-                        group=gr,
-                        probeexecutable=metrictemplate.probeexecutable,
-                        config=metrictemplate.config,
-                        attribute=metrictemplate.attribute,
-                        dependancy=metrictemplate.dependency,
-                        flags=metrictemplate.flags,
-                        files=metrictemplate.files,
-                        parameter=metrictemplate.parameter,
-                        fileparameter=metrictemplate.fileparameter
-                    )
-                else:
-                    metric = poem_models.Metric.objects.create(
-                        name=metrictemplate.name,
-                        mtype=mt,
-                        parent=metrictemplate.parent,
-                        flags=metrictemplate.flags,
-                        group=gr
-                    )
-
-                create_history(metric, request.user.username,
-                               comment='Initial version.')
-
-                imported.append(metrictemplate.name)
-
-            except IntegrityError:
-                err.append(metrictemplate.name)
-                continue
-
+        message_bit = error_bit = ''
         if imported:
             if len(imported) == 1:
                 message_bit = '{} has'.format(imported[0])
@@ -203,7 +215,8 @@ class ImportMetrics(APIView):
             else:
                 error_bit = ', '.join(msg for msg in err) + ' have'
 
-        if imported and err:
+        data = dict()
+        if message_bit and error_bit:
             data = {
                 'imported':
                     '{} been successfully imported.'.format(message_bit),
@@ -211,17 +224,16 @@ class ImportMetrics(APIView):
                     '{} not been imported, since those metrics already exist '
                     'in the database.'.format(error_bit)
             }
-        elif imported and not err:
+        elif message_bit and not error_bit:
             data = {
                 'imported':
                     '{} been successfully imported.'.format(message_bit),
             }
-        elif not imported and err:
+        elif not message_bit and error_bit:
             data = {
                 'err':
                     '{} not been imported, since those metrics already exist '
                     'in the database.'.format(error_bit)
             }
 
-        return Response(status=status.HTTP_201_CREATED,
-                        data=data)
+        return Response(status=status.HTTP_201_CREATED, data=data)

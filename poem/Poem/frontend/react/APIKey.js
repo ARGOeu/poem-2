@@ -3,7 +3,7 @@ import { Backend } from './DataManager';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
-import { LoadingAnim, BaseArgoView, NotifyOk, Checkbox } from './UIElements';
+import { LoadingAnim, BaseArgoView, NotifyOk, Checkbox, NotifyError } from './UIElements';
 import ReactTable from 'react-table';
 import { Formik, Form, Field } from 'formik';
 import {
@@ -35,16 +35,14 @@ export class APIKeyList extends Component {
     this.backend = new Backend();
   }
 
-  componentDidMount() {
+  async componentDidMount() {
     this.setState({ loading: true });
 
-    this.backend.fetchData('/api/v2/internal/apikeys')
-      .then(json => 
-        this.setState({
-          list_keys: json,
-          loading: false
-        })  
-      );
+    let json = await this.backend.fetchData('/api/v2/internal/apikeys');
+    this.setState({
+      list_keys: json,
+      loading: false
+    });
   }
 
   render() {
@@ -91,9 +89,11 @@ export class APIKeyList extends Component {
           <ReactTable
             data={list_keys}
             columns={columns}
-            className='-striped -highlight'
+            className='-highlight'
             defaultPageSize={5}
-          />          
+            rowsText='keys'
+            getTheadThProps={() => ({className: 'table-active font-weight-bold p-2'})}
+          />
         </BaseArgoView>
       )
     }
@@ -115,7 +115,6 @@ export class APIKeyChange extends Component {
     this.state = {
       key: {},
       loading: false,
-      write_perm: false,
       areYouSureModal: false,
       modalFunc: undefined,
       modalTitle: undefined,
@@ -131,12 +130,12 @@ export class APIKeyChange extends Component {
   }
 
   toggleAreYouSure() {
-    this.setState(prevState => 
+    this.setState(prevState =>
       ({areYouSureModal: !prevState.areYouSureModal}));
   }
 
   toggleAreYouSureSetModal(msg, title, onyes) {
-    this.setState(prevState => 
+    this.setState(prevState =>
       ({areYouSureModal: !prevState.areYouSureModal,
         modalFunc: onyes,
         modalMsg: msg,
@@ -159,65 +158,97 @@ export class APIKeyChange extends Component {
       () => this.doChange(values, actions))
   }
 
-  doChange(values, actions) {
+  async doChange(values, actions) {
     if (!this.addview) {
-      this.backend.changeObject(
+      let response = await this.backend.changeObject(
         '/api/v2/internal/apikeys/',
         {
           id: this.state.key.id,
           revoked: values.revoked,
           name: values.name,
         }
-      ).then(response => response.ok ? 
+      );
+      if (response.ok) {
         NotifyOk({
           msg: 'API key successfully changed',
           title: 'Changed',
           callback: () => this.history.push('/ui/administration/apikey')
-        }) 
-        : alert('Something went wrong: ' + response.statusText))
+        });
+      } else {
+        let change_msg = '';
+        try {
+          let json = await response.json();
+          change_msg = `${json.detail ? json.detail : 'Error changing API key'}`;
+        } catch(err) {
+          change_msg = 'Error changing API key';
+        }
+
+        NotifyError({
+          title: `Error: ${response.status} ${response.statusText}`,
+          msg: change_msg
+        });
+      };
     } else {
-      this.backend.addObject(
+      let response = await this.backend.addObject(
         '/api/v2/internal/apikeys/',
         {
           name: values.name
         }
-      ).then(response => response.ok ?
+      );
+      if (response.ok) {
         NotifyOk({
           msg: 'API key successfully added',
           title: 'Added',
           callback: () => this.history.push('/ui/administration/apikey')
         })
-        : 
-        alert('Something went wrong: ' + response.statusText))
-    }
+      } else {
+        let add_msg = '';
+        try {
+          let json = await response.json();
+          add_msg = `${json.detail ? json.detail : 'Error adding API key'}`;
+        } catch(err) {
+          add_msg = 'Error adding API key';
+        }
+        NotifyError({
+          title: `Error: ${response.status} ${response.statusText}`,
+          msg: add_msg
+        });
+      };
+    };
   }
 
-  doDelete(name) {
-    this.backend.deleteObject(`/api/v2/internal/apikeys/${name}`)
-      .then(response => response.ok
-        ?
-          NotifyOk({
-            msg: 'API key successfully deleted',
-            title: 'Deleted',
-            callback: () => this.history.push('/ui/administration/apikey')
-          })  
-        :
-          alert('Something went wrong: ' + response.statusText)
-      )
+  async doDelete(name) {
+    let response = await this.backend.deleteObject(`/api/v2/internal/apikeys/${name}`);
+    if (response.ok) {
+      NotifyOk({
+        msg: 'API key successfully deleted',
+        title: 'Deleted',
+        callback: () => this.history.push('/ui/administration/apikey')
+      })
+    } else {
+      let msg = '';
+      try {
+        let json = await response.json();
+        msg = `${json.detail ? json.detail : 'Error deleting API key'}`;
+      } catch(error) {
+        msg = 'Error deleting API key';
+      }
+      NotifyError({
+        title: `Error: ${response.status} ${response.statusText}`,
+        msg: msg
+      });
+    };
   }
 
-  componentDidMount() {
+  async componentDidMount() {
     this.setState({ loading: true });
 
     if (!this.addview) {
-      this.backend.fetchData(`/api/v2/internal/apikeys/${this.name}`)
-        .then((json) =>
-          this.setState({
-            key: json,
-            loading: false,
-            write_perm: localStorage.getItem('authIsSuperuser') === 'true'
-          })
-        );
+      let json = await this.backend.fetchData(`/api/v2/internal/apikeys/${this.name}`);
+      this.setState({
+        key: json,
+        loading: false,
+      });
     } else {
       this.setState({
         key: {
@@ -226,13 +257,12 @@ export class APIKeyChange extends Component {
           token: ''
         },
         loading: false,
-        write_perm: localStorage.getItem('authIsSuperuser') === 'true'
-      })
-    }
+      });
+    };
   }
 
   render() {
-    const { key, loading, write_perm } = this.state;
+    const { key, loading } = this.state;
 
     if (loading)
       return (<LoadingAnim/>);
@@ -246,8 +276,7 @@ export class APIKeyChange extends Component {
           history={false}
           modal={true}
           state={this.state}
-          toggle={this.toggleAreYouSure}
-          submitperm={write_perm}>
+          toggle={this.toggleAreYouSure}>
             <Formik
               initialValues = {{
                 name: key.name,
@@ -261,7 +290,7 @@ export class APIKeyChange extends Component {
                     <Row>
                       <Col md={6}>
                         <Label for='name'>Name</Label>
-                        <Field 
+                        <Field
                           type='text'
                           name='name'
                           id='name'
@@ -320,31 +349,30 @@ export class APIKeyChange extends Component {
                   }
                   </FormGroup>
                   {
-                    (write_perm) &&
-                      <div className={!this.addview ? "submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5" : "submit-row d-flex align-items-center justify-content-end bg-light p-3 mt-5"}>
-                        {
-                          (!this.addview) &&
-                          <Button 
-                            color='danger'
-                            onClick={() => {
-                              this.toggleAreYouSureSetModal(
-                                'Are you sure you want to delete API key?',
-                                'Delete API key',
-                                () => this.doDelete(props.values.name)
-                              )
-                            }}
-                          >
-                            Delete
-                          </Button>
-                        }
-                        <Button 
-                          color='success' 
-                          id='submit-button' 
-                          type='submit'
+                    <div className={!this.addview ? "submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5" : "submit-row d-flex align-items-center justify-content-end bg-light p-3 mt-5"}>
+                      {
+                        (!this.addview) &&
+                        <Button
+                          color='danger'
+                          onClick={() => {
+                            this.toggleAreYouSureSetModal(
+                              'Are you sure you want to delete API key?',
+                              'Delete API key',
+                              () => this.doDelete(this.name)
+                            )
+                          }}
                         >
-                          Save
+                          Delete
                         </Button>
-                      </div>
+                      }
+                      <Button
+                        color='success'
+                        id='submit-button'
+                        type='submit'
+                      >
+                        Save
+                      </Button>
+                    </div>
                   }
                 </Form>
               )}

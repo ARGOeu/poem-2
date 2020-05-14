@@ -1,14 +1,18 @@
 {% load render_bundle from webpack_loader %}
+{% load static %}
 
 <!DOCTYPE html>
 <html>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-    <title>ARGO ADMIN UI</title>
+    <link rel="shortcut icon" type="image/png" href="{% static 'argo-poem.ico'%}"}/>
+    <title>ARGO POEM</title>
   </head>
   <body class="bodyreact">
     <div id="react"></div>
     {% render_bundle 'main' %}
+    {% render_bundle 'runtime' %}
+    {% render_bundle 'vendors' %}
   </body>
 </html>

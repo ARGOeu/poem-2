@@ -17,6 +17,24 @@ from Poem.poem_super_admin import models as admin_models
 from unittest.mock import patch
 
 
+def mock_function(profile):
+    if profile == 'ARGO-MON':
+        return {'argo.AMS-Check', 'argo.AMSPublisher-Check'}
+
+    if profile == 'MON-TEST':
+        return {'argo.AMS-Check', 'eu.seadatanet.org.downloadmanager-check', \
+               'eu.seadatanet.org.nvs2-check'}
+
+    if profile == 'EMPTY':
+        return set()
+
+    if profile == 'TEST-NONEXISTING':
+        return {'nonexisting.metric'}
+
+    if profile == 'TEST_PROMOO':
+        return {'eu.egi.cloud.OCCI-Categories'}
+
+
 @factory.django.mute_signals(post_save)
 def mock_db_for_metrics_tests():
     metrictype = poem_models.MetricType.objects.create(name='Active')
@@ -112,6 +130,20 @@ def mock_db_for_repos_tests():
         description='CentOS 7'
     )
 
+    repo5 = admin_models.YumRepo.objects.create(
+        name='promoo',
+        tag=tag1,
+        content='content9\ncontent10',
+        description='promoo for CentOS 6'
+    )
+
+    repo6 = admin_models.YumRepo.objects.create(
+        name='promoo',
+        tag=tag2,
+        content='content11\ncontent12',
+        description='promoo for CentOS 7'
+    )
+
     package1 = admin_models.Package.objects.create(
         name='nagios-plugins-argo',
         version='0.1.11'
@@ -120,7 +152,8 @@ def mock_db_for_repos_tests():
 
     package2 = admin_models.Package.objects.create(
         name='nagios-plugins-http',
-        version='2.2.2'
+        version='2.2.2',
+        use_present_version=True
     )
     package2.repos.add(repo3, repo4)
 
@@ -129,6 +162,18 @@ def mock_db_for_repos_tests():
         version='1.0.1'
     )
     package3.repos.add(repo2)
+
+    package4 = admin_models.Package.objects.create(
+        name='nagios-promoo',
+        version='1.4.0'
+    )
+    package4.repos.add(repo5)
+
+    package5 = admin_models.Package.objects.create(
+        name='nagios-promo',
+        version='1.7.1'
+    )
+    package5.repos.add(repo6)
 
     probe1 = admin_models.Probe.objects.create(
         name='ams-probe',
@@ -175,6 +220,16 @@ def mock_db_for_repos_tests():
                'tree/devel',
         description='Nagios plugin.',
         comment='Initial version.',
+        user='testuser',
+        datetime=datetime.datetime.now()
+    )
+
+    probe5 = admin_models.Probe.objects.create(
+        name='nagios-promoo.occi.categories',
+        package=package4,
+        repository='https://github.com/EGI-Foundation/nagios-promoo',
+        docurl='https://wiki.egi.eu/wiki/Cloud_SAM_tests',
+        description='Probe checks the existence of OCCI Infra kinds.',
         user='testuser',
         datetime=datetime.datetime.now()
     )
@@ -228,6 +283,35 @@ def mock_db_for_repos_tests():
         comment=probe4.comment,
         date_created=datetime.datetime.now(),
         version_comment='Initial version.',
+        version_user='testuser'
+    )
+
+    probehistory5 = admin_models.ProbeHistory.objects.create(
+        object_id=probe5,
+        name=probe5.name,
+        package=probe5.package,
+        repository=probe5.repository,
+        docurl=probe5.docurl,
+        description=probe5.description,
+        comment=probe5.comment,
+        date_created=datetime.datetime.now(),
+        version_comment='Initial version.',
+        version_user='testuser'
+    )
+
+    probe5.package = package5
+    probe5.save()
+
+    probehistory6 = admin_models.ProbeHistory.objects.create(
+        object_id=probe5,
+        name=probe5.name,
+        package=probe5.package,
+        repository=probe5.repository,
+        docurl=probe5.docurl,
+        description=probe5.description,
+        comment=probe5.comment,
+        date_created=datetime.datetime.now(),
+        version_comment='["changed": {"fields": ["package"]}]',
         version_user='testuser'
     )
 
@@ -285,6 +369,19 @@ def mock_db_for_repos_tests():
         name='org.apel.APEL-Pub',
         mtype=mtype2,
         flags='["OBSESS 1", "PASSIVE 1"]'
+    )
+
+    mt6 = admin_models.MetricTemplate.objects.create(
+        name='eu.egi.cloud.OCCI-Categories',
+        probekey=probehistory6,
+        mtype=mtype1,
+        probeexecutable='nagios-promoo occi categories',
+        config='["maxCheckAttempts 2", "path /opt/nagios-promoo/bin", '
+               '"interval 60", "retryInterval 15"]',
+        attribute='["OCCI_URL --endpoint", "X509_USER_PROXY --token"]',
+        dependency='["org.nagios.OCCI-TCP 1", "hr.srce.GridProxy-Valid 0"]',
+        parameter='["-t 300", "--check-location 0"]',
+        flags='["OBSESS 1", "NOHOSTNAME 1", "NOTIMEOUT 1", "VO 1"]'
     )
 
     group = poem_models.GroupOfMetrics.objects.create(name='TEST')
@@ -364,6 +461,21 @@ def mock_db_for_repos_tests():
         files=mt5.files,
         parameter=mt5.parameter,
         fileparameter=mt5.fileparameter
+    )
+
+    poem_models.Metric.objects.create(
+        name=mt6.name,
+        group=group,
+        mtype=metric_type,
+        probekey=probehistory5,
+        probeexecutable=mt6.probeexecutable,
+        config=mt6.config,
+        attribute=mt6.attribute,
+        dependancy=mt6.dependency,
+        flags=mt6.flags,
+        files=mt6.files,
+        parameter=mt6.parameter,
+        fileparameter=mt6.fileparameter
     )
 
 
@@ -456,22 +568,22 @@ class ListReposAPIViewTests(TenantTestCase):
 
     def test_list_repos_if_wrong_token(self):
         request = self.factory.get(
-            self.url + '/ARGO-MON/centos7', **{'HTTP_X_API_KEY': 'wrong_token'}
+            self.url + '/centos7',
+            **{'HTTP_X_API_KEY': 'wrong_token',
+               'HTTP_PROFILES': '[ARGO-MON, MON-TEST]'}
         )
-        response = self.view(request, 'ARGO-MON', 'centos7')
+        response = self.view(request, 'centos7')
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
-    @patch('Poem.api.views.get_metrics_from_profile')
+    @patch('Poem.api.views.get_metrics_from_profile',
+           side_effect=mock_function)
     def test_list_repos(self, func):
-        func.return_value = {
-            'argo.AMS-Check', 'argo.AMSPublisher-Check',
-            'eu.seadatanet.org.downloadmanager-check',
-            'eu.seadatanet.org.nvs2-check'
-        }
         request = self.factory.get(
-            self.url + '/ARGO-MON/centos7', **{'HTTP_X_API_KEY': self.token}
+            self.url + '/centos7',
+            **{'HTTP_X_API_KEY': self.token,
+               'HTTP_PROFILES': '[ARGO-MON, MON-TEST]'}
         )
-        response = self.view(request, 'ARGO-MON', 'centos7')
+        response = self.view(request, 'centos7')
         test_data = response.data
         test_data[0]['repo-1']['packages'] = sorted(
             test_data[0]['repo-1']['packages'], key=lambda k: k['name']
@@ -498,7 +610,7 @@ class ListReposAPIViewTests(TenantTestCase):
                         'packages': [
                             {
                                 'name': 'nagios-plugins-http',
-                                'version': '2.2.2'
+                                'version': 'present'
                             }
                         ]
                     }
@@ -507,36 +619,37 @@ class ListReposAPIViewTests(TenantTestCase):
         )
 
     def test_list_repos_if_no_profile_or_tag(self):
-        request = self.factory.get(self.url, **{'HTTP_X_API_KEY': self.token})
-        response = self.view(request)
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(
-            response.data,
-            {'detail': 'You must define profile and OS!'}
-        )
-
-    def test_list_repos_if_only_profile_defined(self):
         request = self.factory.get(
-            self.url + 'PROFILE', **{'HTTP_X_API_KEY': self.token}
+            self.url, **{'HTTP_X_API_KEY': self.token,
+                         'HTTP_PROFILES': '[ARGO-MON, MON-TEST]'}
         )
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(
             response.data,
-            {'detail': 'You must define profile and OS!'}
+            {'detail': 'You must define OS!'}
         )
 
-    @patch('Poem.api.views.get_metrics_from_profile')
+    def test_list_repos_if_no_profile_defined(self):
+        request = self.factory.get(
+            self.url + '/centos7', **{'HTTP_X_API_KEY': self.token}
+        )
+        response = self.view(request, 'centos7')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data,
+            {'detail': 'You must define profile!'}
+        )
+
+    @patch('Poem.api.views.get_metrics_from_profile',
+           side_effect=mock_function)
     def test_list_repos_if_passive_metric_present(self, func):
-        func.return_value = {
-            'argo.AMS-Check', 'argo.AMSPublisher-Check',
-            'eu.seadatanet.org.downloadmanager-check',
-            'org.apel.APEL-Pub'
-        }
         request = self.factory.get(
-            self.url + '/ARGO-MON/centos6', **{'HTTP_X_API_KEY': self.token}
+            self.url + '/centos6',
+            **{'HTTP_X_API_KEY': self.token,
+               'HTTP_PROFILES': '[ARGO-MON, MON-TEST]'}
         )
-        response = self.view(request, 'ARGO-MON', 'centos6')
+        response = self.view(request, 'centos6')
         self.assertEqual(
             response.data,
             [
@@ -555,7 +668,7 @@ class ListReposAPIViewTests(TenantTestCase):
                         'packages': [
                             {
                                 'name': 'nagios-plugins-http',
-                                'version': '2.2.2'
+                                'version': 'present'
                             }
                         ]
                     }
@@ -563,44 +676,41 @@ class ListReposAPIViewTests(TenantTestCase):
             ]
         )
 
-    @patch('Poem.api.views.get_metrics_from_profile')
+    @patch('Poem.api.views.get_metrics_from_profile',
+           side_effect=mock_function)
     def test_empty_repo_list(self, func):
-        func.return_value = {}
         request = self.factory.get(
-            self.url + '/ARGO-MON/centos6', **{'HTTP_X_API_KEY': self.token}
+            self.url + '/centos6',
+            **{'HTTP_X_API_KEY': self.token,
+               'HTTP_PROFILES': '[EMPTY]'}
         )
-        response = self.view(request, 'ARGO-MON', 'centos6')
+        response = self.view(request, 'centos6')
         self.assertEqual(response.data, [])
 
-    @patch('Poem.api.views.get_metrics_from_profile')
+    @patch('Poem.api.views.get_metrics_from_profile',
+           side_effect=mock_function)
     def test_list_repos_if_nonexisting_tag(self, func):
-        func.return_value = {
-            'argo.AMS-Check', 'argo.AMSPublisher-Check',
-            'eu.seadatanet.org.downloadmanager-check',
-            'org.apel.APEL-Pub'
-        }
         request = self.factory.get(
-            self.url + '/ARGO-MON/nonexisting',
-            **{'HTTP_X_API_KEY': self.token}
+            self.url + '/nonexisting',
+            **{'HTTP_X_API_KEY': self.token,
+               'HTTP_PROFILES': '[ARGO-MON, MON-TEST]'}
         )
-        response = self.view(request, 'ARGO-MON', 'nonexisgint')
+        response = self.view(request, 'nonexisting')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(
             response.data,
             {'detail': 'YUM repo tag not found.'}
         )
 
-    @patch('Poem.api.views.get_metrics_from_profile')
+    @patch('Poem.api.views.get_metrics_from_profile',
+           side_effect=mock_function)
     def test_list_repos_if_function_return_metric_does_not_exist(self, func):
-        func.return_value = {
-            'argo.AMS-Check', 'argo.AMSPublisher-Check',
-            'eu.seadatanet.org.downloadmanager-check',
-            'nonexisting.metric'
-        }
         request = self.factory.get(
-            self.url + '/ARGO-MON/centos6', **{'HTTP_X_API_KEY': self.token}
+            self.url + '/centos6',
+            **{'HTTP_X_API_KEY': self.token,
+               'HTTP_PROFILES': '[ARGO-MON, MON-TEST, TEST-NONEXISTING]'}
         )
-        response = self.view(request, 'ARGO-MON', 'centos6')
+        response = self.view(request, 'centos6')
         self.assertEqual(
             response.data,
             [
@@ -619,10 +729,47 @@ class ListReposAPIViewTests(TenantTestCase):
                         'packages': [
                             {
                                 'name': 'nagios-plugins-http',
-                                'version': '2.2.2'
+                                'version': 'present'
                             }
                         ]
                     }
                 }
             ]
         )
+
+    @patch('Poem.api.views.get_metrics_from_profile',
+           side_effect=mock_function)
+    def test_list_repos_if_version_is_the_right_os(self, func):
+        request = self.factory.get(
+            self.url + '/centos6',
+            **{'HTTP_X_API_KEY': self.token,
+               'HTTP_PROFILES': '[TEST_PROMOO]'}
+        )
+        response = self.view(request, 'centos6')
+        self.assertEqual(
+            response.data,
+            [
+                {
+                    'promoo': {
+                        'content': 'content9\ncontent10',
+                        'packages': [
+                            {
+                                'name': 'nagios-promoo',
+                                'version': '1.4.0'
+                            }
+                        ]
+                    }
+                }
+            ]
+        )
+
+    @patch('Poem.api.views.get_metrics_from_profile',
+           side_effect=mock_function)
+    def test_list_repos_if_version_is_wrong_os(self, func):
+        request = self.factory.get(
+            self.url + '/centos6',
+            **{'HTTP_X_API_KEY': self.token,
+               'HTTP_PROFILES': '[TEST_PROMOO]'}
+        )
+        response = self.view(request, 'centos7')
+        self.assertEqual(response.data, [])

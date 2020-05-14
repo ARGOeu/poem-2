@@ -18,6 +18,7 @@ usage()
 	printf "       [-u] -n <schema name>                 - create superuser\n" >&2
 	printf "       [-d] -n <schema name> -f <file path>  - load data from file\n" >&2
 	printf "       [-p] -n <schema name> -f <file path>  - dump data to file\n" >&2
+	printf "       [-i] -n <schema name>                 - import internal metrics\n" >&2
     exit 2
 }
 
@@ -26,21 +27,18 @@ then
     usage
 fi
 
-while getopts 'cafmlhsoxun:dp' OPTION
+while getopts 'cafmlhsoxun:dpi' OPTION
 do
     case $OPTION in
         n)
             schema=$OPTARG ;;
         c)
             su -m -s /bin/sh $RUNASUSER -c \
-            "export DJANGO_SETTINGS_MODULE=Poem.settings && \
-            python $SITEPACK/Poem/manage.py migrate_schemas --shared"
+            "poem-manage migrate_schemas --shared"
             su -m -s /bin/sh $RUNASUSER -c \
-            "export DJANGO_SETTINGS_MODULE=Poem.settings && \
-            python $SITEPACK/Poem/manage.py create_tenant --name all"
+            "poem-manage create_tenant --name all"
             su -m -s /bin/sh $RUNASUSER -c \
-            "export DJANGO_SETTINGS_MODULE=Poem.settings && \
-            python $SITEPACK/Poem/manage.py tenant_command loaddata initial_data_public.json --schema=public"
+            "poem-manage tenant_command --schema=public loaddata initial_data_public.json "
             ;;
         u)
             while getopts 'n:' OPTION2
@@ -50,30 +48,24 @@ do
                 esac
             done
             su -m -s /bin/sh $RUNASUSER -c \
-            "export DJANGO_SETTINGS_MODULE=Poem.settings && \
-            python $SITEPACK/Poem/manage.py tenant_command poem_superuser --schema=$schema"
+            "poem-manage tenant_command --schema=$schema poem_superuser "
              ;;
         m)
-            export DJANGO_SETTINGS_MODULE=Poem.settings && \
-            python $SITEPACK/Poem/manage.py makemigrations poem 
+            poem-manage makemigrations poem
             ;;
         f)
             su -m -s /bin/sh $RUNASUSER -c \
-            "export DJANGO_SETTINGS_MODULE=Poem.settings && \
-            python $SITEPACK/Poem/manage.py migrate_schemas --tenant --fake"
+            "poem-manage migrate_schemas --tenant --fake"
             ;;
         a)
             su -m -s /bin/sh $RUNASUSER -c \
-            "export DJANGO_SETTINGS_MODULE=Poem.settings && \
-            python $SITEPACK/Poem/manage.py migrate_schemas --shared"
+            "poem-manage migrate_schemas --shared"
             su -m -s /bin/sh $RUNASUSER -c \
-            "export DJANGO_SETTINGS_MODULE=Poem.settings && \
-            python $SITEPACK/Poem/manage.py migrate_schemas poem --tenant"
+            "poem-manage migrate_schemas poem --tenant"
             ;;
         l)
             su -m -s /bin/sh $RUNASUSER -c \
-            "export DJANGO_SETTINGS_MODULE=Poem.settings && \
-            python $SITEPACK/Poem/manage.py showmigrations poem poem_super_admin users tenants"
+            "poem-manage showmigrations poem poem_super_admin users tenants"
             ;;
         s)
             while getopts 'n:' OPTION2
@@ -84,16 +76,13 @@ do
                 esac
             done
             su -m -s /bin/sh $RUNASUSER -c \
-            "export DJANGO_SETTINGS_MODULE=Poem.settings && \
-            python $SITEPACK/Poem/manage.py tenant_command clearsessions --schema=$schema"
+            "poem-manage tenant_command --schema=$schema clearsessions "
             ;;
         o)
             su -m -s /bin/sh $RUNASUSER -c \
-            "export DJANGO_SETTINGS_MODULE=Poem.settings && \
-            python $SITEPACK/Poem/manage.py makemigrations" 
+            "poem-manage makemigrations"
             su -m -s /bin/sh $RUNASUSER -c \
-            "export DJANGO_SETTINGS_MODULE=Poem.settings && \
-            python $SITEPACK/Poem/manage.py migrate_schemas --tenant"
+            "poem-manage migrate_schemas --tenant"
             ;;
         x)
             while getopts 'n:' OPTION2
@@ -104,8 +93,7 @@ do
                 esac
             done
             su -m -s /bin/sh $RUNASUSER -c \
-            "export DJANGO_SETTINGS_MODULE=Poem.settings && \
-            python $SITEPACK/Poem/manage.py tenant_command loaddata initial_data.json --schema=$schema"
+            "poem-manage tenant_command --schema=$schema loaddata initial_data.json "
             ;;
         d)
             while getopts 'n:f:' OPTION2
@@ -118,8 +106,7 @@ do
                 esac
             done
             su -m -s /bin/sh $RUNASUSER -c \
-            "export DJANGO_SETTINGS_MODULE=Poem.settings && \
-            python $SITEPACK/Poem/manage.py tenant_command loaddata $filename --schema=$schema"
+            "poem-manage tenant_command --schema=$schema loaddata $filename"
             ;;
         p)
             while getopts 'n:f:' OPTION2
@@ -131,8 +118,28 @@ do
                         filename=$OPTARG ;;
                 esac
             done
-            export DJANGO_SETTINGS_MODULE=Poem.settings && \
-            python $SITEPACK/Poem/manage.py tenant_command dumpdata --indent 2 --natural-foreign --natural-primary --schema=$schema > $filename
+            if [[ $schema == 'public' ]]
+            then
+              poem-manage tenant_command --schema=$schema dumpdata --indent 2 --natural-foreign --natural-primary --exclude tenants.tenant > $filename
+            else
+              poem-manage tenant_command --schema=$schema dumpdata --indent 2 --natural-foreign --natural-primary  > $filename
+            fi
+            ;;
+        i)
+            while getopts 'n:' OPTION2
+            do
+                case $OPTION2 in
+                    n) schema=$OPTARG ;;
+                esac
+            done
+            if [[ $schema == 'public' ]]
+            then
+              echo "You cannot import metrics to public schema!!"
+              exit 1
+            else
+              su -m -s /bin/sh $RUNASUSER -c \
+              "poem-manage tenant_command --schema=$schema import_internal_metrics"
+            fi
             ;;
         h)
             usage

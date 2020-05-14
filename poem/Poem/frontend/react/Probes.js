@@ -1,64 +1,34 @@
 import React, { Component } from 'react';
 import { Backend } from './DataManager';
 import { Link } from 'react-router-dom';
-import { LoadingAnim, BaseArgoView, NotifyOk, Checkbox, FancyErrorMessage, AutocompleteField } from './UIElements';
+import {
+  LoadingAnim,
+  BaseArgoView,
+  NotifyOk,
+  Checkbox,
+  FancyErrorMessage,
+  AutocompleteField,
+  HistoryComponent,
+  DiffElement,
+  NotifyError
+} from './UIElements';
 import ReactTable from 'react-table';
 import {
-  FormGroup, 
-  Label, 
-  FormText, 
-  Row, 
-  Col, 
-  Button, 
-  InputGroup, 
+  FormGroup,
+  Label,
+  FormText,
+  Row,
+  Col,
+  Button,
+  InputGroup,
   InputGroupAddon } from 'reactstrap';
 import { Formik, Form, Field } from 'formik';
-import ReactDiffViewer from 'react-diff-viewer';
-import { NotificationManager } from 'react-notifications';
 import * as Yup from 'yup';
 
 
-export const ProbeHistory = HistoryComponent('probe')
-
-
-export const DiffElement = ({title, item1, item2}) => {
-  item1 = item1.split('\r\n');
-  item2 = item2.split('\r\n');
-
-  let n = Math.max(item1.length, item2.length);
-
-  if (item1.length > item2.length) {
-    for (let i=item2.length; i < item1.length; i++) {
-      item2.push(' ');
-    };
-  } else if (item2.length > item1.length) {
-    for (let i=item1.length; i < item2.length; i++) {
-      item1.push(' ');
-    };
-  };
-
-  const elements = [];
-  for (let i = 0; i < n; i++) {
-    elements.push(
-    <ReactDiffViewer 
-      oldValue={item2[i]}   
-      newValue={item1[i]}
-      showDiffOnly={true}
-      splitView={false}
-      hideLineNumbers={true}
-      disableWordDiff={true}
-      key={'diff-' + i}
-    />
-    );
-  };
-
-  return (
-  <div id='argo-contentwrap' className='ml-2 mb-2 mt-2 p-3 border rounded'>
-    <h6 className='mt-4 font-weight-bold text-uppercase'>{title}</h6>
-    {elements}
-  </div>
-  );
-};
+export const ProbeHistory = HistoryComponent('probe');
+export const ProbeChange = ProbeComponent();
+export const ProbeClone = ProbeComponent(true);
 
 
 const ProbeSchema = Yup.object().shape({
@@ -84,13 +54,16 @@ const LinkField = ({
   field: { value },
   ...props
 }) => (
-  <div className='form-control' style={{backgroundColor: '#e9ecef'}}>
-    <a href={value}>{value}</a>
+  <div className='form-control' style={{backgroundColor: '#e9ecef', overflow: 'hidden', textOverflow: 'ellipsis'}}>
+    <a href={value} style={{'whiteSpace': 'nowrap'}}>{value}</a>
   </div>
 )
 
 
-const ProbeForm = () =>
+const ProbeForm = ({isTenantSchema=false, isHistory=false,
+  errors={name: undefined, package: undefined, repository: undefined, docurl: undefined, comment: undefined},
+  state=undefined, addview=false, cloneview=false, list_packages=[], setFieldValue=undefined,
+  values=undefined, onSelect=undefined, metrictemplatelist=[]}) =>
   <>
     <FormGroup>
       <Row>
@@ -100,11 +73,15 @@ const ProbeForm = () =>
             <Field
               type='text'
               name='name'
-              className='form-control'
+              className={`form-control ${errors.name && 'border-danger'}`}
               id='name'
-              disabled={true}
-            />          
+              disabled={isTenantSchema || isHistory}
+            />
           </InputGroup>
+          {
+            errors.name &&
+              FancyErrorMessage(errors.name)
+          }
           <FormText color="muted">
             Name of this probe.
           </FormText>
@@ -116,6 +93,7 @@ const ProbeForm = () =>
               type='text'
               name='version'
               className='form-control'
+              value={isHistory ? state.version : state.probe.version}
               id='version'
               disabled={true}
             />
@@ -124,19 +102,57 @@ const ProbeForm = () =>
             Version of the probe.
           </FormText>
         </Col>
+        {
+          (!addview && !cloneview && !isTenantSchema && !isHistory) &&
+            <Col md={2}>
+              <Field
+                component={Checkbox}
+                name='update_metrics'
+                className='form-control'
+                id='checkbox'
+                label='Update metric templates'
+              />
+              <FormText color='muted'>
+                Update all associated metric templates.
+              </FormText>
+            </Col>
+        }
       </Row>
       <Row className='mt-3'>
         <Col md={8}>
-          <InputGroup>
-            <InputGroupAddon addonType='prepend'>Package</InputGroupAddon>
-            <Field
-              type='text'
-              name='package'
-              className='form-control'
-              id='package'
-              disabled={true}
-            />
-          </InputGroup>
+          {
+            (isTenantSchema || isHistory) ?
+              <InputGroup>
+                <InputGroupAddon addonType='prepend'>Package</InputGroupAddon>
+                <Field
+                  type='text'
+                  name='package'
+                  className='form-control'
+                  id='package'
+                  disabled={true}
+                />
+              </InputGroup>
+            :
+              <>
+                <AutocompleteField
+                  setFieldValue={setFieldValue}
+                  lists={list_packages}
+                  icon='packages'
+                  field='package'
+                  val={values.package}
+                  onselect_handler={onSelect}
+                  req={errors.package}
+                  label='Package'
+                />
+                {
+                  errors.package &&
+                    FancyErrorMessage(errors.package)
+                }
+              </>
+          }
+          <FormText color='muted'>
+            Probe is part of selected package.
+          </FormText>
         </Col>
       </Row>
     </FormGroup>
@@ -146,14 +162,28 @@ const ProbeForm = () =>
         <Col md={8}>
           <InputGroup>
             <InputGroupAddon addonType='prepend'>Repository</InputGroupAddon>
-            <Field
-              component={LinkField}
-              name='repository'
-              className='form-control'
-              id='repository'
-              disabled={true}
-            />
+            {
+              (isTenantSchema || isHistory) ?
+                <Field
+                  component={LinkField}
+                  name='repository'
+                  className='form-control'
+                  id='repository'
+                  disabled={true}
+                />
+              :
+                <Field
+                  type='text'
+                  name='repository'
+                  className={`form-control ${errors.repository && 'border-danger'}`}
+                  id='repository'
+                />
+            }
           </InputGroup>
+          {
+            errors.repository &&
+              FancyErrorMessage(errors.repository)
+          }
           <FormText color='muted'>
             Probe repository URL.
           </FormText>
@@ -163,14 +193,28 @@ const ProbeForm = () =>
         <Col md={8}>
           <InputGroup>
             <InputGroupAddon addonType='prepend'>Documentation</InputGroupAddon>
-            <Field
-              component={LinkField}
-              name='docurl'
-              className='form-control'
-              id='docurl'
-              disabled={true}
-            />
+            {
+              (isTenantSchema || isHistory) ?
+                <Field
+                  component={LinkField}
+                  name='docurl'
+                  className='form-control'
+                  id='docurl'
+                  disabled={true}
+                />
+              :
+                <Field
+                  type='text'
+                  name='docurl'
+                  className={`form-control ${errors.docurl && 'border-danger'}`}
+                  id='docurl'
+                />
+            }
           </InputGroup>
+          {
+            errors.docurl &&
+              FancyErrorMessage(errors.docurl)
+          }
           <FormText color='muted'>
             Documentation URL.
           </FormText>
@@ -183,10 +227,14 @@ const ProbeForm = () =>
             component='textarea'
             name='description'
             rows='15'
-            className='form-control'
+            className={`form-control ${errors.description && 'border-danger'}`}
             id='description'
-            disabled={true}
+            disabled={isTenantSchema || isHistory}
           />
+          {
+            errors.description &&
+              FancyErrorMessage(errors.description)
+          }
           <FormText color='muted'>
             Free text description outlining the purpose of this probe.
           </FormText>
@@ -195,19 +243,52 @@ const ProbeForm = () =>
       <Row className='mb-3 align-items-top'>
         <Col md={8}>
           <Label for='comment'>Comment</Label>
-          <Field 
+          <Field
             component='textarea'
             name='comment'
             rows='5'
-            className='form-control'
+            className={`form-control ${errors.comment && 'border-danger'}`}
             id='comment'
-            disabled={true}
+            disabled={isTenantSchema || isHistory}
           />
+          {
+            errors.comment &&
+              FancyErrorMessage(errors.comment)
+          }
           <FormText color='muted'>
             Short comment about this version.
           </FormText>
         </Col>
       </Row>
+      {
+        (!isHistory && !addview && !cloneview) &&
+          <Row>
+            <Col md={8}>
+              <div>
+                Metric templates:
+                {
+                  metrictemplatelist.length > 0 &&
+                    <div>
+                      {
+                        metrictemplatelist
+                          .map((e, i) => <Link
+                            key={i}
+                            to={
+                              isTenantSchema ?
+                                `/ui/probes/${values.name}/${e}`
+                              :
+                                `/ui/metrictemplates/${e}`
+                            }>
+                              {e}
+                            </Link>
+                          ).reduce((prev, curr) => [prev, ', ', curr])
+                      }
+                    </div>
+                }
+              </div>
+            </Col>
+          </Row>
+      }
     </FormGroup>
   </>
 
@@ -217,32 +298,36 @@ export class ProbeList extends Component {
     super(props);
 
     this.location = props.location;
+    this.publicView = props.publicView
 
     this.state = {
       loading: false,
       list_probe: null,
       isTenantSchema: null,
       search_name: '',
-      search_description: ''
+      search_description: '',
+      search_package: ''
     };
 
     this.backend = new Backend();
+
+    if (this.publicView)
+      this.apiListProbes = '/api/v2/internal/public_probes'
+    else
+      this.apiListProbes = '/api/v2/internal/probes'
   }
 
-  componentDidMount() {
+  async componentDidMount() {
     this.setState({loading: true});
 
-    Promise.all([
-      this.backend.fetchData('/api/v2/internal/probes'),
-      this.backend.isTenantSchema()
-    ])
-      .then(([json, isTenantSchema]) =>
-        this.setState({
-          list_probe: json,
-          isTenantSchema: isTenantSchema,
-          loading: false,
-          search_name: ''
-        }))
+    let json = await this.backend.fetchData(this.apiListProbes);
+    let isTenantSchema = await this.backend.isTenantSchema();
+    this.setState({
+      list_probe: json,
+      isTenantSchema: isTenantSchema,
+      loading: false,
+      search_name: ''
+    });
   }
 
   render() {
@@ -258,15 +343,15 @@ export class ProbeList extends Component {
       },
       {
         Header: 'Name',
-        id: 'name', 
+        id: 'name',
         minWidth: 80,
-        accessor: e => 
-          <Link to={'/ui/probes/' + e.name}>
+        accessor: e =>
+          <Link to={`/ui/${this.publicView ? 'public_' : ''}probes/${e.name}`}>
             {e.name}
           </Link>,
         filterable: true,
         Filter: (
-          <input 
+          <input
             value={this.state.search_name}
             onChange={e => this.setState({search_name: e.target.value})}
             placeholder='Search by name'
@@ -279,7 +364,7 @@ export class ProbeList extends Component {
         id: 'nv',
         minWidth: 25,
         accessor: e =>
-          <Link to={'/ui/probes/' + e.name + '/history'}>
+          <Link to={`/ui/${this.publicView && 'public_'}probes/${e.name}/history`}>
             {e.nv}
           </Link>,
         Cell: row =>
@@ -288,12 +373,30 @@ export class ProbeList extends Component {
           </div>
       },
       {
+        Header: 'Package',
+        minWidth: 120,
+        accessor: 'package',
+        filterable: true,
+        Filter: (
+          <input
+            type='text'
+            placeholder='Search by package'
+            value={this.state.search_package}
+            onChange={e => this.setState({search_package: e.target.value})}
+            style={{width: '100%'}}
+          />
+        ),
+        filterMethod:
+          (filter, row) =>
+            row[filter.id] !== undefined ? String(row[filter.id]).toLowerCase().includes(filter.value.toLowerCase()) : true
+      },
+      {
         Header: 'Description',
-        minWidth: 300,
+        minWidth: 200,
         accessor: 'description',
         filterable: true,
         Filter: (
-          <input 
+          <input
             type='text'
             placeholder='Search by description'
             value={this.state.search_description}
@@ -301,7 +404,7 @@ export class ProbeList extends Component {
             style={{width: '100%'}}
           />
         ),
-        filterMethod: 
+        filterMethod:
           (filter, row) =>
             row[filter.id] !== undefined ? String(row[filter.id]).toLowerCase().includes(filter.value.toLowerCase()) : true
       }
@@ -310,170 +413,166 @@ export class ProbeList extends Component {
     var { isTenantSchema, list_probe, loading } = this.state;
 
     if (this.state.search_name) {
-      list_probe = list_probe.filter(row => 
+      list_probe = list_probe.filter(row =>
         row.name.toLowerCase().includes(this.state.search_name.toLowerCase())
-      )
+      );
     }
 
     if (this.state.search_description) {
       list_probe = list_probe.filter(row =>
-        row.description.toLowerCase().includes(this.state.search_description.toLowerCase())  
-      )
+        row.description.toLowerCase().includes(this.state.search_description.toLowerCase())
+      );
+    }
+
+    if (this.state.search_package) {
+      list_probe = list_probe.filter(row =>
+        row.package.toLowerCase().includes(this.state.search_package.toLowerCase())
+      );
     }
 
     if (loading)
-      return (<LoadingAnim />)
+      return (<LoadingAnim />);
 
     else if (!loading && list_probe) {
       return (
-        <React.Fragment>
-          <div className="d-flex align-items-center justify-content-between">
-            {
-              isTenantSchema ?
-                <React.Fragment>
-                  <h2 className="ml-3 mt-1 mb-4">{'Select probe for details'}</h2>
-                </React.Fragment>
-              :
-                <React.Fragment>
-                  <h2 className="ml-3 mt-1 mb-4">{'Select probe to change'}</h2>
-                  <Link className="btn btn-secondary" to={this.location.pathname + "/add"} role="button">Add</Link>
-                </React.Fragment>
-            }
-          </div>
-          <div id="argo-contentwrap" className="ml-2 mb-2 mt-2 p-3 border rounded">
-            <ReactTable
-              data={list_probe}
-              columns={columns}
-              className='-striped -highlight'
-              defaultPageSize={50}
-            />
-          </div>
-        </React.Fragment>
-      )
-    }
-    else
+        <BaseArgoView
+          resourcename='probe'
+          location={this.location}
+          listview={true}
+          addnew={!isTenantSchema}
+        >
+          <ReactTable
+            data={list_probe}
+            columns={columns}
+            className='-highlight'
+            defaultPageSize={50}
+            rowsText='probes'
+            getTheadThProps={() => ({className: 'table-active font-weight-bold p-2'})}
+          />
+        </BaseArgoView>
+      );
+    } else
       return null;
   }
 }
 
 
-export class ProbeChange extends Component {
-  constructor(props) {
-    super(props);
+function ProbeComponent(cloneview=false) {
+  return class extends Component {
+    constructor(props) {
+      super(props);
 
-    this.name = props.match.params.name;
-    this.addview = props.addview;
-    this.location = props.location;
-    this.history = props.history;
-    this.backend = new Backend();
+      this.name = props.match.params.name;
+      this.addview = props.addview;
+      this.location = props.location;
+      this.history = props.history;
+      this.backend = new Backend();
+      this.publicView = props.publicView
 
-    this.state = {
-      probe: {
-        'id': '',
-        'name': '',
-        'version': '',
-        'package': '',
-        'repository': '',
-        'docurl': '',
-        'description': '',
-        'comment': ''
-      },
-      isTenantSchema: null,
-      metrictemplatelist: [],
-      list_packages: [],
-      validationVisible: true,
-      update_metrics: false,
-      loading: false,
-      write_perm: false,
-      areYouSureModal: false,
-      modalFunc: undefined,
-      modalTitle: undefined,
-      modalMsg: undefined
-    };
+      if (this.publicView) {
+        this.apiListPackages = '/api/v2/internal/public_packages'
+        this.apiProbeName = '/api/v2/internal/public_probes'
+        this.apiMetricsForProbes = '/api/v2/internal/public_metricsforprobes'
+      }
+      else {
+        this.apiListPackages = '/api/v2/internal/packages'
+        this.apiProbeName = '/api/v2/internal/probes'
+        this.apiMetricsForProbes = '/api/v2/internal/metricsforprobes'
+      }
 
-    this.toggleAreYouSure = this.toggleAreYouSure.bind(this);
-    this.toggleAreYouSureSetModal = this.toggleAreYouSureSetModal.bind(this);
-    this.onSubmitHandle = this.onSubmitHandle.bind(this);
-    this.doDelete = this.doDelete.bind(this);
-    this.onDismiss = this.onDismiss.bind(this);
-    this.onSelect = this.onSelect.bind(this);
-  };
+      this.state = {
+        probe: {
+          'id': '',
+          'name': '',
+          'version': '',
+          'package': '',
+          'repository': '',
+          'docurl': '',
+          'description': '',
+          'comment': ''
+        },
+        isTenantSchema: null,
+        metrictemplatelist: [],
+        list_packages: [],
+        validationVisible: true,
+        update_metrics: false,
+        loading: false,
+        areYouSureModal: false,
+        modalFunc: undefined,
+        modalTitle: undefined,
+        modalMsg: undefined
+      };
 
-  toggleAreYouSure() {
-    this.setState(prevState => 
-      ({areYouSureModal: !prevState.areYouSureModal}));
-  };
+      this.toggleAreYouSure = this.toggleAreYouSure.bind(this);
+      this.toggleAreYouSureSetModal = this.toggleAreYouSureSetModal.bind(this);
+      this.onSubmitHandle = this.onSubmitHandle.bind(this);
+      this.doDelete = this.doDelete.bind(this);
+      this.onDismiss = this.onDismiss.bind(this);
+      this.onSelect = this.onSelect.bind(this);
+    }
 
-  toggleAreYouSureSetModal(msg, title, onyes) {
-    this.setState(prevState => 
-      ({areYouSureModal: !prevState.areYouSureModal,
-        modalFunc: onyes,
-        modalMsg: msg,
-        modalTitle: title,
-      }));
-  };
+    toggleAreYouSure() {
+      this.setState(prevState =>
+        ({areYouSureModal: !prevState.areYouSureModal}));
+    }
 
-  onSubmitHandle(values, actions) {
-    let msg = undefined;
-    let title = undefined;
+    toggleAreYouSureSetModal(msg, title, onyes) {
+      this.setState(prevState =>
+        ({areYouSureModal: !prevState.areYouSureModal,
+          modalFunc: onyes,
+          modalMsg: msg,
+          modalTitle: title,
+        }));
+    }
 
-    if (this.addview) {
-      msg = 'Are you sure you want to add Probe?';
-      title = 'Add probe';
-    } else {
-        msg = 'Are you sure you want to change Probe?';
-        title = 'Change probe';
-    };
+    onSubmitHandle(values, actions) {
+      let msg = undefined;
+      let title = undefined;
 
-    this.toggleAreYouSureSetModal(msg, title,
-      () => this.doChange(values, actions));
-  };
+      if (this.addview || cloneview) {
+        msg = 'Are you sure you want to add probe?';
+        title = 'Add probe';
+      } else {
+          msg = 'Are you sure you want to change probe?';
+          title = 'Change probe';
+      }
 
-  doChange(values, actions) {
-    if (!this.addview) {
-      this.backend.changeObject(
-        '/api/v2/internal/probes/',
-        {
-          id: values.id,
-          name: values.name,
-          package: values.package,
-          repository: values.repository,
-          docurl: values.docurl,
-          description: values.description,
-          comment: values.comment,
-          update_metrics: values.update_metrics
+      this.toggleAreYouSureSetModal(msg, title,
+        () => this.doChange(values, actions));
+    }
+
+    async doChange(values, actions) {
+      if (this.addview || cloneview) {
+        let cloned_from = undefined;
+        if (cloneview) {
+          cloned_from = values.id;
+        } else {
+          cloned_from = '';
         }
-      ).then(response => {
+        let response = await this.backend.addObject(
+          '/api/v2/internal/probes/',
+          {
+            name: values.name,
+            package: values.package,
+            repository: values.repository,
+            docurl: values.docurl,
+            description: values.description,
+            comment: values.comment,
+            cloned_from: cloned_from
+          }
+          );
           if (!response.ok) {
-            response.json()
-              .then(json => {
-                NotificationManager.error(json.detail, 'Error');
-              });
-          } else {
-            NotifyOk({
-              msg: 'Probe successfully changed',
-              title: 'Changed',
-              callback: () => this.history.push('/ui/probes')
+            let add_msg = '';
+            try {
+              let json = await response.json();
+              add_msg = json.detail;
+            } catch(err) {
+              add_msg = 'Error adding probe';
+            }
+            NotifyError({
+              title: `Error: ${response.status} ${response.statusText}`,
+              msg: add_msg
             });
-          };
-        });
-    } else {
-      this.backend.addObject(
-        '/api/v2/internal/probes/',
-        {
-          name: values.name,
-          package: values.package,
-          repository: values.repository,
-          docurl: values.docurl,
-          description: values.description,
-          comment: values.comment
-        }
-        ).then(response => {
-          if (!response.ok) {
-            response.json()
-              .then(json => {
-                NotificationManager.error(json.detail, 'Error');
-              });
           } else {
             NotifyOk({
               msg: 'Probe successfully added',
@@ -481,317 +580,187 @@ export class ProbeChange extends Component {
               callback: () => this.history.push('/ui/probes')
             });
           };
-        });
-    };
-  };
-
-  doDelete(name) {
-    this.backend.deleteObject(`/api/v2/internal/probes/${name}`)
-      .then(response => {
+      } else {
+        let response = await this.backend.changeObject(
+          '/api/v2/internal/probes/',
+          {
+            id: values.id,
+            name: values.name,
+            package: values.package,
+            repository: values.repository,
+            docurl: values.docurl,
+            description: values.description,
+            comment: values.comment,
+            update_metrics: values.update_metrics
+          }
+        );
         if (!response.ok) {
-          response.json()
-            .then(json => {
-              NotificationManager.error(json.detail, 'Error');
-            });
+          let change_msg = '';
+          try {
+            let json = await response.json();
+            change_msg = json.detail;
+          } catch(err) {
+            change_msg = 'Error changing probe';
+          };
+          NotifyError({
+            title: `Error: ${response.status} ${response.statusText}`,
+            msg: change_msg
+          });
         } else {
           NotifyOk({
-            msg: 'Probe successfully deleted',
-            title: 'Deleted',
+            msg: 'Probe successfully changed',
+            title: 'Changed',
             callback: () => this.history.push('/ui/probes')
           });
         };
-      });
-  };
+      };
+    }
 
-  onDismiss() {
-    this.setState({ validationVisible: false });
-  };
-
-  onSelect(field, value) {
-    let probe = this.state.probe;
-    probe[field] = value;
-    probe['version'] = value.split(' ')[1].slice(1, -1);
-    this.setState({probe: probe});
-  };
-
-  componentDidMount() {
-    this.setState({loading: true});
-
-    Promise.all([
-      this.backend.isTenantSchema(),
-      this.backend.fetchData('/api/v2/internal/packages')
-    ])
-      .then(([isTenantSchema, pkgs]) => {
-        let list_packages = [];
-        pkgs.forEach(e => list_packages.push(`${e.name} (${e.version})`));
-        if (!this.addview) {
-          this.backend.fetchData(`/api/v2/internal/probes/${this.name}`)
-            .then(probe => {
-              this.backend.fetchData(`/api/v2/internal/metricsforprobes/${probe.name}(${probe.version})`)
-                .then(metrics => {
-                  this.setState({
-                    probe: probe,
-                    list_packages: list_packages,
-                    isTenantSchema: isTenantSchema,
-                    metrictemplatelist: metrics,
-                    write_perm: localStorage.getItem('authIsSuperuser') === 'true',
-                    loading: false
-                  });
-                });
-            });
-        } else {
-          this.setState({
-            list_packages: list_packages,
-            isTenantSchema: isTenantSchema,
-            write_perm: localStorage.getItem('authIsSuperuser') === 'true',
-            loading: false
-          });
+    async doDelete(name) {
+      let response = await this.backend.deleteObject(`/api/v2/internal/probes/${name}`);
+      if (!response.ok) {
+        let msg = '';
+        try {
+          let json = await response.json();
+          msg = json.detail;
+        } catch(err) {
+          msg = 'Error deleting probe';
         };
-      });
-  };
+        NotifyError({
+          title: `Error: ${response.status} ${response.statusText}`,
+          msg: msg
+        });
+      } else {
+        NotifyOk({
+          msg: 'Probe successfully deleted',
+          title: 'Deleted',
+          callback: () => this.history.push('/ui/probes')
+        });
+      };
+    }
 
-  render() {
-    const { probe, update_metrics, isTenantSchema, metrictemplatelist, 
-      list_packages, write_perm, loading } = this.state;
+    onDismiss() {
+      this.setState({ validationVisible: false });
+    }
 
-    if (loading)
-      return(<LoadingAnim/>)
+    onSelect(field, value) {
+      let probe = this.state.probe;
+      probe[field] = value;
+      probe['version'] = value.split(' ')[1].slice(1, -1);
+      this.setState({probe: probe});
+    }
 
-    else if (!loading) {
-      if (!isTenantSchema) {
-        return (
-          <BaseArgoView
-            resourcename='probes'
-            location={this.location}
-            addview={this.addview}
-            modal={true}
-            state={this.state}
-            toggle={this.toggleAreYouSure}
-            submitperm={write_perm}>
-            <Formik
-              initialValues = {{
-                id: probe.id,
-                name: probe.name,
-                version: probe.version,
-                package: probe.package,
-                repository: probe.repository,
-                docurl: probe.docurl,
-                description: probe.description,
-                comment: probe.comment,
-                update_metrics: update_metrics
-              }}
-              validationSchema={ProbeSchema}
-              onSubmit = {(values, actions) => this.onSubmitHandle(values, actions)}
-            >
-              {props => (
-                <Form>
-                  <FormGroup>
-                    <Row>
-                      <Col md={6}>
-                        <InputGroup>
-                          <InputGroupAddon addonType='prepend'>Name</InputGroupAddon>
-                          <Field
-                            type='text'
-                            name='name'
-                            className={`form-control ${props.errors.name && 'border-danger'}`}
-                            id='name'
-                          />          
-                        </InputGroup>
-                          {
-                            props.errors.name &&
-                              FancyErrorMessage(props.errors.name)
-                          }
-                        <FormText color="muted">
-                          Name of this probe.
-                        </FormText>
-                      </Col>
-                      <Col md={2}>
-                        <InputGroup>
-                          <InputGroupAddon addonType='prepend'>Version</InputGroupAddon>
-                          <Field
-                            type='text'
-                            name='version'
-                            value={this.state.probe.version}
-                            className='form-control'
-                            id='version'
-                            disabled={true}
-                          />
-                        </InputGroup>
-                        <FormText color="muted">
-                          Version of the probe.
-                        </FormText>
-                      </Col>
-                      {
-                        !this.addview &&
-                          <Col md={2}>
-                            <Field
-                              component={Checkbox}
-                              name='update_metrics'
-                              className='form-control'
-                              id='checkbox'
-                              label='Update metric templates'
-                            />
-                            <FormText color='muted'>
-                              Update all associated metric templates.
-                            </FormText>
-                          </Col>
-                      }
-                    </Row>
-                    <Row className='mt-3'>
-                      <Col md={8}>
-                        <AutocompleteField
-                          {...props}
-                          lists={list_packages}
-                          icon='packages'
-                          field='package'
-                          val={props.values.package}
-                          onselect_handler={this.onSelect}
-                          req={props.errors.package}
-                          label={'Package'}
-                        />
-                        {
-                          props.errors.package &&
-                            FancyErrorMessage(props.errors.package)
-                        }
-                        <FormText color='muted'>
-                          Probe is part of selected package.
-                        </FormText>
-                      </Col>
-                    </Row>
-                  </FormGroup>
-                  <FormGroup>
-                    <h4 className="mt-2 p-1 pl-3 text-light text-uppercase rounded" style={{"backgroundColor": "#416090"}}>Probe metadata</h4>
-                    <Row className='mt-4 mb-3 align-items-top'>
-                      <Col md={8}>
-                        <InputGroup>
-                          <InputGroupAddon addonType='prepend'>Repository</InputGroupAddon>
-                          <Field
-                            type='text'
-                            name='repository'
-                            className={`form-control ${props.errors.repository && 'border-danger'}`}
-                            id='repository'
-                          />
-                        </InputGroup>
-                          {
-                            props.errors.repository &&
-                              FancyErrorMessage(props.errors.repository)
-                          }
-                        <FormText color='muted'>
-                          Probe repository URL.
-                        </FormText>
-                      </Col>
-                    </Row>
-                    <Row className='mb-3 align-items-top'>
-                      <Col md={8}>
-                        <InputGroup>
-                          <InputGroupAddon addonType='prepend'>Documentation</InputGroupAddon>
-                          <Field
-                            type='text'
-                            name='docurl'
-                            className={`form-control ${props.errors.docurl && 'border-danger'}`}
-                            id='docurl'
-                          />
-                        </InputGroup>
-                          {
-                            props.errors.docurl &&
-                              FancyErrorMessage(props.errors.docurl)
-                          }
-                        <FormText color='muted'>
-                          Documentation URL.
-                        </FormText>
-                      </Col>
-                    </Row>
-                    <Row className='mb-3 align-items-top'>
-                      <Col md={8}>
-                        <Label for='description'>Description</Label>
-                        <Field
-                          component='textarea'
-                          name='description'
-                          rows='15'
-                          className={`form-control ${props.errors.description && 'border-danger'}`}
-                          id='description'
-                        />
-                          {
-                            props.errors.description &&
-                              FancyErrorMessage(props.errors.description)
-                          }
-                        <FormText color='muted'>
-                          Free text description outlining the purpose of this probe.
-                        </FormText>
-                      </Col>
-                    </Row>
-                    <Row className='mb-3 align-items-top'>
-                      <Col md={8}>
-                        <Label for='comment'>Comment</Label>
-                        <Field 
-                          component='textarea'
-                          name='comment'
-                          rows='5'
-                          className={`form-control ${props.errors.comment && 'border-danger'}`}
-                          id='comment'
-                        />
-                          {
-                            props.errors.comment &&
-                              FancyErrorMessage(props.errors.comment)
-                          }
-                        <FormText color='muted'>
-                          Short comment about this version.
-                        </FormText>
-                      </Col>
-                    </Row>
+    async componentDidMount() {
+      this.setState({loading: true});
+
+      let isTenantSchema = await this.backend.isTenantSchema();
+      let pkgs = await this.backend.fetchData(this.apiListPackages);
+      let list_packages = [];
+      pkgs.forEach(e => list_packages.push(`${e.name} (${e.version})`));
+      if (!this.addview) {
+        let probe = await this.backend.fetchData(`${this.apiProbeName}/${this.name}`);
+        let metrics = await this.backend.fetchData(`${this.apiMetricsForProbes}/${probe.name}(${probe.version})`);
+        this.setState({
+          probe: probe,
+          list_packages: list_packages,
+          isTenantSchema: isTenantSchema,
+          metrictemplatelist: metrics,
+          loading: false
+        });
+      } else {
+        this.setState({
+          list_packages: list_packages,
+          isTenantSchema: isTenantSchema,
+          loading: false
+        });
+      };
+    }
+
+    render() {
+      const { probe, update_metrics, isTenantSchema, metrictemplatelist,
+        list_packages, loading } = this.state;
+
+      if (loading)
+        return(<LoadingAnim/>)
+
+      else if (!loading) {
+        if (!isTenantSchema) {
+          return (
+            <BaseArgoView
+              resourcename='probe'
+              location={this.location}
+              addview={this.addview}
+              cloneview={cloneview}
+              clone={true}
+              modal={true}
+              state={this.state}
+              toggle={this.toggleAreYouSure}>
+              <Formik
+                initialValues = {{
+                  id: probe.id,
+                  name: probe.name,
+                  version: probe.version,
+                  package: probe.package,
+                  repository: probe.repository,
+                  docurl: probe.docurl,
+                  description: probe.description,
+                  comment: probe.comment,
+                  update_metrics: update_metrics
+                }}
+                validationSchema={ProbeSchema}
+                onSubmit = {(values, actions) => this.onSubmitHandle(values, actions)}
+              >
+                {props => (
+                  <Form>
+                    <ProbeForm
+                      {...props}
+                      state={this.state}
+                      addview={this.addview}
+                      cloneview={cloneview}
+                      list_packages={list_packages}
+                      onSelect={this.onSelect}
+                      metrictemplatelist={metrictemplatelist}
+                    />
                     {
-                      !this.addview &&
-                      <Row>
-                        <Col md={8}>
-                          <div>
-                            Metric templates: 
-                            {
-                              metrictemplatelist.length > 0 && 
-                              <div>
-                                {
-                                  metrictemplatelist
-                                    .map((e, i) => <Link key={i} to={'/ui/metrictemplates/' + e}>{e}</Link>)
-                                    .reduce((prev, curr) => [prev, ', ', curr])
-                                }
-                            </div>
-                            }
-                          </div>
-                        </Col>
-                      </Row>
-                    }
-                  </FormGroup>
-                  {
-                    (write_perm) &&
                       <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
-                        <Button 
-                        color='danger'
-                        onClick={() => {
-                          this.toggleAreYouSureSetModal(
-                            'Are you sure you want to delete Probe?',
-                            'Delete probe',
-                            () => this.doDelete(props.values.name)
-                          )
-                        }}>
-                          Delete
-                        </Button>
-                        <Button color='success' id='submit-button' type='submit'>
+                        {
+                          (!this.addview && !cloneview) ?
+                            <Button
+                              color='danger'
+                              onClick={() => {
+                                this.toggleAreYouSureSetModal(
+                                  'Are you sure you want to delete probe?',
+                                  'Delete probe',
+                                  () => this.doDelete(props.values.name)
+                                )}}
+                            >
+                              Delete
+                            </Button>
+                          :
+                            <div></div>
+                        }
+                        <Button
+                          color='success'
+                          id='submit-button'
+                          type='submit'
+                        >
                           Save
                         </Button>
-                      </div>  
-                }
-                </Form>
-              )}
-            </Formik>
-          </BaseArgoView>
-        )
-      } else {
-        return (
-          <React.Fragment>
-            <div className="d-flex align-items-center justify-content-between">
-              <h2 className="ml-3 mt-1 mb-4">{'Probe details'}</h2>
-              <Link className='btn btn-secondary' to={this.location.pathname + '/history'} role='button'>History</Link>
-            </div>
-            <div id="argo-contentwrap" className="ml-2 mb-2 mt-2 p-3 border rounded">
+                      </div>
+                  }
+                  </Form>
+                )}
+              </Formik>
+            </BaseArgoView>
+          )
+        } else {
+          return (
+            <BaseArgoView
+              resourcename='Probe details'
+              location={this.location}
+              tenantview={true}
+              history={true}
+            >
               <Formik
                 initialValues = {{
                   id: probe.id,
@@ -804,174 +773,30 @@ export class ProbeChange extends Component {
                   comment: probe.comment
                 }}
                 render = {props => (
-                  <ProbeForm/> 
+                  <ProbeForm
+                    {...props}
+                    isTenantSchema={true}
+                    state={this.state}
+                    metrictemplatelist={metrictemplatelist}
+                  />
                 )}
               />
-            </div>
-          </React.Fragment>
-        );
-      };
-    };
-  };
-};
-
-
-export function HistoryComponent(obj) {
-  return class extends Component {
-    constructor(props) {
-      super(props);
-
-      this.name = props.match.params.name;
-      this.history = props.history;
-
-      this.state = {
-        loading: false,
-        list_versions: null,
-        compare1: '',
-        compare2: ''
-      };
-
-      this.backend = new Backend();
-    }
-
-    componentDidMount() {
-      this.setState({loading: true});
-      let url = undefined;
-
-      if (obj === 'metric')
-        url = '/api/v2/internal/tenantversion/'
-      
-      else
-        url = '/api/v2/internal/version/'
-
-      this.backend.fetchData(`${url}/${obj}/${this.name}`)
-        .then((json) => {
-          if (json.length > 1) {
-            this.setState({
-              list_versions: json,
-              loading: false,
-              compare1: json[0].version,
-              compare2: json[1].version
-            });
-          } else {
-            this.setState({
-              list_versions: json,
-              loading: false
-            });
-          };
-        }
-      )
-    };
-
-      render() {
-        const { loading, list_versions } = this.state; 
-    
-        if (loading)
-          return (<LoadingAnim />);
-        
-        else if (!loading && list_versions) {
-          return (
-            <BaseArgoView
-              resourcename='Change history'
-              infoview={true}>
-                <table className='table table-sm'>
-                  <thead className='table-active'>
-                    <tr>
-                      { list_versions.length === 1 ?
-                        <th scope='col'>Compare</th>
-                      :
-                        <th scope='col'>
-                          <Button
-                            color='info'
-                            onClick={() => 
-                              this.history.push(
-                                '/ui/'+obj+'s/' + this.name + '/history/compare/' + this.state.compare1 + '/' + this.state.compare2,
-                              )
-                            }
-                          >
-                            Compare
-                          </Button>
-                        </th>
-                      }
-                      <th scope='col'>Version</th>
-                      <th scope='col'>Date/time</th>
-                      <th scope='col'>User</th>
-                      <th scope='col'>Comment</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {
-                      list_versions.map((e, i) =>
-                        <tr key={i}>
-                          {
-                            list_versions.length === 1 ?
-                              <td>-</td>
-                            :
-                              i === 0 ?
-                              <td>
-                                <input
-                                  type='radio'
-                                  name='radio-1'
-                                  value={e.version}
-                                  defaultChecked={true}
-                                  onChange={e => this.setState({compare1: e.target.value})}
-                                />
-                              </td>
-                              :
-                              <td>
-                                <input
-                                  type='radio'
-                                  name='radio-1'
-                                  value={e.version}
-                                  onChange={e => this.setState({compare1: e.target.value})}
-                                /> 
-                                {' '}
-                                <input
-                                  type='radio'
-                                  name='radio-2'
-                                  value={e.version}
-                                  defaultChecked={i===1}
-                                  onChange={e => this.setState({compare2: e.target.value})}
-                                />
-                              </td>
-                          }
-                          {
-                            <td>
-                              {e.version ? <Link to={'/ui/' + obj +'s/' + this.name + '/history/' + e.version}>{e.version}</Link> : ''}
-                            </td>
-                          }
-                          <td>
-                            {e.date_created ? e.date_created : ''}
-                          </td>
-                          <td>
-                            {e.user ? e.user : ''}
-                          </td>
-                          <td className='col-md-6'>
-                            {e.comment ? e.comment : ''}
-                          </td>
-                        </tr>
-                      )
-                    }
-                  </tbody>
-                </table>
-              </BaseArgoView>
+            </BaseArgoView>
           );
         }
-        else
-          return null;
-      };
-    };
-};
-
+      }
+    }
+  };
+}
 
 
 export class ProbeVersionCompare extends Component{
   constructor(props) {
     super(props);
-
     this.version1 = props.match.params.id1;
     this.version2 = props.match.params.id2;
     this.name = props.match.params.name;
+    this.publicView = props.publicView
 
     this.state = {
       loading: false,
@@ -991,73 +816,75 @@ export class ProbeVersionCompare extends Component{
       comment2: ''
     };
 
+    if (this.publicView)
+      this.apiUrl = '/api/v2/internal/public_version/probe/'
+    else
+      this.apiUrl = '/api/v2/internal/version/probe/'
+
     this.backend = new Backend();
   }
 
-  componentDidMount() {
+  async componentDidMount() {
     this.setState({loading: true});
 
-    this.backend.fetchData(`/api/v2/internal/version/probe/${this.name}`)
-      .then((json) => {
-        let name1 = '';
-        let version1 = '';
-        let package1 = '';
-        let description1 = '';
-        let repository1 = '';
-        let docurl1 = '';
-        let comment1 = '';
-        let name2 = ''
-        let version2 = '';
-        let package2 = '';
-        let description2 = '';
-        let repository2 = '';
-        let docurl2 = '';
-        let comment2 = '';
+    let json = await this.backend.fetchData(`${this.apiUrl}/${this.name}`);
+    let name1 = '';
+    let version1 = '';
+    let package1 = '';
+    let description1 = '';
+    let repository1 = '';
+    let docurl1 = '';
+    let comment1 = '';
+    let name2 = ''
+    let version2 = '';
+    let package2 = '';
+    let description2 = '';
+    let repository2 = '';
+    let docurl2 = '';
+    let comment2 = '';
 
-        json.forEach((e) => {
-          if (e.version == this.version1) {
-            name1 = e.fields.name;
-            version1 = e.fields.version;
-            package1 = e.fields.package;
-            description1 = e.fields.description;
-            repository1 = e.fields.repository;
-            docurl1 = e.fields.docurl;
-            comment1 = e.fields.comment;
-          } else if (e.version === this.version2) {
-            name2 = e.fields.name;
-            version2 = e.fields.version;
-            package2 = e.fields.package;
-            description2 = e.fields.description;
-            repository2 = e.fields.repository;
-            docurl2 = e.fields.docurl;
-            comment2 = e.fields.comment;
-          };
-        });
-
-        this.setState({
-          name1: name1,
-          version1: version1,
-          package1: package1,
-          description1: description1,
-          repository1: repository1,
-          docurl1: docurl1,
-          comment1: comment1,
-          name2: name2,
-          version2: version2,
-          package2: package2,
-          description2: description2,
-          repository2: repository2,
-          docurl2: docurl2,
-          comment2: comment2,
-          loading: false
-        });
+    json.forEach((e) => {
+      if (e.version == this.version1) {
+        name1 = e.fields.name;
+        version1 = e.fields.version;
+        package1 = e.fields.package;
+        description1 = e.fields.description;
+        repository1 = e.fields.repository;
+        docurl1 = e.fields.docurl;
+        comment1 = e.fields.comment;
+      } else if (e.version === this.version2) {
+        name2 = e.fields.name;
+        version2 = e.fields.version;
+        package2 = e.fields.package;
+        description2 = e.fields.description;
+        repository2 = e.fields.repository;
+        docurl2 = e.fields.docurl;
+        comment2 = e.fields.comment;
       }
-    )
-  };
+    });
+
+    this.setState({
+      name1: name1,
+      version1: version1,
+      package1: package1,
+      description1: description1,
+      repository1: repository1,
+      docurl1: docurl1,
+      comment1: comment1,
+      name2: name2,
+      version2: version2,
+      package2: package2,
+      description2: description2,
+      repository2: repository2,
+      docurl2: docurl2,
+      comment2: comment2,
+      loading: false
+    });
+  }
 
   render() {
-    var { name1, name2, version1, version2, package1, package2, 
-      description1, description2, repository1, repository2, 
+    var { name1, name2, version1, version2, package1, package2,
+      description1, description2, repository1, repository2,
       docurl1, docurl2, comment1, comment2, loading } = this.state;
 
     if (loading)
@@ -1070,7 +897,7 @@ export class ProbeVersionCompare extends Component{
             <h2 className='ml-3 mt-1 mb-4'>{'Compare ' + this.name}</h2>
           </div>
           {
-            (name1 !== name2) && 
+            (name1 !== name2) &&
               <DiffElement title='name' item1={name1} item2={name2}/>
           }
 
@@ -1107,8 +934,8 @@ export class ProbeVersionCompare extends Component{
     }
     else
       return null;
-  };
-};
+  }
+}
 
 
 export class ProbeVersionDetails extends Component {
@@ -1117,8 +944,14 @@ export class ProbeVersionDetails extends Component {
 
     this.name = props.match.params.name;
     this.version = props.match.params.version;
+    this.publicView = props.publicView
 
     this.backend = new Backend();
+
+    if (this.publicView)
+      this.apiUrl = '/api/v2/internal/public_version/probe/'
+    else
+      this.apiUrl = '/api/v2/internal/version/probe/'
 
     this.state = {
       name: '',
@@ -1130,32 +963,29 @@ export class ProbeVersionDetails extends Component {
       comment: '',
       loading: false
     };
-  };
+  }
 
-  componentDidMount() {
+  async componentDidMount() {
     this.setState({loading: true});
 
-    this.backend.fetchData(`/api/v2/internal/version/probe/${this.name}`)
-      .then((json) => {
-        json.forEach((e) => {
-          if (e.version === this.version) 
-            this.setState({
-              name: e.fields.name,
-              version: e.fields.version,
-              pkg: e.fields.package,
-              description: e.fields.description,
-              repository: e.fields.repository,
-              docurl: e.fields.docurl,
-              comment: e.fields.comment,
-              loading: false
-            });
+    let json = await this.backend.fetchData(`${this.apiUrl}/${this.name}`);
+    json.forEach((e) => {
+      if (e.version === this.version)
+        this.setState({
+          name: e.fields.name,
+          version: e.fields.version,
+          pkg: e.fields.package,
+          description: e.fields.description,
+          repository: e.fields.repository,
+          docurl: e.fields.docurl,
+          comment: e.fields.comment,
+          loading: false
         });
-      }
-    )
-  };
+    });
+  }
 
   render() {
-    const { name, version, pkg, description, repository, 
+    const { name, version, pkg, description, repository,
       docurl, comment, loading} = this.state;
 
     if (loading)
@@ -1164,7 +994,7 @@ export class ProbeVersionDetails extends Component {
     else if (!loading && name) {
       return (
         <BaseArgoView
-          resourcename={name + ' (' + version + ')'}
+          resourcename={`${name} (${version})`}
           infoview={true}
         >
           <Formik
@@ -1178,7 +1008,11 @@ export class ProbeVersionDetails extends Component {
               comment: comment
             }}
             render = {props => (
-              <ProbeForm/>
+              <ProbeForm
+                {...props}
+                state={this.state}
+                isHistory={true}
+              />
             )}
           />
         </BaseArgoView>
@@ -1186,5 +1020,5 @@ export class ProbeVersionDetails extends Component {
     }
     else
       return null;
-  };
-};
+  }
+}

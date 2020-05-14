@@ -1,4 +1,12 @@
+from django.contrib.contenttypes.models import ContentType
+
 import json
+
+from Poem.api.models import MyAPIKey
+from Poem.helpers.history_helpers import create_profile_history
+from Poem.poem import models as poem_models
+
+import requests
 
 
 def one_value_inline(input):
@@ -28,13 +36,18 @@ def two_value_inline(input):
     return results
 
 
-def inline_metric_for_db(input):
+def inline_metric_for_db(data):
     result = []
 
-    for item in input:
-        result.append('{} {}'.format(item['key'], item['value']))
+    for item in data:
+        if item['key']:
+            result.append('{} {}'.format(item['key'], item['value']))
 
-    return result
+    if result:
+        return json.dumps(result)
+
+    else:
+        return ''
 
 
 def two_value_inline_dict(input):
@@ -51,3 +64,73 @@ def two_value_inline_dict(input):
                 results.update(({item.split(' ')[0]: val}))
 
     return results
+
+
+def sync_webapi(api, model):
+    token = MyAPIKey.objects.get(name="WEB-API")
+
+    headers = {'Accept': 'application/json', 'x-api-key': token.token}
+    response = requests.get(api,
+                            headers=headers,
+                            timeout=180)
+    response.raise_for_status()
+    data = response.json()['data']
+
+    data_api = set([p['id'] for p in data])
+    data_db = set(model.objects.all().values_list('apiid', flat=True))
+    entries_not_indb = data_api.difference(data_db)
+
+    new_entries = []
+    for p in data:
+        if p['id'] in entries_not_indb:
+            new_entries.append(
+                dict(name=p['name'], description=p.get('description', ''),
+                     apiid=p['id'], groupname='')
+            )
+
+    if new_entries:
+        for entry in new_entries:
+            instance = model.objects.create(**entry)
+
+            if isinstance(instance, poem_models.MetricProfiles):
+                services = []
+                for item in data:
+                    if item['id'] == instance.apiid:
+                        for service in item['services']:
+                            for metric in service['metrics']:
+                                services.append(
+                                    dict(
+                                        service=service['service'],
+                                        metric=metric
+                                    )
+                                )
+                        description = item.get('description', '')
+                create_profile_history(instance, services, 'poem', description)
+
+            if isinstance(instance, poem_models.Aggregation):
+                for item in data:
+                    if item['id'] == instance.apiid:
+                        aggr_data = {
+                            'endpoint_group': item['endpoint_group'],
+                            'metric_operation': item['metric_operation'],
+                            'profile_operation': item['profile_operation'],
+                            'metric_profile': item['metric_profile']['name'],
+                            'groups': item['groups']
+                        }
+                create_profile_history(instance, aggr_data, 'poem')
+
+            if isinstance(instance, poem_models.ThresholdsProfiles):
+                for item in data:
+                    if item['id'] == instance.apiid:
+                        tp_data = {'rules': item['rules']}
+                create_profile_history(instance, tp_data, 'poem')
+
+    entries_deleted_onapi = data_db.difference(data_api)
+    for p in entries_deleted_onapi:
+        instance = model.objects.get(apiid=p)
+        poem_models.TenantHistory.objects.filter(
+            object_id=instance.id,
+            content_type=ContentType.objects.get_for_model(model)
+        ).delete()
+        instance.delete()
+

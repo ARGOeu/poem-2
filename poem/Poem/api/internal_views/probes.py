@@ -5,7 +5,7 @@ from django.db import IntegrityError
 import json
 
 from Poem.api.views import NotFound
-from Poem.helpers.history_helpers import create_history
+from Poem.helpers.history_helpers import create_history, update_comment
 from Poem.poem import models as poem_models
 from Poem.poem_super_admin import models as admin_models
 from Poem.tenants.models import Tenant
@@ -86,11 +86,25 @@ class ListProbes(APIView):
 
         probe = admin_models.Probe.objects.get(id=request.data['id'])
         old_name = probe.name
-        package_name = request.data['package'].split(' ')[0]
-        package_version = request.data['package'].split(' ')[1][1:-1]
-        package = admin_models.Package.objects.get(
-            name=package_name, version=package_version
-        )
+        try:
+            package_name = request.data['package'].split(' ')[0]
+            package_version = request.data['package'].split(' ')[1][1:-1]
+            package = admin_models.Package.objects.get(
+                name=package_name, version=package_version
+            )
+
+        except IndexError:
+            return Response(
+                {'detail': 'You should specify package version.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        except admin_models.Package.DoesNotExist:
+            return Response(
+                {'detail': 'You should choose existing package.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         old_version = probe.package.version
 
         try:
@@ -141,6 +155,13 @@ class ListProbes(APIView):
                 )
 
                 del new_data['user']
+                new_data.update({
+                    'version_comment': update_comment(
+                        admin_models.Probe.objects.get(
+                            id=request.data['id']
+                        )
+                    )
+                })
                 history.update(**new_data)
 
                 # update Metric history in case probekey name has changed:
@@ -179,9 +200,9 @@ class ListProbes(APIView):
             )
 
     def post(self, request):
-        package_name = request.data['package'].split(' ')[0]
-        package_version = request.data['package'].split(' ')[1][1:-1]
         try:
+            package_name = request.data['package'].split(' ')[0]
+            package_version = request.data['package'].split(' ')[1][1:-1]
             probe = admin_models.Probe.objects.create(
                 name=request.data['name'],
                 package=admin_models.Package.objects.get(
@@ -195,13 +216,35 @@ class ListProbes(APIView):
                 datetime=datetime.datetime.now()
             )
 
-            create_history(probe, probe.user)
+            if request.data['cloned_from']:
+                clone = admin_models.Probe.objects.get(
+                    id=request.data['cloned_from']
+                )
+                comment = 'Derived from {} ({}).'.format(
+                    clone.name, clone.package.version
+                )
+                create_history(probe, probe.user, comment=comment)
+
+            else:
+                create_history(probe, probe.user)
 
             return Response(status=status.HTTP_201_CREATED)
 
         except IntegrityError:
             return Response({'detail': 'Probe with this name already exists.'},
                             status=status.HTTP_400_BAD_REQUEST)
+
+        except admin_models.Package.DoesNotExist:
+            return Response(
+                {'detail': 'You should choose existing package.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        except IndexError:
+            return Response(
+                {'detail': 'You should specify package version.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
     def delete(self, request, name=None):
         schemas = list(
@@ -238,3 +281,24 @@ class ListProbes(APIView):
 
         else:
             return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+class ListPublicProbes(ListProbes):
+    authentication_classes = ()
+    permission_classes = ()
+
+    def _denied(self):
+        return Response(status=status.HTTP_403_FORBIDDEN)
+
+    def post(self, request):
+        return self._denied()
+
+    def put(self, request):
+        return self._denied()
+
+    def post(self, request):
+        return self._denied()
+
+    def delete(self, request, name):
+        return self._denied()
+

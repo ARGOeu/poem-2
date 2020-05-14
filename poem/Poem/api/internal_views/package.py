@@ -4,15 +4,17 @@ from django.db.models import ProtectedError
 from Poem.api.views import NotFound
 from Poem.poem_super_admin import models as admin_models
 
-from re import compile
-
 from rest_framework import status
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 
-nv = compile('(\S+)-(.*)')
+def get_package_version(nameversion):
+    version = nameversion.split('-')[-1]
+    name = nameversion.split(version)[0][0:-1]
+
+    return name, version
 
 
 class ListPackages(APIView):
@@ -21,7 +23,7 @@ class ListPackages(APIView):
     def get(self, request, nameversion=None):
         if nameversion:
             try:
-                package_name, package_version = nv.match(nameversion).groups()
+                package_name, package_version = get_package_version(nameversion)
                 package = admin_models.Package.objects.get(
                     name=package_name, version=package_version
                 )
@@ -34,6 +36,7 @@ class ListPackages(APIView):
                     'id': package.id,
                     'name': package.name,
                     'version': package.version,
+                    'use_present_version': package.use_present_version,
                     'repos': repos
                 }
 
@@ -53,6 +56,7 @@ class ListPackages(APIView):
                 results.append({
                     'name': package.name,
                     'version': package.version,
+                    'use_present_version': package.use_present_version,
                     'repos': repos
                 })
 
@@ -62,12 +66,44 @@ class ListPackages(APIView):
 
     def post(self, request):
         try:
+            if request.data['use_present_version'] in [True, 'true', 'True']:
+                version = 'present'
+                use_present_version = True
+
+            else:
+                version = request.data['version']
+                use_present_version = False
+
+            # check if repos exist
+            repos = dict(request.data)['repos']
+
+            try:
+                for repo in repos:
+                    repo_name = repo.split(' ')[0]
+                    repo_tag = admin_models.OSTag.objects.get(
+                        name=repo.split('(')[1][0:-1]
+                    )
+                    admin_models.YumRepo.objects.get(
+                        name=repo_name, tag=repo_tag
+                    )
+
+            except admin_models.YumRepo.DoesNotExist:
+                return Response(
+                    {'detail': 'YUM repo not found.'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+            except IndexError:
+                return Response(
+                    {'detail': 'You should specify YUM repo tag!'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
             package = admin_models.Package.objects.create(
                 name=request.data['name'],
-                version=request.data['version']
+                version=version,
+                use_present_version=use_present_version
             )
-
-            repos = dict(request.data)['repos']
 
             for repo in repos:
                 repo_name = repo.split(' ')[0]
@@ -87,23 +123,16 @@ class ListPackages(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        except admin_models.YumRepo.DoesNotExist:
-            return Response(
-                {'detail': 'YUM repo not found.'},
-                status=status.HTTP_404_NOT_FOUND
-            )
-
-        except IndexError:
-            return Response(
-                {'detail': 'You should specify YUM repo tag!'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
     def put(self, request):
         package = admin_models.Package.objects.get(id=request.data['id'])
         old_version = package.version
         try:
             package.name = request.data['name']
+            if request.data['use_present_version'] in [True, 'true', 'True']:
+                use_present_version = True
+            else:
+                use_present_version = False
+            package.use_present_version = use_present_version
             package.version = request.data['version']
             package.save()
 
@@ -155,7 +184,7 @@ class ListPackages(APIView):
             )
 
     def delete(self, request, nameversion):
-        package_name, package_version = nv.match(nameversion).groups()
+        package_name, package_version = get_package_version(nameversion)
         try:
             admin_models.Package.objects.get(
                 name=package_name, version=package_version
@@ -171,3 +200,19 @@ class ListPackages(APIView):
                 {'detail': 'You cannot delete package with associated probes!'},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+class ListPublicPackages(ListPackages):
+    authentication_classes = ()
+    permission_classes = ()
+
+    def _denied(self):
+        return Response(status=status.HTTP_403_FORBIDDEN)
+
+    def post(self, request):
+        return self._denied()
+
+    def put(self, request):
+        return self._denied()
+
+    def delete(self, request, nameversion):
+        return self._denied()

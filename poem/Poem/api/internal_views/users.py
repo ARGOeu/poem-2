@@ -1,4 +1,5 @@
 from django.db import IntegrityError
+import datetime
 
 from Poem.api import serializers
 from Poem.api.views import NotFound
@@ -76,22 +77,45 @@ class ListUsers(APIView):
 
     def get(self, request, username=None):
         if username:
-            try:
-                user = CustUser.objects.get(username=username)
-                serializer = serializers.UsersSerializer(user)
-                return Response(serializer.data)
-
-            except CustUser.DoesNotExist:
-                raise NotFound(status=404,
-                               detail='User not found')
+            users = CustUser.objects.filter(username=username)
+            if users.count() == 0:
+                raise NotFound(status=404, detail='User not found')
 
         else:
-            users = CustUser.objects.all()
-            serializer = serializers.UsersSerializer(users, many=True)
+            if request.user.is_superuser:
+                users = CustUser.objects.all()
+            else:
+                users = CustUser.objects.filter(username=request.user.username)
 
-            data = sorted(serializer.data, key=lambda k: k['username'].lower())
+        results = []
+        for user in users:
+            if user.last_login:
+                last_login = datetime.datetime.strftime(
+                    user.last_login, '%Y-%m-%d %H:%M:%S'
+                )
+            else:
+                last_login = ''
 
-            return Response(data)
+            results.append(dict(
+                pk=user.pk,
+                username=user.username,
+                first_name=user.first_name,
+                last_name=user.last_name,
+                is_active=user.is_active,
+                is_superuser=user.is_superuser,
+                email=user.email,
+                date_joined=datetime.datetime.strftime(
+                    user.date_joined, '%Y-%m-%d %H:%M:%S'
+                ),
+                last_login=last_login
+            ))
+
+        results = sorted(results, key=lambda k: k['username'])
+
+        if username:
+            return Response(results[0])
+        else:
+            return Response(results)
 
     def put(self, request):
         try:
@@ -101,7 +125,6 @@ class ListUsers(APIView):
             user.last_name = request.data['last_name']
             user.email = request.data['email']
             user.is_superuser = request.data['is_superuser']
-            user.is_staff = request.data['is_staff']
             user.is_active = request.data['is_active']
             user.save()
 
@@ -122,7 +145,6 @@ class ListUsers(APIView):
                 first_name=request.data['first_name'],
                 last_name=request.data['last_name'],
                 is_superuser=request.data['is_superuser'],
-                is_staff=request.data['is_staff'],
                 is_active=request.data['is_active']
             )
 
@@ -283,3 +305,32 @@ class ListGroupsForGivenUser(APIView):
             results = get_all_groups()
 
         return Response({'result': results})
+
+
+class ListPublicGroupsForGivenUser(APIView):
+    authentication_classes = ()
+    permission_classes = ()
+
+    def get(self, request, username=None):
+        return Response({'result': get_all_groups()})
+
+
+class ChangePassword(APIView):
+    authentication_classes = (SessionAuthentication,)
+
+    def put(self, request):
+        try:
+            user = CustUser.objects.get(username=request.data['username'])
+            if user == request.user:
+                user.set_password(request.data['new_password'])
+                user.save()
+                return Response(status=status.HTTP_201_CREATED)
+
+            else:
+                return Response(
+                    {'detail': 'Trying to change password for another user.'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+
+        except CustUser.DoesNotExist:
+            raise NotFound(status=404, detail='User not found.')

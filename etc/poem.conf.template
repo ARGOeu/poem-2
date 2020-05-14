@@ -1,0 +1,50 @@
+[DEFAULT]
+VENV = /home/pyvenv/poem/
+
+[GENERAL]
+Debug = False
+TimeZone = Europe/Zagreb
+
+[DATABASE]
+Name = postgres
+User = postgres
+Password = postgres
+Host = localhost
+Port = 5432
+
+[SECURITY]
+AllowedHosts = *
+HostCert = /etc/grid-security/hostcert.pem
+HostKey = /etc/grid-security/hostkey.pem
+SecretKeyPath = %(VENV)s/etc/poem/secret_key
+
+[WEBAPI]
+MetricProfile = https://api.devel.argo.grnet.gr/api/v2/metric_profiles
+AggregationProfile = https://api.devel.argo.grnet.gr/api/v2/aggregation_profiles
+ThresholdsProfile = https://api.devel.argo.grnet.gr/api/v2/thresholds_profiles
+
+[GENERAL_ALL]
+PublicPage = tenant.com
+
+[SUPERUSER_ALL]
+Name =
+Password =
+Email =
+
+[GENERAL_EGI]
+Namespace = hr.cro-ngi.TEST
+SamlLoginString = Login using EGI CHECK-IN
+SamlServiceName = ARGO POEM EGI-CheckIN
+
+[SUPERUSER_EGI]
+Name =
+Password =
+Email =
+
+[SYNC_EGI]
+UsePlainHttpAuth = False
+HttpUser = xxxx
+HttpPass = xxxx
+ServiceType = https://goc.egi.eu/gocdbpi/private/?method=get_service_types
+VO = http://operations-portal.egi.eu/xml/voIDCard/public/all/true
+Services = https://eosc-hub-devel.agora.grnet.gr/api/v2/service-types/

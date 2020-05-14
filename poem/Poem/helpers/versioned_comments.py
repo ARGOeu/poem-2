@@ -6,11 +6,18 @@ import json
 from Poem.poem.models import *
 
 
+iterable_fields = ['metricinstances']
+
+
 def msg_with_object(msg, action):
-    return get_text_list(
-        [gettext(field) for field in msg[action]['object']],
-        gettext('and')
-    )
+    if msg[action]['fields'] in iterable_fields:
+        return ' '.join(msg[action]['object'])
+
+    else:
+        return get_text_list(
+            ['"' + gettext(field) + '"' for field in msg[action]['object']],
+            gettext('and')
+        )
 
 
 def msg_with_fields(msg, action):
@@ -38,7 +45,9 @@ def new_comment(comment):
                 )
 
                 if 'object' in submessage['added']:
-                    if len(submessage['added']['object']) > 1:
+                    if len(submessage['added']['object']) > 1 and \
+                            submessage['added']['fields'] not in \
+                            iterable_fields:
                         f = 'fields'
                     else:
                         f = 'field'
@@ -47,11 +56,24 @@ def new_comment(comment):
                         submessage, 'added'
                     )
 
-                    messages.append(
-                        gettext('Added {fields} ' + f + ' "{object}".').format(
-                            **submessage['added']
+                    if submessage['added']['fields'] == 'rules':
+                        messages.append(
+                            'Added rule for metric {object}.'.format(
+                                **submessage['added']
+                            )
                         )
-                    )
+                    elif submessage['added']['fields'] == 'metricinstances':
+                        messages.append(
+                            'Added service-metric instance tuple ({}).'.format(
+                                submessage['added']['object'].replace(' ', ', ')
+                            )
+                        )
+                    else:
+                        messages.append(
+                            gettext(
+                                'Added {fields} ' + f + ' {object}.'
+                            ).format(**submessage['added'])
+                        )
 
                 else:
                     messages.append(gettext(
@@ -64,7 +86,9 @@ def new_comment(comment):
                 )
 
                 if 'object' in submessage['changed']:
-                    if len(submessage['changed']['object']) > 0:
+                    if len(submessage['changed']['object']) > 1 and \
+                            submessage['changed']['fields'] not in \
+                            iterable_fields:
                         f = 'fields'
                     else:
                         f = 'field'
@@ -73,11 +97,18 @@ def new_comment(comment):
                         submessage, 'changed'
                     )
 
-                    messages.append(
-                        gettext(
-                            'Changed {fields} ' + f + ' "{object}".'
-                        ).format(**submessage['changed'])
-                    )
+                    if submessage['changed']['fields'] == 'rules':
+                        messages.append(
+                            'Changed rule for metric {object}.'.format(
+                                **submessage['changed']
+                            )
+                        )
+                    else:
+                        messages.append(
+                            gettext(
+                                'Changed {fields} ' + f + ' {object}.'
+                            ).format(**submessage['changed'])
+                        )
 
                 else:
                     messages.append(gettext('Changed {fields}.').format(
@@ -90,7 +121,9 @@ def new_comment(comment):
                 )
 
                 if 'object' in submessage['deleted']:
-                    if len(submessage['deleted']['object']) > 0:
+                    if len(submessage['deleted']['object']) > 1 and \
+                            submessage['deleted']['fields'] not in \
+                            iterable_fields:
                         f = 'fields'
                     else:
                         f = 'field'
@@ -99,11 +132,28 @@ def new_comment(comment):
                         submessage, 'deleted'
                     )
 
-                    messages.append(
-                        gettext(
-                            'Deleted {fields} ' + f + ' "{object}".'
-                        ).format(**submessage['deleted'])
-                    )
+                    if submessage['deleted']['fields'] == 'rules':
+                        messages.append(
+                            'Deleted rule for metric {object}.'.format(
+                                **submessage['deleted']
+                            )
+                        )
+
+                    elif submessage['deleted']['fields'] == 'metricinstances':
+                        messages.append(
+                            'Deleted service-metric instance '
+                            'tuple ({}).'.format(
+                                submessage['deleted']['object'].replace(
+                                    ' ', ', '
+                                )
+                            )
+                        )
+                    else:
+                        messages.append(
+                            gettext(
+                                'Deleted {fields} ' + f + ' {object}.'
+                            ).format(**submessage['deleted'])
+                        )
 
                 else:
                     messages.append(gettext('Deleted {fields}.').format(

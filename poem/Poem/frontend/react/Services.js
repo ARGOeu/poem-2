@@ -17,17 +17,22 @@ class Services extends Component {
     };
 
     this.backend = new Backend();
+    this.publicView = props.publicView
+
+    if (this.publicView)
+      this.apiUrl = '/api/v2/internal/public_services'
+    else
+      this.apiUrl = '/api/v2/internal/services'
   }
 
-  componentDidMount() {
+  async componentDidMount() {
     this.setState({loading: true});
-    this.backend.fetchData('/api/v2/internal/services')
-      .then(json =>
-        this.setState({
-          rows: json.result.rows, 
-          rowspan: json.result.rowspan, 
-          loading: false})
-      );
+    let json = await this.backend.fetchData(this.apiUrl);
+    this.setState({
+      rows: json.result.rows,
+      rowspan: json.result.rowspan,
+      loading: false
+    });
   }
 
   getRowSpan(re, match) {
@@ -41,7 +46,7 @@ class Services extends Component {
     if (loading) {
       return (<LoadingAnim />)
 
-    } 
+    }
     else if (!loading && rows) {
       return (
         <BaseArgoView
@@ -62,33 +67,33 @@ class Services extends Component {
                 rows.map((e, i) =>
                   <tr key={i}>
                     {
-                      e.service_category && 
+                      e.service_category &&
                         <td id='argo-td' className="table-light" rowSpan={this.getRowSpan(rowspan.service_category, e.service_category)}>
                           {e.service_category}
                         </td>
                     }
                     {
-                      e.service_name && 
+                      e.service_name &&
                         <td id='argo-td' className="table-light" rowSpan={this.getRowSpan(rowspan.service_name, e.service_name)}>
                           {e.service_name}
                         </td>
                     }
                     {
-                      e.service_type && 
+                      e.service_type &&
                         <td id='argo-td' className="table-light" rowSpan={this.getRowSpan(rowspan.service_type, e.service_type)}>
                           <Icon i='serviceflavour'/> {e.service_type}
                         </td>
                     }
                     {
-                      e.metric && 
+                      e.metric &&
                         <td id='argo-td' className="table-light" rowSpan={this.getRowSpan(rowspan.metric, e.metric)}>
-                          <Icon i='metrics'/> <Link to={'/ui/metrics/' + e.metric}>{e.metric}</Link>
+                          <Icon i='metrics'/> <Link to={`/ui/${this.publicView ? 'public_': ''}metrics/` + e.metric}>{e.metric}</Link>
                         </td>
                     }
                     {
-                      e.probe && 
+                      e.probe &&
                         <td id='argo-td' className="table-light" rowSpan={this.getRowSpan(rowspan.probe, e.probe)}>
-                          <Icon i='probes'/> <ProbeVersionLink probeversion={e.probe}/>
+                          <Icon i='probes'/> <ProbeVersionLink publicView={this.publicView} probeversion={e.probe}/>
                         </td>
                     }
                   </tr>
@@ -99,7 +104,7 @@ class Services extends Component {
         </BaseArgoView>
       )
     }
-    else 
+    else
       return null
   }
 }

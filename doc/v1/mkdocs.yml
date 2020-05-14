@@ -1,0 +1,35 @@
+site_name: POEM documentation [V1]
+site_url: http://argoeu.github.io/
+repo_url: https://github.com/ARGOeu/poem-2
+site_description: ARGO is a lightweight service for Service Level Monitoring designed for medium and large sized e-Infrastructures.
+remote_branch: master
+copyright: Copyright © 2014 - 2020 SRCE
+
+nav:
+- Basic Information:
+    - Home: index.md
+- SuperAdmin POEM:
+    - Administration: superadmin_administration.md
+    - Users: superadmin_users.md
+    - YUM repos: superadmin_repos.md
+    - Packages: superadmin_packages.md
+    - Probes: superadmin_probe.md
+    - Metric Templates: superadmin_metric_templates.md
+
+- Tenant POEM:
+    - Administration: tenant_administration.md
+    - Groups of Resources: tenant_groups_of_resources.md
+    - Users: tenant_users.md
+    - Metric Templates: tenant_metric_templates.md
+    - Services: tenant_services.md
+    - Probes: tenant_probes.md
+    - Metrics: tenant_metrics.md
+    - Aggregation Profiles: tenant_aggregation_profiles.md
+    - Metric Profiles: tenant_metric_profiles.md
+    - Thresholds Profiles: tenant_thresholds_profiles.md
+
+- Guides:
+    - SuperAdmin POEM guide: superadmin_guide.md
+    - Tenant POEM guide: tenant_guide.md
+
+theme: readthedocs

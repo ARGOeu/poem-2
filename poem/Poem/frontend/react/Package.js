@@ -1,7 +1,16 @@
 import React, { Component } from 'react';
 import { Backend } from './DataManager';
 import { Link } from 'react-router-dom';
-import{ LoadingAnim, BaseArgoView, DropdownFilterComponent, FancyErrorMessage, AutocompleteField, NotifyOk } from './UIElements';
+import{
+  LoadingAnim,
+  BaseArgoView,
+  DropdownFilterComponent,
+  FancyErrorMessage,
+  AutocompleteField,
+  NotifyOk,
+  Checkbox,
+  NotifyError
+} from './UIElements';
 import ReactTable from 'react-table';
 import {
   FormGroup,
@@ -14,15 +23,19 @@ import {
 } from 'reactstrap';
 import { Formik, Form, Field } from 'formik';
 import * as Yup from 'yup';
-import { NotificationManager } from 'react-notifications';
+
 
 const PackageSchema = Yup.object().shape({
   name: Yup.string()
     .matches(/^\S*$/, 'Name cannot contain white spaces')
     .required('Required'),
+  present_version: Yup.boolean(),
   version: Yup.string()
     .matches(/^\S*$/, 'Version cannot contain white spaces')
-    .required('Required'),
+    .when('present_version', {
+      is: false,
+      then: Yup.string().required('Required')
+    }),
   repo_6: Yup.string(),
   repo_7: Yup.string()
 })
@@ -46,22 +59,18 @@ export class PackageList extends Component {
       };
     };
 
-    componentDidMount() {
+    async componentDidMount() {
       this.setState({loading: true});
 
-      Promise.all([
-        this.backend.fetchData('/api/v2/internal/packages'),
-        this.backend.fetchData('/api/v2/internal/yumrepos')
-      ])
-        .then(([pkgs, repos]) => {
-          let list_repos = [];
-          repos.forEach(e => list_repos.push(e.name + ' (' + e.tag + ')'));
-          this.setState({
-            list_packages: pkgs,
-            list_repos: list_repos,
-            loading: false
-          });
-        });
+      let pkgs = await this.backend.fetchData('/api/v2/internal/packages');
+      let repos = await this.backend.fetchData('/api/v2/internal/yumrepos');
+      let list_repos = [];
+      repos.forEach(e => list_repos.push(e.name + ' (' + e.tag + ')'));
+      this.setState({
+        list_packages: pkgs,
+        list_repos: list_repos,
+        loading: false
+      });
     };
 
     render() {
@@ -85,7 +94,7 @@ export class PackageList extends Component {
             <Link to={'/ui/packages/' + e.name + '-' + e.version}>{e.name + ' (' + e.version + ')'}</Link>,
           filterable: true,
           Filter: (
-            <input 
+            <input
               value={this.state.search_name}
               onChange={e => this.setState({search_name: e.target.value})}
               placeholder='Search by name and version'
@@ -102,7 +111,7 @@ export class PackageList extends Component {
               {row.value.join(', ')}
             </div>,
           filterable: true,
-          Filter: 
+          Filter:
             <DropdownFilterComponent
               value={this.state.repo}
               onChange={e => this.setState({search_repo: e.target.value})}
@@ -126,7 +135,7 @@ export class PackageList extends Component {
 
       if (loading)
         return <LoadingAnim/>;
-      
+
       else if (!loading && list_packages) {
         return (
           <BaseArgoView
@@ -137,12 +146,14 @@ export class PackageList extends Component {
             <ReactTable
               data={list_packages}
               columns={columns}
-              className='-striped -highlight'
+              className='-highlight'
               defaultPageSize={50}
+              rowsText='packages'
+              getTheadThProps={() => ({className: 'table-active font-weight-bold p-2'})}
             />
           </BaseArgoView>
         );
-      } else 
+      } else
         return null;
     };
 };
@@ -169,8 +180,8 @@ export class PackageChange extends Component {
       list_repos_6: [],
       list_repos_7: [],
       list_probes: [],
+      present_version: false,
       loading: false,
-      write_perm: false,
       areYouSureModal: false,
       modalFunc: undefined,
       modalTitle: undefined,
@@ -183,15 +194,16 @@ export class PackageChange extends Component {
     this.onSubmitHandle = this.onSubmitHandle.bind(this);
     this.doChange = this.doChange.bind(this);
     this.doDelete = this.doDelete.bind(this);
+    this.toggleCheckbox = this.toggleCheckbox.bind(this);
   };
 
   toggleAreYouSure() {
-    this.setState(prevState => 
+    this.setState(prevState =>
       ({areYouSureModal: !prevState.areYouSureModal}));
   };
 
   toggleAreYouSureSetModal(msg, title, onyes) {
-    this.setState(prevState => 
+    this.setState(prevState =>
       ({areYouSureModal: !prevState.areYouSureModal,
         modalFunc: onyes,
         modalMsg: msg,
@@ -224,139 +236,155 @@ export class PackageChange extends Component {
     );
   };
 
-  doChange(values, actions) {
+  async doChange(values, actions) {
     let repos = [];
     if (values.repo_6)
       repos.push(values.repo_6);
 
     if (values.repo_7)
       repos.push(values.repo_7);
-   
+
     if (this.addview) {
-      this.backend.addObject(
+      let response = await this.backend.addObject(
         '/api/v2/internal/packages/',
         {
           name: values.name,
           version: values.version,
+          use_present_version: values.present_version,
           repos: repos
         }
-      ).then(response => {
-          if (!response.ok) {
-            response.json()
-              .then(json => {
-                NotificationManager.error(json.detail, 'Error');
-              });
-          } else {
-            NotifyOk({
-              msg: 'Package successfully added',
-              title: 'Added',
-              callback: () => this.history.push('/ui/packages')
-            });
-          };
+      );
+      if (!response.ok) {
+        let add_msg = '';
+        try {
+          let json = await response.json();
+          add_msg = json.detail;
+        } catch(err) {
+          add_msg = 'Error adding package';
+        }
+        NotifyError({
+          title: `Error: ${response.status} ${response.statusText}`,
+          msg: add_msg
         });
+      } else {
+        NotifyOk({
+          msg: 'Package successfully added',
+          title: 'Added',
+          callback: () => this.history.push('/ui/packages')
+        });
+      };
     } else {
-      this.backend.changeObject(
+      let response = await this.backend.changeObject(
         '/api/v2/internal/packages/',
         {
           id: values.id,
           name: values.name,
           version: values.version,
+          use_present_version: values.present_version,
           repos: repos
         }
-      ).then(response => {
-          if (!response.ok) {
-            response.json()
-              .then(json => {
-                NotificationManager.error(json.detail, 'Erro');
-              });
-          } else {
-            NotifyOk({
-              msg: 'Package successfully changed',
-              title: 'Changed',
-              callback: () => this.history.push('/ui/packages')
-            });
-          };
+      );
+      if (!response.ok) {
+        let change_msg = '';
+        try {
+          let json = await response.json();
+          change_msg = json.detail;
+        } catch(err) {
+          change_msg = 'Error changing package';
+        }
+        NotifyError({
+          title: `Error: ${response.status} ${response.statusText}`,
+          msg: change_msg
         });
+      } else {
+        NotifyOk({
+          msg: 'Package successfully changed',
+          title: 'Changed',
+          callback: () => this.history.push('/ui/packages')
+        });
+      };
     };
   };
 
-  doDelete(nameversion) {
-    this.backend.deleteObject(`/api/v2/internal/packages/${nameversion}`)
-      .then(response => {
-        if (!response.ok) {
-          response.json()
-            .then(json => {
-              NotificationManager.error(json.detail, 'Error');
-            });
-        } else {
-          NotifyOk({
-            msg: 'Package successfully deleted',
-            title: 'Deleted',
-            callback: () => this.history.push('/ui/packages')
-          });
-        };
+  async doDelete(nameversion) {
+    let response = await this.backend.deleteObject(`/api/v2/internal/packages/${nameversion}`);
+    if (!response.ok) {
+      let msg = '';
+      try {
+        let json = await response.json();
+        msg = json.detail;
+      } catch(err) {
+        msg = 'Error deleting package';
+      };
+      NotifyError({
+        title: `Error: ${response.status} ${response.statusText}`,
+        msg: msg
       });
+    } else {
+      NotifyOk({
+        msg: 'Package successfully deleted',
+        title: 'Deleted',
+        callback: () => this.history.push('/ui/packages')
+      });
+    };
   };
 
-  componentDidMount() {
+  toggleCheckbox(){
+    this.setState({present_version: !present_version});
+  };
+
+  async componentDidMount() {
     this.setState({loading: true});
-    this.backend.fetchData('/api/v2/internal/yumrepos')
-      .then(repos => {
-          let list_repos_6 = [];
-          let list_repos_7 = [];
-          repos.forEach(e => {
-            if (e.tag === 'CentOS 6')
-              list_repos_6.push(e.name + ' (' + e.tag + ')');
-            else if (e.tag === 'CentOS 7')
-              list_repos_7.push(e.name + ' (' + e.tag + ')');
-          });
+    let repos = await this.backend.fetchData('/api/v2/internal/yumrepos');
+    let list_repos_6 = [];
+    let list_repos_7 = [];
+    repos.forEach(e => {
+      if (e.tag === 'CentOS 6')
+        list_repos_6.push(e.name + ' (' + e.tag + ')');
+      else if (e.tag === 'CentOS 7')
+        list_repos_7.push(e.name + ' (' + e.tag + ')');
+    });
 
-          if (this.addview) {
-            this.setState({
-              list_repos_6: list_repos_6,
-              list_repos_7: list_repos_7,
-              write_perm: localStorage.getItem('authIsSuperuser') === 'true',
-              loading: false
-            });
-          } else {
-            Promise.all([
-              this.backend.fetchData(`/api/v2/internal/packages/${this.nameversion}`),
-              this.backend.fetchData('/api/v2/internal/probes')
-            ])
-              .then(([pkg, probes]) => {
-                let list_probes = [];
-                let repo_6 = '';
-                let repo_7 = '';
-
-                for (let i = 0; i < pkg.repos.length; i++) {
-                  if (pkg.repos[i].split('(')[1].slice(0, -1) === 'CentOS 6')
-                    repo_6 = pkg.repos[i];
-                  
-                  if (pkg.repos[i].split('(')[1].slice(0, -1) === 'CentOS 7')
-                    repo_7 = pkg.repos[i];
-                }
-
-                probes.forEach(e => {
-                  if (e.package === `${pkg.name} (${pkg.version})`)
-                    list_probes.push(e.name);
-                });
-                this.setState({
-                  pkg: pkg,
-                  list_repos_6: list_repos_6,
-                  list_repos_7: list_repos_7,
-                  repo_6: repo_6,
-                  repo_7: repo_7,
-                  list_probes: list_probes,
-                  write_perm: localStorage.getItem('authIsSuperuser') === 'true',
-                  loading: false
-                });
-              });
-          };
+    if (this.addview) {
+      this.setState({
+        list_repos_6: list_repos_6,
+        list_repos_7: list_repos_7,
+        loading: false
       });
+    } else {
+      let pkg = await this.backend.fetchData(`/api/v2/internal/packages/${this.nameversion}`);
+      let probes = await this.backend.fetchData('/api/v2/internal/probes');
+      let list_probes = [];
+      let repo_6 = '';
+      let repo_7 = '';
+
+      for (let i = 0; i < pkg.repos.length; i++) {
+        if (pkg.repos[i].split('(')[1].slice(0, -1) === 'CentOS 6')
+          repo_6 = pkg.repos[i];
+
+        if (pkg.repos[i].split('(')[1].slice(0, -1) === 'CentOS 7')
+          repo_7 = pkg.repos[i];
+      }
+
+      probes.forEach(e => {
+        if (e.package === `${pkg.name} (${pkg.version})`)
+          list_probes.push(e.name);
+      });
+      this.setState({
+        pkg: pkg,
+        list_repos_6: list_repos_6,
+        list_repos_7: list_repos_7,
+        repo_6: repo_6,
+        repo_7: repo_7,
+        list_probes: list_probes,
+        loading: false
+      });
+    };
   };
 
   render() {
-    const { pkg, repo_6, repo_7, list_repos_6, list_repos_7, list_probes, write_perm, loading } = this.state;
+    const { pkg, repo_6, repo_7, list_repos_6, list_repos_7,
+      list_probes, loading, present_version } = this.state;
 
     if (loading)
       return <LoadingAnim/>;
@@ -370,7 +398,6 @@ export class PackageChange extends Component {
           modal={true}
           state={this.state}
           toggle={this.toggleAreYouSure}
-          submitperm={write_perm}
           history={false}
         >
           <Formik
@@ -379,14 +406,16 @@ export class PackageChange extends Component {
               name: pkg.name,
               version: pkg.version,
               repo_6: repo_6,
-              repo_7: repo_7, 
+              repo_7: repo_7,
+              present_version: present_version
             }}
             onSubmit = {(values, actions) => this.onSubmitHandle(values, actions)}
             validationSchema={PackageSchema}
+            enableReinitialize={true}
             render = {props => (
               <Form>
                 <FormGroup>
-                  <Row>
+                  <Row className='align-items-center'>
                     <Col md={6}>
                       <InputGroup>
                         <InputGroupAddon addonType='prepend'>Name</InputGroupAddon>
@@ -406,11 +435,15 @@ export class PackageChange extends Component {
                       </FormText>
                     </Col>
                     <Col md={2}>
+                      <Row>
+                        <Col md={12}>
                       <InputGroup>
                         <InputGroupAddon addonType='prepend'>Version</InputGroupAddon>
                         <Field
                           type='text'
                           name='version'
+                          value={props.values.present_version ? 'present' : props.values.version}
+                          disabled={props.values.present_version}
                           className={`form-control ${props.errors.version && 'border-danger'}`}
                           id='version'
                         />
@@ -422,6 +455,18 @@ export class PackageChange extends Component {
                       <FormText color='muted'>
                         Package version.
                       </FormText>
+                    </Col>
+                  </Row>
+                    </Col>
+                    <Col md={3}>
+                      <Field
+                        component={Checkbox}
+                        name='present_version'
+                        className='form-control'
+                        id='checkbox'
+                        label='Use version which is present in repo'
+                        onChange={this.toggleCheckbox}
+                      />
                     </Col>
                   </Row>
                 </FormGroup>
@@ -489,7 +534,6 @@ export class PackageChange extends Component {
                   }
                 </FormGroup>
                 {
-                  write_perm &&
                   <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
                   {
                     !this.addview ?
@@ -514,7 +558,7 @@ export class PackageChange extends Component {
               </Form>
             )}
           />
-        </BaseArgoView> 
+        </BaseArgoView>
       )
     } else
       return null;

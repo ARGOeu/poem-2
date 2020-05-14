@@ -34,7 +34,6 @@ class UserProfile(models.Model):
         max_length=255,
         blank=True,
         null=True,
-        unique=True
     )
     displayname = models.CharField(
         'displayName',

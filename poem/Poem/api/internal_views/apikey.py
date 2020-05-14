@@ -29,7 +29,10 @@ class ListAPIKeys(APIView):
                 raise NotFound(status=404, detail='API key not found')
 
         else:
-            apikeys = MyAPIKey.objects.all()
+            if request.user.is_superuser:
+                apikeys = MyAPIKey.objects.all().order_by('name')
+            else:
+                apikeys = MyAPIKey.objects.filter(name__startswith='WEB-API').order_by('name')
             api_format = [
                 dict(id=e.id,
                      name=e.name,
@@ -50,7 +53,10 @@ class ListAPIKeys(APIView):
                 obj.save()
 
             else:
-                return Response(status=status.HTTP_403_FORBIDDEN)
+                return Response(
+                    {'detail': 'API key with this name already exists'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
 
             return Response(status=status.HTTP_201_CREATED)
 
@@ -68,7 +74,10 @@ class ListAPIKeys(APIView):
             return Response(status=status.HTTP_201_CREATED)
 
         else:
-            return Response(status=status.HTTP_403_FORBIDDEN)
+            return Response(
+                {'detail': 'API key with this name already exists'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
     def delete(self, request, name=None):
         if name:
@@ -81,4 +90,29 @@ class ListAPIKeys(APIView):
                 raise NotFound(status=404, detail='API key not found')
 
         else:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {'detail': 'API key name must be defined'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+
+class ListPublicAPIKey(APIView):
+    authentication_classes = ()
+    permission_classes = ()
+
+    def get(self, request):
+        try:
+            apikey = MyAPIKey.objects.get(name='WEB-API-RO')
+            api_format = dict(
+                id=apikey.id,
+                name=apikey.name,
+                token=apikey.token,
+                created=datetime.datetime.strftime(apikey.created,
+                                                   '%Y-%m-%d %H:%M:%S'),
+                revoked=apikey.revoked
+            )
+
+        except MyAPIKey.DoesNotExist:
+            raise NotFound(status=404, detail='API key not found')
+
+        return Response(api_format)
