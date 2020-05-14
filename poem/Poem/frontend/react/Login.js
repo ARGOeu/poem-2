@@ -27,7 +27,8 @@ class Login extends Component {
     this.state = {
       samlIdpString: null,
       loginFailedVisible: false,
-      isTenantSchema: null
+      isTenantSchema: null,
+      loading: false
     };
 
     this.backend = new Backend()
@@ -47,19 +48,22 @@ class Login extends Component {
 
   async componentDidMount() {
     this._isMounted = true;
+    this.setState({ loading: true});
 
     let response = await this.backend.isTenantSchema();
-    if (response === true) {
+    if (response) {
       let json = await this.fetchSamlButtonString();
       if (this._isMounted)
         this.setState({
           isTenantSchema: response,
-          samlIdpString: json.result.saml_login_string
+          samlIdpString: json.result.saml_login_string,
+          loading: false
         })
-    } else if (response === false)
+    } else
       if (this._isMounted)
         this.setState({
           isTenantSchema: response,
+          loading: false
         });
   }
 
@@ -91,7 +95,8 @@ class Login extends Component {
   }
 
   render() {
-    if (this.state.isTenantSchema !== null) {
+    let { isTenantSchema, loading } = this.state;
+    if (isTenantSchema !== null && !loading) {
       return (
         <Container>
           <Row className="login-first-row">
@@ -151,9 +156,16 @@ class Login extends Component {
         </Container>
       );
     }
-    else {
-      return null;
+    else if (isTenantSchema === null && !loading) {
+      return (
+        <React.Fragment>
+          <h1>Something went wrong</h1>
+          <p>Cannot obtain schema</p>
+        </React.Fragment>
+      )
     }
+    else
+      return null;
   }
 }
 
