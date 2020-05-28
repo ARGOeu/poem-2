@@ -8,7 +8,8 @@ import {
   NotifyOk,
   FancyErrorMessage,
   NotifyError,
-  ModalAreYouSure
+  ModalAreYouSure,
+  ErrorComponent
 } from './UIElements';
 import ReactTable from 'react-table';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -265,7 +266,8 @@ export class UsersList extends Component
 
     this.state = {
       loading: false,
-      list_users: null
+      list_users: null,
+      error: null
     }
 
     this.location = props.location;
@@ -274,11 +276,19 @@ export class UsersList extends Component
 
   async componentDidMount() {
     this.setState({loading: true})
-    let json = await this.backend.fetchData('/api/v2/internal/users');
-    this.setState({
-      list_users: json,
-      loading: false
-    });
+
+    try {
+      let json = await this.backend.fetchData('/api/v2/internal/users');
+      this.setState({
+        list_users: json,
+        loading: false
+      });
+    } catch(err) {
+      this.setState({
+        error: err,
+        loading: false
+      });
+    };
   }
 
   render() {
@@ -340,10 +350,13 @@ export class UsersList extends Component
             <FontAwesomeIcon icon={faTimesCircle} style={{color: "#CC0000"}}/>
       }
     ];
-    const { loading, list_users } = this.state;
+    const { loading, list_users, error } = this.state;
 
     if (loading)
       return (<LoadingAnim />);
+
+    else if (error)
+      return (<ErrorComponent error={error}/>);
 
     else if (!loading && list_users) {
       return (
@@ -413,7 +426,8 @@ function UserChangeComponent(isTenantSchema=false) {
         modalFunc: undefined,
         modalTitle: undefined,
         modalMsg: undefined,
-        userdetails: {'userdetails': {'username': ''}}
+        userdetails: {'userdetails': {'username': ''}},
+        error: null
       }
 
       this.backend = new Backend();
@@ -619,47 +633,58 @@ function UserChangeComponent(isTenantSchema=false) {
     async componentDidMount() {
       this.setState({loading: true})
 
-      if (!this.addview) {
-        let user = await this.backend.fetchData(`/api/v2/internal/users/${this.user_name}`);
-        if (isTenantSchema) {
-          let userprofile = await this.backend.fetchData(`/api/v2/internal/userprofile/${this.user_name}`);
-          let usergroups = await this.backend.fetchResult(`/api/v2/internal/usergroups/${this.user_name}`);
-          let allgroups = await this.backend.fetchResult('/api/v2/internal/usergroups');
-          this.setState({
-            custuser: user,
-            userprofile: userprofile,
-            usergroups: usergroups,
-            allgroups: allgroups,
-            loading: false
-            });
-        } else {
-          let userdetails = await this.backend.isActiveSession(false);
-          this.setState({
-            custuser: user,
-            userdetails: userdetails,
-            loading: false
-          });
-        }
-      } else {
-        if (isTenantSchema) {
-          let groups = await this.backend.fetchResult('/api/v2/internal/usergroups');
-          this.setState({
-              allgroups: groups,
+      try {
+        if (!this.addview) {
+          let user = await this.backend.fetchData(`/api/v2/internal/users/${this.user_name}`);
+          if (isTenantSchema) {
+            let userprofile = await this.backend.fetchData(`/api/v2/internal/userprofile/${this.user_name}`);
+            let usergroups = await this.backend.fetchResult(`/api/v2/internal/usergroups/${this.user_name}`);
+            let allgroups = await this.backend.fetchResult('/api/v2/internal/usergroups');
+            this.setState({
+              custuser: user,
+              userprofile: userprofile,
+              usergroups: usergroups,
+              allgroups: allgroups,
               loading: false
-          });
+              });
+          } else {
+            let userdetails = await this.backend.isActiveSession(false);
+            this.setState({
+              custuser: user,
+              userdetails: userdetails,
+              loading: false
+            });
+          }
         } else {
-          this.setState({
-            loading: false
-          });
+          if (isTenantSchema) {
+            let groups = await this.backend.fetchResult('/api/v2/internal/usergroups');
+            this.setState({
+                allgroups: groups,
+                loading: false
+            });
+          } else {
+            this.setState({
+              loading: false
+            });
+          };
         };
+      } catch(err) {
+        this.setState({
+          error: err,
+          loading: false
+        });
       };
     }
 
     render() {
-      const { custuser, userprofile, usergroups, allgroups, loading } = this.state;
+      const { custuser, userprofile, usergroups, allgroups, loading,
+      error } = this.state;
 
       if (loading)
         return(<LoadingAnim />)
+
+      else if (error)
+        return (<ErrorComponent error={error}/>);
 
       else if (!loading) {
         if (isTenantSchema) {

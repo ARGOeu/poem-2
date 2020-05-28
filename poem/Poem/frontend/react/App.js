@@ -631,6 +631,14 @@ class App extends Component {
         </BrowserRouter>
       )
     }
+    else if (this.state.isTenantSchema === null && isSessionActive) {
+      return (
+        <React.Fragment>
+          <h1>Something went wrong</h1>
+          <p>Cannot obtain schema.</p>
+        </React.Fragment>
+      )
+    }
     else
       return null
   }

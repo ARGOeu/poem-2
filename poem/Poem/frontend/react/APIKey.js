@@ -3,7 +3,7 @@ import { Backend } from './DataManager';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
-import { LoadingAnim, BaseArgoView, NotifyOk, Checkbox, NotifyError } from './UIElements';
+import { LoadingAnim, BaseArgoView, NotifyOk, Checkbox, NotifyError, ErrorComponent } from './UIElements';
 import ReactTable from 'react-table';
 import { Formik, Form, Field } from 'formik';
 import {
@@ -30,6 +30,7 @@ export class APIKeyList extends Component {
     this.state = {
       list_keys: null,
       loading: false,
+      error: null
     };
 
     this.backend = new Backend();
@@ -38,11 +39,18 @@ export class APIKeyList extends Component {
   async componentDidMount() {
     this.setState({ loading: true });
 
-    let json = await this.backend.fetchData('/api/v2/internal/apikeys');
-    this.setState({
-      list_keys: json,
-      loading: false
-    });
+    try {
+      let json = await this.backend.fetchData('/api/v2/internal/apikeys');
+      this.setState({
+        list_keys: json,
+        loading: false
+      });
+    } catch(err) {
+      this.setState({
+        error: err,
+        loading: false
+      });
+    };
   }
 
   render() {
@@ -74,10 +82,13 @@ export class APIKeyList extends Component {
       }
     ];
 
-    const { loading, list_keys } = this.state;
+    const { loading, list_keys, error } = this.state;
 
     if (loading)
       return (<LoadingAnim/>);
+
+    else if (error)
+      return (<ErrorComponent error={error}/>);
 
     else if (!loading && list_keys) {
       return (
@@ -118,7 +129,8 @@ export class APIKeyChange extends Component {
       areYouSureModal: false,
       modalFunc: undefined,
       modalTitle: undefined,
-      modalMsg: undefined
+      modalMsg: undefined,
+      error: null
     };
 
     this.backend = new Backend();
@@ -243,29 +255,39 @@ export class APIKeyChange extends Component {
   async componentDidMount() {
     this.setState({ loading: true });
 
-    if (!this.addview) {
-      let json = await this.backend.fetchData(`/api/v2/internal/apikeys/${this.name}`);
+    try {
+      if (!this.addview) {
+        let json = await this.backend.fetchData(`/api/v2/internal/apikeys/${this.name}`);
+        this.setState({
+          key: json,
+          loading: false,
+        });
+      } else {
+        this.setState({
+          key: {
+            name: '',
+            revoked: false,
+            token: ''
+          },
+          loading: false,
+        });
+      };
+    } catch(err) {
       this.setState({
-        key: json,
-        loading: false,
-      });
-    } else {
-      this.setState({
-        key: {
-          name: '',
-          revoked: false,
-          token: ''
-        },
-        loading: false,
+        error: err,
+        loading: false
       });
     };
   }
 
   render() {
-    const { key, loading } = this.state;
+    const { key, loading, error } = this.state;
 
     if (loading)
       return (<LoadingAnim/>);
+
+    else if (error)
+      return (<ErrorComponent error={error}/>);
 
     else if (!loading && key) {
       return (

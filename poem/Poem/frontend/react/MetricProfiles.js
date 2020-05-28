@@ -12,7 +12,8 @@ import {
   HistoryComponent,
   DiffElement,
   ProfileMainInfo,
-  NotifyError
+  NotifyError,
+  ErrorComponent
 } from './UIElements';
 import ReactTable from 'react-table';
 import { Formik, Field, FieldArray, Form } from 'formik';
@@ -299,6 +300,7 @@ function MetricProfilesComponent(cloneview=false) {
         modalMsg: undefined,
         searchServiceFlavour: "",
         searchMetric: "",
+        error: null
       }
 
       this.backend = new Backend();
@@ -333,67 +335,74 @@ function MetricProfilesComponent(cloneview=false) {
     async componentDidMount() {
       this.setState({loading: true})
 
-      if (this.publicView) {
-        let json = await this.backend.fetchData(`/api/v2/internal/public_metricprofiles/${this.profile_name}`);
-        let metricp = await this.webapi.fetchMetricProfile(json.apiid);
+      try {
+        if (this.publicView) {
+          let json = await this.backend.fetchData(`/api/v2/internal/public_metricprofiles/${this.profile_name}`);
+          let metricp = await this.webapi.fetchMetricProfile(json.apiid);
+          this.setState({
+            metric_profile: metricp,
+            metric_profile_name: metricp.name,
+            metric_profile_description: metricp.description,
+            groupname: json['groupname'],
+            list_user_groups: [],
+            write_perm: false,
+            view_services: this.flattenServices(metricp.services).sort(this.sortServices),
+            serviceflavours_all: [],
+            metrics_all: [],
+            list_services: this.flattenServices(metricp.services).sort(this.sortServices),
+            loading: false
+          });
+        }
+        else {
+          let sessionActive = await this.backend.isActiveSession();
+          if (sessionActive.active) {
+            let serviceflavoursall = await this.backend.fetchListOfNames('/api/v2/internal/serviceflavoursall');
+            let metricsall = await this.backend.fetchListOfNames('/api/v2/internal/metricsall');
+            if (!this.addview || this.cloneview) {
+              let json = await this.backend.fetchData(`/api/v2/internal/metricprofiles/${this.profile_name}`);
+              let metricp = await this.webapi.fetchMetricProfile(json.apiid);
+              this.setState({
+                metric_profile: metricp,
+                metric_profile_name: metricp.name,
+                metric_profile_description: metricp.description,
+                groupname: json['groupname'],
+                list_user_groups: sessionActive.userdetails.groups.metricprofiles,
+                write_perm: sessionActive.userdetails.is_superuser ||
+                  sessionActive.userdetails.groups.metricprofiles.indexOf(json['groupname']) >= 0,
+                view_services: this.flattenServices(metricp.services).sort(this.sortServices),
+                serviceflavours_all: serviceflavoursall,
+                metrics_all: metricsall,
+                list_services: this.flattenServices(metricp.services).sort(this.sortServices),
+                loading: false
+              });
+            } else {
+              let empty_metric_profile = {
+                id: '',
+                name: '',
+                services: [],
+              };
+              this.setState({
+                metric_profile: empty_metric_profile,
+                metric_profile_name: '',
+                metric_profile_description: '',
+                groupname: '',
+                list_user_groups: sessionActive.userdetails.groups.metricprofiles,
+                write_perm: sessionActive.userdetails.is_superuser ||
+                  sessionActive.userdetails.groups.metricprofiles.length > 0,
+                view_services: [{service: '', metric: '', index: 0, isNew: true}],
+                serviceflavours_all: serviceflavoursall,
+                metrics_all: metricsall,
+                list_services: [{service: '', metric: '', index: 0, isNew: true}],
+                loading: false
+              });
+            };
+          }
+        };
+      } catch(err) {
         this.setState({
-          metric_profile: metricp,
-          metric_profile_name: metricp.name,
-          metric_profile_description: metricp.description,
-          groupname: json['groupname'],
-          list_user_groups: [],
-          write_perm: false,
-          view_services: this.flattenServices(metricp.services).sort(this.sortServices),
-          serviceflavours_all: [],
-          metrics_all: [],
-          list_services: this.flattenServices(metricp.services).sort(this.sortServices),
+          error: err,
           loading: false
         });
-      }
-      else {
-        let sessionActive = await this.backend.isActiveSession();
-        if (sessionActive.active) {
-          let serviceflavoursall = await this.backend.fetchListOfNames('/api/v2/internal/serviceflavoursall');
-          let metricsall = await this.backend.fetchListOfNames('/api/v2/internal/metricsall');
-          if (!this.addview || this.cloneview) {
-            let json = await this.backend.fetchData(`/api/v2/internal/metricprofiles/${this.profile_name}`);
-            let metricp = await this.webapi.fetchMetricProfile(json.apiid);
-            this.setState({
-              metric_profile: metricp,
-              metric_profile_name: metricp.name,
-              metric_profile_description: metricp.description,
-              groupname: json['groupname'],
-              list_user_groups: sessionActive.userdetails.groups.metricprofiles,
-              write_perm: sessionActive.userdetails.is_superuser ||
-                sessionActive.userdetails.groups.metricprofiles.indexOf(json['groupname']) >= 0,
-              view_services: this.flattenServices(metricp.services).sort(this.sortServices),
-              serviceflavours_all: serviceflavoursall,
-              metrics_all: metricsall,
-              list_services: this.flattenServices(metricp.services).sort(this.sortServices),
-              loading: false
-            });
-          } else {
-            let empty_metric_profile = {
-              id: '',
-              name: '',
-              services: [],
-            };
-            this.setState({
-              metric_profile: empty_metric_profile,
-              metric_profile_name: '',
-              metric_profile_description: '',
-              groupname: '',
-              list_user_groups: sessionActive.userdetails.groups.metricprofiles,
-              write_perm: sessionActive.userdetails.is_superuser ||
-                sessionActive.userdetails.groups.metricprofiles.length > 0,
-              view_services: [{service: '', metric: '', index: 0, isNew: true}],
-              serviceflavours_all: serviceflavoursall,
-              metrics_all: metricsall,
-              list_services: [{service: '', metric: '', index: 0, isNew: true}],
-              loading: false
-            });
-          };
-        }
       };
     }
 
@@ -803,7 +812,7 @@ function MetricProfilesComponent(cloneview=false) {
     render() {
       const {write_perm, loading, metric_profile_description, view_services,
         groupname, list_user_groups, serviceflavours_all, metrics_all,
-        searchMetric, searchServiceFlavour} = this.state;
+        searchMetric, searchServiceFlavour, error} = this.state;
       let {metric_profile, metric_profile_name} = this.state
 
       if (this.cloneview && metric_profile && metric_profile_name && metric_profile.id) {
@@ -813,6 +822,9 @@ function MetricProfilesComponent(cloneview=false) {
 
       if (loading)
         return (<LoadingAnim />)
+
+      else if (error)
+        return (<ErrorComponent error={error}/>);
 
       else if (!loading && metric_profile && view_services) {
         return (
@@ -907,7 +919,8 @@ export class MetricProfilesList extends Component
     this.state = {
       loading: false,
       list_metricprofiles: null,
-      write_perm: false
+      write_perm: false,
+      error: null
     }
 
     this.location = props.location;
@@ -922,20 +935,28 @@ export class MetricProfilesList extends Component
 
   async componentDidMount() {
     this.setState({loading: true})
-    let json = await this.backend.fetchData(this.apiUrl);
-    if (!this.publicView) {
-      let session = await this.backend.isActiveSession();
+
+    try {
+      let json = await this.backend.fetchData(this.apiUrl);
+      if (!this.publicView) {
+        let session = await this.backend.isActiveSession();
+        this.setState({
+          list_metricprofiles: json,
+          loading: false,
+          write_perm: session.userdetails.is_superuser || session.userdetails.groups.metricprofiles.length > 0
+        });
+      } else {
+        this.setState({
+          list_metricprofiles: json,
+          loading: false
+        })
+      }
+    } catch(err) {
       this.setState({
-        list_metricprofiles: json,
-        loading: false,
-        write_perm: session.userdetails.is_superuser || session.userdetails.groups.metricprofiles.length > 0
-      });
-    } else {
-      this.setState({
-        list_metricprofiles: json,
+        error: err,
         loading: false
-      })
-    }
+      });
+    };
   }
 
   render() {
@@ -960,10 +981,13 @@ export class MetricProfilesList extends Component
         maxWidth: 150,
       }
     ]
-    const {loading, list_metricprofiles, write_perm} = this.state;
+    const {loading, list_metricprofiles, write_perm, error} = this.state;
 
     if (loading)
       return (<LoadingAnim />)
+
+    else if (error)
+      return (<ErrorComponent error={error}/>);
 
     else if (!loading && list_metricprofiles) {
       return (
@@ -1032,7 +1056,8 @@ export class MetricProfileVersionCompare extends Component {
       metricinstances1: [],
       name2: '',
       groupname2: '',
-      metricinstances2: []
+      metricinstances2: [],
+      error: null
     };
 
     this.backend = new Backend();
@@ -1041,49 +1066,59 @@ export class MetricProfileVersionCompare extends Component {
   async componentDidMount() {
     this.setState({loading: true});
 
-    let json = await this.backend.fetchData(`/api/v2/internal/tenantversion/metricprofile/${this.name}`);
-    let name1 = '';
-    let groupname1 = '';
-    let description1 = '';
-    let metricinstances1 = [];
-    let name2 = '';
-    let groupname2 = '';
-    let description2 = '';
-    let metricinstances2 = [];
+    try {
+      let json = await this.backend.fetchData(`/api/v2/internal/tenantversion/metricprofile/${this.name}`);
+      let name1 = '';
+      let groupname1 = '';
+      let description1 = '';
+      let metricinstances1 = [];
+      let name2 = '';
+      let groupname2 = '';
+      let description2 = '';
+      let metricinstances2 = [];
 
-    json.forEach((e) => {
-      if (e.version == this.version1) {
-        name1 = e.fields.name;
-        description1 = e.fields.description;
-        groupname1 = e.fields.groupname;
-        metricinstances1 = e.fields.metricinstances;
-      } else if (e.version == this.version2) {
-        name2 = e.fields.name;
-        groupname2 = e.fields.groupname;
-        description2 = e.fields.description;
-        metricinstances2 = e.fields.metricinstances;
-      }
-    });
+      json.forEach((e) => {
+        if (e.version == this.version1) {
+          name1 = e.fields.name;
+          description1 = e.fields.description;
+          groupname1 = e.fields.groupname;
+          metricinstances1 = e.fields.metricinstances;
+        } else if (e.version == this.version2) {
+          name2 = e.fields.name;
+          groupname2 = e.fields.groupname;
+          description2 = e.fields.description;
+          metricinstances2 = e.fields.metricinstances;
+        }
+      });
 
-    this.setState({
-      name1: name1,
-      groupname1: groupname1,
-      description1: description1,
-      metricinstances1: metricinstances1,
-      name2: name2,
-      description2: description2,
-      groupname2: groupname2,
-      metricinstances2: metricinstances2,
-      loading: false
-    });
+      this.setState({
+        name1: name1,
+        groupname1: groupname1,
+        description1: description1,
+        metricinstances1: metricinstances1,
+        name2: name2,
+        description2: description2,
+        groupname2: groupname2,
+        metricinstances2: metricinstances2,
+        loading: false
+      });
+    } catch(err) {
+      this.setState({
+        error: err,
+        loading: false
+      });
+    };
   }
 
   render() {
     const { name1, name2, description1, description2, groupname1, groupname2,
-      metricinstances1, metricinstances2, loading } = this.state;
+      metricinstances1, metricinstances2, loading, error } = this.state;
 
     if (loading)
       return (<LoadingAnim/>);
+
+    if (error)
+      return (<ErrorComponent error={error}/>);
 
     else if (!loading && name1 && name2) {
       return (
@@ -1134,33 +1169,44 @@ export class MetricProfileVersionDetails extends Component {
       description: '',
       date_created: '',
       metricinstances: [],
-      loading: false
+      loading: false,
+      error: null
     };
   }
 
   async componentDidMount() {
     this.setState({loading: true});
 
-    let json = await this.backend.fetchData(`/api/v2/internal/tenantversion/metricprofile/${this.name}`);
-    json.forEach((e) => {
-      if (e.version == this.version)
-        this.setState({
-          name: e.fields.name,
-          groupname: e.fields.groupname,
-          description: e.fields.description,
-          date_created: e.date_created,
-          metricinstances: e.fields.metricinstances,
-          loading: false
-        });
-    });
+    try {
+      let json = await this.backend.fetchData(`/api/v2/internal/tenantversion/metricprofile/${this.name}`);
+      json.forEach((e) => {
+        if (e.version == this.version)
+          this.setState({
+            name: e.fields.name,
+            groupname: e.fields.groupname,
+            description: e.fields.description,
+            date_created: e.date_created,
+            metricinstances: e.fields.metricinstances,
+            loading: false
+          });
+      });
+    } catch(err) {
+      this.setState({
+        error: err,
+        loading: false
+      });
+    };
   }
 
   render() {
     const { name, description, groupname, date_created, metricinstances,
-      loading } = this.state;
+      loading, error } = this.state;
 
     if (loading)
       return (<LoadingAnim/>);
+
+    else if (error)
+      return (<ErrorComponent error={error}/>);
 
     else if (!loading && name) {
       return (

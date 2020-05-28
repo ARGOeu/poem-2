@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { BaseArgoView, LoadingAnim, Icon } from './UIElements';
+import { BaseArgoView, LoadingAnim, Icon, ErrorComponent } from './UIElements';
 import {Link} from 'react-router-dom';
 import {Backend} from './DataManager';
 import { ProbeVersionLink } from './Metrics';
@@ -14,6 +14,7 @@ class Services extends Component {
       loading: false,
       rows: null,
       rowspan: null,
+      error: null
     };
 
     this.backend = new Backend();
@@ -27,12 +28,20 @@ class Services extends Component {
 
   async componentDidMount() {
     this.setState({loading: true});
-    let json = await this.backend.fetchData(this.apiUrl);
-    this.setState({
-      rows: json.result.rows,
-      rowspan: json.result.rowspan,
-      loading: false
-    });
+
+    try {
+      let json = await this.backend.fetchData(this.apiUrl);
+      this.setState({
+        rows: json.result.rows,
+        rowspan: json.result.rowspan,
+        loading: false
+      });
+    } catch(err) {
+      this.setState({
+        error: err,
+        loading: false
+      });
+    };
   }
 
   getRowSpan(re, match) {
@@ -41,12 +50,14 @@ class Services extends Component {
   }
 
   render() {
-    const {loading, rows, rowspan} = this.state;
+    const {loading, rows, rowspan, error} = this.state;
 
-    if (loading) {
-      return (<LoadingAnim />)
+    if (loading)
+      return (<LoadingAnim />);
 
-    }
+    else if (error)
+      return (<ErrorComponent error={error}/>);
+
     else if (!loading && rows) {
       return (
         <BaseArgoView
