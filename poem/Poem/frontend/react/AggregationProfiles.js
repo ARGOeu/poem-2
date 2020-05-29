@@ -229,11 +229,11 @@ const Service = ({name, service, operation, list_services, list_operations,
       <Col md={2}>
         <div className="input-group">
           <DropDown
-          field={{name: "operation", value: operation}}
-          data={list_operations}
-          prefix={`groups.${groupindex}.services.${index}`}
-          class_name="custom-select service-operation"
-          isnew={isnew && !groupnew}
+            field={{name: "operation", value: operation}}
+            data={list_operations}
+            prefix={`groups.${groupindex}.services.${index}`}
+            class_name="custom-select service-operation"
+            isnew={isnew && !groupnew}
         />
         </div>
       </Col>
