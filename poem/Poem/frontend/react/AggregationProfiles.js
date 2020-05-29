@@ -51,6 +51,14 @@ function matchItem(item, value) {
 const AggregationProfilesSchema = Yup.object().shape({
   name: Yup.string().required('Required'),
   groupname: Yup.string().required('Required'),
+  groups: Yup.array()
+  .of(Yup.object().shape({
+    services: Yup.array().of(
+      Yup.object().shape({
+        name: Yup.string().required('Required')
+      })
+    )
+  }))
 })
 
 
@@ -193,30 +201,30 @@ const Service = ({name, service, operation, list_services, list_operations,
     <Row className="d-flex align-items-center service pt-1 pb-1 no-gutters" key={index}>
       <Col md={8}>
         <Autocomplete
-        inputProps={{
-          className: `"form-control custom-select " ${isnew && !groupnew ? "border-success" : ""} ${ismissing ? "border-danger": ""}`
-        }}
-        getItemValue={(item) => item}
-        items={list_services}
-        value={service.name}
-        renderItem={(item, isHighlighted) =>
-          <div
-            key={list_services.indexOf(item)}
-            className={`aggregation-autocomplete-entries ${isHighlighted ?
-                "aggregation-autocomplete-entries-highlighted"
-                : ""}`
-            }>
-            {item ? <Icon i='serviceflavour'/> : ''} {item}
-          </div>}
-        onChange={(e) => form.setFieldValue(`groups.${groupindex}.services.${index}.name`, e.target.value)}
-        onSelect={(val) => {
-          form.setFieldValue(`groups.${groupindex}.services.${index}.name`, val)
-        }}
-        wrapperStyle={{}}
-        shouldItemRender={matchItem}
-        renderMenu={(items) =>
-          <div className='aggregation-autocomplete-menu' children={items}/>}
-      />
+          inputProps={{
+            className: `"form-control custom-select " ${isnew && !groupnew ? "border-success" : ""} ${ismissing ? "border-danger": ""}`
+          }}
+          getItemValue={(item) => item}
+          items={list_services}
+          value={service.name}
+          renderItem={(item, isHighlighted) =>
+            <div
+              key={list_services.indexOf(item)}
+              className={`aggregation-autocomplete-entries ${isHighlighted ?
+                  "aggregation-autocomplete-entries-highlighted"
+                  : ""}`
+              }>
+              {item ? <Icon i='serviceflavour'/> : ''} {item}
+            </div>}
+          onChange={(e) => form.setFieldValue(`groups.${groupindex}.services.${index}.name`, e.target.value)}
+          onSelect={(val) => {
+            form.setFieldValue(`groups.${groupindex}.services.${index}.name`, val)
+          }}
+          wrapperStyle={{}}
+          shouldItemRender={matchItem}
+          renderMenu={(items) =>
+            <div className='aggregation-autocomplete-menu' children={items}/>}
+        />
       </Col>
       <Col md={2}>
         <div className="input-group">
@@ -231,15 +239,15 @@ const Service = ({name, service, operation, list_services, list_operations,
       </Col>
       <Col md={2} className="pl-2">
         <Button size="sm" color="light"
-        type="button"
-        onClick={() => remove(index)}>
-          <FontAwesomeIcon icon={faTimes}/>
+          type="button"
+          onClick={() => remove(index)}>
+            <FontAwesomeIcon icon={faTimes}/>
         </Button>
         <Button size="sm" color="light"
-        type="button"
-        onClick={() => insert(index + 1, {name: '', operation:
-          last_service_operation(index, form.values.groups[groupindex].services), isnew: true})}>
-          <FontAwesomeIcon icon={faPlus}/>
+          type="button"
+          onClick={() => insert(index + 1, {name: '', operation:
+            last_service_operation(index, form.values.groups[groupindex].services), isnew: true})}>
+            <FontAwesomeIcon icon={faPlus}/>
         </Button>
       </Col>
     </Row>
