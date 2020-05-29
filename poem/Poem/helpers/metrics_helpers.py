@@ -5,7 +5,8 @@ from django.db import IntegrityError
 
 
 def import_metrics(metrictemplates, tenant, user):
-    imported = not_imported = []
+    imported = []
+    not_imported = []
     for template in metrictemplates:
         metrictemplate = admin_models.MetricTemplate.objects.get(
             name=template

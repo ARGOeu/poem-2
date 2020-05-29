@@ -202,7 +202,9 @@ class ImportMetrics(APIView):
             tenant=request.tenant, user=request.user
         )
 
-        message_bit = error_bit = ''
+        message_bit = ''
+        error_bit = ''
+        error_bit2 = ''
         if imported:
             if len(imported) == 1:
                 message_bit = '{} has'.format(imported[0])
@@ -212,8 +214,10 @@ class ImportMetrics(APIView):
         if err:
             if len(err) == 1:
                 error_bit = '{} has'.format(err[0])
+                error_bit2 = 'this metric already exists'
             else:
                 error_bit = ', '.join(msg for msg in err) + ' have'
+                error_bit2 = 'those metrics already exist'
 
         data = dict()
         if message_bit and error_bit:
@@ -221,8 +225,9 @@ class ImportMetrics(APIView):
                 'imported':
                     '{} been successfully imported.'.format(message_bit),
                 'err':
-                    '{} not been imported, since those metrics already exist '
-                    'in the database.'.format(error_bit)
+                    '{} not been imported, since {} in the database.'.format(
+                        error_bit, error_bit2
+                    )
             }
         elif message_bit and not error_bit:
             data = {
@@ -232,8 +237,9 @@ class ImportMetrics(APIView):
         elif not message_bit and error_bit:
             data = {
                 'err':
-                    '{} not been imported, since those metrics already exist '
-                    'in the database.'.format(error_bit)
+                    '{} not been imported, since {} in the database.'.format(
+                        error_bit, error_bit2
+                    )
             }
 
         return Response(status=status.HTTP_201_CREATED, data=data)

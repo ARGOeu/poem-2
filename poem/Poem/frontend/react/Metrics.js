@@ -381,9 +381,10 @@ export function ListOfMetrics(type, imp=false) {
 
     async importMetrics() {
       let selectedMetrics = this.state.selected;
-      let mt = Object.keys(selectedMetrics);
+      // get only those metrics whose value is true
+      let mt = Object.keys(selectedMetrics).filter(k => selectedMetrics[k]);
       if (mt.length > 0) {
-        let response = await this.backend.importMetrics({'metrictemplates': Object.keys(selectedMetrics)});
+        let response = await this.backend.importMetrics({'metrictemplates': mt});
         let json = await response.json();
         if (json.imported)
           NotifyOk({msg: json.imported, title: 'Imported'})
