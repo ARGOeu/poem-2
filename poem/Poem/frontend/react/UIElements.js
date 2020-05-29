@@ -567,12 +567,20 @@ export const NotifyOk = ({msg='', title='', callback=undefined}) => {
 }
 
 export const NotifyError = ({msg='', title=''}) => {
-  NotificationManager.error(msg, title);
+  msg = <div>
+    <p>{msg}</p>
+    <p>Click to dismiss.</p>
+  </div>
+  NotificationManager.error(msg=msg, title, 0, () => true);
 };
 
 
 export const NotifyWarn = ({msg='', title=''}) => {
-  NotificationManager.warning(msg, title);
+  msg = <div>
+    <p>{msg}</p>
+    <p>Click to dismiss.</p>
+  </div>
+  NotificationManager.warning(msg, title, 0, () => true);
 };
 
 
