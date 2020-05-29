@@ -872,8 +872,8 @@ export class AggregationProfilesChange extends Component
                   render={props => (
                     <GroupList
                       {...props}
-                      list_services={insertSelectPlaceholder(list_services, '')}
-                      list_operations={insertSelectPlaceholder(this.logic_operations, '')}
+                      list_services={list_services}
+                      list_operations={this.logic_operations}
                       last_service_operation={this.insertOperationFromPrevious}
                       write_perm={write_perm}
                     />)}

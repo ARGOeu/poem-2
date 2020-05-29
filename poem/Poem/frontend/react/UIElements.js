@@ -133,11 +133,7 @@ export const DropDown = ({field, data=[], prefix="", class_name="", isnew=false}
     className={`form-control ${class_name} ${isnew ? 'border-success' : ''}`}
   >
     {
-      data.map((name, i) =>
-        i === 0 ?
-          <option key={i} hidden>{name}</option> :
-          <option key={i} value={name}>{name}</option>
-      )
+      data.map((name, i) => <option key={i} value={name}>{name}</option>)
     }
   </Field>
 
