@@ -4,13 +4,13 @@ import { Link } from 'react-router-dom';
 import{
   LoadingAnim,
   BaseArgoView,
-  DropdownFilterComponent,
   FancyErrorMessage,
   AutocompleteField,
   NotifyOk,
   Checkbox,
   NotifyError,
-  ErrorComponent
+  ErrorComponent,
+  DropdownFilterComponent
 } from './UIElements';
 import ReactTable from 'react-table';
 import {
@@ -96,20 +96,30 @@ export class PackageList extends Component {
             </div>
         },
         {
-          Header: 'Name and version',
+          Header: 'Name',
           id: 'name',
           minWidth: 80,
           accessor: e =>
-            <Link to={'/ui/packages/' + e.name + '-' + e.version}>{e.name + ' (' + e.version + ')'}</Link>,
+            <Link to={'/ui/packages/' + e.name + '-' + e.version}>{e.name}</Link>,
           filterable: true,
           Filter: (
             <input
               value={this.state.search_name}
               onChange={e => this.setState({search_name: e.target.value})}
-              placeholder='Search by name and version'
+              placeholder='Search by name'
               style={{width: '100%'}}
             />
           )
+        },
+        {
+          Header: 'Version',
+          id: 'version',
+          accessor: 'version',
+          minWidth: 12,
+          Cell: row =>
+            <div style={{textAlign: 'center'}}>
+              {row.value}
+            </div>
         },
         {
           Header: 'Repo',
@@ -131,7 +141,7 @@ export class PackageList extends Component {
 
       if (this.state.search_name) {
         list_packages = list_packages.filter(row =>
-          `${row.name} + ' (' + ${row.version} + ')`.toLowerCase().includes(this.state.search_name.toLowerCase())
+          row.name.toLowerCase().includes(this.state.search_name.toLowerCase())
         );
       };
 
