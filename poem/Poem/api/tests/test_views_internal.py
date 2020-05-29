@@ -1,33 +1,33 @@
-from collections import OrderedDict
 import datetime
-import requests
-
-from django.contrib.contenttypes.models import ContentType
-from django.core import serializers
-from django.test.client import encode_multipart
-
 import json
+from collections import OrderedDict
+from unittest.mock import patch
 
+import requests
 from Poem.api import views_internal as views
-from Poem.api.internal_views.utils import sync_webapi
-from Poem.api.internal_views.utils import inline_metric_for_db
-from Poem.api.models import MyAPIKey
 from Poem.api.internal_views.metrictemplates import update_metrics_in_profiles
+from Poem.api.internal_views.utils import inline_metric_for_db
+from Poem.api.internal_views.utils import sync_webapi
+from Poem.api.models import MyAPIKey
 from Poem.helpers.history_helpers import create_comment, update_comment
 from Poem.helpers.versioned_comments import new_comment
 from Poem.poem import models as poem_models
 from Poem.poem_super_admin import models as admin_models
 from Poem.tenants.models import Tenant
 from Poem.users.models import CustUser
-
-from rest_framework.test import force_authenticate
+from django.conf import settings
+from django.contrib.contenttypes.models import ContentType
+from django.core import serializers
+from django.core.management import call_command
+from django.db import connection
+from django.test.client import encode_multipart
+from django.test.testcases import TransactionTestCase
 from rest_framework import status
-
+from rest_framework.test import force_authenticate
 from tenant_schemas.test.cases import TenantTestCase
 from tenant_schemas.test.client import TenantRequestFactory
-from tenant_schemas.utils import schema_context, get_public_schema_name
-
-from unittest.mock import patch
+from tenant_schemas.utils import schema_context, get_public_schema_name, \
+    get_tenant_model
 
 
 def encode_data(data):
@@ -6728,15 +6728,57 @@ class ListMetricTemplateTypesAPIViewTests(TenantTestCase):
         )
 
 
-class ImportMetricsAPIViewTests(TenantTestCase):
+ALLOWED_TEST_DOMAIN = '.test.com'
+
+
+class ImportMetricsAPIViewTests(TransactionTestCase):
+    """
+    Using TransactionTestCase because of handling of IntegrityError. The extra
+    setup steps are taken from TenantTestCase.
+    """
+    @classmethod
+    def add_allowed_test_domain(cls):
+        # ALLOWED_HOSTS is a special setting of Django setup_test_environment so we can't modify it with helpers
+        if ALLOWED_TEST_DOMAIN not in settings.ALLOWED_HOSTS:
+            settings.ALLOWED_HOSTS += [ALLOWED_TEST_DOMAIN]
+
+    @classmethod
+    def remove_allowed_test_domain(cls):
+        if ALLOWED_TEST_DOMAIN in settings.ALLOWED_HOSTS:
+            settings.ALLOWED_HOSTS.remove(ALLOWED_TEST_DOMAIN)
+
+    def tearDown(self):
+        connection.set_schema_to_public()
+        self.tenant.delete()
+
+        self.remove_allowed_test_domain()
+        cursor = connection.cursor()
+        cursor.execute('DROP SCHEMA IF EXISTS test CASCADE')
+
+    @classmethod
+    def sync_shared(cls):
+        call_command('migrate_schemas',
+                     schema_name=get_public_schema_name(),
+                     interactive=False,
+                     verbosity=0)
+
     def setUp(self):
+        self.sync_shared()
+        self.add_allowed_test_domain()
+        tenant_domain = 'tenant.test.com'
+        self.tenant = get_tenant_model()(domain_url=tenant_domain,
+                                         schema_name='test')
+        self.tenant.save(verbosity=0)
+
+        connection.set_tenant(self.tenant)
+
         self.factory = TenantRequestFactory(self.tenant)
         self.view = views.ImportMetrics.as_view()
         self.url = '/api/v2/internal/importmetrics/'
         self.user = CustUser.objects.create_user(username='testuser')
 
         mt = admin_models.MetricTemplateType.objects.create(name='Active')
-        poem_models.MetricType.objects.create(name='Active')
+        mtype = poem_models.MetricType.objects.create(name='Active')
 
         tag = admin_models.OSTag.objects.create(name='CentOS 6')
         repo = admin_models.YumRepo.objects.create(name='repo-1', tag=tag)
@@ -6831,21 +6873,140 @@ class ImportMetricsAPIViewTests(TenantTestCase):
             probekey=pk2
         )
 
+        self.template3 = admin_models.MetricTemplate.objects.create(
+            name='argo.AMS-Check-2',
+            probeexecutable='["ams-probe"]',
+            config='["maxCheckAttempts 4", "timeout 70", '
+                   '"path /usr/libexec/argo-monitoring/probes/argo", '
+                   '"interval 5", "retryInterval 4"]',
+            attribute='["argo.ams_TOKEN --token"]',
+            flags='["OBSESS 1", "FLAG 1"]',
+            parameter='["--project EGI"]',
+            mtype=mt,
+            probekey=pk1
+        )
+
+        self.template4 = admin_models.MetricTemplate.objects.create(
+            name='argo.AMSPublisher-Check-3',
+            description='Description of argo.AMSPublisher-Check-3.',
+            probeexecutable='["ams-publisher-probe"]',
+            config='["interval 180", "maxCheckAttempts 3", '
+                   '"path /usr/libexec/argo-monitoring/probes/argo", '
+                   '"retryInterval 1", "timeout 130"]',
+            flags='["NOHOSTNAME 1"]',
+            mtype=mt,
+            probekey=pk2
+        )
+
+        poem_models.Metric.objects.create(
+            name='argo.AMSPublisher-Check',
+            description='Description of argo.AMSPublisher-Check.',
+            probeexecutable='["ams-publisher-probe"]',
+            config='["interval 180", "maxCheckAttempts 1", '
+                   '"path /usr/libexec/argo-monitoring/probes/argo", '
+                   '"retryInterval 1", "timeout 120"]',
+            flags='["NOHOSTNAME 1", "NOTIMEOUT 1"]',
+            parameter='["-s /var/run/argo-nagios-ams-publisher/sock", '
+                      '"-c 4000"]',
+            mtype=mtype,
+            probekey=pk2,
+            group=self.defaultGroup
+        )
+
+        poem_models.Metric.objects.create(
+            name='argo.AMSPublisher-Check-3',
+            description='Description of argo.AMSPublisher-Check-3.',
+            probeexecutable='["ams-publisher-probe"]',
+            config='["interval 180", "maxCheckAttempts 3", '
+                   '"path /usr/libexec/argo-monitoring/probes/argo", '
+                   '"retryInterval 1", "timeout 130"]',
+            flags='["NOHOSTNAME 1"]',
+            mtype=mtype,
+            probekey=pk2,
+            group=self.defaultGroup
+        )
+
     @patch('Poem.poem.dbmodels.metricstags.GroupOfMetrics.objects.get')
-    def test_import_metrics(self, gm):
+    def test_import_metrics_with_both_success_and_warn(self, gm):
         gm.return_value = self.defaultGroup
-        self.assertEqual(poem_models.Metric.objects.all().count(), 0)
+        self.assertEqual(poem_models.Metric.objects.all().count(), 2)
         data = {
-            'metrictemplates': ['argo.AMS-Check', 'argo.AMSPublisher-Check']
+            'metrictemplates':
+                ['argo.AMS-Check', 'argo.AMSPublisher-Check']
         }
         request = self.factory.post(self.url, data, format='json')
         request.tenant = self.tenant
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(poem_models.Metric.objects.all().count(), 2)
+        self.assertEqual(
+            response.data,
+            {
+                'imported': 'argo.AMS-Check has been successfully '
+                            'imported.',
+                'err': 'argo.AMSPublisher-Check has not been imported, '
+                       'since this metric already exists in the '
+                       'database.'
+            }
+        )
+        self.assertEqual(poem_models.Metric.objects.all().count(), 3)
         mt1 = poem_models.Metric.objects.get(name='argo.AMS-Check')
-        mt2 = poem_models.Metric.objects.get(name='argo.AMSPublisher-Check')
+        mt2 = poem_models.Metric.objects.get(
+            name='argo.AMSPublisher-Check'
+        )
+        self.assertEqual(mt1.description, self.template1.description)
+        self.assertEqual(mt1.parent, self.template1.parent)
+        self.assertEqual(
+            mt1.probeexecutable, self.template1.probeexecutable
+        )
+        self.assertEqual(mt1.config, self.template1.config)
+        self.assertEqual(mt1.attribute, self.template1.attribute)
+        self.assertEqual(mt1.dependancy, self.template1.dependency)
+        self.assertEqual(mt1.flags, self.template1.flags)
+        self.assertEqual(mt1.files, self.template1.files)
+        self.assertEqual(mt1.parameter, self.template1.parameter)
+        self.assertEqual(
+            mt1.fileparameter, self.template1.fileparameter
+        )
+        self.assertEqual(mt1.probekey, self.template1.probekey)
+        self.assertEqual(mt2.description, self.template2.description)
+        self.assertEqual(mt2.parent, self.template2.parent)
+        self.assertEqual(
+            mt2.probeexecutable, self.template2.probeexecutable
+        )
+        self.assertEqual(mt2.config, self.template2.config)
+        self.assertEqual(mt2.attribute, self.template2.attribute)
+        self.assertEqual(mt2.dependancy, self.template2.dependency)
+        self.assertEqual(mt2.flags, self.template2.flags)
+        self.assertEqual(mt2.files, self.template2.files)
+        self.assertEqual(mt2.parameter, self.template2.parameter)
+        self.assertEqual(
+            mt2.fileparameter, self.template2.fileparameter
+        )
+        self.assertEqual(mt2.probekey, self.template2.probekey)
+
+    @patch('Poem.poem.dbmodels.metricstags.GroupOfMetrics.objects.get')
+    def test_import_metrics_with_only_success(self, gm):
+        gm.return_value = self.defaultGroup
+        self.assertEqual(poem_models.Metric.objects.all().count(), 2)
+        data = {
+            'metrictemplates': ['argo.AMS-Check', 'argo.AMS-Check-2']
+        }
+        request = self.factory.post(self.url, data, format='json')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(
+            response.data,
+            {
+                'imported': 'argo.AMS-Check, argo.AMS-Check-2 have been '
+                            'successfully imported.',
+            }
+        )
+        self.assertEqual(poem_models.Metric.objects.all().count(), 4)
+        mt1 = poem_models.Metric.objects.get(name='argo.AMS-Check')
+        mt2 = poem_models.Metric.objects.get(name='argo.AMS-Check-2')
         self.assertEqual(mt1.description, self.template1.description)
         self.assertEqual(mt1.parent, self.template1.parent)
         self.assertEqual(mt1.probeexecutable, self.template1.probeexecutable)
@@ -6857,17 +7018,68 @@ class ImportMetricsAPIViewTests(TenantTestCase):
         self.assertEqual(mt1.parameter, self.template1.parameter)
         self.assertEqual(mt1.fileparameter, self.template1.fileparameter)
         self.assertEqual(mt1.probekey, self.template1.probekey)
-        self.assertEqual(mt2.description, self.template2.description)
-        self.assertEqual(mt2.parent, self.template2.parent)
-        self.assertEqual(mt2.probeexecutable, self.template2.probeexecutable)
-        self.assertEqual(mt2.config, self.template2.config)
-        self.assertEqual(mt2.attribute, self.template2.attribute)
-        self.assertEqual(mt2.dependancy, self.template2.dependency)
-        self.assertEqual(mt2.flags, self.template2.flags)
-        self.assertEqual(mt2.files, self.template2.files)
-        self.assertEqual(mt2.parameter, self.template2.parameter)
-        self.assertEqual(mt2.fileparameter, self.template2.fileparameter)
-        self.assertEqual(mt2.probekey, self.template2.probekey)
+        self.assertEqual(mt2.description, self.template3.description)
+        self.assertEqual(mt2.parent, self.template3.parent)
+        self.assertEqual(mt2.probeexecutable, self.template3.probeexecutable)
+        self.assertEqual(mt2.config, self.template3.config)
+        self.assertEqual(mt2.attribute, self.template3.attribute)
+        self.assertEqual(mt2.dependancy, self.template3.dependency)
+        self.assertEqual(mt2.flags, self.template3.flags)
+        self.assertEqual(mt2.files, self.template3.files)
+        self.assertEqual(mt2.parameter, self.template3.parameter)
+        self.assertEqual(mt2.fileparameter, self.template3.fileparameter)
+        self.assertEqual(mt2.probekey, self.template3.probekey)
+
+    @patch('Poem.poem.dbmodels.metricstags.GroupOfMetrics.objects.get')
+    def test_import_metrics_with_only_warnings(self, gm):
+        gm.return_value = self.defaultGroup
+        self.assertEqual(poem_models.Metric.objects.all().count(), 2)
+        data = {
+            'metrictemplates': ['argo.AMSPublisher-Check',
+                                'argo.AMSPublisher-Check-3']
+        }
+        request = self.factory.post(self.url, data, format='json')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(
+            response.data,
+            {
+                'err': 'argo.AMSPublisher-Check, argo.AMSPublisher-Check-3 '
+                       'have not been imported, since those metrics '
+                       'already exist in the database.',
+            }
+        )
+        self.assertEqual(poem_models.Metric.objects.all().count(), 2)
+        mt1 = poem_models.Metric.objects.get(name='argo.AMSPublisher-Check')
+        mt2 = poem_models.Metric.objects.get(
+            name='argo.AMSPublisher-Check-3'
+        )
+        self.assertEqual(mt1.description, self.template2.description)
+        self.assertEqual(mt1.parent, self.template2.parent)
+        self.assertEqual(mt1.probeexecutable,
+                         self.template2.probeexecutable)
+        self.assertEqual(mt1.config, self.template2.config)
+        self.assertEqual(mt1.attribute, self.template2.attribute)
+        self.assertEqual(mt1.dependancy, self.template2.dependency)
+        self.assertEqual(mt1.flags, self.template2.flags)
+        self.assertEqual(mt1.files, self.template2.files)
+        self.assertEqual(mt1.parameter, self.template2.parameter)
+        self.assertEqual(mt1.fileparameter, self.template2.fileparameter)
+        self.assertEqual(mt1.probekey, self.template2.probekey)
+        self.assertEqual(mt2.description, self.template4.description)
+        self.assertEqual(mt2.parent, self.template4.parent)
+        self.assertEqual(mt2.probeexecutable,
+                         self.template4.probeexecutable)
+        self.assertEqual(mt2.config, self.template4.config)
+        self.assertEqual(mt2.attribute, self.template4.attribute)
+        self.assertEqual(mt2.dependancy, self.template4.dependency)
+        self.assertEqual(mt2.flags, self.template4.flags)
+        self.assertEqual(mt2.files, self.template4.files)
+        self.assertEqual(mt2.parameter, self.template4.parameter)
+        self.assertEqual(mt2.fileparameter, self.template4.fileparameter)
+        self.assertEqual(mt2.probekey, self.template4.probekey)
 
 
 class ListMetricTemplatesForProbeVersionAPIViewTests(TenantTestCase):
@@ -10606,3 +10818,65 @@ class CommentsTests(TenantTestCase):
             'Deleted service-metric instance tuple '
             '(APEL, org.apel.APEL-Sync).'
         )
+
+
+class ChangePasswordTests(TenantTestCase):
+    def setUp(self):
+        self.factory = TenantRequestFactory(self.tenant)
+        self.view = views.ChangePassword.as_view()
+        self.url = '/api/v2/internal/change_password'
+        self.user1 = CustUser.objects.create_user(
+            username='testuser',
+            first_name='Test',
+            last_name='User',
+            email='testuser@example.com',
+            date_joined=datetime.datetime(2015, 1, 1, 0, 0, 0)
+        )
+
+        self.user2 = CustUser.objects.create(
+            username='anotheruser',
+            first_name='Another',
+            last_name='Test',
+            email='anotheruser@example.com',
+            date_joined=datetime.datetime(2015, 1, 1, 0, 0, 0)
+        )
+
+    def test_change_password(self):
+        data = {
+            'username': 'testuser',
+            'new_password': 'extra-cool-passwd'
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user1)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        user = CustUser.objects.get(username=self.user1.username)
+        self.assertTrue(user.check_password('extra-cool-passwd'))
+
+    def test_try_change_password_for_different_user(self):
+        data = {
+            'username': 'anotheruser',
+            'new_password': 'extra-cool-passwd'
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user1)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(
+            response.data['detail'],
+            'Trying to change password for another user.'
+        )
+
+    def test_change_password_for_nonexisting_user(self):
+        data = {
+            'username': 'nonexisting',
+            'new_password': 'extra-cool-passwd'
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user1)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data['detail'], 'User not found.')

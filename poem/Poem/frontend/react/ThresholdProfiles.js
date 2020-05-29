@@ -10,7 +10,8 @@ import {
     HistoryComponent,
     DiffElement,
     ProfileMainInfo,
-    NotifyError
+    NotifyError,
+    ErrorComponent
 } from './UIElements';
 import ReactTable from 'react-table';
 import {
@@ -879,24 +880,32 @@ export class ThresholdsProfilesList extends Component {
     this.state = {
       loading: false,
       list_thresholdsprofiles: null,
-      write_perm: false
+      write_perm: false,
+      error: null
     };
   }
 
   async componentDidMount() {
     this.setState({loading: true});
 
-    let profiles = await this.backend.fetchData(this.apiUrl);
-    if (!this.publicView) {
-      let session = await this.backend.isActiveSession();
+    try {
+      let profiles = await this.backend.fetchData(this.apiUrl);
+      if (!this.publicView) {
+        let session = await this.backend.isActiveSession();
+        this.setState({
+          list_thresholdsprofiles: profiles,
+          loading: false,
+          write_perm: session.userdetails.is_superuser || session.userdetails.groups.thresholdsprofiles.length > 0
+        });
+      } else {
+        this.setState({
+          list_thresholdsprofiles: profiles,
+          loading: false
+        });
+      };
+    } catch(err) {
       this.setState({
-        list_thresholdsprofiles: profiles,
-        loading: false,
-        write_perm: session.userdetails.is_superuser || session.userdetails.groups.thresholdsprofiles.length > 0
-      });
-    } else {
-      this.setState({
-        list_thresholdsprofiles: profiles,
+        error: err,
         loading: false
       });
     };
@@ -924,10 +933,13 @@ export class ThresholdsProfilesList extends Component {
         maxWidth: 150,
       }
     ];
-    const { loading, list_thresholdsprofiles, write_perm } = this.state;
+    const { loading, list_thresholdsprofiles, write_perm, error } = this.state;
 
     if (loading)
-      return <LoadingAnim/>
+      return (<LoadingAnim/>);
+
+    else if (error)
+      return (<ErrorComponent error={error}/>);
 
     else if (!loading && list_thresholdsprofiles) {
       return (
@@ -989,7 +1001,8 @@ export class ThresholdsProfilesChange extends Component {
       modalTitle: undefined,
       modalMsg: undefined,
       popoverWarningOpen: false,
-      popoverCriticalOpen: false
+      popoverCriticalOpen: false,
+      error: null
     };
 
     this.toggleAreYouSure = this.toggleAreYouSure.bind(this);
@@ -1226,36 +1239,11 @@ export class ThresholdsProfilesChange extends Component {
   async componentDidMount() {
     this.setState({loading: true});
 
-    if (this.publicView) {
-      let json = await this.backend.fetchData(`/api/v2/internal/public_thresholdsprofiles/${this.name}`);
-      let thresholdsprofile = await this.webapi.fetchThresholdsProfile(json.apiid);
-      this.setState({
-        thresholds_profile: {
-          'apiid': thresholdsprofile.id,
-          'name': thresholdsprofile.name,
-          'groupname': json['groupname']
-        },
-        thresholds_rules: thresholdsToValues(thresholdsprofile.rules),
-        groups_list: [],
-        metrics_list: await this.backend.fetchListOfNames('/api/v2/internal/public_metricsall'),
-        write_perm: false,
-        loading: false
-      });
-    }
-    else {
-      let sessionActive = await this.backend.isActiveSession();
-      let metricsall = await this.backend.fetchListOfNames('/api/v2/internal/metricsall');
-      let json = await this.backend.fetchData(`/api/v2/internal/thresholdsprofiles/${this.name}`);
-      if (this.addview) {
-        this.setState({
-          loading: false,
-          groups_list: sessionActive.userdetails.groups.thresholdsprofiles,
-          metrics_list: metricsall,
-          write_perm: sessionActive.userdetails.is_superuser ||
-            sessionActive.userdetails.groups.thresholdsprofiles.length > 0,
-        });
-      } else {
+    try {
+      if (this.publicView) {
+        let json = await this.backend.fetchData(`/api/v2/internal/public_thresholdsprofiles/${this.name}`);
         let thresholdsprofile = await this.webapi.fetchThresholdsProfile(json.apiid);
+        let metricslist =await this.backend.fetchListOfNames('/api/v2/internal/public_metricsall');
         this.setState({
           thresholds_profile: {
             'apiid': thresholdsprofile.id,
@@ -1263,21 +1251,58 @@ export class ThresholdsProfilesChange extends Component {
             'groupname': json['groupname']
           },
           thresholds_rules: thresholdsToValues(thresholdsprofile.rules),
-          groups_list: sessionActive.userdetails.groups.thresholdsprofiles,
-          metrics_list: metricsall,
-          write_perm: sessionActive.userdetails.is_superuser ||
-            sessionActive.userdetails.groups.thresholdsprofiles.indexOf(json['groupname']) >= 0,
+          groups_list: [],
+          metrics_list: metricslist,
+          write_perm: false,
           loading: false
         });
-      };
-    }
+      }
+      else {
+        let sessionActive = await this.backend.isActiveSession();
+        let metricsall = await this.backend.fetchListOfNames('/api/v2/internal/metricsall');
+        let json = await this.backend.fetchData(`/api/v2/internal/thresholdsprofiles/${this.name}`);
+        if (this.addview) {
+          this.setState({
+            loading: false,
+            groups_list: sessionActive.userdetails.groups.thresholdsprofiles,
+            metrics_list: metricsall,
+            write_perm: sessionActive.userdetails.is_superuser ||
+              sessionActive.userdetails.groups.thresholdsprofiles.length > 0,
+          });
+        } else {
+          let thresholdsprofile = await this.webapi.fetchThresholdsProfile(json.apiid);
+          this.setState({
+            thresholds_profile: {
+              'apiid': thresholdsprofile.id,
+              'name': thresholdsprofile.name,
+              'groupname': json['groupname']
+            },
+            thresholds_rules: thresholdsToValues(thresholdsprofile.rules),
+            groups_list: sessionActive.userdetails.groups.thresholdsprofiles,
+            metrics_list: metricsall,
+            write_perm: sessionActive.userdetails.is_superuser ||
+              sessionActive.userdetails.groups.thresholdsprofiles.indexOf(json['groupname']) >= 0,
+            loading: false
+          });
+        };
+      }
+    } catch(err) {
+      this.setState({
+        error: err,
+        loading: false
+      });
+    };
   }
 
   render() {
-    const { thresholds_profile, thresholds_rules, metrics_list, groups_list, loading, write_perm } = this.state;
+    const { thresholds_profile, thresholds_rules, metrics_list, groups_list,
+      loading, write_perm, error } = this.state;
 
     if (loading)
-      return <LoadingAnim/>;
+      return (<LoadingAnim/>);
+
+    else if (error)
+      return (<ErrorComponent error={error}/>);
 
     else if (!loading && thresholds_profile) {
       return (
@@ -1424,49 +1449,61 @@ export class ThresholdsProfileVersionCompare extends Component {
       rules1: [],
       name2: '',
       groupname2: '',
-      rules2: []
+      rules2: [],
+      error: null
     };
 
     this.backend = new Backend();
   }
 
   async componentDidMount() {
-    let json = await this.backend.fetchData(`/api/v2/internal/tenantversion/thresholdsprofile/${this.name}`);
-    let name1 = '';
-    let groupname1 = '';
-    let rules1 = [];
-    let name2 = '';
-    let groupname2 = '';
-    let rules2 = [];
+    try {
+      let json = await this.backend.fetchData(`/api/v2/internal/tenantversion/thresholdsprofile/${this.name}`);
+      let name1 = '';
+      let groupname1 = '';
+      let rules1 = [];
+      let name2 = '';
+      let groupname2 = '';
+      let rules2 = [];
 
-    json.forEach((e) => {
-      if (e.version == this.version1) {
-        name1 = e.fields.name;
-        groupname1 = e.fields.groupname;
-        rules1 = e.fields.rules;
-      } else if (e.version == this.version2) {
-        name2 = e.fields.name;
-        groupname2 = e.fields.groupname;
-        rules2 = e.fields.rules;
-      }
-    });
+      json.forEach((e) => {
+        if (e.version == this.version1) {
+          name1 = e.fields.name;
+          groupname1 = e.fields.groupname;
+          rules1 = e.fields.rules;
+        } else if (e.version == this.version2) {
+          name2 = e.fields.name;
+          groupname2 = e.fields.groupname;
+          rules2 = e.fields.rules;
+        }
+      });
 
-    this.setState({
-      name1: name1,
-      groupname1: groupname1,
-      rules1: rules1,
-      name2: name2,
-      groupname2: groupname2,
-      rules2: rules2,
-      loading: false
-    });
+      this.setState({
+        name1: name1,
+        groupname1: groupname1,
+        rules1: rules1,
+        name2: name2,
+        groupname2: groupname2,
+        rules2: rules2,
+        loading: false
+      });
+    } catch(err) {
+      this.setState({
+        error: err,
+        loading: false
+      });
+    };
   }
 
   render() {
-    const { name1, name2, groupname1, groupname2, rules1, rules2, loading } = this.state;
+    const { name1, name2, groupname1, groupname2, rules1, rules2, loading,
+    error } = this.state;
 
     if (loading)
       return (<LoadingAnim/>);
+
+    else if (error)
+      return (<ErrorComponent error={error}/>);
 
     else if (!loading && name1 && name2) {
       return (
@@ -1508,31 +1545,43 @@ export class ThresholdsProfileVersionDetail extends Component {
       groupname: '',
       rules: [],
       date_created: '',
-      loading: false
+      loading: false,
+      error: null
     };
   }
 
   async componentDidMount() {
     this.setState({loading: true});
 
-    let json = await this.backend.fetchData(`/api/v2/internal/tenantversion/thresholdsprofile/${this.name}`);
-    json.forEach((e) => {
-      if (e.version == this.version)
-        this.setState({
-          name: e.fields.name,
-          groupname: e.fields.groupname,
-          rules: thresholdsToValues(e.fields.rules),
-          date_created: e.date_created,
-          loading: false
-        });
-    });
+    try {
+      let json = await this.backend.fetchData(`/api/v2/internal/tenantversion/thresholdsprofile/${this.name}`);
+      json.forEach((e) => {
+        if (e.version == this.version)
+          this.setState({
+            name: e.fields.name,
+            groupname: e.fields.groupname,
+            rules: thresholdsToValues(e.fields.rules),
+            date_created: e.date_created,
+            loading: false
+          });
+      });
+    } catch(err) {
+      this.setState({
+        error: err,
+        loading: false
+      });
+    };
   }
 
   render() {
-    const { name, groupname, rules, date_created, loading } = this.state;
+    const { name, groupname, rules, date_created, loading,
+      error } = this.state;
 
     if (loading)
       return (<LoadingAnim/>);
+
+    else if (error)
+      return (<ErrorComponent error={error}/>);
 
     else if (!loading && name) {
       return (

@@ -7,7 +7,8 @@ import {
   FancyErrorMessage,
   NotifyOk,
   DropdownFilterComponent,
-  NotifyError
+  NotifyError,
+  ErrorComponent
 } from './UIElements';
 import ReactTable from 'react-table';
 import { Formik, Form, Field } from 'formik';
@@ -50,7 +51,8 @@ export class YumRepoList extends Component {
       isTenantSchema: null,
       search_name: '',
       search_description: '',
-      search_tag: ''
+      search_tag: '',
+      error: null
     };
 
     this.backend = new Backend();
@@ -59,19 +61,26 @@ export class YumRepoList extends Component {
   async componentDidMount() {
     this.setState({loading: true});
 
-    let repos = await this.backend.fetchData('/api/v2/internal/yumrepos');
-    let tags = await this.backend.fetchData('/api/v2/internal/ostags');
-    let isTenantSchema = await this.backend.isTenantSchema();
-    this.setState({
-      list_repos: repos,
-      list_tags: tags,
-      isTenantSchema: isTenantSchema,
-      loading: false
-    });
+    try {
+      let repos = await this.backend.fetchData('/api/v2/internal/yumrepos');
+      let tags = await this.backend.fetchData('/api/v2/internal/ostags');
+      let isTenantSchema = await this.backend.isTenantSchema();
+      this.setState({
+        list_repos: repos,
+        list_tags: tags,
+        isTenantSchema: isTenantSchema,
+        loading: false
+      });
+    } catch(err) {
+      this.setState({
+        error: err,
+        loading: false
+      });
+    };
   };
 
   render() {
-    var { list_repos, isTenantSchema, loading } = this.state;
+    var { list_repos, isTenantSchema, loading, error } = this.state;
     let repolink = undefined;
 
     if (!isTenantSchema)
@@ -157,7 +166,10 @@ export class YumRepoList extends Component {
     };
 
     if (loading)
-      return (<LoadingAnim/>)
+      return (<LoadingAnim/>);
+
+    else if (error)
+      return (<ErrorComponent error={error}/>);
 
     else if (!loading && list_repos) {
       return (
@@ -211,7 +223,8 @@ function YumRepoComponent(cloneview=false) {
         areYouSureModal: false,
         modalFunc: undefined,
         modalTitle: undefined,
-        modalMsg: undefined
+        modalMsg: undefined,
+        error: null
       };
 
       this.toggleAreYouSure = this.toggleAreYouSure.bind(this);
@@ -340,27 +353,38 @@ function YumRepoComponent(cloneview=false) {
 
     async componentDidMount() {
       this.setState({loading: true});
-      let tags = await this.backend.fetchData('/api/v2/internal/ostags');
-      if (!this.addview) {
-        let json = await this.backend.fetchData(`/api/v2/internal/yumrepos/${this.name}/${this.tag}`);
+
+      try {
+        let tags = await this.backend.fetchData('/api/v2/internal/ostags');
+        if (!this.addview) {
+          let json = await this.backend.fetchData(`/api/v2/internal/yumrepos/${this.name}/${this.tag}`);
+          this.setState({
+            repo: json,
+            tagslist: tags,
+            loading: false
+          });
+        } else {
+          this.setState({
+            tagslist: tags,
+            loading: false
+          });
+        };
+      } catch(err) {
         this.setState({
-          repo: json,
-          tagslist: tags,
-          loading: false
-        });
-      } else {
-        this.setState({
-          tagslist: tags,
+          error: err,
           loading: false
         });
       };
     };
 
     render() {
-      const { repo, tagslist, loading } = this.state;
+      const { repo, tagslist, loading, error } = this.state;
 
       if (loading)
-        return <LoadingAnim/>
+        return (<LoadingAnim/>);
+
+      else if (error)
+        return (<ErrorComponent error={error}/>);
 
       else if (!loading && repo) {
         return (

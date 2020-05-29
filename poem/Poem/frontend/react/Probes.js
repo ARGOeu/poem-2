@@ -10,7 +10,8 @@ import {
   AutocompleteField,
   HistoryComponent,
   DiffElement,
-  NotifyError
+  NotifyError,
+  ErrorComponent
 } from './UIElements';
 import ReactTable from 'react-table';
 import {
@@ -306,7 +307,8 @@ export class ProbeList extends Component {
       isTenantSchema: null,
       search_name: '',
       search_description: '',
-      search_package: ''
+      search_package: '',
+      error: null
     };
 
     this.backend = new Backend();
@@ -320,14 +322,21 @@ export class ProbeList extends Component {
   async componentDidMount() {
     this.setState({loading: true});
 
-    let json = await this.backend.fetchData(this.apiListProbes);
-    let isTenantSchema = await this.backend.isTenantSchema();
-    this.setState({
-      list_probe: json,
-      isTenantSchema: isTenantSchema,
-      loading: false,
-      search_name: ''
-    });
+    try {
+      let json = await this.backend.fetchData(this.apiListProbes);
+      let isTenantSchema = await this.backend.isTenantSchema();
+      this.setState({
+        list_probe: json,
+        isTenantSchema: isTenantSchema,
+        loading: false,
+        search_name: ''
+      });
+    } catch(err) {
+      this.setState({
+        error: err,
+        loading: false
+      });
+    };
   }
 
   render() {
@@ -410,7 +419,7 @@ export class ProbeList extends Component {
       }
     ];
 
-    var { isTenantSchema, list_probe, loading } = this.state;
+    var { isTenantSchema, list_probe, loading, error } = this.state;
 
     if (this.state.search_name) {
       list_probe = list_probe.filter(row =>
@@ -432,6 +441,9 @@ export class ProbeList extends Component {
 
     if (loading)
       return (<LoadingAnim />);
+
+    else if (error)
+      return (<ErrorComponent error={error}/>);
 
     else if (!loading && list_probe) {
       return (
@@ -500,7 +512,8 @@ function ProbeComponent(cloneview=false) {
         areYouSureModal: false,
         modalFunc: undefined,
         modalTitle: undefined,
-        modalMsg: undefined
+        modalMsg: undefined,
+        error: null
       };
 
       this.toggleAreYouSure = this.toggleAreYouSure.bind(this);
@@ -653,24 +666,31 @@ function ProbeComponent(cloneview=false) {
     async componentDidMount() {
       this.setState({loading: true});
 
-      let isTenantSchema = await this.backend.isTenantSchema();
-      let pkgs = await this.backend.fetchData(this.apiListPackages);
-      let list_packages = [];
-      pkgs.forEach(e => list_packages.push(`${e.name} (${e.version})`));
-      if (!this.addview) {
-        let probe = await this.backend.fetchData(`${this.apiProbeName}/${this.name}`);
-        let metrics = await this.backend.fetchData(`${this.apiMetricsForProbes}/${probe.name}(${probe.version})`);
+      try {
+        let isTenantSchema = await this.backend.isTenantSchema();
+        let pkgs = await this.backend.fetchData(this.apiListPackages);
+        let list_packages = [];
+        pkgs.forEach(e => list_packages.push(`${e.name} (${e.version})`));
+        if (!this.addview) {
+          let probe = await this.backend.fetchData(`${this.apiProbeName}/${this.name}`);
+          let metrics = await this.backend.fetchData(`${this.apiMetricsForProbes}/${probe.name}(${probe.version})`);
+          this.setState({
+            probe: probe,
+            list_packages: list_packages,
+            isTenantSchema: isTenantSchema,
+            metrictemplatelist: metrics,
+            loading: false
+          });
+        } else {
+          this.setState({
+            list_packages: list_packages,
+            isTenantSchema: isTenantSchema,
+            loading: false
+          });
+        };
+      } catch(err) {
         this.setState({
-          probe: probe,
-          list_packages: list_packages,
-          isTenantSchema: isTenantSchema,
-          metrictemplatelist: metrics,
-          loading: false
-        });
-      } else {
-        this.setState({
-          list_packages: list_packages,
-          isTenantSchema: isTenantSchema,
+          error: err,
           loading: false
         });
       };
@@ -678,10 +698,13 @@ function ProbeComponent(cloneview=false) {
 
     render() {
       const { probe, update_metrics, isTenantSchema, metrictemplatelist,
-        list_packages, loading } = this.state;
+        list_packages, loading, error } = this.state;
 
       if (loading)
         return(<LoadingAnim/>)
+
+      else if (error)
+        return (<ErrorComponent error={error}/>);
 
       else if (!loading) {
         if (!isTenantSchema) {
@@ -813,7 +836,8 @@ export class ProbeVersionCompare extends Component{
       description2: '',
       repository2: '',
       docurl2: '',
-      comment2: ''
+      comment2: '',
+      error: null
     };
 
     if (this.publicView)
@@ -827,68 +851,78 @@ export class ProbeVersionCompare extends Component{
   async componentDidMount() {
     this.setState({loading: true});
 
-    let json = await this.backend.fetchData(`${this.apiUrl}/${this.name}`);
-    let name1 = '';
-    let version1 = '';
-    let package1 = '';
-    let description1 = '';
-    let repository1 = '';
-    let docurl1 = '';
-    let comment1 = '';
-    let name2 = ''
-    let version2 = '';
-    let package2 = '';
-    let description2 = '';
-    let repository2 = '';
-    let docurl2 = '';
-    let comment2 = '';
+    try {
+      let json = await this.backend.fetchData(`${this.apiUrl}/${this.name}`);
+      let name1 = '';
+      let version1 = '';
+      let package1 = '';
+      let description1 = '';
+      let repository1 = '';
+      let docurl1 = '';
+      let comment1 = '';
+      let name2 = ''
+      let version2 = '';
+      let package2 = '';
+      let description2 = '';
+      let repository2 = '';
+      let docurl2 = '';
+      let comment2 = '';
 
-    json.forEach((e) => {
-      if (e.version == this.version1) {
-        name1 = e.fields.name;
-        version1 = e.fields.version;
-        package1 = e.fields.package;
-        description1 = e.fields.description;
-        repository1 = e.fields.repository;
-        docurl1 = e.fields.docurl;
-        comment1 = e.fields.comment;
-      } else if (e.version === this.version2) {
-        name2 = e.fields.name;
-        version2 = e.fields.version;
-        package2 = e.fields.package;
-        description2 = e.fields.description;
-        repository2 = e.fields.repository;
-        docurl2 = e.fields.docurl;
-        comment2 = e.fields.comment;
-      }
-    });
+      json.forEach((e) => {
+        if (e.version == this.version1) {
+          name1 = e.fields.name;
+          version1 = e.fields.version;
+          package1 = e.fields.package;
+          description1 = e.fields.description;
+          repository1 = e.fields.repository;
+          docurl1 = e.fields.docurl;
+          comment1 = e.fields.comment;
+        } else if (e.version === this.version2) {
+          name2 = e.fields.name;
+          version2 = e.fields.version;
+          package2 = e.fields.package;
+          description2 = e.fields.description;
+          repository2 = e.fields.repository;
+          docurl2 = e.fields.docurl;
+          comment2 = e.fields.comment;
+        }
+      });
 
-    this.setState({
-      name1: name1,
-      version1: version1,
-      package1: package1,
-      description1: description1,
-      repository1: repository1,
-      docurl1: docurl1,
-      comment1: comment1,
-      name2: name2,
-      version2: version2,
-      package2: package2,
-      description2: description2,
-      repository2: repository2,
-      docurl2: docurl2,
-      comment2: comment2,
-      loading: false
-    });
+      this.setState({
+        name1: name1,
+        version1: version1,
+        package1: package1,
+        description1: description1,
+        repository1: repository1,
+        docurl1: docurl1,
+        comment1: comment1,
+        name2: name2,
+        version2: version2,
+        package2: package2,
+        description2: description2,
+        repository2: repository2,
+        docurl2: docurl2,
+        comment2: comment2,
+        loading: false
+      });
+    } catch(err) {
+      this.setState({
+        error: err,
+        loading: false
+      });
+    };
   }
 
   render() {
     var { name1, name2, version1, version2, package1, package2,
       description1, description2, repository1, repository2,
-      docurl1, docurl2, comment1, comment2, loading } = this.state;
+      docurl1, docurl2, comment1, comment2, loading, error } = this.state;
 
     if (loading)
       return (<LoadingAnim/>);
+
+    else if (error)
+      return (<ErrorComponent error={error}/>);
 
     else if (!loading && name1 && name2) {
       return (
@@ -961,35 +995,46 @@ export class ProbeVersionDetails extends Component {
       repository: '',
       docurl: '',
       comment: '',
-      loading: false
+      loading: false,
+      error: null
     };
   }
 
   async componentDidMount() {
     this.setState({loading: true});
 
-    let json = await this.backend.fetchData(`${this.apiUrl}/${this.name}`);
-    json.forEach((e) => {
-      if (e.version === this.version)
-        this.setState({
-          name: e.fields.name,
-          version: e.fields.version,
-          pkg: e.fields.package,
-          description: e.fields.description,
-          repository: e.fields.repository,
-          docurl: e.fields.docurl,
-          comment: e.fields.comment,
-          loading: false
-        });
-    });
+    try {
+      let json = await this.backend.fetchData(`${this.apiUrl}/${this.name}`);
+      json.forEach((e) => {
+        if (e.version === this.version)
+          this.setState({
+            name: e.fields.name,
+            version: e.fields.version,
+            pkg: e.fields.package,
+            description: e.fields.description,
+            repository: e.fields.repository,
+            docurl: e.fields.docurl,
+            comment: e.fields.comment,
+            loading: false
+          });
+      });
+    } catch(err) {
+      this.setState({
+        error: err,
+        loading: false
+      });
+    };
   }
 
   render() {
     const { name, version, pkg, description, repository,
-      docurl, comment, loading} = this.state;
+      docurl, comment, loading, error } = this.state;
 
     if (loading)
       return (<LoadingAnim/>);
+
+    else if (error)
+      return (<ErrorComponent error={error}/>);
 
     else if (!loading && name) {
       return (

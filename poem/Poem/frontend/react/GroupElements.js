@@ -1,6 +1,12 @@
 import React, { Component } from 'react';
 import { Backend } from './DataManager';
-import { LoadingAnim, BaseArgoView, NotifyOk, NotifyError } from './UIElements';
+import {
+  LoadingAnim,
+  BaseArgoView,
+  NotifyOk,
+  NotifyError,
+  ErrorComponent
+} from './UIElements';
 import ReactTable from 'react-table';
 import { Link } from 'react-router-dom';
 import { Formik, Form, Field } from 'formik';
@@ -31,7 +37,8 @@ function GroupList(group, id, name) {
       super(props);
       this.state = {
         loading: false,
-        list_groups: null
+        list_groups: null,
+        error: null
       };
 
       this.location = props.location;
@@ -39,13 +46,20 @@ function GroupList(group, id, name) {
   }
 
   async componentDidMount() {
-      this.setState({loading: true});
+    this.setState({loading: true});
 
+    try {
       let json = await this.backend.fetchResult('/api/v2/internal/usergroups');
       this.setState({
         list_groups: json[group],
         loading: false
       });
+    } catch(err) {
+      this.setState({
+        error: err,
+        loading: false
+      });
+    };
   }
 
   render() {
@@ -60,10 +74,13 @@ function GroupList(group, id, name) {
       }
     ];
 
-    const { loading, list_groups } = this.state;
+    const { loading, list_groups, error } = this.state;
 
     if (loading)
       return(<LoadingAnim/>);
+
+    else if (error)
+      return (<ErrorComponent error={error}/>);
 
     else if (!loading && list_groups) {
       return (
@@ -106,7 +123,8 @@ function GroupChange(gr, id, ttl) {
         areYouSureModal: false,
         modalFunc: undefined,
         modalTitle: undefined,
-        modalMsg: undefined
+        modalMsg: undefined,
+        error: null
       };
 
       this.backend = new Backend();
@@ -256,27 +274,34 @@ function GroupChange(gr, id, ttl) {
     async componentDidMount() {
       this.setState({loading: true});
 
-      let nogroupitems = await this.backend.fetchResult(`/api/v2/internal/${gr}group`);
-      if (!this.addview) {
-        let items = await this.backend.fetchResult(`/api/v2/internal/${gr}group/${this.group}`);
+      try {
+        let nogroupitems = await this.backend.fetchResult(`/api/v2/internal/${gr}group`);
+        if (!this.addview) {
+          let items = await this.backend.fetchResult(`/api/v2/internal/${gr}group/${this.group}`);
+          this.setState({
+            name: this.group,
+            items: items,
+            nogroupitems: nogroupitems,
+            loading: false
+          });
+        } else {
+          this.setState({
+            name: '',
+            items: [],
+            nogroupitems: nogroupitems,
+            loading: false
+          });
+        };
+      } catch(err) {
         this.setState({
-          name: this.group,
-          items: items,
-          nogroupitems: nogroupitems,
-          loading: false
-        });
-      } else {
-        this.setState({
-          name: '',
-          items: [],
-          nogroupitems: nogroupitems,
+          error: err,
           loading: false
         });
       };
     }
 
     render() {
-      const { name, items, loading } = this.state;
+      const { name, items, loading, error } = this.state;
       var nogroupitems = this.state.nogroupitems;
       const BOOTSTRAP_CLASSES = {
         filter: 'form-control',
@@ -287,6 +312,9 @@ function GroupChange(gr, id, ttl) {
 
       if (loading)
         return(<LoadingAnim/>);
+
+      else if (error)
+        return (<ErrorComponent error={error}/>);
 
       else if (!loading) {
         return(
