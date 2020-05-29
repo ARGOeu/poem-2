@@ -57,7 +57,8 @@ export class PackageList extends Component {
         list_repos: null,
         search_name: '',
         search_repo: '',
-        error: null
+        error: null,
+        isTenantSchema: null
       };
     };
 
@@ -67,12 +68,14 @@ export class PackageList extends Component {
       try {
         let pkgs = await this.backend.fetchData('/api/v2/internal/packages');
         let repos = await this.backend.fetchData('/api/v2/internal/yumrepos');
+        let isTenantSchema = await this.backend.isTenantSchema();
         let list_repos = [];
         repos.forEach(e => list_repos.push(e.name + ' (' + e.tag + ')'));
         this.setState({
           list_packages: pkgs,
           list_repos: list_repos,
-          loading: false
+          loading: false,
+          isTenantSchema: isTenantSchema
         });
       } catch(err) {
         this.setState({
@@ -83,7 +86,14 @@ export class PackageList extends Component {
     };
 
     render() {
-      var { list_packages, loading, error } = this.state;
+      var { list_packages, isTenantSchema, loading, error } = this.state;
+      let packagelink = undefined;
+
+      if (!isTenantSchema)
+        packagelink = '/ui/packages/';
+
+      else
+        packagelink = '/ui/administration/packages/'
 
       const columns = [
         {
@@ -100,7 +110,7 @@ export class PackageList extends Component {
           id: 'name',
           minWidth: 80,
           accessor: e =>
-            <Link to={'/ui/packages/' + e.name + '-' + e.version}>{e.name}</Link>,
+            <Link to={packagelink + e.name + '-' + e.version}>{e.name}</Link>,
           filterable: true,
           Filter: (
             <input
@@ -187,6 +197,7 @@ export class PackageChange extends Component {
 
     this.nameversion = props.match.params.nameversion;
     this.addview = props.addview;
+    this.disabled = props.disabled;
     this.location = props.location;
     this.history = props.history;
     this.backend = new Backend();
@@ -426,7 +437,8 @@ export class PackageChange extends Component {
     else if (!loading && list_repos_6) {
       return (
         <BaseArgoView
-          resourcename='package'
+          resourcename={this.disabled ? 'Package details' : 'package'}
+          infoview={this.disabled}
           location={this.location}
           addview={this.addview}
           modal={true}
@@ -458,6 +470,7 @@ export class PackageChange extends Component {
                           name='name'
                           className={`form-control ${props.errors.name && 'border-danger'}`}
                           id='name'
+                          disabled={this.disabled}
                         />
                       </InputGroup>
                       {
@@ -477,7 +490,7 @@ export class PackageChange extends Component {
                           type='text'
                           name='version'
                           value={props.values.present_version ? 'present' : props.values.version}
-                          disabled={props.values.present_version}
+                          disabled={props.values.present_version || this.disabled}
                           className={`form-control ${props.errors.version && 'border-danger'}`}
                           id='version'
                         />
@@ -492,32 +505,49 @@ export class PackageChange extends Component {
                     </Col>
                   </Row>
                     </Col>
-                    <Col md={3}>
-                      <Field
-                        component={Checkbox}
-                        name='present_version'
-                        className='form-control'
-                        id='checkbox'
-                        label='Use version which is present in repo'
-                        onChange={this.toggleCheckbox}
-                      />
-                    </Col>
+                    {
+                      !this.disabled &&
+                        <Col md={3}>
+                          <Field
+                            component={Checkbox}
+                            name='present_version'
+                            className='form-control'
+                            id='checkbox'
+                            label='Use version which is present in repo'
+                            onChange={this.toggleCheckbox}
+                          />
+                        </Col>
+                    }
                   </Row>
                 </FormGroup>
                 <FormGroup>
                   <h4 className="mt-2 p-1 pl-3 text-light text-uppercase rounded" style={{"backgroundColor": "#416090"}}>Yum repo</h4>
                   <Row>
                     <Col md={8}>
-                      <AutocompleteField
-                        {...props}
-                        lists={list_repos_6}
-                        icon='yumrepos'
-                        field='repo_6'
-                        val={props.values.repo_6}
-                        onselect_handler={this.onSelect}
-                        req={props.errors.undefined}
-                        label='CentOS 6 repo'
-                      />
+                      {
+                        this.disabled ?
+                          <InputGroup>
+                            <InputGroupAddon addonType='prepend'>CentOS 6 repo</InputGroupAddon>
+                            <Field
+                              type='text'
+                              className='form-control'
+                              name='repo_6'
+                              id='repo_6'
+                              disabled={true}
+                            />
+                          </InputGroup>
+                        :
+                          <AutocompleteField
+                            {...props}
+                            lists={list_repos_6}
+                            icon='yumrepos'
+                            field='repo_6'
+                            val={props.values.repo_6}
+                            onselect_handler={this.onSelect}
+                            req={props.errors.undefined}
+                            label='CentOS 6 repo'
+                          />
+                      }
                       {
                         props.errors.undefined &&
                           FancyErrorMessage(props.errors.undefined)
@@ -529,16 +559,30 @@ export class PackageChange extends Component {
                   </Row>
                   <Row className='mt-4'>
                     <Col md={8}>
-                      <AutocompleteField
-                        {...props}
-                        lists={list_repos_7}
-                        icon='yumrepos'
-                        field='repo_7'
-                        val={props.values.repo_7}
-                        onselect_handler={this.onSelect}
-                        req={props.errors.undefined}
-                        label='CentOS 7 repo'
-                      />
+                      {
+                        this.disabled ?
+                          <InputGroup>
+                            <InputGroupAddon addonType='prepend'>CentOS 7 repo</InputGroupAddon>
+                            <Field
+                              type='text'
+                              className='form-control'
+                              name='repo_7'
+                              id='repo_7'
+                              disabled={true}
+                            />
+                          </InputGroup>
+                        :
+                          <AutocompleteField
+                            {...props}
+                            lists={list_repos_7}
+                            icon='yumrepos'
+                            field='repo_7'
+                            val={props.values.repo_7}
+                            onselect_handler={this.onSelect}
+                            req={props.errors.undefined}
+                            label='CentOS 7 repo'
+                          />
+                      }
                       {
                         props.errors.undefined &&
                           FancyErrorMessage(props.errors.undefined)
@@ -568,26 +612,27 @@ export class PackageChange extends Component {
                   }
                 </FormGroup>
                 {
-                  <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
-                  {
-                    !this.addview ?
-                      <Button
-                        color="danger"
-                        onClick={() => {
-                          this.toggleAreYouSureSetModal(
-                            'Are you sure you want to delete package?',
-                            'Delete package',
-                            () => this.doDelete(this.nameversion)
-                          )
-                        }}
-                      >
-                        Delete
-                      </Button>
-                    :
-                      <div></div>
-                  }
-                  <Button color="success" id="submit-button" type="submit">Save</Button>
-                </div>
+                  !this.disabled &&
+                    <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
+                      {
+                        !this.addview ?
+                          <Button
+                            color="danger"
+                            onClick={() => {
+                              this.toggleAreYouSureSetModal(
+                                'Are you sure you want to delete package?',
+                                'Delete package',
+                                () => this.doDelete(this.nameversion)
+                              )
+                            }}
+                          >
+                            Delete
+                          </Button>
+                        :
+                          <div></div>
+                      }
+                      <Button color="success" id="submit-button" type="submit">Save</Button>
+                    </div>
             }
               </Form>
             )}
