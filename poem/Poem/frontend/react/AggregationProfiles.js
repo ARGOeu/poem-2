@@ -52,6 +52,10 @@ function matchItem(item, value) {
 const AggregationProfilesSchema = Yup.object().shape({
   name: Yup.string().required('Required'),
   groupname: Yup.string().required('Required'),
+  metric_operation: Yup.string().required('Required'),
+  profile_operation: Yup.string().required('Required'),
+  endpoint_group: Yup.string().required('Required'),
+  metric_profile: Yup.string().required('Required'),
   groups: Yup.array()
   .of(Yup.object().shape({
     services: Yup.array().of(
@@ -259,7 +263,7 @@ const Service = ({name, service, operation, list_services, list_operations,
       form.errors.groups[groupindex].services && form.errors.groups[groupindex].services[index] &&
       <Row>
         <Col md={8}>
-          { FancyErrorMessage(form.errors.groups[groupindex].services[index].name) }
+            { FancyErrorMessage(form.errors.groups[groupindex].services[index].name) }
         </Col>
       </Row>
     }
@@ -272,19 +276,19 @@ const AggregationProfilesForm = ({ values, errors, historyview=false, write_perm
 (
   <>
     <ProfileMainInfo
-    values={values}
-    errors={errors}
-    fieldsdisable={historyview}
-    grouplist={
-      historyview ?
-        undefined
-      :
-        write_perm ?
-          list_user_groups
+      values={values}
+      errors={errors}
+      fieldsdisable={historyview}
+      grouplist={
+        historyview ?
+          undefined
         :
-          [values.groupname]
-    }
-    profiletype='aggregation'
+          write_perm ?
+            list_user_groups
+          :
+            [values.groupname]
+      }
+      profiletype='aggregation'
   />
     <h4 className="mt-4 alert-info p-1 pl-3 text-light text-uppercase rounded" style={{'backgroundColor': "#416090"}}>Operations, endpoint group and metric profile</h4>
     <Row className='mt-4'>
@@ -311,7 +315,7 @@ const AggregationProfilesForm = ({ values, errors, historyview=false, write_perm
                     component={DropDown}
                     data={insertSelectPlaceholder(logic_operations, '')}
                     required={true}
-                    class_name='custom-select'
+                    class_name='form-control custom-select'
                     id='aggregationMetric'
                   />
               }
@@ -319,6 +323,10 @@ const AggregationProfilesForm = ({ values, errors, historyview=false, write_perm
           </Row>
           <Row>
             <Col md={12}>
+              {
+                errors && errors.metric_operation &&
+                  FancyErrorMessage(errors.metric_operation)
+              }
               <FormText>
               Logical operation that will be applied between metrics of each service flavour
               </FormText>
@@ -355,6 +363,10 @@ const AggregationProfilesForm = ({ values, errors, historyview=false, write_perm
           </Row>
           <Row>
             <Col md={12}>
+              {
+                errors && errors.profile_operation &&
+                  FancyErrorMessage(errors.profile_operation)
+              }
               <FormText>
               Logical operation that will be applied between defined service flavour groups
               </FormText>
@@ -387,6 +399,10 @@ const AggregationProfilesForm = ({ values, errors, historyview=false, write_perm
                     id='aggregationEndpointGroup'
                   />
               }
+              {
+                errors && errors.endpoint_group &&
+                  FancyErrorMessage(errors.endpoint_group)
+              }
             </Col>
           </Row>
         </FormGroup>
@@ -411,6 +427,10 @@ const AggregationProfilesForm = ({ values, errors, historyview=false, write_perm
                 required={true}
                 class_name='custom-select'
               />
+          }
+          {
+            errors && errors.metric_profile &&
+              FancyErrorMessage(errors.metric_profile)
           }
           <FormText>
           Metric profile associated to Aggregation profile. Service flavours defined in service flavour groups originate from selected metric profile.
