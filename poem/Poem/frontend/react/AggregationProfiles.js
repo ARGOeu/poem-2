@@ -58,9 +58,12 @@ const AggregationProfilesSchema = Yup.object().shape({
   metric_profile: Yup.string().required('Required'),
   groups: Yup.array()
   .of(Yup.object().shape({
+    name: Yup.string().required('Required'),
+    operation: Yup.string().required('Required'),
     services: Yup.array().of(
       Yup.object().shape({
-        name: Yup.string().required('Required')
+        name: Yup.string().required('Required'),
+        operation: Yup.string().required('Required')
       })
     )
   }))
@@ -117,7 +120,9 @@ const Group = ({operation, services, list_operations, list_services,
                   name={`groups.${groupindex}.name`}
                   placeholder="Name of service group"
                   required={true}
-                  className="form-control"
+                  className={`${form.errors && form.errors.groups &&
+                    form.errors.groups[groupindex] &&
+                    form.errors.groups[groupindex].name ? "form-control border-danger" : "form-control"}`}
                 />
               </Col>
               <Col sm={{size: 2}} md={{size: 1}} className="pl-1">
@@ -148,9 +153,10 @@ const Group = ({operation, services, list_operations, list_services,
           <CardFooter className="p-1 d-flex justify-content-center">
             <DropDown
               field={{name: "operation", value: operation}}
-              data={list_operations}
+              data={insertSelectPlaceholder(list_operations, 'Select')}
               prefix={`groups.${groupindex}`}
               class_name="custom-select col-2"
+              errors={form.errors && form.errors.groups && form.errors.groups[groupindex]}
             />
           </CardFooter>
         </Card>
@@ -159,7 +165,8 @@ const Group = ({operation, services, list_operations, list_services,
         <div className="group-operation" key={groupindex}>
           <DropDown
             field={{name: 'profile_operation', value: form.values.profile_operation}}
-            data={list_operations}/>
+            data={insertSelectPlaceholder(list_operations, 'Select')}
+          />
         </div>
       </Col>
     </React.Fragment>
@@ -193,7 +200,7 @@ const ServiceList = ({services, list_services=[], list_operations=[], last_servi
           last={i === services.length - 1}
           form={form}
           isnew={service.isnew}
-          ismissing={list_services.indexOf(service.name) === -1}
+          ismissing={service.name && list_services.indexOf(service.name) === -1}
         />
       )}
     />
@@ -209,7 +216,7 @@ const Service = ({name, service, operation, list_services, list_operations,
       <Col md={8}>
         <Autocomplete
           inputProps={{
-            className: `"form-control custom-select " ${isnew && !groupnew ? "border-success" : ""} ${ismissing ? "border-danger": ""}`
+            className: `"form-control custom-select " ${isnew && !groupnew ? "border-success" : ""} ${ismissing ? "border-primary": ""}`
           }}
           getItemValue={(item) => item}
           items={list_services}
@@ -237,7 +244,7 @@ const Service = ({name, service, operation, list_services, list_operations,
         <div className="input-group">
           <DropDown
             field={{name: "operation", value: operation}}
-            data={list_operations}
+            data={insertSelectPlaceholder(list_operations, 'Select')}
             prefix={`groups.${groupindex}.services.${index}`}
             class_name="custom-select service-operation"
             isnew={isnew && !groupnew}
@@ -258,15 +265,24 @@ const Service = ({name, service, operation, list_services, list_operations,
         </Button>
       </Col>
     </Row>
+    <Row>
     {
       form.errors && form.errors.groups && form.errors.groups[groupindex] &&
       form.errors.groups[groupindex].services && form.errors.groups[groupindex].services[index] &&
-      <Row>
+      form.errors.groups[groupindex].services[index].name &&
         <Col md={8}>
             { FancyErrorMessage(form.errors.groups[groupindex].services[index].name) }
         </Col>
-      </Row>
     }
+    {
+      form.errors && form.errors.groups && form.errors.groups[groupindex] &&
+      form.errors.groups[groupindex].services && form.errors.groups[groupindex].services[index] &&
+      form.errors.groups[groupindex].services[index].operation &&
+        <Col md={{offset: form.errors.groups[groupindex].services[index].name ? 0 : 8, size: 2}}>
+            { FancyErrorMessage(form.errors.groups[groupindex].services[index].operation) }
+        </Col>
+    }
+    </Row>
   </React.Fragment>
 )
 
@@ -329,7 +345,7 @@ const AggregationProfilesForm = ({ values, errors, historyview=false, write_perm
                   FancyErrorMessage(errors.metric_operation)
               }
               <FormText>
-              Logical operation that will be applied between metrics of each service flavour
+                Logical operation that will be applied between metrics of each service flavour
               </FormText>
             </Col>
           </Row>
@@ -370,7 +386,7 @@ const AggregationProfilesForm = ({ values, errors, historyview=false, write_perm
                   FancyErrorMessage(errors.profile_operation)
               }
               <FormText>
-              Logical operation that will be applied between defined service flavour groups
+                Logical operation that will be applied between defined service flavour groups
               </FormText>
             </Col>
           </Row>
@@ -437,7 +453,7 @@ const AggregationProfilesForm = ({ values, errors, historyview=false, write_perm
               FancyErrorMessage(errors.metric_profile)
           }
           <FormText>
-          Metric profile associated to Aggregation profile. Service flavours defined in service flavour groups originate from selected metric profile.
+            Metric profile associated to Aggregation profile. Service flavours defined in service flavour groups originate from selected metric profile.
           </FormText>
         </FormGroup>
       </Col>
@@ -910,7 +926,7 @@ export class AggregationProfilesChange extends Component
                   <Alert color='danger'>
                     <center>
                       <FontAwesomeIcon icon={faInfoCircle} size="lg" color="black"/> &nbsp;
-                      Some Service Flavours used in Aggregation profile are not presented in associated Metric profile meaning that two profiles are out of sync. Check below for Service Flavours in red borders.
+                      Some Service Flavours used in Aggregation profile are not presented in associated Metric profile meaning that two profiles are out of sync. Check below for Service Flavours in blue borders.
                     </center>
                   </Alert>
                 }
