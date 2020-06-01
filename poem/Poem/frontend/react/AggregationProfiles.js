@@ -317,6 +317,7 @@ const AggregationProfilesForm = ({ values, errors, historyview=false, write_perm
                     required={true}
                     class_name='custom-select'
                     id='aggregationMetric'
+                    errors={errors}
                   />
               }
             </Col>
@@ -357,6 +358,7 @@ const AggregationProfilesForm = ({ values, errors, historyview=false, write_perm
                     required={true}
                     class_name='custom-select'
                     id='aggregationOperation'
+                    errors={errors}
                   />
               }
             </Col>
@@ -397,6 +399,7 @@ const AggregationProfilesForm = ({ values, errors, historyview=false, write_perm
                     required={true}
                     class_name='custom-select'
                     id='aggregationEndpointGroup'
+                    errors={errors}
                   />
               }
               {
@@ -426,6 +429,7 @@ const AggregationProfilesForm = ({ values, errors, historyview=false, write_perm
                 data={insertSelectPlaceholder(list_id_metric_profiles.map(e => e.name), 'Select')}
                 required={true}
                 class_name='custom-select'
+                errors={errors}
               />
           }
           {

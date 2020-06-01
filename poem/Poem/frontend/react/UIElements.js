@@ -126,11 +126,11 @@ export const Icon = props =>
     return <FontAwesomeIcon icon={link_icon.get(props.i)} size={props.i === 'yumrepos' || props.i === 'metricprofiles' ? 'sm' : '1x'} fixedWidth/>
 }
 
-export const DropDown = ({field, data=[], prefix="", class_name="", isnew=false}) =>
+export const DropDown = ({field, data=[], prefix="", class_name="", isnew=false, errors=undefined}) =>
   <Field component="select"
     name={prefix ? `${prefix}.${field.name}` : field.name}
     required={true}
-    className={`form-control ${class_name} ${isnew ? 'border-success' : ''}`}
+    className={`form-control ${class_name} ${isnew ? 'border-success' : `${errors && errors[field.name] ? 'border-danger' : ''}`}`}
   >
     {
       data.map((name, i) => (
