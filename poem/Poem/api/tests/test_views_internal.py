@@ -1,7 +1,7 @@
 import datetime
 import json
 from collections import OrderedDict
-from unittest.mock import patch
+from unittest.mock import patch, call
 
 import requests
 from Poem.api import views_internal as views
@@ -9,7 +9,8 @@ from Poem.api.internal_views.utils import inline_metric_for_db
 from Poem.api.internal_views.utils import sync_webapi
 from Poem.api.models import MyAPIKey
 from Poem.helpers.history_helpers import create_comment, update_comment
-from Poem.helpers.metrics_helpers import update_metrics_in_profiles
+from Poem.helpers.metrics_helpers import update_metrics_in_profiles, \
+    update_metrics
 from Poem.helpers.versioned_comments import new_comment
 from Poem.poem import models as poem_models
 from Poem.poem_super_admin import models as admin_models
@@ -37,7 +38,7 @@ def encode_data(data):
     return content, content_type
 
 
-def mocked_func(*args):
+def mocked_func(*args, **kwargs):
     pass
 
 
@@ -6320,97 +6321,6 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
-    @patch('Poem.helpers.metrics_helpers.requests.put')
-    @patch('Poem.helpers.metrics_helpers.requests.get')
-    @patch('Poem.helpers.metrics_helpers.MyAPIKey.objects.get')
-    def test_update_metrics_in_profiles(self, mock_key, mock_get, mock_put):
-        with self.settings(WEBAPI_METRIC='https://mock.api.url'):
-            mock_key.return_value = MyAPIKey(name='WEB-API', token='mock_key')
-            mock_get.side_effect = mocked_web_api_metric_profiles
-            msgs = update_metrics_in_profiles('metric1', 'new.metric1')
-            mock_put.assert_called_once()
-            mock_put.assert_called_with(
-                'https://mock.api.url/11111111-2222-3333-4444-555555555555',
-                headers={'Accept': 'application/json', 'x-api-key': 'mock_key'},
-                data=json.dumps(
-                    {
-                        "id": "11111111-2222-3333-4444-555555555555",
-                        "name": "PROFILE1",
-                        "description": "First profile",
-                        "services": [
-                            {
-                                "service": "service1",
-                                "metrics": [
-                                    "new.metric1",
-                                    "metric2"
-                                ]
-                            },
-                            {
-                                "service": "service2",
-                                "metrics": [
-                                    "metric3",
-                                    "metric4"
-                                ]
-                            }
-                        ]
-                    }
-                )
-            )
-            self.assertEqual(msgs, [])
-
-    @patch('Poem.helpers.metrics_helpers.requests.get')
-    @patch('Poem.helpers.metrics_helpers.MyAPIKey.objects.get')
-    def test_update_metrics_in_profiles_wrong_token(self, mock_key, mock_get):
-        with self.settings(WEBAPI_METRIC='https://mock.api.url'):
-            mock_key.return_value = MyAPIKey(name='WEB-API', token='wrong_key')
-            mock_get.side_effect = mocked_web_api_metric_profiles_wrong_token
-            msgs = update_metrics_in_profiles('metric1', 'new.metric1')
-            self.assertEqual(
-                msgs,
-                [
-                    'TEST: Error trying to update metric in metric profiles: '
-                    '401 Client Error: Unauthorized.'
-                    '\nPlease update metric profiles manually.'
-                ]
-            )
-
-    def test_update_metrics_in_profiles_nonexisting_key(self):
-        with self.settings(WEBAPI_METRIC='https://mock.api.url'):
-            msgs = update_metrics_in_profiles('metric1', 'new.metric1')
-            self.assertEqual(
-                msgs,
-                [
-                    'TEST: No "WEB-API" key in the DB!\n'
-                    'Please update metric profiles manually.'
-                ]
-            )
-
-    @patch('Poem.helpers.metrics_helpers.requests.put')
-    @patch('Poem.helpers.metrics_helpers.requests.get')
-    @patch('Poem.helpers.metrics_helpers.MyAPIKey.objects.get')
-    def test_update_metrics_in_profiles_if_response_empty(
-            self, mock_key, mock_get, mock_put
-    ):
-        with self.settings(WEBAPI_METRIC='https://mock.api.url'):
-            mock_key.return_value = MyAPIKey(name='WEB-API', token='mock_key')
-            mock_get.side_effect = mocked_web_api_metric_profiles_empty
-            msgs = update_metrics_in_profiles('metric1', 'new.metric1')
-            self.assertEqual(msgs, [])
-            self.assertFalse(mock_put.called)
-
-    @patch('Poem.helpers.metrics_helpers.requests.put')
-    @patch('Poem.helpers.metrics_helpers.requests.get')
-    @patch('Poem.helpers.metrics_helpers.MyAPIKey.objects.get')
-    def test_update_metrics_in_profiles_if_same_name(
-            self, mock_key, mock_get, mock_put
-    ):
-        with self.settings(WEBAPI_METRIC='https://mock.api.url'):
-            mock_key.return_value = MyAPIKey(name='WEB-API', token='mock_key')
-            mock_get.side_effect = mocked_web_api_metric_profiles
-            msgs = update_metrics_in_profiles('metric1', 'metric1')
-            self.assertEqual(msgs, [])
-            self.assertFalse(mock_put.called)
-
 
 class ListMetricTemplateTypesAPIViewTests(TenantTestCase):
     def setUp(self):
@@ -10634,3 +10544,562 @@ class ChangePasswordTests(TenantTestCase):
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(response.data['detail'], 'User not found.')
+
+
+class MetricsHelpersTests(TenantTestCase):
+    def setUp(self):
+        for schema in [self.tenant.schema_name, get_public_schema_name()]:
+            with schema_context(schema):
+                if schema == get_public_schema_name():
+                    Tenant.objects.create(
+                        name='public', domain_url='public',
+                        schema_name=get_public_schema_name()
+                    )
+
+        self.user = CustUser.objects.create_user(username='testuser')
+
+        self.mtype1 = admin_models.MetricTemplateType.objects.create(
+            name='Active'
+        )
+        self.mtype2 = admin_models.MetricTemplateType.objects.create(name='Passive')
+
+        self.mtype3 = poem_models.MetricType.objects.create(name='Active')
+        mtype4 = poem_models.MetricType.objects.create(name='Passive')
+
+        tag1 = admin_models.OSTag.objects.create(name='CentOS 6')
+        tag2 = admin_models.OSTag.objects.create(name='CentOS 7')
+
+        repo1 = admin_models.YumRepo.objects.create(name='repo-1', tag=tag1)
+        repo2 = admin_models.YumRepo.objects.create(name='repo-2', tag=tag2)
+
+        package1 = admin_models.Package.objects.create(
+            name='nagios-plugins-argo',
+            version='0.1.7'
+        )
+        package1.repos.add(repo1)
+
+        package2 = admin_models.Package.objects.create(
+            name='nagios-plugins-argo',
+            version='0.1.8'
+        )
+        package2.repos.add(repo1, repo2)
+
+        package3 = admin_models.Package.objects.create(
+            name='nagios-plugins-argo',
+            version='0.1.11'
+        )
+        package3.repos.add(repo2)
+
+        probe1 = admin_models.Probe.objects.create(
+            name='ams-probe',
+            package=package1,
+            description='Probe is inspecting AMS service by trying to publish '
+                        'and consume randomly generated messages.',
+            comment='Initial version.',
+            repository='https://github.com/ARGOeu/nagios-plugins-argo',
+            docurl='https://github.com/ARGOeu/nagios-plugins-argo/blob/master/'
+                   'README.md'
+        )
+
+        self.probeversion1 = admin_models.ProbeHistory.objects.create(
+            object_id=probe1,
+            name=probe1.name,
+            package=probe1.package,
+            description=probe1.description,
+            comment=probe1.comment,
+            repository=probe1.repository,
+            docurl=probe1.docurl,
+            date_created=datetime.datetime.now(),
+            version_comment='Initial version.',
+            version_user=self.user.username,
+        )
+
+        probe1.package = package2
+        probe1.comment = 'Newer version.'
+        probe1.save()
+
+        self.probeversion2 = admin_models.ProbeHistory.objects.create(
+            object_id=probe1,
+            name=probe1.name,
+            package=probe1.package,
+            description=probe1.description,
+            comment=probe1.comment,
+            repository=probe1.repository,
+            docurl=probe1.docurl,
+            date_created=datetime.datetime.now(),
+            version_comment='[{"changed": {"fields": ["package", "comment"]}}]',
+            version_user=self.user.username
+        )
+
+        probe1.package = package3
+        probe1.comment = 'Newest version.'
+        probe1.save()
+
+        self.probeversion3 = admin_models.ProbeHistory.objects.create(
+            object_id=probe1,
+            name=probe1.name,
+            package=probe1.package,
+            description=probe1.description,
+            comment=probe1.comment,
+            repository=probe1.repository,
+            docurl=probe1.docurl,
+            date_created=datetime.datetime.now(),
+            version_comment='[{"changed": {"fields": ["package", "comment"]}}]',
+            version_user=self.user.username
+        )
+
+        self.metrictemplate1 = admin_models.MetricTemplate.objects.create(
+            name='argo.AMS-Check',
+            mtype=self.mtype1,
+            probekey=self.probeversion1,
+            description='Some description of argo.AMS-Check metric template.',
+            probeexecutable='["ams-probe"]',
+            config='["maxCheckAttempts 3", "timeout 60",'
+                   ' "path /usr/libexec/argo-monitoring/probes/argo",'
+                   ' "interval 5", "retryInterval 3"]',
+            attribute='["argo.ams_TOKEN --token"]',
+            flags='["OBSESS 1"]',
+            parameter='["--project EGI"]'
+        )
+
+        self.metrictemplate2 = admin_models.MetricTemplate.objects.create(
+            name='org.apel.APEL-Pub',
+            flags='["OBSESS 1", "PASSIVE 1"]',
+            mtype=self.mtype2
+        )
+
+        admin_models.MetricTemplateHistory.objects.create(
+            object_id=self.metrictemplate1,
+            name=self.metrictemplate1.name,
+            mtype=self.metrictemplate1.mtype,
+            probekey=self.metrictemplate1.probekey,
+            description=self.metrictemplate1.description,
+            probeexecutable=self.metrictemplate1.probeexecutable,
+            config=self.metrictemplate1.config,
+            attribute=self.metrictemplate1.attribute,
+            dependency=self.metrictemplate1.dependency,
+            flags=self.metrictemplate1.flags,
+            files=self.metrictemplate1.files,
+            parameter=self.metrictemplate1.parameter,
+            fileparameter=self.metrictemplate1.fileparameter,
+            date_created=datetime.datetime.now(),
+            version_user=self.user.username,
+            version_comment='Initial version.',
+        )
+
+        self.metrictemplate1.probekey = self.probeversion2
+        self.metrictemplate1.config = '["maxCheckAttempts 4", "timeout 70", ' \
+                                      '"path /usr/libexec/argo-monitoring/", ' \
+                                      '"interval 5", "retryInterval 3"]'
+        self.metrictemplate1.save()
+
+        admin_models.MetricTemplateHistory.objects.create(
+            object_id=self.metrictemplate1,
+            name=self.metrictemplate1.name,
+            mtype=self.metrictemplate1.mtype,
+            description=self.metrictemplate1.description,
+            probekey=self.metrictemplate1.probekey,
+            probeexecutable=self.metrictemplate1.probeexecutable,
+            config=self.metrictemplate1.config,
+            attribute=self.metrictemplate1.attribute,
+            dependency=self.metrictemplate1.dependency,
+            flags=self.metrictemplate1.flags,
+            files=self.metrictemplate1.files,
+            parameter=self.metrictemplate1.parameter,
+            fileparameter=self.metrictemplate1.fileparameter,
+            date_created=datetime.datetime.now(),
+            version_user=self.user.username,
+            version_comment=create_comment(self.metrictemplate1)
+        )
+
+        admin_models.MetricTemplateHistory.objects.create(
+            object_id=self.metrictemplate2,
+            name=self.metrictemplate2.name,
+            mtype=self.metrictemplate2.mtype,
+            description=self.metrictemplate2.description,
+            probekey=self.metrictemplate2.probekey,
+            probeexecutable=self.metrictemplate2.probeexecutable,
+            config=self.metrictemplate2.config,
+            attribute=self.metrictemplate2.attribute,
+            dependency=self.metrictemplate2.dependency,
+            flags=self.metrictemplate2.flags,
+            files=self.metrictemplate2.files,
+            parameter=self.metrictemplate2.parameter,
+            fileparameter=self.metrictemplate2.fileparameter,
+            date_created=datetime.datetime.now(),
+            version_user=self.user.username,
+            version_comment='Initial version.',
+        )
+
+        group = poem_models.GroupOfMetrics.objects.create(name='TEST')
+        self.ct = ContentType.objects.get_for_model(poem_models.Metric)
+
+        self.metric1 = poem_models.Metric.objects.create(
+            name=self.metrictemplate1.name,
+            group=group,
+            mtype=self.mtype3,
+            description=self.metrictemplate1.description,
+            probekey=self.metrictemplate1.probekey,
+            probeexecutable=self.metrictemplate1.probeexecutable,
+            config=self.metrictemplate1.config,
+            attribute=self.metrictemplate1.attribute,
+            dependancy=self.metrictemplate1.dependency,
+            flags=self.metrictemplate1.flags,
+            files=self.metrictemplate1.files,
+            parameter=self.metrictemplate1.parameter,
+            fileparameter=self.metrictemplate1.fileparameter,
+        )
+
+        poem_models.TenantHistory.objects.create(
+            object_id=self.metric1.id,
+            object_repr=self.metric1.__str__(),
+            serialized_data=serializers.serialize(
+                'json', [self.metric1],
+                use_natural_foreign_keys=True,
+                use_natural_primary_keys=True
+            ),
+            content_type=self.ct,
+            date_created=datetime.datetime.now(),
+            comment='Initial version.',
+            user=self.user.username
+        )
+
+        self.metric2 = poem_models.Metric.objects.create(
+            name=self.metrictemplate2.name,
+            group=group,
+            mtype=mtype4,
+            description=self.metrictemplate2.description,
+            probekey=self.metrictemplate2.probekey,
+            probeexecutable=self.metrictemplate2.probeexecutable,
+            config=self.metrictemplate2.config,
+            attribute=self.metrictemplate2.attribute,
+            dependancy=self.metrictemplate2.dependency,
+            flags=self.metrictemplate2.flags,
+            files=self.metrictemplate2.files,
+            parameter=self.metrictemplate2.parameter,
+            fileparameter=self.metrictemplate2.fileparameter,
+        )
+
+        poem_models.TenantHistory.objects.create(
+            object_id=self.metric2.id,
+            object_repr=self.metric2.__str__(),
+            serialized_data=serializers.serialize(
+                'json', [self.metric2],
+                use_natural_foreign_keys=True,
+                use_natural_primary_keys=True
+            ),
+            content_type=self.ct,
+            date_created=datetime.datetime.now(),
+            comment='Initial version.',
+            user=self.user.username
+        )
+
+    @patch('Poem.helpers.metrics_helpers.update_metrics_in_profiles')
+    def test_update_active_metrics(self, mock_update):
+        mock_update.return_value = []
+        metrictemplate = admin_models.MetricTemplate(
+            name='argo.AMS-Check-new',
+            mtype=self.mtype1,
+            description='New description for the metric.',
+            probekey=self.probeversion2,
+            parent='argo.AMS-Check',
+            probeexecutable='ams-probe',
+            config='["maxCheckAttempts 4", "timeout 70", '
+                   '"path /usr/libexec/argo-monitoring/probes/argo", '
+                   '"interval 6", "retryInterval 4"]',
+            attribute='[argo.ams_TOKEN2 --token]',
+            dependency='["dep-key dep-val"]',
+            parameter='["par-key par-val"]',
+            flags='["flag-key flag-val"]',
+            files='["file-key file-val"]',
+            fileparameter='["fp-key fp-val"]'
+        )
+        update_metrics(
+            metrictemplate, 'argo.AMS-Check', self.probeversion2
+        )
+        mock_update.assert_called_once()
+        mock_update.assert_has_calls([
+            call('argo.AMS-Check', 'argo.AMS-Check-new')
+        ])
+        metric = poem_models.Metric.objects.get(id=self.metric1.id)
+        metric_versions = poem_models.TenantHistory.objects.filter(
+            object_id=metric.id, content_type=self.ct
+        ).order_by('-date_created')
+        serialized_data = json.loads(
+            metric_versions[0].serialized_data
+        )[0]['fields']
+        self.assertEqual(metric_versions.count(), 1)
+        self.assertEqual(metric.name, metrictemplate.name)
+        self.assertEqual(metric.mtype.name, metrictemplate.mtype.name)
+        self.assertEqual(metric.probekey, metrictemplate.probekey)
+        self.assertEqual(metric.description, metrictemplate.description)
+        self.assertEqual(metric.group.name, 'TEST')
+        self.assertEqual(metric.parent, metrictemplate.parent)
+        self.assertEqual(metric.probeexecutable, metrictemplate.probeexecutable)
+        self.assertEqual(
+            metric.config,
+            '["maxCheckAttempts 4", "timeout 70", '
+            '"path /usr/libexec/argo-monitoring/probes/argo", '
+            '"interval 5", "retryInterval 3"]'
+        )
+        self.assertEqual(metric.attribute, metrictemplate.attribute)
+        self.assertEqual(metric.dependancy, metrictemplate.dependency)
+        self.assertEqual(metric.flags, metrictemplate.flags)
+        self.assertEqual(metric.files, metrictemplate.files)
+        self.assertEqual(metric.parameter, metrictemplate.parameter)
+        self.assertEqual(metric.fileparameter, metrictemplate.fileparameter)
+        self.assertEqual(serialized_data['name'], metric.name)
+        self.assertEqual(serialized_data['mtype'], [metric.mtype.name])
+        self.assertEqual(serialized_data['description'], metric.description)
+        self.assertEqual(
+            serialized_data['probekey'],
+            [metric.probekey.name, metric.probekey.package.version]
+        )
+        self.assertEqual(serialized_data['group'], ['TEST'])
+        self.assertEqual(serialized_data['parent'], metric.parent)
+        self.assertEqual(
+            serialized_data['probeexecutable'], metric.probeexecutable
+        )
+        self.assertEqual(serialized_data['config'], metric.config)
+        self.assertEqual(serialized_data['attribute'], metric.attribute)
+        self.assertEqual(serialized_data['dependancy'], metric.dependancy)
+        self.assertEqual(serialized_data['flags'], metric.flags)
+        self.assertEqual(serialized_data['files'], metric.files)
+        self.assertEqual(serialized_data['parameter'], metric.parameter)
+        self.assertEqual(serialized_data['fileparameter'], metric.fileparameter)
+
+    @patch('Poem.helpers.metrics_helpers.update_metrics_in_profiles')
+    def test_update_passive_metrics(self, mock_update):
+        mock_update.return_value = []
+        metrictemplate = admin_models.MetricTemplate(
+            name='org.apel.APEL-Pub-new',
+            mtype=self.mtype2,
+            description='Added description for org.apel.APEL-Pub-new.',
+            probekey=None,
+            parent='',
+            probeexecutable='',
+            config='',
+            attribute='',
+            dependency='',
+            parameter='',
+            flags='["PASSIVE 1"]',
+            files='',
+            fileparameter=''
+        )
+        update_metrics(metrictemplate, 'org.apel.APEL-Pub', None)
+        mock_update.assert_called_once()
+        mock_update.assert_has_calls([
+            call('org.apel.APEL-Pub', 'org.apel.APEL-Pub-new')
+        ])
+        metric = poem_models.Metric.objects.get(id=self.metric2.id)
+        metric_versions = poem_models.TenantHistory.objects.filter(
+            object_id=metric.id, content_type=self.ct
+        ).order_by('-date_created')
+        serialized_data = json.loads(
+            metric_versions[0].serialized_data
+        )[0]['fields']
+        self.assertEqual(metric_versions.count(), 1)
+        self.assertEqual(metric.name, metrictemplate.name)
+        self.assertEqual(metric.mtype.name, metrictemplate.mtype.name)
+        self.assertEqual(metric.probekey, metrictemplate.probekey)
+        self.assertEqual(metric.description, metrictemplate.description)
+        self.assertEqual(metric.group.name, 'TEST')
+        self.assertEqual(metric.parent, metrictemplate.parent)
+        self.assertEqual(metric.probeexecutable,
+                         metrictemplate.probeexecutable)
+        self.assertEqual(metric.config, '')
+        self.assertEqual(metric.attribute, metrictemplate.attribute)
+        self.assertEqual(metric.dependancy, metrictemplate.dependency)
+        self.assertEqual(metric.flags, metrictemplate.flags)
+        self.assertEqual(metric.files, metrictemplate.files)
+        self.assertEqual(metric.parameter, metrictemplate.parameter)
+        self.assertEqual(metric.fileparameter, metrictemplate.fileparameter)
+        self.assertEqual(serialized_data['name'], metric.name)
+        self.assertEqual(serialized_data['mtype'], [metric.mtype.name])
+        self.assertEqual(serialized_data['description'], metric.description)
+        self.assertEqual(serialized_data['probekey'], None)
+        self.assertEqual(serialized_data['group'], ['TEST'])
+        self.assertEqual(serialized_data['parent'], metric.parent)
+        self.assertEqual(
+            serialized_data['probeexecutable'], metric.probeexecutable
+        )
+        self.assertEqual(serialized_data['config'], metric.config)
+        self.assertEqual(serialized_data['attribute'], metric.attribute)
+        self.assertEqual(serialized_data['dependancy'], metric.dependancy)
+        self.assertEqual(serialized_data['flags'], metric.flags)
+        self.assertEqual(serialized_data['files'], metric.files)
+        self.assertEqual(serialized_data['parameter'], metric.parameter)
+        self.assertEqual(serialized_data['fileparameter'],
+                         metric.fileparameter)
+
+    @patch('Poem.helpers.metrics_helpers.update_metrics_in_profiles')
+    def test_update_metrics_from_metrictemplatehistory_instance(
+            self, mock_update
+    ):
+        mock_update.return_value = []
+        metrictemplate = admin_models.MetricTemplateHistory(
+            object_id=self.metrictemplate1,
+            name='argo.AMS-Check-new',
+            mtype=self.mtype1,
+            description='New description for the metric.',
+            probekey=self.probeversion2,
+            parent='argo.AMS-Check',
+            probeexecutable='ams-probe',
+            config='["maxCheckAttempts 4", "timeout 70", '
+                   '"path /usr/libexec/argo-monitoring/probes/argo", '
+                   '"interval 6", "retryInterval 4"]',
+            attribute='[argo.ams_TOKEN2 --token]',
+            dependency='["dep-key dep-val"]',
+            parameter='["par-key par-val"]',
+            flags='["flag-key flag-val"]',
+            files='["file-key file-val"]',
+            fileparameter='["fp-key fp-val"]',
+            date_created=datetime.datetime.now(),
+            version_user=self.user.username,
+            version_comment=create_comment(self.metrictemplate1)
+        )
+        update_metrics(
+            metrictemplate, 'argo.AMS-Check', self.probeversion2
+        )
+        mock_update.assert_called_once()
+        mock_update.assert_has_calls([
+            call('argo.AMS-Check', 'argo.AMS-Check-new')
+        ])
+        metric = poem_models.Metric.objects.get(id=self.metric1.id)
+        metric_versions = poem_models.TenantHistory.objects.filter(
+            object_id=metric.id, content_type=self.ct
+        ).order_by('-date_created')
+        serialized_data = json.loads(
+            metric_versions[0].serialized_data
+        )[0]['fields']
+        self.assertEqual(metric_versions.count(), 1)
+        self.assertEqual(metric.name, metrictemplate.name)
+        self.assertEqual(metric.mtype.name, metrictemplate.mtype.name)
+        self.assertEqual(metric.probekey, metrictemplate.probekey)
+        self.assertEqual(metric.description, metrictemplate.description)
+        self.assertEqual(metric.group.name, 'TEST')
+        self.assertEqual(metric.parent, metrictemplate.parent)
+        self.assertEqual(metric.probeexecutable, metrictemplate.probeexecutable)
+        self.assertEqual(
+            metric.config,
+            '["maxCheckAttempts 4", "timeout 70", '
+            '"path /usr/libexec/argo-monitoring/probes/argo", '
+            '"interval 5", "retryInterval 3"]'
+        )
+        self.assertEqual(metric.attribute, metrictemplate.attribute)
+        self.assertEqual(metric.dependancy, metrictemplate.dependency)
+        self.assertEqual(metric.flags, metrictemplate.flags)
+        self.assertEqual(metric.files, metrictemplate.files)
+        self.assertEqual(metric.parameter, metrictemplate.parameter)
+        self.assertEqual(metric.fileparameter, metrictemplate.fileparameter)
+        self.assertEqual(serialized_data['name'], metric.name)
+        self.assertEqual(serialized_data['mtype'], [metric.mtype.name])
+        self.assertEqual(serialized_data['description'], metric.description)
+        self.assertEqual(
+            serialized_data['probekey'],
+            [metric.probekey.name, metric.probekey.package.version]
+        )
+        self.assertEqual(serialized_data['group'], ['TEST'])
+        self.assertEqual(serialized_data['parent'], metric.parent)
+        self.assertEqual(
+            serialized_data['probeexecutable'], metric.probeexecutable
+        )
+        self.assertEqual(serialized_data['config'], metric.config)
+        self.assertEqual(serialized_data['attribute'], metric.attribute)
+        self.assertEqual(serialized_data['dependancy'], metric.dependancy)
+        self.assertEqual(serialized_data['flags'], metric.flags)
+        self.assertEqual(serialized_data['files'], metric.files)
+        self.assertEqual(serialized_data['parameter'], metric.parameter)
+        self.assertEqual(serialized_data['fileparameter'], metric.fileparameter)
+
+    @patch('Poem.helpers.metrics_helpers.requests.put')
+    @patch('Poem.helpers.metrics_helpers.requests.get')
+    @patch('Poem.helpers.metrics_helpers.MyAPIKey.objects.get')
+    def test_update_metrics_in_profiles(self, mock_key, mock_get, mock_put):
+        with self.settings(WEBAPI_METRIC='https://mock.api.url'):
+            mock_key.return_value = MyAPIKey(name='WEB-API', token='mock_key')
+            mock_get.side_effect = mocked_web_api_metric_profiles
+            msgs = update_metrics_in_profiles('metric1', 'new.metric1')
+            mock_put.assert_called_once()
+            mock_put.assert_called_with(
+                'https://mock.api.url/11111111-2222-3333-4444-555555555555',
+                headers={'Accept': 'application/json', 'x-api-key': 'mock_key'},
+                data=json.dumps(
+                    {
+                        "id": "11111111-2222-3333-4444-555555555555",
+                        "name": "PROFILE1",
+                        "description": "First profile",
+                        "services": [
+                            {
+                                "service": "service1",
+                                "metrics": [
+                                    "new.metric1",
+                                    "metric2"
+                                ]
+                            },
+                            {
+                                "service": "service2",
+                                "metrics": [
+                                    "metric3",
+                                    "metric4"
+                                ]
+                            }
+                        ]
+                    }
+                )
+            )
+            self.assertEqual(msgs, [])
+
+    @patch('Poem.helpers.metrics_helpers.requests.get')
+    @patch('Poem.helpers.metrics_helpers.MyAPIKey.objects.get')
+    def test_update_metrics_in_profiles_wrong_token(self, mock_key, mock_get):
+        with self.settings(WEBAPI_METRIC='https://mock.api.url'):
+            mock_key.return_value = MyAPIKey(name='WEB-API', token='wrong_key')
+            mock_get.side_effect = mocked_web_api_metric_profiles_wrong_token
+            msgs = update_metrics_in_profiles('metric1', 'new.metric1')
+            self.assertEqual(
+                msgs,
+                [
+                    'TEST: Error trying to update metric in metric profiles: '
+                    '401 Client Error: Unauthorized.'
+                    '\nPlease update metric profiles manually.'
+                ]
+            )
+
+    def test_update_metrics_in_profiles_nonexisting_key(self):
+        with self.settings(WEBAPI_METRIC='https://mock.api.url'):
+            msgs = update_metrics_in_profiles('metric1', 'new.metric1')
+            self.assertEqual(
+                msgs,
+                [
+                    'TEST: No "WEB-API" key in the DB!\n'
+                    'Please update metric profiles manually.'
+                ]
+            )
+
+    @patch('Poem.helpers.metrics_helpers.requests.put')
+    @patch('Poem.helpers.metrics_helpers.requests.get')
+    @patch('Poem.helpers.metrics_helpers.MyAPIKey.objects.get')
+    def test_update_metrics_in_profiles_if_response_empty(
+            self, mock_key, mock_get, mock_put
+    ):
+        with self.settings(WEBAPI_METRIC='https://mock.api.url'):
+            mock_key.return_value = MyAPIKey(name='WEB-API', token='mock_key')
+            mock_get.side_effect = mocked_web_api_metric_profiles_empty
+            msgs = update_metrics_in_profiles('metric1', 'new.metric1')
+            self.assertEqual(msgs, [])
+            self.assertFalse(mock_put.called)
+
+    @patch('Poem.helpers.metrics_helpers.requests.put')
+    @patch('Poem.helpers.metrics_helpers.requests.get')
+    @patch('Poem.helpers.metrics_helpers.MyAPIKey.objects.get')
+    def test_update_metrics_in_profiles_if_same_name(
+            self, mock_key, mock_get, mock_put
+    ):
+        with self.settings(WEBAPI_METRIC='https://mock.api.url'):
+            mock_key.return_value = MyAPIKey(name='WEB-API', token='mock_key')
+            mock_get.side_effect = mocked_web_api_metric_profiles
+            msgs = update_metrics_in_profiles('metric1', 'metric1')
+            self.assertEqual(msgs, [])
+            self.assertFalse(mock_put.called)
+
