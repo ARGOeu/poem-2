@@ -5,11 +5,11 @@ from unittest.mock import patch
 
 import requests
 from Poem.api import views_internal as views
-from Poem.api.internal_views.metrictemplates import update_metrics_in_profiles
 from Poem.api.internal_views.utils import inline_metric_for_db
 from Poem.api.internal_views.utils import sync_webapi
 from Poem.api.models import MyAPIKey
 from Poem.helpers.history_helpers import create_comment, update_comment
+from Poem.helpers.metrics_helpers import update_metrics_in_profiles
 from Poem.helpers.versioned_comments import new_comment
 from Poem.poem import models as poem_models
 from Poem.poem_super_admin import models as admin_models
@@ -5122,9 +5122,9 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(response.data, {'detail': 'Metric template not found'})
 
-    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db',
-           side_effect=mocked_inline_metric_for_db)
-    def test_post_metric_template(self, func):
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    def test_post_metric_template(self, mocked_inline):
+        mocked_inline.side_effect = mocked_inline_metric_for_db
         conf = [
             {'key': 'maxCheckAttempts', 'value': '4'},
             {'key': 'timeout', 'value': '70'},
@@ -5192,9 +5192,9 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].version_user, 'testuser')
         self.assertEqual(versions[0].version_comment, 'Initial version.')
 
-    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db',
-           side_effect=mocked_inline_metric_for_db)
-    def test_post_metric_template_with_existing_name(self, func):
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    def test_post_metric_template_with_existing_name(self, mocked_inline):
+        mocked_inline.side_effect = mocked_inline_metric_for_db
         conf = [
             {'key': 'maxCheckAttempts', 'value': '4'},
             {'key': 'timeout', 'value': '70'},
@@ -5229,9 +5229,11 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             }
         )
 
-    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db',
-           side_effect=mocked_inline_metric_for_db)
-    def test_post_metric_template_with_nonexisting_probeversion(self, func):
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    def test_post_metric_template_with_nonexisting_probeversion(
+            self, mock_inline
+    ):
+        mock_inline.side_effect = mocked_inline_metric_for_db
         conf = [
             {'key': 'maxCheckAttempts', 'value': '4'},
             {'key': 'timeout', 'value': '70'},
@@ -5266,9 +5268,11 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             }
         )
 
-    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db',
-           side_effect=mocked_inline_metric_for_db)
-    def test_post_metric_template_without_specifying_probes_version(self, func):
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    def test_post_metric_template_without_specifying_probes_version(
+            self, mock_inline
+    ):
+        mock_inline.side_effect = mocked_inline_metric_for_db
         conf = [
             {'key': 'maxCheckAttempts', 'value': '4'},
             {'key': 'timeout', 'value': '70'},
@@ -5303,7 +5307,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             }
         )
 
-    @patch('Poem.api.internal_views.metrictemplates.update_metrics_in_profiles')
+    @patch('Poem.helpers.metrics_helpers.update_metrics_in_profiles')
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
     def test_put_metrictemplate_without_changing_probekey(self, inline, update):
         inline.side_effect = mocked_inline_metric_for_db
@@ -5453,7 +5457,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(serialized_data['parameter'], metric.parameter)
         self.assertEqual(serialized_data['fileparameter'], metric.fileparameter)
 
-    @patch('Poem.api.internal_views.metrictemplates.update_metrics_in_profiles')
+    @patch('Poem.helpers.metrics_helpers.update_metrics_in_profiles')
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
     def test_put_metrictemplate_with_new_probekey(self, inline, update):
         inline.side_effect = mocked_inline_metric_for_db
@@ -5602,7 +5606,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(serialized_data['parameter'], metric.parameter)
         self.assertEqual(serialized_data['fileparameter'], metric.fileparameter)
 
-    @patch('Poem.api.internal_views.metrictemplates.update_metrics_in_profiles')
+    @patch('Poem.helpers.metrics_helpers.update_metrics_in_profiles')
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
     def test_put_passive_metric_template(self, inline, update):
         inline.side_effect = mocked_inline_metric_for_db
@@ -5701,7 +5705,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(serialized_data['parameter'], metric.parameter)
         self.assertEqual(serialized_data['fileparameter'], metric.fileparameter)
 
-    @patch('Poem.api.internal_views.metrictemplates.update_metrics_in_profiles')
+    @patch('Poem.helpers.metrics_helpers.update_metrics_in_profiles')
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
     def test_put_metrictemplate_without_updating_older_version_metric(
             self, inline, update
@@ -5850,7 +5854,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(serialized_data['parameter'], metric.parameter)
         self.assertEqual(serialized_data['fileparameter'], metric.fileparameter)
 
-    @patch('Poem.api.internal_views.metrictemplates.update_metrics_in_profiles')
+    @patch('Poem.helpers.metrics_helpers.update_metrics_in_profiles')
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
     def test_put_metrictemplate_with_existing_name(self, inline, update):
         inline.side_effect = mocked_inline_metric_for_db
@@ -5893,7 +5897,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         )
         self.assertFalse(update.called)
 
-    @patch('Poem.api.internal_views.metrictemplates.update_metrics_in_profiles')
+    @patch('Poem.helpers.metrics_helpers.update_metrics_in_profiles')
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
     def test_put_metrictemplate_with_nonexisting_probeversion(
             self, inline, update
@@ -5938,7 +5942,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         )
         self.assertFalse(update.called)
 
-    @patch('Poem.api.internal_views.metrictemplates.update_metrics_in_profiles')
+    @patch('Poem.helpers.metrics_helpers.update_metrics_in_profiles')
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
     def test_put_metrictemplate_without_specifying_probes_version(
             self, inline, update
@@ -5983,7 +5987,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         )
         self.assertFalse(update.called)
 
-    @patch('Poem.api.internal_views.metrictemplates.update_metrics_in_profiles')
+    @patch('Poem.helpers.metrics_helpers.update_metrics_in_profiles')
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
     def test_put_metrictemplates_without_rename(self, inline, update):
         inline.side_effect = mocked_inline_metric_for_db
@@ -6132,7 +6136,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(serialized_data['parameter'], metric.parameter)
         self.assertEqual(serialized_data['fileparameter'], metric.fileparameter)
 
-    @patch('Poem.api.internal_views.metrictemplates.update_metrics_in_profiles')
+    @patch('Poem.helpers.metrics_helpers.update_metrics_in_profiles')
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
     def test_put_metrictemplates_with_update_err_msgs(self, inline, update):
         inline.side_effect = mocked_inline_metric_for_db
@@ -6316,9 +6320,9 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
-    @patch('Poem.api.internal_views.metrictemplates.requests.put')
-    @patch('Poem.api.internal_views.metrictemplates.requests.get')
-    @patch('Poem.api.internal_views.metrictemplates.MyAPIKey.objects.get')
+    @patch('Poem.helpers.metrics_helpers.requests.put')
+    @patch('Poem.helpers.metrics_helpers.requests.get')
+    @patch('Poem.helpers.metrics_helpers.MyAPIKey.objects.get')
     def test_update_metrics_in_profiles(self, mock_key, mock_get, mock_put):
         with self.settings(WEBAPI_METRIC='https://mock.api.url'):
             mock_key.return_value = MyAPIKey(name='WEB-API', token='mock_key')
@@ -6354,8 +6358,8 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             )
             self.assertEqual(msgs, [])
 
-    @patch('Poem.api.internal_views.metrictemplates.requests.get')
-    @patch('Poem.api.internal_views.metrictemplates.MyAPIKey.objects.get')
+    @patch('Poem.helpers.metrics_helpers.requests.get')
+    @patch('Poem.helpers.metrics_helpers.MyAPIKey.objects.get')
     def test_update_metrics_in_profiles_wrong_token(self, mock_key, mock_get):
         with self.settings(WEBAPI_METRIC='https://mock.api.url'):
             mock_key.return_value = MyAPIKey(name='WEB-API', token='wrong_key')
@@ -6381,9 +6385,9 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
                 ]
             )
 
-    @patch('Poem.api.internal_views.metrictemplates.requests.put')
-    @patch('Poem.api.internal_views.metrictemplates.requests.get')
-    @patch('Poem.api.internal_views.metrictemplates.MyAPIKey.objects.get')
+    @patch('Poem.helpers.metrics_helpers.requests.put')
+    @patch('Poem.helpers.metrics_helpers.requests.get')
+    @patch('Poem.helpers.metrics_helpers.MyAPIKey.objects.get')
     def test_update_metrics_in_profiles_if_response_empty(
             self, mock_key, mock_get, mock_put
     ):
@@ -6394,9 +6398,9 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             self.assertEqual(msgs, [])
             self.assertFalse(mock_put.called)
 
-    @patch('Poem.api.internal_views.metrictemplates.requests.put')
-    @patch('Poem.api.internal_views.metrictemplates.requests.get')
-    @patch('Poem.api.internal_views.metrictemplates.MyAPIKey.objects.get')
+    @patch('Poem.helpers.metrics_helpers.requests.put')
+    @patch('Poem.helpers.metrics_helpers.requests.get')
+    @patch('Poem.helpers.metrics_helpers.MyAPIKey.objects.get')
     def test_update_metrics_in_profiles_if_same_name(
             self, mock_key, mock_get, mock_put
     ):
