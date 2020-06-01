@@ -1260,7 +1260,6 @@ export class ThresholdsProfilesChange extends Component {
       else {
         let sessionActive = await this.backend.isActiveSession();
         let metricsall = await this.backend.fetchListOfNames('/api/v2/internal/metricsall');
-        let json = await this.backend.fetchData(`/api/v2/internal/thresholdsprofiles/${this.name}`);
         if (this.addview) {
           this.setState({
             loading: false,
@@ -1270,6 +1269,7 @@ export class ThresholdsProfilesChange extends Component {
               sessionActive.userdetails.groups.thresholdsprofiles.length > 0,
           });
         } else {
+          let json = await this.backend.fetchData(`/api/v2/internal/thresholdsprofiles/${this.name}`);
           let thresholdsprofile = await this.webapi.fetchThresholdsProfile(json.apiid);
           this.setState({
             thresholds_profile: {
