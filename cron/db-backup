@@ -1,1 +1,0 @@
-30 3 * * * postgres pg_dump postgres > /home/pyvenv/poem/var/db_backups/poem-db-backup-`date +"%Y-%m-%d"`
