@@ -480,17 +480,25 @@ export class AggregationProfilesChange extends Component
       return ''
   }
 
+  sortServices(a, b) {
+    if (a.toLowerCase() < b.toLowerCase()) return -1
+    if (a.toLowerCase() > b.toLowerCase()) return 1
+  }
+
   extractListOfServices(profileFromAggregation, listMetricProfiles) {
     let targetProfile = listMetricProfiles.filter(p => p.name === profileFromAggregation.name)
 
     if (targetProfile.length === 0)
       targetProfile = listMetricProfiles.filter(p => p.id === profileFromAggregation.id)
 
-    if (targetProfile.length)
-      return targetProfile[0].services.map(s => s.service)
+    if (targetProfile.length) {
+      let services = targetProfile[0].services.map(s => s.service)
+      return services.sort(this.sortServices)
+    }
     else
       return []
   }
+
 
   sortMetricProfiles(a, b) {
     if (a.name.toLowerCase() < b.name.toLowerCase()) return -1;
