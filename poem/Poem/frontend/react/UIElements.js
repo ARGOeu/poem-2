@@ -133,7 +133,12 @@ export const DropDown = ({field, data=[], prefix="", class_name="", isnew=false}
     className={`form-control ${class_name} ${isnew ? 'border-success' : ''}`}
   >
     {
-      data.map((name, i) => <option key={i} value={name}>{name}</option>)
+      data.map((name, i) => (
+        i === 0 ?
+          <option key={i} value='' hidden color='text-muted'>{name}</option>
+        :
+          <option key={i} value={name}>{name}</option>
+      ))
     }
   </Field>
 
@@ -1040,7 +1045,7 @@ export const ProfileMainInfo = ({errors, grouplist=undefined, description=undefi
           errors.name &&
             FancyErrorMessage(errors.name)
         }
-          <FormText color='muted'>
+          <FormText color='text-muted'>
             {`Name of ${profiletype} profile`}
           </FormText>
         </Col>
@@ -1080,7 +1085,7 @@ export const ProfileMainInfo = ({errors, grouplist=undefined, description=undefi
                 component='select'
                 className={`form-control custom-select ${errors.groupname && 'border-danger'}`}
               >
-                <option key={0} value='' hidden color='muted'>Select group</option>
+                <option key={0} value='' hidden color='text-muted'>Select group</option>
                 {
                   grouplist.map((group, i) =>
                     <option key={i + 1} value={group}>{group}</option>

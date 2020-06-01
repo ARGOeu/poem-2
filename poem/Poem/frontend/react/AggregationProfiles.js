@@ -313,9 +313,9 @@ const AggregationProfilesForm = ({ values, errors, historyview=false, write_perm
                   <Field
                     name='metric_operation'
                     component={DropDown}
-                    data={insertSelectPlaceholder(logic_operations, '')}
+                    data={insertSelectPlaceholder(logic_operations, 'Select')}
                     required={true}
-                    class_name='form-control custom-select'
+                    class_name='custom-select'
                     id='aggregationMetric'
                   />
               }
@@ -353,7 +353,7 @@ const AggregationProfilesForm = ({ values, errors, historyview=false, write_perm
                   <Field
                     name='profile_operation'
                     component={DropDown}
-                    data={insertSelectPlaceholder(logic_operations, '')}
+                    data={insertSelectPlaceholder(logic_operations, 'Select')}
                     required={true}
                     class_name='custom-select'
                     id='aggregationOperation'
@@ -393,7 +393,7 @@ const AggregationProfilesForm = ({ values, errors, historyview=false, write_perm
                   <Field
                     name='endpoint_group'
                     component={DropDown}
-                    data={insertSelectPlaceholder(endpoint_groups, '')}
+                    data={insertSelectPlaceholder(endpoint_groups, 'Select')}
                     required={true}
                     class_name='custom-select'
                     id='aggregationEndpointGroup'
@@ -423,7 +423,7 @@ const AggregationProfilesForm = ({ values, errors, historyview=false, write_perm
               <Field
                 name='metric_profile'
                 component={DropDown}
-                data={insertSelectPlaceholder(list_id_metric_profiles.map(e => e.name), '')}
+                data={insertSelectPlaceholder(list_id_metric_profiles.map(e => e.name), 'Select')}
                 required={true}
                 class_name='custom-select'
               />
