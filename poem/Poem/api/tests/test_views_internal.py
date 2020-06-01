@@ -9523,7 +9523,42 @@ class ListPackagesAPIViewTests(TenantTestCase):
             user=self.user.username
         )
 
-    def test_get_list_of_packages(self):
+    def test_get_list_of_packages_public(self):
+        with schema_context(get_public_schema_name()):
+            request = self.factory.get(self.url)
+            force_authenticate(request, user=self.user)
+            response = self.view(request)
+            self.assertEqual(
+                response.data,
+                [
+                    {
+                        'name': 'nagios-plugins-argo',
+                        'version': '0.1.11',
+                        'use_present_version': False,
+                        'repos': ['repo-1 (CentOS 6)', 'repo-2 (CentOS 7)']
+                    },
+                    {
+                        'name': 'nagios-plugins-fedcloud',
+                        'version': '0.5.0',
+                        'use_present_version': False,
+                        'repos': ['repo-2 (CentOS 7)']
+                    },
+                    {
+                        'name': 'nagios-plugins-globus',
+                        'version': '0.1.5',
+                        'use_present_version': False,
+                        'repos': ['repo-2 (CentOS 7)']
+                    },
+                    {
+                        'name': 'nagios-plugins-http',
+                        'version': 'present',
+                        'use_present_version': True,
+                        'repos': ['repo-1 (CentOS 6)', 'repo-2 (CentOS 7)']
+                    }
+                ]
+            )
+
+    def test_get_list_of_packages_tenant(self):
         request = self.factory.get(self.url)
         force_authenticate(request, user=self.user)
         response = self.view(request)
@@ -9534,24 +9569,6 @@ class ListPackagesAPIViewTests(TenantTestCase):
                     'name': 'nagios-plugins-argo',
                     'version': '0.1.11',
                     'use_present_version': False,
-                    'repos': ['repo-1 (CentOS 6)', 'repo-2 (CentOS 7)']
-                },
-                {
-                    'name': 'nagios-plugins-fedcloud',
-                    'version': '0.5.0',
-                    'use_present_version': False,
-                    'repos': ['repo-2 (CentOS 7)']
-                },
-                {
-                    'name': 'nagios-plugins-globus',
-                    'version': '0.1.5',
-                    'use_present_version': False,
-                    'repos': ['repo-2 (CentOS 7)']
-                },
-                {
-                    'name': 'nagios-plugins-http',
-                    'version': 'present',
-                    'use_present_version': True,
                     'repos': ['repo-1 (CentOS 6)', 'repo-2 (CentOS 7)']
                 }
             ]

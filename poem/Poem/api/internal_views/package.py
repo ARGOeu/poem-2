@@ -1,13 +1,13 @@
-from django.db import IntegrityError
-from django.db.models import ProtectedError
-
 from Poem.api.views import NotFound
+from Poem.poem import models as poem_models
 from Poem.poem_super_admin import models as admin_models
-
+from django.db import IntegrityError, connection
+from django.db.models import ProtectedError
 from rest_framework import status
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from tenant_schemas.utils import get_public_schema_name
 
 
 def get_package_version(nameversion):
@@ -46,7 +46,14 @@ class ListPackages(APIView):
                 raise NotFound(status=404, detail='Package not found.')
 
         else:
-            packages = admin_models.Package.objects.all()
+            if connection.schema_name != get_public_schema_name():
+                packages = set()
+                for metric in poem_models.Metric.objects.all():
+                    if metric.probekey:
+                        packages.add(metric.probekey.package)
+
+            else:
+                packages = admin_models.Package.objects.all()
 
             results = []
             for package in packages:
