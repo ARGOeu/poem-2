@@ -109,27 +109,27 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
         </td>
         <td>
           <Field
-          type="text"
-          name="search_serviceflavour"
-          required={false}
-          className="form-control"
-          id="searchServiceFlavour"
-          onChange={(e) => search_handler(e, 'view_services',
-            'searchServiceFlavour', 'service', 'searchMetric', 'metric')}
-          component={SearchField}
-        />
+            type="text"
+            name="search_serviceflavour"
+            required={false}
+            className="form-control"
+            id="searchServiceFlavour"
+            onChange={(e) => search_handler(e, 'view_services',
+              'searchServiceFlavour', 'service', 'searchMetric', 'metric')}
+            component={SearchField}
+          />
         </td>
         <td>
           <Field
-          type="text"
-          name="search_metric"
-          required={false}
-          className="form-control"
-          id="searchMetric"
-          onChange={(e) => search_handler(e, 'view_services', 'searchMetric',
-            'metric', 'searchServiceFlavour', 'service')}
-          component={SearchField}
-        />
+            type="text"
+            name="search_metric"
+            required={false}
+            className="form-control"
+            id="searchMetric"
+            onChange={(e) => search_handler(e, 'view_services', 'searchMetric',
+              'metric', 'searchServiceFlavour', 'service')}
+            component={SearchField}
+          />
         </td>
         <td>
           {''}

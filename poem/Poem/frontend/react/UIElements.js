@@ -126,18 +126,19 @@ export const Icon = props =>
     return <FontAwesomeIcon icon={link_icon.get(props.i)} size={props.i === 'yumrepos' || props.i === 'metricprofiles' ? 'sm' : '1x'} fixedWidth/>
 }
 
-export const DropDown = ({field, data=[], prefix="", class_name="", isnew=false}) =>
+export const DropDown = ({field, data=[], prefix="", class_name="", isnew=false, errors=undefined}) =>
   <Field component="select"
     name={prefix ? `${prefix}.${field.name}` : field.name}
     required={true}
-    className={`form-control ${class_name} ${isnew ? 'border-success' : ''}`}
+    className={`form-control ${class_name} ${isnew ? 'border-success' : `${errors && errors[field.name] ? 'border-danger' : ''}`}`}
   >
     {
-      data.map((name, i) =>
+      data.map((name, i) => (
         i === 0 ?
-          <option key={i} hidden>{name}</option> :
+          <option key={i} value='' hidden color='text-muted'>{name}</option>
+        :
           <option key={i} value={name}>{name}</option>
-      )
+      ))
     }
   </Field>
 
@@ -1044,7 +1045,7 @@ export const ProfileMainInfo = ({errors, grouplist=undefined, description=undefi
           errors.name &&
             FancyErrorMessage(errors.name)
         }
-          <FormText color='muted'>
+          <FormText color='text-muted'>
             {`Name of ${profiletype} profile`}
           </FormText>
         </Col>
@@ -1084,7 +1085,7 @@ export const ProfileMainInfo = ({errors, grouplist=undefined, description=undefi
                 component='select'
                 className={`form-control custom-select ${errors.groupname && 'border-danger'}`}
               >
-                <option key={0} value='' hidden color='muted'>Select group</option>
+                <option key={0} value='' hidden color='text-muted'>Select group</option>
                 {
                   grouplist.map((group, i) =>
                     <option key={i + 1} value={group}>{group}</option>
