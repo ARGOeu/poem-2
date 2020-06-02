@@ -213,6 +213,7 @@ export class PackageChange extends Component {
       list_repos_6: [],
       list_repos_7: [],
       list_probes: [],
+      pkg_versions: [],
       present_version: false,
       loading: false,
       areYouSureModal: false,
@@ -229,6 +230,7 @@ export class PackageChange extends Component {
     this.doChange = this.doChange.bind(this);
     this.doDelete = this.doDelete.bind(this);
     this.toggleCheckbox = this.toggleCheckbox.bind(this);
+    this.onVersionSelect = this.onVersionSelect.bind(this);
   };
 
   toggleAreYouSure() {
@@ -250,6 +252,37 @@ export class PackageChange extends Component {
     pkg[field] = value;
     this.setState({
       pkg: pkg
+    });
+  };
+
+  onVersionSelect(value) {
+    let pkg_versions = this.state.pkg_versions;
+    pkg_versions.forEach(pkgv => {
+      if (pkgv.version === value) {
+        let updated_pkg = {
+          id: pkgv.id,
+          name: pkgv.name,
+          version: pkgv.version,
+          use_present_version: pkgv.use_present_version,
+          repos: pkgv.repos
+        };
+        let repo_6 = '';
+        let repo_7 = '';
+
+        for (let i = 0; i < pkgv.repos.length; i++) {
+          if (pkgv.repos[i].split('(')[1].slice(0, -1) === 'CentOS 6')
+            repo_6 = pkgv.repos[i];
+
+          if (pkgv.repos[i].split('(')[1].slice(0, -1) === 'CentOS 7')
+            repo_7 = pkgv.repos[i];
+        }
+
+        this.setState({
+          pkg: updated_pkg,
+          repo_6: repo_6,
+          repo_7: repo_7
+        });
+      };
     });
   };
 
@@ -390,6 +423,7 @@ export class PackageChange extends Component {
       } else {
         let pkg = await this.backend.fetchData(`/api/v2/internal/packages/${this.nameversion}`);
         let probes = await this.backend.fetchData('/api/v2/internal/probes');
+        let pkg_versions = await this.backend.fetchData(`/api/v2/internal/packageversions/${pkg.name}`);
         let list_probes = [];
         let repo_6 = '';
         let repo_7 = '';
@@ -413,6 +447,7 @@ export class PackageChange extends Component {
           repo_6: repo_6,
           repo_7: repo_7,
           list_probes: list_probes,
+          pkg_versions: pkg_versions,
           loading: false
         });
       };
@@ -426,7 +461,7 @@ export class PackageChange extends Component {
 
   render() {
     const { pkg, repo_6, repo_7, list_repos_6, list_repos_7,
-      list_probes, loading, present_version, error } = this.state;
+      list_probes, pkg_versions, loading, present_version, error } = this.state;
 
     if (loading)
       return (<LoadingAnim/>);
@@ -486,14 +521,31 @@ export class PackageChange extends Component {
                         <Col md={12}>
                       <InputGroup>
                         <InputGroupAddon addonType='prepend'>Version</InputGroupAddon>
-                        <Field
-                          type='text'
-                          name='version'
-                          value={props.values.present_version ? 'present' : props.values.version}
-                          disabled={props.values.present_version || this.disabled}
-                          className={`form-control ${props.errors.version && 'border-danger'}`}
-                          id='version'
-                        />
+                        {
+                          this.disabled ?
+                            <Field
+                              component='select'
+                              name='version'
+                              className='form-control custom-select'
+                              id='version'
+                              onChange={e => this.onVersionSelect(e.target.value)}
+                            >
+                              {
+                                pkg_versions.map((version, i) =>
+                                  <option key={i} value={version.version}>{version.version}</option>
+                                )
+                              }
+                            </Field>
+                          :
+                            <Field
+                              type='text'
+                              name='version'
+                              value={props.values.present_version ? 'present' : props.values.version}
+                              disabled={props.values.present_version}
+                              className={`form-control ${props.errors.version && 'border-danger'}`}
+                              id='version'
+                            />
+                        }
                       </InputGroup>
                       {
                         props.errors.version &&
