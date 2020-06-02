@@ -47,6 +47,7 @@ urlpatterns = [
     path('packages/', views_internal.ListPackages.as_view(), name='packages'),
     path('public_packages/', views_internal.ListPublicPackages.as_view(), name='packages'),
     path('packages/<str:nameversion>', views_internal.ListPackages.as_view(), name='packages'),
+    path('packageversions/<str:name>', views_internal.ListPackagesVersions.as_view(), name='packageversions'),
     path('probes/', views_internal.ListProbes.as_view(), name='probes'),
     path('public_probes/', views_internal.ListPublicProbes.as_view(), name='probes'),
     path('probes/<str:name>', views_internal.ListProbes.as_view(), name='probes'),

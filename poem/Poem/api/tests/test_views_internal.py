@@ -9375,6 +9375,99 @@ class ListPackagesAPIViewTests(TenantTestCase):
         )
 
 
+class ListPackagesVersionsTests(TenantTestCase):
+    def setUp(self):
+        self.factory = TenantRequestFactory(self.tenant)
+        self.view = views.ListPackagesVersions.as_view()
+        self.url = '/api/v2/internal/packageversions/'
+        self.user = CustUser.objects.create_user(username='testuser')
+
+        with schema_context(get_public_schema_name()):
+            Tenant.objects.create(name='public', domain_url='public',
+                                  schema_name=get_public_schema_name())
+
+        tag1 = admin_models.OSTag.objects.create(name='CentOS 6')
+        tag2 = admin_models.OSTag.objects.create(name='CentOS 7')
+
+        repo1 = admin_models.YumRepo.objects.create(
+            name='repo-1', tag=tag1
+        )
+        repo2 = admin_models.YumRepo.objects.create(
+            name='repo-2', tag=tag2
+        )
+
+        package1 = admin_models.Package.objects.create(
+            name='nagios-plugins-argo',
+            version='0.1.7'
+        )
+        package1.repos.add(repo1, repo2)
+
+        package2 = admin_models.Package.objects.create(
+            name='nagios-plugins-argo',
+            version='0.1.11'
+        )
+        package2.repos.add(repo1, repo2)
+
+        package3 = admin_models.Package.objects.create(
+            name='nagios-plugins-argo',
+            version='0.1.12'
+        )
+        package3.repos.add(repo1, repo2)
+
+        package4 = admin_models.Package.objects.create(
+            name='nagios-plugins-fedcloud',
+            version='0.5.0'
+        )
+        package4.repos.add(repo2)
+
+        package5 = admin_models.Package.objects.create(
+            name='nagios-plugins-http',
+            use_present_version=True
+        )
+        package5.repos.add(repo1, repo2)
+
+    def test_forbidden_if_not_authenticated(self):
+        request = self.factory.get(self.url + 'nagios-plugins-argo')
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_get_package_versions_for_given_package_name(self):
+        request = self.factory.get(self.url + 'nagios-plugins-argo')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'nagios-plugins-argo')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            response.data,
+            [
+                {
+                    'name': 'nagios-plugins-argo',
+                    'version': '0.1.12',
+                    'use_present_version': False,
+                    'repos': ['repo-1 (CentOS 6)', 'repo-2 (CentOS 7)']
+                },
+                {
+                    'name': 'nagios-plugins-argo',
+                    'version': '0.1.11',
+                    'use_present_version': False,
+                    'repos': ['repo-1 (CentOS 6)', 'repo-2 (CentOS 7)']
+                },
+                {
+                    'name': 'nagios-plugins-argo',
+                    'version': '0.1.7',
+                    'use_present_version': False,
+                    'repos': ['repo-1 (CentOS 6)', 'repo-2 (CentOS 7)']
+                }
+            ]
+        )
+
+    def test_get_package_versions_package_not_found(self):
+        request = self.factory.get(self.url + 'nonexisting-package')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'nonexisting-package')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data['detail'], 'Package not found.')
+
+
 class ListOSTagsAPIViewTests(TenantTestCase):
     def setUp(self):
         self.factory = TenantRequestFactory(self.tenant)
