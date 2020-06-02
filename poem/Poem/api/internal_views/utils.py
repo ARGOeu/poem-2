@@ -79,6 +79,7 @@ def sync_webapi(api, model):
     data_api = set([p['id'] for p in data])
     data_db = set(model.objects.all().values_list('apiid', flat=True))
     entries_not_indb = data_api.difference(data_db)
+    entries_indb = data_api.intersection(data_db)
 
     new_entries = []
     for p in data:
@@ -134,3 +135,9 @@ def sync_webapi(api, model):
         ).delete()
         instance.delete()
 
+    for p in data:
+        if p['id'] in entries_indb:
+            instance = model.objects.get(apiid=p['id'])
+            instance.name = p['name']
+            instance.description = p.get('description', '')
+            instance.save()
