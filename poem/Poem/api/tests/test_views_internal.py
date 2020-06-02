@@ -10680,3 +10680,608 @@ class MetricsHelpersTests(TenantTestCase):
             self.assertEqual(msgs, [])
             self.assertFalse(mock_put.called)
 
+
+class UpdateMetricsVersionsTests(TenantTestCase):
+    def setUp(self):
+        self.factory = TenantRequestFactory(self.tenant)
+        self.view = views.UpdateMetricsVersions.as_view()
+        self.url = '/api/v2/internal/updatemetricsversions'
+        self.user = CustUser.objects.create_user(username='testuser')
+
+        with schema_context(get_public_schema_name()):
+            Tenant.objects.create(
+                name='public', domain_url='public',
+                schema_name=get_public_schema_name()
+            )
+
+        self.mt = poem_models.MetricType.objects.create(name='Active')
+        self.mtype = admin_models.MetricTemplateType.objects.create(
+            name='Active'
+        )
+
+        ct = ContentType.objects.get_for_model(poem_models.Metric)
+
+        tag = admin_models.OSTag.objects.create(name='CentOS 6')
+        repo = admin_models.YumRepo.objects.create(name='repo-1', tag=tag)
+
+        package1 = admin_models.Package.objects.create(
+            name='nagios-plugins-argo',
+            version='0.1.7'
+        )
+        package1.repos.add(repo)
+
+        self.package2 = admin_models.Package.objects.create(
+            name='nagios-plugins-argo',
+            version='0.1.8'
+        )
+        self.package2.repos.add(repo)
+
+        self.package3 = admin_models.Package.objects.create(
+            name='nagios-plugins-argo',
+            version='0.1.9'
+        )
+        self.package3.repos.add(repo)
+
+        self.package4 = admin_models.Package.objects.create(
+            name='unicore-nagios-plugins',
+            version='2.5.0'
+        )
+        self.package4.repos.add(repo)
+
+        self.probe1 = admin_models.Probe.objects.create(
+            name='ams-probe',
+            package=self.package2,
+            description='Probe is inspecting AMS service.',
+            comment='Initial version.',
+            repository='https://github.com/ARGOeu/nagios-plugins-argo',
+            docurl='https://github.com/ARGOeu/nagios-plugins-argo/blob/master/'
+                   'README.md'
+        )
+
+        probe2 = admin_models.Probe.objects.create(
+            name='ams-publisher-probe',
+            package=self.package2,
+            description='Probe is inspecting AMS publisher running on Nagios '
+                        'monitoring instances.',
+            comment='New version',
+            repository='https://github.com/ARGOeu/nagios-plugins-argo',
+            docurl='https://github.com/ARGOeu/nagios-plugins-argo/blob/master/'
+                   'README.md'
+        )
+
+        probe3 = admin_models.Probe.objects.create(
+            name='check_gateway',
+            package=self.package4,
+            description='Plugin checks UNICORE Gateway functionality.',
+            comment='Initial version.',
+            repository='https://sourceforge.net/p/unicore-life/code/HEAD/tree/'
+                       'monitoring/UMI-Probes/trunk/umi2/check_gateway',
+            docurl='https://sourceforge.net/p/unicore-life/code/HEAD/tree/'
+                   'monitoring/UMI-Probes/trunk/umi2/check_gateway/'
+                   'check_gateway.README'
+        )
+
+        self.probehistory1 = admin_models.ProbeHistory.objects.create(
+            object_id=self.probe1,
+            name=self.probe1.name,
+            package=package1,
+            description=self.probe1.description,
+            comment=self.probe1.comment,
+            repository=self.probe1.repository,
+            docurl=self.probe1.docurl,
+            date_created=datetime.datetime.now(),
+            version_comment='Initial version.',
+            version_user=self.user.username
+        )
+
+        self.probehistory2 = admin_models.ProbeHistory.objects.create(
+            object_id=self.probe1,
+            name=self.probe1.name,
+            package=self.package2,
+            description=self.probe1.description,
+            comment=self.probe1.comment,
+            repository=self.probe1.repository,
+            docurl=self.probe1.docurl,
+            date_created=datetime.datetime.now(),
+            version_comment='Newer version.',
+            version_user=self.user.username
+        )
+
+        self.probehistory3 = admin_models.ProbeHistory.objects.create(
+            object_id=probe2,
+            name=probe2.name,
+            package=package1,
+            description=probe2.description,
+            comment=probe2.comment,
+            repository=probe2.repository,
+            docurl=probe2.docurl,
+            date_created=datetime.datetime.now(),
+            version_comment='New version.',
+            version_user=self.user.username
+        )
+
+        self.probehistory4 = admin_models.ProbeHistory.objects.create(
+            object_id=probe2,
+            name=probe2.name,
+            package=self.package2,
+            description=probe2.description,
+            comment=probe2.comment,
+            repository=probe2.repository,
+            docurl=probe2.docurl,
+            date_created=datetime.datetime.now(),
+            version_comment='New version.',
+            version_user=self.user.username
+        )
+
+        self.probehistory5 = admin_models.ProbeHistory.objects.create(
+            object_id=probe3,
+            name=probe3.name,
+            package=probe3.package,
+            description=probe3.description,
+            comment=probe3.comment,
+            repository=probe3.repository,
+            docurl=probe3.docurl,
+            date_created=datetime.datetime.now(),
+            version_comment='Initial version.',
+            version_user=self.user.username
+        )
+
+        self.group = poem_models.GroupOfMetrics.objects.create(
+            name='TEST'
+        )
+
+        self.mt1 = admin_models.MetricTemplate.objects.create(
+            name='argo.AMS-Check',
+            description='Description of argo.AMS-Check.',
+            probeexecutable='["ams-probe"]',
+            config='["interval 180", "maxCheckAttempts 1", '
+                   '"path /usr/libexec/argo-monitoring/probes/argo", '
+                   '"retryInterval 1", "timeout 120"]',
+            attribute='["argo.ams_TOKEN --token"]',
+            parameter='["--project EGI"]',
+            flags='["OBSESS 1"]',
+            mtype=self.mtype,
+            probekey=self.probehistory1
+        )
+
+        admin_models.MetricTemplateHistory.objects.create(
+            object_id=self.mt1,
+            name=self.mt1.name,
+            mtype=self.mt1.mtype,
+            probekey=self.mt1.probekey,
+            description=self.mt1.description,
+            probeexecutable=self.mt1.probeexecutable,
+            config=self.mt1.config,
+            attribute=self.mt1.attribute,
+            dependency=self.mt1.dependency,
+            flags=self.mt1.flags,
+            files=self.mt1.files,
+            parameter=self.mt1.parameter,
+            fileparameter=self.mt1.fileparameter,
+            date_created=datetime.datetime.now(),
+            version_user=self.user.username,
+            version_comment='Initial version.'
+        )
+
+        self.mt1.probekey = self.probehistory2
+        self.mt1.save()
+
+        self.mth1 = admin_models.MetricTemplateHistory.objects.create(
+            object_id=self.mt1,
+            name=self.mt1.name,
+            mtype=self.mt1.mtype,
+            probekey=self.mt1.probekey,
+            description=self.mt1.description,
+            probeexecutable=self.mt1.probeexecutable,
+            config=self.mt1.config,
+            attribute=self.mt1.attribute,
+            dependency=self.mt1.dependency,
+            flags=self.mt1.flags,
+            files=self.mt1.files,
+            parameter=self.mt1.parameter,
+            fileparameter=self.mt1.fileparameter,
+            date_created=datetime.datetime.now(),
+            version_user=self.user.username,
+            version_comment='Newer version.'
+        )
+
+        mt2 = admin_models.MetricTemplate.objects.create(
+            name='argo.AMSPublisher-Check',
+            description='Description of argo.AMSPublisher-Check.',
+            probeexecutable='["ams-publisher-probe"]',
+            config='["interval 180", "maxCheckAttempts 3", '
+                   '"path /usr/libexec/argo-monitoring/probes/argo", '
+                   '"retryInterval 1", "timeout 130"]',
+            flags='["NOHOSTNAME 1"]',
+            mtype=self.mtype,
+            probekey=self.probehistory3
+        )
+
+        admin_models.MetricTemplateHistory.objects.create(
+            object_id=mt2,
+            name=mt2.name,
+            mtype=mt2.mtype,
+            probekey=mt2.probekey,
+            description=mt2.description,
+            probeexecutable=mt2.probeexecutable,
+            config=mt2.config,
+            attribute=mt2.attribute,
+            dependency=mt2.dependency,
+            flags=mt2.flags,
+            files=mt2.files,
+            parameter=mt2.parameter,
+            fileparameter=mt2.fileparameter,
+            date_created=datetime.datetime.now(),
+            version_user=self.user.username,
+            version_comment='Initial version.'
+        )
+
+        mt2.probekey = self.probehistory4
+        mt2.save()
+
+        self.mth2 = admin_models.MetricTemplateHistory.objects.create(
+            object_id=mt2,
+            name=mt2.name,
+            mtype=mt2.mtype,
+            probekey=mt2.probekey,
+            description=mt2.description,
+            probeexecutable=mt2.probeexecutable,
+            config=mt2.config,
+            attribute=mt2.attribute,
+            dependency=mt2.dependency,
+            flags=mt2.flags,
+            files=mt2.files,
+            parameter=mt2.parameter,
+            fileparameter=mt2.fileparameter,
+            date_created=datetime.datetime.now(),
+            version_user=self.user.username,
+            version_comment='Newer version.'
+        )
+
+        metric1 = poem_models.Metric.objects.create(
+            name='argo.AMS-Check',
+            description='Description of argo.AMS-Check.',
+            probeexecutable='["ams-probe"]',
+            config='["interval 180", "maxCheckAttempts 1", '
+                   '"path /usr/libexec/argo-monitoring/probes/argo", '
+                   '"retryInterval 1", "timeout 120"]',
+            attribute='["argo.ams_TOKEN --token"]',
+            parameter='["--project EGI"]',
+            flags='["OBSESS 1"]',
+            mtype=self.mt,
+            probekey=self.probehistory1,
+            group=self.group
+        )
+
+        metric2 = poem_models.Metric.objects.create(
+            name='argo.AMSPublisher-Check',
+            description='Description of argo.AMSPublisher-Check.',
+            probeexecutable='["ams-publisher-probe"]',
+            config='["interval 180", "maxCheckAttempts 3", '
+                   '"path /usr/libexec/argo-monitoring/probes/argo", '
+                   '"retryInterval 1", "timeout 130"]',
+            flags='["NOHOSTNAME 1"]',
+            mtype=self.mt,
+            probekey=self.probehistory3,
+            group=self.group
+        )
+
+        metric3 = poem_models.Metric.objects.create(
+            name='emi.unicore.Gateway',
+            description='',
+            probeexecutable='["pl.plgrid/UNICORE/umi2/check_gateway/'
+                            'check_gateway.pl"]',
+            config='["interval 20", "maxCheckAttempts 2", '
+                   '"path /usr/libexec/grid-monitoring/probes", '
+                   '"retryInterval 5", "timeout 60"]',
+            attribute='["METRIC_CONFIG_FILE -f"]',
+            flags='["OBSESS 1", "NOHOSTNAME 1", "NOLBNODE 1"]',
+            mtype=self.mt,
+            probekey=self.probehistory5,
+            group=self.group
+        )
+
+        poem_models.TenantHistory.objects.create(
+            object_id=metric1.id,
+            serialized_data=serializers.serialize(
+                'json', [metric1],
+                use_natural_foreign_keys=True,
+                use_natural_primary_keys=True
+            ),
+            object_repr=metric1.__str__(),
+            content_type=ct,
+            date_created=datetime.datetime.now(),
+            comment='Initial version.',
+            user=self.user.username
+        )
+
+        poem_models.TenantHistory.objects.create(
+            object_id=metric1.id,
+            serialized_data=serializers.serialize(
+                'json', [metric1],
+                use_natural_foreign_keys=True,
+                use_natural_primary_keys=True
+            ),
+            object_repr=metric1.__str__(),
+            content_type=ct,
+            date_created=datetime.datetime.now(),
+            comment='Initial version.',
+            user=self.user.username
+        )
+
+        poem_models.TenantHistory.objects.create(
+            object_id=metric2.id,
+            serialized_data=serializers.serialize(
+                'json', [metric2],
+                use_natural_foreign_keys=True,
+                use_natural_primary_keys=True
+            ),
+            object_repr=metric2.__str__(),
+            content_type=ct,
+            date_created=datetime.datetime.now(),
+            comment='Initial version.',
+            user=self.user.username
+        )
+
+        poem_models.TenantHistory.objects.create(
+            object_id=metric3.id,
+            serialized_data=serializers.serialize(
+                'json', [metric3],
+                use_natural_foreign_keys=True,
+                use_natural_primary_keys=True
+            ),
+            object_repr=metric3.__str__(),
+            content_type=ct,
+            date_created=datetime.datetime.now(),
+            comment='Initial version.',
+            user=self.user.username
+        )
+
+    def test_permission_denied_if_not_authenticated(self):
+        data = {
+            'name': self.package2.name,
+            'version': self.package2.version
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    @patch('Poem.api.internal_views.metrics.update_metrics')
+    def test_update_metrics_versions(self, mock_update_metrics):
+        mock_update_metrics.side_effect = mocked_func
+        data = {
+            'name': self.package2.name,
+            'version': self.package2.version
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(mock_update_metrics.call_count, 2)
+        mock_update_metrics.has_calls([
+            call(self.mth1, 'argo.AMS-Check', self.probehistory1),
+            call(self.mth2, 'argo.AMSPublisher-Check', self.probehistory3)
+        ])
+
+    @patch('Poem.api.internal_views.metrics.update_metrics')
+    def test_update_metrics_version_if_metric_template_was_renamed(
+            self, mock_update
+    ):
+        mock_update.side_effect = mocked_func
+        probe1 = admin_models.Probe.objects.create(
+            name='ams-probe-new',
+            package=self.package3,
+            description='Probe is inspecting AMS service in a newer way.',
+            comment='Not initial version.',
+            repository='https://github.com/ARGOeu/nagios-plugins-argo',
+            docurl='https://github.com/ARGOeu/nagios-plugins-argo/blob/master/'
+                   'README.md'
+        )
+        probehistory1 = admin_models.ProbeHistory.objects.create(
+            object_id=probe1,
+            name=probe1.name,
+            package=probe1.package,
+            description=probe1.description,
+            comment=probe1.comment,
+            repository=probe1.repository,
+            docurl=probe1.docurl,
+            date_created=datetime.datetime.now(),
+            version_comment='Newest version.',
+            version_user=self.user.username
+        )
+        self.mt1.name = 'argo.AMS-Check-new'
+        self.mt1.description = 'Description of argo.AMS-Check-new.'
+        self.mt1.probekey = probehistory1
+        self.mt1.save()
+        mth = admin_models.MetricTemplateHistory.objects.create(
+            object_id=self.mt1,
+            name=self.mt1.name,
+            mtype=self.mt1.mtype,
+            probekey=self.mt1.probekey,
+            description=self.mt1.description,
+            probeexecutable=self.mt1.probeexecutable,
+            config=self.mt1.config,
+            attribute=self.mt1.attribute,
+            dependency=self.mt1.dependency,
+            flags=self.mt1.flags,
+            files=self.mt1.files,
+            parameter=self.mt1.parameter,
+            fileparameter=self.mt1.fileparameter,
+            date_created=datetime.datetime.now(),
+            version_user=self.user.username,
+            version_comment='Newest version.'
+        )
+        data = {
+            'name': self.package3.name,
+            'version': self.package3.version
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(mock_update.call_count, 1)
+        mock_update.has_calls([
+            call(mth, 'argo.AMS-Check', self.probehistory1)
+        ])
+
+    @patch('Poem.api.internal_views.metrics.update_metrics')
+    def test_metrics_deleted_if_their_probes_do_not_exist_in_new_package(
+            self, mock_update
+    ):
+        mock_update.side_effect = mocked_func
+        self.probe1.package = self.package3
+        self.probe1.save()
+        probehistory1 = admin_models.ProbeHistory.objects.create(
+            object_id=self.probe1,
+            name=self.probe1.name,
+            package=self.probe1.package,
+            description=self.probe1.description,
+            comment=self.probe1.comment,
+            repository=self.probe1.repository,
+            docurl=self.probe1.docurl,
+            date_created=datetime.datetime.now(),
+            version_comment='Newest version.',
+            version_user=self.user.username
+        )
+        self.mt1.probekey = probehistory1
+        self.mt1.save()
+        mth = admin_models.MetricTemplateHistory.objects.create(
+            object_id=self.mt1,
+            name=self.mt1.name,
+            mtype=self.mt1.mtype,
+            probekey=self.mt1.probekey,
+            description=self.mt1.description,
+            probeexecutable=self.mt1.probeexecutable,
+            config=self.mt1.config,
+            attribute=self.mt1.attribute,
+            dependency=self.mt1.dependency,
+            flags=self.mt1.flags,
+            files=self.mt1.files,
+            parameter=self.mt1.parameter,
+            fileparameter=self.mt1.fileparameter,
+            date_created=datetime.datetime.now(),
+            version_user=self.user.username,
+            version_comment='Newest version.'
+        )
+        data = {
+            'name': self.package3.name,
+            'version': self.package3.version
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(
+            response.data,
+            {
+                'deleted': 'Metric argo.AMSPublisher-Check has been deleted, '
+                           'since its probe is not part of the chosen package.'
+            }
+        )
+        self.assertEqual(mock_update.call_count, 1)
+        mock_update.has_calls([
+            call(mth, 'argo.AMS-Check', self.probehistory1)
+        ])
+
+    @patch('Poem.api.internal_views.metrics.update_metrics')
+    def test_metrics_warning_if_metric_template_history_do_not_exist(
+            self, mock_update
+    ):
+        mock_update.side_effect = mocked_func
+        data = {
+            'name': self.package4.name,
+            'version': self.package4.version
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertFalse(mock_update.called)
+        self.assertEqual(
+            response.data,
+            {
+                'warning': 'Metric template history instance of '
+                           'emi.unicore.Gateway has not been found. '
+                           'Please contact Administrator.'
+            }
+        )
+
+    @patch('Poem.api.internal_views.metrics.update_metrics')
+    def test_metrics_with_update_warning_and_deletion(self,  mock_update):
+        mock_update.side_effect = mocked_func
+        self.probe1.package = self.package3
+        self.probe1.save()
+        probehistory1 = admin_models.ProbeHistory.objects.create(
+            object_id=self.probe1,
+            name=self.probe1.name,
+            package=self.probe1.package,
+            description=self.probe1.description,
+            comment=self.probe1.comment,
+            repository=self.probe1.repository,
+            docurl=self.probe1.docurl,
+            date_created=datetime.datetime.now(),
+            version_comment='Newest version.',
+            version_user=self.user.username
+        )
+        self.mt1.probekey = probehistory1
+        self.mt1.save()
+        mth = admin_models.MetricTemplateHistory.objects.create(
+            object_id=self.mt1,
+            name=self.mt1.name,
+            mtype=self.mt1.mtype,
+            probekey=self.mt1.probekey,
+            description=self.mt1.description,
+            probeexecutable=self.mt1.probeexecutable,
+            config=self.mt1.config,
+            attribute=self.mt1.attribute,
+            dependency=self.mt1.dependency,
+            flags=self.mt1.flags,
+            files=self.mt1.files,
+            parameter=self.mt1.parameter,
+            fileparameter=self.mt1.fileparameter,
+            date_created=datetime.datetime.now(),
+            version_user=self.user.username,
+            version_comment='Newest version.'
+        )
+        poem_models.Metric.objects.create(
+            name='test.AMS-Check',
+            description='Description of test.AMS-Check.',
+            probeexecutable='["ams-probe"]',
+            config='["interval 180", "maxCheckAttempts 1", '
+                   '"path /usr/libexec/argo-monitoring/probes/argo", '
+                   '"retryInterval 1", "timeout 120"]',
+            attribute='["argo.ams_TOKEN --token"]',
+            parameter='["--project EGI"]',
+            flags='["OBSESS 1"]',
+            mtype=self.mt,
+            probekey=self.probehistory1,
+            group=self.group
+        )
+        data = {
+            'name': self.package3.name,
+            'version': self.package3.version
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(
+            response.data,
+            {
+                'deleted': 'Metric argo.AMSPublisher-Check has been deleted, '
+                           'since its probe is not part of the chosen package.',
+                'warning': 'Metric template history instance of '
+                           'test.AMS-Check has not been found. '
+                           'Please contact Administrator.'
+            }
+        )
+        self.assertEqual(mock_update.call_count, 1)
+        mock_update.has_calls([
+            call(mth, 'argo.AMS-Check', self.probehistory1)
+        ])

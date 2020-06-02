@@ -4,7 +4,7 @@ from Poem.api.internal_views.utils import one_value_inline, two_value_inline, \
     inline_metric_for_db
 from Poem.api.views import NotFound
 from Poem.helpers.history_helpers import create_history
-from Poem.helpers.metrics_helpers import import_metrics
+from Poem.helpers.metrics_helpers import import_metrics, update_metrics
 from Poem.poem import models as poem_models
 from Poem.poem_super_admin import models as admin_models
 from django.contrib.contenttypes.models import ContentType
@@ -243,3 +243,98 @@ class ImportMetrics(APIView):
             }
 
         return Response(status=status.HTTP_201_CREATED, data=data)
+
+
+class UpdateMetricsVersions(APIView):
+    """
+    We allow tenant users to pick package version they wish to install, and
+    update metrics accordingly.
+    """
+    authentication_classes = (SessionAuthentication,)
+
+    def put(self, request):
+        try:
+            package = admin_models.Package.objects.get(
+                name=request.data['name'],
+                version=request.data['version']
+            )
+
+            # warning for metrics if there is no metric template history for
+            # metric templates of that name
+            warning_no_tbh = []
+            # metrics deleted because they are not available in the given
+            # package
+            deleted_not_in_package = []
+            # updated metrics
+            updated = []
+            for metric in poem_models.Metric.objects.all():
+                if metric.probekey.package.name == package.name:
+                    mts_history = \
+                        admin_models.MetricTemplateHistory.objects.filter(
+                            name=metric.name
+                        )
+                    if len(mts_history) > 0:
+                        mts = admin_models.MetricTemplateHistory.objects.filter(
+                            object_id=mts_history[0].object_id
+                        )
+                        metrictemplate = None
+                        for mt in mts:
+                            if mt.probekey.package == package:
+                                metrictemplate = mt
+                                break
+
+                        if metrictemplate:
+                            update_metrics(
+                                metrictemplate, metric.name, metric.probekey
+                            )
+                            updated.append(metric.name)
+
+                        else:
+                            deleted_not_in_package.append(metric.name)
+
+                    else:
+                        warning_no_tbh.append(metric.name)
+
+            msg = dict()
+            if deleted_not_in_package:
+                if len(deleted_not_in_package) == 1:
+                    subj = 'Metric {}'.format(deleted_not_in_package[0])
+                    verb = 'has'
+                    obj = 'its probe is'
+                else:
+                    subj = 'Metrics {}'.format(
+                        ', '.join(deleted_not_in_package)
+                    )
+                    verb = 'have'
+                    obj = 'their probes are'
+
+                msg.update(
+                    {
+                        'deleted': '{} {} been deleted, since {} not part of '
+                                   'the chosen package.'.format(subj, verb, obj)
+                    }
+                )
+
+            if warning_no_tbh:
+                if len(warning_no_tbh) == 1:
+                    subj = 'instance of {} has'.format(warning_no_tbh[0])
+
+                else:
+                    subj = 'instances of {} have'.format(
+                        ', '.join(warning_no_tbh)
+                    )
+
+                msg.update(
+                    {
+                        'warning': 'Metric template history {} not been found. '
+                                   'Please contact Administrator.'.format(subj)
+                    }
+                )
+
+            return Response(msg, status=status.HTTP_201_CREATED)
+
+        except admin_models.Package.DoesNotExist:
+            return Response(
+                {'detail': 'Package not found.'},
+                status=status.HTTP_404_NOT_FOUND
+            )
