@@ -11157,6 +11157,13 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             call(self.mth1, 'argo.AMS-Check', self.probehistory1),
             call(self.mth2, 'argo.AMSPublisher-Check', self.probehistory3)
         ])
+        self.assertEqual(
+            response.data,
+            {
+                'updated': 'Metrics argo.AMS-Check, argo.AMSPublisher-Check '
+                           'have been successfully updated.'
+            }
+        )
 
     @patch('Poem.api.internal_views.metrics.update_metrics')
     def test_update_metrics_version_if_metric_template_was_renamed(
@@ -11219,6 +11226,15 @@ class UpdateMetricsVersionsTests(TenantTestCase):
         mock_update.has_calls([
             call(mth, 'argo.AMS-Check', self.probehistory1)
         ])
+        self.assertEqual(
+            response.data,
+            {
+                'deleted': 'Metric argo.AMSPublisher-Check has been deleted, '
+                           'since its probe is not part of the chosen package.',
+                'updated': 'Metric argo.AMS-Check has been successfully '
+                           'updated.'
+            }
+        )
 
     @patch('Poem.api.internal_views.metrics.update_metrics')
     def test_metrics_deleted_if_their_probes_do_not_exist_in_new_package(
@@ -11272,7 +11288,9 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             response.data,
             {
                 'deleted': 'Metric argo.AMSPublisher-Check has been deleted, '
-                           'since its probe is not part of the chosen package.'
+                           'since its probe is not part of the chosen package.',
+                'updated': 'Metric argo.AMS-Check has been successfully '
+                           'updated.'
             }
         )
         self.assertEqual(mock_update.call_count, 1)
@@ -11367,6 +11385,8 @@ class UpdateMetricsVersionsTests(TenantTestCase):
         self.assertEqual(
             response.data,
             {
+                'updated': 'Metric argo.AMS-Check has been successfully '
+                           'updated.',
                 'deleted': 'Metric argo.AMSPublisher-Check has been deleted, '
                            'since its probe is not part of the chosen package.',
                 'warning': 'Metric template history instance of '

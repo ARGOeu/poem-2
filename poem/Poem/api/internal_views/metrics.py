@@ -331,6 +331,17 @@ class UpdateMetricsVersions(APIView):
                     }
                 )
 
+            if updated:
+                if len(updated) == 1:
+                    subj = 'Metric {} has'.format(updated[0])
+
+                else:
+                    subj = 'Metrics {} have'.format(', '.join(updated))
+
+                msg.update({
+                    'updated': '{} been successfully updated.'.format(subj)
+                })
+
             return Response(msg, status=status.HTTP_201_CREATED)
 
         except admin_models.Package.DoesNotExist:
