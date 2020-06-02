@@ -373,7 +373,7 @@ export class ProbeList extends Component {
         id: 'nv',
         minWidth: 25,
         accessor: e =>
-          <Link to={`/ui/${this.publicView && 'public_'}probes/${e.name}/history`}>
+          <Link to={`/ui/${this.publicView ? 'public_' : ''}probes/${e.name}/history`}>
             {e.nv}
           </Link>,
         Cell: row =>
