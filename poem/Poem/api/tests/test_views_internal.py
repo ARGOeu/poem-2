@@ -10556,7 +10556,7 @@ class MetricsHelpersTests(TenantTestCase):
             name='argo.AMS-Check-new',
             mtype=self.mtype1,
             description='New description for the metric.',
-            probekey=self.probeversion3,
+            probekey=self.probeversion2,
             parent='argo.AMS-Check',
             probeexecutable='ams-probe',
             config='["maxCheckAttempts 4", "timeout 70", '
@@ -10635,13 +10635,13 @@ class MetricsHelpersTests(TenantTestCase):
             name='argo.AMS-Check',
             mtype=self.mtype1,
             description='New description for the metric.',
-            probekey=self.probeversion2,
+            probekey=self.probeversion3,
             parent='argo.AMS-Check',
             probeexecutable='ams-probe',
             config='["maxCheckAttempts 4", "timeout 70", '
                    '"path /usr/libexec/argo-monitoring/probes/argo", '
                    '"interval 6", "retryInterval 4"]',
-            attribute='[argo.ams_TOKEN2 --token]',
+            attribute='["argo.ams_TOKEN2 --token"]',
             dependency='["dep-key dep-val"]',
             parameter='["par-key par-val"]',
             flags='["flag-key flag-val"]',
@@ -10649,11 +10649,59 @@ class MetricsHelpersTests(TenantTestCase):
             fileparameter='["fp-key fp-val"]'
         )
         update_metrics(
-            metrictemplate, 'argo.AMS-Check', self.probeversion2
+            metrictemplate, 'argo.AMS-Check', self.probeversion2,
+            user='testuser'
         )
+        metric = poem_models.Metric.objects.get(id=self.metric1.id)
+        metric_versions = poem_models.TenantHistory.objects.filter(
+            object_id=metric.id, content_type=self.ct
+        ).order_by('-date_created')
+        serialized_data = json.loads(
+            metric_versions[0].serialized_data
+        )[0]['fields']
+        self.assertEqual(metric_versions.count(), 2)
+        self.assertEqual(metric_versions[0].user, 'testuser')
+        self.assertEqual(metric.name, metrictemplate.name)
+        self.assertEqual(metric.mtype.name, metrictemplate.mtype.name)
+        self.assertEqual(metric.probekey, metrictemplate.probekey)
+        self.assertEqual(metric.description, metrictemplate.description)
+        self.assertEqual(metric.group.name, 'TEST')
+        self.assertEqual(metric.parent, metrictemplate.parent)
+        self.assertEqual(metric.probeexecutable, metrictemplate.probeexecutable)
+        self.assertEqual(
+            metric.config,
+            '["maxCheckAttempts 4", "timeout 70", '
+            '"path /usr/libexec/argo-monitoring/probes/argo", '
+            '"interval 5", "retryInterval 3"]'
+        )
+        self.assertEqual(metric.attribute, metrictemplate.attribute)
+        self.assertEqual(metric.dependancy, metrictemplate.dependency)
+        self.assertEqual(metric.flags, metrictemplate.flags)
+        self.assertEqual(metric.files, metrictemplate.files)
+        self.assertEqual(metric.parameter, metrictemplate.parameter)
+        self.assertEqual(metric.fileparameter, metrictemplate.fileparameter)
+        self.assertEqual(serialized_data['name'], metric.name)
+        self.assertEqual(serialized_data['mtype'], [metric.mtype.name])
+        self.assertEqual(serialized_data['description'], metric.description)
+        self.assertEqual(
+            serialized_data['probekey'],
+            [metric.probekey.name, metric.probekey.package.version]
+        )
+        self.assertEqual(serialized_data['group'], ['TEST'])
+        self.assertEqual(serialized_data['parent'], metric.parent)
+        self.assertEqual(
+            serialized_data['probeexecutable'], metric.probeexecutable
+        )
+        self.assertEqual(serialized_data['config'], metric.config)
+        self.assertEqual(serialized_data['attribute'], metric.attribute)
+        self.assertEqual(serialized_data['dependancy'], metric.dependancy)
+        self.assertEqual(serialized_data['flags'], metric.flags)
+        self.assertEqual(serialized_data['files'], metric.files)
+        self.assertEqual(serialized_data['parameter'], metric.parameter)
+        self.assertEqual(serialized_data['fileparameter'], metric.fileparameter)
         self.assertFalse(mock_update.called)
 
-    def test_update_metrics_if_metric_template_different_version(self):
+    def test_update_metrics_if_metric_template_different_name(self):
         self.metrictemplate1.name = 'argo.AMS-Check-new'
         self.metrictemplate1.probekey = self.probeversion3
         self.metrictemplate1.save()

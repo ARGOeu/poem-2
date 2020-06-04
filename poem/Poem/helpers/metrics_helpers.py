@@ -73,7 +73,7 @@ def import_metrics(metrictemplates, tenant, user):
     return imported, not_imported
 
 
-def update_metrics(metrictemplate, name, probekey):
+def update_metrics(metrictemplate, name, probekey, user=''):
     schemas = list(Tenant.objects.all().values_list('schema_name', flat=True))
     schemas.remove(get_public_schema_name())
 
@@ -111,19 +111,23 @@ def update_metrics(metrictemplate, name, probekey):
 
                 met.save()
 
-                history = poem_models.TenantHistory.objects.filter(
-                    object_id=met.id,
-                    content_type=ContentType.objects.get_for_model(
-                        poem_models.Metric
+                if met.probekey != probekey:
+                    create_history(met, user)
+
+                else:
+                    history = poem_models.TenantHistory.objects.filter(
+                        object_id=met.id,
+                        content_type=ContentType.objects.get_for_model(
+                            poem_models.Metric
+                        )
+                    )[0]
+                    history.serialized_data = serializers.serialize(
+                        'json', [met],
+                        use_natural_foreign_keys=True,
+                        use_natural_primary_keys=True
                     )
-                )[0]
-                history.serialized_data = serializers.serialize(
-                    'json', [met],
-                    use_natural_foreign_keys=True,
-                    use_natural_primary_keys=True
-                )
-                history.object_repr = met.__str__()
-                history.save()
+                    history.object_repr = met.__str__()
+                    history.save()
 
                 msgs = []
                 if name != met.name:

@@ -286,7 +286,8 @@ class UpdateMetricsVersions(APIView):
 
                         if metrictemplate:
                             update_metrics(
-                                metrictemplate, metric.name, metric.probekey
+                                metrictemplate, metric.name, metric.probekey,
+                                user=request.user.username
                             )
                             updated.append(metric.name)
 
