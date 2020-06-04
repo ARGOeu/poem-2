@@ -725,7 +725,6 @@ export function ListOfMetrics(type, imp=false) {
                     this.state.userDetails.is_superuser &&
                       <Button
                       className='btn btn-secondary'
-                      disabled={!this.state.search_ostag}
                       onClick={() => this.importMetrics()}
                         >
                           Import
@@ -733,15 +732,6 @@ export function ListOfMetrics(type, imp=false) {
                   }
                 </div>
                 <div id="argo-contentwrap" className="ml-2 mb-2 mt-2 p-3 border rounded">
-                  {
-                    !this.state.search_ostag &&
-                      <Alert color='danger'>
-                        <center>
-                          <FontAwesomeIcon icon={faInfoCircle} size='lg' color='black'/> &nbsp;
-                          You should choose OS for import.
-                        </center>
-                      </Alert>
-                  }
                   <ReactTable
                     data={list_metric}
                     columns={columns}
