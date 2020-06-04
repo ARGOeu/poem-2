@@ -11432,6 +11432,11 @@ class UpdateMetricsVersionsTests(TenantTestCase):
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertRaises(
+            poem_models.Metric.DoesNotExist,
+            poem_models.Metric.objects.get,
+            name='argo.AMSPublisher-Check'
+        )
         self.assertEqual(
             response.data,
             {

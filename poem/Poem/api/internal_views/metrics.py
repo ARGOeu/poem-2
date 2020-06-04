@@ -291,6 +291,7 @@ class UpdateMetricsVersions(APIView):
                             updated.append(metric.name)
 
                         else:
+                            metric.delete()
                             deleted_not_in_package.append(metric.name)
 
                     else:
