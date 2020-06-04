@@ -268,7 +268,8 @@ class UpdateMetricsVersions(APIView):
             # updated metrics
             updated = []
             for metric in poem_models.Metric.objects.all():
-                if metric.probekey.package.name == package.name:
+                if metric.probekey and \
+                        metric.probekey.package.name == package.name:
                     mts_history = \
                         admin_models.MetricTemplateHistory.objects.filter(
                             name=metric.name

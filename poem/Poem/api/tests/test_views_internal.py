@@ -10787,9 +10787,13 @@ class UpdateMetricsVersionsTests(TenantTestCase):
                 schema_name=get_public_schema_name()
             )
 
-        self.mt = poem_models.MetricType.objects.create(name='Active')
-        self.mtype = admin_models.MetricTemplateType.objects.create(
+        self.mtype1 = poem_models.MetricType.objects.create(name='Active')
+        self.mtype2 = poem_models.MetricType.objects.create(name='Passive')
+        self.mttype1 = admin_models.MetricTemplateType.objects.create(
             name='Active'
+        )
+        self.mttype2 = admin_models.MetricTemplateType.objects.create(
+            name='Passive'
         )
 
         ct = ContentType.objects.get_for_model(poem_models.Metric)
@@ -10933,7 +10937,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             attribute='["argo.ams_TOKEN --token"]',
             parameter='["--project EGI"]',
             flags='["OBSESS 1"]',
-            mtype=self.mtype,
+            mtype=self.mttype1,
             probekey=self.probehistory1
         )
 
@@ -10986,7 +10990,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
                    '"path /usr/libexec/argo-monitoring/probes/argo", '
                    '"retryInterval 1", "timeout 130"]',
             flags='["NOHOSTNAME 1"]',
-            mtype=self.mtype,
+            mtype=self.mttype1,
             probekey=self.probehistory3
         )
 
@@ -11031,6 +11035,31 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             version_comment='Newer version.'
         )
 
+        mt3 = admin_models.MetricTemplate.objects.create(
+            name='org.apel.APEL-Pub',
+            flags='["OBSESS 1", "PASSIVE 1"]',
+            mtype=self.mttype2
+        )
+
+        admin_models.MetricTemplateHistory.objects.create(
+            object_id=mt3,
+            name=mt3.name,
+            mtype=mt3.mtype,
+            probekey=mt3.probekey,
+            description=mt3.description,
+            probeexecutable=mt3.probeexecutable,
+            config=mt3.config,
+            attribute=mt3.attribute,
+            dependency=mt3.dependency,
+            flags=mt3.flags,
+            files=mt3.files,
+            parameter=mt3.parameter,
+            fileparameter=mt3.fileparameter,
+            date_created=datetime.datetime.now(),
+            version_user=self.user.username,
+            version_comment='Initial version.'
+        )
+
         metric1 = poem_models.Metric.objects.create(
             name='argo.AMS-Check',
             description='Description of argo.AMS-Check.',
@@ -11041,7 +11070,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             attribute='["argo.ams_TOKEN --token"]',
             parameter='["--project EGI"]',
             flags='["OBSESS 1"]',
-            mtype=self.mt,
+            mtype=self.mtype1,
             probekey=self.probehistory1,
             group=self.group
         )
@@ -11054,7 +11083,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
                    '"path /usr/libexec/argo-monitoring/probes/argo", '
                    '"retryInterval 1", "timeout 130"]',
             flags='["NOHOSTNAME 1"]',
-            mtype=self.mt,
+            mtype=self.mtype1,
             probekey=self.probehistory3,
             group=self.group
         )
@@ -11069,8 +11098,15 @@ class UpdateMetricsVersionsTests(TenantTestCase):
                    '"retryInterval 5", "timeout 60"]',
             attribute='["METRIC_CONFIG_FILE -f"]',
             flags='["OBSESS 1", "NOHOSTNAME 1", "NOLBNODE 1"]',
-            mtype=self.mt,
+            mtype=self.mtype1,
             probekey=self.probehistory5,
+            group=self.group
+        )
+
+        metric4 = poem_models.Metric.objects.create(
+            name='org.apel.APEL-Pub',
+            flags='["OBSESS 1", "PASSIVE 1"]',
+            mtype=self.mtype2,
             group=self.group
         )
 
@@ -11124,6 +11160,20 @@ class UpdateMetricsVersionsTests(TenantTestCase):
                 use_natural_primary_keys=True
             ),
             object_repr=metric3.__str__(),
+            content_type=ct,
+            date_created=datetime.datetime.now(),
+            comment='Initial version.',
+            user=self.user.username
+        )
+
+        poem_models.TenantHistory.objects.create(
+            object_id=metric4.id,
+            serialized_data=serializers.serialize(
+                'json', [metric4],
+                use_natural_foreign_keys=True,
+                use_natural_primary_keys=True
+            ),
+            object_repr=metric4.__str__(),
             content_type=ct,
             date_created=datetime.datetime.now(),
             comment='Initial version.',
@@ -11369,7 +11419,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             attribute='["argo.ams_TOKEN --token"]',
             parameter='["--project EGI"]',
             flags='["OBSESS 1"]',
-            mtype=self.mt,
+            mtype=self.mtype1,
             probekey=self.probehistory1,
             group=self.group
         )
