@@ -10,7 +10,8 @@ import{
   Checkbox,
   NotifyError,
   ErrorComponent,
-  DropdownFilterComponent
+  DropdownFilterComponent,
+  NotifyWarn
 } from './UIElements';
 import ReactTable from 'react-table';
 import {
@@ -220,7 +221,8 @@ export class PackageChange extends Component {
       modalFunc: undefined,
       modalTitle: undefined,
       modalMsg: undefined,
-      error: null
+      error: null,
+      disabled_button: true
     };
 
     this.toggleAreYouSure = this.toggleAreYouSure.bind(this);
@@ -231,6 +233,8 @@ export class PackageChange extends Component {
     this.doDelete = this.doDelete.bind(this);
     this.toggleCheckbox = this.toggleCheckbox.bind(this);
     this.onVersionSelect = this.onVersionSelect.bind(this);
+    this.onTenantSubmitHandle = this.onTenantSubmitHandle.bind(this);
+    this.updateMetrics = this.updateMetrics.bind(this);
   };
 
   toggleAreYouSure() {
@@ -280,7 +284,8 @@ export class PackageChange extends Component {
         this.setState({
           pkg: updated_pkg,
           repo_6: repo_6,
-          repo_7: repo_7
+          repo_7: repo_7,
+          disabled_button: false
         });
       };
     });
@@ -301,6 +306,51 @@ export class PackageChange extends Component {
     this.toggleAreYouSureSetModal(
       msg, title, () => this.doChange(values, actions)
     );
+  };
+
+  onTenantSubmitHandle(values, actions) {
+    let msg = 'Are you sure you want to update metrics?';
+    let title = 'Update metrics';
+
+    this.toggleAreYouSureSetModal(
+      msg, title, () => this.updateMetrics(values, actions)
+    );
+  };
+
+  async updateMetrics(values, actions) {
+    let response = await this.backend.changeObject(
+      '/api/v2/internal/updatemetricsversions/',
+      {
+        name: values.name,
+        version: values.version
+      }
+    );
+    if (!response.ok) {
+      let err_msg = '';
+      try {
+        let json = await response.json();
+        err_msg = json.detail;
+      } catch(err) {
+        err_msg = 'Error updating metrics';
+      };
+      NotifyError({
+        title: `Error: ${response.status} ${response.statusText}`,
+        msg: err_msg
+      });
+    } else {
+      let json = await response.json();
+      if ('updated' in json)
+        NotifyOk({
+          msg: json.updated,
+          title: 'Updated',
+          callback: () => this.history.push('/ui/administration/packages')
+        });
+      if ('warning' in json)
+        NotifyWarn({msg: json.warning, title: 'Warning'});
+
+      if ('deleted' in json)
+        NotifyWarn({msg: json.deleted, title: 'Deleted'});
+    };
   };
 
   async doChange(values, actions) {
@@ -664,27 +714,44 @@ export class PackageChange extends Component {
                   }
                 </FormGroup>
                 {
-                  !this.disabled &&
-                    <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
-                      {
-                        !this.addview ?
-                          <Button
-                            color="danger"
-                            onClick={() => {
-                              this.toggleAreYouSureSetModal(
-                                'Are you sure you want to delete package?',
-                                'Delete package',
-                                () => this.doDelete(this.nameversion)
-                              )
-                            }}
-                          >
-                            Delete
-                          </Button>
-                        :
-                          <div></div>
-                      }
-                      <Button color="success" id="submit-button" type="submit">Save</Button>
-                    </div>
+                  <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
+                    {
+                      (!this.addview && !this.disabled) ?
+                        <Button
+                          color="danger"
+                          onClick={() => {
+                            this.toggleAreYouSureSetModal(
+                              'Are you sure you want to delete package?',
+                              'Delete package',
+                              () => this.doDelete(this.nameversion)
+                            )
+                          }}
+                        >
+                          Delete
+                        </Button>
+                      :
+                        <div></div>
+                    }
+                    {
+                      this.disabled ?
+                        <Button
+                          color='success'
+                          id='import-metrics-button'
+                          disabled={this.disabled && this.state.disabled_button}
+                          onClick={() => this.onTenantSubmitHandle(props.values)}
+                        >
+                          Update metrics
+                        </Button>
+                      :
+                        <Button
+                          color="success"
+                          id="submit-button"
+                          type="submit"
+                        >
+                          Save
+                        </Button>
+                    }
+                  </div>
             }
               </Form>
             )}
