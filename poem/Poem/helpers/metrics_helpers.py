@@ -84,6 +84,7 @@ def update_metrics(metrictemplate, name, probekey):
                     name=name, probekey=probekey
                 )
                 met.name = metrictemplate.name
+                met.probekey = metrictemplate.probekey
                 met.probeexecutable = metrictemplate.probeexecutable
                 met.description = metrictemplate.description
                 met.parent = metrictemplate.parent

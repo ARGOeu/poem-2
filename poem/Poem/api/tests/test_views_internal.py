@@ -10556,7 +10556,7 @@ class MetricsHelpersTests(TenantTestCase):
             name='argo.AMS-Check-new',
             mtype=self.mtype1,
             description='New description for the metric.',
-            probekey=self.probeversion2,
+            probekey=self.probeversion3,
             parent='argo.AMS-Check',
             probeexecutable='ams-probe',
             config='["maxCheckAttempts 4", "timeout 70", '
