@@ -15,28 +15,48 @@ from tenant_schemas.utils import schema_context, get_public_schema_name
 
 def import_metrics(metrictemplates, tenant, user):
     imported = []
+    warn_imported = []
     not_imported = []
     for template in metrictemplates:
-        metrictemplate = admin_models.MetricTemplate.objects.get(
-            name=template
-        )
-        mt = poem_models.MetricType.objects.get(
-            name=metrictemplate.mtype.name
-        )
+        imported_different_version = False
+        mt = admin_models.MetricTemplate.objects.get(name=template)
+        mtype = poem_models.MetricType.objects.get(name=mt.mtype.name)
         gr = poem_models.GroupOfMetrics.objects.get(
             name=tenant.name.upper()
         )
 
+        packages = []
+        for m in poem_models.Metric.objects.all():
+            if m.probekey:
+                packages.append(m.probekey.package)
+
+        package_names = [package.name for package in packages]
+
         try:
-            if metrictemplate.probekey:
-                ver = admin_models.ProbeHistory.objects.get(
-                    name=metrictemplate.probekey.name,
-                    package__version=metrictemplate.probekey.package.version
-                )
+            if mt.probekey:
+                if mt.probekey.package.name in package_names and \
+                        mt.probekey.package not in packages:
+                    package_version = [
+                        package for package in packages
+                        if package.name == mt.probekey.package.name
+                    ][0]
+                    ver = admin_models.ProbeHistory.objects.get(
+                        name=mt.probekey.name,
+                        package=package_version
+                    )
+                    metrictemplate = \
+                        admin_models.MetricTemplateHistory.objects.get(
+                            name=mt.name, probekey=ver
+                        )
+                    imported_different_version = True
+
+                else:
+                    metrictemplate = mt
+                    ver = mt.probekey
 
                 metric = poem_models.Metric.objects.create(
                     name=metrictemplate.name,
-                    mtype=mt,
+                    mtype=mtype,
                     probekey=ver,
                     description=metrictemplate.description,
                     parent=metrictemplate.parent,
@@ -52,11 +72,11 @@ def import_metrics(metrictemplates, tenant, user):
                 )
             else:
                 metric = poem_models.Metric.objects.create(
-                    name=metrictemplate.name,
-                    mtype=mt,
-                    description=metrictemplate.description,
-                    parent=metrictemplate.parent,
-                    flags=metrictemplate.flags,
+                    name=mt.name,
+                    mtype=mtype,
+                    description=mt.description,
+                    parent=mt.parent,
+                    flags=mt.flags,
                     group=gr
                 )
 
@@ -64,13 +84,17 @@ def import_metrics(metrictemplates, tenant, user):
                 metric, user.username, comment='Initial version.'
             )
 
-            imported.append(metrictemplate.name)
+            if imported_different_version:
+                warn_imported.append(mt.name)
+
+            else:
+                imported.append(mt.name)
 
         except IntegrityError:
-            not_imported.append(metrictemplate.name)
+            not_imported.append(mt.name)
             continue
 
-    return imported, not_imported
+    return imported, warn_imported, not_imported
 
 
 def update_metrics(metrictemplate, name, probekey, user=''):

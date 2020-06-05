@@ -197,12 +197,13 @@ class ImportMetrics(APIView):
     authentication_classes = (SessionAuthentication,)
 
     def post(self, request):
-        imported, err = import_metrics(
+        imported, warn, err = import_metrics(
             metrictemplates=dict(request.data)['metrictemplates'],
             tenant=request.tenant, user=request.user
         )
 
         message_bit = ''
+        warn_bit = ''
         error_bit = ''
         error_bit2 = ''
         if imported:
@@ -211,36 +212,49 @@ class ImportMetrics(APIView):
             else:
                 message_bit = ', '.join(msg for msg in imported) + ' have'
 
+        if warn:
+            if len(warn) == 1:
+                warn_bit = '{} has been imported with older probe version. ' \
+                           'If you wish to use more recent probe version, ' \
+                           'you should update package version you use.'.format(
+                                warn[0]
+                            )
+
+            else:
+                warn_bit = "{} have been imported with older probes' " \
+                           "versions. If you wish to use more recent " \
+                           "versions of probes, you should update packages' " \
+                           "versions you use.".format(
+                                ', '.join(msg for msg in warn)
+                            )
+
         if err:
             if len(err) == 1:
                 error_bit = '{} has'.format(err[0])
-                error_bit2 = 'this metric already exists'
+                error_bit2 = 'it already exists'
             else:
                 error_bit = ', '.join(msg for msg in err) + ' have'
-                error_bit2 = 'those metrics already exist'
+                error_bit2 = 'they already exist'
 
         data = dict()
-        if message_bit and error_bit:
-            data = {
+        if message_bit:
+            data.update({
                 'imported':
-                    '{} been successfully imported.'.format(message_bit),
+                    '{} been successfully imported.'.format(message_bit)
+            })
+
+        if warn_bit:
+            data.update({
+                'warn': warn_bit
+            })
+
+        if error_bit:
+            data.update({
                 'err':
-                    '{} not been imported, since {} in the database.'.format(
+                    '{} not been imported since {} in the database.'.format(
                         error_bit, error_bit2
                     )
-            }
-        elif message_bit and not error_bit:
-            data = {
-                'imported':
-                    '{} been successfully imported.'.format(message_bit),
-            }
-        elif not message_bit and error_bit:
-            data = {
-                'err':
-                    '{} not been imported, since {} in the database.'.format(
-                        error_bit, error_bit2
-                    )
-            }
+            })
 
         return Response(status=status.HTTP_201_CREATED, data=data)
 
