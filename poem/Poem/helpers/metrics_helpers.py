@@ -17,6 +17,7 @@ def import_metrics(metrictemplates, tenant, user):
     imported = []
     warn_imported = []
     not_imported = []
+    unavailable = []
     for template in metrictemplates:
         imported_different_version = False
         mt = admin_models.MetricTemplate.objects.get(name=template)
@@ -44,11 +45,16 @@ def import_metrics(metrictemplates, tenant, user):
                         name=mt.probekey.name,
                         package=package_version
                     )
-                    metrictemplate = \
-                        admin_models.MetricTemplateHistory.objects.get(
-                            name=mt.name, probekey=ver
-                        )
-                    imported_different_version = True
+                    try:
+                        metrictemplate = \
+                            admin_models.MetricTemplateHistory.objects.get(
+                                name=mt.name, probekey=ver
+                            )
+                        imported_different_version = True
+
+                    except admin_models.MetricTemplateHistory.DoesNotExist:
+                        unavailable.append(mt.name)
+                        continue
 
                 else:
                     metrictemplate = mt
@@ -94,7 +100,7 @@ def import_metrics(metrictemplates, tenant, user):
             not_imported.append(mt.name)
             continue
 
-    return imported, warn_imported, not_imported
+    return imported, warn_imported, not_imported, unavailable
 
 
 def update_metrics(metrictemplate, name, probekey, user=''):

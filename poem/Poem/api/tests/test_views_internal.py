@@ -10618,6 +10618,38 @@ class MetricsHelpersTests(TransactionTestCase):
             version_comment='Newest version.',
         )
 
+        self.metrictemplate9 = admin_models.MetricTemplate.objects.create(
+            name='argo.AMS-Check-Old',
+            mtype=self.mt_active,
+            probekey=self.probeversion1_1,
+            description='Some description of argo.AMS-Check metric template.',
+            probeexecutable='["ams-probe"]',
+            config='["maxCheckAttempts 3", "timeout 60",'
+                   ' "path /usr/libexec/argo-monitoring/probes/argo",'
+                   ' "interval 5", "retryInterval 3"]',
+            attribute='["argo.ams_TOKEN --token"]',
+            flags='["OBSESS 1"]',
+            parameter='["--project EGI"]'
+        )
+
+        self.mt_history9 = admin_models.MetricTemplateHistory.objects.create(
+            object_id=self.metrictemplate9,
+            name=self.metrictemplate9.name,
+            mtype=self.metrictemplate9.mtype,
+            probekey=self.metrictemplate9.probekey,
+            description=self.metrictemplate9.description,
+            probeexecutable=self.metrictemplate9.probeexecutable,
+            config=self.metrictemplate9.config,
+            attribute=self.metrictemplate9.attribute,
+            dependency=self.metrictemplate9.dependency,
+            flags=self.metrictemplate9.flags,
+            files=self.metrictemplate9.files,
+            parameter=self.metrictemplate9.parameter,
+            fileparameter=self.metrictemplate9.fileparameter,
+            date_created=datetime.datetime.now(),
+            version_user=self.user.username,
+            version_comment='Initial version.',
+        )
         self.group = poem_models.GroupOfMetrics.objects.create(
             name=self.tenant.name.upper()
         )
@@ -10745,7 +10777,7 @@ class MetricsHelpersTests(TransactionTestCase):
 
     def test_import_active_metrics_successfully(self):
         self.assertEqual(poem_models.Metric.objects.all().count(), 4)
-        success, warning, error = import_metrics(
+        success, warning, error, unavailable = import_metrics(
             ['eu.egi.cloud.OpenStack-VM', 'org.nagios.CertLifetime2'],
             self.tenant, self.user
         )
@@ -10754,6 +10786,7 @@ class MetricsHelpersTests(TransactionTestCase):
         )
         self.assertEqual(warning, [])
         self.assertEqual(error, [])
+        self.assertEqual(unavailable, [])
         self.assertEqual(poem_models.Metric.objects.all().count(), 6)
         metric1 = poem_models.Metric.objects.get(
             name='eu.egi.cloud.OpenStack-VM'
@@ -10848,12 +10881,13 @@ class MetricsHelpersTests(TransactionTestCase):
 
     def test_import_passive_metric_successfully(self):
         self.assertEqual(poem_models.Metric.objects.all().count(), 4)
-        success, warning, error = import_metrics(
+        success, warning, error, unavailable = import_metrics(
             ['eu.egi.sec.ARC-CE-result'], self.tenant, self.user
         )
         self.assertEqual(success, ['eu.egi.sec.ARC-CE-result'])
         self.assertEqual(warning, [])
         self.assertEqual(error, [])
+        self.assertEqual(unavailable, [])
         self.assertEqual(poem_models.Metric.objects.all().count(), 5)
         metric1 = poem_models.Metric.objects.get(
             name='eu.egi.sec.ARC-CE-result'
@@ -10900,12 +10934,13 @@ class MetricsHelpersTests(TransactionTestCase):
 
     def test_import_active_metric_with_warning(self):
         self.assertEqual(poem_models.Metric.objects.all().count(), 4)
-        success, warning, error = import_metrics(
+        success, warning, error, unavailable = import_metrics(
             ['argo.AMSPublisher-Check'], self.tenant, self.user
         )
         self.assertEqual(success, [])
         self.assertEqual(warning, ['argo.AMSPublisher-Check'])
         self.assertEqual(error, [])
+        self.assertEqual(unavailable, [])
         self.assertEqual(poem_models.Metric.objects.all().count(), 5)
         metric1 = poem_models.Metric.objects.get(
             name='argo.AMSPublisher-Check'
@@ -10955,13 +10990,14 @@ class MetricsHelpersTests(TransactionTestCase):
 
     def test_import_active_metrics_with_error(self):
         self.assertEqual(poem_models.Metric.objects.all().count(), 4)
-        success, warning, error = import_metrics(
+        success, warning, error, unavailable = import_metrics(
             ['argo.AMS-Check', 'org.nagios.CertLifetime'],
             self.tenant, self.user
         )
         self.assertEqual(success, [])
         self.assertEqual(warning, [])
         self.assertEqual(error, ['argo.AMS-Check', 'org.nagios.CertLifetime'])
+        self.assertEqual(unavailable, [])
         self.assertEqual(poem_models.Metric.objects.all().count(), 4)
         metric1 = poem_models.Metric.objects.get(name='argo.AMS-Check')
         history1 = poem_models.TenantHistory.objects.filter(
@@ -11050,6 +11086,26 @@ class MetricsHelpersTests(TransactionTestCase):
         self.assertEqual(serialized_data2['parameter'], metric2.parameter)
         self.assertEqual(
             serialized_data2['fileparameter'], metric2.fileparameter
+        )
+
+    def test_import_metric_older_version_than_tenants_package(self):
+        self.assertEqual(poem_models.Metric.objects.all().count(), 4)
+        success, warning, error, unavailable = import_metrics(
+            ['argo.AMS-Check-Old'], self.tenant, self.user
+        )
+        self.assertEqual(success, [])
+        self.assertEqual(warning, [])
+        self.assertEqual(error, [])
+        self.assertEqual(unavailable, ['argo.AMS-Check-Old'])
+        self.assertEqual(poem_models.Metric.objects.all().count(), 4)
+        poem_models.Metric.objects.get(name='argo.AMS-Check')
+        poem_models.Metric.objects.get(name='org.nagios.CertLifetime')
+        poem_models.Metric.objects.get(name='eu.egi.cloud.OpenStack-Swift')
+        poem_models.Metric.objects.get(name='org.apel.APEL-Pub')
+        self.assertRaises(
+            poem_models.Metric.DoesNotExist,
+            poem_models.Metric.objects.get,
+            name='argo.AMS-Check-Old'
         )
 
     @patch('Poem.helpers.metrics_helpers.update_metrics_in_profiles')
