@@ -2,21 +2,25 @@
 
 ## Description
 
-ARGO POEM service is multi-tenant aware web application used for management of tenants and corresponding resources needed to bootstrap their monitoring. It's register of services, repositories, packages and related probes, metric configurations and metric profiles that instruct ARGO monitoring instances what kind of probes/tests to execute for given tenant. Additionally it manages grouping of results and defines configuration of reports that ARGO compute engine will generate for each tenant. All of that in multi-tenant manner where single instance of web application can cater for multiple tenants and their monitoring needs. Users of EGI tenant are allowed to login via SAML2 based EGI CheckIN service. 
+ARGO POEM service is multi-tenant aware web application used for management of tenants and corresponding resources needed to bootstrap their monitoring. It's register of services, repositories, packages and related probes, metric configurations and metric profiles that instruct ARGO monitoring instances what kind of probes/tests to execute for given tenant. Additionally it manages grouping of results and defines configuration of reports that ARGO compute engine will generate for each tenant. All of that in multi-tenant manner where single instance of web application can cater for multiple tenants and their monitoring needs. Users of EGI tenant are allowed to login via SAML2 based EGI CheckIN service.
 
 ### Features
 
 Here is a complete list of features:
-* handling of RPM repositories with Nagios probes 
-* versioning of packages and Nagios probes 
+* handling of RPM repositories with Nagios probes
+* versioning of packages and Nagios probes
 * mapping of probes and metrics with predefined metric configuration templates
 * mapping of metrics and service types and grouping of them into metric profiles
-* handling of aggregation profiles; definition of service type groups and logical operators within and between them so to define the status result deduction rules 
+* handling of aggregation profiles; definition of service type groups and logical operators within and between them so to define the status result deduction rules
 * definition of availability and reliability reports and its parameters; topology sources, filters and applying of different profiles to fully accommodate generation of reports
 * flexible session and token protected REST API
-* use of ARGO WEB-API as a centralized store for various resources 
+* use of ARGO WEB-API as a centralized store for various resources
 * PostgreSQL with schemas for enabling of multi-tenancy
 * integration with SAML identity providers
+
+### Design
+
+ARGO POEM is SPA (single page) web application where Django framework is used on the backend and ReactJS UI library is used on the frontend side. Client's browser loads in bundle code that jointly represents whole frontend component that packs together Javascript, CSS, fonts, icons and everything else needed to properly render the UI. Frontend component is glued with backend Django framework through its staticfiles where bundle is loaded in a single Django template and presented to client.
 
 ## Installation
 
@@ -74,7 +78,7 @@ Once the Python 3.6 is installed, it needs to be used to create a new virtual en
 % scl enable rh-python36 'export VIRTUALENVWRAPPER_PYTHON=/opt/rh/rh-python36/root/bin/python3.6; source /opt/rh/rh-python36/root/usr/bin/virtualenvwrapper.sh; export WORKON_HOME=/home/pyvenv; mkdir -p $WORKON_HOME; mkvirtualenv poem'
 ```
 
-> **Notice** how the location of virtual environment is controlled with `WORKON_HOME` variable. Created virtual environment directory will be `$WORKON_HOME/poem`. It needs to be aligned with `VENV` variable in service configuration. 
+> **Notice** how the location of virtual environment is controlled with `WORKON_HOME` variable. Created virtual environment directory will be `$WORKON_HOME/poem`. It needs to be aligned with `VENV` variable in service configuration.
 
 Afterward, the context of virtual environment can be started:
 
@@ -108,7 +112,7 @@ Next, the correct permission needs to be set on virtual environment directory:
 % (poem) chown -R apache:apache $VIRTUAL_ENV
 ```
 
-### PostgreSQL server setup 
+### PostgreSQL server setup
 
 POEM is tested and meant to be running on PostgreSQL 10 DBMS. CentOS 7 operating system delivers [PostgreSQL 10 through Software Collections service](https://www.softwarecollections.org/en/scls/rhscl/rh-postgresql10/) that is installed with the following instructions:
 
@@ -209,7 +213,7 @@ Part of the REST API is protected by token so for tenants that consume those API
     Namespace = hr.cro-ngi.TEST
     SamlLoginString = Log in using EGI CHECK-IN
     SamlServiceName = ARGO POEM EGI-CheckIN
-	
+
 * `Namespace` defines the identifier that will be prepended to every Profile
 * `SamlLoginString` defines the text presented on the SAML2 button of login page
 * `SamlServiceName` defines service name in SAML2 configuration
@@ -219,21 +223,21 @@ Part of the REST API is protected by token so for tenants that consume those API
 Initial superuser credentials that can be used to sign in to POEM with username and password.
 
     [SUPERUSER_EGI]
-    Name = test 
+    Name = test
     Password = test
     Email = test@foo.baar
 
-> It is **important** to note that these options should be specified with correct values **before** trying to create a superuser in database for the given tenant. 
+> It is **important** to note that these options should be specified with correct values **before** trying to create a superuser in database for the given tenant.
 
 ### SYNC_<tenant_name>
 
-These control options are used by sync scripts that fetch all available services types from GOCDB-like service and Virtual organizations from Operations portal. Additionally, if GOCDB-like service supports only Basic HTTP Authentication, it should be enabled by setting `UsePlainHttpAuth` and specifying credentials in `HttpUser` and `HttpPass`. 
+These control options are used by sync scripts that fetch all available services types from GOCDB-like service and Virtual organizations from Operations portal. Additionally, if GOCDB-like service supports only Basic HTTP Authentication, it should be enabled by setting `UsePlainHttpAuth` and specifying credentials in `HttpUser` and `HttpPass`.
 
     [SYNC_EGI]
-    UsePlainHttpAuth = False 
+    UsePlainHttpAuth = False
     HttpUser = xxxx
     HttpPass = xxxx
-    ServiceType = https://goc.egi.eu/gocdbpi/private/?method=get_service_types 
+    ServiceType = https://goc.egi.eu/gocdbpi/private/?method=get_service_types
     VO = http://operations-portal.egi.eu/xml/voIDCard/public/all/true
     Services = https://eosc-hub-devel.agora.grnet.gr/api/v2/service-types/
 
@@ -250,7 +254,7 @@ Once all is set, database can be created with provided tool `poem-db`. First, a 
 
 ```sh
 % workon poem
-% poem-db -c 
+% poem-db -c
 [standard:public] === Running migrate for schema public
 [standard:public] Operations to perform:
 [standard:public]   Apply all migrations: admin, auth, contenttypes, poem, rest_framework_api_key, reversion, sessions, tenants
