@@ -226,7 +226,9 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
                 <Button size="sm" color="light"
                   type="button"
                   onClick={() => {
-                    remove_handler(form.values.view_services[index]);
+                    remove_handler(form.values.view_services[index],
+                      form.values.groupname, form.values.name,
+                      form.values.description);
                     // prevent removal of last tuple
                     if (index > 0 &&
                       form.values.view_services.length > 1)
@@ -756,7 +758,7 @@ function MetricProfilesComponent(cloneview=false) {
       });
     }
 
-    onRemove(element) {
+    onRemove(element, group, name, description) {
       let tmp_view_services = []
       let tmp_list_services = []
 
@@ -805,7 +807,10 @@ function MetricProfilesComponent(cloneview=false) {
       }
       this.setState({
         list_services: tmp_list_services,
-        view_services: tmp_view_services
+        view_services: tmp_view_services,
+        groupname: group,
+        metric_profile_name: name,
+        metric_profile_description: description
       });
     }
 
