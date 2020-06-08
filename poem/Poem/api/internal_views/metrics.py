@@ -197,7 +197,7 @@ class ImportMetrics(APIView):
     authentication_classes = (SessionAuthentication,)
 
     def post(self, request):
-        imported, warn, err = import_metrics(
+        imported, warn, err, unavailable = import_metrics(
             metrictemplates=dict(request.data)['metrictemplates'],
             tenant=request.tenant, user=request.user
         )
@@ -206,6 +206,7 @@ class ImportMetrics(APIView):
         warn_bit = ''
         error_bit = ''
         error_bit2 = ''
+        unavailable_bit = ''
         if imported:
             if len(imported) == 1:
                 message_bit = '{} has'.format(imported[0])
@@ -236,6 +237,22 @@ class ImportMetrics(APIView):
                 error_bit = ', '.join(msg for msg in err) + ' have'
                 error_bit2 = 'they already exist'
 
+        if unavailable:
+            if len(unavailable) == 1:
+                unavailable_bit = '{} has not been imported, since it is not ' \
+                                  'available for the package version you ' \
+                                  'use. If you wish to use the metric, you ' \
+                                  'should change the package version, and try' \
+                                  ' to import again.'.format(unavailable[0])
+            else:
+                unavailable_bit = "{} have not been imported, since they are " \
+                                  "not available for the packages' versions " \
+                                  "you use. If you wish to use the metrics, " \
+                                  "you should change the packages' versions, " \
+                                  "and try to import again.".format(
+                                    ', '.join(ua for ua in unavailable)
+                )
+
         data = dict()
         if message_bit:
             data.update({
@@ -256,7 +273,12 @@ class ImportMetrics(APIView):
                     )
             })
 
-        return Response(status=status.HTTP_201_CREATED, data=data)
+        if unavailable_bit:
+            data.update({
+                'unavailable': unavailable_bit
+            })
+
+        return Response(status=status.HTTP_200_OK, data=data)
 
 
 class UpdateMetricsVersions(APIView):

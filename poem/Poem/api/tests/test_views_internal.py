@@ -5877,7 +5877,7 @@ class ImportMetricsAPIViewTests(TenantTestCase):
 
     @patch('Poem.api.internal_views.metrics.import_metrics')
     def test_import_one_metric_successfully(self, mock_import):
-        mock_import.return_value = ['metric1'], [], []
+        mock_import.return_value = ['metric1'], [], [], []
         data = {
             'metrictemplates': ['metric1']
         }
@@ -5885,7 +5885,7 @@ class ImportMetricsAPIViewTests(TenantTestCase):
         request.tenant = self.tenant
         force_authenticate(request, user=self.user)
         response = self.view(request)
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         mock_import.assert_called_once()
         mock_import.assert_has_calls([
             call(
@@ -5899,7 +5899,7 @@ class ImportMetricsAPIViewTests(TenantTestCase):
 
     @patch('Poem.api.internal_views.metrics.import_metrics')
     def test_import_multiple_metrics_successfully(self, mock_import):
-        mock_import.return_value = ['metric1', 'metric2', 'metric3'], [], []
+        mock_import.return_value = ['metric1', 'metric2', 'metric3'], [], [], []
         data = {
             'metrictemplates': ['metric1', 'metric2', 'metric3']
         }
@@ -5907,7 +5907,7 @@ class ImportMetricsAPIViewTests(TenantTestCase):
         request.tenant = self.tenant
         force_authenticate(request, user=self.user)
         response = self.view(request)
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         mock_import.assert_called_once()
         mock_import.assert_has_calls([
             call(
@@ -5926,7 +5926,7 @@ class ImportMetricsAPIViewTests(TenantTestCase):
 
     @patch('Poem.api.internal_views.metrics.import_metrics')
     def test_import_one_metric_warning(self, mock_import):
-        mock_import.return_value = [], ['metric1'], []
+        mock_import.return_value = [], ['metric1'], [], []
         data = {
             'metrictemplates': ['metric1']
         }
@@ -5934,7 +5934,7 @@ class ImportMetricsAPIViewTests(TenantTestCase):
         request.tenant = self.tenant
         force_authenticate(request, user=self.user)
         response = self.view(request)
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         mock_import.assert_called_once()
         mock_import.assert_has_calls([
             call(
@@ -5950,7 +5950,7 @@ class ImportMetricsAPIViewTests(TenantTestCase):
 
     @patch('Poem.api.internal_views.metrics.import_metrics')
     def test_import_multiple_metrics_warning(self, mock_import):
-        mock_import.return_value = [], ['metric1', 'metric2', 'metric3'], []
+        mock_import.return_value = [], ['metric1', 'metric2', 'metric3'], [], []
         data = {
             'metrictemplates': ['metric1', 'metric2', 'metric3']
         }
@@ -5958,7 +5958,7 @@ class ImportMetricsAPIViewTests(TenantTestCase):
         request.tenant = self.tenant
         force_authenticate(request, user=self.user)
         response = self.view(request)
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         mock_import.assert_called_once()
         mock_import.assert_has_calls([
             call(
@@ -5976,7 +5976,7 @@ class ImportMetricsAPIViewTests(TenantTestCase):
 
     @patch('Poem.api.internal_views.metrics.import_metrics')
     def test_import_one_metric_error(self, mock_import):
-        mock_import.return_value = [], [], ['metric1']
+        mock_import.return_value = [], [], ['metric1'], []
         data = {
             'metrictemplates': ['metric1']
         }
@@ -5984,7 +5984,7 @@ class ImportMetricsAPIViewTests(TenantTestCase):
         request.tenant = self.tenant
         force_authenticate(request, user=self.user)
         response = self.view(request)
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         mock_import.assert_called_once()
         mock_import.assert_has_calls([
             call(
@@ -5999,7 +5999,7 @@ class ImportMetricsAPIViewTests(TenantTestCase):
 
     @patch('Poem.api.internal_views.metrics.import_metrics')
     def test_import_multiple_metrics_error(self, mock_import):
-        mock_import.return_value = [], [], ['metric1', 'metric2', 'metric3']
+        mock_import.return_value = [], [], ['metric1', 'metric2', 'metric3'], []
         data = {
             'metrictemplates': ['metric1', 'metric2', 'metric3']
         }
@@ -6007,7 +6007,7 @@ class ImportMetricsAPIViewTests(TenantTestCase):
         request.tenant = self.tenant
         force_authenticate(request, user=self.user)
         response = self.view(request)
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         mock_import.assert_called_once()
         mock_import.assert_has_calls([
             call(
@@ -6022,23 +6022,69 @@ class ImportMetricsAPIViewTests(TenantTestCase):
         )
 
     @patch('Poem.api.internal_views.metrics.import_metrics')
+    def test_import_one_metric_unavailable(self, mock_import):
+        mock_import.return_value = [], [], [], ['metric1']
+        data = {'metrictemplates': ['metric1']}
+        request = self.factory.post(self.url, data, format='json')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        mock_import.assert_called_once()
+        mock_import.assert_has_calls([
+            call(metrictemplates=['metric1'],
+                 tenant=self.tenant, user=self.user)
+        ])
+        self.assertEqual(
+            response.data,
+            {"unavailable": "metric1 has not been imported, since it is not "
+                            "available for the package version you use. If you "
+                            "wish to use the metric, you should change the "
+                            "package version, and try to import again."}
+        )
+
+    @patch('Poem.api.internal_views.metrics.import_metrics')
+    def test_import_multiple_metrics_unavailable(self, mock_import):
+        mock_import.return_value = [], [], [], ['metric1', 'metric2']
+        data = {'metrictemplates': ['metric1', 'metric2']}
+        request = self.factory.post(self.url, data, format='json')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        mock_import.assert_called_once()
+        mock_import.assert_has_calls([
+            call(metrictemplates=['metric1', 'metric2'],
+                 tenant=self.tenant, user=self.user)
+        ])
+        self.assertEqual(
+            response.data,
+            {"unavailable": "metric1, metric2 have not been imported, since "
+                            "they are not available for the packages' versions "
+                            "you use. If you wish to use the metrics, you "
+                            "should change the packages' versions, and try to "
+                            "import again."}
+        )
+
+    @patch('Poem.api.internal_views.metrics.import_metrics')
     def test_import_multiple_metrics_mixed(self, mock_import):
         mock_import.return_value = ['metric1', 'metric2'], ['metric3'], \
-                                   ['metric4', 'metric5', 'metric6']
+                                   ['metric4', 'metric5', 'metric6'], \
+                                   ['metric7']
         data = {
             'metrictemplates': ['metric1', 'metric2', 'metric3', 'metric4',
-                                'metric5', 'metric6']
+                                'metric5', 'metric6', 'metric7']
         }
         request = self.factory.post(self.url, data, format='json')
         request.tenant = self.tenant
         force_authenticate(request, user=self.user)
         response = self.view(request)
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         mock_import.assert_called_once()
         mock_import.assert_has_calls([
             call(
                 metrictemplates=['metric1', 'metric2', 'metric3', 'metric4',
-                                 'metric5', 'metric6'],
+                                 'metric5', 'metric6', 'metric7'],
                 tenant=self.tenant, user=self.user
             )
         ])
@@ -6050,7 +6096,11 @@ class ImportMetricsAPIViewTests(TenantTestCase):
                      "If you wish to use more recent probe version, you should "
                      "update package version you use.",
              "err": "metric4, metric5, metric6 have not been imported since "
-                    "they already exist in the database."}
+                    "they already exist in the database.",
+             "unavailable": "metric7 has not been imported, since it is not "
+                            "available for the package version you use. If you "
+                            "wish to use the metric, you should change the "
+                            "package version, and try to import again."}
         )
 
 
