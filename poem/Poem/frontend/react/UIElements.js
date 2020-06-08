@@ -583,6 +583,15 @@ export const NotifyWarn = ({msg='', title=''}) => {
 };
 
 
+export const NotifyInfo = ({msg='', title=''}) => {
+  msg = <div>
+    <p>{msg}</p>
+    <p>Click to dismiss.</p>
+  </div>
+  NotificationManager.info(msg, title, 0, () => true);
+};
+
+
 export const PublicPage = ({children}) => {
   let userDetails = {
     username: 'Anonymous'
