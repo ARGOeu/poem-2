@@ -12,6 +12,7 @@ import {
   AutocompleteField,
   NotifyWarn,
   NotifyError,
+  NotifyInfo,
   ErrorComponent
  } from './UIElements';
 import ReactTable from 'react-table';
@@ -386,11 +387,18 @@ export function ListOfMetrics(type, imp=false) {
       if (mt.length > 0) {
         let response = await this.backend.importMetrics({'metrictemplates': mt});
         let json = await response.json();
-        if (json.imported)
+        if ('imported' in json)
           NotifyOk({msg: json.imported, title: 'Imported'})
 
-        if (json.err)
+        if ('warn' in json)
+          NotifyInfo({msg: json.warn, title: 'Imported with older probe version'});
+
+        if ('err' in json)
           NotifyWarn({msg: json.err, title: 'Not imported'});
+
+        if ('unavailable' in json)
+          NotifyError({msg: json.unavailable, title: 'Unavailable'});
+
       } else {
         NotifyError({
           msg: 'No metric templates were selected!',
