@@ -24,7 +24,7 @@ ARGO POEM is SPA (single page) web application using Django framework as backend
 
 Web application is served with Apache web server and uses PostgreSQL as database storage.
 
-#### Complete list of packages used to built web service
+#### List of packages used
 
 Backend:
 * `Django`
@@ -50,6 +50,15 @@ Frontend:
 * `reactstrap`
 * `webpack`
 * `yup`
+
+## User documentation and instances
+
+User documentation: http://argoeu.github.io/poem/v1/
+
+EGI instances:
+* devel - `https://egi.poem.devel.argo.grnet.gr`
+* production - `https://poem.egi.eu`
+* SuperPOEM - `https://poem.argo.grnet.gr`
 
 ## Installation
 
@@ -264,14 +273,13 @@ Initial superuser credentials that can be used to sign in to POEM with username 
 
 ### SYNC_<tenant_name>
 
-These control options are used by sync scripts that fetch all available services types from GOCDB-like service and Virtual organizations from Operations portal. Additionally, if GOCDB-like service supports only Basic HTTP Authentication, it should be enabled by setting `UsePlainHttpAuth` and specifying credentials in `HttpUser` and `HttpPass`.
+These control options are used by sync scripts that fetch all available services types from GOCDB-like service. Additionally, if GOCDB-like service supports only Basic HTTP Authentication, it should be enabled by setting `UsePlainHttpAuth` and specifying credentials in `HttpUser` and `HttpPass`.
 
     [SYNC_EGI]
     UsePlainHttpAuth = False
     HttpUser = xxxx
     HttpPass = xxxx
     ServiceType = https://goc.egi.eu/gocdbpi/private/?method=get_service_types
-    Services = https://eosc-hub-devel.agora.grnet.gr/api/v2/service-types/
 
 ### Creating database and starting the service
 
@@ -282,7 +290,7 @@ Prerequisites for creating the empty database are:
 4) `$VIRTUAL_ENV` has permissions set to `apache:apache`
 5) `poem.conf` Apache configuration is presented in `/opt/rh/httpd24/root/etc/httpd/conf.d/`
 
-Once all is set, database can be created with provided tool `poem-db`. First, a tenant should be created for the `public` schema in the database, and migrations for public schema are run by calling `poem-db -c`:
+Once all is set, database can be created with provided tool `poem-db`.
 
 ```sh
 % workon poem
@@ -296,9 +304,65 @@ Once all is set, database can be created with provided tool `poem-db`. First, a 
 
 ## Tenant handling
 
-Next step is creation of tenants by calling `poem-tenant` tool. The script takes two mandatory arguments, tenant name and hostname (called `domain_url` in database). Script will create schema in the database for the given tenant, and the migrations will be run. Also, data is imported for the `poem_tags` table in the new schema. Superuser is created by calling tool `poem-db -u -n <schema_name>`:
+### SuperPOEM
+
+TODO: Tenant handling will be done within SuperPOEM that will spawn TenantPOEM and will have a register all of them with needed tenant metadata. Until then, TenantPOEM is created with a set of Django backend tools that set and create needed tenant metadata. 
+
+Prerequisite for spawning of new TenantPOEM is to have SuperPOEM operational with its data (metric templates, probes, packages and repo) loaded in `public` database schema. SuperPOEM is residing on its own FQDN, supporting only username/password login that should be defined in `poem.conf`:
+```
+[SECURITY]
+AllowedHosts = poem.devel.argo.grnet.gr
+
+[GENERAL_ALL]
+PublicPage = poem.devel.argo.grnet.gr
+
+[SUPERUSER_ALL]
+Name = <username>
+Password = <password>
+Email = <email> 
+```
+
+`public` schema is automatically created once the database is created. It just needs to be populated with SuperPOEM data:
+```
+poem-db -d -n public -f public.json
+```
+
+### TenantPOEM
+
+Tenant metadata is:
+* tenant FQDN
+* superuser TenantPOEM credentials
+* topology sources for GOCDB-like feed
+* WEB-API read-only and CRUD tokens
+
+#### Metadata configuration
+
+Tenant metadata should be listed in `poem.conf` with corresponding sections:
+```
+[SECURITY]
+AllowedHosts = egi.poem.devel.argo.grnet.gr
+
+[GENERAL_EGI]
+SamlLoginString = Login using EGI CHECK-IN
+SamlServiceName = ARGO POEM EGI-CheckIN
+
+[SUPERUSER_EGI]
+Name = <username>
+Password = <password>
+Email = <email> 
+
+[SYNC_EGI]
+UsePlainHttpAuth = False
+HttpUser = xxxx
+HttpPass = xxxx
+ServiceType = https://goc.egi.eu/gocdbpi/private/?method=get_service_types
+```
+
+#### DB schema creation
+
+For DB schema handling, `poem-tenant` tool is introduced. It takes two mandatory arguments, tenant name and FQDN. Tool will create DB schema for the given tenant and the Django migrations will be run effectively recreating all needed database tables needed for storing tenant data.Superuser is created by tool `poem-db`:
 ```sh
-% poem-tenant -t EGI -d egi-ui.argo.grnet.gr
+% poem-tenant -t EGI -d egi.poem.devel.argo.grnet.gr
 [standard:egi] === Running migrate for schema egi
 [standard:egi] Operations to perform:
 [standard:egi]   Apply all migrations: admin, auth, contenttypes, poem, rest_framework_api_key, reversion, sessions, tenants
@@ -308,16 +372,31 @@ Next step is creation of tenants by calling `poem-tenant` tool. The script takes
 Superuser created successfully.
 ```
 
+> DB schema name internally is always lower-cased name given to `poem-tenant` tool and in such form is provided to `poem-db` tool.
+
 Afterward, Apache server needs to be started:
 ```sh
 % systemctl start httpd24-httpd.service
 ```
 
-POEM web application should be now served at `https://<tenant_domain_url>/poem`
+Tenant POEM web application should be now served at `https://<tenant_domain_url>/`
 
-### Loading data from .json file
-There is also possibility to load data for tenant from .json file:
-```sh
-poem-db -d -n egi -f /path/to/file.json
+#### Tokens
+
+For seamless interaction with ARGO WEB-API, tokens with predefined names and values should be set. Therefore, `poem-token` tool is introduced. Naming of tokens should follow exactly this schema:
+* `WEB-API-RO` - read-only ARGO-WEB-API token
+* `WEB-API` - CRUD ARGO-WEB-API token
+* `TENANT-NAME` - REST API consumed by monitoring boxes
+
+Example:
 ```
-> In case that the data is to be loaded from .json file, super user **should not** be created beforehand.
+poem-token -t WEB-API-RO -s egi -o xxxx 
+poem-token -t WEB-API -s egi -o xxxx 
+```
+
+`poem-token` tools takes two or three arguments. In three-arguments-mode, it's setting token name provided after `-t` within schema provided after `-s` to a predefined value provided after `-o`. If `-o` is omitted, than value will be automatically created.
+
+In two-argument-mode it is used to generate a token for its REST API that will be consumed by monitoring boxes:
+```
+poem-token -t EGI -s egi
+```
