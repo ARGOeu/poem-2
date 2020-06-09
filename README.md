@@ -20,7 +20,36 @@ Here is a complete list of features:
 
 ### Design
 
-ARGO POEM is SPA (single page) web application where Django framework is used on the backend and ReactJS UI library is used on the frontend side. Client's browser loads in bundle code that jointly represents whole frontend component that packs together Javascript, CSS, fonts, icons and everything else needed to properly render the UI. Frontend component is glued with backend Django framework through its staticfiles where bundle is loaded in a single Django template and presented to client.
+ARGO POEM is SPA (single page) web application using Django framework as backend and ReactJS UI library as a frontend component. Client's browser loads in bundle code that jointly represents whole frontend component that packs together Javascript, CSS, fonts, icons and everything else needed to properly render the UI. Frontend component is glued with backend Django framework as its staticfile that loads bundle in a single Django template presented to client. Keeping frontend close to backend allows exploiting of some nice Django packages that primarily deal with API methods, user authentication and tenant database handling. Frontend talks to backend over session protected REST API methods for resources that should be stored in local database. For the other part of the resources that should be kept on token protected ARGO WEB-API, HTTP requests are triggered directly from frontend. 
+
+Web application is served with Apache web server and uses PostgreSQL as database storage.
+
+#### Complete list of packages used to built web service
+
+Backend:
+* `Django`
+* `django-rest-auth`
+* `django-tenant-schemas`
+* `django-webpack-loader`
+* `djangorestframework`
+* `djangorestframework-api-key`
+* `djangosaml2`
+* `psycopg2-binary`
+
+Frontend:
+* `ReactJS`
+* `formik`
+* `react-autocomplete`
+* `react-diff-viewer`
+* `react-dom`
+* `react-fontawesome`
+* `react-notifications`
+* `react-popup`
+* `react-router`
+* `react-table`
+* `reactstrap`
+* `webpack`
+* `yup`
 
 ## Installation
 
