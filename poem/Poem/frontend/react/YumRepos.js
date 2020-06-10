@@ -103,7 +103,7 @@ export class YumRepoList extends Component {
         id: 'name',
         minWidth: 80,
         accessor: e =>
-          <Link to={repolink + e.name + '-' + e.tag.replace(/\s/g, '').toLowerCase()}>{`${e.name} (${e.tag})`}</Link>,
+          <Link to={repolink + e.name + '-' + e.tag.replace(/\s/g, '').toLowerCase()}>{e.name}</Link>,
         filterable: true,
         Filter: (
           <input
@@ -448,7 +448,7 @@ function YumRepoComponent(cloneview=false) {
                               <Field
                                 component='select'
                                 name='tag'
-                                className='form-control'
+                                className='form-control custom-select'
                                 id='tag'
                               >
                                 {
