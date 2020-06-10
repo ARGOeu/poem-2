@@ -1,5 +1,38 @@
 # Changelog
 
+## [3.3.0] - 2020-06-09
+### Added
+* ARGO-2398 Create set of group of resources when creating new tenant
+* ARGO-2413 Probes could present the related metrics
+* ARGO-2412 Metric Template and package name
+* ARGO-2405 Clone feature for YUM repos
+* ARGO-2408 Add information on FLAGS and ATTRIBUTES to POEM documentation
+* ARGO-2349 POEM step by step guides
+* ARGO-2426 Import minimum set of internal metrics when creating tenant
+* ARGO-2428 Expose user details and groups permissions on NavBar hover/info
+* ARGO-2436 Add description of user details to POEM documentation
+* ARGO-2362 Ability to set/change password for user
+* ARGO-2420 Introduce modal/popup for connection related problems with WEB-API
+* ARGO-2435 Delete tenant feature
+* ARGO-1697 Form validation of Service Type entries in Aggregations
+
+### Fixed
+* ARGO-2403 Metric not renamed in metric profile when metric template is renamed
+* ARGO-2281 Prevent add view if user does not control any corresponding resource group
+* ARGO-2082 Prevent duplicated tuples on Metric profiles
+* ARGO-2451 Warning message when importing metric templates
+* ARGO-2452 Set no timeout on warning messages
+* ARGO-2458 Fix regression with not able to add new Threshold profile
+* ARGO-2459 Sync profile name changes
+* ARGO-2460 Clicking on probe's number of versions does not redirect to history page
+* ARGO-2470 Profile name in Metric profile clone view keeps changing
+
+### Changed
+* ARGO-2419 Order side bar on SuperAdmin POEM logically
+* ARGO-2411 Probe details page: URL is huge
+* ARGO-2421 User with no UI permission given should be served with RO WEB-API token
+* ARGO-2429 Remove file parameters & attributes fields from frontend
+
 ## [3.2.0] - 2020-04-24
 ### Added
 * ARGO-2278 Create user manual for POEM
