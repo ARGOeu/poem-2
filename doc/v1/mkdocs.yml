@@ -28,4 +28,8 @@ nav:
     - Metric Profiles: tenant_metric_profiles.md
     - Thresholds Profiles: tenant_thresholds_profiles.md
 
+- Guides:
+    - SuperAdmin POEM guide: superadmin_guide.md
+    - Tenant POEM guide: tenant_guide.md
+
 theme: readthedocs

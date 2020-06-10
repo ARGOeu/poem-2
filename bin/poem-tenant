@@ -5,9 +5,10 @@ SITEPACK=$(python -c "from distutils.sysconfig import get_python_lib; print(get_
 
 usage()
 {
-	printf "Usage: %s -t <tenant name> [-d <hostname>] [-l]\n" $(basename $0) >&2
+	printf "Usage: %s -t <tenant name> [-d <hostname> | -r] [-l] \n" $(basename $0) >&2
 	printf "       [-t] - tenant name\n" >&2
 	printf "       [-d] - hostname\n" >&2
+	printf "       [-r] - remove tenant and schema\n" >&2
 	printf "       [-l] - list all tenants\n" >&2
     exit 2
 }
@@ -17,7 +18,7 @@ then
     usage
 fi
 
-while getopts 't:d:hl' OPTION
+while getopts 't:d:hlr' OPTION
 do
     case $OPTION in
         t)
@@ -26,12 +27,24 @@ do
         d)
             hostname=$OPTARG
             ;;
+        r)
+            if [ -z "$name" ]
+            then
+              echo "Tenant name should be given!"
+              usage
+            else
+              su -m -s /bin/sh $RUNASUSER -c \
+              "poem-manage delete_tenant --name $name"
+              exit 0
+            fi
+            ;;
         h)
             usage
             ;;
         l)
             su -m -s /bin/sh $RUNASUSER -c \
             "poem-manage list_tenants" | awk '{print $1}' | tr '\n' ' '
+            echo
             exit 0
             ;;
         ?)
@@ -49,9 +62,15 @@ else
     "poem-manage create_tenant --name $name --hostname $hostname"
 fi
 
+schema=$(echo "$name" | tr '[:upper:]' '[:lower:]')
+
+su -m -s /bin/sh $RUNASUSER -c \
+"poem-manage tenant_command --schema $schema poem_superuser"
+
 if [[ $name != 'all' ]]
 then
-    schema=$(echo "$name" | tr '[:upper:]' '[:lower:]')
     su -m -s /bin/sh $RUNASUSER -c \
     "poem-manage tenant_command --schema=$schema loaddata initial_data.json "
+    su -m -s /bin/sh $RUNASUSER -c \
+    "poem-manage tenant_command --schema=$schema import_internal_metrics"
 fi

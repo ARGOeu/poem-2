@@ -1,15 +1,13 @@
-from django.contrib.contenttypes.models import ContentType
-from django.db import IntegrityError
-
 import json
 
 from Poem.api.internal_views.utils import one_value_inline, two_value_inline, \
     inline_metric_for_db
 from Poem.api.views import NotFound
 from Poem.helpers.history_helpers import create_history
+from Poem.helpers.metrics_helpers import import_metrics
 from Poem.poem import models as poem_models
 from Poem.poem_super_admin import models as admin_models
-
+from django.contrib.contenttypes.models import ContentType
 from rest_framework import status
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
@@ -199,61 +197,14 @@ class ImportMetrics(APIView):
     authentication_classes = (SessionAuthentication,)
 
     def post(self, request):
-        imported = []
-        err = []
-        for template in dict(request.data)['metrictemplates']:
-            metrictemplate = admin_models.MetricTemplate.objects.get(
-                name=template
-            )
-            mt = poem_models.MetricType.objects.get(
-                name=metrictemplate.mtype.name
-            )
-            gr = poem_models.GroupOfMetrics.objects.get(
-                name=request.tenant.name.upper()
-            )
+        imported, err = import_metrics(
+            metrictemplates=dict(request.data)['metrictemplates'],
+            tenant=request.tenant, user=request.user
+        )
 
-            try:
-                if metrictemplate.probekey:
-                    ver = admin_models.ProbeHistory.objects.get(
-                        name=metrictemplate.probekey.name,
-                        package__version=metrictemplate.probekey.package.version
-                    )
-
-                    metric = poem_models.Metric.objects.create(
-                        name=metrictemplate.name,
-                        mtype=mt,
-                        probekey=ver,
-                        description=metrictemplate.description,
-                        parent=metrictemplate.parent,
-                        group=gr,
-                        probeexecutable=metrictemplate.probeexecutable,
-                        config=metrictemplate.config,
-                        attribute=metrictemplate.attribute,
-                        dependancy=metrictemplate.dependency,
-                        flags=metrictemplate.flags,
-                        files=metrictemplate.files,
-                        parameter=metrictemplate.parameter,
-                        fileparameter=metrictemplate.fileparameter
-                    )
-                else:
-                    metric = poem_models.Metric.objects.create(
-                        name=metrictemplate.name,
-                        mtype=mt,
-                        description=metrictemplate.description,
-                        parent=metrictemplate.parent,
-                        flags=metrictemplate.flags,
-                        group=gr
-                    )
-
-                create_history(metric, request.user.username,
-                               comment='Initial version.')
-
-                imported.append(metrictemplate.name)
-
-            except IntegrityError:
-                err.append(metrictemplate.name)
-                continue
-
+        message_bit = ''
+        error_bit = ''
+        error_bit2 = ''
         if imported:
             if len(imported) == 1:
                 message_bit = '{} has'.format(imported[0])
@@ -263,28 +214,32 @@ class ImportMetrics(APIView):
         if err:
             if len(err) == 1:
                 error_bit = '{} has'.format(err[0])
+                error_bit2 = 'this metric already exists'
             else:
                 error_bit = ', '.join(msg for msg in err) + ' have'
+                error_bit2 = 'those metrics already exist'
 
-        if imported and err:
+        data = dict()
+        if message_bit and error_bit:
             data = {
                 'imported':
                     '{} been successfully imported.'.format(message_bit),
                 'err':
-                    '{} not been imported, since those metrics already exist '
-                    'in the database.'.format(error_bit)
+                    '{} not been imported, since {} in the database.'.format(
+                        error_bit, error_bit2
+                    )
             }
-        elif imported and not err:
+        elif message_bit and not error_bit:
             data = {
                 'imported':
                     '{} been successfully imported.'.format(message_bit),
             }
-        elif not imported and err:
+        elif not message_bit and error_bit:
             data = {
                 'err':
-                    '{} not been imported, since those metrics already exist '
-                    'in the database.'.format(error_bit)
+                    '{} not been imported, since {} in the database.'.format(
+                        error_bit, error_bit2
+                    )
             }
 
-        return Response(status=status.HTTP_201_CREATED,
-                        data=data)
+        return Response(status=status.HTTP_201_CREATED, data=data)

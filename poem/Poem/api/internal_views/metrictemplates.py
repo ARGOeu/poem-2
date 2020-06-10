@@ -1,11 +1,14 @@
+from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.core import serializers
 from django.db import IntegrityError
 
 import json
+import requests
 
 from Poem.api.internal_views.utils import one_value_inline, two_value_inline, \
     inline_metric_for_db
+from Poem.api.models import MyAPIKey
 from Poem.api.views import NotFound
 from Poem.helpers.history_helpers import create_history, create_comment, \
     update_comment
@@ -68,8 +71,91 @@ def update_metrics(metrictemplate, name, probekey):
                 history.object_repr = met.__str__()
                 history.save()
 
+                msgs = []
+                if name != met.name:
+                    msgs = update_metrics_in_profiles(name, met.name)
+
+                return msgs
+
             except Metric.DoesNotExist:
                 continue
+
+
+def update_metrics_in_profiles(old_name, new_name):
+    error_msgs = []
+    if old_name == new_name:
+        pass
+
+    else:
+        schemas = list(Tenant.objects.all().values_list(
+            'schema_name', flat=True
+        ))
+        schemas.remove(get_public_schema_name())
+
+        for schema in schemas:
+            with schema_context(schema):
+                try:
+                    token = MyAPIKey.objects.get(name='WEB-API')
+                    headers = {
+                        'Accept': 'application/json', 'x-api-key': token.token
+                    }
+
+                    response = requests.get(
+                        settings.WEBAPI_METRIC, headers=headers, timeout=180
+                    )
+                    response.raise_for_status()
+
+                    data = response.json()['data']
+
+                    for profile in data:
+                        flag = 0
+                        new_services = []
+                        for service in profile['services']:
+                            new_metrics = []
+                            for metric in service['metrics']:
+                                if metric == old_name:
+                                    flag += 1
+                                    new_metrics.append(new_name)
+                                else:
+                                    new_metrics.append(metric)
+                            new_services.append({
+                                'service': service['service'],
+                                'metrics': new_metrics
+                            })
+
+                        if flag > 0:
+                            new_data = {
+                                'id': profile['id'],
+                                'name': profile['name'],
+                                'description': profile['description'],
+                                'services': new_services
+                            }
+                            response = requests.put(
+                                settings.WEBAPI_METRIC + '/' + profile['id'],
+                                headers=headers,
+                                data=json.dumps(new_data)
+                            )
+                            response.raise_for_status()
+
+                except requests.exceptions.HTTPError as e:
+                    error_msgs.append(
+                        '{}: Error trying to update metric in metric profiles: '
+                        '{}.\nPlease update metric profiles manually.'.format(
+                            schema.upper(), e
+                        )
+                    )
+                    continue
+
+                except MyAPIKey.DoesNotExist:
+                    error_msgs.append(
+                        '{}: No "WEB-API" key in the DB!'
+                        '\nPlease update metric profiles manually.'.format(
+                            schema.upper()
+                        )
+                    )
+                    continue
+
+    return error_msgs
 
 
 class ListMetricTemplates(APIView):
@@ -146,16 +232,15 @@ class ListMetricTemplates(APIView):
 
         try:
             if request.data['mtype'] == 'Active':
+                probe_name = request.data['probeversion'].split(' ')[0]
+                probe_version = request.data['probeversion'].split(' ')[1][1:-1]
                 mt = admin_models.MetricTemplate.objects.create(
                     name=request.data['name'],
                     mtype=admin_models.MetricTemplateType.objects.get(
                         name=request.data['mtype']
                     ),
                     probekey=admin_models.ProbeHistory.objects.get(
-                        name=request.data['probeversion'].split(' ')[0],
-                        package__version=request.data['probeversion'].split(
-                            ' '
-                        )[1][1:-1]
+                        name=probe_name,  package__version=probe_version
                     ),
                     description=request.data['description'],
                     parent=parent,
@@ -199,6 +284,18 @@ class ListMetricTemplates(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+        except admin_models.ProbeHistory.DoesNotExist:
+            return Response(
+                {'detail': 'You should choose existing probe version!'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        except IndexError:
+            return Response(
+                {'detail': 'You should specify the version of the probe!'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
     def put(self, request):
         metrictemplate = admin_models.MetricTemplate.objects.get(
             id=request.data['id']
@@ -217,12 +314,25 @@ class ListMetricTemplates(APIView):
             probeexecutable = ''
 
         if request.data['probeversion']:
-            new_probekey = admin_models.ProbeHistory.objects.get(
-                name=request.data['probeversion'].split(' ')[0],
-                package__version=request.data['probeversion'].split(
-                    ' '
-                )[1][1:-1]
-            )
+            try:
+                probe_name = request.data['probeversion'].split(' ')[0]
+                probe_version = request.data['probeversion'].split(' ')[1][1:-1]
+                new_probekey = admin_models.ProbeHistory.objects.get(
+                    name=probe_name,
+                    package__version=probe_version
+                )
+
+            except admin_models.ProbeHistory.DoesNotExist:
+                return Response(
+                    {'detail': 'You should choose existing probe version!'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            except IndexError:
+                return Response(
+                    {'detail': 'You should specify the version of the probe!'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
         else:
             new_probekey = None
 
@@ -305,7 +415,13 @@ class ListMetricTemplates(APIView):
                     pk=request.data['id']
                 )
 
-                update_metrics(mt, old_name, old_probekey)
+                msgs = update_metrics(mt, old_name, old_probekey)
+
+                if msgs:
+                    return Response(
+                        {'detail': '\n'.join(msgs)},
+                        status=status.HTTP_418_IM_A_TEAPOT
+                    )
 
             return Response(status=status.HTTP_201_CREATED)
 

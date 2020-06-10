@@ -6,11 +6,15 @@ import {
   LoadingAnim,
   BaseArgoView,
   SearchField,
+  FancyErrorMessage,
   NotifyOk,
   Icon,
   HistoryComponent,
   DiffElement,
-  ProfileMainInfo} from './UIElements';
+  ProfileMainInfo,
+  NotifyError,
+  ErrorComponent
+} from './UIElements';
 import ReactTable from 'react-table';
 import { Formik, Field, FieldArray, Form } from 'formik';
 import 'react-table/react-table.css';
@@ -33,30 +37,78 @@ function matchItem(item, value) {
 }
 
 
-const MetricProfilesSchema = Yup.object().shape({
-  name: Yup.string().required('Required'),
-  groupname: Yup.string().required('Required'),
-})
+const MetricProfileTupleValidate = ({view_services, name, groupname}) => {
+  let errors = new Object()
+  let found = false
+  let empty = false
+  errors.view_services = new Array(view_services.length)
+
+  // find duplicates
+  for (var i of view_services)
+    for (var j of view_services)
+      if (i.index !== j.index &&
+          i.service === j.service &&
+          i.metric === j.metric &&
+          (i.isNew || i.serviceChanged
+           || i.metricChanged)) {
+        errors.view_services[i.index] = new Object()
+        errors.view_services[i.index].dup = "Duplicated"
+        found = true
+      }
+
+  // empty essential metadata
+  if (!name) {
+    errors.name = 'Required'
+    empty = true
+  }
+  if (!groupname) {
+    errors.groupname = 'Required'
+    empty = true
+  }
+
+  // find new empty tuples
+  for (var i of view_services) {
+    let obj = undefined
+    if (!errors.view_services[i.index])
+      errors.view_services[i.index] = new Object()
+    obj = errors.view_services[i.index]
+
+    if (!i.service && i.isNew) {
+      obj.service = "Required"
+      empty = true
+    }
+    if (!i.metric && i.isNew) {
+      obj.metric = "Required"
+      empty = true
+    }
+  }
+
+  if (found || empty)
+    return errors
+  else
+    return new Object()
+}
 
 
 const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
   remove_handler, insert_handler, onselect_handler, form, remove, insert}) =>
-    <table className="table table-bordered table-sm">
-      <thead className="table-active">
-        <tr>
-          <th className="align-middle text-center" style={{width: "5%"}}>#</th>
-          <th style={{width: "42.5%"}}><Icon i="serviceflavour"/> Service flavour</th>
-          <th style={{width: "42.5%"}}><Icon i='metrics'/> Metric</th>
-          <th style={{width: "10%"}}>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr style={{background: "#ECECEC"}}>
-          <td className="align-middle text-center">
-            <FontAwesomeIcon icon={faSearch}/>
-          </td>
-          <td>
-            <Field
+(
+  <table className="table table-bordered table-sm table-hover">
+    <thead className="table-active">
+      <tr>
+        <th className="align-middle text-center" style={{width: "5%"}}>#</th>
+        <th style={{width: "42.5%"}}><Icon i="serviceflavour"/> Service flavour</th>
+        <th style={{width: "42.5%"}}><Icon i='metrics'/> Metric</th>
+        <th style={{width: "10%"}}>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style={{background: "#ECECEC"}}>
+        <td className="align-middle text-center">
+          <FontAwesomeIcon icon={faSearch}/>
+        </td>
+        <td>
+          <Field
             type="text"
             name="search_serviceflavour"
             required={false}
@@ -66,9 +118,9 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
               'searchServiceFlavour', 'service', 'searchMetric', 'metric')}
             component={SearchField}
           />
-          </td>
-          <td>
-            <Field
+        </td>
+        <td>
+          <Field
             type="text"
             name="search_metric"
             required={false}
@@ -78,108 +130,143 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
               'metric', 'searchServiceFlavour', 'service')}
             component={SearchField}
           />
-          </td>
-          <td>
-            {''}
-          </td>
-        </tr>
-        {
+        </td>
+        <td>
+          {''}
+        </td>
+      </tr>
+      {
         form.values.view_services.map((service, index) =>
-          <tr key={index}>
-            <td className={service.isNew ? "bg-light align-middle text-center" : "align-middle text-center"}>
-              {index + 1}
-            </td>
-            <td className={service.isNew ? "bg-light" : ""}>
-              <Autocomplete
-                inputProps={{
-                  className: `"form-control custom-select " ${service.isNew ? "border border-success" : ""}`
-                }}
-                getItemValue={(item) => item}
-                items={serviceflavours_all}
-                value={service.service}
-                renderItem={(item, isHighlighted) =>
-                  <div
-                    key={serviceflavours_all.indexOf(item)}
-                    className={`metricprofiles-autocomplete-entries ${isHighlighted ?
-                        "metricprofiles-autocomplete-entries-highlighted"
-                        : ""}`
-                    }>
-                    {item ? <Icon i='serviceflavour'/> : ''} {item}
-                  </div>}
-                onChange={(e) => form.setFieldValue(`view_services.${index}.service`, e.target.value)}
-                onSelect={(val) => {
-                  form.setFieldValue(`view_services.${index}.service`, val)
-                  onselect_handler(form.values.view_services[index],
-                    'service',
-                    val)
-                }}
-                wrapperStyle={{}}
-                shouldItemRender={matchItem}
-                renderMenu={(items) =>
-                  <div className='metricprofiles-autocomplete-menu'>
-                    {items}
-                  </div>}
-              />
-            </td>
-            <td className={service.isNew ? "bg-light" : ""}>
-              <Autocomplete
-                inputProps={{
-                  className: `"form-control custom-select " ${service.isNew ? "border border-success" : ""}`
-                }}
-                getItemValue={(item) => item}
-                items={metrics_all}
-                value={service.metric}
-                renderItem={(item, isHighlighted) =>
-                  <div
-                    key={metrics_all.indexOf(item)}
-                    className={`metricprofiles-autocomplete-entries ${isHighlighted ?
-                        "metricprofiles-autocomplete-entries-highlighted"
-                        : ""}`
-                    }>
-                    {item ? <Icon i='metrics'/> : ''} {item}
-                  </div>}
-                onChange={(e) => form.setFieldValue(`view_services.${index}.metric`, e.target.value)}
-                onSelect={(val) => {
-                  form.setFieldValue(`view_services.${index}.metric`, val)
-                  onselect_handler(form.values.view_services[index],
-                    'metric',
-                    val)
-                }}
-                wrapperStyle={{}}
-                shouldItemRender={matchItem}
-                renderMenu={(items) =>
-                  <div className='metricprofiles-autocomplete-menu'>
-                    {items}
-                  </div>}
-              />
-            </td>
-            <td className="align-middle pl-3">
-              <Button size="sm" color="light"
-                type="button"
-                onClick={() => {
-                  remove_handler(form.values.view_services[index]);
-                  // prevent removal of last tuple
-                  if (index > 0 &&
-                    form.values.view_services.length > 1)
-                    return remove(index)
-                }}>
-                <FontAwesomeIcon icon={faTimes}/>
-              </Button>
-              <Button size="sm" color="light"
-                type="button"
-                onClick={() => {
-                  let new_element = {index: index + 1, service: '', metric: '', isNew: true}
-                  insert_handler(new_element, index + 1, form.values.groupname, form.values.name, form.values.description)
-                  return insert(index + 1, new_element)
-                }}>
-                <FontAwesomeIcon icon={faPlus}/>
-              </Button>
-            </td>
-          </tr>
+          <React.Fragment key={index}>
+            <tr key={index}>
+              <td className={service.isNew ? "bg-light align-middle text-center" : "align-middle text-center"}>
+                {index + 1}
+              </td>
+              <td className={service.isNew ? "bg-light" : ""}>
+                <Autocomplete
+                  inputProps={{
+                    className: `"form-control custom-select " ${service.isNew ? "border border-success" : service.serviceChanged ? "border border-danger" : ""}`
+                  }}
+                  getItemValue={(item) => item}
+                  items={serviceflavours_all}
+                  value={service.service}
+                  renderItem={(item, isHighlighted) =>
+                    <div
+                      key={serviceflavours_all.indexOf(item)}
+                      className={`metricprofiles-autocomplete-entries ${isHighlighted ?
+                          "metricprofiles-autocomplete-entries-highlighted"
+                          : ""}`
+                      }>
+                      {item ? <Icon i='serviceflavour'/> : ''} {item}
+                    </div>}
+                  onChange={(e) => form.setFieldValue(`view_services.${index}.service`, e.target.value)}
+                  onSelect={(val) => {
+                    form.setFieldValue(`view_services.${index}.service`, val)
+                    form.setFieldValue(`view_services.${index}.serviceChanged`, true)
+                    onselect_handler(form.values.view_services[index],
+                      'service',
+                      val)
+                  }}
+                  wrapperStyle={{}}
+                  shouldItemRender={matchItem}
+                  renderMenu={(items) =>
+                    <div className='metricprofiles-autocomplete-menu'>
+                      {items}
+                    </div>}
+                />
+                {
+                  form.errors && form.errors.view_services && form.errors.view_services[index]
+                    ? form.errors.view_services[index].service
+                      ? FancyErrorMessage(form.errors.view_services[index].service)
+                      : null
+                    : null
+                }
+              </td>
+              <td className={service.isNew ? "bg-light" : ""}>
+                <Autocomplete
+                  inputProps={{
+                    className: `"form-control custom-select " ${service.isNew ? "border border-success" : service.metricChanged  ? "border border-danger" : ""}`
+                  }}
+                  getItemValue={(item) => item}
+                  items={metrics_all}
+                  value={service.metric}
+                  renderItem={(item, isHighlighted) =>
+                    <div
+                      key={metrics_all.indexOf(item)}
+                      className={`metricprofiles-autocomplete-entries ${isHighlighted ?
+                          "metricprofiles-autocomplete-entries-highlighted"
+                          : ""}`
+                      }>
+                      {item ? <Icon i='metrics'/> : ''} {item}
+                    </div>}
+                  onChange={(e) => form.setFieldValue(`view_services.${index}.metric`, e.target.value)}
+                  onSelect={(val) => {
+                    form.setFieldValue(`view_services.${index}.metric`, val)
+                    form.setFieldValue(`view_services.${index}.metricChanged`, true)
+                    onselect_handler(form.values.view_services[index],
+                      'metric',
+                      val)
+                  }}
+                  wrapperStyle={{}}
+                  shouldItemRender={matchItem}
+                  renderMenu={(items) =>
+                    <div className='metricprofiles-autocomplete-menu'>
+                      {items}
+                    </div>}
+                />
+                {
+                  form.errors && form.errors.view_services && form.errors.view_services[index]
+                    ? form.errors.view_services[index].metric
+                      ? FancyErrorMessage(form.errors.view_services[index].metric)
+                      : null
+                    : null
+                }
+              </td>
+              <td className={service.isNew ? "bg-light align-middle pl-3" : "align-middle pl-3"}>
+                <Button size="sm" color="light"
+                  type="button"
+                  onClick={() => {
+                    remove_handler(form.values.view_services[index],
+                      form.values.groupname, form.values.name,
+                      form.values.description);
+                    // prevent removal of last tuple
+                    if (index > 0 &&
+                      form.values.view_services.length > 1)
+                      return remove(index)
+                  }}>
+                  <FontAwesomeIcon icon={faTimes}/>
+                </Button>
+                <Button size="sm" color="light"
+                  type="button"
+                  onClick={() => {
+                    let new_element = {index: index + 1, service: '', metric: '', isNew: true}
+                    insert_handler(new_element, index + 1, form.values.groupname, form.values.name, form.values.description)
+                    return insert(index + 1, new_element)
+                  }}>
+                  <FontAwesomeIcon icon={faPlus}/>
+                </Button>
+              </td>
+            </tr>
+            {
+              form.errors && form.errors.view_services && form.errors.view_services[index]
+                ? form.errors.view_services[index].dup
+                  ?
+                    <tr key={index + form.values.view_services.length}>
+                      <td className="bg-light"></td>
+                      <td colSpan="2" className="bg-light text-center">
+                        {FancyErrorMessage(form.errors.view_services[index].dup)}
+                      </td>
+                      <td className="bg-light"></td>
+                    </tr>
+                  : null
+                : null
+            }
+          </React.Fragment>
         )
       }
-      </tbody>
-    </table>
+    </tbody>
+  </table>
+)
 
 
 function MetricProfilesComponent(cloneview=false) {
@@ -215,6 +302,7 @@ function MetricProfilesComponent(cloneview=false) {
         modalMsg: undefined,
         searchServiceFlavour: "",
         searchMetric: "",
+        error: null
       }
 
       this.backend = new Backend();
@@ -249,67 +337,74 @@ function MetricProfilesComponent(cloneview=false) {
     async componentDidMount() {
       this.setState({loading: true})
 
-      if (this.publicView) {
-        let json = await this.backend.fetchData(`/api/v2/internal/public_metricprofiles/${this.profile_name}`);
-        let metricp = await this.webapi.fetchMetricProfile(json.apiid);
+      try {
+        if (this.publicView) {
+          let json = await this.backend.fetchData(`/api/v2/internal/public_metricprofiles/${this.profile_name}`);
+          let metricp = await this.webapi.fetchMetricProfile(json.apiid);
+          this.setState({
+            metric_profile: metricp,
+            metric_profile_name: metricp.name,
+            metric_profile_description: metricp.description,
+            groupname: json['groupname'],
+            list_user_groups: [],
+            write_perm: false,
+            view_services: this.flattenServices(metricp.services).sort(this.sortServices),
+            serviceflavours_all: [],
+            metrics_all: [],
+            list_services: this.flattenServices(metricp.services).sort(this.sortServices),
+            loading: false
+          });
+        }
+        else {
+          let sessionActive = await this.backend.isActiveSession();
+          if (sessionActive.active) {
+            let serviceflavoursall = await this.backend.fetchListOfNames('/api/v2/internal/serviceflavoursall');
+            let metricsall = await this.backend.fetchListOfNames('/api/v2/internal/metricsall');
+            if (!this.addview || this.cloneview) {
+              let json = await this.backend.fetchData(`/api/v2/internal/metricprofiles/${this.profile_name}`);
+              let metricp = await this.webapi.fetchMetricProfile(json.apiid);
+              this.setState({
+                metric_profile: metricp,
+                metric_profile_name: metricp.name,
+                metric_profile_description: metricp.description,
+                groupname: json['groupname'],
+                list_user_groups: sessionActive.userdetails.groups.metricprofiles,
+                write_perm: sessionActive.userdetails.is_superuser ||
+                  sessionActive.userdetails.groups.metricprofiles.indexOf(json['groupname']) >= 0,
+                view_services: this.flattenServices(metricp.services).sort(this.sortServices),
+                serviceflavours_all: serviceflavoursall,
+                metrics_all: metricsall,
+                list_services: this.flattenServices(metricp.services).sort(this.sortServices),
+                loading: false
+              });
+            } else {
+              let empty_metric_profile = {
+                id: '',
+                name: '',
+                services: [],
+              };
+              this.setState({
+                metric_profile: empty_metric_profile,
+                metric_profile_name: '',
+                metric_profile_description: '',
+                groupname: '',
+                list_user_groups: sessionActive.userdetails.groups.metricprofiles,
+                write_perm: sessionActive.userdetails.is_superuser ||
+                  sessionActive.userdetails.groups.metricprofiles.length > 0,
+                view_services: [{service: '', metric: '', index: 0, isNew: true}],
+                serviceflavours_all: serviceflavoursall,
+                metrics_all: metricsall,
+                list_services: [{service: '', metric: '', index: 0, isNew: true}],
+                loading: false
+              });
+            };
+          }
+        };
+      } catch(err) {
         this.setState({
-          metric_profile: metricp,
-          metric_profile_name: metricp.name,
-          metric_profile_description: metricp.description,
-          groupname: json['groupname'],
-          list_user_groups: [],
-          write_perm: false,
-          view_services: this.flattenServices(metricp.services).sort(this.sortServices),
-          serviceflavours_all: [],
-          metrics_all: [],
-          list_services: this.flattenServices(metricp.services).sort(this.sortServices),
+          error: err,
           loading: false
         });
-      }
-      else {
-        let sessionActive = await this.backend.isActiveSession();
-        if (sessionActive.active) {
-          let serviceflavoursall = await this.backend.fetchListOfNames('/api/v2/internal/serviceflavoursall');
-          let metricsall = await this.backend.fetchListOfNames('/api/v2/internal/metricsall');
-          if (!this.addview || this.cloneview) {
-            let json = await this.backend.fetchData(`/api/v2/internal/metricprofiles/${this.profile_name}`);
-            let metricp = await this.webapi.fetchMetricProfile(json.apiid);
-            this.setState({
-              metric_profile: metricp,
-              metric_profile_name: metricp.name,
-              metric_profile_description: metricp.description,
-              groupname: json['groupname'],
-              list_user_groups: sessionActive.userdetails.groups.metricprofiles,
-              write_perm: sessionActive.userdetails.is_superuser ||
-                sessionActive.userdetails.groups.metricprofiles.indexOf(json['groupname']) >= 0,
-              view_services: this.flattenServices(metricp.services).sort(this.sortServices),
-              serviceflavours_all: serviceflavoursall,
-              metrics_all: metricsall,
-              list_services: this.flattenServices(metricp.services).sort(this.sortServices),
-              loading: false
-            });
-          } else {
-            let empty_metric_profile = {
-              id: '',
-              name: '',
-              services: [],
-            };
-            this.setState({
-              metric_profile: empty_metric_profile,
-              metric_profile_name: '',
-              metric_profile_description: '',
-              groupname: '',
-              list_user_groups: sessionActive.userdetails.groups.metricprofiles,
-              write_perm: sessionActive.userdetails.is_superuser ||
-                sessionActive.userdetails.groups.metricprofiles.length > 0,
-              view_services: [{service: '', metric: '', index: 0, isNew: true}],
-              serviceflavours_all: serviceflavoursall,
-              metrics_all: metricsall,
-              list_services: [{service: '', metric: '', index: 0, isNew: true}],
-              loading: false
-            });
-          };
-        }
       };
     }
 
@@ -494,10 +589,19 @@ function MetricProfilesComponent(cloneview=false) {
         };
         let response = await this.webapi.changeMetricProfile(dataToSend);
         if (!response.ok) {
-          this.toggleAreYouSureSetModal(
-            `Error: ${response.status}, ${response.statusText}`,
-            'Web API error changing metric profile',
-            undefined)
+          let change_msg = '';
+          try {
+            let json = await response.json();
+            let msg_list = [];
+            json.errors.forEach(e => msg_list.push(e.details));
+            change_msg = msg_list.join(' ');
+          } catch(err) {
+            change_msg = 'Web API error changing metric profile';
+          };
+          NotifyError({
+            title: `Web API error: ${response.status} ${response.statusText}`,
+            msg: change_msg
+          });
         } else {
           let r = await this.backend.changeObject(
             '/api/v2/internal/metricprofiles/',
@@ -515,12 +619,19 @@ function MetricProfilesComponent(cloneview=false) {
               title: 'Changed',
               callback: () => this.history.push('/ui/metricprofiles')
             });
-          else
-            this.toggleAreYouSureSetModal(
-              `Error: ${response.status} ${response.statusText}`,
-              'Internal API error changing metric profile',
-              undefined
-            );
+          else {
+            let change_msg = '';
+            try {
+              let json = await r.json();
+              change_msg = json.detail;
+            } catch(err) {
+              change_msg = 'Internal API error changing metric profile';
+            };
+            NotifyError({
+              title: `Internal API error: ${r.status} ${r.statusText}`,
+              msg: change_msg
+            });
+          };
         };
       } else {
         services = this.groupMetricsByServices(servicesList);
@@ -531,11 +642,19 @@ function MetricProfilesComponent(cloneview=false) {
         }
         let response = await this.webapi.addMetricProfile(dataToSend);
         if (!response.ok) {
-          this.toggleAreYouSureSetModal(
-            `Error: ${response.status}, ${response.statusText}`,
-            'Web API error adding metric profile',
-            undefined
-          );
+          let add_msg = '';
+          try {
+            let json = await response.json();
+            let msg_list = [];
+            json.errors.forEach(e => msg_list.push(e.details));
+            add_msg = msg_list.join(' ');
+          } catch(err) {
+            add_msg = 'Web API error adding metric profile';
+          };
+          NotifyError({
+            title: `Web API error: ${response.status} ${response.statusText}`,
+            msg: add_msg
+          });
         } else {
           let r_json = await response.json();
           let r_internal = await this.backend.addObject(
@@ -554,12 +673,19 @@ function MetricProfilesComponent(cloneview=false) {
               title: 'Added',
               callback: () => this.history.push('/ui/metricprofiles')
             });
-          else
-            this.toggleAreYouSureSetModal(
-              `Error: ${r_internal.status} ${r_internal.statusText}`,
-              'Internal API error adding metric profile',
-              undefined
-            );
+          else {
+            let add_msg = '';
+            try {
+              let json = await r_internal.json();
+              add_msg = json.detail;
+            } catch(err) {
+              add_msg = 'Internal API error adding metric profile';
+            };
+            NotifyError({
+              title: `Internal API error: ${r_internal.status} ${r_internal.statusText}`,
+              msg: add_msg
+            });
+          }
         };
       };
     }
@@ -567,11 +693,19 @@ function MetricProfilesComponent(cloneview=false) {
     async doDelete(idProfile) {
       let response = await this.webapi.deleteMetricProfile(idProfile);
       if (!response.ok) {
-        this.toggleAreYouSureSetModal(
-         `Error: ${response.status} ${response.statusText}`,
-         'Web API error deleting metric profile',
-         undefined
-        );
+        let msg = '';
+        try {
+          let json = await response.json();
+          let msg_list = [];
+          json.errors.forEach(e => msg_list.push(e.details));
+          msg = msg_list.join(' ');
+        } catch(err) {
+          msg = 'Web API error deleting metric profile';
+        };
+        NotifyError({
+          title: `Web API error: ${response.status} ${response.statusText}`,
+          msg: msg
+        });
       } else {
         let r_internal = await this.backend.deleteObject(`/api/v2/internal/metricprofiles/${idProfile}`);
         if (r_internal.ok)
@@ -580,12 +714,19 @@ function MetricProfilesComponent(cloneview=false) {
             title: 'Deleted',
             callback: () => this.history.push('/ui/metricprofiles')
           });
-        else
-          this.toggleAreYouSureSetModal(
-            `Error: ${r_internal.status} ${r_internal.statusText}`,
-            'Internal API error deleting metric profile',
-            undefined
-          );
+        else {
+          let msg = '';
+          try {
+            let json = await r_internal.json();
+            msg = json.detail;
+          } catch(err) {
+            msg = 'Internal API error deleting metric profile';
+          };
+          NotifyError({
+            title: `Internal API error: ${r_internal.status} ${r_internal.statusText}`,
+            msg: msg
+          });
+        };
       };
     }
 
@@ -596,14 +737,20 @@ function MetricProfilesComponent(cloneview=false) {
       let new_element = tmp_list_services.findIndex(service =>
         service.index === index && service.isNew === true)
 
-      if (new_element >= 0 )
+      if (new_element >= 0 ) {
         tmp_list_services[new_element][field] = value;
-      else
+        tmp_list_services[new_element][field + 'Changed'] = value;
+      }
+      else {
         tmp_list_services[index][field] = value;
+        tmp_list_services[index][field + 'Changed'] = value;
+      }
 
       for (var i = 0; i < tmp_view_services.length; i++)
-        if (tmp_view_services[i].index === index)
+        if (tmp_view_services[i].index === index) {
           tmp_view_services[i][field] = value
+          tmp_view_services[i][field + 'Changed'] = true
+        }
 
       this.setState({
         list_services: tmp_list_services,
@@ -611,7 +758,7 @@ function MetricProfilesComponent(cloneview=false) {
       });
     }
 
-    onRemove(element) {
+    onRemove(element, group, name, description) {
       let tmp_view_services = []
       let tmp_list_services = []
 
@@ -660,14 +807,17 @@ function MetricProfilesComponent(cloneview=false) {
       }
       this.setState({
         list_services: tmp_list_services,
-        view_services: tmp_view_services
+        view_services: tmp_view_services,
+        groupname: group,
+        metric_profile_name: name,
+        metric_profile_description: description
       });
     }
 
     render() {
       const {write_perm, loading, metric_profile_description, view_services,
         groupname, list_user_groups, serviceflavours_all, metrics_all,
-        searchMetric, searchServiceFlavour} = this.state;
+        searchMetric, searchServiceFlavour, error} = this.state;
       let {metric_profile, metric_profile_name} = this.state
 
       if (this.cloneview && metric_profile && metric_profile_name && metric_profile.id) {
@@ -677,6 +827,9 @@ function MetricProfilesComponent(cloneview=false) {
 
       if (loading)
         return (<LoadingAnim />)
+
+      else if (error)
+        return (<ErrorComponent error={error}/>);
 
       else if (!loading && metric_profile && view_services) {
         return (
@@ -689,7 +842,7 @@ function MetricProfilesComponent(cloneview=false) {
             clone={true}
             state={this.state}
             toggle={this.toggleAreYouSure}
-            addview={!this.publicView}
+            addview={this.publicView ? !this.publicView : this.addview}
             publicview={this.publicView}
             submitperm={write_perm}>
             <Formik
@@ -707,7 +860,7 @@ function MetricProfilesComponent(cloneview=false) {
                 servicesList: this.state.list_services
               }, actions)}
               enableReinitialize={true}
-              validationSchema={MetricProfilesSchema}
+              validate={MetricProfileTupleValidate}
               render = {props => (
                 <Form>
                   <ProfileMainInfo
@@ -762,6 +915,7 @@ function MetricProfilesComponent(cloneview=false) {
   }
 }
 
+
 export class MetricProfilesList extends Component
 {
   constructor(props) {
@@ -769,7 +923,9 @@ export class MetricProfilesList extends Component
 
     this.state = {
       loading: false,
-      list_metricprofiles: null
+      list_metricprofiles: null,
+      write_perm: false,
+      error: null
     }
 
     this.location = props.location;
@@ -784,11 +940,28 @@ export class MetricProfilesList extends Component
 
   async componentDidMount() {
     this.setState({loading: true})
-    let json = await this.backend.fetchData(this.apiUrl);
-    this.setState({
-      list_metricprofiles: json,
-      loading: false}
-    );
+
+    try {
+      let json = await this.backend.fetchData(this.apiUrl);
+      if (!this.publicView) {
+        let session = await this.backend.isActiveSession();
+        this.setState({
+          list_metricprofiles: json,
+          loading: false,
+          write_perm: session.userdetails.is_superuser || session.userdetails.groups.metricprofiles.length > 0
+        });
+      } else {
+        this.setState({
+          list_metricprofiles: json,
+          loading: false
+        })
+      }
+    } catch(err) {
+      this.setState({
+        error: err,
+        loading: false
+      });
+    };
   }
 
   render() {
@@ -813,10 +986,13 @@ export class MetricProfilesList extends Component
         maxWidth: 150,
       }
     ]
-    const {loading, list_metricprofiles} = this.state
+    const {loading, list_metricprofiles, write_perm, error} = this.state;
 
     if (loading)
       return (<LoadingAnim />)
+
+    else if (error)
+      return (<ErrorComponent error={error}/>);
 
     else if (!loading && list_metricprofiles) {
       return (
@@ -825,6 +1001,7 @@ export class MetricProfilesList extends Component
           location={this.location}
           listview={true}
           addnew={!this.publicView}
+          addperm={write_perm}
           publicview={this.publicView}>
           <ReactTable
             data={list_metricprofiles}
@@ -884,7 +1061,8 @@ export class MetricProfileVersionCompare extends Component {
       metricinstances1: [],
       name2: '',
       groupname2: '',
-      metricinstances2: []
+      metricinstances2: [],
+      error: null
     };
 
     this.backend = new Backend();
@@ -893,49 +1071,59 @@ export class MetricProfileVersionCompare extends Component {
   async componentDidMount() {
     this.setState({loading: true});
 
-    let json = await this.backend.fetchData(`/api/v2/internal/tenantversion/metricprofile/${this.name}`);
-    let name1 = '';
-    let groupname1 = '';
-    let description1 = '';
-    let metricinstances1 = [];
-    let name2 = '';
-    let groupname2 = '';
-    let description2 = '';
-    let metricinstances2 = [];
+    try {
+      let json = await this.backend.fetchData(`/api/v2/internal/tenantversion/metricprofile/${this.name}`);
+      let name1 = '';
+      let groupname1 = '';
+      let description1 = '';
+      let metricinstances1 = [];
+      let name2 = '';
+      let groupname2 = '';
+      let description2 = '';
+      let metricinstances2 = [];
 
-    json.forEach((e) => {
-      if (e.version == this.version1) {
-        name1 = e.fields.name;
-        description1 = e.fields.description;
-        groupname1 = e.fields.groupname;
-        metricinstances1 = e.fields.metricinstances;
-      } else if (e.version == this.version2) {
-        name2 = e.fields.name;
-        groupname2 = e.fields.groupname;
-        description2 = e.fields.description;
-        metricinstances2 = e.fields.metricinstances;
-      }
-    });
+      json.forEach((e) => {
+        if (e.version == this.version1) {
+          name1 = e.fields.name;
+          description1 = e.fields.description;
+          groupname1 = e.fields.groupname;
+          metricinstances1 = e.fields.metricinstances;
+        } else if (e.version == this.version2) {
+          name2 = e.fields.name;
+          groupname2 = e.fields.groupname;
+          description2 = e.fields.description;
+          metricinstances2 = e.fields.metricinstances;
+        }
+      });
 
-    this.setState({
-      name1: name1,
-      groupname1: groupname1,
-      description1: description1,
-      metricinstances1: metricinstances1,
-      name2: name2,
-      description2: description2,
-      groupname2: groupname2,
-      metricinstances2: metricinstances2,
-      loading: false
-    });
+      this.setState({
+        name1: name1,
+        groupname1: groupname1,
+        description1: description1,
+        metricinstances1: metricinstances1,
+        name2: name2,
+        description2: description2,
+        groupname2: groupname2,
+        metricinstances2: metricinstances2,
+        loading: false
+      });
+    } catch(err) {
+      this.setState({
+        error: err,
+        loading: false
+      });
+    };
   }
 
   render() {
     const { name1, name2, description1, description2, groupname1, groupname2,
-      metricinstances1, metricinstances2, loading } = this.state;
+      metricinstances1, metricinstances2, loading, error } = this.state;
 
     if (loading)
       return (<LoadingAnim/>);
+
+    if (error)
+      return (<ErrorComponent error={error}/>);
 
     else if (!loading && name1 && name2) {
       return (
@@ -986,33 +1174,44 @@ export class MetricProfileVersionDetails extends Component {
       description: '',
       date_created: '',
       metricinstances: [],
-      loading: false
+      loading: false,
+      error: null
     };
   }
 
   async componentDidMount() {
     this.setState({loading: true});
 
-    let json = await this.backend.fetchData(`/api/v2/internal/tenantversion/metricprofile/${this.name}`);
-    json.forEach((e) => {
-      if (e.version == this.version)
-        this.setState({
-          name: e.fields.name,
-          groupname: e.fields.groupname,
-          description: e.fields.description,
-          date_created: e.date_created,
-          metricinstances: e.fields.metricinstances,
-          loading: false
-        });
-    });
+    try {
+      let json = await this.backend.fetchData(`/api/v2/internal/tenantversion/metricprofile/${this.name}`);
+      json.forEach((e) => {
+        if (e.version == this.version)
+          this.setState({
+            name: e.fields.name,
+            groupname: e.fields.groupname,
+            description: e.fields.description,
+            date_created: e.date_created,
+            metricinstances: e.fields.metricinstances,
+            loading: false
+          });
+      });
+    } catch(err) {
+      this.setState({
+        error: err,
+        loading: false
+      });
+    };
   }
 
   render() {
     const { name, description, groupname, date_created, metricinstances,
-      loading } = this.state;
+      loading, error } = this.state;
 
     if (loading)
       return (<LoadingAnim/>);
+
+    else if (error)
+      return (<ErrorComponent error={error}/>);
 
     else if (!loading && name) {
       return (

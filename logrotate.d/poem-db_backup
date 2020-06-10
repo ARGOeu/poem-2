@@ -1,0 +1,9 @@
+/home/pyvenv/poem/var/db_backups/poem-db-backup {
+    daily
+    compress
+    missingok
+    rotate 999
+    maxage 366
+    dateext
+    dateformat -%Y-%m-%d
+}

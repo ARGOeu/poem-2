@@ -3,7 +3,7 @@ import { Backend } from './DataManager';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
-import { LoadingAnim, BaseArgoView, NotifyOk, Checkbox } from './UIElements';
+import { LoadingAnim, BaseArgoView, NotifyOk, Checkbox, NotifyError, ErrorComponent } from './UIElements';
 import ReactTable from 'react-table';
 import { Formik, Form, Field } from 'formik';
 import {
@@ -30,6 +30,7 @@ export class APIKeyList extends Component {
     this.state = {
       list_keys: null,
       loading: false,
+      error: null
     };
 
     this.backend = new Backend();
@@ -38,11 +39,18 @@ export class APIKeyList extends Component {
   async componentDidMount() {
     this.setState({ loading: true });
 
-    let json = await this.backend.fetchData('/api/v2/internal/apikeys');
-    this.setState({
-      list_keys: json,
-      loading: false
-    });
+    try {
+      let json = await this.backend.fetchData('/api/v2/internal/apikeys');
+      this.setState({
+        list_keys: json,
+        loading: false
+      });
+    } catch(err) {
+      this.setState({
+        error: err,
+        loading: false
+      });
+    };
   }
 
   render() {
@@ -74,10 +82,13 @@ export class APIKeyList extends Component {
       }
     ];
 
-    const { loading, list_keys } = this.state;
+    const { loading, list_keys, error } = this.state;
 
     if (loading)
       return (<LoadingAnim/>);
+
+    else if (error)
+      return (<ErrorComponent error={error}/>);
 
     else if (!loading && list_keys) {
       return (
@@ -118,7 +129,8 @@ export class APIKeyChange extends Component {
       areYouSureModal: false,
       modalFunc: undefined,
       modalTitle: undefined,
-      modalMsg: undefined
+      modalMsg: undefined,
+      error: null
     };
 
     this.backend = new Backend();
@@ -168,18 +180,26 @@ export class APIKeyChange extends Component {
           name: values.name,
         }
       );
-      response.ok ?
+      if (response.ok) {
         NotifyOk({
           msg: 'API key successfully changed',
           title: 'Changed',
           callback: () => this.history.push('/ui/administration/apikey')
-        })
-      :
-        this.toggleAreYouSureSetModal(
-          `Error: ${response.status} ${response.statusText}`,
-          'Error changing API key',
-          undefined
-        );
+        });
+      } else {
+        let change_msg = '';
+        try {
+          let json = await response.json();
+          change_msg = `${json.detail ? json.detail : 'Error changing API key'}`;
+        } catch(err) {
+          change_msg = 'Error changing API key';
+        }
+
+        NotifyError({
+          title: `Error: ${response.status} ${response.statusText}`,
+          msg: change_msg
+        });
+      };
     } else {
       let response = await this.backend.addObject(
         '/api/v2/internal/apikeys/',
@@ -187,63 +207,87 @@ export class APIKeyChange extends Component {
           name: values.name
         }
       );
-      response.ok ?
+      if (response.ok) {
         NotifyOk({
           msg: 'API key successfully added',
           title: 'Added',
           callback: () => this.history.push('/ui/administration/apikey')
         })
-        :
-          this.toggleAreYouSureSetModal(
-            `Error: ${response.status} ${response.statusText}`,
-            'Error adding API key',
-            undefined
-          );
+      } else {
+        let add_msg = '';
+        try {
+          let json = await response.json();
+          add_msg = `${json.detail ? json.detail : 'Error adding API key'}`;
+        } catch(err) {
+          add_msg = 'Error adding API key';
+        }
+        NotifyError({
+          title: `Error: ${response.status} ${response.statusText}`,
+          msg: add_msg
+        });
+      };
     };
   }
 
   async doDelete(name) {
     let response = await this.backend.deleteObject(`/api/v2/internal/apikeys/${name}`);
-    response.ok?
+    if (response.ok) {
       NotifyOk({
         msg: 'API key successfully deleted',
         title: 'Deleted',
         callback: () => this.history.push('/ui/administration/apikey')
       })
-    :
-      this.toggleAreYouSureSetModal(
-        `Error: ${response.status} ${response.statusText}`,
-        'Error deleting API key',
-        undefined
-      );
+    } else {
+      let msg = '';
+      try {
+        let json = await response.json();
+        msg = `${json.detail ? json.detail : 'Error deleting API key'}`;
+      } catch(error) {
+        msg = 'Error deleting API key';
+      }
+      NotifyError({
+        title: `Error: ${response.status} ${response.statusText}`,
+        msg: msg
+      });
+    };
   }
 
   async componentDidMount() {
     this.setState({ loading: true });
 
-    if (!this.addview) {
-      let json = await this.backend.fetchData(`/api/v2/internal/apikeys/${this.name}`);
+    try {
+      if (!this.addview) {
+        let json = await this.backend.fetchData(`/api/v2/internal/apikeys/${this.name}`);
+        this.setState({
+          key: json,
+          loading: false,
+        });
+      } else {
+        this.setState({
+          key: {
+            name: '',
+            revoked: false,
+            token: ''
+          },
+          loading: false,
+        });
+      };
+    } catch(err) {
       this.setState({
-        key: json,
-        loading: false,
-      });
-    } else {
-      this.setState({
-        key: {
-          name: '',
-          revoked: false,
-          token: ''
-        },
-        loading: false,
+        error: err,
+        loading: false
       });
     };
   }
 
   render() {
-    const { key, loading } = this.state;
+    const { key, loading, error } = this.state;
 
     if (loading)
       return (<LoadingAnim/>);
+
+    else if (error)
+      return (<ErrorComponent error={error}/>);
 
     else if (!loading && key) {
       return (
@@ -336,7 +380,7 @@ export class APIKeyChange extends Component {
                             this.toggleAreYouSureSetModal(
                               'Are you sure you want to delete API key?',
                               'Delete API key',
-                              () => this.doDelete(props.values.name)
+                              () => this.doDelete(this.name)
                             )
                           }}
                         >

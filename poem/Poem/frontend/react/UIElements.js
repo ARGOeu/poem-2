@@ -1,7 +1,8 @@
-import React, { Component } from 'react';
+import React, { Component, useState } from 'react';
 import Cookies from 'universal-cookie';
 import {
   Alert,
+  Badge,
   Breadcrumb,
   BreadcrumbItem,
   Button,
@@ -9,6 +10,7 @@ import {
   Card,
   CardBody,
   CardHeader,
+  CardText,
   Col,
   Collapse,
   Container,
@@ -28,6 +30,9 @@ import {
   NavbarBrand,
   NavbarToggler,
   Row,
+  Popover,
+  PopoverHeader,
+  PopoverBody
 } from 'reactstrap';
 import {Link} from 'react-router-dom';
 import ArgoLogo from './argologo_color.svg';
@@ -63,8 +68,8 @@ import ReactDiffViewer from 'react-diff-viewer';
 var list_pages = ['administration','services', 'probes',
                   'metrics', 'metricprofiles', 'aggregationprofiles',
                   'thresholdsprofiles'];
-var admin_list_pages = ['administration', 'probes', 'yumrepos',
-                        'packages', 'metrictemplates'];
+var admin_list_pages = ['administration', 'yumrepos', 'packages',
+                        'probes', 'metrictemplates'];
 
 var link_title = new Map();
 link_title.set('administration', 'Administration');
@@ -121,18 +126,19 @@ export const Icon = props =>
     return <FontAwesomeIcon icon={link_icon.get(props.i)} size={props.i === 'yumrepos' || props.i === 'metricprofiles' ? 'sm' : '1x'} fixedWidth/>
 }
 
-export const DropDown = ({field, data=[], prefix="", class_name="", isnew=false}) =>
+export const DropDown = ({field, data=[], prefix="", class_name="", isnew=false, errors=undefined}) =>
   <Field component="select"
     name={prefix ? `${prefix}.${field.name}` : field.name}
     required={true}
-    className={`form-control ${class_name} ${isnew ? 'border-success' : ''}`}
+    className={`form-control ${class_name} ${isnew ? 'border-success' : `${errors && errors[field.name] ? 'border-danger' : ''}`}`}
   >
     {
-      data.map((name, i) =>
+      data.map((name, i) => (
         i === 0 ?
-          <option key={i} hidden>{name}</option> :
+          <option key={i} value='' hidden color='text-muted'>{name}</option>
+        :
           <option key={i} value={name}>{name}</option>
-      )
+      ))
     }
   </Field>
 
@@ -257,44 +263,215 @@ export const CustomBreadcrumb = ({location, history, publicView=false}) =>
 }
 
 
-export const NavigationBar = ({history, onLogout, isOpenModal, toggle, titleModal, msgModal, userDetails}) =>
-(
-  <React.Fragment>
-    <ModalAreYouSure
-      isOpen={isOpenModal}
-      toggle={toggle}
-      title={titleModal}
-      msg={msgModal}
-      onYes={() => doLogout(history, onLogout)} />
-    <Navbar expand="md" id="argo-nav" className="border rounded">
-      <NavbarBrand className="text-light">
-        <img src={ArgoLogo} alt="ARGO logo" className="img-responsive"/>
-        <span className="pl-3">
-          <strong>ARGO</strong> POEM
-        </span>
-      </NavbarBrand>
-      <NavbarToggler/>
-      <Collapse navbar className='justify-content-end'>
-        <Nav navbar >
-          <NavItem className='m-2 text-light'>
-            Welcome,&nbsp;
-            <span className='font-weight-bold'>
-              {userDetails.first_name ? userDetails.first_name : userDetails.username}
-            </span>
-          </NavItem>
-          <NavItem className='m-2'>
-            <Button
-              id="argo-navbar-logout"
-              size="sm"
-              onClick={() => toggle()}>
-              <FontAwesomeIcon icon={faSignOutAlt} />
-            </Button>
-          </NavItem>
-        </Nav>
-      </Collapse>
-    </Navbar>
-  </React.Fragment>
-)
+const UserDetailsToolTip = ({userDetails, isTenantSchema, publicView}) =>
+{
+  const NoPermBadge = ({only=false}) =>
+    only ?
+      <div className="text-center">
+         <Badge color="dark" className="mb-1 mt-1" style={{fontSize: '100%'}}>
+          No permissions
+        </Badge>
+      </div>
+    :
+      <Badge color="dark" className="mb-1 mt-1">
+        No permissions
+      </Badge>
+
+  const GroupBadge = ({name}) =>
+    <span>
+      <Badge color="primary" className="mb-1 mt-1">
+        {name}
+      </Badge>{' '}
+    </span>
+
+  const WhiteRuler = () =>
+    <div>
+      <hr style={{'borderTop': '1px solid black'}}/>
+    </div>
+
+  const HaveAnyPerm = (groups) => {
+    let havePerm = false
+
+    for (var group in groups) {
+      if (groups[group].length > 0) {
+        havePerm = true
+        break
+      }
+    }
+    return havePerm
+  }
+
+
+  return (
+    publicView ?
+      <div>
+        <div>
+          <Badge color="warning" style={{fontSize: "100%"}} pill>
+            Anonymous User
+          </Badge>
+        </div>
+        <WhiteRuler/>
+        <NoPermBadge only={true}/>
+      </div>
+    :
+      <div>
+        <div className="text-center">
+          {
+            userDetails.is_superuser ?
+              <Badge color="danger" className="mt-2 mb-2" style={{fontSize: "100%"}} pill>
+                {
+                  isTenantSchema
+                    ? 'Tenant Admin'
+                    : 'Super Admin'
+                }
+              </Badge>
+              :
+              <Badge color="success" className="mt-2 mb-2" style={{fontSize: "100%"}} pill>
+                Tenant User
+              </Badge>
+          }
+        </div>
+        {
+          userDetails.first_name &&
+          <div className="text-center">
+            <b>{userDetails.first_name}{' '}{userDetails.last_name}</b>
+          </div>
+        }
+        {
+          <div className="text-center text-primary">
+            {
+              !userDetails.first_name ?
+                <br/>
+              :
+                null
+            }
+            {userDetails.email}
+          </div>
+        }
+        {
+          userDetails.is_superuser ?
+            null
+          :
+            HaveAnyPerm(userDetails.groups) ?
+              <div>
+                <WhiteRuler/>
+                <div className="text-left">
+                  Aggregation profiles:
+                  <br/>
+                  {
+                    userDetails.groups.aggregations.length > 0
+                      ?
+                        userDetails.groups.aggregations.map((group, index) => (
+                          <GroupBadge name={group} key={index}/>
+                        ))
+                      :
+                        <NoPermBadge/>
+                  }
+                </div>
+                <div className="text-left">
+                  Metrics:
+                  <br/>
+                  {
+                    userDetails.groups.metrics.length > 0
+                      ?
+                        userDetails.groups.metrics.map((group, index) => (
+                          <GroupBadge name={group} key={index}/>
+                        ))
+                      :
+                        <NoPermBadge/>
+                  }
+                </div>
+                <div className="text-left">
+                  Metric profiles:
+                  <br/>
+                  {
+                    userDetails.groups.metricprofiles.length > 0
+                      ?
+                        userDetails.groups.metricprofiles.map((group, index) => (
+                          <GroupBadge name={group} key={index}/>
+                        ))
+                      :
+                        <NoPermBadge/>
+                  }
+                </div>
+                <div className="text-left">
+                  Thresholds profiles:
+                  <br/>
+                  {
+                    userDetails.groups.thresholdsprofiles.length > 0
+                      ?
+                        userDetails.groups.thresholdsprofiles.map((group, index) => (
+                          <GroupBadge name={group} key={index}/>
+                        ))
+                      :
+                        <NoPermBadge/>
+                  }
+                </div>
+              </div>
+            :
+              <div>
+                <WhiteRuler/>
+                <NoPermBadge only={true}/>
+              </div>
+        }
+      </div>
+  )
+}
+
+
+export const NavigationBar = ({history, onLogout, isOpenModal, toggle,
+  titleModal, msgModal, userDetails, isTenantSchema, publicView}) =>
+{
+  const [tooltipOpen, setTooltipOpen] = useState(false);
+
+  return (
+    <React.Fragment>
+      <ModalAreYouSure
+        isOpen={isOpenModal}
+        toggle={toggle}
+        title={titleModal}
+        msg={msgModal}
+        onYes={() => doLogout(history, onLogout)} />
+      <Navbar expand="md" id="argo-nav" className="border rounded">
+        <NavbarBrand className="text-light">
+          <img src={ArgoLogo} alt="ARGO logo" className="img-responsive"/>
+          <span className="pl-3">
+            <strong>ARGO</strong> POEM
+          </span>
+        </NavbarBrand>
+        <NavbarToggler/>
+        <Collapse navbar className='justify-content-end'>
+          <Nav navbar >
+            <NavItem className='m-2 ml-5 text-light'>
+              Welcome,&nbsp;
+              <span onMouseEnter={() => setTooltipOpen(true)}
+                onMouseLeave={() => setTooltipOpen(false)}
+                className='font-weight-bold' href="#" id="userToolTip">
+                <Badge href="#" color="dark" style={{fontSize: '100%'}}>
+                  {userDetails.first_name ? userDetails.first_name : userDetails.username}
+                </Badge>
+              </span>
+              <Popover style={{opacity: 0.9}} placement="bottom" isOpen={tooltipOpen}
+                target="userToolTip" toggle={() => setTooltipOpen(!tooltipOpen)}>
+                <PopoverBody>
+                  <UserDetailsToolTip userDetails={userDetails} isTenantSchema={isTenantSchema} publicView={publicView}/>
+                </PopoverBody>
+              </Popover>
+            </NavItem>
+            <NavItem className='m-2'>
+              <Button
+                id="argo-navbar-logout"
+                size="sm"
+                onClick={() => toggle()}>
+                <FontAwesomeIcon icon={faSignOutAlt} />
+              </Button>
+            </NavItem>
+          </Nav>
+        </Collapse>
+      </Navbar>
+    </React.Fragment>
+  )
+}
 
 
 export const NavigationLinks = ({location, isTenantSchema, userDetails}) => {
@@ -390,6 +567,23 @@ export const NotifyOk = ({msg='', title='', callback=undefined}) => {
   setTimeout(callback, 2000);
 }
 
+export const NotifyError = ({msg='', title=''}) => {
+  msg = <div>
+    <p>{msg}</p>
+    <p>Click to dismiss.</p>
+  </div>
+  NotificationManager.error(msg=msg, title, 0, () => true);
+};
+
+
+export const NotifyWarn = ({msg='', title=''}) => {
+  msg = <div>
+    <p>{msg}</p>
+    <p>Click to dismiss.</p>
+  </div>
+  NotificationManager.warning(msg, title, 0, () => true);
+};
+
 
 export const PublicPage = ({children}) => {
   let userDetails = {
@@ -408,6 +602,7 @@ export const PublicPage = ({children}) => {
             titleModal='Log out'
             msgModal='Are you sure you want to log out?'
             userDetails={userDetails}
+            publicView={true}
           />
         </Col>
       </Row>
@@ -430,7 +625,7 @@ export const PublicPage = ({children}) => {
 export const BaseArgoView = ({resourcename='', location=undefined,
   infoview=false, addview=false, listview=false, modal=false, state=undefined,
   toggle=undefined, submitperm=true, history=true, addnew=true, clone=false,
-  cloneview=false, tenantview=false, publicview=false, children}) =>
+  cloneview=false, tenantview=false, publicview=false, addperm=true, children}) =>
 (
   <React.Fragment>
     {
@@ -460,7 +655,18 @@ export const BaseArgoView = ({resourcename='', location=undefined,
                 }
                 {
                   addnew &&
-                    <Link className="btn btn-secondary" to={location.pathname + "/add"} role="button">Add</Link>
+                    addperm ?
+                      <Link className="btn btn-secondary" to={location.pathname + "/add"} role="button">Add</Link>
+                    :
+                      <Button
+                        className='btn btn-secondary'
+                        onClick={() => NotifyError({
+                          title: 'Not allowed',
+                          msg: `You do not have permission to add ${resourcename}.`
+                        })}
+                      >
+                        Add
+                      </Button>
                 }
               </React.Fragment>
             :
@@ -622,7 +828,8 @@ export function HistoryComponent(obj, tenantview=false) {
         loading: false,
         list_versions: null,
         compare1: '',
-        compare2: ''
+        compare2: '',
+        error: null
       };
 
       if (!this.publicView) {
@@ -653,27 +860,37 @@ export function HistoryComponent(obj, tenantview=false) {
     async componentDidMount() {
       this.setState({loading: true});
 
-      let json = await this.backend.fetchData(`${this.apiUrl}/${obj}/${this.name}`);
-      if (json.length > 1) {
+      try {
+        let json = await this.backend.fetchData(`${this.apiUrl}/${obj}/${this.name}`);
+        if (json.length > 1) {
+          this.setState({
+            list_versions: json,
+            loading: false,
+            compare1: json[0].version,
+            compare2: json[1].version
+          });
+        } else {
+          this.setState({
+            list_versions: json,
+            loading: false
+          });
+        };
+      } catch(err) {
         this.setState({
-          list_versions: json,
-          loading: false,
-          compare1: json[0].version,
-          compare2: json[1].version
-        });
-      } else {
-        this.setState({
-          list_versions: json,
+          error: err,
           loading: false
         });
       };
     }
 
     render() {
-      const { loading, list_versions } = this.state;
+      const { loading, list_versions, error } = this.state;
 
       if (loading)
         return (<LoadingAnim />);
+
+      else if (error)
+        return (<ErrorComponent error={error}/>);
 
       else if (!loading && list_versions) {
         return (
@@ -828,7 +1045,7 @@ export const ProfileMainInfo = ({errors, grouplist=undefined, description=undefi
           errors.name &&
             FancyErrorMessage(errors.name)
         }
-          <FormText color='muted'>
+          <FormText color='text-muted'>
             {`Name of ${profiletype} profile`}
           </FormText>
         </Col>
@@ -868,7 +1085,7 @@ export const ProfileMainInfo = ({errors, grouplist=undefined, description=undefi
                 component='select'
                 className={`form-control custom-select ${errors.groupname && 'border-danger'}`}
               >
-                <option key={0} value='' hidden color='muted'>Select group</option>
+                <option key={0} value='' hidden color='text-muted'>Select group</option>
                 {
                   grouplist.map((group, i) =>
                     <option key={i + 1} value={group}>{group}</option>
@@ -888,3 +1105,22 @@ export const ProfileMainInfo = ({errors, grouplist=undefined, description=undefi
       </Row>
     </FormGroup>
 );
+
+
+export const ErrorComponent = ({error}) => {
+  let errors = [];
+  error.toString().split('; ').forEach((e, i) => {
+    if (i === 0)
+      errors.push(<h3 key={i}>{e}</h3>)
+    else
+      errors.push(<p key={i}>{e}</p>)
+
+  })
+
+  return (
+    <React.Fragment>
+      <h1>Something went wrong</h1>
+      {errors}
+    </React.Fragment>
+  )
+}

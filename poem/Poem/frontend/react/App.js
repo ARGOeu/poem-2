@@ -25,7 +25,7 @@ import { TenantAdministration, SuperAdminAdministration } from './Administration
 import { AggregationProfilesChange, AggregationProfilesList, AggregationProfileHistory, AggregationProfileVersionCompare, AggregationProfileVersionDetails } from './AggregationProfiles';
 import Reports from './Reports';
 import Services from './Services';
-import { UsersList, UserChange, SuperAdminUserChange } from './Users';
+import { UsersList, UserChange, SuperAdminUserChange, ChangePassword } from './Users';
 import {
   GroupOfMetricsList,
   GroupOfMetricsChange,
@@ -43,7 +43,7 @@ import { Container, Row, Col } from 'reactstrap';
 import { NavigationBar, CustomBreadcrumb, NavigationLinks, Footer, PublicPage} from './UIElements';
 import { NotificationContainer } from 'react-notifications';
 import { Backend } from './DataManager';
-import { YumRepoList, YumRepoChange } from './YumRepos';
+import { YumRepoList, YumRepoChange, YumRepoClone } from './YumRepos';
 import { ThresholdsProfilesList, ThresholdsProfilesChange, ThresholdsProfilesHistory, ThresholdsProfileVersionCompare, ThresholdsProfileVersionDetail } from './ThresholdProfiles';
 import Cookies from 'universal-cookie';
 
@@ -62,6 +62,14 @@ const SuperUserRoute = ({isSuperUser, ...props}) => (
   :
     <Route component={NotFound} />
 )
+
+
+const AddRoute = ({usergroups, ...props}) => (
+  usergroups.length > 0 ?
+    <Route {...props} />
+  :
+    <Route component={NotFound} />
+);
 
 
 const RedirectAfterLogin = ({isSuperUser, ...props}) => {
@@ -97,7 +105,7 @@ const RedirectAfterLogin = ({isSuperUser, ...props}) => {
 }
 
 
-const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, token, tenantName, isSuperUser}) => (
+const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, token, tenantName, isSuperUser, userGroups}) => (
   <Switch>
     <Route exact path="/ui/login" render={props => <RedirectAfterLogin isSuperUser={isSuperUser} {...props}/>}/>
     <Route exact path="/ui/home" component={Home} />
@@ -107,6 +115,9 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, t
     <Route exact path="/ui/probes/:name/history" render={props => <ProbeHistory {...props}/>}/>
     <Route exact path="/ui/probes/:name/history/compare/:id1/:id2" render={props => <ProbeVersionCompare {...props}/>}/>
     <Route exact path="/ui/probes/:name/history/:version" render={props => <ProbeVersionDetails {...props}/>}/>
+    <Route exact path="/ui/probes/:name/:metrictemplatename"
+      render={props => <MetricTemplateChange {...props} tenantview={true} probeview={true}/>}
+    />
     <Route exact path="/ui/probes/:name" render={props => <ProbeChange {...props}/>}/>
     <Route exact path="/ui/metrics" component={MetricList} />
     <Route exact path="/ui/metrics/:name/history" render={props => <MetricHistory {...props}/>}/>
@@ -114,7 +125,7 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, t
     <Route exact path="/ui/metrics/:name/history/:version" render={props => <MetricVersionDetails {...props}/>}/>
     <Route exact path="/ui/metrics/:name" render={props => <MetricChange {...props}/>}/>
     <Route exact path="/ui/metricprofiles" component={MetricProfilesList} />
-    <Route exact path="/ui/metricprofiles/add"
+    <AddRoute usergroups={userGroups.metricprofiles} exact path="/ui/metricprofiles/add"
       render={props => <MetricProfilesChange
         {...props}
         webapimetric={webApiMetric}
@@ -146,7 +157,7 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, t
       render={props => <MetricProfileVersionDetails {...props}/>}
     />
     <Route exact path="/ui/aggregationprofiles" component={AggregationProfilesList} />
-    <Route exact path="/ui/aggregationprofiles/add"
+    <AddRoute usergroups={userGroups.aggregations} exact path="/ui/aggregationprofiles/add"
       render={props => <AggregationProfilesChange
         {...props}
         webapiaggregation={webApiAggregation}
@@ -237,7 +248,7 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, t
       render={props => <GroupOfThresholdsProfilesChange {...props}/>}
     />
     <Route exact path="/ui/thresholdsprofiles" component={ThresholdsProfilesList} />
-    <Route exact path="/ui/thresholdsprofiles/add"
+    <AddRoute usergroups={userGroups.thresholdsprofiles} exact path="/ui/thresholdsprofiles/add"
       render={props => <ThresholdsProfilesChange
         {...props}
         webapithresholds={webApiThresholds}
@@ -286,6 +297,7 @@ const SuperAdminRouteSwitch = ({props}) => (
     <Route exact path='/ui/metrictemplates/:name' render={props => <MetricTemplateChange {...props}/>}/>
     <Route exact path='/ui/yumrepos/' render={props => <YumRepoList {...props}/>}/>
     <Route exact path='/ui/yumrepos/add' render={props => <YumRepoChange addview={true} {...props}/>}/>
+    <Route exact path='/ui/yumrepos/:name/clone' render={props => <YumRepoClone {...props}/>}/>
     <Route exact path='/ui/yumrepos/:name' render={props => <YumRepoChange {...props}/>}/>
     <Route exact path='/ui/packages/' render={props => <PackageList {...props}/>}/>
     <Route exact path='/ui/packages/add' render={props => <PackageChange addview={true} {...props}/>}/>
@@ -296,6 +308,9 @@ const SuperAdminRouteSwitch = ({props}) => (
       render={props => <SuperAdminUserChange
         {...props}
         addview={true}/>}
+    />
+    <Route exact path="/ui/administration/users/:user_name/change_password"
+      render={props => <ChangePassword {...props}/>}
     />
     <Route exact path="/ui/administration/users/:user_name"
       render={props => <SuperAdminUserChange {...props}/>}
@@ -352,13 +367,12 @@ class App extends Component {
 
   async initalizeState(poemType, response) {
     if (poemType) {
-      let token = await this.backend.fetchToken();
       let options = await this.backend.fetchConfigOptions();
       this.setState({
         isTenantSchema: poemType,
         isSessionActive: response.active,
         userDetails: response.userdetails,
-        token: token,
+        token: response.userdetails.token,
         webApiMetric: options && options.result.webapimetric,
         webApiAggregation: options && options.result.webapiaggregation,
         webApiThresholds: options && options.result.webapithresholds,
@@ -552,7 +566,6 @@ class App extends Component {
       )
     }
     else if (!publicView && !isSessionActive) {
-
       return (
         <BrowserRouter>
           <Switch>
@@ -583,6 +596,8 @@ class App extends Component {
                   titleModal='Log out'
                   msgModal='Are you sure you want to log out?'
                   userDetails={userDetails}
+                  isTenantSchema={this.state.isTenantSchema}
+                  publicView={publicView}
                 />
               </Col>
             </Row>
@@ -600,7 +615,8 @@ class App extends Component {
                     webApiThresholds={this.state.webApiThresholds}
                     token={this.state.token}
                     tenantName={this.state.tenantName}
-                    isSuperUser={userDetails.is_superuser}/>
+                    isSuperUser={userDetails.is_superuser}
+                    userGroups={userDetails.groups}/>
                  :
                   <SuperAdminRouteSwitch/>
                 }
@@ -613,6 +629,14 @@ class App extends Component {
             </Row>
           </Container>
         </BrowserRouter>
+      )
+    }
+    else if (this.state.isTenantSchema === null && isSessionActive) {
+      return (
+        <React.Fragment>
+          <h1>Something went wrong</h1>
+          <p>Cannot obtain schema.</p>
+        </React.Fragment>
       )
     }
     else

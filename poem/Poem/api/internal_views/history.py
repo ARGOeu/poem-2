@@ -33,66 +33,67 @@ class ListVersions(APIView):
                     object_id=instance
                 ).order_by('-date_created')
 
-                results = []
-                for ver in vers:
-                    if isinstance(instance, admin_models.Probe):
-                        version = ver.package.version
-                        fields = {
-                            'name': ver.name,
-                            'version': ver.package.version,
-                            'package': ver.package.__str__(),
-                            'description': ver.description,
-                            'comment': ver.comment,
-                            'repository': ver.repository,
-                            'docurl': ver.docurl
-                        }
-                    else:
-                        if ver.probekey:
-                            probekey = ver.probekey.__str__()
-                            version = ver.probekey.__str__().split(' ')[1][1:-1]
-                        else:
-                            probekey = ''
-                            version = datetime.datetime.strftime(
-                                ver.date_created, '%Y-%m-%d %H:%M:%S'
-                            )
-                        fields = {
-                            'name': ver.name,
-                            'mtype': ver.mtype.name,
-                            'probeversion': probekey,
-                            'description': ver.description,
-                            'parent': one_value_inline(ver.parent),
-                            'probeexecutable': one_value_inline(
-                                ver.probeexecutable
-                            ),
-                            'config': two_value_inline(ver.config),
-                            'attribute': two_value_inline(ver.attribute),
-                            'dependency': two_value_inline(ver.dependency),
-                            'flags': two_value_inline(ver.flags),
-                            'files': two_value_inline(ver.files),
-                            'parameter': two_value_inline(ver.parameter),
-                            'fileparameter': two_value_inline(ver.fileparameter)
-                        }
-
-                    results.append(dict(
-                        id=ver.id,
-                        object_repr=ver.__str__(),
-                        fields=fields,
-                        user=ver.version_user,
-                        date_created=datetime.datetime.strftime(
-                            ver.date_created, '%Y-%m-%d %H:%M:%S'
-                        ),
-                        comment=new_comment(ver.version_comment),
-                        version=version
-                    ))
-
-                results = sorted(results, key=lambda k: k['id'], reverse=True)
-                return Response(results)
-
         else:
             vers = history_model[obj].objects.all()
-            results = sorted([ver.__str__() for ver in vers], key=str.lower)
 
-            return Response(results)
+        results = []
+        for ver in vers:
+            if obj == 'probe':
+                version = ver.package.version
+                fields = {
+                    'name': ver.name,
+                    'version': ver.package.version,
+                    'package': ver.package.__str__(),
+                    'description': ver.description,
+                    'comment': ver.comment,
+                    'repository': ver.repository,
+                    'docurl': ver.docurl
+                }
+            else:
+                if ver.probekey:
+                    probekey = ver.probekey.__str__()
+                    version = ver.probekey.__str__().split(' ')[1][1:-1]
+                else:
+                    probekey = ''
+                    version = datetime.datetime.strftime(
+                        ver.date_created, '%Y-%m-%d %H:%M:%S'
+                    )
+                fields = {
+                    'name': ver.name,
+                    'mtype': ver.mtype.name,
+                    'probeversion': probekey,
+                    'description': ver.description,
+                    'parent': one_value_inline(ver.parent),
+                    'probeexecutable': one_value_inline(
+                        ver.probeexecutable
+                    ),
+                    'config': two_value_inline(ver.config),
+                    'attribute': two_value_inline(ver.attribute),
+                    'dependency': two_value_inline(ver.dependency),
+                    'flags': two_value_inline(ver.flags),
+                    'files': two_value_inline(ver.files),
+                    'parameter': two_value_inline(ver.parameter),
+                    'fileparameter': two_value_inline(ver.fileparameter)
+                }
+
+            results.append(dict(
+                id=ver.id,
+                object_repr=ver.__str__(),
+                fields=fields,
+                user=ver.version_user,
+                date_created=datetime.datetime.strftime(
+                    ver.date_created, '%Y-%m-%d %H:%M:%S'
+                ),
+                comment=new_comment(ver.version_comment),
+                version=version
+            ))
+
+        if name:
+            results = sorted(results, key=lambda k: k['id'], reverse=True)
+        else:
+            results = sorted(results, key=lambda k: k['object_repr'])
+
+        return Response(results)
 
 
 class ListPublicVersions(ListVersions):

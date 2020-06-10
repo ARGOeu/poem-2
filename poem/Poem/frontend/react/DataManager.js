@@ -22,20 +22,7 @@ export class Backend {
       } else
         return null;
     } catch(err) {
-      alert(`Something went wrong: ${err}`);
-    }
-  }
-
-  async fetchToken() {
-    try {
-      let response = await fetch('/api/v2/internal/apikeys/WEB-API');
-      if (response.ok) {
-        let json = await response.json();
-        return json['token'];
-      } else
-        return null;
-    } catch(err) {
-      alert(`Something went wrong: ${err}`)
+      return null;
     }
   }
 
@@ -50,7 +37,7 @@ export class Backend {
       } else
         return null;
     } catch(err) {
-      alert(`Something went wrong: ${err}`)
+      return null;
     }
   }
 
@@ -63,34 +50,71 @@ export class Backend {
   }
 
   async fetchData(url) {
+    let error_msg = '';
     try {
       let response = await fetch(url);
-      return response.json();
-    } catch(err) {
-      alert(`Something went wrong: ${err}`);
-    }
+      if (response.ok)
+        return response.json();
+
+      else {
+        try {
+          let json = await response.json();
+          error_msg = `${response.status} ${response.statusText}; in fetch ${url}; ${json.detail}`;
+        } catch(err1) {
+          error_msg = `${response.status} ${response.statusText}; in fetch ${url}`;
+        }
+      }
+    } catch (err) {
+      error_msg = `${err}; in fetch ${url}`;
+    };
+    if (error_msg)
+      throw Error(error_msg);
   }
 
   async fetchListOfNames(url) {
+    let error_msg = '';
     try {
       let response = await fetch(url);
-      let json = await response.json();
-      let list = [];
-      json.forEach(e => list.push(e.name));
-      return list;
+      if (response.ok) {
+        let json = await response.json();
+        let list = [];
+        json.forEach(e => list.push(e.name));
+        return list;
+      } else {
+        try {
+          let json = await response.json();
+          error_msg = `${response.status} ${response.statusText}; in fetch ${url}; ${json.detail}`;
+        } catch(err1) {
+          error_msg = `${response.status} ${response.statusText}; in fetch ${url}`;
+        }
+      }
     } catch(err) {
-      alert(`Something went wrong: ${err}`);
-    }
+      error_msg = `${err}; in fetch ${url}`;
+    };
+    if (error_msg)
+      throw Error(error_msg);
   }
 
   async fetchResult(url) {
+    let error_msg = '';
     try {
       let response = await fetch(url);
-      let json = await response.json();
-      return json['result'];
+      if (response.ok) {
+        let json = await response.json();
+        return json['result'];
+      } else {
+        try {
+          let json = await response.json();
+          error_msg = `${response.status} ${response.statusText}; in fetch ${url}; ${json.detail}`;
+        } catch(err1) {
+          error_msg = `${response.status} ${response.statusText}; in fetch ${url}`;
+        };
+      }
     } catch(err) {
-      alert(`Something went wrong: ${err}`);
-    }
+      error_msg = `${err}; in fetch ${url}`;
+    };
+    if (error_msg)
+      throw Error(error_msg);
   }
 
   changeObject(url, data) {
@@ -148,6 +172,7 @@ export class WebApi {
   }
 
   async fetchMetricProfiles() {
+    let err_msg = '';
     try {
       let response = await fetch(
         this.metricprofiles,
@@ -158,11 +183,22 @@ export class WebApi {
           }
         }
       );
-      let json = await response.json();
-      return json['data'];
+      if (response.ok) {
+        let json = await response.json();
+        return json['data'];
+      } else {
+        try {
+          let json = await response.json();
+          err_msg = `${response.status} ${response.statusText}; in fetch ${this.metricprofiles}; ${json.status.details}`;
+        } catch(err) {
+          err_msg = `${response.status} ${response.statusText}; in fetch ${this.metricprofiles}`;
+        };
+      };
     } catch(err) {
-      alert(`Something went wrong: ${err}`);
-    }
+      err_msg = `${err}; in fetch ${this.metricprofiles}`;
+    };
+    if (err_msg)
+      throw Error(err_msg);
   }
 
   fetchMetricProfile(id) {
@@ -214,6 +250,7 @@ export class WebApi {
   }
 
   async fetchProfile(url) {
+    let err_msg = '';
     try {
       let response = await fetch(
         url,
@@ -224,11 +261,29 @@ export class WebApi {
           }
         }
       );
-      let json = await response.json();
-      return json['data'][0];
+      if (response.ok) {
+        let json = await response.json();
+        return json['data'][0];
+      } else {
+        try {
+          let json = await response.json();
+          if (json.status.details)
+            err_msg = `${response.status} ${response.statusText}; in fetch ${url}; ${json.status.details}`;
+
+          else if (json.errors[0].details)
+            err_msg = `${response.status} ${response.statusText}; in fetch ${url}; ${json.errors[0].details}`;
+
+          else
+            err_msg = `${response.status} ${response.statusText}; in fetch ${url}`;
+        } catch(err1) {
+          err_msg = `${response.status} ${response.statusText}; in fetch ${url}`;
+        };
+      };
     } catch(err) {
-      alert(`Something went wrong: ${err}`);
-    }
+      err_msg = `${err}; in fetch ${url}`;
+    };
+    if (err_msg)
+      throw Error(err_msg);
   }
 
   changeProfile(url, data) {

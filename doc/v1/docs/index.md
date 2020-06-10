@@ -1,6 +1,7 @@
 # Index
 
 ## SuperAdmin POEM
+- [User Interface](superadmin_ui.md)
 - [Administration](superadmin_administration.md)
     - [Users](superadmin_users.md)
 - [Probes](superadmin_probe.md)
@@ -9,6 +10,7 @@
 - [Metric Templates](superadmin_metric_templates.md)
 
 ## Tenant POEM
+- [User Interface](tenant_ui.md)
 - [Administration](tenant_administration.md)
     - [Users](tenant_users.md)
     - [Groups of Resources](tenant_groups_of_resources.md)

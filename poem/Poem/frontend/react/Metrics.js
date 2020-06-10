@@ -9,7 +9,10 @@ import {
   DropdownFilterComponent,
   HistoryComponent,
   DiffElement,
-  AutocompleteField
+  AutocompleteField,
+  NotifyWarn,
+  NotifyError,
+  ErrorComponent
  } from './UIElements';
 import ReactTable from 'react-table';
 import { Formik, Form, Field, FieldArray } from 'formik';
@@ -29,7 +32,6 @@ import {
 } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faInfoCircle, faMinus, faPlus } from '@fortawesome/free-solid-svg-icons';
-import { NotificationManager } from 'react-notifications';
 import ReactDiffViewer from 'react-diff-viewer';
 
 export const MetricList = ListOfMetrics('metric');
@@ -301,7 +303,8 @@ export function ListOfMetrics(type, imp=false) {
           search_probeversion: '',
           search_type: '',
           search_group: '',
-          userDetails: undefined
+          userDetails: undefined,
+          error: null
         }
       } else {
         this.state = {
@@ -315,7 +318,8 @@ export function ListOfMetrics(type, imp=false) {
           search_type: '',
           selected: {},
           selectAll: 0,
-          userDetails: undefined
+          userDetails: undefined,
+          error: null
         }
       }
 
@@ -377,20 +381,20 @@ export function ListOfMetrics(type, imp=false) {
 
     async importMetrics() {
       let selectedMetrics = this.state.selected;
-      let mt = Object.keys(selectedMetrics);
+      // get only those metrics whose value is true
+      let mt = Object.keys(selectedMetrics).filter(k => selectedMetrics[k]);
       if (mt.length > 0) {
-        let response = await this.backend.importMetrics({'metrictemplates': Object.keys(selectedMetrics)});
+        let response = await this.backend.importMetrics({'metrictemplates': mt});
         let json = await response.json();
         if (json.imported)
-          NotificationManager.success(json.imported, 'Imported');
+          NotifyOk({msg: json.imported, title: 'Imported'})
 
         if (json.err)
-          NotificationManager.warning(json.err, 'Not imported');
+          NotifyWarn({msg: json.err, title: 'Not imported'});
       } else {
-        NotificationManager.error(
-          'No metric templates were selected!',
-          'Error'
-        );
+        NotifyError({
+          msg: 'No metric templates were selected!',
+          title: 'Error'});
       };
     }
 
@@ -398,57 +402,63 @@ export function ListOfMetrics(type, imp=false) {
       this.setState({loading: true});
 
       let response = await this.backend.isTenantSchema();
-      if (!this.publicView) {
-        let sessionActive = await this.backend.isActiveSession(response);
-        if (sessionActive.active)
-          if (type === 'metric') {
-            let metrics = await this.backend.fetchData('/api/v2/internal/metric');
-            let groups = await this.backend.fetchResult('/api/v2/internal/usergroups');
-            let types = await this.backend.fetchData('/api/v2/internal/mtypes');
-            this.setState({
-              list_metric: metrics,
-              list_groups: groups['metrics'],
-              list_types: types,
-              loading: false,
-              search_name: '',
-              search_probeversion: '',
-              search_group: '',
-              search_type: '',
-              userDetails: sessionActive.userdetails
-            });
-          } else {
-            let metrictemplates = await this.backend.fetchData(`/api/v2/internal/metrictemplates${imp ? '-import' : ''}`);
-            let types = await this.backend.fetchData('/api/v2/internal/mttypes');
-            let ostags = await this.backend.fetchData('/api/v2/internal/ostags');
-            this.setState({
-              list_metric: metrictemplates,
-              list_types: types,
-              list_ostags: ostags,
-              loading: false,
-              search_name: '',
-              search_probeversion: '',
-              search_type: '',
-              search_ostag: '',
-              userDetails: sessionActive.userdetails
-            });
-          };
-      }
-      else {
-        let metrics = await this.backend.fetchData('/api/v2/internal/public_metric');
-        let groups = await this.backend.fetchResult('/api/v2/internal/public_usergroups');
-        let types = await this.backend.fetchData('/api/v2/internal/public_mtypes');
+      try {
+        if (!this.publicView) {
+          let sessionActive = await this.backend.isActiveSession(response);
+          if (sessionActive.active)
+            if (type === 'metric') {
+              let metrics = await this.backend.fetchData('/api/v2/internal/metric');
+              let groups = await this.backend.fetchResult('/api/v2/internal/usergroups');
+              let types = await this.backend.fetchData('/api/v2/internal/mtypes');
+              this.setState({
+                list_metric: metrics,
+                list_groups: groups['metrics'],
+                list_types: types,
+                loading: false,
+                search_name: '',
+                search_probeversion: '',
+                search_group: '',
+                search_type: '',
+                userDetails: sessionActive.userdetails
+              });
+            } else {
+              let metrictemplates = await this.backend.fetchData(`/api/v2/internal/metrictemplates${imp ? '-import' : ''}`);
+              let types = await this.backend.fetchData('/api/v2/internal/mttypes');
+              let ostags = await this.backend.fetchData('/api/v2/internal/ostags');
+              this.setState({
+                list_metric: metrictemplates,
+                list_types: types,
+                list_ostags: ostags,
+                loading: false,
+                search_name: '',
+                search_probeversion: '',
+                search_type: '',
+                search_ostag: '',
+                userDetails: sessionActive.userdetails
+              });
+            };
+        } else {
+          let metrics = await this.backend.fetchData('/api/v2/internal/public_metric');
+          let groups = await this.backend.fetchResult('/api/v2/internal/public_usergroups');
+          let types = await this.backend.fetchData('/api/v2/internal/public_mtypes');
+          this.setState({
+            list_metric: metrics,
+            list_groups: groups['metrics'],
+            list_types: types,
+            loading: false,
+            search_name: '',
+            search_probeversion: '',
+            search_group: '',
+            search_type: '',
+            userDetails: {username: 'Anonymous'}
+          });
+        }
+      } catch(err) {
         this.setState({
-          list_metric: metrics,
-          list_groups: groups['metrics'],
-          list_types: types,
-          loading: false,
-          search_name: '',
-          search_probeversion: '',
-          search_group: '',
-          search_type: '',
-          userDetails: {username: 'Anonymous'}
+          error: err,
+          loading: false
         });
-      }
+      };
     }
 
     render() {
@@ -656,7 +666,7 @@ export function ListOfMetrics(type, imp=false) {
         )
       }
 
-      var { loading, list_metric } = this.state;
+      var { loading, list_metric, error } = this.state;
 
       if (this.state.search_name) {
         list_metric = this.doFilter(list_metric, 'name', this.state.search_name)
@@ -681,7 +691,10 @@ export function ListOfMetrics(type, imp=false) {
       }
 
       if (loading)
-      return (<LoadingAnim />);
+        return (<LoadingAnim />);
+
+      else if (error)
+        return (<ErrorComponent error={error}/>);
 
       else if (!loading && list_metric && this.state.userDetails) {
         if (type === 'metric') {
@@ -752,7 +765,7 @@ export function ListOfMetrics(type, imp=false) {
                 <ReactTable
                   data={list_metric}
                   columns={columns}
-                  className='-striped -highlight'
+                  className='-highlight'
                   defaultPageSize={50}
                   rowsText='metrics'
                   getTheadThProps={() => ({className: 'table-active font-weight-bold p-2'})}
@@ -794,7 +807,7 @@ export const MetricForm =
     <>
       <FormGroup>
         <Row className='mb-3'>
-          <Col md={4}>
+          <Col md={6}>
             <InputGroup>
               <InputGroupAddon addonType='prepend'>Name</InputGroupAddon>
               <Field
@@ -806,14 +819,71 @@ export const MetricForm =
             />
             </InputGroup>
             {
-            errors.name &&
-              FancyErrorMessage(errors.name)
-          }
+              errors.name &&
+                FancyErrorMessage(errors.name)
+            }
             <FormText color='muted'>
             Metric name.
             </FormText>
           </Col>
-          <Col md={4}>
+          <Col md={4} className='mt-1'>
+            <InputGroup>
+              <InputGroupAddon addonType='prepend'>Type</InputGroupAddon>
+              {
+                (isTenantSchema || isHistory) ?
+                  <Field
+                    type='text'
+                    name='type'
+                    className='form-control'
+                    id='mtype'
+                    readOnly={true}
+                  />
+                :
+                  <Field
+                    component='select'
+                    name='type'
+                    className='form-control custom-select'
+                    id='mtype'
+                    onChange={e => {
+                      handleChange(e);
+                      if (e.target.value === 'Passive') {
+                        let ind = values.flags.length;
+                        if (ind === 1 && values.flags[0].key === '') {
+                          setFieldValue('flags[0].key', 'PASSIVE');
+                          setFieldValue('flags[0].value', '1');
+                        } else {
+                          setFieldValue(`flags[${ind}].key`, 'PASSIVE')
+                          setFieldValue(`flags[${ind}].value`, '1')
+                        }
+                      } else if (e.target.value === 'Active') {
+                        let ind = undefined;
+                        values.flags.forEach((e, index) => {
+                          if (e.key === 'PASSIVE') {
+                            ind = index;
+                          }
+                        });
+                        if (values.flags.length === 1)
+                          values.flags.splice(ind, 1, {'key': '', 'value': ''})
+                        else
+                          values.flags.splice(ind, 1)
+                      }
+                    }}
+                  >
+                    {
+                      types.map((name, i) =>
+                        <option key={i} value={name}>{name}</option>
+                      )
+                    }
+                  </Field>
+              }
+            </InputGroup>
+            <FormText color='muted'>
+            Metric is of given type.
+            </FormText>
+          </Col>
+        </Row>
+        <Row>
+          <Col md={6}>
             {
               values.type === 'Passive' ?
                 <InputGroup>
@@ -868,99 +938,58 @@ export const MetricForm =
                     />
             }
             {
-            errors.probeversion &&
-              FancyErrorMessage(errors.probeversion)
-          }
+              errors.probeversion &&
+                FancyErrorMessage(errors.probeversion)
+            }
             {
-            values.type === 'Active' &&
-              <FormText color='muted'>
-                Probe name and version
-                {
-                  !isHistory &&
-                    <>
-                      <FontAwesomeIcon
-                        id='probe-popover'
-                        hidden={`state.${obj}.mtype` === 'Passive' || addview}
-                        icon={faInfoCircle}
-                        style={{color: '#416090'}}
-                      />
-                      <Popover
-                        placement='bottom'
-                        isOpen={state.popoverOpen}
-                        target='probe-popover'
-                        toggle={togglePopOver}
-                        trigger='click'
-                      >
-                        <PopoverHeader>
-                          <ProbeVersionLink
-                            probeversion={obj === 'metric' ? state.metric.probeversion : state.metrictemplate.probeversion}
-                            publicView={publicView}
-                          />
-                        </PopoverHeader>
-                        <PopoverBody>{state.probe.description}</PopoverBody>
-                      </Popover>
-                    </>
-                }
-              </FormText>
+              values.type === 'Active' &&
+                <FormText color='muted'>
+                  Probe name and version&nbsp;
+                  {
+                    !isHistory &&
+                      <>
+                        <FontAwesomeIcon
+                          id='probe-popover'
+                          hidden={`state.${obj}.mtype` === 'Passive' || addview}
+                          icon={faInfoCircle}
+                          style={{color: '#416090'}}
+                        />
+                        <Popover
+                          placement='bottom'
+                          isOpen={state.popoverOpen}
+                          target='probe-popover'
+                          toggle={togglePopOver}
+                          trigger='click'
+                        >
+                          <PopoverHeader>
+                            <ProbeVersionLink
+                              probeversion={obj === 'metric' ? state.metric.probeversion : state.metrictemplate.probeversion}
+                              publicView={publicView}
+                            />
+                          </PopoverHeader>
+                          <PopoverBody>{state.probe.description}</PopoverBody>
+                        </Popover>
+                      </>
+                  }
+                </FormText>
           }
           </Col>
-          <Col md={2}>
+          <Col md={4} className='mt-1'>
             <InputGroup>
-              <InputGroupAddon addonType='prepend'>Type</InputGroupAddon>
-              {
-              (isTenantSchema || isHistory) ?
-                <Field
-                  type='text'
-                  name='type'
-                  className='form-control'
-                  id='mtype'
-                  readOnly={true}
-                />
-              :
-                <Field
-                  component='select'
-                  name='type'
-                  className='form-control custom-select'
-                  id='mtype'
-                  onChange={e => {
-                    handleChange(e);
-                    if (e.target.value === 'Passive') {
-                      let ind = values.flags.length;
-                      if (ind === 1 && values.flags[0].key === '') {
-                        setFieldValue('flags[0].key', 'PASSIVE');
-                        setFieldValue('flags[0].value', '1');
-                      } else {
-                        setFieldValue(`flags[${ind}].key`, 'PASSIVE')
-                        setFieldValue(`flags[${ind}].value`, '1')
-                      }
-                    } else if (e.target.value === 'Active') {
-                      let ind = undefined;
-                      values.flags.forEach((e, index) => {
-                        if (e.key === 'PASSIVE') {
-                          ind = index;
-                        }
-                      });
-                      if (values.flags.length === 1)
-                        values.flags.splice(ind, 1, {'key': '', 'value': ''})
-                      else
-                        values.flags.splice(ind, 1)
-                    }
-                  }}
-                >
-                  {
-                    types.map((name, i) =>
-                      <option key={i} value={name}>{name}</option>
-                    )
-                  }
-                </Field>
-            }
+              <InputGroupAddon addonType='prepend'>Package</InputGroupAddon>
+              <Field
+                type='text'
+                className='form-control'
+                value={state.probe.package}
+                disabled={true}
+              />
             </InputGroup>
             <FormText color='muted'>
-            Metric is of given type.
+              Package which contains probe.
             </FormText>
           </Col>
         </Row>
-      <Row className='mb-4'>
+      <Row className='mb-4 mt-2'>
         <Col md={10}>
           <Label for='description'>Description:</Label>
           <Field
@@ -1033,8 +1062,6 @@ export const MetricForm =
         <InlineFields values={values} errors={errors} field='dependency' addnew={!isTenantSchema && !isHistory}/>
         <InlineFields values={values} errors={errors} field='parameter' addnew={!isTenantSchema && !isHistory}/>
         <InlineFields values={values} errors={errors} field='flags' addnew={!isTenantSchema && !isHistory}/>
-        <InlineFields values={values} errors={errors} field='file_attributes' addnew={!isTenantSchema && !isHistory}/>
-        <InlineFields values={values} errors={errors} field='file_parameters' addnew={!isTenantSchema && !isHistory}/>
         <h6 className='mt-4 font-weight-bold text-uppercase'>parent</h6>
         <Row>
           <Col md={5}>
@@ -1110,6 +1137,7 @@ export function CompareMetrics(metrictype) {
         flags2: '',
         files2: '',
         fileparameter2: '',
+        error: null
       };
 
       this.backend = new Backend();
@@ -1126,117 +1154,126 @@ export function CompareMetrics(metrictype) {
       else
         url = `/api/v2/internal/version/metrictemplate/${this.name}`;
 
-      let json = await this.backend.fetchData(url);
-      let name1 = '';
-      let probeversion1 = '';
-      let type1 = '';
-      let group1 = '';
-      let description1 = '';
-      let probeexecutable1 = '';
-      let parent1 = '';
-      let config1 = '';
-      let attribute1 = '';
-      let dependency1 = '';
-      let flags1 = '';
-      let files1 = '';
-      let parameter1 = '';
-      let fileparameter1 = '';
-      let name2 = '';
-      let probeversion2 = '';
-      let type2 = '';
-      let group2 = '';
-      let description2 = '';
-      let probeexecutable2 = '';
-      let parent2 = '';
-      let config2 = '';
-      let attribute2 = '';
-      let dependency2 = '';
-      let flags2 = '';
-      let files2 = '';
-      let parameter2 = '';
-      let fileparameter2 = '';
+      try {
+        let json = await this.backend.fetchData(url);
+        let name1 = '';
+        let probeversion1 = '';
+        let type1 = '';
+        let group1 = '';
+        let description1 = '';
+        let probeexecutable1 = '';
+        let parent1 = '';
+        let config1 = '';
+        let attribute1 = '';
+        let dependency1 = '';
+        let flags1 = '';
+        let files1 = '';
+        let parameter1 = '';
+        let fileparameter1 = '';
+        let name2 = '';
+        let probeversion2 = '';
+        let type2 = '';
+        let group2 = '';
+        let description2 = '';
+        let probeexecutable2 = '';
+        let parent2 = '';
+        let config2 = '';
+        let attribute2 = '';
+        let dependency2 = '';
+        let flags2 = '';
+        let files2 = '';
+        let parameter2 = '';
+        let fileparameter2 = '';
 
-      json.forEach((e) => {
-        if (e.version == this.version1) {
-          name1 = e.fields.name;
-          probeversion1 = e.fields.probeversion;
-          type1 = e.fields.mtype;
-          if (metrictype === 'metric') {
-            group1 = e.fields.group;
-            dependency1 = e.fields.dependancy;
-          } else
-            dependency1 = e.fields.dependency;
-          description1 = e.fields.description;
-          probeexecutable1 = e.fields.probeexecutable;
-          parent1 = e.fields.parent;
-          config1 = e.fields.config;
-          attribute1 = e.fields.attribute;
-          parameter1 = e.fields.parameter;
-          flags1 = e.fields.flags; files1 = e.fields.files;
-          fileparameter1 = e.fields.fileparameter;
-        } else if (e.version == this.version2) {
-            name2 = e.fields.name;
-            probeversion2 = e.fields.probeversion;
-            type2 = e.fields.mtype;
+        json.forEach((e) => {
+          if (e.version == this.version1) {
+            name1 = e.fields.name;
+            probeversion1 = e.fields.probeversion;
+            type1 = e.fields.mtype;
             if (metrictype === 'metric') {
-              group2 = e.fields.group;
-              dependency2 = e.fields.dependancy;
+              group1 = e.fields.group;
+              dependency1 = e.fields.dependancy;
             } else
-              dependency2 = e.fields.dependency;
-            description2 = e.fields.description;
-            probeexecutable2 = e.fields.probeexecutable;
-            parent2 = e.fields.parent;
-            config2 = e.fields.config;
-            attribute2 = e.fields.attribute;
-            flags2 = e.fields.flags;
-            files2 = e.fields.files;
-            parameter2 = e.fields.parameter;
-            fileparameter2 = e.fields.fileparameter;
-        }
-      });
-      this.setState({
-        name1: name1,
-        probeversion1: probeversion1,
-        type1: type1,
-        group1: group1,
-        description1: description1,
-        probeexecutable1: probeexecutable1,
-        parent1: parent1,
-        config1: config1,
-        attribute1: attribute1,
-        dependency1: dependency1,
-        parameter1: parameter1,
-        flags1: flags1,
-        files1: files1,
-        fileparameter1: fileparameter1,
-        name2: name2,
-        probeversion2: probeversion2,
-        type2: type2,
-        group2: group2,
-        description2: description2,
-        probeexecutable2: probeexecutable2,
-        parent2: parent2,
-        config2: config2,
-        attribute2: attribute2,
-        dependency2: dependency2,
-        parameter2: parameter2,
-        flags2: flags2,
-        files2: files2,
-        fileparameter2: fileparameter2,
-        loading: false
-      });
+              dependency1 = e.fields.dependency;
+            description1 = e.fields.description;
+            probeexecutable1 = e.fields.probeexecutable;
+            parent1 = e.fields.parent;
+            config1 = e.fields.config;
+            attribute1 = e.fields.attribute;
+            parameter1 = e.fields.parameter;
+            flags1 = e.fields.flags; files1 = e.fields.files;
+            fileparameter1 = e.fields.fileparameter;
+          } else if (e.version == this.version2) {
+              name2 = e.fields.name;
+              probeversion2 = e.fields.probeversion;
+              type2 = e.fields.mtype;
+              if (metrictype === 'metric') {
+                group2 = e.fields.group;
+                dependency2 = e.fields.dependancy;
+              } else
+                dependency2 = e.fields.dependency;
+              description2 = e.fields.description;
+              probeexecutable2 = e.fields.probeexecutable;
+              parent2 = e.fields.parent;
+              config2 = e.fields.config;
+              attribute2 = e.fields.attribute;
+              flags2 = e.fields.flags;
+              files2 = e.fields.files;
+              parameter2 = e.fields.parameter;
+              fileparameter2 = e.fields.fileparameter;
+          }
+        });
+        this.setState({
+          name1: name1,
+          probeversion1: probeversion1,
+          type1: type1,
+          group1: group1,
+          description1: description1,
+          probeexecutable1: probeexecutable1,
+          parent1: parent1,
+          config1: config1,
+          attribute1: attribute1,
+          dependency1: dependency1,
+          parameter1: parameter1,
+          flags1: flags1,
+          files1: files1,
+          fileparameter1: fileparameter1,
+          name2: name2,
+          probeversion2: probeversion2,
+          type2: type2,
+          group2: group2,
+          description2: description2,
+          probeexecutable2: probeexecutable2,
+          parent2: parent2,
+          config2: config2,
+          attribute2: attribute2,
+          dependency2: dependency2,
+          parameter2: parameter2,
+          flags2: flags2,
+          files2: files2,
+          fileparameter2: fileparameter2,
+          loading: false
+        });
+      } catch(err) {
+        this.setState({
+          error: err,
+          loading: false
+        });
+      };
     }
 
     render() {
       var { name1, name2, probeversion1, probeversion2, type1, type2,
         probeexecutable1, probeexecutable2, parent1, parent2, config1,
         config2, attribute1, attribute2, dependency1, dependency2,
-        parameter1, parameter2, flags1, flags2, files1, files2,
-        fileparameter1, fileparameter2, group1, group2, loading,
-        description1, description2 } = this.state;
+        parameter1, parameter2, flags1, flags2, group1, group2, loading,
+        description1, description2, error } = this.state;
 
       if (loading)
         return <LoadingAnim/>;
+
+      else if (error)
+        return (<ErrorComponent error={error}/>);
 
       else if (!loading && name1 && name2) {
         return (
@@ -1292,14 +1329,6 @@ export function CompareMetrics(metrictype) {
               (!arraysEqual(flags1, flags2)) &&
                 <InlineDiffElement title='flags' item1={flags1} item2={flags2}/>
             }
-            {
-              (!arraysEqual(files1, files2)) &&
-                <InlineDiffElement title='file attributes' item1={files1} item2={files2}/>
-            }
-            {
-              (!arraysEqual(fileparameter1, fileparameter2)) &&
-                <InlineDiffElement title='file parameters' item1={fileparameter1} item2={fileparameter2}/>
-            }
           </React.Fragment>
         );
       } else
@@ -1325,6 +1354,7 @@ export class MetricChange extends Component {
       probe: {},
       groups: [],
       probeversions: [],
+      allprobeversions: [],
       metrictemplateversions: [],
       loading: false,
       popoverOpen: false,
@@ -1332,7 +1362,8 @@ export class MetricChange extends Component {
       areYouSureModal: false,
       modalFunc: undefined,
       modalTitle: undefined,
-      modalMsg: undefined
+      modalMsg: undefined,
+      error: null
     };
 
     this.toggleAreYouSure = this.toggleAreYouSure.bind(this);
@@ -1386,8 +1417,15 @@ export class MetricChange extends Component {
           files: mt.fields.files,
           fileparameter: mt.fields.fileparameter
         };
+        let probe = {};
+        this.state.allprobeversions.forEach((e) => {
+          if (e.object_repr === value) {
+            probe = e.fields;
+          };
+        });
         this.setState({
-          metric: updated_metric
+          metric: updated_metric,
+          probe: probe
         });
       }
     })
@@ -1421,47 +1459,95 @@ export class MetricChange extends Component {
         fileparameter: values.file_parameters
       }
     );
-    response.ok ?
+    if (response.ok) {
       NotifyOk({
         msg: 'Metric successfully changed',
         title: 'Changed',
         callback: () => this.history.push('/ui/metrics')
       })
-    :
-      this.toggleAreYouSureSetModal(
-        `Error: ${response.status} ${response.statusText}`,
-        'Error changing metric',
-        undefined
-      );
+    } else {
+      let change_msg = '';
+      try {
+        let json = await response.json();
+        change_msg = json.detail;
+      } catch(err) {
+        change_msg = 'Error changing metric';
+      };
+      NotifyError({
+        title: `Error: ${response.status} ${response.statusText}`,
+        msg: change_msg
+      });
+    };
   }
 
   async doDelete(name) {
     let response = await this.backend.deleteObject(`/api/v2/internal/metric/${name}`);
-    response.ok ?
+    if (response.ok) {
       NotifyOk({
         msg: 'Metric successfully deleted',
         title: 'Deleted',
         callback: () => this.history.push('/ui/metrics')
-      })
-    :
-      this.toggleAreYouSureSetModal(
-        `Error: ${response.status} ${response.statusText}`,
-        'Error deleting metric',
-        undefined
-      );
+      });
+    } else {
+      let msg = '';
+      try {
+        let json = await response.json();
+        msg = json.detail;
+      } catch(err) {
+        msg = 'Error deleting metric';
+      }
+      NotifyError({
+        title: `Error: ${response.status} ${response.statusText}`,
+        msg: msg
+      });
+    };
   }
 
   async componentDidMount() {
     this.setState({loading: true});
 
-    if (!this.addview) {
-      if (!this.publicView) {
-        let session = await this.backend.isActiveSession();
-        let metrics = await this.backend.fetchData(`/api/v2/internal/metric/${this.name}`);
-        let metrictemplateversions = await this.backend.fetchData(`/api/v2/internal/version/metrictemplate/${this.name}`);
-        if (session.active)
+    try {
+      if (!this.addview) {
+        if (!this.publicView) {
+          let session = await this.backend.isActiveSession();
+          let metrics = await this.backend.fetchData(`/api/v2/internal/metric/${this.name}`);
+          let metrictemplateversions = await this.backend.fetchData(`/api/v2/internal/version/metrictemplate/${this.name}`);
+          if (session.active)
+            if (metrics.probeversion) {
+              let probe = await this.backend.fetchData(`/api/v2/internal/version/probe/${metrics.probeversion.split(' ')[0]}`);
+              let fields = {};
+              let probeversions = [];
+              probe.forEach((e) => {
+                probeversions.push(e.object_repr);
+                if (e.object_repr === metrics.probeversion) {
+                  fields = e.fields;
+                }
+              })
+              this.setState({
+                metric: metrics,
+                probe: fields,
+                probeversions: probeversions,
+                allprobeversions: probe,
+                metrictemplateversions: metrictemplateversions,
+                groups: session.userdetails.groups.metrics,
+                loading: false,
+                write_perm: session.userdetails.is_superuser ||
+                  session.userdetails.groups.metrics.indexOf(metrics.group) >= 0,
+              });
+            } else {
+              this.setState({
+                metric: metrics,
+                groups: session.userdetails.groups.metrics,
+                loading: false,
+                write_perm: session.userdetails.is_superuser ||
+                  session.userdetails.groups.metrics.indexOf(metrics.group) >= 0,
+              });
+            };
+        } else {
+          let metrics = await this.backend.fetchData(`/api/v2/internal/public_metric/${this.name}`);
+          let metrictemplateversions = await this.backend.fetchData(`/api/v2/internal/public_version/metrictemplate/${this.name}`);
           if (metrics.probeversion) {
-            let probe = await this.backend.fetchData(`/api/v2/internal/version/probe/${metrics.probeversion.split(' ')[0]}`);
+            let probe = await this.backend.fetchData(`/api/v2/internal/public_version/probe/${metrics.probeversion.split(' ')[0]}`);
             let fields = {};
             let probeversions = [];
             probe.forEach((e) => {
@@ -1474,64 +1560,41 @@ export class MetricChange extends Component {
               metric: metrics,
               probe: fields,
               probeversions: probeversions,
+              allprobeversions: probe,
               metrictemplateversions: metrictemplateversions,
-              groups: session.userdetails.groups.metrics,
+              groups: [],
               loading: false,
-              write_perm: session.userdetails.is_superuser ||
-                session.userdetails.groups.metrics.indexOf(metrics.group) >= 0,
+              write_perm: false,
             });
           } else {
             this.setState({
               metric: metrics,
-              groups: session.userdetails.groups.metrics,
+              groups: [],
               loading: false,
-              write_perm: session.userdetails.is_superuser ||
-                session.userdetails.groups.metrics.indexOf(metrics.group) >= 0,
+              write_perm: false,
             });
           };
-      }
-      else {
-        let metrics = await this.backend.fetchData(`/api/v2/internal/public_metric/${this.name}`);
-        let metrictemplateversions = await this.backend.fetchData(`/api/v2/internal/public_version/metrictemplate/${this.name}`);
-        if (metrics.probeversion) {
-          let probe = await this.backend.fetchData(`/api/v2/internal/public_version/probe/${metrics.probeversion.split(' ')[0]}`);
-          let fields = {};
-          let probeversions = [];
-          probe.forEach((e) => {
-            probeversions.push(e.object_repr);
-            if (e.object_repr === metrics.probeversion) {
-              fields = e.fields;
-            }
-          })
-          this.setState({
-            metric: metrics,
-            probe: fields,
-            probeversions: probeversions,
-            metrictemplateversions: metrictemplateversions,
-            groups: [],
-            loading: false,
-            write_perm: false,
-          });
-        } else {
-          this.setState({
-            metric: metrics,
-            groups: [],
-            loading: false,
-            write_perm: false,
-          });
-        };
-      }
+        }
+      };
+    } catch(err) {
+      this.setState({
+        error: err,
+        loading: false
+      });
     };
   }
 
   render() {
-    const { metric, probeversions, groups, loading, write_perm } = this.state;
+    const { metric, probeversions, groups, loading, write_perm, error } = this.state;
 
     if (!groups.includes(metric.group))
       groups.push(metric.group);
 
     if (loading)
       return (<LoadingAnim/>)
+
+    else if (error)
+      return (<ErrorComponent error={error}/>);
 
     else if (!loading) {
       return (
@@ -1614,6 +1677,7 @@ export class MetricVersionDetails extends Component {
     this.state = {
       name: '',
       probeversion: '',
+      probe: {'package': ''},
       description: '',
       mtype: '',
       group: '',
@@ -1626,44 +1690,63 @@ export class MetricVersionDetails extends Component {
       flags: [],
       files: [],
       fileparameter: [],
-      loading: false
+      loading: false,
+      error: null
     };
   }
 
   async componentDidMount() {
     this.setState({loading: true});
 
-    let json = await this.backend.fetchData(`/api/v2/internal/tenantversion/metric/${this.name}`);
-    json.forEach((e) => {
-      if (e.version == this.version)
-        this.setState({
-          name: e.fields.name,
-          probeversion: e.fields.probeversion,
-          description: e.fields.description,
-          type: e.fields.mtype,
-          group: e.fields.group,
-          probeexecutable: e.fields.probeexecutable,
-          parent: e.fields.parent,
-          config: e.fields.config,
-          attribute: e.fields.attribute,
-          dependancy: e.fields.dependancy,
-          parameter: e.fields.parameter,
-          flags: e.fields.flags,
-          files: e.fields.files,
-          fileparameter: e.fields.fileparameter,
-          date_created: e.date_created,
-          loading: false
-        });
-    });
+    try {
+      let json = await this.backend.fetchData(`/api/v2/internal/tenantversion/metric/${this.name}`);
+      json.forEach(async (e) => {
+        if (e.version == this.version) {
+          let probes = await this.backend.fetchData(`/api/v2/internal/version/probe/${e.fields.probeversion.split(' ')[0]}`);
+          let probe = {};
+          probes.forEach(p => {
+            if (p.object_repr === e.fields.probeversion)
+              probe = p.fields;
+          });
+          this.setState({
+            name: e.fields.name,
+            probeversion: e.fields.probeversion,
+            probe: probe,
+            description: e.fields.description,
+            type: e.fields.mtype,
+            group: e.fields.group,
+            probeexecutable: e.fields.probeexecutable,
+            parent: e.fields.parent,
+            config: e.fields.config,
+            attribute: e.fields.attribute,
+            dependancy: e.fields.dependancy,
+            parameter: e.fields.parameter,
+            flags: e.fields.flags,
+            files: e.fields.files,
+            fileparameter: e.fields.fileparameter,
+            date_created: e.date_created,
+            loading: false
+          });
+        };
+      });
+    } catch(err) {
+      this.setState({
+        error: err,
+        loading: false
+      });
+    };
   }
 
   render() {
     const { name, probeversion, type, group, probeexecutable, parent, config,
       attribute, dependancy, parameter, flags, files, fileparameter, date_created,
-      loading, description } = this.state;
+      loading, description, error } = this.state;
 
     if (loading)
-    return (<LoadingAnim/>);
+      return (<LoadingAnim/>);
+
+    else if (error)
+      return (<ErrorComponent error={error}/>);
 
     else if (!loading && name) {
       return (

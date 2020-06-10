@@ -1,14 +1,14 @@
 # Probes
 
-## List of Probes
+## List of probes
 
 Probes page is accessible through the menu on the left side. It is a read-only page where users may see probes' configurations. The page is shown in the image below.
 
 ![Tenant Probes](figures/tenant_probes.png)
 
-## Probe Details
+## Probe details
 
-Users may see details of particular probe by clicking on its name, or see all the available versions of probe by clicking on the number of versions. Probes can be searched by name or description.
+Users may see details of particular probe by clicking on its name, or see all the available versions of probe by clicking on the number of versions. Probes can be searched by name, description or package they belong to.
 
 Page of a particular probe is shown in the image below.
 

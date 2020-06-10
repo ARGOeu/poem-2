@@ -1,8 +1,20 @@
 from configparser import ConfigParser
+
+from Poem.poem import models as poem_models
+from Poem.tenants.models import Tenant
 from django.conf import settings
 from django.core.management.base import BaseCommand
+from tenant_schemas.utils import schema_context, get_public_schema_name
 
-from Poem.tenants.models import Tenant
+
+def create_groups_of_resources(tenant_name):
+    schema = tenant_name.lower()
+    group = tenant_name.upper()
+    with schema_context(schema):
+        poem_models.GroupOfAggregations.objects.create(name=group)
+        poem_models.GroupOfMetrics.objects.create(name=group)
+        poem_models.GroupOfMetricProfiles.objects.create(name=group)
+        poem_models.GroupOfThresholdsProfiles.objects.create(name=group)
 
 
 def create_tenant(name, hostname):
@@ -14,6 +26,9 @@ def create_tenant(name, hostname):
         schema = name.lower()
     tenant = Tenant(domain_url=hostname, schema_name=schema, name=name)
     tenant.save()
+
+    if schema != get_public_schema_name():
+        create_groups_of_resources(name)
 
 
 def get_public_schema_hostname():
@@ -34,8 +49,6 @@ class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
         name = kwargs['name']
-        # since there is no public page (yet), in case of creating public
-        # tenant, no hostname is required and a dummy value is used
         if kwargs['hostname']:
             hostname = kwargs['hostname']
         else:

@@ -8,7 +8,9 @@ import{
   FancyErrorMessage,
   AutocompleteField,
   NotifyOk,
-  Checkbox
+  Checkbox,
+  NotifyError,
+  ErrorComponent
 } from './UIElements';
 import ReactTable from 'react-table';
 import {
@@ -22,7 +24,7 @@ import {
 } from 'reactstrap';
 import { Formik, Form, Field } from 'formik';
 import * as Yup from 'yup';
-import { NotificationManager } from 'react-notifications';
+
 
 const PackageSchema = Yup.object().shape({
   name: Yup.string()
@@ -54,26 +56,34 @@ export class PackageList extends Component {
         list_packages: null,
         list_repos: null,
         search_name: '',
-        search_repo: ''
+        search_repo: '',
+        error: null
       };
     };
 
     async componentDidMount() {
       this.setState({loading: true});
 
-      let pkgs = await this.backend.fetchData('/api/v2/internal/packages');
-      let repos = await this.backend.fetchData('/api/v2/internal/yumrepos');
-      let list_repos = [];
-      repos.forEach(e => list_repos.push(e.name + ' (' + e.tag + ')'));
-      this.setState({
-        list_packages: pkgs,
-        list_repos: list_repos,
-        loading: false
-      });
+      try {
+        let pkgs = await this.backend.fetchData('/api/v2/internal/packages');
+        let repos = await this.backend.fetchData('/api/v2/internal/yumrepos');
+        let list_repos = [];
+        repos.forEach(e => list_repos.push(e.name + ' (' + e.tag + ')'));
+        this.setState({
+          list_packages: pkgs,
+          list_repos: list_repos,
+          loading: false
+        });
+      } catch(err) {
+        this.setState({
+          error: err,
+          loading: false
+        });
+      };
     };
 
     render() {
-      var { list_packages, loading } = this.state;
+      var { list_packages, loading, error } = this.state;
 
       const columns = [
         {
@@ -133,7 +143,10 @@ export class PackageList extends Component {
       };
 
       if (loading)
-        return <LoadingAnim/>;
+        return (<LoadingAnim/>);
+
+      else if (error)
+        return (<ErrorComponent error={error}/>);
 
       else if (!loading && list_packages) {
         return (
@@ -145,8 +158,10 @@ export class PackageList extends Component {
             <ReactTable
               data={list_packages}
               columns={columns}
-              className='-striped -highlight'
+              className='-highlight'
               defaultPageSize={50}
+              rowsText='packages'
+              getTheadThProps={() => ({className: 'table-active font-weight-bold p-2'})}
             />
           </BaseArgoView>
         );
@@ -182,7 +197,8 @@ export class PackageChange extends Component {
       areYouSureModal: false,
       modalFunc: undefined,
       modalTitle: undefined,
-      modalMsg: undefined
+      modalMsg: undefined,
+      error: null
     };
 
     this.toggleAreYouSure = this.toggleAreYouSure.bind(this);
@@ -252,8 +268,17 @@ export class PackageChange extends Component {
         }
       );
       if (!response.ok) {
-        let json = await response.json();
-        NotificationManager.error(json.detail, 'Error');
+        let add_msg = '';
+        try {
+          let json = await response.json();
+          add_msg = json.detail;
+        } catch(err) {
+          add_msg = 'Error adding package';
+        }
+        NotifyError({
+          title: `Error: ${response.status} ${response.statusText}`,
+          msg: add_msg
+        });
       } else {
         NotifyOk({
           msg: 'Package successfully added',
@@ -273,8 +298,17 @@ export class PackageChange extends Component {
         }
       );
       if (!response.ok) {
-        let json = await response.json();
-        NotificationManager.error(json.detail, 'Error');
+        let change_msg = '';
+        try {
+          let json = await response.json();
+          change_msg = json.detail;
+        } catch(err) {
+          change_msg = 'Error changing package';
+        }
+        NotifyError({
+          title: `Error: ${response.status} ${response.statusText}`,
+          msg: change_msg
+        });
       } else {
         NotifyOk({
           msg: 'Package successfully changed',
@@ -288,8 +322,17 @@ export class PackageChange extends Component {
   async doDelete(nameversion) {
     let response = await this.backend.deleteObject(`/api/v2/internal/packages/${nameversion}`);
     if (!response.ok) {
-      let json = await response.json();
-      NotificationManager.error(json.detail, 'Error');
+      let msg = '';
+      try {
+        let json = await response.json();
+        msg = json.detail;
+      } catch(err) {
+        msg = 'Error deleting package';
+      };
+      NotifyError({
+        title: `Error: ${response.status} ${response.statusText}`,
+        msg: msg
+      });
     } else {
       NotifyOk({
         msg: 'Package successfully deleted',
@@ -305,48 +348,56 @@ export class PackageChange extends Component {
 
   async componentDidMount() {
     this.setState({loading: true});
-    let repos = await this.backend.fetchData('/api/v2/internal/yumrepos');
-    let list_repos_6 = [];
-    let list_repos_7 = [];
-    repos.forEach(e => {
-      if (e.tag === 'CentOS 6')
-        list_repos_6.push(e.name + ' (' + e.tag + ')');
-      else if (e.tag === 'CentOS 7')
-        list_repos_7.push(e.name + ' (' + e.tag + ')');
-    });
 
-    if (this.addview) {
-      this.setState({
-        list_repos_6: list_repos_6,
-        list_repos_7: list_repos_7,
-        loading: false
+    try {
+      let repos = await this.backend.fetchData('/api/v2/internal/yumrepos');
+      let list_repos_6 = [];
+      let list_repos_7 = [];
+      repos.forEach(e => {
+        if (e.tag === 'CentOS 6')
+          list_repos_6.push(e.name + ' (' + e.tag + ')');
+        else if (e.tag === 'CentOS 7')
+          list_repos_7.push(e.name + ' (' + e.tag + ')');
       });
-    } else {
-      let pkg = await this.backend.fetchData(`/api/v2/internal/packages/${this.nameversion}`);
-      let probes = await this.backend.fetchData('/api/v2/internal/probes');
-      let list_probes = [];
-      let repo_6 = '';
-      let repo_7 = '';
 
-      for (let i = 0; i < pkg.repos.length; i++) {
-        if (pkg.repos[i].split('(')[1].slice(0, -1) === 'CentOS 6')
-          repo_6 = pkg.repos[i];
+      if (this.addview) {
+        this.setState({
+          list_repos_6: list_repos_6,
+          list_repos_7: list_repos_7,
+          loading: false
+        });
+      } else {
+        let pkg = await this.backend.fetchData(`/api/v2/internal/packages/${this.nameversion}`);
+        let probes = await this.backend.fetchData('/api/v2/internal/probes');
+        let list_probes = [];
+        let repo_6 = '';
+        let repo_7 = '';
 
-        if (pkg.repos[i].split('(')[1].slice(0, -1) === 'CentOS 7')
-          repo_7 = pkg.repos[i];
-      }
+        for (let i = 0; i < pkg.repos.length; i++) {
+          if (pkg.repos[i].split('(')[1].slice(0, -1) === 'CentOS 6')
+            repo_6 = pkg.repos[i];
 
-      probes.forEach(e => {
-        if (e.package === `${pkg.name} (${pkg.version})`)
-          list_probes.push(e.name);
-      });
+          if (pkg.repos[i].split('(')[1].slice(0, -1) === 'CentOS 7')
+            repo_7 = pkg.repos[i];
+        }
+
+        probes.forEach(e => {
+          if (e.package === `${pkg.name} (${pkg.version})`)
+            list_probes.push(e.name);
+        });
+        this.setState({
+          pkg: pkg,
+          list_repos_6: list_repos_6,
+          list_repos_7: list_repos_7,
+          repo_6: repo_6,
+          repo_7: repo_7,
+          list_probes: list_probes,
+          loading: false
+        });
+      };
+    } catch(err) {
       this.setState({
-        pkg: pkg,
-        list_repos_6: list_repos_6,
-        list_repos_7: list_repos_7,
-        repo_6: repo_6,
-        repo_7: repo_7,
-        list_probes: list_probes,
+        error: err,
         loading: false
       });
     };
@@ -354,10 +405,13 @@ export class PackageChange extends Component {
 
   render() {
     const { pkg, repo_6, repo_7, list_repos_6, list_repos_7,
-      list_probes, loading, present_version } = this.state;
+      list_probes, loading, present_version, error } = this.state;
 
     if (loading)
-      return <LoadingAnim/>;
+      return (<LoadingAnim/>);
+
+    else if (error)
+      return (<ErrorComponent error={error}/>);
 
     else if (!loading && list_repos_6) {
       return (
