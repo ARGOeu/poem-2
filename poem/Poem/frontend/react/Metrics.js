@@ -342,7 +342,7 @@ export function ListOfMetrics(type, imp=false) {
       newSelected[name] = !this.state.selected[name];
       this.setState({
         selected: newSelected,
-        selectAll: 2
+        selectAll: Object.keys(newSelected).every((k) => !newSelected[k]) ? 0 : 2
       })
     }
 
