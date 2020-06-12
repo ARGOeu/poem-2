@@ -37,7 +37,8 @@ function matchItem(item, value) {
 }
 
 
-const MetricProfileTupleValidate = ({view_services, name, groupname}) => {
+const MetricProfileTupleValidate = ({view_services, name, groupname,
+  metrics_all, services_all}) => {
   let errors = new Object()
   let found = false
   let empty = false
@@ -77,8 +78,20 @@ const MetricProfileTupleValidate = ({view_services, name, groupname}) => {
       obj.service = "Required"
       empty = true
     }
+    else if (i.service &&
+      i.isNew &&
+      services_all.indexOf(i.service) == -1) {
+      obj.service = "Must be one of predefined service types"
+      empty = true
+    }
     if (!i.metric && i.isNew) {
       obj.metric = "Required"
+      empty = true
+    }
+    else if (i.metric &&
+      i.isNew &&
+      metrics_all.indexOf(i.metric) == -1) {
+      obj.metric = "Must be one of predefined metrics"
       empty = true
     }
   }
@@ -853,7 +866,9 @@ function MetricProfilesComponent(cloneview=false) {
                 groupname: groupname,
                 view_services: view_services,
                 search_metric: searchMetric,
-                search_serviceflavour: searchServiceFlavour
+                search_serviceflavour: searchServiceFlavour,
+                metrics_all: metrics_all,
+                services_all: serviceflavours_all
               }}
               onSubmit = {(values, actions) => this.onSubmitHandle({
                 formValues: values,
