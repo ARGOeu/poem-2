@@ -539,12 +539,9 @@ class ListMetricTemplatesForProbeVersion(APIView):
                 probekey__package__version=probeversion.split('(')[1][0:-1]
             )
 
-            if metrics.count() == 0:
-                raise NotFound(status=404, detail='Metrics not found')
-            else:
-                return Response(
-                    metrics.order_by('name').values_list('name', flat=True)
-                )
+            return Response(
+                metrics.order_by('name').values_list('name', flat=True)
+            )
 
 
 class ListPublicMetricTemplatesForProbeVersion(ListMetricTemplatesForProbeVersion):

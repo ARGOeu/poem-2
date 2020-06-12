@@ -7111,6 +7111,17 @@ class ListMetricTemplatesForProbeVersionAPIViewTests(TenantTestCase):
                    'README.md'
         )
 
+        probe2 = admin_models.Probe.objects.create(
+            name='ams-publisher-probe',
+            package=package1,
+            description='Probe is inspecting AMS publisher running on Nagios '
+                        'monitoring instances.',
+            comment='Initial version.',
+            repository='https://github.com/ARGOeu/nagios-plugins-argo',
+            docurl='https://github.com/ARGOeu/nagios-plugins-argo/blob/master/'
+                   'README.md'
+        )
+
         self.probeversion1 = admin_models.ProbeHistory.objects.create(
             object_id=probe1,
             name=probe1.name,
@@ -7119,6 +7130,19 @@ class ListMetricTemplatesForProbeVersionAPIViewTests(TenantTestCase):
             comment=probe1.comment,
             repository=probe1.repository,
             docurl=probe1.docurl,
+            date_created=datetime.datetime.now(),
+            version_comment='Initial version.',
+            version_user=self.user.username
+        )
+
+        self.probeversion2 = admin_models.ProbeHistory.objects.create(
+            object_id=probe2,
+            name=probe2.name,
+            package=probe2.package,
+            description=probe2.description,
+            comment=probe2.comment,
+            repository=probe2.repository,
+            docurl=probe2.docurl,
             date_created=datetime.datetime.now(),
             version_comment='Initial version.',
             version_user=self.user.username
@@ -7164,6 +7188,12 @@ class ListMetricTemplatesForProbeVersionAPIViewTests(TenantTestCase):
             [r for r in response.data],
             ['argo.AMS-Check', 'test-metric']
         )
+
+    def test_get_metric_templates_if_empty(self):
+        request = self.factory.get(self.url + 'ams-publisher-probe(0.1.7)')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'ams-publisher-probe(0.1.7)')
+        self.assertEqual(list(response.data), [])
 
 
 class ListTenantVersionsAPIViewTests(TenantTestCase):
