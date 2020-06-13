@@ -79,7 +79,7 @@ const MetricProfileTupleValidate = ({view_services, name, groupname,
       empty = true
     }
     else if (i.service &&
-      i.isNew &&
+      (i.isNew || i.serviceChanged) &&
       services_all.indexOf(i.service) == -1) {
       obj.service = "Must be one of predefined service types"
       empty = true
@@ -89,7 +89,7 @@ const MetricProfileTupleValidate = ({view_services, name, groupname,
       empty = true
     }
     else if (i.metric &&
-      i.isNew &&
+      (i.isNew || i.metricChanged) &&
       metrics_all.indexOf(i.metric) == -1) {
       obj.metric = "Must be one of predefined metrics"
       empty = true
