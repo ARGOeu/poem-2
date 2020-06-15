@@ -24,7 +24,6 @@ import {
 import { TenantAdministration, SuperAdminAdministration } from './Administration';
 import { AggregationProfilesChange, AggregationProfilesList, AggregationProfileHistory, AggregationProfileVersionCompare, AggregationProfileVersionDetails } from './AggregationProfiles';
 import Reports from './Reports';
-import Services from './Services';
 import { UsersList, UserChange, SuperAdminUserChange, ChangePassword } from './Users';
 import {
   GroupOfMetricsList,
@@ -109,7 +108,6 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, t
   <Switch>
     <Route exact path="/ui/login" render={props => <RedirectAfterLogin isSuperUser={isSuperUser} {...props}/>}/>
     <Route exact path="/ui/home" component={Home} />
-    <Route exact path="/ui/services" component={Services} />
     <Route exact path="/ui/reports" component={Reports} />
     <Route exact path="/ui/probes" component={ProbeList} />
     <Route exact path="/ui/probes/:name/history" render={props => <ProbeHistory {...props}/>}/>
@@ -496,13 +494,6 @@ class App extends Component {
               }
             />
           </Switch>
-          <Route exact path="/ui/public_services"
-            render={props =>
-              <PublicPage>
-                <Services publicView={true} {...props}/>
-              </PublicPage>
-            }
-          />
           <Route exact path="/ui/public_metricprofiles"
             render={props =>
               <PublicPage>
