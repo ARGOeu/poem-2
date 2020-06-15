@@ -819,6 +819,10 @@ function MetricProfilesComponent(cloneview=false) {
         //   tmp_view_services[i].index = element_index - 1;
         // }
       }
+      else {
+        tmp_list_services = [...this.state.list_services]
+        tmp_view_services = [...this.state.view_services]
+      }
       this.setState({
         list_services: tmp_list_services,
         view_services: tmp_view_services,
