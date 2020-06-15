@@ -79,7 +79,7 @@ const MetricProfileTupleValidate = ({view_services, name, groupname,
       empty = true
     }
     else if (i.service &&
-      i.isNew &&
+      (i.isNew || i.serviceChanged) &&
       services_all.indexOf(i.service) == -1) {
       obj.service = "Must be one of predefined service types"
       empty = true
@@ -89,7 +89,7 @@ const MetricProfileTupleValidate = ({view_services, name, groupname,
       empty = true
     }
     else if (i.metric &&
-      i.isNew &&
+      (i.isNew || i.metricChanged) &&
       metrics_all.indexOf(i.metric) == -1) {
       obj.metric = "Must be one of predefined metrics"
       empty = true
@@ -813,10 +813,15 @@ function MetricProfilesComponent(cloneview=false) {
           tmp_list_services[i].index = element_index - 1;
         }
 
-        for (var i = index_tmp; i < tmp_view_services.length; i++) {
-          let element_index = tmp_view_services[i].index
-          tmp_view_services[i].index = element_index - 1;
-        }
+        // this one ends up reindexing already indexed array
+        // for (var i = index_tmp; i < tmp_view_services.length; i++) {
+        //   let element_index = tmp_view_services[i].index
+        //   tmp_view_services[i].index = element_index - 1;
+        // }
+      }
+      else {
+        tmp_list_services = [...this.state.list_services]
+        tmp_view_services = [...this.state.view_services]
       }
       this.setState({
         list_services: tmp_list_services,
