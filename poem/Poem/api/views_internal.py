@@ -8,7 +8,6 @@ from Poem.api.internal_views.metricprofiles import *
 from Poem.api.internal_views.metrics import *
 from Poem.api.internal_views.metrictemplates import *
 from Poem.api.internal_views.probes import *
-from Poem.api.internal_views.services import *
 from Poem.api.internal_views.tenanthistory import *
 from Poem.api.internal_views.users import *
 from Poem.api.internal_views.yumrepos import *

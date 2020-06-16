@@ -46,5 +46,3 @@ UsePlainHttpAuth = False
 HttpUser = xxxx
 HttpPass = xxxx
 ServiceType = https://goc.egi.eu/gocdbpi/private/?method=get_service_types
-VO = http://operations-portal.egi.eu/xml/voIDCard/public/all/true
-Services = https://eosc-hub-devel.agora.grnet.gr/api/v2/service-types/

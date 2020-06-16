@@ -65,7 +65,7 @@ import { Backend } from './DataManager';
 import ReactDiffViewer from 'react-diff-viewer';
 
 
-var list_pages = ['administration','services', 'probes',
+var list_pages = ['administration', 'probes',
                   'metrics', 'metricprofiles', 'aggregationprofiles',
                   'thresholdsprofiles'];
 var admin_list_pages = ['administration', 'yumrepos', 'packages',
@@ -73,7 +73,6 @@ var admin_list_pages = ['administration', 'yumrepos', 'packages',
 
 var link_title = new Map();
 link_title.set('administration', 'Administration');
-link_title.set('services', 'Services');
 link_title.set('reports', 'Reports');
 link_title.set('probes', 'Probes');
 link_title.set('public_probes', 'Public probes');
@@ -99,7 +98,6 @@ export const Icon = props =>
 {
   let link_icon = new Map();
   link_icon.set('administration', faWrench);
-  link_icon.set('services', faSitemap);
   link_icon.set('serviceflavour', faHighlighter);
   link_icon.set('reports', faFileAlt);
   link_icon.set('probes', faServer);
