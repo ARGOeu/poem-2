@@ -10,7 +10,7 @@ from Poem.api.internal_views.utils import sync_webapi
 from Poem.api.models import MyAPIKey
 from Poem.helpers.history_helpers import create_comment, update_comment
 from Poem.helpers.metrics_helpers import update_metrics_in_profiles, \
-    update_metrics, import_metrics
+    update_metrics, import_metrics, get_metrics_in_profiles
 from Poem.helpers.versioned_comments import new_comment
 from Poem.poem import models as poem_models
 from Poem.poem_super_admin import models as admin_models
@@ -63,15 +63,32 @@ class MockResponse:
         self.data = data
         self.status_code = status_code
 
+        if self.status_code == 200:
+            self.reason = 'OK'
+
+        elif self.status_code == 401:
+            self.reason = 'Unauthorized'
+
+        elif self.status_code == 404:
+            self.reason = 'Not Found'
+
     def json(self):
-        return self.data
+        if isinstance(self.data, dict):
+            return self.data
+        else:
+            raise json.decoder.JSONDecodeError
 
     def raise_for_status(self):
         if self.status_code == 200:
             return ''
 
         elif self.status_code == 401:
-            raise requests.exceptions.HTTPError('401 Client Error: Unauthorized')
+            raise requests.exceptions.HTTPError(
+                '401 Client Error: Unauthorized'
+            )
+
+        elif self.status_code == 404:
+            raise requests.exceptions.HTTPError('404 Client Error: Not Found')
 
 
 def mocked_web_api_request(*args, **kwargs):
@@ -237,6 +254,9 @@ def mocked_web_api_metric_profiles(*args, **kwargs):
                             "metrics": [
                                 "metric7"
                             ]
+                        },
+                        {
+                            "service": "service5"
                         }
                     ]
                 }
@@ -268,6 +288,10 @@ def mocked_web_api_metric_profiles_wrong_token(*args, **kwargs):
             }
         }, 401
     )
+
+
+def mocked_web_api_metric_profiles_not_found(*args, **kwargs):
+    return MockResponse('404 page not found', 404)
 
 
 class ListAPIKeysAPIViewTests(TenantTestCase):
@@ -11570,6 +11594,68 @@ class MetricsHelpersTests(TransactionTestCase):
             msgs = update_metrics_in_profiles('metric1', 'metric1')
             self.assertEqual(msgs, [])
             self.assertFalse(mock_put.called)
+
+    @patch('Poem.helpers.metrics_helpers.requests.get')
+    @patch('Poem.helpers.metrics_helpers.MyAPIKey.objects.get')
+    def test_get_metrics_in_profiles(self, mock_key, mock_get):
+        with self.settings(WEBAPI_METRIC='https://mock.api.url'):
+            mock_key.return_value = MyAPIKey(name='WEB-API', token='mock_key')
+            mock_get.side_effect = mocked_web_api_metric_profiles
+            metrics = get_metrics_in_profiles('test')
+            mock_get.assert_called_once()
+            mock_get.assert_called_with(
+                'https://mock.api.url',
+                headers={'Accept': 'application/json', 'x-api-key': 'mock_key'},
+                timeout=180
+            )
+            self.assertEqual(
+                metrics,
+                {
+                    'metric1': ['PROFILE1'],
+                    'metric2': ['PROFILE1', 'PROFILE2'],
+                    'metric3': ['PROFILE1', 'PROFILE2'],
+                    'metric4': ['PROFILE1'],
+                    'metric5': ['PROFILE2'],
+                    'metric7': ['PROFILE2']
+                }
+            )
+
+    @patch('Poem.helpers.metrics_helpers.requests.get')
+    @patch('Poem.helpers.metrics_helpers.MyAPIKey.objects.get')
+    def test_get_metrics_in_profiles_wrong_token(self, mock_key, mock_get):
+        with self.settings(WEBAPI_METRIC='https://mock.api.url'):
+            mock_key.return_value = MyAPIKey(name='WEB-API', token='wrong_key')
+            mock_get.side_effect = mocked_web_api_metric_profiles_wrong_token
+            self.assertRaises(
+                requests.exceptions.HTTPError,
+                get_metrics_in_profiles,
+                'test'
+            )
+
+    def test_get_metrics_in_profiles_nonexisting_key(self):
+        with self.settings(WEBAPI_METRIC='https://mock.api.url'):
+            with self.assertRaises(Exception) as context:
+                get_metrics_in_profiles('test')
+            self.assertEqual(
+                str(context.exception),
+                'Error fetching WEB API data: API key not found.'
+            )
+
+    @patch('Poem.helpers.metrics_helpers.requests.get')
+    @patch('Poem.helpers.metrics_helpers.MyAPIKey.objects.get')
+    def test_get_metrics_in_profiles_if_response_empty(
+            self, mock_key, mock_get
+    ):
+        with self.settings(WEBAPI_METRIC='https://mock.api.url'):
+            mock_key.return_value = MyAPIKey(name='WEB-API', token='mock_key')
+            mock_get.side_effect = mocked_web_api_metric_profiles_empty
+            metrics = get_metrics_in_profiles('test')
+            mock_get.assert_called_once_with(
+                'https://mock.api.url',
+                headers={'Accept': 'application/json', 'x-api-key': 'mock_key'},
+                timeout=180
+            )
+            self.assertEqual(metrics, {})
 
 
 class UpdateMetricsVersionsTests(TenantTestCase):

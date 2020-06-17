@@ -103,6 +103,45 @@ def import_metrics(metrictemplates, tenant, user):
     return imported, warn_imported, not_imported, unavailable
 
 
+def get_metrics_in_profiles(schema):
+    with schema_context(schema):
+        try:
+            token = MyAPIKey.objects.get(name='WEB-API')
+            headers = {
+                'Accept': 'application/json', 'x-api-key': token.token
+            }
+
+            response = requests.get(
+                settings.WEBAPI_METRIC, headers=headers, timeout=180
+            )
+            response.raise_for_status()
+
+            data = response.json()['data']
+            metrics_dict = dict()
+            for item in data:
+                for service in item['services']:
+                    if 'metrics' in service:
+                        for metric in service['metrics']:
+                            if metric not in metrics_dict:
+                                metrics_dict.update({
+                                    metric: [item['name']]
+                                })
+
+                            else:
+                                metrics_dict.update({
+                                    metric:
+                                        metrics_dict[metric] + [item['name']]
+                                })
+
+            return metrics_dict
+
+        except requests.exceptions.HTTPError:
+            raise
+
+        except MyAPIKey.DoesNotExist:
+            raise Exception('Error fetching WEB API data: API key not found.')
+
+
 def update_metrics(metrictemplate, name, probekey, user=''):
     schemas = list(Tenant.objects.all().values_list('schema_name', flat=True))
     schemas.remove(get_public_schema_name())
@@ -200,12 +239,13 @@ def update_metrics_in_profiles(old_name, new_name):
                         new_services = []
                         for service in profile['services']:
                             new_metrics = []
-                            for metric in service['metrics']:
-                                if metric == old_name:
-                                    flag += 1
-                                    new_metrics.append(new_name)
-                                else:
-                                    new_metrics.append(metric)
+                            if 'metrics' in service:
+                                for metric in service['metrics']:
+                                    if metric == old_name:
+                                        flag += 1
+                                        new_metrics.append(new_name)
+                                    else:
+                                        new_metrics.append(metric)
                             new_services.append({
                                 'service': service['service'],
                                 'metrics': new_metrics
