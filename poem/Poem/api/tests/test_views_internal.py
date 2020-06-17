@@ -76,7 +76,10 @@ class MockResponse:
         if isinstance(self.data, dict):
             return self.data
         else:
-            raise json.decoder.JSONDecodeError
+            try:
+                json.loads(self.data)
+            except json.decoder.JSONDecodeError:
+                raise
 
     def raise_for_status(self):
         if self.status_code == 200:
@@ -254,9 +257,6 @@ def mocked_web_api_metric_profiles(*args, **kwargs):
                             "metrics": [
                                 "metric7"
                             ]
-                        },
-                        {
-                            "service": "service5"
                         }
                     ]
                 }
@@ -12071,6 +12071,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
@@ -12337,3 +12338,361 @@ class UpdateMetricsVersionsTests(TenantTestCase):
         mock_update.has_calls([
             call(mth, 'argo.AMS-Check', self.probehistory1)
         ])
+
+    @patch('Poem.api.internal_views.metrics.update_metrics')
+    def test_update_metrics_if_package_not_found(self, mock_update):
+        mock_update.side_effect = mocked_func
+        data = {
+            'name': 'nonexisting-package',
+            'version': '1.0.0'
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data['detail'], 'Package not found.')
+        self.assertFalse(mock_update.called)
+
+    @patch('Poem.api.internal_views.metrics.get_metrics_in_profiles')
+    @patch('Poem.api.internal_views.metrics.update_metrics')
+    def test_update_metrics_versions_dry_run(self, mock_update, mock_get):
+        mock_update.side_effect = mocked_func
+        mock_get.return_value = {
+            'argo.AMS-Check': ['PROFILE1', 'PROFILE2'],
+            'argo.AMSPublisher-Check': ['PROFILE3']
+        }
+        request = self.factory.get(self.url + 'nagios-plugins-argo-0.1.8')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'nagios-plugins-argo-0.1.8')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertFalse(mock_update.called)
+        mock_get.assert_called_once()
+        self.assertEqual(
+            response.data,
+            {
+                'updated': 'Metrics argo.AMS-Check, argo.AMSPublisher-Check '
+                           'will be updated.'
+            }
+        )
+
+    @patch('Poem.api.internal_views.metrics.get_metrics_in_profiles')
+    @patch('Poem.api.internal_views.metrics.update_metrics')
+    def test_update_metrics_version_if_metric_template_was_renamed_dry_run(
+            self, mock_update, mock_get
+    ):
+        mock_update.side_effect = mocked_func
+        mock_get.return_value = {
+            'argo.AMS-Check': ['PROFILE1', 'PROFILE2'],
+            'argo.AMSPublisher-Check': ['PROFILE1']
+        }
+        probe1 = admin_models.Probe.objects.create(
+            name='ams-probe-new',
+            package=self.package3,
+            description='Probe is inspecting AMS service in a newer way.',
+            comment='Not initial version.',
+            repository='https://github.com/ARGOeu/nagios-plugins-argo',
+            docurl='https://github.com/ARGOeu/nagios-plugins-argo/blob/master/'
+                   'README.md'
+        )
+        probehistory1 = admin_models.ProbeHistory.objects.create(
+            object_id=probe1,
+            name=probe1.name,
+            package=probe1.package,
+            description=probe1.description,
+            comment=probe1.comment,
+            repository=probe1.repository,
+            docurl=probe1.docurl,
+            date_created=datetime.datetime.now(),
+            version_comment='Newest version.',
+            version_user=self.user.username
+        )
+        self.mt1.name = 'argo.AMS-Check-new'
+        self.mt1.description = 'Description of argo.AMS-Check-new.'
+        self.mt1.probekey = probehistory1
+        self.mt1.save()
+        admin_models.MetricTemplateHistory.objects.create(
+            object_id=self.mt1,
+            name=self.mt1.name,
+            mtype=self.mt1.mtype,
+            probekey=self.mt1.probekey,
+            description=self.mt1.description,
+            probeexecutable=self.mt1.probeexecutable,
+            config=self.mt1.config,
+            attribute=self.mt1.attribute,
+            dependency=self.mt1.dependency,
+            flags=self.mt1.flags,
+            files=self.mt1.files,
+            parameter=self.mt1.parameter,
+            fileparameter=self.mt1.fileparameter,
+            date_created=datetime.datetime.now(),
+            version_user=self.user.username,
+            version_comment='Newest version.'
+        )
+        request = self.factory.get(self.url + 'nagios-plugins-argo-0.1.9')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'nagios-plugins-argo-0.1.9')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        metric = poem_models.Metric.objects.get(name='argo.AMSPublisher-Check')
+        assert metric
+        self.assertFalse(mock_update.called)
+        mock_get.assert_called_once()
+        self.assertEqual(
+            response.data,
+            {
+                'deleted': 'Metric argo.AMSPublisher-Check will be deleted, '
+                           'since its probe is not part of the chosen package. '
+                           'WARNING: Metric argo.AMSPublisher-Check is part of '
+                           'PROFILE1 metric profile. ARE YOU SURE YOU WANT TO '
+                           'DELETE IT?',
+                'updated': 'Metric argo.AMS-Check will be updated.'
+            }
+        )
+
+    @patch('Poem.api.internal_views.metrics.get_metrics_in_profiles')
+    @patch('Poem.api.internal_views.metrics.update_metrics')
+    def test_metrics_deleted_if_their_probes_do_not_exist_in_new_package_dry(
+            self, mock_update, mock_get
+    ):
+        mock_update.side_effect = mocked_func
+        mock_get.return_value = {
+            'argo.AMS-Check': ['PROFILE1', 'PROFILE2']
+        }
+        self.probe1.package = self.package3
+        self.probe1.save()
+        probehistory1 = admin_models.ProbeHistory.objects.create(
+            object_id=self.probe1,
+            name=self.probe1.name,
+            package=self.probe1.package,
+            description=self.probe1.description,
+            comment=self.probe1.comment,
+            repository=self.probe1.repository,
+            docurl=self.probe1.docurl,
+            date_created=datetime.datetime.now(),
+            version_comment='Newest version.',
+            version_user=self.user.username
+        )
+        self.mt1.probekey = probehistory1
+        self.mt1.save()
+        admin_models.MetricTemplateHistory.objects.create(
+            object_id=self.mt1,
+            name=self.mt1.name,
+            mtype=self.mt1.mtype,
+            probekey=self.mt1.probekey,
+            description=self.mt1.description,
+            probeexecutable=self.mt1.probeexecutable,
+            config=self.mt1.config,
+            attribute=self.mt1.attribute,
+            dependency=self.mt1.dependency,
+            flags=self.mt1.flags,
+            files=self.mt1.files,
+            parameter=self.mt1.parameter,
+            fileparameter=self.mt1.fileparameter,
+            date_created=datetime.datetime.now(),
+            version_user=self.user.username,
+            version_comment='Newest version.'
+        )
+        request = self.factory.get(self.url + 'nagios-plugins-argo-0.1.9')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'nagios-plugins-argo-0.1.9')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        metric = poem_models.Metric.objects.get(name='argo.AMSPublisher-Check')
+        assert metric
+        self.assertEqual(
+            response.data,
+            {
+                'deleted': 'Metric argo.AMSPublisher-Check will be deleted, '
+                           'since its probe is not part of the chosen package.',
+                'updated': 'Metric argo.AMS-Check will be updated.'
+            }
+        )
+        self.assertFalse(mock_update.called)
+        mock_get.assert_called_once()
+
+    @patch('Poem.api.internal_views.metrics.get_metrics_in_profiles')
+    @patch('Poem.api.internal_views.metrics.update_metrics')
+    def test_metrics_warning_if_metric_template_history_do_not_exist_dry_run(
+            self, mock_update, mock_get
+    ):
+        mock_update.side_effect = mocked_func
+        mock_get.return_value = {
+            'argo.AMS-Check': ['PROFILE1', 'PROFILE2'],
+            'argo.AMSProfile-Check': ['PROFILE3']
+        }
+        request = self.factory.get(self.url + 'unicore-nagios-plugins-2.5.0')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'unicore-nagios-plugins-2.5.0')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertFalse(mock_update.called)
+        mock_get.assert_called_once()
+        self.assertEqual(
+            response.data,
+            {
+                'warning': 'Metric template history instance of '
+                           'emi.unicore.Gateway has not been found. '
+                           'Please contact Administrator.'
+            }
+        )
+
+    @patch('Poem.api.internal_views.metrics.get_metrics_in_profiles')
+    @patch('Poem.api.internal_views.metrics.update_metrics')
+    def test_metrics_with_update_warning_and_deletion_dry(
+            self,  mock_update, mock_get
+    ):
+        mock_update.side_effect = mocked_func
+        mock_get.return_value = {
+            'argo.AMS-Check': ['PROFILE1', 'PROFILE2'],
+            'argo.AMSPublisher-Check': ['PROFILE3', 'PROFILE4']
+        }
+        self.probe1.package = self.package3
+        self.probe1.save()
+        probehistory1 = admin_models.ProbeHistory.objects.create(
+            object_id=self.probe1,
+            name=self.probe1.name,
+            package=self.probe1.package,
+            description=self.probe1.description,
+            comment=self.probe1.comment,
+            repository=self.probe1.repository,
+            docurl=self.probe1.docurl,
+            date_created=datetime.datetime.now(),
+            version_comment='Newest version.',
+            version_user=self.user.username
+        )
+        self.mt1.probekey = probehistory1
+        self.mt1.save()
+        admin_models.MetricTemplateHistory.objects.create(
+            object_id=self.mt1,
+            name=self.mt1.name,
+            mtype=self.mt1.mtype,
+            probekey=self.mt1.probekey,
+            description=self.mt1.description,
+            probeexecutable=self.mt1.probeexecutable,
+            config=self.mt1.config,
+            attribute=self.mt1.attribute,
+            dependency=self.mt1.dependency,
+            flags=self.mt1.flags,
+            files=self.mt1.files,
+            parameter=self.mt1.parameter,
+            fileparameter=self.mt1.fileparameter,
+            date_created=datetime.datetime.now(),
+            version_user=self.user.username,
+            version_comment='Newest version.'
+        )
+        poem_models.Metric.objects.create(
+            name='test.AMS-Check',
+            description='Description of test.AMS-Check.',
+            probeexecutable='["ams-probe"]',
+            config='["interval 180", "maxCheckAttempts 1", '
+                   '"path /usr/libexec/argo-monitoring/probes/argo", '
+                   '"retryInterval 1", "timeout 120"]',
+            attribute='["argo.ams_TOKEN --token"]',
+            parameter='["--project EGI"]',
+            flags='["OBSESS 1"]',
+            mtype=self.mtype1,
+            probekey=self.probehistory1,
+            group=self.group
+        )
+        request = self.factory.get(self.url + 'nagios-plugins-argo-0.1.9')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'nagios-plugins-argo-0.1.9')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        metric = poem_models.Metric.objects.get(name='argo.AMSPublisher-Check')
+        assert metric
+        self.assertEqual(
+            response.data,
+            {
+                'updated': 'Metric argo.AMS-Check will be updated.',
+                'deleted': 'Metric argo.AMSPublisher-Check will be deleted, '
+                           'since its probe is not part of the chosen package. '
+                           'WARNING: Metric argo.AMSPublisher-Check is part of '
+                           'PROFILE3, PROFILE4 metric profiles. ARE YOU SURE '
+                           'YOU WANT TO DELETE IT?',
+                'warning': 'Metric template history instance of '
+                           'test.AMS-Check has not been found. '
+                           'Please contact Administrator.'
+            }
+        )
+        self.assertFalse(mock_update.called)
+        mock_get.assert_called_once()
+
+    @patch('Poem.api.internal_views.metrics.get_metrics_in_profiles')
+    @patch('Poem.api.internal_views.metrics.update_metrics')
+    def test_update_metrics_if_metrics_in_profiles_wrong_token_dry_run(
+            self, mock_update, mock_get
+    ):
+        exception = requests.exceptions.HTTPError(
+            response=MockResponse(
+                {
+                    "status": {
+                        "message": "Unauthorized",
+                        "code": "401",
+                        "details": "You need to provide a correct "
+                                   "authentication token "
+                                   "using the header 'x-api-key'"
+                    }
+                }, 401
+            )
+        )
+        mock_update.side_effect = mocked_func
+        mock_get.side_effect = exception
+        request = self.factory.get(self.url + 'nagios-plugins-argo-0.1.8')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'nagios-plugins-argo-0.1.8')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            "Error fetching WEB API data: 401 Unauthorized: You need to provide"
+            " a correct authentication token using the header 'x-api-key'"
+        )
+        mock_get.assert_called_once()
+        self.assertFalse(mock_update.called)
+
+    @patch('Poem.api.internal_views.metrics.get_metrics_in_profiles')
+    @patch('Poem.api.internal_views.metrics.update_metrics')
+    def test_update_metrics_if_metrics_in_profiles_page_not_found_dry_run(
+            self, mock_update, mock_get
+    ):
+        exception = requests.exceptions.HTTPError(
+            response=MockResponse('404 page not found', 404)
+        )
+        mock_update.side_effect = mocked_func
+        mock_get.side_effect = exception
+        request = self.factory.get(self.url + 'nagios-plugins-argo-0.1.8')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'nagios-plugins-argo-0.1.8')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(
+            response.data['detail'],
+            'Error fetching WEB API data: 404 Not Found'
+        )
+        mock_get.assert_called_once()
+        self.assertFalse(mock_update.called)
+
+    @patch('Poem.api.internal_views.metrics.get_metrics_in_profiles')
+    @patch('Poem.api.internal_views.metrics.update_metrics')
+    def test_update_metrics_if_metrics_in_profiles_api_key_not_found_dry_run(
+            self, mock_update, mock_get
+    ):
+        mock_update.side_effect = mocked_func
+        mock_get.side_effect = Exception(
+            'Error fetching WEB API data: API key not found.'
+        )
+        request = self.factory.get(self.url + 'nagios-plugins-argo-0.1.8')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'nagios-plugins-argo-0.1.8')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(
+            response.data['detail'],
+            'Error fetching WEB API data: API key not found.'
+        )
+        mock_get.assert_called_once()
+        self.assertFalse(mock_update.called)

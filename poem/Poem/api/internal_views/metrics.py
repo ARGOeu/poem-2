@@ -1,10 +1,12 @@
 import json
 
+import requests
 from Poem.api.internal_views.utils import one_value_inline, two_value_inline, \
     inline_metric_for_db
 from Poem.api.views import NotFound
 from Poem.helpers.history_helpers import create_history
-from Poem.helpers.metrics_helpers import import_metrics, update_metrics
+from Poem.helpers.metrics_helpers import import_metrics, update_metrics, \
+    get_metrics_in_profiles
 from Poem.poem import models as poem_models
 from Poem.poem_super_admin import models as admin_models
 from django.contrib.contenttypes.models import ContentType
@@ -288,11 +290,10 @@ class UpdateMetricsVersions(APIView):
     """
     authentication_classes = (SessionAuthentication,)
 
-    def put(self, request):
+    def _handle_metrics(self, name, version, user, dry_run=False, metrics=None):
         try:
             package = admin_models.Package.objects.get(
-                name=request.data['name'],
-                version=request.data['version']
+                name=name, version=version
             )
 
             # warning for metrics if there is no metric template history for
@@ -303,6 +304,7 @@ class UpdateMetricsVersions(APIView):
             deleted_not_in_package = []
             # updated metrics
             updated = []
+            profile_warning = []
             for metric in poem_models.Metric.objects.all():
                 if metric.probekey and \
                         metric.probekey.package.name == package.name:
@@ -321,14 +323,39 @@ class UpdateMetricsVersions(APIView):
                                 break
 
                         if metrictemplate:
-                            update_metrics(
-                                metrictemplate, metric.name, metric.probekey,
-                                user=request.user.username
-                            )
+                            if not dry_run:
+                                update_metrics(
+                                    metrictemplate, metric.name,
+                                    metric.probekey,
+                                    user=user
+                                )
                             updated.append(metric.name)
 
                         else:
-                            metric.delete()
+                            if dry_run:
+                                for key, value in metrics.items():
+                                    if metric.name == key:
+                                        if len(value) == 1:
+                                            profile_warning.append(
+                                                'Metric {} is part of {} '
+                                                'metric profile.'.format(
+                                                    metric.name, value[0]
+                                                )
+                                            )
+
+                                        else:
+                                            profile_warning.append(
+                                                'Metric {} is part of {} '
+                                                'metric profiles.'.format(
+                                                    metric.name, ', '.join(
+                                                        value
+                                                    )
+                                                )
+                                            )
+
+                            else:
+                                metric.delete()
+
                             deleted_not_in_package.append(metric.name)
 
                     else:
@@ -347,12 +374,30 @@ class UpdateMetricsVersions(APIView):
                     verb = 'have'
                     obj = 'their probes are'
 
-                msg.update(
-                    {
-                        'deleted': '{} {} been deleted, since {} not part of '
-                                   'the chosen package.'.format(subj, verb, obj)
-                    }
-                )
+                if dry_run:
+                    delete_msg = '{} will be deleted, since {} not part of ' \
+                                 'the chosen package.'.format(subj, obj)
+
+                    if profile_warning:
+                        if len(profile_warning) == 1:
+                            delete_msg += \
+                                ' WARNING: {} ARE YOU SURE YOU WANT TO ' \
+                                'DELETE IT?'.format(
+                                    profile_warning[0]
+                                )
+
+                        else:
+                            delete_msg += \
+                                ' {} ARE YOU SURE YOU WANT TO ' \
+                                'DELETE THEM?'.format(
+                                    ' '.join(profile_warning)
+                                )
+
+                else:
+                    delete_msg = '{} {} been deleted, since {} not part of ' \
+                                 'the chosen package.'.format(subj, verb, obj)
+
+                msg.update({'deleted': delete_msg})
 
             if warning_no_tbh:
                 if len(warning_no_tbh) == 1:
@@ -372,19 +417,73 @@ class UpdateMetricsVersions(APIView):
 
             if updated:
                 if len(updated) == 1:
-                    subj = 'Metric {} has'.format(updated[0])
+                    if dry_run:
+                        subj = 'Metric {} will be'.format(updated[0])
+
+                    else:
+                        subj = 'Metric {} has been successfully'.format(
+                            updated[0]
+                        )
 
                 else:
-                    subj = 'Metrics {} have'.format(', '.join(updated))
+                    if dry_run:
+                        subj = 'Metrics {} will be'.format(', '.join(updated))
 
-                msg.update({
-                    'updated': '{} been successfully updated.'.format(subj)
-                })
+                    else:
+                        subj = 'Metrics {} have been successfully'.format(
+                            ', '.join(updated)
+                        )
 
-            return Response(msg, status=status.HTTP_201_CREATED)
+                msg.update({'updated': '{} updated.'.format(subj)})
+
+            if dry_run:
+                return msg, status.HTTP_200_OK
+
+            else:
+                return msg, status.HTTP_201_CREATED
 
         except admin_models.Package.DoesNotExist:
-            return Response(
-                {'detail': 'Package not found.'},
-                status=status.HTTP_404_NOT_FOUND
+            return {'detail': 'Package not found.'}, status.HTTP_404_NOT_FOUND
+
+    def get(self, request, pkg):
+        version = pkg.split('-')[-1]
+        name = pkg.split(version)[0][0:-1]
+
+        try:
+            metrics_in_profiles = get_metrics_in_profiles(
+                request.tenant.schema_name
             )
+
+        except requests.exceptions.HTTPError as e:
+            try:
+                json_msg = e.response.json()
+                msg = 'Error fetching WEB API data: {} {}: {}'.format(
+                    e.response.status_code, e.response.reason,
+                    json_msg['status']['details']
+                )
+
+            except json.decoder.JSONDecodeError:
+                msg = 'Error fetching WEB API data: {} {}'.format(
+                    e.response.status_code, e.response.reason
+                )
+
+            return Response({'detail': msg}, status=e.response.status_code)
+
+        except Exception as e:
+            msg = str(e)
+            return Response({'detail': msg}, status=status.HTTP_404_NOT_FOUND)
+
+        msg, status_code = self._handle_metrics(
+            name=name, version=version, user=request.user.username,
+            dry_run=True, metrics=metrics_in_profiles
+        )
+
+        return Response(msg, status=status_code)
+
+    def put(self, request):
+        msg, status_code = self._handle_metrics(
+            name=request.data['name'], version=request.data['version'],
+            user=request.user.username
+        )
+
+        return Response(msg, status=status_code)

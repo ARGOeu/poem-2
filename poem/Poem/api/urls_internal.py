@@ -20,6 +20,7 @@ urlpatterns = [
     path('groups/<str:group>', views_internal.ListGroupsForUser.as_view(), name='groups'),
     path('importmetrics/', views_internal.ImportMetrics.as_view(), name='import'),
     path('updatemetricsversions/', views_internal.UpdateMetricsVersions.as_view(), name='updatemetricsversions'),
+    path('updatemetricsversions/<str:pkg>', views_internal.UpdateMetricsVersions.as_view(), name='updatemetricsversions'),
     path('istenantschema/', views_internal.GetIsTenantSchema.as_view(), name='istenantschema'),
     path('metric/', views_internal.ListMetric.as_view(), name='metric'),
     path('public_metric/', views_internal.ListPublicMetric.as_view(), name='metric'),
