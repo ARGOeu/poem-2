@@ -10,7 +10,8 @@ from Poem.api.internal_views.utils import sync_webapi
 from Poem.api.models import MyAPIKey
 from Poem.helpers.history_helpers import create_comment, update_comment
 from Poem.helpers.metrics_helpers import update_metrics_in_profiles, \
-    update_metrics, import_metrics, get_metrics_in_profiles
+    update_metrics, import_metrics, get_metrics_in_profiles, \
+    delete_metrics_from_profile
 from Poem.helpers.versioned_comments import new_comment
 from Poem.poem import models as poem_models
 from Poem.poem_super_admin import models as admin_models
@@ -292,6 +293,59 @@ def mocked_web_api_metric_profiles_wrong_token(*args, **kwargs):
 
 def mocked_web_api_metric_profiles_not_found(*args, **kwargs):
     return MockResponse('404 page not found', 404)
+
+
+def mocked_web_api_metric_profile(*args, **kwargs):
+    return MockResponse(
+        {
+            "status": {
+                "message": "Success",
+                "code": "200"
+            },
+            "data": [
+                {
+                    "id": "11111111-2222-3333-4444-555555555555",
+                    "date": "2020-04-20",
+                    "name": "PROFILE1",
+                    "description": "First profile",
+                    "services": [
+                        {
+                            "service": "service1",
+                            "metrics": [
+                                "metric1",
+                                "metric2"
+                            ]
+                        },
+                        {
+                            "service": "service2",
+                            "metrics": [
+                                "metric3",
+                                "metric4"
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }, 200
+    )
+
+
+def mocked_web_api_metric_profile_put(*args, **kwargs):
+    return MockResponse(
+        {
+            "status": {
+                "message": "Metric Profile successfully updated",
+                "code": "200"
+            },
+            "data": {
+                "id": "11111111-2222-3333-4444-555555555555",
+                "links": {
+                    "self": "https:///api/v2/metric_profiles/"
+                            "11111111-2222-3333-4444-555555555555"
+                }
+            }
+        }, 200
+    )
 
 
 class ListAPIKeysAPIViewTests(TenantTestCase):
@@ -11656,6 +11710,101 @@ class MetricsHelpersTests(TransactionTestCase):
                 timeout=180
             )
             self.assertEqual(metrics, {})
+
+    @patch('Poem.helpers.metrics_helpers.requests.put')
+    @patch('Poem.helpers.metrics_helpers.requests.get')
+    @patch('Poem.helpers.metrics_helpers.poem_models.MetricProfiles.objects.get')
+    @patch('Poem.helpers.metrics_helpers.MyAPIKey.objects.get')
+    def test_delete_metrics_from_profiles(
+            self, mock_key, mock_profile, mock_get, mock_put
+    ):
+        with self.settings(WEBAPI_METRIC='https://mock.api.url/'):
+            mock_key.return_value = MyAPIKey(name='WEB-API', token='mock_key')
+            mock_profile.return_value = poem_models.MetricProfiles(
+                name='PROFILE1', apiid='11111111-2222-3333-4444-555555555555',
+                description='First profile', groupname='TEST'
+            )
+            mock_get.side_effect = mocked_web_api_metric_profile
+            mock_put.side_effect = mocked_web_api_metric_profile_put
+            delete_metrics_from_profile(
+                profile='PROFILE1', metrics=['metric3', 'metric4']
+            )
+            mock_get.assert_called_once_with(
+                'https://mock.api.url/11111111-2222-3333-4444-555555555555',
+                headers={'Accept': 'application/json', 'x-api-key': 'mock_key'},
+                timeout=180
+            )
+            data = {
+                "id": "11111111-2222-3333-4444-555555555555",
+                "name": "PROFILE1",
+                "description": "First profile",
+                "services": [
+                    {
+                        "service": "service1",
+                        "metrics": [
+                            "metric1",
+                            "metric2"
+                        ]
+                    }
+                ]
+            }
+            mock_put.assert_called_once_with(
+                'https://mock.api.url/11111111-2222-3333-4444-555555555555',
+                headers={'Accept': 'application/json', 'x-api-key': 'mock_key'},
+                data=json.dumps(data)
+            )
+
+    @patch('Poem.helpers.metrics_helpers.requests.get')
+    @patch('Poem.helpers.metrics_helpers.poem_models.MetricProfiles.objects.get')
+    @patch('Poem.helpers.metrics_helpers.MyAPIKey.objects.get')
+    def test_delete_metrics_from_profiles_wrong_token(
+            self, mock_key, mock_profile, mock_get
+    ):
+        with self.settings(WEBAPI_METRIC='https://mock.api.url/'):
+            mock_key.return_value = MyAPIKey(name='WEB-API', token='wrong_key')
+            mock_profile.return_value = poem_models.MetricProfiles(
+                name='PROFILE1', apiid='11111111-2222-3333-4444-555555555555',
+                description='First profile', groupname='TEST'
+            )
+            mock_get.side_effect = mocked_web_api_metric_profiles_wrong_token
+            self.assertRaises(
+                requests.exceptions.HTTPError,
+                delete_metrics_from_profile,
+                profile='PROFILE1', metrics=['metric3', 'metric4']
+            )
+            mock_get.assert_called_once_with(
+                'https://mock.api.url/11111111-2222-3333-4444-555555555555',
+                headers={'Accept': 'application/json',
+                         'x-api-key': 'wrong_key'},
+                timeout=180
+            )
+
+    @patch(
+        'Poem.helpers.metrics_helpers.poem_models.MetricProfiles.objects.get'
+    )
+    def test_delete_metrics_from_profiles_nonexisting_key(self, mock_profile):
+        mock_profile.return_value = poem_models.MetricProfiles(
+            name='PROFILE1', apiid='11111111-2222-3333-4444-555555555555',
+            description='First profile', groupname='TEST'
+        )
+        with self.assertRaises(Exception) as context:
+            delete_metrics_from_profile(
+                profile='PROFILE1', metrics=['metric3', 'metric4']
+            )
+        self.assertEqual(
+            str(context.exception),
+            'Error deleting metric from profile: API key not found.'
+        )
+
+    def test_delete_metrics_from_profiles_missing_profile(self):
+        with self.assertRaises(Exception) as context:
+            delete_metrics_from_profile(
+                profile='PROFILE1', metrics=['metric3', 'metric4']
+            )
+        self.assertEqual(
+            str(context.exception),
+            'Error deleting metric from profile: Profile not found.'
+        )
 
 
 class UpdateMetricsVersionsTests(TenantTestCase):

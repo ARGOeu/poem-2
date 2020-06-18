@@ -284,3 +284,55 @@ def update_metrics_in_profiles(old_name, new_name):
                     continue
 
     return error_msgs
+
+
+def delete_metrics_from_profile(profile, metrics):
+    try:
+        profile_id = poem_models.MetricProfiles.objects.get(name=profile).apiid
+        token = MyAPIKey.objects.get(name='WEB-API')
+        headers = {
+            'Accept': 'application/json', 'x-api-key': token.token
+        }
+        if settings.WEBAPI_METRIC.endswith('/'):
+            url = settings.WEBAPI_METRIC + profile_id
+
+        else:
+            url = settings.WEBAPI_METRIC + '/' + profile_id
+
+        response = requests.get(url, headers=headers, timeout=180)
+        response.raise_for_status()
+
+        data = response.json()['data'][0]
+
+        for metric in metrics:
+            for item in data['services']:
+                if 'metrics' in item:
+                    if metric in item['metrics']:
+                        item['metrics'].remove(metric)
+                        if not item['metrics']:
+                            data['services'].remove(item)
+
+        send_data = {
+            'id': data['id'],
+            'name': data['name'],
+            'description': data['description'],
+            'services': data['services']
+        }
+
+        response = requests.put(
+            url, headers=headers, data=json.dumps(send_data)
+        )
+        response.raise_for_status()
+
+    except MyAPIKey.DoesNotExist:
+        raise Exception(
+            'Error deleting metric from profile: API key not found.'
+        )
+
+    except poem_models.MetricProfiles.DoesNotExist:
+        raise Exception(
+            'Error deleting metric from profile: Profile not found.'
+        )
+
+    except requests.exceptions.HTTPError:
+        raise
