@@ -18,7 +18,7 @@ Particular metric's page is shown in the image below.
 
 ![Tenant Metric Detail](figures/tenant_metrics_details.png)
 
-Most of the fields is disabled. Tenant users are only allowed to modify four of the configuration values, group and probe version. User may only choose among groups that are associated to him. Exception to this rule is user with superuser permission, (s)he can pick any existing group. In case of probes, users can only choose among versions of the same probe in a drop down menu. Metric configuration is then going to automatically be updated, if necessary.
+Most of the fields is disabled. Tenant users are only allowed to modify four of the configuration values and group. User may only choose among groups that are associated to him. Exception to this rule is user with superuser permission, (s)he can pick any existing group. 
 
 Fields descriptions are given in [metric template documentation](superadmin_metric_templates.md#field-descriptions).
 
