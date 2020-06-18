@@ -12224,20 +12224,24 @@ class UpdateMetricsVersionsTests(TenantTestCase):
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
+    @patch('Poem.api.internal_views.metrics.delete_metrics_from_profile')
     @patch('Poem.api.internal_views.metrics.update_metrics')
-    def test_update_metrics_versions(self, mock_update_metrics):
-        mock_update_metrics.side_effect = mocked_func
+    def test_update_metrics_versions(self, mock_update, mock_delete):
+        mock_update.side_effect = mocked_func
+        mock_delete.side_effect = mocked_func
         data = {
             'name': self.package2.name,
             'version': self.package2.version
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(mock_update_metrics.call_count, 2)
-        mock_update_metrics.has_calls([
+        self.assertFalse(mock_delete.called)
+        self.assertEqual(mock_update.call_count, 2)
+        mock_update.has_calls([
             call(self.mth1, 'argo.AMS-Check', self.probehistory1),
             call(self.mth2, 'argo.AMSPublisher-Check', self.probehistory3)
         ])
@@ -12249,11 +12253,15 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             }
         )
 
+    @patch('Poem.api.internal_views.metrics.delete_metrics_from_profile')
+    @patch('Poem.api.internal_views.metrics.get_metrics_in_profiles')
     @patch('Poem.api.internal_views.metrics.update_metrics')
     def test_update_metrics_version_if_metric_template_was_renamed(
-            self, mock_update
+            self, mock_update, mock_get, mock_delete
     ):
         mock_update.side_effect = mocked_func
+        mock_get.return_value = {'argo.AMS-Check ': ['PROFILE1']}
+        mock_delete.side_effect = mocked_func
         probe1 = admin_models.Probe.objects.create(
             name='ams-probe-new',
             package=self.package3,
@@ -12303,9 +12311,11 @@ class UpdateMetricsVersionsTests(TenantTestCase):
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertFalse(mock_delete.called)
         self.assertEqual(mock_update.call_count, 1)
         mock_update.has_calls([
             call(mth, 'argo.AMS-Check', self.probehistory1)
@@ -12320,11 +12330,18 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             }
         )
 
+    @patch('Poem.api.internal_views.metrics.delete_metrics_from_profile')
+    @patch('Poem.api.internal_views.metrics.get_metrics_in_profiles')
     @patch('Poem.api.internal_views.metrics.update_metrics')
     def test_metrics_deleted_if_their_probes_do_not_exist_in_new_package(
-            self, mock_update
+            self, mock_update, mock_get, mock_delete
     ):
         mock_update.side_effect = mocked_func
+        mock_get.return_value = {
+            'argo.AMSPublisher-Check': ['PROFILE1'],
+            'argo.AMS-Check': ['PROFILE1', 'PROFILE2']
+        }
+        mock_delete.side_effect = mocked_func
         self.probe1.package = self.package3
         self.probe1.save()
         probehistory1 = admin_models.ProbeHistory.objects.create(
@@ -12365,6 +12382,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -12376,6 +12394,9 @@ class UpdateMetricsVersionsTests(TenantTestCase):
                 'updated': 'Metric argo.AMS-Check has been successfully '
                            'updated.'
             }
+        )
+        mock_delete.assert_called_once_with(
+            'PROFILE1', ['argo.AMSPublisher-Check']
         )
         self.assertEqual(mock_update.call_count, 1)
         mock_update.has_calls([
@@ -12393,6 +12414,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -12406,9 +12428,18 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             }
         )
 
+    @patch('Poem.api.internal_views.metrics.delete_metrics_from_profile')
+    @patch('Poem.api.internal_views.metrics.get_metrics_in_profiles')
     @patch('Poem.api.internal_views.metrics.update_metrics')
-    def test_metrics_with_update_warning_and_deletion(self,  mock_update):
+    def test_metrics_with_update_warning_and_deletion(
+            self,  mock_update, mock_get, mock_delete
+    ):
         mock_update.side_effect = mocked_func
+        mock_get.return_value = {
+            'argo.AMSPublisher-Check': ['PROFILE1', 'PROFILE2'],
+            'argo.AMS-Check': ['PROFILE1']
+        }
+        mock_delete.side_effect = mocked_func
         self.probe1.package = self.package3
         self.probe1.save()
         probehistory1 = admin_models.ProbeHistory.objects.create(
@@ -12463,6 +12494,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -12487,6 +12519,204 @@ class UpdateMetricsVersionsTests(TenantTestCase):
         mock_update.has_calls([
             call(mth, 'argo.AMS-Check', self.probehistory1)
         ])
+        self.assertEqual(mock_delete.call_count, 2)
+        mock_delete.assert_has_calls([
+            call('PROFILE1', ['argo.AMSPublisher-Check']),
+            call('PROFILE2', ['argo.AMSPublisher-Check'])
+        ])
+
+    @patch('Poem.api.internal_views.metrics.delete_metrics_from_profile')
+    @patch('Poem.api.internal_views.metrics.get_metrics_in_profiles')
+    @patch('Poem.api.internal_views.metrics.update_metrics')
+    def test_metrics_with_update_warning_and_deletion_if_api_get_exception(
+            self,  mock_update, mock_get, mock_delete
+    ):
+        mock_update.side_effect = mocked_func
+        mock_get.side_effect = Exception('Exception')
+        mock_delete.side_effect = mocked_func
+        self.probe1.package = self.package3
+        self.probe1.save()
+        probehistory1 = admin_models.ProbeHistory.objects.create(
+            object_id=self.probe1,
+            name=self.probe1.name,
+            package=self.probe1.package,
+            description=self.probe1.description,
+            comment=self.probe1.comment,
+            repository=self.probe1.repository,
+            docurl=self.probe1.docurl,
+            date_created=datetime.datetime.now(),
+            version_comment='Newest version.',
+            version_user=self.user.username
+        )
+        self.mt1.probekey = probehistory1
+        self.mt1.save()
+        mth = admin_models.MetricTemplateHistory.objects.create(
+            object_id=self.mt1,
+            name=self.mt1.name,
+            mtype=self.mt1.mtype,
+            probekey=self.mt1.probekey,
+            description=self.mt1.description,
+            probeexecutable=self.mt1.probeexecutable,
+            config=self.mt1.config,
+            attribute=self.mt1.attribute,
+            dependency=self.mt1.dependency,
+            flags=self.mt1.flags,
+            files=self.mt1.files,
+            parameter=self.mt1.parameter,
+            fileparameter=self.mt1.fileparameter,
+            date_created=datetime.datetime.now(),
+            version_user=self.user.username,
+            version_comment='Newest version.'
+        )
+        poem_models.Metric.objects.create(
+            name='test.AMS-Check',
+            description='Description of test.AMS-Check.',
+            probeexecutable='["ams-probe"]',
+            config='["interval 180", "maxCheckAttempts 1", '
+                   '"path /usr/libexec/argo-monitoring/probes/argo", '
+                   '"retryInterval 1", "timeout 120"]',
+            attribute='["argo.ams_TOKEN --token"]',
+            parameter='["--project EGI"]',
+            flags='["OBSESS 1"]',
+            mtype=self.mtype1,
+            probekey=self.probehistory1,
+            group=self.group
+        )
+        data = {
+            'name': self.package3.name,
+            'version': self.package3.version
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertRaises(
+            poem_models.Metric.DoesNotExist,
+            poem_models.Metric.objects.get,
+            name='argo.AMSPublisher-Check'
+        )
+        self.assertEqual(
+            response.data,
+            {
+                'updated': 'Metric argo.AMS-Check has been successfully '
+                           'updated.',
+                'deleted': 'Metric argo.AMSPublisher-Check has been deleted, '
+                           'since its probe is not part of the chosen package. '
+                           'WARNING: Unable to get data on metrics and metric '
+                           'profiles. Please remove deleted metrics from '
+                           'metric profiles manually.',
+                'warning': 'Metric template history instance of '
+                           'test.AMS-Check has not been found. '
+                           'Please contact Administrator.'
+            }
+        )
+        self.assertEqual(mock_update.call_count, 1)
+        mock_update.has_calls([
+            call(mth, 'argo.AMS-Check', self.probehistory1)
+        ])
+        mock_get.assert_called_once_with(self.tenant.schema_name)
+        self.assertFalse(mock_delete.called)
+
+    @patch('Poem.api.internal_views.metrics.delete_metrics_from_profile')
+    @patch('Poem.api.internal_views.metrics.get_metrics_in_profiles')
+    @patch('Poem.api.internal_views.metrics.update_metrics')
+    def test_metrics_with_update_warning_and_deletion_if_api_put_exception(
+            self,  mock_update, mock_get, mock_delete
+    ):
+        mock_update.side_effect = mocked_func
+        mock_get.return_value = {
+            'argo.AMSPublisher-Check': ['PROFILE1'],
+            'argo.AMS-Check': ['PROFILE1']
+        }
+        mock_delete.side_effect = Exception('Exception')
+        self.probe1.package = self.package3
+        self.probe1.save()
+        probehistory1 = admin_models.ProbeHistory.objects.create(
+            object_id=self.probe1,
+            name=self.probe1.name,
+            package=self.probe1.package,
+            description=self.probe1.description,
+            comment=self.probe1.comment,
+            repository=self.probe1.repository,
+            docurl=self.probe1.docurl,
+            date_created=datetime.datetime.now(),
+            version_comment='Newest version.',
+            version_user=self.user.username
+        )
+        self.mt1.probekey = probehistory1
+        self.mt1.save()
+        mth = admin_models.MetricTemplateHistory.objects.create(
+            object_id=self.mt1,
+            name=self.mt1.name,
+            mtype=self.mt1.mtype,
+            probekey=self.mt1.probekey,
+            description=self.mt1.description,
+            probeexecutable=self.mt1.probeexecutable,
+            config=self.mt1.config,
+            attribute=self.mt1.attribute,
+            dependency=self.mt1.dependency,
+            flags=self.mt1.flags,
+            files=self.mt1.files,
+            parameter=self.mt1.parameter,
+            fileparameter=self.mt1.fileparameter,
+            date_created=datetime.datetime.now(),
+            version_user=self.user.username,
+            version_comment='Newest version.'
+        )
+        poem_models.Metric.objects.create(
+            name='test.AMS-Check',
+            description='Description of test.AMS-Check.',
+            probeexecutable='["ams-probe"]',
+            config='["interval 180", "maxCheckAttempts 1", '
+                   '"path /usr/libexec/argo-monitoring/probes/argo", '
+                   '"retryInterval 1", "timeout 120"]',
+            attribute='["argo.ams_TOKEN --token"]',
+            parameter='["--project EGI"]',
+            flags='["OBSESS 1"]',
+            mtype=self.mtype1,
+            probekey=self.probehistory1,
+            group=self.group
+        )
+        data = {
+            'name': self.package3.name,
+            'version': self.package3.version
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertRaises(
+            poem_models.Metric.DoesNotExist,
+            poem_models.Metric.objects.get,
+            name='argo.AMSPublisher-Check'
+        )
+        self.assertEqual(
+            response.data,
+            {
+                'updated': 'Metric argo.AMS-Check has been successfully '
+                           'updated.',
+                'deleted': 'Metric argo.AMSPublisher-Check has been deleted, '
+                           'since its probe is not part of the chosen package. '
+                           'WARNING: Error trying to remove metric '
+                           'argo.AMSPublisher-Check from profile PROFILE1. '
+                           'Please remove it manually.',
+                'warning': 'Metric template history instance of '
+                           'test.AMS-Check has not been found. '
+                           'Please contact Administrator.'
+            }
+        )
+        self.assertEqual(mock_update.call_count, 1)
+        mock_update.has_calls([
+            call(mth, 'argo.AMS-Check', self.probehistory1)
+        ])
+        mock_get.assert_called_once_with(self.tenant.schema_name)
+        mock_delete.assert_called_once_with(
+            'PROFILE1', ['argo.AMSPublisher-Check']
+        )
 
     @patch('Poem.api.internal_views.metrics.update_metrics')
     def test_update_metrics_if_package_not_found(self, mock_update):

@@ -6,7 +6,7 @@ from Poem.api.internal_views.utils import one_value_inline, two_value_inline, \
 from Poem.api.views import NotFound
 from Poem.helpers.history_helpers import create_history
 from Poem.helpers.metrics_helpers import import_metrics, update_metrics, \
-    get_metrics_in_profiles
+    get_metrics_in_profiles, delete_metrics_from_profile
 from Poem.poem import models as poem_models
 from Poem.poem_super_admin import models as admin_models
 from django.contrib.contenttypes.models import ContentType
@@ -440,10 +440,15 @@ class UpdateMetricsVersions(APIView):
                 return msg, status.HTTP_200_OK
 
             else:
-                return msg, status.HTTP_201_CREATED
+                return msg, status.HTTP_201_CREATED, deleted_not_in_package
 
         except admin_models.Package.DoesNotExist:
-            return {'detail': 'Package not found.'}, status.HTTP_404_NOT_FOUND
+            msg = {'detail': 'Package not found.'}
+            if dry_run:
+                return msg, status.HTTP_404_NOT_FOUND
+
+            else:
+                return msg, status.HTTP_404_NOT_FOUND, []
 
     def get(self, request, pkg):
         version = pkg.split('-')[-1]
@@ -481,9 +486,61 @@ class UpdateMetricsVersions(APIView):
         return Response(msg, status=status_code)
 
     def put(self, request):
-        msg, status_code = self._handle_metrics(
+        msg, status_code, deleted = self._handle_metrics(
             name=request.data['name'], version=request.data['version'],
             user=request.user.username
         )
+
+        warn_msg = []
+        if deleted:
+            try:
+                metrics_in_profiles = get_metrics_in_profiles(
+                    request.tenant.schema_name
+                )
+
+            except Exception:
+                warn_msg.append(
+                    'Unable to get data on metrics and metric profiles. '
+                    'Please remove deleted metrics from metric profiles '
+                    'manually.'
+                )
+
+            else:
+                profiles = dict()
+                for metric in deleted:
+                    for key, value in metrics_in_profiles.items():
+                        if key == metric:
+                            for p in value:
+                                if p in profiles:
+                                    profiles.update({p: profiles[p] + [key]})
+                                else:
+                                    profiles.update({p: [key]})
+
+                if profiles:
+                    for key, value in profiles.items():
+                        try:
+                            delete_metrics_from_profile(key, value)
+
+                        except Exception:
+                            if len(value) > 1:
+                                message = \
+                                    'Error trying to remove metrics {} from '\
+                                    'profile {}.'.format(', '.join(value), key)
+                                pronoun = 'them'
+                            else:
+                                message = \
+                                    'Error trying to remove metric {} from '\
+                                    'profile {}.'.format(value[0], key)
+                                pronoun = 'it'
+
+                            warn_msg.append(
+                                message + ' Please remove {} manually.'.format(
+                                    pronoun
+                                )
+                            )
+                            continue
+
+        if warn_msg:
+            msg['deleted'] += ' WARNING: ' + ' '.join(warn_msg)
 
         return Response(msg, status=status_code)
