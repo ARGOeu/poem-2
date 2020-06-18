@@ -894,7 +894,7 @@ export const MetricForm =
                   />
                 </InputGroup>
               :
-                (isHistory || (isTenantSchema && obj === 'metrictemplate')) ?
+                (isHistory || isTenantSchema) ?
                   <InputGroup>
                     <InputGroupAddon addonType='prepend'>Probe</InputGroupAddon>
                     <Field
@@ -906,34 +906,16 @@ export const MetricForm =
                     />
                   </InputGroup>
                 :
-                  (isTenantSchema && obj === 'metric') ?
-                    <InputGroup>
-                      <InputGroupAddon addonType='prepend'>Probe</InputGroupAddon>
-                      <Field
-                        component='select'
-                        name='probeversion'
-                        className='form-control custom-select'
-                        id='probeversion'
-                        onChange={e => onSelect('probeversion', e.target.value)}
-                      >
-                        {
-                          probeversions.map((name, i) =>
-                            <option key={i} value={name}>{name}</option>
-                          )
-                        }
-                      </Field>
-                    </InputGroup>
-                  :
-                    <AutocompleteField
-                      setFieldValue={setFieldValue}
-                      lists={probeversions}
-                      icon='probes'
-                      field='probeversion'
-                      val={values.probeversion}
-                      onselect_handler={onSelect}
-                      req={errors.probeversion}
-                      label='Probe'
-                    />
+                  <AutocompleteField
+                    setFieldValue={setFieldValue}
+                    lists={probeversions}
+                    icon='probes'
+                    field='probeversion'
+                    val={values.probeversion}
+                    onselect_handler={onSelect}
+                    req={errors.probeversion}
+                    label='Probe'
+                  />
             }
             {
               errors.probeversion &&
@@ -1370,7 +1352,6 @@ export class MetricChange extends Component {
     this.doChange = this.doChange.bind(this);
     this.doDelete = this.doDelete.bind(this);
     this.togglePopOver = this.togglePopOver.bind(this);
-    this.onSelect = this.onSelect.bind(this);
   }
 
   togglePopOver() {
@@ -1391,42 +1372,6 @@ export class MetricChange extends Component {
         modalMsg: msg,
         modalTitle: title,
       }));
-  }
-
-  onSelect(field, value) {
-    let metric = this.state.metric;
-    let metrictemplateversions = this.state.metrictemplateversions;
-    metrictemplateversions.forEach(mt => {
-      if (mt.fields.probeversion === value) {
-        let updated_metric = {
-          name: mt.fields.name,
-          probeversion: mt.fields.probeversion,
-          description: mt.fields.description,
-          group: metric.group,
-          mtype: mt.fields.mtype,
-          probeexecutable: mt.fields.probeexecutable,
-          parent: mt.fields.parent,
-          config: mt.fields.config,
-          attribute: mt.fields.attribute,
-          dependancy: mt.fields.dependency,
-          parameter: mt.fields.parameter,
-          flags: mt.fields.flags,
-          files: mt.fields.flags,
-          files: mt.fields.files,
-          fileparameter: mt.fields.fileparameter
-        };
-        let probe = {};
-        this.state.allprobeversions.forEach((e) => {
-          if (e.object_repr === value) {
-            probe = e.fields;
-          };
-        });
-        this.setState({
-          metric: updated_metric,
-          probe: probe
-        });
-      }
-    })
   }
 
   onSubmitHandle(values, actions) {
@@ -1631,7 +1576,6 @@ export class MetricChange extends Component {
                   obj='metric'
                   isTenantSchema={true}
                   state={this.state}
-                  onSelect={this.onSelect}
                   togglePopOver={this.togglePopOver}
                   probeversions={probeversions}
                   groups={groups}
