@@ -1,16 +1,15 @@
+import requests
 from Poem.api.internal_views.utils import one_value_inline, \
     two_value_inline_dict
 from Poem.api.models import MyAPIKey
 from Poem.api.permissions import MyHasAPIKey
 from Poem.poem import models
 from Poem.poem_super_admin import models as admin_models
-
-import requests
-
+from django.conf import settings
 from rest_framework import status
-from rest_framework.views import APIView
-from rest_framework.response import Response
 from rest_framework.exceptions import APIException
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 
 class NotFound(APIException):
@@ -102,8 +101,7 @@ def get_metrics_from_profile(profile):
 
     headers = {'Accept': 'application/json', 'x-api-key': token.token}
     response = requests.get(
-        'https://api.devel.argo.grnet.gr/api/v2/metric_profiles',
-        headers=headers, timeout=180
+        settings.WEBAPI_METRIC, headers=headers, timeout=180
     )
     response.raise_for_status()
     data = response.json()['data']
