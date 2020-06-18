@@ -308,13 +308,53 @@ export class PackageChange extends Component {
     );
   };
 
-  onTenantSubmitHandle(values, actions) {
-    let msg = 'Are you sure you want to update metrics?';
-    let title = 'Update metrics';
+  async onTenantSubmitHandle(values, actions) {
+    try {
+      let response = await fetch(
+        `/api/v2/internal/updatemetricsversions/${values.name}-${values.version}`,
+      )
 
-    this.toggleAreYouSureSetModal(
-      msg, title, () => this.updateMetrics(values, actions)
-    );
+      if (response.ok) {
+        let json = await response.json();
+        let msgs = [];
+        if ('updated' in json)
+          msgs.push(json['updated']);
+
+        if ('deleted' in json)
+          msgs.push(json['deleted']);
+
+        if ('warning' in json)
+          msgs.push(json['warning']);
+
+        let title = 'Update metrics';
+
+        msgs.push('ARE YOU SURE you want to update metrics?')
+
+        this.toggleAreYouSureSetModal(
+          <div>
+            {msgs.map((m, i) => <p key={i}>{m}</p>)}
+          </div>,
+          title, () => this.updateMetrics(values, actions)
+        );
+      } else {
+        let error_msg = '';
+        try {
+          let json = await response.json()
+          error_msg = `${response.status} ${response.statusText} ${json.detail}`;
+        } catch(err1) {
+          error_msg = `${response.status} ${response.statusText}`;
+        }
+        NotifyError({
+          title: 'Error',
+          msg: error_msg
+        });
+      };
+    } catch(err) {
+      NotifyError({
+        title: 'Error',
+        msg: `Error fetching metrics data: ${err}`
+      });
+    };
   };
 
   async updateMetrics(values, actions) {
