@@ -1,6 +1,6 @@
 FROM centos:7
 MAINTAINER dvrcic@srce.hr
-COPY EGI-trustanchors.repo /etc/yum.repos.d/
+ADD https://repository.egi.eu/sw/production/cas/1/current/repo-files/EGI-trustanchors.repo /etc/yum.repos.d/
 RUN groupadd user -g 1000 && useradd -u 1000 -g 1000 user -m -d /home/user
 RUN passwd -d root
 RUN sed -i -r 's/bash/zsh/' /etc/passwd; sed -i -r 's/^tsflags/# tsflags/' /etc/yum.conf
