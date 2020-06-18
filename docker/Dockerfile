@@ -51,10 +51,10 @@ RUN source /etc/profile.d/venv_poem.sh; \
     make wheel-devel; \
     pip3 install dist/*; \
     pip3 install -r requirements.txt
-COPY DigiCertCA.crt /etc/pki/tls/certs/
+ADD https://cacerts.digicert.com/TERENAeScienceSSLCA3.crt.pem /etc/pki/tls/certs/
 RUN yum -y install ca-policy-egi-core; \
     rm -rf /etc/pki/ca-trust/source/anchors/*; \
-    cp /etc/pki/tls/certs/DigiCertCA.crt /etc/pki/ca-trust/source/anchors; \
+    cp /etc/pki/tls/certs/TERENAeScienceSSLCA3.crt.pem /etc/pki/ca-trust/source/anchors; \
     cp /etc/grid-security/certificates/*.pem /etc/pki/ca-trust/source/anchors; \
     update-ca-trust
 ADD hostcert.pem hostkey.pem /etc/grid-security/
