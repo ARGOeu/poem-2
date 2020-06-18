@@ -47,7 +47,7 @@ import { ThresholdsProfilesList, ThresholdsProfilesChange, ThresholdsProfilesHis
 import Cookies from 'universal-cookie';
 
 import './App.css';
-import { PackageList, PackageChange } from './Package';
+import { PackageList, PackageChange, PackageClone } from './Package';
 
 
 const NavigationBarWithRouter = withRouter(NavigationBar);
@@ -304,6 +304,7 @@ const SuperAdminRouteSwitch = ({props}) => (
     <Route exact path='/ui/packages/' render={props => <PackageList {...props}/>}/>
     <Route exact path='/ui/packages/add' render={props => <PackageChange addview={true} {...props}/>}/>
     <Route exact path='/ui/packages/:nameversion' render={props => <PackageChange {...props}/>}/>
+    <Route exact path='/ui/packages/:nameversion/clone' render={props => <PackageClone {...props}/>}/>
     <Route exact path="/ui/administration" component={SuperAdminAdministration}/>
     <Route exact path="/ui/administration/users" component={UsersList} />
     <Route exact path="/ui/administration/users/add"

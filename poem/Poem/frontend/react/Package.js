@@ -28,6 +28,7 @@ import * as Yup from 'yup';
 
 
 export const PackageChange = PackageComponent();
+export const PackageClone = PackageComponent(true);
 
 
 const PackageSchema = Yup.object().shape({
@@ -299,7 +300,7 @@ function PackageComponent(cloneview=false){
       let msg = undefined;
       let title = undefined;
 
-      if (!this.addview || !cloneview) {
+      if (!this.addview && !cloneview) {
         msg = 'Are you sure you want to change package?';
         title = 'Change package';
       } else {
@@ -741,7 +742,7 @@ function PackageComponent(cloneview=false){
                       </Col>
                     </Row>
                     {
-                      !this.addview &&
+                      (!this.addview && !cloneview) &&
                         <Row className='mt-3'>
                           <Col md={8}>
                             Probes:
