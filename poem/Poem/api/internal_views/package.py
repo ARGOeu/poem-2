@@ -1,13 +1,15 @@
-from django.db import IntegrityError
-from django.db.models import ProtectedError
+from distutils.version import StrictVersion
 
 from Poem.api.views import NotFound
+from Poem.poem import models as poem_models
 from Poem.poem_super_admin import models as admin_models
-
+from django.db import IntegrityError, connection
+from django.db.models import ProtectedError
 from rest_framework import status
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from tenant_schemas.utils import get_public_schema_name
 
 
 def get_package_version(nameversion):
@@ -15,6 +17,23 @@ def get_package_version(nameversion):
     name = nameversion.split(version)[0][0:-1]
 
     return name, version
+
+
+def get_packages_for_api(packages):
+    results = []
+    for package in packages:
+        repos = []
+        for repo in package.repos.all():
+            repos.append('{} ({})'.format(repo.name, repo.tag.name))
+
+        results.append({
+            'name': package.name,
+            'version': package.version,
+            'use_present_version': package.use_present_version,
+            'repos': repos
+        })
+
+    return results
 
 
 class ListPackages(APIView):
@@ -46,21 +65,19 @@ class ListPackages(APIView):
                 raise NotFound(status=404, detail='Package not found.')
 
         else:
-            packages = admin_models.Package.objects.all()
+            if connection.schema_name != get_public_schema_name():
+                packages = set()
+                for metric in poem_models.Metric.objects.all():
+                    if metric.probekey:
+                        packages.add(metric.probekey.package)
 
-            results = []
-            for package in packages:
-                repos = []
-                for repo in package.repos.all():
-                    repos.append('{} ({})'.format(repo.name, repo.tag.name))
-                results.append({
-                    'name': package.name,
-                    'version': package.version,
-                    'use_present_version': package.use_present_version,
-                    'repos': repos
-                })
+            else:
+                packages = admin_models.Package.objects.all()
 
-            results = sorted(results, key=lambda k: k['name'].lower())
+            results = sorted(
+                get_packages_for_api(packages),
+                key=lambda k: k['name'].lower()
+            )
 
             return Response(results)
 
@@ -201,6 +218,7 @@ class ListPackages(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+
 class ListPublicPackages(ListPackages):
     authentication_classes = ()
     permission_classes = ()
@@ -216,3 +234,30 @@ class ListPublicPackages(ListPackages):
 
     def delete(self, request, nameversion):
         return self._denied()
+
+
+class ListPackagesVersions(APIView):
+    authentication_classes = (SessionAuthentication,)
+
+    def get(self, request, name):
+        packages = admin_models.Package.objects.filter(name=name)
+
+        if len(packages) > 0:
+            versions = get_packages_for_api(packages)
+
+            try:
+                result = sorted(
+                    versions, key=lambda x: StrictVersion(x['version']),
+                    reverse=True
+                )
+
+            except ValueError:
+                result = sorted(versions, key=lambda x: x['version'])
+
+            return Response(result, status=status.HTTP_200_OK)
+
+        else:
+            return Response(
+                {'detail': 'Package not found.'},
+                status=status.HTTP_404_NOT_FOUND
+            )

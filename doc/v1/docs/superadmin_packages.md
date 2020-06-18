@@ -8,7 +8,7 @@ The page is accessible from the menu on the left side. It is shown in the image 
 
 ![SuperAdmin packages](figures/superadmin_packages.png)
 
-Packages can be filtered by choosing repo name from the drop down menu in **Repo** column, and by name by typing values in search bar on top of **Name and version** column. 
+Packages can be filtered by choosing repo name from the drop down menu in **Repo** column, and by name by typing values in search bar on top of **Name** column. 
 
 ## Package details
 

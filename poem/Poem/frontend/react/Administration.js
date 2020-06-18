@@ -64,11 +64,14 @@ export const TenantAdministration = (props) =>
         SuperAdmin POEM data
       </CardHeader>
       <CardBody>
-        <Row className="p-1 align-items-center">
-          <Icon i="metrics"/> <Link to={'/ui/administration/metrictemplates'}>Metric templates</Link>
-        </Row>
         <Row className='p-1 align-items-center'>
             <Icon i="yumrepos"/> <Link to={'/ui/administration/yumrepos'}>YUM repos</Link>
+        </Row>
+        <Row className='p-1 align-items-center'>
+            <Icon i="packages"/> <Link to={'/ui/administration/packages'}>Packages</Link>
+        </Row>
+        <Row className="p-1 align-items-center">
+          <Icon i="metrics"/> <Link to={'/ui/administration/metrictemplates'}>Metric templates</Link>
         </Row>
       </CardBody>
     </Card>
