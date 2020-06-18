@@ -13,12 +13,12 @@ services:
       - /home/dvrcic:/mnt
       - /dev/log:/dev/log
       - /etc/localtime:/etc/localtime:ro
-      - $WORKDIR/git.poem-react/docker/pysitepkg:/root/pysitepkg
-      - $WORKDIR/git.poem-react/docker/syncsite.sh:/root/syncsite.sh
-      - $WORKDIR/git.poem-react/docker/safety.sh:/root/safety.sh
-      - $WORKDIR/git.poem-react/docker/collectstatic.sh:/root/collectstatic.sh
-      - $WORKDIR/git.poem-react/docker/restarthttpd.sh:/root/restarthttpd.sh
-      - $WORKDIR/git.poem-react/poem-react/:/root/poem-source
+      - $WORKDIR/git.poem-react/poem-react/docker/pysitepkg:/home/user/pysitepkg
+      - $WORKDIR/git.poem-react/poem-react/docker/syncsite.sh:/home/user/syncsite.sh
+      - $WORKDIR/git.poem-react/poem-react/docker/safety.sh:/home/user/safety.sh
+      - $WORKDIR/git.poem-react/poem-react/docker/collectstatic.sh:/home/user/collectstatic.sh
+      - $WORKDIR/git.poem-react/poem-react/docker/restarthttpd.sh:/home/user/restarthttpd.sh
+      - $WORKDIR/git.poem-react/poem-react/:/home/user/poem-source
       - $WORKDIR/git.poem-react/poem-react/poem/Poem/:$VENV/lib/python3.6/site-packages/Poem
       - $WORKDIR/git.poem-react/poem-react/poem/media/:$VENV/usr/share/poem/media
       - $WORKDIR/git.poem-react/poem-react/poem/static/:$VENV/usr/share/poem/static
