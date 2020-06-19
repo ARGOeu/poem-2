@@ -517,7 +517,7 @@ function PackageComponent(cloneview=false){
           });
         } else {
           let pkg = await this.backend.fetchData(`/api/v2/internal/packages/${this.nameversion}`);
-          let probes = await this.backend.fetchData('/api/v2/internal/probes');
+          let probes = await this.backend.fetchData('/api/v2/internal/version/probe');
           let pkg_versions = await this.backend.fetchData(`/api/v2/internal/packageversions/${pkg.name}`);
           let list_probes = [];
           let repo_6 = '';
@@ -532,8 +532,8 @@ function PackageComponent(cloneview=false){
           }
 
           probes.forEach(e => {
-            if (e.package === `${pkg.name} (${pkg.version})`)
-              list_probes.push(e.name);
+            if (e.fields.package === `${pkg.name} (${pkg.version})`)
+              list_probes.push(e.fields.name);
           });
           this.setState({
             pkg: pkg,
@@ -742,20 +742,17 @@ function PackageComponent(cloneview=false){
                       </Col>
                     </Row>
                     {
-                      (!this.addview && !cloneview) &&
+                      (!this.addview && !cloneview && list_probes.length > 0) &&
                         <Row className='mt-3'>
                           <Col md={8}>
                             Probes:
-                            {
-                              list_probes.length > 0 &&
-                                <div>
-                                  {
-                                    list_probes
-                                      .map((e, i) => <Link key={i} to={'/ui/probes/' + e}>{e}</Link>)
-                                      .reduce((prev, curr) => [prev, ', ', curr])
-                                  }
-                                </div>
-                            }
+                            <div>
+                              {
+                                list_probes
+                                  .map((e, i) => <Link key={i} to={`/ui/probes/${e}/history/${props.values.version}`}>{e}</Link>)
+                                  .reduce((prev, curr) => [prev, ', ', curr])
+                              }
+                            </div>
                           </Col>
                         </Row>
                     }
