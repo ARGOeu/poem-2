@@ -214,10 +214,12 @@ function PackageComponent(cloneview=false){
           name: '',
           version: '',
         },
+        initial_version: '',
         repo_6: '',
         repo_7: '',
         list_repos_6: [],
         list_repos_7: [],
+        all_probes: [],
         list_probes: [],
         pkg_versions: [],
         present_version: false,
@@ -265,7 +267,7 @@ function PackageComponent(cloneview=false){
     };
 
     onVersionSelect(value) {
-      let pkg_versions = this.state.pkg_versions;
+      let { pkg_versions, all_probes, initial_version } = this.state;
       pkg_versions.forEach(pkgv => {
         if (pkgv.version === value) {
           let updated_pkg = {
@@ -286,11 +288,18 @@ function PackageComponent(cloneview=false){
               repo_7 = pkgv.repos[i];
           }
 
+          let updated_list_probes = [];
+          all_probes.forEach(p => {
+            if (p.fields.package === `${updated_pkg.name} (${updated_pkg.version})`)
+              updated_list_probes.push(p.fields.name);
+          });
+
           this.setState({
             pkg: updated_pkg,
             repo_6: repo_6,
             repo_7: repo_7,
-            disabled_button: false
+            list_probes: updated_list_probes,
+            disabled_button: value === initial_version
           });
         };
       });
@@ -517,7 +526,7 @@ function PackageComponent(cloneview=false){
           });
         } else {
           let pkg = await this.backend.fetchData(`/api/v2/internal/packages/${this.nameversion}`);
-          let probes = await this.backend.fetchData('/api/v2/internal/probes');
+          let probes = await this.backend.fetchData('/api/v2/internal/version/probe');
           let pkg_versions = await this.backend.fetchData(`/api/v2/internal/packageversions/${pkg.name}`);
           let list_probes = [];
           let repo_6 = '';
@@ -532,15 +541,17 @@ function PackageComponent(cloneview=false){
           }
 
           probes.forEach(e => {
-            if (e.package === `${pkg.name} (${pkg.version})`)
-              list_probes.push(e.name);
+            if (e.fields.package === `${pkg.name} (${pkg.version})`)
+              list_probes.push(e.fields.name);
           });
           this.setState({
             pkg: pkg,
+            initial_version: pkg.version,
             list_repos_6: list_repos_6,
             list_repos_7: list_repos_7,
             repo_6: repo_6,
             repo_7: repo_7,
+            all_probes: probes,
             list_probes: list_probes,
             pkg_versions: pkg_versions,
             loading: false
@@ -742,20 +753,17 @@ function PackageComponent(cloneview=false){
                       </Col>
                     </Row>
                     {
-                      (!this.addview && !cloneview) &&
+                      (!this.addview && !cloneview && list_probes.length > 0) &&
                         <Row className='mt-3'>
                           <Col md={8}>
                             Probes:
-                            {
-                              list_probes.length > 0 &&
-                                <div>
-                                  {
-                                    list_probes
-                                      .map((e, i) => <Link key={i} to={'/ui/probes/' + e}>{e}</Link>)
-                                      .reduce((prev, curr) => [prev, ', ', curr])
-                                  }
-                                </div>
-                            }
+                            <div>
+                              {
+                                list_probes
+                                  .map((e, i) => <Link key={i} to={`/ui/probes/${e}/history/${props.values.version}`}>{e}</Link>)
+                                  .reduce((prev, curr) => [prev, ', ', curr])
+                              }
+                            </div>
                           </Col>
                         </Row>
                     }
