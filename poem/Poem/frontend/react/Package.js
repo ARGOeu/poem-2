@@ -214,10 +214,12 @@ function PackageComponent(cloneview=false){
           name: '',
           version: '',
         },
+        initial_version: '',
         repo_6: '',
         repo_7: '',
         list_repos_6: [],
         list_repos_7: [],
+        all_probes: [],
         list_probes: [],
         pkg_versions: [],
         present_version: false,
@@ -265,7 +267,7 @@ function PackageComponent(cloneview=false){
     };
 
     onVersionSelect(value) {
-      let pkg_versions = this.state.pkg_versions;
+      let { pkg_versions, all_probes, initial_version } = this.state;
       pkg_versions.forEach(pkgv => {
         if (pkgv.version === value) {
           let updated_pkg = {
@@ -286,11 +288,18 @@ function PackageComponent(cloneview=false){
               repo_7 = pkgv.repos[i];
           }
 
+          let updated_list_probes = [];
+          all_probes.forEach(p => {
+            if (p.fields.package === `${updated_pkg.name} (${updated_pkg.version})`)
+              updated_list_probes.push(p.fields.name);
+          });
+
           this.setState({
             pkg: updated_pkg,
             repo_6: repo_6,
             repo_7: repo_7,
-            disabled_button: false
+            list_probes: updated_list_probes,
+            disabled_button: value === initial_version
           });
         };
       });
@@ -537,10 +546,12 @@ function PackageComponent(cloneview=false){
           });
           this.setState({
             pkg: pkg,
+            initial_version: pkg.version,
             list_repos_6: list_repos_6,
             list_repos_7: list_repos_7,
             repo_6: repo_6,
             repo_7: repo_7,
+            all_probes: probes,
             list_probes: list_probes,
             pkg_versions: pkg_versions,
             loading: false
