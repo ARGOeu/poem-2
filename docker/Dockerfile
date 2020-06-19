@@ -16,11 +16,12 @@ RUN yum -y install epel-release && \
       net-tools \
       nmap \
       psmisc \
+      sudo \
       telnet \
       unzip \
       vim \
-      which \
       wget \
+      which \
       zsh
 RUN yum -y makecache
 RUN yum -y install \
@@ -67,7 +68,10 @@ COPY \
 	safety.sh \
 	entrypoint.sh \
 	/home/user/
-COPY poem-apache.ini /etc/supervisord.d/
+COPY apache/poem-apache.ini /etc/supervisord.d/
+COPY apache/poem.conf /opt/rh/httpd24/root/etc/httpd/conf.d/
+RUN sed -r -i 's/(^SSLCertificate.*)/# \1/' /opt/rh/httpd24/root/etc/httpd/conf.d/ssl.conf; \
+    sed -r -i 's/(^SSLCACertificate.*)/# \1/' /opt/rh/httpd24/root/etc/httpd/conf.d/ssl.conf
 RUN ./setup.sh
 COPY tmux-2.9a-3.el7.x86_64.rpm ./
 RUN yum localinstall -y tmux-2.9a-3.el7.x86_64.rpm
