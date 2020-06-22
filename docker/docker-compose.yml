@@ -10,28 +10,28 @@ services:
     depends_on:
       - db-react
     volumes:
-      - /home/dvrcic:/mnt
+      - $HOME:/mnt
       - /dev/log:/dev/log
       - /etc/localtime:/etc/localtime:ro
-      - $WORKDIR/git.poem-react/poem-react/docker/pysitepkg:/home/user/pysitepkg
-      - $WORKDIR/git.poem-react/poem-react/docker/syncsite.sh:/home/user/syncsite.sh
-      - $WORKDIR/git.poem-react/poem-react/docker/safety.sh:/home/user/safety.sh
-      - $WORKDIR/git.poem-react/poem-react/docker/collectstatic.sh:/home/user/collectstatic.sh
-      - $WORKDIR/git.poem-react/poem-react/docker/restarthttpd.sh:/home/user/restarthttpd.sh
-      - $WORKDIR/git.poem-react/poem-react/:/home/user/poem-source
-      - $WORKDIR/git.poem-react/poem-react/poem/Poem/:$VENV/lib/python3.6/site-packages/Poem
-      - $WORKDIR/git.poem-react/poem-react/poem/media/:$VENV/usr/share/poem/media
-      - $WORKDIR/git.poem-react/poem-react/poem/static/:$VENV/usr/share/poem/static
-      - $WORKDIR/git.poem-react/poem-react/poem/apache/poem.wsgi:$VENV/usr/share/poem/apache/poem.wsgi
-      - $WORKDIR/git.poem-react/poem-react/etc/:$VENV/etc/poem
-      - $WORKDIR/git.poem-react/poem-react/poem/apache/poem.conf:/etc/httpd/conf.d/poem.conf
-      - $WORKDIR/git.poem-react/poem-react/bin/poem-db:$VENV/bin/poem-db
-      - $WORKDIR/git.poem-react/poem-react/bin/poem-clearsessions:$VENV/bin/poem-clearsessions
-      - $WORKDIR/git.poem-react/poem-react/bin/poem-manage:$VENV/bin/poem-manage
-      - $WORKDIR/git.poem-react/poem-react/bin/poem-genseckey:$VENV/bin/poem-genseckey
-      - $WORKDIR/git.poem-react/poem-react/bin/poem-syncservtype:$VENV/bin/poem-syncservtype
-      - $WORKDIR/git.poem-react/poem-react/bin/poem-tenant:$VENV/bin/poem-tenant
-      - $WORKDIR/git.poem-react/poem-react/bin/poem-token:$VENV/bin/poem-token
+      - ../docker/pysitepkg:/home/user/pysitepkg
+      - ../docker/syncsite.sh:/home/user/syncsite.sh
+      - ../docker/safety.sh:/home/user/safety.sh
+      - ../docker/collectstatic.sh:/home/user/collectstatic.sh
+      - ../docker/restarthttpd.sh:/home/user/restarthttpd.sh
+      - ../:/home/user/poem-source
+      - ../poem/Poem/:$VENV/lib/python3.6/site-packages/Poem
+      - ../poem/media/:$VENV/usr/share/poem/media
+      - ../poem/static/:$VENV/usr/share/poem/static
+      - ../poem/apache/poem.wsgi:$VENV/usr/share/poem/apache/poem.wsgi
+      - ../etc/:$VENV/etc/poem
+      - ../poem/apache/poem.conf:/etc/httpd/conf.d/poem.conf
+      - ../bin/poem-db:$VENV/bin/poem-db
+      - ../bin/poem-clearsessions:$VENV/bin/poem-clearsessions
+      - ../bin/poem-manage:$VENV/bin/poem-manage
+      - ../bin/poem-genseckey:$VENV/bin/poem-genseckey
+      - ../bin/poem-syncservtype:$VENV/bin/poem-syncservtype
+      - ../bin/poem-tenant:$VENV/bin/poem-tenant
+      - ../bin/poem-token:$VENV/bin/poem-token
     networks:
       app_net:
         ipv4_address: 172.19.0.2
@@ -39,7 +39,7 @@ services:
     container_name: poem-postgres10
     image: postgres:10
     volumes:
-      - $WORKDIR/git.poem-react/pgsqldata:/var/lib/postgresql/data
+      - $PSQLDATA:/var/lib/postgresql/data
     networks:
       app_net:
         ipv4_address: 172.19.0.3
@@ -53,4 +53,3 @@ networks:
       config:
         - subnet: 172.19.0.0/24
           gateway: 172.19.0.1
-
