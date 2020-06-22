@@ -1,6 +1,8 @@
 version: '2.2'
 services:
   web-react:
+    env_file:
+      - .env
     image: ipanema:5000/poem-react-c7
     command: /home/user/entrypoint.sh
     container_name: poem-react-c7
@@ -36,6 +38,8 @@ services:
       app_net:
         ipv4_address: 172.19.0.2
   db-react:
+    env_file:
+      - .env
     container_name: poem-postgres10
     image: postgres:10
     volumes:
