@@ -1,7 +1,8 @@
 #!/bin/bash
 
+VENV=/home/pyvenv/poem/
 RUNASROOT="su -m -s /bin/bash root -c"
 
 $RUNASROOT "supervisord"
-. /home/pyenv/poem/bin/activate
+. $VENV/bin/activate
 /bin/zsh -c $*
