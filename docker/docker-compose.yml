@@ -3,7 +3,7 @@ services:
   web-poem:
     env_file:
       - .env
-    image: ipanema:5000/poem-react-c7
+    image: $IMAGE
     command: /home/user/entrypoint.sh
     container_name: poem-react-c7
     hostname: poem-react
