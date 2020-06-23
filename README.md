@@ -26,39 +26,25 @@ Web application is served with Apache web server and uses PostgreSQL as database
 
 #### List of packages used
 
-Backend:
-* `Django`
-* `django-rest-auth`
-* `django-tenant-schemas`
-* `django-webpack-loader`
-* `djangorestframework`
-* `djangorestframework-api-key`
-* `djangosaml2`
-* `psycopg2-binary`
+Backend: `Django`, `django-rest-auth`, `django-tenant-schemas`, `django-webpack-loader`, `djangorestframework`, `djangorestframework-api-key`, `djangosaml2`, `psycopg2-binary`
 
-Frontend:
-* `ReactJS`
-* `formik`
-* `react-autocomplete`
-* `react-diff-viewer`
-* `react-dom`
-* `react-fontawesome`
-* `react-notifications`
-* `react-popup`
-* `react-router`
-* `react-table`
-* `reactstrap`
-* `webpack`
-* `yup`
+Frontend: `ReactJS`, `formik`, `react-autocomplete`, `react-diff-viewer`, `react-dom`, `react-fontawesome`, `react-notifications`, `react-popup`, `react-router`, `react-table`, `reactstrap`, `webpack`, `yup`
 
 ## User documentation and instances
 
 User documentation: http://argoeu.github.io/poem/v1/
 
 EGI instances:
-* devel - `https://egi.poem.devel.argo.grnet.gr`
-* production - `https://poem.egi.eu`
-* SuperPOEM - `https://poem.argo.grnet.gr`
+* devel - https://egi.poem.devel.argo.grnet.gr
+* production - https://poem.egi.eu
+* SuperPOEM - https://poem.argo.grnet.gr
+
+Public pages:
+* https://poem.egi.eu/ui/public_aggregationprofiles
+* https://poem.egi.eu/ui/public_metricprofiles
+* https://poem.egi.eu/ui/public_metrics
+* https://poem.egi.eu/ui/public_probes
+* https://poem.egi.eu/ui/public_thresholdsprofiles
 
 ## Installation
 
@@ -400,3 +386,23 @@ In two-argument-mode it is used to generate a token for its REST API that will b
 ```
 poem-token -t EGI -s egi
 ```
+
+## Development environment
+
+Development environment is based on Docker containers and container building instructions and helper scripts are provided in `docker/` folder. Environment is implemented as multi-container Docker application that can be spawned with `docker-compose`. Prior starting application, container that will be running Django/React code needs to be built. Container that will be running PostgreSQL is pulled from Docker registry.
+
+Building of Django/React container requires certificate to be placed as `hostcert.pem` and `hostkey.pem` in `docker/` folder. Self-signed certificate will be sufficient but be aware that syncing from GOCDB-like services will not work until you have [IGTF](https://www.igtf.net/) signed certificate.
+
+Building of container:
+```
+docker/ $ docker build . -t poem-react-c7
+
+```
+
+> Arbitrary image name can be specified after `-t` but that should be also reflected in `docker/.env`.
+
+Starting of multi-container application:
+```
+docker/ $ docker-compose up
+```
+
