@@ -73,8 +73,8 @@ COPY apache/poem.conf /opt/rh/httpd24/root/etc/httpd/conf.d/
 RUN sed -r -i 's/(^SSLCertificate.*)/# \1/' /opt/rh/httpd24/root/etc/httpd/conf.d/ssl.conf; \
     sed -r -i 's/(^SSLCACertificate.*)/# \1/' /opt/rh/httpd24/root/etc/httpd/conf.d/ssl.conf
 RUN ./setup.sh
-COPY tmux-2.9a-3.el7.x86_64.rpm ./
-RUN yum localinstall -y tmux-2.9a-3.el7.x86_64.rpm
+# COPY tmux-2.9a-3.el7.x86_64.rpm ./
+# RUN yum localinstall -y tmux-2.9a-3.el7.x86_64.rpm
 RUN echo "user ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers
 USER user
 ENTRYPOINT ["/home/user/entrypoint.sh"]
