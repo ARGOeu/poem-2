@@ -814,10 +814,12 @@ function MetricProfilesComponent(cloneview=false) {
         }
 
         // this one ends up reindexing already indexed array
-        // for (var i = index_tmp; i < tmp_view_services.length; i++) {
-        //   let element_index = tmp_view_services[i].index
-        //   tmp_view_services[i].index = element_index - 1;
-        // }
+        // limit it so reindexing happens only if first element differs
+        if (tmp_list_services[0].index != tmp_view_services[0].index)
+          for (var i = index_tmp; i < tmp_view_services.length; i++) {
+            let element_index = tmp_view_services[i].index
+            tmp_view_services[i].index = element_index - 1;
+          }
       }
       else {
         tmp_list_services = [...this.state.list_services]
