@@ -137,6 +137,14 @@ export class Backend {
     )
   }
 
+  bulkDeleteMetrics(data) {
+    return this.send(
+      '/api/v2/internal/deletetemplates/',
+      'POST',
+      data
+    );
+  }
+
   send(url, method, values=undefined) {
     const cookies = new Cookies();
 
