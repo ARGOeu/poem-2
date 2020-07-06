@@ -4,7 +4,8 @@ from Poem.api.internal_views.utils import one_value_inline, two_value_inline, \
     inline_metric_for_db
 from Poem.api.views import NotFound
 from Poem.helpers.history_helpers import create_history, update_comment
-from Poem.helpers.metrics_helpers import update_metrics
+from Poem.helpers.metrics_helpers import update_metrics, \
+    get_metrics_in_profiles, delete_metrics_from_profile
 from Poem.poem.models import Metric, TenantHistory
 from Poem.poem_super_admin import models as admin_models
 from Poem.tenants.models import Tenant
@@ -400,6 +401,98 @@ class ListMetricTemplatesForProbeVersion(APIView):
 
             return Response(
                 metrics.order_by('name').values_list('name', flat=True)
+            )
+
+
+class BulkDeleteMetricTemplates(APIView):
+    authentication_classes = (SessionAuthentication,)
+
+    def post(self, request):
+        metrictemplates = dict(request.data)['metrictemplates']
+
+        schemas = list(
+            Tenant.objects.all().values_list('schema_name', flat=True)
+        )
+        schemas.remove(get_public_schema_name())
+
+        warning_message = []
+        error_message = []
+        for schema in schemas:
+            with schema_context(schema):
+                try:
+                    mip = get_metrics_in_profiles(schema)
+                except Exception as e:
+                    error_message.append('{}: {}'.format(schema, str(e)))
+                    continue
+
+                inter = set(metrictemplates).intersection(set(list(mip.keys())))
+                profiles = dict()
+                for metric in metrictemplates:
+                    try:
+                        instance = Metric.objects.get(name=metric)
+                        TenantHistory.objects.filter(
+                            object_id=instance.id
+                        ).delete()
+                        instance.delete()
+
+                    except Metric.DoesNotExist:
+                        continue
+
+                    for key, value in mip.items():
+                        if metric in inter and key == metric:
+                            for p in value:
+                                if p in profiles:
+                                    profiles.update({p: profiles[p] + [key]})
+                                else:
+                                    profiles.update({p: [key]})
+
+                if profiles:
+                    for key, value in profiles.items():
+                        try:
+                            delete_metrics_from_profile(key, value)
+
+                        except Exception as e:
+                            if len(value) > 1:
+                                noun = 'Metrics {}'.format(', '.join(value))
+                            else:
+                                noun = 'Metric {}'.format(value[0])
+
+                            warning_message.append(
+                                '{}: {} not deleted from profile {}: {}'.format(
+                                    schema, noun, key, str(e)
+                                )
+                            )
+
+        response_message = dict()
+        if error_message:
+            response_message.update({'error': '; '.join(error_message)})
+            return Response(
+                response_message,
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        else:
+            mt = admin_models.MetricTemplate.objects.filter(
+                name__in=metrictemplates
+            )
+
+            mt.delete()
+
+            if len(metrictemplates) > 1:
+                msg = 'Metric templates {}'.format(', '.join(metrictemplates))
+
+            else:
+                msg = 'Metric template {}'.format(metrictemplates[0])
+
+            response_message.update({
+                'info': '{} successfully deleted.'.format(msg)
+            })
+
+            if warning_message:
+                response_message.update({'warning': '; '.join(warning_message)})
+
+            return Response(
+                data=response_message, status=status.HTTP_200_OK
             )
 
 

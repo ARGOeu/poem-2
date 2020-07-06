@@ -13075,3 +13075,466 @@ class UpdateMetricsVersionsTests(TenantTestCase):
         )
         mock_get.assert_called_once()
         self.assertFalse(mock_update.called)
+
+
+class BulkDeleteMetricTemplatesTests(TenantTestCase):
+    def setUp(self):
+        self.factory = TenantRequestFactory(self.tenant)
+        self.view = views.BulkDeleteMetricTemplates.as_view()
+        self.url = '/api/v2/internal/deletetemplates/'
+        self.user = CustUser.objects.create_user(username='testuser')
+
+        with schema_context(get_public_schema_name()):
+            Tenant.objects.create(
+                name='public', domain_url='public',
+                schema_name=get_public_schema_name()
+            )
+
+        mttype1 = admin_models.MetricTemplateType.objects.create(name='Active')
+        mttype2 = admin_models.MetricTemplateType.objects.create(name='Passive')
+
+        mtype = poem_models.MetricType.objects.create(name='Active')
+
+        tag = admin_models.OSTag.objects.create(name='tag')
+        repo = admin_models.YumRepo.objects.create(name='repo', tag=tag)
+
+        package = admin_models.Package.objects.create(
+            name='nagios-plugins-argo',
+            version='0.1.12'
+        )
+        package.repos.add(repo)
+
+        probe1 = admin_models.Probe.objects.create(
+            name='ams-probe',
+            package=package,
+            description='Probe is inspecting AMS service by trying to publish '
+                        'and consume randomly generated messages.',
+            comment='Initial version.',
+            repository='https://github.com/ARGOeu/nagios-plugins-argo',
+            docurl='https://github.com/ARGOeu/nagios-plugins-argo/blob/master/'
+                   'README.md'
+        )
+
+        probeversion1 = admin_models.ProbeHistory.objects.create(
+            object_id=probe1,
+            name=probe1.name,
+            package=probe1.package,
+            description=probe1.description,
+            comment=probe1.comment,
+            repository=probe1.repository,
+            docurl=probe1.docurl,
+            date_created=datetime.datetime.now(),
+            version_comment='Initial version.',
+            version_user=self.user.username,
+        )
+
+        probe2 = admin_models.Probe.objects.create(
+            name='ams-publisher-probe',
+            package=package,
+            description='Probe is inspecting AMS publisher running on Nagios '
+                        'monitoring instances.',
+            comment='Initial version.',
+            repository='https://github.com/ARGOeu/nagios-plugins-argo',
+            docurl='https://github.com/ARGOeu/nagios-plugins-argo/blob/master/'
+                   'README.md'
+        )
+
+        probeversion2 = admin_models.ProbeHistory.objects.create(
+            object_id=probe2,
+            name=probe2.name,
+            package=probe2.package,
+            description=probe2.description,
+            comment=probe2.comment,
+            repository=probe2.repository,
+            docurl=probe2.docurl,
+            date_created=datetime.datetime.now(),
+            version_comment='Initial version.',
+            version_user=self.user.username,
+        )
+
+        mt1 = admin_models.MetricTemplate.objects.create(
+            name='argo.AMS-Check',
+            mtype=mttype1,
+            probekey=probeversion1,
+            probeexecutable='["ams-probe"]',
+            config='["maxCheckAttempts 3", "timeout 60",'
+                   ' "path /usr/libexec/argo-monitoring/probes/argo",'
+                   ' "interval 5", "retryInterval 3"]',
+            attribute='["argo.ams_TOKEN --token"]',
+            flags='["OBSESS 1"]',
+            parameter='["--project EGI"]'
+        )
+
+        admin_models.MetricTemplateHistory.objects.create(
+            object_id=mt1,
+            name=mt1.name,
+            mtype=mt1.mtype,
+            probekey=mt1.probekey,
+            description=mt1.description,
+            probeexecutable=mt1.probeexecutable,
+            config=mt1.config,
+            attribute=mt1.attribute,
+            dependency=mt1.dependency,
+            flags=mt1.flags,
+            files=mt1.files,
+            parameter=mt1.parameter,
+            fileparameter=mt1.fileparameter,
+            date_created=datetime.datetime.now(),
+            version_user=self.user.username,
+            version_comment='Initial version.',
+        )
+
+        mt2 = admin_models.MetricTemplate.objects.create(
+            name='test.AMS-Check',
+            description='Description of test.AMS-Check.',
+            probeexecutable='["ams-probe"]',
+            config='["interval 180", "maxCheckAttempts 1", '
+                   '"path /usr/libexec/argo-monitoring/probes/argo", '
+                   '"retryInterval 1", "timeout 120"]',
+            attribute='["argo.ams_TOKEN --token"]',
+            parameter='["--project EGI"]',
+            flags='["OBSESS 1"]',
+            mtype=mttype1,
+            probekey=probeversion1
+        )
+
+        admin_models.MetricTemplateHistory.objects.create(
+            object_id=mt2,
+            name=mt2.name,
+            mtype=mt2.mtype,
+            probekey=mt2.probekey,
+            description=mt2.description,
+            probeexecutable=mt2.probeexecutable,
+            config=mt2.config,
+            attribute=mt2.attribute,
+            dependency=mt2.dependency,
+            flags=mt2.flags,
+            files=mt2.files,
+            parameter=mt2.parameter,
+            fileparameter=mt2.fileparameter,
+            date_created=datetime.datetime.now(),
+            version_user=self.user.username,
+            version_comment='Initial version.',
+        )
+
+        mt3 = admin_models.MetricTemplate.objects.create(
+            name='argo.AMSPublisher-Check',
+            mtype=mttype1,
+            probekey=probeversion2,
+            description='Some description of publisher metric.',
+            probeexecutable='ams-publisher-probe',
+            config='["maxCheckAttempts 1", "timeout 120",'
+                   ' "path /usr/libexec/argo-monitoring/probes/argo",'
+                   ' "interval 180", "retryInterval 1"]',
+            parameter='["-s /var/run/argo-nagios-ams-publisher/sock"]',
+            flags='["NOHOSTNAME 1", "NOTIMEOUT 1", "NOPUBLISH 1"]'
+        )
+
+        admin_models.MetricTemplateHistory.objects.create(
+            object_id=mt3,
+            name=mt3.name,
+            mtype=mt3.mtype,
+            probekey=mt3.probekey,
+            description=mt3.description,
+            probeexecutable=mt3.probeexecutable,
+            config=mt3.config,
+            attribute=mt3.attribute,
+            dependency=mt3.dependency,
+            flags=mt3.flags,
+            files=mt3.files,
+            parameter=mt3.parameter,
+            fileparameter=mt3.fileparameter,
+            date_created=datetime.datetime.now(),
+            version_user=self.user.username,
+            version_comment='Initial version.',
+        )
+
+        mt4 = admin_models.MetricTemplate.objects.create(
+            name='org.apel.APEL-Pub',
+            flags='["OBSESS 1", "PASSIVE 1"]',
+            mtype=mttype2,
+        )
+
+        admin_models.MetricTemplateHistory.objects.create(
+            object_id=mt4,
+            name=mt4.name,
+            mtype=mt4.mtype,
+            probekey=mt4.probekey,
+            description=mt4.description,
+            probeexecutable=mt4.probeexecutable,
+            config=mt4.config,
+            attribute=mt4.attribute,
+            dependency=mt4.dependency,
+            flags=mt4.flags,
+            files=mt4.files,
+            parameter=mt4.parameter,
+            fileparameter=mt4.fileparameter,
+            date_created=datetime.datetime.now(),
+            version_user=self.user.username,
+            version_comment='Initial version.',
+        )
+
+        self.metric = poem_models.Metric.objects.create(
+            name='test.AMS-Check',
+            description='Description of test.AMS-Check.',
+            probeexecutable='["ams-probe"]',
+            config='["interval 180", "maxCheckAttempts 1", '
+                   '"path /usr/libexec/argo-monitoring/probes/argo", '
+                   '"retryInterval 1", "timeout 120"]',
+            attribute='["argo.ams_TOKEN --token"]',
+            parameter='["--project EGI"]',
+            flags='["OBSESS 1"]',
+            mtype=mtype,
+            probekey=probeversion1,
+            group=poem_models.GroupOfMetrics.objects.create(name='test')
+        )
+
+        poem_models.TenantHistory.objects.create(
+            object_id=self.metric.id,
+            serialized_data=serializers.serialize(
+                'json', [self.metric],
+                use_natural_foreign_keys=True,
+                use_natural_primary_keys=True
+            ),
+            object_repr='argo.AMS-Check',
+            content_type=ContentType.objects.get_for_model(self.metric),
+            date_created=datetime.datetime.now(),
+            comment='Initial version.',
+            user=self.user.username
+        )
+
+    @patch(
+        'Poem.api.internal_views.metrictemplates.delete_metrics_from_profile')
+    @patch('Poem.api.internal_views.metrictemplates.get_metrics_in_profiles')
+    def test_bulk_delete_metric_templates(self, mock_get, mock_delete):
+        mock_get.return_value = {'test.AMS-Check': ['PROFILE1', 'PROFILE2']}
+        mock_delete.side_effect = mocked_func
+        data = {
+            'metrictemplates': ['argo.AMS-Check', 'test.AMS-Check']
+        }
+        assert self.metric
+        metric_id = self.metric.id
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 4)
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            response.data,
+            {
+                "info": "Metric templates argo.AMS-Check, test.AMS-Check "
+                        "successfully deleted."
+            }
+        )
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 2)
+        self.assertRaises(
+            admin_models.MetricTemplate.DoesNotExist,
+            admin_models.MetricTemplate.objects.get,
+            name='argo.AMS-Check'
+        )
+        self.assertRaises(
+            admin_models.MetricTemplate.DoesNotExist,
+            admin_models.MetricTemplate.objects.get,
+            name='test.AMS-Check'
+        )
+        self.assertRaises(
+            poem_models.Metric.DoesNotExist,
+            poem_models.Metric.objects.get,
+            name='test.AMS-Check'
+        )
+        self.assertEqual(
+            len(poem_models.TenantHistory.objects.filter(object_id=metric_id)),
+            0
+        )
+        self.assertEqual(mock_delete.call_count, 2)
+        mock_delete.assert_has_calls([
+            call('PROFILE1', ['test.AMS-Check']),
+            call('PROFILE2', ['test.AMS-Check'])
+        ])
+
+    @patch(
+        'Poem.api.internal_views.metrictemplates.delete_metrics_from_profile')
+    @patch('Poem.api.internal_views.metrictemplates.get_metrics_in_profiles')
+    def test_bulk_delete_one_metric_templates(self, mock_get, mock_delete):
+        mock_get.return_value = {'test.AMS-Check': ['PROFILE1', 'PROFILE2']}
+        mock_delete.side_effect = mocked_func
+        data = {'metrictemplates': ['test.AMS-Check']}
+        assert self.metric
+        metric_id = self.metric.id
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 4)
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            response.data,
+            {"info": "Metric template test.AMS-Check successfully deleted."}
+        )
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 3)
+        self.assertRaises(
+            admin_models.MetricTemplate.DoesNotExist,
+            admin_models.MetricTemplate.objects.get,
+            name='test.AMS-Check'
+        )
+        self.assertRaises(
+            poem_models.Metric.DoesNotExist,
+            poem_models.Metric.objects.get,
+            name='test.AMS-Check'
+        )
+        self.assertEqual(
+            len(poem_models.TenantHistory.objects.filter(object_id=metric_id)),
+            0
+        )
+        self.assertEqual(mock_delete.call_count, 2)
+        mock_delete.assert_has_calls([
+            call('PROFILE1', ['test.AMS-Check']),
+            call('PROFILE2', ['test.AMS-Check'])
+        ])
+
+    @patch(
+        'Poem.api.internal_views.metrictemplates.delete_metrics_from_profile')
+    @patch('Poem.api.internal_views.metrictemplates.get_metrics_in_profiles')
+    def test_bulk_delete_metric_templates_if_get_exception(
+            self, mock_get, mock_delete
+    ):
+        mock_get.side_effect = Exception(
+            'Error fetching WEB API data: API key not found'
+        )
+        mock_delete.side_effect = mocked_func
+        data = {
+            'metrictemplates': ['argo.AMS-Check', 'test.AMS-Check']
+        }
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(
+            response.data,
+            {"error": "test: Error fetching WEB API data: API key not found"}
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 4)
+        metric_history = poem_models.TenantHistory.objects.filter(
+            object_id=self.metric.id
+        )
+        assert self.metric, metric_history
+
+    @patch(
+        'Poem.api.internal_views.metrictemplates.delete_metrics_from_profile')
+    @patch('Poem.api.internal_views.metrictemplates.get_metrics_in_profiles')
+    def test_bulk_delete_metric_templates_if_get_requests_exception(
+            self, mock_get, mock_delete
+    ):
+        mock_get.side_effect = requests.exceptions.HTTPError('Exception')
+        mock_delete.side_effect = mocked_func
+        data = {
+            'metrictemplates': ['argo.AMS-Check', 'test.AMS-Check']
+        }
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.data, {"error": "test: Exception"})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        metric_history = poem_models.TenantHistory.objects.filter(
+            object_id=self.metric.id
+        )
+        assert self.metric, metric_history
+
+    @patch(
+        'Poem.api.internal_views.metrictemplates.delete_metrics_from_profile')
+    @patch('Poem.api.internal_views.metrictemplates.get_metrics_in_profiles')
+    def test_bulk_delete_metric_templates_if_delete_profile_exception(
+            self, mock_get, mock_delete
+    ):
+        mock_get.return_value = {'test.AMS-Check': ['PROFILE1', 'PROFILE2']}
+        mock_delete.side_effect = Exception(
+            'Error deleting metric from profile: Something went wrong'
+        )
+        data = {
+            'metrictemplates': ['argo.AMS-Check', 'test.AMS-Check']
+        }
+        metric_id = self.metric.id
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(
+            response.data,
+            {
+                "info": "Metric templates argo.AMS-Check, test.AMS-Check "
+                        "successfully deleted.",
+                "warning": "test: Metric test.AMS-Check not deleted "
+                           "from profile PROFILE1: Error deleting metric from "
+                           "profile: Something went wrong; "
+                           "test: Metric test.AMS-Check not deleted from "
+                           "profile PROFILE2: Error deleting metric from "
+                           "profile: Something went wrong"
+             }
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertRaises(
+            admin_models.MetricTemplate.DoesNotExist,
+            admin_models.MetricTemplate.objects.get,
+            name='argo.AMS-Check'
+        )
+        self.assertRaises(
+            admin_models.MetricTemplate.DoesNotExist,
+            admin_models.MetricTemplate.objects.get,
+            name='test.AMS-Check'
+        )
+        self.assertRaises(
+            poem_models.Metric.DoesNotExist,
+            poem_models.Metric.objects.get,
+            name='test.AMS-Check'
+        )
+        self.assertEqual(
+            len(poem_models.TenantHistory.objects.filter(object_id=metric_id)),
+            0
+        )
+        self.assertEqual(mock_delete.call_count, 2)
+        mock_delete.assert_has_calls([
+            call('PROFILE1', ['test.AMS-Check']),
+            call('PROFILE2', ['test.AMS-Check'])
+        ])
+
+    @patch(
+        'Poem.api.internal_views.metrictemplates.delete_metrics_from_profile')
+    @patch('Poem.api.internal_views.metrictemplates.get_metrics_in_profiles')
+    def test_bulk_delete_metric_templates_if_metric_not_in_profile(
+            self, mock_get, mock_delete
+    ):
+        mock_get.return_value = {}
+        mock_delete.side_effect = mocked_func
+        data = {
+            'metrictemplates': ['argo.AMS-Check', 'test.AMS-Check']
+        }
+        metric_id = self.metric.id
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(
+            response.data,
+            {
+                "info": "Metric templates argo.AMS-Check, test.AMS-Check "
+                        "successfully deleted."
+            }
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertRaises(
+            admin_models.MetricTemplate.DoesNotExist,
+            admin_models.MetricTemplate.objects.get,
+            name='argo.AMS-Check'
+        )
+        self.assertRaises(
+            admin_models.MetricTemplate.DoesNotExist,
+            admin_models.MetricTemplate.objects.get,
+            name='test.AMS-Check'
+        )
+        self.assertRaises(
+            poem_models.Metric.DoesNotExist,
+            poem_models.Metric.objects.get,
+            name='test.AMS-Check'
+        )
+        self.assertEqual(
+            len(poem_models.TenantHistory.objects.filter(object_id=metric_id)),
+            0
+        )
+        self.assertFalse(mock_delete.called)
