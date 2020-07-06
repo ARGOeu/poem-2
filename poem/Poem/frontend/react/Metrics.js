@@ -29,7 +29,8 @@ import {
   PopoverBody,
   PopoverHeader,
   InputGroup,
-  InputGroupAddon
+  InputGroupAddon,
+  ButtonToolbar
 } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faInfoCircle, faMinus, faPlus } from '@fortawesome/free-solid-svg-icons';
@@ -291,7 +292,8 @@ export function ListOfMetrics(type, imp=false) {
     constructor(props) {
       super(props);
 
-      this.location = props.location
+      this.location = props.location;
+      this.history = props.history;
 
       if (type === 'metric') {
         this.state = {
@@ -329,6 +331,7 @@ export function ListOfMetrics(type, imp=false) {
       this.doFilter = this.doFilter.bind(this);
       this.toggleRow = this.toggleRow.bind(this);
       this.importMetrics = this.importMetrics.bind(this);
+      this.bulkDeleteMetrics = this.bulkDeleteMetrics.bind(this);
     }
 
     doFilter(list_metric, field, filter) {
@@ -405,6 +408,29 @@ export function ListOfMetrics(type, imp=false) {
           title: 'Error'});
       };
     }
+
+    async bulkDeleteMetrics() {
+      let selectedMetrics = this.state.selected;
+      let mt = Object.keys(selectedMetrics).filter(k => selectedMetrics[k]);
+      if (mt.length > 0) {
+        let response = await this.backend.bulkDeleteMetrics({'metrictemplates': mt});
+        let json = await response.json();
+        if (response.ok) {
+          if ('info' in json)
+            NotifyOk({msg: json.info, title: 'Deleted'});
+
+          if ('warning' in json)
+            NotifyWarn({msg: json.warn, title: 'Deleted'});
+
+        } else
+          NotifyError({msg: json.error, title: 'Deleted'});
+
+      } else
+        NotifyError({
+          msg: 'No metric templates were selected!',
+          title: 'Error'
+        });
+    };
 
     async componentDidMount() {
       this.setState({loading: true});
@@ -570,7 +596,7 @@ export function ListOfMetrics(type, imp=false) {
         }
       ];
 
-      if (imp && this.state.userDetails && this.state.userDetails.is_superuser) {
+      if (type == 'metrictemplate' && this.state.userDetails && this.state.userDetails.is_superuser) {
         columns.splice(
           0,
           0,
@@ -589,7 +615,7 @@ export function ListOfMetrics(type, imp=false) {
                 </div>
               );
             },
-            Header: 'Select all',
+            Header: `${imp ? 'Select all' : 'Delete'}`,
             Filter: (
               <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
                 <input
@@ -753,22 +779,35 @@ export function ListOfMetrics(type, imp=false) {
             )
           else
             return (
-              <BaseArgoView
-                resourcename='metric template'
-                location={this.location}
-                listview={!imp}
-                importlistview={imp}
-                addnew={true}
-              >
-                <ReactTable
-                  data={list_metric}
-                  columns={columns}
-                  className='-highlight'
-                  defaultPageSize={50}
-                  rowsText='metrics'
-                  getTheadThProps={() => ({className: 'table-active font-weight-bold p-2'})}
-                />
-              </BaseArgoView>
+              <>
+                <div className="d-flex align-items-center justify-content-between">
+                  <h2 className="ml-3 mt-1 mb-4">{'Metric templates'}</h2>
+                  {
+                    <ButtonToolbar>
+                      <Link className={`btn btn-secondary ${imp ? '' : 'mr-2'}`} to={this.location.pathname + '/add'} role='button'>Add</Link>
+                      {
+                        !imp &&
+                          <Button
+                            className='btn btn-secondary'
+                            onClick={() => this.bulkDeleteMetrics()}
+                          >
+                            Delete
+                          </Button>
+                      }
+                    </ButtonToolbar>
+                  }
+                </div>
+                <div id='argo-contentwrap' className='ml-2 mb-2 mt-2 p-3 border rounded'>
+                  <ReactTable
+                    data={list_metric}
+                    columns={columns}
+                    className='-highlight'
+                    defaultPageSize={50}
+                    rowsText='metrics'
+                    getTheadThProps={() => ({className: 'table-active font-weight-bold p-2'})}
+                  />
+                </div>
+              </>
             )
         }
       }
