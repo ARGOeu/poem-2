@@ -13,7 +13,8 @@ import {
   NotifyWarn,
   NotifyError,
   NotifyInfo,
-  ErrorComponent
+  ErrorComponent,
+  ModalAreYouSure
  } from './UIElements';
 import ReactTable from 'react-table';
 import { Formik, Form, Field, FieldArray } from 'formik';
@@ -322,6 +323,10 @@ export function ListOfMetrics(type, imp=false) {
           selected: {},
           selectAll: 0,
           userDetails: undefined,
+          areYouSureModal: false,
+          modalFunc: undefined,
+          modalTitle: undefined,
+          modalMsg: undefined,
           error: null
         }
       }
@@ -332,6 +337,9 @@ export function ListOfMetrics(type, imp=false) {
       this.toggleRow = this.toggleRow.bind(this);
       this.importMetrics = this.importMetrics.bind(this);
       this.bulkDeleteMetrics = this.bulkDeleteMetrics.bind(this);
+      this.toggleAreYouSure = this.toggleAreYouSure.bind(this);
+      this.toggleAreYouSureSetModal = this.toggleAreYouSureSetModal.bind(this);
+      this.onDelete = this.onDelete.bind(this);
     }
 
     doFilter(list_metric, field, filter) {
@@ -383,6 +391,36 @@ export function ListOfMetrics(type, imp=false) {
       });
     }
 
+    toggleAreYouSure() {
+      this.setState(prevState =>
+        ({areYouSureModal: !prevState.areYouSureModal}));
+    };
+
+    toggleAreYouSureSetModal(msg, title, onyes) {
+      this.setState(prevState =>
+        ({areYouSureModal: !prevState.areYouSureModal,
+          modalFunc: onyes,
+          modalMsg: msg,
+          modalTitle: title,
+        }));
+    }
+
+    onDelete() {
+      let selectedMetrics = this.state.selected;
+      // get only those metrics whose value is true
+      let mt = Object.keys(selectedMetrics).filter(k => selectedMetrics[k]);
+      let msg = undefined;
+      if (mt.length > 1)
+        msg = `Are you sure you want to delete metric templates ${mt.join(', ')}?`;
+      else
+        msg = `Are you sure you want to delete metric template ${mt[0]}?`;
+
+      let title = `Delete metric template${mt.length > 1 ? 's' : ''}`;
+
+      this.toggleAreYouSureSetModal(msg, title,
+        () => this.bulkDeleteMetrics(mt));
+    };
+
     async importMetrics() {
       let selectedMetrics = this.state.selected;
       // get only those metrics whose value is true
@@ -409,18 +447,23 @@ export function ListOfMetrics(type, imp=false) {
       };
     }
 
-    async bulkDeleteMetrics() {
-      let selectedMetrics = this.state.selected;
-      let mt = Object.keys(selectedMetrics).filter(k => selectedMetrics[k]);
+    async bulkDeleteMetrics(mt) {
+      let refreshed_metrics = this.state.list_metric;
       if (mt.length > 0) {
         let response = await this.backend.bulkDeleteMetrics({'metrictemplates': mt});
         let json = await response.json();
         if (response.ok) {
+          refreshed_metrics = refreshed_metrics.filter(m => !mt.includes(m.name));
           if ('info' in json)
             NotifyOk({msg: json.info, title: 'Deleted'});
 
           if ('warning' in json)
             NotifyWarn({msg: json.warn, title: 'Deleted'});
+
+          this.setState({
+            list_metric: refreshed_metrics,
+            selectAll: 0
+          });
 
         } else
           NotifyError({msg: json.error, title: 'Deleted'});
@@ -780,6 +823,13 @@ export function ListOfMetrics(type, imp=false) {
           else
             return (
               <>
+                <ModalAreYouSure
+                  isOpen={this.state.areYouSureModal}
+                  toggle={this.toggleAreYouSure}
+                  title={this.state.modalTitle}
+                  msg={this.state.modalMsg}
+                  onYes={this.state.modalFunc}
+                />
                 <div className="d-flex align-items-center justify-content-between">
                   <h2 className="ml-3 mt-1 mb-4">{'Metric templates'}</h2>
                   {
@@ -789,7 +839,7 @@ export function ListOfMetrics(type, imp=false) {
                         !imp &&
                           <Button
                             className='btn btn-secondary'
-                            onClick={() => this.bulkDeleteMetrics()}
+                            onClick={() => this.onDelete()}
                           >
                             Delete
                           </Button>
