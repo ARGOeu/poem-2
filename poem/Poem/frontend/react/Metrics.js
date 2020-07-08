@@ -466,7 +466,10 @@ export function ListOfMetrics(type, imp=false) {
           });
 
         } else
-          NotifyError({msg: json.error, title: 'Deleted'});
+          NotifyError({
+            msg: `Error deleting metric template${mt.length > 0 ? 's' : ''}`,
+            title: `Error: ${response.status} ${response.statusText}`
+          });
 
       } else
         NotifyError({
