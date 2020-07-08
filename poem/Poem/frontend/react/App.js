@@ -24,7 +24,6 @@ import {
 import { TenantAdministration, SuperAdminAdministration } from './Administration';
 import { AggregationProfilesChange, AggregationProfilesList, AggregationProfileHistory, AggregationProfileVersionCompare, AggregationProfileVersionDetails } from './AggregationProfiles';
 import Reports from './Reports';
-import Services from './Services';
 import { UsersList, UserChange, SuperAdminUserChange, ChangePassword } from './Users';
 import {
   GroupOfMetricsList,
@@ -48,7 +47,7 @@ import { ThresholdsProfilesList, ThresholdsProfilesChange, ThresholdsProfilesHis
 import Cookies from 'universal-cookie';
 
 import './App.css';
-import { PackageList, PackageChange } from './Package';
+import { PackageList, PackageChange, PackageClone } from './Package';
 
 
 const NavigationBarWithRouter = withRouter(NavigationBar);
@@ -109,7 +108,6 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, t
   <Switch>
     <Route exact path="/ui/login" render={props => <RedirectAfterLogin isSuperUser={isSuperUser} {...props}/>}/>
     <Route exact path="/ui/home" component={Home} />
-    <Route exact path="/ui/services" component={Services} />
     <Route exact path="/ui/reports" component={Reports} />
     <Route exact path="/ui/probes" component={ProbeList} />
     <Route exact path="/ui/probes/:name/history" render={props => <ProbeHistory {...props}/>}/>
@@ -238,6 +236,10 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, t
     <SuperUserRoute isSuperUser={isSuperUser} exact path='/ui/administration/yumrepos/:name'
       render={props => <YumRepoChange {...props} disabled={true}/>}
     />
+    <SuperUserRoute isSuperUser={isSuperUser} exact path='/ui/administration/packages/' component={PackageList}/>
+    <SuperUserRoute isSuperUser={isSuperUser} exact path='/ui/administration/packages/:nameversion'
+      render={props => <PackageChange {...props} disabled={true}/>}
+    />
     <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/groupofthresholdsprofiles" component={GroupOfThresholdsProfilesList} />
     <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/groupofthresholdsprofiles/add"
       render={props => <GroupOfThresholdsProfilesChange
@@ -302,6 +304,7 @@ const SuperAdminRouteSwitch = ({props}) => (
     <Route exact path='/ui/packages/' render={props => <PackageList {...props}/>}/>
     <Route exact path='/ui/packages/add' render={props => <PackageChange addview={true} {...props}/>}/>
     <Route exact path='/ui/packages/:nameversion' render={props => <PackageChange {...props}/>}/>
+    <Route exact path='/ui/packages/:nameversion/clone' render={props => <PackageClone {...props}/>}/>
     <Route exact path="/ui/administration" component={SuperAdminAdministration}/>
     <Route exact path="/ui/administration/users" component={UsersList} />
     <Route exact path="/ui/administration/users/add"
@@ -496,13 +499,6 @@ class App extends Component {
               }
             />
           </Switch>
-          <Route exact path="/ui/public_services"
-            render={props =>
-              <PublicPage>
-                <Services publicView={true} {...props}/>
-              </PublicPage>
-            }
-          />
           <Route exact path="/ui/public_metricprofiles"
             render={props =>
               <PublicPage>

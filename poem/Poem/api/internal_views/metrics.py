@@ -1,10 +1,12 @@
 import json
 
+import requests
 from Poem.api.internal_views.utils import one_value_inline, two_value_inline, \
     inline_metric_for_db
 from Poem.api.views import NotFound
 from Poem.helpers.history_helpers import create_history
-from Poem.helpers.metrics_helpers import import_metrics
+from Poem.helpers.metrics_helpers import import_metrics, update_metrics, \
+    get_metrics_in_profiles, delete_metrics_from_profile
 from Poem.poem import models as poem_models
 from Poem.poem_super_admin import models as admin_models
 from django.contrib.contenttypes.models import ContentType
@@ -197,49 +199,348 @@ class ImportMetrics(APIView):
     authentication_classes = (SessionAuthentication,)
 
     def post(self, request):
-        imported, err = import_metrics(
+        imported, warn, err, unavailable = import_metrics(
             metrictemplates=dict(request.data)['metrictemplates'],
             tenant=request.tenant, user=request.user
         )
 
         message_bit = ''
+        warn_bit = ''
         error_bit = ''
         error_bit2 = ''
+        unavailable_bit = ''
         if imported:
             if len(imported) == 1:
                 message_bit = '{} has'.format(imported[0])
             else:
                 message_bit = ', '.join(msg for msg in imported) + ' have'
 
+        if warn:
+            if len(warn) == 1:
+                warn_bit = '{} has been imported with older probe version. ' \
+                           'If you wish to use more recent probe version, ' \
+                           'you should update package version you use.'.format(
+                                warn[0]
+                            )
+
+            else:
+                warn_bit = "{} have been imported with older probes' " \
+                           "versions. If you wish to use more recent " \
+                           "versions of probes, you should update packages' " \
+                           "versions you use.".format(
+                                ', '.join(msg for msg in warn)
+                            )
+
         if err:
             if len(err) == 1:
                 error_bit = '{} has'.format(err[0])
-                error_bit2 = 'this metric already exists'
+                error_bit2 = 'it already exists'
             else:
                 error_bit = ', '.join(msg for msg in err) + ' have'
-                error_bit2 = 'those metrics already exist'
+                error_bit2 = 'they already exist'
+
+        if unavailable:
+            if len(unavailable) == 1:
+                unavailable_bit = '{} has not been imported, since it is not ' \
+                                  'available for the package version you ' \
+                                  'use. If you wish to use the metric, you ' \
+                                  'should change the package version, and try' \
+                                  ' to import again.'.format(unavailable[0])
+            else:
+                unavailable_bit = "{} have not been imported, since they are " \
+                                  "not available for the packages' versions " \
+                                  "you use. If you wish to use the metrics, " \
+                                  "you should change the packages' versions, " \
+                                  "and try to import again.".format(
+                                    ', '.join(ua for ua in unavailable)
+                )
 
         data = dict()
-        if message_bit and error_bit:
-            data = {
+        if message_bit:
+            data.update({
                 'imported':
-                    '{} been successfully imported.'.format(message_bit),
-                'err':
-                    '{} not been imported, since {} in the database.'.format(
-                        error_bit, error_bit2
-                    )
-            }
-        elif message_bit and not error_bit:
-            data = {
-                'imported':
-                    '{} been successfully imported.'.format(message_bit),
-            }
-        elif not message_bit and error_bit:
-            data = {
-                'err':
-                    '{} not been imported, since {} in the database.'.format(
-                        error_bit, error_bit2
-                    )
-            }
+                    '{} been successfully imported.'.format(message_bit)
+            })
 
-        return Response(status=status.HTTP_201_CREATED, data=data)
+        if warn_bit:
+            data.update({
+                'warn': warn_bit
+            })
+
+        if error_bit:
+            data.update({
+                'err':
+                    '{} not been imported since {} in the database.'.format(
+                        error_bit, error_bit2
+                    )
+            })
+
+        if unavailable_bit:
+            data.update({
+                'unavailable': unavailable_bit
+            })
+
+        return Response(status=status.HTTP_200_OK, data=data)
+
+
+class UpdateMetricsVersions(APIView):
+    """
+    We allow tenant users to pick package version they wish to install, and
+    update metrics accordingly.
+    """
+    authentication_classes = (SessionAuthentication,)
+
+    def _handle_metrics(self, name, version, user, dry_run=False, metrics=None):
+        try:
+            package = admin_models.Package.objects.get(
+                name=name, version=version
+            )
+
+            # warning for metrics if there is no metric template history for
+            # metric templates of that name
+            warning_no_tbh = []
+            # metrics deleted because they are not available in the given
+            # package
+            deleted_not_in_package = []
+            # updated metrics
+            updated = []
+            profile_warning = []
+            for metric in poem_models.Metric.objects.all():
+                if metric.probekey and \
+                        metric.probekey.package.name == package.name:
+                    mts_history = \
+                        admin_models.MetricTemplateHistory.objects.filter(
+                            name=metric.name
+                        )
+                    if len(mts_history) > 0:
+                        mts = admin_models.MetricTemplateHistory.objects.filter(
+                            object_id=mts_history[0].object_id
+                        )
+                        metrictemplate = None
+                        for mt in mts:
+                            if mt.probekey.package == package:
+                                metrictemplate = mt
+                                break
+
+                        if metrictemplate:
+                            if not dry_run:
+                                update_metrics(
+                                    metrictemplate, metric.name,
+                                    metric.probekey,
+                                    user=user
+                                )
+                            updated.append(metric.name)
+
+                        else:
+                            if dry_run:
+                                for key, value in metrics.items():
+                                    if metric.name == key:
+                                        if len(value) == 1:
+                                            profile_warning.append(
+                                                'Metric {} is part of {} '
+                                                'metric profile.'.format(
+                                                    metric.name, value[0]
+                                                )
+                                            )
+
+                                        else:
+                                            profile_warning.append(
+                                                'Metric {} is part of {} '
+                                                'metric profiles.'.format(
+                                                    metric.name, ', '.join(
+                                                        value
+                                                    )
+                                                )
+                                            )
+
+                            else:
+                                metric.delete()
+
+                            deleted_not_in_package.append(metric.name)
+
+                    else:
+                        warning_no_tbh.append(metric.name)
+
+            msg = dict()
+            if deleted_not_in_package:
+                if len(deleted_not_in_package) == 1:
+                    subj = 'Metric {}'.format(deleted_not_in_package[0])
+                    verb = 'has'
+                    obj = 'its probe is'
+                else:
+                    subj = 'Metrics {}'.format(
+                        ', '.join(deleted_not_in_package)
+                    )
+                    verb = 'have'
+                    obj = 'their probes are'
+
+                if dry_run:
+                    delete_msg = '{} will be deleted, since {} not part of ' \
+                                 'the chosen package.'.format(subj, obj)
+
+                    if profile_warning:
+                        if len(profile_warning) == 1:
+                            delete_msg += \
+                                ' WARNING: {} ARE YOU SURE YOU WANT TO ' \
+                                'DELETE IT?'.format(
+                                    profile_warning[0]
+                                )
+
+                        else:
+                            delete_msg += \
+                                ' {} ARE YOU SURE YOU WANT TO ' \
+                                'DELETE THEM?'.format(
+                                    ' '.join(profile_warning)
+                                )
+
+                else:
+                    delete_msg = '{} {} been deleted, since {} not part of ' \
+                                 'the chosen package.'.format(subj, verb, obj)
+
+                msg.update({'deleted': delete_msg})
+
+            if warning_no_tbh:
+                if len(warning_no_tbh) == 1:
+                    subj = 'instance of {} has'.format(warning_no_tbh[0])
+
+                else:
+                    subj = 'instances of {} have'.format(
+                        ', '.join(warning_no_tbh)
+                    )
+
+                msg.update(
+                    {
+                        'warning': 'Metric template history {} not been found. '
+                                   'Please contact Administrator.'.format(subj)
+                    }
+                )
+
+            if updated:
+                if len(updated) == 1:
+                    if dry_run:
+                        subj = 'Metric {} will be'.format(updated[0])
+
+                    else:
+                        subj = 'Metric {} has been successfully'.format(
+                            updated[0]
+                        )
+
+                else:
+                    if dry_run:
+                        subj = 'Metrics {} will be'.format(', '.join(updated))
+
+                    else:
+                        subj = 'Metrics {} have been successfully'.format(
+                            ', '.join(updated)
+                        )
+
+                msg.update({'updated': '{} updated.'.format(subj)})
+
+            if dry_run:
+                return msg, status.HTTP_200_OK
+
+            else:
+                return msg, status.HTTP_201_CREATED, deleted_not_in_package
+
+        except admin_models.Package.DoesNotExist:
+            msg = {'detail': 'Package not found.'}
+            if dry_run:
+                return msg, status.HTTP_404_NOT_FOUND
+
+            else:
+                return msg, status.HTTP_404_NOT_FOUND, []
+
+    def get(self, request, pkg):
+        version = pkg.split('-')[-1]
+        name = pkg.split(version)[0][0:-1]
+
+        try:
+            metrics_in_profiles = get_metrics_in_profiles(
+                request.tenant.schema_name
+            )
+
+        except requests.exceptions.HTTPError as e:
+            try:
+                json_msg = e.response.json()
+                msg = 'Error fetching WEB API data: {} {}: {}'.format(
+                    e.response.status_code, e.response.reason,
+                    json_msg['status']['details']
+                )
+
+            except json.decoder.JSONDecodeError:
+                msg = 'Error fetching WEB API data: {} {}'.format(
+                    e.response.status_code, e.response.reason
+                )
+
+            return Response({'detail': msg}, status=e.response.status_code)
+
+        except Exception as e:
+            msg = str(e)
+            return Response({'detail': msg}, status=status.HTTP_404_NOT_FOUND)
+
+        msg, status_code = self._handle_metrics(
+            name=name, version=version, user=request.user.username,
+            dry_run=True, metrics=metrics_in_profiles
+        )
+
+        return Response(msg, status=status_code)
+
+    def put(self, request):
+        msg, status_code, deleted = self._handle_metrics(
+            name=request.data['name'], version=request.data['version'],
+            user=request.user.username
+        )
+
+        warn_msg = []
+        if deleted:
+            try:
+                metrics_in_profiles = get_metrics_in_profiles(
+                    request.tenant.schema_name
+                )
+
+            except Exception:
+                warn_msg.append(
+                    'Unable to get data on metrics and metric profiles. '
+                    'Please remove deleted metrics from metric profiles '
+                    'manually.'
+                )
+
+            else:
+                profiles = dict()
+                for metric in deleted:
+                    for key, value in metrics_in_profiles.items():
+                        if key == metric:
+                            for p in value:
+                                if p in profiles:
+                                    profiles.update({p: profiles[p] + [key]})
+                                else:
+                                    profiles.update({p: [key]})
+
+                if profiles:
+                    for key, value in profiles.items():
+                        try:
+                            delete_metrics_from_profile(key, value)
+
+                        except Exception:
+                            if len(value) > 1:
+                                message = \
+                                    'Error trying to remove metrics {} from '\
+                                    'profile {}.'.format(', '.join(value), key)
+                                pronoun = 'them'
+                            else:
+                                message = \
+                                    'Error trying to remove metric {} from '\
+                                    'profile {}.'.format(value[0], key)
+                                pronoun = 'it'
+
+                            warn_msg.append(
+                                message + ' Please remove {} manually.'.format(
+                                    pronoun
+                                )
+                            )
+                            continue
+
+        if warn_msg:
+            msg['deleted'] += ' WARNING: ' + ' '.join(warn_msg)
+
+        return Response(msg, status=status_code)
