@@ -13409,10 +13409,16 @@ class BulkDeleteMetricTemplatesTests(TenantTestCase):
         response = self.view(request)
         self.assertEqual(
             response.data,
-            {"error": "test: Error fetching WEB API data: API key not found"}
+            {
+                "info": "Metric templates argo.AMS-Check, test.AMS-Check "
+                        "successfully deleted.",
+                "warning": "test: Metrics are not removed from metric "
+                           "profiles. Unable to get metric profiles: "
+                           "Error fetching WEB API data: API key not found"
+            }
         )
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 4)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 2)
         metric_history = poem_models.TenantHistory.objects.filter(
             object_id=self.metric.id
         )
@@ -13432,8 +13438,16 @@ class BulkDeleteMetricTemplatesTests(TenantTestCase):
         request = self.factory.post(self.url, data, format='json')
         force_authenticate(request, user=self.user)
         response = self.view(request)
-        self.assertEqual(response.data, {"error": "test: Exception"})
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data,
+            {
+                "info": "Metric templates argo.AMS-Check, test.AMS-Check "
+                        "successfully deleted.",
+                "warning": "test: Metrics are not removed from metric profiles."
+                           " Unable to get metric profiles: Exception"
+            }
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         metric_history = poem_models.TenantHistory.objects.filter(
             object_id=self.metric.id
         )

@@ -416,13 +416,17 @@ class BulkDeleteMetricTemplates(APIView):
         schemas.remove(get_public_schema_name())
 
         warning_message = []
-        error_message = []
         for schema in schemas:
             with schema_context(schema):
                 try:
                     mip = get_metrics_in_profiles(schema)
                 except Exception as e:
-                    error_message.append('{}: {}'.format(schema, str(e)))
+                    warning_message.append(
+                        '{}: Metrics are not removed from metric profiles. '
+                        'Unable to get metric profiles: {}'.format(
+                            schema, str(e)
+                        )
+                    )
                     continue
 
                 inter = set(metrictemplates).intersection(set(list(mip.keys())))
@@ -464,36 +468,28 @@ class BulkDeleteMetricTemplates(APIView):
                             )
 
         response_message = dict()
-        if error_message:
-            response_message.update({'error': '; '.join(error_message)})
-            return Response(
-                response_message,
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        mt = admin_models.MetricTemplate.objects.filter(
+            name__in=metrictemplates
+        )
+
+        mt.delete()
+
+        if len(metrictemplates) > 1:
+            msg = 'Metric templates {}'.format(', '.join(metrictemplates))
 
         else:
-            mt = admin_models.MetricTemplate.objects.filter(
-                name__in=metrictemplates
-            )
+            msg = 'Metric template {}'.format(metrictemplates[0])
 
-            mt.delete()
+        response_message.update({
+            'info': '{} successfully deleted.'.format(msg)
+        })
 
-            if len(metrictemplates) > 1:
-                msg = 'Metric templates {}'.format(', '.join(metrictemplates))
+        if warning_message:
+            response_message.update({'warning': '; '.join(warning_message)})
 
-            else:
-                msg = 'Metric template {}'.format(metrictemplates[0])
-
-            response_message.update({
-                'info': '{} successfully deleted.'.format(msg)
-            })
-
-            if warning_message:
-                response_message.update({'warning': '; '.join(warning_message)})
-
-            return Response(
-                data=response_message, status=status.HTTP_200_OK
-            )
+        return Response(
+            data=response_message, status=status.HTTP_200_OK
+        )
 
 
 class ListPublicMetricTemplatesForProbeVersion(ListMetricTemplatesForProbeVersion):
