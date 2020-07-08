@@ -409,16 +409,17 @@ export function ListOfMetrics(type, imp=false) {
       let selectedMetrics = this.state.selected;
       // get only those metrics whose value is true
       let mt = Object.keys(selectedMetrics).filter(k => selectedMetrics[k]);
-      let msg = undefined;
-      if (mt.length > 1)
-        msg = `Are you sure you want to delete metric templates ${mt.join(', ')}?`;
-      else
-        msg = `Are you sure you want to delete metric template ${mt[0]}?`;
+      if (mt.length > 0 ) {
+        let msg = `Are you sure you want to delete metric template${mt.length > 1 ? 's' : ''} ${mt.join(', ')}?`
+        let title = `Delete metric template${mt.length > 1 ? 's' : ''}`;
 
-      let title = `Delete metric template${mt.length > 1 ? 's' : ''}`;
-
-      this.toggleAreYouSureSetModal(msg, title,
-        () => this.bulkDeleteMetrics(mt));
+        this.toggleAreYouSureSetModal(msg, title,
+          () => this.bulkDeleteMetrics(mt));
+      } else
+        NotifyError({
+          msg: 'No metric templates were selected!',
+          title: 'Error'
+        });
     };
 
     async importMetrics() {
@@ -449,32 +450,25 @@ export function ListOfMetrics(type, imp=false) {
 
     async bulkDeleteMetrics(mt) {
       let refreshed_metrics = this.state.list_metric;
-      if (mt.length > 0) {
-        let response = await this.backend.bulkDeleteMetrics({'metrictemplates': mt});
-        let json = await response.json();
-        if (response.ok) {
-          refreshed_metrics = refreshed_metrics.filter(m => !mt.includes(m.name));
-          if ('info' in json)
-            NotifyOk({msg: json.info, title: 'Deleted'});
+      let response = await this.backend.bulkDeleteMetrics({'metrictemplates': mt});
+      let json = await response.json();
+      if (response.ok) {
+        refreshed_metrics = refreshed_metrics.filter(m => !mt.includes(m.name));
+        if ('info' in json)
+          NotifyOk({msg: json.info, title: 'Deleted'});
 
-          if ('warning' in json)
-            NotifyWarn({msg: json.warn, title: 'Deleted'});
+        if ('warning' in json)
+          NotifyWarn({msg: json.warn, title: 'Deleted'});
 
-          this.setState({
-            list_metric: refreshed_metrics,
-            selectAll: 0
-          });
-
-        } else
-          NotifyError({
-            msg: `Error deleting metric template${mt.length > 0 ? 's' : ''}`,
-            title: `Error: ${response.status} ${response.statusText}`
-          });
+        this.setState({
+          list_metric: refreshed_metrics,
+          selectAll: 0
+        });
 
       } else
         NotifyError({
-          msg: 'No metric templates were selected!',
-          title: 'Error'
+          msg: `Error deleting metric template${mt.length > 0 ? 's' : ''}`,
+          title: `Error: ${response.status} ${response.statusText}`
         });
     };
 
