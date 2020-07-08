@@ -1,6 +1,5 @@
 from setuptools import setup, find_packages
 import os
-import sys
 
 NAME = 'poem'
 
@@ -17,7 +16,7 @@ def get_files(install_prefix, directory):
 
 
 setup(name=NAME,
-      version='3.3.0',
+      version='3.3.1',
       description='Reports, Profiles, Probes and Metric Configuration Management (POEM) for ARGO Monitoring framework.',
       author='SRCE',
       author_email='dvrcic@srce.hr, kzailac@srce.hr',
