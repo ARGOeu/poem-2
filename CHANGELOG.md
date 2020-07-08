@@ -1,5 +1,25 @@
 # Changelog
 
+## [3.3.1] - 2020-07-08
+
+### Added
+* ARGO-2464 Add clone functionality to Package page
+* ARGO-2469 List of probes at the end of package page should show list of probes for the given package version
+* ARGO-2488 Build of development container environment part of repository
+
+### Fixed
+* ARGO-2500 Succesive delete of metric profile tuples starting from first one is stopped
+* ARGO-2481 Metric profile side effect value changes
+* ARGO-2480 Metric profile ends with empty tuples
+* ARGO-2465 Fix 'Select all' button on 'Import metric template' page
+* ARGO-2478 Error if probe has no associated metrics
+
+### Changed
+* ARGO-2275 Simplify package version management on tenant level
+* ARGO-2477 Remove OS version from name in YUM repo page
+* ARGO-2483 Remove SPMT/AGORA
+* ARGO-2487 Remove hard coded WEB-API devel from /repos call
+
 ## [3.3.0] - 2020-06-09
 ### Added
 * ARGO-2398 Create set of group of resources when creating new tenant
