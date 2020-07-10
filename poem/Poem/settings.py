@@ -95,6 +95,7 @@ SHARED_APPS = (
     'rest_auth',
     'Poem.users',
     'Poem.poem_super_admin',
+    'Poem.api',
 )
 
 TENANT_APPS = (
