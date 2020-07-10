@@ -8,6 +8,14 @@ Metric templates page is accessible from the menu on the left side. The page is 
 
 Metric templates may be filtered by name, probe, and tag (active or passive). By clicking on the metric template name, user can access particular metric template page. It is also possible to access particular probe version by clicking on its name.
 
+There is also a feature to delete multiple metric templates at once. For that, user may select metrics (s)he wishes to delete from POEM, and click on **Delete** button (shown in figure below). 
+
+![SuperAdmin metric template bulk delete](figures/superadmin_metric_template_bulk_delete.png)
+
+User will then be asked if (s)he is sure (s)he wants to delete selected metrics. Once the user confirms his/her selection, metric templates and their histories are deleted. Also, metrics imported to tenants and their histories are also deleted, and they are removed from metric profiles. User will be informed of successful deletion of metric templates (figure below). Also, in case of any error, user will be informed the same way.
+
+![SuperAdmin metric template deleted](figures/superadmin_metric_template_deleted.png)
+
 ## Metric template details
 
 Depending on metric template type, pages for particular metric templates are a bit different. Active metric template must have a probe assigned to it, while passive metric template does not.
