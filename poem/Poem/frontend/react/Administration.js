@@ -99,6 +99,9 @@ export const SuperAdminAdministration = (props) =>
       </CardHeader>
       <CardBody>
         <Row className="p-1 align-items-center">
+          <Icon i="tenants"/> <Link to={"/ui/tenants"}>Tenants</Link>
+        </Row>
+        <Row className="p-1 align-items-center">
           <Icon i="yumrepos"/> <Link className='pl-1' to={'/ui/yumrepos'}>YUM repos</Link>
         </Row>
         <Row className="p-1 align-items-center">
@@ -113,7 +116,7 @@ export const SuperAdminAdministration = (props) =>
       </CardBody>
     </Card>
     <Card className='mb-2'>
-      <CardHeader className="mt-2 p-2 text-light text-uppercase rounded" style={{'backgroundColor': "#416090"}}>
+      <CardHeader className="mt-1 p-2 text-light text-uppercase rounded" style={{'backgroundColor': "#416090"}}>
         Authentication and authorization
       </CardHeader>
       <CardBody>
@@ -123,7 +126,7 @@ export const SuperAdminAdministration = (props) =>
       </CardBody>
     </Card>
     <Card>
-      <CardHeader className="mt-2 p-2 text-light text-uppercase rounded" style={{'backgroundColor': "#416090"}}>
+      <CardHeader className="mt-1 p-2 text-light text-uppercase rounded" style={{'backgroundColor': "#416090"}}>
         API key permissions
       </CardHeader>
       <CardBody>
