@@ -157,16 +157,19 @@ export class TenantChange extends Component {
     else if (!loading && tenant) {
       return (
         <BaseArgoView
-          resourcename='tenant'
+          resourcename='Tenant details'
           location={this.location}
           history={false}
+          infoview={true}
         >
           <Formik
             initialValues = {{
               name: tenant.name,
               schema: tenant.schema_name,
               url: tenant.domain_url,
-              created_on: tenant.created_on
+              created_on: tenant.created_on,
+              nr_metrics: tenant.nr_metrics,
+              nr_probes: tenant.nr_probes
             }}
             render = {props => (
               <Form>
@@ -224,6 +227,37 @@ export class TenantChange extends Component {
                           type='text'
                           name='created_on'
                           id='created_on'
+                          readOnly
+                          className='form-control'
+                        />
+                      </InputGroup>
+                    </Col>
+                  </Row>
+                </FormGroup>
+                <FormGroup>
+                  <h4 className="mt-2 p-1 pl-3 text-light text-uppercase rounded" style={{"backgroundColor": "#416090"}}>{`${tenant.schema_name == 'public' ? 'Resources available in POEM' : 'Resources used by tenant'}`}</h4>
+                  <Row>
+                    <Col md={4}>
+                      <InputGroup>
+                        <InputGroupAddon addonType='prepend'>{`Number of metric${tenant.schema_name == 'public' ? ' templates' : 's'}`}</InputGroupAddon>
+                        <Field
+                          type='text'
+                          name='nr_metrics'
+                          id='nr_metrics'
+                          readOnly
+                          className='form-control'
+                        />
+                      </InputGroup>
+                    </Col>
+                  </Row>
+                  <Row>
+                    <Col md={4}>
+                      <InputGroup>
+                        <InputGroupAddon addonType='prepend'>Number of probes</InputGroupAddon>
+                        <Field
+                          type='text'
+                          name='nr_probes'
+                          id='nr_probes'
                           readOnly
                           className='form-control'
                         />
