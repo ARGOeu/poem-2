@@ -250,7 +250,7 @@ export class TenantChange extends Component {
                       </InputGroup>
                     </Col>
                   </Row>
-                  <Row>
+                  <Row className='mt-2'>
                     <Col md={4}>
                       <InputGroup>
                         <InputGroupAddon addonType='prepend'>Number of probes</InputGroupAddon>
