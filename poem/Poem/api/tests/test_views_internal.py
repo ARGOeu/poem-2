@@ -13589,7 +13589,8 @@ class ListTenantsTests(TenantTestCase):
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
-    def test_get_all_tenants(self):
+    @patch('Poem.api.internal_views.tenants.get_tenant_resources')
+    def test_get_all_tenants(self, mock_resources):
         request = self.factory.get(self.url)
         force_authenticate(request, user=self.user)
         response = self.view(request)
@@ -13630,8 +13631,11 @@ class ListTenantsTests(TenantTestCase):
                 }
             ]
         )
+        self.assertFalse(mock_resources.called)
 
-    def test_get_tenant_by_name(self):
+    @patch('Poem.api.internal_views.tenants.get_tenant_resources')
+    def test_get_tenant_by_name(self, mock_resources):
+        mock_resources.return_value = {'metrics': 24, 'probes': 15}
         request = self.factory.get(self.url + 'TEST1')
         force_authenticate(request, user=self.user)
         response = self.view(request, 'TEST1')
@@ -13643,11 +13647,16 @@ class ListTenantsTests(TenantTestCase):
                 'schema_name': 'test1',
                 'created_on': datetime.date.strftime(
                     self.tenant1.created_on, '%Y-%m-%d'
-                )
+                ),
+                'nr_metrics': 24,
+                'nr_probes': 15
             }
         )
+        mock_resources.assert_called_once_with('test1')
 
-    def test_get_public_schema_tenant_by_name(self):
+    @patch('Poem.api.internal_views.tenants.get_tenant_resources')
+    def test_get_public_schema_tenant_by_name(self, mock_resources):
+        mock_resources.return_value = {'metric_templates': 354, 'probes': 112}
         request = self.factory.get(self.url + 'SuperPOEM_Tenant')
         force_authenticate(request, user=self.user)
         response = self.view(request, 'SuperPOEM_Tenant')
@@ -13659,16 +13668,21 @@ class ListTenantsTests(TenantTestCase):
                 'schema_name': get_public_schema_name(),
                 'created_on': datetime.date.strftime(
                     self.tenant1.created_on, '%Y-%m-%d'
-                )
+                ),
+                'nr_metrics': 354,
+                'nr_probes': 112
             }
         )
+        mock_resources.assert_called_once_with(get_public_schema_name())
 
-    def test_get_tenant_by_nonexisting_name(self):
+    @patch('Poem.api.internal_views.tenants.get_tenant_resources')
+    def test_get_tenant_by_nonexisting_name(self, mock_resources):
         request = self.factory.get(self.url + 'nonexisting')
         force_authenticate(request, user=self.user)
         response = self.view(request, 'nonexisting')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(response.data['detail'], 'Tenant not found.')
+        self.assertFalse(mock_resources.called)
 
 
 class BasicResourceInfoTests(TenantTestCase):
