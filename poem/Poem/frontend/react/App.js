@@ -48,7 +48,7 @@ import Cookies from 'universal-cookie';
 
 import './App.css';
 import { PackageList, PackageChange, PackageClone } from './Package';
-import { TenantList } from './Tenants';
+import { TenantList, TenantChange } from './Tenants';
 
 
 const NavigationBarWithRouter = withRouter(NavigationBar);
@@ -327,6 +327,9 @@ const SuperAdminRouteSwitch = ({props}) => (
       render={props => <APIKeyChange {...props} />}
     />
     <Route exact path="/ui/tenants" component={TenantList}/>
+    <Route exact path="/ui/tenants/:name"
+      render={props => <TenantChange {...props} />}
+    />
     <Route component={NotFound} />
   </Switch>
 )
