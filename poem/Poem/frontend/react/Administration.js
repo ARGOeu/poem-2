@@ -122,5 +122,15 @@ export const SuperAdminAdministration = (props) =>
         </Row>
       </CardBody>
     </Card>
+    <Card>
+      <CardHeader className="mt-2 p-2 text-light text-uppercase rounded" style={{'backgroundColor': "#416090"}}>
+        API key permissions
+      </CardHeader>
+      <CardBody>
+        <Row className="p-1 align-items-center">
+          <Icon i="apikey"/> <Link to={'/ui/administration/apikey'}>API keys</Link>
+        </Row>
+      </CardBody>
+    </Card>
   </Form>
 )

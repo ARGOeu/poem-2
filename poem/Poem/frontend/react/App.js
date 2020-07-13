@@ -318,6 +318,13 @@ const SuperAdminRouteSwitch = ({props}) => (
     <Route exact path="/ui/administration/users/:user_name"
       render={props => <SuperAdminUserChange {...props}/>}
     />
+    <Route exact path="/ui/administration/apikey" component={APIKeyList} />
+    <Route exact path="/ui/administration/apikey/add"
+      render={props => <APIKeyChange {...props} addview={true}/>}
+    />
+    <Route exact path="/ui/administration/apikey/:name"
+      render={props => <APIKeyChange {...props} />}
+    />
     <Route component={NotFound} />
   </Switch>
 )
