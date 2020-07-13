@@ -13552,3 +13552,120 @@ class BulkDeleteMetricTemplatesTests(TenantTestCase):
             0
         )
         self.assertFalse(mock_delete.called)
+
+
+class ListTenantsTests(TenantTestCase):
+    def setUp(self) -> None:
+        self.factory = TenantRequestFactory(self.tenant)
+        self.view = views.ListTenants.as_view()
+        self.url = '/api/v2/internal/tenants/'
+        self.user = CustUser.objects.create_user(username='testuser')
+
+        with schema_context(get_public_schema_name()):
+            self.tenant1 = Tenant(
+                name='TEST1', schema_name='test1',
+                domain_url='test1.domain.url'
+            )
+            self.tenant1.auto_create_schema = False
+
+            self.tenant2 = Tenant(
+                name='TEST2', schema_name='test2',
+                domain_url='test2.domain.url'
+            )
+            self.tenant2.auto_create_schema = False
+
+            self.tenant3 = Tenant(
+                name='all', schema_name=get_public_schema_name(),
+                domain_url='domain.url'
+            )
+            self.tenant3.auto_create_schema = False
+
+            self.tenant1.save()
+            self.tenant2.save()
+            self.tenant3.save()
+
+    def test_get_tenants_no_auth(self):
+        request = self.factory.get(self.url)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_get_all_tenants(self):
+        request = self.factory.get(self.url)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(
+            response.data,
+            [
+                {
+                    'name': self.tenant.name,
+                    'schema_name': self.tenant.schema_name,
+                    'domain_url': self.tenant.domain_url,
+                    'created_on': datetime.date.strftime(
+                        self.tenant.created_on, '%Y-%m-%d'
+                    )
+                },
+                {
+                    'name': 'SuperPOEM Tenant',
+                    'schema_name': get_public_schema_name(),
+                    'domain_url': 'domain.url',
+                    'created_on': datetime.date.strftime(
+                        self.tenant3.created_on, '%Y-%m-%d'
+                    )
+                },
+                {
+                    'name': 'TEST1',
+                    'domain_url': 'test1.domain.url',
+                    'schema_name': 'test1',
+                    'created_on': datetime.date.strftime(
+                        self.tenant1.created_on, '%Y-%m-%d'
+                    )
+                },
+                {
+                    'name': 'TEST2',
+                    'domain_url': 'test2.domain.url',
+                    'schema_name': 'test2',
+                    'created_on': datetime.date.strftime(
+                        self.tenant2.created_on, '%Y-%m-%d'
+                    )
+                }
+            ]
+        )
+
+    def test_get_tenant_by_name(self):
+        request = self.factory.get(self.url + 'TEST1')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'TEST1')
+        self.assertEqual(
+            response.data,
+            {
+                'name': 'TEST1',
+                'domain_url': 'test1.domain.url',
+                'schema_name': 'test1',
+                'created_on': datetime.date.strftime(
+                    self.tenant1.created_on, '%Y-%m-%d'
+                )
+            }
+        )
+
+    def test_get_public_schema_tenant_by_name(self):
+        request = self.factory.get(self.url + 'SuperPOEM_Tenant')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'SuperPOEM_Tenant')
+        self.assertEqual(
+            response.data,
+            {
+                'name': 'SuperPOEM Tenant',
+                'domain_url': 'domain.url',
+                'schema_name': get_public_schema_name(),
+                'created_on': datetime.date.strftime(
+                    self.tenant1.created_on, '%Y-%m-%d'
+                )
+            }
+        )
+
+    def test_get_tenant_by_nonexisting_name(self):
+        request = self.factory.get(self.url + 'nonexisting')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'nonexisting')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data['detail'], 'Tenant not found.')
