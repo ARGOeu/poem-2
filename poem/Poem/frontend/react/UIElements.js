@@ -664,19 +664,20 @@ export const BaseArgoView = ({resourcename='', location=undefined,
                     <h2 className='ml-3 mt-1 mb-4'>{`Select ${resourcename} for details`}</h2>
                 }
                 {
-                  addnew &&
-                    addperm ?
+                  (addnew && addperm) &&
                       <Link className="btn btn-secondary" to={location.pathname + "/add"} role="button">Add</Link>
-                    :
-                      <Button
-                        className='btn btn-secondary'
-                        onClick={() => NotifyError({
-                          title: 'Not allowed',
-                          msg: `You do not have permission to add ${resourcename}.`
-                        })}
-                      >
-                        Add
-                      </Button>
+                }
+                {
+                  (addnew && !addperm) &&
+                    <Button
+                      className='btn btn-secondary'
+                      onClick={() => NotifyError({
+                        title: 'Not allowed',
+                        msg: `You do not have permission to add ${resourcename}.`
+                      })}
+                    >
+                      Add
+                    </Button>
                 }
               </React.Fragment>
             :
