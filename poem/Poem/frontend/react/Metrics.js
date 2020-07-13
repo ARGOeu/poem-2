@@ -13,7 +13,8 @@ import {
   NotifyWarn,
   NotifyError,
   NotifyInfo,
-  ErrorComponent
+  ErrorComponent,
+  ModalAreYouSure
  } from './UIElements';
 import ReactTable from 'react-table';
 import { Formik, Form, Field, FieldArray } from 'formik';
@@ -29,7 +30,8 @@ import {
   PopoverBody,
   PopoverHeader,
   InputGroup,
-  InputGroupAddon
+  InputGroupAddon,
+  ButtonToolbar
 } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faInfoCircle, faMinus, faPlus } from '@fortawesome/free-solid-svg-icons';
@@ -291,7 +293,8 @@ export function ListOfMetrics(type, imp=false) {
     constructor(props) {
       super(props);
 
-      this.location = props.location
+      this.location = props.location;
+      this.history = props.history;
 
       if (type === 'metric') {
         this.state = {
@@ -320,6 +323,10 @@ export function ListOfMetrics(type, imp=false) {
           selected: {},
           selectAll: 0,
           userDetails: undefined,
+          areYouSureModal: false,
+          modalFunc: undefined,
+          modalTitle: undefined,
+          modalMsg: undefined,
           error: null
         }
       }
@@ -329,6 +336,10 @@ export function ListOfMetrics(type, imp=false) {
       this.doFilter = this.doFilter.bind(this);
       this.toggleRow = this.toggleRow.bind(this);
       this.importMetrics = this.importMetrics.bind(this);
+      this.bulkDeleteMetrics = this.bulkDeleteMetrics.bind(this);
+      this.toggleAreYouSure = this.toggleAreYouSure.bind(this);
+      this.toggleAreYouSureSetModal = this.toggleAreYouSureSetModal.bind(this);
+      this.onDelete = this.onDelete.bind(this);
     }
 
     doFilter(list_metric, field, filter) {
@@ -380,6 +391,37 @@ export function ListOfMetrics(type, imp=false) {
       });
     }
 
+    toggleAreYouSure() {
+      this.setState(prevState =>
+        ({areYouSureModal: !prevState.areYouSureModal}));
+    };
+
+    toggleAreYouSureSetModal(msg, title, onyes) {
+      this.setState(prevState =>
+        ({areYouSureModal: !prevState.areYouSureModal,
+          modalFunc: onyes,
+          modalMsg: msg,
+          modalTitle: title,
+        }));
+    }
+
+    onDelete() {
+      let selectedMetrics = this.state.selected;
+      // get only those metrics whose value is true
+      let mt = Object.keys(selectedMetrics).filter(k => selectedMetrics[k]);
+      if (mt.length > 0 ) {
+        let msg = `Are you sure you want to delete metric template${mt.length > 1 ? 's' : ''} ${mt.join(', ')}?`
+        let title = `Delete metric template${mt.length > 1 ? 's' : ''}`;
+
+        this.toggleAreYouSureSetModal(msg, title,
+          () => this.bulkDeleteMetrics(mt));
+      } else
+        NotifyError({
+          msg: 'No metric templates were selected!',
+          title: 'Error'
+        });
+    };
+
     async importMetrics() {
       let selectedMetrics = this.state.selected;
       // get only those metrics whose value is true
@@ -405,6 +447,30 @@ export function ListOfMetrics(type, imp=false) {
           title: 'Error'});
       };
     }
+
+    async bulkDeleteMetrics(mt) {
+      let refreshed_metrics = this.state.list_metric;
+      let response = await this.backend.bulkDeleteMetrics({'metrictemplates': mt});
+      let json = await response.json();
+      if (response.ok) {
+        refreshed_metrics = refreshed_metrics.filter(m => !mt.includes(m.name));
+        if ('info' in json)
+          NotifyOk({msg: json.info, title: 'Deleted'});
+
+        if ('warning' in json)
+          NotifyWarn({msg: json.warn, title: 'Deleted'});
+
+        this.setState({
+          list_metric: refreshed_metrics,
+          selectAll: 0
+        });
+
+      } else
+        NotifyError({
+          msg: `Error deleting metric template${mt.length > 0 ? 's' : ''}`,
+          title: `Error: ${response.status} ${response.statusText}`
+        });
+    };
 
     async componentDidMount() {
       this.setState({loading: true});
@@ -570,7 +636,7 @@ export function ListOfMetrics(type, imp=false) {
         }
       ];
 
-      if (imp && this.state.userDetails && this.state.userDetails.is_superuser) {
+      if (type == 'metrictemplate' && this.state.userDetails && this.state.userDetails.is_superuser) {
         columns.splice(
           0,
           0,
@@ -589,7 +655,7 @@ export function ListOfMetrics(type, imp=false) {
                 </div>
               );
             },
-            Header: 'Select all',
+            Header: `${imp ? 'Select all' : 'Delete'}`,
             Filter: (
               <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
                 <input
@@ -753,22 +819,42 @@ export function ListOfMetrics(type, imp=false) {
             )
           else
             return (
-              <BaseArgoView
-                resourcename='metric template'
-                location={this.location}
-                listview={!imp}
-                importlistview={imp}
-                addnew={true}
-              >
-                <ReactTable
-                  data={list_metric}
-                  columns={columns}
-                  className='-highlight'
-                  defaultPageSize={50}
-                  rowsText='metrics'
-                  getTheadThProps={() => ({className: 'table-active font-weight-bold p-2'})}
+              <>
+                <ModalAreYouSure
+                  isOpen={this.state.areYouSureModal}
+                  toggle={this.toggleAreYouSure}
+                  title={this.state.modalTitle}
+                  msg={this.state.modalMsg}
+                  onYes={this.state.modalFunc}
                 />
-              </BaseArgoView>
+                <div className="d-flex align-items-center justify-content-between">
+                  <h2 className="ml-3 mt-1 mb-4">{'Metric templates'}</h2>
+                  {
+                    <ButtonToolbar>
+                      <Link className={`btn btn-secondary ${imp ? '' : 'mr-2'}`} to={this.location.pathname + '/add'} role='button'>Add</Link>
+                      {
+                        !imp &&
+                          <Button
+                            className='btn btn-secondary'
+                            onClick={() => this.onDelete()}
+                          >
+                            Delete
+                          </Button>
+                      }
+                    </ButtonToolbar>
+                  }
+                </div>
+                <div id='argo-contentwrap' className='ml-2 mb-2 mt-2 p-3 border rounded'>
+                  <ReactTable
+                    data={list_metric}
+                    columns={columns}
+                    className='-highlight'
+                    defaultPageSize={50}
+                    rowsText='metrics'
+                    getTheadThProps={() => ({className: 'table-active font-weight-bold p-2'})}
+                  />
+                </div>
+              </>
             )
         }
       }
