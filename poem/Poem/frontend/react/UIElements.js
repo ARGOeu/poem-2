@@ -57,7 +57,8 @@ import {
   faExclamation,
   faSquare,
   faUser,
-  faBox} from '@fortawesome/free-solid-svg-icons';
+  faBox,
+  faIdBadge} from '@fortawesome/free-solid-svg-icons';
 import { NotificationManager } from 'react-notifications';
 import { Field } from 'formik';
 import Autocomplete from 'react-autocomplete';
@@ -68,7 +69,7 @@ import ReactDiffViewer from 'react-diff-viewer';
 var list_pages = ['administration', 'probes',
                   'metrics', 'metricprofiles', 'aggregationprofiles',
                   'thresholdsprofiles'];
-var admin_list_pages = ['administration', 'yumrepos', 'packages',
+var admin_list_pages = ['administration', 'tenants', 'yumrepos', 'packages',
                         'probes', 'metrictemplates'];
 
 var link_title = new Map();
@@ -93,6 +94,7 @@ link_title.set('groupofthresholdsprofiles', 'Groups of thresholds profiles');
 link_title.set('public_thresholdsprofiles', 'Thresholds profiles');
 link_title.set('thresholdsprofiles', 'Thresholds profiles');
 link_title.set('packages', 'Packages');
+link_title.set('tenants', 'Tenants');
 
 export const Icon = props =>
 {
@@ -110,6 +112,7 @@ export const Icon = props =>
   link_icon.set('thresholdsprofiles', faExclamation);
   link_icon.set('users', faUser);
   link_icon.set('packages', faBox);
+  link_icon.set('tenants', faIdBadge);
 
   if (props.i.startsWith('groupof'))
     return (
