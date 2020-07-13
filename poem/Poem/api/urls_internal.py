@@ -78,4 +78,5 @@ urlpatterns = [
     path('yumrepos/', views_internal.ListYumRepos.as_view(), name='yumrepos'),
     path('yumrepos/<str:name>/<str:tag>', views_internal.ListYumRepos.as_view(), name='yumrepos'),
     path('tenants/', views_internal.ListTenants.as_view(), name='tenants'),
+    path('tenants/<str:name>', views_internal.ListTenants.as_view(), name='tenants'),
 ]
