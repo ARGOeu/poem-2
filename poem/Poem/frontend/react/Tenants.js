@@ -13,7 +13,9 @@ import {
   CardHeader,
   CardBody,
   CardText,
-  CardGroup
+  CardGroup,
+  CardFooter,
+  Badge
 } from 'reactstrap';
 
 
@@ -79,6 +81,20 @@ export class TenantList extends Component {
                       <b>POEM url:</b> {list_tenants[i + j].domain_url}
                     </CardText>
                   </CardBody>
+                  <CardFooter>
+                    <div className='mb-1'>
+                      <Badge color='info' className='mr-2'>
+                        {`Metric${list_tenants[i + j].schema_name == 'public' ? ' templates ' : 's '
+                        }`}
+                        <Badge style={{fontSize: '10pt'}} color='light'>{list_tenants[i + j].nr_metrics}</Badge>
+                      </Badge>
+                    </div>
+                    <div>
+                      <Badge color='success'>
+                        Probes <Badge style={{fontSize: '10pt'}} color='light'>{list_tenants[i + j].nr_probes}</Badge>
+                      </Badge>
+                    </div>
+                  </CardFooter>
                 </Card>
               )
           }
