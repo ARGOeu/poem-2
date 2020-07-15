@@ -234,37 +234,6 @@ export class TenantChange extends Component {
                     </Col>
                   </Row>
                 </FormGroup>
-                <FormGroup>
-                  <h4 className="mt-2 p-1 pl-3 text-light text-uppercase rounded" style={{"backgroundColor": "#416090"}}>{`${tenant.schema_name == 'public' ? 'Resources available in POEM' : 'Resources used by tenant'}`}</h4>
-                  <Row>
-                    <Col md={4}>
-                      <InputGroup>
-                        <InputGroupAddon addonType='prepend'>{`Number of metric${tenant.schema_name == 'public' ? ' templates' : 's'}`}</InputGroupAddon>
-                        <Field
-                          type='text'
-                          name='nr_metrics'
-                          id='nr_metrics'
-                          readOnly
-                          className='form-control'
-                        />
-                      </InputGroup>
-                    </Col>
-                  </Row>
-                  <Row className='mt-2'>
-                    <Col md={4}>
-                      <InputGroup>
-                        <InputGroupAddon addonType='prepend'>Number of probes</InputGroupAddon>
-                        <Field
-                          type='text'
-                          name='nr_probes'
-                          id='nr_probes'
-                          readOnly
-                          className='form-control'
-                        />
-                      </InputGroup>
-                    </Col>
-                  </Row>
-                </FormGroup>
               </Form>
             )}
           />
