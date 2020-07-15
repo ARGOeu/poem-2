@@ -67,7 +67,7 @@ export class TenantList extends Component {
           for (let j = 0; j < 3; j++) {
             if ((i + j) < list_tenants.length)
               cards.push(
-                <Card className='mr-2' key={j + 1}>
+                <Card className='mr-3' key={j + 1}>
                   <CardHeader>
                     <Link  to={`/ui/tenants/${list_tenants[i + j].name.trim().split(' ').join('_')}`}>
                       {list_tenants[i + j].name}
@@ -106,7 +106,7 @@ export class TenantList extends Component {
             group_width = '66.6666%'
 
           groups.push(
-            <CardGroup key={i} className='mb-2' style={{width: group_width}}>
+            <CardGroup key={i} className='mb-3' style={{width: group_width}}>
               {
                 cards.map((card, k) => card)
               }
