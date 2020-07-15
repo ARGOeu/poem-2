@@ -13,54 +13,48 @@ class ListTenants(APIView):
     authentication_classes = (SessionAuthentication,)
 
     def get(self, request, name=None):
+        results = []
         if name:
-            try:
-                if name == 'SuperPOEM_Tenant':
-                    tenant = Tenant.objects.get(
-                        schema_name=get_public_schema_name()
-                    )
-                    tenant_name = 'SuperPOEM Tenant'
-                    metric_key = 'metric_templates'
-                else:
-                    tenant = Tenant.objects.get(name=name)
-                    tenant_name = tenant.name
-                    metric_key = 'metrics'
-
-                data = get_tenant_resources(tenant.schema_name)
-                results = dict(
-                    name=tenant_name,
-                    schema_name=tenant.schema_name,
-                    domain_url=tenant.domain_url,
-                    created_on=datetime.date.strftime(
-                        tenant.created_on, '%Y-%m-%d'
-                    ),
-                    nr_metrics=data[metric_key],
-                    nr_probes=data['probes']
+            if name == 'SuperPOEM_Tenant':
+                tenants = Tenant.objects.filter(
+                    schema_name=get_public_schema_name()
                 )
+            else:
+                tenants = Tenant.objects.filter(name=name)
 
-            except Tenant.DoesNotExist:
+            if len(tenants) == 0:
                 return Response(
                     {'detail': 'Tenant not found.'},
                     status=status.HTTP_404_NOT_FOUND
                 )
 
         else:
-            results = []
             tenants = Tenant.objects.all()
 
-            for tenant in tenants:
-                if tenant.schema_name == get_public_schema_name():
-                    tenant_name = 'SuperPOEM Tenant'
-                else:
-                    tenant_name = tenant.name
+        for tenant in tenants:
+            if tenant.schema_name == get_public_schema_name():
+                tenant_name = 'SuperPOEM Tenant'
+                metric_key = 'metric_templates'
+            else:
+                tenant_name = tenant.name
+                metric_key = 'metrics'
 
-                results.append(dict(
-                    name=tenant_name,
-                    schema_name=tenant.schema_name,
-                    domain_url=tenant.domain_url,
-                    created_on=datetime.date.strftime(tenant.created_on, '%Y-%m-%d')
-                ))
+            data = get_tenant_resources(tenant.schema_name)
+            results.append(dict(
+                name=tenant_name,
+                schema_name=tenant.schema_name,
+                domain_url=tenant.domain_url,
+                created_on=datetime.date.strftime(
+                    tenant.created_on, '%Y-%m-%d'
+                ),
+                nr_metrics=data[metric_key],
+                nr_probes=data['probes']
+            ))
 
+        if name:
+            results = results[0]
+
+        else:
             results = sorted(results, key=lambda k: k['name'].lower())
 
         return Response(results)

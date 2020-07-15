@@ -13554,6 +13554,20 @@ class BulkDeleteMetricTemplatesTests(TenantTestCase):
         self.assertFalse(mock_delete.called)
 
 
+def mock_tenant_resources(*args, **kwargs):
+    if args[0] == 'public':
+        return {'metric_templates': 354, 'probes': 111}
+
+    elif args[0] == 'test1':
+        return {'metrics': 30, 'probes': 10}
+
+    elif args[0] == 'test2':
+        return {'metrics': 50, 'probes': 30}
+
+    else:
+        return {'metrics': 24, 'probes': 15}
+
+
 class ListTenantsTests(TenantTestCase):
     def setUp(self) -> None:
         self.factory = TenantRequestFactory(self.tenant)
@@ -13591,9 +13605,11 @@ class ListTenantsTests(TenantTestCase):
 
     @patch('Poem.api.internal_views.tenants.get_tenant_resources')
     def test_get_all_tenants(self, mock_resources):
+        mock_resources.side_effect = mock_tenant_resources
         request = self.factory.get(self.url)
         force_authenticate(request, user=self.user)
         response = self.view(request)
+        self.assertEqual(mock_resources.call_count, 4)
         self.assertEqual(
             response.data,
             [
@@ -13603,7 +13619,9 @@ class ListTenantsTests(TenantTestCase):
                     'domain_url': self.tenant.domain_url,
                     'created_on': datetime.date.strftime(
                         self.tenant.created_on, '%Y-%m-%d'
-                    )
+                    ),
+                    'nr_metrics': 24,
+                    'nr_probes': 15
                 },
                 {
                     'name': 'SuperPOEM Tenant',
@@ -13611,7 +13629,9 @@ class ListTenantsTests(TenantTestCase):
                     'domain_url': 'domain.url',
                     'created_on': datetime.date.strftime(
                         self.tenant3.created_on, '%Y-%m-%d'
-                    )
+                    ),
+                    'nr_metrics': 354,
+                    'nr_probes': 111
                 },
                 {
                     'name': 'TEST1',
@@ -13619,7 +13639,9 @@ class ListTenantsTests(TenantTestCase):
                     'schema_name': 'test1',
                     'created_on': datetime.date.strftime(
                         self.tenant1.created_on, '%Y-%m-%d'
-                    )
+                    ),
+                    'nr_metrics': 30,
+                    'nr_probes': 10
                 },
                 {
                     'name': 'TEST2',
@@ -13627,11 +13649,12 @@ class ListTenantsTests(TenantTestCase):
                     'schema_name': 'test2',
                     'created_on': datetime.date.strftime(
                         self.tenant2.created_on, '%Y-%m-%d'
-                    )
+                    ),
+                    'nr_metrics': 50,
+                    'nr_probes': 30
                 }
             ]
         )
-        self.assertFalse(mock_resources.called)
 
     @patch('Poem.api.internal_views.tenants.get_tenant_resources')
     def test_get_tenant_by_name(self, mock_resources):
