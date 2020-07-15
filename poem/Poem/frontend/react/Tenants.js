@@ -2,16 +2,18 @@ import React, { Component } from 'react';
 import { Backend } from './DataManager';
 import { Link } from 'react-router-dom';
 import { LoadingAnim, ErrorComponent, BaseArgoView } from './UIElements';
-import ReactTable from 'react-table';
 import { Formik, Form, Field } from 'formik';
 import {
   FormGroup,
   Row,
   Col,
-  FormText,
-  Button,
   InputGroup,
-  InputGroupAddon
+  InputGroupAddon,
+  Card,
+  CardHeader,
+  CardBody,
+  CardText,
+  CardGroup
 } from 'reactstrap';
 
 
@@ -48,34 +50,6 @@ export class TenantList extends Component {
     };
 
     render() {
-      const columns = [
-        {
-          Header: '#',
-          id: 'row',
-          minWidth: 12,
-          Cell: (row) =>
-            <div style={{textAlign: 'center'}}>
-              {row.index + 1}
-            </div>
-        },
-        {
-            Header: 'Name',
-            id: 'name',
-            accessor: e =>
-              <Link to={`/ui/tenants/${e.name.trim().split(' ').join('_')}`}>
-                {e.name}
-              </Link>
-        },
-        {
-          Header: 'Schema name',
-          accessor: 'schema_name'
-        },
-        {
-          Header: 'Tenant POEM URL',
-          accessor: 'domain_url'
-        }
-      ];
-
       const { loading, list_tenants, error } = this.state;
 
       if (loading)
@@ -85,6 +59,45 @@ export class TenantList extends Component {
         return (<ErrorComponent error={error}/>);
 
       else if (!loading && list_tenants) {
+        let groups = [];
+        for (let i = 0; i < list_tenants.length; i = i + 3) {
+          let cards = []
+          for (let j = 0; j < 3; j++) {
+            if ((i + j) < list_tenants.length)
+              cards.push(
+                <Card className='mr-2' key={j + 1}>
+                  <CardHeader>
+                    <Link  to={`/ui/tenants/${list_tenants[i + j].name.trim().split(' ').join('_')}`}>
+                      {list_tenants[i + j].name}
+                    </Link>
+                  </CardHeader>
+                  <CardBody>
+                    <CardText>
+                      <b>Schema name:</b> {list_tenants[i + j].schema_name}
+                    </CardText>
+                    <CardText>
+                      <b>POEM url:</b> {list_tenants[i + j].domain_url}
+                    </CardText>
+                  </CardBody>
+                </Card>
+              )
+          }
+          let group_width = '100%';
+          if (cards.length == 1)
+            group_width = '33.3333%'
+
+          if (cards.length == 2)
+            group_width = '66.6666%'
+
+          groups.push(
+            <CardGroup key={i} className='mb-2' style={{width: group_width}}>
+              {
+                cards.map((card, k) => card)
+              }
+            </CardGroup>
+          )
+        }
+
         return (
           <BaseArgoView
             resourcename='tenant'
@@ -92,14 +105,9 @@ export class TenantList extends Component {
             listview={true}
             addnew={false}
           >
-            <ReactTable
-              data={list_tenants}
-              columns={columns}
-              className='-highlight'
-              defaultPageSize={10}
-              rowsText='tenants'
-              getTheadThProps={() => ({className: 'table-active font-weight-bold p-2'})}
-            />
+            {
+              groups.map((group, k) => group)
+            }
           </BaseArgoView>
         );
       } else
