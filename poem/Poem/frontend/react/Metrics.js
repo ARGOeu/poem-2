@@ -14,7 +14,8 @@ import {
   NotifyError,
   NotifyInfo,
   ErrorComponent,
-  ModalAreYouSure
+  ModalAreYouSure,
+  ParagraphTitle
  } from './UIElements';
 import ReactTable from 'react-table';
 import { Formik, Form, Field, FieldArray } from 'formik';
@@ -1105,7 +1106,7 @@ export const MetricForm =
       }
       </FormGroup>
       <FormGroup>
-        <h4 className="mt-2 p-1 pl-3 text-light text-uppercase rounded" style={{"backgroundColor": "#416090"}}>Metric configuration</h4>
+        <ParagraphTitle title='Metric configuration'/>
         <h6 className='mt-4 font-weight-bold text-uppercase' hidden={values.type === 'Passive'}>probe executable</h6>
         <Row>
           <Col md={5}>

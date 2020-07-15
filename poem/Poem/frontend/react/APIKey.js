@@ -3,7 +3,7 @@ import { Backend } from './DataManager';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
-import { LoadingAnim, BaseArgoView, NotifyOk, Checkbox, NotifyError, ErrorComponent } from './UIElements';
+import { LoadingAnim, BaseArgoView, NotifyOk, Checkbox, NotifyError, ErrorComponent, ParagraphTitle } from './UIElements';
 import ReactTable from 'react-table';
 import { Formik, Form, Field } from 'formik';
 import {
@@ -340,35 +340,35 @@ export class APIKeyChange extends Component {
                     </Row>
                   </FormGroup>
                   <FormGroup>
-                  <h4 className="mt-2 p-1 pl-3 text-light text-uppercase rounded" style={{"backgroundColor": "#416090"}}>Credentials</h4>
-                  <Row>
-                    <Col sm={6}>
-                      <InputGroup>
-                        <InputGroupAddon addonType='prepend'>Token</InputGroupAddon>
-                        <Field
-                          type='text'
-                          name='token'
-                          id='token'
-                          readOnly
-                          className='form-control'
-                        />
-                      </InputGroup>
-                      <FormText color='muted'>
-                        A public, unique identifier for this API key.
-                      </FormText>
-                    </Col>
-                  </Row>
-                  {
-                    this.addview &&
-                    <Toast className='mt-3'>
-                      <ToastHeader icon='info'>
-                        Info
-                      </ToastHeader>
-                      <ToastBody>
-                        Token will be generated when clicking save.
-                      </ToastBody>
-                    </Toast>
-                  }
+                    <ParagraphTitle title='Credentials'/>
+                    <Row>
+                      <Col sm={6}>
+                        <InputGroup>
+                          <InputGroupAddon addonType='prepend'>Token</InputGroupAddon>
+                          <Field
+                            type='text'
+                            name='token'
+                            id='token'
+                            readOnly
+                            className='form-control'
+                          />
+                        </InputGroup>
+                        <FormText color='muted'>
+                          A public, unique identifier for this API key.
+                        </FormText>
+                      </Col>
+                    </Row>
+                    {
+                      this.addview &&
+                      <Toast className='mt-3'>
+                        <ToastHeader icon='info'>
+                          Info
+                        </ToastHeader>
+                        <ToastBody>
+                          Token will be generated when clicking save.
+                        </ToastBody>
+                      </Toast>
+                    }
                   </FormGroup>
                   {
                     <div className={!this.addview ? "submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5" : "submit-row d-flex align-items-center justify-content-end bg-light p-3 mt-5"}>

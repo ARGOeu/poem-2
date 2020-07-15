@@ -11,7 +11,8 @@ import {
   DiffElement,
   ProfileMainInfo,
   NotifyError,
-  ErrorComponent
+  ErrorComponent,
+  ParagraphTitle
 } from './UIElements';
 import Autocomplete from 'react-autocomplete';
 import ReactTable from 'react-table';
@@ -306,7 +307,7 @@ const AggregationProfilesForm = ({ values, errors, historyview=false, write_perm
       }
       profiletype='aggregation'
   />
-    <h4 className="mt-4 alert-info p-1 pl-3 text-light text-uppercase rounded" style={{'backgroundColor': "#416090"}}>Operations, endpoint group and metric profile</h4>
+    <ParagraphTitle title='Operations, endpoint group and metric profile'/>
     <Row className='mt-4'>
       <Col md={4}>
         <FormGroup>
@@ -458,7 +459,7 @@ const AggregationProfilesForm = ({ values, errors, historyview=false, write_perm
         </FormGroup>
       </Col>
     </Row>
-    <h4 className="mt-2 alert-info p-1 pl-3 text-light text-uppercase rounded" style={{'backgroundColor': "#416090"}}>Service flavour groups</h4>
+    <ParagraphTitle title='Service flavour groups'/>
   </>
 );
 

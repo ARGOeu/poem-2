@@ -5,7 +5,8 @@ import {
   BaseArgoView,
   NotifyOk,
   NotifyError,
-  ErrorComponent
+  ErrorComponent,
+  ParagraphTitle
 } from './UIElements';
 import ReactTable from 'react-table';
 import { Link } from 'react-router-dom';
@@ -350,7 +351,7 @@ function GroupChange(gr, id, ttl) {
                       </Row>
                     </FormGroup>
                     <FormGroup>
-                    <h4 className="mt-2 p-1 pl-3 text-light text-uppercase rounded" style={{"backgroundColor": "#416090"}}>{ttl}</h4>
+                      <ParagraphTitle title={ttl}/>
                       <Row>
                         <Col md={5}>
                           <FilteredMultiSelect

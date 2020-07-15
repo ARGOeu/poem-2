@@ -13,7 +13,8 @@ import {
   DiffElement,
   ProfileMainInfo,
   NotifyError,
-  ErrorComponent
+  ErrorComponent,
+  ParagraphTitle
 } from './UIElements';
 import ReactTable from 'react-table';
 import { Formik, Field, FieldArray, Form } from 'formik';
@@ -22,7 +23,6 @@ import { Button } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faTimes, faSearch } from '@fortawesome/free-solid-svg-icons';
 import ReactDiffViewer from 'react-diff-viewer';
-import * as Yup from 'yup';
 
 import './MetricProfiles.css';
 
@@ -896,7 +896,7 @@ function MetricProfilesComponent(cloneview=false) {
                     }
                     profiletype='metric'
                   />
-                  <h4 className="mt-4 alert-info p-1 pl-3 text-light text-uppercase rounded" style={{'backgroundColor': "#416090"}}>Metric instances</h4>
+                  <ParagraphTitle title='Metric instances'/>
                   <FieldArray
                     name="view_services"
                     render={props => (
@@ -1256,7 +1256,7 @@ export class MetricProfileVersionDetails extends Component {
                   description='description'
                   profiletype='metric'
                 />
-                <h4 className="mt-4 alert-info p-1 pl-3 text-light text-uppercase rounded" style={{'backgroundColor': "#416090"}}>Metric instances</h4>
+                <ParagraphTitle title='Metric instances'/>
                 <FieldArray
                   name='metricinstances'
                   render={arrayHelpers => (
