@@ -10,13 +10,15 @@ import {
   InputGroup,
   InputGroupAddon,
   Card,
-  CardHeader,
-  CardBody,
   CardText,
   CardGroup,
   CardFooter,
-  Badge
+  Badge,
+  CardTitle,
+  CardSubtitle
 } from 'reactstrap';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faIdBadge } from '@fortawesome/free-solid-svg-icons';
 
 
 export class TenantList extends Component {
@@ -68,20 +70,23 @@ export class TenantList extends Component {
             if ((i + j) < list_tenants.length)
               cards.push(
                 <Card className='mr-3' key={j + 1}>
-                  <CardHeader>
-                    <Link  to={`/ui/tenants/${list_tenants[i + j].name.trim().split(' ').join('_')}`}>
-                      {list_tenants[i + j].name}
-                    </Link>
-                  </CardHeader>
-                  <CardBody>
-                    <CardText>
+                  <CardTitle className='text-center'>
+                    <h3>
+                      <Link to={`/ui/tenants/${list_tenants[i + j].name.trim().split(' ').join('_')}`}>
+                        {list_tenants[i + j].name}
+                      </Link>
+                    </h3>
+                  </CardTitle>
+                  <CardSubtitle className='mb-4 mt-3 text-center'>
+                    <FontAwesomeIcon icon={faIdBadge} size='5x'/>
+                  </CardSubtitle>
+                  <CardFooter>
+                    <CardText className='mb-1'>
                       <b>Schema name:</b> {list_tenants[i + j].schema_name}
                     </CardText>
                     <CardText>
                       <b>POEM url:</b> {list_tenants[i + j].domain_url}
                     </CardText>
-                  </CardBody>
-                  <CardFooter>
                     <div className='mb-1'>
                       <Badge color='info' className='mr-2'>
                         {`Metric${list_tenants[i + j].schema_name == 'public' ? ' templates ' : 's '
