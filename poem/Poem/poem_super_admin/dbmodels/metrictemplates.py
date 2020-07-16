@@ -24,6 +24,22 @@ class MetricTemplateType(models.Model):
         return (self.name,)
 
 
+class MetricTags(models.Model):
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=128, blank=True, null=True)
+
+    objects = MetricTemplateManager()
+
+    class Meta:
+        app_label = 'poem_super_admin'
+
+    def __str__(self):
+        return u'%s' % self.name
+
+    def natural_key(self):
+        return (self.name,)
+
+
 class MetricTemplate(models.Model):
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=128, unique=True)
