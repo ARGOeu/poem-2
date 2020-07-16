@@ -9,14 +9,19 @@ import { Form } from 'formik';
 import { Link } from 'react-router-dom';
 
 
+const CustomCardHeader = ({title}) => (
+  <CardHeader className="mt-1 sm-5 p-2 text-uppercase rounded" style={{'backgroundColor': "#c4ccd4"}}>
+    {title}
+  </CardHeader>
+)
+
+
 export const TenantAdministration = (props) =>
 (
   <Form className='ml-2 mb-2 mt-2'>
     <h2 className='ml-3 mt-1 mb-4'>Administration</h2>
-    <Card className='mb-2 pb-1 pt-1'>
-      <CardHeader className="sm-5 p-2 text-light text-uppercase rounded" style={{'backgroundColor': "#416090"}}>
-        Poem
-      </CardHeader>
+    <Card className='mb-2'>
+      <CustomCardHeader title='Poem'/>
       <CardBody>
         {
           //<Row className="p-1 align-items-center">
@@ -38,9 +43,7 @@ export const TenantAdministration = (props) =>
       </CardBody>
     </Card>
     <Card className='mb-2'>
-      <CardHeader className="mt-2 p-2 text-light text-uppercase rounded" style={{'backgroundColor': "#416090"}}>
-        Authentication and authorization
-      </CardHeader>
+      <CustomCardHeader title='Authentication and authorization'/>
       <CardBody>
         <Row className="p-1 align-items-center">
           <Icon i="groupofaggregationprofiles"/> <Link to={'/ui/administration/groupofaggregations'}>Groups of aggregations</Link>
@@ -59,10 +62,8 @@ export const TenantAdministration = (props) =>
         </Row>
       </CardBody>
     </Card>
-    <Card>
-      <CardHeader className="mt-2 p-2 text-light text-uppercase rounded" style={{'backgroundColor': "#416090"}}>
-        SuperAdmin POEM data
-      </CardHeader>
+    <Card className='mb-2'>
+      <CustomCardHeader title='SuperAdmin POEM data'/>
       <CardBody>
         <Row className='p-1 align-items-center'>
             <Icon i="yumrepos"/> <Link to={'/ui/administration/yumrepos'}>YUM repos</Link>
@@ -76,9 +77,7 @@ export const TenantAdministration = (props) =>
       </CardBody>
     </Card>
     <Card>
-      <CardHeader className="mt-2 p-2 text-light text-uppercase rounded" style={{'backgroundColor': "#416090"}}>
-        API key permissions
-      </CardHeader>
+      <CustomCardHeader title='API key permissions'/>
       <CardBody>
         <Row className="p-1 align-items-center">
           <Icon i="apikey"/> <Link to={'/ui/administration/apikey'}>API keys</Link>
@@ -93,10 +92,8 @@ export const SuperAdminAdministration = (props) =>
 (
   <Form className='ml-2 mb-2 mt-2'>
     <h2 className='ml-3 mt-1 mb-4'>Administration</h2>
-    <Card className='mb-2 pb-1 pt-1'>
-      <CardHeader className="sm-5 p-2 text-light text-uppercase rounded" style={{'backgroundColor': "#416090"}}>
-        Poem
-      </CardHeader>
+    <Card className='mb-2'>
+      <CustomCardHeader title='Poem'/>
       <CardBody>
         <Row className="p-1 align-items-center">
           <Icon i="tenants"/> <Link to={"/ui/tenants"}>Tenants</Link>
@@ -116,9 +113,7 @@ export const SuperAdminAdministration = (props) =>
       </CardBody>
     </Card>
     <Card className='mb-2'>
-      <CardHeader className="mt-1 p-2 text-light text-uppercase rounded" style={{'backgroundColor': "#416090"}}>
-        Authentication and authorization
-      </CardHeader>
+      <CustomCardHeader title='Authentication and authorization'/>
       <CardBody>
         <Row className="p-1 align-items-center">
           <Icon i='users'/> <Link to={'/ui/administration/users'}>Users</Link>
@@ -126,9 +121,7 @@ export const SuperAdminAdministration = (props) =>
       </CardBody>
     </Card>
     <Card>
-      <CardHeader className="mt-1 p-2 text-light text-uppercase rounded" style={{'backgroundColor': "#416090"}}>
-        API key permissions
-      </CardHeader>
+      <CustomCardHeader title='API key permissions'/>
       <CardBody>
         <Row className="p-1 align-items-center">
           <Icon i="apikey"/> <Link to={'/ui/administration/apikey'}>API keys</Link>

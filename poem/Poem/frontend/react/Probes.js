@@ -11,7 +11,8 @@ import {
   HistoryComponent,
   DiffElement,
   NotifyError,
-  ErrorComponent
+  ErrorComponent,
+  ParagraphTitle
 } from './UIElements';
 import ReactTable from 'react-table';
 import {
@@ -158,7 +159,7 @@ const ProbeForm = ({isTenantSchema=false, isHistory=false,
       </Row>
     </FormGroup>
     <FormGroup>
-      <h4 className="mt-2 p-1 pl-3 text-light text-uppercase rounded" style={{"backgroundColor": "#416090"}}>Probe metadata</h4>
+      <ParagraphTitle title='Probe metadata'/>
       <Row className='mt-4 mb-3 align-items-top'>
         <Col md={8}>
           <InputGroup>

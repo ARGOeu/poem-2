@@ -1135,3 +1135,8 @@ export const ErrorComponent = ({error}) => {
     </React.Fragment>
   )
 }
+
+
+export const ParagraphTitle = ({title}) => (
+  <h4 className="mt-2 p-1 pl-3 text-uppercase rounded" style={{"backgroundColor": "#c4ccd4"}}>{title}</h4>
+)
