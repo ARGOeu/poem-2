@@ -1138,5 +1138,5 @@ export const ErrorComponent = ({error}) => {
 
 
 export const ParagraphTitle = ({title}) => (
-  <h4 className="mt-2 p-1 pl-3 text-light text-uppercase rounded" style={{"backgroundColor": "#607B8B"}}>{title}</h4>
+  <h4 className="mt-2 p-1 pl-3 text-uppercase rounded" style={{"backgroundColor": "#c4ccd4"}}>{title}</h4>
 )
