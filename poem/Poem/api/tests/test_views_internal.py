@@ -5,8 +5,8 @@ from unittest.mock import patch, call
 
 import requests
 from Poem.api import views_internal as views
-from Poem.api.internal_views.utils import inline_metric_for_db
-from Poem.api.internal_views.utils import sync_webapi
+from Poem.api.internal_views.utils import inline_metric_for_db, sync_webapi, \
+    get_tenant_resources
 from Poem.api.models import MyAPIKey
 from Poem.helpers.history_helpers import create_comment, update_comment
 from Poem.helpers.metrics_helpers import update_metrics_in_profiles, \
@@ -13552,3 +13552,459 @@ class BulkDeleteMetricTemplatesTests(TenantTestCase):
             0
         )
         self.assertFalse(mock_delete.called)
+
+
+def mock_tenant_resources(*args, **kwargs):
+    if args[0] == 'public':
+        return {'metric_templates': 354, 'probes': 111}
+
+    elif args[0] == 'test1':
+        return {'metrics': 30, 'probes': 10}
+
+    elif args[0] == 'test2':
+        return {'metrics': 50, 'probes': 30}
+
+    else:
+        return {'metrics': 24, 'probes': 15}
+
+
+class ListTenantsTests(TenantTestCase):
+    def setUp(self) -> None:
+        self.factory = TenantRequestFactory(self.tenant)
+        self.view = views.ListTenants.as_view()
+        self.url = '/api/v2/internal/tenants/'
+        self.user = CustUser.objects.create_user(username='testuser')
+
+        with schema_context(get_public_schema_name()):
+            self.tenant1 = Tenant(
+                name='TEST1', schema_name='test1',
+                domain_url='test1.domain.url'
+            )
+            self.tenant1.auto_create_schema = False
+
+            self.tenant2 = Tenant(
+                name='TEST2', schema_name='test2',
+                domain_url='test2.domain.url'
+            )
+            self.tenant2.auto_create_schema = False
+
+            self.tenant3 = Tenant(
+                name='all', schema_name=get_public_schema_name(),
+                domain_url='domain.url'
+            )
+            self.tenant3.auto_create_schema = False
+
+            self.tenant1.save()
+            self.tenant2.save()
+            self.tenant3.save()
+
+    def test_get_tenants_no_auth(self):
+        request = self.factory.get(self.url)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    @patch('Poem.api.internal_views.tenants.get_tenant_resources')
+    def test_get_all_tenants(self, mock_resources):
+        mock_resources.side_effect = mock_tenant_resources
+        request = self.factory.get(self.url)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(mock_resources.call_count, 4)
+        self.assertEqual(
+            response.data,
+            [
+                {
+                    'name': self.tenant.name,
+                    'schema_name': self.tenant.schema_name,
+                    'domain_url': self.tenant.domain_url,
+                    'created_on': datetime.date.strftime(
+                        self.tenant.created_on, '%Y-%m-%d'
+                    ),
+                    'nr_metrics': 24,
+                    'nr_probes': 15
+                },
+                {
+                    'name': 'SuperPOEM Tenant',
+                    'schema_name': get_public_schema_name(),
+                    'domain_url': 'domain.url',
+                    'created_on': datetime.date.strftime(
+                        self.tenant3.created_on, '%Y-%m-%d'
+                    ),
+                    'nr_metrics': 354,
+                    'nr_probes': 111
+                },
+                {
+                    'name': 'TEST1',
+                    'domain_url': 'test1.domain.url',
+                    'schema_name': 'test1',
+                    'created_on': datetime.date.strftime(
+                        self.tenant1.created_on, '%Y-%m-%d'
+                    ),
+                    'nr_metrics': 30,
+                    'nr_probes': 10
+                },
+                {
+                    'name': 'TEST2',
+                    'domain_url': 'test2.domain.url',
+                    'schema_name': 'test2',
+                    'created_on': datetime.date.strftime(
+                        self.tenant2.created_on, '%Y-%m-%d'
+                    ),
+                    'nr_metrics': 50,
+                    'nr_probes': 30
+                }
+            ]
+        )
+
+    @patch('Poem.api.internal_views.tenants.get_tenant_resources')
+    def test_get_tenant_by_name(self, mock_resources):
+        mock_resources.return_value = {'metrics': 24, 'probes': 15}
+        request = self.factory.get(self.url + 'TEST1')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'TEST1')
+        self.assertEqual(
+            response.data,
+            {
+                'name': 'TEST1',
+                'domain_url': 'test1.domain.url',
+                'schema_name': 'test1',
+                'created_on': datetime.date.strftime(
+                    self.tenant1.created_on, '%Y-%m-%d'
+                ),
+                'nr_metrics': 24,
+                'nr_probes': 15
+            }
+        )
+        mock_resources.assert_called_once_with('test1')
+
+    @patch('Poem.api.internal_views.tenants.get_tenant_resources')
+    def test_get_public_schema_tenant_by_name(self, mock_resources):
+        mock_resources.return_value = {'metric_templates': 354, 'probes': 112}
+        request = self.factory.get(self.url + 'SuperPOEM_Tenant')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'SuperPOEM_Tenant')
+        self.assertEqual(
+            response.data,
+            {
+                'name': 'SuperPOEM Tenant',
+                'domain_url': 'domain.url',
+                'schema_name': get_public_schema_name(),
+                'created_on': datetime.date.strftime(
+                    self.tenant1.created_on, '%Y-%m-%d'
+                ),
+                'nr_metrics': 354,
+                'nr_probes': 112
+            }
+        )
+        mock_resources.assert_called_once_with(get_public_schema_name())
+
+    @patch('Poem.api.internal_views.tenants.get_tenant_resources')
+    def test_get_tenant_by_nonexisting_name(self, mock_resources):
+        request = self.factory.get(self.url + 'nonexisting')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'nonexisting')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data['detail'], 'Tenant not found.')
+        self.assertFalse(mock_resources.called)
+
+
+class BasicResourceInfoTests(TenantTestCase):
+    def setUp(self) -> None:
+        user = CustUser.objects.create_user(username='testuser')
+
+        mtype1 = admin_models.MetricTemplateType.objects.create(name='Active')
+        mtype2 = admin_models.MetricTemplateType.objects.create(name='Passive')
+
+        mtype3 = poem_models.MetricType.objects.create(name='Active')
+        mtype4 = poem_models.MetricType.objects.create(name='Passive')
+
+        ct = ContentType.objects.get_for_model(poem_models.Metric)
+
+        tag1 = admin_models.OSTag.objects.create(name='CentOS 6')
+        tag2 = admin_models.OSTag.objects.create(name='CentOS 7')
+
+        repo1 = admin_models.YumRepo.objects.create(name='repo-1', tag=tag1)
+        repo2 = admin_models.YumRepo.objects.create(name='repo-2', tag=tag2)
+
+        package1 = admin_models.Package.objects.create(
+            name='nagios-plugins-argo',
+            version='0.1.7'
+        )
+        package1.repos.add(repo1)
+
+        package2 = admin_models.Package.objects.create(
+            name='nagios-plugins-argo',
+            version='0.1.8'
+        )
+        package2.repos.add(repo1, repo2)
+
+        package3 = admin_models.Package.objects.create(
+            name='nagios-plugins-argo',
+            version='0.1.11'
+        )
+        package3.repos.add(repo2)
+
+        probe1 = admin_models.Probe.objects.create(
+            name='ams-probe',
+            package=package1,
+            description='Probe is inspecting AMS service by trying to publish '
+                        'and consume randomly generated messages.',
+            comment='Initial version.',
+            repository='https://github.com/ARGOeu/nagios-plugins-argo',
+            docurl='https://github.com/ARGOeu/nagios-plugins-argo/blob/master/'
+                   'README.md'
+        )
+
+        probeversion1 = admin_models.ProbeHistory.objects.create(
+            object_id=probe1,
+            name=probe1.name,
+            package=probe1.package,
+            description=probe1.description,
+            comment=probe1.comment,
+            repository=probe1.repository,
+            docurl=probe1.docurl,
+            date_created=datetime.datetime.now(),
+            version_comment='Initial version.',
+            version_user=user.username,
+        )
+
+        probe1.package = package2
+        probe1.comment = 'Newer version.'
+        probe1.save()
+
+        probeversion2 = admin_models.ProbeHistory.objects.create(
+            object_id=probe1,
+            name=probe1.name,
+            package=probe1.package,
+            description=probe1.description,
+            comment=probe1.comment,
+            repository=probe1.repository,
+            docurl=probe1.docurl,
+            date_created=datetime.datetime.now(),
+            version_comment='[{"changed": {"fields": ["package", "comment"]}}]',
+            version_user=user.username
+        )
+
+        probe1.package = package3
+        probe1.comment = 'Newest version.'
+        probe1.save()
+
+        admin_models.ProbeHistory.objects.create(
+            object_id=probe1,
+            name=probe1.name,
+            package=probe1.package,
+            description=probe1.description,
+            comment=probe1.comment,
+            repository=probe1.repository,
+            docurl=probe1.docurl,
+            date_created=datetime.datetime.now(),
+            version_comment='[{"changed": {"fields": ["package", "comment"]}}]',
+            version_user=user.username
+        )
+
+        probe2 = admin_models.Probe.objects.create(
+            name='ams-publisher-probe',
+            package=package3,
+            description='Probe is inspecting AMS publisher.',
+            comment='Initial version.',
+            repository='https://github.com/ARGOeu/nagios-plugins-argo',
+            docurl='https://github.com/ARGOeu/nagios-plugins-argo/blob/master/'
+                   'README.md'
+        )
+
+        probeversion4 = admin_models.ProbeHistory.objects.create(
+            object_id=probe2,
+            name=probe2.name,
+            package=probe2.package,
+            description=probe2.description,
+            comment=probe2.comment,
+            repository=probe2.repository,
+            docurl=probe2.docurl,
+            date_created=datetime.datetime.now(),
+            version_comment='Initial version.',
+            version_user=user.username
+        )
+
+        metrictemplate1 = admin_models.MetricTemplate.objects.create(
+            name='argo.AMS-Check',
+            mtype=mtype1,
+            probekey=probeversion1,
+            description='Some description of argo.AMS-Check metric template.',
+            probeexecutable='["ams-probe"]',
+            config='["maxCheckAttempts 3", "timeout 60",'
+                   ' "path /usr/libexec/argo-monitoring/probes/argo",'
+                   ' "interval 5", "retryInterval 3"]',
+            attribute='["argo.ams_TOKEN --token"]',
+            flags='["OBSESS 1"]',
+            parameter='["--project EGI"]'
+        )
+
+        metrictemplate2 = admin_models.MetricTemplate.objects.create(
+            name='org.apel.APEL-Pub',
+            flags='["OBSESS 1", "PASSIVE 1"]',
+            mtype=mtype2,
+        )
+
+        admin_models.MetricTemplateHistory.objects.create(
+            object_id=metrictemplate1,
+            name=metrictemplate1.name,
+            mtype=metrictemplate1.mtype,
+            probekey=metrictemplate1.probekey,
+            description=metrictemplate1.description,
+            probeexecutable=metrictemplate1.probeexecutable,
+            config=metrictemplate1.config,
+            attribute=metrictemplate1.attribute,
+            dependency=metrictemplate1.dependency,
+            flags=metrictemplate1.flags,
+            files=metrictemplate1.files,
+            parameter=metrictemplate1.parameter,
+            fileparameter=metrictemplate1.fileparameter,
+            date_created=datetime.datetime.now(),
+            version_user=user.username,
+            version_comment='Initial version.',
+        )
+
+        admin_models.MetricTemplateHistory.objects.create(
+            object_id=metrictemplate2,
+            name=metrictemplate2.name,
+            mtype=metrictemplate2.mtype,
+            description=metrictemplate2.description,
+            probekey=metrictemplate2.probekey,
+            probeexecutable=metrictemplate2.probeexecutable,
+            config=metrictemplate2.config,
+            attribute=metrictemplate2.attribute,
+            dependency=metrictemplate2.dependency,
+            flags=metrictemplate2.flags,
+            files=metrictemplate2.files,
+            parameter=metrictemplate2.parameter,
+            fileparameter=metrictemplate2.fileparameter,
+            date_created=datetime.datetime.now(),
+            version_user=user.username,
+            version_comment='Initial version.',
+        )
+
+        metrictemplate1.probekey = probeversion2
+        metrictemplate1.config = '["maxCheckAttempts 4", "timeout 70", ' \
+                                 '"path /usr/libexec/argo-monitoring/", ' \
+                                 '"interval 5", "retryInterval 3"]'
+        metrictemplate1.save()
+
+        admin_models.MetricTemplateHistory.objects.create(
+            object_id=metrictemplate1,
+            name=metrictemplate1.name,
+            mtype=metrictemplate1.mtype,
+            description=metrictemplate1.description,
+            probekey=metrictemplate1.probekey,
+            probeexecutable=metrictemplate1.probeexecutable,
+            config=metrictemplate1.config,
+            attribute=metrictemplate1.attribute,
+            dependency=metrictemplate1.dependency,
+            flags=metrictemplate1.flags,
+            files=metrictemplate1.files,
+            parameter=metrictemplate1.parameter,
+            fileparameter=metrictemplate1.fileparameter,
+            date_created=datetime.datetime.now(),
+            version_user=user.username,
+            version_comment=create_comment(metrictemplate1)
+        )
+
+        metrictemplate3 = admin_models.MetricTemplate.objects.create(
+            name='argo.AMSPublisher-Check',
+            mtype=mtype1,
+            probekey=probeversion4,
+            probeexecutable='["ams-publisher-probe"]',
+            config='["interval 180", "maxCheckAttempts 1", '
+                   '"path /usr/libexec/argo-monitoring/probes/argo", '
+                   '"retryInterval 1", "timeout 120"]',
+            parameter='["-s /var/run/argo-nagios-ams-publisher/sock"]',
+            flags='["NOHOSTNAME 1", "NOTIMEOUT 1", "NOPUBLISH 1"]'
+        )
+
+        admin_models.MetricTemplateHistory.objects.create(
+            object_id=metrictemplate3,
+            name=metrictemplate3.name,
+            mtype=metrictemplate3.mtype,
+            description=metrictemplate3.description,
+            probekey=metrictemplate3.probekey,
+            probeexecutable=metrictemplate3.probeexecutable,
+            config=metrictemplate3.config,
+            attribute=metrictemplate3.attribute,
+            dependency=metrictemplate3.dependency,
+            flags=metrictemplate3.flags,
+            files=metrictemplate3.files,
+            parameter=metrictemplate3.parameter,
+            fileparameter=metrictemplate3.fileparameter,
+            date_created=datetime.datetime.now(),
+            version_user=user.username,
+            version_comment=create_comment(metrictemplate3)
+        )
+
+        group = poem_models.GroupOfMetrics.objects.create(name='TEST')
+
+        metric1 = poem_models.Metric.objects.create(
+            name=metrictemplate1.name,
+            group=group,
+            mtype=mtype3,
+            description=metrictemplate1.description,
+            probekey=metrictemplate1.probekey,
+            probeexecutable=metrictemplate1.probeexecutable,
+            config=metrictemplate1.config,
+            attribute=metrictemplate1.attribute,
+            dependancy=metrictemplate1.dependency,
+            flags=metrictemplate1.flags,
+            files=metrictemplate1.files,
+            parameter=metrictemplate1.parameter,
+            fileparameter=metrictemplate1.fileparameter,
+        )
+
+        poem_models.TenantHistory.objects.create(
+            object_id=metric1.id,
+            object_repr=metric1.__str__(),
+            serialized_data=serializers.serialize(
+                'json', [metric1],
+                use_natural_foreign_keys=True,
+                use_natural_primary_keys=True
+            ),
+            content_type=ct,
+            date_created=datetime.datetime.now(),
+            comment='Initial version.',
+            user=user.username
+        )
+
+        metric2 = poem_models.Metric.objects.create(
+            name=metrictemplate2.name,
+            group=group,
+            mtype=mtype4,
+            description=metrictemplate2.description,
+            probekey=metrictemplate2.probekey,
+            probeexecutable=metrictemplate2.probeexecutable,
+            config=metrictemplate2.config,
+            attribute=metrictemplate2.attribute,
+            dependancy=metrictemplate2.dependency,
+            flags=metrictemplate2.flags,
+            files=metrictemplate2.files,
+            parameter=metrictemplate2.parameter,
+            fileparameter=metrictemplate2.fileparameter,
+        )
+
+        poem_models.TenantHistory.objects.create(
+            object_id=metric2.id,
+            object_repr=metric2.__str__(),
+            serialized_data=serializers.serialize(
+                'json', [metric2],
+                use_natural_foreign_keys=True,
+                use_natural_primary_keys=True
+            ),
+            content_type=ct,
+            date_created=datetime.datetime.now(),
+            comment='Initial version.',
+            user=user.username
+        )
+
+    def test_get_resource_info(self):
+        data = get_tenant_resources('test')
+        self.assertEqual(data, {'metrics': 2, 'probes': 1})
+
+    def test_get_resourece_info_for_super_poem_tenant(self):
+        data = get_tenant_resources(get_public_schema_name())
+        self.assertEqual(data, {'metric_templates': 3, 'probes': 2})
