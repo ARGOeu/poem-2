@@ -75,6 +75,7 @@ class MetricTemplateHistory(models.Model):
     object_id = models.ForeignKey(MetricTemplate, on_delete=models.CASCADE)
     name = models.CharField(max_length=128)
     mtype = models.ForeignKey(MetricTemplateType, on_delete=models.CASCADE)
+    tags = models.ManyToManyField(MetricTags)
     probekey = models.ForeignKey(ProbeHistory, null=True,
                                  on_delete=models.SET_NULL)
     description = models.TextField(default='')
