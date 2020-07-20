@@ -803,11 +803,14 @@ class ListProbesAPIViewTests(TenantTestCase):
         mtype = admin_models.MetricTemplateType.objects.create(name='Active')
         metrictype = poem_models.MetricType.objects.create(name='Active')
 
+        metrictag1 = admin_models.MetricTags.objects.create(name='test_tag1')
+        metrictag2 = admin_models.MetricTags.objects.create(name='test_tag2')
+
         group = poem_models.GroupOfMetrics.objects.create(name='TEST')
 
         ct = ContentType.objects.get_for_model(poem_models.Metric)
 
-        admin_models.MetricTemplate.objects.create(
+        mt1 = admin_models.MetricTemplate.objects.create(
             name='argo.API-Check',
             mtype=mtype,
             probekey=pv,
@@ -818,8 +821,9 @@ class ListProbesAPIViewTests(TenantTestCase):
             attribute='["argo.api_TOKEN --token"]',
             flags='["OBSESS 1"]'
         )
+        mt1.tags.add(metrictag1, metrictag2)
 
-        admin_models.MetricTemplate.objects.create(
+        mt2 = admin_models.MetricTemplate.objects.create(
             name='argo.AMS-Check',
             mtype=mtype,
             probekey=pv2,
@@ -831,6 +835,7 @@ class ListProbesAPIViewTests(TenantTestCase):
             flags='["OBSESS 1"]',
             parameter='["--project EGI"]'
         )
+        mt2.tags.add(metrictag1)
 
         metric1 = poem_models.Metric.objects.create(
             name='argo.API-Check',
@@ -6918,7 +6923,10 @@ class ListMetricTemplatesForProbeVersionAPIViewTests(TenantTestCase):
             version_user=self.user.username
         )
 
-        admin_models.MetricTemplate.objects.create(
+        metrictag1 = admin_models.MetricTags.objects.create(name='test_tag1')
+        metrictag2 = admin_models.MetricTags.objects.create(name='test_tag2')
+
+        mt1 = admin_models.MetricTemplate.objects.create(
             name='argo.AMS-Check',
             mtype=mtype1,
             probekey=self.probeversion1,
@@ -6930,12 +6938,14 @@ class ListMetricTemplatesForProbeVersionAPIViewTests(TenantTestCase):
             flags='["OBSESS 1"]',
             parameter='["--project EGI"]'
         )
+        mt1.tags.add(metrictag1, metrictag2)
 
-        admin_models.MetricTemplate.objects.create(
+        mt2 = admin_models.MetricTemplate.objects.create(
             name='org.apel.APEL-Pub',
             flags='["OBSESS 1", "PASSIVE 1"]',
             mtype=mtype2,
         )
+        mt2.tags.add(metrictag2)
 
         admin_models.MetricTemplate.objects.create(
             name='test-metric',
@@ -8098,6 +8108,16 @@ class HistoryHelpersTests(TenantTestCase):
             version_user='testuser'
         )
 
+        self.metrictag1 = admin_models.MetricTags.objects.create(
+            name='test_tag1'
+        )
+        self.metrictag2 = admin_models.MetricTags.objects.create(
+            name='test_tag2'
+        )
+        self.metrictag3 = admin_models.MetricTags.objects.create(
+            name='test_tag3'
+        )
+
         self.mt1 = admin_models.MetricTemplate.objects.create(
             name='metric-template-1',
             description='Description of metric-template-1.',
@@ -8114,8 +8134,9 @@ class HistoryHelpersTests(TenantTestCase):
             mtype=self.active,
             probekey=probe_history1
         )
+        self.mt1.tags.add(self.metrictag1, self.metrictag2)
 
-        admin_models.MetricTemplateHistory.objects.create(
+        mth1 = admin_models.MetricTemplateHistory.objects.create(
             object_id=self.mt1,
             name=self.mt1.name,
             mtype=self.mt1.mtype,
@@ -8134,13 +8155,14 @@ class HistoryHelpersTests(TenantTestCase):
             version_comment='Initial version.',
             version_user='testuser'
         )
+        mth1.tags.add(self.metrictag1, self.metrictag2)
 
         self.mt1.probekey = self.probe_history2
         self.mt1.config = '["maxCheckAttempts 3", "timeout 70", ' \
                           '"path $USER", "interval 5", "retryInterval 3"]'
         self.mt1.save()
 
-        admin_models.MetricTemplateHistory.objects.create(
+        mth2 = admin_models.MetricTemplateHistory.objects.create(
             object_id=self.mt1,
             name=self.mt1.name,
             mtype=self.mt1.mtype,
@@ -8161,6 +8183,7 @@ class HistoryHelpersTests(TenantTestCase):
                             '["probekey"]}}]',
             version_user='testuser'
         )
+        mth2.tags.add(self.metrictag1, self.metrictag2)
 
         self.mt2 = admin_models.MetricTemplate.objects.create(
             name='metric-template-3',
@@ -8178,8 +8201,9 @@ class HistoryHelpersTests(TenantTestCase):
             mtype=self.active,
             probekey=probe_history1
         )
+        self.mt2.tags.add(self.metrictag1)
 
-        admin_models.MetricTemplateHistory.objects.create(
+        mth3 = admin_models.MetricTemplateHistory.objects.create(
             object_id=self.mt2,
             name=self.mt2.name,
             mtype=self.mt2.mtype,
@@ -8198,6 +8222,7 @@ class HistoryHelpersTests(TenantTestCase):
             version_comment='Initial version.',
             version_user='testuser'
         )
+        mth3.tags.add(self.metrictag1)
 
         self.metric1 = poem_models.Metric.objects.create(
             name='metric-1',
@@ -8363,6 +8388,8 @@ class HistoryHelpersTests(TenantTestCase):
         self.mt1.dependency = '["dependency-key1 dependency-value1"]'
         self.mt1.flags = '["flags-key flags-value", "flags-key1 flags-value2"]'
         self.mt1.save()
+        self.mt1.tags.remove(self.metrictag1)
+        self.mt1.tags.add(self.metrictag3)
         comment = create_comment(self.mt1)
         comment_set = set()
         for item in json.loads(comment):
@@ -8373,6 +8400,8 @@ class HistoryHelpersTests(TenantTestCase):
                 '{"deleted": {"fields": ["dependency"], '
                 '"object": ["dependency-key2"]}}',
                 '{"added": {"fields": ["flags"], "object": ["flags-key1"]}}',
+                '{"added": {"fields": ["tags"], "object": ["test_tag3"]}}',
+                '{"deleted": {"fields": ["tags"], "object": ["test_tag1"]}}',
                 '{"added": {"fields": ["probeexecutable"]}}',
                 '{"changed": {"fields": ["description", "name", "probekey"]}}',
                 '{"deleted": {"fields": ["parent"]}}'
@@ -8395,6 +8424,7 @@ class HistoryHelpersTests(TenantTestCase):
             fileparameter='["fileparameter-key fileparameter-value"]',
             mtype=self.active
         )
+        mt.tags.add(self.metrictag1)
         comment = create_comment(mt)
         self.assertEqual(comment, 'Initial version.')
 
@@ -8405,6 +8435,7 @@ class HistoryHelpersTests(TenantTestCase):
         self.mt1.dependency = '["dependency-key1 dependency-value1"]'
         self.mt1.flags = '["flags-key flags-value", "flags-key1 flags-value2"]'
         self.mt1.save()
+        self.mt1.tags.add(self.metrictag3)
         comment = update_comment(self.mt1)
         comment_set = set()
         for item in json.loads(comment):
@@ -8416,6 +8447,7 @@ class HistoryHelpersTests(TenantTestCase):
                 '{"deleted": {"fields": ["dependency"], '
                 '"object": ["dependency-key2"]}}',
                 '{"added": {"fields": ["flags"], "object": ["flags-key1"]}}',
+                '{"added": {"fields": ["tags"], "object": ["test_tag3"]}}',
                 '{"added": {"fields": ["probeexecutable"]}}',
                 '{"changed": {"fields": ["name", "probekey"]}}',
                 '{"deleted": {"fields": ["parent"]}}'
@@ -8430,6 +8462,7 @@ class HistoryHelpersTests(TenantTestCase):
         self.mt2.dependency = '["dependency-key1 dependency-value1"]'
         self.mt2.flags = '["flags-key flags-value", "flags-key1 flags-value2"]'
         self.mt2.save()
+        self.mt2.tags.add(self.metrictag3)
         comment = update_comment(self.mt2)
         self.assertEqual(comment, 'Initial version.')
 
@@ -9526,6 +9559,9 @@ class ListPackagesAPIViewTests(TenantTestCase):
 
         ct = ContentType.objects.get_for_model(poem_models.Metric)
 
+        mtag1 = admin_models.MetricTags.objects.create(name='test_tag1')
+        mtag2 = admin_models.MetricTags.objects.create(name='test_tag2')
+
         mt = admin_models.MetricTemplate.objects.create(
             name='argo.AMS-Check',
             mtype=mtype,
@@ -9538,8 +9574,9 @@ class ListPackagesAPIViewTests(TenantTestCase):
             flags='["OBSESS 1"]',
             parameter='["--project EGI"]'
         )
+        mt.tags.add(mtag1)
 
-        admin_models.MetricTemplateHistory.objects.create(
+        mth1 = admin_models.MetricTemplateHistory.objects.create(
             object_id=mt,
             name=mt.name,
             mtype=mt.mtype,
@@ -9557,6 +9594,7 @@ class ListPackagesAPIViewTests(TenantTestCase):
             version_comment='Initial version.',
             version_user=self.user.username
         )
+        mth1.tags.add(mtag1)
 
         metric1 = poem_models.Metric.objects.create(
             name='argo.AMS-Check',
@@ -10272,6 +10310,10 @@ class ListMetricTemplatesForImportTests(TenantTestCase):
             version_user=self.user.username
         )
 
+        metrictag1 = admin_models.MetricTags.objects.create(name='test_tag1')
+        metrictag2 = admin_models.MetricTags.objects.create(name='test_tag2')
+        metrictag3 = admin_models.MetricTags.objects.create(name='test_tag3')
+
         metrictemplate1 = admin_models.MetricTemplate.objects.create(
             name='argo.AMS-Check',
             mtype=mtype1,
@@ -10284,6 +10326,7 @@ class ListMetricTemplatesForImportTests(TenantTestCase):
             flags='["OBSESS 1"]',
             parameter='["--project EGI"]'
         )
+        metrictemplate1.tags.add(metrictag2)
 
         self.mtversion1 = admin_models.MetricTemplateHistory.objects.create(
             object_id=metrictemplate1,
@@ -10302,9 +10345,11 @@ class ListMetricTemplatesForImportTests(TenantTestCase):
             version_user=self.user.username,
             version_comment='Initial version.'
         )
+        self.mtversion1.tags.add(metrictag2)
 
         metrictemplate1.probekey = probeversion2
         metrictemplate1.save()
+        metrictemplate1.tags.add(metrictag1)
 
         self.mtversion2 = admin_models.MetricTemplateHistory.objects.create(
             object_id=metrictemplate1,
@@ -10323,6 +10368,7 @@ class ListMetricTemplatesForImportTests(TenantTestCase):
             version_user=self.user.username,
             version_comment='Newer version.'
         )
+        self.mtversion2.tags.add(metrictag1, metrictag2)
 
         metrictemplate2 = admin_models.MetricTemplate.objects.create(
             name='argo.EGI-Connectors-Check',
@@ -10355,6 +10401,7 @@ class ListMetricTemplatesForImportTests(TenantTestCase):
 
         metrictemplate2.probekey = probeversion4
         metrictemplate2.save()
+        metrictemplate2.tags.add(metrictag3)
 
         self.mtversion4 = admin_models.MetricTemplateHistory.objects.create(
             object_id=metrictemplate2,
@@ -10373,6 +10420,7 @@ class ListMetricTemplatesForImportTests(TenantTestCase):
             version_user=self.user.username,
             version_comment='Newer version.'
         )
+        self.mtversion4.tags.add(metrictag3)
 
         metrictemplate3 = admin_models.MetricTemplate.objects.create(
             name='org.apel.APEL-Pub',
