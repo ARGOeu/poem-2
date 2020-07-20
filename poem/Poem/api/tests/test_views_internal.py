@@ -4222,6 +4222,10 @@ class ListVersionsAPIViewTests(TenantTestCase):
             name='Passive'
         )
 
+        mtag1 = admin_models.MetricTags.objects.create(name='test_tag1')
+        mtag2 = admin_models.MetricTags.objects.create(name='test_tag2')
+        mtag3 = admin_models.MetricTags.objects.create(name='test_tag3')
+
         self.metrictemplate1 = admin_models.MetricTemplate.objects.create(
             name='argo.POEM-API-MON',
             mtype=self.mtype1,
@@ -4257,6 +4261,7 @@ class ListVersionsAPIViewTests(TenantTestCase):
             'Description of argo.POEM-API-MON-new'
         self.metrictemplate1.probekey = self.ver2
         self.metrictemplate1.save()
+        self.metrictemplate1.tags.add(mtag1)
 
         self.ver5 = admin_models.MetricTemplateHistory.objects.create(
             object_id=self.metrictemplate1,
@@ -4276,11 +4281,13 @@ class ListVersionsAPIViewTests(TenantTestCase):
             version_comment=json.dumps(
                 [
                     {'added': {'fields': ['description']}},
-                    {'changed': {'fields': ['name', 'probekey']}}
+                    {'changed': {'fields': ['name', 'probekey']}},
+                    {'added': {'fields': ['tags'], 'object': ['test_tag1']}}
                 ]
             ),
             version_user=self.user.username
         )
+        self.ver5.tags.add(mtag1)
 
         self.metrictemplate2 = admin_models.MetricTemplate.objects.create(
             name='org.apel.APEL-Pub',
@@ -4288,6 +4295,7 @@ class ListVersionsAPIViewTests(TenantTestCase):
             mtype=self.mtype2,
             flags='["OBSESS 1", "PASSIVE 1"]'
         )
+        self.metrictemplate2.tags.add(mtag2, mtag3)
 
         self.ver6 = admin_models.MetricTemplateHistory.objects.create(
             object_id=self.metrictemplate2,
@@ -4307,9 +4315,11 @@ class ListVersionsAPIViewTests(TenantTestCase):
             version_comment='Initial version.',
             version_user=self.user.username
         )
+        self.ver6.tags.add(mtag2, mtag3)
 
         self.metrictemplate2.name = 'org.apel.APEL-Pub-new'
         self.metrictemplate2.save()
+        self.metrictemplate2.tags.remove(mtag2)
 
         self.ver7 = admin_models.MetricTemplateHistory.objects.create(
             object_id=self.metrictemplate2,
@@ -4329,6 +4339,7 @@ class ListVersionsAPIViewTests(TenantTestCase):
             version_comment=json.dumps([{'changed': {'fields': ['name']}}]),
             version_user=self.user.username
         )
+        self.ver7.tags.add(mtag3)
 
     def test_get_versions_of_probes(self):
         request = self.factory.get(self.url + 'probe/poem-probe-new')
@@ -4453,6 +4464,7 @@ class ListVersionsAPIViewTests(TenantTestCase):
                     'fields': {
                         'name': 'argo.POEM-API-MON-new',
                         'mtype': self.mtype1.name,
+                        'tags': ['test_tag1'],
                         'probeversion': 'poem-probe-new (0.1.11)',
                         'description': 'Description of argo.POEM-API-MON-new',
                         'parent': '',
@@ -4481,7 +4493,8 @@ class ListVersionsAPIViewTests(TenantTestCase):
                     'date_created': datetime.datetime.strftime(
                         self.ver5.date_created, '%Y-%m-%d %H:%M:%S'
                     ),
-                    'comment': 'Added description. Changed name and probekey.',
+                    'comment': 'Added description. Changed name and probekey. '
+                               'Added tags field "test_tag1".',
                     'version': '0.1.11'
                 },
                 {
@@ -4491,6 +4504,7 @@ class ListVersionsAPIViewTests(TenantTestCase):
                     'fields': {
                         'name': 'argo.POEM-API-MON',
                         'mtype': self.mtype1.name,
+                        'tags': [],
                         'probeversion': 'poem-probe (0.1.7)',
                         'description': '',
                         'parent': '',
@@ -4541,6 +4555,7 @@ class ListVersionsAPIViewTests(TenantTestCase):
                     'fields': {
                         'name': 'argo.POEM-API-MON-new',
                         'mtype': self.mtype1.name,
+                        'tags': ['test_tag1'],
                         'probeversion': 'poem-probe-new (0.1.11)',
                         'description': 'Description of argo.POEM-API-MON-new',
                         'parent': '',
@@ -4569,7 +4584,8 @@ class ListVersionsAPIViewTests(TenantTestCase):
                     'date_created': datetime.datetime.strftime(
                         self.ver5.date_created, '%Y-%m-%d %H:%M:%S'
                     ),
-                    'comment': 'Added description. Changed name and probekey.',
+                    'comment': 'Added description. Changed name and probekey. '
+                               'Added tags field "test_tag1".',
                     'version': '0.1.11'
                 },
                 {
@@ -4579,6 +4595,7 @@ class ListVersionsAPIViewTests(TenantTestCase):
                     'fields': {
                         'name': 'argo.POEM-API-MON',
                         'mtype': self.mtype1.name,
+                        'tags': [],
                         'probeversion': 'poem-probe (0.1.7)',
                         'description': '',
                         'parent': '',
@@ -4627,6 +4644,7 @@ class ListVersionsAPIViewTests(TenantTestCase):
                     'fields': {
                         'name': 'org.apel.APEL-Pub-new',
                         'mtype': self.mtype2.name,
+                        'tags': ['test_tag3'],
                         'probeversion': '',
                         'description': 'Description of org.apel.APEL-Pub',
                         'parent': '',
@@ -4658,6 +4676,7 @@ class ListVersionsAPIViewTests(TenantTestCase):
                     'fields': {
                         'name': 'org.apel.APEL-Pub',
                         'mtype': self.mtype2.name,
+                        'tags': ['test_tag2', 'test_tag3'],
                         'probeversion': '',
                         'description': 'Description of org.apel.APEL-Pub',
                         'parent': '',
