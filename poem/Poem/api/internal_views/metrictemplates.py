@@ -505,3 +505,12 @@ class ListMetricTemplateTypes(APIView):
             'name', flat=True
         )
         return Response(types)
+
+
+class ListMetricTags(APIView):
+    authentication_classes = (SessionAuthentication,)
+
+    def get(self, request):
+        tags = admin_models.MetricTags.objects.all().order_by('name')
+        tags_list = [tag.name for tag in tags]
+        return Response(tags_list)

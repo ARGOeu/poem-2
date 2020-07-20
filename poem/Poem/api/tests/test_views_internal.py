@@ -14008,3 +14008,30 @@ class BasicResourceInfoTests(TenantTestCase):
     def test_get_resourece_info_for_super_poem_tenant(self):
         data = get_tenant_resources(get_public_schema_name())
         self.assertEqual(data, {'metric_templates': 3, 'probes': 2})
+
+
+class MetricTagsTests(TenantTestCase):
+    def setUp(self):
+        self.factory = TenantRequestFactory(self.tenant)
+        self.view = views.ListMetricTags.as_view()
+        self.url = '/api/v2/internal/metrictags/'
+        self.user = CustUser.objects.create_user(username='testuser')
+
+        admin_models.MetricTags.objects.create(name='internal')
+        admin_models.MetricTags.objects.create(name='deprecated')
+        admin_models.MetricTags.objects.create(name='test_tag1')
+        admin_models.MetricTags.objects.create(name='test_tag2')
+
+    def test_get_metric_tags(self):
+        request = self.factory.get(self.url)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(
+            response.data,
+            ['deprecated', 'internal', 'test_tag1', 'test_tag2']
+        )
+
+    def test_get_metric_tags_if_not_auth(self):
+        request = self.factory.get(self.url)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
