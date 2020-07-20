@@ -70,7 +70,7 @@ def create_history_entry(instance, user, comment):
         )
 
     else:
-        admin_models.MetricTemplateHistory.objects.create(
+        history = admin_models.MetricTemplateHistory.objects.create(
             object_id=instance,
             name=instance.name,
             mtype=instance.mtype,
@@ -88,6 +88,8 @@ def create_history_entry(instance, user, comment):
             version_comment=comment,
             version_user=user
         )
+        for tag in instance.tags.all():
+            history.tags.add(tag)
 
 
 def create_history(instance, user, comment=None):

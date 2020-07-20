@@ -120,6 +120,17 @@ class ListMetricTemplates(APIView):
                         request.data['fileparameter']
                     )
                 )
+                if 'tags' in dict(request.data):
+                    for tag_name in dict(request.data)['tags']:
+                        try:
+                            tag = admin_models.MetricTags.objects.get(
+                                name=tag_name
+                            )
+                        except admin_models.MetricTags.DoesNotExist:
+                            tag = admin_models.MetricTags.objects.create(
+                                name=tag_name
+                            )
+                        mt.tags.add(tag)
             else:
                 mt = admin_models.MetricTemplate.objects.create(
                     name=request.data['name'],
