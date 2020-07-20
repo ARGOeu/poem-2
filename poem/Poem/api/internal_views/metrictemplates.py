@@ -178,6 +178,7 @@ class ListMetricTemplates(APIView):
         )
         old_name = metrictemplate.name
         old_probekey = metrictemplate.probekey
+        old_tags = set([tag.name for tag in metrictemplate.tags.all()])
 
         if request.data['parent']:
             parent = json.dumps([request.data['parent']])
@@ -188,6 +189,10 @@ class ListMetricTemplates(APIView):
             probeexecutable = json.dumps([request.data['probeexecutable']])
         else:
             probeexecutable = ''
+
+        new_tags = set()
+        if 'tags' in dict(request.data):
+            new_tags = set(dict(request.data)['tags'])
 
         if request.data['probeversion']:
             try:
@@ -243,6 +248,23 @@ class ListMetricTemplates(APIView):
                 )
                 metrictemplate.save()
 
+                if old_tags.difference(new_tags):
+                    for tag in old_tags.difference(new_tags):
+                        metrictemplate.tags.remove(
+                            admin_models.MetricTags.objects.get(name=tag)
+                        )
+
+                if new_tags.difference(old_tags):
+                    for tag in new_tags.difference(old_tags):
+                        try:
+                            mtag = admin_models.MetricTags.objects.get(name=tag)
+
+                        except admin_models.MetricTags.DoesNotExist:
+                            mtag = admin_models.MetricTags.objects.create(
+                                name=tag
+                            )
+                        metrictemplate.tags.add(mtag)
+
                 create_history(metrictemplate, request.user.username)
 
             else:
@@ -275,6 +297,32 @@ class ListMetricTemplates(APIView):
                     id=request.data['id']
                 ).update(**new_data)
 
+                mt = admin_models.MetricTemplate.objects.get(
+                    pk=request.data['id']
+                )
+
+                tags_to_remove = None
+                if old_tags.difference(new_tags):
+                    tags_to_remove = admin_models.MetricTags.objects.filter(
+                        name__in=old_tags.difference(new_tags)
+                    )
+                    for tag in tags_to_remove:
+                        mt.tags.remove(tag)
+
+                tags_to_add = None
+                if new_tags.difference(old_tags):
+                    tags_to_add = []
+                    for tag in new_tags.difference(old_tags):
+                        try:
+                            mtag = admin_models.MetricTags.objects.get(name=tag)
+
+                        except admin_models.MetricTags.DoesNotExist:
+                            mtag = admin_models.MetricTags.objects.create(
+                                name=tag
+                            )
+                        tags_to_add.append(mtag)
+                        mt.tags.add(mtag)
+
                 new_data.update({
                     'version_comment': update_comment(
                         admin_models.MetricTemplate.objects.get(
@@ -287,9 +335,17 @@ class ListMetricTemplates(APIView):
                     name=old_name, probekey=old_probekey
                 ).update(**new_data)
 
-                mt = admin_models.MetricTemplate.objects.get(
-                    pk=request.data['id']
+                history = admin_models.MetricTemplateHistory.objects.get(
+                    name=request.data['name'], probekey=new_probekey
                 )
+
+                if tags_to_remove:
+                    for tag in tags_to_remove:
+                        history.tags.remove(tag)
+
+                if tags_to_add:
+                    for tag in tags_to_add:
+                        history.tags.add(tag)
 
                 msgs = update_metrics(mt, old_name, old_probekey)
 

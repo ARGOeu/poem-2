@@ -1,12 +1,11 @@
-from django.contrib.contenttypes.models import ContentType
-from django.core import serializers
-
-from deepdiff import DeepDiff
 import json
 
 from Poem.poem import models as poem_models
 from Poem.poem_super_admin import models as admin_models
 from Poem.users.models import CustUser
+from deepdiff import DeepDiff
+from django.contrib.contenttypes.models import ContentType
+from django.core import serializers
 
 
 def to_dict(instance):
@@ -311,7 +310,8 @@ def analyze_differences(old_data, new_data):
                             added.append(field)
 
                         else:
-                            changed.append(field)
+                            if field != 'tags':
+                                changed.append(field)
 
                 except KeyError:
                     pass
