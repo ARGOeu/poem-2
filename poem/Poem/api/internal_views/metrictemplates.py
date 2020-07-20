@@ -48,6 +48,10 @@ class ListMetricTemplates(APIView):
                 for repo in metrictemplate.probekey.package.repos.all():
                     ostag.append(repo.tag.name)
 
+            tags = []
+            for tag in metrictemplate.tags.all():
+                tags.append(tag.name)
+
             if metrictemplate.probekey:
                 probeversion = metrictemplate.probekey.__str__()
             else:
@@ -58,6 +62,7 @@ class ListMetricTemplates(APIView):
                 name=metrictemplate.name,
                 mtype=metrictemplate.mtype.name,
                 ostag=ostag,
+                tags=sorted(tags),
                 probeversion=probeversion,
                 description=metrictemplate.description,
                 parent=parent,

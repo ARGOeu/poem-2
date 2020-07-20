@@ -4801,13 +4801,22 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.url = '/api/v2/internal/metrictemplates/'
         self.user = CustUser.objects.create_user(username='testuser')
 
-        self.mtype1 = admin_models.MetricTemplateType.objects.create(
+        self.template_active = admin_models.MetricTemplateType.objects.create(
             name='Active'
         )
-        mtype2 = admin_models.MetricTemplateType.objects.create(name='Passive')
+        template_passive = admin_models.MetricTemplateType.objects.create(
+            name='Passive'
+        )
 
-        self.mtype3 = poem_models.MetricType.objects.create(name='Active')
-        mtype4 = poem_models.MetricType.objects.create(name='Passive')
+        self.metric_active = poem_models.MetricType.objects.create(
+            name='Active'
+        )
+        metric_passive = poem_models.MetricType.objects.create(name='Passive')
+
+        mtag1 = admin_models.MetricTags.objects.create(name='internal')
+        mtag2 = admin_models.MetricTags.objects.create(name='deprecated')
+        mtag3 = admin_models.MetricTags.objects.create(name='test_tag1')
+        mtag4 = admin_models.MetricTags.objects.create(name='test_tag2')
 
         self.ct = ContentType.objects.get_for_model(poem_models.Metric)
 
@@ -4902,7 +4911,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
 
         self.metrictemplate1 = admin_models.MetricTemplate.objects.create(
             name='argo.AMS-Check',
-            mtype=self.mtype1,
+            mtype=self.template_active,
             probekey=self.probeversion1,
             description='Some description of argo.AMS-Check metric template.',
             probeexecutable='["ams-probe"]',
@@ -4913,14 +4922,16 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             flags='["OBSESS 1"]',
             parameter='["--project EGI"]'
         )
+        self.metrictemplate1.tags.add(mtag3, mtag4)
 
         self.metrictemplate2 = admin_models.MetricTemplate.objects.create(
             name='org.apel.APEL-Pub',
             flags='["OBSESS 1", "PASSIVE 1"]',
-            mtype=mtype2,
+            mtype=template_passive
         )
+        self.metrictemplate2.tags.add(mtag2)
 
-        admin_models.MetricTemplateHistory.objects.create(
+        mt1_history = admin_models.MetricTemplateHistory.objects.create(
             object_id=self.metrictemplate1,
             name=self.metrictemplate1.name,
             mtype=self.metrictemplate1.mtype,
@@ -4938,8 +4949,9 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             version_user=self.user.username,
             version_comment='Initial version.',
         )
+        mt1_history.tags.add(mtag3, mtag4)
 
-        admin_models.MetricTemplateHistory.objects.create(
+        mt2_history = admin_models.MetricTemplateHistory.objects.create(
             object_id=self.metrictemplate2,
             name=self.metrictemplate2.name,
             mtype=self.metrictemplate2.mtype,
@@ -4957,6 +4969,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             version_user=self.user.username,
             version_comment='Initial version.',
         )
+        mt2_history.tags.add(mtag2)
 
         self.metrictemplate1.probekey = self.probeversion2
         self.metrictemplate1.config = '["maxCheckAttempts 4", "timeout 70", ' \
@@ -4988,7 +5001,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.metric1 = poem_models.Metric.objects.create(
             name=self.metrictemplate1.name,
             group=group,
-            mtype=self.mtype3,
+            mtype=self.metric_active,
             description=self.metrictemplate1.description,
             probekey=self.metrictemplate1.probekey,
             probeexecutable=self.metrictemplate1.probeexecutable,
@@ -5018,7 +5031,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.metric2 = poem_models.Metric.objects.create(
             name=self.metrictemplate2.name,
             group=group,
-            mtype=mtype4,
+            mtype=metric_passive,
             description=self.metrictemplate2.description,
             probekey=self.metrictemplate2.probekey,
             probeexecutable=self.metrictemplate2.probeexecutable,
@@ -5059,6 +5072,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
                     'description': 'Some description of argo.AMS-Check metric '
                                    'template.',
                     'ostag': ['CentOS 6', 'CentOS 7'],
+                    'tags': ['test_tag1', 'test_tag2'],
                     'probeversion': 'ams-probe (0.1.8)',
                     'parent': '',
                     'probeexecutable': 'ams-probe',
@@ -5112,6 +5126,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
                     'mtype': 'Passive',
                     'description': '',
                     'ostag': [],
+                    'tags': ['deprecated'],
                     'probeversion': '',
                     'parent': '',
                     'probeexecutable': '',
@@ -5145,6 +5160,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
                 'id': self.metrictemplate1.id,
                 'name': 'argo.AMS-Check',
                 'mtype': 'Active',
+                'tags': ['test_tag1', 'test_tag2'],
                 'description': 'Some description of argo.AMS-Check metric '
                                'template.',
                 'probeversion': 'ams-probe (0.1.8)',
@@ -5239,7 +5255,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             object_id=mt
         )
         self.assertEqual(versions.count(), 1)
-        self.assertEqual(mt.mtype, self.mtype1)
+        self.assertEqual(mt.mtype, self.template_active)
         self.assertEqual(mt.probekey, self.probeversion1)
         self.assertEqual(mt.description, 'New description for new-template.')
         self.assertEqual(mt.parent, '')
@@ -5671,7 +5687,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         data = {
             'id': self.metrictemplate1.id,
             'name': 'org.apel.APEL-Pub',
-            'mtype': self.mtype1,
+            'mtype': self.template_active,
             'probeversion': 'ams-probe (0.1.7)',
             'description': self.metrictemplate1.description,
             'parent': '',
@@ -5716,7 +5732,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         data = {
             'id': self.metrictemplate1.id,
             'name': 'test.apel.APEL-Pub',
-            'mtype': self.mtype1,
+            'mtype': self.template_active,
             'probeversion': 'nonexisting (1.0.0)',
             'description': self.metrictemplate1.description,
             'parent': '',
@@ -5761,7 +5777,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         data = {
             'id': self.metrictemplate1.id,
             'name': 'test.apel.APEL-Pub',
-            'mtype': self.mtype1,
+            'mtype': self.template_active,
             'probeversion': 'nonexisting',
             'description': self.metrictemplate1.description,
             'parent': '',
