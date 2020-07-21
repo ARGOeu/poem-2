@@ -74,6 +74,7 @@ class ListTenantVersions(APIView):
                         fields = {
                             'name': fields0['name'],
                             'mtype': fields0['mtype'][0],
+                            'tags': [tag[0] for tag in fields0['tags']],
                             'group': fields0['group'][0],
                             'probeversion': probeversion,
                             'description': description,

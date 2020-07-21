@@ -3456,6 +3456,9 @@ class ListMetricAPIViewTests(TenantTestCase):
         mtype1 = poem_models.MetricType.objects.create(name='Active')
         mtype2 = poem_models.MetricType.objects.create(name='Passive')
 
+        self.mtag1 = admin_models.MetricTags.objects.create(name='test_tag1')
+        self.mtag2 = admin_models.MetricTags.objects.create(name='test_tag2')
+
         group = poem_models.GroupOfMetrics.objects.create(name='EGI')
         poem_models.GroupOfMetrics.objects.create(name='EUDAT')
 
@@ -3527,6 +3530,7 @@ class ListMetricAPIViewTests(TenantTestCase):
             flags='["OBSESS 1"]',
             parameter='["--project EGI"]'
         )
+        self.metric1.tags.add(self.mtag1, self.mtag2)
 
         self.metric2 = poem_models.Metric.objects.create(
             name='org.apel.APEL-Pub',
@@ -3576,6 +3580,7 @@ class ListMetricAPIViewTests(TenantTestCase):
                     'id': self.metric1.id,
                     'name': 'argo.AMS-Check',
                     'mtype': 'Active',
+                    'tags': ['test_tag1', 'test_tag2'],
                     'probeversion': 'ams-probe (0.1.7)',
                     'group': 'EGI',
                     'description': 'Description of argo.AMS-Check',
@@ -3629,6 +3634,7 @@ class ListMetricAPIViewTests(TenantTestCase):
                     'id': self.metric2.id,
                     'name': 'org.apel.APEL-Pub',
                     'mtype': 'Passive',
+                    'tags': [],
                     'probeversion': '',
                     'group': 'EGI',
                     'description': '',
@@ -3664,6 +3670,7 @@ class ListMetricAPIViewTests(TenantTestCase):
                 'id': self.metric1.id,
                 'name': 'argo.AMS-Check',
                 'mtype': 'Active',
+                'tags': ['test_tag1', 'test_tag2'],
                 'probeversion': 'ams-probe (0.1.7)',
                 'group': 'EGI',
                 'description': 'Description of argo.AMS-Check',
@@ -3735,8 +3742,8 @@ class ListMetricAPIViewTests(TenantTestCase):
         self.assertEqual(
             res,
             '["maxCheckAttempts 4", "timeout 70", '
-             '"path /usr/libexec/argo-monitoring/probes/argo", '
-             '"interval 6", "retryInterval 4"]'
+            '"path /usr/libexec/argo-monitoring/probes/argo", '
+            '"interval 6", "retryInterval 4"]'
         )
 
     @patch('Poem.api.internal_views.metrics.inline_metric_for_db',
@@ -3757,6 +3764,7 @@ class ListMetricAPIViewTests(TenantTestCase):
         data = {
             'name': 'argo.AMS-Check',
             'mtype': 'Active',
+            'tags': ['test_tag1', 'test_tag2'],
             'group': 'EUDAT',
             'description': 'New description of argo.AMS-Check',
             'parent': '',
@@ -3784,6 +3792,9 @@ class ListMetricAPIViewTests(TenantTestCase):
             versions[0].serialized_data
         )[0]['fields']
         self.assertEqual(metric.mtype.name, 'Active')
+        self.assertEqual(len(metric.tags.all()), 2)
+        self.assertTrue(self.mtag1 in metric.tags.all())
+        self.assertTrue(self.mtag2 in metric.tags.all())
         self.assertEqual(metric.probekey, self.probeversion2)
         self.assertEqual(metric.group.name, 'EUDAT')
         self.assertEqual(
@@ -3807,6 +3818,9 @@ class ListMetricAPIViewTests(TenantTestCase):
         self.assertEqual(metric.fileparameter, '')
         self.assertEqual(serialized_data['name'], metric.name)
         self.assertEqual(serialized_data['mtype'], [metric.mtype.name])
+        self.assertEqual(
+            serialized_data['tags'], [['test_tag1'], ['test_tag2']]
+        )
         self.assertEqual(serialized_data['description'], metric.description)
         self.assertEqual(
             serialized_data['probekey'],
@@ -3830,6 +3844,7 @@ class ListMetricAPIViewTests(TenantTestCase):
         data = {
             'name': 'org.apel.APEL-Pub',
             'mtype': 'Passive',
+            'tags': [],
             'probeversion': '',
             'group': 'EUDAT',
             'description': 'Description of passive metric org.apel.APEL-Pub.',
@@ -3857,6 +3872,7 @@ class ListMetricAPIViewTests(TenantTestCase):
             versions[0].serialized_data
         )[0]['fields']
         self.assertEqual(metric.mtype.name, 'Passive')
+        self.assertEqual(len(metric.tags.all()), 0)
         self.assertEqual(metric.probekey, None)
         self.assertEqual(metric.group.name, 'EUDAT')
         self.assertEqual(
@@ -3874,6 +3890,7 @@ class ListMetricAPIViewTests(TenantTestCase):
         self.assertEqual(metric.fileparameter, '')
         self.assertEqual(serialized_data['name'], metric.name)
         self.assertEqual(serialized_data['mtype'], [metric.mtype.name])
+        self.assertEqual(serialized_data['tags'], [])
         self.assertEqual(serialized_data['probekey'], None)
         self.assertEqual(
             serialized_data['description'],
@@ -7046,6 +7063,10 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
         self.mtype1 = poem_models.MetricType.objects.create(name='Active')
         self.mtype2 = poem_models.MetricType.objects.create(name='Passive')
 
+        self.mtag1 = admin_models.MetricTags.objects.create(name='test_tag1')
+        self.mtag2 = admin_models.MetricTags.objects.create(name='test_tag2')
+        self.mtag3 = admin_models.MetricTags.objects.create(name='test_tag3')
+
         group1 = poem_models.GroupOfMetrics.objects.create(name='EGI')
         group2 = poem_models.GroupOfMetrics.objects.create(name='TEST')
 
@@ -7065,6 +7086,7 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
             flags='["OBSESS 1"]',
             parameter='["--project EGI"]'
         )
+        self.metric1.tags.add(self.mtag1, self.mtag2)
 
         poem_models.Metric.objects.create(
             name='test.AMS-Check',
@@ -7110,6 +7132,7 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
         self.metric1.parameter = ''
         self.metric1.fileparameter = '["new-key new-value"]'
         self.metric1.save()
+        self.metric1.tags.add(self.mtag3)
 
         comment = create_comment(
             self.metric1, ct=ct_m, new_serialized_data=serializers.serialize(
@@ -7412,6 +7435,7 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
                     'fields': {
                         'name': 'argo.AMS-Check-new',
                         'mtype': self.mtype1.name,
+                        'tags': ['test_tag1', 'test_tag2', 'test_tag3'],
                         'group': 'TEST',
                         'probeversion': 'ams-probe (0.1.11)',
                         'description': 'Description of argo.AMS-Check-new.',
@@ -7443,7 +7467,8 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
                     'date_created': datetime.datetime.strftime(
                         self.ver2.date_created, '%Y-%m-%d %H:%M:%S'
                     ),
-                    'comment': 'Changed config fields "maxCheckAttempts", '
+                    'comment': 'Added tags field "test_tag3". '
+                               'Changed config fields "maxCheckAttempts", '
                                '"retryInterval" and "timeout". Added '
                                'description. Changed group and probekey.',
                     'version': datetime.datetime.strftime(
@@ -7456,6 +7481,7 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
                     'fields': {
                         'name': 'argo.AMS-Check',
                         'mtype': self.mtype1.name,
+                        'tags': ['test_tag1', 'test_tag2'],
                         'group': 'EGI',
                         'probeversion': 'ams-probe (0.1.7)',
                         'description': '',
@@ -7508,6 +7534,7 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
                     'fields': {
                         'name': 'org.apel.APEL-Pub',
                         'mtype': self.mtype2.name,
+                        'tags': [],
                         'group': 'EGI',
                         'probeversion': '',
                         'description': 'Description of org.apel.APEL-Pub.',
@@ -8240,6 +8267,7 @@ class HistoryHelpersTests(TenantTestCase):
             mtype=self.metric_active,
             probekey=probe_history1
         )
+        self.metric1.tags.add(self.metrictag1, self.metrictag2)
 
         poem_models.TenantHistory.objects.create(
             object_id=self.metric1.id,
@@ -8558,21 +8586,24 @@ class HistoryHelpersTests(TenantTestCase):
         self.assertEqual(comment, 'Initial version.')
 
     def test_create_comment_for_metric(self):
-        metric = poem_models.Metric(
-            name='metric-2',
-            description='Description for metric-2.',
-            probekey=self.probe_history2,
-            probeexecutable='["new-probeexecutable"]',
-            config='["maxCheckAttempts 3", "timeout 60",'
-                   ' "path $USER", "interval 5", "retryInterval 3"]',
-            attribute='["attribute-key attribute-value"]',
-            dependancy='["dependency-key1 dependency-value1"]',
-            flags='["flags-key flags-value", "flags-key1 flags-value2"]',
-            files='["files-key files-value"]',
-            parameter='["parameter-key parameter-value"]',
-            fileparameter='["fileparameter-key fileparameter-value"]',
-            mtype=self.metric_active
+        metric = poem_models.Metric.objects.get(
+            id=self.metric1.id
         )
+        metric.name = 'metric-2'
+        metric.description = 'Description for metric-2.'
+        metric.probekey = self.probe_history2
+        metric.probeexecutable = '["new-probeexecutable"]'
+        metric.config = '["maxCheckAttempts 3", "timeout 60",'\
+                        ' "path $USER", "interval 5", "retryInterval 3"]'
+        metric.attribute = '["attribute-key attribute-value"]'
+        metric.dependancy = '["dependency-key1 dependency-value1"]'
+        metric.flags = '["flags-key flags-value", "flags-key1 flags-value2"]'
+        metric.files = '["files-key files-value"]'
+        metric.parameter = '["parameter-key parameter-value"]'
+        metric.fileparameter = '["fileparameter-key fileparameter-value"]'
+        metric.mtype = self.metric_active
+        metric.parent = ''
+        metric.save()
         serialized_data = serializers.serialize(
             'json', [metric],
             use_natural_foreign_keys=True,
@@ -8596,20 +8627,23 @@ class HistoryHelpersTests(TenantTestCase):
         )
 
     def test_create_comment_for_metric_if_field_deleted_from_model(self):
-        mt = poem_models.Metric(
-            name='metric-2',
-            description='Description of metric-1.',
-            probekey=self.probe_history2,
-            probeexecutable='["new-probeexecutable"]',
-            config='["maxCheckAttempts 4", "timeout 60",'
-                   ' "path $USER", "interval 5", "retryInterval 3"]',
-            attribute='["attribute-key attribute-value"]',
-            dependancy='["dependency-key1 dependency-value1"]',
-            flags='["flags-key flags-value", "flags-key1 flags-value2"]',
-            files='["files-key files-value"]',
-            parameter='["parameter-key parameter-value"]',
-            mtype=self.metric_active
+        mt = poem_models.Metric.objects.get(
+            id=self.metric1.id
         )
+        mt.name = 'metric-2'
+        mt.description = 'Description of metric-1.'
+        mt.probekey = self.probe_history2
+        mt.probeexecutable = '["new-probeexecutable"]'
+        mt.config = '["maxCheckAttempts 4", "timeout 60",'\
+                    ' "path $USER", "interval 5", "retryInterval 3"]'
+        mt.attribute = '["attribute-key attribute-value"]'
+        mt.dependancy = '["dependency-key1 dependency-value1"]'
+        mt.flags = '["flags-key flags-value", "flags-key1 flags-value2"]'
+        mt.files = '["files-key files-value"]'
+        mt.parameter = '["parameter-key parameter-value"]'
+        mt.mtype = self.metric_active
+        mt.parent = ''
+        mt.save()
         serialized_data = serializers.serialize(
             'json', [mt],
             use_natural_foreign_keys=True,
@@ -8639,21 +8673,24 @@ class HistoryHelpersTests(TenantTestCase):
         )
 
     def test_create_comment_for_metric_if_field_added_to_model(self):
-        mt = poem_models.Metric(
-            name='metric-2',
-            description='Description of metric-1.',
-            probekey=self.probe_history2,
-            probeexecutable='["new-probeexecutable"]',
-            config='["maxCheckAttempts 4", "timeout 60",'
-                   ' "path $USER", "interval 5", "retryInterval 4"]',
-            attribute='["attribute-key attribute-value"]',
-            dependancy='["dependency-key1 dependency-value1"]',
-            flags='["flags-key flags-value", "flags-key1 flags-value2"]',
-            files='["files-key files-value"]',
-            parameter='["parameter-key parameter-value"]',
-            fileparameter='["fileparameter-key fileparameter-value"]',
-            mtype=self.metric_active
+        mt = poem_models.Metric.objects.get(
+            id=self.metric1.id
         )
+        mt.name = 'metric-2'
+        mt.description = 'Description of metric-1.'
+        mt.probekey = self.probe_history2
+        mt.probeexecutable = '["new-probeexecutable"]'
+        mt.config = '["maxCheckAttempts 4", "timeout 60",'\
+                    ' "path $USER", "interval 5", "retryInterval 4"]'
+        mt.attribute = '["attribute-key attribute-value"]'
+        mt.dependancy = '["dependency-key1 dependency-value1"]'
+        mt.flags = '["flags-key flags-value", "flags-key1 flags-value2"]'
+        mt.files = '["files-key files-value"]'
+        mt.parameter = '["parameter-key parameter-value"]'
+        mt.fileparameter = '["fileparameter-key fileparameter-value"]'
+        mt.mtype = self.metric_active
+        mt.parent = ''
+        mt.save()
         serialized_data = serializers.serialize(
             'json', [mt],
             use_natural_foreign_keys=True,
@@ -9560,7 +9597,6 @@ class ListPackagesAPIViewTests(TenantTestCase):
         ct = ContentType.objects.get_for_model(poem_models.Metric)
 
         mtag1 = admin_models.MetricTags.objects.create(name='test_tag1')
-        mtag2 = admin_models.MetricTags.objects.create(name='test_tag2')
 
         mt = admin_models.MetricTemplate.objects.create(
             name='argo.AMS-Check',
@@ -9609,6 +9645,7 @@ class ListPackagesAPIViewTests(TenantTestCase):
             flags='["OBSESS 1"]',
             parameter='["--project EGI"]'
         )
+        metric1.tags.add(mtag1)
 
         poem_models.TenantHistory.objects.create(
             object_id=metric1.id,
@@ -10491,6 +10528,7 @@ class ListMetricTemplatesForImportTests(TenantTestCase):
                 {
                     'name': 'argo.AMS-Check',
                     'mtype': 'Active',
+                    'tags': ['test_tag1', 'test_tag2'],
                     'ostag': ['CentOS 6', 'CentOS 7'],
                     'probeversion': 'ams-probe (0.1.11)',
                     'centos6_probeversion': 'ams-probe (0.1.11)',
@@ -10499,6 +10537,7 @@ class ListMetricTemplatesForImportTests(TenantTestCase):
                 {
                     'name': 'argo.EGI-Connectors-Check',
                     'mtype': 'Active',
+                    'tags': ['test_tag3'],
                     'ostag': ['CentOS 6', 'CentOS 7'],
                     'probeversion': 'check_nrpe (3.2.1)',
                     'centos6_probeversion': 'check_nrpe (3.2.0)',
@@ -10507,6 +10546,7 @@ class ListMetricTemplatesForImportTests(TenantTestCase):
                 {
                     'name': 'eu.seadatanet.org.nerc-sparql-check',
                     'mtype': 'Active',
+                    'tags': [],
                     'ostag': ['CentOS 7'],
                     'probeversion': 'sdc-nerq-sparq (1.0.1)',
                     'centos6_probeversion': '',
@@ -10515,6 +10555,7 @@ class ListMetricTemplatesForImportTests(TenantTestCase):
                 {
                     'name': 'org.apel.APEL-Pub',
                     'mtype': 'Passive',
+                    'tags': [],
                     'ostag': ['CentOS 6', 'CentOS 7'],
                     'probeversion': '',
                     'centos6_probeversion': '',
@@ -10901,6 +10942,10 @@ class MetricsHelpersTests(TransactionTestCase):
             name='Passive'
         )
 
+        self.mtag1 = admin_models.MetricTags.objects.create(name='test_tag1')
+        self.mtag2 = admin_models.MetricTags.objects.create(name='test_tag2')
+        self.mtag3 = admin_models.MetricTags.objects.create(name='test_tag3')
+
         self.m_active = poem_models.MetricType.objects.create(name='Active')
         self.m_passive = poem_models.MetricType.objects.create(name='Passive')
 
@@ -11135,8 +11180,9 @@ class MetricsHelpersTests(TransactionTestCase):
             flags='["OBSESS 1"]',
             parameter='["--project EGI"]'
         )
+        self.metrictemplate1.tags.add(self.mtag1, self.mtag2)
 
-        self.mt_history1 = admin_models.MetricTemplateHistory.objects.create(
+        self.mt1_history1 = admin_models.MetricTemplateHistory.objects.create(
             object_id=self.metrictemplate1,
             name=self.metrictemplate1.name,
             mtype=self.metrictemplate1.mtype,
@@ -11154,14 +11200,16 @@ class MetricsHelpersTests(TransactionTestCase):
             version_user=self.user.username,
             version_comment='Initial version.',
         )
+        self.mt1_history1.tags.add(self.mtag1, self.mtag2)
 
         self.metrictemplate1.probekey = self.probeversion1_2
         self.metrictemplate1.config = '["maxCheckAttempts 4", "timeout 70", ' \
                                       '"path /usr/libexec/argo-monitoring/", ' \
                                       '"interval 5", "retryInterval 3"]'
         self.metrictemplate1.save()
+        self.metrictemplate1.tags.add(self.mtag3)
 
-        admin_models.MetricTemplateHistory.objects.create(
+        self.mt1_history2 = admin_models.MetricTemplateHistory.objects.create(
             object_id=self.metrictemplate1,
             name=self.metrictemplate1.name,
             mtype=self.metrictemplate1.mtype,
@@ -11179,11 +11227,12 @@ class MetricsHelpersTests(TransactionTestCase):
             version_user=self.user.username,
             version_comment=create_comment(self.metrictemplate1)
         )
+        self.mt1_history2.tags.add(self.mtag1, self.mtag2, self.mtag3)
 
         self.metrictemplate1.probekey = self.probeversion1_3
         self.metrictemplate1.save()
 
-        admin_models.MetricTemplateHistory.objects.create(
+        self.mt1_history3 = admin_models.MetricTemplateHistory.objects.create(
             object_id=self.metrictemplate1,
             name=self.metrictemplate1.name,
             mtype=self.metrictemplate1.mtype,
@@ -11201,6 +11250,7 @@ class MetricsHelpersTests(TransactionTestCase):
             version_user=self.user.username,
             version_comment=create_comment(self.metrictemplate1)
         )
+        self.mt1_history3.tags.add(self.mtag1, self.mtag2, self.mtag3)
 
         self.metrictemplate2 = admin_models.MetricTemplate.objects.create(
             name='org.nagios.CertLifetime',
@@ -11213,8 +11263,9 @@ class MetricsHelpersTests(TransactionTestCase):
             parameter='["-C 30", "--sni "]',
             flags='["OBSESS 1"]'
         )
+        self.metrictemplate2.tags.add(self.mtag2)
 
-        admin_models.MetricTemplateHistory.objects.create(
+        mt2_history1 = admin_models.MetricTemplateHistory.objects.create(
             object_id=self.metrictemplate2,
             name=self.metrictemplate2.name,
             mtype=self.metrictemplate2.mtype,
@@ -11232,6 +11283,7 @@ class MetricsHelpersTests(TransactionTestCase):
             version_user=self.user.username,
             version_comment='Initial version.',
         )
+        mt2_history1.tags.add(self.mtag2)
 
         self.metrictemplate3 = admin_models.MetricTemplate.objects.create(
             name='eu.egi.cloud.OpenStack-VM',
@@ -11284,8 +11336,9 @@ class MetricsHelpersTests(TransactionTestCase):
                        '"org.nagios.Keystone-TCP 1"]',
             flags='["NOHOSTNAME 1", "OBSESS 1"]'
         )
+        self.metrictemplate4.tags.add(self.mtag3)
 
-        admin_models.MetricTemplateHistory.objects.create(
+        mt4_history1 = admin_models.MetricTemplateHistory.objects.create(
             object_id=self.metrictemplate4,
             name=self.metrictemplate4.name,
             mtype=self.metrictemplate4.mtype,
@@ -11304,6 +11357,7 @@ class MetricsHelpersTests(TransactionTestCase):
             version_comment='Initial version.',
             version_user='testuser'
         )
+        mt4_history1.tags.add(self.mtag3)
 
         self.metrictemplate5 = admin_models.MetricTemplate.objects.create(
             name='org.apel.APEL-Pub',
@@ -11341,8 +11395,9 @@ class MetricsHelpersTests(TransactionTestCase):
             parameter='["-C 30", "--sni "]',
             flags='["OBSESS 1"]'
         )
+        self.metrictemplate6.tags.add(self.mtag1, self.mtag2)
 
-        admin_models.MetricTemplateHistory.objects.create(
+        mt6_history1 = admin_models.MetricTemplateHistory.objects.create(
             object_id=self.metrictemplate6,
             name=self.metrictemplate6.name,
             mtype=self.metrictemplate6.mtype,
@@ -11360,6 +11415,7 @@ class MetricsHelpersTests(TransactionTestCase):
             version_user=self.user.username,
             version_comment='Initial version.',
         )
+        mt6_history1.tags.add(self.mtag1, self.mtag2)
 
         self.metrictemplate7 = admin_models.MetricTemplate.objects.create(
             name='eu.egi.sec.ARC-CE-result',
@@ -11399,8 +11455,9 @@ class MetricsHelpersTests(TransactionTestCase):
             parameter='["-s /var/run/argo-nagios-ams-publisher/sock"]',
             flags='["NOHOSTNAME 1", "NOTIMEOUT 1", "NOPUBLISH 1"]'
         )
+        self.metrictemplate8.tags.add(self.mtag1)
 
-        self.mt_history8_1 = admin_models.MetricTemplateHistory.objects.create(
+        self.mt8_history1 = admin_models.MetricTemplateHistory.objects.create(
             object_id=self.metrictemplate8,
             name=self.metrictemplate8.name,
             mtype=self.metrictemplate8.mtype,
@@ -11418,11 +11475,12 @@ class MetricsHelpersTests(TransactionTestCase):
             version_user=self.user.username,
             version_comment='Initial version.',
         )
+        self.mt8_history1.tags.add(self.mtag1)
 
         self.metrictemplate8.probekey = self.probeversion5_2
         self.metrictemplate8.save()
 
-        self.mt_history8_2 = admin_models.MetricTemplateHistory.objects.create(
+        self.mt8_history2 = admin_models.MetricTemplateHistory.objects.create(
             object_id=self.metrictemplate8,
             name=self.metrictemplate8.name,
             mtype=self.metrictemplate8.mtype,
@@ -11438,14 +11496,17 @@ class MetricsHelpersTests(TransactionTestCase):
             fileparameter=self.metrictemplate8.fileparameter,
             date_created=datetime.datetime.now(),
             version_user=self.user.username,
-            version_comment='Newer version.',
+            version_comment='Newer version.'
         )
+        self.mt8_history2.tags.add(self.mtag1)
 
         self.metrictemplate8.probekey = self.probeversion5_3
         self.metrictemplate8.parameter = ''
         self.metrictemplate8.save()
+        self.metrictemplate8.tags.remove(self.mtag1)
+        self.metrictemplate8.tags.add(self.mtag2)
 
-        self.mt_history8_3 = admin_models.MetricTemplateHistory.objects.create(
+        self.mt8_history3 = admin_models.MetricTemplateHistory.objects.create(
             object_id=self.metrictemplate8,
             name=self.metrictemplate8.name,
             mtype=self.metrictemplate8.mtype,
@@ -11463,6 +11524,7 @@ class MetricsHelpersTests(TransactionTestCase):
             version_user=self.user.username,
             version_comment='Newest version.',
         )
+        self.mt8_history3.tags.add(self.mtag2)
 
         self.metrictemplate9 = admin_models.MetricTemplate.objects.create(
             name='argo.AMS-Check-Old',
@@ -11478,7 +11540,7 @@ class MetricsHelpersTests(TransactionTestCase):
             parameter='["--project EGI"]'
         )
 
-        self.mt_history9 = admin_models.MetricTemplateHistory.objects.create(
+        self.mt9_history1 = admin_models.MetricTemplateHistory.objects.create(
             object_id=self.metrictemplate9,
             name=self.metrictemplate9.name,
             mtype=self.metrictemplate9.mtype,
@@ -11496,6 +11558,7 @@ class MetricsHelpersTests(TransactionTestCase):
             version_user=self.user.username,
             version_comment='Initial version.',
         )
+
         self.group = poem_models.GroupOfMetrics.objects.create(
             name=self.tenant.name.upper()
         )
@@ -11515,6 +11578,7 @@ class MetricsHelpersTests(TransactionTestCase):
             flags='["OBSESS 1"]',
             parameter='["--project EGI"]'
         )
+        self.metric1.tags.add(self.mtag1, self.mtag2, self.mtag3)
 
         poem_models.TenantHistory.objects.create(
             object_id=self.metric1.id,
@@ -11544,6 +11608,7 @@ class MetricsHelpersTests(TransactionTestCase):
             parameter=self.metrictemplate2.parameter,
             fileparameter=self.metrictemplate2.fileparameter,
         )
+        self.metric2.tags.add(self.mtag2)
 
         poem_models.TenantHistory.objects.create(
             object_id=self.metric2.id,
@@ -11576,6 +11641,7 @@ class MetricsHelpersTests(TransactionTestCase):
             parameter=self.metrictemplate4.parameter,
             fileparameter=self.metrictemplate4.fileparameter
         )
+        self.metric3.tags.add(self.mtag3)
 
         poem_models.TenantHistory.objects.create(
             object_id=self.metric3.id,
@@ -11651,6 +11717,7 @@ class MetricsHelpersTests(TransactionTestCase):
         self.assertEqual(history1.count(), 1)
         self.assertEqual(metric1.name, self.metrictemplate3.name)
         self.assertEqual(metric1.mtype, self.m_active)
+        self.assertEqual(len(metric1.tags.all()), 0)
         self.assertEqual(metric1.group, self.group)
         self.assertEqual(metric1.description, self.metrictemplate3.description)
         self.assertEqual(metric1.probekey, self.metrictemplate3.probekey)
@@ -11668,6 +11735,7 @@ class MetricsHelpersTests(TransactionTestCase):
         )
         self.assertEqual(serialized_data1['name'], metric1.name)
         self.assertEqual(serialized_data1['mtype'][0], metric1.mtype.name)
+        self.assertEqual(serialized_data1['tags'], [])
         self.assertEqual(serialized_data1['group'][0], metric1.group.name)
         self.assertEqual(serialized_data1['description'], metric1.description)
         self.assertEqual(
@@ -11689,6 +11757,9 @@ class MetricsHelpersTests(TransactionTestCase):
         self.assertEqual(history2.count(), 1)
         self.assertEqual(metric2.name, self.metrictemplate6.name)
         self.assertEqual(metric2.mtype, self.m_active)
+        self.assertEqual(len(metric2.tags.all()), 2)
+        self.assertTrue(self.mtag1 in metric2.tags.all())
+        self.assertTrue(self.mtag2 in metric2.tags.all())
         self.assertEqual(metric2.group, self.group)
         self.assertEqual(metric2.description, self.metrictemplate6.description)
         self.assertEqual(metric2.probekey, self.metrictemplate6.probekey)
@@ -11706,6 +11777,9 @@ class MetricsHelpersTests(TransactionTestCase):
         )
         self.assertEqual(serialized_data2['name'], metric2.name)
         self.assertEqual(serialized_data2['mtype'][0], metric2.mtype.name)
+        self.assertEqual(
+            serialized_data2['tags'], [['test_tag1'], ['test_tag2']]
+        )
         self.assertEqual(serialized_data2['group'][0], metric2.group.name)
         self.assertEqual(serialized_data2['description'], metric2.description)
         self.assertEqual(
@@ -11745,6 +11819,7 @@ class MetricsHelpersTests(TransactionTestCase):
         self.assertEqual(history1.count(), 1)
         self.assertEqual(metric1.name, self.metrictemplate7.name)
         self.assertEqual(metric1.mtype, self.m_passive)
+        self.assertEqual(len(metric1.tags.all()), 0)
         self.assertEqual(metric1.group, self.group)
         self.assertEqual(metric1.description, self.metrictemplate7.description)
         self.assertEqual(metric1.probekey, self.metrictemplate7.probekey)
@@ -11762,6 +11837,7 @@ class MetricsHelpersTests(TransactionTestCase):
         )
         self.assertEqual(serialized_data1['name'], metric1.name)
         self.assertEqual(serialized_data1['mtype'][0], metric1.mtype.name)
+        self.assertEqual(serialized_data1['tags'], [])
         self.assertEqual(serialized_data1['group'][0], metric1.group.name)
         self.assertEqual(serialized_data1['description'], metric1.description)
         self.assertEqual(serialized_data1['probekey'], None)
@@ -11796,25 +11872,28 @@ class MetricsHelpersTests(TransactionTestCase):
         ).order_by('-date_created')
         serialized_data1 = json.loads(history1[0].serialized_data)[0]['fields']
         self.assertEqual(history1.count(), 1)
-        self.assertEqual(metric1.name, self.mt_history8_2.name)
+        self.assertEqual(metric1.name, self.mt8_history2.name)
         self.assertEqual(metric1.mtype, self.m_active)
+        self.assertEqual(len(metric1.tags.all()), 1)
+        self.assertTrue(self.mtag1 in metric1.tags.all())
         self.assertEqual(metric1.group, self.group)
-        self.assertEqual(metric1.description, self.mt_history8_2.description)
-        self.assertEqual(metric1.probekey, self.mt_history8_2.probekey)
+        self.assertEqual(metric1.description, self.mt8_history2.description)
+        self.assertEqual(metric1.probekey, self.mt8_history2.probekey)
         self.assertEqual(
-            metric1.probeexecutable, self.mt_history8_2.probeexecutable
+            metric1.probeexecutable, self.mt8_history2.probeexecutable
         )
-        self.assertEqual(metric1.config, self.mt_history8_2.config)
-        self.assertEqual(metric1.attribute, self.mt_history8_2.attribute)
-        self.assertEqual(metric1.dependancy, self.mt_history8_2.dependency)
-        self.assertEqual(metric1.flags, self.mt_history8_2.flags)
-        self.assertEqual(metric1.files, self.mt_history8_2.files)
-        self.assertEqual(metric1.parameter, self.mt_history8_2.parameter)
+        self.assertEqual(metric1.config, self.mt8_history2.config)
+        self.assertEqual(metric1.attribute, self.mt8_history2.attribute)
+        self.assertEqual(metric1.dependancy, self.mt8_history2.dependency)
+        self.assertEqual(metric1.flags, self.mt8_history2.flags)
+        self.assertEqual(metric1.files, self.mt8_history2.files)
+        self.assertEqual(metric1.parameter, self.mt8_history2.parameter)
         self.assertEqual(
-            metric1.fileparameter, self.mt_history8_2.fileparameter
+            metric1.fileparameter, self.mt8_history2.fileparameter
         )
         self.assertEqual(serialized_data1['name'], metric1.name)
         self.assertEqual(serialized_data1['mtype'][0], metric1.mtype.name)
+        self.assertEqual(serialized_data1['tags'], [['test_tag1']])
         self.assertEqual(serialized_data1['group'][0], metric1.group.name)
         self.assertEqual(serialized_data1['description'], metric1.description)
         self.assertEqual(
@@ -11853,6 +11932,7 @@ class MetricsHelpersTests(TransactionTestCase):
         self.assertEqual(history1.count(), 1)
         self.assertEqual(metric1.name, self.metric1.name)
         self.assertEqual(metric1.mtype, self.metric1.mtype)
+        self.assertEqual(metric1.tags, self.metric1.tags)
         self.assertEqual(metric1.group, self.metric1.group)
         self.assertEqual(metric1.description, self.metric1.description)
         self.assertEqual(metric1.probekey, self.metric1.probekey)
@@ -11870,6 +11950,10 @@ class MetricsHelpersTests(TransactionTestCase):
         )
         self.assertEqual(serialized_data1['name'], metric1.name)
         self.assertEqual(serialized_data1['mtype'][0], metric1.mtype.name)
+        self.assertEqual(
+            serialized_data1['tags'],
+            [['test_tag1'], ['test_tag2'], ['test_tag3']]
+        )
         self.assertEqual(serialized_data1['group'][0], metric1.group.name)
         self.assertEqual(serialized_data1['description'], metric1.description)
         self.assertEqual(
@@ -11898,6 +11982,7 @@ class MetricsHelpersTests(TransactionTestCase):
         self.assertEqual(history2.count(), 1)
         self.assertEqual(metric2.name, self.metric2.name)
         self.assertEqual(metric2.mtype, self.metric2.mtype)
+        self.assertEqual(metric2.tags, self.metric2.tags)
         self.assertEqual(metric2.group, self.metric2.group)
         self.assertEqual(metric2.description, self.metric2.description)
         self.assertEqual(metric2.probekey, self.metric2.probekey)
@@ -11915,6 +12000,7 @@ class MetricsHelpersTests(TransactionTestCase):
         )
         self.assertEqual(serialized_data2['name'], metric2.name)
         self.assertEqual(serialized_data2['mtype'][0], metric2.mtype.name)
+        self.assertEqual(serialized_data2['tags'], [['test_tag2']])
         self.assertEqual(serialized_data2['group'][0], metric2.group.name)
         self.assertEqual(serialized_data2['description'], metric2.description)
         self.assertEqual(
@@ -11957,23 +12043,27 @@ class MetricsHelpersTests(TransactionTestCase):
     @patch('Poem.helpers.metrics_helpers.update_metrics_in_profiles')
     def test_update_active_metrics(self, mock_update):
         mock_update.return_value = []
-        metrictemplate = admin_models.MetricTemplate(
-            name='argo.AMS-Check-new',
-            mtype=self.mt_active,
-            description='New description for the metric.',
-            probekey=self.probeversion1_2,
-            parent='argo.AMS-Check',
-            probeexecutable='ams-probe',
-            config='["maxCheckAttempts 4", "timeout 70", '
-                   '"path /usr/libexec/argo-monitoring/probes/argo", '
-                   '"interval 6", "retryInterval 4"]',
-            attribute='[argo.ams_TOKEN2 --token]',
-            dependency='["dep-key dep-val"]',
-            parameter='["par-key par-val"]',
-            flags='["flag-key flag-val"]',
-            files='["file-key file-val"]',
-            fileparameter='["fp-key fp-val"]'
+        metrictemplate = admin_models.MetricTemplate.objects.get(
+            id=self.metrictemplate1.id
         )
+        metrictemplate.name = 'argo.AMS-Check-new'
+        metrictemplate.mtype = self.mt_active
+        metrictemplate.description = 'New description for the metric.'
+        metrictemplate.probekey = self.probeversion1_2
+        metrictemplate.parent = 'argo.AMS-Check'
+        metrictemplate.probeexecutable = 'ams-probe'
+        metrictemplate.config = \
+            '["maxCheckAttempts 4", "timeout 70", '\
+            '"path /usr/libexec/argo-monitoring/probes/argo", '\
+            '"interval 6", "retryInterval 4"]'
+        metrictemplate.attribute = '[argo.ams_TOKEN2 --token]'
+        metrictemplate.dependency = '["dep-key dep-val"]'
+        metrictemplate.parameter = '["par-key par-val"]'
+        metrictemplate.flags = '["flag-key flag-val"]'
+        metrictemplate.files = '["file-key file-val"]'
+        metrictemplate.fileparameter = '["fp-key fp-val"]'
+        metrictemplate.save()
+        metrictemplate.tags.remove(self.mtag2)
         update_metrics(
             metrictemplate, 'argo.AMS-Check', self.probeversion1_2
         )
@@ -11991,6 +12081,9 @@ class MetricsHelpersTests(TransactionTestCase):
         self.assertEqual(metric_versions.count(), 1)
         self.assertEqual(metric.name, metrictemplate.name)
         self.assertEqual(metric.mtype.name, metrictemplate.mtype.name)
+        self.assertEqual(len(metric.tags.all()), 2)
+        self.assertTrue(self.mtag1 in metric.tags.all())
+        self.assertTrue(self.mtag3 in metric.tags.all())
         self.assertEqual(metric.probekey, metrictemplate.probekey)
         self.assertEqual(metric.description, metrictemplate.description)
         self.assertEqual(metric.group.name, 'TEST')
@@ -12010,6 +12103,9 @@ class MetricsHelpersTests(TransactionTestCase):
         self.assertEqual(metric.fileparameter, metrictemplate.fileparameter)
         self.assertEqual(serialized_data['name'], metric.name)
         self.assertEqual(serialized_data['mtype'], [metric.mtype.name])
+        self.assertEqual(
+            serialized_data['tags'], [['test_tag1'], ['test_tag3']]
+        )
         self.assertEqual(serialized_data['description'], metric.description)
         self.assertEqual(
             serialized_data['probekey'],
@@ -12031,21 +12127,25 @@ class MetricsHelpersTests(TransactionTestCase):
     @patch('Poem.helpers.metrics_helpers.update_metrics_in_profiles')
     def test_update_passive_metrics(self, mock_update):
         mock_update.return_value = []
-        metrictemplate = admin_models.MetricTemplate(
-            name='org.apel.APEL-Pub-new',
-            mtype=self.mt_passive,
-            description='Added description for org.apel.APEL-Pub-new.',
-            probekey=None,
-            parent='',
-            probeexecutable='',
-            config='',
-            attribute='',
-            dependency='',
-            parameter='',
-            flags='["PASSIVE 1"]',
-            files='',
-            fileparameter=''
+        metrictemplate = admin_models.MetricTemplate.objects.get(
+            id=self.metrictemplate5.id
         )
+        metrictemplate.name = 'org.apel.APEL-Pub-new'
+        metrictemplate.mtype = self.mt_passive
+        metrictemplate.description = 'Added description for ' \
+                                     'org.apel.APEL-Pub-new.'
+        metrictemplate.probekey = None
+        metrictemplate.parent = ''
+        metrictemplate.probeexecutable = ''
+        metrictemplate.config = ''
+        metrictemplate.attribute = ''
+        metrictemplate.dependency = ''
+        metrictemplate.parameter = ''
+        metrictemplate.flags = '["PASSIVE 1"]'
+        metrictemplate.files = ''
+        metrictemplate.fileparameter = ''
+        metrictemplate.save()
+        metrictemplate.tags.add(self.mtag1)
         update_metrics(metrictemplate, 'org.apel.APEL-Pub', None)
         mock_update.assert_called_once()
         mock_update.assert_has_calls([
@@ -12061,6 +12161,8 @@ class MetricsHelpersTests(TransactionTestCase):
         self.assertEqual(metric_versions.count(), 1)
         self.assertEqual(metric.name, metrictemplate.name)
         self.assertEqual(metric.mtype.name, metrictemplate.mtype.name)
+        self.assertEqual(len(metric.tags.all()), 1)
+        self.assertTrue(self.mtag1 in metric.tags.all())
         self.assertEqual(metric.probekey, metrictemplate.probekey)
         self.assertEqual(metric.description, metrictemplate.description)
         self.assertEqual(metric.group.name, 'TEST')
@@ -12076,6 +12178,7 @@ class MetricsHelpersTests(TransactionTestCase):
         self.assertEqual(metric.fileparameter, metrictemplate.fileparameter)
         self.assertEqual(serialized_data['name'], metric.name)
         self.assertEqual(serialized_data['mtype'], [metric.mtype.name])
+        self.assertEqual(serialized_data['tags'], [['test_tag1']])
         self.assertEqual(serialized_data['description'], metric.description)
         self.assertEqual(serialized_data['probekey'], None)
         self.assertEqual(serialized_data['group'], ['TEST'])
@@ -12097,7 +12200,7 @@ class MetricsHelpersTests(TransactionTestCase):
             self, mock_update
     ):
         mock_update.return_value = []
-        metrictemplate = admin_models.MetricTemplateHistory(
+        metrictemplate = admin_models.MetricTemplateHistory.objects.create(
             object_id=self.metrictemplate1,
             name='argo.AMS-Check-new',
             mtype=self.mt_active,
@@ -12118,6 +12221,7 @@ class MetricsHelpersTests(TransactionTestCase):
             version_user=self.user.username,
             version_comment=create_comment(self.metrictemplate1)
         )
+        metrictemplate.tags.add(self.mtag1, self.mtag2)
         update_metrics(
             metrictemplate, 'argo.AMS-Check', self.probeversion1_2
         )
@@ -12135,6 +12239,9 @@ class MetricsHelpersTests(TransactionTestCase):
         self.assertEqual(metric_versions.count(), 1)
         self.assertEqual(metric.name, metrictemplate.name)
         self.assertEqual(metric.mtype.name, metrictemplate.mtype.name)
+        self.assertEqual(len(metric.tags.all()), 2)
+        self.assertTrue(self.mtag1 in metric.tags.all())
+        self.assertTrue(self.mtag2 in metric.tags.all())
         self.assertEqual(metric.probekey, metrictemplate.probekey)
         self.assertEqual(metric.description, metrictemplate.description)
         self.assertEqual(metric.group.name, 'TEST')
@@ -12154,6 +12261,9 @@ class MetricsHelpersTests(TransactionTestCase):
         self.assertEqual(metric.fileparameter, metrictemplate.fileparameter)
         self.assertEqual(serialized_data['name'], metric.name)
         self.assertEqual(serialized_data['mtype'], [metric.mtype.name])
+        self.assertEqual(
+            serialized_data['tags'], [['test_tag1'], ['test_tag2']]
+        )
         self.assertEqual(serialized_data['description'], metric.description)
         self.assertEqual(
             serialized_data['probekey'],
@@ -12177,23 +12287,27 @@ class MetricsHelpersTests(TransactionTestCase):
             self, mock_update
     ):
         mock_update.side_effect = mocked_func
-        metrictemplate = admin_models.MetricTemplate(
-            name='argo.AMS-Check',
-            mtype=self.mt_active,
-            description='New description for the metric.',
-            probekey=self.probeversion1_3,
-            parent='argo.AMS-Check',
-            probeexecutable='ams-probe',
-            config='["maxCheckAttempts 4", "timeout 70", '
-                   '"path /usr/libexec/argo-monitoring/probes/argo", '
-                   '"interval 6", "retryInterval 4"]',
-            attribute='["argo.ams_TOKEN2 --token"]',
-            dependency='["dep-key dep-val"]',
-            parameter='["par-key par-val"]',
-            flags='["flag-key flag-val"]',
-            files='["file-key file-val"]',
-            fileparameter='["fp-key fp-val"]'
+        metrictemplate = admin_models.MetricTemplate.objects.get(
+            id=self.metrictemplate1.id
         )
+        metrictemplate.name = 'argo.AMS-Check'
+        metrictemplate.mtype = self.mt_active
+        metrictemplate.description = 'New description for the metric.'
+        metrictemplate.probekey = self.probeversion1_3
+        metrictemplate.parent = 'argo.AMS-Check'
+        metrictemplate.probeexecutable = 'ams-probe'
+        metrictemplate.config = \
+            '["maxCheckAttempts 4", "timeout 70", '\
+            '"path /usr/libexec/argo-monitoring/probes/argo", '\
+            '"interval 6", "retryInterval 4"]'
+        metrictemplate.attribute = '["argo.ams_TOKEN2 --token"]'
+        metrictemplate.dependency = '["dep-key dep-val"]'
+        metrictemplate.parameter = '["par-key par-val"]'
+        metrictemplate.flags = '["flag-key flag-val"]'
+        metrictemplate.files = '["file-key file-val"]'
+        metrictemplate.fileparameter = '["fp-key fp-val"]'
+        metrictemplate.save()
+        metrictemplate.tags.remove(self.mtag2)
         update_metrics(
             metrictemplate, 'argo.AMS-Check', self.probeversion1_2,
             user='testuser'
@@ -12208,6 +12322,9 @@ class MetricsHelpersTests(TransactionTestCase):
         self.assertEqual(metric_versions.count(), 2)
         self.assertEqual(metric_versions[0].user, 'testuser')
         self.assertEqual(metric.name, metrictemplate.name)
+        self.assertEqual(len(metric.tags.all()), 2)
+        self.assertTrue(self.mtag1 in metric.tags.all())
+        self.assertTrue(self.mtag3 in metric.tags.all())
         self.assertEqual(metric.mtype.name, metrictemplate.mtype.name)
         self.assertEqual(metric.probekey, metrictemplate.probekey)
         self.assertEqual(metric.description, metrictemplate.description)
@@ -12228,6 +12345,9 @@ class MetricsHelpersTests(TransactionTestCase):
         self.assertEqual(metric.fileparameter, metrictemplate.fileparameter)
         self.assertEqual(serialized_data['name'], metric.name)
         self.assertEqual(serialized_data['mtype'], [metric.mtype.name])
+        self.assertEqual(
+            serialized_data['tags'], [['test_tag1'], ['test_tag3']]
+        )
         self.assertEqual(serialized_data['description'], metric.description)
         self.assertEqual(
             serialized_data['probekey'],
@@ -12256,6 +12376,10 @@ class MetricsHelpersTests(TransactionTestCase):
         )
         metric = poem_models.Metric.objects.get(id=self.metric1.id)
         self.assertEqual(metric.name, 'argo.AMS-Check-new')
+        self.assertEqual(len(metric.tags.all()), 3)
+        self.assertTrue(self.mtag1 in metric.tags.all())
+        self.assertTrue(self.mtag2 in metric.tags.all())
+        self.assertTrue(self.mtag3 in metric.tags.all())
         self.assertEqual(metric.group.name, 'TEST')
         self.assertEqual(
             metric.description,
@@ -12678,6 +12802,10 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             name='TEST'
         )
 
+        self.mtag1 = admin_models.MetricTags.objects.create(name='test_tag1')
+        self.mtag2 = admin_models.MetricTags.objects.create(name='test_tag2')
+        self.mtag3 = admin_models.MetricTags.objects.create(name='test_tag3')
+
         self.mt1 = admin_models.MetricTemplate.objects.create(
             name='argo.AMS-Check',
             description='Description of argo.AMS-Check.',
@@ -12691,8 +12819,9 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             mtype=self.mttype1,
             probekey=self.probehistory1
         )
+        self.mt1.tags.add(self.mtag1, self.mtag2)
 
-        admin_models.MetricTemplateHistory.objects.create(
+        mt1_history1 = admin_models.MetricTemplateHistory.objects.create(
             object_id=self.mt1,
             name=self.mt1.name,
             mtype=self.mt1.mtype,
@@ -12710,11 +12839,13 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             version_user=self.user.username,
             version_comment='Initial version.'
         )
+        mt1_history1.tags.add(self.mtag1, self.mtag2)
 
         self.mt1.probekey = self.probehistory2
         self.mt1.save()
+        self.mt1.tags.add(self.mtag3)
 
-        self.mth1 = admin_models.MetricTemplateHistory.objects.create(
+        self.mt1_history2 = admin_models.MetricTemplateHistory.objects.create(
             object_id=self.mt1,
             name=self.mt1.name,
             mtype=self.mt1.mtype,
@@ -12732,6 +12863,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             version_user=self.user.username,
             version_comment='Newer version.'
         )
+        self.mt1_history2.tags.add(self.mtag1, self.mtag2, self.mtag3)
 
         mt2 = admin_models.MetricTemplate.objects.create(
             name='argo.AMSPublisher-Check',
@@ -12744,8 +12876,9 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             mtype=self.mttype1,
             probekey=self.probehistory3
         )
+        mt2.tags.add(self.mtag2)
 
-        admin_models.MetricTemplateHistory.objects.create(
+        mt2_history1 = admin_models.MetricTemplateHistory.objects.create(
             object_id=mt2,
             name=mt2.name,
             mtype=mt2.mtype,
@@ -12763,11 +12896,13 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             version_user=self.user.username,
             version_comment='Initial version.'
         )
+        mt2_history1.tags.add(self.mtag2)
 
         mt2.probekey = self.probehistory4
         mt2.save()
+        mt2.tags.remove(self.mtag2)
 
-        self.mth2 = admin_models.MetricTemplateHistory.objects.create(
+        self.mt2_history2 = admin_models.MetricTemplateHistory.objects.create(
             object_id=mt2,
             name=mt2.name,
             mtype=mt2.mtype,
@@ -12825,6 +12960,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             probekey=self.probehistory1,
             group=self.group
         )
+        metric1.tags.add(self.mtag1, self.mtag2)
 
         metric2 = poem_models.Metric.objects.create(
             name='argo.AMSPublisher-Check',
@@ -12838,6 +12974,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             probekey=self.probehistory3,
             group=self.group
         )
+        metric2.tags.add(self.mtag2)
 
         metric3 = poem_models.Metric.objects.create(
             name='emi.unicore.Gateway',
@@ -12853,6 +12990,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             probekey=self.probehistory5,
             group=self.group
         )
+        metric3.tags.add(self.mtag1)
 
         metric4 = poem_models.Metric.objects.create(
             name='org.apel.APEL-Pub',
@@ -12960,8 +13098,10 @@ class UpdateMetricsVersionsTests(TenantTestCase):
         self.assertFalse(mock_delete.called)
         self.assertEqual(mock_update.call_count, 2)
         mock_update.has_calls([
-            call(self.mth1, 'argo.AMS-Check', self.probehistory1),
-            call(self.mth2, 'argo.AMSPublisher-Check', self.probehistory3)
+            call(self.mt1_history2, 'argo.AMS-Check', self.probehistory1),
+            call(
+                self.mt2_history2, 'argo.AMSPublisher-Check', self.probehistory3
+            )
         ])
         self.assertEqual(
             response.data,
@@ -13005,7 +13145,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
         self.mt1.description = 'Description of argo.AMS-Check-new.'
         self.mt1.probekey = probehistory1
         self.mt1.save()
-        mth = admin_models.MetricTemplateHistory.objects.create(
+        mt1_history3 = admin_models.MetricTemplateHistory.objects.create(
             object_id=self.mt1,
             name=self.mt1.name,
             mtype=self.mt1.mtype,
@@ -13023,6 +13163,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             version_user=self.user.username,
             version_comment='Newest version.'
         )
+        mt1_history3.tags.add(self.mtag1, self.mtag2, self.mtag3)
         data = {
             'name': self.package3.name,
             'version': self.package3.version
@@ -13036,7 +13177,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
         self.assertFalse(mock_delete.called)
         self.assertEqual(mock_update.call_count, 1)
         mock_update.has_calls([
-            call(mth, 'argo.AMS-Check', self.probehistory1)
+            call(mt1_history3, 'argo.AMS-Check', self.probehistory1)
         ])
         self.assertEqual(
             response.data,
@@ -13076,7 +13217,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
         )
         self.mt1.probekey = probehistory1
         self.mt1.save()
-        mth = admin_models.MetricTemplateHistory.objects.create(
+        mt1_history3 = admin_models.MetricTemplateHistory.objects.create(
             object_id=self.mt1,
             name=self.mt1.name,
             mtype=self.mt1.mtype,
@@ -13094,6 +13235,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             version_user=self.user.username,
             version_comment='Newest version.'
         )
+        mt1_history3.tags.add(self.mtag1, self.mtag2, self.mtag3)
         data = {
             'name': self.package3.name,
             'version': self.package3.version
@@ -13118,7 +13260,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
         )
         self.assertEqual(mock_update.call_count, 1)
         mock_update.has_calls([
-            call(mth, 'argo.AMS-Check', self.probehistory1)
+            call(mt1_history3, 'argo.AMS-Check', self.probehistory1)
         ])
 
     @patch('Poem.api.internal_views.metrics.update_metrics')
@@ -13174,7 +13316,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
         )
         self.mt1.probekey = probehistory1
         self.mt1.save()
-        mth = admin_models.MetricTemplateHistory.objects.create(
+        mt1_history3 = admin_models.MetricTemplateHistory.objects.create(
             object_id=self.mt1,
             name=self.mt1.name,
             mtype=self.mt1.mtype,
@@ -13192,7 +13334,8 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             version_user=self.user.username,
             version_comment='Newest version.'
         )
-        poem_models.Metric.objects.create(
+        mt1_history3.tags.add(self.mtag1, self.mtag2, self.mtag3)
+        metric = poem_models.Metric.objects.create(
             name='test.AMS-Check',
             description='Description of test.AMS-Check.',
             probeexecutable='["ams-probe"]',
@@ -13206,6 +13349,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             probekey=self.probehistory1,
             group=self.group
         )
+        metric.tags.add(self.mtag1)
         data = {
             'name': self.package3.name,
             'version': self.package3.version
@@ -13235,7 +13379,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
         )
         self.assertEqual(mock_update.call_count, 1)
         mock_update.has_calls([
-            call(mth, 'argo.AMS-Check', self.probehistory1)
+            call(mt1_history3, 'argo.AMS-Check', self.probehistory1)
         ])
         self.assertEqual(mock_delete.call_count, 2)
         mock_delete.assert_has_calls([
@@ -13268,7 +13412,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
         )
         self.mt1.probekey = probehistory1
         self.mt1.save()
-        mth = admin_models.MetricTemplateHistory.objects.create(
+        mt1_history3 = admin_models.MetricTemplateHistory.objects.create(
             object_id=self.mt1,
             name=self.mt1.name,
             mtype=self.mt1.mtype,
@@ -13286,7 +13430,8 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             version_user=self.user.username,
             version_comment='Newest version.'
         )
-        poem_models.Metric.objects.create(
+        mt1_history3.tags.add(self.mtag1, self.mtag2, self.mtag3)
+        metric = poem_models.Metric.objects.create(
             name='test.AMS-Check',
             description='Description of test.AMS-Check.',
             probeexecutable='["ams-probe"]',
@@ -13300,6 +13445,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             probekey=self.probehistory1,
             group=self.group
         )
+        metric.tags.add(self.mtag1)
         data = {
             'name': self.package3.name,
             'version': self.package3.version
@@ -13332,7 +13478,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
         )
         self.assertEqual(mock_update.call_count, 1)
         mock_update.has_calls([
-            call(mth, 'argo.AMS-Check', self.probehistory1)
+            call(mt1_history3, 'argo.AMS-Check', self.probehistory1)
         ])
         mock_get.assert_called_once_with(self.tenant.schema_name)
         self.assertFalse(mock_delete.called)
@@ -13365,7 +13511,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
         )
         self.mt1.probekey = probehistory1
         self.mt1.save()
-        mth = admin_models.MetricTemplateHistory.objects.create(
+        mt1_history3 = admin_models.MetricTemplateHistory.objects.create(
             object_id=self.mt1,
             name=self.mt1.name,
             mtype=self.mt1.mtype,
@@ -13383,7 +13529,8 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             version_user=self.user.username,
             version_comment='Newest version.'
         )
-        poem_models.Metric.objects.create(
+        mt1_history3.tags.add(self.mtag1, self.mtag2, self.mtag3)
+        metric = poem_models.Metric.objects.create(
             name='test.AMS-Check',
             description='Description of test.AMS-Check.',
             probeexecutable='["ams-probe"]',
@@ -13397,6 +13544,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             probekey=self.probehistory1,
             group=self.group
         )
+        metric.tags.add(self.mtag1)
         data = {
             'name': self.package3.name,
             'version': self.package3.version
@@ -13429,7 +13577,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
         )
         self.assertEqual(mock_update.call_count, 1)
         mock_update.has_calls([
-            call(mth, 'argo.AMS-Check', self.probehistory1)
+            call(mt1_history3, 'argo.AMS-Check', self.probehistory1)
         ])
         mock_get.assert_called_once_with(self.tenant.schema_name)
         mock_delete.assert_called_once_with(
@@ -13510,7 +13658,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
         self.mt1.description = 'Description of argo.AMS-Check-new.'
         self.mt1.probekey = probehistory1
         self.mt1.save()
-        admin_models.MetricTemplateHistory.objects.create(
+        mt1_history3 = admin_models.MetricTemplateHistory.objects.create(
             object_id=self.mt1,
             name=self.mt1.name,
             mtype=self.mt1.mtype,
@@ -13528,6 +13676,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             version_user=self.user.username,
             version_comment='Newest version.'
         )
+        mt1_history3.tags.add(self.mtag1, self.mtag2, self.mtag3)
         request = self.factory.get(self.url + 'nagios-plugins-argo-0.1.9')
         request.tenant = self.tenant
         force_authenticate(request, user=self.user)
@@ -13574,7 +13723,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
         )
         self.mt1.probekey = probehistory1
         self.mt1.save()
-        admin_models.MetricTemplateHistory.objects.create(
+        mt1_history3 = admin_models.MetricTemplateHistory.objects.create(
             object_id=self.mt1,
             name=self.mt1.name,
             mtype=self.mt1.mtype,
@@ -13592,6 +13741,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             version_user=self.user.username,
             version_comment='Newest version.'
         )
+        mt1_history3.tags.add(self.mtag1, self.mtag2, self.mtag3)
         request = self.factory.get(self.url + 'nagios-plugins-argo-0.1.9')
         request.tenant = self.tenant
         force_authenticate(request, user=self.user)
@@ -13662,7 +13812,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
         )
         self.mt1.probekey = probehistory1
         self.mt1.save()
-        admin_models.MetricTemplateHistory.objects.create(
+        mt1_history3 = admin_models.MetricTemplateHistory.objects.create(
             object_id=self.mt1,
             name=self.mt1.name,
             mtype=self.mt1.mtype,
@@ -13680,7 +13830,8 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             version_user=self.user.username,
             version_comment='Newest version.'
         )
-        poem_models.Metric.objects.create(
+        mt1_history3.tags.add(self.mtag1, self.mtag2, self.mtag3)
+        metric1 = poem_models.Metric.objects.create(
             name='test.AMS-Check',
             description='Description of test.AMS-Check.',
             probeexecutable='["ams-probe"]',
@@ -13694,13 +13845,14 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             probekey=self.probehistory1,
             group=self.group
         )
+        metric1.tags.add(self.mtag1)
         request = self.factory.get(self.url + 'nagios-plugins-argo-0.1.9')
         request.tenant = self.tenant
         force_authenticate(request, user=self.user)
         response = self.view(request, 'nagios-plugins-argo-0.1.9')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        metric = poem_models.Metric.objects.get(name='argo.AMSPublisher-Check')
-        assert metric
+        metric2 = poem_models.Metric.objects.get(name='argo.AMSPublisher-Check')
+        assert metric2
         self.assertEqual(
             response.data,
             {

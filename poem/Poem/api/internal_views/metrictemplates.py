@@ -451,6 +451,7 @@ class ListMetricTemplatesForImport(APIView):
                 dict(
                     name=mt.name,
                     mtype=mt.mtype.name,
+                    tags=sorted([tag.name for tag in mt.tags.all()]),
                     probeversion=probeversion,
                     centos6_probeversion=centos6_probeversion,
                     centos7_probeversion=centos7_probeversion,

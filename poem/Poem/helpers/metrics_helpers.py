@@ -76,6 +76,8 @@ def import_metrics(metrictemplates, tenant, user):
                     parameter=metrictemplate.parameter,
                     fileparameter=metrictemplate.fileparameter
                 )
+                new_tags = set([tag.name for tag in metrictemplate.tags.all()])
+
             else:
                 metric = poem_models.Metric.objects.create(
                     name=mt.name,
@@ -85,6 +87,21 @@ def import_metrics(metrictemplates, tenant, user):
                     flags=mt.flags,
                     group=gr
                 )
+                new_tags = set([tag.name for tag in mt.tags.all()])
+
+            old_tags = set([tag.name for tag in metric.tags.all()])
+
+            if new_tags.difference(old_tags):
+                for tag_name in new_tags.difference(old_tags):
+                    metric.tags.add(
+                        admin_models.MetricTags.objects.get(name=tag_name)
+                    )
+
+            if old_tags.difference(new_tags):
+                for tag_name in old_tags.difference(new_tags):
+                    metric.tags.remove(
+                        admin_models.MetricTags.objects.get(name=tag_name)
+                    )
 
             create_history(
                 metric, user.username, comment='Initial version.'
@@ -180,6 +197,20 @@ def update_metrics(metrictemplate, name, probekey, user=''):
                     met.config = json.dumps(metconfig)
 
                 met.save()
+
+                new_tags = set([tag.name for tag in metrictemplate.tags.all()])
+                old_tags = set([tag.name for tag in met.tags.all()])
+                if new_tags.difference(old_tags):
+                    for tag_name in new_tags.difference(old_tags):
+                        met.tags.add(
+                            admin_models.MetricTags.objects.get(name=tag_name)
+                        )
+
+                if old_tags.difference(new_tags):
+                    for tag_name in old_tags.difference(new_tags):
+                        met.tags.remove(
+                            admin_models.MetricTags.objects.get(name=tag_name)
+                        )
 
                 if met.probekey != probekey:
                     create_history(met, user)
