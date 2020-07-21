@@ -20,7 +20,6 @@ import {
 import ReactTable from 'react-table';
 import { Formik, Form, Field, FieldArray } from 'formik';
 import {
-  Alert,
   FormGroup,
   Row,
   Col,
@@ -35,8 +34,10 @@ import {
   ButtonToolbar
 } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faInfoCircle, faMinus, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faInfoCircle, faMinus, faPlus, faCaretDown } from '@fortawesome/free-solid-svg-icons';
 import ReactDiffViewer from 'react-diff-viewer';
+import CreatableSelect from 'react-select/creatable';
+import { components } from 'react-select';
 
 export const MetricList = ListOfMetrics('metric');
 export const MetricHistory = HistoryComponent('metric');
@@ -866,6 +867,21 @@ export function ListOfMetrics(type, imp=false) {
 }
 
 
+const styles = {
+  multiValue: (base, state) => {
+    return (state.data.value === 'internal') ? { ...base, backgroundColor: '#d4edda' } : (state.data.value === 'deprecated') ? { ...base, backgroundColor: '#f8d7da' } : base;
+  },
+};
+
+const DropdownIndicator = props => {
+  return (
+    <components.DropdownIndicator {...props}>
+      <FontAwesomeIcon icon={faCaretDown}/>
+    </components.DropdownIndicator>
+  );
+};
+
+
 export const MetricForm =
   ({
     values=undefined,
@@ -880,6 +896,7 @@ export const MetricForm =
     state=undefined,
     togglePopOver=undefined,
     onSelect=undefined,
+    onTagChange=undefined,
     isHistory=false,
     isTenantSchema=false,
     addview=false,
@@ -887,6 +904,8 @@ export const MetricForm =
     groups=[],
     metrictemplatelist=[],
     types=[],
+    alltags=[],
+    tags=[],
     publicView=false
   }) =>
     <>
@@ -1056,18 +1075,37 @@ export const MetricForm =
             </FormText>
           </Col>
         </Row>
-      <Row className='mb-4 mt-2'>
-        <Col md={10}>
-          <Label for='description'>Description:</Label>
-          <Field
-            id='description'
-            className='form-control'
-            component='textarea'
-            name='description'
-            disabled={isTenantSchema || isHistory}
-          />
-        </Col>
-      </Row>
+        {
+          obj === 'metrictemplate' ?
+            <Row className='mb-4 mt-2'>
+              <Col md={10}>
+                <Label>Tags:</Label>
+                <CreatableSelect
+                  closeMenuOnSelect={false}
+                  isMulti
+                  onChange={onTagChange}
+                  options={alltags}
+                  components={{DropdownIndicator}}
+                  defaultValue={tags}
+                  styles={styles}
+                />
+              </Col>
+            </Row>
+          :
+            <Row></Row>
+        }
+        <Row className='mb-4 mt-2'>
+          <Col md={10}>
+            <Label for='description'>Description:</Label>
+            <Field
+              id='description'
+              className='form-control'
+              component='textarea'
+              name='description'
+              disabled={isTenantSchema || isHistory}
+            />
+          </Col>
+        </Row>
         {
           obj === 'metric' &&
             <Row className='mb-4'>
