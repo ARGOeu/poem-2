@@ -1470,6 +1470,7 @@ export class MetricChange extends Component {
 
     this.state = {
       metric: {},
+      tags: [],
       probe: {},
       groups: [],
       probeversions: [],
@@ -1607,6 +1608,7 @@ export class MetricChange extends Component {
               })
               this.setState({
                 metric: metrics,
+                tags: metrics.tags,
                 probe: fields,
                 probeversions: probeversions,
                 allprobeversions: probe,
@@ -1619,6 +1621,7 @@ export class MetricChange extends Component {
             } else {
               this.setState({
                 metric: metrics,
+                tags: metrics.tags,
                 groups: session.userdetails.groups.metrics,
                 loading: false,
                 write_perm: session.userdetails.is_superuser ||
@@ -1640,6 +1643,7 @@ export class MetricChange extends Component {
             })
             this.setState({
               metric: metrics,
+              tags: metrics.tags,
               probe: fields,
               probeversions: probeversions,
               allprobeversions: probe,
@@ -1651,6 +1655,7 @@ export class MetricChange extends Component {
           } else {
             this.setState({
               metric: metrics,
+              tags: metrics.tags,
               groups: [],
               loading: false,
               write_perm: false,
@@ -1761,6 +1766,7 @@ export class MetricVersionDetails extends Component {
       probe: {'package': ''},
       description: '',
       mtype: '',
+      tags: [],
       group: '',
       probeexecutable: '',
       parent: '',
@@ -1795,6 +1801,7 @@ export class MetricVersionDetails extends Component {
             probe: probe,
             description: e.fields.description,
             type: e.fields.mtype,
+            tags: e.fields.tags,
             group: e.fields.group,
             probeexecutable: e.fields.probeexecutable,
             parent: e.fields.parent,
