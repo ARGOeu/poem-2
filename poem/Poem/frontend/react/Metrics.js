@@ -1098,11 +1098,14 @@ export const MetricForm =
                 <Label>Tags:</Label>
                 <div>
                   {
-                    state.tags.map((tag, i) =>
-                      <Badge className={'mr-1'} key={i} color={tag === 'internal' ? 'success' : tag === 'deprecated' ? 'danger' : 'secondary'}>
-                        {tag}
-                      </Badge>
-                    )
+                    state.tags.length === 0 ?
+                      <Badge color='dark'>none</Badge>
+                    :
+                      state.tags.map((tag, i) =>
+                        <Badge className={'mr-1'} key={i} color={tag === 'internal' ? 'success' : tag === 'deprecated' ? 'danger' : 'secondary'}>
+                          {tag}
+                        </Badge>
+                      )
                   }
                 </div>
               </Col>
