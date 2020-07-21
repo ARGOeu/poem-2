@@ -306,9 +306,11 @@ export function ListOfMetrics(type, imp=false) {
           list_tags: null,
           list_groups: null,
           list_types: null,
+          list_tags: null,
           search_name: '',
           search_probeversion: '',
           search_type: '',
+          search_tag: '',
           search_group: '',
           userDetails: undefined,
           error: null
@@ -318,11 +320,13 @@ export function ListOfMetrics(type, imp=false) {
           loading: false,
           list_metric: null,
           list_types: null,
+          list_tags: null,
           list_ostags: null,
           search_name: '',
           search_probeversion: '',
           search_ostag: '',
           search_type: '',
+          search_tag: '',
           selected: {},
           selectAll: 0,
           userDetails: undefined,
@@ -365,15 +369,21 @@ export function ListOfMetrics(type, imp=false) {
       var { list_metric } = this.state;
 
       if (this.state.search_name) {
-        list_metric = this.doFilter(list_metric, 'name', this.state.search_name)
+        list_metric = this.doFilter(list_metric, 'name', this.state.search_name);
       }
 
       if (this.state.search_probeversion) {
-        list_metric = this.doFilter(list_metric, 'probeversion', this.state.search_probeversion)
+        list_metric = this.doFilter(list_metric, 'probeversion', this.state.search_probeversion);
       }
 
       if (this.state.search_type) {
-        list_metric = this.doFilter(list_metric, 'mtype', this.state.search_type)
+        list_metric = this.doFilter(list_metric, 'mtype', this.state.search_type);
+      }
+
+      if (this.state.search_tag) {
+        list_metric = list_metric.filter(row =>
+          row.tags.includes(this.state.search_tag)
+        );
       }
 
       if (this.state.search_ostag) {
@@ -479,6 +489,8 @@ export function ListOfMetrics(type, imp=false) {
       this.setState({loading: true});
 
       let response = await this.backend.isTenantSchema();
+      let alltags = await this.backend.fetchData('/api/v2/internal/metrictags');
+      alltags.push('none');
       try {
         if (!this.publicView) {
           let sessionActive = await this.backend.isActiveSession(response);
@@ -491,6 +503,7 @@ export function ListOfMetrics(type, imp=false) {
                 list_metric: metrics,
                 list_groups: groups['metrics'],
                 list_types: types,
+                list_tags: alltags,
                 loading: false,
                 search_name: '',
                 search_probeversion: '',
@@ -506,6 +519,7 @@ export function ListOfMetrics(type, imp=false) {
                 list_metric: metrictemplates,
                 list_types: types,
                 list_ostags: ostags,
+                list_tags: alltags,
                 loading: false,
                 search_name: '',
                 search_probeversion: '',
@@ -522,6 +536,7 @@ export function ListOfMetrics(type, imp=false) {
             list_metric: metrics,
             list_groups: groups['metrics'],
             list_types: types,
+            list_tags: alltags,
             loading: false,
             search_name: '',
             search_probeversion: '',
@@ -634,6 +649,32 @@ export function ListOfMetrics(type, imp=false) {
               value={this.state.mtype}
               onChange={e => this.setState({search_type: e.target.value})}
               data={this.state.list_types}
+            />
+          )
+        },
+        {
+          Header: 'Tag',
+          minWidth: 30,
+          accessor: 'tags',
+          Cell: row =>
+            <div style={{textAlign: 'center'}}>
+              {
+                row.value.length === 0 ?
+                  <Badge color='dark'>none</Badge>
+                :
+                  row.value.map((tag, i) =>
+                    <Badge className={'mr-1'} key={i} color={tag === 'internal' ? 'success' : tag === 'deprecated' ? 'danger' : 'secondary'}>
+                      {tag}
+                    </Badge>
+                  )
+              }
+            </div>,
+          filterable: true,
+          Filter: (
+            <DropdownFilterComponent
+              value={this.state.tags}
+              onChange={e => this.setState({search_tag: e.target.value})}
+              data={this.state.list_tags}
             />
           )
         }
@@ -762,6 +803,17 @@ export function ListOfMetrics(type, imp=false) {
           `${row.ostag.join(', ')}`.toLowerCase().includes(this.state.search_ostag.toLowerCase())
         )
       }
+
+      if (this.state.search_tag) {
+        list_metric = list_metric.filter(row => {
+          if (this.state.search_tag === 'none')
+            return row.tags.length === 0
+
+          else
+            return row.tags.includes(this.state.search_tag)
+        }
+        );
+      };
 
       if (type === 'metric' && this.state.search_group) {
         list_metric = this.doFilter(list_metric, 'group', this.state.search_group)
