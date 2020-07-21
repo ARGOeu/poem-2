@@ -38,6 +38,10 @@ def build_metricconfigs():
         parameter = two_value_inline_dict(m.parameter)
         fileparameter = two_value_inline_dict(m.fileparameter)
 
+        mdict[m.name].update(
+            {'tags': sorted([tag.name for tag in m.tags.all()])}
+        )
+
         if probeexecutable:
             mdict[m.name].update({'probe': probeexecutable})
         else:
