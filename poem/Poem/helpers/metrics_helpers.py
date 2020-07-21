@@ -146,6 +146,7 @@ def update_metrics(metrictemplate, name, probekey, user=''):
     schemas = list(Tenant.objects.all().values_list('schema_name', flat=True))
     schemas.remove(get_public_schema_name())
 
+    msgs = []
     for schema in schemas:
         with schema_context(schema):
             try:
@@ -198,14 +199,14 @@ def update_metrics(metrictemplate, name, probekey, user=''):
                     history.object_repr = met.__str__()
                     history.save()
 
-                msgs = []
                 if name != met.name:
                     msgs = update_metrics_in_profiles(name, met.name)
 
-                return msgs
 
             except poem_models.Metric.DoesNotExist:
                 continue
+
+    return msgs
 
 
 def update_metrics_in_profiles(old_name, new_name):
