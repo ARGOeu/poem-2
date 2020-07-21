@@ -518,6 +518,7 @@ export class MetricTemplateVersionDetails extends Component {
             probeversion: e.fields.probeversion,
             probe: probe,
             type: e.fields.mtype,
+            tags: e.fields.tags,
             probeexecutable: e.fields.probeexecutable,
             description: e.fields.description,
             parent: e.fields.parent,

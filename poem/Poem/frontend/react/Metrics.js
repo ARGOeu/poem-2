@@ -31,7 +31,8 @@ import {
   PopoverHeader,
   InputGroup,
   InputGroupAddon,
-  ButtonToolbar
+  ButtonToolbar,
+  Badge
 } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faInfoCircle, faMinus, faPlus, faCaretDown } from '@fortawesome/free-solid-svg-icons';
@@ -1076,7 +1077,7 @@ export const MetricForm =
           </Col>
         </Row>
         {
-          obj === 'metrictemplate' ?
+          (obj === 'metrictemplate' && !isHistory) ?
             <Row className='mb-4 mt-2'>
               <Col md={10}>
                 <Label>Tags:</Label>
@@ -1092,7 +1093,20 @@ export const MetricForm =
               </Col>
             </Row>
           :
-            <Row></Row>
+            <Row className='mb-4 mt-2'>
+              <Col md={10}>
+                <Label>Tags:</Label>
+                <div>
+                  {
+                    state.tags.map((tag, i) =>
+                      <Badge className={'mr-1'} key={i} color={tag === 'internal' ? 'success' : tag === 'deprecated' ? 'danger' : 'secondary'}>
+                        {tag}
+                      </Badge>
+                    )
+                  }
+                </div>
+              </Col>
+            </Row>
         }
         <Row className='mb-4 mt-2'>
           <Col md={10}>
