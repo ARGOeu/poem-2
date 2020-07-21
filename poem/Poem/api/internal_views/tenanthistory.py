@@ -71,10 +71,14 @@ class ListTenantVersions(APIView):
                         else:
                             description = ''
 
+                        tags = []
+                        if 'tags' in fields0:
+                            tags = [tag[0] for tag in fields0['tags']]
+
                         fields = {
                             'name': fields0['name'],
                             'mtype': fields0['mtype'][0],
-                            'tags': [tag[0] for tag in fields0['tags']],
+                            'tags': tags,
                             'group': fields0['group'][0],
                             'probeversion': probeversion,
                             'description': description,
