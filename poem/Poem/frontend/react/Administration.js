@@ -10,7 +10,7 @@ import { Link } from 'react-router-dom';
 
 
 const CustomCardHeader = ({title}) => (
-  <CardHeader className="mt-1 sm-5 p-2 text-uppercase rounded" style={{'backgroundColor': "#c4ccd4"}}>
+  <CardHeader className="mt-1 sm-5 p-2 text-uppercase font-weight-bold rounded" style={{'backgroundColor': "#c4ccd4"}}>
     {title}
   </CardHeader>
 )
