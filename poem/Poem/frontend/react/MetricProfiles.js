@@ -384,10 +384,10 @@ function MetricProfilesComponent(cloneview=false) {
                 list_user_groups: sessionActive.userdetails.groups.metricprofiles,
                 write_perm: sessionActive.userdetails.is_superuser ||
                   sessionActive.userdetails.groups.metricprofiles.indexOf(json['groupname']) >= 0,
-                view_services: this.flattenServices(metricp.services).sort(this.sortServices),
+                view_services: this.ensureAlignedIndexes(this.flattenServices(metricp.services).sort(this.sortServices)),
                 serviceflavours_all: serviceflavoursall,
                 metrics_all: metricsall,
-                list_services: this.flattenServices(metricp.services).sort(this.sortServices),
+                list_services: this.ensureAlignedIndexes(this.flattenServices(metricp.services).sort(this.sortServices)),
                 loading: false
               });
             } else {
@@ -776,14 +776,11 @@ function MetricProfilesComponent(cloneview=false) {
       let tmp_view_services = []
       let tmp_list_services = []
 
-      // XXX: this means no duplicate elements allowed
       let index = this.state.list_services.findIndex(service =>
-        element.index === service.index &&
         element.service === service.service &&
         element.metric === service.metric
       );
       let index_tmp = this.state.view_services.findIndex(service =>
-        element.index === service.index &&
         element.service === service.service &&
         element.metric === service.metric
       );
