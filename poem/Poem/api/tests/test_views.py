@@ -71,9 +71,13 @@ def mock_db_for_metrics_tests():
         version_comment='Initial version.',
         version_user='testuser'
     )
+
     group = poem_models.GroupOfMetrics.objects.create(name='EOSC')
 
-    poem_models.Metric.objects.create(
+    mtag1 = admin_models.MetricTags.objects.create(name='test_tag1')
+    mtag2 = admin_models.MetricTags.objects.create(name='test_tag2')
+
+    metric1 = poem_models.Metric.objects.create(
         name='argo.AMS-Check',
         mtype=metrictype,
         group=group,
@@ -90,6 +94,7 @@ def mock_db_for_metrics_tests():
         parameter='["--project EGI"]',
         fileparameter='["FILE_SIZE_KBS 1000"]'
     )
+    metric1.tags.add(mtag1, mtag2)
 
     poem_models.Metric.objects.create(
         name='argo.AMSPublisher-Check',
@@ -508,6 +513,7 @@ class ListMetricsAPIViewTests(TenantTestCase):
                 {
                     'argo.AMS-Check': {
                         'probe': 'ams-probe',
+                        'tags': ['test_tag1', 'test_tag2'],
                         'config': {
                             'maxCheckAttempts': '3',
                             'timeout': '60',
@@ -542,6 +548,7 @@ class ListMetricsAPIViewTests(TenantTestCase):
                 {
                     'argo.AMSPublisher-Check': {
                         'probe': '',
+                        'tags': [],
                         'config': {},
                         'flags': {},
                         'dependency': {},

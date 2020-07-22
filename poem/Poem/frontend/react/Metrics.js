@@ -20,7 +20,6 @@ import {
 import ReactTable from 'react-table';
 import { Formik, Form, Field, FieldArray } from 'formik';
 import {
-  Alert,
   FormGroup,
   Row,
   Col,
@@ -32,11 +31,14 @@ import {
   PopoverHeader,
   InputGroup,
   InputGroupAddon,
-  ButtonToolbar
+  ButtonToolbar,
+  Badge
 } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faInfoCircle, faMinus, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faInfoCircle, faMinus, faPlus, faCaretDown } from '@fortawesome/free-solid-svg-icons';
 import ReactDiffViewer from 'react-diff-viewer';
+import CreatableSelect from 'react-select/creatable';
+import { components } from 'react-select';
 
 export const MetricList = ListOfMetrics('metric');
 export const MetricHistory = HistoryComponent('metric');
@@ -304,9 +306,11 @@ export function ListOfMetrics(type, imp=false) {
           list_tags: null,
           list_groups: null,
           list_types: null,
+          list_tags: null,
           search_name: '',
           search_probeversion: '',
           search_type: '',
+          search_tag: '',
           search_group: '',
           userDetails: undefined,
           error: null
@@ -316,11 +320,13 @@ export function ListOfMetrics(type, imp=false) {
           loading: false,
           list_metric: null,
           list_types: null,
+          list_tags: null,
           list_ostags: null,
           search_name: '',
           search_probeversion: '',
           search_ostag: '',
           search_type: '',
+          search_tag: '',
           selected: {},
           selectAll: 0,
           userDetails: undefined,
@@ -363,15 +369,21 @@ export function ListOfMetrics(type, imp=false) {
       var { list_metric } = this.state;
 
       if (this.state.search_name) {
-        list_metric = this.doFilter(list_metric, 'name', this.state.search_name)
+        list_metric = this.doFilter(list_metric, 'name', this.state.search_name);
       }
 
       if (this.state.search_probeversion) {
-        list_metric = this.doFilter(list_metric, 'probeversion', this.state.search_probeversion)
+        list_metric = this.doFilter(list_metric, 'probeversion', this.state.search_probeversion);
       }
 
       if (this.state.search_type) {
-        list_metric = this.doFilter(list_metric, 'mtype', this.state.search_type)
+        list_metric = this.doFilter(list_metric, 'mtype', this.state.search_type);
+      }
+
+      if (this.state.search_tag) {
+        list_metric = list_metric.filter(row =>
+          row.tags.includes(this.state.search_tag)
+        );
       }
 
       if (this.state.search_ostag) {
@@ -477,6 +489,8 @@ export function ListOfMetrics(type, imp=false) {
       this.setState({loading: true});
 
       let response = await this.backend.isTenantSchema();
+      let alltags = await this.backend.fetchData('/api/v2/internal/metrictags');
+      alltags.push('none');
       try {
         if (!this.publicView) {
           let sessionActive = await this.backend.isActiveSession(response);
@@ -489,6 +503,7 @@ export function ListOfMetrics(type, imp=false) {
                 list_metric: metrics,
                 list_groups: groups['metrics'],
                 list_types: types,
+                list_tags: alltags,
                 loading: false,
                 search_name: '',
                 search_probeversion: '',
@@ -504,6 +519,7 @@ export function ListOfMetrics(type, imp=false) {
                 list_metric: metrictemplates,
                 list_types: types,
                 list_ostags: ostags,
+                list_tags: alltags,
                 loading: false,
                 search_name: '',
                 search_probeversion: '',
@@ -520,6 +536,7 @@ export function ListOfMetrics(type, imp=false) {
             list_metric: metrics,
             list_groups: groups['metrics'],
             list_types: types,
+            list_tags: alltags,
             loading: false,
             search_name: '',
             search_probeversion: '',
@@ -632,6 +649,32 @@ export function ListOfMetrics(type, imp=false) {
               value={this.state.mtype}
               onChange={e => this.setState({search_type: e.target.value})}
               data={this.state.list_types}
+            />
+          )
+        },
+        {
+          Header: 'Tag',
+          minWidth: 30,
+          accessor: 'tags',
+          Cell: row =>
+            <div style={{textAlign: 'center'}}>
+              {
+                row.value.length === 0 ?
+                  <Badge color='dark'>none</Badge>
+                :
+                  row.value.map((tag, i) =>
+                    <Badge className={'mr-1'} key={i} color={tag === 'internal' ? 'success' : tag === 'deprecated' ? 'danger' : 'secondary'}>
+                      {tag}
+                    </Badge>
+                  )
+              }
+            </div>,
+          filterable: true,
+          Filter: (
+            <DropdownFilterComponent
+              value={this.state.tags}
+              onChange={e => this.setState({search_tag: e.target.value})}
+              data={this.state.list_tags}
             />
           )
         }
@@ -761,6 +804,17 @@ export function ListOfMetrics(type, imp=false) {
         )
       }
 
+      if (this.state.search_tag) {
+        list_metric = list_metric.filter(row => {
+          if (this.state.search_tag === 'none')
+            return row.tags.length === 0
+
+          else
+            return row.tags.includes(this.state.search_tag)
+        }
+        );
+      };
+
       if (type === 'metric' && this.state.search_group) {
         list_metric = this.doFilter(list_metric, 'group', this.state.search_group)
       }
@@ -866,6 +920,21 @@ export function ListOfMetrics(type, imp=false) {
 }
 
 
+const styles = {
+  multiValue: (base, state) => {
+    return (state.data.value === 'internal') ? { ...base, backgroundColor: '#d4edda' } : (state.data.value === 'deprecated') ? { ...base, backgroundColor: '#f8d7da' } : base;
+  },
+};
+
+const DropdownIndicator = props => {
+  return (
+    <components.DropdownIndicator {...props}>
+      <FontAwesomeIcon icon={faCaretDown}/>
+    </components.DropdownIndicator>
+  );
+};
+
+
 export const MetricForm =
   ({
     values=undefined,
@@ -880,6 +949,7 @@ export const MetricForm =
     state=undefined,
     togglePopOver=undefined,
     onSelect=undefined,
+    onTagChange=undefined,
     isHistory=false,
     isTenantSchema=false,
     addview=false,
@@ -887,6 +957,8 @@ export const MetricForm =
     groups=[],
     metrictemplatelist=[],
     types=[],
+    alltags=[],
+    tags=[],
     publicView=false
   }) =>
     <>
@@ -1056,18 +1128,53 @@ export const MetricForm =
             </FormText>
           </Col>
         </Row>
-      <Row className='mb-4 mt-2'>
-        <Col md={10}>
-          <Label for='description'>Description:</Label>
-          <Field
-            id='description'
-            className='form-control'
-            component='textarea'
-            name='description'
-            disabled={isTenantSchema || isHistory}
-          />
-        </Col>
-      </Row>
+        {
+          (obj === 'metrictemplate' && !isHistory) ?
+            <Row className='mb-4 mt-2'>
+              <Col md={10}>
+                <Label>Tags:</Label>
+                <CreatableSelect
+                  closeMenuOnSelect={false}
+                  isMulti
+                  onChange={onTagChange}
+                  options={alltags}
+                  components={{DropdownIndicator}}
+                  defaultValue={tags}
+                  styles={styles}
+                />
+              </Col>
+            </Row>
+          :
+            <Row className='mb-4 mt-2'>
+              <Col md={10}>
+                <Label>Tags:</Label>
+                <div>
+                  {
+                    state.tags.length === 0 ?
+                      <Badge color='dark'>none</Badge>
+                    :
+                      state.tags.map((tag, i) =>
+                        <Badge className={'mr-1'} key={i} color={tag === 'internal' ? 'success' : tag === 'deprecated' ? 'danger' : 'secondary'}>
+                          {tag}
+                        </Badge>
+                      )
+                  }
+                </div>
+              </Col>
+            </Row>
+        }
+        <Row className='mb-4 mt-2'>
+          <Col md={10}>
+            <Label for='description'>Description:</Label>
+            <Field
+              id='description'
+              className='form-control'
+              component='textarea'
+              name='description'
+              disabled={isTenantSchema || isHistory}
+            />
+          </Col>
+        </Row>
         {
           obj === 'metric' &&
             <Row className='mb-4'>
@@ -1418,6 +1525,7 @@ export class MetricChange extends Component {
 
     this.state = {
       metric: {},
+      tags: [],
       probe: {},
       groups: [],
       probeversions: [],
@@ -1555,6 +1663,7 @@ export class MetricChange extends Component {
               })
               this.setState({
                 metric: metrics,
+                tags: metrics.tags,
                 probe: fields,
                 probeversions: probeversions,
                 allprobeversions: probe,
@@ -1567,6 +1676,7 @@ export class MetricChange extends Component {
             } else {
               this.setState({
                 metric: metrics,
+                tags: metrics.tags,
                 groups: session.userdetails.groups.metrics,
                 loading: false,
                 write_perm: session.userdetails.is_superuser ||
@@ -1588,6 +1698,7 @@ export class MetricChange extends Component {
             })
             this.setState({
               metric: metrics,
+              tags: metrics.tags,
               probe: fields,
               probeversions: probeversions,
               allprobeversions: probe,
@@ -1599,6 +1710,7 @@ export class MetricChange extends Component {
           } else {
             this.setState({
               metric: metrics,
+              tags: metrics.tags,
               groups: [],
               loading: false,
               write_perm: false,
@@ -1709,6 +1821,7 @@ export class MetricVersionDetails extends Component {
       probe: {'package': ''},
       description: '',
       mtype: '',
+      tags: [],
       group: '',
       probeexecutable: '',
       parent: '',
@@ -1743,6 +1856,7 @@ export class MetricVersionDetails extends Component {
             probe: probe,
             description: e.fields.description,
             type: e.fields.mtype,
+            tags: e.fields.tags,
             group: e.fields.group,
             probeexecutable: e.fields.probeexecutable,
             parent: e.fields.parent,

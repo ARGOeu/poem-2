@@ -62,6 +62,7 @@ function MetricTemplateComponent(cloneview=false) {
         metrictemplate: {},
         probe: {'package': ''},
         types: [],
+        tags: [],
         probeversions: [],
         allprobeversions: [],
         metrictemplatelist: [],
@@ -81,6 +82,7 @@ function MetricTemplateComponent(cloneview=false) {
       this.onSubmitHandle = this.onSubmitHandle.bind(this);
       this.doChange = this.doChange.bind(this);
       this.doDelete = this.doDelete.bind(this);
+      this.onTagChange = this.onTagChange.bind(this);
     }
 
     togglePopOver() {
@@ -118,6 +120,12 @@ function MetricTemplateComponent(cloneview=false) {
       });
     }
 
+    onTagChange(value) {
+      this.setState({
+        tags: value
+      });
+    };
+
     onSubmitHandle(values, actions) {
       let msg = undefined;
       let title = undefined;
@@ -135,6 +143,13 @@ function MetricTemplateComponent(cloneview=false) {
     }
 
     async doChange(values, actions){
+      function onlyUnique(value, index, self) {
+        return self.indexOf(value) == index;
+      };
+      let tags = [];
+      this.state.tags.forEach(t => tags.push(t.value));
+      let unique = tags.filter( onlyUnique );
+
       if (this.addview || cloneview) {
         let cloned_from = undefined;
         if (cloneview) {
@@ -149,6 +164,7 @@ function MetricTemplateComponent(cloneview=false) {
             name: values.name,
             probeversion: values.probeversion,
             mtype: values.type,
+            tags: unique,
             description: values.description,
             probeexecutable: values.probeexecutable,
             parent: values.parent,
@@ -188,6 +204,7 @@ function MetricTemplateComponent(cloneview=false) {
             name: values.name,
             probeversion: values.probeversion,
             mtype: values.type,
+            tags: unique,
             description: values.description,
             probeexecutable: values.probeexecutable,
             parent: values.parent,
@@ -256,6 +273,7 @@ function MetricTemplateComponent(cloneview=false) {
 
       try {
         let types = await this.backend.fetchData('/api/v2/internal/mttypes');
+        let tags = await this.backend.fetchData('/api/v2/internal/metrictags');
         let allprobeversions = await this.backend.fetchData('/api/v2/internal/version/probe');
         let metrictemplatelist = await this.backend.fetchData('/api/v2/internal/metrictemplates');
         let mlist = [];
@@ -263,8 +281,13 @@ function MetricTemplateComponent(cloneview=false) {
         let probeversions = [];
         allprobeversions.forEach(e => probeversions.push(e.object_repr));
 
+        let alltags = [];
+        tags.forEach(t => alltags.push({value: t, label: t}));
+
         if (!this.addview) {
           let metrictemplate = await this.backend.fetchData(`/api/v2/internal/metrictemplates/${this.name}`);
+          let tags = [];
+          metrictemplate.tags.forEach(t => tags.push({value: t, label: t}));
           if (metrictemplate.attribute.length === 0) {
             metrictemplate.attribute = [{'key': '', 'value': ''}];
           }
@@ -298,6 +321,8 @@ function MetricTemplateComponent(cloneview=false) {
               allprobeversions: allprobeversions,
               metrictemplatelist: mlist,
               types: types,
+              alltags: alltags,
+              tags: tags,
               loading: false,
             });
           } else {
@@ -306,6 +331,8 @@ function MetricTemplateComponent(cloneview=false) {
               metrictemplatelist: mlist,
               allprobeversions: allprobeversions,
               types: types,
+              tags: tags,
+              alltags: alltags,
               loading: false,
             });
           }
@@ -337,6 +364,8 @@ function MetricTemplateComponent(cloneview=false) {
             probeversions: probeversions,
             allprobeversions: allprobeversions,
             types: types,
+            alltags: alltags,
+            tags: [],
             loading: false,
           });
         }
@@ -349,8 +378,8 @@ function MetricTemplateComponent(cloneview=false) {
     }
 
     render() {
-      const { metrictemplate, types, probeversions, metrictemplatelist,
-        loading, error } = this.state;
+      const { metrictemplate, types, tags, alltags, probeversions,
+        metrictemplatelist, loading, error } = this.state;
 
       if (loading)
         return (<LoadingAnim/>)
@@ -401,7 +430,10 @@ function MetricTemplateComponent(cloneview=false) {
                     state={this.state}
                     onSelect={this.onSelect}
                     togglePopOver={this.togglePopOver}
+                    onTagChange={this.onTagChange}
                     types={types}
+                    alltags={alltags}
+                    tags={tags}
                     probeversions={probeversions}
                     metrictemplatelist={metrictemplatelist}
                   />
@@ -486,6 +518,7 @@ export class MetricTemplateVersionDetails extends Component {
             probeversion: e.fields.probeversion,
             probe: probe,
             type: e.fields.mtype,
+            tags: e.fields.tags,
             probeexecutable: e.fields.probeexecutable,
             description: e.fields.description,
             parent: e.fields.parent,

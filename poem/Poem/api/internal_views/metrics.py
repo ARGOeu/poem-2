@@ -72,6 +72,7 @@ class ListMetric(APIView):
                 id=metric.id,
                 name=metric.name,
                 mtype=metric.mtype.name,
+                tags=[tag.name for tag in metric.tags.all()],
                 probeversion=probeversion,
                 group=group,
                 description=metric.description,
