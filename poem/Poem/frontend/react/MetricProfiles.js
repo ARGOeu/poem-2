@@ -384,10 +384,10 @@ function MetricProfilesComponent(cloneview=false) {
                 list_user_groups: sessionActive.userdetails.groups.metricprofiles,
                 write_perm: sessionActive.userdetails.is_superuser ||
                   sessionActive.userdetails.groups.metricprofiles.indexOf(json['groupname']) >= 0,
-                view_services: this.flattenServices(metricp.services).sort(this.sortServices),
+                view_services: this.ensureAlignedIndexes(this.flattenServices(metricp.services).sort(this.sortServices)),
                 serviceflavours_all: serviceflavoursall,
                 metrics_all: metricsall,
-                list_services: this.flattenServices(metricp.services).sort(this.sortServices),
+                list_services: this.ensureAlignedIndexes(this.flattenServices(metricp.services).sort(this.sortServices)),
                 loading: false
               });
             } else {
@@ -445,6 +445,17 @@ function MetricProfilesComponent(cloneview=false) {
       }
     }
 
+    ensureAlignedIndexes(list) {
+      let i = 0
+
+      list.forEach(e => {
+        e.index = i
+        i += 1
+      })
+
+      return list
+    }
+
     handleSearch(e, statefieldlist, statefieldsearch, formikfield,
       alternatestatefield, alternateformikfield) {
       let filtered = this.state[statefieldlist.replace('view_', 'list_')]
@@ -455,14 +466,8 @@ function MetricProfilesComponent(cloneview=false) {
         filtered = this.state[statefieldlist.replace('view_', 'list_')].
           filter((elem) => matchItem(elem[formikfield], e.target.value))
 
-        // reindex after back to full list view
-        let index_update = 0
-        tmp_list_services.forEach((element) => {
-          element.index = index_update;
-          index_update += 1;
-        })
-
         tmp_list_services.sort(this.sortServices);
+        tmp_list_services = this.ensureAlignedIndexes(tmp_list_services)
       }
       else if (e.target.value !== '') {
         filtered = this.state[statefieldlist].filter((elem) =>
@@ -499,14 +504,10 @@ function MetricProfilesComponent(cloneview=false) {
         slice_left_tmp_list_services.push({index: i, service, metric, isNew: true});
 
         // reindex first slice
-        let index_update = 0;
-        slice_left_tmp_list_services.forEach((element) => {
-          element.index = index_update;
-          index_update += 1;
-        })
+        slice_left_tmp_list_services = this.ensureAlignedIndexes(slice_left_tmp_list_services)
 
         // reindex rest of list
-        index_update = slice_left_tmp_list_services.length;
+        let index_update = slice_left_tmp_list_services.length;
         slice_right_tmp_list_services.forEach((element) => {
           element.index = index_update;
           index_update += 1;
@@ -775,14 +776,11 @@ function MetricProfilesComponent(cloneview=false) {
       let tmp_view_services = []
       let tmp_list_services = []
 
-      // XXX: this means no duplicate elements allowed
       let index = this.state.list_services.findIndex(service =>
-        element.index === service.index &&
         element.service === service.service &&
         element.metric === service.metric
       );
       let index_tmp = this.state.view_services.findIndex(service =>
-        element.index === service.index &&
         element.service === service.service &&
         element.metric === service.metric
       );
@@ -813,21 +811,18 @@ function MetricProfilesComponent(cloneview=false) {
           tmp_list_services[i].index = element_index - 1;
         }
 
-        // this one ends up reindexing already indexed array
-        // limit it so reindexing happens only if first element differs
-        if (tmp_list_services[0].index != tmp_view_services[0].index)
-          for (var i = index_tmp; i < tmp_view_services.length; i++) {
-            let element_index = tmp_view_services[i].index
-            tmp_view_services[i].index = element_index - 1;
-          }
+        for (var i = index_tmp; i < tmp_view_services.length; i++) {
+          let element_index = tmp_view_services[i].index
+          tmp_view_services[i].index = element_index - 1;
+        }
       }
       else {
         tmp_list_services = [...this.state.list_services]
         tmp_view_services = [...this.state.view_services]
       }
       this.setState({
-        list_services: tmp_list_services,
-        view_services: tmp_view_services,
+        list_services: this.ensureAlignedIndexes(tmp_list_services),
+        view_services: this.ensureAlignedIndexes(tmp_view_services),
         groupname: group,
         metric_profile_name: name,
         metric_profile_description: description
