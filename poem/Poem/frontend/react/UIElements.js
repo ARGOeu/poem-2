@@ -789,7 +789,7 @@ export const AutocompleteField = ({setFieldValue, lists=[], val='', icon, field,
         </div>
       );
     else
-      return (<input {...inputProps}/>);
+      return (<input {...inputProps} type='text' className='form-control'/>);
   }
 
   return (
