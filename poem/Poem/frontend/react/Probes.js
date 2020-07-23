@@ -660,7 +660,12 @@ function ProbeComponent(cloneview=false) {
     onSelect(field, value) {
       let probe = this.state.probe;
       probe[field] = value;
-      probe['version'] = value.split(' ')[1].slice(1, -1);
+      try {
+        probe['version'] = value.split(' ')[1].slice(1, -1);
+      } catch(err) {
+        if (err instanceof TypeError)
+          probe['version'] = '';
+      };
       this.setState({probe: probe});
     }
 
