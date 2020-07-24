@@ -4,9 +4,10 @@
 - [User Interface](superadmin_ui.md)
 - [Administration](superadmin_administration.md)
     - [Users](superadmin_users.md)
-- [Probes](superadmin_probe.md)
+- [Tenants](superadmin_tenants.md)
 - [YUM Repos](superadmin_repos.md)
 - [Packages](superadmin_packages.md)
+- [Probes](superadmin_probe.md)
 - [Metric Templates](superadmin_metric_templates.md)
 
 ## Tenant POEM
