@@ -1,7 +1,7 @@
-import React, { Component } from 'react';
+import React, { Component, useState } from 'react';
 import {Link} from 'react-router-dom';
 import {Backend, WebApi} from './DataManager';
-import Autocomplete from 'react-autocomplete';
+import Autosuggest from 'react-autosuggest';
 import {
   LoadingAnim,
   BaseArgoView,
@@ -103,6 +103,68 @@ const MetricProfileTupleValidate = ({view_services, name, groupname,
 }
 
 
+const MetricProfileAutocomplete = ({form, lists=[], item={}, index, field, onselect_handler}) => {
+  let val = '';
+  let icon = '';
+  if (field === 'service') {
+    val = item.service;
+    icon = 'serviceflavour';
+  } else {
+    val = item.metric;
+    icon = 'metrics';
+  }
+
+  const [inputValue, setInputValue] = useState(val);
+  const [suggestions, setSuggestions] = useState(lists);
+
+  const getSuggestions = value => {
+    return (
+      lists.filter(suggestion =>
+        suggestion.toLowerCase().includes(value.trim().toLowerCase())
+      )
+    );
+  };
+
+  return (
+    <Autosuggest
+      suggestions={suggestions}
+      onSuggestionsClearRequested={() => setSuggestions([])}
+      onSuggestionsFetchRequested={({ value }) => {
+        setInputValue(value);
+        setSuggestions(getSuggestions(value));
+      }}
+      getSuggestionValue={suggestion => suggestion}
+      renderSuggestion={(suggestion, { isHighlighted }) =>
+        <div
+          key={lists.indexOf(suggestion)}
+          className={`metricprofiles-autocomplete-entries ${isHighlighted ?
+              "metricprofiles-autocomplete-entries-highlighted"
+              : ""}`
+          }>
+          {suggestion ? <Icon i={icon}/> : ''} {suggestion}
+        </div>
+      }
+      renderInputComponent={inputProps =>
+        <input {...inputProps} className={`"form-control custom-select " ${item.isNew ? "border border-success" : item.isChanged ? "border border-danger" : ""}`}/>
+      }
+      inputProps={{
+        value: inputValue,
+        onChange: (_, { newValue }) => {
+          setInputValue(newValue);
+          form.setFieldValue(`view_services.${index}.${field}`, newValue);
+          form.setFieldValue(`view_services.${index}.${field}Changed`, true);
+          onselect_handler(form.values.view_services[index], field, newValue);
+        }
+      }}
+      theme={{
+        containerOpen: 'metricprofiles-autocomplete-menu',
+        suggestionsList: 'metricprofiles-autocomplete-list'
+      }}
+    />
+  )
+};
+
+
 const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
   remove_handler, insert_handler, onselect_handler, form, remove, insert}) =>
 (
@@ -156,36 +218,13 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
                 {index + 1}
               </td>
               <td className={service.isNew ? "bg-light" : ""}>
-                <Autocomplete
-                  inputProps={{
-                    className: `"form-control custom-select " ${service.isNew ? "border border-success" : service.serviceChanged ? "border border-danger" : ""}`
-                  }}
-                  getItemValue={(item) => item}
-                  items={serviceflavours_all}
-                  value={service.service}
-                  renderItem={(item, isHighlighted) =>
-                    <div
-                      key={serviceflavours_all.indexOf(item)}
-                      className={`metricprofiles-autocomplete-entries ${isHighlighted ?
-                          "metricprofiles-autocomplete-entries-highlighted"
-                          : ""}`
-                      }>
-                      {item ? <Icon i='serviceflavour'/> : ''} {item}
-                    </div>}
-                  onChange={(e) => form.setFieldValue(`view_services.${index}.service`, e.target.value)}
-                  onSelect={(val) => {
-                    form.setFieldValue(`view_services.${index}.service`, val)
-                    form.setFieldValue(`view_services.${index}.serviceChanged`, true)
-                    onselect_handler(form.values.view_services[index],
-                      'service',
-                      val)
-                  }}
-                  wrapperStyle={{}}
-                  shouldItemRender={matchItem}
-                  renderMenu={(items) =>
-                    <div className='metricprofiles-autocomplete-menu'>
-                      {items}
-                    </div>}
+                <MetricProfileAutocomplete
+                  form={form}
+                  lists={serviceflavours_all}
+                  item={service}
+                  field='service'
+                  index={index}
+                  onselect_handler={onselect_handler}
                 />
                 {
                   form.errors && form.errors.view_services && form.errors.view_services[index]
@@ -196,36 +235,13 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
                 }
               </td>
               <td className={service.isNew ? "bg-light" : ""}>
-                <Autocomplete
-                  inputProps={{
-                    className: `"form-control custom-select " ${service.isNew ? "border border-success" : service.metricChanged  ? "border border-danger" : ""}`
-                  }}
-                  getItemValue={(item) => item}
-                  items={metrics_all}
-                  value={service.metric}
-                  renderItem={(item, isHighlighted) =>
-                    <div
-                      key={metrics_all.indexOf(item)}
-                      className={`metricprofiles-autocomplete-entries ${isHighlighted ?
-                          "metricprofiles-autocomplete-entries-highlighted"
-                          : ""}`
-                      }>
-                      {item ? <Icon i='metrics'/> : ''} {item}
-                    </div>}
-                  onChange={(e) => form.setFieldValue(`view_services.${index}.metric`, e.target.value)}
-                  onSelect={(val) => {
-                    form.setFieldValue(`view_services.${index}.metric`, val)
-                    form.setFieldValue(`view_services.${index}.metricChanged`, true)
-                    onselect_handler(form.values.view_services[index],
-                      'metric',
-                      val)
-                  }}
-                  wrapperStyle={{}}
-                  shouldItemRender={matchItem}
-                  renderMenu={(items) =>
-                    <div className='metricprofiles-autocomplete-menu'>
-                      {items}
-                    </div>}
+                <MetricProfileAutocomplete
+                  form={form}
+                  lists={metrics_all}
+                  item={service}
+                  field='metric'
+                  index={index}
+                  onselect_handler={onselect_handler}
                 />
                 {
                   form.errors && form.errors.view_services && form.errors.view_services[index]
