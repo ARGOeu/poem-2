@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { Backend } from './DataManager';
 import { Link } from 'react-router-dom';
-import { LoadingAnim, ErrorComponent, BaseArgoView } from './UIElements';
+import { LoadingAnim, ErrorComponent, BaseArgoView, ParagraphTitle } from './UIElements';
 import { Formik, Form, Field } from 'formik';
 import {
   FormGroup,
@@ -219,7 +219,7 @@ export class TenantChange extends Component {
                   </Row>
                 </FormGroup>
                 <FormGroup>
-                  <h4 className="mt-2 p-1 pl-3 text-light text-uppercase rounded" style={{"backgroundColor": "#416090"}}>Basic info</h4>
+                  <ParagraphTitle title='basic info'/>
                   <Row>
                     <Col md={6}>
                       <InputGroup>
