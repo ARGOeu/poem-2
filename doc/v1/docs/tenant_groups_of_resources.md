@@ -1,6 +1,6 @@
 # Groups of resources
 
-All the groups of resources are available through Administration page. There are four groups of resources:
+All the groups of resources are available through [Administration](tenant_administration.md) page. There are four groups of resources:
 
 * groups of aggregations,
 * groups of metrics,

@@ -2,7 +2,7 @@
 
 ## List of users
 
-Users page is only accessible through **Administration** page. It is shown in the image below.
+Users page is only accessible through [Administration](superadmin_administration.md) page. It is shown in the image below.
 
 ![SuperAdmin Users](figures/superadmin_users.png)
 
