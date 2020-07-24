@@ -40,7 +40,6 @@
     "jsctags": "git+https://github.com/ramitos/jsctags.git",
     "jshint": "^2.10.2",
     "postcss-loader": "^3.0.0",
-    "react-autocomplete": "^1.8.1",
     "react-diff-viewer": "^2.0.5",
     "react-filtered-multiselect": "^0.5.1",
     "react-notifications": "^1.6.0",
