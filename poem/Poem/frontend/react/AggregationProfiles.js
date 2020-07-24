@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component, useState } from 'react';
 import {Link} from 'react-router-dom';
 import {
   LoadingAnim,
@@ -14,7 +14,6 @@ import {
   ErrorComponent,
   ParagraphTitle
 } from './UIElements';
-import Autocomplete from 'react-autocomplete';
 import ReactTable from 'react-table';
 import 'react-table/react-table.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -36,8 +35,8 @@ import {
   Row
 } from 'reactstrap';
 import * as Yup from 'yup';
-
 import ReactDiffViewer from 'react-diff-viewer';
+import Autosuggest from 'react-autosuggest';
 
 import "react-notifications/lib/notifications.css";
 import './AggregationProfiles.css';
@@ -210,82 +209,108 @@ const ServiceList = ({services, list_services=[], list_operations=[], last_servi
 
 const Service = ({name, service, operation, list_services, list_operations,
   last_service_operation, groupindex, groupnew, index, remove, insert, form,
-  isnew, ismissing}) =>
-(
-  <React.Fragment>
-    <Row className="d-flex align-items-center service pt-1 pb-1 no-gutters" key={index}>
-      <Col md={8}>
-        <Autocomplete
-          inputProps={{
-            className: `"form-control custom-select " ${isnew && !groupnew ? "border-success" : ""} ${ismissing ? "border-primary": ""}`
-          }}
-          getItemValue={(item) => item}
-          items={list_services}
-          value={service.name}
-          renderItem={(item, isHighlighted) =>
-            <div
-              key={list_services.indexOf(item)}
-              className={`aggregation-autocomplete-entries ${isHighlighted ?
-                  "aggregation-autocomplete-entries-highlighted"
-                  : ""}`
-              }>
-              {item ? <Icon i='serviceflavour'/> : ''} {item}
-            </div>}
-          onChange={(e) => form.setFieldValue(`groups.${groupindex}.services.${index}.name`, e.target.value)}
-          onSelect={(val) => {
-            form.setFieldValue(`groups.${groupindex}.services.${index}.name`, val)
-          }}
-          wrapperStyle={{}}
-          shouldItemRender={matchItem}
-          renderMenu={(items) =>
-            <div className='aggregation-autocomplete-menu' children={items}/>}
-        />
-      </Col>
-      <Col md={2}>
-        <div className="input-group">
-          <DropDown
-            field={{name: "operation", value: operation}}
-            data={insertSelectPlaceholder(list_operations, 'Select')}
-            prefix={`groups.${groupindex}.services.${index}`}
-            class_name="custom-select service-operation"
-            isnew={isnew && !groupnew}
-        />
-        </div>
-      </Col>
-      <Col md={2} className="pl-2">
-        <Button size="sm" color="light"
-          type="button"
-          onClick={() => remove(index)}>
-            <FontAwesomeIcon icon={faTimes}/>
-        </Button>
-        <Button size="sm" color="light"
-          type="button"
-          onClick={() => insert(index + 1, {name: '', operation:
-            last_service_operation(index, form.values.groups[groupindex].services), isnew: true})}>
-            <FontAwesomeIcon icon={faPlus}/>
-        </Button>
-      </Col>
-    </Row>
-    <Row>
-    {
-      form.errors && form.errors.groups && form.errors.groups[groupindex] &&
-      form.errors.groups[groupindex].services && form.errors.groups[groupindex].services[index] &&
-      form.errors.groups[groupindex].services[index].name &&
-        <Col md={8}>
-            { FancyErrorMessage(form.errors.groups[groupindex].services[index].name) }
-        </Col>
-    }
-    {
-      form.errors && form.errors.groups && form.errors.groups[groupindex] &&
-      form.errors.groups[groupindex].services && form.errors.groups[groupindex].services[index] &&
-      form.errors.groups[groupindex].services[index].operation &&
-        <Col md={{offset: form.errors.groups[groupindex].services[index].name ? 0 : 8, size: 2}}>
-            { FancyErrorMessage(form.errors.groups[groupindex].services[index].operation) }
-        </Col>
-    }
-    </Row>
-  </React.Fragment>
-)
+  isnew, ismissing}) => {
+    const [inputValue, setInputValue] = useState(service.name);
+    const [suggestions, setSuggestions] = useState(list_services);
+
+    const getSuggestions = value => {
+      return (
+        list_services.filter(suggestion =>
+          suggestion.toLowerCase().includes(value.trim().toLowerCase())
+        )
+      );
+    };
+
+    const getSuggestionValue = suggestion => suggestion;
+
+    const renderSuggestion = (suggestion, { isHighlighted }) => (
+      <div
+        key={list_services.indexOf(suggestion)}
+        className={`aggregation-autocomplete-entries ${isHighlighted ?
+            "aggregation-autocomplete-entries-highlighted"
+            : ""}`
+        }>
+        {suggestion ? <Icon i='serviceflavour'/> : ''} {suggestion}
+      </div>
+    );
+
+    const renderInputComponent = inputProps => (
+      <input {...inputProps} className={`"form-control custom-select " ${isnew && !groupnew ? "border-success" : ""} ${ismissing ? "border-primary": ""}`}/>
+    );
+
+    return (
+      <React.Fragment>
+        <Row className="d-flex align-items-center service pt-1 pb-1 no-gutters" key={index}>
+          <Col md={8}>
+            <Autosuggest
+              suggestions={suggestions}
+              onSuggestionsClearRequested={() => setSuggestions([])}
+              onSuggestionsFetchRequested={({ value }) => {
+                setInputValue(value);
+                setSuggestions(getSuggestions(value));
+              }}
+              getSuggestionValue={getSuggestionValue}
+              renderSuggestion={renderSuggestion}
+              inputProps={{
+                value: inputValue,
+                onChange: (_, { newValue }) => {
+                  setInputValue(newValue);
+                  form.setFieldValue(`groups.${groupindex}.services.${index}.name`, newValue);
+                }
+              }}
+              renderInputComponent={renderInputComponent}
+              theme={{
+                containerOpen: 'aggregation-autocomplete-menu',
+                suggestionsList: 'aggregation-autocomplete-list'
+              }}
+            />
+          </Col>
+          <Col md={2}>
+            <div className="input-group">
+              <DropDown
+                field={{name: "operation", value: operation}}
+                data={insertSelectPlaceholder(list_operations, 'Select')}
+                prefix={`groups.${groupindex}.services.${index}`}
+                class_name="custom-select service-operation"
+                isnew={isnew && !groupnew}
+            />
+            </div>
+          </Col>
+          <Col md={2} className="pl-2">
+            <Button size="sm" color="light"
+              type="button"
+              onClick={() => remove(index)}>
+                <FontAwesomeIcon icon={faTimes}/>
+            </Button>
+            <Button size="sm" color="light"
+              type="button"
+              onClick={() => insert(index + 1, {name: '', operation:
+                last_service_operation(index, form.values.groups[groupindex].services), isnew: true})}>
+                <FontAwesomeIcon icon={faPlus}/>
+            </Button>
+          </Col>
+        </Row>
+        <Row>
+        {
+          form.errors && form.errors.groups && form.errors.groups[groupindex] &&
+          form.errors.groups[groupindex].services && form.errors.groups[groupindex].services[index] &&
+          form.errors.groups[groupindex].services[index].name &&
+            <Col md={8}>
+                { FancyErrorMessage(form.errors.groups[groupindex].services[index].name) }
+            </Col>
+        }
+        {
+          form.errors && form.errors.groups && form.errors.groups[groupindex] &&
+          form.errors.groups[groupindex].services && form.errors.groups[groupindex].services[index] &&
+          form.errors.groups[groupindex].services[index].operation &&
+            <Col md={{offset: form.errors.groups[groupindex].services[index].name ? 0 : 8, size: 2}}>
+                { FancyErrorMessage(form.errors.groups[groupindex].services[index].operation) }
+            </Col>
+        }
+        </Row>
+      </React.Fragment>
+    );
+}
 
 
 const AggregationProfilesForm = ({ values, errors, historyview=false, write_perm=false,
