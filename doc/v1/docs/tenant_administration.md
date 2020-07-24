@@ -10,7 +10,7 @@ Tenant POEM administration page is shown in the image below.
 
 First section are links to component pages users are allowed to modify. They are all also accessible from the menu of the left side.
 
-### Authentication and Authorization
+### Authentication and authorization
 
 Second section, **Authentication and authorization**, is only available through Administration page, and therefore, only superusers can modify them.
 

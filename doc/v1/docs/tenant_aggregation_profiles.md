@@ -24,7 +24,7 @@ Fields **Operations**, **Endpoint group** and **Metric profile** are all drop do
 
 In **Service flavour groups** section, the user can create new groups, and delete and modify the existing ones. For adding one uses buttons with "+" sign, for deleting buttons with "x" sign. Whole group is deleted by clicking the red "x" button.
 
-There is a validation which checks if service flavours mentioned in aggregation profile exist in the associated metric profile, and if they do not, the warning message is displayed, and the missing service flavours are marked red (like shown in the image above).
+There is a validation which checks if service flavours mentioned in aggregation profile exist in the associated metric profile, and if they do not, the warning message is displayed, and the missing service flavours are marked blue (like shown in the image above).
 
 Same as for other resources, only users with appropriate permission may modify aggregation profile. That is, users that have group of aggregation the profile belongs to assigned to them, or users with superuser permission.
 
