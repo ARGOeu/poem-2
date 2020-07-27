@@ -812,6 +812,7 @@ export const AutocompleteField = ({setFieldValue, lists=[], val='', icon, field,
           }
         }}
         renderInputComponent={renderInputComponent}
+        shouldRenderSuggestions={() => true}
         theme={{
           containerOpen: 'argo-autocomplete-menu',
           suggestionsList: 'argo-autocomplete-list'
