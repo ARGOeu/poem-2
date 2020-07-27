@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component, useState, useEffect } from 'react';
 import { Backend } from './DataManager';
 import {
   LoadingAnim,
@@ -19,91 +19,77 @@ import {
   Button} from 'reactstrap';
 import FilteredMultiSelect from 'react-filtered-multiselect';
 
-export const GroupOfMetricsList = GroupList('metrics', 'groupofmetrics', 'group of metrics');
 export const GroupOfMetricsChange = GroupChange('metrics', 'groupofmetrics', 'metrics');
 
-export const GroupOfAggregationsList = GroupList('aggregations', 'groupofaggregations', 'group of aggregations');
 export const GroupOfAggregationsChange = GroupChange('aggregations', 'groupofaggregations', 'aggregations');
 
-export const GroupOfMetricProfilesList = GroupList('metricprofiles', 'groupofmetricprofiles', 'group of metric profiles');
 export const GroupOfMetricProfilesChange = GroupChange('metricprofiles', 'groupofmetricprofiles', 'metric profiles');
 
-export const GroupOfThresholdsProfilesList = GroupList('thresholdsprofiles', 'groupofthresholdsprofiles', 'group of thresholds profiles');
 export const GroupOfThresholdsProfilesChange = GroupChange('thresholdsprofiles', 'groupofthresholdsprofiles', 'thresholds profiles');
 
 
-function GroupList(group, id, name) {
-  return class extends Component {
-    constructor(props) {
-      super(props);
-      this.state = {
-        loading: false,
-        list_groups: null,
-        error: null
-      };
+export const GroupList = (props) => {
+  const [loading, setLoading] = useState(false);
+  const [listGroups, setListGroups] = useState(null);
+  const [error, setError] = useState(null);
 
-      this.location = props.location;
-      this.backend = new Backend();
-  }
+  const location = props.location;
+  const name = props.name;
+  const id = props.id;
+  const group = props.group;
+  const backend = new Backend();
 
-  async componentDidMount() {
-    this.setState({loading: true});
-
-    try {
-      let json = await this.backend.fetchResult('/api/v2/internal/usergroups');
-      this.setState({
-        list_groups: json[group],
-        loading: false
-      });
-    } catch(err) {
-      this.setState({
-        error: err,
-        loading: false
-      });
-    };
-  }
-
-  render() {
-    const columns = [
-      {
-        Header: name.charAt(0).toUpperCase() + name.slice(1),
-        id: id,
-        accessor: e =>
-          <Link to={`/ui/administration/${id}/${e}`}>
-            {e}
-          </Link>
+  useEffect(() => {
+    setLoading(true);
+    async function fetchData() {
+      try {
+        let json = await backend.fetchResult('/api/v2/internal/usergroups');
+        setListGroups(json[group]);
+      } catch(err) {
+        setError(err);
       }
-    ];
+      setLoading(false);
+    };
+    fetchData();
+  }, []);
 
-    const { loading, list_groups, error } = this.state;
-
-    if (loading)
-      return(<LoadingAnim/>);
-
-    else if (error)
-      return (<ErrorComponent error={error}/>);
-
-    else if (!loading && list_groups) {
-      return (
-        <BaseArgoView
-          resourcename={name}
-          location={this.location}
-          listview={true}>
-            <ReactTable
-              data={list_groups}
-              columns={columns}
-              className='-highlight'
-              defaultPageSize={12}
-              rowsText='groups'
-              getTheadThProps={() => ({className: 'table-active font-weight-bold p-2'})}
-            />
-        </BaseArgoView>
-      );
-    } else
-      return null;
+  const columns = [
+    {
+      Header: name.charAt(0).toUpperCase() + name.slice(1),
+      id: id,
+      accessor: e =>
+        <Link to={`/ui/administration/${id}/${e}`}>
+          {e}
+        </Link>
     }
-  };
-}
+  ];
+
+  if (loading)
+    return (<LoadingAnim/>);
+
+  else if (error)
+    return (<ErrorComponent error={error}/>);
+
+  else if (!loading && listGroups)
+    return (
+      <BaseArgoView
+        resourcename={name}
+        location={location}
+        listview={true}>
+          <ReactTable
+            data={listGroups}
+            columns={columns}
+            className='-highlight'
+            defaultPageSize={12}
+            rowsText='groups'
+            getTheadThProps={() => ({className: 'table-active font-weight-bold p-2'})}
+          />
+      </BaseArgoView>
+    );
+
+  else
+    return null;
+};
 
 
 function GroupChange(gr, id, ttl) {

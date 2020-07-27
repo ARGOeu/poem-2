@@ -26,14 +26,11 @@ import { AggregationProfilesChange, AggregationProfilesList, AggregationProfileH
 import Reports from './Reports';
 import { UsersList, UserChange, SuperAdminUserChange, ChangePassword } from './Users';
 import {
-  GroupOfMetricsList,
   GroupOfMetricsChange,
-  GroupOfAggregationsList,
   GroupOfAggregationsChange,
-  GroupOfMetricProfilesList,
   GroupOfMetricProfilesChange,
-  GroupOfThresholdsProfilesList,
-  GroupOfThresholdsProfilesChange
+  GroupOfThresholdsProfilesChange,
+  GroupList
 } from './GroupElements';
 import { APIKeyList, APIKeyChange } from './APIKey';
 import NotFound from './NotFound';
@@ -192,7 +189,9 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, t
     <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/users/:user_name"
       render={props => <UserChange {...props}/>}
     />
-    <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/groupofmetrics" component={GroupOfMetricsList} />
+    <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/groupofmetrics"
+      render={props => <GroupList {...props} group='metrics' id='groupofmetrics' name='group of metrics'/>}
+    />
     <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/groupofmetrics/add"
       render={props => <GroupOfMetricsChange
         {...props}
@@ -201,7 +200,9 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, t
     <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/groupofmetrics/:group"
       render={props => <GroupOfMetricsChange {...props}/>}
     />
-    <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/groupofaggregations" component={GroupOfAggregationsList} />
+    <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/groupofaggregations"
+      render={props => <GroupList {...props} group='aggregations' id='groupofaggregations' name='group of aggregations'/>}
+    />
     <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/groupofaggregations/add"
       render={props => <GroupOfAggregationsChange
         {...props}
@@ -210,7 +211,9 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, t
     <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/groupofaggregations/:group"
       render={props => <GroupOfAggregationsChange {...props}/>}
     />
-    <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/groupofmetricprofiles" component={GroupOfMetricProfilesList} />
+    <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/groupofmetricprofiles"
+      render={props => <GroupList {...props} group='metricprofiles' id='groupofmetricprofiles' name='group of metric profiles'/>}
+    />
     <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/groupofmetricprofiles/add"
       render={props => <GroupOfMetricProfilesChange
         {...props}
@@ -241,7 +244,9 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, t
     <SuperUserRoute isSuperUser={isSuperUser} exact path='/ui/administration/packages/:nameversion'
       render={props => <PackageChange {...props} disabled={true}/>}
     />
-    <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/groupofthresholdsprofiles" component={GroupOfThresholdsProfilesList} />
+    <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/groupofthresholdsprofiles"
+      render={props => <GroupList {...props} group='thresholdsprofiles' id='groupofthresholdsprofiles' name='group of thresholds profiles'/>}
+    />
     <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/groupofthresholdsprofiles/add"
       render={props => <GroupOfThresholdsProfilesChange
         {...props}
