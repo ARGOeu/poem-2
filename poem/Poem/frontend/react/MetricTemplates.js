@@ -106,18 +106,23 @@ function MetricTemplateComponent(cloneview=false) {
     }
 
     onSelect(field, value) {
-      let metrictemplate = this.state.metrictemplate;
-      let probe = {};
-      this.state.allprobeversions.forEach((e) => {
-        if (e.object_repr === value) {
-          probe = e.fields;
+      if (field === 'probeversion') {
+        let { metrictemplate, allprobeversions } = this.state;
+        let probe = {};
+        for (let probeversion of allprobeversions) {
+          if (probeversion.object_repr === value) {
+            probe = probeversion.fields;
+            break;
+          } else {
+            probe = {'package': ''};
+          }
         };
-      });
-      metrictemplate[field] = value;
-      this.setState({
-        metrictemplate: metrictemplate,
-        probe: probe
-      });
+        metrictemplate[field] = value;
+        this.setState({
+          metrictemplate: metrictemplate,
+          probe: probe
+        });
+      };
     }
 
     onTagChange(value) {

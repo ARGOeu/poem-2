@@ -1256,7 +1256,6 @@ export const MetricForm =
                   field='parent'
                   val={values.parent}
                   icon='metrics'
-                  className={`form-control ${errors.parent && 'border-danger'}`}
                   onselect_handler={onSelect}
                   req={errors.parent}
                 />

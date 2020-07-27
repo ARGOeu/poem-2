@@ -10,7 +10,6 @@ import {
   Card,
   CardBody,
   CardHeader,
-  CardText,
   Col,
   Collapse,
   Container,
@@ -31,7 +30,6 @@ import {
   NavbarToggler,
   Row,
   Popover,
-  PopoverHeader,
   PopoverBody
 } from 'reactstrap';
 import {Link} from 'react-router-dom';
@@ -46,7 +44,6 @@ import {
   faSearch,
   faWrench,
   faFileAlt,
-  faSitemap,
   faCog,
   faServer,
   faCogs,
@@ -61,9 +58,9 @@ import {
   faIdBadge} from '@fortawesome/free-solid-svg-icons';
 import { NotificationManager } from 'react-notifications';
 import { Field } from 'formik';
-import Autocomplete from 'react-autocomplete';
 import { Backend } from './DataManager';
 import ReactDiffViewer from 'react-diff-viewer';
+import Autosuggest from 'react-autosuggest';
 
 
 var list_pages = ['administration', 'probes',
@@ -756,56 +753,72 @@ export const FancyErrorMessage = (msg) => (
 )
 
 
-function matchItem(item, value) {
-  if (value)
-    return item.toLowerCase().indexOf(value.toLowerCase()) !== -1;
-}
+export const AutocompleteField = ({setFieldValue, lists=[], val='', icon, field, req, label, onselect_handler}) => {
+  const [inputValue, setInputValue] = useState(val);
+  const [suggestions, setSuggestions] = useState(lists);
 
+  const getSuggestions = value => {
+    return (
+      lists.filter(suggestion =>
+        suggestion.toLowerCase().includes(value.trim().toLowerCase())
+      )
+    );
+  };
 
-export const AutocompleteField = ({lists, onselect_handler, field, val, icon, setFieldValue, req, label, values}) => {
-  let classname = `form-control ${req && 'border-danger'}`;
+  const getSuggestionValue = suggestion => suggestion;
 
-  return(
-    <Autocomplete
-      inputProps={{className: classname}}
-      getItemValue={(item) => item}
-      items={lists}
-      value={val}
-      renderItem={(item, isHighlighted) =>
-        <div
-          key={lists.indexOf(item)}
-          className={`argo-autocomplete-entries ${isHighlighted ?
-            "argo-autocomplete-entries-highlighted"
-            : ""}`
-        }
-        >
-          {item ? <Icon i={icon}/> : ''} {item}
+  const renderSuggestion = (suggestion, {isHighlighted}) => (
+    <div
+      key={lists.indexOf(suggestion)}
+      className={`argo-autocomplete-entries ${isHighlighted ?
+        'argo-autocomplete-entries-highlighted' : ''}`}
+    >
+      {suggestion ? <Icon i={icon}/> : ''} {suggestion}
+    </div>
+  );
+
+  const renderInputComponent = inputProps => {
+    if (label)
+      return (
+        <div className='input-group mb-3'>
+          <div className='input-group-prepend'>
+            <span className='input-group-text' id='basic-addon1'>{label}</span>
+          </div>
+          <input {...inputProps} type='text'
+          className={`form-control ${req && 'border-danger'}`} aria-label='label'/>
         </div>
-      }
-      renderInput={(props) => {
-        if (label)
-          return (
-            <div className='input-group mb-3'>
-              <div className='input-group-prepend'>
-                <span className='input-group-text' id='basic-addon1'>{label}</span>
-              </div>
-              <input {...props} type='text' className={classname} aria-label='label'/>
-            </div>
-          );
-        else
-          return <input {...props}/>;
-      }}
-      onChange={(e) => {setFieldValue(field, e.target.value)}}
-      onSelect={(val) =>  {
-        setFieldValue(field, val)
-        onselect_handler(field, val);
-      }}
-      wrapperStyle={{}}
-      shouldItemRender={matchItem}
-      renderMenu={(items) =>
-        <div className='argo-autocomplete-menu' children={items}/>
-      }
-    />
+      );
+    else
+      return (<input {...inputProps} type='text' className='form-control'/>);
+  }
+
+  return (
+    <div>
+      <Autosuggest
+        suggestions={suggestions}
+        onSuggestionsClearRequested={() => setSuggestions([])}
+        onSuggestionsFetchRequested={({ value }) => {
+          setInputValue(value);
+          setSuggestions(getSuggestions(value));
+        }}
+        getSuggestionValue={getSuggestionValue}
+        renderSuggestion={renderSuggestion}
+        inputProps={{
+          value: inputValue,
+          onChange: (_, { newValue }) => {
+            setInputValue(newValue);
+            setFieldValue(field, newValue);
+            onselect_handler(field, newValue);
+          }
+        }}
+        renderInputComponent={renderInputComponent}
+        shouldRenderSuggestions={() => true}
+        theme={{
+          containerOpen: 'argo-autocomplete-menu',
+          suggestionsList: 'argo-autocomplete-list'
+        }}
+      />
+    </div>
   );
 };
 
