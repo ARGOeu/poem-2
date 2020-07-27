@@ -10,7 +10,7 @@ Metrics page is accessible through menu on the left side. It is shown in the ima
 
 ![Tenant Metrics](figures/tenant_metrics.png)
 
-Metrics can be filtered by name, probe, group and type (active or passive). Any particular metric can be accessed by clicking its name. Also one may see probes associated to metrics by clicking probe's name.
+Metrics can be filtered by name, probe, group, type (active or passive), and tag. Any particular metric can be accessed by clicking its name. Also, one may see probes associated to metrics by clicking probe's name.
 
 ## Metric details
 

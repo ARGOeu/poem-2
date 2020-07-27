@@ -6,7 +6,7 @@ Metric templates page is accessible from the menu on the left side. The page is 
 
 ![SuperAdmin metric templates](figures/superadmin_metric_template.png)
 
-Metric templates may be filtered by name, probe, and tag (active or passive). By clicking on the metric template name, user can access particular metric template page. It is also possible to access particular probe version by clicking on its name.
+Metric templates may be filtered by name, probe, type (active or passive), or tag. By clicking on the metric template name, user can access particular metric template's page. It is also possible to access particular probe version by clicking on its name.
 
 There is also a feature to delete multiple metric templates at once. For that, user may select metrics (s)he wishes to delete from POEM, and click on **Delete** button (shown in figure below). 
 
@@ -32,6 +32,7 @@ Mandatory fields in case of active metric template:
 * **Name** - metric template name;
 * **Probe** - probe name and version. This field is autocomplete, user must choose from available probes;
 * **Type** - type (active or passive; active in this example);
+* **Tag** - tag;
 * **Probe executable** - executable file;
 * **Config** 
     * **maxCheckAttempts** - used to define the number of times that Nagios will retry the service check command if it returns any state other than an OK state; setting this value to 1 will cause Nagios to generate an alert without retrying the service check again;
@@ -39,6 +40,14 @@ Mandatory fields in case of active metric template:
     * **path** - path to executable file,
     * **interval** -  used to define the time (in minutes) to wait before scheduling the next "regular" check of the service; "regular" checks are those that occur when the service is in an OK state or when the service is in a non-OK state, but has already been rechecked **maxCheckAttempts** number of times;
     * **retryInterval** - used to define the time (in minutes) to wait before scheduling a re-check of the service; services are rescheduled at the retry interval when they have changed to a non-OK state; once the service has been retried **maxCheckAttempts** times without a change in its status, it will revert to being scheduled at its "normal" rate as defined by the **interval** value.
+
+##### Tags
+
+Metric templates can be tagged by any tag. There are, however, two tags that are special. With tag *internal* are tagged so called internal metrics, which are checking internal processes which are necessary for all tenants. Those metrics are automatically imported to a tenant once new tenant is created.
+
+Metric templates tagged with *deprecated* tag are no longer being maintained, and are going to be deleted at an appropriate time.
+
+Tag field is a multiple select field with autocomplete and a possibility to create new entries. So, when SuperAdmin user starts typing, all the already existing tags are listed filtered by the typed in letters. If the desired tag does not exist, user can create new one by simply clicking on create entry.
 
 ##### Attributes
 
