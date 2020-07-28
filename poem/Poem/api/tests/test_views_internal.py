@@ -2957,12 +2957,7 @@ class ListMetricsInGroupAPIViewTests(TenantTestCase):
         response = self.view(request, 'EGI')
         self.assertEqual(
             response.data,
-            {
-                'result': [
-                    {'id': self.metric1.id, 'name': 'argo.AMS-Check'},
-                    {'id': self.metric2.id, 'name': 'org.apel.APEL-Pub'}
-                ]
-            }
+            {'result': ['argo.AMS-Check', 'org.apel.APEL-Pub']}
         )
 
     def test_get_metric_without_group(self):
@@ -2970,12 +2965,7 @@ class ListMetricsInGroupAPIViewTests(TenantTestCase):
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(
-            response.data,
-            {
-                'result': [
-                    {'id': self.metric3.id, 'name': 'eu.egi.CertValidity'}
-                ]
-            }
+            response.data, {'result': ['eu.egi.CertValidity']}
         )
 
     def test_get_metric_group_with_no_autorization(self):
@@ -3132,14 +3122,7 @@ class ListAggregationsInGroupAPIViewTests(TenantTestCase):
         request = self.factory.get(self.url + 'EGI')
         force_authenticate(request, user=self.user)
         response = self.view(request, 'EGI')
-        self.assertEqual(
-            response.data,
-            {
-                'result': [
-                    {'id': self.aggr1.id, 'name': 'TEST_PROFILE'}
-                ]
-            }
-        )
+        self.assertEqual(response.data, {'result': ['TEST_PROFILE']})
 
     def test_get_aggregations_in_case_no_authorization(self):
         request = self.factory.get(self.url + 'EGI')
@@ -3151,13 +3134,7 @@ class ListAggregationsInGroupAPIViewTests(TenantTestCase):
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(
-            response.data,
-            {
-                'result': [
-                    {'id': self.aggr2.id, 'name': 'ANOTHER-PROFILE'}
-                ]
-            }
-        )
+            response.data, {'result': ['ANOTHER-PROFILE']})
 
     def test_add_aggregation_profile_in_group(self):
         self.assertEqual(self.group.aggregations.count(), 1)
@@ -3306,14 +3283,7 @@ class ListMetricProfilesInGroupAPIViewTests(TenantTestCase):
         request = self.factory.get(self.url + 'EGI')
         force_authenticate(request, user=self.user)
         response = self.view(request, 'EGI')
-        self.assertEqual(
-            response.data,
-            {
-                'result': [
-                    {'id': self.mp1.id, 'name': 'TEST_PROFILE'}
-                ]
-            }
-        )
+        self.assertEqual(response.data, {'result': ['TEST_PROFILE']})
 
     def test_get_metric_profiles_in_group_in_case_no_authorization(self):
         request = self.factory.get(self.url + 'EGI')
@@ -3324,14 +3294,7 @@ class ListMetricProfilesInGroupAPIViewTests(TenantTestCase):
         request = self.factory.get(self.url)
         force_authenticate(request, user=self.user)
         response = self.view(request)
-        self.assertEqual(
-            response.data,
-            {
-                'result': [
-                    {'id': self.mp2.id, 'name': 'ANOTHER-PROFILE'}
-                ]
-            }
-        )
+        self.assertEqual(response.data, {'result': ['ANOTHER-PROFILE']})
 
     def test_add_metric_profile_in_group(self):
         self.assertEqual(self.group.metricprofiles.count(), 1)
@@ -9009,14 +8972,7 @@ class ListThresholdsProfilesInGroupAPIViewTests(TenantTestCase):
         request = self.factory.get(self.url + 'EGI')
         force_authenticate(request, user=self.user)
         response = self.view(request, 'EGI')
-        self.assertEqual(
-            response.data,
-            {
-                'result': [
-                    {'id': self.tp1.id, 'name': 'TEST_PROFILE'}
-                ]
-            }
-        )
+        self.assertEqual(response.data,{'result': ['TEST_PROFILE']})
 
     def test_get_thresholds_profiles_in_group_in_case_no_authorization(self):
         request = self.factory.get(self.url + 'EGI')
@@ -9027,14 +8983,7 @@ class ListThresholdsProfilesInGroupAPIViewTests(TenantTestCase):
         request = self.factory.get(self.url)
         force_authenticate(request, user=self.user)
         response = self.view(request)
-        self.assertEqual(
-            response.data,
-            {
-                'result': [
-                    {'id': self.tp2.id, 'name': 'ANOTHER_PROFILE'}
-                ]
-            }
-        )
+        self.assertEqual(response.data, {'result': ['ANOTHER_PROFILE']})
 
     def test_add_thresholds_profile_in_group(self):
         self.assertEqual(self.group.thresholdsprofiles.count(), 1)
