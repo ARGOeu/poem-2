@@ -1,6 +1,6 @@
 # Probe
 
-Probe is code which implements single or multiple tests. 
+Probe is code which implements single or multiple tests. All of the probes must comply with [the guidelines for monitoring probes](http://argoeu.github.io/monitoring-probes/v1/guidelines_for_monitoring_probes/).
 
 ## List of probes
 
