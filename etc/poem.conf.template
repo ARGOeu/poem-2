@@ -45,4 +45,4 @@ Email =
 UsePlainHttpAuth = False
 HttpUser = xxxx
 HttpPass = xxxx
-ServiceType = https://goc.egi.eu/gocdbpi/private/?method=get_service_types
+ServiceType = https://goc.egi.eu/gocdbpi/public/?method=get_service_types
