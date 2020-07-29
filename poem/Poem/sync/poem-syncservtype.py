@@ -48,19 +48,6 @@ def main():
             tenant = Tenant.objects.get(schema_name=schema)
             data = tenant_servtype_data(tenant.name)
 
-            fos = []
-            try:
-                for fp in [settings.HOST_CERT, settings.HOST_KEY]:
-                    if not os.path.exists(fp):
-                        raise IOError("invalid path %s" % fp)
-                    else:
-                        fos.append(open(fp))
-            except IOError as e:
-                logger.error(e)
-                raise SystemExit(1)
-            for fo in fos:
-                fo.close()
-
             url = data['SERVICETYPE_URL']
 
             try:
@@ -73,7 +60,6 @@ def main():
                     if url.startswith('https'):
                         req = requests.get(
                             url,
-                            cert=(settings.HOST_CERT, settings.HOST_KEY),
                             timeout=60
                         )
                     else:
