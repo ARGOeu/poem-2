@@ -1,20 +1,15 @@
 import datetime
-
-from django.db.models.signals import post_save
+from unittest.mock import patch, call
 
 import factory
-
-from rest_framework import status
-
-from tenant_schemas.test.cases import TenantTestCase
-from tenant_schemas.test.client import TenantRequestFactory
-
 from Poem.api import views
 from Poem.api.models import MyAPIKey
 from Poem.poem import models as poem_models
 from Poem.poem_super_admin import models as admin_models
-
-from unittest.mock import patch
+from django.db.models.signals import post_save
+from rest_framework import status
+from tenant_schemas.test.cases import TenantTestCase
+from tenant_schemas.test.client import TenantRequestFactory
 
 
 def mock_function(profile):
@@ -22,8 +17,16 @@ def mock_function(profile):
         return {'argo.AMS-Check', 'argo.AMSPublisher-Check'}
 
     if profile == 'MON-TEST':
-        return {'argo.AMS-Check', 'eu.seadatanet.org.downloadmanager-check', \
-               'eu.seadatanet.org.nvs2-check'}
+        return {
+            'argo.AMS-Check', 'eu.seadatanet.org.downloadmanager-check',
+            'eu.seadatanet.org.nvs2-check'
+        }
+
+    if profile == 'MON-PASSIVE':
+        return {
+            'argo.AMS-Check', 'eu.seadatanet.org.downloadmanager-check',
+            'eu.seadatanet.org.nvs2-check', 'org.apel.APEL-Pub'
+        }
 
     if profile == 'EMPTY':
         return set()
@@ -51,7 +54,7 @@ def mock_db_for_metrics_tests():
         name='ams-probe',
         package=package,
         description='Probe is inspecting AMS service by trying to publish '
-                        'and consume randomly generated messages.',
+                    'and consume randomly generated messages.',
         comment='Initial version.',
         repository='https://github.com/ARGOeu/nagios-plugins-argo',
         docurl='https://github.com/ARGOeu/nagios-plugins-argo/blob/master/'
@@ -175,7 +178,7 @@ def mock_db_for_repos_tests():
     package4.repos.add(repo5)
 
     package5 = admin_models.Package.objects.create(
-        name='nagios-promo',
+        name='nagios-promoo',
         version='1.7.1'
     )
     package5.repos.add(repo6)
@@ -499,8 +502,9 @@ class ListMetricsAPIViewTests(TenantTestCase):
         mock_db_for_metrics_tests()
 
     def test_list_metrics_if_wrong_token(self):
-        request = self.factory.get(self.url, **{'HTTP_X_API_KEY':
-                                                    'wrong_token'})
+        request = self.factory.get(
+            self.url, **{'HTTP_X_API_KEY': 'wrong_token'}
+        )
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
@@ -582,9 +586,9 @@ class ListReposAPIViewTests(TenantTestCase):
         response = self.view(request, 'centos7')
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
-    @patch('Poem.api.views.get_metrics_from_profile',
-           side_effect=mock_function)
-    def test_list_repos(self, func):
+    @patch('Poem.api.views.get_metrics_from_profile')
+    def test_list_repos(self, mock_get_metrics):
+        mock_get_metrics.side_effect = mock_function
         request = self.factory.get(
             self.url + '/centos7',
             **{'HTTP_X_API_KEY': self.token,
@@ -592,13 +596,15 @@ class ListReposAPIViewTests(TenantTestCase):
         )
         response = self.view(request, 'centos7')
         test_data = response.data
-        test_data[0]['repo-1']['packages'] = sorted(
-            test_data[0]['repo-1']['packages'], key=lambda k: k['name']
+        test_data['data']['repo-1']['packages'] = sorted(
+            test_data['data']['repo-1']['packages'], key=lambda k: k['name']
         )
+        self.assertEqual(mock_get_metrics.call_count, 2)
+        mock_get_metrics.assert_has_calls([call('ARGO-MON'), call('MON-TEST')])
         self.assertEqual(
             test_data,
-            [
-                {
+            {
+                'data': {
                     'repo-1': {
                         'content': 'content3\ncontent4\n',
                         'packages': [
@@ -621,14 +627,16 @@ class ListReposAPIViewTests(TenantTestCase):
                             }
                         ]
                     }
-                }
-            ]
+                },
+                'missing_packages': []
+            }
         )
 
     def test_list_repos_if_no_profile_or_tag(self):
         request = self.factory.get(
-            self.url, **{'HTTP_X_API_KEY': self.token,
-                         'HTTP_PROFILES': '[ARGO-MON, MON-TEST]'}
+            self.url,
+            **{'HTTP_X_API_KEY': self.token,
+               'HTTP_PROFILES': '[ARGO-MON, MON-TEST]'}
         )
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -648,19 +656,23 @@ class ListReposAPIViewTests(TenantTestCase):
             {'detail': 'You must define profile!'}
         )
 
-    @patch('Poem.api.views.get_metrics_from_profile',
-           side_effect=mock_function)
-    def test_list_repos_if_passive_metric_present(self, func):
+    @patch('Poem.api.views.get_metrics_from_profile')
+    def test_list_repos_if_passive_metric_present(self, mock_get_metrics):
+        mock_get_metrics.side_effect = mock_function
         request = self.factory.get(
             self.url + '/centos6',
             **{'HTTP_X_API_KEY': self.token,
-               'HTTP_PROFILES': '[ARGO-MON, MON-TEST]'}
+               'HTTP_PROFILES': '[ARGO-MON, MON-PASSIVE]'}
         )
         response = self.view(request, 'centos6')
+        self.assertEqual(mock_get_metrics.call_count, 2)
+        mock_get_metrics.assert_has_calls(
+            [call('ARGO-MON'), call('MON-PASSIVE')]
+        )
         self.assertEqual(
             response.data,
-            [
-                {
+            {
+                'data': {
                     'repo-1': {
                         'content': 'content1\ncontent2\n',
                         'packages': [
@@ -679,49 +691,60 @@ class ListReposAPIViewTests(TenantTestCase):
                             }
                         ]
                     }
-                }
-            ]
+                },
+                'missing_packages': ['nagios-plugins-seadatacloud-nvs2 (1.0.1)']
+            }
         )
 
-    @patch('Poem.api.views.get_metrics_from_profile',
-           side_effect=mock_function)
-    def test_empty_repo_list(self, func):
+    @patch('Poem.api.views.get_metrics_from_profile')
+    def test_empty_repo_list(self, mock_get_metrics):
+        mock_get_metrics.side_effect = mock_function
         request = self.factory.get(
             self.url + '/centos6',
             **{'HTTP_X_API_KEY': self.token,
                'HTTP_PROFILES': '[EMPTY]'}
         )
         response = self.view(request, 'centos6')
-        self.assertEqual(response.data, [])
+        mock_get_metrics.assert_called_once()
+        mock_get_metrics.assert_called_with('EMPTY')
+        self.assertEqual(response.data, {'data': {}, 'missing_packages': []})
 
-    @patch('Poem.api.views.get_metrics_from_profile',
-           side_effect=mock_function)
-    def test_list_repos_if_nonexisting_tag(self, func):
+    @patch('Poem.api.views.get_metrics_from_profile')
+    def test_list_repos_if_nonexisting_tag(self, mock_get_metrics):
+        mock_get_metrics.side_effect = mock_function
         request = self.factory.get(
             self.url + '/nonexisting',
             **{'HTTP_X_API_KEY': self.token,
                'HTTP_PROFILES': '[ARGO-MON, MON-TEST]'}
         )
         response = self.view(request, 'nonexisting')
+        self.assertEqual(mock_get_metrics.call_count, 2)
+        mock_get_metrics.assert_has_calls([call('ARGO-MON'), call('MON-TEST')])
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(
             response.data,
             {'detail': 'YUM repo tag not found.'}
         )
 
-    @patch('Poem.api.views.get_metrics_from_profile',
-           side_effect=mock_function)
-    def test_list_repos_if_function_return_metric_does_not_exist(self, func):
+    @patch('Poem.api.views.get_metrics_from_profile')
+    def test_list_repos_if_function_return_metric_does_not_exist(
+            self, mock_get_metrics
+    ):
+        mock_get_metrics.side_effect = mock_function
         request = self.factory.get(
             self.url + '/centos6',
             **{'HTTP_X_API_KEY': self.token,
                'HTTP_PROFILES': '[ARGO-MON, MON-TEST, TEST-NONEXISTING]'}
         )
         response = self.view(request, 'centos6')
+        self.assertEqual(mock_get_metrics.call_count, 3)
+        mock_get_metrics.assert_has_calls([
+            call('ARGO-MON'), call('MON-TEST'), call('TEST-NONEXISTING')
+        ])
         self.assertEqual(
             response.data,
-            [
-                {
+            {
+                'data': {
                     'repo-1': {
                         'content': 'content1\ncontent2\n',
                         'packages': [
@@ -740,23 +763,26 @@ class ListReposAPIViewTests(TenantTestCase):
                             }
                         ]
                     }
-                }
-            ]
+                },
+                'missing_packages': ['nagios-plugins-seadatacloud-nvs2 (1.0.1)']
+            }
         )
 
-    @patch('Poem.api.views.get_metrics_from_profile',
-           side_effect=mock_function)
-    def test_list_repos_if_version_is_the_right_os(self, func):
+    @patch('Poem.api.views.get_metrics_from_profile')
+    def test_list_repos_if_version_is_the_right_os(self, mock_get_metrics):
+        mock_get_metrics.side_effect = mock_function
         request = self.factory.get(
             self.url + '/centos6',
             **{'HTTP_X_API_KEY': self.token,
                'HTTP_PROFILES': '[TEST_PROMOO]'}
         )
         response = self.view(request, 'centos6')
+        mock_get_metrics.assert_called_once()
+        mock_get_metrics.assert_called_with('TEST_PROMOO')
         self.assertEqual(
             response.data,
-            [
-                {
+            {
+                'data': {
                     'promoo': {
                         'content': 'content9\ncontent10',
                         'packages': [
@@ -766,17 +792,26 @@ class ListReposAPIViewTests(TenantTestCase):
                             }
                         ]
                     }
-                }
-            ]
+                },
+                'missing_packages': []
+            }
         )
 
-    @patch('Poem.api.views.get_metrics_from_profile',
-           side_effect=mock_function)
-    def test_list_repos_if_version_is_wrong_os(self, func):
+    @patch('Poem.api.views.get_metrics_from_profile')
+    def test_list_repos_if_version_is_wrong_os(self, mock_get_metrics):
+        mock_get_metrics.side_effect = mock_function
         request = self.factory.get(
             self.url + '/centos6',
             **{'HTTP_X_API_KEY': self.token,
                'HTTP_PROFILES': '[TEST_PROMOO]'}
         )
         response = self.view(request, 'centos7')
-        self.assertEqual(response.data, [])
+        mock_get_metrics.assert_called_once()
+        mock_get_metrics.assert_called_with('TEST_PROMOO')
+        self.assertEqual(
+            response.data,
+            {
+                'data': {},
+                'missing_packages': ['nagios-promoo (1.4.0)']
+            }
+        )
