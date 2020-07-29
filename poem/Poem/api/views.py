@@ -175,12 +175,14 @@ class ListRepos(APIView):
 
             data = dict()
             packagedict = dict()
+            missing_packages = []
             for package in packages:
                 try:
                     repo = package.repos.get(tag=ostag)
 
                 except admin_models.YumRepo.DoesNotExist:
-                    pass
+                    missing_packages.append(package.__str__())
+                    continue
 
                 else:
                     packagedict.update({package: repo})
@@ -213,7 +215,4 @@ class ListRepos(APIView):
                         }
                     )
 
-        if data:
-            return Response([data])
-        else:
-            return Response([])
+        return Response({'data': data, 'missing_packages': missing_packages})
