@@ -73,7 +73,6 @@ def main():
                     if url.startswith('https'):
                         req = requests.get(
                             url,
-                            cert=(settings.HOST_CERT, settings.HOST_KEY),
                             timeout=60
                         )
                     else:
