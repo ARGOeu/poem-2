@@ -309,11 +309,16 @@ export const GroupChange = (props) => {
                         color='success'
                         onClick={() => {
                           let itms = items;
-                          newItems.forEach(i => {
-                            if (!itms.includes(i.value))
-                              itms.push(i.value);
-                          });
+                          let fitms = freeItems;
+                          for (let i = 0; i < fitms.length; i++) {
+                            if (newItems.includes(fitms[i])) {
+                              fitms.splice(i, 1);
+                              i--;
+                            }
+                          };
+                          newItems.forEach(i => itms.push(i.value));
                           setItems(itms.sort());
+                          setFreeItems(fitms);
                           setNewItems([]);
                         }}
                       >
