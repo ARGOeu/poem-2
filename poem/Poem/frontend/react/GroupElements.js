@@ -299,6 +299,7 @@ export const GroupChange = (props) => {
                     <Col md={8}>
                       <Select
                         closeMenuOnSelect={false}
+                        placeholder={`Search available ${title}`}
                         noOptionsMessage={() => `No available ${title}`}
                         isMulti
                         onChange={e => setNewItems(e)}
