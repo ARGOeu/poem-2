@@ -13,7 +13,7 @@ import {
 } from './UIElements';
 import ReactTable from 'react-table';
 import { Link } from 'react-router-dom';
-import { Formik, Form, Field } from 'formik';
+import { Formik, Form, Field, setNestedObjectValues } from 'formik';
 import {
   FormGroup,
   Row,
@@ -24,6 +24,7 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes, faSearch } from '@fortawesome/free-solid-svg-icons';
 import Select from 'react-select';
+import Async from 'react-select/async';
 
 
 export const GroupList = (props) => {
@@ -298,8 +299,10 @@ export const GroupChange = (props) => {
                     <Col md={8}>
                       <Select
                         closeMenuOnSelect={false}
+                        noOptionsMessage={() => `No available ${title}`}
                         isMulti
                         onChange={e => setNewItems(e)}
+                        openMenuOnClick={true}
                         value={newItems}
                         options={freeItems}
                       />
@@ -365,7 +368,20 @@ export const GroupChange = (props) => {
                                   type='button'
                                   onClick={() => {
                                     let updatedItems = items.filter(row => row !== item);
+                                    let fitms = freeItems;
+                                    fitms.push({value: item, label: item});
+                                    let sorted_fitms = fitms.sort((a, b) => {
+                                      let comparison = 0
+                                      if (a.value.toLowerCase() > b.value.toLowerCase())
+                                        comparison = 1;
+
+                                      else if (a.value.toLowerCase() < b.value.toLowerCase())
+                                        comparison = -1;
+
+                                      return comparison;
+                                    });
                                     setItems(updatedItems);
+                                    setFreeItems(sorted_fitms);
                                   }}
                                 >
                                   <FontAwesomeIcon icon={faTimes}/>
