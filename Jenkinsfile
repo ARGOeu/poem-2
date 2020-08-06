@@ -10,7 +10,7 @@ pipeline {
         stage ('Test Centos 7') {
             agent {
                 dockerfile {
-                    filename "${PROJECT_DIR}/testenv/Dockerfile"
+                    filename "Dockerfile"
                     dir "${PROJECT_DIR}/testenv"
                 }
             }
