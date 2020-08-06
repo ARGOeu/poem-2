@@ -12,6 +12,7 @@ pipeline {
                 dockerfile {
                     filename "Dockerfile"
                     dir "${PROJECT_DIR}/testenv"
+                    args "root:root"
                 }
             }
             steps {
