@@ -489,7 +489,7 @@ export function ListOfMetrics(type, imp=false) {
       this.setState({loading: true});
 
       let response = await this.backend.isTenantSchema();
-      let alltags = await this.backend.fetchData('/api/v2/internal/metrictags');
+      let alltags = await this.backend.fetchData(`/api/v2/internal/${this.publicView ? 'public_' : ''}metrictags`);
       alltags.push('none');
       try {
         if (!this.publicView) {
