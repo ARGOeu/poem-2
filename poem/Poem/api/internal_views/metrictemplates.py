@@ -580,6 +580,11 @@ class ListMetricTemplateTypes(APIView):
         return Response(types)
 
 
+class ListPublicMetricTemplateTypes(ListMetricTemplateTypes):
+    authentication_classes = ()
+    permission_classes = ()
+
+
 class ListMetricTags(APIView):
     authentication_classes = (SessionAuthentication,)
 
