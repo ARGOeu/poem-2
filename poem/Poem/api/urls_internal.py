@@ -39,6 +39,7 @@ urlpatterns = [
     path('metricsgroup/', views_internal.ListMetricsInGroup.as_view(), name='metrics'),
     path('metricsgroup/<str:group>', views_internal.ListMetricsInGroup.as_view(), name='metrics'),
     path('metrictemplates/', views_internal.ListMetricTemplates.as_view(), name='metrictemplates'),
+    path('public_metrictemplates/', views_internal.ListPublicMetricTemplates.as_view(), name='metrictemplates'),
     path('deletetemplates/', views_internal.BulkDeleteMetricTemplates.as_view(), name='deletetemplates'),
     path('metrictemplates/<str:name>', views_internal.ListMetricTemplates.as_view(), name='metrictemplates'),
     path('metrictemplates-import/', views_internal.ListMetricTemplatesForImport.as_view(), name='metrictemplates-import'),
