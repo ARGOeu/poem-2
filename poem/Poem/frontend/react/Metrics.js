@@ -1182,7 +1182,7 @@ export const MetricForm =
                 <InputGroup>
                   <InputGroupAddon addonType='prepend'>Group</InputGroupAddon>
                   {
-                    isHistory ?
+                    (isHistory || publicView) ?
                       <Field
                         type='text'
                         name='group'
@@ -1231,7 +1231,7 @@ export const MetricForm =
           }
           </Col>
         </Row>
-        <InlineFields values={values} errors={errors} field='config' addnew={!isTenantSchema && !isHistory} readonly={obj === 'metrictemplate' && isTenantSchema || isHistory}/>
+        <InlineFields values={values} errors={errors} field='config' addnew={!isTenantSchema && !isHistory} readonly={obj === 'metrictemplate' && isTenantSchema || isHistory || publicView}/>
         <InlineFields values={values} errors={errors} field='attributes' addnew={!isTenantSchema && !isHistory}/>
         <InlineFields values={values} errors={errors} field='dependency' addnew={!isTenantSchema && !isHistory}/>
         <InlineFields values={values} errors={errors} field='parameter' addnew={!isTenantSchema && !isHistory}/>
