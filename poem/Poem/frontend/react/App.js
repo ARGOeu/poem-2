@@ -545,6 +545,14 @@ class App extends Component {
                 </PublicPage>
               }
             />
+            <Route
+              exact path="/ui/public_metrictemplates/:name/history"
+              render={props =>
+                <PublicPage>
+                  <MetricTemplateHistory publicView={true} {...props}/>
+                </PublicPage>
+              }
+            />
             <Route exact path="/ui/public_metrics"
               render={props =>
                 <PublicPage>
