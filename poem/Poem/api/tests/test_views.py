@@ -40,19 +40,27 @@ def mock_function(profile):
 
 @factory.django.mute_signals(post_save)
 def mock_db_for_metrics_tests():
-    metrictype = poem_models.MetricType.objects.create(name='Active')
+    active = poem_models.MetricType.objects.create(name='Active')
+    passive = poem_models.MetricType.objects.create(name='Passive')
 
     tag = admin_models.OSTag.objects.create(name='CentOS 6')
     repo = admin_models.YumRepo.objects.create(name='repo-1', tag=tag)
-    package = admin_models.Package.objects.create(
-        name='nagios-plugins-argo',
-        version='0.1.7'
-    )
-    package.repos.add(repo)
 
-    probe = admin_models.Probe.objects.create(
+    package1 = admin_models.Package.objects.create(
+        name='nagios-plugins-argo',
+        version='0.1.12'
+    )
+    package1.repos.add(repo)
+
+    package2 = admin_models.Package.objects.create(
+        name='nagios-plugins-cert',
+        version='1.0.0'
+    )
+    package2.repos.add(repo)
+
+    probe1 = admin_models.Probe.objects.create(
         name='ams-probe',
-        package=package,
+        package=package1,
         description='Probe is inspecting AMS service by trying to publish '
                     'and consume randomly generated messages.',
         comment='Initial version.',
@@ -63,14 +71,62 @@ def mock_db_for_metrics_tests():
         user='testuser'
     )
 
-    probekey = admin_models.ProbeHistory.objects.create(
-        object_id=probe,
-        name=probe.name,
-        package=probe.package,
-        description=probe.description,
-        comment=probe.comment,
-        repository=probe.repository,
-        docurl=probe.docurl,
+    probe2 = admin_models.Probe.objects.create(
+        name='ams-publisher-probe',
+        package=package1,
+        description='Probe is inspecting AMS publisher.',
+        comment='Initial version.',
+        repository='https://github.com/ARGOeu/nagios-plugins-argo',
+        docurl='https://github.com/ARGOeu/nagios-plugins-argo/blob/master/'
+               'README.md',
+        datetime=datetime.datetime.now(),
+        user='testuser'
+    )
+
+    probe3 = admin_models.Probe.objects.create(
+        name='CertLifetime-probe',
+        package=package2,
+        description='Nagios plugin for checking X509 certificate lifetime.',
+        comment='Initial version.',
+        repository='https://github.com/ARGOeu/nagios-plugins-cert',
+        docurl='https://wiki.egi.eu/wiki/ROC_SAM_Tests#hr.srce.CREAMCE-'
+               'CertLifetime',
+        datetime=datetime.datetime.now(),
+        user='testuser'
+    )
+
+    probekey1 = admin_models.ProbeHistory.objects.create(
+        object_id=probe1,
+        name=probe1.name,
+        package=probe1.package,
+        description=probe1.description,
+        comment=probe1.comment,
+        repository=probe1.repository,
+        docurl=probe1.docurl,
+        version_comment='Initial version.',
+        version_user='testuser'
+    )
+
+    probekey2 = admin_models.ProbeHistory.objects.create(
+        object_id=probe2,
+        name=probe2.name,
+        package=probe2.package,
+        description=probe2.description,
+        comment=probe2.comment,
+        repository=probe2.repository,
+        docurl=probe2.docurl,
+        version_comment='Initial version.',
+        version_user='testuser'
+    )
+
+    probekey3 = admin_models.ProbeHistory.objects.create(
+        object_id=probe3,
+        name=probe3.name,
+        package=probe3.package,
+        description=probe3.description,
+        comment=probe3.comment,
+        repository=probe3.repository,
+        docurl=probe3.docurl,
         version_comment='Initial version.',
         version_user='testuser'
     )
@@ -79,12 +135,13 @@ def mock_db_for_metrics_tests():
 
     mtag1 = admin_models.MetricTags.objects.create(name='test_tag1')
     mtag2 = admin_models.MetricTags.objects.create(name='test_tag2')
+    mtag3 = admin_models.MetricTags.objects.create(name='internal')
 
     metric1 = poem_models.Metric.objects.create(
-        name='argo.AMS-Check',
-        mtype=metrictype,
+        name='test.AMS-Check',
+        mtype=active,
         group=group,
-        probekey=probekey,
+        probekey=probekey1,
         parent='["org.nagios.CDMI-TCP"]',
         probeexecutable='["ams-probe"]',
         config='["maxCheckAttempts 3", "timeout 60", '
@@ -99,9 +156,45 @@ def mock_db_for_metrics_tests():
     )
     metric1.tags.add(mtag1, mtag2)
 
-    poem_models.Metric.objects.create(
+    metric2 = poem_models.Metric.objects.create(
         name='argo.AMSPublisher-Check',
-        mtype=metrictype,
+        mtype=active,
+        group=group,
+        probekey=probekey2,
+        probeexecutable='["ams-publisher-probe"]',
+        config='["maxCheckAttempts 1", "timeout 120", '
+               '"path /usr/libexec/argo-monitoring/probes/argo", '
+               '"interval 180", "retryInterval 1"]',
+        parameter='["-s /var/run/argo-nagios-ams-publisher/sock", '
+                  '"-q w:metrics+g:published180"]',
+        flags='["NOHOSTNAME 1", "NOTIMEOUT 1", "NOPUBLISH 1"]'
+    )
+    metric2.tags.add(mtag1, mtag3)
+
+    metric3 = poem_models.Metric.objects.create(
+        name='hr.srce.CertLifetime-Local',
+        mtype=active,
+        group=group,
+        probekey=probekey3,
+        probeexecutable='["CertLifetime-probe"]',
+        config='["maxCheckAttempts 2", "timeout 60", '
+               '"path /usr/libexec/argo-monitoring/probes/cert", '
+               '"interval 240", "retryInterval 30"]',
+        attribute='["NAGIOS_HOST_CERT -f"]',
+        flags='["NOHOSTNAME 1", "NOPUBLISH 1"]'
+    )
+    metric3.tags.add(mtag3)
+
+    poem_models.Metric.objects.create(
+        name='org.apel.APEL-Pub',
+        mtype=passive,
+        group=group,
+        flags='["OBSESS 1", "PASSIVE 1"]'
+    )
+
+    poem_models.Metric.objects.create(
+        name='test.EMPTY-metric',
+        mtype=active
     )
 
 
@@ -515,7 +608,83 @@ class ListMetricsAPIViewTests(TenantTestCase):
             response.data,
             [
                 {
-                    'argo.AMS-Check': {
+                    'argo.AMSPublisher-Check': {
+                        'probe': 'ams-publisher-probe',
+                        'tags': ['internal', 'test_tag1'],
+                        'config': {
+                            'maxCheckAttempts': '1',
+                            'timeout': '120',
+                            'path': '/usr/libexec/argo-monitoring/probes/argo',
+                            'interval': '180',
+                            'retryInterval': '1'
+                        },
+                        'flags': {
+                            'NOHOSTNAME': '1',
+                            'NOTIMEOUT': '1',
+                            'NOPUBLISH': '1'
+                        },
+                        'dependency': {},
+                        'attribute': {},
+                        'parameter': {
+                            '-s': '/var/run/argo-nagios-ams-publisher/sock',
+                            '-q': 'w:metrics+g:published180'
+                        },
+                        'file_parameter': {},
+                        'file_attribute': {},
+                        'parent': '',
+                        'docurl':
+                            'https://github.com/ARGOeu/nagios-plugins-argo'
+                            '/blob/master/README.md'
+                    }
+                },
+                {
+                    'hr.srce.CertLifetime-Local': {
+                        'probe': 'CertLifetime-probe',
+                        'tags': ['internal'],
+                        'config': {
+                            'maxCheckAttempts': '2',
+                            'timeout': '60',
+                            'path': '/usr/libexec/argo-monitoring/probes/cert',
+                            'interval': '240',
+                            'retryInterval': '30'
+                        },
+                        'flags': {
+                            'NOHOSTNAME': '1',
+                            'NOPUBLISH': '1'
+                        },
+                        'dependency': {},
+                        'attribute': {
+                            'NAGIOS_HOST_CERT': '-f'
+                        },
+                        'parameter': {},
+                        'file_parameter': {},
+                        'file_attribute': {},
+                        'parent': '',
+                        'docurl':
+                            'https://wiki.egi.eu/wiki/ROC_SAM_Tests#hr.srce.'
+                            'CREAMCE-CertLifetime'
+                    }
+                },
+                {
+                    'org.apel.APEL-Pub': {
+                        'probe': '',
+                        'tags': [],
+                        'config': {},
+                        'flags': {
+                            'OBSESS': '1',
+                            'PASSIVE': '1'
+                        },
+                        'dependency': {},
+                        'attribute': {},
+                        'parameter': {},
+                        'file_parameter': {},
+                        'file_attribute': {},
+                        'parent': '',
+                        'docurl': ''
+                    }
+                },
+                {
+                    'test.AMS-Check': {
                         'probe': 'ams-probe',
                         'tags': ['test_tag1', 'test_tag2'],
                         'config': {
@@ -550,7 +719,7 @@ class ListMetricsAPIViewTests(TenantTestCase):
                     }
                 },
                 {
-                    'argo.AMSPublisher-Check': {
+                    'test.EMPTY-metric': {
                         'probe': '',
                         'tags': [],
                         'config': {},

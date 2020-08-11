@@ -22,7 +22,7 @@ class NotFound(APIException):
 def build_metricconfigs():
     ret = []
 
-    metricsobjs = models.Metric.objects.all()
+    metricsobjs = models.Metric.objects.all().order_by('name')
 
     for m in metricsobjs:
         mdict = dict()
