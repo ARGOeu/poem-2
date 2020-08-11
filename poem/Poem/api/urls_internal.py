@@ -80,4 +80,5 @@ urlpatterns = [
     path('tenants/', views_internal.ListTenants.as_view(), name='tenants'),
     path('tenants/<str:name>', views_internal.ListTenants.as_view(), name='tenants'),
     path('metrictags/', views_internal.ListMetricTags.as_view(), name='metrictags'),
+    path('public_metrictags/', views_internal.ListPublicMetricTags.as_view(), name='metrictags'),
 ]
