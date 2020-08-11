@@ -48,6 +48,7 @@ urlpatterns = [
     path('mtypes/', views_internal.ListMetricTypes.as_view(), name='mtypes'),
     path('public_mtypes/', views_internal.ListPublicMetricTypes.as_view(), name='mtypes'),
     path('ostags/', views_internal.ListOSTags.as_view(), name='ostags'),
+    path('public_ostags/', views_internal.ListPublicOSTags.as_view(), name='ostags'),
     path('packages/', views_internal.ListPackages.as_view(), name='packages'),
     path('public_packages/', views_internal.ListPublicPackages.as_view(), name='packages'),
     path('packages/<str:nameversion>', views_internal.ListPackages.as_view(), name='packages'),

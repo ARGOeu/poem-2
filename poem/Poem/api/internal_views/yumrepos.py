@@ -114,3 +114,8 @@ class ListOSTags(APIView):
     def get(self, request):
         tags = admin_models.OSTag.objects.all().values_list('name', flat=True)
         return Response(tags)
+
+
+class ListPublicOSTags(ListOSTags):
+    authentication_classes = ()
+    permission_classes = ()
