@@ -963,7 +963,7 @@ export const MetricForm =
               name='name'
               className={`form-control ${errors.name && 'border-danger'}`}
               id='name'
-              readOnly={isHistory || isTenantSchema}
+              readOnly={isHistory || isTenantSchema || publicView}
             />
             </InputGroup>
             {
@@ -978,7 +978,7 @@ export const MetricForm =
             <InputGroup>
               <InputGroupAddon addonType='prepend'>Type</InputGroupAddon>
               {
-                (isTenantSchema || isHistory) ?
+                (isTenantSchema || isHistory || publicView) ?
                   <Field
                     type='text'
                     name='type'
@@ -1044,7 +1044,7 @@ export const MetricForm =
                   />
                 </InputGroup>
               :
-                (isHistory || isTenantSchema) ?
+                (isHistory || isTenantSchema || publicView) ?
                   <InputGroup>
                     <InputGroupAddon addonType='prepend'>Probe</InputGroupAddon>
                     <Field
@@ -1120,7 +1120,7 @@ export const MetricForm =
           </Col>
         </Row>
         {
-          (obj === 'metrictemplate' && !isHistory) ?
+          (obj === 'metrictemplate' && (!isHistory && !isTenantSchema && !publicView)) ?
             <Row className='mb-4 mt-2'>
               <Col md={10}>
                 <Label>Tags:</Label>
@@ -1162,7 +1162,7 @@ export const MetricForm =
               className='form-control'
               component='textarea'
               name='description'
-              disabled={isTenantSchema || isHistory}
+              disabled={isTenantSchema || isHistory || publicView}
             />
           </Col>
         </Row>
@@ -1214,7 +1214,7 @@ export const MetricForm =
             id='probeexecutable'
             className={`form-control ${errors.probeexecutable && 'border-danger'}`}
             hidden={values.type === 'Passive'}
-            readOnly={isTenantSchema || isHistory}
+            readOnly={isTenantSchema || isHistory || publicView}
           />
             {
             errors.probeexecutable &&
@@ -1223,15 +1223,15 @@ export const MetricForm =
           </Col>
         </Row>
         <InlineFields values={values} errors={errors} field='config' addnew={!isTenantSchema && !isHistory} readonly={obj === 'metrictemplate' && isTenantSchema || isHistory || publicView}/>
-        <InlineFields values={values} errors={errors} field='attributes' addnew={!isTenantSchema && !isHistory}/>
-        <InlineFields values={values} errors={errors} field='dependency' addnew={!isTenantSchema && !isHistory}/>
-        <InlineFields values={values} errors={errors} field='parameter' addnew={!isTenantSchema && !isHistory}/>
-        <InlineFields values={values} errors={errors} field='flags' addnew={!isTenantSchema && !isHistory}/>
+        <InlineFields values={values} errors={errors} field='attributes' addnew={!isTenantSchema && !isHistory && !publicView}/>
+        <InlineFields values={values} errors={errors} field='dependency' addnew={!isTenantSchema && !isHistory && !publicView}/>
+        <InlineFields values={values} errors={errors} field='parameter' addnew={!isTenantSchema && !isHistory && !publicView}/>
+        <InlineFields values={values} errors={errors} field='flags' addnew={!isTenantSchema && !isHistory && !publicView}/>
         <h6 className='mt-4 font-weight-bold text-uppercase'>parent</h6>
         <Row>
           <Col md={5}>
             {
-            (isTenantSchema || isHistory) ?
+            (isTenantSchema || isHistory || publicView) ?
               <Field
                 type='text'
                 name='parent'
