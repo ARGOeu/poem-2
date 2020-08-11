@@ -492,46 +492,17 @@ export function ListOfMetrics(type, imp=false) {
       let alltags = await this.backend.fetchData(`/api/v2/internal/${this.publicView ? 'public_' : ''}metrictags`);
       alltags.push('none');
       try {
+        let userDetails = {username: 'Anonymous'};
         if (!this.publicView) {
           let sessionActive = await this.backend.isActiveSession(response);
           if (sessionActive.active)
-            if (type === 'metric') {
-              let metrics = await this.backend.fetchData('/api/v2/internal/metric');
-              let groups = await this.backend.fetchResult('/api/v2/internal/usergroups');
-              let types = await this.backend.fetchData('/api/v2/internal/mtypes');
-              this.setState({
-                list_metric: metrics,
-                list_groups: groups['metrics'],
-                list_types: types,
-                list_tags: alltags,
-                loading: false,
-                search_name: '',
-                search_probeversion: '',
-                search_group: '',
-                search_type: '',
-                userDetails: sessionActive.userdetails
-              });
-            } else {
-              let metrictemplates = await this.backend.fetchData(`/api/v2/internal/metrictemplates${imp ? '-import' : ''}`);
-              let types = await this.backend.fetchData('/api/v2/internal/mttypes');
-              let ostags = await this.backend.fetchData('/api/v2/internal/ostags');
-              this.setState({
-                list_metric: metrictemplates,
-                list_types: types,
-                list_ostags: ostags,
-                list_tags: alltags,
-                loading: false,
-                search_name: '',
-                search_probeversion: '',
-                search_type: '',
-                search_ostag: '',
-                userDetails: sessionActive.userdetails
-              });
-            };
-        } else {
-          let metrics = await this.backend.fetchData('/api/v2/internal/public_metric');
-          let groups = await this.backend.fetchResult('/api/v2/internal/public_usergroups');
-          let types = await this.backend.fetchData('/api/v2/internal/public_mtypes');
+            userDetails = sessionActive.userdetails;
+        }
+
+        if (type === 'metric') {
+          let metrics = await this.backend.fetchData(`/api/v2/internal/${this.publicView ? 'public_' : ''}metric`);
+          let groups = await this.backend.fetchResult(`/api/v2/internal/${this.publicView ? 'public_' : ''}usergroups`);
+          let types = await this.backend.fetchData(`/api/v2/internal/${this.publicView ? 'public_' : ''}mtypes`);
           this.setState({
             list_metric: metrics,
             list_groups: groups['metrics'],
@@ -542,9 +513,25 @@ export function ListOfMetrics(type, imp=false) {
             search_probeversion: '',
             search_group: '',
             search_type: '',
-            userDetails: {username: 'Anonymous'}
+            userDetails: userDetails
           });
-        }
+        } else {
+          let metrictemplates = await this.backend.fetchData(`/api/v2/internal/${this.publicView ? 'public_metrictemplates' : `metrictemplates${imp ? '-import' : ''}`}`);
+          let types = await this.backend.fetchData(`/api/v2/internal/${this.publicView ? 'public_' : ''}mttypes`);
+          let ostags = await this.backend.fetchData(`/api/v2/internal/${this.publicView ? 'public_' : ''}ostags`);
+          this.setState({
+            list_metric: metrictemplates,
+            list_types: types,
+            list_ostags: ostags,
+            list_tags: alltags,
+            loading: false,
+            search_name: '',
+            search_probeversion: '',
+            search_type: '',
+            search_ostag: '',
+            userDetails: userDetails
+          });
+        };
       } catch(err) {
         this.setState({
           error: err,
@@ -561,10 +548,14 @@ export function ListOfMetrics(type, imp=false) {
         else
           metriclink = '/ui/metrics/'
       } else {
-        if (imp)
-          metriclink = '/ui/administration/metrictemplates/'
+        if (this.publicView)
+          metriclink = '/ui/public_metrictemplates/';
+
+        else if (imp)
+          metriclink = '/ui/administration/metrictemplates/';
+
         else
-          metriclink = '/ui/metrictemplates/'
+          metriclink = '/ui/metrictemplates/';
       }
 
       const columns = [
