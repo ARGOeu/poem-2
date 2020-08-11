@@ -683,7 +683,7 @@ export const BaseArgoView = ({resourcename='', location=undefined,
                   <h2 className="ml-3 mt-1 mb-4">{`Clone ${resourcename}`}</h2>
                 </React.Fragment>
               :
-                tenantview ?
+                (tenantview || publicview) ?
                   <React.Fragment>
                     <h2 className="ml-3 mt-1 mb-4">{resourcename}</h2>
                     {
