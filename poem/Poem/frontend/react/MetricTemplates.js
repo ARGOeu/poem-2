@@ -485,6 +485,7 @@ export class MetricTemplateVersionDetails extends Component {
 
     this.name = props.match.params.name;
     this.version = props.match.params.version;
+    this.publicView = props.publicView;
 
     this.backend = new Backend();
 
@@ -512,10 +513,10 @@ export class MetricTemplateVersionDetails extends Component {
     this.setState({loading: true});
 
     try {
-      let json = await this.backend.fetchData(`/api/v2/internal/version/metrictemplate/${this.name}`);
+      let json = await this.backend.fetchData(`/api/v2/internal/${this.publicView ? 'public_' : ''}version/metrictemplate/${this.name}`);
       json.forEach(async (e) => {
         if (e.version == this.version) {
-          let probes = await this.backend.fetchData(`/api/v2/internal/version/probe/${e.fields.probeversion.split(' ')[0]}`);
+          let probes = await this.backend.fetchData(`/api/v2/internal/${this.publicView ? 'public_' : ''}version/probe/${e.fields.probeversion.split(' ')[0]}`);
           let probe = {};
           probes.forEach(p => {
             if (p.object_repr === e.fields.probeversion)
