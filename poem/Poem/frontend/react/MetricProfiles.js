@@ -890,21 +890,80 @@ function MetricProfilesComponent(cloneview=false) {
                         [groupname]
                     }
                     profiletype='metric'
+                    fieldsdisable={this.publicView}
                   />
                   <ParagraphTitle title='Metric instances'/>
-                  <FieldArray
-                    name="view_services"
-                    render={props => (
-                      <ServicesList
-                        {...props}
-                        serviceflavours_all={serviceflavours_all}
-                        metrics_all={metrics_all}
-                        search_handler={this.handleSearch}
-                        remove_handler={this.onRemove}
-                        insert_handler={this.onInsert}
-                        onselect_handler={this.onSelect}
-                      />)}
-                  />
+                  {
+                    !this.publicView ?
+                      <FieldArray
+                        name="view_services"
+                        render={props => (
+                          <ServicesList
+                            {...props}
+                            serviceflavours_all={serviceflavours_all}
+                            metrics_all={metrics_all}
+                            search_handler={this.handleSearch}
+                            remove_handler={this.onRemove}
+                            insert_handler={this.onInsert}
+                            onselect_handler={this.onSelect}
+                          />)}
+                      />
+                    :
+                      <FieldArray
+                        name='metricinstances'
+                        render={arrayHelpers => (
+                          <table className='table table-bordered table-sm'>
+                            <thead className='table-active'>
+                              <tr>
+                                <th className='align-middle text-center' style={{width: '5%'}}>#</th>
+                                <th style={{width: '47.5%'}}><Icon i='serviceflavour'/>Service flavour</th>
+                                <th style={{width: '47.5%'}}><Icon i='metrics'/>Metric</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <tr style={{background: "#ECECEC"}}>
+                                <td className="align-middle text-center">
+                                  <FontAwesomeIcon icon={faSearch}/>
+                                </td>
+                                <td>
+                                  <Field
+                                    type="text"
+                                    name="search_serviceflavour"
+                                    required={false}
+                                    className="form-control"
+                                    id="searchServiceFlavour"
+                                    onChange={(e) => this.handleSearch(e, 'view_services',
+                                      'searchServiceFlavour', 'service', 'searchMetric', 'metric')}
+                                    component={SearchField}
+                                  />
+                                </td>
+                                <td>
+                                  <Field
+                                    type="text"
+                                    name="search_metric"
+                                    required={false}
+                                    className="form-control"
+                                    id="searchMetric"
+                                    onChange={(e) => this.handleSearch(e, 'view_services', 'searchMetric',
+                                      'metric', 'searchServiceFlavour', 'service')}
+                                    component={SearchField}
+                                  />
+                                </td>
+                              </tr>
+                              {
+                                props.values.view_services.map((service, index) =>
+                                  <tr key={index}>
+                                    <td className='align-middle text-center'>{index + 1}</td>
+                                    <td>{service.service}</td>
+                                    <td>{service.metric}</td>
+                                  </tr>
+                                )
+                              }
+                            </tbody>
+                          </table>
+                        )}
+                      />
+                  }
                   {
                     (write_perm) &&
                       <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
