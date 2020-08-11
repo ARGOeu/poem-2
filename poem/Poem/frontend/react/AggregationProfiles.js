@@ -922,7 +922,7 @@ export class AggregationProfilesChange extends Component
                 }}
                 />
                 {
-                  is_service_missing &&
+                  (is_service_missing && !this.publicView) &&
                   <Alert color='danger'>
                     <center>
                       <FontAwesomeIcon icon={faInfoCircle} size="lg" color="black"/> &nbsp;
@@ -937,18 +937,81 @@ export class AggregationProfilesChange extends Component
                   endpoint_groups={this.endpoint_groups}
                   list_id_metric_profiles={list_id_metric_profiles}
                   write_perm={write_perm}
+                  historyview={this.publicView}
                 />
-                <FieldArray
-                  name="groups"
-                  render={props => (
-                    <GroupList
-                      {...props}
-                      list_services={list_services}
-                      list_operations={this.logic_operations}
-                      last_service_operation={this.insertOperationFromPrevious}
-                      write_perm={write_perm}
-                    />)}
-                />
+                {
+                  !this.publicView ?
+                    <FieldArray
+                      name="groups"
+                      render={props => (
+                        <GroupList
+                          {...props}
+                          list_services={list_services}
+                          list_operations={this.logic_operations}
+                          last_service_operation={this.insertOperationFromPrevious}
+                          write_perm={write_perm}
+                        />)}
+                    />
+                  :
+                    <FieldArray
+                      name='groups'
+                      render={arrayHelpers => (
+                        <Row className='groups'>
+                          {
+                            props.values['groups'].map((group, i) =>
+                              <FieldArray
+                                key={i}
+                                name='groups'
+                                render={arrayHelpers => (
+                                  <React.Fragment key={i}>
+                                    <Col sm={{size: 8}} md={{size: 5}} className='mt-4 mb-2'>
+                                      <Card>
+                                        <CardHeader className='p-1' color='primary'>
+                                          <Row className='d-flex align-items-center no-gutters'>
+                                            <Col sm={{size: 10}} md={{size: 11}}>
+                                              {props.values.groups[i].name}
+                                            </Col>
+                                          </Row>
+                                        </CardHeader>
+                                        <CardBody className='p-1'>
+                                          {
+                                            group.services.map((service, j) =>
+                                              <FieldArray
+                                                key={j}
+                                                name={`groups.${i}.services`}
+                                                render={arrayHelpers => (
+                                                  <Row className='d-flex align-items-center service pt-1 pb-1 no-gutters' key={j}>
+                                                    <Col md={8}>
+                                                      {props.values.groups[i].services[j].name}
+                                                    </Col>
+                                                    <Col md={2}>
+                                                      {props.values.groups[i].services[j].operation}
+                                                    </Col>
+                                                  </Row>
+                                                )}
+                                              />
+                                            )
+                                          }
+                                        </CardBody>
+                                        <CardFooter className='p-1 d-flex justify-content-center'>
+                                          {props.values.groups[i].operation}
+                                        </CardFooter>
+                                      </Card>
+                                    </Col>
+                                    <Col sm={{size: 4}} md={{size: 1}} className='mt-5'>
+                                      <div className='group-operation' key={i}>
+                                        {props.values.profile_operation}
+                                      </div>
+                                    </Col>
+                                  </React.Fragment>
+                                )}
+                              />
+                            )
+                          }
+                        </Row>
+                      )}
+                    />
+                }
                 {
                   (write_perm) &&
                     <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
