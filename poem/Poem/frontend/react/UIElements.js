@@ -74,6 +74,7 @@ link_title.set('administration', 'Administration');
 link_title.set('reports', 'Reports');
 link_title.set('probes', 'Probes');
 link_title.set('public_probes', 'Public probes');
+link_title.set('public_metrictemplates', 'Public metric templates');
 link_title.set('metrics', 'Metrics');
 link_title.set('public_metrics', 'Public metrics');
 link_title.set('metricprofiles', 'Metric profiles');
