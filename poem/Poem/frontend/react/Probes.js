@@ -62,7 +62,7 @@ const LinkField = ({
 )
 
 
-const ProbeForm = ({isTenantSchema=false, isHistory=false,
+const ProbeForm = ({isTenantSchema=false, isHistory=false, publicView=false,
   errors={name: undefined, package: undefined, repository: undefined, docurl: undefined, comment: undefined},
   state=undefined, addview=false, cloneview=false, list_packages=[], setFieldValue=undefined,
   values=undefined, onSelect=undefined, metrictemplatelist=[]}) =>
@@ -276,10 +276,13 @@ const ProbeForm = ({isTenantSchema=false, isHistory=false,
                           .map((e, i) => <Link
                             key={i}
                             to={
-                              isTenantSchema ?
-                                `/ui/probes/${values.name}/${e}`
+                              publicView ?
+                                `/ui/public_metrictemplates/${e}`
                               :
-                                `/ui/metrictemplates/${e}`
+                                isTenantSchema ?
+                                  `/ui/probes/${values.name}/${e}`
+                                :
+                                  `/ui/metrictemplates/${e}`
                             }>
                               {e}
                             </Link>
@@ -479,8 +482,8 @@ function ProbeComponent(cloneview=false) {
       this.addview = props.addview;
       this.location = props.location;
       this.history = props.history;
+      this.publicView = props.publicView;
       this.backend = new Backend();
-      this.publicView = props.publicView
 
       if (this.publicView) {
         this.apiListPackages = '/api/v2/internal/public_packages'
@@ -805,6 +808,7 @@ function ProbeComponent(cloneview=false) {
                   <ProbeForm
                     {...props}
                     isTenantSchema={true}
+                    publicView={this.publicView}
                     state={this.state}
                     metrictemplatelist={metrictemplatelist}
                   />
