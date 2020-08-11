@@ -1337,6 +1337,7 @@ export class ThresholdsProfilesChange extends Component {
                   state={this.state}
                   toggleWarningPopOver={this.toggleWarningPopOver}
                   toggleCriticalPopOver={this.toggleCriticalPopOver}
+                  historyview={this.publicView}
                 />
                 {
                   write_perm &&
