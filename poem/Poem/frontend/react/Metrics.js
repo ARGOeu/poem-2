@@ -1144,11 +1144,18 @@ export const MetricForm =
                     state.tags.length === 0 ?
                       <Badge color='dark'>none</Badge>
                     :
-                      state.tags.map((tag, i) =>
-                        <Badge className={'mr-1'} key={i} color={tag === 'internal' ? 'success' : tag === 'deprecated' ? 'danger' : 'secondary'}>
-                          {tag}
-                        </Badge>
-                      )
+                      (obj === 'metrictemplate' && !isHistory) ?
+                        state.tags.map((tag, i) =>
+                          <Badge className={'mr-1'} key={i} color={tag.value === 'internal' ? 'success' : tag.value === 'deprecated' ? 'danger' : 'secondary'}>
+                            {tag.value}
+                          </Badge>
+                        )
+                      :
+                        state.tags.map((tag, i) =>
+                          <Badge className={'mr-1'} key={i} color={tag === 'internal' ? 'success' : tag === 'deprecated' ? 'danger' : 'secondary'}>
+                            {tag}
+                          </Badge>
+                        )
                   }
                 </div>
               </Col>
