@@ -1270,6 +1270,7 @@ export function CompareMetrics(metrictype) {
       this.version1 = props.match.params.id1;
       this.version2 = props.match.params.id2;
       this.name = props.match.params.name;
+      this.publicView = props.publicView;
 
       this.state = {
         loading: false,
@@ -1313,10 +1314,10 @@ export function CompareMetrics(metrictype) {
       let url = undefined;
 
       if (metrictype === 'metric')
-        url = `/api/v2/internal/tenantversion/metric/${this.name}`;
+        url = `/api/v2/internal/${this.publicView ? 'public_' : ''}tenantversion/metric/${this.name}`;
 
       else
-        url = `/api/v2/internal/version/metrictemplate/${this.name}`;
+        url = `/api/v2/internal/${this.publicView ? 'public_' : ''}version/metrictemplate/${this.name}`;
 
       try {
         let json = await this.backend.fetchData(url);
@@ -1731,10 +1732,11 @@ export class MetricChange extends Component {
     else if (!loading) {
       return (
         <BaseArgoView
-          resourcename='metric'
+          resourcename={(this.publicView) ? `${metric.name}` : 'metric'}
           location={this.location}
           addview={this.addview}
           modal={true}
+          history={!this.publicView}
           state={this.state}
           toggle={this.toggleAreYouSure}
           publicview={this.publicView}
