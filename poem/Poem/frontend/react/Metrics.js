@@ -1732,7 +1732,7 @@ export class MetricChange extends Component {
     else if (!loading) {
       return (
         <BaseArgoView
-          resourcename={(this.publicView) ? `${metric.name}` : 'metric'}
+          resourcename={(this.publicView) ? 'Metric details' : 'metric'}
           location={this.location}
           addview={this.addview}
           modal={true}

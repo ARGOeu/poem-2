@@ -396,7 +396,7 @@ function MetricTemplateComponent(cloneview=false) {
       else if (!loading && metrictemplate) {
         return (
           <BaseArgoView
-            resourcename={(this.tenantview || this.publicView) ? `${metrictemplate.name}` : 'metric template'}
+            resourcename={(this.tenantview || this.publicView) ? 'Metric template details' : 'metric template'}
             location={this.location}
             addview={this.addview}
             tenantview={this.tenantview}

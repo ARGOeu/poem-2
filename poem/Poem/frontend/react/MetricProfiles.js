@@ -849,12 +849,13 @@ function MetricProfilesComponent(cloneview=false) {
       else if (!loading && metric_profile && view_services) {
         return (
           <BaseArgoView
-            resourcename='Metric profile'
+            resourcename={this.publicView ? 'Metric profile details' : 'metric profile'}
             location={this.location}
             addview={this.addview}
             modal={true}
             cloneview={this.cloneview}
             clone={true}
+            history={!this.publicView}
             state={this.state}
             toggle={this.toggleAreYouSure}
             addview={this.publicView ? !this.publicView : this.addview}
