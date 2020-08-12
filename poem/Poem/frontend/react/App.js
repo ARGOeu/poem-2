@@ -8,7 +8,7 @@ import {
   MetricProfilesClone,
   MetricProfilesList
 } from './MetricProfiles';
-import Home from './Home';
+import Home, { PublicHome } from './Home';
 import { ProbeList, ProbeChange, ProbeHistory, ProbeVersionCompare, ProbeVersionDetails, ProbeClone } from './Probes';
 import { MetricList, MetricChange, MetricHistory, MetricVersonCompare, MetricVersionDetails } from './Metrics';
 import {
@@ -492,6 +492,14 @@ class App extends Component {
       return (
         <BrowserRouter>
           <Switch>
+            <Route
+              exact path="/ui/public_home"
+              render={props =>
+                <PublicPage>
+                  <PublicHome/>
+                </PublicPage>
+              }
+            />
             <Route
               exact path="/ui/public_probes"
               render={props =>
