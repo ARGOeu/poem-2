@@ -74,6 +74,7 @@ link_title.set('administration', 'Administration');
 link_title.set('reports', 'Reports');
 link_title.set('probes', 'Probes');
 link_title.set('public_probes', 'Public probes');
+link_title.set('public_metrictemplates', 'Public metric templates');
 link_title.set('metrics', 'Metrics');
 link_title.set('public_metrics', 'Public metrics');
 link_title.set('metricprofiles', 'Metric profiles');
@@ -683,7 +684,7 @@ export const BaseArgoView = ({resourcename='', location=undefined,
                   <h2 className="ml-3 mt-1 mb-4">{`Clone ${resourcename}`}</h2>
                 </React.Fragment>
               :
-                tenantview ?
+                (tenantview || publicview) ?
                   <React.Fragment>
                     <h2 className="ml-3 mt-1 mb-4">{resourcename}</h2>
                     {

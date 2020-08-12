@@ -529,6 +529,46 @@ class App extends Component {
                 </PublicPage>
               }
             />
+            <Route
+              exact path="/ui/public_metrictemplates"
+              render={props =>
+                <PublicPage>
+                  <TenantMetricTemplateList publicView={true} {...props}/>
+                </PublicPage>
+              }
+            />
+            <Route
+              exact path="/ui/public_metrictemplates/:name"
+              render={props =>
+                <PublicPage>
+                  <MetricTemplateChange publicView={true} {...props}/>
+                </PublicPage>
+              }
+            />
+            <Route
+              exact path="/ui/public_metrictemplates/:name/history"
+              render={props =>
+                <PublicPage>
+                  <MetricTemplateHistory publicView={true} {...props}/>
+                </PublicPage>
+              }
+            />
+            <Route
+              exact path="/ui/public_metrictemplates/:name/history/compare/:id1/:id2"
+              render={props =>
+                <PublicPage>
+                  <MetricTemplateVersionCompare publicView={true} {...props}VersionCompare/>
+                </PublicPage>
+              }
+            />
+            <Route
+              exact path="/ui/public_metrictemplates/:name/history/:version"
+              render={props =>
+                <PublicPage>
+                  <MetricTemplateVersionDetails publicView={true} {...props}/>
+                </PublicPage>
+              }
+            />
             <Route exact path="/ui/public_metrics"
               render={props =>
                 <PublicPage>

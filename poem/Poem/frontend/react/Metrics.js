@@ -492,46 +492,17 @@ export function ListOfMetrics(type, imp=false) {
       let alltags = await this.backend.fetchData(`/api/v2/internal/${this.publicView ? 'public_' : ''}metrictags`);
       alltags.push('none');
       try {
+        let userDetails = {username: 'Anonymous'};
         if (!this.publicView) {
           let sessionActive = await this.backend.isActiveSession(response);
           if (sessionActive.active)
-            if (type === 'metric') {
-              let metrics = await this.backend.fetchData('/api/v2/internal/metric');
-              let groups = await this.backend.fetchResult('/api/v2/internal/usergroups');
-              let types = await this.backend.fetchData('/api/v2/internal/mtypes');
-              this.setState({
-                list_metric: metrics,
-                list_groups: groups['metrics'],
-                list_types: types,
-                list_tags: alltags,
-                loading: false,
-                search_name: '',
-                search_probeversion: '',
-                search_group: '',
-                search_type: '',
-                userDetails: sessionActive.userdetails
-              });
-            } else {
-              let metrictemplates = await this.backend.fetchData(`/api/v2/internal/metrictemplates${imp ? '-import' : ''}`);
-              let types = await this.backend.fetchData('/api/v2/internal/mttypes');
-              let ostags = await this.backend.fetchData('/api/v2/internal/ostags');
-              this.setState({
-                list_metric: metrictemplates,
-                list_types: types,
-                list_ostags: ostags,
-                list_tags: alltags,
-                loading: false,
-                search_name: '',
-                search_probeversion: '',
-                search_type: '',
-                search_ostag: '',
-                userDetails: sessionActive.userdetails
-              });
-            };
-        } else {
-          let metrics = await this.backend.fetchData('/api/v2/internal/public_metric');
-          let groups = await this.backend.fetchResult('/api/v2/internal/public_usergroups');
-          let types = await this.backend.fetchData('/api/v2/internal/public_mtypes');
+            userDetails = sessionActive.userdetails;
+        }
+
+        if (type === 'metric') {
+          let metrics = await this.backend.fetchData(`/api/v2/internal/${this.publicView ? 'public_' : ''}metric`);
+          let groups = await this.backend.fetchResult(`/api/v2/internal/${this.publicView ? 'public_' : ''}usergroups`);
+          let types = await this.backend.fetchData(`/api/v2/internal/${this.publicView ? 'public_' : ''}mtypes`);
           this.setState({
             list_metric: metrics,
             list_groups: groups['metrics'],
@@ -542,9 +513,25 @@ export function ListOfMetrics(type, imp=false) {
             search_probeversion: '',
             search_group: '',
             search_type: '',
-            userDetails: {username: 'Anonymous'}
+            userDetails: userDetails
           });
-        }
+        } else {
+          let metrictemplates = await this.backend.fetchData(`/api/v2/internal/${this.publicView ? 'public_metrictemplates' : `metrictemplates${imp ? '-import' : ''}`}`);
+          let types = await this.backend.fetchData(`/api/v2/internal/${this.publicView ? 'public_' : ''}mttypes`);
+          let ostags = await this.backend.fetchData(`/api/v2/internal/${this.publicView ? 'public_' : ''}ostags`);
+          this.setState({
+            list_metric: metrictemplates,
+            list_types: types,
+            list_ostags: ostags,
+            list_tags: alltags,
+            loading: false,
+            search_name: '',
+            search_probeversion: '',
+            search_type: '',
+            search_ostag: '',
+            userDetails: userDetails
+          });
+        };
       } catch(err) {
         this.setState({
           error: err,
@@ -561,10 +548,14 @@ export function ListOfMetrics(type, imp=false) {
         else
           metriclink = '/ui/metrics/'
       } else {
-        if (imp)
-          metriclink = '/ui/administration/metrictemplates/'
+        if (this.publicView)
+          metriclink = '/ui/public_metrictemplates/';
+
+        else if (imp)
+          metriclink = '/ui/administration/metrictemplates/';
+
         else
-          metriclink = '/ui/metrictemplates/'
+          metriclink = '/ui/metrictemplates/';
       }
 
       const columns = [
@@ -972,7 +963,7 @@ export const MetricForm =
               name='name'
               className={`form-control ${errors.name && 'border-danger'}`}
               id='name'
-              readOnly={isHistory || isTenantSchema}
+              readOnly={isHistory || isTenantSchema || publicView}
             />
             </InputGroup>
             {
@@ -987,7 +978,7 @@ export const MetricForm =
             <InputGroup>
               <InputGroupAddon addonType='prepend'>Type</InputGroupAddon>
               {
-                (isTenantSchema || isHistory) ?
+                (isTenantSchema || isHistory || publicView) ?
                   <Field
                     type='text'
                     name='type'
@@ -1053,7 +1044,7 @@ export const MetricForm =
                   />
                 </InputGroup>
               :
-                (isHistory || isTenantSchema) ?
+                (isHistory || isTenantSchema || publicView) ?
                   <InputGroup>
                     <InputGroupAddon addonType='prepend'>Probe</InputGroupAddon>
                     <Field
@@ -1129,7 +1120,7 @@ export const MetricForm =
           </Col>
         </Row>
         {
-          (obj === 'metrictemplate' && !isHistory) ?
+          (obj === 'metrictemplate' && (!isHistory && !isTenantSchema && !publicView)) ?
             <Row className='mb-4 mt-2'>
               <Col md={10}>
                 <Label>Tags:</Label>
@@ -1153,11 +1144,18 @@ export const MetricForm =
                     state.tags.length === 0 ?
                       <Badge color='dark'>none</Badge>
                     :
-                      state.tags.map((tag, i) =>
-                        <Badge className={'mr-1'} key={i} color={tag === 'internal' ? 'success' : tag === 'deprecated' ? 'danger' : 'secondary'}>
-                          {tag}
-                        </Badge>
-                      )
+                      (obj === 'metrictemplate' && !isHistory) ?
+                        state.tags.map((tag, i) =>
+                          <Badge className={'mr-1'} key={i} color={tag.value === 'internal' ? 'success' : tag.value === 'deprecated' ? 'danger' : 'secondary'}>
+                            {tag.value}
+                          </Badge>
+                        )
+                      :
+                        state.tags.map((tag, i) =>
+                          <Badge className={'mr-1'} key={i} color={tag === 'internal' ? 'success' : tag === 'deprecated' ? 'danger' : 'secondary'}>
+                            {tag}
+                          </Badge>
+                        )
                   }
                 </div>
               </Col>
@@ -1171,7 +1169,7 @@ export const MetricForm =
               className='form-control'
               component='textarea'
               name='description'
-              disabled={isTenantSchema || isHistory}
+              disabled={isTenantSchema || isHistory || publicView}
             />
           </Col>
         </Row>
@@ -1223,7 +1221,7 @@ export const MetricForm =
             id='probeexecutable'
             className={`form-control ${errors.probeexecutable && 'border-danger'}`}
             hidden={values.type === 'Passive'}
-            readOnly={isTenantSchema || isHistory}
+            readOnly={isTenantSchema || isHistory || publicView}
           />
             {
             errors.probeexecutable &&
@@ -1232,15 +1230,15 @@ export const MetricForm =
           </Col>
         </Row>
         <InlineFields values={values} errors={errors} field='config' addnew={!isTenantSchema && !isHistory} readonly={obj === 'metrictemplate' && isTenantSchema || isHistory || publicView}/>
-        <InlineFields values={values} errors={errors} field='attributes' addnew={!isTenantSchema && !isHistory}/>
-        <InlineFields values={values} errors={errors} field='dependency' addnew={!isTenantSchema && !isHistory}/>
-        <InlineFields values={values} errors={errors} field='parameter' addnew={!isTenantSchema && !isHistory}/>
-        <InlineFields values={values} errors={errors} field='flags' addnew={!isTenantSchema && !isHistory}/>
+        <InlineFields values={values} errors={errors} field='attributes' addnew={!isTenantSchema && !isHistory && !publicView}/>
+        <InlineFields values={values} errors={errors} field='dependency' addnew={!isTenantSchema && !isHistory && !publicView}/>
+        <InlineFields values={values} errors={errors} field='parameter' addnew={!isTenantSchema && !isHistory && !publicView}/>
+        <InlineFields values={values} errors={errors} field='flags' addnew={!isTenantSchema && !isHistory && !publicView}/>
         <h6 className='mt-4 font-weight-bold text-uppercase'>parent</h6>
         <Row>
           <Col md={5}>
             {
-            (isTenantSchema || isHistory) ?
+            (isTenantSchema || isHistory || publicView) ?
               <Field
                 type='text'
                 name='parent'
@@ -1279,6 +1277,7 @@ export function CompareMetrics(metrictype) {
       this.version1 = props.match.params.id1;
       this.version2 = props.match.params.id2;
       this.name = props.match.params.name;
+      this.publicView = props.publicView;
 
       this.state = {
         loading: false,
@@ -1322,10 +1321,10 @@ export function CompareMetrics(metrictype) {
       let url = undefined;
 
       if (metrictype === 'metric')
-        url = `/api/v2/internal/tenantversion/metric/${this.name}`;
+        url = `/api/v2/internal/${this.publicView ? 'public_' : ''}tenantversion/metric/${this.name}`;
 
       else
-        url = `/api/v2/internal/version/metrictemplate/${this.name}`;
+        url = `/api/v2/internal/${this.publicView ? 'public_' : ''}version/metrictemplate/${this.name}`;
 
       try {
         let json = await this.backend.fetchData(url);
@@ -1740,10 +1739,11 @@ export class MetricChange extends Component {
     else if (!loading) {
       return (
         <BaseArgoView
-          resourcename='metric'
+          resourcename={(this.publicView) ? 'Metric details' : 'metric'}
           location={this.location}
           addview={this.addview}
           modal={true}
+          history={!this.publicView}
           state={this.state}
           toggle={this.toggleAreYouSure}
           publicview={this.publicView}

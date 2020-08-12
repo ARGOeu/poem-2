@@ -1308,9 +1308,10 @@ export class ThresholdsProfilesChange extends Component {
     else if (!loading && thresholds_profile) {
       return (
         <BaseArgoView
-          resourcename='thresholds profile'
+          resourcename={this.publicView ? 'Thresholds profile details' : 'thresholds profile'}
           location={this.location}
           modal={true}
+          history={!this.publicView}
           state={this.state}
           toggle={this.toggleAreYouSure}
           submitperm={write_perm}

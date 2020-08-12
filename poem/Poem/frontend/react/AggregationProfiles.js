@@ -887,9 +887,10 @@ export class AggregationProfilesChange extends Component
 
       return (
         <BaseArgoView
-          resourcename='aggregation profile'
+          resourcename={this.publicView ? 'Aggregation profile details' : 'aggregation profile'}
           location={this.location}
           modal={true}
+          history={!this.publicView}
           state={this.state}
           toggle={this.toggleAreYouSure}
           addview={this.publicView ? !this.publicView : this.addview}

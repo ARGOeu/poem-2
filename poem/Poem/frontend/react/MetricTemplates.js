@@ -54,6 +54,7 @@ function MetricTemplateComponent(cloneview=false) {
         this.name = props.match.params.name;
       this.location = props.location;
       this.addview = props.addview;
+      this.publicView = props.publicView;
       this.tenantview = props.tenantview;
       this.history = props.history;
       this.backend = new Backend();
@@ -277,10 +278,10 @@ function MetricTemplateComponent(cloneview=false) {
       this.setState({loading: true});
 
       try {
-        let types = await this.backend.fetchData('/api/v2/internal/mttypes');
-        let tags = await this.backend.fetchData('/api/v2/internal/metrictags');
-        let allprobeversions = await this.backend.fetchData('/api/v2/internal/version/probe');
-        let metrictemplatelist = await this.backend.fetchData('/api/v2/internal/metrictemplates');
+        let types = await this.backend.fetchData(`/api/v2/internal/${this.publicView ? 'public_' : ''}mttypes`);
+        let tags = await this.backend.fetchData(`/api/v2/internal/${this.publicView ? 'public_' : ''}metrictags`);
+        let allprobeversions = await this.backend.fetchData(`/api/v2/internal/${this.publicView ? 'public_' : ''}version/probe`);
+        let metrictemplatelist = await this.backend.fetchData(`/api/v2/internal/${this.publicView ? 'public_' : ''}metrictemplates`);
         let mlist = [];
         metrictemplatelist.forEach(e => mlist.push(e.name));
         let probeversions = [];
@@ -290,7 +291,7 @@ function MetricTemplateComponent(cloneview=false) {
         tags.forEach(t => alltags.push({value: t, label: t}));
 
         if (!this.addview) {
-          let metrictemplate = await this.backend.fetchData(`/api/v2/internal/metrictemplates/${this.name}`);
+          let metrictemplate = await this.backend.fetchData(`/api/v2/internal/${this.publicView ? 'public_' : ''}metrictemplates/${this.name}`);
           let tags = [];
           metrictemplate.tags.forEach(t => tags.push({value: t, label: t}));
           if (metrictemplate.attribute.length === 0) {
@@ -395,13 +396,14 @@ function MetricTemplateComponent(cloneview=false) {
       else if (!loading && metrictemplate) {
         return (
           <BaseArgoView
-            resourcename={this.tenantview ? `${metrictemplate.name}` : 'metric template'}
+            resourcename={(this.tenantview || this.publicView) ? 'Metric template details' : 'metric template'}
             location={this.location}
             addview={this.addview}
             tenantview={this.tenantview}
+            publicview={this.publicView}
             history={!this.probeview}
             cloneview={cloneview}
-            clone={true}
+            clone={!this.publicView}
             modal={true}
             state={this.state}
             toggle={this.toggleAreYouSure}
@@ -431,6 +433,7 @@ function MetricTemplateComponent(cloneview=false) {
                     {...props}
                     obj='metrictemplate'
                     isTenantSchema={this.tenantview}
+                    publicView={this.publicView}
                     addview={this.addview}
                     state={this.state}
                     onSelect={this.onSelect}
@@ -443,7 +446,7 @@ function MetricTemplateComponent(cloneview=false) {
                     metrictemplatelist={metrictemplatelist}
                   />
                   {
-                    (!this.tenantview) &&
+                    (!this.tenantview && !this.publicView) &&
                       <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
                         {
                           (!this.addview && !cloneview) ?
@@ -482,6 +485,7 @@ export class MetricTemplateVersionDetails extends Component {
 
     this.name = props.match.params.name;
     this.version = props.match.params.version;
+    this.publicView = props.publicView;
 
     this.backend = new Backend();
 
@@ -509,10 +513,10 @@ export class MetricTemplateVersionDetails extends Component {
     this.setState({loading: true});
 
     try {
-      let json = await this.backend.fetchData(`/api/v2/internal/version/metrictemplate/${this.name}`);
+      let json = await this.backend.fetchData(`/api/v2/internal/${this.publicView ? 'public_' : ''}version/metrictemplate/${this.name}`);
       json.forEach(async (e) => {
         if (e.version == this.version) {
-          let probes = await this.backend.fetchData(`/api/v2/internal/version/probe/${e.fields.probeversion.split(' ')[0]}`);
+          let probes = await this.backend.fetchData(`/api/v2/internal/${this.publicView ? 'public_' : ''}version/probe/${e.fields.probeversion.split(' ')[0]}`);
           let probe = {};
           probes.forEach(p => {
             if (p.object_repr === e.fields.probeversion)
