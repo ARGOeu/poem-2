@@ -199,24 +199,16 @@ export const CustomBreadcrumb = ({location, history, publicView=false}) =>
   let breadcrumb_elements = new Array()
   let two_level = new Object()
 
-  if (!publicView) {
-    breadcrumb_elements.push({'url': '/ui/home', 'title': 'Home'});
+  breadcrumb_elements.push({'url': `/ui/${publicView ? 'public_' : ''}home`, 'title': 'Home'});
+  if (!publicView)
     spliturl = location.pathname.split('/');
 
-    two_level['url'] = '/ui/' + spliturl[2];
-    two_level['title'] = link_title.get(spliturl[2]);
-    breadcrumb_elements.push(two_level);
-  }
-  else {
+  else
     spliturl = window.location.pathname.split('/');
-    two_level['url'] = '/ui/' + spliturl[2];
-    two_level['title'] = link_title.get(spliturl[2]);
 
-    breadcrumb_elements.push({
-      'url': two_level['url'],
-      'title': two_level['title']
-    });
-  }
+  two_level['url'] = '/ui/' + spliturl[2];
+  two_level['title'] = link_title.get(spliturl[2]);
+  breadcrumb_elements.push(two_level);
 
   if (spliturl.length > 3) {
     var three_level = new Object({'url': two_level['url'] + '/' + spliturl[3]});
