@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component, useState, useEffect } from 'react';
 import { Backend } from './DataManager';
 import { LoadingAnim, ErrorComponent, BaseArgoView, ParagraphTitle } from './UIElements';
 import { Formik, Form, Field } from 'formik';
@@ -20,116 +20,103 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faIdBadge } from '@fortawesome/free-solid-svg-icons';
 
 
-export class TenantList extends Component {
-  constructor(props) {
-    super(props);
+export const TenantList = (props) => {
+  const [listTenants, setListTenants] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null)
 
-    this.location = props.location;
-    this.history = props.history;
+  const location = props.location;
+  const history = props.history;
 
-    this.state = {
-        list_tenants: null,
-        loading: false,
-        error: null
-    };
+  const backend = new Backend();
 
-    this.backend = new Backend();
-    };
-
-    async componentDidMount() {
-      this.setState({ loading: true });
-
+  useEffect(() => {
+    setLoading(true);
+    async function fetchData() {
       try {
-        let json = await this.backend.fetchData('/api/v2/internal/tenants');
-        this.setState({
-            list_tenants: json,
-            loading: false
-        });
+        let json = await backend.fetchData('/api/v2/internal/tenants');
+        setListTenants(json);
       } catch(err) {
-        this.setState({
-            error: err,
-            loading: false
-        });
+        setError(err);
       };
+      setLoading(false);
     };
+    fetchData();
+  }, [])
 
-    render() {
-      const { loading, list_tenants, error } = this.state;
+  if (loading)
+    return (<LoadingAnim/>);
 
-      if (loading)
-        return (<LoadingAnim/>);
+  else if (error)
+    return (<ErrorComponent error={error}/>);
 
-      else if (error)
-        return (<ErrorComponent error={error}/>);
-
-      else if (!loading && list_tenants) {
-        let groups = [];
-        for (let i = 0; i < list_tenants.length; i = i + 3) {
-          let cards = []
-          for (let j = 0; j < 3; j++) {
-            if ((i + j) < list_tenants.length)
-              cards.push(
-                <Card className='mr-3' key={j + 1} tag='a' onClick={() => this.history.push(`/ui/tenants/${list_tenants[i + j].name}`)} style={{cursor: 'pointer'}}>
-                  <CardTitle className='text-center'>
-                    <h3>{list_tenants[i + j].name}</h3>
-                  </CardTitle>
-                  <CardSubtitle className='mb-4 mt-3 text-center'>
-                    <FontAwesomeIcon icon={faIdBadge} size='5x'/>
-                  </CardSubtitle>
-                  <CardFooter>
-                    <CardText className='mb-1'>
-                      <b>Schema name:</b> {list_tenants[i + j].schema_name}
-                    </CardText>
-                    <CardText>
-                      <b>POEM url:</b> {list_tenants[i + j].domain_url}
-                    </CardText>
-                    <div className='mb-1'>
-                      <Badge color='info' className='mr-2'>
-                        {`Metric${list_tenants[i + j].schema_name == 'public' ? ' templates ' : 's '
-                        }`}
-                        <Badge style={{fontSize: '10pt'}} color='light'>{list_tenants[i + j].nr_metrics}</Badge>
-                      </Badge>
-                    </div>
-                    <div>
-                      <Badge color='success'>
-                        Probes <Badge style={{fontSize: '10pt'}} color='light'>{list_tenants[i + j].nr_probes}</Badge>
-                      </Badge>
-                    </div>
-                  </CardFooter>
-                </Card>
-              )
-          }
-          let group_width = '100%';
-          if (cards.length == 1)
-            group_width = '33.3333%'
-
-          if (cards.length == 2)
-            group_width = '66.6666%'
-
-          groups.push(
-            <CardGroup key={i} className='mb-3' style={{width: group_width}}>
-              {
-                cards.map((card, k) => card)
-              }
-            </CardGroup>
+  else if (!loading && listTenants) {
+    let groups = [];
+    for (let i = 0; i < listTenants.length; i = i + 3) {
+      let cards = []
+      for (let j = 0; j < 3; j++) {
+        if ((i + j) < listTenants.length)
+          cards.push(
+            <Card className='mr-3' key={j + 1} tag='a' onClick={() => history.push(`/ui/tenants/${listTenants[i + j].name}`)} style={{cursor: 'pointer'}}>
+              <CardTitle className='text-center'>
+                <h3>{listTenants[i + j].name}</h3>
+              </CardTitle>
+              <CardSubtitle className='mb-4 mt-3 text-center'>
+                <FontAwesomeIcon icon={faIdBadge} size='5x'/>
+              </CardSubtitle>
+              <CardFooter>
+                <CardText className='mb-1'>
+                  <b>Schema name:</b> {listTenants[i + j].schema_name}
+                </CardText>
+                <CardText>
+                  <b>POEM url:</b> {listTenants[i + j].domain_url}
+                </CardText>
+                <div className='mb-1'>
+                  <Badge color='info' className='mr-2'>
+                    {`Metric${listTenants[i + j].schema_name == 'public' ? ' templates ' : 's '
+                    }`}
+                    <Badge style={{fontSize: '10pt'}} color='light'>{listTenants[i + j].nr_metrics}</Badge>
+                  </Badge>
+                </div>
+                <div>
+                  <Badge color='success'>
+                    Probes <Badge style={{fontSize: '10pt'}} color='light'>{listTenants[i + j].nr_probes}</Badge>
+                  </Badge>
+                </div>
+              </CardFooter>
+            </Card>
           )
-        }
+      }
+      let group_width = '100%';
+      if (cards.length == 1)
+        group_width = '33.3333%'
 
-        return (
-          <BaseArgoView
-            resourcename='tenant'
-            location={this.location}
-            listview={true}
-            addnew={false}
-          >
-            {
-              groups.map((group, k) => group)
-            }
-          </BaseArgoView>
-        );
-      } else
-        return null;
-    };
+      if (cards.length == 2)
+        group_width = '66.6666%'
+
+      groups.push(
+        <CardGroup key={i} className='mb-3' style={{width: group_width}}>
+          {
+            cards.map((card, k) => card)
+          }
+        </CardGroup>
+      )
+    }
+
+    return (
+      <BaseArgoView
+        resourcename='tenant'
+        location={location}
+        listview={true}
+        addnew={false}
+      >
+        {
+          groups.map((group, k) => group)
+        }
+      </BaseArgoView>
+    );
+  } else
+    return null;
 };
 
 
