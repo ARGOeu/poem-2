@@ -1,6 +1,5 @@
 import React, { Component } from 'react';
 import { Backend } from './DataManager';
-import { Link } from 'react-router-dom';
 import { LoadingAnim, ErrorComponent, BaseArgoView, ParagraphTitle } from './UIElements';
 import { Formik, Form, Field } from 'formik';
 import {
@@ -26,6 +25,7 @@ export class TenantList extends Component {
     super(props);
 
     this.location = props.location;
+    this.history = props.history;
 
     this.state = {
         list_tenants: null,
@@ -69,13 +69,9 @@ export class TenantList extends Component {
           for (let j = 0; j < 3; j++) {
             if ((i + j) < list_tenants.length)
               cards.push(
-                <Card className='mr-3' key={j + 1}>
+                <Card className='mr-3' key={j + 1} tag='a' onClick={() => this.history.push(`/ui/tenants/${list_tenants[i + j].name}`)} style={{cursor: 'pointer'}}>
                   <CardTitle className='text-center'>
-                    <h3>
-                      <Link to={`/ui/tenants/${list_tenants[i + j].name.trim().split(' ').join('_')}`}>
-                        {list_tenants[i + j].name}
-                      </Link>
-                    </h3>
+                    <h3>{list_tenants[i + j].name}</h3>
                   </CardTitle>
                   <CardSubtitle className='mb-4 mt-3 text-center'>
                     <FontAwesomeIcon icon={faIdBadge} size='5x'/>
