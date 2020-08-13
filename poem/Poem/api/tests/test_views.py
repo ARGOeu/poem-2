@@ -136,6 +136,7 @@ def mock_db_for_metrics_tests():
     mtag1 = admin_models.MetricTags.objects.create(name='test_tag1')
     mtag2 = admin_models.MetricTags.objects.create(name='test_tag2')
     mtag3 = admin_models.MetricTags.objects.create(name='internal')
+    admin_models.MetricTags.objects.create(name='empty_tag')
 
     metric1 = poem_models.Metric.objects.create(
         name='test.AMS-Check',
@@ -735,6 +736,31 @@ class ListMetricsAPIViewTests(TenantTestCase):
                 }
             ]
         )
+
+    def test_get_internal_metrics(self):
+        request = self.factory.get(
+            self.url + '/internal', **{'HTTP_X_API_KEY': self.token}
+        )
+        response = self.view(request, 'internal')
+        self.assertEqual(
+            response.data,
+            ['argo.AMSPublisher-Check', 'hr.srce.CertLifetime-Local']
+        )
+
+    def test_get_metrics_if_no_tagged_metrics(self):
+        request = self.factory.get(
+            self.url + '/empty_tag', **{'HTTP_X_API_KEY': self.token}
+        )
+        response = self.view(request, 'empty_tag')
+        self.assertEqual(response.data, [])
+
+    def test_get_metrics_if_nonexistent_tag(self):
+        request = self.factory.get(
+            self.url + '/nonexistent', **{'HTTP_X_API_KEY': self.token}
+        )
+        response = self.view(request, 'nonexistent')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data, {'detail': 'Requested tag not found.'})
 
 
 class ListReposAPIViewTests(TenantTestCase):

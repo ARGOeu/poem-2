@@ -7,6 +7,7 @@ app_name = 'poem'
 
 urlpatterns = [
     path('metrics/', views.ListMetrics.as_view()),
+    path('metrics/<str:tag>/', views.ListMetrics.as_view()),
     path('repos/', views.ListRepos.as_view()),
     path('repos/<str:profile>/', views.ListRepos.as_view()),
     path('repos/<str:tag>', views.ListRepos.as_view()),
