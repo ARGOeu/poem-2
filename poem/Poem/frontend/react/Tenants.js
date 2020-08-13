@@ -1,4 +1,4 @@
-import React, { Component, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Backend } from './DataManager';
 import { LoadingAnim, ErrorComponent, BaseArgoView, ParagraphTitle } from './UIElements';
 import { Formik, Form, Field } from 'formik';
@@ -120,138 +120,123 @@ export const TenantList = (props) => {
 };
 
 
-export class TenantChange extends Component {
-  constructor(props) {
-    super(props);
+export const TenantChange = (props) => {
+  const [tenant, setTenant] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-    this.name = props.match.params.name;
-    this.location = props.location;
-    this.history = props.history;
+  const name = props.match.params.name;
+  const location = props.location;
 
-    this.state = {
-      tenant: {},
-      loading: false,
-      error: null
-    };
+  const backend = new Backend();
 
-    this.backend = new Backend();
-  };
-
-  async componentDidMount() {
-    this.setState({ loading: true });
-
-    try {
-      let json = await this.backend.fetchData(
-        `/api/v2/internal/tenants/${this.name.trim().split(' ').join('_')}`
+  useEffect(() => {
+    setLoading(true);
+    async function fetchData() {
+      try {
+        let json = await backend.fetchData(
+          `/api/v2/internal/tenants/${name.trim().split(' ').join('_')}`
         );
-
-      this.setState({
-        tenant: json,
-        loading: false
-      });
-    } catch(err) {
-      this.setState({
-        error: err,
-        loading: false
-      });
+        setTenant(json)
+      } catch(err) {
+        setError(err);
+      };
+      setLoading(false);
     };
-  };
+    fetchData();
+  }, []);
 
-  render() {
-    const { tenant, loading, error } = this.state;
+  if (loading)
+    return (<LoadingAnim/>);
 
-    if (loading)
-      return (<LoadingAnim/>);
+  else if (error)
+    return (<ErrorComponent error={error}/>);
 
-    else if (error)
-      return (<ErrorComponent error={error}/>);
-
-    else if (!loading && tenant) {
-      return (
-        <BaseArgoView
-          resourcename='Tenant details'
-          location={this.location}
-          history={false}
-          infoview={true}
-        >
-          <Formik
-            initialValues = {{
-              name: tenant.name,
-              schema: tenant.schema_name,
-              url: tenant.domain_url,
-              created_on: tenant.created_on,
-              nr_metrics: tenant.nr_metrics,
-              nr_probes: tenant.nr_probes
-            }}
-            render = {props => (
-              <Form>
-                <FormGroup>
-                  <Row>
-                    <Col md={6}>
-                      <InputGroup>
-                        <InputGroupAddon addonType='prepend'>Name</InputGroupAddon>
-                        <Field
-                          type='text'
-                          name='name'
-                          id='name'
-                          readOnly
-                          className='form-control form-control-lg'
-                        />
-                      </InputGroup>
-                    </Col>
-                  </Row>
-                </FormGroup>
-                <FormGroup>
-                  <ParagraphTitle title='basic info'/>
-                  <Row>
-                    <Col md={6}>
-                      <InputGroup>
-                        <InputGroupAddon addonType='prepend'>Schema</InputGroupAddon>
-                        <Field
-                          type='text'
-                          name='schema'
-                          id='schema'
-                          readOnly
-                          className='form-control'
-                        />
-                      </InputGroup>
-                    </Col>
-                  </Row>
-                  <Row>
-                    <Col md={6}>
-                      <InputGroup>
-                        <InputGroupAddon addonType='prepend'>POEM URL</InputGroupAddon>
-                        <Field
-                          type='text'
-                          name='url'
-                          id='url'
-                          readOnly
-                          className='form-control'
-                        />
-                      </InputGroup>
-                    </Col>
-                  </Row>
-                  <Row>
-                    <Col md={6}>
-                      <InputGroup>
-                        <InputGroupAddon addonType='prepend'>Created on</InputGroupAddon>
-                        <Field
-                          type='text'
-                          name='created_on'
-                          id='created_on'
-                          readOnly
-                          className='form-control'
-                        />
-                      </InputGroup>
-                    </Col>
-                  </Row>
-                </FormGroup>
-              </Form>
-            )}
-          />
-        </BaseArgoView>
-      );
-    } else
-      return null;
-  };
+  else if (!loading && tenant) {
+    return (
+      <BaseArgoView
+        resourcename='Tenant details'
+        location={location}
+        history={false}
+        infoview={true}
+      >
+        <Formik
+          initialValues = {{
+            name: tenant.name,
+            schema: tenant.schema_name,
+            url: tenant.domain_url,
+            created_on: tenant.created_on,
+            nr_metrics: tenant.nr_metrics,
+            nr_probes: tenant.nr_probes
+          }}
+          render = {props => (
+            <Form>
+              <FormGroup>
+                <Row>
+                  <Col md={6}>
+                    <InputGroup>
+                      <InputGroupAddon addonType='prepend'>Name</InputGroupAddon>
+                      <Field
+                        type='text'
+                        name='name'
+                        id='name'
+                        readOnly
+                        className='form-control form-control-lg'
+                      />
+                    </InputGroup>
+                  </Col>
+                </Row>
+              </FormGroup>
+              <FormGroup>
+                <ParagraphTitle title='basic info'/>
+                <Row>
+                  <Col md={6}>
+                    <InputGroup>
+                      <InputGroupAddon addonType='prepend'>Schema</InputGroupAddon>
+                      <Field
+                        type='text'
+                        name='schema'
+                        id='schema'
+                        readOnly
+                        className='form-control'
+                      />
+                    </InputGroup>
+                  </Col>
+                </Row>
+                <Row>
+                  <Col md={6}>
+                    <InputGroup>
+                      <InputGroupAddon addonType='prepend'>POEM URL</InputGroupAddon>
+                      <Field
+                        type='text'
+                        name='url'
+                        id='url'
+                        readOnly
+                        className='form-control'
+                      />
+                    </InputGroup>
+                  </Col>
+                </Row>
+                <Row>
+                  <Col md={6}>
+                    <InputGroup>
+                      <InputGroupAddon addonType='prepend'>Created on</InputGroupAddon>
+                      <Field
+                        type='text'
+                        name='created_on'
+                        id='created_on'
+                        readOnly
+                        className='form-control'
+                      />
+                    </InputGroup>
+                  </Col>
+                </Row>
+              </FormGroup>
+            </Form>
+          )}
+        />
+      </BaseArgoView>
+    );
+  } else
+    return null;
 };
