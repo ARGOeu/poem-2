@@ -171,12 +171,14 @@ export class WebApi {
       metricProfiles=undefined,
       aggregationProfiles=undefined,
       thresholdsProfiles=undefined,
+      operationsProfiles=undefined,
       reportsConfigurations=undefined
     }) {
     this.token = token;
     this.metricprofiles = metricProfiles;
     this.aggregationprofiles = aggregationProfiles;
     this.thresholdsprofiles = thresholdsProfiles;
+    this.operationsprofiles = operationsProfiles;
   }
 
   async fetchMetricProfiles() {
@@ -209,8 +211,42 @@ export class WebApi {
       throw Error(err_msg);
   }
 
+  async fetchOperationsProfiles() {
+    let err_msg = '';
+    try {
+      let response = await fetch(
+        this.operationsprofiles,
+        {
+          headers: {
+            "Accept": "application/json",
+            "x-api-key": this.token
+          }
+        }
+      );
+      if (response.ok) {
+        let json = await response.json();
+        return json['data'];
+      } else {
+        try {
+          let json = await response.json();
+          err_msg = `${response.status} ${response.statusText}; in fetch ${this.operationsprofiles}; ${json.status.details}`;
+        } catch(err) {
+          err_msg = `${response.status} ${response.statusText}; in fetch ${this.operationsprofiles}`;
+        };
+      };
+    } catch(err) {
+      err_msg = `${err}; in fetch ${this.operationsprofiles}`;
+    };
+    if (err_msg)
+      throw Error(err_msg);
+  }
+
   fetchMetricProfile(id) {
     return this.fetchProfile(`${this.metricprofiles}/${id}`);
+  }
+
+  fetchOperationProfile(id) {
+    return this.fetchProfile(`${this.operationsprofiles}/${id}`);
   }
 
   fetchAggregationProfile(id) {
