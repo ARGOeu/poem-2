@@ -43,7 +43,7 @@ import Cookies from 'universal-cookie';
 import './App.css';
 import { PackageList, PackageChange, PackageClone } from './Package';
 import { TenantList, TenantChange } from './Tenants';
-import { OperationsProfilesList } from './OperationsProfiles';
+import { OperationsProfilesList, OperationsProfileDetails } from './OperationsProfiles';
 
 
 const NavigationBarWithRouter = withRouter(NavigationBar);
@@ -316,6 +316,15 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, w
         webapioperations={webApiOperations}
         webapitoken={token}
       />} />
+    <Route
+      exact path="/ui/operationsprofiles/:name"
+      render={props => <OperationsProfileDetails
+        {...props}
+        webapioperations={webApiOperations}
+        webapitoken={token}
+      />}
+    />
+
     <Route component={NotFound} />
   </Switch>
 )
