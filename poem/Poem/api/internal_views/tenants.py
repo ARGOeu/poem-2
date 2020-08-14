@@ -58,3 +58,8 @@ class ListTenants(APIView):
             results = sorted(results, key=lambda k: k['name'].lower())
 
         return Response(results)
+
+
+class ListPublicTenants(ListTenants):
+    authentication_classes = ()
+    permission_classes = ()
