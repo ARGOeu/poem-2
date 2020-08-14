@@ -55,7 +55,8 @@ import {
   faSquare,
   faUser,
   faBox,
-  faIdBadge} from '@fortawesome/free-solid-svg-icons';
+  faIdBadge,
+  faTable} from '@fortawesome/free-solid-svg-icons';
 import { NotificationManager } from 'react-notifications';
 import { Field } from 'formik';
 import { Backend } from './DataManager';
@@ -65,7 +66,7 @@ import Autosuggest from 'react-autosuggest';
 
 var list_pages = ['administration', 'probes',
                   'metrics', 'metricprofiles', 'aggregationprofiles',
-                  'thresholdsprofiles'];
+                  'thresholdsprofiles', 'operationsprofiles'];
 var admin_list_pages = ['administration', 'tenants', 'yumrepos', 'packages',
                         'probes', 'metrictemplates'];
 
@@ -93,6 +94,7 @@ link_title.set('public_thresholdsprofiles', 'Thresholds profiles');
 link_title.set('thresholdsprofiles', 'Thresholds profiles');
 link_title.set('packages', 'Packages');
 link_title.set('tenants', 'Tenants');
+link_title.set('operationsprofiles', 'Operations profiles')
 
 export const Icon = props =>
 {
@@ -111,6 +113,7 @@ export const Icon = props =>
   link_icon.set('users', faUser);
   link_icon.set('packages', faBox);
   link_icon.set('tenants', faIdBadge);
+  link_icon.set('operationsprofiles', faTable);
 
   if (props.i.startsWith('groupof'))
     return (
