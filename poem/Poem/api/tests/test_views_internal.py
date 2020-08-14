@@ -4072,7 +4072,8 @@ class GetConfigOptionsAPIViewTests(TenantTestCase):
     def test_get_config_options(self, *args):
         with self.settings(WEBAPI_METRIC='https://metric.profile.com',
                            WEBAPI_AGGREGATION='https://aggregations.com',
-                           WEBAPI_THRESHOLDS='https://thresholds.com'):
+                           WEBAPI_THRESHOLDS='https://thresholds.com',
+                           WEBAPI_OPERATIONS='https://operations.com'):
             request = self.factory.get(self.url)
             response = self.view(request)
             self.assertEqual(
@@ -4083,6 +4084,7 @@ class GetConfigOptionsAPIViewTests(TenantTestCase):
                         'webapimetric': 'https://metric.profile.com',
                         'webapiaggregation': 'https://aggregations.com',
                         'webapithresholds': 'https://thresholds.com',
+                        'webapioperations': 'https://operations.com',
                         'tenant_name': 'Tenant'
                     }
                 }
