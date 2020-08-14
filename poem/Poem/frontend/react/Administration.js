@@ -40,6 +40,9 @@ export const TenantAdministration = (props) =>
         <Row className="p-1 align-items-center">
           <Icon i="thresholdsprofiles"/> <Link className='pl-1' to={'/ui/thresholdsprofiles'}>Thresholds profiles</Link>
         </Row>
+        <Row className="p-1 align-items-center">
+          <Icon i="operationsprofiles"/> <Link className='pl-1' to={'/ui/operationsprofiles'}>Operations profiles</Link>
+        </Row>
       </CardBody>
     </Card>
     <Card className='mb-2'>
