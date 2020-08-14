@@ -22,7 +22,7 @@ class NotFound(APIException):
 def build_metricconfigs():
     ret = []
 
-    metricsobjs = models.Metric.objects.all()
+    metricsobjs = models.Metric.objects.all().order_by('name')
 
     for m in metricsobjs:
         mdict = dict()
@@ -130,8 +130,22 @@ def get_metrics_from_profile(profile):
 class ListMetrics(APIView):
     permission_classes = (MyHasAPIKey,)
 
-    def get(self, request):
-        return Response(build_metricconfigs())
+    def get(self, request, tag=None):
+        if tag:
+            try:
+                admin_models.MetricTags.objects.get(name=tag)
+                metrics = models.Metric.objects.filter(tags__name=tag)
+
+                return Response(sorted([metric.name for metric in metrics]))
+
+            except admin_models.MetricTags.DoesNotExist:
+                return Response(
+                    {'detail': 'Requested tag not found.'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+        else:
+            return Response(build_metricconfigs())
 
 
 class ListRepos(APIView):
