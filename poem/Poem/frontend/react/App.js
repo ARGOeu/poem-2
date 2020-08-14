@@ -43,6 +43,7 @@ import Cookies from 'universal-cookie';
 import './App.css';
 import { PackageList, PackageChange, PackageClone } from './Package';
 import { TenantList, TenantChange } from './Tenants';
+import { OperationsProfilesList } from './OperationsProfiles';
 
 
 const NavigationBarWithRouter = withRouter(NavigationBar);
@@ -99,7 +100,7 @@ const RedirectAfterLogin = ({isSuperUser, ...props}) => {
 }
 
 
-const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, token, tenantName, isSuperUser, userGroups}) => (
+const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, webApiOperations, token, tenantName, isSuperUser, userGroups}) => (
   <Switch>
     <Route exact path="/ui/login" render={props => <RedirectAfterLogin isSuperUser={isSuperUser} {...props}/>}/>
     <Route exact path="/ui/home" component={Home} />
@@ -308,6 +309,13 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, t
     <Route exact path="/ui/thresholdsprofiles/:name/history/:version"
       render={props => <ThresholdsProfileVersionDetail {...props}/>}
     />
+    <Route
+      exact path="/ui/operationsprofiles"
+      render={props => <OperationsProfilesList
+        {...props}
+        webapioperations={webApiOperations}
+        webapitoken={token}
+      />} />
     <Route component={NotFound} />
   </Switch>
 )
@@ -382,6 +390,7 @@ class App extends Component {
       webApiAggregation: undefined,
       webApiMetric: undefined,
       webApiThresholds: undefined,
+      webApiOperations: undefined,
       publicView: undefined,
       tenantName: undefined,
       token: undefined,
@@ -424,6 +433,7 @@ class App extends Component {
         webApiMetric: options && options.result.webapimetric,
         webApiAggregation: options && options.result.webapiaggregation,
         webApiThresholds: options && options.result.webapithresholds,
+        webApiOperations: options && options.result.webapioperations,
         tenantName: options && options.result.tenant_name,
         publicView: false,
       });
@@ -799,6 +809,7 @@ class App extends Component {
                     webApiMetric={this.state.webApiMetric}
                     webApiAggregation={this.state.webApiAggregation}
                     webApiThresholds={this.state.webApiThresholds}
+                    webApiOperations={this.state.webApiOperations}
                     token={this.state.token}
                     tenantName={this.state.tenantName}
                     isSuperUser={userDetails.is_superuser}
