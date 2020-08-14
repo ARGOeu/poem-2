@@ -245,8 +245,14 @@ export class WebApi {
     return this.fetchProfile(`${this.metricprofiles}/${id}`);
   }
 
-  fetchOperationProfile(id) {
-    return this.fetchProfile(`${this.operationsprofiles}/${id}`);
+  async fetchOperationProfile(name) {
+    const profiles = await this.fetchOperationsProfiles();
+    let profile = {};
+    profiles.forEach(p => {
+      if (p.name === name)
+        profile = p;
+    });
+    return profile;
   }
 
   fetchAggregationProfile(id) {
