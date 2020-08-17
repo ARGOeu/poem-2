@@ -468,6 +468,7 @@ class App extends Component {
       webApiMetric: options && options.result.webapimetric,
       webApiAggregation: options && options.result.webapiaggregation,
       webApiThresholds: options && options.result.webapithresholds,
+      webApiOperations: options && options.result.webapioperations,
       tenantName: options && options.result.tenant_name,
       publicView: true,
     })
@@ -667,6 +668,18 @@ class App extends Component {
                       webapitoken={this.state.token}
                       tenantname={this.state.tenantName}
                       publicView={true}
+                    />
+                  </PublicPage>
+                }
+              />
+              <Route exact path="/ui/public_operationsprofiles"
+                render={props =>
+                  <PublicPage>
+                    <OperationsProfilesList
+                      {...props}
+                      publicView={true}
+                      webapitoken={this.state.token}
+                      webapioperations={this.state.webApiOperations}
                     />
                   </PublicPage>
                 }

@@ -21,6 +21,7 @@ export const OperationsProfilesList = (props) => {
   const [error, setError] = useState(null);
 
   const location = props.location;
+  const publicView = props.publicView;
   const webapi = new WebApi({
     token: props.webapitoken,
     operationsProfiles: props.webapioperations
@@ -45,7 +46,7 @@ export const OperationsProfilesList = (props) => {
       Header: 'Name',
       id: 'name',
       accessor: e =>
-        <Link to={`/ui/operationsprofiles/${e.name}`}>
+        <Link to={`/ui/${publicView ? 'public_' : ''}operationsprofiles/${e.name}`}>
           {e.name}
         </Link>
     }
