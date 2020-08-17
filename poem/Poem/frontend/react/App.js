@@ -684,6 +684,18 @@ class App extends Component {
                   </PublicPage>
                 }
               />
+              <Route exact path="/ui/public_operationsprofiles/:name"
+                render={props =>
+                  <PublicPage>
+                    <OperationsProfileDetails
+                      {...props}
+                      publicView={true}
+                      webapitoken={this.state.token}
+                      webapioperations={this.state.webApiOperations}
+                    />
+                  </PublicPage>
+                }
+              />
               <Route component={NotFound} />
             </Switch>
           </BrowserRouter>
