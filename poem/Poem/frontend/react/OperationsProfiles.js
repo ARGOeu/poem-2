@@ -150,8 +150,8 @@ export const OperationsProfileDetails = (props) => {
                   <Table bordered size='sm'>
                     <thead>
                       <tr>
-                        <th>#</th>
-                        <th>Available states</th>
+                        <th style={{backgroundColor: '#ececec'}}>#</th>
+                        <th style={{backgroundColor: '#ececec'}}>Available states</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -170,8 +170,8 @@ export const OperationsProfileDetails = (props) => {
                   <Table bordered>
                     <thead>
                       <tr>
-                        <th>Default</th>
-                        <th>State to be used</th>
+                        <th style={{backgroundColor: '#ececec'}}>Default</th>
+                        <th style={{backgroundColor: '#ececec'}}>State to be used</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -200,9 +200,9 @@ export const OperationsProfileDetails = (props) => {
                       <Table bordered size='sm'>
                         <thead>
                           <tr>
-                            <th>State A</th>
-                            <th>State B</th>
-                            <th>Result</th>
+                            <th style={{backgroundColor: '#ececec'}}>State A</th>
+                            <th style={{backgroundColor: '#ececec'}}>State B</th>
+                            <th style={{backgroundColor: '#c1e3ca'}}>Result</th>
                           </tr>
                         </thead>
                         <tbody>
