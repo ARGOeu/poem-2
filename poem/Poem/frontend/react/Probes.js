@@ -455,7 +455,7 @@ export class ProbeList extends Component {
           resourcename='probe'
           location={this.location}
           listview={true}
-          addnew={!isTenantSchema}
+          addnew={!isTenantSchema && !this.publicView}
         >
           <ReactTable
             data={list_probe}
