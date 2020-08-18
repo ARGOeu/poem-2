@@ -94,7 +94,8 @@ link_title.set('public_thresholdsprofiles', 'Thresholds profiles');
 link_title.set('thresholdsprofiles', 'Thresholds profiles');
 link_title.set('packages', 'Packages');
 link_title.set('tenants', 'Tenants');
-link_title.set('operationsprofiles', 'Operations profiles')
+link_title.set('operationsprofiles', 'Operations profiles');
+link_title.set('public_operationsprofiles', 'Operations profiles');
 
 export const Icon = props =>
 {
