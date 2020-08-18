@@ -788,15 +788,44 @@ function MetricProfilesComponent(cloneview=false) {
     onRemove(element, group, name, description) {
       let tmp_view_services = []
       let tmp_list_services = []
+      let index = undefined
+      let index_tmp = undefined
 
-      let index = this.state.list_services.findIndex(service =>
+      // special case when duplicates are result of explicit add of duplicated
+      // tuple followed by immediate delete of it
+      let dup_list = this.state.list_services.filter(service =>
         element.service === service.service &&
         element.metric === service.metric
-      );
-      let index_tmp = this.state.view_services.findIndex(service =>
+      )
+      let dup_view = this.state.view_services.filter(service =>
         element.service === service.service &&
         element.metric === service.metric
-      );
+      )
+      let dup = dup_list.length >= 2 || dup_view.length >= 2 ? true : false
+
+      if (dup) {
+        // search by index also
+        index = this.state.list_services.findIndex(service =>
+          element.index === service.index &&
+          element.service === service.service &&
+          element.metric === service.metric
+        );
+        index_tmp = this.state.view_services.findIndex(service =>
+          element.index === service.index &&
+          element.service === service.service &&
+          element.metric === service.metric
+        );
+      }
+      else {
+        index = this.state.list_services.findIndex(service =>
+          element.service === service.service &&
+          element.metric === service.metric
+        );
+        index_tmp = this.state.view_services.findIndex(service =>
+          element.service === service.service &&
+          element.metric === service.metric
+        );
+      }
 
       // don't remove last tuple, just reset it to empty values
       if (this.state.view_services.length === 1
