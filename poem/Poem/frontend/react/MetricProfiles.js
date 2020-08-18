@@ -236,7 +236,7 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
                     }}
                     theme={{
                       containerOpen: 'metricprofiles-autocomplete-menu',
-                      suggestionsList: 'metricprofiles-autocomplete-entries'
+                      suggestionsList: 'metricprofiles-autocomplete-list'
                     }}
                   />
                   {
