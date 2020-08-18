@@ -16,7 +16,6 @@
     - [Users](tenant_users.md)
     - [Groups of Resources](tenant_groups_of_resources.md)
     - [Metric Templates](tenant_metric_templates.md)
-- [Services](tenant_services.md)
 - [Probes](tenant_probes.md)
 - [Metrics](tenant_metrics.md)
 - [Metric Profiles](tenant_metric_profiles.md)

@@ -21,7 +21,6 @@ nav:
     - Groups of Resources: tenant_groups_of_resources.md
     - Users: tenant_users.md
     - Metric Templates: tenant_metric_templates.md
-    - Services: tenant_services.md
     - Probes: tenant_probes.md
     - Metrics: tenant_metrics.md
     - Aggregation Profiles: tenant_aggregation_profiles.md
