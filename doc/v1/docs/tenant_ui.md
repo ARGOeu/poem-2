@@ -6,7 +6,7 @@ User interface is slightly different for tenant user and tenant admin user.
 
 When tenant admin user (for tenant POEM, not to be mistaken for super admin user for SuperAdmin POEM) logs into POEM, (s)he is redirected to [administration page](tenant_administration.md).
 
-On the side bar (shown in the figure below), one may access the other POEM pages: [probes](tenant_probes.md), [metrics](tenant_metrics.md), [metric profiles](tenant_metric_profiles.md), [aggregation profiles](tenant_aggregation_profiles.md), and [thresholds profiles](tenant_thresholds_profiles.md).
+On the side bar (shown in the figure below), one may access the other POEM pages: [probes](tenant_probes.md), [metrics](tenant_metrics.md), [metric profiles](tenant_metric_profiles.md), [aggregation profiles](tenant_aggregation_profiles.md), [thresholds profiles](tenant_thresholds_profiles.md), and [operations profiles](tenant_operations_profiles.md).
 
 ![Tenant Admin Sidebar](figures/tenant_sidebar.png)
 
@@ -23,7 +23,7 @@ By hovering over his/her name, user may see his/her details: user type (tenant u
 
 Tenant users do not have permission to access [administration page](tenant_administration.md), so when they are logged in, they are redirected to [metric profiles page](tenant_metric_profiles.md).
 
-The sidebar for tenant users (shown in the figure below) is, therefore, somewhat shorter: it does not contain link to administration, just to [probes](tenant_probes.md), [metrics](tenant_metrics.md), [metric profiles](tenant_metric_profiles.md), [aggregation profiles](tenant_aggregation_profiles.md), and [thresholds profiles](tenant_thresholds_profiles.md).
+The sidebar for tenant users (shown in the figure below) is, therefore, somewhat shorter: it does not contain link to administration, just to [probes](tenant_probes.md), [metrics](tenant_metrics.md), [metric profiles](tenant_metric_profiles.md), [aggregation profiles](tenant_aggregation_profiles.md), [thresholds profiles](tenant_thresholds_profiles.md), and [operations profiles](tenant_operations_profiles.md).
 
 ![Tenant Sidebar](figures/tenant_tenant_sidebar.png)
 

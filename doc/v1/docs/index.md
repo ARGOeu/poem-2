@@ -1,23 +1,24 @@
 # Index
 
 ## SuperAdmin POEM
-- [User Interface](superadmin_ui.md)
+- [User interface](superadmin_ui.md)
 - [Administration](superadmin_administration.md)
     - [Users](superadmin_users.md)
 - [Tenants](superadmin_tenants.md)
-- [YUM Repos](superadmin_repos.md)
+- [YUM repos](superadmin_repos.md)
 - [Packages](superadmin_packages.md)
 - [Probes](superadmin_probe.md)
-- [Metric Templates](superadmin_metric_templates.md)
+- [Metric templates](superadmin_metric_templates.md)
 
 ## Tenant POEM
-- [User Interface](tenant_ui.md)
+- [User interface](tenant_ui.md)
 - [Administration](tenant_administration.md)
     - [Users](tenant_users.md)
-    - [Groups of Resources](tenant_groups_of_resources.md)
-    - [Metric Templates](tenant_metric_templates.md)
+    - [Groups of resources](tenant_groups_of_resources.md)
+    - [Metric templates](tenant_metric_templates.md)
 - [Probes](tenant_probes.md)
 - [Metrics](tenant_metrics.md)
-- [Metric Profiles](tenant_metric_profiles.md)
-- [Aggregation Profiles](tenant_aggregation_profiles.md)
-- [Thresholds Profiles](tenant_thresholds_profiles.md)
+- [Metric profiles](tenant_metric_profiles.md)
+- [Aggregation profiles](tenant_aggregation_profiles.md)
+- [Thresholds profiles](tenant_thresholds_profiles.md)
+- [Operations profiles](tenant_operations_profiles.md)

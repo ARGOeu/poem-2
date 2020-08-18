@@ -15,18 +15,19 @@ nav:
     - YUM repos: superadmin_repos.md
     - Packages: superadmin_packages.md
     - Probes: superadmin_probe.md
-    - Metric Templates: superadmin_metric_templates.md
+    - Metric templates: superadmin_metric_templates.md
 
 - Tenant POEM:
     - Administration: tenant_administration.md
-    - Groups of Resources: tenant_groups_of_resources.md
+    - Groups of resources: tenant_groups_of_resources.md
     - Users: tenant_users.md
-    - Metric Templates: tenant_metric_templates.md
+    - Metric templates: tenant_metric_templates.md
     - Probes: tenant_probes.md
     - Metrics: tenant_metrics.md
-    - Aggregation Profiles: tenant_aggregation_profiles.md
-    - Metric Profiles: tenant_metric_profiles.md
-    - Thresholds Profiles: tenant_thresholds_profiles.md
+    - Aggregation profiles: tenant_aggregation_profiles.md
+    - Metric profiles: tenant_metric_profiles.md
+    - Thresholds profiles: tenant_thresholds_profiles.md
+    - Operations profiles: tenant_operations_profiles.md
 
 - Guides:
     - SuperAdmin POEM guide: superadmin_guide.md
