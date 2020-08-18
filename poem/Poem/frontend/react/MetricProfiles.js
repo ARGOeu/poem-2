@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import {Link} from 'react-router-dom';
 import {Backend, WebApi} from './DataManager';
 import Autocomplete from 'react-autocomplete';
+import Autosuggest from 'react-autosuggest';
 import {
   LoadingAnim,
   BaseArgoView,
@@ -196,36 +197,37 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
                 }
               </td>
               <td className={service.isNew ? "bg-light" : ""}>
-                <Autocomplete
+                <Autosuggest
                   inputProps={{
-                    className: `"form-control custom-select " ${service.isNew ? "border border-success" : service.metricChanged  ? "border border-danger" : ""}`
+                    className: `"form-control custom-select " ${service.isNew ? "border border-success" : service.metricChanged  ? "border border-danger" : ""}`,
+                    placeholder: '',
+                    onChange: (_, {newValue}) => form.setFieldValue(`view_services.${index}.metric`, newValue),
+                    value: service.metric
                   }}
-                  getItemValue={(item) => item}
-                  items={metrics_all}
-                  value={service.metric}
-                  renderItem={(item, isHighlighted) =>
+                  getSuggestionValue={(suggestion) => suggestion}
+                  suggestions={metrics_all}
+                  renderSuggestion={(suggestion, {query, isHighlighted}) =>
                     <div
-                      key={metrics_all.indexOf(item)}
+                      key={metrics_all.indexOf(suggestion)}
                       className={`metricprofiles-autocomplete-entries ${isHighlighted ?
                           "metricprofiles-autocomplete-entries-highlighted"
                           : ""}`
                       }>
-                      {item ? <Icon i='metrics'/> : ''} {item}
+                      {suggestion ? <Icon i='metrics'/> : ''} {suggestion}
                     </div>}
-                  onChange={(e) => form.setFieldValue(`view_services.${index}.metric`, e.target.value)}
-                  onSelect={(val) => {
-                    form.setFieldValue(`view_services.${index}.metric`, val)
+                  onSuggestionsFetchRequested={({value}) => value}
+                  onSuggestionsClearRequested={() => []}
+                  onSuggestionSelected={(_, {suggestion}) => {
+                    form.setFieldValue(`view_services.${index}.metric`, suggestion)
                     form.setFieldValue(`view_services.${index}.metricChanged`, true)
                     onselect_handler(form.values.view_services[index],
                       'metric',
-                      val)
+                      suggestion)
                   }}
-                  wrapperStyle={{}}
-                  shouldItemRender={matchItem}
-                  renderMenu={(items) =>
-                    <div className='metricprofiles-autocomplete-menu'>
-                      {items}
-                    </div>}
+                  theme={{
+                    containerOpen: 'metricprofiles-autocomplete-menu',
+                    suggestionsList: 'metricprofiles-autocomplete-entries'
+                  }}
                 />
                 {
                   form.errors && form.errors.view_services && form.errors.view_services[index]
