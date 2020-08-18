@@ -10,7 +10,7 @@ Administration page is only available to authenticated users with superuser stat
 
 ### POEM
 
-The pages in the first section ([YUM repos](superadmin_repos.md), [packages](superadmin_packages.md), [probes](superadmin_probe.md), and [metric templates](superadmin_metric_templates.md)) are also available to all users from the menu on the left side. 
+The pages in the first section ([tenants](superadmin_tenants.md), [YUM repos](superadmin_repos.md), [packages](superadmin_packages.md), [probes](superadmin_probe.md), and [metric templates](superadmin_metric_templates.md)) are also available to all users from the menu on the left side. 
 
 ### Authentication and Authorization Page
 

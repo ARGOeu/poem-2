@@ -2,7 +2,7 @@
 
 Metric is a procedure which checks specific functionality of a given service, i.e. single measurement (e.g. `org.nagios.WebCheck`, `hr.srce.CertLifetime`). 
 
-Since tenant users are not allowed to create metrics themselves, metric templates are created on SuperAdmin POEM which can be imported by tenant super admins as metrics through [Metric Template Page](tenant_metric_templates.md).
+Since tenant users are not allowed to create metrics themselves, metric templates are created on SuperAdmin POEM which can be imported by tenant super admins as metrics through [metric template page](tenant_metric_templates.md).
 
 ## List of metrics
 
@@ -18,7 +18,7 @@ Particular metric's page is shown in the image below.
 
 ![Tenant Metric Detail](figures/tenant_metrics_details.png)
 
-Most of the fields is disabled. Tenant users are only allowed to modify four of the configuration values and group. User may only choose among groups that are associated to him. Exception to this rule is user with superuser permission, (s)he can pick any existing group. 
+Most of the fields are disabled. Tenant users are only allowed to modify four of the configuration values and group. User may only choose among groups that are associated to him. Exception to this rule is user with superuser permission, (s)he can pick any existing group. 
 
 Fields descriptions are given in [metric template documentation](superadmin_metric_templates.md#field-descriptions).
 

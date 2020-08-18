@@ -12,7 +12,7 @@ There is also a feature to delete multiple metric templates at once. For that, u
 
 ![SuperAdmin metric template bulk delete](figures/superadmin_metric_template_bulk_delete.png)
 
-User will then be asked if (s)he is sure (s)he wants to delete selected metrics. Once the user confirms his/her selection, metric templates and their histories are deleted. Also, metrics imported to tenants and their histories are also deleted, and they are removed from metric profiles. User will be informed of successful deletion of metric templates (figure below). Also, in case of any error, user will be informed the same way.
+User will then be asked if (s)he is sure (s)he wants to delete selected metrics. Once the user confirms his/her selection, metric templates and their histories are deleted. Metrics imported to tenants and their histories are also deleted, and they are removed from metric profiles. User will be informed of successful deletion of metric templates (figure below). Also, in case of any error, user will be informed the same way.
 
 ![SuperAdmin metric template deleted](figures/superadmin_metric_template_deleted.png)
 
@@ -43,11 +43,11 @@ Mandatory fields in case of active metric template:
 
 ##### Tags
 
-Metric templates can be tagged by any tag. There are, however, two tags that are special. With tag *internal* are tagged so called internal metrics, which are checking internal processes which are necessary for all tenants. Those metrics are automatically imported to a tenant once new tenant is created.
+Metric templates can be tagged by any tag. There are, however, two tags that are special. So called internal metrics are tagged with *internal* tag. Those metrics are checking internal processes which are necessary for all tenants. They are automatically imported to a tenant POEM once new tenant is created.
 
 Metric templates tagged with *deprecated* tag are no longer being maintained, and are going to be deleted at an appropriate time.
 
-Tag field is a multiple select field with autocomplete and a possibility to create new entries. So, when SuperAdmin user starts typing, all the already existing tags are listed filtered by the typed in letters. If the desired tag does not exist, user can create new one by simply clicking on create entry.
+Tag field is a multiple select field with autocomplete and a possibility to create new entries. So, when SuperAdmin user starts typing, all the already existing tags are listed (filtered by the letters typed-in). If the desired tag does not exist, user can create new one by simply clicking *create entry*.
 
 ##### Attributes
 
