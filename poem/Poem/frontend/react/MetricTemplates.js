@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { ListOfMetrics, MetricForm, CompareMetrics } from './Metrics';
+import { MetricForm, CompareMetrics } from './Metrics';
 import { Backend } from './DataManager';
 import {
   LoadingAnim,
@@ -13,9 +13,6 @@ import {
 import { Formik, Form } from 'formik';
 import { Button } from 'reactstrap';
 import * as Yup from 'yup';
-
-export const MetricTemplateList = ListOfMetrics('metrictemplate');
-export const TenantMetricTemplateList = ListOfMetrics('metrictemplate', true)
 
 export const MetricTemplateChange = MetricTemplateComponent()
 export const MetricTemplateClone = MetricTemplateComponent(true)
