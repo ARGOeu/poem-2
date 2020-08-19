@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component, useState, useEffect } from 'react';
 import { Backend } from './DataManager';
 import { Link } from 'react-router-dom';
 import {
@@ -40,7 +40,6 @@ import ReactDiffViewer from 'react-diff-viewer';
 import CreatableSelect from 'react-select/creatable';
 import { components } from 'react-select';
 
-export const MetricList = ListOfMetrics('metric');
 export const MetricHistory = HistoryComponent('metric');
 export const MetricVersonCompare = CompareMetrics('metric');
 
@@ -291,540 +290,490 @@ export const ProbeVersionLink = ({probeversion, publicView=false}) => (
 )
 
 
-export function ListOfMetrics(type, imp=false) {
-  return class extends Component {
-    constructor(props) {
-      super(props);
+export const ListOfMetrics = (props) => {
+  const location = props.location;
+  const type = props.type;
+  const importable = props.importable;
 
-      this.location = props.location;
-      this.history = props.history;
+  const [loading, setLoading] = useState(false);
+  const [listMetrics, setListMetrics] = useState(null);
+  const [listTypes, setListTypes] = useState(null);
+  const [listTags, setListTags] = useState(null);
+  const [searchName, setSearchName] = useState('');
+  const [searchProbeversion, setSearchProbeversion] = useState('');
+  const [searchType, setSearchType] = useState('');
+  const [searchTag, setSearchTag] = useState('');
+  const [listGroups, setListGroups] = useState(null);
+  const [searchGroup, setSearchGroup] = useState('');
+  const [userDetails, setUserDetails] = useState(undefined);
+  const [listOStags, setListOStags] = useState(null);
+  const [searchOStag, setSearchOStag] = useState('');
+  const [selected, setSelected] = useState({});
+  const [selectAll, setSelectAll] = useState(0);
+  const [areYouSureModal, setAreYouSureModal] = useState(false);
+  const [modalVar, setModalVar] = useState(undefined);
+  const [modalTitle, setModalTitle] = useState(undefined);
+  const [modalMsg, setModalMsg] = useState(undefined);
+  const [error, setError] = useState(null);
 
-      if (type === 'metric') {
-        this.state = {
-          loading: false,
-          list_metric: null,
-          list_tags: null,
-          list_groups: null,
-          list_types: null,
-          list_tags: null,
-          search_name: '',
-          search_probeversion: '',
-          search_type: '',
-          search_tag: '',
-          search_group: '',
-          userDetails: undefined,
-          error: null
-        }
-      } else {
-        this.state = {
-          loading: false,
-          list_metric: null,
-          list_types: null,
-          list_tags: null,
-          list_ostags: null,
-          search_name: '',
-          search_probeversion: '',
-          search_ostag: '',
-          search_type: '',
-          search_tag: '',
-          selected: {},
-          selectAll: 0,
-          userDetails: undefined,
-          areYouSureModal: false,
-          modalFunc: undefined,
-          modalTitle: undefined,
-          modalMsg: undefined,
-          error: null
-        }
-      }
+  const backend = new Backend();
+  const publicView = props.publicView;
 
-      this.backend = new Backend();
-      this.publicView = props.publicView
-      this.doFilter = this.doFilter.bind(this);
-      this.toggleRow = this.toggleRow.bind(this);
-      this.importMetrics = this.importMetrics.bind(this);
-      this.bulkDeleteMetrics = this.bulkDeleteMetrics.bind(this);
-      this.toggleAreYouSure = this.toggleAreYouSure.bind(this);
-      this.toggleAreYouSureSetModal = this.toggleAreYouSureSetModal.bind(this);
-      this.onDelete = this.onDelete.bind(this);
-    }
+  function doFilter(list_metric, field, filter) {
+    return (
+      list_metric.filter(row =>
+        eval(`row.${field}`).toLowerCase().includes(filter.toLowerCase()))
+    )
+  };
 
-    doFilter(list_metric, field, filter) {
-      return (
-        list_metric.filter(row =>
-          eval(`row.${field}`).toLowerCase().includes(filter.toLowerCase()))
-      )
-    }
+  function toggleRow(name) {
+    const newSelected = Object.assign({}, selected);
+    newSelected[name] = !selected[name];
+    setSelected(newSelected);
+    setSelectAll(Object.keys(newSelected).every((k) => !newSelected[k]) ? 0 : 2);
+  };
 
-    toggleRow(name) {
-      const newSelected = Object.assign({}, this.state.selected);
-      newSelected[name] = !this.state.selected[name];
-      this.setState({
-        selected: newSelected,
-        selectAll: Object.keys(newSelected).every((k) => !newSelected[k]) ? 0 : 2
-      })
-    }
+  function toggleSelectAll() {
+    var list_metric = listMetrics;
 
-    toggleSelectAll() {
-      var { list_metric } = this.state;
+    if (searchName) {
+      list_metric = doFilter(list_metric, 'name', searchName);
+    };
 
-      if (this.state.search_name) {
-        list_metric = this.doFilter(list_metric, 'name', this.state.search_name);
-      }
+    if (searchProbeversion) {
+      list_metric = doFilter(list_metric, 'probeversion', searchProbeversion);
+    };
 
-      if (this.state.search_probeversion) {
-        list_metric = this.doFilter(list_metric, 'probeversion', this.state.search_probeversion);
-      }
+    if (searchType) {
+      list_metric = doFilter(list_metric, 'mtype', searchType);
+    };
 
-      if (this.state.search_type) {
-        list_metric = this.doFilter(list_metric, 'mtype', this.state.search_type);
-      }
+    if (searchTag) {
+      list_metric = list_metric.filter(row =>
+        row.tags.includes(searchTag)
+      );
+    };
 
-      if (this.state.search_tag) {
-        list_metric = list_metric.filter(row =>
-          row.tags.includes(this.state.search_tag)
-        );
-      }
+    if (searchOStag) {
+      list_metric = list_metric.filter(row =>
+        `${row.ostag.join(', ')}`.includes(searchOStag)
+      );
+    };
 
-      if (this.state.search_ostag) {
-        list_metric = list_metric.filter(row =>
-          `${row.ostag.join(', ')}`.includes(this.state.search_ostag)
-        )
-      }
-
-      let newSelected = {};
-      if (this.state.selectAll === 0) {
-        list_metric.forEach(x => {
-          newSelected[x.name] = true;
-        });
-      }
-      this.setState({
-        selected: newSelected,
-        selectAll: this.state.selectAll === 0 ? 1 : 0
+    let newSelected = {};
+    if (selectAll === 0) {
+      list_metric.forEach(x => {
+        newSelected[x.name] = true;
       });
-    }
-
-    toggleAreYouSure() {
-      this.setState(prevState =>
-        ({areYouSureModal: !prevState.areYouSureModal}));
     };
 
-    toggleAreYouSureSetModal(msg, title, onyes) {
-      this.setState(prevState =>
-        ({areYouSureModal: !prevState.areYouSureModal,
-          modalFunc: onyes,
-          modalMsg: msg,
-          modalTitle: title,
-        }));
-    }
+    setSelected(newSelected);
+    setSelectAll(selectAll === 0 ? 1 : 0);
+  };
 
-    onDelete() {
-      let selectedMetrics = this.state.selected;
-      // get only those metrics whose value is true
-      let mt = Object.keys(selectedMetrics).filter(k => selectedMetrics[k]);
-      if (mt.length > 0 ) {
-        let msg = `Are you sure you want to delete metric template${mt.length > 1 ? 's' : ''} ${mt.join(', ')}?`
-        let title = `Delete metric template${mt.length > 1 ? 's' : ''}`;
+  function toggleAreYouSure() {
+    setAreYouSureModal(!areYouSureModal);
+  };
 
-        this.toggleAreYouSureSetModal(msg, title,
-          () => this.bulkDeleteMetrics(mt));
-      } else
-        NotifyError({
-          msg: 'No metric templates were selected!',
-          title: 'Error'
-        });
-    };
+  function onDelete() {
+    let selectedMetrics = selected;
+    // get only those metrics whose value is true
+    let mt = Object.keys(selectedMetrics).filter(k => selectedMetrics[k]);
+    if (mt.length > 0 ) {
+      setModalMsg(`Are you sure you want to delete metric template${mt.length > 1 ? 's' : ''} ${mt.join(', ')}?`);
+      setModalTitle(`Delete metric template${mt.length > 1 ? 's' : ''}`);
+      setModalVar(mt);
+      toggleAreYouSure();
+    } else
+      NotifyError({
+        msg: 'No metric templates were selected!',
+        title: 'Error'
+      });
+  };
 
-    async importMetrics() {
-      let selectedMetrics = this.state.selected;
-      // get only those metrics whose value is true
-      let mt = Object.keys(selectedMetrics).filter(k => selectedMetrics[k]);
-      if (mt.length > 0) {
-        let response = await this.backend.importMetrics({'metrictemplates': mt});
-        let json = await response.json();
-        if ('imported' in json)
-          NotifyOk({msg: json.imported, title: 'Imported'})
-
-        if ('warn' in json)
-          NotifyInfo({msg: json.warn, title: 'Imported with older probe version'});
-
-        if ('err' in json)
-          NotifyWarn({msg: json.err, title: 'Not imported'});
-
-        if ('unavailable' in json)
-          NotifyError({msg: json.unavailable, title: 'Unavailable'});
-
-      } else {
-        NotifyError({
-          msg: 'No metric templates were selected!',
-          title: 'Error'});
-      };
-    }
-
-    async bulkDeleteMetrics(mt) {
-      let refreshed_metrics = this.state.list_metric;
-      let response = await this.backend.bulkDeleteMetrics({'metrictemplates': mt});
+  async function importMetrics() {
+    let selectedMetrics = selected;
+    // get only those metrics whose value is true
+    let mt = Object.keys(selectedMetrics).filter(k => selectedMetrics[k]);
+    if (mt.length > 0) {
+      let response = await backend.importMetrics({'metrictemplates': mt});
       let json = await response.json();
-      if (response.ok) {
-        refreshed_metrics = refreshed_metrics.filter(m => !mt.includes(m.name));
-        if ('info' in json)
-          NotifyOk({msg: json.info, title: 'Deleted'});
+      if ('imported' in json)
+        NotifyOk({msg: json.imported, title: 'Imported'})
 
-        if ('warning' in json)
-          NotifyWarn({msg: json.warn, title: 'Deleted'});
+      if ('warn' in json)
+        NotifyInfo({msg: json.warn, title: 'Imported with older probe version'});
 
-        this.setState({
-          list_metric: refreshed_metrics,
-          selectAll: 0
-        });
+      if ('err' in json)
+        NotifyWarn({msg: json.err, title: 'Not imported'});
 
-      } else
-        NotifyError({
-          msg: `Error deleting metric template${mt.length > 0 ? 's' : ''}`,
-          title: `Error: ${response.status} ${response.statusText}`
-        });
+      if ('unavailable' in json)
+        NotifyError({msg: json.unavailable, title: 'Unavailable'});
+
+    } else {
+      NotifyError({
+        msg: 'No metric templates were selected!',
+        title: 'Error'});
     };
+  };
 
-    async componentDidMount() {
-      this.setState({loading: true});
+  async function bulkDeleteMetrics(mt) {
+    let refreshed_metrics = listMetrics;
+    let response = await backend.bulkDeleteMetrics({'metrictemplates': mt});
+    let json = await response.json();
+    if (response.ok) {
+      refreshed_metrics = refreshed_metrics.filter(m => !mt.includes(m.name));
+      if ('info' in json)
+        NotifyOk({msg: json.info, title: 'Deleted'});
 
-      let response = await this.backend.isTenantSchema();
-      let alltags = await this.backend.fetchData(`/api/v2/internal/${this.publicView ? 'public_' : ''}metrictags`);
+      if ('warning' in json)
+        NotifyWarn({msg: json.warning, title: 'Deleted'});
+
+      setListMetrics(refreshed_metrics);
+      setSelectAll(0);
+
+    } else
+      NotifyError({
+        msg: `Error deleting metric template${mt.length > 0 ? 's' : ''}`,
+        title: `Error: ${response.status} ${response.statusText}`
+      });
+  };
+
+  useEffect(() => {
+    setLoading(true);
+
+    async function fetchMetricData() {
+      let response = await backend.isTenantSchema();
+      let alltags = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}metrictags`);
       alltags.push('none');
       try {
-        let userDetails = {username: 'Anonymous'};
-        if (!this.publicView) {
-          let sessionActive = await this.backend.isActiveSession(response);
+        let userdetails = {username: 'Anonymous'};
+        if (!publicView) {
+          let sessionActive = await backend.isActiveSession(response);
           if (sessionActive.active)
-            userDetails = sessionActive.userdetails;
-        }
+            userdetails = sessionActive.userdetails;
+        };
+
+        let metrics = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}${type === 'metrics' ? 'metric' : type}`);
+        let types = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}mt${type=='metrictemplates' ? 't' : ''}ypes`);
+
+        setListMetrics(metrics);
+        setListTypes(types);
+        setListTags(alltags);
+        setUserDetails(userdetails);
 
         if (type === 'metric') {
-          let metrics = await this.backend.fetchData(`/api/v2/internal/${this.publicView ? 'public_' : ''}metric`);
-          let groups = await this.backend.fetchResult(`/api/v2/internal/${this.publicView ? 'public_' : ''}usergroups`);
-          let types = await this.backend.fetchData(`/api/v2/internal/${this.publicView ? 'public_' : ''}mtypes`);
-          this.setState({
-            list_metric: metrics,
-            list_groups: groups['metrics'],
-            list_types: types,
-            list_tags: alltags,
-            loading: false,
-            search_name: '',
-            search_probeversion: '',
-            search_group: '',
-            search_type: '',
-            userDetails: userDetails
-          });
+          let groups = await backend.fetchResult(`/api/v2/internal/${publicView ? 'public_' : ''}usergroups`);
+          setListGroups(groups['metrics']);
         } else {
-          let metrictemplates = await this.backend.fetchData(`/api/v2/internal/${this.publicView ? 'public_metrictemplates' : `metrictemplates${imp ? '-import' : ''}`}`);
-          let types = await this.backend.fetchData(`/api/v2/internal/${this.publicView ? 'public_' : ''}mttypes`);
-          let ostags = await this.backend.fetchData(`/api/v2/internal/${this.publicView ? 'public_' : ''}ostags`);
-          this.setState({
-            list_metric: metrictemplates,
-            list_types: types,
-            list_ostags: ostags,
-            list_tags: alltags,
-            loading: false,
-            search_name: '',
-            search_probeversion: '',
-            search_type: '',
-            search_ostag: '',
-            userDetails: userDetails
-          });
+          let ostags = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}ostags`);
+          setListOStags(ostags);
         };
       } catch(err) {
-        this.setState({
-          error: err,
-          loading: false
-        });
+        setError(err);
       };
-    }
 
-    render() {
-      let metriclink = undefined;
-      if (type === 'metric') {
-        if (this.publicView)
-          metriclink = '/ui/public_metrics/'
-        else
-          metriclink = '/ui/metrics/'
-      } else {
-        if (this.publicView)
-          metriclink = '/ui/public_metrictemplates/';
+      setLoading(false);
+    };
 
-        else if (imp)
-          metriclink = '/ui/administration/metrictemplates/';
+    fetchMetricData();
+  }, []);
 
-        else
-          metriclink = '/ui/metrictemplates/';
-      }
+  let metriclink = `/ui/${importable ? 'administration/' : ''}${publicView ? 'public_' : ''}${type}/`;
 
-      const columns = [
-        {
-          Header: 'Name',
-          id: 'name',
-          minWidth: 100,
-          accessor: e =>
-            <Link
-            to={
-              imp ?
-                this.state.search_ostag === 'CentOS 6' && e.centos6_probeversion ?
-                  `${metriclink}${e.name}/history/${e.centos6_probeversion.split(' ')[1].substring(1, e.centos6_probeversion.split(' ')[1].length - 1)}`
-                :
-                  (this.state.search_ostag === 'CentOS 7' && e.centos7_probeversion) ?
-                    `${metriclink}${e.name}/history/${e.centos7_probeversion.split(' ')[1].substring(1, e.centos7_probeversion.split(' ')[1].length - 1)}`
-                  :
-                    `${metriclink}${e.name}`
+  const columns = [
+    {
+      Header: 'Name',
+      id: 'name',
+      minWidth: 100,
+      accessor: e =>
+        <Link
+        to={
+          importable ?
+            searchOStag === 'CentOS 6' && e.centos6_probeversion ?
+              `${metriclink}${e.name}/history/${e.centos6_probeversion.split(' ')[1].substring(1, e.centos6_probeversion.split(' ')[1].length - 1)}`
+            :
+              (searchOStag === 'CentOS 7' && e.centos7_probeversion) ?
+                `${metriclink}${e.name}/history/${e.centos7_probeversion.split(' ')[1].substring(1, e.centos7_probeversion.split(' ')[1].length - 1)}`
               :
                 `${metriclink}${e.name}`
-            }
-          >
-              {e.name}
-            </Link>,
-          filterable: true,
-          Filter: (
-            <DefaultFilterComponent
-              field='name'
-              value={this.state.search_name}
-              onChange={e => this.setState({search_name: e.target.value})}
-            />
-          )
-        },
-        {
-          Header: 'Probe version',
-          id: 'probeversion',
-          minWidth: 80,
-          accessor: e => (
-            e.probeversion ?
-              <ProbeVersionLink
-                publicView={this.publicView}
-                probeversion={
-                  imp ?
-                    (this.state.search_ostag === 'CentOS 6' && e.centos6_probeversion) ?
-                      e.centos6_probeversion
-                    :
-                      (this.state.search_ostag === 'CentOS 7' && e.centos7_probeversion) ?
-                        e.centos7_probeversion
-                      :
-                        e.probeversion
+          :
+            `${metriclink}${e.name}`
+        }
+      >
+          {e.name}
+        </Link>,
+      filterable: true,
+      Filter: (
+        <DefaultFilterComponent
+          field='name'
+          value={searchName}
+          onChange={e => setSearchName(e.target.value)}
+        />
+      )
+    },
+    {
+      Header: 'Probe version',
+      id: 'probeversion',
+      minWidth: 80,
+      accessor: e => (
+        e.probeversion ?
+          <ProbeVersionLink
+            publicView={publicView}
+            probeversion={
+              importable ?
+                (searchOStag.search_ostag === 'CentOS 6' && e.centos6_probeversion) ?
+                  e.centos6_probeversion
+                :
+                  (searchOStag === 'CentOS 7' && e.centos7_probeversion) ?
+                    e.centos7_probeversion
                   :
                     e.probeversion
-                }
-              />
+              :
+                e.probeversion
+            }
+          />
+        :
+          ""
+      ),
+      Cell: row =>
+        <div style={{textAlign: 'center'}}>
+          {row.value}
+        </div>,
+      filterable: true,
+      Filter: (
+        <DefaultFilterComponent
+          field='probe version'
+          value={searchProbeversion}
+          onChange={e => setSearchProbeversion(e.target.value)}
+        />
+      )
+    },
+    {
+      Header: 'Type',
+      minWidth: 30,
+      accessor: 'mtype',
+      Cell: row =>
+        <div style={{textAlign: 'center'}}>
+          {row.value}
+        </div>,
+      filterable:true,
+      Filter: (
+        <DropdownFilterComponent
+          value={searchType}
+          onChange={e => setSearchType(e.target.value)}
+          data={listTypes}
+        />
+      )
+    },
+    {
+      Header: 'Tag',
+      minWidth: 30,
+      accessor: 'tags',
+      Cell: row =>
+        <div style={{textAlign: 'center'}}>
+          {
+            row.value.length === 0 ?
+              <Badge color='dark'>none</Badge>
             :
-              ""
-          ),
-          Cell: row =>
-            <div style={{textAlign: 'center'}}>
-              {row.value}
-            </div>,
-          filterable: true,
-          Filter: (
-            <DefaultFilterComponent
-              field='probe version'
-              value={this.state.search_probeversion}
-              onChange={e => this.setState({search_probeversion: e.target.value})}
-            />
-          )
-        },
-        {
-          Header: 'Type',
-          minWidth: 30,
-          accessor: 'mtype',
-          Cell: row =>
-            <div style={{textAlign: 'center'}}>
-              {row.value}
-            </div>,
-          filterable:true,
-          Filter: (
-            <DropdownFilterComponent
-              value={this.state.mtype}
-              onChange={e => this.setState({search_type: e.target.value})}
-              data={this.state.list_types}
-            />
-          )
-        },
-        {
-          Header: 'Tag',
-          minWidth: 30,
-          accessor: 'tags',
-          Cell: row =>
-            <div style={{textAlign: 'center'}}>
-              {
-                row.value.length === 0 ?
-                  <Badge color='dark'>none</Badge>
-                :
-                  row.value.map((tag, i) =>
-                    <Badge className={'mr-1'} key={i} color={tag === 'internal' ? 'success' : tag === 'deprecated' ? 'danger' : 'secondary'}>
-                      {tag}
-                    </Badge>
-                  )
-              }
-            </div>,
-          filterable: true,
-          Filter: (
-            <DropdownFilterComponent
-              value={this.state.tags}
-              onChange={e => this.setState({search_tag: e.target.value})}
-              data={this.state.list_tags}
-            />
-          )
-        }
-      ];
-
-      if (type == 'metrictemplate' && this.state.userDetails && this.state.userDetails.is_superuser) {
-        columns.splice(
-          0,
-          0,
-          {
-            id: 'checkbox',
-            accessor: '',
-            Cell: ({original}) => {
-              return (
-                <div style={{display: 'flex', justifyContent: 'center'}}>
-                  <input
-                    type='checkbox'
-                    className='checkbox'
-                    checked={this.state.selected[original.name] === true}
-                    onChange={() => this.toggleRow(original.name)}
-                  />
-                </div>
-              );
-            },
-            Header: `${imp ? 'Select all' : 'Delete'}`,
-            Filter: (
-              <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
-                <input
-                  type='checkbox'
-                  className='checkbox'
-                  checked={this.state.selectAll === 1}
-                  ref={input => {
-                    if (input) {
-                      input.indeterminate = this.state.selectAll === 2;
-                    }
-                  }}
-                  onChange={() => this.toggleSelectAll()}
-                />
-              </div>
-              ),
-            filterable: true,
-            sortable: false,
-            minWidth: 12
+              row.value.map((tag, i) =>
+                <Badge className={'mr-1'} key={i} color={tag === 'internal' ? 'success' : tag === 'deprecated' ? 'danger' : 'secondary'}>
+                  {tag}
+                </Badge>
+              )
           }
-        )
-      } else {
-        columns.splice(
-          0,
-          0,
-          {
-            Header: '#',
-            id: 'row',
-            minWidth: 12,
-            Cell: (row) =>
-              <div style={{textAlign: 'center'}}>
-                {row.index + 1}
-              </div>
-          }
-        )
-      }
+        </div>,
+      filterable: true,
+      Filter: (
+        <DropdownFilterComponent
+          value={searchTag}
+          onChange={e => setSearchTag(e.target.value)}
+          data={listTags}
+        />
+      )
+    }
+  ];
 
-      if (type === 'metric') {
-        columns.splice(
-          4,
-          0,
-          {
-            Header: 'Group',
-            minWidth: 30,
-            accessor: 'group',
-            Cell: row =>
-              <div style={{textAlign: 'center'}}>
-                {row.value}
-              </div>,
-            filterable: true,
-            Filter: (
-              <DropdownFilterComponent
-                value={this.state.search_group}
-                onChange={e => this.setState({search_group: e.target.value})}
-                data={this.state.list_groups}
-              />
-            )
-          }
-        )
-      }
-
-      if (imp) {
-        columns.splice(
-          4,
-          0,
-          {
-            Header: 'OS',
-            minWidth: 30,
-            accessor: 'ostag',
-            Cell: row =>
-              <div style={{textAlign: 'center'}}>
-                {row.value.join(', ')}
-              </div>,
-            filterable: true,
-            Filter: (
-              <DropdownFilterComponent
-                value={this.state.ostag}
-                onChange={e => this.setState({search_ostag: e.target.value})}
-                data={this.state.list_ostags}
-              />
-            )
-          }
-        )
-      }
-
-      var { loading, list_metric, error } = this.state;
-
-      if (this.state.search_name) {
-        list_metric = this.doFilter(list_metric, 'name', this.state.search_name)
-      }
-
-      if (this.state.search_probeversion) {
-        list_metric = this.doFilter(list_metric, 'probeversion', this.state.search_probeversion)
-      }
-
-      if (this.state.search_type) {
-        list_metric = this.doFilter(list_metric, 'mtype', this.state.search_type)
-      }
-
-      if (this.state.search_ostag) {
-        list_metric = list_metric.filter(row =>
-          `${row.ostag.join(', ')}`.toLowerCase().includes(this.state.search_ostag.toLowerCase())
-        )
-      }
-
-      if (this.state.search_tag) {
-        list_metric = list_metric.filter(row => {
-          if (this.state.search_tag === 'none')
-            return row.tags.length === 0
-
-          else
-            return row.tags.includes(this.state.search_tag)
-        }
-        );
-      };
-
-      if (type === 'metric' && this.state.search_group) {
-        list_metric = this.doFilter(list_metric, 'group', this.state.search_group)
-      }
-
-      if (loading)
-        return (<LoadingAnim />);
-
-      else if (error)
-        return (<ErrorComponent error={error}/>);
-
-      else if (!loading && list_metric && this.state.userDetails) {
-        if (type === 'metric') {
+  if (type == 'metrictemplates' && userDetails && userDetails.is_superuser) {
+    columns.splice(
+      0,
+      0,
+      {
+        id: 'checkbox',
+        accessor: '',
+        Cell: ({original}) => {
           return (
-            <BaseArgoView
-              resourcename='metric'
-              location={this.location}
-              listview={true}
-              addnew={false}
-            >
+            <div style={{display: 'flex', justifyContent: 'center'}}>
+              <input
+                type='checkbox'
+                className='checkbox'
+                checked={selected[original.name] === true}
+                onChange={() => toggleRow(original.name)}
+              />
+            </div>
+          );
+        },
+        Header: `${importable ? 'Select all' : 'Delete'}`,
+        Filter: (
+          <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
+            <input
+              type='checkbox'
+              className='checkbox'
+              checked={selectAll === 1}
+              ref={input => {
+                if (input) {
+                  input.indeterminate = selectAll === 2;
+                }
+              }}
+              onChange={() => toggleSelectAll()}
+            />
+          </div>
+          ),
+        filterable: true,
+        sortable: false,
+        minWidth: 12
+      }
+    )
+  } else {
+    columns.splice(
+      0,
+      0,
+      {
+        Header: '#',
+        id: 'row',
+        minWidth: 12,
+        Cell: (row) =>
+          <div style={{textAlign: 'center'}}>
+            {row.index + 1}
+          </div>
+      }
+    )
+  };
+
+  if (type === 'metric') {
+    columns.splice(
+      4,
+      0,
+      {
+        Header: 'Group',
+        minWidth: 30,
+        accessor: 'group',
+        Cell: row =>
+          <div style={{textAlign: 'center'}}>
+            {row.value}
+          </div>,
+        filterable: true,
+        Filter: (
+          <DropdownFilterComponent
+            value={searchGroup}
+            onChange={e => setSearchGroup(e.target.value)}
+            data={listGroups}
+          />
+        )
+      }
+    )
+  }
+
+  if (importable) {
+    columns.splice(
+      4,
+      0,
+      {
+        Header: 'OS',
+        minWidth: 30,
+        accessor: 'ostag',
+        Cell: row =>
+          <div style={{textAlign: 'center'}}>
+            {row.value.join(', ')}
+          </div>,
+        filterable: true,
+        Filter: (
+          <DropdownFilterComponent
+            value={searchOStag}
+            onChange={e => setSearchOStag(e.target.value)}
+            data={listOStags}
+          />
+        )
+      }
+    )
+  };
+
+  var list_metric = listMetrics;
+
+  if (searchName) {
+    list_metric = doFilter(list_metric, 'name', searchName);
+  };
+
+  if (searchProbeversion) {
+    list_metric = doFilter(list_metric, 'probeversion', searchProbeversion);
+  };
+
+  if (searchType) {
+    list_metric = doFilter(list_metric, 'mtype', searchType);
+  };
+
+  if (searchOStag) {
+    list_metric = list_metric.filter(row =>
+      `${row.ostag.join(', ')}`.toLowerCase().includes(searchOStag.toLowerCase())
+    );
+  };
+
+  if (searchTag) {
+    list_metric = list_metric.filter(row => {
+      if (searchTag === 'none')
+        return row.tags.length === 0;
+
+      else
+        return row.tags.includes(searchTag);
+    });
+  };
+
+  if (type === 'metrics' && searchGroup) {
+    list_metric = doFilter(list_metric, 'group', searchGroup);
+  };
+
+  if (loading)
+    return (<LoadingAnim />);
+
+  else if (error)
+    return (<ErrorComponent error={error}/>);
+
+  else if (!loading && list_metric && userDetails) {
+    if (type === 'metrics') {
+      return (
+        <BaseArgoView
+          resourcename='metric'
+          location={location}
+          listview={true}
+          addnew={false}
+        >
+          <ReactTable
+            data={list_metric}
+            columns={columns}
+            className='-highlight'
+            defaultPageSize={50}
+            rowsText='metrics'
+            getTheadThProps={() => ({className: 'table-active font-weight-bold p-2'})}
+          />
+        </BaseArgoView>
+      )
+    } else {
+      if (importable)
+        return (
+          <>
+            <div className="d-flex align-items-center justify-content-between">
+              <h2 className="ml-3 mt-1 mb-4">{`Select metric template${userDetails.is_superuser ? '(s) to import' : ' for details'}`}</h2>
+              {
+                userDetails.is_superuser &&
+                  <Button
+                  className='btn btn-secondary'
+                  onClick={() => importMetrics()}
+                    >
+                      Import
+                    </Button>
+              }
+            </div>
+            <div id="argo-contentwrap" className="ml-2 mb-2 mt-2 p-3 border rounded">
               <ReactTable
                 data={list_metric}
                 columns={columns}
@@ -833,82 +782,52 @@ export function ListOfMetrics(type, imp=false) {
                 rowsText='metrics'
                 getTheadThProps={() => ({className: 'table-active font-weight-bold p-2'})}
               />
-            </BaseArgoView>
-          )
-        } else {
-          if (imp)
-            return (
-              <>
-                <div className="d-flex align-items-center justify-content-between">
-                  <h2 className="ml-3 mt-1 mb-4">{`Select metric template${this.state.userDetails.is_superuser ? '(s) to import' : ' for details'}`}</h2>
-                  {
-                    this.state.userDetails.is_superuser &&
-                      <Button
-                      className='btn btn-secondary'
-                      onClick={() => this.importMetrics()}
-                        >
-                          Import
-                        </Button>
-                  }
-                </div>
-                <div id="argo-contentwrap" className="ml-2 mb-2 mt-2 p-3 border rounded">
-                  <ReactTable
-                    data={list_metric}
-                    columns={columns}
-                    className='-highlight'
-                    defaultPageSize={50}
-                    rowsText='metrics'
-                    getTheadThProps={() => ({className: 'table-active font-weight-bold p-2'})}
-                  />
-                </div>
-              </>
-            )
-          else
-            return (
-              <>
-                <ModalAreYouSure
-                  isOpen={this.state.areYouSureModal}
-                  toggle={this.toggleAreYouSure}
-                  title={this.state.modalTitle}
-                  msg={this.state.modalMsg}
-                  onYes={this.state.modalFunc}
-                />
-                <div className="d-flex align-items-center justify-content-between">
-                  <h2 className="ml-3 mt-1 mb-4">{'Metric templates'}</h2>
-                  {
-                    <ButtonToolbar>
-                      <Link className={`btn btn-secondary ${imp ? '' : 'mr-2'}`} to={this.location.pathname + '/add'} role='button'>Add</Link>
-                      {
-                        !imp &&
-                          <Button
-                            className='btn btn-secondary'
-                            onClick={() => this.onDelete()}
-                          >
-                            Delete
-                          </Button>
-                      }
-                    </ButtonToolbar>
-                  }
-                </div>
-                <div id='argo-contentwrap' className='ml-2 mb-2 mt-2 p-3 border rounded'>
-                  <ReactTable
-                    data={list_metric}
-                    columns={columns}
-                    className='-highlight'
-                    defaultPageSize={50}
-                    rowsText='metrics'
-                    getTheadThProps={() => ({className: 'table-active font-weight-bold p-2'})}
-                  />
-                </div>
-              </>
-            )
-        }
-      }
+            </div>
+          </>
+        )
       else
-        return null
-    }
-  }
-}
+        return (
+          <>
+            <ModalAreYouSure
+              isOpen={areYouSureModal}
+              toggle={toggleAreYouSure}
+              title={modalTitle}
+              msg={modalMsg}
+              onYes={() => bulkDeleteMetrics(modalVar)}
+            />
+            <div className="d-flex align-items-center justify-content-between">
+              <h2 className="ml-3 mt-1 mb-4">{'Metric templates'}</h2>
+              {
+                <ButtonToolbar>
+                  <Link className={`btn btn-secondary ${importable ? '' : 'mr-2'}`} to={location.pathname + '/add'} role='button'>Add</Link>
+                  {
+                    !importable &&
+                      <Button
+                        className='btn btn-secondary'
+                        onClick={() => onDelete()}
+                      >
+                        Delete
+                      </Button>
+                  }
+                </ButtonToolbar>
+              }
+            </div>
+            <div id='argo-contentwrap' className='ml-2 mb-2 mt-2 p-3 border rounded'>
+              <ReactTable
+                data={list_metric}
+                columns={columns}
+                className='-highlight'
+                defaultPageSize={50}
+                rowsText='metrics'
+                getTheadThProps={() => ({className: 'table-active font-weight-bold p-2'})}
+              />
+            </div>
+          </>
+        );
+    };
+  } else
+    return null
+};
 
 
 const styles = {
