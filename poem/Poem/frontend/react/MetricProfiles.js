@@ -37,7 +37,7 @@ function matchItem(item, value) {
 }
 
 
-const MetricProfileAutocompleteField = ({suggestions, service, index, onselect, icon, form, tupleType}) => {
+const MetricProfileAutocompleteField = ({suggestions, service, index, onselect, icon, form, tupleType, id}) => {
   const [suggestionList, setSuggestions] = useState(suggestions)
 
   return (
@@ -46,7 +46,7 @@ const MetricProfileAutocompleteField = ({suggestions, service, index, onselect, 
         className: `"form-control custom-select " ${service.isNew ? "border border-success" : service[tupleType + 'Changed'] ? "border border-danger" : ""}`,
         placeholder: '',
         onChange: (_, {newValue}) => form.setFieldValue(`view_services.${index}.${tupleType}`, newValue),
-        value: service.service
+        value: service[tupleType]
       }}
       getSuggestionValue={(suggestion) => suggestion}
       suggestions={suggestionList}
@@ -80,6 +80,7 @@ const MetricProfileAutocompleteField = ({suggestions, service, index, onselect, 
         containerOpen: 'metricprofiles-autocomplete-menu',
         suggestionsList: 'metricprofiles-autocomplete-list'
       }}
+      id={id}
     />
   )
 }
@@ -210,7 +211,8 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
                   icon='serviceflavour'
                   onselect={onselect_handler}
                   form={form}
-                  tupleType='service'/>
+                  tupleType='service'
+                  id={`autosuggest-metric-${index}`}/>
                 {
                   form.errors && form.errors.view_services && form.errors.view_services[index]
                     ? form.errors.view_services[index].service
@@ -227,7 +229,9 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
                   icon='metrics'
                   onselect={onselect_handler}
                   form={form}
-                  tupleType='metric'/>
+                  tupleType='metric'
+                  id={`autosuggest-metric-${index}`}
+                />
                 {
                   form.errors && form.errors.view_services && form.errors.view_services[index]
                     ? form.errors.view_services[index].metric
