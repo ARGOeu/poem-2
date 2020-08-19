@@ -45,10 +45,6 @@ import './AggregationProfiles.css';
 export const AggregationProfileHistory = HistoryComponent('aggregationprofile');
 
 
-function matchItem(item, value) {
-  return item.toLowerCase().indexOf(value.toLowerCase()) !== -1;
-}
-
 
 const AggregationProfilesSchema = Yup.object().shape({
   name: Yup.string().required('Required'),
