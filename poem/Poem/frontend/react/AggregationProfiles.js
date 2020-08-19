@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component, useState } from 'react';
 import {Link} from 'react-router-dom';
 import {
   LoadingAnim,
@@ -14,7 +14,7 @@ import {
   ErrorComponent,
   ParagraphTitle
 } from './UIElements';
-import Autocomplete from 'react-autocomplete';
+import Autosuggest from 'react-autosuggest';
 import ReactTable from 'react-table';
 import 'react-table/react-table.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -76,6 +76,50 @@ function insertSelectPlaceholder(data, text) {
     return [text, ...data]
   else
     return [text]
+}
+
+
+const AggregationProfileAutocompleteField = ({suggestions, service, index, form, isNew, groupNew, groupIndex, isMissing}) => {
+  const [suggestionList, setSuggestions] = useState(suggestions)
+
+  return (
+    <Autosuggest
+      inputProps={{
+        className: `"form-control custom-select " ${isNew && !groupNew ? "border-success" : ""} ${isMissing ? "border-primary": ""}`,
+        placeholder: '',
+        onChange: (_, {newValue}) => form.setFieldValue(`groups.${groupIndex}.services.${index}.name`, newValue),
+        value: service.name
+      }}
+      getSuggestionValue={(suggestion) => suggestion}
+      suggestions={suggestionList}
+      renderSuggestion={(suggestion, {query, isHighlighted}) =>
+        <div
+          key={suggestions.indexOf(suggestion)}
+          className={`aggregation-autocomplete-entries ${isHighlighted ?
+              "aggregation-autocomplete-entries-highlighted"
+              : ""}`
+          }>
+          {suggestion ? <Icon i='serviceflavour'/> : ''} {suggestion}
+        </div>}
+      onSuggestionsFetchRequested={({ value }) =>
+        {
+          let result = suggestions.filter(service => service.toLowerCase().includes(value.trim().toLowerCase()))
+          setSuggestions(result)
+        }
+      }
+      onSuggestionsClearRequested={() => {
+        setSuggestions([])
+      }}
+      onSuggestionSelected={(_, {suggestion}) => {
+        form.setFieldValue(`groups.${groupIndex}.services.${index}.name`, suggestion)
+      }}
+      shouldRenderSuggestions={() => true}
+      theme={{
+        containerOpen: 'aggregation-autocomplete-menu',
+        suggestionsList: 'aggregation-autocomplete-list'
+      }}
+    />
+  )
 }
 
 
@@ -215,30 +259,15 @@ const Service = ({name, service, operation, list_services, list_operations,
   <React.Fragment>
     <Row className="d-flex align-items-center service pt-1 pb-1 no-gutters" key={index}>
       <Col md={8}>
-        <Autocomplete
-          inputProps={{
-            className: `"form-control custom-select " ${isnew && !groupnew ? "border-success" : ""} ${ismissing ? "border-primary": ""}`
-          }}
-          getItemValue={(item) => item}
-          items={list_services}
-          value={service.name}
-          renderItem={(item, isHighlighted) =>
-            <div
-              key={list_services.indexOf(item)}
-              className={`aggregation-autocomplete-entries ${isHighlighted ?
-                  "aggregation-autocomplete-entries-highlighted"
-                  : ""}`
-              }>
-              {item ? <Icon i='serviceflavour'/> : ''} {item}
-            </div>}
-          onChange={(e) => form.setFieldValue(`groups.${groupindex}.services.${index}.name`, e.target.value)}
-          onSelect={(val) => {
-            form.setFieldValue(`groups.${groupindex}.services.${index}.name`, val)
-          }}
-          wrapperStyle={{}}
-          shouldItemRender={matchItem}
-          renderMenu={(items) =>
-            <div className='aggregation-autocomplete-menu' children={items}/>}
+        <AggregationProfileAutocompleteField
+          suggestions={list_services}
+          service={service}
+          index={index}
+          form={form}
+          isNew={isnew}
+          groupNew={groupnew}
+          groupIndex={groupindex}
+          isMissing={ismissing}
         />
       </Col>
       <Col md={2}>
