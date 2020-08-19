@@ -115,7 +115,7 @@ const AggregationProfileAutocompleteField = ({suggestions, service, index, form,
       }}
       shouldRenderSuggestions={() => true}
       theme={{
-        containerOpen: 'aggregation-autocomplete-menu',
+        suggestionsContainerOpen: 'aggregation-autocomplete-menu',
         suggestionsList: 'aggregation-autocomplete-list'
       }}
     />
