@@ -10,12 +10,10 @@ import {
 } from './MetricProfiles';
 import Home, { PublicHome } from './Home';
 import { ProbeList, ProbeChange, ProbeHistory, ProbeVersionCompare, ProbeVersionDetails, ProbeClone } from './Probes';
-import { MetricList, MetricChange, MetricHistory, MetricVersonCompare, MetricVersionDetails } from './Metrics';
+import { MetricChange, MetricHistory, MetricVersonCompare, MetricVersionDetails, ListOfMetrics } from './Metrics';
 import {
-  MetricTemplateList,
   MetricTemplateChange,
   MetricTemplateClone,
-  TenantMetricTemplateList,
   MetricTemplateHistory,
   MetricTemplateVersionCompare,
   MetricTemplateVersionDetails,
@@ -113,7 +111,7 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, w
       render={props => <MetricTemplateChange {...props} tenantview={true} probeview={true}/>}
     />
     <Route exact path="/ui/probes/:name" render={props => <ProbeChange {...props}/>}/>
-    <Route exact path="/ui/metrics" component={MetricList} />
+    <Route exact path="/ui/metrics" render={props => <ListOfMetrics {...props} type='metrics'/>} />
     <Route exact path="/ui/metrics/:name/history" render={props => <MetricHistory {...props}/>}/>
     <Route exact path="/ui/metrics/:name/history/compare/:id1/:id2" render={props => <MetricVersonCompare {...props}/>}/>
     <Route exact path="/ui/metrics/:name/history/:version" render={props => <MetricVersionDetails {...props}/>}/>
@@ -247,7 +245,7 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, w
     <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/apikey/add"
       render={props => <APIKeyChange {...props} addview={true}/>}
     />
-    <SuperUserRoute isSuperUser={isSuperUser} exact path='/ui/administration/metrictemplates/' component={TenantMetricTemplateList}/>
+    <SuperUserRoute isSuperUser={isSuperUser} exact path='/ui/administration/metrictemplates/' render={props => <ListOfMetrics type='metrictemplates' importable={true} {...props} /> } />
     <SuperUserRoute isSuperUser={isSuperUser} exact path='/ui/administration/metrictemplates/:name'
       render={props => <MetricTemplateChange {...props} tenantview={true}/>}
     />
@@ -341,7 +339,7 @@ const SuperAdminRouteSwitch = ({props}) => (
     <Route exact path="/ui/probes/:name/history/compare/:id1/:id2" render={props => <ProbeVersionCompare {...props}/>}/>
     <Route exact path="/ui/probes/:name/history/:version" render={props => <ProbeVersionDetails {...props}/>}/>
     <Route exact path="/ui/probes/:name" render={props => <ProbeChange {...props}/>}/>
-    <Route exact path='/ui/metrictemplates' component={MetricTemplateList}/>
+    <Route exact path='/ui/metrictemplates' render={props => <ListOfMetrics type='metrictemplates' {...props} />} />
     <Route exact path='/ui/metrictemplates/add' render={props => <MetricTemplateChange {...props} addview={true}/>}/>
     <Route exact path='/ui/metrictemplates/:name/clone' render={props => <MetricTemplateClone {...props}/>}/>
     <Route exact path='/ui/metrictemplates/:name/history' render={props => <MetricTemplateHistory {...props}/>}/>
@@ -563,7 +561,7 @@ class App extends Component {
                 exact path="/ui/public_metrictemplates"
                 render={props =>
                   <PublicPage>
-                    <TenantMetricTemplateList publicView={true} {...props}/>
+                    <ListOfMetrics type='metrictemplates' importable={true} publicView={true} {...props}/>
                   </PublicPage>
                 }
               />
@@ -602,7 +600,7 @@ class App extends Component {
               <Route exact path="/ui/public_metrics"
                 render={props =>
                   <PublicPage>
-                    <MetricList publicView={true} {...props}/>
+                    <ListOfMetrics type='metrics' publicView={true} {...props}/>
                   </PublicPage>
                 }
               />
@@ -753,7 +751,7 @@ class App extends Component {
                 exact path="/ui/public_metrictemplates"
                 render={props =>
                   <PublicPage>
-                    <TenantMetricTemplateList publicView={true} {...props}/>
+                    <ListOfMetrics type='metrictemplates' importable={true} publicView={true} {...props}/>
                   </PublicPage>
                 }
               />
