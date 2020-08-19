@@ -1,7 +1,6 @@
 import React, { Component, useState } from 'react';
 import {Link} from 'react-router-dom';
 import {Backend, WebApi} from './DataManager';
-import Autocomplete from 'react-autocomplete';
 import Autosuggest from 'react-autosuggest';
 import {
   LoadingAnim,
@@ -195,6 +194,7 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
                         'service',
                         suggestion)
                     }}
+                    shouldRenderSuggestions={() => true}
                     theme={{
                       containerOpen: 'metricprofiles-autocomplete-menu',
                       suggestionsList: 'metricprofiles-autocomplete-list'
@@ -243,6 +243,7 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
                         'metric',
                         suggestion)
                     }}
+                    shouldRenderSuggestions={() => true}
                     theme={{
                       containerOpen: 'metricprofiles-autocomplete-menu',
                       suggestionsList: 'metricprofiles-autocomplete-list'
