@@ -1,4 +1,4 @@
-import React, { Component, useState, useEffect } from 'react';
+import React, { Component, useState, useEffect, useCallback } from 'react';
 import { Backend } from './DataManager';
 import { Link } from 'react-router-dom';
 import {
@@ -855,8 +855,10 @@ export const MetricForm =
     },
     setFieldValue=undefined,
     handleChange,
-    obj='',
-    state=undefined,
+    obj_label='',
+    obj=undefined,
+    probe=undefined,
+    popoverOpen=undefined,
     togglePopOver=undefined,
     onSelect=undefined,
     onTagChange=undefined,
@@ -999,24 +1001,24 @@ export const MetricForm =
                       <>
                         <FontAwesomeIcon
                           id='probe-popover'
-                          hidden={`state.${obj}.mtype` === 'Passive' || addview}
+                          hidden={`${obj}.mtype` === 'Passive' || addview}
                           icon={faInfoCircle}
                           style={{color: '#416090'}}
                         />
                         <Popover
                           placement='bottom'
-                          isOpen={state.popoverOpen}
+                          isOpen={popoverOpen}
                           target='probe-popover'
                           toggle={togglePopOver}
                           trigger='click'
                         >
                           <PopoverHeader>
                             <ProbeVersionLink
-                              probeversion={obj === 'metric' ? state.metric.probeversion : state.metrictemplate.probeversion}
+                              probeversion={obj.probeversion}
                               publicView={publicView}
                             />
                           </PopoverHeader>
-                          <PopoverBody>{state.probe.description}</PopoverBody>
+                          <PopoverBody>{probe.description}</PopoverBody>
                         </Popover>
                       </>
                   }
@@ -1029,7 +1031,7 @@ export const MetricForm =
               <Field
                 type='text'
                 className='form-control'
-                value={state.probe.package}
+                value={probe.package}
                 disabled={true}
               />
             </InputGroup>
@@ -1060,17 +1062,17 @@ export const MetricForm =
                 <Label>Tags:</Label>
                 <div>
                   {
-                    state.tags.length === 0 ?
+                    tags.length === 0 ?
                       <Badge color='dark'>none</Badge>
                     :
                       (obj === 'metrictemplate' && !isHistory) ?
-                        state.tags.map((tag, i) =>
+                        tags.map((tag, i) =>
                           <Badge className={'mr-1'} key={i} color={tag.value === 'internal' ? 'success' : tag.value === 'deprecated' ? 'danger' : 'secondary'}>
                             {tag.value}
                           </Badge>
                         )
                       :
-                        state.tags.map((tag, i) =>
+                        tags.map((tag, i) =>
                           <Badge className={'mr-1'} key={i} color={tag === 'internal' ? 'success' : tag === 'deprecated' ? 'danger' : 'secondary'}>
                             {tag}
                           </Badge>
@@ -1093,7 +1095,7 @@ export const MetricForm =
           </Col>
         </Row>
         {
-          obj === 'metric' &&
+          obj_label === 'metric' &&
             <Row className='mb-4'>
               <Col md={3}>
                 <InputGroup>
@@ -1429,96 +1431,71 @@ export function CompareMetrics(metrictype) {
 }
 
 
-export class MetricChange extends Component {
-  constructor(props) {
-    super(props);
+export const MetricChange = (props) => {
+  const name = props.match.params.name;
+  const addview = props.addview;
+  const location = props.location;
+  const history = props.history;
+  const publicView = props.publicView;
 
-    this.name = props.match.params.name;
-    this.addview = props.addview;
-    this.location = props.location;
-    this.history = props.history;
-    this.backend = new Backend();
-    this.publicView = props.publicView;
+  const backend = new Backend();
 
-    this.state = {
-      metric: {},
-      tags: [],
-      probe: {},
-      groups: [],
-      probeversions: [],
-      allprobeversions: [],
-      metrictemplateversions: [],
-      loading: false,
-      popoverOpen: false,
-      write_perm: false,
-      areYouSureModal: false,
-      modalFunc: undefined,
-      modalTitle: undefined,
-      modalMsg: undefined,
-      error: null
-    };
+  const [metric, setMetric] = useState({});
+  const [tags, setTags] = useState([]);
+  const [probe, setProbe] = useState({});
+  const [groups, setGroups] = useState([]);
+  const [probeVersions, setProbeVersions] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [popoverOpen, setPopoverOpen] = useState(false);
+  const [writePerm, setWritePerm] = useState(false);
+  const [areYouSureModal, setAreYouSureModal] = useState(false);
+  const [modalTitle, setModalTitle] = useState(undefined);
+  const [modalMsg, setModalMsg] = useState(undefined);
+  const [modalFlag, setModalFlag] = useState(undefined);
+  const [formValues, setFormValues] = useState(undefined);
+  const [error, setError] = useState(null);
 
-    this.toggleAreYouSure = this.toggleAreYouSure.bind(this);
-    this.toggleAreYouSureSetModal = this.toggleAreYouSureSetModal.bind(this);
-    this.onSubmitHandle = this.onSubmitHandle.bind(this);
-    this.doChange = this.doChange.bind(this);
-    this.doDelete = this.doDelete.bind(this);
-    this.togglePopOver = this.togglePopOver.bind(this);
-  }
+  function togglePopOver() {
+    setPopoverOpen(!popoverOpen);
+  };
 
-  togglePopOver() {
-    this.setState({
-      popoverOpen: !this.state.popoverOpen
-    })
-  }
+  function toggleAreYouSure() {
+    setAreYouSureModal(!areYouSureModal);
+  };
 
-  toggleAreYouSure() {
-    this.setState(prevState =>
-      ({areYouSureModal: !prevState.areYouSureModal}));
-  }
+  function onSubmitHandle(values, actions) {
+    setModalMsg('Are you sure you want to change metric?');
+    setModalTitle('Change metric');
+    setFormValues(values);
+    setModalFlag('submit');
+    toggleAreYouSure();
+  };
 
-  toggleAreYouSureSetModal(msg, title, onyes) {
-    this.setState(prevState =>
-      ({areYouSureModal: !prevState.areYouSureModal,
-        modalFunc: onyes,
-        modalMsg: msg,
-        modalTitle: title,
-      }));
-  }
-
-  onSubmitHandle(values, actions) {
-    let msg = 'Are you sure you want to change metric?';
-    let title = 'Change metric';
-
-    this.toggleAreYouSureSetModal(msg, title,
-      () => this.doChange(values, actions))
-  }
-
-  async doChange(values, actions) {
-    let response = await this.backend.changeObject(
+  async function doChange() {
+    let response = await backend.changeObject(
       '/api/v2/internal/metric/',
       {
-        name: values.name,
-        mtype: values.type,
-        group: values.group,
-        description: values.description,
-        parent: values.parent,
-        probeversion: values.probeversion,
-        probeexecutable: values.probeexecutable,
-        config: values.config,
-        attribute: values.attributes,
-        dependancy: values.dependency,
-        flags: values.flags,
-        files: values.file_attributes,
-        parameter: values.parameter,
-        fileparameter: values.file_parameters
+        name: formValues.name,
+        mtype: formValues.type,
+        group: formValues.group,
+        description: formValues.description,
+        parent: formValues.parent,
+        probeversion: formValues.probeversion,
+        probeexecutable: formValues.probeexecutable,
+        config: formValues.config,
+        attribute: formValues.attributes,
+        dependancy: formValues.dependency,
+        flags: formValues.flags,
+        files: formValues.files,
+        parameter: formValues.parameter,
+        fileparameter: formValues.file_parameters
       }
     );
     if (response.ok) {
       NotifyOk({
         msg: 'Metric successfully changed',
         title: 'Changed',
-        callback: () => this.history.push('/ui/metrics')
+        callback: () => history.push('/ui/metrics')
       })
     } else {
       let change_msg = '';
@@ -1533,15 +1510,15 @@ export class MetricChange extends Component {
         msg: change_msg
       });
     };
-  }
+  };
 
-  async doDelete(name) {
-    let response = await this.backend.deleteObject(`/api/v2/internal/metric/${name}`);
+  async function doDelete() {
+    let response = await backend.deleteObject(`/api/v2/internal/metric/${name}`);
     if (response.ok) {
       NotifyOk({
         msg: 'Metric successfully deleted',
         title: 'Deleted',
-        callback: () => this.history.push('/ui/metrics')
+        callback: () => history.push('/ui/metrics')
       });
     } else {
       let msg = '';
@@ -1556,117 +1533,75 @@ export class MetricChange extends Component {
         msg: msg
       });
     };
-  }
+  };
 
-  async componentDidMount() {
-    this.setState({loading: true});
+  useEffect(() => {
+    setLoading(true);
 
-    try {
-      if (!this.addview) {
-        if (!this.publicView) {
-          let session = await this.backend.isActiveSession();
-          let metrics = await this.backend.fetchData(`/api/v2/internal/metric/${this.name}`);
-          let metrictemplateversions = await this.backend.fetchData(`/api/v2/internal/version/metrictemplate/${this.name}`);
+    async function fetchMetricData() {
+      try {
+        if (!addview) {
+          let session = await backend.isActiveSession();
+          let fetchMetric = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}metric/${name}`);
+          setMetric(fetchMetric);
+          setTags(fetchMetric.tags);
           if (session.active)
-            if (metrics.probeversion) {
-              let probe = await this.backend.fetchData(`/api/v2/internal/version/probe/${metrics.probeversion.split(' ')[0]}`);
-              let fields = {};
-              let probeversions = [];
-              probe.forEach((e) => {
-                probeversions.push(e.object_repr);
-                if (e.object_repr === metrics.probeversion) {
-                  fields = e.fields;
-                }
-              })
-              this.setState({
-                metric: metrics,
-                tags: metrics.tags,
-                probe: fields,
-                probeversions: probeversions,
-                allprobeversions: probe,
-                metrictemplateversions: metrictemplateversions,
-                groups: session.userdetails.groups.metrics,
-                loading: false,
-                write_perm: session.userdetails.is_superuser ||
-                  session.userdetails.groups.metrics.indexOf(metrics.group) >= 0,
-              });
-            } else {
-              this.setState({
-                metric: metrics,
-                tags: metrics.tags,
-                groups: session.userdetails.groups.metrics,
-                loading: false,
-                write_perm: session.userdetails.is_superuser ||
-                  session.userdetails.groups.metrics.indexOf(metrics.group) >= 0,
-              });
-            };
-        } else {
-          let metrics = await this.backend.fetchData(`/api/v2/internal/public_metric/${this.name}`);
-          let metrictemplateversions = await this.backend.fetchData(`/api/v2/internal/public_version/metrictemplate/${this.name}`);
-          if (metrics.probeversion) {
-            let probe = await this.backend.fetchData(`/api/v2/internal/public_version/probe/${metrics.probeversion.split(' ')[0]}`);
+            setGroups(session.userdetails.groups.metrics);
+            setWritePerm(
+              session.userdetails.is_superuser ||
+              session.userdetails.groups.metrics.indexOf(metrics.group) >= 0,
+            );
+          if (fetchMetric.probeversion) {
+            let fetchProbe = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}version/probe/${fetchMetric.probeversion.split(' ')[0]}`);
             let fields = {};
-            let probeversions = [];
-            probe.forEach((e) => {
-              probeversions.push(e.object_repr);
-              if (e.object_repr === metrics.probeversion) {
+            let fetchProbeversions = [];
+            fetchProbe.forEach((e) => {
+              fetchProbeversions.push(e.object_repr);
+              if (e.object_repr === fetchMetric.probeversion) {
                 fields = e.fields;
               }
             })
-            this.setState({
-              metric: metrics,
-              tags: metrics.tags,
-              probe: fields,
-              probeversions: probeversions,
-              allprobeversions: probe,
-              metrictemplateversions: metrictemplateversions,
-              groups: [],
-              loading: false,
-              write_perm: false,
-            });
-          } else {
-            this.setState({
-              metric: metrics,
-              tags: metrics.tags,
-              groups: [],
-              loading: false,
-              write_perm: false,
-            });
+            setProbe(fields);
+            setProbeVersions(fetchProbeversions);
           };
-        }
+        };
+      } catch(err) {
+        setError(err)
       };
-    } catch(err) {
-      this.setState({
-        error: err,
-        loading: false
-      });
+      setLoading(false);
     };
-  }
 
-  render() {
-    const { metric, probeversions, groups, loading, write_perm, error } = this.state;
+    fetchMetricData();
+  }, []);
 
-    if (!groups.includes(metric.group))
-      groups.push(metric.group);
 
-    if (loading)
-      return (<LoadingAnim/>)
+  if (!groups.includes(metric.group))
+    groups.push(metric.group);
 
-    else if (error)
-      return (<ErrorComponent error={error}/>);
+  if (loading)
+    return (<LoadingAnim/>);
 
-    else if (!loading) {
-      return (
+  else if (error)
+    return (<ErrorComponent error={error}/>);
+
+  else if (!loading) {
+    return (
+      <React.Fragment>
+        <ModalAreYouSure
+          isOpen={areYouSureModal}
+          toggle={toggleAreYouSure}
+          title={modalTitle}
+          msg={modalMsg}
+          onYes={modalFlag === 'submit' ? doChange : modalFlag === 'delete' ? doDelete : undefined}
+        />
         <BaseArgoView
-          resourcename={(this.publicView) ? 'Metric details' : 'metric'}
-          location={this.location}
-          addview={this.addview}
-          modal={true}
-          history={!this.publicView}
-          state={this.state}
-          toggle={this.toggleAreYouSure}
-          publicview={this.publicView}
-          submitperm={write_perm}>
+          resourcename={(publicView) ? 'Metric details' : 'metric'}
+          location={location}
+          addview={addview}
+          modal={false}
+          history={!publicView}
+          publicview={publicView}
+          submitperm={writePerm}>
           <Formik
             enableReinitialize={true}
             initialValues = {{
@@ -1682,31 +1617,36 @@ export class MetricChange extends Component {
               dependency: metric.dependancy,
               parameter: metric.parameter,
               flags: metric.flags,
+              files: metric.files,
               file_attributes: metric.files,
               file_parameters: metric.fileparameter
             }}
-            onSubmit = {(values, actions) => this.onSubmitHandle(values, actions)}
+            onSubmit = {(values, actions) => onSubmitHandle(values, actions)}
             render = {props => (
               <Form>
                 <MetricForm
                   {...props}
-                  obj='metric'
+                  obj_label='metric'
+                  obj={metric}
+                  probe={probe}
+                  tags={tags}
                   isTenantSchema={true}
-                  state={this.state}
-                  togglePopOver={this.togglePopOver}
-                  probeversions={probeversions}
+                  popoverOpen={popoverOpen}
+                  togglePopOver={togglePopOver}
+                  probeversions={probeVersions}
                   groups={groups}
-                  publicView={this.publicView}
+                  publicView={publicView}
                 />
                 {
-                  (write_perm) &&
+                  (writePerm) &&
                     <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
                       <Button
                         color="danger"
                         onClick={() => {
-                          this.toggleAreYouSureSetModal('Are you sure you want to delete Metric?',
-                          'Delete metric',
-                          () => this.doDelete(props.values.name))
+                          setModalMsg('Are you sure you want to delete metric?')
+                          setModalTitle('Delete metric')
+                          setModalFlag('delete');
+                          toggleAreYouSure();
                         }}
                       >
                         Delete
@@ -1718,10 +1658,11 @@ export class MetricChange extends Component {
             )}
           />
         </BaseArgoView>
-      )
-    }
-  }
-}
+      </React.Fragment>
+    )
+  } else
+    return null;
+};
 
 
 export class MetricVersionDetails extends Component {
