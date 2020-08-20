@@ -462,7 +462,7 @@ export const ListOfMetrics = (props) => {
         setListTags(alltags);
         setUserDetails(userdetails);
 
-        if (type === 'metric') {
+        if (type === 'metrics') {
           let groups = await backend.fetchResult(`/api/v2/internal/${publicView ? 'public_' : ''}usergroups`);
           setListGroups(groups['metrics']);
         } else {
@@ -650,7 +650,7 @@ export const ListOfMetrics = (props) => {
     )
   };
 
-  if (type === 'metric') {
+  if (type === 'metrics') {
     columns.splice(
       4,
       0,
