@@ -756,31 +756,32 @@ function ProbeComponent(cloneview=false) {
                       metrictemplatelist={metrictemplatelist}
                     />
                     {
-                      <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
-                        {
-                          (!this.addview && !cloneview && !this.publicView) ?
-                            <Button
-                              color='danger'
-                              onClick={() => {
-                                this.toggleAreYouSureSetModal(
-                                  'Are you sure you want to delete probe?',
-                                  'Delete probe',
-                                  () => this.doDelete(props.values.name)
-                                )}}
-                            >
-                              Delete
-                            </Button>
-                          :
-                            <div></div>
-                        }
-                        <Button
-                          color='success'
-                          id='submit-button'
-                          type='submit'
-                        >
-                          Save
-                        </Button>
-                      </div>
+                      !this.publicView &&
+                        <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
+                          {
+                            (!this.addview && !cloneview && !this.publicView) ?
+                              <Button
+                                color='danger'
+                                onClick={() => {
+                                  this.toggleAreYouSureSetModal(
+                                    'Are you sure you want to delete probe?',
+                                    'Delete probe',
+                                    () => this.doDelete(props.values.name)
+                                  )}}
+                              >
+                                Delete
+                              </Button>
+                            :
+                              <div></div>
+                          }
+                          <Button
+                            color='success'
+                            id='submit-button'
+                            type='submit'
+                          >
+                            Save
+                          </Button>
+                        </div>
                   }
                   </Form>
                 )}
