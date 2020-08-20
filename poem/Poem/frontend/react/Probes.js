@@ -77,7 +77,7 @@ const ProbeForm = ({isTenantSchema=false, isHistory=false, publicView=false,
               name='name'
               className={`form-control ${errors.name && 'border-danger'}`}
               id='name'
-              disabled={isTenantSchema || isHistory}
+              disabled={isTenantSchema || isHistory || publicView}
             />
           </InputGroup>
           {
@@ -105,7 +105,7 @@ const ProbeForm = ({isTenantSchema=false, isHistory=false, publicView=false,
           </FormText>
         </Col>
         {
-          (!addview && !cloneview && !isTenantSchema && !isHistory) &&
+          (!addview && !cloneview && !isTenantSchema && !isHistory && !publicView) &&
             <Col md={2}>
               <Field
                 component={Checkbox}
@@ -123,7 +123,7 @@ const ProbeForm = ({isTenantSchema=false, isHistory=false, publicView=false,
       <Row className='mt-3'>
         <Col md={8}>
           {
-            (isTenantSchema || isHistory) ?
+            (isTenantSchema || isHistory || publicView) ?
               <InputGroup>
                 <InputGroupAddon addonType='prepend'>Package</InputGroupAddon>
                 <Field
@@ -165,7 +165,7 @@ const ProbeForm = ({isTenantSchema=false, isHistory=false, publicView=false,
           <InputGroup>
             <InputGroupAddon addonType='prepend'>Repository</InputGroupAddon>
             {
-              (isTenantSchema || isHistory) ?
+              (isTenantSchema || isHistory || publicView) ?
                 <Field
                   component={LinkField}
                   name='repository'
@@ -196,7 +196,7 @@ const ProbeForm = ({isTenantSchema=false, isHistory=false, publicView=false,
           <InputGroup>
             <InputGroupAddon addonType='prepend'>Documentation</InputGroupAddon>
             {
-              (isTenantSchema || isHistory) ?
+              (isTenantSchema || isHistory || publicView) ?
                 <Field
                   component={LinkField}
                   name='docurl'
@@ -231,7 +231,7 @@ const ProbeForm = ({isTenantSchema=false, isHistory=false, publicView=false,
             rows='15'
             className={`form-control ${errors.description && 'border-danger'}`}
             id='description'
-            disabled={isTenantSchema || isHistory}
+            disabled={isTenantSchema || isHistory || publicView}
           />
           {
             errors.description &&
@@ -251,7 +251,7 @@ const ProbeForm = ({isTenantSchema=false, isHistory=false, publicView=false,
             rows='5'
             className={`form-control ${errors.comment && 'border-danger'}`}
             id='comment'
-            disabled={isTenantSchema || isHistory}
+            disabled={isTenantSchema || isHistory || publicView}
           />
           {
             errors.comment &&
@@ -455,7 +455,7 @@ export class ProbeList extends Component {
           resourcename='probe'
           location={this.location}
           listview={true}
-          addnew={!isTenantSchema}
+          addnew={!isTenantSchema && !this.publicView}
         >
           <ReactTable
             data={list_probe}
@@ -719,13 +719,14 @@ function ProbeComponent(cloneview=false) {
         if (!isTenantSchema) {
           return (
             <BaseArgoView
-              resourcename='probe'
+              resourcename={`${this.publicView ? 'Probe details' : 'probe'}`}
               location={this.location}
               addview={this.addview}
               cloneview={cloneview}
               clone={true}
               modal={true}
               state={this.state}
+              publicview={this.publicView}
               toggle={this.toggleAreYouSure}>
               <Formik
                 initialValues = {{
@@ -749,36 +750,38 @@ function ProbeComponent(cloneview=false) {
                       state={this.state}
                       addview={this.addview}
                       cloneview={cloneview}
+                      publicView={this.publicView}
                       list_packages={list_packages}
                       onSelect={this.onSelect}
                       metrictemplatelist={metrictemplatelist}
                     />
                     {
-                      <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
-                        {
-                          (!this.addview && !cloneview) ?
-                            <Button
-                              color='danger'
-                              onClick={() => {
-                                this.toggleAreYouSureSetModal(
-                                  'Are you sure you want to delete probe?',
-                                  'Delete probe',
-                                  () => this.doDelete(props.values.name)
-                                )}}
-                            >
-                              Delete
-                            </Button>
-                          :
-                            <div></div>
-                        }
-                        <Button
-                          color='success'
-                          id='submit-button'
-                          type='submit'
-                        >
-                          Save
-                        </Button>
-                      </div>
+                      !this.publicView &&
+                        <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
+                          {
+                            (!this.addview && !cloneview && !this.publicView) ?
+                              <Button
+                                color='danger'
+                                onClick={() => {
+                                  this.toggleAreYouSureSetModal(
+                                    'Are you sure you want to delete probe?',
+                                    'Delete probe',
+                                    () => this.doDelete(props.values.name)
+                                  )}}
+                              >
+                                Delete
+                              </Button>
+                            :
+                              <div></div>
+                          }
+                          <Button
+                            color='success'
+                            id='submit-button'
+                            type='submit'
+                          >
+                            Save
+                          </Button>
+                        </div>
                   }
                   </Form>
                 )}
