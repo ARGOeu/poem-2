@@ -40,15 +40,20 @@ function matchItem(item, value) {
 const MetricProfileAutocompleteField = ({suggestions, service, index, onselect, icon, form, tupleType, id}) => {
   const [suggestionList, setSuggestions] = useState(suggestions)
 
+  const changeFieldValue = (newValue) => {
+    form.setFieldValue(`view_services.${index}.${tupleType}`, newValue)
+    form.setFieldValue(`view_services.${index}.${tupleType}Changed`, true)
+    onselect(form.values.view_services[index],
+      tupleType,
+      newValue)
+  }
+
   return (
     <Autosuggest
       inputProps={{
         className: `"form-control custom-select " ${service.isNew ? "border border-success" : service[tupleType + 'Changed'] ? "border border-danger" : ""}`,
         placeholder: '',
-        onChange: (_, {newValue}) => {
-          form.setFieldValue(`view_services.${index}.${tupleType}`, newValue)
-          form.setFieldValue(`view_services.${index}.${tupleType}Changed`, true)
-        },
+        onChange: (_, {newValue}) => changeFieldValue(newValue),
         value: service[tupleType]
       }}
       getSuggestionValue={(suggestion) => suggestion}
@@ -71,13 +76,7 @@ const MetricProfileAutocompleteField = ({suggestions, service, index, onselect, 
       onSuggestionsClearRequested={() => {
         setSuggestions([])
       }}
-      onSuggestionSelected={(_, {suggestion}) => {
-        form.setFieldValue(`view_services.${index}.${tupleType}`, suggestion)
-        form.setFieldValue(`view_services.${index}.${tupleType}Changed`, true)
-        onselect(form.values.view_services[index],
-          tupleType,
-          suggestion)
-      }}
+      onSuggestionSelected={(_, {suggestion}) => changeFieldValue(suggestion) }
       shouldRenderSuggestions={() => true}
       theme={{
         containerOpen: 'metricprofiles-autocomplete-menu',
