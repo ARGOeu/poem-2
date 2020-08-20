@@ -81,6 +81,9 @@ export const PublicHome = (props) => {
                       <Row className='p-1 align-items-center'>
                         <Icon i='thresholdsprofiles'/> <a href={`https://${tenants[i + j].domain_url}/ui/public_thresholdsprofiles`}>Thresholds profiles</a>
                       </Row>
+                      <Row className='p-1 align-items-center'>
+                        <Icon i='operationsprofiles'/> <a href={`https://${tenants[i + j].domain_url}/ui/public_operationsprofiles`}>Operations profiles</a>
+                      </Row>
                     </CardBody>
                   </Card>
                 </CardBody>
@@ -153,6 +156,9 @@ export const PublicHome = (props) => {
             </Row>
             <Row className='p-1 align-items-center'>
               <Icon i='thresholdsprofiles'/> <Link to={'/ui/public_thresholdsprofiles'}>Thresholds profiles</Link>
+            </Row>
+            <Row className='p-1 align-items-center'>
+              <Icon i='operationsprofiles'/> <Link to={'/ui/public_operationsprofiles'}>Operations profiles</Link>
             </Row>
           </CardBody>
         </Card>
