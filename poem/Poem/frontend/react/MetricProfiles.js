@@ -1,7 +1,7 @@
-import React, { Component } from 'react';
+import React, { Component, useState } from 'react';
 import {Link} from 'react-router-dom';
 import {Backend, WebApi} from './DataManager';
-import Autocomplete from 'react-autocomplete';
+import Autosuggest from 'react-autosuggest';
 import {
   LoadingAnim,
   BaseArgoView,
@@ -34,6 +34,57 @@ export const MetricProfilesChange = MetricProfilesComponent();
 
 function matchItem(item, value) {
   return item.toLowerCase().indexOf(value.toLowerCase()) !== -1;
+}
+
+
+const MetricProfileAutocompleteField = ({suggestions, service, index, onselect, icon, form, tupleType, id}) => {
+  const [suggestionList, setSuggestions] = useState(suggestions)
+
+  const changeFieldValue = (newValue) => {
+    form.setFieldValue(`view_services.${index}.${tupleType}`, newValue)
+    form.setFieldValue(`view_services.${index}.${tupleType}Changed`, true)
+    onselect(form.values.view_services[index],
+      tupleType,
+      newValue)
+  }
+
+  return (
+    <Autosuggest
+      inputProps={{
+        className: `"form-control custom-select " ${service.isNew ? "border border-success" : service[tupleType + 'Changed'] ? "border border-danger" : ""}`,
+        placeholder: '',
+        onChange: (_, {newValue}) => changeFieldValue(newValue),
+        value: service[tupleType]
+      }}
+      getSuggestionValue={(suggestion) => suggestion}
+      suggestions={suggestionList}
+      renderSuggestion={(suggestion, {query, isHighlighted}) =>
+        <div
+          key={suggestions.indexOf(suggestion)}
+          className={`metricprofiles-autocomplete-entries ${isHighlighted ?
+              "metricprofiles-autocomplete-entries-highlighted"
+              : ""}`
+          }>
+          {suggestion ? <Icon i={icon}/> : ''} {suggestion}
+        </div>}
+      onSuggestionsFetchRequested={({ value }) =>
+        {
+          let result = suggestions.filter(service => service.toLowerCase().includes(value.trim().toLowerCase()))
+          setSuggestions(result)
+        }
+      }
+      onSuggestionsClearRequested={() => {
+        setSuggestions([])
+      }}
+      onSuggestionSelected={(_, {suggestion}) => changeFieldValue(suggestion) }
+      shouldRenderSuggestions={() => true}
+      theme={{
+        containerOpen: 'metricprofiles-autocomplete-menu',
+        suggestionsList: 'metricprofiles-autocomplete-list'
+      }}
+      id={id}
+    />
+  )
 }
 
 
@@ -104,8 +155,7 @@ const MetricProfileTupleValidate = ({view_services, name, groupname,
 
 
 const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
-  remove_handler, insert_handler, onselect_handler, form, remove, insert}) =>
-(
+  remove_handler, insert_handler, onselect_handler, form, remove, insert}) => (
   <table className="table table-bordered table-sm table-hover">
     <thead className="table-active">
       <tr>
@@ -156,37 +206,15 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
                 {index + 1}
               </td>
               <td className={service.isNew ? "bg-light" : ""}>
-                <Autocomplete
-                  inputProps={{
-                    className: `"form-control custom-select " ${service.isNew ? "border border-success" : service.serviceChanged ? "border border-danger" : ""}`
-                  }}
-                  getItemValue={(item) => item}
-                  items={serviceflavours_all}
-                  value={service.service}
-                  renderItem={(item, isHighlighted) =>
-                    <div
-                      key={serviceflavours_all.indexOf(item)}
-                      className={`metricprofiles-autocomplete-entries ${isHighlighted ?
-                          "metricprofiles-autocomplete-entries-highlighted"
-                          : ""}`
-                      }>
-                      {item ? <Icon i='serviceflavour'/> : ''} {item}
-                    </div>}
-                  onChange={(e) => form.setFieldValue(`view_services.${index}.service`, e.target.value)}
-                  onSelect={(val) => {
-                    form.setFieldValue(`view_services.${index}.service`, val)
-                    form.setFieldValue(`view_services.${index}.serviceChanged`, true)
-                    onselect_handler(form.values.view_services[index],
-                      'service',
-                      val)
-                  }}
-                  wrapperStyle={{}}
-                  shouldItemRender={matchItem}
-                  renderMenu={(items) =>
-                    <div className='metricprofiles-autocomplete-menu'>
-                      {items}
-                    </div>}
-                />
+                <MetricProfileAutocompleteField
+                  suggestions={serviceflavours_all}
+                  service={service}
+                  index={index}
+                  icon='serviceflavour'
+                  onselect={onselect_handler}
+                  form={form}
+                  tupleType='service'
+                  id={`autosuggest-metric-${index}`}/>
                 {
                   form.errors && form.errors.view_services && form.errors.view_services[index]
                     ? form.errors.view_services[index].service
@@ -196,36 +224,15 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
                 }
               </td>
               <td className={service.isNew ? "bg-light" : ""}>
-                <Autocomplete
-                  inputProps={{
-                    className: `"form-control custom-select " ${service.isNew ? "border border-success" : service.metricChanged  ? "border border-danger" : ""}`
-                  }}
-                  getItemValue={(item) => item}
-                  items={metrics_all}
-                  value={service.metric}
-                  renderItem={(item, isHighlighted) =>
-                    <div
-                      key={metrics_all.indexOf(item)}
-                      className={`metricprofiles-autocomplete-entries ${isHighlighted ?
-                          "metricprofiles-autocomplete-entries-highlighted"
-                          : ""}`
-                      }>
-                      {item ? <Icon i='metrics'/> : ''} {item}
-                    </div>}
-                  onChange={(e) => form.setFieldValue(`view_services.${index}.metric`, e.target.value)}
-                  onSelect={(val) => {
-                    form.setFieldValue(`view_services.${index}.metric`, val)
-                    form.setFieldValue(`view_services.${index}.metricChanged`, true)
-                    onselect_handler(form.values.view_services[index],
-                      'metric',
-                      val)
-                  }}
-                  wrapperStyle={{}}
-                  shouldItemRender={matchItem}
-                  renderMenu={(items) =>
-                    <div className='metricprofiles-autocomplete-menu'>
-                      {items}
-                    </div>}
+                <MetricProfileAutocompleteField
+                  suggestions={metrics_all}
+                  service={service}
+                  index={index}
+                  icon='metrics'
+                  onselect={onselect_handler}
+                  form={form}
+                  tupleType='metric'
+                  id={`autosuggest-metric-${index}`}
                 />
                 {
                   form.errors && form.errors.view_services && form.errors.view_services[index]
@@ -775,15 +782,44 @@ function MetricProfilesComponent(cloneview=false) {
     onRemove(element, group, name, description) {
       let tmp_view_services = []
       let tmp_list_services = []
+      let index = undefined
+      let index_tmp = undefined
 
-      let index = this.state.list_services.findIndex(service =>
+      // special case when duplicates are result of explicit add of duplicated
+      // tuple followed by immediate delete of it
+      let dup_list = this.state.list_services.filter(service =>
         element.service === service.service &&
         element.metric === service.metric
-      );
-      let index_tmp = this.state.view_services.findIndex(service =>
+      )
+      let dup_view = this.state.view_services.filter(service =>
         element.service === service.service &&
         element.metric === service.metric
-      );
+      )
+      let dup = dup_list.length >= 2 || dup_view.length >= 2 ? true : false
+
+      if (dup) {
+        // search by index also
+        index = this.state.list_services.findIndex(service =>
+          element.index === service.index &&
+          element.service === service.service &&
+          element.metric === service.metric
+        );
+        index_tmp = this.state.view_services.findIndex(service =>
+          element.index === service.index &&
+          element.service === service.service &&
+          element.metric === service.metric
+        );
+      }
+      else {
+        index = this.state.list_services.findIndex(service =>
+          element.service === service.service &&
+          element.metric === service.metric
+        );
+        index_tmp = this.state.view_services.findIndex(service =>
+          element.service === service.service &&
+          element.metric === service.metric
+        );
+      }
 
       // don't remove last tuple, just reset it to empty values
       if (this.state.view_services.length === 1
