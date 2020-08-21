@@ -204,7 +204,8 @@ export class APIKeyChange extends Component {
       let response = await this.backend.addObject(
         '/api/v2/internal/apikeys/',
         {
-          name: values.name
+          name: values.name,
+          token: values.token
         }
       );
       if (response.ok) {
@@ -349,7 +350,7 @@ export class APIKeyChange extends Component {
                             type='text'
                             name='token'
                             id='token'
-                            readOnly
+                            readOnly={this.addview ? false : true}
                             className='form-control'
                           />
                         </InputGroup>
