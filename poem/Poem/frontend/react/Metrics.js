@@ -303,11 +303,9 @@ export const ListOfMetrics = (props) => {
   const [searchProbeversion, setSearchProbeversion] = useState('');
   const [searchType, setSearchType] = useState('');
   const [searchTag, setSearchTag] = useState('');
-  const [listGroups, setListGroups] = useState(null);
-  const [searchGroup, setSearchGroup] = useState('');
+  const [listOSGroups, setListOSGroups] = useState(null);
   const [userDetails, setUserDetails] = useState(undefined);
-  const [listOStags, setListOStags] = useState(null);
-  const [searchOStag, setSearchOStag] = useState('');
+  const [searchOSGroups, setSearchOSGroups] = useState('');
   const [selected, setSelected] = useState({});
   const [selectAll, setSelectAll] = useState(0);
   const [areYouSureModal, setAreYouSureModal] = useState(false);
@@ -354,10 +352,13 @@ export const ListOfMetrics = (props) => {
       );
     };
 
-    if (searchOStag) {
-      list_metric = list_metric.filter(row =>
-        `${row.ostag.join(', ')}`.includes(searchOStag)
-      );
+    if (searchOSGroups) {
+      type === 'metrics' ?
+        list_metric = doFilter(list_metric, 'group', searchOSGroups)
+      :
+        list_metric = list_metric.filter(row =>
+          `${row.ostag.join(', ')}`.includes(searchOStag)
+        );
     };
 
     let newSelected = {};
@@ -464,10 +465,10 @@ export const ListOfMetrics = (props) => {
 
         if (type === 'metrics') {
           let groups = await backend.fetchResult(`/api/v2/internal/${publicView ? 'public_' : ''}usergroups`);
-          setListGroups(groups['metrics']);
+          setListOSGroups(groups['metrics']);
         } else {
           let ostags = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}ostags`);
-          setListOStags(ostags);
+          setListOSGroups(ostags);
         };
       } catch(err) {
         setError(err);
@@ -665,9 +666,9 @@ export const ListOfMetrics = (props) => {
         filterable: true,
         Filter: (
           <DropdownFilterComponent
-            value={searchGroup}
-            onChange={e => setSearchGroup(e.target.value)}
-            data={listGroups}
+            value={searchOSGroups}
+            onChange={e => setSearchOSGroups(e.target.value)}
+            data={listOSGroups}
           />
         )
       }
@@ -689,9 +690,9 @@ export const ListOfMetrics = (props) => {
         filterable: true,
         Filter: (
           <DropdownFilterComponent
-            value={searchOStag}
-            onChange={e => setSearchOStag(e.target.value)}
-            data={listOStags}
+            value={searchOSGroups}
+            onChange={e => setSearchOSGroups(e.target.value)}
+            data={listOSGroups}
           />
         )
       }
@@ -712,10 +713,13 @@ export const ListOfMetrics = (props) => {
     list_metric = doFilter(list_metric, 'mtype', searchType);
   };
 
-  if (searchOStag) {
-    list_metric = list_metric.filter(row =>
-      `${row.ostag.join(', ')}`.toLowerCase().includes(searchOStag.toLowerCase())
-    );
+  if (searchOSGroups) {
+    type === 'metrics' ?
+      list_metric = doFilter(list_metric, 'group', searchOSGroups)
+    :
+      list_metric = list_metric.filter(row =>
+        `${row.ostag.join(', ')}`.toLowerCase().includes(searchOStag.toLowerCase())
+      );
   };
 
   if (searchTag) {
@@ -726,10 +730,6 @@ export const ListOfMetrics = (props) => {
       else
         return row.tags.includes(searchTag);
     });
-  };
-
-  if (type === 'metrics' && searchGroup) {
-    list_metric = doFilter(list_metric, 'group', searchGroup);
   };
 
   if (loading)
