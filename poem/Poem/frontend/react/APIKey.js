@@ -7,6 +7,7 @@ import { LoadingAnim, BaseArgoView, NotifyOk, Checkbox, NotifyError, ErrorCompon
 import ReactTable from 'react-table';
 import { Formik, Form, Field } from 'formik';
 import {
+  Alert,
   FormGroup,
   Row,
   Col,
@@ -15,9 +16,6 @@ import {
   Button,
   InputGroup,
   InputGroupAddon,
-  Toast,
-  ToastBody,
-  ToastHeader
 } from 'reactstrap';
 
 
@@ -342,6 +340,12 @@ export class APIKeyChange extends Component {
                   </FormGroup>
                   <FormGroup>
                     <ParagraphTitle title='Credentials'/>
+                    {
+                      this.addview &&
+                        <Alert color="info" className="text-center">
+                          If token field is <b>left empty</b>, value will be automatically generated on save.
+                        </Alert>
+                    }
                     <Row>
                       <Col sm={6}>
                         <InputGroup>
@@ -350,7 +354,7 @@ export class APIKeyChange extends Component {
                             type='text'
                             name='token'
                             id='token'
-                            readOnly={this.addview ? false : true}
+                            disabled={this.addview ? false : true}
                             className='form-control'
                           />
                         </InputGroup>
@@ -359,17 +363,6 @@ export class APIKeyChange extends Component {
                         </FormText>
                       </Col>
                     </Row>
-                    {
-                      this.addview &&
-                      <Toast className='mt-3'>
-                        <ToastHeader icon='info'>
-                          Info
-                        </ToastHeader>
-                        <ToastBody>
-                          Token will be generated when clicking save.
-                        </ToastBody>
-                      </Toast>
-                    }
                   </FormGroup>
                   {
                     <div className={!this.addview ? "submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5" : "submit-row d-flex align-items-center justify-content-end bg-light p-3 mt-5"}>
