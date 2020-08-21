@@ -1060,7 +1060,7 @@ export const MetricForm =
           </Col>
         </Row>
         {
-          (obj === 'metrictemplate' && (!isHistory && !isTenantSchema && !publicView)) ?
+          (obj_label === 'metrictemplate' && (!isHistory && !isTenantSchema && !publicView)) ?
             <Row className='mb-4 mt-2'>
               <Col md={10}>
                 <Label>Tags:</Label>
