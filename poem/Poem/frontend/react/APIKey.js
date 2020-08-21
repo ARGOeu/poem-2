@@ -121,7 +121,7 @@ export const APIKeyChange = (props) => {
 
   const [key, setKey] = useState({})
   const [loading, setLoading] = useState(false)
-  const [areYouSureModal, toggleAreYouSureModal] = useState(false)
+  const [areYouSureModal, setAreYouSureModal] = useState(false)
   const [modalFunc, setModalFunc] = useState(undefined)
   const [modalTitle, setModalTitle] = useState(undefined)
   const [modalMsg, setModalMsg] = useState(undefined)
@@ -198,7 +198,7 @@ export const APIKeyChange = (props) => {
       msg = 'Are you sure you want to change API key?';
       title = 'Change API key';
     }
-    toggleAreYouSureModal(!areYouSureModal);
+    setAreYouSureModal(!areYouSureModal);
     setModalMsg(msg)
     setModalTitle(title)
     setModalFunc(() => doChange(values, actions))
@@ -270,7 +270,7 @@ export const APIKeyChange = (props) => {
         history={false}
         modal={true}
         state={{areYouSureModal, modalFunc, modalTitle, modalMsg}}
-        toggle={toggleAreYouSureModal}>
+        toggle={() => setAreYouSureModal(!areYouSureModal)}>
           <Formik
             initialValues = {{
               name: key.name,
@@ -346,7 +346,7 @@ export const APIKeyChange = (props) => {
                         onClick={() => {
                           setModalMsg('Are you sure you want to delete API key?')
                           setModalTitle('Delete API key')
-                          setModalFunc(doDelete(name))
+                          setModalFunc(() => doDelete(name))
                           toggleAreYouSureModal(!areYouSureModal);
                         }}
                       >
