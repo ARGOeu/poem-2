@@ -311,7 +311,7 @@ export const ListOfMetrics = (props) => {
   const backend = new Backend();
 
   const { data: listMetrics, error: listMetricsError, isLoading: listMetricsLoading } = useQuery(
-    type, async () => {
+    `${type}_listview`, async () => {
       let metrics =await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}${type === 'metrics' ? 'metric' : type}`);
       return metrics;
     },
@@ -319,14 +319,14 @@ export const ListOfMetrics = (props) => {
   );
 
   const { data: listTypes, error: listTypesError, isLoading: listTypesLoading } = useQuery(
-    'mtypes', async () => {
+    `${type}_listview_mtypes`, async () => {
       let types = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}mt${type=='metrictemplates' ? 't' : ''}ypes`);
       return types;
     }
   );
 
   const { data: listTags, error: listTagsError, isLoading: listTagsLoading } = useQuery(
-    'tags', async () => {
+    `${type}_listview_tags`, async () => {
       let tags = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}metrictags`);
       tags.push('none');
       return tags;
@@ -334,7 +334,7 @@ export const ListOfMetrics = (props) => {
   );
 
   const { data: listOSGroups, error: listOSGroupsError, isLoading: listOSGroupsLoading } = useQuery(
-    'osgroups', async () => {
+    `${type}_listview_osgroups`, async () => {
       if (type === 'metrics') {
         let groups = await backend.fetchResult(`/api/v2/internal/${publicView ? 'public_' : ''}usergroups`);
         return groups['metrics'];
@@ -346,14 +346,14 @@ export const ListOfMetrics = (props) => {
   );
 
   const { data: isTenantSchema, isLoading: isTenantSchemaLoading } = useQuery(
-    'schema', async () => {
+    `${type}_listview_schema`, async () => {
       let schema = backend.isTenantSchema();
       return schema;
     }
   );
 
   const { data: userDetails, error: userDetailsError, isLoading: userDetailsLoading } = useQuery(
-    'userdetails', async () => {
+    `${type}_listview_userdetails`, async () => {
       let userdetails = { username: 'Anonymous' };
       let schema = backend.isTenantSchema();
       if (!publicView) {
@@ -478,7 +478,7 @@ export const ListOfMetrics = (props) => {
       if ('warning' in json)
         NotifyWarn({msg: json.warning, title: 'Deleted'});
 
-      queryCache.setQueryData(type, (oldData) => oldData.filter(m => !mt.includes(m.name)));
+      queryCache.setQueryData(`${type}_listview`, (oldData) => oldData.filter(m => !mt.includes(m.name)));
       setSelectAll(0);
 
     } else

@@ -64,14 +64,14 @@ export const MetricTemplateComponent = (props) => {
   const [formValues, setFormValues] = useState(undefined);
 
   const { data: types, error: typesError, isLoading: typesLoading } = useQuery(
-    'types', async () => {
+    'mt_changeview_types', async () => {
       let types = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}mttypes`);
       return types;
     }
   );
 
   const { data: allTags, error: allTagsError, isLoading: allTagsLoading } = useQuery(
-    'tags', async () => {
+    'mt_changeview_tags', async () => {
       let tags = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}metrictags`);
       let formatTags = [];
       tags.forEach(t => formatTags.push({value: t, label: t}));
@@ -80,14 +80,14 @@ export const MetricTemplateComponent = (props) => {
   );
 
   const { data: allProbeVersions, error: allProbeVersionsError, isLoading: allProbeVersionsLoading } = useQuery(
-    'allprobeversions', async () => {
+    'mt_changeview_allprobeversions', async () => {
       let allprobeversions = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}version/probe`);
       return allprobeversions;
     }
   );
 
   const { data: listMetricTemplates, error: listMetricTemplatesError, isLoading: listMetricTemplatesLoading } = useQuery(
-    'metrictemplates', async () => {
+    'mt_changeview_metrictemplates', async () => {
       let mts = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}metrictemplates`);
       let mtlist = [];
       mts.forEach(m => mtlist.push(m.name));
@@ -96,7 +96,7 @@ export const MetricTemplateComponent = (props) => {
   );
 
   const {data: metricTemplate, error: metricTemplateError, isLoading: metricTemplateLoading } = useQuery(
-    'metrictemplate',
+    'mt_changeview_metrictemplate',
     async () => {
       let metrictemplate = {
         id: '',
@@ -175,14 +175,14 @@ export const MetricTemplateComponent = (props) => {
         }
       };
       metrictemplate.probe = probe;
-      queryCache.setQueryData('metrictemplate', () => metrictemplate);
+      queryCache.setQueryData('mt_changeview_metrictemplate', () => metrictemplate);
     };
   };
 
   function onTagChange(value) {
     let metrictemplate = metricTemplate;
     metrictemplate.tags = value;
-    queryCache.setQueryData('metrictemplate', () => metrictemplate);
+    queryCache.setQueryData('mt_changeview_metrictemplate', () => metrictemplate);
   };
 
   function togglePopOver() {
