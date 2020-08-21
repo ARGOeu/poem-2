@@ -288,7 +288,7 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, w
     <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/apikey/add"
       render={props => <APIKeyChange {...props} addview={true}/>}
     />
-    <SuperUserRoute isSuperUser={isSuperUser} exact path='/ui/administration/metrictemplates/' render={props => <ListOfMetrics type='metrictemplates' importable={true} {...props} /> } />
+    <SuperUserRoute isSuperUser={isSuperUser} exact path='/ui/administration/metrictemplates/' render={props => <ListOfMetrics type='metrictemplates' {...props} /> } />
     <SuperUserRoute isSuperUser={isSuperUser} exact path='/ui/administration/metrictemplates/:name'
       render={props => <MetricTemplateChange {...props} tenantview={true}/>}
     />
@@ -567,7 +567,7 @@ class App extends Component {
                 exact path="/ui/public_metrictemplates"
                 render={props =>
                   <PublicPage tenantName={this.state.tenantName}>
-                    <ListOfMetrics type='metrictemplates' importable={true} publicView={true} {...props}/>
+                    <ListOfMetrics type='metrictemplates' publicView={true} {...props}/>
                   </PublicPage>
                 }
               />
@@ -757,7 +757,7 @@ class App extends Component {
                 exact path="/ui/public_metrictemplates"
                 render={props =>
                   <PublicPage>
-                    <ListOfMetrics type='metrictemplates' importable={true} publicView={true} {...props}/>
+                    <ListOfMetrics type='metrictemplates' publicView={true} {...props}/>
                   </PublicPage>
                 }
               />
