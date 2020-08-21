@@ -39,7 +39,7 @@ import { faInfoCircle, faMinus, faPlus, faCaretDown } from '@fortawesome/free-so
 import ReactDiffViewer from 'react-diff-viewer';
 import CreatableSelect from 'react-select/creatable';
 import { components } from 'react-select';
-import { useQuery } from 'react-query';
+import { useQuery, queryCache } from 'react-query';
 
 export const MetricHistory = HistoryComponent('metric');
 export const MetricVersonCompare = CompareMetrics('metric');
@@ -294,7 +294,6 @@ export const ProbeVersionLink = ({probeversion, publicView=false}) => (
 export const ListOfMetrics = (props) => {
   const location = props.location;
   const type = props.type;
-  const importable = props.importable;
   const publicView = props.publicView;
 
   const [searchName, setSearchName] = useState('');
@@ -312,7 +311,7 @@ export const ListOfMetrics = (props) => {
   const backend = new Backend();
 
   const { data: listMetrics, error: listMetricsError, isLoading: listMetricsLoading } = useQuery(
-    'metrics', async () => {
+    type, async () => {
       let metrics =await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}${type === 'metrics' ? 'metric' : type}`);
       return metrics;
     },
@@ -346,11 +345,18 @@ export const ListOfMetrics = (props) => {
     }
   );
 
+  const { data: isTenantSchema, isLoading: isTenantSchemaLoading } = useQuery(
+    'schema', async () => {
+      let schema = backend.isTenantSchema();
+      return schema;
+    }
+  );
+
   const { data: userDetails, error: userDetailsError, isLoading: userDetailsLoading } = useQuery(
     'userdetails', async () => {
       let userdetails = { username: 'Anonymous' };
+      let schema = backend.isTenantSchema();
       if (!publicView) {
-        let schema = backend.isTenantSchema();
         let sessionActive = await backend.isActiveSession(schema);
         if (sessionActive.active)
           userdetails = sessionActive.userdetails;
@@ -461,18 +467,18 @@ export const ListOfMetrics = (props) => {
   };
 
   async function bulkDeleteMetrics(mt) {
-    let refreshed_metrics = listMetrics;
+    //let refreshed_metrics = listMetrics;
     let response = await backend.bulkDeleteMetrics({'metrictemplates': mt});
     let json = await response.json();
     if (response.ok) {
-      refreshed_metrics = refreshed_metrics.filter(m => !mt.includes(m.name));
+      //refreshed_metrics = refreshed_metrics.filter(m => !mt.includes(m.name));
       if ('info' in json)
         NotifyOk({msg: json.info, title: 'Deleted'});
 
       if ('warning' in json)
         NotifyWarn({msg: json.warning, title: 'Deleted'});
 
-      setListMetrics(refreshed_metrics);
+      queryCache.setQueryData(type, (oldData) => oldData.filter(m => !mt.includes(m.name)));
       setSelectAll(0);
 
     } else
@@ -482,7 +488,7 @@ export const ListOfMetrics = (props) => {
       });
   };
 
-  if (listMetricsLoading || listTypesLoading || listTagsLoading || listOSGroupsLoading || userDetailsLoading)
+  if (listMetricsLoading || listTypesLoading || listTagsLoading || listOSGroupsLoading || isTenantSchemaLoading || userDetailsLoading)
     return (<LoadingAnim />);
 
   else if (listMetricsError)
@@ -501,7 +507,7 @@ export const ListOfMetrics = (props) => {
     return (<ErrorComponent error={userDetailsError.message}/>);
 
   else {
-    let metriclink = `/ui/${importable ? 'administration/' : ''}${publicView ? 'public_' : ''}${type}/`;
+    let metriclink = `/ui/${(type === 'metrictemplates' && isTenantSchema) ? 'administration/' : ''}${publicView ? 'public_' : ''}${type}/`;
 
     const columns = [
       {
@@ -511,7 +517,7 @@ export const ListOfMetrics = (props) => {
         accessor: e =>
           <Link
           to={
-            importable ?
+            (type === 'metrictemplates' && isTenantSchema) ?
               searchOSGroups === 'CentOS 6' && e.centos6_probeversion ?
                 `${metriclink}${e.name}/history/${e.centos6_probeversion.split(' ')[1].substring(1, e.centos6_probeversion.split(' ')[1].length - 1)}`
               :
@@ -543,7 +549,7 @@ export const ListOfMetrics = (props) => {
             <ProbeVersionLink
               publicView={publicView}
               probeversion={
-                importable ?
+                (type === 'metrictemplates' && isTenantSchema) ?
                   (searchOSGroups.search_ostag === 'CentOS 6' && e.centos6_probeversion) ?
                     e.centos6_probeversion
                   :
@@ -635,7 +641,7 @@ export const ListOfMetrics = (props) => {
               </div>
             );
           },
-          Header: `${importable ? 'Select all' : 'Delete'}`,
+          Header: `${isTenantSchema ? 'Select all' : 'Delete'}`,
           Filter: (
             <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
               <input
@@ -695,7 +701,7 @@ export const ListOfMetrics = (props) => {
         }
       )
     } else {
-      if (importable) {
+      if (isTenantSchema) {
         columns.splice(
           4,
           0,
@@ -772,7 +778,7 @@ export const ListOfMetrics = (props) => {
         </BaseArgoView>
       )
     } else {
-      if (importable)
+      if (isTenantSchema)
         return (
           <>
             <div className="d-flex align-items-center justify-content-between">
@@ -810,12 +816,12 @@ export const ListOfMetrics = (props) => {
               onYes={() => bulkDeleteMetrics(modalVar)}
             />
             <div className="d-flex align-items-center justify-content-between">
-              <h2 className="ml-3 mt-1 mb-4">{'Metric templates'}</h2>
+              <h2 className="ml-3 mt-1 mb-4">{'Select metric template to change'}</h2>
               {
                 <ButtonToolbar>
-                  <Link className={`btn btn-secondary ${importable ? '' : 'mr-2'}`} to={location.pathname + '/add'} role='button'>Add</Link>
+                  <Link className={'btn btn-secondary mr-2'} to={location.pathname + '/add'} role='button'>Add</Link>
                   {
-                    !importable &&
+                    !isTenantSchema &&
                       <Button
                         className='btn btn-secondary'
                         onClick={() => onDelete()}
@@ -832,7 +838,7 @@ export const ListOfMetrics = (props) => {
                 columns={columns}
                 className='-highlight'
                 defaultPageSize={50}
-                rowsText='metrics'
+                rowsText='metric templates'
                 getTheadThProps={() => ({className: 'table-active font-weight-bold p-2'})}
               />
             </div>
