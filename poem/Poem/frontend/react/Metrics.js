@@ -1,4 +1,4 @@
-import React, { Component, useState, useEffect, useCallback } from 'react';
+import React, { Component, useState, useEffect } from 'react';
 import { Backend } from './DataManager';
 import { Link } from 'react-router-dom';
 import {
@@ -39,6 +39,7 @@ import { faInfoCircle, faMinus, faPlus, faCaretDown } from '@fortawesome/free-so
 import ReactDiffViewer from 'react-diff-viewer';
 import CreatableSelect from 'react-select/creatable';
 import { components } from 'react-select';
+import { useQuery } from 'react-query';
 
 export const MetricHistory = HistoryComponent('metric');
 export const MetricVersonCompare = CompareMetrics('metric');
@@ -294,17 +295,12 @@ export const ListOfMetrics = (props) => {
   const location = props.location;
   const type = props.type;
   const importable = props.importable;
+  const publicView = props.publicView;
 
-  const [loading, setLoading] = useState(false);
-  const [listMetrics, setListMetrics] = useState(null);
-  const [listTypes, setListTypes] = useState(null);
-  const [listTags, setListTags] = useState(null);
   const [searchName, setSearchName] = useState('');
   const [searchProbeversion, setSearchProbeversion] = useState('');
   const [searchType, setSearchType] = useState('');
   const [searchTag, setSearchTag] = useState('');
-  const [listOSGroups, setListOSGroups] = useState(null);
-  const [userDetails, setUserDetails] = useState(undefined);
   const [searchOSGroups, setSearchOSGroups] = useState('');
   const [selected, setSelected] = useState({});
   const [selectAll, setSelectAll] = useState(0);
@@ -312,10 +308,56 @@ export const ListOfMetrics = (props) => {
   const [modalVar, setModalVar] = useState(undefined);
   const [modalTitle, setModalTitle] = useState(undefined);
   const [modalMsg, setModalMsg] = useState(undefined);
-  const [error, setError] = useState(null);
 
   const backend = new Backend();
-  const publicView = props.publicView;
+
+  const { data: listMetrics, error: listMetricsError, isLoading: listMetricsLoading } = useQuery(
+    'metrics', async () => {
+      let metrics =await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}${type === 'metrics' ? 'metric' : type}`);
+      return metrics;
+    },
+    { retry: false }
+  );
+
+  const { data: listTypes, error: listTypesError, isLoading: listTypesLoading } = useQuery(
+    'mtypes', async () => {
+      let types = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}mt${type=='metrictemplates' ? 't' : ''}ypes`);
+      return types;
+    }
+  );
+
+  const { data: listTags, error: listTagsError, isLoading: listTagsLoading } = useQuery(
+    'tags', async () => {
+      let tags = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}metrictags`);
+      tags.push('none');
+      return tags;
+    }
+  );
+
+  const { data: listOSGroups, error: listOSGroupsError, isLoading: listOSGroupsLoading } = useQuery(
+    'osgroups', async () => {
+      if (type === 'metrics') {
+        let groups = await backend.fetchResult(`/api/v2/internal/${publicView ? 'public_' : ''}usergroups`);
+        return groups['metrics'];
+      } else {
+        let ostags = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}ostags`);
+        return ostags;
+      };
+    }
+  );
+
+  const { data: userDetails, error: userDetailsError, isLoading: userDetailsLoading } = useQuery(
+    'userdetails', async () => {
+      let userdetails = { username: 'Anonymous' };
+      if (!publicView) {
+        let schema = backend.isTenantSchema();
+        let sessionActive = await backend.isActiveSession(schema);
+        if (sessionActive.active)
+          userdetails = sessionActive.userdetails;
+      };
+      return userdetails;
+    }
+  );
 
   function doFilter(list_metric, field, filter) {
     return (
@@ -440,305 +482,277 @@ export const ListOfMetrics = (props) => {
       });
   };
 
-  useEffect(() => {
-    setLoading(true);
+  if (listMetricsLoading || listTypesLoading || listTagsLoading || listOSGroupsLoading || userDetailsLoading)
+    return (<LoadingAnim />);
 
-    async function fetchMetricData() {
-      let response = await backend.isTenantSchema();
-      let alltags = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}metrictags`);
-      alltags.push('none');
-      try {
-        let userdetails = {username: 'Anonymous'};
-        if (!publicView) {
-          let sessionActive = await backend.isActiveSession(response);
-          if (sessionActive.active)
-            userdetails = sessionActive.userdetails;
-        };
+  else if (listMetricsError)
+    return (<ErrorComponent error={listMetricsError.message}/>);
 
-        let metrics = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}${type === 'metrics' ? 'metric' : type}`);
-        let types = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}mt${type=='metrictemplates' ? 't' : ''}ypes`);
+  else if (listTypesError)
+    return (<ErrorComponent error={listTypesError.message}/>);
 
-        setListMetrics(metrics);
-        setListTypes(types);
-        setListTags(alltags);
-        setUserDetails(userdetails);
+  else if (listTagsError)
+    return (<ErrorComponent error={listTagsError.message}/>);
 
-        if (type === 'metrics') {
-          let groups = await backend.fetchResult(`/api/v2/internal/${publicView ? 'public_' : ''}usergroups`);
-          setListOSGroups(groups['metrics']);
-        } else {
-          let ostags = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}ostags`);
-          setListOSGroups(ostags);
-        };
-      } catch(err) {
-        setError(err);
-      };
+  else if (listOSGroupsError)
+    return (<ErrorComponent error={listOSGroupsError.message}/>);
 
-      setLoading(false);
-    };
+  else if (userDetailsError)
+    return (<ErrorComponent error={userDetailsError.message}/>);
 
-    fetchMetricData();
-  }, []);
+  else {
+    let metriclink = `/ui/${importable ? 'administration/' : ''}${publicView ? 'public_' : ''}${type}/`;
 
-  let metriclink = `/ui/${importable ? 'administration/' : ''}${publicView ? 'public_' : ''}${type}/`;
-
-  const columns = [
-    {
-      Header: 'Name',
-      id: 'name',
-      minWidth: 100,
-      accessor: e =>
-        <Link
-        to={
-          importable ?
-            searchOStag === 'CentOS 6' && e.centos6_probeversion ?
-              `${metriclink}${e.name}/history/${e.centos6_probeversion.split(' ')[1].substring(1, e.centos6_probeversion.split(' ')[1].length - 1)}`
-            :
-              (searchOStag === 'CentOS 7' && e.centos7_probeversion) ?
-                `${metriclink}${e.name}/history/${e.centos7_probeversion.split(' ')[1].substring(1, e.centos7_probeversion.split(' ')[1].length - 1)}`
+    const columns = [
+      {
+        Header: 'Name',
+        id: 'name',
+        minWidth: 100,
+        accessor: e =>
+          <Link
+          to={
+            importable ?
+              searchOSGroups === 'CentOS 6' && e.centos6_probeversion ?
+                `${metriclink}${e.name}/history/${e.centos6_probeversion.split(' ')[1].substring(1, e.centos6_probeversion.split(' ')[1].length - 1)}`
               :
-                `${metriclink}${e.name}`
-          :
-            `${metriclink}${e.name}`
-        }
-      >
-          {e.name}
-        </Link>,
-      filterable: true,
-      Filter: (
-        <DefaultFilterComponent
-          field='name'
-          value={searchName}
-          onChange={e => setSearchName(e.target.value)}
-        />
-      )
-    },
-    {
-      Header: 'Probe version',
-      id: 'probeversion',
-      minWidth: 80,
-      accessor: e => (
-        e.probeversion ?
-          <ProbeVersionLink
-            publicView={publicView}
-            probeversion={
-              importable ?
-                (searchOStag.search_ostag === 'CentOS 6' && e.centos6_probeversion) ?
-                  e.centos6_probeversion
+                (searchOSGroups === 'CentOS 7' && e.centos7_probeversion) ?
+                  `${metriclink}${e.name}/history/${e.centos7_probeversion.split(' ')[1].substring(1, e.centos7_probeversion.split(' ')[1].length - 1)}`
                 :
-                  (searchOStag === 'CentOS 7' && e.centos7_probeversion) ?
-                    e.centos7_probeversion
-                  :
-                    e.probeversion
-              :
-                e.probeversion
-            }
-          />
-        :
-          ""
-      ),
-      Cell: row =>
-        <div style={{textAlign: 'center'}}>
-          {row.value}
-        </div>,
-      filterable: true,
-      Filter: (
-        <DefaultFilterComponent
-          field='probe version'
-          value={searchProbeversion}
-          onChange={e => setSearchProbeversion(e.target.value)}
-        />
-      )
-    },
-    {
-      Header: 'Type',
-      minWidth: 30,
-      accessor: 'mtype',
-      Cell: row =>
-        <div style={{textAlign: 'center'}}>
-          {row.value}
-        </div>,
-      filterable:true,
-      Filter: (
-        <DropdownFilterComponent
-          value={searchType}
-          onChange={e => setSearchType(e.target.value)}
-          data={listTypes}
-        />
-      )
-    },
-    {
-      Header: 'Tag',
-      minWidth: 30,
-      accessor: 'tags',
-      Cell: row =>
-        <div style={{textAlign: 'center'}}>
-          {
-            row.value.length === 0 ?
-              <Badge color='dark'>none</Badge>
+                  `${metriclink}${e.name}`
             :
-              row.value.map((tag, i) =>
-                <Badge className={'mr-1'} key={i} color={tag === 'internal' ? 'success' : tag === 'deprecated' ? 'danger' : 'secondary'}>
-                  {tag}
-                </Badge>
-              )
+              `${metriclink}${e.name}`
           }
-        </div>,
-      filterable: true,
-      Filter: (
-        <DropdownFilterComponent
-          value={searchTag}
-          onChange={e => setSearchTag(e.target.value)}
-          data={listTags}
-        />
-      )
-    }
-  ];
-
-  if (type == 'metrictemplates' && userDetails && userDetails.is_superuser) {
-    columns.splice(
-      0,
-      0,
-      {
-        id: 'checkbox',
-        accessor: '',
-        Cell: ({original}) => {
-          return (
-            <div style={{display: 'flex', justifyContent: 'center'}}>
-              <input
-                type='checkbox'
-                className='checkbox'
-                checked={selected[original.name] === true}
-                onChange={() => toggleRow(original.name)}
-              />
-            </div>
-          );
-        },
-        Header: `${importable ? 'Select all' : 'Delete'}`,
-        Filter: (
-          <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
-            <input
-              type='checkbox'
-              className='checkbox'
-              checked={selectAll === 1}
-              ref={input => {
-                if (input) {
-                  input.indeterminate = selectAll === 2;
-                }
-              }}
-              onChange={() => toggleSelectAll()}
-            />
-          </div>
-          ),
+        >
+            {e.name}
+          </Link>,
         filterable: true,
-        sortable: false,
-        minWidth: 12
-      }
-    )
-  } else {
-    columns.splice(
-      0,
-      0,
+        Filter: (
+          <DefaultFilterComponent
+            field='name'
+            value={searchName}
+            onChange={e => setSearchName(e.target.value)}
+          />
+        )
+      },
       {
-        Header: '#',
-        id: 'row',
-        minWidth: 12,
-        Cell: (row) =>
-          <div style={{textAlign: 'center'}}>
-            {row.index + 1}
-          </div>
-      }
-    )
-  };
-
-  if (type === 'metrics') {
-    columns.splice(
-      4,
-      0,
-      {
-        Header: 'Group',
-        minWidth: 30,
-        accessor: 'group',
+        Header: 'Probe version',
+        id: 'probeversion',
+        minWidth: 80,
+        accessor: e => (
+          e.probeversion ?
+            <ProbeVersionLink
+              publicView={publicView}
+              probeversion={
+                importable ?
+                  (searchOSGroups.search_ostag === 'CentOS 6' && e.centos6_probeversion) ?
+                    e.centos6_probeversion
+                  :
+                    (searchOSGroups === 'CentOS 7' && e.centos7_probeversion) ?
+                      e.centos7_probeversion
+                    :
+                      e.probeversion
+                :
+                  e.probeversion
+              }
+            />
+          :
+            ""
+        ),
         Cell: row =>
           <div style={{textAlign: 'center'}}>
             {row.value}
           </div>,
         filterable: true,
         Filter: (
-          <DropdownFilterComponent
-            value={searchOSGroups}
-            onChange={e => setSearchOSGroups(e.target.value)}
-            data={listOSGroups}
+          <DefaultFilterComponent
+            field='probe version'
+            value={searchProbeversion}
+            onChange={e => setSearchProbeversion(e.target.value)}
           />
         )
-      }
-    )
-  }
-
-  if (importable) {
-    columns.splice(
-      4,
-      0,
+      },
       {
-        Header: 'OS',
+        Header: 'Type',
         minWidth: 30,
-        accessor: 'ostag',
+        accessor: 'mtype',
         Cell: row =>
           <div style={{textAlign: 'center'}}>
-            {row.value.join(', ')}
+            {row.value}
+          </div>,
+        filterable:true,
+        Filter: (
+          <DropdownFilterComponent
+            value={searchType}
+            onChange={e => setSearchType(e.target.value)}
+            data={listTypes}
+          />
+        )
+      },
+      {
+        Header: 'Tag',
+        minWidth: 30,
+        accessor: 'tags',
+        Cell: row =>
+          <div style={{textAlign: 'center'}}>
+            {
+              row.value.length === 0 ?
+                <Badge color='dark'>none</Badge>
+              :
+                row.value.map((tag, i) =>
+                  <Badge className={'mr-1'} key={i} color={tag === 'internal' ? 'success' : tag === 'deprecated' ? 'danger' : 'secondary'}>
+                    {tag}
+                  </Badge>
+                )
+            }
           </div>,
         filterable: true,
         Filter: (
           <DropdownFilterComponent
-            value={searchOSGroups}
-            onChange={e => setSearchOSGroups(e.target.value)}
-            data={listOSGroups}
+            value={searchTag}
+            onChange={e => setSearchTag(e.target.value)}
+            data={listTags}
           />
         )
       }
-    )
-  };
+    ];
 
-  var list_metric = listMetrics;
+    if (type == 'metrictemplates' && userDetails && userDetails.is_superuser) {
+      columns.splice(
+        0,
+        0,
+        {
+          id: 'checkbox',
+          accessor: '',
+          Cell: ({original}) => {
+            return (
+              <div style={{display: 'flex', justifyContent: 'center'}}>
+                <input
+                  type='checkbox'
+                  className='checkbox'
+                  checked={selected[original.name] === true}
+                  onChange={() => toggleRow(original.name)}
+                />
+              </div>
+            );
+          },
+          Header: `${importable ? 'Select all' : 'Delete'}`,
+          Filter: (
+            <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
+              <input
+                type='checkbox'
+                className='checkbox'
+                checked={selectAll === 1}
+                ref={input => {
+                  if (input) {
+                    input.indeterminate = selectAll === 2;
+                  }
+                }}
+                onChange={() => toggleSelectAll()}
+              />
+            </div>
+            ),
+          filterable: true,
+          sortable: false,
+          minWidth: 12
+        }
+      )
+    } else {
+      columns.splice(
+        0,
+        0,
+        {
+          Header: '#',
+          id: 'row',
+          minWidth: 12,
+          Cell: (row) =>
+            <div style={{textAlign: 'center'}}>
+              {row.index + 1}
+            </div>
+        }
+      )
+    };
 
-  if (searchName) {
-    list_metric = doFilter(list_metric, 'name', searchName);
-  };
+    if (type === 'metrics') {
+      columns.splice(
+        4,
+        0,
+        {
+          Header: 'Group',
+          minWidth: 30,
+          accessor: 'group',
+          Cell: row =>
+            <div style={{textAlign: 'center'}}>
+              {row.value}
+            </div>,
+          filterable: true,
+          Filter: (
+            <DropdownFilterComponent
+              value={searchOSGroups}
+              onChange={e => setSearchOSGroups(e.target.value)}
+              data={listOSGroups}
+            />
+          )
+        }
+      )
+    } else {
+      if (importable) {
+        columns.splice(
+          4,
+          0,
+          {
+            Header: 'OS',
+            minWidth: 30,
+            accessor: 'ostag',
+            Cell: row =>
+              <div style={{textAlign: 'center'}}>
+                {row.value.join(', ')}
+              </div>,
+            filterable: true,
+            Filter: (
+              <DropdownFilterComponent
+                value={searchOSGroups}
+                onChange={e => setSearchOSGroups(e.target.value)}
+                data={listOSGroups}
+              />
+            )
+          }
+        )
+      };
+    };
 
-  if (searchProbeversion) {
-    list_metric = doFilter(list_metric, 'probeversion', searchProbeversion);
-  };
+    var list_metric = listMetrics;
 
-  if (searchType) {
-    list_metric = doFilter(list_metric, 'mtype', searchType);
-  };
+    if (searchName) {
+      list_metric = doFilter(list_metric, 'name', searchName);
+    };
 
-  if (searchOSGroups) {
-    type === 'metrics' ?
-      list_metric = doFilter(list_metric, 'group', searchOSGroups)
-    :
-      list_metric = list_metric.filter(row =>
-        `${row.ostag.join(', ')}`.toLowerCase().includes(searchOStag.toLowerCase())
-      );
-  };
+    if (searchProbeversion) {
+      list_metric = doFilter(list_metric, 'probeversion', searchProbeversion);
+    };
 
-  if (searchTag) {
-    list_metric = list_metric.filter(row => {
-      if (searchTag === 'none')
-        return row.tags.length === 0;
+    if (searchType) {
+      list_metric = doFilter(list_metric, 'mtype', searchType);
+    };
 
-      else
-        return row.tags.includes(searchTag);
-    });
-  };
+    if (searchOSGroups) {
+      type === 'metrics' ?
+        list_metric = doFilter(list_metric, 'group', searchOSGroups)
+      :
+        list_metric = list_metric.filter(row =>
+          `${row.ostag.join(', ')}`.toLowerCase().includes(searchOStag.toLowerCase())
+        );
+    };
 
-  if (loading)
-    return (<LoadingAnim />);
+    if (searchTag) {
+      list_metric = list_metric.filter(row => {
+        if (searchTag === 'none')
+          return row.tags.length === 0;
 
-  else if (error)
-    return (<ErrorComponent error={error}/>);
+        else
+          return row.tags.includes(searchTag);
+      });
+    };
 
-  else if (!loading && list_metric && userDetails) {
     if (type === 'metrics') {
       return (
         <BaseArgoView
@@ -825,8 +839,7 @@ export const ListOfMetrics = (props) => {
           </>
         );
     };
-  } else
-    return null
+  };
 };
 
 
