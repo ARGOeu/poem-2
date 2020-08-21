@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component, useState, useEffect } from 'react';
 import { Backend } from './DataManager';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -112,65 +112,24 @@ export class APIKeyList extends Component {
 }
 
 
-export class APIKeyChange extends Component {
-  constructor(props) {
-    super(props);
+export const APIKeyChange = (props) => {
+  const name = props.match.params.name;
+  const location = props.location;
+  const addview = props.addview;
+  const history = props.history;
+  const backend = new Backend();
 
-    this.name = props.match.params.name;
-    this.location = props.location;
-    this.addview = props.addview;
-    this.history = props.history;
+  const [key, setKey] = useState({})
+  const [loading, setLoading] = useState(false)
+  const [areYouSureModal, toggleAreYouSureModal] = useState(false)
+  const [modalFunc, setModalFunc] = useState(undefined)
+  const [modalTitle, setModalTitle] = useState(undefined)
+  const [modalMsg, setModalMsg] = useState(undefined)
+  const [error, setError] = useState(null)
 
-    this.state = {
-      key: {},
-      loading: false,
-      areYouSureModal: false,
-      modalFunc: undefined,
-      modalTitle: undefined,
-      modalMsg: undefined,
-      error: null
-    };
-
-    this.backend = new Backend();
-    this.toggleAreYouSure = this.toggleAreYouSure.bind(this);
-    this.toggleAreYouSureSetModal = this.toggleAreYouSureSetModal.bind(this);
-    this.onSubmitHandle = this.onSubmitHandle.bind(this);
-    this.doChange = this.doChange.bind(this);
-    this.doDelete = this.doDelete.bind(this);
-  }
-
-  toggleAreYouSure() {
-    this.setState(prevState =>
-      ({areYouSureModal: !prevState.areYouSureModal}));
-  }
-
-  toggleAreYouSureSetModal(msg, title, onyes) {
-    this.setState(prevState =>
-      ({areYouSureModal: !prevState.areYouSureModal,
-        modalFunc: onyes,
-        modalMsg: msg,
-        modalTitle: title,
-      }));
-  }
-
-  onSubmitHandle(values, actions) {
-    let msg = undefined;
-    let title = undefined;
-
-    if (this.addview) {
-      msg = 'Are you sure you want to add API key?';
-      title = 'Add API key';
-    } else {
-      msg = 'Are you sure you want to change API key?';
-      title = 'Change API key';
-    }
-    this.toggleAreYouSureSetModal(msg, title,
-      () => this.doChange(values, actions))
-  }
-
-  async doChange(values, actions) {
-    if (!this.addview) {
-      let response = await this.backend.changeObject(
+  const doChange = async (values, action) => {
+    if (!addview) {
+      let response = await backend.changeObject(
         '/api/v2/internal/apikeys/',
         {
           id: this.state.key.id,
@@ -182,7 +141,7 @@ export class APIKeyChange extends Component {
         NotifyOk({
           msg: 'API key successfully changed',
           title: 'Changed',
-          callback: () => this.history.push('/ui/administration/apikey')
+          callback: () => history.push('/ui/administration/apikey')
         });
       } else {
         let change_msg = '';
@@ -199,7 +158,7 @@ export class APIKeyChange extends Component {
         });
       };
     } else {
-      let response = await this.backend.addObject(
+      let response = await backend.addObject(
         '/api/v2/internal/apikeys/',
         {
           name: values.name,
@@ -210,7 +169,7 @@ export class APIKeyChange extends Component {
         NotifyOk({
           msg: 'API key successfully added',
           title: 'Added',
-          callback: () => this.history.push('/ui/administration/apikey')
+          callback: () => history.push('/ui/administration/apikey')
         })
       } else {
         let add_msg = '';
@@ -226,15 +185,60 @@ export class APIKeyChange extends Component {
         });
       };
     };
+  };
+
+  const onSubmitHandle = (values, actions) => {
+    let msg = undefined;
+    let title = undefined;
+
+    if (addview) {
+      msg = 'Are you sure you want to add API key?';
+      title = 'Add API key';
+    } else {
+      msg = 'Are you sure you want to change API key?';
+      title = 'Change API key';
+    }
+    toggleAreYouSureModal(!areYouSureModal);
+    setModalMsg(msg)
+    setModalTitle(title)
+    setModalFunc(() => doChange(values, actions))
   }
 
-  async doDelete(name) {
-    let response = await this.backend.deleteObject(`/api/v2/internal/apikeys/${name}`);
+  useEffect(() => {
+    setLoading(true);
+
+    try {
+      if (!addview) {
+        const fetchDataAndSet = async () => {
+          let json = await backend.fetchData(`/api/v2/internal/apikeys/${name}`)
+          setKey(json);
+          setLoading(false);
+        }
+        fetchDataAndSet();
+      }
+      else {
+        setKey({
+          name: '',
+          revoked: false,
+          token: ''
+        });
+        setLoading(false);
+      };
+    }
+    catch(err) {
+      setError(err)
+      setLoading(false)
+    };
+
+  }, []);
+
+  const doDelete = async (name) => {
+    let response = await backend.deleteObject(`/api/v2/internal/apikeys/${name}`);
     if (response.ok) {
       NotifyOk({
         msg: 'API key successfully deleted',
         title: 'Deleted',
-        callback: () => this.history.push('/ui/administration/apikey')
+        callback: () => history.push('/ui/administration/apikey')
       })
     } else {
       let msg = '';
@@ -251,150 +255,117 @@ export class APIKeyChange extends Component {
     };
   }
 
-  async componentDidMount() {
-    this.setState({ loading: true });
+  if (loading)
+    return (<LoadingAnim/>);
 
-    try {
-      if (!this.addview) {
-        let json = await this.backend.fetchData(`/api/v2/internal/apikeys/${this.name}`);
-        this.setState({
-          key: json,
-          loading: false,
-        });
-      } else {
-        this.setState({
-          key: {
-            name: '',
-            revoked: false,
-            token: ''
-          },
-          loading: false,
-        });
-      };
-    } catch(err) {
-      this.setState({
-        error: err,
-        loading: false
-      });
-    };
-  }
+  else if (error)
+    return (<ErrorComponent error={error}/>);
 
-  render() {
-    const { key, loading, error } = this.state;
-
-    if (loading)
-      return (<LoadingAnim/>);
-
-    else if (error)
-      return (<ErrorComponent error={error}/>);
-
-    else if (!loading && key) {
-      return (
-        <BaseArgoView
-          resourcename='API key'
-          location={this.location}
-          addview={this.addview}
-          history={false}
-          modal={true}
-          state={this.state}
-          toggle={this.toggleAreYouSure}>
-            <Formik
-              initialValues = {{
-                name: key.name,
-                revoked: key.revoked,
-                token: key.token
-              }}
-              onSubmit = {(values, actions) => this.onSubmitHandle(values, actions)}
-              render = {props => (
-                <Form>
-                  <FormGroup>
-                    <Row>
-                      <Col md={6}>
-                        <Label for='name'>Name</Label>
+  else if (!loading && key) {
+    return (
+      <BaseArgoView
+        resourcename='API key'
+        location={location}
+        addview={addview}
+        history={false}
+        modal={true}
+        state={{areYouSureModal, modalFunc, modalTitle, modalMsg}}
+        toggle={toggleAreYouSureModal}>
+          <Formik
+            initialValues = {{
+              name: key.name,
+              revoked: key.revoked,
+              token: key.token
+            }}
+            onSubmit = {(values, actions) => onSubmitHandle(values, actions)}
+            render = {props => (
+              <Form>
+                <FormGroup>
+                  <Row>
+                    <Col md={6}>
+                      <Label for='name'>Name</Label>
+                      <Field
+                        type='text'
+                        name='name'
+                        id='name'
+                        required={true}
+                        className='form-control'
+                      />
+                      <FormText color='muted'>
+                        A free-form unique identifier of the client. 50 characters max.
+                      </FormText>
+                    </Col>
+                  </Row>
+                  <Row className='mt-2'>
+                    <Col md={6}>
+                      <Field
+                        component={Checkbox}
+                        name='revoked'
+                        className='form-control'
+                        id='checkbox'
+                        label='Revoked'
+                      />
+                      <FormText color='muted'>
+                        If the API key is revoked, clients cannot use it any more. (This cannot be undone.)
+                      </FormText>
+                    </Col>
+                  </Row>
+                </FormGroup>
+                <FormGroup>
+                  <ParagraphTitle title='Credentials'/>
+                  {
+                    addview &&
+                      <Alert color="info" className="text-center">
+                        If token field is <b>left empty</b>, value will be automatically generated on save.
+                      </Alert>
+                  }
+                  <Row>
+                    <Col sm={6}>
+                      <InputGroup>
+                        <InputGroupAddon addonType='prepend'>Token</InputGroupAddon>
                         <Field
                           type='text'
-                          name='name'
-                          id='name'
-                          required={true}
+                          name='token'
+                          id='token'
+                          disabled={addview ? false : true}
                           className='form-control'
                         />
-                        <FormText color='muted'>
-                          A free-form unique identifier of the client. 50 characters max.
-                        </FormText>
-                      </Col>
-                    </Row>
-                    <Row className='mt-2'>
-                      <Col md={6}>
-                        <Field
-                          component={Checkbox}
-                          name='revoked'
-                          className='form-control'
-                          id='checkbox'
-                          label='Revoked'
-                        />
-                        <FormText color='muted'>
-                          If the API key is revoked, clients cannot use it any more. (This cannot be undone.)
-                        </FormText>
-                      </Col>
-                    </Row>
-                  </FormGroup>
-                  <FormGroup>
-                    <ParagraphTitle title='Credentials'/>
+                      </InputGroup>
+                      <FormText color='muted'>
+                        A public, unique identifier for this API key.
+                      </FormText>
+                    </Col>
+                  </Row>
+                </FormGroup>
+                {
+                  <div className={!addview ? "submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5" : "submit-row d-flex align-items-center justify-content-end bg-light p-3 mt-5"}>
                     {
-                      this.addview &&
-                        <Alert color="info" className="text-center">
-                          If token field is <b>left empty</b>, value will be automatically generated on save.
-                        </Alert>
-                    }
-                    <Row>
-                      <Col sm={6}>
-                        <InputGroup>
-                          <InputGroupAddon addonType='prepend'>Token</InputGroupAddon>
-                          <Field
-                            type='text'
-                            name='token'
-                            id='token'
-                            disabled={this.addview ? false : true}
-                            className='form-control'
-                          />
-                        </InputGroup>
-                        <FormText color='muted'>
-                          A public, unique identifier for this API key.
-                        </FormText>
-                      </Col>
-                    </Row>
-                  </FormGroup>
-                  {
-                    <div className={!this.addview ? "submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5" : "submit-row d-flex align-items-center justify-content-end bg-light p-3 mt-5"}>
-                      {
-                        (!this.addview) &&
-                        <Button
-                          color='danger'
-                          onClick={() => {
-                            this.toggleAreYouSureSetModal(
-                              'Are you sure you want to delete API key?',
-                              'Delete API key',
-                              () => this.doDelete(this.name)
-                            )
-                          }}
-                        >
-                          Delete
-                        </Button>
-                      }
+                      (!addview) &&
                       <Button
-                        color='success'
-                        id='submit-button'
-                        type='submit'
+                        color='danger'
+                        onClick={() => {
+                          setModalMsg('Are you sure you want to delete API key?')
+                          setModalTitle('Delete API key')
+                          setModalFunc(doDelete(name))
+                          toggleAreYouSureModal(!areYouSureModal);
+                        }}
                       >
-                        Save
+                        Delete
                       </Button>
-                    </div>
-                  }
-                </Form>
-              )}
-            />
-          </BaseArgoView>
-      )
-    }
+                    }
+                    <Button
+                      color='success'
+                      id='submit-button'
+                      type='submit'
+                    >
+                      Save
+                    </Button>
+                  </div>
+                }
+              </Form>
+            )}
+          />
+        </BaseArgoView>
+    )
   }
 }
