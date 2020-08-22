@@ -274,6 +274,10 @@ export const APIKeyChange = (props) => {
   const copyToClipboard = (e) => {
     navigator.clipboard.writeText(refToken.current.value)
     e.target.focus();
+    NotifyOk({
+      msg: 'API token copied to clipboard',
+      title: 'Copied',
+      })
   }
 
   if (loading)
