@@ -1,4 +1,4 @@
-import React, { Component, useState, useEffect, useCallback, useMemo } from 'react';
+import React, { Component, useState, useEffect } from 'react';
 import { Backend } from './DataManager';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -119,19 +119,27 @@ export const APIKeyChange = (props) => {
   const history = props.history;
   const backend = new Backend();
 
-  const [key, setKey] = useState({})
+  const [key, setKey] = useState({
+    name: '',
+    revoked: false,
+    token: ''
+  })
   const [loading, setLoading] = useState(false)
   const [areYouSureModal, setAreYouSureModal] = useState(false)
   const [modalTitle, setModalTitle] = useState(undefined)
+  const [modalFunc, setModalFunc] = useState(undefined)
   const [modalMsg, setModalMsg] = useState(undefined)
   const [error, setError] = useState(null)
+  const [onYes, setOnYes] = useState('')
+  // TODO: useFormik hook with formik 2.x
+  const [formikValues, setFormikValues] = useState({})
 
   const doChange = async (values, action) => {
     if (!addview) {
       let response = await backend.changeObject(
         '/api/v2/internal/apikeys/',
         {
-          id: this.state.key.id,
+          id: key.id,
           revoked: values.revoked,
           name: values.name,
         }
@@ -200,7 +208,8 @@ export const APIKeyChange = (props) => {
     setAreYouSureModal(!areYouSureModal);
     setModalMsg(msg)
     setModalTitle(title)
-    setModalFunc(() => doChange(values, actions))
+    setOnYes('change')
+    setFormikValues(values)
   }
 
   useEffect(() => {
@@ -228,7 +237,6 @@ export const APIKeyChange = (props) => {
       setError(err)
       setLoading(false)
     };
-
   }, []);
 
   const doDelete = async () => {
@@ -254,6 +262,13 @@ export const APIKeyChange = (props) => {
     };
   }
 
+  const onYesCallback = () => {
+    if (onYes === 'delete')
+      doDelete(name)
+    else if (onYes === 'change')
+      doChange(formikValues)
+  }
+
   if (loading)
     return (<LoadingAnim/>);
 
@@ -268,7 +283,7 @@ export const APIKeyChange = (props) => {
         addview={addview}
         history={false}
         modal={true}
-        state={{areYouSureModal, 'modalFunc': doDelete, modalTitle, modalMsg}}
+        state={{areYouSureModal, 'modalFunc': onYesCallback, modalTitle, modalMsg}}
         toggle={() => setAreYouSureModal(!areYouSureModal)}>
           <Formik
             initialValues = {{
@@ -346,6 +361,7 @@ export const APIKeyChange = (props) => {
                           setModalMsg('Are you sure you want to delete API key?')
                           setModalTitle('Delete API key')
                           setAreYouSureModal(!areYouSureModal);
+                          setOnYes('delete')
                         }}
                       >
                         Delete
