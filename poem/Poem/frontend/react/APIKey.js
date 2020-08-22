@@ -1,4 +1,4 @@
-import React, { Component, useState, useEffect } from 'react';
+import React, { Component, useState, useEffect, useRef } from 'react';
 import { Backend } from './DataManager';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -133,6 +133,7 @@ export const APIKeyChange = (props) => {
   const [onYes, setOnYes] = useState('')
   // TODO: useFormik hook with formik 2.x
   const [formikValues, setFormikValues] = useState({})
+  const refToken = useRef(null);
 
   const doChange = async (values, action) => {
     if (!addview) {
@@ -269,6 +270,11 @@ export const APIKeyChange = (props) => {
       doChange(formikValues)
   }
 
+  const copyToClipboard = (e) => {
+    navigator.clipboard.writeText(refToken.current.value)
+    e.target.focus();
+  }
+
   if (loading)
     return (<LoadingAnim/>);
 
@@ -343,11 +349,15 @@ export const APIKeyChange = (props) => {
                           id='token'
                           disabled={addview ? false : true}
                           className='form-control'
+                          innerRef={refToken}
                         />
                       </InputGroup>
                       <FormText color='muted'>
                         A public, unique identifier for this API key.
                       </FormText>
+                    </Col>
+                    <Col sm={3}>
+                      <Button className="btn" color="success" onClick={(e) => copyToClipboard(e)}>Clipboard</Button>
                     </Col>
                   </Row>
                 </FormGroup>
