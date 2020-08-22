@@ -17,6 +17,7 @@ import {
   InputGroup,
   InputGroupAddon,
 } from 'reactstrap';
+import { faClipboard } from '@fortawesome/free-solid-svg-icons';
 
 
 export class APIKeyList extends Component {
@@ -339,7 +340,7 @@ export const APIKeyChange = (props) => {
                         If token field is <b>left empty</b>, value will be automatically generated on save.
                       </Alert>
                   }
-                  <Row>
+                  <Row className="no-gutters">
                     <Col sm={6}>
                       <InputGroup>
                         <InputGroupAddon addonType='prepend'>Token</InputGroupAddon>
@@ -356,8 +357,10 @@ export const APIKeyChange = (props) => {
                         A public, unique identifier for this API key.
                       </FormText>
                     </Col>
-                    <Col sm={3}>
-                      <Button className="btn" color="success" onClick={(e) => copyToClipboard(e)}>Clipboard</Button>
+                    <Col sm={2}>
+                      <Button className="btn" color="success" onClick={(e) => copyToClipboard(e)}>
+                        <FontAwesomeIcon icon={faClipboard} size="lg" color='white'/>
+                     </Button>
                     </Col>
                   </Row>
                 </FormGroup>
