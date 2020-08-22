@@ -266,18 +266,18 @@ export const APIKeyChange = (props) => {
 
   const onYesCallback = () => {
     if (onYes === 'delete')
-      doDelete(name)
+      doDelete(name);
     else if (onYes === 'change')
-      doChange(formikValues)
+      doChange(formikValues);
   }
 
   const copyToClipboard = (e) => {
-    navigator.clipboard.writeText(refToken.current.value)
+    navigator.clipboard.writeText(refToken.current.value);
     e.target.focus();
     NotifyOk({
       msg: 'API token copied to clipboard',
       title: 'Copied',
-      })
+    });
   }
 
   if (loading)
@@ -361,11 +361,14 @@ export const APIKeyChange = (props) => {
                         A public, unique identifier for this API key.
                       </FormText>
                     </Col>
-                    <Col sm={2}>
-                      <Button className="btn" color="success" onClick={(e) => copyToClipboard(e)}>
-                        <FontAwesomeIcon icon={faClipboard} size="lg" color='white'/>
-                     </Button>
-                    </Col>
+                    {
+                      !addview &&
+                      <Col sm={2}>
+                        <Button className="btn" color="success" onClick={(e) => copyToClipboard(e)}>
+                          <FontAwesomeIcon icon={faClipboard} size="lg" color='white'/>
+                       </Button>
+                      </Col>
+                    }
                   </Row>
                 </FormGroup>
                 {
