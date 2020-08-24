@@ -11,7 +11,7 @@ import {
   SearchField,
   ModalAreYouSure
 } from './UIElements';
-import ReactTable from 'react-table';
+import ReactTable from 'react-table-6';
 import { Link } from 'react-router-dom';
 import { Formik, Form, Field, setNestedObjectValues } from 'formik';
 import {

@@ -15,7 +15,7 @@ import {
   ErrorComponent,
   ParagraphTitle
 } from './UIElements';
-import ReactTable from 'react-table';
+import ReactTable from 'react-table-6';
 import { Formik, Field, FieldArray, Form } from 'formik';
 import 'react-table/react-table.css';
 import { Button } from 'reactstrap';

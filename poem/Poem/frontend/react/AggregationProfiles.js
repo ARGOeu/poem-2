@@ -14,7 +14,7 @@ import {
   ParagraphTitle
 } from './UIElements';
 import Autosuggest from 'react-autosuggest';
-import ReactTable from 'react-table';
+import ReactTable from 'react-table-6';
 import 'react-table/react-table.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Formik, Field, FieldArray, Form } from 'formik';
