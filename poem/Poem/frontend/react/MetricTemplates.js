@@ -1,5 +1,5 @@
 import React, { Component, useState } from 'react';
-import { MetricForm, CompareMetrics } from './Metrics';
+import { MetricForm} from './Metrics';
 import { Backend } from './DataManager';
 import {
   LoadingAnim,
@@ -19,7 +19,6 @@ import { useQuery, queryCache } from 'react-query';
 export const MetricTemplateHistory = HistoryComponent('metrictemplate');
 export const TenantMetricTemplateHistory = HistoryComponent('metrictemplate', true);
 
-export const MetricTemplateVersionCompare = CompareMetrics('metrictemplate');
 
 
 const MetricTemplateSchema = Yup.object().shape({
