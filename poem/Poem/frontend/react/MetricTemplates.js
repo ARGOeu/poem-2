@@ -53,6 +53,7 @@ export const MetricTemplateComponent = (props) => {
   const publicView = props.publicView;
   const tenantview = props.tenantview;
   const history = props.history;
+  const querykey = `metrictemplate_${addview ? 'addview' : `${name}_${tenantview ? 'tenant_' : ''}${cloneview ? 'cloneview' : `${publicView ? 'publicview' : 'changeview'}`}`}`;
 
   const backend = new Backend();
 
@@ -64,14 +65,14 @@ export const MetricTemplateComponent = (props) => {
   const [formValues, setFormValues] = useState(undefined);
 
   const { data: types, error: typesError, isLoading: typesLoading } = useQuery(
-    'mt_changeview_types', async () => {
+    `${querykey}_types`, async () => {
       let types = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}mttypes`);
       return types;
     }
   );
 
   const { data: allTags, error: allTagsError, isLoading: allTagsLoading } = useQuery(
-    'mt_changeview_tags', async () => {
+    `${querykey}_tags`, async () => {
       let tags = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}metrictags`);
       let formatTags = [];
       tags.forEach(t => formatTags.push({value: t, label: t}));
@@ -80,14 +81,14 @@ export const MetricTemplateComponent = (props) => {
   );
 
   const { data: allProbeVersions, error: allProbeVersionsError, isLoading: allProbeVersionsLoading } = useQuery(
-    'mt_changeview_allprobeversions', async () => {
+    `${querykey}_allprobeversions`, async () => {
       let allprobeversions = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}version/probe`);
       return allprobeversions;
     }
   );
 
   const { data: listMetricTemplates, error: listMetricTemplatesError, isLoading: listMetricTemplatesLoading } = useQuery(
-    'mt_changeview_metrictemplates', async () => {
+    `${querykey}_metrictemplates`, async () => {
       let mts = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}metrictemplates`);
       let mtlist = [];
       mts.forEach(m => mtlist.push(m.name));
@@ -96,7 +97,7 @@ export const MetricTemplateComponent = (props) => {
   );
 
   const {data: metricTemplate, error: metricTemplateError, isLoading: metricTemplateLoading } = useQuery(
-    'mt_changeview_metrictemplate',
+    `${querykey}_metrictemplate`,
     async () => {
       let metrictemplate = {
         id: '',
@@ -553,9 +554,10 @@ export class MetricTemplateVersionDetails extends Component {
               <Form>
                 <MetricForm
                   {...props}
-                  obj='metrictemplate'
-                  state={this.state}
+                  obj_label='metrictemplate'
                   isHistory={true}
+                  probe={this.state.probe}
+                  tags={this.state.tags}
                 />
               </Form>
             )}
