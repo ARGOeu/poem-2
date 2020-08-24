@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
 import { LoadingAnim, BaseArgoView, NotifyOk, Checkbox, NotifyError, ErrorComponent, ParagraphTitle } from './UIElements';
-import ReactTable from 'react-table';
+import ReactTable from 'react-table-6';
 import { Formik, Form, Field } from 'formik';
 import {
   Alert,
