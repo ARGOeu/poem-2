@@ -67,9 +67,16 @@ class ListAPIKeys(APIView):
         names = MyAPIKey.objects.get_usable_keys().values_list('name',
                                                                flat=True)
         if request.data['name'] not in names:
-            MyAPIKey.objects.create_key(
-                name=request.data['name']
-            )
+            token = request.data.get('token', False)
+            if token:
+                MyAPIKey.objects.create_key(
+                    name=request.data['name'],
+                    token=token
+                )
+            else:
+                MyAPIKey.objects.create_key(
+                    name=request.data['name']
+                )
 
             return Response(status=status.HTTP_201_CREATED)
 
