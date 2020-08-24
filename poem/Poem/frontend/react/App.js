@@ -10,10 +10,9 @@ import {
 } from './MetricProfiles';
 import Home, { PublicHome } from './Home';
 import { ProbeList, ProbeChange, ProbeHistory, ProbeVersionCompare, ProbeVersionDetails, ProbeClone } from './Probes';
-import { MetricChange, MetricHistory, MetricVersonCompare, MetricVersionDetails, ListOfMetrics } from './Metrics';
+import { MetricChange, MetricHistory, MetricVersionDetails, ListOfMetrics, CompareMetrics } from './Metrics';
 import {
   MetricTemplateHistory,
-  MetricTemplateVersionCompare,
   MetricTemplateVersionDetails,
   TenantMetricTemplateHistory,
   MetricTemplateComponent
@@ -118,7 +117,7 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, w
     <Route exact path="/ui/probes/:name" render={props => <ProbeChange {...props}/>}/>
     <Route exact path="/ui/metrics" render={props => <ListOfMetrics {...props} type='metrics'/>} />
     <Route exact path="/ui/metrics/:name/history" render={props => <MetricHistory {...props}/>}/>
-    <Route exact path="/ui/metrics/:name/history/compare/:id1/:id2" render={props => <MetricVersonCompare {...props}/>}/>
+    <Route exact path="/ui/metrics/:name/history/compare/:id1/:id2" render={props => <CompareMetrics {...props} type='metric'/>}/>
     <Route exact path="/ui/metrics/:name/history/:version" render={props => <MetricVersionDetails {...props}/>}/>
     <Route exact path="/ui/metrics/:name" render={props => <MetricChange {...props}/>}/>
     <Route exact path="/ui/metricprofiles" component={MetricProfilesList} />
@@ -299,7 +298,7 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, w
       />}
     />
     <SuperUserRoute isSuperUser={isSuperUser} exact path='/ui/administration/metrictemplates/:name/history' render={props => <TenantMetricTemplateHistory {...props}/>}/>
-    <SuperUserRoute isSuperUser={isSuperUser} exact path='/ui/administration/metrictemplates/:name/history/compare/:id1/:id2' render={props => <MetricTemplateVersionCompare {...props}/>}/>
+    <SuperUserRoute isSuperUser={isSuperUser} exact path='/ui/administration/metrictemplates/:name/history/compare/:id1/:id2' render={props => <CompareMetrics {...props} type='metrictemplate'/>}/>
     <SuperUserRoute isSuperUser={isSuperUser} exact path='/ui/administration/metrictemplates/:name/history/:version' render={props => <MetricTemplateVersionDetails {...props}/>}/>
     <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/apikey/:name"
       render={props => <APIKeyChange {...props} />}
@@ -351,7 +350,7 @@ const SuperAdminRouteSwitch = ({props}) => (
     <Route exact path='/ui/metrictemplates/add' render={props => <MetricTemplateComponent {...props} addview={true}/>}/>
     <Route exact path='/ui/metrictemplates/:name/clone' render={props => <MetricTemplateComponent {...props} cloneview={true}/>}/>
     <Route exact path='/ui/metrictemplates/:name/history' render={props => <MetricTemplateHistory {...props}/>}/>
-    <Route exact path='/ui/metrictemplates/:name/history/compare/:id1/:id2' render={props => <MetricTemplateVersionCompare {...props}/>}/>
+    <Route exact path='/ui/metrictemplates/:name/history/compare/:id1/:id2' render={props => <CompareMetrics {...props} type='metrictemplate'/>}/>
     <Route exact path='/ui/metrictemplates/:name/history/:version' render={props => <MetricTemplateVersionDetails {...props}/>}/>
     <Route exact path='/ui/metrictemplates/:name' render={props => <MetricTemplateComponent {...props}/>}/>
     <Route exact path='/ui/yumrepos/' render={props => <YumRepoList {...props}/>}/>
@@ -597,7 +596,7 @@ class App extends Component {
                 exact path="/ui/public_metrictemplates/:name/history/compare/:id1/:id2"
                 render={props =>
                   <PublicPage tenantName={this.state.tenantName}>
-                    <MetricTemplateVersionCompare publicView={true} {...props}VersionCompare/>
+                    <CompareMetrics publicView={true} {...props} type='metrictemplate'/>
                   </PublicPage>
                 }
               />
@@ -787,7 +786,7 @@ class App extends Component {
                 exact path="/ui/public_metrictemplates/:name/history/compare/:id1/:id2"
                 render={props =>
                   <PublicPage>
-                    <MetricTemplateVersionCompare publicView={true} {...props}VersionCompare/>
+                    <CompareMetrics publicView={true} {...props} type='metrictemplate'/>
                   </PublicPage>
                 }
               />
