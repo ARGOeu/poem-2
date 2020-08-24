@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { WebApi } from './DataManager';
 import { Link } from 'react-router-dom';
 import { LoadingAnim, ErrorComponent, BaseArgoView, ParagraphTitle } from './UIElements';
-import ReactTable from 'react-table';
+import ReactTable from 'react-table-6';
 import {
   FormGroup,
   Row,

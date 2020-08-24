@@ -13,7 +13,7 @@ import {
   ErrorComponent,
   ParagraphTitle
 } from './UIElements';
-import ReactTable from 'react-table';
+import ReactTable from 'react-table-6';
 import {
   FormGroup,
   Label,
