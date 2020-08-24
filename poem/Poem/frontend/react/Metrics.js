@@ -42,7 +42,6 @@ import { components } from 'react-select';
 import { useQuery, queryCache } from 'react-query';
 
 export const MetricHistory = HistoryComponent('metric');
-export const MetricVersonCompare = CompareMetrics('metric');
 
 
 const DefaultFilterComponent = ({value, onChange, field}) => (
@@ -1209,245 +1208,117 @@ export const MetricForm =
     </>
 
 
-export function CompareMetrics(metrictype) {
-  return class extends Component {
-    constructor(props) {
-      super(props);
+export const CompareMetrics = (props) => {
+  const version1 = props.match.params.id1;
+  const version2 = props.match.params.id2;
+  const name = props.match.params.name;
+  const publicView = props.publicView;
+  const type = props.type;
 
-      this.version1 = props.match.params.id1;
-      this.version2 = props.match.params.id2;
-      this.name = props.match.params.name;
-      this.publicView = props.publicView;
+  const [loading, setLoading] = useState(false);
+  const [metric1, setMetric1] = useState(undefined);
+  const [metric2, setMetric2] = useState(undefined);
+  const [error, setError] = useState(undefined);
 
-      this.state = {
-        loading: false,
-        name1: '',
-        probeversion1: '',
-        type1: '',
-        group1: '',
-        description1: '',
-        probeexecutable1: '',
-        parent1: '',
-        config1: '',
-        attribute1: '',
-        dependency1: '',
-        parameter1: '',
-        flags1: '',
-        files1: '',
-        fileparameter1: '',
-        name2: '',
-        probeversion2: '',
-        type2: '',
-        group2: '',
-        description2: '',
-        probeexecutable2: '',
-        parent2: '',
-        config2: '',
-        attribute2: '',
-        dependency2: '',
-        parameter2: '',
-        flags2: '',
-        files2: '',
-        fileparameter2: '',
-        error: null
-      };
+  const backend = new Backend();
 
-      this.backend = new Backend();
-    }
+  useEffect(() => {
+    setLoading(true);
 
-    async componentDidMount() {
-      this.setState({loading: true});
-
-      let url = undefined;
-
-      if (metrictype === 'metric')
-        url = `/api/v2/internal/${this.publicView ? 'public_' : ''}tenantversion/metric/${this.name}`;
-
-      else
-        url = `/api/v2/internal/${this.publicView ? 'public_' : ''}version/metrictemplate/${this.name}`;
-
+    async function fetchData() {
       try {
-        let json = await this.backend.fetchData(url);
-        let name1 = '';
-        let probeversion1 = '';
-        let type1 = '';
-        let group1 = '';
-        let description1 = '';
-        let probeexecutable1 = '';
-        let parent1 = '';
-        let config1 = '';
-        let attribute1 = '';
-        let dependency1 = '';
-        let flags1 = '';
-        let files1 = '';
-        let parameter1 = '';
-        let fileparameter1 = '';
-        let name2 = '';
-        let probeversion2 = '';
-        let type2 = '';
-        let group2 = '';
-        let description2 = '';
-        let probeexecutable2 = '';
-        let parent2 = '';
-        let config2 = '';
-        let attribute2 = '';
-        let dependency2 = '';
-        let flags2 = '';
-        let files2 = '';
-        let parameter2 = '';
-        let fileparameter2 = '';
+        let url = `/api/v2/internal/${publicView ? 'public_' : ''}${type === 'metric' ? 'tenant' : ''}version/${type}/${name}`;
+        let json = await backend.fetchData(url);
 
         json.forEach((e) => {
-          if (e.version == this.version1) {
-            name1 = e.fields.name;
-            probeversion1 = e.fields.probeversion;
-            type1 = e.fields.mtype;
-            if (metrictype === 'metric') {
-              group1 = e.fields.group;
-              dependency1 = e.fields.dependancy;
-            } else
-              dependency1 = e.fields.dependency;
-            description1 = e.fields.description;
-            probeexecutable1 = e.fields.probeexecutable;
-            parent1 = e.fields.parent;
-            config1 = e.fields.config;
-            attribute1 = e.fields.attribute;
-            parameter1 = e.fields.parameter;
-            flags1 = e.fields.flags; files1 = e.fields.files;
-            fileparameter1 = e.fields.fileparameter;
-          } else if (e.version == this.version2) {
-              name2 = e.fields.name;
-              probeversion2 = e.fields.probeversion;
-              type2 = e.fields.mtype;
-              if (metrictype === 'metric') {
-                group2 = e.fields.group;
-                dependency2 = e.fields.dependancy;
-              } else
-                dependency2 = e.fields.dependency;
-              description2 = e.fields.description;
-              probeexecutable2 = e.fields.probeexecutable;
-              parent2 = e.fields.parent;
-              config2 = e.fields.config;
-              attribute2 = e.fields.attribute;
-              flags2 = e.fields.flags;
-              files2 = e.fields.files;
-              parameter2 = e.fields.parameter;
-              fileparameter2 = e.fields.fileparameter;
-          }
-        });
-        this.setState({
-          name1: name1,
-          probeversion1: probeversion1,
-          type1: type1,
-          group1: group1,
-          description1: description1,
-          probeexecutable1: probeexecutable1,
-          parent1: parent1,
-          config1: config1,
-          attribute1: attribute1,
-          dependency1: dependency1,
-          parameter1: parameter1,
-          flags1: flags1,
-          files1: files1,
-          fileparameter1: fileparameter1,
-          name2: name2,
-          probeversion2: probeversion2,
-          type2: type2,
-          group2: group2,
-          description2: description2,
-          probeexecutable2: probeexecutable2,
-          parent2: parent2,
-          config2: config2,
-          attribute2: attribute2,
-          dependency2: dependency2,
-          parameter2: parameter2,
-          flags2: flags2,
-          files2: files2,
-          fileparameter2: fileparameter2,
-          loading: false
+          if (e.version == version1)
+            setMetric1(e.fields);
+
+          if (e.version == version2)
+            setMetric2(e.fields);
         });
       } catch(err) {
-        this.setState({
-          error: err,
-          loading: false
-        });
+        setError(err)
       };
-    }
+      setLoading(false);
+    };
 
-    render() {
-      var { name1, name2, probeversion1, probeversion2, type1, type2,
-        probeexecutable1, probeexecutable2, parent1, parent2, config1,
-        config2, attribute1, attribute2, dependency1, dependency2,
-        parameter1, parameter2, flags1, flags2, group1, group2, loading,
-        description1, description2, error } = this.state;
+    fetchData();
+  }, []);
 
-      if (loading)
-        return <LoadingAnim/>;
+  if (loading)
+    return (<LoadingAnim/>);
 
-      else if (error)
-        return (<ErrorComponent error={error}/>);
+  else if (error)
+    return (<ErrorComponent error={error}/>);
 
-      else if (!loading && name1 && name2) {
-        return (
-          <React.Fragment>
-            <div className='d-flex align-items-center justify-content-between'>
-              <h2 className='ml-3 mt-1 mb-4'>{`Compare ${this.name}`}</h2>
-            </div>
-            {
-              (name1 !== name2) &&
-                <DiffElement title='name' item1={name1} item2={name2}/>
-            }
-            {
-              (probeversion1 !== probeversion2) &&
-                <DiffElement title='probe version' item1={probeversion1} item2={probeversion2}/>
-            }
-            {
-              (type1 !== type2) &&
-                <DiffElement title='type' item1={type1} item2={type2}/>
-            }
-            {
-              (group1 && group2 && group1 !== group2) &&
-                <DiffElement title='group' item1={group1} item2={group2}/>
-            }
-            {
-              (description1 !== description2) &&
-                <DiffElement title='description' item1={description1} item2={description2}/>
-            }
-            {
-              (probeexecutable1 !== probeexecutable2) &&
-                <DiffElement title='probe executable' item1={probeexecutable1} item2={probeexecutable2}/>
-            }
-            {
-              (parent1 !== parent2) &&
-                <DiffElement title='parent' item1={parent1} item2={parent2}/>
-            }
-            {
-              (!arraysEqual(config1, config2)) &&
-                <InlineDiffElement title='config' item1={config1} item2={config2}/>
-            }
-            {
-              (!arraysEqual(attribute1, attribute2)) &&
-                <InlineDiffElement title='attribute' item1={attribute1} item2={attribute2}/>
-            }
-            {
-              (!arraysEqual(dependency1, dependency2)) &&
-                <InlineDiffElement title='dependency' item1={dependency1} item2={dependency2}/>
-            }
-            {
-              (!arraysEqual(parameter1, parameter2)) &&
-                <InlineDiffElement title='parameter' item1={parameter1} item2={parameter2}/>
-            }
-            {
-              (!arraysEqual(flags1, flags2)) &&
-                <InlineDiffElement title='flags' item1={flags1} item2={flags2}/>
-            }
-          </React.Fragment>
-        );
-      } else
-        return null;
-    }
-  };
-}
+  else if (!loading && metric1 && metric2) {
+    return (
+      <React.Fragment>
+        <div className='d-flex align-items-center justify-content-between'>
+          <h2 className='ml-3 mt-1 mb-4'>{`Compare ${name}`}</h2>
+        </div>
+        {
+          (metric1.name !== metric2.name) &&
+            <DiffElement title='name' item1={metric1.name} item2={metric2.name}/>
+        }
+        {
+          (metric1.probeversion !== metric2.probeversion) &&
+            <DiffElement title='probe version' item1={metric1.probeversion} item2={metric2.probeversion}/>
+        }
+        {
+          (metric1.type !== metric2.type) &&
+            <DiffElement title='type' item1={metric1.type} item2={metric2.type}/>
+        }
+        {
+          (!arraysEqual(metric1.tags, metric2.tags)) &&
+            <DiffElement title='tags' item1={metric1.tags} item2={metric2.tags}/>
+        }
+        {
+          (type === 'metric' && metric1.group !== metric2.group) &&
+            <DiffElement title='group' item1={metric1.group} item2={metric2.group}/>
+        }
+        {
+          (metric1.description !== metric2.description) &&
+            <DiffElement title='description' item1={metric1.description} item2={metric2.description}/>
+        }
+        {
+          (metric1.probeexecutable !== metric2.probeexecutable) &&
+            <DiffElement title='probe executable' item1={metric1.probeexecutable} item2={metric2.probeexecutable}/>
+        }
+        {
+          (metric1.parent !== metric2.parent) &&
+            <DiffElement title='parent' item1={metric1.parent} item2={metric2.parent}/>
+        }
+        {
+          (!arraysEqual(metric1.config, metric2.config)) &&
+            <InlineDiffElement title='config' item1={metric1.config} item2={metric2.config}/>
+        }
+        {
+          (!arraysEqual(metric1.attribute, metric2.attribute)) &&
+            <InlineDiffElement title='attribute' item1={metric1.attribute} item2={metric2.attribute}/>
+        }
+        {
+          (type === 'metrictemplate' && !arraysEqual(metric1.dependency, metric2.dependency)) &&
+            <InlineDiffElement title='dependency' item1={metric1.dependency} item2={metric2.dependency}/>
+        }
+        {
+          (type === 'metric' && !arraysEqual(metric1.dependancy, metric2.dependancy)) &&
+            <InlineDiffElement title='dependency' item1={metric1.dependancy} item2={metric2.dependancy}/>
+        }
+        {
+          (!arraysEqual(metric1.parameter, metric2.parameter)) &&
+            <InlineDiffElement title='parameter' item1={metric1.parameter} item2={metric2.parameter}/>
+        }
+        {
+          (!arraysEqual(metric1.flags, metric2.flags)) &&
+            <InlineDiffElement title='flags' item1={metric1.flags} item2={metric2.flags}/>
+        }
+      </React.Fragment>
+    );
+  } else
+    return null;
+};
 
 
 export const MetricChange = (props) => {
