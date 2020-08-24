@@ -1452,27 +1452,49 @@ export function CompareMetrics(metrictype) {
 
 export const MetricChange = (props) => {
   const name = props.match.params.name;
-  const addview = props.addview;
   const location = props.location;
   const history = props.history;
   const publicView = props.publicView;
+  const querykey = `metric_${name}_${publicView ? 'publicview' : 'changeview'}`;
 
   const backend = new Backend();
 
-  const [metric, setMetric] = useState({});
-  const [tags, setTags] = useState([]);
-  const [probe, setProbe] = useState({});
-  const [groups, setGroups] = useState([]);
-  const [probeVersions, setProbeVersions] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [popoverOpen, setPopoverOpen] = useState(false);
-  const [writePerm, setWritePerm] = useState(false);
   const [areYouSureModal, setAreYouSureModal] = useState(false);
   const [modalTitle, setModalTitle] = useState(undefined);
   const [modalMsg, setModalMsg] = useState(undefined);
   const [modalFlag, setModalFlag] = useState(undefined);
   const [formValues, setFormValues] = useState(undefined);
-  const [error, setError] = useState(null);
+
+  const { data: metric, error: metricError, isLoading: metricLoading } = useQuery(
+    `${querykey}_metric`, async () => {
+      let metric = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}metric/${name}`);
+      return metric;
+    }
+  );
+
+  const { data: session, error: sessionError, isLoading: sessionLoading } = useQuery(
+    `${querykey}_session`, async () => {
+      let session = await backend.isActiveSession();
+      return session;
+    }
+  );
+
+  const { data: probe, error: probeError, isLoading: probeLoading } = useQuery(
+    `${querykey}_probe`, async () => {
+      let probe = {};
+      let probes = [];
+      if (metric.probeversion)
+        probes = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}version/probe/${metric.probeversion.split(' ')[0]}`);
+        probes.forEach((p) => {
+          if (p.object_repr === metric.probeversion)
+            probe = p.fields;
+        });
+
+      return probe;
+    },
+    { enabled: metric }
+  );
 
   function togglePopOver() {
     setPopoverOpen(!popoverOpen);
@@ -1554,56 +1576,29 @@ export const MetricChange = (props) => {
     };
   };
 
-  useEffect(() => {
-    setLoading(true);
-
-    async function fetchMetricData() {
-      try {
-        if (!addview) {
-          let session = await backend.isActiveSession();
-          let fetchMetric = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}metric/${name}`);
-          setMetric(fetchMetric);
-          setTags(fetchMetric.tags);
-          if (session.active)
-            setGroups(session.userdetails.groups.metrics);
-            setWritePerm(
-              session.userdetails.is_superuser ||
-              session.userdetails.groups.metrics.indexOf(metrics.group) >= 0,
-            );
-          if (fetchMetric.probeversion) {
-            let fetchProbe = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}version/probe/${fetchMetric.probeversion.split(' ')[0]}`);
-            let fields = {};
-            let fetchProbeversions = [];
-            fetchProbe.forEach((e) => {
-              fetchProbeversions.push(e.object_repr);
-              if (e.object_repr === fetchMetric.probeversion) {
-                fields = e.fields;
-              }
-            })
-            setProbe(fields);
-            setProbeVersions(fetchProbeversions);
-          };
-        };
-      } catch(err) {
-        setError(err)
-      };
-      setLoading(false);
-    };
-
-    fetchMetricData();
-  }, []);
-
-
-  if (!groups.includes(metric.group))
-    groups.push(metric.group);
-
-  if (loading)
+  if (metricLoading || sessionLoading || probeLoading)
     return (<LoadingAnim/>);
 
-  else if (error)
-    return (<ErrorComponent error={error}/>);
+  else if (metricError)
+    return (<ErrorComponent error={metricError}/>);
 
-  else if (!loading) {
+  else if (sessionError)
+    return (<ErrorComponent error={sessionError}/>);
+
+  else if (probeError)
+    return (<ErrorComponent error={probeError}/>);
+
+  else {
+    var groups = [];
+    var writePerm = false;
+    if (session.active)
+      groups = session.userdetails.groups.metrics;
+      writePerm = session.userdetails.is_superuser || session.userdetails.groups.metrics.indexOf(metric.group >= 0);
+
+    if (!groups.includes(metric.group))
+      groups.push(metric.group);
+
+
     return (
       <React.Fragment>
         <ModalAreYouSure
@@ -1616,8 +1611,6 @@ export const MetricChange = (props) => {
         <BaseArgoView
           resourcename={(publicView) ? 'Metric details' : 'metric'}
           location={location}
-          addview={addview}
-          modal={false}
           history={!publicView}
           publicview={publicView}
           submitperm={writePerm}>
@@ -1648,11 +1641,10 @@ export const MetricChange = (props) => {
                   obj_label='metric'
                   obj={metric}
                   probe={probe}
-                  tags={tags}
+                  tags={metric.tags}
                   isTenantSchema={true}
                   popoverOpen={popoverOpen}
                   togglePopOver={togglePopOver}
-                  probeversions={probeVersions}
                   groups={groups}
                   publicView={publicView}
                 />
@@ -1678,9 +1670,8 @@ export const MetricChange = (props) => {
           />
         </BaseArgoView>
       </React.Fragment>
-    )
-  } else
-    return null;
+    );
+  };
 };
 
 
