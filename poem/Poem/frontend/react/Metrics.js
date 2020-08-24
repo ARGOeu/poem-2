@@ -1546,131 +1546,88 @@ export const MetricChange = (props) => {
 };
 
 
-export class MetricVersionDetails extends Component {
-  constructor(props) {
-    super(props);
+export const MetricVersionDetails = (props) => {
+  const name = props.match.params.name;
+  const version = props.match.params.version;
 
-    this.name = props.match.params.name;
-    this.version = props.match.params.version;
+  const backend = new Backend();
 
-    this.backend = new Backend();
+  const [loading, setLoading] = useState(false);
+  const [metric, setMetric] = useState(null);
+  const [probe, setProbe] = useState({'package': ''})
+  const [error, setError] = useState(null);
 
-    this.state = {
-      name: '',
-      probeversion: '',
-      probe: {'package': ''},
-      description: '',
-      mtype: '',
-      tags: [],
-      group: '',
-      probeexecutable: '',
-      parent: '',
-      config: [],
-      attribute: [],
-      dependancy: [],
-      parameter: [],
-      flags: [],
-      files: [],
-      fileparameter: [],
-      loading: false,
-      error: null
+  useEffect(() => {
+    setLoading(true);
+
+    async function fetchData() {
+      try {
+        let json = await backend.fetchData(`/api/v2/internal/tenantversion/metric/${name}`);
+        json.forEach(async (e) => {
+          if (e.version == version) {
+            let probes = await backend.fetchData(`/api/v2/internal/version/probe/${e.fields.probeversion.split(' ')[0]}`);
+            probes.forEach(p => {
+              if (p.object_repr === e.fields.probeversion)
+                setProbe(p.fields);
+            });
+            let m = e.fields;
+            m.date_created = e.date_created;
+            setMetric(m);
+          };
+        });
+      } catch(err) {
+        setError(err)
+      };
+
+      setLoading(false);
     };
-  }
 
-  async componentDidMount() {
-    this.setState({loading: true});
+    fetchData();
+  }, []);
 
-    try {
-      let json = await this.backend.fetchData(`/api/v2/internal/tenantversion/metric/${this.name}`);
-      json.forEach(async (e) => {
-        if (e.version == this.version) {
-          let probes = await this.backend.fetchData(`/api/v2/internal/version/probe/${e.fields.probeversion.split(' ')[0]}`);
-          let probe = {};
-          probes.forEach(p => {
-            if (p.object_repr === e.fields.probeversion)
-              probe = p.fields;
-          });
-          this.setState({
-            name: e.fields.name,
-            probeversion: e.fields.probeversion,
-            probe: probe,
-            description: e.fields.description,
-            type: e.fields.mtype,
-            tags: e.fields.tags,
-            group: e.fields.group,
-            probeexecutable: e.fields.probeexecutable,
-            parent: e.fields.parent,
-            config: e.fields.config,
-            attribute: e.fields.attribute,
-            dependancy: e.fields.dependancy,
-            parameter: e.fields.parameter,
-            flags: e.fields.flags,
-            files: e.fields.files,
-            fileparameter: e.fields.fileparameter,
-            date_created: e.date_created,
-            loading: false
-          });
-        };
-      });
-    } catch(err) {
-      this.setState({
-        error: err,
-        loading: false
-      });
-    };
-  }
+  if (loading)
+    return (<LoadingAnim/>);
 
-  render() {
-    const { name, probeversion, type, group, probeexecutable, parent, config,
-      attribute, dependancy, parameter, flags, files, fileparameter, date_created,
-      loading, description, error } = this.state;
+  else if (error)
+    return (<ErrorComponent error={error}/>);
 
-    if (loading)
-      return (<LoadingAnim/>);
-
-    else if (error)
-      return (<ErrorComponent error={error}/>);
-
-    else if (!loading && name) {
-      return (
-        <BaseArgoView
-          resourcename={`${name} (${date_created})`}
-          infoview={true}
-        >
-          <Formik
-            initialValues = {{
-              name: name,
-              probeversion: probeversion,
-              type: type,
-              group: group,
-              description: description,
-              probeexecutable: probeexecutable,
-              parent: parent,
-              config: config,
-              attributes: attribute,
-              dependency: dependancy,
-              parameter: parameter,
-              flags: flags,
-              files: files,
-              fileparameter: fileparameter
-            }}
-            render = {props => (
-              <Form>
-                <MetricForm
-                  {...props}
-                  obj_label='metric'
-                  state={this.state}
-                  isHistory={true}
-                  probe={this.state.probe}
-                  tags={this.state.tags}
-                />
-              </Form>
-            )}
-            />
-        </BaseArgoView>
-      )
-    }
-    else
-      return null
-  }
-}
+  else if (!loading && metric) {
+    return (
+      <BaseArgoView
+        resourcename={`${name} (${metric.date_created})`}
+        infoview={true}
+      >
+        <Formik
+          initialValues = {{
+            name: name,
+            probeversion: metric.probeversion,
+            type: metric.mtype,
+            group: metric.group,
+            description: metric.description,
+            probeexecutable: metric.probeexecutable,
+            parent: metric.parent,
+            config: metric.config,
+            attributes: metric.attribute,
+            dependency: metric.dependancy,
+            parameter: metric.parameter,
+            flags: metric.flags,
+            files: metric.files,
+            fileparameter: metric.fileparameter
+          }}
+          render = {props => (
+            <Form>
+              <MetricForm
+                {...props}
+                obj_label='metric'
+                isHistory={true}
+                probe={probe}
+                tags={metric.tags}
+              />
+            </Form>
+          )}
+          />
+      </BaseArgoView>
+    );
+  } else
+    return null;
+};
