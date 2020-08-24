@@ -1,4 +1,4 @@
-import React, { Component, useState } from 'react';
+import React, { Component, useState, useEffect } from 'react';
 import { MetricForm} from './Metrics';
 import { Backend } from './DataManager';
 import {
@@ -444,127 +444,88 @@ export const MetricTemplateComponent = (props) => {
 };
 
 
-export class MetricTemplateVersionDetails extends Component {
-  constructor(props) {
-    super(props);
+export const MetricTemplateVersionDetails = (props) => {
+  const name = props.match.params.name;
+  const version = props.match.params.version;
+  const publicView = props.publicView;
 
-    this.name = props.match.params.name;
-    this.version = props.match.params.version;
-    this.publicView = props.publicView;
+  const backend = new Backend();
 
-    this.backend = new Backend();
+  const [metricTemplate, setMetricTemplate] = useState(null);
+  const [probe, setProbe] = useState({'package': ''});
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-    this.state = {
-      name: '',
-      probeversion: '',
-      probe: {'package': ''},
-      mtype: '',
-      probeexecutable: '',
-      parent: '',
-      description: '',
-      config: [],
-      attribute: [],
-      dependency: [],
-      parameter: [],
-      flags: [],
-      files: [],
-      fileparameter: [],
-      loading: false,
-      error: null
+  useEffect(() => {
+    setLoading(true);
+
+    async function fetchData() {
+      try {
+        let json = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}version/metrictemplate/${name}`);
+        json.forEach(async (e) => {
+          if (e.version == version) {
+            let probes = await backend.fetchData(`/api/v2/internal/${this.publicView ? 'public_' : ''}version/probe/${e.fields.probeversion.split(' ')[0]}`);
+            probes.forEach(p => {
+              if (p.object_repr === e.fields.probeversion)
+                setProbe(p.fields);
+            });
+            let mt = e.fields;
+            mt.date_created = e.date_created;
+            setMetricTemplate(mt);
+          };
+        });
+      } catch(err) {
+        setError(err);
+      };
+
+      setLoading(false);
     };
-  }
 
-  async componentDidMount() {
-    this.setState({loading: true});
+    fetchData();
+  }, []);
 
-    try {
-      let json = await this.backend.fetchData(`/api/v2/internal/${this.publicView ? 'public_' : ''}version/metrictemplate/${this.name}`);
-      json.forEach(async (e) => {
-        if (e.version == this.version) {
-          let probes = await this.backend.fetchData(`/api/v2/internal/${this.publicView ? 'public_' : ''}version/probe/${e.fields.probeversion.split(' ')[0]}`);
-          let probe = {};
-          probes.forEach(p => {
-            if (p.object_repr === e.fields.probeversion)
-              probe = p.fields;
-          });
-          this.setState({
-            name: e.fields.name,
-            probeversion: e.fields.probeversion,
-            probe: probe,
-            type: e.fields.mtype,
-            tags: e.fields.tags,
-            probeexecutable: e.fields.probeexecutable,
-            description: e.fields.description,
-            parent: e.fields.parent,
-            config: e.fields.config,
-            attribute: e.fields.attribute,
-            dependency: e.fields.dependency,
-            parameter: e.fields.parameter,
-            flags: e.fields.flags,
-            files: e.fields.files,
-            fileparameter: e.fields.fileparameter,
-            date_created: e.date_created,
-            loading: false
-          });
-        }
-      });
-    } catch(err) {
-      this.setState({
-        error: err,
-        loading: false
-      });
-    };
-  }
+  if (loading)
+    return (<LoadingAnim/>);
 
-  render() {
-    const { name, probeversion, type, probeexecutable, parent, config,
-      attribute, dependency, parameter, flags, files, fileparameter,
-      loading, description, error } = this.state;
+  else if (error)
+    return (<ErrorComponent error={error}/>);
 
-    if (loading)
-      return (<LoadingAnim/>);
-
-    else if (error)
-      return (<ErrorComponent error={error}/>);
-
-    else if (!loading && name) {
-      return (
-        <BaseArgoView
-          resourcename={`${name} ${probeversion && `[${probeversion}]`}`}
-          infoview={true}
-        >
-          <Formik
-            initialValues = {{
-              name: name,
-              probeversion: probeversion,
-              type: type,
-              probeexecutable: probeexecutable,
-              description: description,
-              parent: parent,
-              config: config,
-              attributes: attribute,
-              dependency: dependency,
-              parameter: parameter,
-              flags: flags,
-              file_attributes: files,
-              file_parameters: fileparameter
-            }}
-            render = {props => (
-              <Form>
-                <MetricForm
-                  {...props}
-                  obj_label='metrictemplate'
-                  isHistory={true}
-                  probe={this.state.probe}
-                  tags={this.state.tags}
-                />
-              </Form>
-            )}
-          />
-        </BaseArgoView>
-      )
-    }
-    else
-      return null
-  }
-}
+  else if (!loading && metricTemplate) {
+    return (
+      <BaseArgoView
+        resourcename={`${name} ${metricTemplate.probeversion && `[${metricTemplate.probeversion}]`}`}
+        infoview={true}
+      >
+        <Formik
+          initialValues = {{
+            name: metricTemplate.name,
+            probeversion: metricTemplate.probeversion,
+            type: metricTemplate.mtype,
+            probeexecutable: metricTemplate.probeexecutable,
+            description: metricTemplate.description,
+            parent: metricTemplate.parent,
+            config: metricTemplate.config,
+            attributes: metricTemplate.attribute,
+            dependency: metricTemplate.dependency,
+            parameter: metricTemplate.parameter,
+            flags: metricTemplate.flags,
+            file_attributes: metricTemplate.files,
+            file_parameters: metricTemplate.fileparameter
+          }}
+          render = {props => (
+            <Form>
+              <MetricForm
+                {...props}
+                obj_label='metrictemplate'
+                isHistory={true}
+                probe={probe}
+                tags={metricTemplate.tags}
+              />
+            </Form>
+          )}
+        />
+      </BaseArgoView>
+    );
+  } else
+    return null;
+};
