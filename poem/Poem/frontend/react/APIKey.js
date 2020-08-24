@@ -20,96 +20,83 @@ import {
 import { faClipboard } from '@fortawesome/free-solid-svg-icons';
 
 
-export class APIKeyList extends Component {
-  constructor(props) {
-    super(props);
+export const APIKeyList = (props) => {
+  const location = props.location;
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(undefined);
+  const [list_keys, setKeys] = useState(null);
+  const backend = new Backend();
 
-    this.location = props.location;
-
-    this.state = {
-      list_keys: null,
-      loading: false,
-      error: null
-    };
-
-    this.backend = new Backend();
-  }
-
-  async componentDidMount() {
-    this.setState({ loading: true });
+  useEffect(() => {
+    setLoading(true);
 
     try {
-      let json = await this.backend.fetchData('/api/v2/internal/apikeys');
-      this.setState({
-        list_keys: json,
-        loading: false
-      });
-    } catch(err) {
-      this.setState({
-        error: err,
-        loading: false
-      });
-    };
-  }
-
-  render() {
-    const columns = [
-      {
-        Header: 'Name',
-        id: 'name',
-        accessor: e =>
-          <Link to={'/ui/administration/apikey/' + e.name}>
-            {e.name}
-          </Link>
-      },
-      {
-        Header: 'Created',
-        accessor: 'created'
-      },
-      {
-        Header: 'Revoked',
-        id: 'revoked',
-        Cell: row =>
-          <div style={{textAlign: 'center'}}>
-            {row.value}
-          </div>,
-        accessor: e =>
-          e.revoked ?
-          <FontAwesomeIcon icon={faCheckCircle} style={{color: "#339900"}}/>
-          :
-          <FontAwesomeIcon icon={faTimesCircle} style={{color: "#CC0000"}}/>
+      const fetchDataAndSet = async () => {
+        let json = await backend.fetchData('/api/v2/internal/apikeys');
+        setKeys(json);
+        setLoading(false);
       }
-    ];
+      fetchDataAndSet();
+    } catch(err) {
+      setError(err);
+      setLoading(false);
+    };
+  }, []);
 
-    const { loading, list_keys, error } = this.state;
-
-    if (loading)
-      return (<LoadingAnim/>);
-
-    else if (error)
-      return (<ErrorComponent error={error}/>);
-
-    else if (!loading && list_keys) {
-      return (
-        <BaseArgoView
-          resourcename='API key'
-          location={this.location}
-          listview={true}
-        >
-          <ReactTable
-            data={list_keys}
-            columns={columns}
-            className='-highlight'
-            defaultPageSize={5}
-            rowsText='keys'
-            getTheadThProps={() => ({className: 'table-active font-weight-bold p-2'})}
-          />
-        </BaseArgoView>
-      )
+  const columns = [
+    {
+      Header: 'Name',
+      id: 'name',
+      accessor: e =>
+        <Link to={'/ui/administration/apikey/' + e.name}>
+          {e.name}
+        </Link>
+    },
+    {
+      Header: 'Created',
+      accessor: 'created'
+    },
+    {
+      Header: 'Revoked',
+      id: 'revoked',
+      Cell: row =>
+        <div style={{textAlign: 'center'}}>
+          {row.value}
+        </div>,
+      accessor: e =>
+        e.revoked ?
+        <FontAwesomeIcon icon={faCheckCircle} style={{color: "#339900"}}/>
+        :
+        <FontAwesomeIcon icon={faTimesCircle} style={{color: "#CC0000"}}/>
     }
-    else
-      return null
+  ];
+
+  if (loading)
+    return (<LoadingAnim/>);
+
+  else if (error)
+    return (<ErrorComponent error={error}/>);
+
+  else if (!loading && list_keys) {
+    return (
+      <BaseArgoView
+        resourcename='API key'
+        location={location}
+        listview={true}
+      >
+        <ReactTable
+          data={list_keys}
+          columns={columns}
+          className='-highlight'
+          defaultPageSize={5}
+          rowsText='keys'
+          getTheadThProps={() => ({className: 'table-active font-weight-bold p-2'})}
+        />
+      </BaseArgoView>
+    )
   }
+  else
+    return null
 }
 
 
