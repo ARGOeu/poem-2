@@ -1084,7 +1084,7 @@ export const MetricForm =
                     tags.length === 0 ?
                       <Badge color='dark'>none</Badge>
                     :
-                      (obj === 'metrictemplate' && !isHistory) ?
+                      (obj_label === 'metrictemplate' && !isHistory) ?
                         tags.map((tag, i) =>
                           <Badge className={'mr-1'} key={i} color={tag.value === 'internal' ? 'success' : tag.value === 'deprecated' ? 'danger' : 'secondary'}>
                             {tag.value}
@@ -1169,7 +1169,7 @@ export const MetricForm =
           }
           </Col>
         </Row>
-        <InlineFields values={values} errors={errors} field='config' addnew={!isTenantSchema && !isHistory} readonly={obj === 'metrictemplate' && isTenantSchema || isHistory || publicView}/>
+        <InlineFields values={values} errors={errors} field='config' addnew={!isTenantSchema && !isHistory} readonly={obj_label === 'metrictemplate' && isTenantSchema || isHistory || publicView}/>
         <InlineFields values={values} errors={errors} field='attributes' addnew={!isTenantSchema && !isHistory && !publicView}/>
         <InlineFields values={values} errors={errors} field='dependency' addnew={!isTenantSchema && !isHistory && !publicView}/>
         <InlineFields values={values} errors={errors} field='parameter' addnew={!isTenantSchema && !isHistory && !publicView}/>
@@ -1796,9 +1796,11 @@ export class MetricVersionDetails extends Component {
               <Form>
                 <MetricForm
                   {...props}
-                  obj='metric'
+                  obj_label='metric'
                   state={this.state}
                   isHistory={true}
+                  probe={this.state.probe}
+                  tags={this.state.tags}
                 />
               </Form>
             )}
