@@ -10,9 +10,10 @@ import {
 import Home, { PublicHome } from './Home';
 import {
   ProbeList,
+  ProbeChange,
   ProbeVersionCompare,
   ProbeVersionDetails,
-  ProbeComponent
+  ProbeClone
 } from './Probes';
 import {
   MetricChange,
@@ -31,7 +32,7 @@ import {
   AggregationProfileVersionCompare,
   AggregationProfileVersionDetails
 } from './AggregationProfiles';
-import { ReportsList, ReportsComponent } from './Reports';
+import Reports from './Reports';
 import { UsersList, UserChange, SuperAdminUserChange, ChangePassword } from './Users';
 import {
   GroupList,
@@ -417,8 +418,8 @@ const SuperAdminRouteSwitch = ({props}) => (
     <Route exact path="/ui/login" render={() => <Redirect to="/ui/administration" />}/>
     <Route exact path="/ui/home" component={Home} />
     <Route exact path="/ui/probes" component={ProbeList} />
-    <Route exact path="/ui/probes/add" render={props => <ProbeComponent {...props} addview={true}/>}/>
-    <Route exact path='/ui/probes/:name/clone' render={props => <ProbeComponent cloneview={true} {...props}/>}/>
+    <Route exact path="/ui/probes/add" render={props => <ProbeChange {...props} addview={true}/>}/>
+    <Route exact path='/ui/probes/:name/clone' render={props => <ProbeClone {...props}/>}/>
     <Route exact path="/ui/probes/:name/history" render={props => <HistoryComponent object='probe' {...props}/>}/>
     <Route exact path="/ui/probes/:name/history/compare/:id1/:id2" render={props => <ProbeVersionCompare {...props}/>}/>
     <Route exact path="/ui/probes/:name/history/:version" render={props => <ProbeVersionDetails {...props}/>}/>
