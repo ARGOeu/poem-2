@@ -170,14 +170,14 @@ export const MetricTemplateComponent = (props) => {
         }
       };
       metrictemplate.probe = probe;
-      queryCache.setQueryData('mt_changeview_metrictemplate', () => metrictemplate);
+      queryCache.setQueryData(`${querykey}_metrictemplate`, () => metrictemplate);
     };
   };
 
   function onTagChange(value) {
     let metrictemplate = metricTemplate;
     metrictemplate.tags = value;
-    queryCache.setQueryData('mt_changeview_metrictemplate', () => metrictemplate);
+    queryCache.setQueryData(`${querykey}_metrictemplate`, () => metrictemplate);
   };
 
   function togglePopOver() {
@@ -403,7 +403,7 @@ export const MetricTemplateComponent = (props) => {
                   onTagChange={onTagChange}
                   types={types}
                   alltags={allTags}
-                  tags={metricTemplate.tags}
+                  tags={addview ? [] : metricTemplate.tags}
                   probeversions={probeVersionsNames}
                   metrictemplatelist={listMetricTemplates}
                 />
