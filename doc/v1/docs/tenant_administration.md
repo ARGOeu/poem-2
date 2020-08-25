@@ -22,4 +22,4 @@ Through [metric template page](tenant_metric_templates.md), users can import met
 
 ### APIKey Permissions
 
-In fourth section, **APIKey Permissions**, users are able to see API keys for tenant.
+In fourth section, **APIKey Permissions**, users are able to see [API keys](tenant_apikey.md) for tenant.

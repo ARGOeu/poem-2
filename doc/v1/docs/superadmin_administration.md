@@ -14,4 +14,4 @@ The pages in the first section ([tenants](superadmin_tenants.md), [YUM repos](su
 
 ### Authentication and Authorization Page
 
-[Users](superadmin_users.md) and API keys pages, on the other hand, are only available through **Administration** page. Only users with superuser status may add, change or delete users, or see or revoke API keys.
+[Users](superadmin_users.md) and **API keys** pages, on the other hand, are only available through **Administration** page. Only users with superuser status may add, change or delete users, or see or revoke API keys. API keys page looks the same as the one in tenant POEMs, and is described in [documentation for tenant POEM](tenant_apikey.md).
