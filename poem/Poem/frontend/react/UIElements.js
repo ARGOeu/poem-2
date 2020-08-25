@@ -945,7 +945,6 @@ export const HistoryComponent = (props) => {
     apiUrl = `/api/v2/internal/${publicView ? 'public_' : ''}version/`;
 
   const compareUrl = `/ui/${tenantView ? 'administration/' : ''}${publicView ? 'public_' : ''}${obj}s/${name}/history`;
-
   const backend = new Backend();
 
   useEffect(() => {
