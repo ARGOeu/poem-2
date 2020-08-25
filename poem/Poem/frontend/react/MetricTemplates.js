@@ -1,11 +1,10 @@
-import React, { Component, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MetricForm} from './Metrics';
 import { Backend } from './DataManager';
 import {
   LoadingAnim,
   BaseArgoView,
   NotifyOk,
-  HistoryComponent,
   NotifyError,
   NotifyWarn,
   ErrorComponent,
@@ -15,10 +14,6 @@ import { Formik, Form } from 'formik';
 import { Button } from 'reactstrap';
 import * as Yup from 'yup';
 import { useQuery, queryCache } from 'react-query';
-
-export const MetricTemplateHistory = HistoryComponent('metrictemplate');
-export const TenantMetricTemplateHistory = HistoryComponent('metrictemplate', true);
-
 
 
 const MetricTemplateSchema = Yup.object().shape({
