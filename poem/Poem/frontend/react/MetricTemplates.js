@@ -115,7 +115,7 @@ export const MetricTemplateComponent = (props) => {
         files: [{'key': '', 'value': ''}],
         fileparameter: [{'key': '', 'value': ''}],
         tags: [],
-        probe: {}
+        probe: {'package': ''}
       };
 
       if (!addview) {
@@ -130,8 +130,8 @@ export const MetricTemplateComponent = (props) => {
           allProbeVersions.forEach(pv => {
             if (pv.object_repr === metrictemplate.probeversion)
               probe = pv.fields;
-              metrictemplate.probe = probe;
           });
+              metrictemplate.probe = probe;
         };
 
         if (metrictemplate.attribute.length === 0)
