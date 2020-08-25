@@ -7,7 +7,6 @@ import {
   NotifyOk,
   FancyErrorMessage,
   DropdownFilterComponent,
-  HistoryComponent,
   DiffElement,
   AutocompleteField,
   NotifyWarn,
@@ -40,8 +39,6 @@ import ReactDiffViewer from 'react-diff-viewer';
 import CreatableSelect from 'react-select/creatable';
 import { components } from 'react-select';
 import { useQuery, queryCache } from 'react-query';
-
-export const MetricHistory = HistoryComponent('metric');
 
 
 const DefaultFilterComponent = ({value, onChange, field}) => (

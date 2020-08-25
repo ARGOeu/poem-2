@@ -8,7 +8,6 @@ import {
   Checkbox,
   FancyErrorMessage,
   AutocompleteField,
-  HistoryComponent,
   DiffElement,
   NotifyError,
   ErrorComponent,
@@ -28,7 +27,6 @@ import { Formik, Form, Field } from 'formik';
 import * as Yup from 'yup';
 
 
-export const ProbeHistory = HistoryComponent('probe');
 export const ProbeChange = ProbeComponent();
 export const ProbeClone = ProbeComponent(true);
 

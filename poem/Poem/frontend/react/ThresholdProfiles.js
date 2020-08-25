@@ -7,7 +7,6 @@ import {
     AutocompleteField,
     NotifyOk,
     FancyErrorMessage,
-    HistoryComponent,
     DiffElement,
     ProfileMainInfo,
     NotifyError,
@@ -40,9 +39,6 @@ import * as Yup from 'yup';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes, faPlus, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import ReactDiffViewer from 'react-diff-viewer';
-
-
-export const ThresholdsProfilesHistory = HistoryComponent('thresholdsprofile');
 
 
 const ThresholdsSchema = Yup.object().shape({
