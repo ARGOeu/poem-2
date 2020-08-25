@@ -9,7 +9,6 @@ import {
   FancyErrorMessage,
   NotifyOk,
   Icon,
-  HistoryComponent,
   DiffElement,
   ProfileMainInfo,
   NotifyError,
@@ -27,7 +26,6 @@ import ReactDiffViewer from 'react-diff-viewer';
 import './MetricProfiles.css';
 
 
-export const MetricProfileHistory = HistoryComponent('metricprofile');
 export const MetricProfilesClone = MetricProfilesComponent(true);
 export const MetricProfilesChange = MetricProfilesComponent();
 

@@ -7,7 +7,6 @@ import {
   DropDown,
   FancyErrorMessage,
   Icon,
-  HistoryComponent,
   DiffElement,
   ProfileMainInfo,
   NotifyError,
@@ -41,8 +40,6 @@ import ReactDiffViewer from 'react-diff-viewer';
 
 import "react-notifications/lib/notifications.css";
 import './AggregationProfiles.css';
-
-export const AggregationProfileHistory = HistoryComponent('aggregationprofile');
 
 
 
