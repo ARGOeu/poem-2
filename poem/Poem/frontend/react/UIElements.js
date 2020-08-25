@@ -1,4 +1,4 @@
-import React, { Component, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Cookies from 'universal-cookie';
 import {
   Alert,
@@ -946,176 +946,145 @@ export const DropdownFilterComponent = ({value, onChange, data}) => (
 )
 
 
-export function HistoryComponent(obj, tenantview=false) {
-  return class extends Component {
-    constructor(props) {
-      super(props);
+export const HistoryComponent = (props) => {
+  const name = props.match.params.name;
+  const history = props.history;
+  const publicView = props.publicView
+  const tenantView = props.tenantView;
+  const obj = props.object;
 
-      this.name = props.match.params.name;
-      this.history = props.history;
-      this.publicView = props.publicView
+  const [loading, setLoading] = useState(false);
+  const [listVersions, setListVersions] = useState(null);
+  const [compare1, setCompare1] = useState('');
+  const [compare2, setCompare2] = useState('');
+  const [error, setError] = useState(null);
 
-      this.state = {
-        loading: false,
-        list_versions: null,
-        compare1: '',
-        compare2: '',
-        error: null
-      };
+  var apiUrl = undefined;
+  if (['metric', 'metricprofile', 'aggregationprofile', 'thresholdsprofile'].includes(obj))
+    apiUrl = `/api/v2/internal/${publicView ? 'public_' : ''}tenantversion/`;
+  else
+    apiUrl = `/api/v2/internal/${publicView ? 'public_' : ''}version/`;
 
-      if (!this.publicView) {
-        if (['metric', 'metricprofile', 'aggregationprofile', 'thresholdsprofile'].includes(obj))
-          this.apiUrl = '/api/v2/internal/tenantversion/'
-        else
-          this.apiUrl = '/api/v2/internal/version/'
-      }
-      else {
-        if (['metric', 'metricprofile', 'aggregationprofile', 'thresholdsprofile'].includes(obj))
-          this.apiUrl = '/api/v2/internal/public_tenantversion/'
-        else
-          this.apiUrl = '/api/v2/internal/public_version/'
-      }
+  const compareUrl = `/ui/${tenantView ? 'administration/' : ''}${publicView ? 'public_' : ''}${obj}s/${name}/history`;
 
-      if (tenantview)
-        this.compareUrl = `/ui/administration/${obj}s/${this.name}/history`;
-      else {
-        if (this.publicView)
-          this.compareUrl = `/ui/public_${obj}s/${this.name}/history`;
-        else
-          this.compareUrl = `/ui/${obj}s/${this.name}/history`;
-      }
+  const backend = new Backend();
 
-      this.backend = new Backend();
-    }
+  useEffect(() => {
+    setLoading(true);
 
-    async componentDidMount() {
-      this.setState({loading: true});
-
+    async function fetchData() {
       try {
-        let json = await this.backend.fetchData(`${this.apiUrl}/${obj}/${this.name}`);
+        let json = await backend.fetchData(`${apiUrl}/${obj}/${name}`);
+          setListVersions(json);
         if (json.length > 1) {
-          this.setState({
-            list_versions: json,
-            loading: false,
-            compare1: json[0].version,
-            compare2: json[1].version
-          });
-        } else {
-          this.setState({
-            list_versions: json,
-            loading: false
-          });
-        }
+          setCompare1(json[0].version);
+          setCompare2(json[1].version);
+        };
       } catch(err) {
-        this.setState({
-          error: err,
-          loading: false
-        });
-      }
-    }
+        setError(err);
+      };
+      setLoading(false);
+    };
 
-    render() {
-      const { loading, list_versions, error } = this.state;
+    fetchData();
+  }, []);
 
-      if (loading)
-        return (<LoadingAnim />);
+  if (loading)
+    return (<LoadingAnim />);
 
-      else if (error)
-        return (<ErrorComponent error={error}/>);
+  else if (error)
+    return (<ErrorComponent error={error}/>);
 
-      else if (!loading && list_versions) {
-        return (
-          <BaseArgoView
-            resourcename='Version history'
-            infoview={true}>
-            <table className='table table-sm'>
-              <thead className='table-active'>
-                <tr>
-                  { list_versions.length === 1 ?
-                    <th scope='col'>Compare</th>
-                    :
-                    <th scope='col'>
-                      <Button
-                          color='info'
-                          onClick={() =>
-                            this.history.push(
-                              `${this.compareUrl}/compare/${this.state.compare1}/${this.state.compare2}`,
-                          )
-                          }
-                        >
-                          Compare
-                      </Button>
-                    </th>
-                    }
-                  <th scope='col'>Version</th>
-                  <th scope='col'>Date/time</th>
-                  <th scope='col'>User</th>
-                  <th scope='col'>Comment</th>
-                </tr>
-              </thead>
-              <tbody>
-                {
-                    list_versions.map((e, i) =>
-                      <tr key={i}>
-                        {
-                          list_versions.length === 1 ?
-                            <td>-</td>
-                          :
-                            i === 0 ?
-                              <td>
-                                <input
-                                type='radio'
-                                name='radio-1'
-                                value={e.version}
-                                defaultChecked={true}
-                                onChange={e => this.setState({compare1: e.target.value})}
-                              />
-                              </td>
-                            :
-                              <td>
-                                <input
-                                type='radio'
-                                name='radio-1'
-                                value={e.version}
-                                onChange={e => this.setState({compare1: e.target.value})}
-                              />
-                                {' '}
-                                <input
-                                type='radio'
-                                name='radio-2'
-                                value={e.version}
-                                defaultChecked={i===1}
-                                onChange={e => this.setState({compare2: e.target.value})}
-                              />
-                              </td>
-                        }
-                        {
+  else if (!loading && listVersions) {
+    return (
+      <BaseArgoView
+        resourcename='Version history'
+        infoview={true}>
+        <table className='table table-sm'>
+          <thead className='table-active'>
+            <tr>
+              { listVersions.length === 1 ?
+                <th scope='col'>Compare</th>
+                :
+                <th scope='col'>
+                  <Button
+                      color='info'
+                      onClick={() =>
+                        history.push(
+                          `${compareUrl}/compare/${compare1}/${compare2}`,
+                      )
+                      }
+                    >
+                      Compare
+                  </Button>
+                </th>
+                }
+              <th scope='col'>Version</th>
+              <th scope='col'>Date/time</th>
+              <th scope='col'>User</th>
+              <th scope='col'>Comment</th>
+            </tr>
+          </thead>
+          <tbody>
+            {
+                listVersions.map((e, i) =>
+                  <tr key={i}>
+                    {
+                      listVersions.length === 1 ?
+                        <td>-</td>
+                      :
+                        i === 0 ?
                           <td>
-                            {e.version ? <Link to={`${this.compareUrl}/${e.version}`}>{e.version}</Link> : ''}
+                            <input
+                            type='radio'
+                            name='radio-1'
+                            value={e.version}
+                            defaultChecked={true}
+                            onChange={e => setCompare1(e.target.value)}
+                          />
                           </td>
-                        }
-                        <td>
-                          {e.date_created ? e.date_created : ''}
-                        </td>
-                        <td>
-                          {e.user ? e.user : ''}
-                        </td>
-                        <td className='col-md-6'>
-                          {e.comment ? e.comment : ''}
-                        </td>
-                      </tr>
-                    )
-                  }
-              </tbody>
-            </table>
-          </BaseArgoView>
-        );
-      }
-      else
-        return null;
-    }
-  }
-}
+                        :
+                          <td>
+                            <input
+                            type='radio'
+                            name='radio-1'
+                            value={e.version}
+                            onChange={e => setCompare1(e.target.value)}
+                          />
+                            {' '}
+                            <input
+                            type='radio'
+                            name='radio-2'
+                            value={e.version}
+                            defaultChecked={i===1}
+                            onChange={e => setCompare2(e.target.value)}
+                          />
+                          </td>
+                    }
+                    {
+                      <td>
+                        {e.version ? <Link to={`${compareUrl}/${e.version}`}>{e.version}</Link> : ''}
+                      </td>
+                    }
+                    <td>
+                      {e.date_created ? e.date_created : ''}
+                    </td>
+                    <td>
+                      {e.user ? e.user : ''}
+                    </td>
+                    <td className='col-md-6'>
+                      {e.comment ? e.comment : ''}
+                    </td>
+                  </tr>
+                )
+              }
+          </tbody>
+        </table>
+      </BaseArgoView>
+    );
+  } else
+    return null;
+};
 
 
 export const DiffElement = ({title, item1, item2}) => {
