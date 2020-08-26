@@ -1,4 +1,4 @@
-import React, { Component, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Backend } from './DataManager';
 import { Link } from 'react-router-dom';
 import {
@@ -865,98 +865,70 @@ export const ProbeVersionCompare = (props) => {
 };
 
 
-export class ProbeVersionDetails extends Component {
-  constructor(props) {
-    super(props);
+export const ProbeVersionDetails = (props) => {
+  const name = props.match.params.name;
+  const version = props.match.params.version;
+  const publicView = props.publicView;
 
-    this.name = props.match.params.name;
-    this.version = props.match.params.version;
-    this.publicView = props.publicView
+  const backend = new Backend();
+  const apiUrl = `/api/v2/internal/${publicView ? 'public_' : ''}version/probe`;
 
-    this.backend = new Backend();
+  const [probe, setProbe] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-    if (this.publicView)
-      this.apiUrl = '/api/v2/internal/public_version/probe/'
-    else
-      this.apiUrl = '/api/v2/internal/version/probe/'
+  useEffect(() => {
+    setLoading(true);
 
-    this.state = {
-      name: '',
-      version: '',
-      pkg: '',
-      description: '',
-      repository: '',
-      docurl: '',
-      comment: '',
-      loading: false,
-      error: null
+    async function fetchProbeVersion() {
+      try {
+        let json = await backend.fetchData(`${apiUrl}/${name}`);
+        json.forEach((e) => {
+          if (e.version === version)
+            setProbe(e.fields);
+        });
+      } catch(err) {
+        setError(err);
+      };
+      setLoading(false);
     };
+
+    fetchProbeVersion();
+  }, []);
+
+  if (loading)
+    return (<LoadingAnim/>);
+
+  else if (error)
+    return (<ErrorComponent error={error}/>);
+
+  else if (!loading && name) {
+    return (
+      <BaseArgoView
+        resourcename={`${name} (${version})`}
+        infoview={true}
+      >
+        <Formik
+          initialValues = {{
+            name: probe.name,
+            version: probe.version,
+            package: probe.package,
+            repository: probe.repository,
+            docurl: probe.docurl,
+            description: probe.description,
+            comment: probe.comment
+          }}
+          render = {props => (
+            <ProbeForm
+              {...props}
+              version={probe.version}
+              isHistory={true}
+            />
+          )}
+        />
+      </BaseArgoView>
+    );
   }
-
-  async componentDidMount() {
-    this.setState({loading: true});
-
-    try {
-      let json = await this.backend.fetchData(`${this.apiUrl}/${this.name}`);
-      json.forEach((e) => {
-        if (e.version === this.version)
-          this.setState({
-            name: e.fields.name,
-            version: e.fields.version,
-            pkg: e.fields.package,
-            description: e.fields.description,
-            repository: e.fields.repository,
-            docurl: e.fields.docurl,
-            comment: e.fields.comment,
-            loading: false
-          });
-      });
-    } catch(err) {
-      this.setState({
-        error: err,
-        loading: false
-      });
-    };
-  }
-
-  render() {
-    const { name, version, pkg, description, repository,
-      docurl, comment, loading, error } = this.state;
-
-    if (loading)
-      return (<LoadingAnim/>);
-
-    else if (error)
-      return (<ErrorComponent error={error}/>);
-
-    else if (!loading && name) {
-      return (
-        <BaseArgoView
-          resourcename={`${name} (${version})`}
-          infoview={true}
-        >
-          <Formik
-            initialValues = {{
-              name: name,
-              version: version,
-              package: pkg,
-              repository: repository,
-              docurl: docurl,
-              description: description,
-              comment: comment
-            }}
-            render = {props => (
-              <ProbeForm
-                {...props}
-                state={this.state}
-                isHistory={true}
-              />
-            )}
-          />
-        </BaseArgoView>
-      );
-    }
-    else
-      return null;
-  }
-}
+  else
+    return null;
+};
