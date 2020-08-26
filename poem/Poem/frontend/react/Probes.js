@@ -26,6 +26,7 @@ import {
   InputGroupAddon } from 'reactstrap';
 import { Formik, Form, Field } from 'formik';
 import * as Yup from 'yup';
+import { useQuery } from 'react-query';
 
 
 const ProbeSchema = Yup.object().shape({
@@ -313,139 +314,131 @@ export const ProbeList = (props) => {
   const location = props.location;
   const publicView = props.publicView;
 
-  const [loading, setLoading] = useState(false);
-  const [listProbes, setListProbes] = useState(null);
-  const [isTenantSchema, setIsTenantSchema] = useState(null);
   const [searchName, setSearchName] = useState('');
   const [searchDescription, setSearchDescription] = useState('');
   const [searchPackage, setSearchPackage] = useState('');
-  const [error, setError] = useState(null);
 
   const backend = new Backend();
 
-  useEffect(() => {
-    setLoading(true);
+  const { data: listProbes, error: listProbesError, isLoading: listProbesLoading } = useQuery(
+    'probe_listview', async () => {
+      let probes = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}probes`);
+      return probes;
+    }
+  );
 
-    async function fetchProbes() {
-      try {
-        let json = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}probes`);
-        let schema = await backend.isTenantSchema();
-        setListProbes(json);
-        setIsTenantSchema(schema)
-      } catch(err) {
-        setError(err);
-      };
-      setLoading(false);
+  const { data: isTenantSchema, isLoading: isTenantSchemaLoading } = useQuery(
+    'probe_listview_schema', async () => {
+      let schema = backend.isTenantSchema();
+      return schema;
+    }
+  );
+
+  if (listProbesLoading || isTenantSchemaLoading)
+    return (<LoadingAnim/>);
+
+  else if (listProbesError)
+    return (<ErrorComponent error={listProbesError.message}/>);
+
+  else {
+    const columns = [
+      {
+        Header: '#',
+        id: 'row',
+        minWidth: 12,
+        Cell: (row) =>
+          <div style={{textAlign: 'center'}}>
+            {row.index + 1}
+          </div>
+      },
+      {
+        Header: 'Name',
+        id: 'name',
+        minWidth: 80,
+        accessor: e =>
+          <Link to={`/ui/${publicView ? 'public_' : ''}probes/${e.name}`}>
+            {e.name}
+          </Link>,
+        filterable: true,
+        Filter: (
+          <input
+            value={searchName}
+            onChange={e => setSearchName(e.target.value)}
+            placeholder='Search by name'
+            style={{width: "100%"}}
+          />
+        )
+      },
+      {
+        Header: '#versions',
+        id: 'nv',
+        minWidth: 25,
+        accessor: e =>
+          <Link to={`/ui/${publicView ? 'public_' : ''}probes/${e.name}/history`}>
+            {e.nv}
+          </Link>,
+        Cell: row =>
+          <div style={{textAlign: 'center'}}>
+            {row.value}
+          </div>
+      },
+      {
+        Header: 'Package',
+        minWidth: 120,
+        accessor: 'package',
+        filterable: true,
+        Filter: (
+          <input
+            type='text'
+            placeholder='Search by package'
+            value={searchPackage}
+            onChange={e => setSearchPackage(e.target.value)}
+            style={{width: '100%'}}
+          />
+        ),
+        filterMethod:
+          (filter, row) =>
+            row[filter.id] !== undefined ? String(row[filter.id]).toLowerCase().includes(filter.value.toLowerCase()) : true
+      },
+      {
+        Header: 'Description',
+        minWidth: 200,
+        accessor: 'description',
+        filterable: true,
+        Filter: (
+          <input
+            type='text'
+            placeholder='Search by description'
+            value={searchDescription}
+            onChange={e=> setSearchDescription(e.target.value)}
+            style={{width: '100%'}}
+          />
+        ),
+        filterMethod:
+          (filter, row) =>
+            row[filter.id] !== undefined ? String(row[filter.id]).toLowerCase().includes(filter.value.toLowerCase()) : true
+      }
+    ];
+
+    var list_probe = listProbes;
+    if (searchName) {
+      list_probe = list_probe.filter(row =>
+        row.name.toLowerCase().includes(searchName.toLowerCase())
+      );
     };
 
-    fetchProbes();
-  }, []);
+    if (searchDescription) {
+      list_probe = list_probe.filter(row =>
+        row.description.toLowerCase().includes(searchDescription.toLowerCase())
+      );
+    };
 
-  const columns = [
-    {
-      Header: '#',
-      id: 'row',
-      minWidth: 12,
-      Cell: (row) =>
-        <div style={{textAlign: 'center'}}>
-          {row.index + 1}
-        </div>
-    },
-    {
-      Header: 'Name',
-      id: 'name',
-      minWidth: 80,
-      accessor: e =>
-        <Link to={`/ui/${publicView ? 'public_' : ''}probes/${e.name}`}>
-          {e.name}
-        </Link>,
-      filterable: true,
-      Filter: (
-        <input
-          value={searchName}
-          onChange={e => setSearchName(e.target.value)}
-          placeholder='Search by name'
-          style={{width: "100%"}}
-        />
-      )
-    },
-    {
-      Header: '#versions',
-      id: 'nv',
-      minWidth: 25,
-      accessor: e =>
-        <Link to={`/ui/${publicView ? 'public_' : ''}probes/${e.name}/history`}>
-          {e.nv}
-        </Link>,
-      Cell: row =>
-        <div style={{textAlign: 'center'}}>
-          {row.value}
-        </div>
-    },
-    {
-      Header: 'Package',
-      minWidth: 120,
-      accessor: 'package',
-      filterable: true,
-      Filter: (
-        <input
-          type='text'
-          placeholder='Search by package'
-          value={searchPackage}
-          onChange={e => setSearchPackage(e.target.value)}
-          style={{width: '100%'}}
-        />
-      ),
-      filterMethod:
-        (filter, row) =>
-          row[filter.id] !== undefined ? String(row[filter.id]).toLowerCase().includes(filter.value.toLowerCase()) : true
-    },
-    {
-      Header: 'Description',
-      minWidth: 200,
-      accessor: 'description',
-      filterable: true,
-      Filter: (
-        <input
-          type='text'
-          placeholder='Search by description'
-          value={searchDescription}
-          onChange={e=> setSearchDescription(e.target.value)}
-          style={{width: '100%'}}
-        />
-      ),
-      filterMethod:
-        (filter, row) =>
-          row[filter.id] !== undefined ? String(row[filter.id]).toLowerCase().includes(filter.value.toLowerCase()) : true
-    }
-  ];
+    if (searchPackage) {
+      list_probe = list_probe.filter(row =>
+        row.package.toLowerCase().includes(searchPackage.toLowerCase())
+      );
+    };
 
-  var list_probe = listProbes;
-  if (searchName) {
-    list_probe = list_probe.filter(row =>
-      row.name.toLowerCase().includes(searchName.toLowerCase())
-    );
-  };
-
-  if (searchDescription) {
-    list_probe = list_probe.filter(row =>
-      row.description.toLowerCase().includes(searchDescription.toLowerCase())
-    );
-  };
-
-  if (searchPackage) {
-    list_probe = list_probe.filter(row =>
-      row.package.toLowerCase().includes(searchPackage.toLowerCase())
-    );
-  };
-
-  if (loading)
-    return (<LoadingAnim />);
-
-  else if (error)
-    return (<ErrorComponent error={error}/>);
-
-  else if (!loading && listProbes) {
     return (
       <BaseArgoView
         resourcename='probe'
@@ -463,8 +456,7 @@ export const ProbeList = (props) => {
         />
       </BaseArgoView>
     );
-  } else
-    return null;
+  };
 };
 
 
