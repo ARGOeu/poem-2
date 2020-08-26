@@ -11,7 +11,8 @@ import {
   DiffElement,
   NotifyError,
   ErrorComponent,
-  ParagraphTitle
+  ParagraphTitle,
+  ModalAreYouSure
 } from './UIElements';
 import ReactTable from 'react-table-6';
 import {
@@ -25,10 +26,6 @@ import {
   InputGroupAddon } from 'reactstrap';
 import { Formik, Form, Field } from 'formik';
 import * as Yup from 'yup';
-
-
-export const ProbeChange = ProbeComponent();
-export const ProbeClone = ProbeComponent(true);
 
 
 const ProbeSchema = Yup.object().shape({
@@ -60,10 +57,26 @@ const LinkField = ({
 )
 
 
-const ProbeForm = ({isTenantSchema=false, isHistory=false, publicView=false,
-  errors={name: undefined, package: undefined, repository: undefined, docurl: undefined, comment: undefined},
-  state=undefined, addview=false, cloneview=false, list_packages=[], setFieldValue=undefined,
-  values=undefined, onSelect=undefined, metrictemplatelist=[]}) =>
+const ProbeForm = ({
+  isTenantSchema=false,
+  isHistory=false,
+  publicView=false,
+  errors={
+    name: undefined,
+    package: undefined,
+    repository: undefined,
+    docurl: undefined,
+    comment: undefined
+  },
+  addview=false,
+  cloneview=false,
+  list_packages=[],
+  setFieldValue=undefined,
+  values=undefined,
+  onSelect=undefined,
+  metrictemplatelist=[],
+  version=undefined
+}) =>
   <>
     <FormGroup>
       <Row>
@@ -93,7 +106,7 @@ const ProbeForm = ({isTenantSchema=false, isHistory=false, publicView=false,
               type='text'
               name='version'
               className='form-control'
-              value={isHistory ? state.version : state.probe.version}
+              value={version}
               id='version'
               disabled={true}
             />
@@ -455,357 +468,313 @@ export const ProbeList = (props) => {
 };
 
 
-function ProbeComponent(cloneview=false) {
-  return class extends Component {
-    constructor(props) {
-      super(props);
+export const ProbeComponent = (props) => {
+  const name = props.match.params.name;
+  const addview = props.addview;
+  const cloneview = props.cloneview;
+  const location = props.location;
+  const history = props.history;
+  const publicView = props.publicView;
+  const backend = new Backend();
 
-      this.name = props.match.params.name;
-      this.addview = props.addview;
-      this.location = props.location;
-      this.history = props.history;
-      this.publicView = props.publicView;
-      this.backend = new Backend();
+  const apiListPackages = `/api/v2/internal/${publicView ? 'public_' : ''}packages`;
+  const apiProbeName = `/api/v2/internal/${publicView ? 'public_' : ''}probes`;
+  const apiMetricsForProbes = `/api/v2/internal/${publicView ? 'public_' : ''}metricsforprobes`;
 
-      if (this.publicView) {
-        this.apiListPackages = '/api/v2/internal/public_packages'
-        this.apiProbeName = '/api/v2/internal/public_probes'
-        this.apiMetricsForProbes = '/api/v2/internal/public_metricsforprobes'
-      }
-      else {
-        this.apiListPackages = '/api/v2/internal/packages'
-        this.apiProbeName = '/api/v2/internal/probes'
-        this.apiMetricsForProbes = '/api/v2/internal/metricsforprobes'
-      }
+  const [probe, setProbe] = useState({
+    'id': '',
+    'name': '',
+    'version': '',
+    'package': '',
+    'repository': '',
+    'docurl': '',
+    'description': '',
+    'comment': ''
+  });
+  const [isTenantSchema, setIsTenantSchema] = useState(null);
+  const [metricTemplateList, setMetricTemplateList] = useState([]);
+  const [listPackages, setListPackages] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [areYouSureModal, setAreYouSureModal] = useState(false);
+  const [modalFlag, setModalFlag] = useState(undefined);
+  const [modalTitle, setModalTitle] = useState(undefined);
+  const [modalMsg, setModalMsg] = useState(undefined);
+  const [formValues, setFormValues] = useState(undefined);
+  const [error, setError] = useState(null);
 
-      this.state = {
-        probe: {
-          'id': '',
-          'name': '',
-          'version': '',
-          'package': '',
-          'repository': '',
-          'docurl': '',
-          'description': '',
-          'comment': ''
-        },
-        isTenantSchema: null,
-        metrictemplatelist: [],
-        list_packages: [],
-        validationVisible: true,
-        update_metrics: false,
-        loading: false,
-        areYouSureModal: false,
-        modalFunc: undefined,
-        modalTitle: undefined,
-        modalMsg: undefined,
-        error: null
-      };
+  function toggleAreYouSure() {
+    setAreYouSureModal(!areYouSureModal);
+  };
 
-      this.toggleAreYouSure = this.toggleAreYouSure.bind(this);
-      this.toggleAreYouSureSetModal = this.toggleAreYouSureSetModal.bind(this);
-      this.onSubmitHandle = this.onSubmitHandle.bind(this);
-      this.doDelete = this.doDelete.bind(this);
-      this.onDismiss = this.onDismiss.bind(this);
-      this.onSelect = this.onSelect.bind(this);
-    }
+  function onSubmitHandle(values, actions) {
+    let msg = `Are you sure you want to ${addview || cloneview ? 'add' : 'change'} probe?`;
+    let title = `${addview || cloneview ? 'Add' : 'Change'} probe`;
 
-    toggleAreYouSure() {
-      this.setState(prevState =>
-        ({areYouSureModal: !prevState.areYouSureModal}));
-    }
+    setFormValues(values);
+    setModalMsg(msg);
+    setModalTitle(title);
+    setModalFlag('submit');
+    toggleAreYouSure();
+  };
 
-    toggleAreYouSureSetModal(msg, title, onyes) {
-      this.setState(prevState =>
-        ({areYouSureModal: !prevState.areYouSureModal,
-          modalFunc: onyes,
-          modalMsg: msg,
-          modalTitle: title,
-        }));
-    }
-
-    onSubmitHandle(values, actions) {
-      let msg = undefined;
-      let title = undefined;
-
-      if (this.addview || cloneview) {
-        msg = 'Are you sure you want to add probe?';
-        title = 'Add probe';
+  async function doChange() {
+    if (addview || cloneview) {
+      let cloned_from = undefined;
+      if (cloneview) {
+        cloned_from = formValues.id;
       } else {
-          msg = 'Are you sure you want to change probe?';
-          title = 'Change probe';
+        cloned_from = '';
       }
 
-      this.toggleAreYouSureSetModal(msg, title,
-        () => this.doChange(values, actions));
-    }
-
-    async doChange(values, actions) {
-      if (this.addview || cloneview) {
-        let cloned_from = undefined;
-        if (cloneview) {
-          cloned_from = values.id;
-        } else {
-          cloned_from = '';
+      let response = await backend.addObject(
+        '/api/v2/internal/probes/',
+        {
+          name: formValues.name,
+          package: formValues.package,
+          repository: formValues.repository,
+          docurl: formValues.docurl,
+          description: formValues.description,
+          comment: formValues.comment,
+          cloned_from: cloned_from
         }
-        let response = await this.backend.addObject(
-          '/api/v2/internal/probes/',
-          {
-            name: values.name,
-            package: values.package,
-            repository: values.repository,
-            docurl: values.docurl,
-            description: values.description,
-            comment: values.comment,
-            cloned_from: cloned_from
-          }
-          );
-          if (!response.ok) {
-            let add_msg = '';
-            try {
-              let json = await response.json();
-              add_msg = json.detail;
-            } catch(err) {
-              add_msg = 'Error adding probe';
-            }
-            NotifyError({
-              title: `Error: ${response.status} ${response.statusText}`,
-              msg: add_msg
-            });
-          } else {
-            NotifyOk({
-              msg: 'Probe successfully added',
-              title: 'Added',
-              callback: () => this.history.push('/ui/probes')
-            });
-          };
-      } else {
-        let response = await this.backend.changeObject(
-          '/api/v2/internal/probes/',
-          {
-            id: values.id,
-            name: values.name,
-            package: values.package,
-            repository: values.repository,
-            docurl: values.docurl,
-            description: values.description,
-            comment: values.comment,
-            update_metrics: values.update_metrics
-          }
-        );
-        if (!response.ok) {
-          let change_msg = '';
-          try {
-            let json = await response.json();
-            change_msg = json.detail;
-          } catch(err) {
-            change_msg = 'Error changing probe';
-          };
-          NotifyError({
-            title: `Error: ${response.status} ${response.statusText}`,
-            msg: change_msg
-          });
-        } else {
-          NotifyOk({
-            msg: 'Probe successfully changed',
-            title: 'Changed',
-            callback: () => this.history.push('/ui/probes')
-          });
-        };
-      };
-    }
-
-    async doDelete(name) {
-      let response = await this.backend.deleteObject(`/api/v2/internal/probes/${name}`);
+      );
       if (!response.ok) {
-        let msg = '';
+        let add_msg = '';
         try {
           let json = await response.json();
-          msg = json.detail;
+          add_msg = json.detail;
         } catch(err) {
-          msg = 'Error deleting probe';
-        };
+          add_msg = 'Error adding probe';
+        }
         NotifyError({
           title: `Error: ${response.status} ${response.statusText}`,
-          msg: msg
+          msg: add_msg
         });
       } else {
         NotifyOk({
-          msg: 'Probe successfully deleted',
-          title: 'Deleted',
-          callback: () => this.history.push('/ui/probes')
+          msg: 'Probe successfully added',
+          title: 'Added',
+          callback: () => history.push('/ui/probes')
         });
       };
-    }
-
-    onDismiss() {
-      this.setState({ validationVisible: false });
-    }
-
-    onSelect(field, value) {
-      let probe = this.state.probe;
-      probe[field] = value;
-      try {
-        probe['version'] = value.split(' ')[1].slice(1, -1);
-      } catch(err) {
-        if (err instanceof TypeError)
-          probe['version'] = '';
+    } else {
+      let response = await backend.changeObject(
+        '/api/v2/internal/probes/',
+        {
+          id: formValues.id,
+          name: formValues.name,
+          package: formValues.package,
+          repository: formValues.repository,
+          docurl: formValues.docurl,
+          description: formValues.description,
+          comment: formValues.comment,
+          update_metrics: formValues.update_metrics
+        }
+      );
+      if (!response.ok) {
+        let change_msg = '';
+        try {
+          let json = await response.json();
+          change_msg = json.detail;
+        } catch(err) {
+          change_msg = 'Error changing probe';
+        };
+        NotifyError({
+          title: `Error: ${response.status} ${response.statusText}`,
+          msg: change_msg
+        });
+      } else {
+        NotifyOk({
+          msg: 'Probe successfully changed',
+          title: 'Changed',
+          callback: () => history.push('/ui/probes')
+        });
       };
-      this.setState({probe: probe});
-    }
+    };
+  };
 
-    async componentDidMount() {
-      this.setState({loading: true});
-
+  async function doDelete() {
+    let response = await backend.deleteObject(`/api/v2/internal/probes/${name}`);
+    if (!response.ok) {
+      let msg = '';
       try {
-        let isTenantSchema = await this.backend.isTenantSchema();
-        let pkgs = await this.backend.fetchData(this.apiListPackages);
+        let json = await response.json();
+        msg = json.detail;
+      } catch(err) {
+        msg = 'Error deleting probe';
+      };
+      NotifyError({
+        title: `Error: ${response.status} ${response.statusText}`,
+        msg: msg
+      });
+    } else {
+      NotifyOk({
+        msg: 'Probe successfully deleted',
+        title: 'Deleted',
+        callback: () => history.push('/ui/probes')
+      });
+    };
+  };
+
+  function onSelect(field, value) {
+    let selectedProbe = probe;
+    selectedProbe[field] = value;
+    try {
+      selectedProbe['version'] = value.split(' ')[1].slice(1, -1);
+    } catch(err) {
+      if (err instanceof TypeError)
+        selectedProbe['version'] = '';
+    };
+    setProbe(selectedProbe);
+  };
+
+  useEffect(() => {
+    setLoading(true);
+
+    async function fetchProbe() {
+      try {
+        let schema = await backend.isTenantSchema();
+        let pkgs = await backend.fetchData(apiListPackages);
         let list_packages = [];
         pkgs.forEach(e => list_packages.push(`${e.name} (${e.version})`));
-        if (!this.addview) {
-          let probe = await this.backend.fetchData(`${this.apiProbeName}/${this.name}`);
-          let metrics = await this.backend.fetchData(`${this.apiMetricsForProbes}/${probe.name}(${probe.version})`);
-          this.setState({
-            probe: probe,
-            list_packages: list_packages,
-            isTenantSchema: isTenantSchema,
-            metrictemplatelist: metrics,
-            loading: false
-          });
-        } else {
-          this.setState({
-            list_packages: list_packages,
-            isTenantSchema: isTenantSchema,
-            loading: false
-          });
+        setListPackages(list_packages);
+        setIsTenantSchema(schema);
+        if (!addview) {
+          let prb = await backend.fetchData(`${apiProbeName}/${name}`);
+          let metrics = await backend.fetchData(`${apiMetricsForProbes}/${prb.name}(${prb.version})`);
+          setProbe(prb);
+          setMetricTemplateList(metrics);
         };
       } catch(err) {
-        this.setState({
-          error: err,
-          loading: false
-        });
+        setError(err);
       };
-    }
 
-    render() {
-      const { probe, update_metrics, isTenantSchema, metrictemplatelist,
-        list_packages, loading, error } = this.state;
+      setLoading(false);
+    };
 
-      if (loading)
-        return(<LoadingAnim/>)
+    fetchProbe();
+  }, []);
 
-      else if (error)
-        return (<ErrorComponent error={error}/>);
+  if (loading)
+    return(<LoadingAnim/>)
 
-      else if (!loading) {
-        if (!isTenantSchema) {
-          return (
-            <BaseArgoView
-              resourcename={`${this.publicView ? 'Probe details' : 'probe'}`}
-              location={this.location}
-              addview={this.addview}
-              cloneview={cloneview}
-              clone={true}
-              modal={true}
-              state={this.state}
-              publicview={this.publicView}
-              toggle={this.toggleAreYouSure}>
-              <Formik
-                initialValues = {{
-                  id: probe.id,
-                  name: probe.name,
-                  version: probe.version,
-                  package: probe.package,
-                  repository: probe.repository,
-                  docurl: probe.docurl,
-                  description: probe.description,
-                  comment: probe.comment,
-                  update_metrics: update_metrics
-                }}
-                validationSchema={ProbeSchema}
-                onSubmit = {(values, actions) => this.onSubmitHandle(values, actions)}
-              >
-                {props => (
-                  <Form>
-                    <ProbeForm
-                      {...props}
-                      state={this.state}
-                      addview={this.addview}
-                      cloneview={cloneview}
-                      publicView={this.publicView}
-                      list_packages={list_packages}
-                      onSelect={this.onSelect}
-                      metrictemplatelist={metrictemplatelist}
-                    />
-                    {
-                      !this.publicView &&
-                        <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
-                          {
-                            (!this.addview && !cloneview && !this.publicView) ?
-                              <Button
-                                color='danger'
-                                onClick={() => {
-                                  this.toggleAreYouSureSetModal(
-                                    'Are you sure you want to delete probe?',
-                                    'Delete probe',
-                                    () => this.doDelete(props.values.name)
-                                  )}}
-                              >
-                                Delete
-                              </Button>
-                            :
-                              <div></div>
-                          }
-                          <Button
-                            color='success'
-                            id='submit-button'
-                            type='submit'
-                          >
-                            Save
-                          </Button>
-                        </div>
-                  }
-                  </Form>
-                )}
-              </Formik>
-            </BaseArgoView>
-          )
-        } else {
-          return (
-            <BaseArgoView
-              resourcename='Probe details'
-              location={this.location}
-              tenantview={true}
-              history={true}
+  else if (error)
+    return (<ErrorComponent error={error}/>);
+
+  else if (!loading) {
+    if (!isTenantSchema) {
+      return (
+        <React.Fragment>
+          <ModalAreYouSure
+            isOpen={areYouSureModal}
+            toggle={toggleAreYouSure}
+            title={modalTitle}
+            msg={modalMsg}
+            onYes={modalFlag === 'submit' ? doChange : modalFlag === 'delete' ? doDelete : undefined}
+          />
+          <BaseArgoView
+            resourcename={`${publicView ? 'Probe details' : 'probe'}`}
+            location={location}
+            addview={addview}
+            cloneview={cloneview}
+            clone={true}
+            publicview={publicView}
+          >
+            <Formik
+              initialValues = {{
+                id: probe.id,
+                name: probe.name,
+                version: probe.version,
+                package: probe.package,
+                repository: probe.repository,
+                docurl: probe.docurl,
+                description: probe.description,
+                comment: probe.comment,
+                update_metrics: false
+              }}
+              validationSchema={ProbeSchema}
+              onSubmit = {(values, actions) => onSubmitHandle(values, actions)}
             >
-              <Formik
-                initialValues = {{
-                  id: probe.id,
-                  name: probe.name,
-                  version: probe.version,
-                  package: probe.package,
-                  repository: probe.repository,
-                  docurl: probe.docurl,
-                  description: probe.description,
-                  comment: probe.comment
-                }}
-                render = {props => (
+              {props => (
+                <Form>
                   <ProbeForm
                     {...props}
-                    isTenantSchema={true}
-                    publicView={this.publicView}
-                    state={this.state}
-                    metrictemplatelist={metrictemplatelist}
+                    addview={addview}
+                    cloneview={cloneview}
+                    publicView={publicView}
+                    list_packages={listPackages}
+                    onSelect={onSelect}
+                    metrictemplatelist={metricTemplateList}
+                    version={probe.version}
                   />
-                )}
+                  {
+                    !publicView &&
+                      <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
+                        {
+                          (!addview && !cloneview && !publicView) ?
+                            <Button
+                              color='danger'
+                              onClick={() => {
+                                setModalMsg('Are you sure you want to delete probe?');
+                                setModalTitle('Delete probe');
+                                setModalFlag('delete');
+                                toggleAreYouSure();
+                                }}
+                            >
+                              Delete
+                            </Button>
+                          :
+                            <div></div>
+                        }
+                        <Button
+                          color='success'
+                          id='submit-button'
+                          type='submit'
+                        >
+                          Save
+                        </Button>
+                      </div>
+                }
+                </Form>
+              )}
+            </Formik>
+          </BaseArgoView>
+        </React.Fragment>
+      )
+    } else {
+      return (
+        <BaseArgoView
+          resourcename='Probe details'
+          location={location}
+          tenantview={true}
+          history={true}
+        >
+          <Formik
+            initialValues = {{
+              id: probe.id,
+              name: probe.name,
+              version: probe.version,
+              package: probe.package,
+              repository: probe.repository,
+              docurl: probe.docurl,
+              description: probe.description,
+              comment: probe.comment
+            }}
+            render = {props => (
+              <ProbeForm
+                {...props}
+                isTenantSchema={true}
+                publicView={publicView}
+                metrictemplatelist={metricTemplateList}
+                version={probe.version}
               />
-            </BaseArgoView>
-          );
-        }
-      }
-    }
+            )}
+          />
+        </BaseArgoView>
+      );
+    };
   };
-}
+};
 
 
 export class ProbeVersionCompare extends Component{
