@@ -777,163 +777,92 @@ export const ProbeComponent = (props) => {
 };
 
 
-export class ProbeVersionCompare extends Component{
-  constructor(props) {
-    super(props);
-    this.version1 = props.match.params.id1;
-    this.version2 = props.match.params.id2;
-    this.name = props.match.params.name;
-    this.publicView = props.publicView
+export const ProbeVersionCompare = (props) => {
+  const version1 = props.match.params.id1;
+  const version2 = props.match.params.id2;
+  const name = props.match.params.name;
+  const publicView = props.publicView;
 
-    this.state = {
-      loading: false,
-      name1: '',
-      version1: '',
-      package1: '',
-      description1: '',
-      repository1: '',
-      docurl1: '',
-      comment1: '',
-      name2: '',
-      version2: '',
-      package2: '',
-      description2: '',
-      repository2: '',
-      docurl2: '',
-      comment2: '',
-      error: null
+  const [loading, setLoading] = useState(false);
+  const [probe1, setProbe1] = useState({});
+  const [probe2, setProbe2] = useState({});
+  const [error, setError] = useState(null);
+
+  const backend = new Backend();
+
+  useEffect(() => {
+    setLoading(true);
+
+    async function fetchVersions() {
+      try {
+        let json = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}version/probe/${name}`);
+
+        json.forEach((e) => {
+          if (e.version == version1)
+            setProbe1(e.fields);
+          else if (e.version === version2)
+            setProbe2(e.fields);
+        });
+      } catch(err) {
+        setError(err);
+      };
+      setLoading(false);
     };
 
-    if (this.publicView)
-      this.apiUrl = '/api/v2/internal/public_version/probe/'
-    else
-      this.apiUrl = '/api/v2/internal/version/probe/'
+    fetchVersions();
+  }, []);
 
-    this.backend = new Backend();
-  }
+  if (loading)
+    return (<LoadingAnim/>);
 
-  async componentDidMount() {
-    this.setState({loading: true});
+  else if (error)
+    return (<ErrorComponent error={error}/>);
 
-    try {
-      let json = await this.backend.fetchData(`${this.apiUrl}/${this.name}`);
-      let name1 = '';
-      let version1 = '';
-      let package1 = '';
-      let description1 = '';
-      let repository1 = '';
-      let docurl1 = '';
-      let comment1 = '';
-      let name2 = ''
-      let version2 = '';
-      let package2 = '';
-      let description2 = '';
-      let repository2 = '';
-      let docurl2 = '';
-      let comment2 = '';
-
-      json.forEach((e) => {
-        if (e.version == this.version1) {
-          name1 = e.fields.name;
-          version1 = e.fields.version;
-          package1 = e.fields.package;
-          description1 = e.fields.description;
-          repository1 = e.fields.repository;
-          docurl1 = e.fields.docurl;
-          comment1 = e.fields.comment;
-        } else if (e.version === this.version2) {
-          name2 = e.fields.name;
-          version2 = e.fields.version;
-          package2 = e.fields.package;
-          description2 = e.fields.description;
-          repository2 = e.fields.repository;
-          docurl2 = e.fields.docurl;
-          comment2 = e.fields.comment;
+  else if (!loading && probe1 && probe2) {
+    return (
+      <React.Fragment>
+        <div className="d-flex align-items-center justify-content-between">
+          <h2 className='ml-3 mt-1 mb-4'>{`Compare ${name}`}</h2>
+        </div>
+        {
+          (probe1.name !== probe2.name) &&
+            <DiffElement title='name' item1={probe1.name} item2={probe2.name}/>
         }
-      });
 
-      this.setState({
-        name1: name1,
-        version1: version1,
-        package1: package1,
-        description1: description1,
-        repository1: repository1,
-        docurl1: docurl1,
-        comment1: comment1,
-        name2: name2,
-        version2: version2,
-        package2: package2,
-        description2: description2,
-        repository2: repository2,
-        docurl2: docurl2,
-        comment2: comment2,
-        loading: false
-      });
-    } catch(err) {
-      this.setState({
-        error: err,
-        loading: false
-      });
-    };
+        {
+          (probe1.version !== probe2.version) &&
+            <DiffElement title='version' item1={probe1.version} item2={probe2.version}/>
+        }
+
+        {
+          (probe1.package !== probe2.package) &&
+            <DiffElement title='package' item1={probe1.package} item2={probe2.package}/>
+        }
+
+        {
+          (probe1.description !== probe2.description) &&
+            <DiffElement title='description' item1={probe1.description} item2={probe2.description}/>
+        }
+
+        {
+          (probe1.repository !== probe2.repository) &&
+            <DiffElement title='repository' item1={probe1.repository} item2={probe2.repository}/>
+        }
+
+        {
+          (probe1.docurl !== probe2.docurl) &&
+            <DiffElement title={'documentation'} item1={probe1.docurl} item2={probe2.docurl}/>
+        }
+        {
+          (probe1.comment !== probe2.comment) &&
+            <DiffElement title={'comment'} item1={probe1.comment} item2={probe2.comment}/>
+        }
+      </React.Fragment>
+    );
   }
-
-  render() {
-    var { name1, name2, version1, version2, package1, package2,
-      description1, description2, repository1, repository2,
-      docurl1, docurl2, comment1, comment2, loading, error } = this.state;
-
-    if (loading)
-      return (<LoadingAnim/>);
-
-    else if (error)
-      return (<ErrorComponent error={error}/>);
-
-    else if (!loading && name1 && name2) {
-      return (
-        <React.Fragment>
-          <div className="d-flex align-items-center justify-content-between">
-            <h2 className='ml-3 mt-1 mb-4'>{'Compare ' + this.name}</h2>
-          </div>
-          {
-            (name1 !== name2) &&
-              <DiffElement title='name' item1={name1} item2={name2}/>
-          }
-
-          {
-            (version1 !== version2) &&
-              <DiffElement title='version' item1={version1} item2={version2}/>
-          }
-
-          {
-            (package1 !== package2) &&
-              <DiffElement title='package' item1={package1} item2={package2}/>
-          }
-
-          {
-            (description1 !== description2) &&
-              <DiffElement title='description' item1={description1} item2={description2}/>
-          }
-
-          {
-            (repository1 !== repository2) &&
-              <DiffElement title='repository' item1={repository1} item2={repository2}/>
-          }
-
-          {
-            (docurl1 !== docurl2) &&
-              <DiffElement title={'documentation'} item1={docurl1} item2={docurl2}/>
-          }
-          {
-            (comment1 !== comment2) &&
-              <DiffElement title={'comment'} item1={comment1} item2={comment2}/>
-          }
-        </React.Fragment>
-      );
-    }
-    else
-      return null;
-  }
-}
+  else
+    return null;
+};
 
 
 export class ProbeVersionDetails extends Component {
