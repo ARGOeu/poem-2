@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component, useState, useEffect } from 'react';
 import { Backend } from './DataManager';
 import { Link } from 'react-router-dom';
 import {
@@ -296,179 +296,163 @@ const ProbeForm = ({isTenantSchema=false, isHistory=false, publicView=false,
   </>
 
 
-export class ProbeList extends Component {
-  constructor(props) {
-    super(props);
+export const ProbeList = (props) => {
+  const location = props.location;
+  const publicView = props.publicView;
 
-    this.location = props.location;
-    this.publicView = props.publicView
+  const [loading, setLoading] = useState(false);
+  const [listProbes, setListProbes] = useState(null);
+  const [isTenantSchema, setIsTenantSchema] = useState(null);
+  const [searchName, setSearchName] = useState('');
+  const [searchDescription, setSearchDescription] = useState('');
+  const [searchPackage, setSearchPackage] = useState('');
+  const [error, setError] = useState(null);
 
-    this.state = {
-      loading: false,
-      list_probe: null,
-      isTenantSchema: null,
-      search_name: '',
-      search_description: '',
-      search_package: '',
-      error: null
+  const backend = new Backend();
+
+  useEffect(() => {
+    setLoading(true);
+
+    async function fetchProbes() {
+      try {
+        let json = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}probes`);
+        let schema = await backend.isTenantSchema();
+        setListProbes(json);
+        setIsTenantSchema(schema)
+      } catch(err) {
+        setError(err);
+      };
+      setLoading(false);
     };
 
-    this.backend = new Backend();
+    fetchProbes();
+  }, []);
 
-    if (this.publicView)
-      this.apiListProbes = '/api/v2/internal/public_probes'
-    else
-      this.apiListProbes = '/api/v2/internal/probes'
-  }
-
-  async componentDidMount() {
-    this.setState({loading: true});
-
-    try {
-      let json = await this.backend.fetchData(this.apiListProbes);
-      let isTenantSchema = await this.backend.isTenantSchema();
-      this.setState({
-        list_probe: json,
-        isTenantSchema: isTenantSchema,
-        loading: false,
-        search_name: ''
-      });
-    } catch(err) {
-      this.setState({
-        error: err,
-        loading: false
-      });
-    };
-  }
-
-  render() {
-    const columns = [
-      {
-        Header: '#',
-        id: 'row',
-        minWidth: 12,
-        Cell: (row) =>
-          <div style={{textAlign: 'center'}}>
-            {row.index + 1}
-          </div>
-      },
-      {
-        Header: 'Name',
-        id: 'name',
-        minWidth: 80,
-        accessor: e =>
-          <Link to={`/ui/${this.publicView ? 'public_' : ''}probes/${e.name}`}>
-            {e.name}
-          </Link>,
-        filterable: true,
-        Filter: (
-          <input
-            value={this.state.search_name}
-            onChange={e => this.setState({search_name: e.target.value})}
-            placeholder='Search by name'
-            style={{width: "100%"}}
-          />
-        )
-      },
-      {
-        Header: '#versions',
-        id: 'nv',
-        minWidth: 25,
-        accessor: e =>
-          <Link to={`/ui/${this.publicView ? 'public_' : ''}probes/${e.name}/history`}>
-            {e.nv}
-          </Link>,
-        Cell: row =>
-          <div style={{textAlign: 'center'}}>
-            {row.value}
-          </div>
-      },
-      {
-        Header: 'Package',
-        minWidth: 120,
-        accessor: 'package',
-        filterable: true,
-        Filter: (
-          <input
-            type='text'
-            placeholder='Search by package'
-            value={this.state.search_package}
-            onChange={e => this.setState({search_package: e.target.value})}
-            style={{width: '100%'}}
-          />
-        ),
-        filterMethod:
-          (filter, row) =>
-            row[filter.id] !== undefined ? String(row[filter.id]).toLowerCase().includes(filter.value.toLowerCase()) : true
-      },
-      {
-        Header: 'Description',
-        minWidth: 200,
-        accessor: 'description',
-        filterable: true,
-        Filter: (
-          <input
-            type='text'
-            placeholder='Search by description'
-            value={this.state.search_description}
-            onChange={e=> this.setState({search_description: e.target.value})}
-            style={{width: '100%'}}
-          />
-        ),
-        filterMethod:
-          (filter, row) =>
-            row[filter.id] !== undefined ? String(row[filter.id]).toLowerCase().includes(filter.value.toLowerCase()) : true
-      }
-    ];
-
-    var { isTenantSchema, list_probe, loading, error } = this.state;
-
-    if (this.state.search_name) {
-      list_probe = list_probe.filter(row =>
-        row.name.toLowerCase().includes(this.state.search_name.toLowerCase())
-      );
+  const columns = [
+    {
+      Header: '#',
+      id: 'row',
+      minWidth: 12,
+      Cell: (row) =>
+        <div style={{textAlign: 'center'}}>
+          {row.index + 1}
+        </div>
+    },
+    {
+      Header: 'Name',
+      id: 'name',
+      minWidth: 80,
+      accessor: e =>
+        <Link to={`/ui/${publicView ? 'public_' : ''}probes/${e.name}`}>
+          {e.name}
+        </Link>,
+      filterable: true,
+      Filter: (
+        <input
+          value={searchName}
+          onChange={e => setSearchName(e.target.value)}
+          placeholder='Search by name'
+          style={{width: "100%"}}
+        />
+      )
+    },
+    {
+      Header: '#versions',
+      id: 'nv',
+      minWidth: 25,
+      accessor: e =>
+        <Link to={`/ui/${publicView ? 'public_' : ''}probes/${e.name}/history`}>
+          {e.nv}
+        </Link>,
+      Cell: row =>
+        <div style={{textAlign: 'center'}}>
+          {row.value}
+        </div>
+    },
+    {
+      Header: 'Package',
+      minWidth: 120,
+      accessor: 'package',
+      filterable: true,
+      Filter: (
+        <input
+          type='text'
+          placeholder='Search by package'
+          value={searchPackage}
+          onChange={e => setSearchPackage(e.target.value)}
+          style={{width: '100%'}}
+        />
+      ),
+      filterMethod:
+        (filter, row) =>
+          row[filter.id] !== undefined ? String(row[filter.id]).toLowerCase().includes(filter.value.toLowerCase()) : true
+    },
+    {
+      Header: 'Description',
+      minWidth: 200,
+      accessor: 'description',
+      filterable: true,
+      Filter: (
+        <input
+          type='text'
+          placeholder='Search by description'
+          value={searchDescription}
+          onChange={e=> setSearchDescription(e.target.value)}
+          style={{width: '100%'}}
+        />
+      ),
+      filterMethod:
+        (filter, row) =>
+          row[filter.id] !== undefined ? String(row[filter.id]).toLowerCase().includes(filter.value.toLowerCase()) : true
     }
+  ];
 
-    if (this.state.search_description) {
-      list_probe = list_probe.filter(row =>
-        row.description.toLowerCase().includes(this.state.search_description.toLowerCase())
-      );
-    }
+  var list_probe = listProbes;
+  if (searchName) {
+    list_probe = list_probe.filter(row =>
+      row.name.toLowerCase().includes(searchName.toLowerCase())
+    );
+  };
 
-    if (this.state.search_package) {
-      list_probe = list_probe.filter(row =>
-        row.package.toLowerCase().includes(this.state.search_package.toLowerCase())
-      );
-    }
+  if (searchDescription) {
+    list_probe = list_probe.filter(row =>
+      row.description.toLowerCase().includes(searchDescription.toLowerCase())
+    );
+  };
 
-    if (loading)
-      return (<LoadingAnim />);
+  if (searchPackage) {
+    list_probe = list_probe.filter(row =>
+      row.package.toLowerCase().includes(searchPackage.toLowerCase())
+    );
+  };
 
-    else if (error)
-      return (<ErrorComponent error={error}/>);
+  if (loading)
+    return (<LoadingAnim />);
 
-    else if (!loading && list_probe) {
-      return (
-        <BaseArgoView
-          resourcename='probe'
-          location={this.location}
-          listview={true}
-          addnew={!isTenantSchema && !this.publicView}
-        >
-          <ReactTable
-            data={list_probe}
-            columns={columns}
-            className='-highlight'
-            defaultPageSize={50}
-            rowsText='probes'
-            getTheadThProps={() => ({className: 'table-active font-weight-bold p-2'})}
-          />
-        </BaseArgoView>
-      );
-    } else
-      return null;
-  }
-}
+  else if (error)
+    return (<ErrorComponent error={error}/>);
+
+  else if (!loading && listProbes) {
+    return (
+      <BaseArgoView
+        resourcename='probe'
+        location={location}
+        listview={true}
+        addnew={!isTenantSchema && !publicView}
+      >
+        <ReactTable
+          data={list_probe}
+          columns={columns}
+          className='-highlight'
+          defaultPageSize={50}
+          rowsText='probes'
+          getTheadThProps={() => ({className: 'table-active font-weight-bold p-2'})}
+        />
+      </BaseArgoView>
+    );
+  } else
+    return null;
+};
 
 
 function ProbeComponent(cloneview=false) {
