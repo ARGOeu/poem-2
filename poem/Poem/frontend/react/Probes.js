@@ -278,10 +278,10 @@ const ProbeForm = ({
         (!isHistory && !addview && !cloneview) &&
           <Row>
             <Col md={8}>
-              <div>
-                Metric templates:
-                {
-                  metrictemplatelist.length > 0 &&
+              {
+                metrictemplatelist.length > 0 &&
+                <div>
+                  Metric templates:
                     <div>
                       {
                         metrictemplatelist
@@ -301,8 +301,8 @@ const ProbeForm = ({
                           ).reduce((prev, curr) => [prev, ', ', curr])
                       }
                     </div>
-                }
-              </div>
+                </div>
+              }
             </Col>
           </Row>
       }
