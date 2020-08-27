@@ -71,11 +71,12 @@ import Autosuggest from 'react-autosuggest';
 import { CookiePolicy } from './CookiePolicy';
 
 
-var list_pages = ['administration', 'probes',
-                  'metrics', 'reports', servicetypes', 'metricprofiles', 'aggregationprofiles',
-                  'thresholdsprofiles', 'operationsprofiles'];
-var admin_list_pages = [ 'administration', 'tenants',
-                        'yumrepos', 'packages', 'probes', 'metrictemplates'];
+var list_pages = [
+  'administration', 'probes', 'metrics', 'reports', 'metricprofiles',
+  'aggregationprofiles', 'thresholdsprofiles', 'operationsprofiles'
+];
+var admin_list_pages = ['administration', 'tenants', 'yumrepos', 'packages',
+                        'probes', 'metrictemplates'];
 
 var link_title = new Map();
 
