@@ -22,10 +22,10 @@ import { faClipboard } from '@fortawesome/free-solid-svg-icons';
 
 export const APIKeyList = (props) => {
   const location = props.location;
+  const backend = new Backend();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(undefined);
   const [list_keys, setKeys] = useState(null);
-  const backend = new Backend();
 
   useEffect(() => {
     setLoading(true);
