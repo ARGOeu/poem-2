@@ -96,6 +96,7 @@ class GetConfigOptions(APIView):
         options.update(webapiaggregation=settings.WEBAPI_AGGREGATION)
         options.update(webapithresholds=settings.WEBAPI_THRESHOLDS)
         options.update(webapioperations=settings.WEBAPI_OPERATIONS)
+        options.update(webapireports=settings.WEBAPI_REPORTS)
         options.update(tenant_name=tenant)
 
         return Response({'result': options})
