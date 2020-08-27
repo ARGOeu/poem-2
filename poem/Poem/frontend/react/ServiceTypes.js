@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Backend } from './DataManager';
-import { LoadingAnim, ErrorComponent } from './UIElements';
+import { LoadingAnim, BaseArgoView, ErrorComponent } from './UIElements';
 import { useTable } from 'react-table';
 
 function Table({ columns, data }) {
@@ -92,7 +92,11 @@ export const ServiceTypesList = (props) => {
 
   else if (!loading && serviceTypesDescriptions) {
     return (
-      <Table columns={columns} data={serviceTypesDescriptions}/>
+      <BaseArgoView
+        resourcename='Services types'
+        infoview={true}>
+        <Table columns={columns} data={serviceTypesDescriptions}/>
+      </BaseArgoView>
     )
   }
 }
