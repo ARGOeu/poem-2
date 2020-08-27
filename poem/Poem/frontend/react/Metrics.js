@@ -503,7 +503,7 @@ export const ListOfMetrics = (props) => {
     return (<ErrorComponent error={userDetailsError.message}/>);
 
   else {
-    let metriclink = `/ui/${(type === 'metrictemplates' && isTenantSchema) ? 'administration/' : ''}${publicView ? 'public_' : ''}${type}/`;
+    let metriclink = `/ui/${(type === 'metrictemplates' && isTenantSchema && !publicView) ? 'administration/' : ''}${publicView ? 'public_' : ''}${type}/`;
 
     const columns = [
       {
