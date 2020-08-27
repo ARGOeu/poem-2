@@ -459,7 +459,7 @@ export const MetricTemplateVersionDetails = (props) => {
         let json = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}version/metrictemplate/${name}`);
         json.forEach(async (e) => {
           if (e.version == version) {
-            let probes = await backend.fetchData(`/api/v2/internal/${this.publicView ? 'public_' : ''}version/probe/${e.fields.probeversion.split(' ')[0]}`);
+            let probes = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}version/probe/${e.fields.probeversion.split(' ')[0]}`);
             probes.forEach(p => {
               if (p.object_repr === e.fields.probeversion)
                 setProbe(p.fields);
