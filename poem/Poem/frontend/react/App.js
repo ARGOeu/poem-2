@@ -33,6 +33,7 @@ import {
   AggregationProfileVersionDetails
 } from './AggregationProfiles';
 import Reports from './Reports';
+import { ReportsList } from './Reports';
 import { UsersList, UserChange, SuperAdminUserChange, ChangePassword } from './Users';
 import {
   GroupList,
@@ -111,11 +112,10 @@ const RedirectAfterLogin = ({isSuperUser, ...props}) => {
 }
 
 
-const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, webApiOperations, token, tenantName, isSuperUser, userGroups}) => (
+const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, webApiOperations, webApiReports, token, tenantName, isSuperUser, userGroups}) => (
   <Switch>
     <Route exact path="/ui/login" render={props => <RedirectAfterLogin isSuperUser={isSuperUser} {...props}/>}/>
     <Route exact path="/ui/home" component={Home} />
-    <Route exact path="/ui/reports" component={Reports} />
     <Route exact path="/ui/probes" component={ProbeList} />
     <Route exact path="/ui/probes/:name/history" render={props => <HistoryComponent object='probe' {...props}/>}/>
     <Route exact path="/ui/probes/:name/history/compare/:id1/:id2" render={props => <ProbeVersionCompare {...props}/>}/>
@@ -383,6 +383,16 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, w
         webapitoken={token}
       />}
     />
+    <Route
+      exact path="/ui/reports"
+      render={props =>
+        <ReportsList
+          {...props}
+          webapitoken={token}
+          webapireports={webApiReports}
+        />
+      }
+    />
     <Route component={NotFound} />
   </Switch>
 )
@@ -459,6 +469,7 @@ class App extends Component {
       webApiMetric: undefined,
       webApiThresholds: undefined,
       webApiOperations: undefined,
+      webApiReports: undefined,
       publicView: undefined,
       tenantName: undefined,
       token: undefined,
@@ -504,6 +515,7 @@ class App extends Component {
         webApiThresholds: options && options.result.webapithresholds,
         webApiOperations: options && options.result.webapioperations,
         version: options && options.result.version,
+        webApiReports: options && options.result.webapireports,
         tenantName: options && options.result.tenant_name,
         publicView: false,
       });
@@ -531,6 +543,7 @@ class App extends Component {
       webApiAggregation: options && options.result.webapiaggregation,
       webApiThresholds: options && options.result.webapithresholds,
       webApiOperations: options && options.result.webapioperations,
+      webApiReports: options && options.result.webapireports,
       tenantName: options && options.result.tenant_name,
       publicView: true,
     })
@@ -906,6 +919,7 @@ class App extends Component {
                     webApiAggregation={this.state.webApiAggregation}
                     webApiThresholds={this.state.webApiThresholds}
                     webApiOperations={this.state.webApiOperations}
+                    webApiReports={this.state.webApiReports}
                     token={this.state.token}
                     tenantName={this.state.tenantName}
                     isSuperUser={userDetails.is_superuser}
