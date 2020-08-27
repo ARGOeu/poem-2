@@ -48,6 +48,7 @@ try:
     WEBAPI_AGGREGATION = config.get('WEBAPI', 'AggregationProfile')
     WEBAPI_THRESHOLDS = config.get('WEBAPI', 'ThresholdsProfile')
     WEBAPI_OPERATIONS = config.get('WEBAPI', 'OperationsProfile')
+    WEBAPI_REPORTS = config.get('WEBAPI', 'Reports')
 
 
 except NoSectionError as e:
