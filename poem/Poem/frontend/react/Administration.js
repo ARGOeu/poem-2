@@ -23,13 +23,11 @@ export const TenantAdministration = (props) =>
     <Card className='mb-2'>
       <CustomCardHeader title='Poem'/>
       <CardBody>
-        {
-          //<Row className="p-1 align-items-center">
-            //<Icon i="reports"/> <Link className='pl-1' to={'/ui/reports'}>Reports</Link>
-          //</Row>
-        }
         <Row className="p-1 align-items-center">
           <Icon i="metrics"/> <Link className='pl-1' to={'/ui/metrics'}>Metrics</Link>
+        </Row>
+        <Row className="p-1 align-items-center">
+          <Icon i="reports"/> <Link className='pl-1' to={'/ui/reports'}>Reports</Link>
         </Row>
         <Row className="p-1 align-items-center">
           <Icon i="metricprofiles"/> <Link className='pl-1' to={'/ui/metricprofiles'}>Metric profiles</Link>
