@@ -64,9 +64,10 @@ import ReactDiffViewer from 'react-diff-viewer';
 import Autosuggest from 'react-autosuggest';
 
 
-var list_pages = ['administration', 'probes',
-                  'metrics', 'metricprofiles', 'aggregationprofiles',
-                  'thresholdsprofiles', 'operationsprofiles'];
+var list_pages = [
+  'administration', 'probes', 'metrics', 'reports', 'metricprofiles',
+  'aggregationprofiles', 'thresholdsprofiles', 'operationsprofiles'
+];
 var admin_list_pages = ['administration', 'tenants', 'yumrepos', 'packages',
                         'probes', 'metrictemplates'];
 
