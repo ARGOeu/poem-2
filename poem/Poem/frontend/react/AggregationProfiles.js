@@ -15,7 +15,7 @@ import {
 } from './UIElements';
 import Autosuggest from 'react-autosuggest';
 import ReactTable from 'react-table-6';
-import 'react-table/react-table.css';
+import 'react-table-6/react-table.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Formik, Field, FieldArray, Form } from 'formik';
 import { faPlus, faTimes, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
