@@ -23,6 +23,7 @@ MetricProfile = https://api.devel.argo.grnet.gr/api/v2/metric_profiles
 AggregationProfile = https://api.devel.argo.grnet.gr/api/v2/aggregation_profiles
 ThresholdsProfile = https://api.devel.argo.grnet.gr/api/v2/thresholds_profiles
 OperationsProfile = https://api.devel.argo.grnet.gr/api/v2/operations_profiles
+Reports = https://api.devel.argo.grnet.gr/api/v2/reports
 
 [GENERAL_ALL]
 PublicPage = tenant.com
