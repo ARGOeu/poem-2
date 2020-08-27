@@ -26,7 +26,7 @@ import {
   InputGroupAddon } from 'reactstrap';
 import { Formik, Form, Field } from 'formik';
 import * as Yup from 'yup';
-import { useQuery } from 'react-query';
+import { useQuery, queryCache } from 'react-query';
 
 
 const ProbeSchema = Yup.object().shape({
@@ -468,31 +468,58 @@ export const ProbeComponent = (props) => {
   const history = props.history;
   const publicView = props.publicView;
   const backend = new Backend();
+  const querykey = `probe_${addview ? `addview` : `${name}_${cloneview ? 'cloneview' : `${publicView ? 'publicview' : 'changeview'}`}`}`;
 
   const apiListPackages = `/api/v2/internal/${publicView ? 'public_' : ''}packages`;
   const apiProbeName = `/api/v2/internal/${publicView ? 'public_' : ''}probes`;
   const apiMetricsForProbes = `/api/v2/internal/${publicView ? 'public_' : ''}metricsforprobes`;
 
-  const [probe, setProbe] = useState({
-    'id': '',
-    'name': '',
-    'version': '',
-    'package': '',
-    'repository': '',
-    'docurl': '',
-    'description': '',
-    'comment': ''
-  });
-  const [isTenantSchema, setIsTenantSchema] = useState(null);
-  const [metricTemplateList, setMetricTemplateList] = useState([]);
-  const [listPackages, setListPackages] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [areYouSureModal, setAreYouSureModal] = useState(false);
   const [modalFlag, setModalFlag] = useState(undefined);
   const [modalTitle, setModalTitle] = useState(undefined);
   const [modalMsg, setModalMsg] = useState(undefined);
   const [formValues, setFormValues] = useState(undefined);
-  const [error, setError] = useState(null);
+
+  const { data: probe, error: probeError, isLoading: probeLoading } = useQuery(
+    `${querykey}_probe`, async () => {
+      let prb = {
+        'id': '',
+        'name': '',
+        'version': '',
+        'package': '',
+        'repository': '',
+        'docurl': '',
+        'description': '',
+        'comment': ''
+      };
+      if (!addview)
+        prb = await backend.fetchData(`${apiProbeName}/${name}`);
+      return prb;
+    }
+  );
+
+  const { data: isTenantSchema, isLoading: isTenantSchemaLoading } = useQuery(
+    `${querykey}_schema`, async () => {
+      let schema = await backend.isTenantSchema();
+      return schema;
+    }
+  );
+
+  const { data: metricTemplateList, error: metricTemplateListError, isLoading: metricTemplateListLoading } = useQuery(
+    `${querykey}_metrictemplates`, async () => {
+      let metrics = await backend.fetchData(`${apiMetricsForProbes}/${probe.name}(${probe.version})`);
+      return metrics; },
+    { enabled: probe }
+  );
+
+  const { data: listPackages, error: listPackagesError, isLoading: listPackagesLoading } = useQuery(
+    `${querykey}_packages`, async () => {
+      let pkgs = await backend.fetchData(apiListPackages);
+      let list_packages = [];
+      pkgs.forEach(pkg => list_packages.push(`${pkg.name} (${pkg.version})`));
+      return list_packages;
+    }
+  );
 
   function toggleAreYouSure() {
     setAreYouSureModal(!areYouSureModal);
@@ -617,44 +644,27 @@ export const ProbeComponent = (props) => {
       if (err instanceof TypeError)
         selectedProbe['version'] = '';
     };
-    setProbe(selectedProbe);
+    queryCache.setQueryData(`${querykey}_probe`, () => selectedProbe);
   };
 
-  useEffect(() => {
-    setLoading(true);
-
-    async function fetchProbe() {
-      try {
-        let schema = await backend.isTenantSchema();
-        let pkgs = await backend.fetchData(apiListPackages);
-        let list_packages = [];
-        pkgs.forEach(e => list_packages.push(`${e.name} (${e.version})`));
-        setListPackages(list_packages);
-        setIsTenantSchema(schema);
-        if (!addview) {
-          let prb = await backend.fetchData(`${apiProbeName}/${name}`);
-          let metrics = await backend.fetchData(`${apiMetricsForProbes}/${prb.name}(${prb.version})`);
-          setProbe(prb);
-          setMetricTemplateList(metrics);
-        };
-      } catch(err) {
-        setError(err);
-      };
-
-      setLoading(false);
-    };
-
-    fetchProbe();
-  }, []);
-
-  if (loading)
+  if (probeLoading || isTenantSchemaLoading || metricTemplateListLoading || listPackagesLoading)
     return(<LoadingAnim/>)
 
-  else if (error)
-    return (<ErrorComponent error={error}/>);
+  else if (probeError)
+    return (<ErrorComponent error={probeError.message}/>);
 
-  else if (!loading) {
+  else if (metricTemplateListError)
+    return (<ErrorComponent error={metricTemplateListError.message}/>);
+
+  else if (listPackagesError)
+    return (<ErrorComponent error={listPackagesError}/>);
+
+  else {
     if (!isTenantSchema) {
+      let probePackage = '';
+      if (!addview)
+        probePackage = probe.package;
+
       return (
         <React.Fragment>
           <ModalAreYouSure
@@ -677,7 +687,7 @@ export const ProbeComponent = (props) => {
                 id: probe.id,
                 name: probe.name,
                 version: probe.version,
-                package: probe.package,
+                package: probePackage,
                 repository: probe.repository,
                 docurl: probe.docurl,
                 description: probe.description,
