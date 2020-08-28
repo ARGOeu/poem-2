@@ -344,6 +344,9 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, w
         {...props}
         webapitoken={token}
         webapireports={webApiReports}
+        webapimetric={webApiMetric}
+        webapiaggregation={webApiAggregation}
+        webapioperations={webApiOperations}
       />}
     />
     <Route component={NotFound} />
