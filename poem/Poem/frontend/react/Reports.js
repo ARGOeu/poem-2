@@ -269,31 +269,26 @@ export const ReportsComponent = (props) => {
                   </Col>
                 </Row>
               </FormGroup>
-              <ParagraphTitle title='profiles' className='mt-3'/>
               <FormGroup>
+                <ParagraphTitle title='profiles'/>
                 <Row className='mt-2'>
-                  <Col md={6}>
-                    <InputGroup>
-                      <InputGroupAddon addonType='prepend'>Metric profile</InputGroupAddon>
-                      <Field
-                        id='metricProfile'
-                        component='select'
-                        className='form-control custom-select'
-                        name='metricProfile'
-                      >
-                        {
-                          listMetricProfiles.map((name, i) =>
-                            <option key={i} value={name}>{name}</option>
-                          )
-                        }
-                      </Field>
-                    </InputGroup>
+                  <Col md={4}>
+                    <Label to='metricProfile'>Metric profile</Label>
+                    <Field
+                      id='metricProfile'
+                      component='select'
+                      className='form-control custom-select'
+                      name='metricProfile'
+                    >
+                      {
+                        listMetricProfiles.map((name, i) =>
+                          <option key={i} value={name}>{name}</option>
+                        )
+                      }
+                    </Field>
                   </Col>
-                </Row>
-                <Row className='mt-2'>
-                  <Col md={6}>
-                    <InputGroup>
-                      <InputGroupAddon addonType='prepend'>Aggregation profile</InputGroupAddon>
+                  <Col md={4}>
+                      <Label to='aggregationProfile'>Aggregation profile</Label>
                       <Field
                         component='select'
                         id='aggregationProfile'
@@ -306,26 +301,21 @@ export const ReportsComponent = (props) => {
                           )
                         }
                       </Field>
-                    </InputGroup>
                   </Col>
-                </Row>
-                <Row className='mt-2'>
-                  <Col md={6}>
-                    <InputGroup>
-                      <InputGroupAddon addonType='prepend'>Operations profile</InputGroupAddon>
-                      <Field
-                        component='select'
-                        id='operationsProfile'
-                        className='form-control custom-select'
-                        name='operationsProfile'
-                      >
-                        {
-                          listOperationsProfiles.map((name, i) =>
-                            <option key={i} value={name}>{name}</option>
-                          )
-                        }
-                      </Field>
-                    </InputGroup>
+                  <Col md={4}>
+                    <Label to='operationsProfile'>Operations profile</Label>
+                    <Field
+                      component='select'
+                      id='operationsProfile'
+                      className='form-control custom-select'
+                      name='operationsProfile'
+                    >
+                      {
+                        listOperationsProfiles.map((name, i) =>
+                          <option key={i} value={name}>{name}</option>
+                        )
+                      }
+                    </Field>
                   </Col>
                 </Row>
               </FormGroup>
