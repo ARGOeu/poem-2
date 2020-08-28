@@ -7,7 +7,17 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
 import ReactTable from 'react-table';
 import { Formik, Field } from 'formik';
-import { Form, FormGroup, Row, Col, InputGroup, InputGroupAddon, FormText, Label } from 'reactstrap';
+import {
+  Form,
+  FormGroup,
+  Row,
+  Col,
+  InputGroup,
+  InputGroupAddon,
+  FormText,
+  Label,
+  Table
+} from 'reactstrap';
 
 
 export const ReportsList = (props) => {
@@ -219,7 +229,12 @@ export const ReportsComponent = (props) => {
             description: report.info.description,
             metricProfile: metricProfile,
             aggregationProfile: aggregationProfile,
-            operationsProfile: operationsProfile
+            operationsProfile: operationsProfile,
+            availabilityThreshold: report.thresholds.availability,
+            reliabilityThreshold: report.thresholds.reliability,
+            uptimeThreshold: report.thresholds.uptime,
+            unknownThreshold: report.thresholds.unknown,
+            downtimeThreshold: report.thresholds.downtime
           }}
           render = {props => (
             <Form>
@@ -253,66 +268,133 @@ export const ReportsComponent = (props) => {
                     </FormText>
                   </Col>
                 </Row>
-                <ParagraphTitle title='profiles' className='mt-3'/>
-                <FormGroup>
-                  <Row className='mt-2'>
-                    <Col md={6}>
-                      <InputGroup>
-                        <InputGroupAddon addonType='prepend'>Metric profile</InputGroupAddon>
-                        <Field
-                          id='metricProfile'
-                          component='select'
-                          className='form-control custom-select'
-                          name='metricProfile'
-                        >
-                          {
-                            listMetricProfiles.map((name, i) =>
-                              <option key={i} value={name}>{name}</option>
-                            )
-                          }
-                        </Field>
-                      </InputGroup>
-                    </Col>
-                  </Row>
-                  <Row className='mt-2'>
-                    <Col md={6}>
-                      <InputGroup>
-                        <InputGroupAddon addonType='prepend'>Aggregation profile</InputGroupAddon>
-                        <Field
-                          component='select'
-                          id='aggregationProfile'
-                          className='form-control custom-select'
-                          name='aggregationProfile'
-                        >
-                          {
-                            listAggregationProfiles.map((name, i) =>
-                              <option key={i} value={name}>{name}</option>
-                            )
-                          }
-                        </Field>
-                      </InputGroup>
-                    </Col>
-                  </Row>
-                  <Row className='mt-2'>
-                    <Col md={6}>
-                      <InputGroup>
-                        <InputGroupAddon addonType='prepend'>Operations profile</InputGroupAddon>
-                        <Field
-                          component='select'
-                          id='operationsProfile'
-                          className='form-control custom-select'
-                          name='operationsProfile'
-                        >
-                          {
-                            listOperationsProfiles.map((name, i) =>
-                              <option key={i} value={name}>{name}</option>
-                            )
-                          }
-                        </Field>
-                      </InputGroup>
-                    </Col>
-                  </Row>
-                </FormGroup>
+              </FormGroup>
+              <ParagraphTitle title='profiles' className='mt-3'/>
+              <FormGroup>
+                <Row className='mt-2'>
+                  <Col md={6}>
+                    <InputGroup>
+                      <InputGroupAddon addonType='prepend'>Metric profile</InputGroupAddon>
+                      <Field
+                        id='metricProfile'
+                        component='select'
+                        className='form-control custom-select'
+                        name='metricProfile'
+                      >
+                        {
+                          listMetricProfiles.map((name, i) =>
+                            <option key={i} value={name}>{name}</option>
+                          )
+                        }
+                      </Field>
+                    </InputGroup>
+                  </Col>
+                </Row>
+                <Row className='mt-2'>
+                  <Col md={6}>
+                    <InputGroup>
+                      <InputGroupAddon addonType='prepend'>Aggregation profile</InputGroupAddon>
+                      <Field
+                        component='select'
+                        id='aggregationProfile'
+                        className='form-control custom-select'
+                        name='aggregationProfile'
+                      >
+                        {
+                          listAggregationProfiles.map((name, i) =>
+                            <option key={i} value={name}>{name}</option>
+                          )
+                        }
+                      </Field>
+                    </InputGroup>
+                  </Col>
+                </Row>
+                <Row className='mt-2'>
+                  <Col md={6}>
+                    <InputGroup>
+                      <InputGroupAddon addonType='prepend'>Operations profile</InputGroupAddon>
+                      <Field
+                        component='select'
+                        id='operationsProfile'
+                        className='form-control custom-select'
+                        name='operationsProfile'
+                      >
+                        {
+                          listOperationsProfiles.map((name, i) =>
+                            <option key={i} value={name}>{name}</option>
+                          )
+                        }
+                      </Field>
+                    </InputGroup>
+                  </Col>
+                </Row>
+              </FormGroup>
+              <ParagraphTitle title='Thresholds'/>
+              <FormGroup>
+                <Row>
+                  <Col md={6}>
+                    <Table bordered size='sm'>
+                      <thead>
+                        <tr>
+                          <th style={{backgroundColor: '#ececec'}}>Threshold</th>
+                          <th style={{backgroundColor: '#ececec'}}>Value</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td>availability</td>
+                          <td>
+                            <Field
+                              id='availabilityThreshold'
+                              name='availabilityThreshold'
+                              className='form-control'
+                            />
+                          </td>
+                        </tr>
+                        <tr>
+                          <td>reliability</td>
+                          <td>
+                            <Field
+                              id='reliabilityThreshold'
+                              name='reliabilityThreshold'
+                              className='form-control'
+                            />
+                          </td>
+                        </tr>
+                        <tr>
+                          <td>uptime</td>
+                          <td>
+                            <Field
+                              id='uptimeThreshold'
+                              name='uptimeThreshold'
+                              className='form-control'
+                            />
+                          </td>
+                        </tr>
+                        <tr>
+                          <td>unknown</td>
+                          <td>
+                            <Field
+                              id='unknownThreshold'
+                              name='unknownThreshold'
+                              className='form-control'
+                            />
+                          </td>
+                        </tr>
+                        <tr>
+                          <td>downtime</td>
+                          <td>
+                            <Field
+                              id='downtimeThreshold'
+                              name='downtimeThreshold'
+                              className='form-control'
+                            />
+                          </td>
+                        </tr>
+                      </tbody>
+                    </Table>
+                  </Col>
+                </Row>
               </FormGroup>
             </Form>
           )}
