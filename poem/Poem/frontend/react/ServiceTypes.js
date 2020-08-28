@@ -16,12 +16,12 @@ function Table({ columns, data }) {
 
   // Render the UI for your table
   return (
-    <table className="table table-bordered table-hover">
+    <table className="table table-bordered table-sm table-hover">
       <thead className="table-active align-middle text-center">
-        {headerGroups.map(headerGroup => (
-          <tr>
-            {headerGroup.headers.map(column => (
-              <th>{column.render('Header')}</th>
+        {headerGroups.map((headerGroup, thi) => (
+          <tr key={thi}>
+            {headerGroup.headers.map((column, tri) => (
+              <th key={tri}>{column.render('Header')}</th>
             ))}
           </tr>
         ))}
@@ -30,12 +30,12 @@ function Table({ columns, data }) {
         {rows.map((row, row_index) => {
           prepareRow(row)
           return (
-            <tr>
+            <tr key={row_index}>
               {row.cells.map((cell, cell_index) => {
                 if (cell_index === 0)
-                  return <td className="align-middle text-center table-light">{row_index + 1}</td>
+                  return <td key={cell_index} className="align-middle text-center table-light">{row_index + 1}</td>
                 else
-                  return <td className="align-middle table-light">{cell.render('Cell')}</td>
+                  return <td key={cell_index} className="align-middle table-light">{cell.render('Cell')}</td>
               })}
             </tr>
           )
@@ -55,6 +55,7 @@ export const ServiceTypesList = (props) => {
   useEffect(() => {
     try {
       const fetchData = async () => {
+        setLoading(true);
         let json = await backend.fetchData('/api/v2/internal/servicetypesdesc');
         setServiceTypesDescriptions(json);
         setLoading(false);
