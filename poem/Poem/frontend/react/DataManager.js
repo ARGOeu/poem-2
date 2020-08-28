@@ -182,11 +182,11 @@ export class WebApi {
     this.reports = reportsConfigurations;
   }
 
-  async fetchMetricProfiles() {
+  async fetchProfiles(url) {
     let err_msg = '';
     try {
       let response = await fetch(
-        this.metricprofiles,
+        url,
         {
           headers: {
             "Accept": "application/json",
@@ -200,76 +200,32 @@ export class WebApi {
       } else {
         try {
           let json = await response.json();
-          err_msg = `${response.status} ${response.statusText}; in fetch ${this.metricprofiles}; ${json.status.details}`;
+          err_msg = `${response.status} ${response.statusText}; in fetch ${url}; ${json.status.details}`;
         } catch(err) {
-          err_msg = `${response.status} ${response.statusText}; in fetch ${this.metricprofiles}`;
+          err_msg = `${response.status} ${response.statusText}; in fetch ${url}`;
         };
       };
     } catch(err) {
-      err_msg = `${err}; in fetch ${this.metricprofiles}`;
+      err_msg = `${err}; in fetch ${url}`;
     };
     if (err_msg)
       throw Error(err_msg);
-  }
+  };
+
+  async fetchMetricProfiles() {
+    return this.fetchProfiles(this.metricprofiles);
+  };
+
+  async fetchAggregationProfiles() {
+    return this.fetchProfiles(this.aggregationprofiles);
+  };
 
   async fetchOperationsProfiles() {
-    let err_msg = '';
-    try {
-      let response = await fetch(
-        this.operationsprofiles,
-        {
-          headers: {
-            "Accept": "application/json",
-            "x-api-key": this.token
-          }
-        }
-      );
-      if (response.ok) {
-        let json = await response.json();
-        return json['data'];
-      } else {
-        try {
-          let json = await response.json();
-          err_msg = `${response.status} ${response.statusText}; in fetch ${this.operationsprofiles}; ${json.status.details}`;
-        } catch(err) {
-          err_msg = `${response.status} ${response.statusText}; in fetch ${this.operationsprofiles}`;
-        };
-      };
-    } catch(err) {
-      err_msg = `${err}; in fetch ${this.operationsprofiles}`;
-    };
-    if (err_msg)
-      throw Error(err_msg);
-  }
+    return this.fetchProfiles(this.operationsprofiles);
+  };
 
   async fetchReports() {
-    let err_msg = '';
-    try {
-      let response = await fetch(
-        this.reports,
-        {
-          headers: {
-            "Accept": "application/json",
-            "x-api-key": this.token
-          }
-        }
-      );
-      if (response.ok) {
-        let json = await response.json();
-        return json['data'];
-      } else {
-        try {
-          let json = await response.json();
-          err_msg = `${response.status} ${response.statusText}; in fetch ${this.reportsConfigurations}; ${json.status.details}`;
-        } catch(err) {
-          err_msg = `${response.status} ${response.statusText}; in fetch ${this.reportsConfigurations}`;
-        };
-      };
-    } catch(err) {
-      err_msg = `${err}; in fetch ${this.reportsConfigurations}`;
-    };
-    if (err_msg)
-      throw Error(err_msg);
+    return this.fetchProfiles(this.reports);
   };
 
   fetchMetricProfile(id) {
