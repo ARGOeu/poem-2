@@ -15,8 +15,7 @@ import {
   InputGroup,
   InputGroupAddon,
   FormText,
-  Label,
-  Table
+  Label
 } from 'reactstrap';
 
 
@@ -269,7 +268,7 @@ export const ReportsComponent = (props) => {
                   </Col>
                 </Row>
               </FormGroup>
-              <FormGroup>
+              <FormGroup className='mt-4'>
                 <ParagraphTitle title='profiles'/>
                 <Row className='mt-2'>
                   <Col md={4}>
@@ -319,70 +318,48 @@ export const ReportsComponent = (props) => {
                   </Col>
                 </Row>
               </FormGroup>
-              <ParagraphTitle title='Thresholds'/>
-              <FormGroup>
+              <FormGroup className='mt-4'>
+                <ParagraphTitle title='Thresholds'/>
                 <Row>
-                  <Col md={6}>
-                    <Table bordered size='sm'>
-                      <thead>
-                        <tr>
-                          <th style={{backgroundColor: '#ececec'}}>Threshold</th>
-                          <th style={{backgroundColor: '#ececec'}}>Value</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr>
-                          <td>availability</td>
-                          <td>
-                            <Field
-                              id='availabilityThreshold'
-                              name='availabilityThreshold'
-                              className='form-control'
-                            />
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>reliability</td>
-                          <td>
-                            <Field
-                              id='reliabilityThreshold'
-                              name='reliabilityThreshold'
-                              className='form-control'
-                            />
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>uptime</td>
-                          <td>
-                            <Field
-                              id='uptimeThreshold'
-                              name='uptimeThreshold'
-                              className='form-control'
-                            />
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>unknown</td>
-                          <td>
-                            <Field
-                              id='unknownThreshold'
-                              name='unknownThreshold'
-                              className='form-control'
-                            />
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>downtime</td>
-                          <td>
-                            <Field
-                              id='downtimeThreshold'
-                              name='downtimeThreshold'
-                              className='form-control'
-                            />
-                          </td>
-                        </tr>
-                      </tbody>
-                    </Table>
+                  <Col md={2} className='mr-4'>
+                    <Label to='availabilityThreshold'>Availability</Label>
+                    <Field
+                      id='availabilityThreshold'
+                      name='availabilityThreshold'
+                      className='form-control'
+                    />
+                  </Col>
+                  <Col md={2} className='mr-4'>
+                    <Label to='reliabilityThreshold'>Reliability</Label>
+                    <Field
+                      id='reliabilityThreshold'
+                      name='reliabilityThreshold'
+                      className='form-control'
+                    />
+                  </Col>
+                  <Col md={2} className='mr-4'>
+                    <Label to='uptimeThreshold'>Uptime</Label>
+                    <Field
+                      id='uptimeThreshold'
+                      name='uptimeThreshold'
+                      className='form-control'
+                    />
+                  </Col>
+                  <Col md={2} className='mr-4'>
+                    <Label to='unknownThreshold'>Unknown</Label>
+                    <Field
+                      id='unknownThreshold'
+                      name='unknownThreshold'
+                      className='form-control'
+                    />
+                  </Col>
+                  <Col md={2} className='mr-4'>
+                    <Label to='downtimeThreshold'>Downtime</Label>
+                    <Field
+                      id='downtimeThreshold'
+                      name='downtimeThreshold'
+                      className='form-control'
+                    />
                   </Col>
                 </Row>
               </FormGroup>
