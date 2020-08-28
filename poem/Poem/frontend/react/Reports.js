@@ -1,7 +1,13 @@
 import React, { useState } from 'react';
 import { WebApi } from './DataManager';
 import { useQuery } from 'react-query';
-import { LoadingAnim, ErrorComponent, BaseArgoView, ParagraphTitle } from './UIElements';
+import {
+  LoadingAnim,
+  ErrorComponent,
+  BaseArgoView,
+  ParagraphTitle,
+  Checkbox
+ } from './UIElements';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
@@ -233,12 +239,13 @@ export const ReportsComponent = (props) => {
             reliabilityThreshold: report.thresholds.reliability,
             uptimeThreshold: report.thresholds.uptime,
             unknownThreshold: report.thresholds.unknown,
-            downtimeThreshold: report.thresholds.downtime
+            downtimeThreshold: report.thresholds.downtime,
+            disabled: report.disabled
           }}
           render = {props => (
             <Form>
               <FormGroup>
-                <Row>
+                <Row className='align-items-center'>
                   <Col md={6}>
                     <InputGroup>
                       <InputGroupAddon addonType='prepend'>Name</InputGroupAddon>
@@ -250,6 +257,18 @@ export const ReportsComponent = (props) => {
                     </InputGroup>
                     <FormText color='muted'>
                       Report name
+                    </FormText>
+                  </Col>
+                  <Col md={2}>
+                    <Field
+                      component={Checkbox}
+                      name='disabled'
+                      className='form-control'
+                      id='checkbox'
+                      label='Disabled'
+                    />
+                    <FormText color='muted'>
+                      Mark report as disabled.
                     </FormText>
                   </Col>
                 </Row>
