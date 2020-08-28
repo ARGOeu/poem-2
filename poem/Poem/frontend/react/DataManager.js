@@ -286,6 +286,16 @@ export class WebApi {
     return profile;
   }
 
+  async fetchReport(name) {
+    const reports = await this.fetchReports();
+    let report = {};
+    reports.forEach(r => {
+      if (r.info.name === name)
+        report = r;
+    });
+    return report;
+  };
+
   fetchAggregationProfile(id) {
     return this.fetchProfile(`${this.aggregationprofiles}/${id}`);
   }
