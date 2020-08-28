@@ -291,7 +291,7 @@ export const ReportsComponent = (props) => {
                 <ParagraphTitle title='profiles'/>
                 <Row className='mt-2'>
                   <Col md={4}>
-                    <Label to='metricProfile'>Metric profile</Label>
+                    <Label to='metricProfile'>Metric profile:</Label>
                     <Field
                       id='metricProfile'
                       component='select'
@@ -306,7 +306,7 @@ export const ReportsComponent = (props) => {
                     </Field>
                   </Col>
                   <Col md={4}>
-                      <Label to='aggregationProfile'>Aggregation profile</Label>
+                      <Label to='aggregationProfile'>Aggregation profile:</Label>
                       <Field
                         component='select'
                         id='aggregationProfile'
@@ -321,7 +321,7 @@ export const ReportsComponent = (props) => {
                       </Field>
                   </Col>
                   <Col md={4}>
-                    <Label to='operationsProfile'>Operations profile</Label>
+                    <Label to='operationsProfile'>Operations profile:</Label>
                     <Field
                       component='select'
                       id='operationsProfile'
@@ -341,7 +341,7 @@ export const ReportsComponent = (props) => {
                 <ParagraphTitle title='Thresholds'/>
                 <Row>
                   <Col md={2} className='mr-4'>
-                    <Label to='availabilityThreshold'>Availability</Label>
+                    <Label to='availabilityThreshold'>Availability:</Label>
                     <Field
                       id='availabilityThreshold'
                       name='availabilityThreshold'
@@ -349,7 +349,7 @@ export const ReportsComponent = (props) => {
                     />
                   </Col>
                   <Col md={2} className='mr-4'>
-                    <Label to='reliabilityThreshold'>Reliability</Label>
+                    <Label to='reliabilityThreshold'>Reliability:</Label>
                     <Field
                       id='reliabilityThreshold'
                       name='reliabilityThreshold'
@@ -357,7 +357,7 @@ export const ReportsComponent = (props) => {
                     />
                   </Col>
                   <Col md={2} className='mr-4'>
-                    <Label to='uptimeThreshold'>Uptime</Label>
+                    <Label to='uptimeThreshold'>Uptime:</Label>
                     <Field
                       id='uptimeThreshold'
                       name='uptimeThreshold'
@@ -365,7 +365,7 @@ export const ReportsComponent = (props) => {
                     />
                   </Col>
                   <Col md={2} className='mr-4'>
-                    <Label to='unknownThreshold'>Unknown</Label>
+                    <Label to='unknownThreshold'>Unknown:</Label>
                     <Field
                       id='unknownThreshold'
                       name='unknownThreshold'
@@ -373,7 +373,7 @@ export const ReportsComponent = (props) => {
                     />
                   </Col>
                   <Col md={2} className='mr-4'>
-                    <Label to='downtimeThreshold'>Downtime</Label>
+                    <Label to='downtimeThreshold'>Downtime:</Label>
                     <Field
                       id='downtimeThreshold'
                       name='downtimeThreshold'
