@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { WebApi } from './DataManager';
 import { useQuery } from 'react-query';
-import { LoadingAnim, ErrorComponent, BaseArgoView } from './UIElements';
+import { LoadingAnim, ErrorComponent, BaseArgoView, ParagraphTitle } from './UIElements';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
 import ReactTable from 'react-table';
+import { Formik, Field } from 'formik';
+import { Form, FormGroup, Row, Col, InputGroup, InputGroupAddon, FormText, Label } from 'reactstrap';
 
 
 export const ReportsList = (props) => {
@@ -124,4 +126,137 @@ export const ReportsList = (props) => {
       </BaseArgoView>
     )
   };
+};
+
+
+export const ReportsComponent = (props) => {
+  const name = props.match.params.name;
+  const location = props.location;
+
+  const webapi = new WebApi({
+    token: props.webapitoken,
+    reportsConfigurations: props.webapireports
+  });
+
+  const { data: report, error: error, isLoading: loading } = useQuery(
+    `report_${name}_changeview`, async () => {
+      let report = webapi.fetchReport(name);
+      return report;
+    }
+  );
+
+  if (loading)
+    return (<LoadingAnim/>);
+
+  else if (error)
+    return (<ErrorComponent error={error}/>);
+
+  else {
+    let metricProfile = '';
+    let aggregationProfile = '';
+    let operationsProfile = '';
+    report.profiles.forEach(p => {
+      if (p.type === 'metric')
+        metricProfile = p.name;
+
+      if (p.type === 'aggregation')
+        aggregationProfile = p.name;
+
+      if (p.type === 'operations')
+        operationsProfile = p.name;
+    })
+    return (
+      <BaseArgoView
+        resourcename='report'
+        location={location}
+        history={false}
+      >
+        <Formik
+          initialValues = {{
+            id: report.id,
+            disabled: report.disabled,
+            name: report.info.name,
+            description: report.info.description,
+            metricProfile: metricProfile,
+            aggregationProfile: aggregationProfile,
+            operationsProfile: operationsProfile
+          }}
+          render = {props => (
+            <Form>
+              <FormGroup>
+                <Row>
+                  <Col md={6}>
+                    <InputGroup>
+                      <InputGroupAddon addonType='prepend'>Name</InputGroupAddon>
+                      <Field
+                        type='text'
+                        name='name'
+                        className='form-control form-control-lg'
+                      />
+                    </InputGroup>
+                    <FormText color='muted'>
+                      Report name
+                    </FormText>
+                  </Col>
+                </Row>
+                <Row className='mt-3'>
+                  <Col md={10}>
+                    <Label for='description'>Description:</Label>
+                    <Field
+                      id='description'
+                      className='form-control'
+                      component='textarea'
+                      name='description'
+                    />
+                    <FormText color='muted'>
+                      Free text report description.
+                    </FormText>
+                  </Col>
+                </Row>
+                <ParagraphTitle title='profiles' className='mt-3'/>
+                <FormGroup>
+                  <Row className='mt-2'>
+                    <Col md={6}>
+                      <InputGroup>
+                        <InputGroupAddon addonType='prepend'>Metric profile</InputGroupAddon>
+                        <Field
+                          id='metricProfile'
+                          className='form-control'
+                          name='metricProfile'
+                        />
+                      </InputGroup>
+                    </Col>
+                  </Row>
+                  <Row className='mt-2'>
+                    <Col md={6}>
+                      <InputGroup>
+                        <InputGroupAddon addonType='prepend'>Aggregation profile</InputGroupAddon>
+                        <Field
+                          id='aggregationProfile'
+                          className='form-control'
+                          name='aggregationProfile'
+                        />
+                      </InputGroup>
+                    </Col>
+                  </Row>
+                  <Row className='mt-2'>
+                    <Col md={6}>
+                      <InputGroup>
+                        <InputGroupAddon addonType='prepend'>Operations profile</InputGroupAddon>
+                        <Field
+                          id='operationsProfile'
+                          className='form-control'
+                          name='operationsProfile'
+                        />
+                      </InputGroup>
+                    </Col>
+                  </Row>
+                </FormGroup>
+              </FormGroup>
+            </Form>
+          )}
+        />
+      </BaseArgoView>
+    )
+  }
 };
