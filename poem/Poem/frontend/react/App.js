@@ -32,8 +32,7 @@ import {
   AggregationProfileVersionCompare,
   AggregationProfileVersionDetails
 } from './AggregationProfiles';
-import Reports from './Reports';
-import { ReportsList } from './Reports';
+import { ReportsList, ReportsComponent } from './Reports';
 import { UsersList, UserChange, SuperAdminUserChange, ChangePassword } from './Users';
 import {
   GroupList,
@@ -392,6 +391,14 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, w
           webapireports={webApiReports}
         />
       }
+    />
+    <Route
+      exact path="/ui/reports/:name"
+      render={props => <ReportsComponent
+        {...props}
+        webapitoken={token}
+        webapireports={webApiReports}
+      />}
     />
     <Route component={NotFound} />
   </Switch>
