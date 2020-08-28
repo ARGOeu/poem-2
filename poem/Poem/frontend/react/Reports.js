@@ -132,24 +132,64 @@ export const ReportsList = (props) => {
 export const ReportsComponent = (props) => {
   const name = props.match.params.name;
   const location = props.location;
+  const querykey = `report_${name}_changeview`;
 
   const webapi = new WebApi({
     token: props.webapitoken,
-    reportsConfigurations: props.webapireports
+    reportsConfigurations: props.webapireports,
+    metricProfiles: props.webapimetric,
+    aggregationProfiles: props.webapiaggregation,
+    operationsProfiles: props.webapioperations
   });
 
-  const { data: report, error: error, isLoading: loading } = useQuery(
-    `report_${name}_changeview`, async () => {
+  const { data: report, error: reportError, isLoading: reportLoading } = useQuery(
+    `${querykey}_report`, async () => {
       let report = webapi.fetchReport(name);
       return report;
     }
   );
 
-  if (loading)
+  const { data: listMetricProfiles, error: listMetricProfilesError, isLoading: listMetricProfilesLoading } = useQuery(
+    `${querykey}_metricprofiles`, async () => {
+      let mp = await webapi.fetchMetricProfiles();
+      let metricprofiles = [];
+      mp.forEach(p => metricprofiles.push(p.name));
+      return metricprofiles;
+    }
+  );
+
+  const { data: listAggregationProfiles, error: listAggregationProfilesError, isLoading: listAggregationProfilesLoading } = useQuery(
+    `${querykey}_aggregationprofiles`, async () => {
+      let ap = await webapi.fetchAggregationProfiles();
+      let aggregations = [];
+      ap.forEach(p => aggregations.push(p.name));
+      return aggregations;
+    }
+  );
+
+  const { data: listOperationsProfiles, error: listOperationsProfilesError, isLoading: listOperationsProfilesLoading } = useQuery(
+    `${querykey}_operationsprofiles`, async () => {
+      let op = await webapi.fetchOperationsProfiles();
+      let operations = [];
+      op.forEach(p => operations.push(p.name));
+      return operations;
+    }
+  );
+
+  if (reportLoading || listMetricProfilesLoading || listAggregationProfilesLoading || listOperationsProfilesLoading)
     return (<LoadingAnim/>);
 
-  else if (error)
-    return (<ErrorComponent error={error}/>);
+  else if (reportError)
+    return (<ErrorComponent error={reportError}/>);
+
+  else if (listMetricProfilesError)
+    return (<ErrorComponent error={listMetricProfilesError}/>);
+
+  else if (listAggregationProfilesError)
+    return (<ErrorComponent error={listAggregationProfilesError}/>);
+
+  else if (listOperationsProfilesError)
+    return (<ErrorComponent error={listOperationsProfilesError}/>);
 
   else {
     let metricProfile = '';
@@ -221,9 +261,16 @@ export const ReportsComponent = (props) => {
                         <InputGroupAddon addonType='prepend'>Metric profile</InputGroupAddon>
                         <Field
                           id='metricProfile'
-                          className='form-control'
+                          component='select'
+                          className='form-control custom-select'
                           name='metricProfile'
-                        />
+                        >
+                          {
+                            listMetricProfiles.map((name, i) =>
+                              <option key={i} value={name}>{name}</option>
+                            )
+                          }
+                        </Field>
                       </InputGroup>
                     </Col>
                   </Row>
@@ -232,10 +279,17 @@ export const ReportsComponent = (props) => {
                       <InputGroup>
                         <InputGroupAddon addonType='prepend'>Aggregation profile</InputGroupAddon>
                         <Field
+                          component='select'
                           id='aggregationProfile'
-                          className='form-control'
+                          className='form-control custom-select'
                           name='aggregationProfile'
-                        />
+                        >
+                          {
+                            listAggregationProfiles.map((name, i) =>
+                              <option key={i} value={name}>{name}</option>
+                            )
+                          }
+                        </Field>
                       </InputGroup>
                     </Col>
                   </Row>
@@ -244,10 +298,17 @@ export const ReportsComponent = (props) => {
                       <InputGroup>
                         <InputGroupAddon addonType='prepend'>Operations profile</InputGroupAddon>
                         <Field
+                          component='select'
                           id='operationsProfile'
-                          className='form-control'
+                          className='form-control custom-select'
                           name='operationsProfile'
-                        />
+                        >
+                          {
+                            listOperationsProfiles.map((name, i) =>
+                              <option key={i} value={name}>{name}</option>
+                            )
+                          }
+                        </Field>
                       </InputGroup>
                     </Col>
                   </Row>
