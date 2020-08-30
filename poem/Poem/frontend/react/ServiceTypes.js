@@ -92,7 +92,7 @@ function Table({ columns, data }) {
             <PaginationItem disabled={!canNextPage}>
               <PaginationLink last onClick={() => gotoPage(pageCount - 1)}/>
             </PaginationItem>
-            <PaginationItem>
+            <PaginationItem className="pl-2">
               <select
                 style={{width: '180px'}}
                 className="custom-select text-primary"
