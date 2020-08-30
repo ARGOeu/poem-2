@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Backend } from './DataManager';
 import { LoadingAnim, BaseArgoView, ErrorComponent } from './UIElements';
-import { useTable, usePagination } from 'react-table';
+import { useTable, usePagination, useFilters } from 'react-table';
 import {
   Pagination,
   PaginationItem,
@@ -9,9 +9,37 @@ import {
   Row,
   Col
 } from 'reactstrap';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faSearch } from '@fortawesome/free-solid-svg-icons';
+
+
+const DefaultColumnFilter = ({column: { filterValue, setFilter }}) => {
+  return (
+    <div className="input-group">
+      <input className="form-control"
+        type="text"
+        placeholder="Search"
+        value={filterValue || ''}
+        onChange={e => {setFilter(e.target.value || undefined)}}
+      />
+      <div className="input-group-append">
+        <span className="input-group-text" id="basic-addon">
+          <FontAwesomeIcon icon={faSearch}/>
+        </span>
+      </div>
+    </div>
+  )
+}
 
 
 function Table({ columns, data }) {
+  const defaultColumn = React.useMemo(
+    () => ({
+      Filter: DefaultColumnFilter,
+    }),
+    []
+  )
+
   // Use the state and functions returned from useTable to build your UI
   const {
     headerGroups,
@@ -30,8 +58,10 @@ function Table({ columns, data }) {
     {
       columns,
       data,
-      initialState: { pageIndex: 0, pageSize: 15 }
+      initialState: { pageIndex: 0, pageSize: 15 },
+      defaultColumn,
     },
+    useFilters,
     usePagination
   )
 
@@ -43,11 +73,29 @@ function Table({ columns, data }) {
           <table className="table table-bordered table-hover">
             <thead className="table-active align-middle text-center">
               {headerGroups.map((headerGroup, thi) => (
-                <tr key={thi}>
-                  {headerGroup.headers.map((column, tri) => (
-                    <th key={tri}>{column.render('Header')}</th>
-                  ))}
-                </tr>
+                <React.Fragment>
+                  <tr key={thi}>
+                    {headerGroup.headers.map((column, tri) => (
+                      <th key={tri}>
+                        {column.render('Header')}
+                      </th>
+                    ))}
+                  </tr>
+                  <tr className="p-0 m-0" key={thi}>
+                    {headerGroup.headers.map((column, tri) => {
+                      if (tri === 0) return(
+                        <th className="p-1 m-1 align-middle" key={tri}>
+                          <FontAwesomeIcon icon={faSearch}/>
+                        </th>
+                      )
+                      else return (
+                        <th className="p-1 m-1" key={tri}>
+                          {column.canFilter ? column.render('Filter') : null}
+                        </th>
+                      )
+                    })}
+                  </tr>
+                </React.Fragment>
               ))}
             </thead>
             <tbody>
@@ -114,6 +162,7 @@ function Table({ columns, data }) {
     </React.Fragment>
   )
 }
+
 
 export const ServiceTypesList = (props) => {
   const location = props.location;
