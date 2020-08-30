@@ -30,7 +30,7 @@ function Table({ columns, data }) {
     {
       columns,
       data,
-      initialState: { pageIndex: 0 }
+      initialState: { pageIndex: 0, pageSize: 15 }
     },
     usePagination
   )
@@ -71,11 +71,11 @@ function Table({ columns, data }) {
       <Row >
         <Col className="d-flex justify-content-center">
           <Pagination>
-            <PaginationItem>
-              <PaginationLink first onClick={() => gotoPage(0)} disabled={!canPreviousPage}/>
+            <PaginationItem disabled={!canPreviousPage}>
+              <PaginationLink first onClick={() => gotoPage(0)}/>
             </PaginationItem>
-            <PaginationItem>
-              <PaginationLink previous onClick={() => previousPage()} disabled={!canPreviousPage}/>
+            <PaginationItem disabled={!canPreviousPage}>
+              <PaginationLink previous onClick={() => previousPage()}/>
             </PaginationItem>
             {
               [...Array(pageCount)].map((e, i) =>
@@ -86,11 +86,11 @@ function Table({ columns, data }) {
                 </PaginationItem>
               )
             }
-            <PaginationItem>
-              <PaginationLink next onClick={() => nextPage()} disabled={!canNextPage}/>
+            <PaginationItem disabled={!canNextPage}>
+              <PaginationLink next onClick={() => nextPage()}/>
             </PaginationItem>
-            <PaginationItem>
-              <PaginationLink last onClick={() => gotoPage(pageCount - 1)} disabled={!canNextPage}/>
+            <PaginationItem disabled={!canNextPage}>
+              <PaginationLink last onClick={() => gotoPage(pageCount - 1)}/>
             </PaginationItem>
             <PaginationItem>
               <select
@@ -101,7 +101,7 @@ function Table({ columns, data }) {
                   setPageSize(Number(e.target.value))
                 }}
               >
-                {[10, 20, 30, 40, 50].map(pageSize => (
+                {[15, 30, 50, 100].map(pageSize => (
                   <option key={pageSize} value={pageSize}>
                     {pageSize} service types
                   </option>
