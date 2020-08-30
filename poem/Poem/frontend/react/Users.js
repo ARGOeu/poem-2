@@ -9,7 +9,8 @@ import {
   FancyErrorMessage,
   NotifyError,
   ModalAreYouSure,
-  ErrorComponent
+  ErrorComponent,
+  ParagraphTitle
 } from './UIElements';
 import ReactTable from 'react-table';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -149,7 +150,7 @@ const CommonUser = ({add, errors, values}) =>
         </FormGroup>
     }
     <FormGroup>
-      <h4 className="mt-2 p-1 pl-3 text-light text-uppercase rounded" style={{"backgroundColor": "#416090"}}>Personal info</h4>
+      <ParagraphTitle title='Personal info'/>
       <Row>
         <Col md={6}>
           <InputGroup>
@@ -226,7 +227,7 @@ const CommonUser = ({add, errors, values}) =>
       }
     </FormGroup>
     <FormGroup>
-      <h4 className="mt-2 p-1 pl-3 text-light text-uppercase rounded" style={{"backgroundColor": "#416090"}}>Permissions</h4>
+      <ParagraphTitle title='permissions'/>
       <Row>
         <Col md={6}>
           <Field
@@ -732,7 +733,7 @@ function UserChangeComponent(isTenantSchema=false) {
                       isTenantSchema &&
                         <>
                           <FormGroup>
-                            <h4 className="mt-2 p-1 pl-3 text-light text-uppercase rounded" style={{"backgroundColor": "#416090"}}>POEM user permissions</h4>
+                            <ParagraphTitle title='POEM user permissions'/>
                             <Row>
                               <Col md={6}>
                                 <Label for="groupsofmetrics" className="grouplabel">Groups of metrics</Label>
@@ -847,7 +848,7 @@ function UserChangeComponent(isTenantSchema=false) {
                             </Row>
                           </FormGroup>
                           <FormGroup>
-                            <h4 className="mt-2 p-1 pl-3 text-light text-uppercase rounded" style={{"backgroundColor": "#416090"}}>Additional information</h4>
+                            <ParagraphTitle title='Additional information'/>
                             <Row>
                               <Col md={12}>
                                 <InputGroup>

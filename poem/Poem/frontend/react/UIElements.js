@@ -1,4 +1,4 @@
-import React, { Component, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Cookies from 'universal-cookie';
 import {
   Alert,
@@ -10,7 +10,6 @@ import {
   Card,
   CardBody,
   CardHeader,
-  CardText,
   Col,
   Collapse,
   Container,
@@ -31,7 +30,6 @@ import {
   NavbarToggler,
   Row,
   Popover,
-  PopoverHeader,
   PopoverBody
 } from 'reactstrap';
 import {Link} from 'react-router-dom';
@@ -46,7 +44,6 @@ import {
   faSearch,
   faWrench,
   faFileAlt,
-  faSitemap,
   faCog,
   faServer,
   faCogs,
@@ -57,26 +54,28 @@ import {
   faExclamation,
   faSquare,
   faUser,
-  faBox} from '@fortawesome/free-solid-svg-icons';
+  faBox,
+  faIdBadge,
+  faTable} from '@fortawesome/free-solid-svg-icons';
 import { NotificationManager } from 'react-notifications';
 import { Field } from 'formik';
-import Autocomplete from 'react-autocomplete';
 import { Backend } from './DataManager';
 import ReactDiffViewer from 'react-diff-viewer';
+import Autosuggest from 'react-autosuggest';
 
 
-var list_pages = ['administration','services', 'probes',
+var list_pages = ['administration', 'probes',
                   'metrics', 'metricprofiles', 'aggregationprofiles',
-                  'thresholdsprofiles'];
-var admin_list_pages = ['administration', 'yumrepos', 'packages',
+                  'thresholdsprofiles', 'operationsprofiles'];
+var admin_list_pages = ['administration', 'tenants', 'yumrepos', 'packages',
                         'probes', 'metrictemplates'];
 
 var link_title = new Map();
 link_title.set('administration', 'Administration');
-link_title.set('services', 'Services');
 link_title.set('reports', 'Reports');
 link_title.set('probes', 'Probes');
 link_title.set('public_probes', 'Public probes');
+link_title.set('public_metrictemplates', 'Public metric templates');
 link_title.set('metrics', 'Metrics');
 link_title.set('public_metrics', 'Public metrics');
 link_title.set('metricprofiles', 'Metric profiles');
@@ -94,12 +93,14 @@ link_title.set('groupofthresholdsprofiles', 'Groups of thresholds profiles');
 link_title.set('public_thresholdsprofiles', 'Thresholds profiles');
 link_title.set('thresholdsprofiles', 'Thresholds profiles');
 link_title.set('packages', 'Packages');
+link_title.set('tenants', 'Tenants');
+link_title.set('operationsprofiles', 'Operations profiles');
+link_title.set('public_operationsprofiles', 'Operations profiles');
 
 export const Icon = props =>
 {
   let link_icon = new Map();
   link_icon.set('administration', faWrench);
-  link_icon.set('services', faSitemap);
   link_icon.set('serviceflavour', faHighlighter);
   link_icon.set('reports', faFileAlt);
   link_icon.set('probes', faServer);
@@ -112,6 +113,8 @@ export const Icon = props =>
   link_icon.set('thresholdsprofiles', faExclamation);
   link_icon.set('users', faUser);
   link_icon.set('packages', faBox);
+  link_icon.set('tenants', faIdBadge);
+  link_icon.set('operationsprofiles', faTable);
 
   if (props.i.startsWith('groupof'))
     return (
@@ -126,18 +129,19 @@ export const Icon = props =>
     return <FontAwesomeIcon icon={link_icon.get(props.i)} size={props.i === 'yumrepos' || props.i === 'metricprofiles' ? 'sm' : '1x'} fixedWidth/>
 }
 
-export const DropDown = ({field, data=[], prefix="", class_name="", isnew=false}) =>
+export const DropDown = ({field, data=[], prefix="", class_name="", isnew=false, errors=undefined}) =>
   <Field component="select"
     name={prefix ? `${prefix}.${field.name}` : field.name}
     required={true}
-    className={`form-control ${class_name} ${isnew ? 'border-success' : ''}`}
+    className={`form-control ${class_name} ${isnew ? 'border-success' : `${errors && errors[field.name] ? 'border-danger' : ''}`}`}
   >
     {
-      data.map((name, i) =>
+      data.map((name, i) => (
         i === 0 ?
-          <option key={i} hidden>{name}</option> :
+          <option key={i} value='' hidden color='text-muted'>{name}</option>
+        :
           <option key={i} value={name}>{name}</option>
-      )
+      ))
     }
   </Field>
 
@@ -199,24 +203,16 @@ export const CustomBreadcrumb = ({location, history, publicView=false}) =>
   let breadcrumb_elements = new Array()
   let two_level = new Object()
 
-  if (!publicView) {
-    breadcrumb_elements.push({'url': '/ui/home', 'title': 'Home'});
+  breadcrumb_elements.push({'url': `/ui/${publicView ? 'public_' : ''}home`, 'title': 'Home'});
+  if (!publicView)
     spliturl = location.pathname.split('/');
 
-    two_level['url'] = '/ui/' + spliturl[2];
-    two_level['title'] = link_title.get(spliturl[2]);
-    breadcrumb_elements.push(two_level);
-  }
-  else {
+  else
     spliturl = window.location.pathname.split('/');
-    two_level['url'] = '/ui/' + spliturl[2];
-    two_level['title'] = link_title.get(spliturl[2]);
 
-    breadcrumb_elements.push({
-      'url': two_level['url'],
-      'title': two_level['title']
-    });
-  }
+  two_level['url'] = '/ui/' + spliturl[2];
+  two_level['title'] = link_title.get(spliturl[2]);
+  breadcrumb_elements.push(two_level);
 
   if (spliturl.length > 3) {
     var three_level = new Object({'url': two_level['url'] + '/' + spliturl[3]});
@@ -567,12 +563,29 @@ export const NotifyOk = ({msg='', title='', callback=undefined}) => {
 }
 
 export const NotifyError = ({msg='', title=''}) => {
-  NotificationManager.error(msg, title);
+  msg = <div>
+    <p>{msg}</p>
+    <p>Click to dismiss.</p>
+  </div>
+  NotificationManager.error(msg=msg, title, 0, () => true);
 };
 
 
 export const NotifyWarn = ({msg='', title=''}) => {
-  NotificationManager.warning(msg, title);
+  msg = <div>
+    <p>{msg}</p>
+    <p>Click to dismiss.</p>
+  </div>
+  NotificationManager.warning(msg, title, 0, () => true);
+};
+
+
+export const NotifyInfo = ({msg='', title=''}) => {
+  msg = <div>
+    <p>{msg}</p>
+    <p>Click to dismiss.</p>
+  </div>
+  NotificationManager.info(msg, title, 0, () => true);
 };
 
 
@@ -645,19 +658,20 @@ export const BaseArgoView = ({resourcename='', location=undefined,
                     <h2 className='ml-3 mt-1 mb-4'>{`Select ${resourcename} for details`}</h2>
                 }
                 {
-                  addnew &&
-                    addperm ?
+                  (addnew && addperm) &&
                       <Link className="btn btn-secondary" to={location.pathname + "/add"} role="button">Add</Link>
-                    :
-                      <Button
-                        className='btn btn-secondary'
-                        onClick={() => NotifyError({
-                          title: 'Not allowed',
-                          msg: `You do not have permission to add ${resourcename}.`
-                        })}
-                      >
-                        Add
-                      </Button>
+                }
+                {
+                  (addnew && !addperm) &&
+                    <Button
+                      className='btn btn-secondary'
+                      onClick={() => NotifyError({
+                        title: 'Not allowed',
+                        msg: `You do not have permission to add ${resourcename}.`
+                      })}
+                    >
+                      Add
+                    </Button>
                 }
               </React.Fragment>
             :
@@ -666,7 +680,7 @@ export const BaseArgoView = ({resourcename='', location=undefined,
                   <h2 className="ml-3 mt-1 mb-4">{`Clone ${resourcename}`}</h2>
                 </React.Fragment>
               :
-                tenantview ?
+                (tenantview || publicview) ?
                   <React.Fragment>
                     <h2 className="ml-3 mt-1 mb-4">{resourcename}</h2>
                     {
@@ -736,56 +750,72 @@ export const FancyErrorMessage = (msg) => (
 )
 
 
-function matchItem(item, value) {
-  if (value)
-    return item.toLowerCase().indexOf(value.toLowerCase()) !== -1;
-}
+export const AutocompleteField = ({setFieldValue, lists=[], val='', icon, field, req, label, onselect_handler}) => {
+  const [inputValue, setInputValue] = useState(val);
+  const [suggestions, setSuggestions] = useState(lists);
 
+  const getSuggestions = value => {
+    return (
+      lists.filter(suggestion =>
+        suggestion.toLowerCase().includes(value.trim().toLowerCase())
+      )
+    );
+  };
 
-export const AutocompleteField = ({lists, onselect_handler, field, val, icon, setFieldValue, req, label, values}) => {
-  let classname = `form-control ${req && 'border-danger'}`;
+  const getSuggestionValue = suggestion => suggestion;
 
-  return(
-    <Autocomplete
-      inputProps={{className: classname}}
-      getItemValue={(item) => item}
-      items={lists}
-      value={val}
-      renderItem={(item, isHighlighted) =>
-        <div
-          key={lists.indexOf(item)}
-          className={`argo-autocomplete-entries ${isHighlighted ?
-            "argo-autocomplete-entries-highlighted"
-            : ""}`
-        }
-        >
-          {item ? <Icon i={icon}/> : ''} {item}
+  const renderSuggestion = (suggestion, {isHighlighted}) => (
+    <div
+      key={lists.indexOf(suggestion)}
+      className={`argo-autocomplete-entries ${isHighlighted ?
+        'argo-autocomplete-entries-highlighted' : ''}`}
+    >
+      {suggestion ? <Icon i={icon}/> : ''} {suggestion}
+    </div>
+  );
+
+  const renderInputComponent = inputProps => {
+    if (label)
+      return (
+        <div className='input-group mb-3'>
+          <div className='input-group-prepend'>
+            <span className='input-group-text' id='basic-addon1'>{label}</span>
+          </div>
+          <input {...inputProps} type='text'
+          className={`form-control ${req && 'border-danger'}`} aria-label='label'/>
         </div>
-      }
-      renderInput={(props) => {
-        if (label)
-          return (
-            <div className='input-group mb-3'>
-              <div className='input-group-prepend'>
-                <span className='input-group-text' id='basic-addon1'>{label}</span>
-              </div>
-              <input {...props} type='text' className={classname} aria-label='label'/>
-            </div>
-          );
-        else
-          return <input {...props}/>;
-      }}
-      onChange={(e) => {setFieldValue(field, e.target.value)}}
-      onSelect={(val) =>  {
-        setFieldValue(field, val)
-        onselect_handler(field, val);
-      }}
-      wrapperStyle={{}}
-      shouldItemRender={matchItem}
-      renderMenu={(items) =>
-        <div className='argo-autocomplete-menu' children={items}/>
-      }
-    />
+      );
+    else
+      return (<input {...inputProps} type='text' className='form-control'/>);
+  }
+
+  return (
+    <div>
+      <Autosuggest
+        suggestions={suggestions}
+        onSuggestionsClearRequested={() => setSuggestions([])}
+        onSuggestionsFetchRequested={({ value }) => {
+          setInputValue(value);
+          setSuggestions(getSuggestions(value));
+        }}
+        getSuggestionValue={getSuggestionValue}
+        renderSuggestion={renderSuggestion}
+        inputProps={{
+          value: inputValue,
+          onChange: (_, { newValue }) => {
+            setInputValue(newValue);
+            setFieldValue(field, newValue);
+            onselect_handler(field, newValue);
+          }
+        }}
+        renderInputComponent={renderInputComponent}
+        shouldRenderSuggestions={() => true}
+        theme={{
+          containerOpen: 'argo-autocomplete-menu',
+          suggestionsList: 'argo-autocomplete-list'
+        }}
+      />
+    </div>
   );
 };
 
@@ -806,181 +836,152 @@ export const DropdownFilterComponent = ({value, onChange, data}) => (
 )
 
 
-export function HistoryComponent(obj, tenantview=false) {
-  return class extends Component {
-    constructor(props) {
-      super(props);
+export const HistoryComponent = (props) => {
+  const name = props.match.params.name;
+  const history = props.history;
+  const publicView = props.publicView
+  const tenantView = props.tenantView;
+  const obj = props.object;
 
-      this.name = props.match.params.name;
-      this.history = props.history;
-      this.publicView = props.publicView
+  const [loading, setLoading] = useState(false);
+  const [listVersions, setListVersions] = useState(null);
+  const [compare1, setCompare1] = useState('');
+  const [compare2, setCompare2] = useState('');
+  const [error, setError] = useState(null);
 
-      this.state = {
-        loading: false,
-        list_versions: null,
-        compare1: '',
-        compare2: '',
-        error: null
-      };
+  var apiUrl = undefined;
+  if (['metric', 'metricprofile', 'aggregationprofile', 'thresholdsprofile'].includes(obj))
+    apiUrl = `/api/v2/internal/${publicView ? 'public_' : ''}tenantversion/`;
+  else
+    apiUrl = `/api/v2/internal/${publicView ? 'public_' : ''}version/`;
 
-      if (!this.publicView) {
-        if (['metric', 'metricprofile', 'aggregationprofile', 'thresholdsprofile'].includes(obj))
-          this.apiUrl = '/api/v2/internal/tenantversion/'
-        else
-          this.apiUrl = '/api/v2/internal/version/'
-      }
-      else {
-        if (['metric', 'metricprofile', 'aggregationprofile', 'thresholdsprofile'].includes(obj))
-          this.apiUrl = '/api/v2/internal/public_tenantversion/'
-        else
-          this.apiUrl = '/api/v2/internal/public_version/'
-      }
+  const compareUrl = `/ui/${tenantView ? 'administration/' : ''}${publicView ? 'public_' : ''}${obj}s/${name}/history`;
 
-      if (tenantview)
-        this.compareUrl = `/ui/administration/${obj}s/${this.name}/history`;
-      else {
-        if (this.publicView)
-          this.compareUrl = `/ui/public_${obj}s/${this.name}/history`;
-        else
-          this.compareUrl = `/ui/${obj}s/${this.name}/history`;
-      }
+  const backend = new Backend();
 
-      this.backend = new Backend();
-    }
+  useEffect(() => {
+    setLoading(true);
 
-    async componentDidMount() {
-      this.setState({loading: true});
-
+    async function fetchData() {
       try {
-        let json = await this.backend.fetchData(`${this.apiUrl}/${obj}/${this.name}`);
+        let json = await backend.fetchData(`${apiUrl}/${obj}/${name}`);
+          setListVersions(json);
         if (json.length > 1) {
-          this.setState({
-            list_versions: json,
-            loading: false,
-            compare1: json[0].version,
-            compare2: json[1].version
-          });
-        } else {
-          this.setState({
-            list_versions: json,
-            loading: false
-          });
+          setCompare1(json[0].version);
+          setCompare2(json[1].version);
         };
       } catch(err) {
-        this.setState({
-          error: err,
-          loading: false
-        });
+        setError(err);
       };
-    }
+      setLoading(false);
+    };
 
-    render() {
-      const { loading, list_versions, error } = this.state;
+    fetchData();
+  }, []);
 
-      if (loading)
-        return (<LoadingAnim />);
+  if (loading)
+    return (<LoadingAnim />);
 
-      else if (error)
-        return (<ErrorComponent error={error}/>);
+  else if (error)
+    return (<ErrorComponent error={error}/>);
 
-      else if (!loading && list_versions) {
-        return (
-          <BaseArgoView
-            resourcename='Version history'
-            infoview={true}>
-            <table className='table table-sm'>
-              <thead className='table-active'>
-                <tr>
-                  { list_versions.length === 1 ?
-                    <th scope='col'>Compare</th>
-                    :
-                    <th scope='col'>
-                      <Button
-                          color='info'
-                          onClick={() =>
-                            this.history.push(
-                              `${this.compareUrl}/compare/${this.state.compare1}/${this.state.compare2}`,
-                          )
-                          }
-                        >
-                          Compare
-                      </Button>
-                    </th>
-                    }
-                  <th scope='col'>Version</th>
-                  <th scope='col'>Date/time</th>
-                  <th scope='col'>User</th>
-                  <th scope='col'>Comment</th>
-                </tr>
-              </thead>
-              <tbody>
-                {
-                    list_versions.map((e, i) =>
-                      <tr key={i}>
-                        {
-                          list_versions.length === 1 ?
-                            <td>-</td>
-                          :
-                            i === 0 ?
-                              <td>
-                                <input
-                                type='radio'
-                                name='radio-1'
-                                value={e.version}
-                                defaultChecked={true}
-                                onChange={e => this.setState({compare1: e.target.value})}
-                              />
-                              </td>
-                            :
-                              <td>
-                                <input
-                                type='radio'
-                                name='radio-1'
-                                value={e.version}
-                                onChange={e => this.setState({compare1: e.target.value})}
-                              />
-                                {' '}
-                                <input
-                                type='radio'
-                                name='radio-2'
-                                value={e.version}
-                                defaultChecked={i===1}
-                                onChange={e => this.setState({compare2: e.target.value})}
-                              />
-                              </td>
-                        }
-                        {
+  else if (!loading && listVersions) {
+    return (
+      <BaseArgoView
+        resourcename='Version history'
+        infoview={true}>
+        <table className='table table-sm'>
+          <thead className='table-active'>
+            <tr>
+              { listVersions.length === 1 ?
+                <th scope='col'>Compare</th>
+                :
+                <th scope='col'>
+                  <Button
+                      color='info'
+                      onClick={() =>
+                        history.push(
+                          `${compareUrl}/compare/${compare1}/${compare2}`,
+                      )
+                      }
+                    >
+                      Compare
+                  </Button>
+                </th>
+                }
+              <th scope='col'>Version</th>
+              <th scope='col'>Date/time</th>
+              <th scope='col'>User</th>
+              <th scope='col'>Comment</th>
+            </tr>
+          </thead>
+          <tbody>
+            {
+                listVersions.map((e, i) =>
+                  <tr key={i}>
+                    {
+                      listVersions.length === 1 ?
+                        <td>-</td>
+                      :
+                        i === 0 ?
                           <td>
-                            {e.version ? <Link to={`${this.compareUrl}/${e.version}`}>{e.version}</Link> : ''}
+                            <input
+                            type='radio'
+                            name='radio-1'
+                            value={e.version}
+                            defaultChecked={true}
+                            onChange={e => setCompare1(e.target.value)}
+                          />
                           </td>
-                        }
-                        <td>
-                          {e.date_created ? e.date_created : ''}
-                        </td>
-                        <td>
-                          {e.user ? e.user : ''}
-                        </td>
-                        <td className='col-md-6'>
-                          {e.comment ? e.comment : ''}
-                        </td>
-                      </tr>
-                    )
-                  }
-              </tbody>
-            </table>
-          </BaseArgoView>
-        );
-      }
-      else
-        return null;
-    }
-  }
-}
+                        :
+                          <td>
+                            <input
+                            type='radio'
+                            name='radio-1'
+                            value={e.version}
+                            onChange={e => setCompare1(e.target.value)}
+                          />
+                            {' '}
+                            <input
+                            type='radio'
+                            name='radio-2'
+                            value={e.version}
+                            defaultChecked={i===1}
+                            onChange={e => setCompare2(e.target.value)}
+                          />
+                          </td>
+                    }
+                    {
+                      <td>
+                        {e.version ? <Link to={`${compareUrl}/${e.version}`}>{e.version}</Link> : ''}
+                      </td>
+                    }
+                    <td>
+                      {e.date_created ? e.date_created : ''}
+                    </td>
+                    <td>
+                      {e.user ? e.user : ''}
+                    </td>
+                    <td className='col-md-6'>
+                      {e.comment ? e.comment : ''}
+                    </td>
+                  </tr>
+                )
+              }
+          </tbody>
+        </table>
+      </BaseArgoView>
+    );
+  } else
+    return null;
+};
 
 
 export const DiffElement = ({title, item1, item2}) => {
-  item1 = item1.split('\r\n');
-  item2 = item2.split('\r\n');
+  if (!Array.isArray(item1) && !Array.isArray(item2)) {
+    item1 = item1.split('\r\n');
+    item2 = item2.split('\r\n');
+  };
 
   let n = Math.max(item1.length, item2.length);
 
@@ -1036,7 +1037,7 @@ export const ProfileMainInfo = ({errors, grouplist=undefined, description=undefi
           errors.name &&
             FancyErrorMessage(errors.name)
         }
-          <FormText color='muted'>
+          <FormText color='text-muted'>
             {`Name of ${profiletype} profile`}
           </FormText>
         </Col>
@@ -1076,7 +1077,7 @@ export const ProfileMainInfo = ({errors, grouplist=undefined, description=undefi
                 component='select'
                 className={`form-control custom-select ${errors.groupname && 'border-danger'}`}
               >
-                <option key={0} value='' hidden color='muted'>Select group</option>
+                <option key={0} value='' hidden color='text-muted'>Select group</option>
                 {
                   grouplist.map((group, i) =>
                     <option key={i + 1} value={group}>{group}</option>
@@ -1115,3 +1116,8 @@ export const ErrorComponent = ({error}) => {
     </React.Fragment>
   )
 }
+
+
+export const ParagraphTitle = ({title}) => (
+  <h4 className="mt-2 p-1 pl-3 text-uppercase rounded" style={{"backgroundColor": "#c4ccd4"}}>{title}</h4>
+)

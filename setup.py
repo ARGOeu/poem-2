@@ -1,6 +1,5 @@
 from setuptools import setup, find_packages
 import os
-import sys
 
 NAME = 'poem'
 
@@ -17,8 +16,8 @@ def get_files(install_prefix, directory):
 
 
 setup(name=NAME,
-      version='3.2.0',
-      description='Profiles, Probes and Metric Configuration Management (POEM) for ARGO Monitoring framework.',
+      version='3.3.1',
+      description='Reports, Profiles, Probes and Metric Configuration Management (POEM) for ARGO Monitoring framework.',
       author='SRCE',
       author_email='dvrcic@srce.hr, kzailac@srce.hr',
       license='Apache License 2.0',
@@ -30,14 +29,13 @@ setup(name=NAME,
           "License :: OSI Approved :: Apache Software License",
           "Operating System :: POSIX :: Linux",
       ),
-      scripts=['bin/poem-syncmetricinstances', 'bin/poem-syncservtype',
-               'bin/poem-db', 'bin/poem-genseckey', 'bin/poem-manage',
-               'bin/poem-token', 'bin/poem-syncservices', 'bin/poem-tenant',
+      scripts=['bin/poem-syncservtype', 'bin/poem-db', 'bin/poem-genseckey',
+               'bin/poem-manage', 'bin/poem-token', 'bin/poem-tenant',
                'bin/poem-clearsessions'],
       data_files=[
           ('etc/poem', ['etc/poem.conf.template', 'etc/poem_logging.conf']),
-          ('etc/cron.d/', ['cron/poem-sync', 'cron/poem-clearsessions', 'cron/db-backup']),
-          ('etc/logrotate.d/', ['logrotate.d/poem-db-backup']),
+          ('etc/cron.d/', ['cron/poem-sync', 'cron/poem-clearsessions', 'cron/poem-db_backup']),
+          ('etc/logrotate.d/', ['logrotate.d/poem-db_backup']),
           ('etc/httpd/conf.d', ['poem/apache/poem.conf']),
           ('usr/share/poem/apache', ['poem/apache/poem.wsgi']),
           ('var/log/poem', ['helpers/empty']),

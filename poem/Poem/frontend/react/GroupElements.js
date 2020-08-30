@@ -1,419 +1,429 @@
-import React, { Component } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Backend } from './DataManager';
 import {
   LoadingAnim,
   BaseArgoView,
   NotifyOk,
   NotifyError,
-  ErrorComponent
+  ErrorComponent,
+  ParagraphTitle,
+  Icon,
+  SearchField,
+  ModalAreYouSure
 } from './UIElements';
 import ReactTable from 'react-table';
 import { Link } from 'react-router-dom';
-import { Formik, Form, Field } from 'formik';
+import { Formik, Form, Field, setNestedObjectValues } from 'formik';
 import {
   FormGroup,
   Row,
   Col,
-  Label,
-  Button} from 'reactstrap';
-import FilteredMultiSelect from 'react-filtered-multiselect';
-
-export const GroupOfMetricsList = GroupList('metrics', 'groupofmetrics', 'group of metrics');
-export const GroupOfMetricsChange = GroupChange('metrics', 'groupofmetrics', 'metrics');
-
-export const GroupOfAggregationsList = GroupList('aggregations', 'groupofaggregations', 'group of aggregations');
-export const GroupOfAggregationsChange = GroupChange('aggregations', 'groupofaggregations', 'aggregations');
-
-export const GroupOfMetricProfilesList = GroupList('metricprofiles', 'groupofmetricprofiles', 'group of metric profiles');
-export const GroupOfMetricProfilesChange = GroupChange('metricprofiles', 'groupofmetricprofiles', 'metric profiles');
-
-export const GroupOfThresholdsProfilesList = GroupList('thresholdsprofiles', 'groupofthresholdsprofiles', 'group of thresholds profiles');
-export const GroupOfThresholdsProfilesChange = GroupChange('thresholdsprofiles', 'groupofthresholdsprofiles', 'thresholds profiles');
+  Button,
+  InputGroup,
+  InputGroupAddon} from 'reactstrap';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faTimes, faSearch } from '@fortawesome/free-solid-svg-icons';
+import Select from 'react-select';
+import Async from 'react-select/async';
 
 
-function GroupList(group, id, name) {
-  return class extends Component {
-    constructor(props) {
-      super(props);
-      this.state = {
-        loading: false,
-        list_groups: null,
-        error: null
-      };
+export const GroupList = (props) => {
+  const [loading, setLoading] = useState(false);
+  const [listGroups, setListGroups] = useState(null);
+  const [error, setError] = useState(null);
 
-      this.location = props.location;
-      this.backend = new Backend();
-  }
+  const location = props.location;
+  const name = props.name;
+  const id = props.id;
+  const group = props.group;
+  const backend = new Backend();
 
-  async componentDidMount() {
-    this.setState({loading: true});
-
-    try {
-      let json = await this.backend.fetchResult('/api/v2/internal/usergroups');
-      this.setState({
-        list_groups: json[group],
-        loading: false
-      });
-    } catch(err) {
-      this.setState({
-        error: err,
-        loading: false
-      });
+  useEffect(() => {
+    setLoading(true);
+    async function fetchData() {
+      try {
+        let json = await backend.fetchResult('/api/v2/internal/usergroups');
+        setListGroups(json[group]);
+      } catch(err) {
+        setError(err);
+      }
+      setLoading(false);
     };
-  }
+    fetchData();
+  }, []);
 
-  render() {
-    const columns = [
-      {
-        Header: name.charAt(0).toUpperCase() + name.slice(1),
-        id: id,
-        accessor: e =>
-          <Link to={`/ui/administration/${id}/${e}`}>
-            {e}
-          </Link>
-      }
-    ];
-
-    const { loading, list_groups, error } = this.state;
-
-    if (loading)
-      return(<LoadingAnim/>);
-
-    else if (error)
-      return (<ErrorComponent error={error}/>);
-
-    else if (!loading && list_groups) {
-      return (
-        <BaseArgoView
-          resourcename={name}
-          location={this.location}
-          listview={true}>
-            <ReactTable
-              data={list_groups}
-              columns={columns}
-              className='-highlight'
-              defaultPageSize={12}
-              rowsText='groups'
-              getTheadThProps={() => ({className: 'table-active font-weight-bold p-2'})}
-            />
-        </BaseArgoView>
-      );
-    } else
-      return null;
+  const columns = [
+    {
+      Header: name.charAt(0).toUpperCase() + name.slice(1),
+      id: id,
+      accessor: e =>
+        <Link to={`/ui/administration/${id}/${e}`}>
+          {e}
+        </Link>
     }
+  ];
+
+  if (loading)
+    return (<LoadingAnim/>);
+
+  else if (error)
+    return (<ErrorComponent error={error}/>);
+
+  else if (!loading && listGroups)
+    return (
+      <BaseArgoView
+        resourcename={name}
+        location={location}
+        listview={true}>
+          <ReactTable
+            data={listGroups}
+            columns={columns}
+            className='-highlight'
+            defaultPageSize={12}
+            rowsText='groups'
+            getTheadThProps={() => ({className: 'table-active font-weight-bold p-2'})}
+          />
+      </BaseArgoView>
+    );
+
+  else
+    return null;
+};
+
+
+export const GroupChange = (props) => {
+  const [name, setName] = useState('');
+  var [items, setItems] = useState([]);
+  const [searchItem, setSearchItem] = useState('');
+  var [freeItems, setFreeItems] = useState([]);
+  const [newItems, setNewItems] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [areYouSureModal, setAreYouSureModal] = useState(undefined);
+  const [modalTitle, setModalTitle] = useState(undefined);
+  const [modalMsg, setModalMsg] = useState(undefined);
+  const [error, setError] = useState(null);
+  const [formName, setFormName] = useState('');
+  const [deleteFlag, setDeleteFlag] = useState(false);
+
+  const groupname = props.match.params.name;
+  const group = props.group;
+  const id = props.id;
+  const title = props.title;
+  const addview = props.addview;
+
+  const location = props.location;
+  const history = props.history;
+
+  const backend = new Backend();
+
+  function toggleAreYouSure() {
+    setAreYouSureModal(!areYouSureModal);
   };
-}
 
+  function onSubmitHandle(values, action) {
+    setModalMsg(`Are you sure you want to ${addview ? 'add' : 'change'} group of ${title}?`);
+    setModalTitle(`${addview ? 'Add' : 'Change'} group of ${title}`);
+    setFormName(values.name);
+    toggleAreYouSure();
+  };
 
-function GroupChange(gr, id, ttl) {
-  return class extends Component {
-    constructor(props) {
-      super(props);
+  function onDeleteHandle() {
+    setModalMsg(`Are you sure you want to delete group of ${title}?`);
+    setModalTitle(`Delete group of ${title}`);
+    toggleAreYouSure();
+    setDeleteFlag(true);
+  };
 
-      this.group = props.match.params.group;
-      this.addview = props.addview;
-      this.location = props.location;
-      this.history = props.history;
+  async function doChange() {
+    if (!addview) {
+      let response = await backend.changeObject(
+        `/api/v2/internal/${group}group/`,
+        {name: formName, items: items}
+      );
 
-      this.state = {
-        name: '',
-        items: [],
-        nogroupitems: [],
-        loading: false,
-        areYouSureModal: false,
-        modalFunc: undefined,
-        modalTitle: undefined,
-        modalMsg: undefined,
-        error: null
-      };
-
-      this.backend = new Backend();
-
-      this.handleDeselect = this.handleDeselect.bind(this);
-      this.handleSelect = this.handleSelect.bind(this);
-      this.toggleAreYouSure = this.toggleAreYouSure.bind(this);
-      this.toggleAreYouSureSetModal = this.toggleAreYouSureSetModal.bind(this);
-      this.onSubmitHandle = this.onSubmitHandle.bind(this);
-      this.doChange = this.doChange.bind(this);
-      this.doDelete = this.doDelete.bind(this);
-    }
-
-    handleDeselect(deSelectedItems) {
-      var items = this.state.items.slice();
-      var nogroupitems = this.state.nogroupitems.slice();
-      deSelectedItems.forEach(option => {
-        items.splice(items.indexOf(option), 1);
-      });
-      deSelectedItems.forEach(option => {
-        if (nogroupitems.indexOf(option) === -1) {
-          nogroupitems.push(option);
-        }
-      });
-      this.setState({items, nogroupitems});
-    }
-
-    handleSelect(items) {
-      items.sort((a, b) => a.id - b.id);
-      this.setState({items});
-    }
-
-    toggleAreYouSure() {
-      this.setState(prevState =>
-        ({areYouSureModal: !prevState.areYouSureModal}));
-    }
-
-    toggleAreYouSureSetModal(msg, title, onyes) {
-      this.setState(prevState =>
-        ({areYouSureModal: !prevState.areYouSureModal,
-          modalFunc: onyes,
-          modalMsg: msg,
-          modalTitle: title,
-        }));
-    }
-
-    onSubmitHandle(values, action) {
-      let msg = undefined;
-      let title = undefined;
-
-      if (this.addview) {
-        msg = `Are you sure you want to add group of ${ttl}?`;
-        title = `Add group of ${ttl}`;
-      } else {
-        msg = `Are you sure you want to change group of ${ttl}?`;
-        title = `Change group of ${ttl}`;
-      }
-      this.toggleAreYouSureSetModal(msg, title,
-        () => this.doChange(values, action));
-    }
-
-    async doChange(values, action) {
-      let items = [];
-      this.state.items.forEach((i) => items.push(i.name));
-
-      if (!this.addview) {
-        let response = await this.backend.changeObject(
-          `/api/v2/internal/${gr}group/`,
-          {
-            name: values.name,
-            items: items
-          }
-        );
-
-        if (response.ok)
-          NotifyOk({
-            msg: `Group of ${ttl} successfully changed`,
-            title: 'Changed',
-            callback: () => this.history.push(`/ui/administration/${id}`)
-          });
-        else {
-          let change_msg = '';
-          try {
-            let json = await response.json();
-            change_msg = json.detail;
-          } catch {
-            change_msg = `Error changing group of ${ttl}`;
-          };
-          NotifyError({
-            title: `Error: ${response.status} ${response.statusText}`,
-            msg: change_msg
-          });
-        }
-      } else {
-        let response = await this.backend.addObject(
-          `/api/v2/internal/${gr}group/`,
-          {
-            name: values.name,
-            items: items
-          }
-        );
-        if (response.ok)
-          NotifyOk({
-            msg:  `Group of ${ttl} successfully added`,
-            title: 'Added',
-            callback: () => this.history.push(`/ui/administration/${id}`)
-          });
-        else {
-          let add_msg = '';
-          try {
-            let json = await response.json();
-            add_msg = json.detail;
-          } catch(err) {
-            add_msg = `Error adding group of ${ttl}`;
-          };
-          NotifyError({
-            msg: add_msg,
-            title: `Error: ${response.status} ${response.statusText}`
-          });
-        };
-      }
-    }
-
-    async doDelete(name) {
-      let response = await this.backend.deleteObject(`/api/v2/internal/${gr}group/${name}`);
       if (response.ok)
         NotifyOk({
-          msg:  `Group of ${ttl} successfully deleted`,
-          title: 'Deleted',
-          callback: () => this.history.push(`/ui/administration/${id}`)
+          msg: `Group of ${title} successfully changed`,
+          title: 'Changed',
+          callback: () => history.push(`/ui/administration/${id}`)
         });
+
       else {
-        let msg = '';
+        let change_msg = '';
         try {
           let json = await response.json();
-          msg = json.detail;
+          change_msg = json.detail;
         } catch(err) {
-          msg = `Error deleting group of ${ttl}`;
+          change_msg = `Error changing group of ${title}`;
         };
         NotifyError({
-          msg: msg,
-          title: `Error: ${response.status} ${response.statusText}`
+          title: `Error: ${response.status} ${response.statusText}`,
+          msg: change_msg
         });
       };
-    }
+    } else {
+      let response = await backend.addObject(
+        `/api/v2/internal/${group}group/`,
+        {name: formName, items: items}
+      );
 
-    async componentDidMount() {
-      this.setState({loading: true});
+      if (response.ok)
+        NotifyOk({
+          msg: `Group of ${title} successfully added`,
+          title: 'Added',
+          callback: () => history.push(`/ui/administration/${id}`)
+        });
 
-      try {
-        let nogroupitems = await this.backend.fetchResult(`/api/v2/internal/${gr}group`);
-        if (!this.addview) {
-          let items = await this.backend.fetchResult(`/api/v2/internal/${gr}group/${this.group}`);
-          this.setState({
-            name: this.group,
-            items: items,
-            nogroupitems: nogroupitems,
-            loading: false
-          });
-        } else {
-          this.setState({
-            name: '',
-            items: [],
-            nogroupitems: nogroupitems,
-            loading: false
-          });
+      else {
+        let add_msg = '';
+        try {
+          let json = await response.json();
+          add_msg = json.detail;
+        } catch(err) {
+          add_msg = `Error adding group of ${title}`;
         };
-      } catch(err) {
-        this.setState({
-          error: err,
-          loading: false
+        NotifyError({
+          title: `Error: ${response.status} ${response.statusText}`,
+          msg: add_msg
         });
       };
-    }
+    };
+  };
 
-    render() {
-      const { name, items, loading, error } = this.state;
-      var nogroupitems = this.state.nogroupitems;
-      const BOOTSTRAP_CLASSES = {
-        filter: 'form-control',
-        select: 'form-control',
-        button: 'btn btn btn-block btn-primary',
-        buttonActive: 'btn btn btn-block btn-primary'
+  async function doDelete() {
+    let response = await backend.deleteObject(`/api/v2/internal/${group}group/${name}`);
+
+    if (response.ok)
+      NotifyOk({
+        msg: `Group of ${title} successfully deleted`,
+        title: 'Deleted',
+        callback: () => history.push(`/ui/administration/${id}`)
+      });
+
+    else {
+      let msg = '';
+      try {
+        let json = await response.json();
+        msg = json.detail;
+      } catch(err) {
+        msg = `Error deleting group of ${title}`;
       };
+      NotifyError({
+        title: `Error: ${response.status} ${response.statusText}`,
+        msg: msg
+      });
+    };
+  };
 
-      if (loading)
-        return(<LoadingAnim/>);
+  useEffect(() => {
+    setLoading(true);
 
-      else if (error)
-        return (<ErrorComponent error={error}/>);
+    async function fetchItems() {
+      try {
+        let nogroupitems_response = await backend.fetchResult(`/api/v2/internal/${group}group`);
+        let nogroupitems = [];
+        nogroupitems_response.forEach(e => nogroupitems.push({value: e, label: e}));
 
-      else if (!loading) {
-        return(
-          <BaseArgoView
-            resourcename={`group of ${ttl}`}
-            location={this.location}
-            addview={this.addview}
-            history={false}
-            modal={true}
-            state={this.state}
-            toggle={this.toggleAreYouSure}>
-              <Formik
-                initialValues={{
-                  name: name,
-                  items: items
-                }}
-                onSubmit = {(values, action) => this.onSubmitHandle(values, action)}
-                render = {props => (
-                  <Form>
-                    <FormGroup>
-                      <Row>
-                        <Col md={6}>
-                          <Label for='groupname'>Name</Label>
+        if (!addview) {
+          let groupitems = await backend.fetchResult(`/api/v2/internal/${group}group/${groupname}`);
+          setName(groupname);
+          setItems(groupitems);
+        };
+        setFreeItems(nogroupitems);
+      } catch(err) {
+        setError(err);
+      };
+      setLoading(false);
+    };
+
+    fetchItems();
+  }, []);
+
+  var filteredItems = items;
+  if (searchItem)
+    filteredItems = filteredItems.filter(row =>
+      row.toLowerCase().includes(searchItem)
+    );
+
+  if (loading)
+    return (<LoadingAnim/>);
+
+  else if (error)
+    return (<ErrorComponent error={error}/>);
+
+  else if (!loading) {
+    return (
+      <React.Fragment>
+        <ModalAreYouSure
+          isOpen={areYouSureModal}
+          toggle={toggleAreYouSure}
+          title={modalTitle}
+          msg={modalMsg}
+          onYes={deleteFlag ? doDelete : doChange}
+        />
+        <BaseArgoView
+          resourcename={`group of ${title}`}
+          location={location}
+          addview={addview}
+          history={false}
+          modal={false}
+        >
+          <Formik
+            initialValues = {{
+              name: name,
+              items: items
+            }}
+            onSubmit = {(values, action) => onSubmitHandle(values, action)}
+            render = {renderProps => (
+              <Form>
+                <FormGroup>
+                  <Row>
+                    <Col md={6}>
+                      <InputGroup>
+                        <InputGroupAddon addonType='prepend'>Name</InputGroupAddon>
+                        <Field
+                          type='text'
+                          name='name'
+                          required={true}
+                          className='form-control'
+                          id='groupname'
+                          disabled={!addview}
+                        />
+                      </InputGroup>
+                    </Col>
+                  </Row>
+                </FormGroup>
+                <FormGroup>
+                  <ParagraphTitle title={title}/>
+                  <Row className='mb-2'>
+                    <Col md={8}>
+                      <Select
+                        closeMenuOnSelect={false}
+                        placeholder={`Search available ${title}`}
+                        noOptionsMessage={() => `No available ${title}`}
+                        isMulti
+                        onChange={e => setNewItems(e)}
+                        openMenuOnClick={true}
+                        value={newItems}
+                        options={freeItems}
+                      />
+                    </Col>
+                    <Col md={2}>
+                      <Button
+                        color='success'
+                        onClick={() => {
+                          let itms = items;
+                          let fitms = freeItems;
+                          for (let i = 0; i < fitms.length; i++) {
+                            if (newItems.includes(fitms[i])) {
+                              fitms.splice(i, 1);
+                              i--;
+                            }
+                          };
+                          newItems.forEach(i => itms.push(i.value));
+                          setItems(itms.sort());
+                          setFreeItems(fitms);
+                          setNewItems([]);
+                        }}
+                      >
+                        {`Add new ${title} to group`}
+                      </Button>
+                    </Col>
+                  </Row>
+                  <table className='table table-bordered table-sm table-hover' style={{width: '85%'}}>
+                    <thead className='table-active'>
+                      <tr>
+                        <th className='align-middle text-center' style={{width: '5%'}}>#</th>
+                        <th style={{width: '90%'}}><Icon i={group === 'aggregations' ? 'aggregationprofiles' : group}/> {`${title.charAt(0).toUpperCase() + title.slice(1)} in group`}</th>
+                        <th style={{width: '5%'}}>Remove</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr style={{background: '#ECECEC'}}>
+                        <td className='align-middle text-center'>
+                          <FontAwesomeIcon icon={faSearch}/>
+                        </td>
+                        <td>
                           <Field
                             type='text'
-                            name='name'
-                            required={true}
+                            name='search_items'
                             className='form-control'
-                            id='groupname'
-                            disabled={!this.addview}
+                            onChange={(e) => setSearchItem(e.target.value)}
+                            component={SearchField}
                           />
-                        </Col>
-                      </Row>
-                    </FormGroup>
-                    <FormGroup>
-                    <h4 className="mt-2 p-1 pl-3 text-light text-uppercase rounded" style={{"backgroundColor": "#416090"}}>{ttl}</h4>
-                      <Row>
-                        <Col md={5}>
-                          <FilteredMultiSelect
-                            buttonText='Add'
-                            classNames={BOOTSTRAP_CLASSES}
-                            onChange={this.handleSelect}
-                            options={nogroupitems}
-                            selectedOptions={items}
-                            size={15}
-                            textProp='name'
-                            valueProp='id'
-                          />
-                        </Col>
-                        <Col md={5}>
-                          <FilteredMultiSelect
-                            buttonText='Remove'
-                            classNames={{
-                              filter: 'form-control',
-                              select: 'form-control',
-                              button: 'btn btn btn-block btn-danger',
-                              buttonActive: 'btn btn btn-block btn-danger'
-                            }}
-                            onChange={this.handleDeselect}
-                            options={items}
-                            size={15}
-                            textProp='name'
-                            valueProp='id'
-                          />
-                        </Col>
-                      </Row>
-                    </FormGroup>
+                        </td>
+                        <td>{''}</td>
+                      </tr>
+                      {
+                        filteredItems.map((item, index) =>
+                          <React.Fragment key={index}>
+                            <tr key={index}>
+                              <td className='align-middle text-center'>
+                                {index + 1}
+                              </td>
+                              <td>{item}</td>
+                              <td className='align-middle pl-3'>
+                                <Button
+                                  size='sm'
+                                  color='light'
+                                  type='button'
+                                  onClick={() => {
+                                    let updatedItems = items.filter(row => row !== item);
+                                    let fitms = freeItems;
+                                    fitms.push({value: item, label: item});
+                                    let sorted_fitms = fitms.sort((a, b) => {
+                                      let comparison = 0
+                                      if (a.value.toLowerCase() > b.value.toLowerCase())
+                                        comparison = 1;
+
+                                      else if (a.value.toLowerCase() < b.value.toLowerCase())
+                                        comparison = -1;
+
+                                      return comparison;
+                                    });
+                                    setItems(updatedItems);
+                                    setFreeItems(sorted_fitms);
+                                  }}
+                                >
+                                  <FontAwesomeIcon icon={faTimes}/>
+                                </Button>
+                              </td>
+                            </tr>
+                          </React.Fragment>
+                        )
+                      }
+                    </tbody>
+                  </table>
+                </FormGroup>
+                {
+                  <div className='submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5'>
                     {
-                      <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
-                        {
-                          !this.addview ?
-                            <Button
-                              color="danger"
-                              onClick={() => {
-                                this.toggleAreYouSureSetModal(`Are you sure you want to delete group of ${gr}?`,
-                                `Delete group of ${gr}`,
-                                () => this.doDelete(props.values.name))
-                              }}
-                            >
-                              Delete
-                            </Button>
-                          :
-                            <div></div>
-                        }
+                      !addview ?
                         <Button
-                          color="success"
-                          id="submit-button"
-                          type="submit"
+                          color='danger'
+                          onClick={() => onDeleteHandle()}
                         >
-                          Save
+                          Delete
                         </Button>
-                      </div>
-                  }
-                  </Form>
-                )}
-              />
-            </BaseArgoView>
-        );
-      }
-    }
-  };
-}
+                      :
+                        <div></div>
+                    }
+                    <Button
+                      color='success'
+                      id='submit-button'
+                      type='submit'
+                    >
+                      Save
+                    </Button>
+                  </div>
+                }
+              </Form>
+            )}
+          />
+        </BaseArgoView>
+      </React.Fragment>
+    );
+  }
+  else
+    return null;
+};

@@ -1,16 +1,15 @@
+import requests
 from Poem.api.internal_views.utils import one_value_inline, \
     two_value_inline_dict
 from Poem.api.models import MyAPIKey
 from Poem.api.permissions import MyHasAPIKey
 from Poem.poem import models
 from Poem.poem_super_admin import models as admin_models
-
-import requests
-
+from django.conf import settings
 from rest_framework import status
-from rest_framework.views import APIView
-from rest_framework.response import Response
 from rest_framework.exceptions import APIException
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 
 class NotFound(APIException):
@@ -23,7 +22,7 @@ class NotFound(APIException):
 def build_metricconfigs():
     ret = []
 
-    metricsobjs = models.Metric.objects.all()
+    metricsobjs = models.Metric.objects.all().order_by('name')
 
     for m in metricsobjs:
         mdict = dict()
@@ -38,6 +37,10 @@ def build_metricconfigs():
         files = two_value_inline_dict(m.files)
         parameter = two_value_inline_dict(m.parameter)
         fileparameter = two_value_inline_dict(m.fileparameter)
+
+        mdict[m.name].update(
+            {'tags': sorted([tag.name for tag in m.tags.all()])}
+        )
 
         if probeexecutable:
             mdict[m.name].update({'probe': probeexecutable})
@@ -102,8 +105,7 @@ def get_metrics_from_profile(profile):
 
     headers = {'Accept': 'application/json', 'x-api-key': token.token}
     response = requests.get(
-        'https://api.devel.argo.grnet.gr/api/v2/metric_profiles',
-        headers=headers, timeout=180
+        settings.WEBAPI_METRIC, headers=headers, timeout=180
     )
     response.raise_for_status()
     data = response.json()['data']
@@ -128,8 +130,22 @@ def get_metrics_from_profile(profile):
 class ListMetrics(APIView):
     permission_classes = (MyHasAPIKey,)
 
-    def get(self, request):
-        return Response(build_metricconfigs())
+    def get(self, request, tag=None):
+        if tag:
+            try:
+                admin_models.MetricTags.objects.get(name=tag)
+                metrics = models.Metric.objects.filter(tags__name=tag)
+
+                return Response(sorted([metric.name for metric in metrics]))
+
+            except admin_models.MetricTags.DoesNotExist:
+                return Response(
+                    {'detail': 'Requested tag not found.'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+        else:
+            return Response(build_metricconfigs())
 
 
 class ListRepos(APIView):
@@ -173,12 +189,14 @@ class ListRepos(APIView):
 
             data = dict()
             packagedict = dict()
+            missing_packages = []
             for package in packages:
                 try:
                     repo = package.repos.get(tag=ostag)
 
                 except admin_models.YumRepo.DoesNotExist:
-                    pass
+                    missing_packages.append(package.__str__())
+                    continue
 
                 else:
                     packagedict.update({package: repo})
@@ -211,7 +229,4 @@ class ListRepos(APIView):
                         }
                     )
 
-        if data:
-            return Response([data])
-        else:
-            return Response([])
+        return Response({'data': data, 'missing_packages': missing_packages})

@@ -1,18 +1,19 @@
-import React, { Component } from 'react';
+import React, { Component, useState } from 'react';
 import {Link} from 'react-router-dom';
 import {
   LoadingAnim,
   BaseArgoView,
   NotifyOk,
   DropDown,
+  FancyErrorMessage,
   Icon,
-  HistoryComponent,
   DiffElement,
   ProfileMainInfo,
   NotifyError,
-  ErrorComponent
+  ErrorComponent,
+  ParagraphTitle
 } from './UIElements';
-import Autocomplete from 'react-autocomplete';
+import Autosuggest from 'react-autosuggest';
 import ReactTable from 'react-table';
 import 'react-table/react-table.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -40,31 +41,84 @@ import ReactDiffViewer from 'react-diff-viewer';
 import "react-notifications/lib/notifications.css";
 import './AggregationProfiles.css';
 
-export const AggregationProfileHistory = HistoryComponent('aggregationprofile');
-
-
-function matchItem(item, value) {
-  return item.toLowerCase().indexOf(value.toLowerCase()) !== -1;
-}
 
 
 const AggregationProfilesSchema = Yup.object().shape({
   name: Yup.string().required('Required'),
   groupname: Yup.string().required('Required'),
+  metric_operation: Yup.string().required('Required'),
+  profile_operation: Yup.string().required('Required'),
+  endpoint_group: Yup.string().required('Required'),
+  metric_profile: Yup.string().required('Required'),
+  groups: Yup.array()
+  .of(Yup.object().shape({
+    name: Yup.string().required('Required'),
+    operation: Yup.string().required('Required'),
+    services: Yup.array().of(
+      Yup.object().shape({
+        name: Yup.string().required('Required'),
+        operation: Yup.string().required('Required')
+      })
+    )
+  }))
 })
 
 
 function insertSelectPlaceholder(data, text) {
-  if (data) {
+  if (data)
     return [text, ...data]
-  } else
+  else
     return [text]
+}
+
+
+const AggregationProfileAutocompleteField = ({suggestions, service, index, form, isNew, groupNew, groupIndex, isMissing}) => {
+  const [suggestionList, setSuggestions] = useState(suggestions)
+
+  return (
+    <Autosuggest
+      inputProps={{
+        className: `"form-control custom-select " ${isNew && !groupNew ? "border-success" : ""} ${isMissing ? "border-primary": ""}`,
+        placeholder: '',
+        onChange: (_, {newValue}) => form.setFieldValue(`groups.${groupIndex}.services.${index}.name`, newValue),
+        value: service.name
+      }}
+      getSuggestionValue={(suggestion) => suggestion}
+      suggestions={suggestionList}
+      renderSuggestion={(suggestion, {query, isHighlighted}) =>
+        <div
+          key={suggestions.indexOf(suggestion)}
+          className={`aggregation-autocomplete-entries ${isHighlighted ?
+              "aggregation-autocomplete-entries-highlighted"
+              : ""}`
+          }>
+          {suggestion ? <Icon i='serviceflavour'/> : ''} {suggestion}
+        </div>}
+      onSuggestionsFetchRequested={({ value }) =>
+        {
+          let result = suggestions.filter(service => service.toLowerCase().includes(value.trim().toLowerCase()))
+          setSuggestions(result)
+        }
+      }
+      onSuggestionsClearRequested={() => {
+        setSuggestions([])
+      }}
+      onSuggestionSelected={(_, {suggestion}) => {
+        form.setFieldValue(`groups.${groupIndex}.services.${index}.name`, suggestion)
+      }}
+      shouldRenderSuggestions={() => true}
+      theme={{
+        suggestionsContainerOpen: 'aggregation-autocomplete-menu',
+        suggestionsList: 'aggregation-autocomplete-list'
+      }}
+    />
+  )
 }
 
 
 const GroupList = ({name, form, list_services, list_operations, last_service_operation, write_perm}) =>
   <Row className="groups">
-    {
+  {
     form.values[name].map((group, i) =>
       <FieldArray
         key={i}
@@ -104,7 +158,9 @@ const Group = ({operation, services, list_operations, list_services,
                   name={`groups.${groupindex}.name`}
                   placeholder="Name of service group"
                   required={true}
-                  className="form-control"
+                  className={`${form.errors && form.errors.groups &&
+                    form.errors.groups[groupindex] &&
+                    form.errors.groups[groupindex].name ? "form-control border-danger" : "form-control"}`}
                 />
               </Col>
               <Col sm={{size: 2}} md={{size: 1}} className="pl-1">
@@ -135,9 +191,10 @@ const Group = ({operation, services, list_operations, list_services,
           <CardFooter className="p-1 d-flex justify-content-center">
             <DropDown
               field={{name: "operation", value: operation}}
-              data={list_operations}
+              data={insertSelectPlaceholder(list_operations, 'Select')}
               prefix={`groups.${groupindex}`}
               class_name="custom-select col-2"
+              errors={form.errors && form.errors.groups && form.errors.groups[groupindex]}
             />
           </CardFooter>
         </Card>
@@ -146,7 +203,8 @@ const Group = ({operation, services, list_operations, list_services,
         <div className="group-operation" key={groupindex}>
           <DropDown
             field={{name: 'profile_operation', value: form.values.profile_operation}}
-            data={list_operations}/>
+            data={insertSelectPlaceholder(list_operations, 'Select')}
+          />
         </div>
       </Col>
     </React.Fragment>
@@ -180,7 +238,7 @@ const ServiceList = ({services, list_services=[], list_operations=[], last_servi
           last={i === services.length - 1}
           form={form}
           isnew={service.isnew}
-          ismissing={list_services.indexOf(service.name) === -1}
+          ismissing={service.name && list_services.indexOf(service.name) === -1}
         />
       )}
     />
@@ -190,65 +248,73 @@ const ServiceList = ({services, list_services=[], list_operations=[], last_servi
 const Service = ({name, service, operation, list_services, list_operations,
   last_service_operation, groupindex, groupnew, index, remove, insert, form,
   isnew, ismissing}) =>
+(
+  <React.Fragment>
     <Row className="d-flex align-items-center service pt-1 pb-1 no-gutters" key={index}>
       <Col md={8}>
-        <Autocomplete
-        inputProps={{
-          className: `"form-control custom-select " ${isnew && !groupnew ? "border-success" : ""} ${ismissing ? "border-danger": ""}`
-        }}
-        getItemValue={(item) => item}
-        items={list_services}
-        value={service.name}
-        renderItem={(item, isHighlighted) =>
-          <div
-            key={list_services.indexOf(item)}
-            className={`aggregation-autocomplete-entries ${isHighlighted ?
-                "aggregation-autocomplete-entries-highlighted"
-                : ""}`
-            }>
-            {item ? <Icon i='serviceflavour'/> : ''} {item}
-          </div>}
-        onChange={(e) => form.setFieldValue(`groups.${groupindex}.services.${index}.name`, e.target.value)}
-        onSelect={(val) => {
-          form.setFieldValue(`groups.${groupindex}.services.${index}.name`, val)
-        }}
-        wrapperStyle={{}}
-        shouldItemRender={matchItem}
-        renderMenu={(items) =>
-          <div className='aggregation-autocomplete-menu' children={items}/>}
-      />
+        <AggregationProfileAutocompleteField
+          suggestions={list_services}
+          service={service}
+          index={index}
+          form={form}
+          isNew={isnew}
+          groupNew={groupnew}
+          groupIndex={groupindex}
+          isMissing={ismissing}
+        />
       </Col>
       <Col md={2}>
         <div className="input-group">
           <DropDown
-          field={{name: "operation", value: operation}}
-          data={list_operations}
-          prefix={`groups.${groupindex}.services.${index}`}
-          class_name="custom-select service-operation"
-          isnew={isnew && !groupnew}
+            field={{name: "operation", value: operation}}
+            data={insertSelectPlaceholder(list_operations, 'Select')}
+            prefix={`groups.${groupindex}.services.${index}`}
+            class_name="custom-select service-operation"
+            isnew={isnew && !groupnew}
         />
         </div>
       </Col>
       <Col md={2} className="pl-2">
         <Button size="sm" color="light"
-        type="button"
-        onClick={() => remove(index)}>
-          <FontAwesomeIcon icon={faTimes}/>
+          type="button"
+          onClick={() => remove(index)}>
+            <FontAwesomeIcon icon={faTimes}/>
         </Button>
         <Button size="sm" color="light"
-        type="button"
-        onClick={() => insert(index + 1, {name: '', operation:
-          last_service_operation(index, form.values.groups[groupindex].services), isnew: true})}>
-          <FontAwesomeIcon icon={faPlus}/>
+          type="button"
+          onClick={() => insert(index + 1, {name: '', operation:
+            last_service_operation(index, form.values.groups[groupindex].services), isnew: true})}>
+            <FontAwesomeIcon icon={faPlus}/>
         </Button>
       </Col>
     </Row>
+    <Row>
+    {
+      form.errors && form.errors.groups && form.errors.groups[groupindex] &&
+      form.errors.groups[groupindex].services && form.errors.groups[groupindex].services[index] &&
+      form.errors.groups[groupindex].services[index].name &&
+        <Col md={8}>
+            { FancyErrorMessage(form.errors.groups[groupindex].services[index].name) }
+        </Col>
+    }
+    {
+      form.errors && form.errors.groups && form.errors.groups[groupindex] &&
+      form.errors.groups[groupindex].services && form.errors.groups[groupindex].services[index] &&
+      form.errors.groups[groupindex].services[index].operation &&
+        <Col md={{offset: form.errors.groups[groupindex].services[index].name ? 0 : 8, size: 2}}>
+            { FancyErrorMessage(form.errors.groups[groupindex].services[index].operation) }
+        </Col>
+    }
+    </Row>
+  </React.Fragment>
+)
 
 
 const AggregationProfilesForm = ({ values, errors, historyview=false, write_perm=false,
-  list_user_groups, logic_operations, endpoint_groups, list_id_metric_profiles }) => (
-    <>
-      <ProfileMainInfo
+  list_user_groups, logic_operations, endpoint_groups, list_id_metric_profiles }) =>
+(
+  <>
+    <ProfileMainInfo
       values={values}
       errors={errors}
       fieldsdisable={historyview}
@@ -262,141 +328,161 @@ const AggregationProfilesForm = ({ values, errors, historyview=false, write_perm
             [values.groupname]
       }
       profiletype='aggregation'
-    />
-      <h4 className="mt-4 alert-info p-1 pl-3 text-light text-uppercase rounded" style={{'backgroundColor': "#416090"}}>Operations, endpoint group and metric profile</h4>
-      <Row className='mt-4'>
-        <Col md={4}>
-          <FormGroup>
-            <Row>
-              <Col md={12}>
-                <Label for='aggregationMetric'>Metric operation:</Label>
-              </Col>
-            </Row>
-            <Row>
-              <Col md={5}>
-                {
-                  historyview ?
-                    <Field
-                      name='metric_operation'
-                      className='form-control'
-                      id='aggregationMetric'
-                      disabled={true}
-                    />
-                  :
-                    <Field
-                      name='metric_operation'
-                      component={DropDown}
-                      data={insertSelectPlaceholder(logic_operations, '')}
-                      required={true}
-                      class_name='custom-select'
-                      id='aggregationMetric'
-                    />
-                }
-              </Col>
-            </Row>
-            <Row>
-              <Col md={12}>
-                <FormText>
+  />
+    <ParagraphTitle title='Operations, endpoint group and metric profile'/>
+    <Row className='mt-4'>
+      <Col md={4}>
+        <FormGroup>
+          <Row>
+            <Col md={12}>
+              <Label for='aggregationMetric'>Metric operation:</Label>
+            </Col>
+          </Row>
+          <Row>
+            <Col md={5}>
+              {
+                historyview ?
+                  <Field
+                    name='metric_operation'
+                    className='form-control'
+                    id='aggregationMetric'
+                    disabled={true}
+                  />
+                :
+                  <Field
+                    name='metric_operation'
+                    component={DropDown}
+                    data={insertSelectPlaceholder(logic_operations, 'Select')}
+                    required={true}
+                    class_name='custom-select'
+                    id='aggregationMetric'
+                    errors={errors}
+                  />
+              }
+            </Col>
+          </Row>
+          <Row>
+            <Col md={12}>
+              {
+                errors && errors.metric_operation &&
+                  FancyErrorMessage(errors.metric_operation)
+              }
+              <FormText>
                 Logical operation that will be applied between metrics of each service flavour
-                </FormText>
-              </Col>
-            </Row>
-          </FormGroup>
-        </Col>
-        <Col md={4}>
-          <FormGroup>
-            <Row>
-              <Col md={12}>
-                <Label for='aggregationOperation'>Aggregation operation:</Label>
-              </Col>
-              <Col md={5}>
-                {
-                  historyview ?
-                    <Field
-                      name='profile_operation'
-                      className='form-control'
-                      id='aggregationOperation'
-                      disabled={true}
-                    />
-                  :
-                    <Field
-                      name='profile_operation'
-                      component={DropDown}
-                      data={insertSelectPlaceholder(logic_operations, '')}
-                      required={true}
-                      class_name='custom-select'
-                      id='aggregationOperation'
-                    />
-                }
-              </Col>
-            </Row>
-            <Row>
-              <Col md={12}>
-                <FormText>
+              </FormText>
+            </Col>
+          </Row>
+        </FormGroup>
+      </Col>
+      <Col md={4}>
+        <FormGroup>
+          <Row>
+            <Col md={12}>
+              <Label for='aggregationOperation'>Aggregation operation:</Label>
+            </Col>
+            <Col md={5}>
+              {
+                historyview ?
+                  <Field
+                    name='profile_operation'
+                    className='form-control'
+                    id='aggregationOperation'
+                    disabled={true}
+                  />
+                :
+                  <Field
+                    name='profile_operation'
+                    component={DropDown}
+                    data={insertSelectPlaceholder(logic_operations, 'Select')}
+                    required={true}
+                    class_name='custom-select'
+                    id='aggregationOperation'
+                    errors={errors}
+                  />
+              }
+            </Col>
+          </Row>
+          <Row>
+            <Col md={12}>
+              {
+                errors && errors.profile_operation &&
+                  FancyErrorMessage(errors.profile_operation)
+              }
+              <FormText>
                 Logical operation that will be applied between defined service flavour groups
-                </FormText>
-              </Col>
-            </Row>
-          </FormGroup>
-        </Col>
-        <Col md={4}>
-          <FormGroup>
-            <Row>
-              <Col md={12}>
-                <Label for='aggregationEndpointGroup'>Endpoint group:</Label>
-              </Col>
-              <Col md={5}>
-                {
-                  historyview ?
-                    <Field
-                      name='endpoint_group'
-                      className='form-control'
-                      id='aggregationEndpointGroup'
-                      disabled={true}
-                    />
-                  :
-                    <Field
-                      name='endpoint_group'
-                      component={DropDown}
-                      data={insertSelectPlaceholder(endpoint_groups, '')}
-                      required={true}
-                      class_name='custom-select'
-                      id='aggregationEndpointGroup'
-                    />
-                }
-              </Col>
-            </Row>
-          </FormGroup>
-        </Col>
-      </Row>
-      <Row className='mt-4'>
-        <Col md={5}>
-          <FormGroup>
-            <Label for='metricProfile'>Metric profile:</Label>
-            {
-              historyview ?
-                <Field
-                  name='metric_profile'
-                  className='form-control'
-                  disabled={true}
-                />
-              :
-                <Field
-                  name='metric_profile'
-                  component={DropDown}
-                  data={insertSelectPlaceholder(list_id_metric_profiles.map(e => e.name), '')}
-                  required={true}
-                  class_name='custom-select'
-                />
-            }
-            <FormText>
+              </FormText>
+            </Col>
+          </Row>
+        </FormGroup>
+      </Col>
+      <Col md={4}>
+        <FormGroup>
+          <Row>
+            <Col md={12}>
+              <Label for='aggregationEndpointGroup'>Endpoint group:</Label>
+            </Col>
+            <Col md={5}>
+              {
+                historyview ?
+                  <Field
+                    name='endpoint_group'
+                    className='form-control'
+                    id='aggregationEndpointGroup'
+                    disabled={true}
+                  />
+                :
+                  <Field
+                    name='endpoint_group'
+                    component={DropDown}
+                    data={insertSelectPlaceholder(endpoint_groups, 'Select')}
+                    required={true}
+                    class_name='custom-select'
+                    id='aggregationEndpointGroup'
+                    errors={errors}
+                  />
+              }
+              {
+                errors && errors.endpoint_group &&
+                  FancyErrorMessage(errors.endpoint_group)
+              }
+            </Col>
+          </Row>
+        </FormGroup>
+      </Col>
+    </Row>
+    <Row className='mt-4'>
+      <Col md={5}>
+        <FormGroup>
+          <Label for='metricProfile'>Metric profile:</Label>
+          {
+            historyview ?
+              <Field
+                name='metric_profile'
+                className='form-control'
+                disabled={true}
+              />
+            :
+              <Field
+                name='metric_profile'
+                component={DropDown}
+                data={insertSelectPlaceholder(list_id_metric_profiles.map(e => e.name), 'Select')}
+                required={true}
+                class_name='custom-select'
+                errors={errors}
+              />
+          }
+          {
+            errors && errors.metric_profile &&
+              FancyErrorMessage(errors.metric_profile)
+          }
+          <FormText>
             Metric profile associated to Aggregation profile. Service flavours defined in service flavour groups originate from selected metric profile.
-            </FormText>
-          </FormGroup>
-        </Col>
-      </Row>
-      <h4 className="mt-2 alert-info p-1 pl-3 text-light text-uppercase rounded" style={{'backgroundColor': "#416090"}}>Service flavour groups</h4>
-    </>
+          </FormText>
+        </FormGroup>
+      </Col>
+    </Row>
+    <ParagraphTitle title='Service flavour groups'/>
+  </>
 );
 
 
@@ -472,14 +558,21 @@ export class AggregationProfilesChange extends Component
       return ''
   }
 
+  sortServices(a, b) {
+    if (a.toLowerCase() < b.toLowerCase()) return -1
+    if (a.toLowerCase() > b.toLowerCase()) return 1
+  }
+
   extractListOfServices(profileFromAggregation, listMetricProfiles) {
     let targetProfile = listMetricProfiles.filter(p => p.name === profileFromAggregation.name)
 
     if (targetProfile.length === 0)
       targetProfile = listMetricProfiles.filter(p => p.id === profileFromAggregation.id)
 
-    if (targetProfile.length)
-      return targetProfile[0].services.map(s => s.service)
+    if (targetProfile.length) {
+      let services = targetProfile[0].services.map(s => s.service)
+      return services.sort(this.sortServices)
+    }
     else
       return []
   }
@@ -816,9 +909,10 @@ export class AggregationProfilesChange extends Component
 
       return (
         <BaseArgoView
-          resourcename='aggregation profile'
+          resourcename={this.publicView ? 'Aggregation profile details' : 'aggregation profile'}
           location={this.location}
           modal={true}
+          history={!this.publicView}
           state={this.state}
           toggle={this.toggleAreYouSure}
           addview={this.publicView ? !this.publicView : this.addview}
@@ -851,11 +945,11 @@ export class AggregationProfilesChange extends Component
                 }}
                 />
                 {
-                  is_service_missing &&
+                  (is_service_missing && !this.publicView) &&
                   <Alert color='danger'>
                     <center>
                       <FontAwesomeIcon icon={faInfoCircle} size="lg" color="black"/> &nbsp;
-                      Some Service Flavours used in Aggregation profile are not presented in associated Metric profile meaning that two profiles are out of sync. Check below for Service Flavours in red borders.
+                      Some Service Flavours used in Aggregation profile are not presented in associated Metric profile meaning that two profiles are out of sync. Check below for Service Flavours in blue borders.
                     </center>
                   </Alert>
                 }
@@ -866,18 +960,81 @@ export class AggregationProfilesChange extends Component
                   endpoint_groups={this.endpoint_groups}
                   list_id_metric_profiles={list_id_metric_profiles}
                   write_perm={write_perm}
+                  historyview={this.publicView}
                 />
-                <FieldArray
-                  name="groups"
-                  render={props => (
-                    <GroupList
-                      {...props}
-                      list_services={insertSelectPlaceholder(list_services, '')}
-                      list_operations={insertSelectPlaceholder(this.logic_operations, '')}
-                      last_service_operation={this.insertOperationFromPrevious}
-                      write_perm={write_perm}
-                    />)}
-                />
+                {
+                  !this.publicView ?
+                    <FieldArray
+                      name="groups"
+                      render={props => (
+                        <GroupList
+                          {...props}
+                          list_services={list_services}
+                          list_operations={this.logic_operations}
+                          last_service_operation={this.insertOperationFromPrevious}
+                          write_perm={write_perm}
+                        />)}
+                    />
+                  :
+                    <FieldArray
+                      name='groups'
+                      render={arrayHelpers => (
+                        <Row className='groups'>
+                          {
+                            props.values['groups'].map((group, i) =>
+                              <FieldArray
+                                key={i}
+                                name='groups'
+                                render={arrayHelpers => (
+                                  <React.Fragment key={i}>
+                                    <Col sm={{size: 8}} md={{size: 5}} className='mt-4 mb-2'>
+                                      <Card>
+                                        <CardHeader className='p-1' color='primary'>
+                                          <Row className='d-flex align-items-center no-gutters'>
+                                            <Col sm={{size: 10}} md={{size: 11}}>
+                                              {props.values.groups[i].name}
+                                            </Col>
+                                          </Row>
+                                        </CardHeader>
+                                        <CardBody className='p-1'>
+                                          {
+                                            group.services.map((service, j) =>
+                                              <FieldArray
+                                                key={j}
+                                                name={`groups.${i}.services`}
+                                                render={arrayHelpers => (
+                                                  <Row className='d-flex align-items-center service pt-1 pb-1 no-gutters' key={j}>
+                                                    <Col md={8}>
+                                                      {props.values.groups[i].services[j].name}
+                                                    </Col>
+                                                    <Col md={2}>
+                                                      {props.values.groups[i].services[j].operation}
+                                                    </Col>
+                                                  </Row>
+                                                )}
+                                              />
+                                            )
+                                          }
+                                        </CardBody>
+                                        <CardFooter className='p-1 d-flex justify-content-center'>
+                                          {props.values.groups[i].operation}
+                                        </CardFooter>
+                                      </Card>
+                                    </Col>
+                                    <Col sm={{size: 4}} md={{size: 1}} className='mt-5'>
+                                      <div className='group-operation' key={i}>
+                                        {props.values.profile_operation}
+                                      </div>
+                                    </Col>
+                                  </React.Fragment>
+                                )}
+                              />
+                            )
+                          }
+                        </Row>
+                      )}
+                    />
+                }
                 {
                   (write_perm) &&
                     <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">

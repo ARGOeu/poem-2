@@ -5,7 +5,6 @@ from Poem.api.internal_views.utils import one_value_inline, \
 from Poem.api.views import NotFound
 from Poem.helpers.versioned_comments import new_comment
 from Poem.poem_super_admin import models as admin_models
-
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -61,6 +60,7 @@ class ListVersions(APIView):
                 fields = {
                     'name': ver.name,
                     'mtype': ver.mtype.name,
+                    'tags': [tag.name for tag in ver.tags.all()],
                     'probeversion': probekey,
                     'description': ver.description,
                     'parent': one_value_inline(ver.parent),

@@ -8,10 +8,10 @@ import {
   Checkbox,
   FancyErrorMessage,
   AutocompleteField,
-  HistoryComponent,
   DiffElement,
   NotifyError,
-  ErrorComponent
+  ErrorComponent,
+  ParagraphTitle
 } from './UIElements';
 import ReactTable from 'react-table';
 import {
@@ -27,7 +27,6 @@ import { Formik, Form, Field } from 'formik';
 import * as Yup from 'yup';
 
 
-export const ProbeHistory = HistoryComponent('probe');
 export const ProbeChange = ProbeComponent();
 export const ProbeClone = ProbeComponent(true);
 
@@ -61,7 +60,7 @@ const LinkField = ({
 )
 
 
-const ProbeForm = ({isTenantSchema=false, isHistory=false,
+const ProbeForm = ({isTenantSchema=false, isHistory=false, publicView=false,
   errors={name: undefined, package: undefined, repository: undefined, docurl: undefined, comment: undefined},
   state=undefined, addview=false, cloneview=false, list_packages=[], setFieldValue=undefined,
   values=undefined, onSelect=undefined, metrictemplatelist=[]}) =>
@@ -76,7 +75,7 @@ const ProbeForm = ({isTenantSchema=false, isHistory=false,
               name='name'
               className={`form-control ${errors.name && 'border-danger'}`}
               id='name'
-              disabled={isTenantSchema || isHistory}
+              disabled={isTenantSchema || isHistory || publicView}
             />
           </InputGroup>
           {
@@ -104,7 +103,7 @@ const ProbeForm = ({isTenantSchema=false, isHistory=false,
           </FormText>
         </Col>
         {
-          (!addview && !cloneview && !isTenantSchema && !isHistory) &&
+          (!addview && !cloneview && !isTenantSchema && !isHistory && !publicView) &&
             <Col md={2}>
               <Field
                 component={Checkbox}
@@ -122,7 +121,7 @@ const ProbeForm = ({isTenantSchema=false, isHistory=false,
       <Row className='mt-3'>
         <Col md={8}>
           {
-            (isTenantSchema || isHistory) ?
+            (isTenantSchema || isHistory || publicView) ?
               <InputGroup>
                 <InputGroupAddon addonType='prepend'>Package</InputGroupAddon>
                 <Field
@@ -158,13 +157,13 @@ const ProbeForm = ({isTenantSchema=false, isHistory=false,
       </Row>
     </FormGroup>
     <FormGroup>
-      <h4 className="mt-2 p-1 pl-3 text-light text-uppercase rounded" style={{"backgroundColor": "#416090"}}>Probe metadata</h4>
+      <ParagraphTitle title='Probe metadata'/>
       <Row className='mt-4 mb-3 align-items-top'>
         <Col md={8}>
           <InputGroup>
             <InputGroupAddon addonType='prepend'>Repository</InputGroupAddon>
             {
-              (isTenantSchema || isHistory) ?
+              (isTenantSchema || isHistory || publicView) ?
                 <Field
                   component={LinkField}
                   name='repository'
@@ -195,7 +194,7 @@ const ProbeForm = ({isTenantSchema=false, isHistory=false,
           <InputGroup>
             <InputGroupAddon addonType='prepend'>Documentation</InputGroupAddon>
             {
-              (isTenantSchema || isHistory) ?
+              (isTenantSchema || isHistory || publicView) ?
                 <Field
                   component={LinkField}
                   name='docurl'
@@ -230,7 +229,7 @@ const ProbeForm = ({isTenantSchema=false, isHistory=false,
             rows='15'
             className={`form-control ${errors.description && 'border-danger'}`}
             id='description'
-            disabled={isTenantSchema || isHistory}
+            disabled={isTenantSchema || isHistory || publicView}
           />
           {
             errors.description &&
@@ -250,7 +249,7 @@ const ProbeForm = ({isTenantSchema=false, isHistory=false,
             rows='5'
             className={`form-control ${errors.comment && 'border-danger'}`}
             id='comment'
-            disabled={isTenantSchema || isHistory}
+            disabled={isTenantSchema || isHistory || publicView}
           />
           {
             errors.comment &&
@@ -275,10 +274,13 @@ const ProbeForm = ({isTenantSchema=false, isHistory=false,
                           .map((e, i) => <Link
                             key={i}
                             to={
-                              isTenantSchema ?
-                                `/ui/probes/${values.name}/${e}`
+                              publicView ?
+                                `/ui/public_metrictemplates/${e}`
                               :
-                                `/ui/metrictemplates/${e}`
+                                isTenantSchema ?
+                                  `/ui/probes/${values.name}/${e}`
+                                :
+                                  `/ui/metrictemplates/${e}`
                             }>
                               {e}
                             </Link>
@@ -373,7 +375,7 @@ export class ProbeList extends Component {
         id: 'nv',
         minWidth: 25,
         accessor: e =>
-          <Link to={`/ui/${this.publicView && 'public_'}probes/${e.name}/history`}>
+          <Link to={`/ui/${this.publicView ? 'public_' : ''}probes/${e.name}/history`}>
             {e.nv}
           </Link>,
         Cell: row =>
@@ -451,7 +453,7 @@ export class ProbeList extends Component {
           resourcename='probe'
           location={this.location}
           listview={true}
-          addnew={!isTenantSchema}
+          addnew={!isTenantSchema && !this.publicView}
         >
           <ReactTable
             data={list_probe}
@@ -478,8 +480,8 @@ function ProbeComponent(cloneview=false) {
       this.addview = props.addview;
       this.location = props.location;
       this.history = props.history;
+      this.publicView = props.publicView;
       this.backend = new Backend();
-      this.publicView = props.publicView
 
       if (this.publicView) {
         this.apiListPackages = '/api/v2/internal/public_packages'
@@ -659,7 +661,12 @@ function ProbeComponent(cloneview=false) {
     onSelect(field, value) {
       let probe = this.state.probe;
       probe[field] = value;
-      probe['version'] = value.split(' ')[1].slice(1, -1);
+      try {
+        probe['version'] = value.split(' ')[1].slice(1, -1);
+      } catch(err) {
+        if (err instanceof TypeError)
+          probe['version'] = '';
+      };
       this.setState({probe: probe});
     }
 
@@ -710,13 +717,14 @@ function ProbeComponent(cloneview=false) {
         if (!isTenantSchema) {
           return (
             <BaseArgoView
-              resourcename='probe'
+              resourcename={`${this.publicView ? 'Probe details' : 'probe'}`}
               location={this.location}
               addview={this.addview}
               cloneview={cloneview}
               clone={true}
               modal={true}
               state={this.state}
+              publicview={this.publicView}
               toggle={this.toggleAreYouSure}>
               <Formik
                 initialValues = {{
@@ -740,36 +748,38 @@ function ProbeComponent(cloneview=false) {
                       state={this.state}
                       addview={this.addview}
                       cloneview={cloneview}
+                      publicView={this.publicView}
                       list_packages={list_packages}
                       onSelect={this.onSelect}
                       metrictemplatelist={metrictemplatelist}
                     />
                     {
-                      <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
-                        {
-                          (!this.addview && !cloneview) ?
-                            <Button
-                              color='danger'
-                              onClick={() => {
-                                this.toggleAreYouSureSetModal(
-                                  'Are you sure you want to delete probe?',
-                                  'Delete probe',
-                                  () => this.doDelete(props.values.name)
-                                )}}
-                            >
-                              Delete
-                            </Button>
-                          :
-                            <div></div>
-                        }
-                        <Button
-                          color='success'
-                          id='submit-button'
-                          type='submit'
-                        >
-                          Save
-                        </Button>
-                      </div>
+                      !this.publicView &&
+                        <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
+                          {
+                            (!this.addview && !cloneview && !this.publicView) ?
+                              <Button
+                                color='danger'
+                                onClick={() => {
+                                  this.toggleAreYouSureSetModal(
+                                    'Are you sure you want to delete probe?',
+                                    'Delete probe',
+                                    () => this.doDelete(props.values.name)
+                                  )}}
+                              >
+                                Delete
+                              </Button>
+                            :
+                              <div></div>
+                          }
+                          <Button
+                            color='success'
+                            id='submit-button'
+                            type='submit'
+                          >
+                            Save
+                          </Button>
+                        </div>
                   }
                   </Form>
                 )}
@@ -799,6 +809,7 @@ function ProbeComponent(cloneview=false) {
                   <ProbeForm
                     {...props}
                     isTenantSchema={true}
+                    publicView={this.publicView}
                     state={this.state}
                     metrictemplatelist={metrictemplatelist}
                   />

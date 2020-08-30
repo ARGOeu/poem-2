@@ -61,6 +61,7 @@ class ListAggregations(APIView):
             aggr = poem_models.Aggregation.objects.get(
                 apiid=request.data['apiid']
             )
+            aggr.name = request.data['name']
             aggr.groupname = request.data['groupname']
             aggr.save()
 

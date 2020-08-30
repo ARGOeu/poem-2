@@ -1,12 +1,12 @@
-from django.contrib.contenttypes.models import ContentType
-
 import json
 
+import requests
 from Poem.api.models import MyAPIKey
 from Poem.helpers.history_helpers import create_profile_history
 from Poem.poem import models as poem_models
-
-import requests
+from Poem.poem_super_admin import models as admin_models
+from django.contrib.contenttypes.models import ContentType
+from tenant_schemas.utils import schema_context, get_public_schema_name
 
 
 def one_value_inline(input):
@@ -79,6 +79,7 @@ def sync_webapi(api, model):
     data_api = set([p['id'] for p in data])
     data_db = set(model.objects.all().values_list('apiid', flat=True))
     entries_not_indb = data_api.difference(data_db)
+    entries_indb = data_api.intersection(data_db)
 
     new_entries = []
     for p in data:
@@ -134,3 +135,29 @@ def sync_webapi(api, model):
         ).delete()
         instance.delete()
 
+    for p in data:
+        if p['id'] in entries_indb:
+            instance = model.objects.get(apiid=p['id'])
+            instance.name = p['name']
+            instance.description = p.get('description', '')
+            instance.save()
+
+
+def get_tenant_resources(schema_name):
+    with schema_context(schema_name):
+        if schema_name == get_public_schema_name():
+            metrics = admin_models.MetricTemplate.objects.all()
+            met_key = 'metric_templates'
+        else:
+            metrics = poem_models.Metric.objects.all()
+            met_key = 'metrics'
+        n_met = metrics.count()
+
+        probes = set()
+        for metric in metrics:
+            if metric.probekey:
+                probes.add(metric.probekey)
+
+        n_probe = len(probes)
+
+        return {met_key: n_met, 'probes': n_probe}

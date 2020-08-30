@@ -1,9 +1,7 @@
-from django.db import IntegrityError
-
 from Poem.api.views import NotFound
 from Poem.helpers.history_helpers import create_history
 from Poem.poem import models as poem_models
-
+from django.db import IntegrityError
 from rest_framework import status
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
@@ -29,11 +27,9 @@ class ListMetricsInGroup(APIView):
 
         results = []
         for item in metrics:
-            results.append({'id': item.id, 'name': item.name})
+            results.append(item.name)
 
-        results = sorted(results, key=lambda k: k['name'])
-
-        return Response({'result': results})
+        return Response({'result': sorted(results)})
 
     def put(self, request):
         group = poem_models.GroupOfMetrics.objects.get(
@@ -108,10 +104,9 @@ class ListAggregationsInGroup(APIView):
 
         results = []
         for item in aggr:
-            results.append({'id': item.id, 'name': item.name})
+            results.append(item.name)
 
-        results = sorted(results, key=lambda k: k['name'])
-        return Response({'result': results})
+        return Response({'result': sorted(results)})
 
     def put(self, request):
         group = poem_models.GroupOfAggregations.objects.get(
@@ -195,11 +190,9 @@ class ListMetricProfilesInGroup(APIView):
 
         results = []
         for item in mp:
-            results.append({'id': item.id, 'name': item.name})
+            results.append(item.name)
 
-        results = sorted(results, key=lambda k: k['name'])
-
-        return Response({'result': results})
+        return Response({'result': sorted(results)})
 
     def put(self, request):
         group = poem_models.GroupOfMetricProfiles.objects.get(
@@ -285,11 +278,9 @@ class ListThresholdsProfilesInGroup(APIView):
 
         results = []
         for item in tp:
-            results.append({'id': item.id, 'name': item.name})
+            results.append(item.name)
 
-        results = sorted(results, key=lambda k: k['name'])
-
-        return Response({'result': results})
+        return Response({'result': sorted(results)})
 
     def put(self, request):
         group = poem_models.GroupOfThresholdsProfiles.objects.get(

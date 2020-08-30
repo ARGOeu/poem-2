@@ -16,7 +16,9 @@ Second section, **Authentication and authorization**, is only available through 
 
 ### SuperAdmin POEM data
 
-Third section, **SuperAdmin POEM data**, are pages of read-only resources. They are set up through SuperAdmin POEM UI, and tenant users are not allowed to modify them.
+Third section, **SuperAdmin POEM data**, are pages of read-only resources. They are set up through SuperAdmin POEM UI, and tenant users are not allowed to modify them. 
+
+Through [Metric template page](tenant_metric_templates.md), users can import metrics. Through [Package page](tenant_packages.md), users can change versions of packages they use, and metrics will be automatically updated to use the probes provided by the chosen package version.
 
 ### APIKey Permissions
 

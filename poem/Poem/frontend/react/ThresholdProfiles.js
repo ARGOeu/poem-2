@@ -7,11 +7,11 @@ import {
     AutocompleteField,
     NotifyOk,
     FancyErrorMessage,
-    HistoryComponent,
     DiffElement,
     ProfileMainInfo,
     NotifyError,
-    ErrorComponent
+    ErrorComponent,
+    ParagraphTitle
 } from './UIElements';
 import ReactTable from 'react-table';
 import {
@@ -39,9 +39,6 @@ import * as Yup from 'yup';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes, faPlus, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import ReactDiffViewer from 'react-diff-viewer';
-
-
-export const ThresholdsProfilesHistory = HistoryComponent('thresholdsprofile');
 
 
 const ThresholdsSchema = Yup.object().shape({
@@ -255,7 +252,7 @@ const ThresholdsProfilesForm = ({
       profiletype='thresholds'
     />
     <FormGroup>
-      <h4 className="mt-4 p-1 pl-3 text-light text-uppercase rounded" style={{"backgroundColor": "#416090"}}>Thresholds rules</h4>
+      <ParagraphTitle title='Thresholds rules'/>
       <Row>
         <Col md={12}>
           <FieldArray
@@ -1260,7 +1257,6 @@ export class ThresholdsProfilesChange extends Component {
       else {
         let sessionActive = await this.backend.isActiveSession();
         let metricsall = await this.backend.fetchListOfNames('/api/v2/internal/metricsall');
-        let json = await this.backend.fetchData(`/api/v2/internal/thresholdsprofiles/${this.name}`);
         if (this.addview) {
           this.setState({
             loading: false,
@@ -1270,6 +1266,7 @@ export class ThresholdsProfilesChange extends Component {
               sessionActive.userdetails.groups.thresholdsprofiles.length > 0,
           });
         } else {
+          let json = await this.backend.fetchData(`/api/v2/internal/thresholdsprofiles/${this.name}`);
           let thresholdsprofile = await this.webapi.fetchThresholdsProfile(json.apiid);
           this.setState({
             thresholds_profile: {
@@ -1307,9 +1304,10 @@ export class ThresholdsProfilesChange extends Component {
     else if (!loading && thresholds_profile) {
       return (
         <BaseArgoView
-          resourcename='thresholds profile'
+          resourcename={this.publicView ? 'Thresholds profile details' : 'thresholds profile'}
           location={this.location}
           modal={true}
+          history={!this.publicView}
           state={this.state}
           toggle={this.toggleAreYouSure}
           submitperm={write_perm}
@@ -1336,6 +1334,7 @@ export class ThresholdsProfilesChange extends Component {
                   state={this.state}
                   toggleWarningPopOver={this.toggleWarningPopOver}
                   toggleCriticalPopOver={this.toggleCriticalPopOver}
+                  historyview={this.publicView}
                 />
                 {
                   write_perm &&

@@ -1,0 +1,1 @@
+30 3 * * * postgres source /etc/profile.d/venv_poem.sh; workon poem; export LD_LIBRARY_PATH=/opt/rh/rh-postgresql10/root/usr/lib64:$LD_LIBRARY_PATH; export PATH=/opt/rh/rh-postgresql10/root/usr/bin:$PATH; pg_dump postgres > $VIRTUAL_ENV/var/db_backups/poem-db-backup-$(date "+\%Y-\%m-\%d")

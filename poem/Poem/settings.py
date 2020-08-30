@@ -47,6 +47,7 @@ try:
     WEBAPI_METRIC = config.get('WEBAPI', 'MetricProfile')
     WEBAPI_AGGREGATION = config.get('WEBAPI', 'AggregationProfile')
     WEBAPI_THRESHOLDS = config.get('WEBAPI', 'ThresholdsProfile')
+    WEBAPI_OPERATIONS = config.get('WEBAPI', 'OperationsProfile')
 
 
 except NoSectionError as e:
@@ -95,6 +96,7 @@ SHARED_APPS = (
     'rest_auth',
     'Poem.users',
     'Poem.poem_super_admin',
+    'Poem.api',
 )
 
 TENANT_APPS = (

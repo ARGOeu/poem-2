@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component, useState, useEffect } from 'react';
 import { Backend } from './DataManager';
 import { Link } from 'react-router-dom';
 import {
@@ -7,17 +7,18 @@ import {
   NotifyOk,
   FancyErrorMessage,
   DropdownFilterComponent,
-  HistoryComponent,
   DiffElement,
   AutocompleteField,
   NotifyWarn,
   NotifyError,
-  ErrorComponent
+  NotifyInfo,
+  ErrorComponent,
+  ModalAreYouSure,
+  ParagraphTitle
  } from './UIElements';
 import ReactTable from 'react-table';
 import { Formik, Form, Field, FieldArray } from 'formik';
 import {
-  Alert,
   FormGroup,
   Row,
   Col,
@@ -28,15 +29,16 @@ import {
   PopoverBody,
   PopoverHeader,
   InputGroup,
-  InputGroupAddon
+  InputGroupAddon,
+  ButtonToolbar,
+  Badge
 } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faInfoCircle, faMinus, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faInfoCircle, faMinus, faPlus, faCaretDown } from '@fortawesome/free-solid-svg-icons';
 import ReactDiffViewer from 'react-diff-viewer';
-
-export const MetricList = ListOfMetrics('metric');
-export const MetricHistory = HistoryComponent('metric');
-export const MetricVersonCompare = CompareMetrics('metric');
+import CreatableSelect from 'react-select/creatable';
+import { components } from 'react-select';
+import { useQuery, queryCache } from 'react-query';
 
 
 const DefaultFilterComponent = ({value, onChange, field}) => (
@@ -285,364 +287,417 @@ export const ProbeVersionLink = ({probeversion, publicView=false}) => (
 )
 
 
-export function ListOfMetrics(type, imp=false) {
-  return class extends Component {
-    constructor(props) {
-      super(props);
+export const ListOfMetrics = (props) => {
+  const location = props.location;
+  const type = props.type;
+  const publicView = props.publicView;
 
-      this.location = props.location
+  const [searchName, setSearchName] = useState('');
+  const [searchProbeversion, setSearchProbeversion] = useState('');
+  const [searchType, setSearchType] = useState('');
+  const [searchTag, setSearchTag] = useState('');
+  const [searchOSGroups, setSearchOSGroups] = useState('');
+  const [selected, setSelected] = useState({});
+  const [selectAll, setSelectAll] = useState(0);
+  const [areYouSureModal, setAreYouSureModal] = useState(false);
+  const [modalVar, setModalVar] = useState(undefined);
+  const [modalTitle, setModalTitle] = useState(undefined);
+  const [modalMsg, setModalMsg] = useState(undefined);
 
-      if (type === 'metric') {
-        this.state = {
-          loading: false,
-          list_metric: null,
-          list_tags: null,
-          list_groups: null,
-          list_types: null,
-          search_name: '',
-          search_probeversion: '',
-          search_type: '',
-          search_group: '',
-          userDetails: undefined,
-          error: null
-        }
+  const backend = new Backend();
+
+  const { data: listMetrics, error: listMetricsError, isLoading: listMetricsLoading } = useQuery(
+    `${type}_listview`, async () => {
+      let metrics =await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}${type === 'metrics' ? 'metric' : type}`);
+      return metrics;
+    },
+    { retry: false }
+  );
+
+  const { data: listTypes, error: listTypesError, isLoading: listTypesLoading } = useQuery(
+    `${type}_listview_mtypes`, async () => {
+      let types = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}mt${type=='metrictemplates' ? 't' : ''}ypes`);
+      return types;
+    }
+  );
+
+  const { data: listTags, error: listTagsError, isLoading: listTagsLoading } = useQuery(
+    `${type}_listview_tags`, async () => {
+      let tags = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}metrictags`);
+      tags.push('none');
+      return tags;
+    }
+  );
+
+  const { data: listOSGroups, error: listOSGroupsError, isLoading: listOSGroupsLoading } = useQuery(
+    `${type}_listview_osgroups`, async () => {
+      if (type === 'metrics') {
+        let groups = await backend.fetchResult(`/api/v2/internal/${publicView ? 'public_' : ''}usergroups`);
+        return groups['metrics'];
       } else {
-        this.state = {
-          loading: false,
-          list_metric: null,
-          list_types: null,
-          list_ostags: null,
-          search_name: '',
-          search_probeversion: '',
-          search_ostag: '',
-          search_type: '',
-          selected: {},
-          selectAll: 0,
-          userDetails: undefined,
-          error: null
-        }
-      }
-
-      this.backend = new Backend();
-      this.publicView = props.publicView
-      this.doFilter = this.doFilter.bind(this);
-      this.toggleRow = this.toggleRow.bind(this);
-      this.importMetrics = this.importMetrics.bind(this);
+        let ostags = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}ostags`);
+        return ostags;
+      };
     }
+  );
 
-    doFilter(list_metric, field, filter) {
-      return (
-        list_metric.filter(row =>
-          eval(`row.${field}`).toLowerCase().includes(filter.toLowerCase()))
-      )
+  const { data: isTenantSchema, isLoading: isTenantSchemaLoading } = useQuery(
+    `${type}_listview_schema`, async () => {
+      let schema = backend.isTenantSchema();
+      return schema;
     }
+  );
 
-    toggleRow(name) {
-      const newSelected = Object.assign({}, this.state.selected);
-      newSelected[name] = !this.state.selected[name];
-      this.setState({
-        selected: newSelected,
-        selectAll: 2
-      })
+  const { data: userDetails, error: userDetailsError, isLoading: userDetailsLoading } = useQuery(
+    `${type}_listview_userdetails`, async () => {
+      let userdetails = { username: 'Anonymous' };
+      let schema = backend.isTenantSchema();
+      if (!publicView) {
+        let sessionActive = await backend.isActiveSession(schema);
+        if (sessionActive.active)
+          userdetails = sessionActive.userdetails;
+      };
+      return userdetails;
     }
+  );
 
-    toggleSelectAll() {
-      var { list_metric } = this.state;
+  function doFilter(list_metric, field, filter) {
+    return (
+      list_metric.filter(row =>
+        eval(`row.${field}`).toLowerCase().includes(filter.toLowerCase()))
+    )
+  };
 
-      if (this.state.search_name) {
-        list_metric = this.doFilter(list_metric, 'name', this.state.search_name)
-      }
+  function toggleRow(name) {
+    const newSelected = Object.assign({}, selected);
+    newSelected[name] = !selected[name];
+    setSelected(newSelected);
+    setSelectAll(Object.keys(newSelected).every((k) => !newSelected[k]) ? 0 : 2);
+  };
 
-      if (this.state.search_probeversion) {
-        list_metric = this.doFilter(list_metric, 'probeversion', this.state.search_probeversion)
-      }
+  function toggleSelectAll() {
+    var list_metric = listMetrics;
 
-      if (this.state.search_type) {
-        list_metric = this.doFilter(list_metric, 'mtype', this.state.search_type)
-      }
+    if (searchName) {
+      list_metric = doFilter(list_metric, 'name', searchName);
+    };
 
-      if (this.state.search_ostag) {
+    if (searchProbeversion) {
+      list_metric = doFilter(list_metric, 'probeversion', searchProbeversion);
+    };
+
+    if (searchType) {
+      list_metric = doFilter(list_metric, 'mtype', searchType);
+    };
+
+    if (searchTag) {
+      list_metric = list_metric.filter(row =>
+        row.tags.includes(searchTag)
+      );
+    };
+
+    if (searchOSGroups) {
+      type === 'metrics' ?
+        list_metric = doFilter(list_metric, 'group', searchOSGroups)
+      :
         list_metric = list_metric.filter(row =>
-          `${row.ostag.join(', ')}`.includes(this.state.search_ostag)
+          `${row.ostag.join(', ')}`.includes(searchOStag)
+        );
+    };
+
+    let newSelected = {};
+    if (selectAll === 0) {
+      list_metric.forEach(x => {
+        newSelected[x.name] = true;
+      });
+    };
+
+    setSelected(newSelected);
+    setSelectAll(selectAll === 0 ? 1 : 0);
+  };
+
+  function toggleAreYouSure() {
+    setAreYouSureModal(!areYouSureModal);
+  };
+
+  function onDelete() {
+    let selectedMetrics = selected;
+    // get only those metrics whose value is true
+    let mt = Object.keys(selectedMetrics).filter(k => selectedMetrics[k]);
+    if (mt.length > 0 ) {
+      setModalMsg(`Are you sure you want to delete metric template${mt.length > 1 ? 's' : ''} ${mt.join(', ')}?`);
+      setModalTitle(`Delete metric template${mt.length > 1 ? 's' : ''}`);
+      setModalVar(mt);
+      toggleAreYouSure();
+    } else
+      NotifyError({
+        msg: 'No metric templates were selected!',
+        title: 'Error'
+      });
+  };
+
+  async function importMetrics() {
+    let selectedMetrics = selected;
+    // get only those metrics whose value is true
+    let mt = Object.keys(selectedMetrics).filter(k => selectedMetrics[k]);
+    if (mt.length > 0) {
+      let response = await backend.importMetrics({'metrictemplates': mt});
+      let json = await response.json();
+      if ('imported' in json)
+        NotifyOk({msg: json.imported, title: 'Imported'})
+
+      if ('warn' in json)
+        NotifyInfo({msg: json.warn, title: 'Imported with older probe version'});
+
+      if ('err' in json)
+        NotifyWarn({msg: json.err, title: 'Not imported'});
+
+      if ('unavailable' in json)
+        NotifyError({msg: json.unavailable, title: 'Unavailable'});
+
+    } else {
+      NotifyError({
+        msg: 'No metric templates were selected!',
+        title: 'Error'});
+    };
+  };
+
+  async function bulkDeleteMetrics(mt) {
+    //let refreshed_metrics = listMetrics;
+    let response = await backend.bulkDeleteMetrics({'metrictemplates': mt});
+    let json = await response.json();
+    if (response.ok) {
+      //refreshed_metrics = refreshed_metrics.filter(m => !mt.includes(m.name));
+      if ('info' in json)
+        NotifyOk({msg: json.info, title: 'Deleted'});
+
+      if ('warning' in json)
+        NotifyWarn({msg: json.warning, title: 'Deleted'});
+
+      queryCache.setQueryData(`${type}_listview`, (oldData) => oldData.filter(m => !mt.includes(m.name)));
+      setSelectAll(0);
+
+    } else
+      NotifyError({
+        msg: `Error deleting metric template${mt.length > 0 ? 's' : ''}`,
+        title: `Error: ${response.status} ${response.statusText}`
+      });
+  };
+
+  if (listMetricsLoading || listTypesLoading || listTagsLoading || listOSGroupsLoading || isTenantSchemaLoading || userDetailsLoading)
+    return (<LoadingAnim />);
+
+  else if (listMetricsError)
+    return (<ErrorComponent error={listMetricsError.message}/>);
+
+  else if (listTypesError)
+    return (<ErrorComponent error={listTypesError.message}/>);
+
+  else if (listTagsError)
+    return (<ErrorComponent error={listTagsError.message}/>);
+
+  else if (listOSGroupsError)
+    return (<ErrorComponent error={listOSGroupsError.message}/>);
+
+  else if (userDetailsError)
+    return (<ErrorComponent error={userDetailsError.message}/>);
+
+  else {
+    let metriclink = `/ui/${(type === 'metrictemplates' && isTenantSchema && !publicView) ? 'administration/' : ''}${publicView ? 'public_' : ''}${type}/`;
+
+    const columns = [
+      {
+        Header: 'Name',
+        id: 'name',
+        minWidth: 100,
+        accessor: e =>
+          <Link
+          to={
+            (type === 'metrictemplates' && isTenantSchema) ?
+              searchOSGroups === 'CentOS 6' && e.centos6_probeversion ?
+                `${metriclink}${e.name}/history/${e.centos6_probeversion.split(' ')[1].substring(1, e.centos6_probeversion.split(' ')[1].length - 1)}`
+              :
+                (searchOSGroups === 'CentOS 7' && e.centos7_probeversion) ?
+                  `${metriclink}${e.name}/history/${e.centos7_probeversion.split(' ')[1].substring(1, e.centos7_probeversion.split(' ')[1].length - 1)}`
+                :
+                  `${metriclink}${e.name}`
+            :
+              `${metriclink}${e.name}`
+          }
+        >
+            {e.name}
+          </Link>,
+        filterable: true,
+        Filter: (
+          <DefaultFilterComponent
+            field='name'
+            value={searchName}
+            onChange={e => setSearchName(e.target.value)}
+          />
+        )
+      },
+      {
+        Header: 'Probe version',
+        id: 'probeversion',
+        minWidth: 80,
+        accessor: e => (
+          e.probeversion ?
+            <ProbeVersionLink
+              publicView={publicView}
+              probeversion={
+                (type === 'metrictemplates' && isTenantSchema) ?
+                  (searchOSGroups.search_ostag === 'CentOS 6' && e.centos6_probeversion) ?
+                    e.centos6_probeversion
+                  :
+                    (searchOSGroups === 'CentOS 7' && e.centos7_probeversion) ?
+                      e.centos7_probeversion
+                    :
+                      e.probeversion
+                :
+                  e.probeversion
+              }
+            />
+          :
+            ""
+        ),
+        Cell: row =>
+          <div style={{textAlign: 'center'}}>
+            {row.value}
+          </div>,
+        filterable: true,
+        Filter: (
+          <DefaultFilterComponent
+            field='probe version'
+            value={searchProbeversion}
+            onChange={e => setSearchProbeversion(e.target.value)}
+          />
+        )
+      },
+      {
+        Header: 'Type',
+        minWidth: 30,
+        accessor: 'mtype',
+        Cell: row =>
+          <div style={{textAlign: 'center'}}>
+            {row.value}
+          </div>,
+        filterable:true,
+        Filter: (
+          <DropdownFilterComponent
+            value={searchType}
+            onChange={e => setSearchType(e.target.value)}
+            data={listTypes}
+          />
+        )
+      },
+      {
+        Header: 'Tag',
+        minWidth: 30,
+        accessor: 'tags',
+        Cell: row =>
+          <div style={{textAlign: 'center'}}>
+            {
+              row.value.length === 0 ?
+                <Badge color='dark'>none</Badge>
+              :
+                row.value.map((tag, i) =>
+                  <Badge className={'mr-1'} key={i} color={tag === 'internal' ? 'success' : tag === 'deprecated' ? 'danger' : 'secondary'}>
+                    {tag}
+                  </Badge>
+                )
+            }
+          </div>,
+        filterable: true,
+        Filter: (
+          <DropdownFilterComponent
+            value={searchTag}
+            onChange={e => setSearchTag(e.target.value)}
+            data={listTags}
+          />
         )
       }
+    ];
 
-      let newSelected = {};
-      if (this.state.selectAll === 0) {
-        list_metric.forEach(x => {
-          newSelected[x.name] = true;
-        });
-      }
-      this.setState({
-        selected: newSelected,
-        selectAll: this.state.selectAll === 0 ? 1 : 0
-      });
-    }
-
-    async importMetrics() {
-      let selectedMetrics = this.state.selected;
-      // get only those metrics whose value is true
-      let mt = Object.keys(selectedMetrics).filter(k => selectedMetrics[k]);
-      if (mt.length > 0) {
-        let response = await this.backend.importMetrics({'metrictemplates': mt});
-        let json = await response.json();
-        if (json.imported)
-          NotifyOk({msg: json.imported, title: 'Imported'})
-
-        if (json.err)
-          NotifyWarn({msg: json.err, title: 'Not imported'});
-      } else {
-        NotifyError({
-          msg: 'No metric templates were selected!',
-          title: 'Error'});
-      };
-    }
-
-    async componentDidMount() {
-      this.setState({loading: true});
-
-      let response = await this.backend.isTenantSchema();
-      try {
-        if (!this.publicView) {
-          let sessionActive = await this.backend.isActiveSession(response);
-          if (sessionActive.active)
-            if (type === 'metric') {
-              let metrics = await this.backend.fetchData('/api/v2/internal/metric');
-              let groups = await this.backend.fetchResult('/api/v2/internal/usergroups');
-              let types = await this.backend.fetchData('/api/v2/internal/mtypes');
-              this.setState({
-                list_metric: metrics,
-                list_groups: groups['metrics'],
-                list_types: types,
-                loading: false,
-                search_name: '',
-                search_probeversion: '',
-                search_group: '',
-                search_type: '',
-                userDetails: sessionActive.userdetails
-              });
-            } else {
-              let metrictemplates = await this.backend.fetchData(`/api/v2/internal/metrictemplates${imp ? '-import' : ''}`);
-              let types = await this.backend.fetchData('/api/v2/internal/mttypes');
-              let ostags = await this.backend.fetchData('/api/v2/internal/ostags');
-              this.setState({
-                list_metric: metrictemplates,
-                list_types: types,
-                list_ostags: ostags,
-                loading: false,
-                search_name: '',
-                search_probeversion: '',
-                search_type: '',
-                search_ostag: '',
-                userDetails: sessionActive.userdetails
-              });
-            };
-        } else {
-          let metrics = await this.backend.fetchData('/api/v2/internal/public_metric');
-          let groups = await this.backend.fetchResult('/api/v2/internal/public_usergroups');
-          let types = await this.backend.fetchData('/api/v2/internal/public_mtypes');
-          this.setState({
-            list_metric: metrics,
-            list_groups: groups['metrics'],
-            list_types: types,
-            loading: false,
-            search_name: '',
-            search_probeversion: '',
-            search_group: '',
-            search_type: '',
-            userDetails: {username: 'Anonymous'}
-          });
-        }
-      } catch(err) {
-        this.setState({
-          error: err,
-          loading: false
-        });
-      };
-    }
-
-    render() {
-      let metriclink = undefined;
-      if (type === 'metric') {
-        if (this.publicView)
-          metriclink = '/ui/public_metrics/'
-        else
-          metriclink = '/ui/metrics/'
-      } else {
-        if (imp)
-          metriclink = '/ui/administration/metrictemplates/'
-        else
-          metriclink = '/ui/metrictemplates/'
-      }
-
-      const columns = [
+    if (type == 'metrictemplates' && userDetails && userDetails.is_superuser) {
+      columns.splice(
+        0,
+        0,
         {
-          Header: 'Name',
-          id: 'name',
-          minWidth: 100,
-          accessor: e =>
-            <Link
-            to={
-              imp ?
-                this.state.search_ostag === 'CentOS 6' && e.centos6_probeversion ?
-                  `${metriclink}${e.name}/history/${e.centos6_probeversion.split(' ')[1].substring(1, e.centos6_probeversion.split(' ')[1].length - 1)}`
-                :
-                  (this.state.search_ostag === 'CentOS 7' && e.centos7_probeversion) ?
-                    `${metriclink}${e.name}/history/${e.centos7_probeversion.split(' ')[1].substring(1, e.centos7_probeversion.split(' ')[1].length - 1)}`
-                  :
-                    `${metriclink}${e.name}`
-              :
-                `${metriclink}${e.name}`
-            }
-          >
-              {e.name}
-            </Link>,
-          filterable: true,
-          Filter: (
-            <DefaultFilterComponent
-              field='name'
-              value={this.state.search_name}
-              onChange={e => this.setState({search_name: e.target.value})}
-            />
-          )
-        },
-        {
-          Header: 'Probe version',
-          id: 'probeversion',
-          minWidth: 80,
-          accessor: e => (
-            e.probeversion ?
-              <ProbeVersionLink
-                publicView={this.publicView}
-                probeversion={
-                  imp ?
-                    (this.state.search_ostag === 'CentOS 6' && e.centos6_probeversion) ?
-                      e.centos6_probeversion
-                    :
-                      (this.state.search_ostag === 'CentOS 7' && e.centos7_probeversion) ?
-                        e.centos7_probeversion
-                      :
-                        e.probeversion
-                  :
-                    e.probeversion
-                }
-              />
-            :
-              ""
-          ),
-          Cell: row =>
-            <div style={{textAlign: 'center'}}>
-              {row.value}
-            </div>,
-          filterable: true,
-          Filter: (
-            <DefaultFilterComponent
-              field='probe version'
-              value={this.state.search_probeversion}
-              onChange={e => this.setState({search_probeversion: e.target.value})}
-            />
-          )
-        },
-        {
-          Header: 'Type',
-          minWidth: 30,
-          accessor: 'mtype',
-          Cell: row =>
-            <div style={{textAlign: 'center'}}>
-              {row.value}
-            </div>,
-          filterable:true,
-          Filter: (
-            <DropdownFilterComponent
-              value={this.state.mtype}
-              onChange={e => this.setState({search_type: e.target.value})}
-              data={this.state.list_types}
-            />
-          )
-        }
-      ];
-
-      if (imp && this.state.userDetails && this.state.userDetails.is_superuser) {
-        columns.splice(
-          0,
-          0,
-          {
-            id: 'checkbox',
-            accessor: '',
-            Cell: ({original}) => {
-              return (
-                <div style={{display: 'flex', justifyContent: 'center'}}>
-                  <input
-                    type='checkbox'
-                    className='checkbox'
-                    checked={this.state.selected[original.name] === true}
-                    onChange={() => this.toggleRow(original.name)}
-                  />
-                </div>
-              );
-            },
-            Header: 'Select all',
-            Filter: (
-              <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
+          id: 'checkbox',
+          accessor: '',
+          Cell: ({original}) => {
+            return (
+              <div style={{display: 'flex', justifyContent: 'center'}}>
                 <input
                   type='checkbox'
                   className='checkbox'
-                  checked={this.state.selectAll === 1}
-                  ref={input => {
-                    if (input) {
-                      input.indeterminate = this.state.selectAll === 2;
-                    }
-                  }}
-                  onChange={() => this.toggleSelectAll()}
+                  checked={selected[original.name] === true}
+                  onChange={() => toggleRow(original.name)}
                 />
               </div>
-              ),
-            filterable: true,
-            sortable: false,
-            minWidth: 12
-          }
-        )
-      } else {
-        columns.splice(
-          0,
-          0,
-          {
-            Header: '#',
-            id: 'row',
-            minWidth: 12,
-            Cell: (row) =>
-              <div style={{textAlign: 'center'}}>
-                {row.index + 1}
-              </div>
-          }
-        )
-      }
-
-      if (type === 'metric') {
-        columns.splice(
-          4,
-          0,
-          {
-            Header: 'Group',
-            minWidth: 30,
-            accessor: 'group',
-            Cell: row =>
-              <div style={{textAlign: 'center'}}>
-                {row.value}
-              </div>,
-            filterable: true,
-            Filter: (
-              <DropdownFilterComponent
-                value={this.state.search_group}
-                onChange={e => this.setState({search_group: e.target.value})}
-                data={this.state.list_groups}
+            );
+          },
+          Header: `${isTenantSchema ? 'Select all' : 'Delete'}`,
+          Filter: (
+            <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
+              <input
+                type='checkbox'
+                className='checkbox'
+                checked={selectAll === 1}
+                ref={input => {
+                  if (input) {
+                    input.indeterminate = selectAll === 2;
+                  }
+                }}
+                onChange={() => toggleSelectAll()}
               />
-            )
-          }
-        )
-      }
+            </div>
+            ),
+          filterable: true,
+          sortable: false,
+          minWidth: 12
+        }
+      )
+    } else {
+      columns.splice(
+        0,
+        0,
+        {
+          Header: '#',
+          id: 'row',
+          minWidth: 12,
+          Cell: (row) =>
+            <div style={{textAlign: 'center'}}>
+              {row.index + 1}
+            </div>
+        }
+      )
+    };
 
-      if (imp) {
+    if (type === 'metrics') {
+      columns.splice(
+        4,
+        0,
+        {
+          Header: 'Group',
+          minWidth: 30,
+          accessor: 'group',
+          Cell: row =>
+            <div style={{textAlign: 'center'}}>
+              {row.value}
+            </div>,
+          filterable: true,
+          Filter: (
+            <DropdownFilterComponent
+              value={searchOSGroups}
+              onChange={e => setSearchOSGroups(e.target.value)}
+              data={listOSGroups}
+            />
+          )
+        }
+      )
+    } else {
+      if (isTenantSchema) {
         columns.splice(
           4,
           0,
@@ -657,54 +712,84 @@ export function ListOfMetrics(type, imp=false) {
             filterable: true,
             Filter: (
               <DropdownFilterComponent
-                value={this.state.ostag}
-                onChange={e => this.setState({search_ostag: e.target.value})}
-                data={this.state.list_ostags}
+                value={searchOSGroups}
+                onChange={e => setSearchOSGroups(e.target.value)}
+                data={listOSGroups}
               />
             )
           }
         )
-      }
+      };
+    };
 
-      var { loading, list_metric, error } = this.state;
+    var list_metric = listMetrics;
 
-      if (this.state.search_name) {
-        list_metric = this.doFilter(list_metric, 'name', this.state.search_name)
-      }
+    if (searchName) {
+      list_metric = doFilter(list_metric, 'name', searchName);
+    };
 
-      if (this.state.search_probeversion) {
-        list_metric = this.doFilter(list_metric, 'probeversion', this.state.search_probeversion)
-      }
+    if (searchProbeversion) {
+      list_metric = doFilter(list_metric, 'probeversion', searchProbeversion);
+    };
 
-      if (this.state.search_type) {
-        list_metric = this.doFilter(list_metric, 'mtype', this.state.search_type)
-      }
+    if (searchType) {
+      list_metric = doFilter(list_metric, 'mtype', searchType);
+    };
 
-      if (this.state.search_ostag) {
+    if (searchOSGroups) {
+      type === 'metrics' ?
+        list_metric = doFilter(list_metric, 'group', searchOSGroups)
+      :
         list_metric = list_metric.filter(row =>
-          `${row.ostag.join(', ')}`.toLowerCase().includes(this.state.search_ostag.toLowerCase())
-        )
-      }
+          `${row.ostag.join(', ')}`.toLowerCase().includes(searchOStag.toLowerCase())
+        );
+    };
 
-      if (type === 'metric' && this.state.search_group) {
-        list_metric = this.doFilter(list_metric, 'group', this.state.search_group)
-      }
+    if (searchTag) {
+      list_metric = list_metric.filter(row => {
+        if (searchTag === 'none')
+          return row.tags.length === 0;
 
-      if (loading)
-        return (<LoadingAnim />);
+        else
+          return row.tags.includes(searchTag);
+      });
+    };
 
-      else if (error)
-        return (<ErrorComponent error={error}/>);
-
-      else if (!loading && list_metric && this.state.userDetails) {
-        if (type === 'metric') {
-          return (
-            <BaseArgoView
-              resourcename='metric'
-              location={this.location}
-              listview={true}
-              addnew={false}
-            >
+    if (type === 'metrics') {
+      return (
+        <BaseArgoView
+          resourcename='metric'
+          location={location}
+          listview={true}
+          addnew={false}
+        >
+          <ReactTable
+            data={list_metric}
+            columns={columns}
+            className='-highlight'
+            defaultPageSize={50}
+            rowsText='metrics'
+            getTheadThProps={() => ({className: 'table-active font-weight-bold p-2'})}
+          />
+        </BaseArgoView>
+      )
+    } else {
+      if (isTenantSchema)
+        return (
+          <>
+            <div className="d-flex align-items-center justify-content-between">
+              <h2 className="ml-3 mt-1 mb-4">{`Select metric template${userDetails.is_superuser ? '(s) to import' : ' for details'}`}</h2>
+              {
+                userDetails.is_superuser &&
+                  <Button
+                  className='btn btn-secondary'
+                  onClick={() => importMetrics()}
+                    >
+                      Import
+                    </Button>
+              }
+            </div>
+            <div id="argo-contentwrap" className="ml-2 mb-2 mt-2 p-3 border rounded">
               <ReactTable
                 data={list_metric}
                 columns={columns}
@@ -713,72 +798,66 @@ export function ListOfMetrics(type, imp=false) {
                 rowsText='metrics'
                 getTheadThProps={() => ({className: 'table-active font-weight-bold p-2'})}
               />
-            </BaseArgoView>
-          )
-        } else {
-          if (imp)
-            return (
-              <>
-                <div className="d-flex align-items-center justify-content-between">
-                  <h2 className="ml-3 mt-1 mb-4">{`Select metric template${this.state.userDetails.is_superuser ? '(s) to import' : ' for details'}`}</h2>
-                  {
-                    this.state.userDetails.is_superuser &&
-                      <Button
-                      className='btn btn-secondary'
-                      disabled={!this.state.search_ostag}
-                      onClick={() => this.importMetrics()}
-                        >
-                          Import
-                        </Button>
-                  }
-                </div>
-                <div id="argo-contentwrap" className="ml-2 mb-2 mt-2 p-3 border rounded">
-                  {
-                    !this.state.search_ostag &&
-                      <Alert color='danger'>
-                        <center>
-                          <FontAwesomeIcon icon={faInfoCircle} size='lg' color='black'/> &nbsp;
-                          You should choose OS for import.
-                        </center>
-                      </Alert>
-                  }
-                  <ReactTable
-                    data={list_metric}
-                    columns={columns}
-                    className='-highlight'
-                    defaultPageSize={50}
-                    rowsText='metrics'
-                    getTheadThProps={() => ({className: 'table-active font-weight-bold p-2'})}
-                  />
-                </div>
-              </>
-            )
-          else
-            return (
-              <BaseArgoView
-                resourcename='metric template'
-                location={this.location}
-                listview={!imp}
-                importlistview={imp}
-                addnew={true}
-              >
-                <ReactTable
-                  data={list_metric}
-                  columns={columns}
-                  className='-highlight'
-                  defaultPageSize={50}
-                  rowsText='metrics'
-                  getTheadThProps={() => ({className: 'table-active font-weight-bold p-2'})}
-                />
-              </BaseArgoView>
-            )
-        }
-      }
+            </div>
+          </>
+        )
       else
-        return null
-    }
-  }
-}
+        return (
+          <>
+            <ModalAreYouSure
+              isOpen={areYouSureModal}
+              toggle={toggleAreYouSure}
+              title={modalTitle}
+              msg={modalMsg}
+              onYes={() => bulkDeleteMetrics(modalVar)}
+            />
+            <div className="d-flex align-items-center justify-content-between">
+              <h2 className="ml-3 mt-1 mb-4">{'Select metric template to change'}</h2>
+              {
+                <ButtonToolbar>
+                  <Link className={'btn btn-secondary mr-2'} to={location.pathname + '/add'} role='button'>Add</Link>
+                  {
+                    !isTenantSchema &&
+                      <Button
+                        className='btn btn-secondary'
+                        onClick={() => onDelete()}
+                      >
+                        Delete
+                      </Button>
+                  }
+                </ButtonToolbar>
+              }
+            </div>
+            <div id='argo-contentwrap' className='ml-2 mb-2 mt-2 p-3 border rounded'>
+              <ReactTable
+                data={list_metric}
+                columns={columns}
+                className='-highlight'
+                defaultPageSize={50}
+                rowsText='metric templates'
+                getTheadThProps={() => ({className: 'table-active font-weight-bold p-2'})}
+              />
+            </div>
+          </>
+        );
+    };
+  };
+};
+
+
+const styles = {
+  multiValue: (base, state) => {
+    return (state.data.value === 'internal') ? { ...base, backgroundColor: '#d4edda' } : (state.data.value === 'deprecated') ? { ...base, backgroundColor: '#f8d7da' } : base;
+  },
+};
+
+const DropdownIndicator = props => {
+  return (
+    <components.DropdownIndicator {...props}>
+      <FontAwesomeIcon icon={faCaretDown}/>
+    </components.DropdownIndicator>
+  );
+};
 
 
 export const MetricForm =
@@ -791,10 +870,13 @@ export const MetricForm =
     },
     setFieldValue=undefined,
     handleChange,
-    obj='',
-    state=undefined,
+    obj_label='',
+    obj=undefined,
+    probe=undefined,
+    popoverOpen=undefined,
     togglePopOver=undefined,
     onSelect=undefined,
+    onTagChange=undefined,
     isHistory=false,
     isTenantSchema=false,
     addview=false,
@@ -802,6 +884,8 @@ export const MetricForm =
     groups=[],
     metrictemplatelist=[],
     types=[],
+    alltags=[],
+    tags=[],
     publicView=false
   }) =>
     <>
@@ -815,7 +899,7 @@ export const MetricForm =
               name='name'
               className={`form-control ${errors.name && 'border-danger'}`}
               id='name'
-              readOnly={isHistory || isTenantSchema}
+              readOnly={isHistory || isTenantSchema || publicView}
             />
             </InputGroup>
             {
@@ -830,7 +914,7 @@ export const MetricForm =
             <InputGroup>
               <InputGroupAddon addonType='prepend'>Type</InputGroupAddon>
               {
-                (isTenantSchema || isHistory) ?
+                (isTenantSchema || isHistory || publicView) ?
                   <Field
                     type='text'
                     name='type'
@@ -896,7 +980,7 @@ export const MetricForm =
                   />
                 </InputGroup>
               :
-                (isHistory || (isTenantSchema && obj === 'metrictemplate')) ?
+                (isHistory || isTenantSchema || publicView) ?
                   <InputGroup>
                     <InputGroupAddon addonType='prepend'>Probe</InputGroupAddon>
                     <Field
@@ -908,34 +992,16 @@ export const MetricForm =
                     />
                   </InputGroup>
                 :
-                  (isTenantSchema && obj === 'metric') ?
-                    <InputGroup>
-                      <InputGroupAddon addonType='prepend'>Probe</InputGroupAddon>
-                      <Field
-                        component='select'
-                        name='probeversion'
-                        className='form-control custom-select'
-                        id='probeversion'
-                        onChange={e => onSelect('probeversion', e.target.value)}
-                      >
-                        {
-                          probeversions.map((name, i) =>
-                            <option key={i} value={name}>{name}</option>
-                          )
-                        }
-                      </Field>
-                    </InputGroup>
-                  :
-                    <AutocompleteField
-                      setFieldValue={setFieldValue}
-                      lists={probeversions}
-                      icon='probes'
-                      field='probeversion'
-                      val={values.probeversion}
-                      onselect_handler={onSelect}
-                      req={errors.probeversion}
-                      label='Probe'
-                    />
+                  <AutocompleteField
+                    setFieldValue={setFieldValue}
+                    lists={probeversions}
+                    icon='probes'
+                    field='probeversion'
+                    val={values.probeversion}
+                    onselect_handler={onSelect}
+                    req={errors.probeversion}
+                    label='Probe'
+                  />
             }
             {
               errors.probeversion &&
@@ -950,24 +1016,24 @@ export const MetricForm =
                       <>
                         <FontAwesomeIcon
                           id='probe-popover'
-                          hidden={`state.${obj}.mtype` === 'Passive' || addview}
+                          hidden={`${obj}.mtype` === 'Passive' || addview}
                           icon={faInfoCircle}
                           style={{color: '#416090'}}
                         />
                         <Popover
                           placement='bottom'
-                          isOpen={state.popoverOpen}
+                          isOpen={popoverOpen}
                           target='probe-popover'
                           toggle={togglePopOver}
                           trigger='click'
                         >
                           <PopoverHeader>
                             <ProbeVersionLink
-                              probeversion={obj === 'metric' ? state.metric.probeversion : state.metrictemplate.probeversion}
+                              probeversion={obj.probeversion}
                               publicView={publicView}
                             />
                           </PopoverHeader>
-                          <PopoverBody>{state.probe.description}</PopoverBody>
+                          <PopoverBody>{probe.description}</PopoverBody>
                         </Popover>
                       </>
                   }
@@ -980,7 +1046,7 @@ export const MetricForm =
               <Field
                 type='text'
                 className='form-control'
-                value={state.probe.package}
+                value={probe.package}
                 disabled={true}
               />
             </InputGroup>
@@ -989,26 +1055,68 @@ export const MetricForm =
             </FormText>
           </Col>
         </Row>
-      <Row className='mb-4 mt-2'>
-        <Col md={10}>
-          <Label for='description'>Description:</Label>
-          <Field
-            id='description'
-            className='form-control'
-            component='textarea'
-            name='description'
-            disabled={isTenantSchema || isHistory}
-          />
-        </Col>
-      </Row>
         {
-          obj === 'metric' &&
+          (obj_label === 'metrictemplate' && (!isHistory && !isTenantSchema && !publicView)) ?
+            <Row className='mb-4 mt-2'>
+              <Col md={10}>
+                <Label>Tags:</Label>
+                <CreatableSelect
+                  closeMenuOnSelect={false}
+                  isMulti
+                  onChange={onTagChange}
+                  options={alltags}
+                  components={{DropdownIndicator}}
+                  defaultValue={tags}
+                  styles={styles}
+                />
+              </Col>
+            </Row>
+          :
+            <Row className='mb-4 mt-2'>
+              <Col md={10}>
+                <Label>Tags:</Label>
+                <div>
+                  {
+                    tags.length === 0 ?
+                      <Badge color='dark'>none</Badge>
+                    :
+                      (obj_label === 'metrictemplate' && !isHistory) ?
+                        tags.map((tag, i) =>
+                          <Badge className={'mr-1'} key={i} color={tag.value === 'internal' ? 'success' : tag.value === 'deprecated' ? 'danger' : 'secondary'}>
+                            {tag.value}
+                          </Badge>
+                        )
+                      :
+                        tags.map((tag, i) =>
+                          <Badge className={'mr-1'} key={i} color={tag === 'internal' ? 'success' : tag === 'deprecated' ? 'danger' : 'secondary'}>
+                            {tag}
+                          </Badge>
+                        )
+                  }
+                </div>
+              </Col>
+            </Row>
+        }
+        <Row className='mb-4 mt-2'>
+          <Col md={10}>
+            <Label for='description'>Description:</Label>
+            <Field
+              id='description'
+              className='form-control'
+              component='textarea'
+              name='description'
+              disabled={isTenantSchema || isHistory || publicView}
+            />
+          </Col>
+        </Row>
+        {
+          obj_label === 'metric' &&
             <Row className='mb-4'>
               <Col md={3}>
                 <InputGroup>
                   <InputGroupAddon addonType='prepend'>Group</InputGroupAddon>
                   {
-                    isHistory ?
+                    (isHistory || publicView) ?
                       <Field
                         type='text'
                         name='group'
@@ -1039,7 +1147,7 @@ export const MetricForm =
       }
       </FormGroup>
       <FormGroup>
-        <h4 className="mt-2 p-1 pl-3 text-light text-uppercase rounded" style={{"backgroundColor": "#416090"}}>Metric configuration</h4>
+        <ParagraphTitle title='Metric configuration'/>
         <h6 className='mt-4 font-weight-bold text-uppercase' hidden={values.type === 'Passive'}>probe executable</h6>
         <Row>
           <Col md={5}>
@@ -1049,7 +1157,7 @@ export const MetricForm =
             id='probeexecutable'
             className={`form-control ${errors.probeexecutable && 'border-danger'}`}
             hidden={values.type === 'Passive'}
-            readOnly={isTenantSchema || isHistory}
+            readOnly={isTenantSchema || isHistory || publicView}
           />
             {
             errors.probeexecutable &&
@@ -1057,16 +1165,16 @@ export const MetricForm =
           }
           </Col>
         </Row>
-        <InlineFields values={values} errors={errors} field='config' addnew={!isTenantSchema && !isHistory} readonly={obj === 'metrictemplate' && isTenantSchema || isHistory}/>
-        <InlineFields values={values} errors={errors} field='attributes' addnew={!isTenantSchema && !isHistory}/>
-        <InlineFields values={values} errors={errors} field='dependency' addnew={!isTenantSchema && !isHistory}/>
-        <InlineFields values={values} errors={errors} field='parameter' addnew={!isTenantSchema && !isHistory}/>
-        <InlineFields values={values} errors={errors} field='flags' addnew={!isTenantSchema && !isHistory}/>
+        <InlineFields values={values} errors={errors} field='config' addnew={!isTenantSchema && !isHistory} readonly={obj_label === 'metrictemplate' && isTenantSchema || isHistory || publicView}/>
+        <InlineFields values={values} errors={errors} field='attributes' addnew={!isTenantSchema && !isHistory && !publicView}/>
+        <InlineFields values={values} errors={errors} field='dependency' addnew={!isTenantSchema && !isHistory && !publicView}/>
+        <InlineFields values={values} errors={errors} field='parameter' addnew={!isTenantSchema && !isHistory && !publicView}/>
+        <InlineFields values={values} errors={errors} field='flags' addnew={!isTenantSchema && !isHistory && !publicView}/>
         <h6 className='mt-4 font-weight-bold text-uppercase'>parent</h6>
         <Row>
           <Col md={5}>
             {
-            (isTenantSchema || isHistory) ?
+            (isTenantSchema || isHistory || publicView) ?
               <Field
                 type='text'
                 name='parent'
@@ -1082,7 +1190,6 @@ export const MetricForm =
                   field='parent'
                   val={values.parent}
                   icon='metrics'
-                  className={`form-control ${errors.parent && 'border-danger'}`}
                   onselect_handler={onSelect}
                   req={errors.parent}
                 />
@@ -1098,372 +1205,206 @@ export const MetricForm =
     </>
 
 
-export function CompareMetrics(metrictype) {
-  return class extends Component {
-    constructor(props) {
-      super(props);
+export const CompareMetrics = (props) => {
+  const version1 = props.match.params.id1;
+  const version2 = props.match.params.id2;
+  const name = props.match.params.name;
+  const publicView = props.publicView;
+  const type = props.type;
 
-      this.version1 = props.match.params.id1;
-      this.version2 = props.match.params.id2;
-      this.name = props.match.params.name;
+  const [loading, setLoading] = useState(false);
+  const [metric1, setMetric1] = useState(undefined);
+  const [metric2, setMetric2] = useState(undefined);
+  const [error, setError] = useState(undefined);
 
-      this.state = {
-        loading: false,
-        name1: '',
-        probeversion1: '',
-        type1: '',
-        group1: '',
-        description1: '',
-        probeexecutable1: '',
-        parent1: '',
-        config1: '',
-        attribute1: '',
-        dependency1: '',
-        parameter1: '',
-        flags1: '',
-        files1: '',
-        fileparameter1: '',
-        name2: '',
-        probeversion2: '',
-        type2: '',
-        group2: '',
-        description2: '',
-        probeexecutable2: '',
-        parent2: '',
-        config2: '',
-        attribute2: '',
-        dependency2: '',
-        parameter2: '',
-        flags2: '',
-        files2: '',
-        fileparameter2: '',
-        error: null
-      };
+  const backend = new Backend();
 
-      this.backend = new Backend();
-    }
+  useEffect(() => {
+    setLoading(true);
 
-    async componentDidMount() {
-      this.setState({loading: true});
-
-      let url = undefined;
-
-      if (metrictype === 'metric')
-        url = `/api/v2/internal/tenantversion/metric/${this.name}`;
-
-      else
-        url = `/api/v2/internal/version/metrictemplate/${this.name}`;
-
+    async function fetchData() {
       try {
-        let json = await this.backend.fetchData(url);
-        let name1 = '';
-        let probeversion1 = '';
-        let type1 = '';
-        let group1 = '';
-        let description1 = '';
-        let probeexecutable1 = '';
-        let parent1 = '';
-        let config1 = '';
-        let attribute1 = '';
-        let dependency1 = '';
-        let flags1 = '';
-        let files1 = '';
-        let parameter1 = '';
-        let fileparameter1 = '';
-        let name2 = '';
-        let probeversion2 = '';
-        let type2 = '';
-        let group2 = '';
-        let description2 = '';
-        let probeexecutable2 = '';
-        let parent2 = '';
-        let config2 = '';
-        let attribute2 = '';
-        let dependency2 = '';
-        let flags2 = '';
-        let files2 = '';
-        let parameter2 = '';
-        let fileparameter2 = '';
+        let url = `/api/v2/internal/${publicView ? 'public_' : ''}${type === 'metric' ? 'tenant' : ''}version/${type}/${name}`;
+        let json = await backend.fetchData(url);
 
         json.forEach((e) => {
-          if (e.version == this.version1) {
-            name1 = e.fields.name;
-            probeversion1 = e.fields.probeversion;
-            type1 = e.fields.mtype;
-            if (metrictype === 'metric') {
-              group1 = e.fields.group;
-              dependency1 = e.fields.dependancy;
-            } else
-              dependency1 = e.fields.dependency;
-            description1 = e.fields.description;
-            probeexecutable1 = e.fields.probeexecutable;
-            parent1 = e.fields.parent;
-            config1 = e.fields.config;
-            attribute1 = e.fields.attribute;
-            parameter1 = e.fields.parameter;
-            flags1 = e.fields.flags; files1 = e.fields.files;
-            fileparameter1 = e.fields.fileparameter;
-          } else if (e.version == this.version2) {
-              name2 = e.fields.name;
-              probeversion2 = e.fields.probeversion;
-              type2 = e.fields.mtype;
-              if (metrictype === 'metric') {
-                group2 = e.fields.group;
-                dependency2 = e.fields.dependancy;
-              } else
-                dependency2 = e.fields.dependency;
-              description2 = e.fields.description;
-              probeexecutable2 = e.fields.probeexecutable;
-              parent2 = e.fields.parent;
-              config2 = e.fields.config;
-              attribute2 = e.fields.attribute;
-              flags2 = e.fields.flags;
-              files2 = e.fields.files;
-              parameter2 = e.fields.parameter;
-              fileparameter2 = e.fields.fileparameter;
-          }
-        });
-        this.setState({
-          name1: name1,
-          probeversion1: probeversion1,
-          type1: type1,
-          group1: group1,
-          description1: description1,
-          probeexecutable1: probeexecutable1,
-          parent1: parent1,
-          config1: config1,
-          attribute1: attribute1,
-          dependency1: dependency1,
-          parameter1: parameter1,
-          flags1: flags1,
-          files1: files1,
-          fileparameter1: fileparameter1,
-          name2: name2,
-          probeversion2: probeversion2,
-          type2: type2,
-          group2: group2,
-          description2: description2,
-          probeexecutable2: probeexecutable2,
-          parent2: parent2,
-          config2: config2,
-          attribute2: attribute2,
-          dependency2: dependency2,
-          parameter2: parameter2,
-          flags2: flags2,
-          files2: files2,
-          fileparameter2: fileparameter2,
-          loading: false
+          if (e.version == version1)
+            setMetric1(e.fields);
+
+          if (e.version == version2)
+            setMetric2(e.fields);
         });
       } catch(err) {
-        this.setState({
-          error: err,
-          loading: false
-        });
+        setError(err)
       };
-    }
-
-    render() {
-      var { name1, name2, probeversion1, probeversion2, type1, type2,
-        probeexecutable1, probeexecutable2, parent1, parent2, config1,
-        config2, attribute1, attribute2, dependency1, dependency2,
-        parameter1, parameter2, flags1, flags2, group1, group2, loading,
-        description1, description2, error } = this.state;
-
-      if (loading)
-        return <LoadingAnim/>;
-
-      else if (error)
-        return (<ErrorComponent error={error}/>);
-
-      else if (!loading && name1 && name2) {
-        return (
-          <React.Fragment>
-            <div className='d-flex align-items-center justify-content-between'>
-              <h2 className='ml-3 mt-1 mb-4'>{`Compare ${this.name}`}</h2>
-            </div>
-            {
-              (name1 !== name2) &&
-                <DiffElement title='name' item1={name1} item2={name2}/>
-            }
-            {
-              (probeversion1 !== probeversion2) &&
-                <DiffElement title='probe version' item1={probeversion1} item2={probeversion2}/>
-            }
-            {
-              (type1 !== type2) &&
-                <DiffElement title='type' item1={type1} item2={type2}/>
-            }
-            {
-              (group1 && group2 && group1 !== group2) &&
-                <DiffElement title='group' item1={group1} item2={group2}/>
-            }
-            {
-              (description1 !== description2) &&
-                <DiffElement title='description' item1={description1} item2={description2}/>
-            }
-            {
-              (probeexecutable1 !== probeexecutable2) &&
-                <DiffElement title='probe executable' item1={probeexecutable1} item2={probeexecutable2}/>
-            }
-            {
-              (parent1 !== parent2) &&
-                <DiffElement title='parent' item1={parent1} item2={parent2}/>
-            }
-            {
-              (!arraysEqual(config1, config2)) &&
-                <InlineDiffElement title='config' item1={config1} item2={config2}/>
-            }
-            {
-              (!arraysEqual(attribute1, attribute2)) &&
-                <InlineDiffElement title='attribute' item1={attribute1} item2={attribute2}/>
-            }
-            {
-              (!arraysEqual(dependency1, dependency2)) &&
-                <InlineDiffElement title='dependency' item1={dependency1} item2={dependency2}/>
-            }
-            {
-              (!arraysEqual(parameter1, parameter2)) &&
-                <InlineDiffElement title='parameter' item1={parameter1} item2={parameter2}/>
-            }
-            {
-              (!arraysEqual(flags1, flags2)) &&
-                <InlineDiffElement title='flags' item1={flags1} item2={flags2}/>
-            }
-          </React.Fragment>
-        );
-      } else
-        return null;
-    }
-  };
-}
-
-
-export class MetricChange extends Component {
-  constructor(props) {
-    super(props);
-
-    this.name = props.match.params.name;
-    this.addview = props.addview;
-    this.location = props.location;
-    this.history = props.history;
-    this.backend = new Backend();
-    this.publicView = props.publicView;
-
-    this.state = {
-      metric: {},
-      probe: {},
-      groups: [],
-      probeversions: [],
-      allprobeversions: [],
-      metrictemplateversions: [],
-      loading: false,
-      popoverOpen: false,
-      write_perm: false,
-      areYouSureModal: false,
-      modalFunc: undefined,
-      modalTitle: undefined,
-      modalMsg: undefined,
-      error: null
+      setLoading(false);
     };
 
-    this.toggleAreYouSure = this.toggleAreYouSure.bind(this);
-    this.toggleAreYouSureSetModal = this.toggleAreYouSureSetModal.bind(this);
-    this.onSubmitHandle = this.onSubmitHandle.bind(this);
-    this.doChange = this.doChange.bind(this);
-    this.doDelete = this.doDelete.bind(this);
-    this.togglePopOver = this.togglePopOver.bind(this);
-    this.onSelect = this.onSelect.bind(this);
-  }
+    fetchData();
+  }, []);
 
-  togglePopOver() {
-    this.setState({
-      popoverOpen: !this.state.popoverOpen
-    })
-  }
+  if (loading)
+    return (<LoadingAnim/>);
 
-  toggleAreYouSure() {
-    this.setState(prevState =>
-      ({areYouSureModal: !prevState.areYouSureModal}));
-  }
+  else if (error)
+    return (<ErrorComponent error={error}/>);
 
-  toggleAreYouSureSetModal(msg, title, onyes) {
-    this.setState(prevState =>
-      ({areYouSureModal: !prevState.areYouSureModal,
-        modalFunc: onyes,
-        modalMsg: msg,
-        modalTitle: title,
-      }));
-  }
+  else if (!loading && metric1 && metric2) {
+    return (
+      <React.Fragment>
+        <div className='d-flex align-items-center justify-content-between'>
+          <h2 className='ml-3 mt-1 mb-4'>{`Compare ${name}`}</h2>
+        </div>
+        {
+          (metric1.name !== metric2.name) &&
+            <DiffElement title='name' item1={metric1.name} item2={metric2.name}/>
+        }
+        {
+          (metric1.probeversion !== metric2.probeversion) &&
+            <DiffElement title='probe version' item1={metric1.probeversion} item2={metric2.probeversion}/>
+        }
+        {
+          (metric1.type !== metric2.type) &&
+            <DiffElement title='type' item1={metric1.type} item2={metric2.type}/>
+        }
+        {
+          (!arraysEqual(metric1.tags, metric2.tags)) &&
+            <DiffElement title='tags' item1={metric1.tags} item2={metric2.tags}/>
+        }
+        {
+          (type === 'metric' && metric1.group !== metric2.group) &&
+            <DiffElement title='group' item1={metric1.group} item2={metric2.group}/>
+        }
+        {
+          (metric1.description !== metric2.description) &&
+            <DiffElement title='description' item1={metric1.description} item2={metric2.description}/>
+        }
+        {
+          (metric1.probeexecutable !== metric2.probeexecutable) &&
+            <DiffElement title='probe executable' item1={metric1.probeexecutable} item2={metric2.probeexecutable}/>
+        }
+        {
+          (metric1.parent !== metric2.parent) &&
+            <DiffElement title='parent' item1={metric1.parent} item2={metric2.parent}/>
+        }
+        {
+          (!arraysEqual(metric1.config, metric2.config)) &&
+            <InlineDiffElement title='config' item1={metric1.config} item2={metric2.config}/>
+        }
+        {
+          (!arraysEqual(metric1.attribute, metric2.attribute)) &&
+            <InlineDiffElement title='attribute' item1={metric1.attribute} item2={metric2.attribute}/>
+        }
+        {
+          (type === 'metrictemplate' && !arraysEqual(metric1.dependency, metric2.dependency)) &&
+            <InlineDiffElement title='dependency' item1={metric1.dependency} item2={metric2.dependency}/>
+        }
+        {
+          (type === 'metric' && !arraysEqual(metric1.dependancy, metric2.dependancy)) &&
+            <InlineDiffElement title='dependency' item1={metric1.dependancy} item2={metric2.dependancy}/>
+        }
+        {
+          (!arraysEqual(metric1.parameter, metric2.parameter)) &&
+            <InlineDiffElement title='parameter' item1={metric1.parameter} item2={metric2.parameter}/>
+        }
+        {
+          (!arraysEqual(metric1.flags, metric2.flags)) &&
+            <InlineDiffElement title='flags' item1={metric1.flags} item2={metric2.flags}/>
+        }
+      </React.Fragment>
+    );
+  } else
+    return null;
+};
 
-  onSelect(field, value) {
-    let metric = this.state.metric;
-    let metrictemplateversions = this.state.metrictemplateversions;
-    metrictemplateversions.forEach(mt => {
-      if (mt.fields.probeversion === value) {
-        let updated_metric = {
-          name: mt.fields.name,
-          probeversion: mt.fields.probeversion,
-          description: mt.fields.description,
-          group: metric.group,
-          mtype: mt.fields.mtype,
-          probeexecutable: mt.fields.probeexecutable,
-          parent: mt.fields.parent,
-          config: mt.fields.config,
-          attribute: mt.fields.attribute,
-          dependancy: mt.fields.dependency,
-          parameter: mt.fields.parameter,
-          flags: mt.fields.flags,
-          files: mt.fields.flags,
-          files: mt.fields.files,
-          fileparameter: mt.fields.fileparameter
-        };
-        let probe = {};
-        this.state.allprobeversions.forEach((e) => {
-          if (e.object_repr === value) {
-            probe = e.fields;
-          };
+
+export const MetricChange = (props) => {
+  const name = props.match.params.name;
+  const location = props.location;
+  const history = props.history;
+  const publicView = props.publicView;
+  const querykey = `metric_${name}_${publicView ? 'publicview' : 'changeview'}`;
+
+  const backend = new Backend();
+
+  const [popoverOpen, setPopoverOpen] = useState(false);
+  const [areYouSureModal, setAreYouSureModal] = useState(false);
+  const [modalTitle, setModalTitle] = useState(undefined);
+  const [modalMsg, setModalMsg] = useState(undefined);
+  const [modalFlag, setModalFlag] = useState(undefined);
+  const [formValues, setFormValues] = useState(undefined);
+
+  const { data: metric, error: metricError, isLoading: metricLoading } = useQuery(
+    `${querykey}_metric`, async () => {
+      let metric = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}metric/${name}`);
+      return metric;
+    }
+  );
+
+  const { data: session, error: sessionError, isLoading: sessionLoading } = useQuery(
+    `${querykey}_session`, async () => {
+      let session = await backend.isActiveSession();
+      return session;
+    }
+  );
+
+  const { data: probe, error: probeError, isLoading: probeLoading } = useQuery(
+    `${querykey}_probe`, async () => {
+      let probe = {};
+      let probes = [];
+      if (metric.probeversion)
+        probes = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}version/probe/${metric.probeversion.split(' ')[0]}`);
+        probes.forEach((p) => {
+          if (p.object_repr === metric.probeversion)
+            probe = p.fields;
         });
-        this.setState({
-          metric: updated_metric,
-          probe: probe
-        });
-      }
-    })
-  }
 
-  onSubmitHandle(values, actions) {
-    let msg = 'Are you sure you want to change metric?';
-    let title = 'Change metric';
+      return probe;
+    },
+    { enabled: metric }
+  );
 
-    this.toggleAreYouSureSetModal(msg, title,
-      () => this.doChange(values, actions))
-  }
+  function togglePopOver() {
+    setPopoverOpen(!popoverOpen);
+  };
 
-  async doChange(values, actions) {
-    let response = await this.backend.changeObject(
+  function toggleAreYouSure() {
+    setAreYouSureModal(!areYouSureModal);
+  };
+
+  function onSubmitHandle(values, actions) {
+    setModalMsg('Are you sure you want to change metric?');
+    setModalTitle('Change metric');
+    setFormValues(values);
+    setModalFlag('submit');
+    toggleAreYouSure();
+  };
+
+  async function doChange() {
+    let response = await backend.changeObject(
       '/api/v2/internal/metric/',
       {
-        name: values.name,
-        mtype: values.type,
-        group: values.group,
-        description: values.description,
-        parent: values.parent,
-        probeversion: values.probeversion,
-        probeexecutable: values.probeexecutable,
-        config: values.config,
-        attribute: values.attributes,
-        dependancy: values.dependency,
-        flags: values.flags,
-        files: values.file_attributes,
-        parameter: values.parameter,
-        fileparameter: values.file_parameters
+        name: formValues.name,
+        mtype: formValues.type,
+        group: formValues.group,
+        description: formValues.description,
+        parent: formValues.parent,
+        probeversion: formValues.probeversion,
+        probeexecutable: formValues.probeexecutable,
+        config: formValues.config,
+        attribute: formValues.attributes,
+        dependancy: formValues.dependency,
+        flags: formValues.flags,
+        files: formValues.files,
+        parameter: formValues.parameter,
+        fileparameter: formValues.file_parameters
       }
     );
     if (response.ok) {
       NotifyOk({
         msg: 'Metric successfully changed',
         title: 'Changed',
-        callback: () => this.history.push('/ui/metrics')
+        callback: () => history.push('/ui/metrics')
       })
     } else {
       let change_msg = '';
@@ -1478,15 +1419,15 @@ export class MetricChange extends Component {
         msg: change_msg
       });
     };
-  }
+  };
 
-  async doDelete(name) {
-    let response = await this.backend.deleteObject(`/api/v2/internal/metric/${name}`);
+  async function doDelete() {
+    let response = await backend.deleteObject(`/api/v2/internal/metric/${name}`);
     if (response.ok) {
       NotifyOk({
         msg: 'Metric successfully deleted',
         title: 'Deleted',
-        callback: () => this.history.push('/ui/metrics')
+        callback: () => history.push('/ui/metrics')
       });
     } else {
       let msg = '';
@@ -1501,112 +1442,47 @@ export class MetricChange extends Component {
         msg: msg
       });
     };
-  }
+  };
 
-  async componentDidMount() {
-    this.setState({loading: true});
+  if (metricLoading || sessionLoading || probeLoading)
+    return (<LoadingAnim/>);
 
-    try {
-      if (!this.addview) {
-        if (!this.publicView) {
-          let session = await this.backend.isActiveSession();
-          let metrics = await this.backend.fetchData(`/api/v2/internal/metric/${this.name}`);
-          let metrictemplateversions = await this.backend.fetchData(`/api/v2/internal/version/metrictemplate/${this.name}`);
-          if (session.active)
-            if (metrics.probeversion) {
-              let probe = await this.backend.fetchData(`/api/v2/internal/version/probe/${metrics.probeversion.split(' ')[0]}`);
-              let fields = {};
-              let probeversions = [];
-              probe.forEach((e) => {
-                probeversions.push(e.object_repr);
-                if (e.object_repr === metrics.probeversion) {
-                  fields = e.fields;
-                }
-              })
-              this.setState({
-                metric: metrics,
-                probe: fields,
-                probeversions: probeversions,
-                allprobeversions: probe,
-                metrictemplateversions: metrictemplateversions,
-                groups: session.userdetails.groups.metrics,
-                loading: false,
-                write_perm: session.userdetails.is_superuser ||
-                  session.userdetails.groups.metrics.indexOf(metrics.group) >= 0,
-              });
-            } else {
-              this.setState({
-                metric: metrics,
-                groups: session.userdetails.groups.metrics,
-                loading: false,
-                write_perm: session.userdetails.is_superuser ||
-                  session.userdetails.groups.metrics.indexOf(metrics.group) >= 0,
-              });
-            };
-        } else {
-          let metrics = await this.backend.fetchData(`/api/v2/internal/public_metric/${this.name}`);
-          let metrictemplateversions = await this.backend.fetchData(`/api/v2/internal/public_version/metrictemplate/${this.name}`);
-          if (metrics.probeversion) {
-            let probe = await this.backend.fetchData(`/api/v2/internal/public_version/probe/${metrics.probeversion.split(' ')[0]}`);
-            let fields = {};
-            let probeversions = [];
-            probe.forEach((e) => {
-              probeversions.push(e.object_repr);
-              if (e.object_repr === metrics.probeversion) {
-                fields = e.fields;
-              }
-            })
-            this.setState({
-              metric: metrics,
-              probe: fields,
-              probeversions: probeversions,
-              allprobeversions: probe,
-              metrictemplateversions: metrictemplateversions,
-              groups: [],
-              loading: false,
-              write_perm: false,
-            });
-          } else {
-            this.setState({
-              metric: metrics,
-              groups: [],
-              loading: false,
-              write_perm: false,
-            });
-          };
-        }
-      };
-    } catch(err) {
-      this.setState({
-        error: err,
-        loading: false
-      });
+  else if (metricError)
+    return (<ErrorComponent error={metricError}/>);
+
+  else if (sessionError)
+    return (<ErrorComponent error={sessionError}/>);
+
+  else if (probeError)
+    return (<ErrorComponent error={probeError}/>);
+
+  else {
+    var groups = [];
+    var writePerm = false;
+    if (session.active) {
+      groups = session.userdetails.groups.metrics;
+      writePerm = session.userdetails.is_superuser || session.userdetails.groups.metrics.indexOf(metric.group >= 0);
     };
-  }
-
-  render() {
-    const { metric, probeversions, groups, loading, write_perm, error } = this.state;
 
     if (!groups.includes(metric.group))
       groups.push(metric.group);
 
-    if (loading)
-      return (<LoadingAnim/>)
 
-    else if (error)
-      return (<ErrorComponent error={error}/>);
-
-    else if (!loading) {
-      return (
+    return (
+      <React.Fragment>
+        <ModalAreYouSure
+          isOpen={areYouSureModal}
+          toggle={toggleAreYouSure}
+          title={modalTitle}
+          msg={modalMsg}
+          onYes={modalFlag === 'submit' ? doChange : modalFlag === 'delete' ? doDelete : undefined}
+        />
         <BaseArgoView
-          resourcename='metric'
-          location={this.location}
-          addview={this.addview}
-          modal={true}
-          state={this.state}
-          toggle={this.toggleAreYouSure}
-          publicview={this.publicView}
-          submitperm={write_perm}>
+          resourcename={(publicView) ? 'Metric details' : 'metric'}
+          location={location}
+          history={!publicView}
+          publicview={publicView}
+          submitperm={writePerm}>
           <Formik
             enableReinitialize={true}
             initialValues = {{
@@ -1622,32 +1498,35 @@ export class MetricChange extends Component {
               dependency: metric.dependancy,
               parameter: metric.parameter,
               flags: metric.flags,
+              files: metric.files,
               file_attributes: metric.files,
               file_parameters: metric.fileparameter
             }}
-            onSubmit = {(values, actions) => this.onSubmitHandle(values, actions)}
+            onSubmit = {(values, actions) => onSubmitHandle(values, actions)}
             render = {props => (
               <Form>
                 <MetricForm
                   {...props}
-                  obj='metric'
+                  obj_label='metric'
+                  obj={metric}
+                  probe={probe}
+                  tags={metric.tags}
                   isTenantSchema={true}
-                  state={this.state}
-                  onSelect={this.onSelect}
-                  togglePopOver={this.togglePopOver}
-                  probeversions={probeversions}
+                  popoverOpen={popoverOpen}
+                  togglePopOver={togglePopOver}
                   groups={groups}
-                  publicView={this.publicView}
+                  publicView={publicView}
                 />
                 {
-                  (write_perm) &&
+                  (writePerm) &&
                     <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
                       <Button
                         color="danger"
                         onClick={() => {
-                          this.toggleAreYouSureSetModal('Are you sure you want to delete Metric?',
-                          'Delete metric',
-                          () => this.doDelete(props.values.name))
+                          setModalMsg('Are you sure you want to delete metric?')
+                          setModalTitle('Delete metric')
+                          setModalFlag('delete');
+                          toggleAreYouSure();
                         }}
                       >
                         Delete
@@ -1659,133 +1538,94 @@ export class MetricChange extends Component {
             )}
           />
         </BaseArgoView>
-      )
-    }
-  }
-}
+      </React.Fragment>
+    );
+  };
+};
 
 
-export class MetricVersionDetails extends Component {
-  constructor(props) {
-    super(props);
+export const MetricVersionDetails = (props) => {
+  const name = props.match.params.name;
+  const version = props.match.params.version;
 
-    this.name = props.match.params.name;
-    this.version = props.match.params.version;
+  const backend = new Backend();
 
-    this.backend = new Backend();
+  const [loading, setLoading] = useState(false);
+  const [metric, setMetric] = useState(null);
+  const [probe, setProbe] = useState({'package': ''})
+  const [error, setError] = useState(null);
 
-    this.state = {
-      name: '',
-      probeversion: '',
-      probe: {'package': ''},
-      description: '',
-      mtype: '',
-      group: '',
-      probeexecutable: '',
-      parent: '',
-      config: [],
-      attribute: [],
-      dependancy: [],
-      parameter: [],
-      flags: [],
-      files: [],
-      fileparameter: [],
-      loading: false,
-      error: null
+  useEffect(() => {
+    setLoading(true);
+
+    async function fetchData() {
+      try {
+        let json = await backend.fetchData(`/api/v2/internal/tenantversion/metric/${name}`);
+        json.forEach(async (e) => {
+          if (e.version == version) {
+            let probes = await backend.fetchData(`/api/v2/internal/version/probe/${e.fields.probeversion.split(' ')[0]}`);
+            probes.forEach(p => {
+              if (p.object_repr === e.fields.probeversion)
+                setProbe(p.fields);
+            });
+            let m = e.fields;
+            m.date_created = e.date_created;
+            setMetric(m);
+          };
+        });
+      } catch(err) {
+        setError(err)
+      };
+
+      setLoading(false);
     };
-  }
 
-  async componentDidMount() {
-    this.setState({loading: true});
+    fetchData();
+  }, []);
 
-    try {
-      let json = await this.backend.fetchData(`/api/v2/internal/tenantversion/metric/${this.name}`);
-      json.forEach(async (e) => {
-        if (e.version == this.version) {
-          let probes = await this.backend.fetchData(`/api/v2/internal/version/probe/${e.fields.probeversion.split(' ')[0]}`);
-          let probe = {};
-          probes.forEach(p => {
-            if (p.object_repr === e.fields.probeversion)
-              probe = p.fields;
-          });
-          this.setState({
-            name: e.fields.name,
-            probeversion: e.fields.probeversion,
-            probe: probe,
-            description: e.fields.description,
-            type: e.fields.mtype,
-            group: e.fields.group,
-            probeexecutable: e.fields.probeexecutable,
-            parent: e.fields.parent,
-            config: e.fields.config,
-            attribute: e.fields.attribute,
-            dependancy: e.fields.dependancy,
-            parameter: e.fields.parameter,
-            flags: e.fields.flags,
-            files: e.fields.files,
-            fileparameter: e.fields.fileparameter,
-            date_created: e.date_created,
-            loading: false
-          });
-        };
-      });
-    } catch(err) {
-      this.setState({
-        error: err,
-        loading: false
-      });
-    };
-  }
+  if (loading)
+    return (<LoadingAnim/>);
 
-  render() {
-    const { name, probeversion, type, group, probeexecutable, parent, config,
-      attribute, dependancy, parameter, flags, files, fileparameter, date_created,
-      loading, description, error } = this.state;
+  else if (error)
+    return (<ErrorComponent error={error}/>);
 
-    if (loading)
-      return (<LoadingAnim/>);
-
-    else if (error)
-      return (<ErrorComponent error={error}/>);
-
-    else if (!loading && name) {
-      return (
-        <BaseArgoView
-          resourcename={`${name} (${date_created})`}
-          infoview={true}
-        >
-          <Formik
-            initialValues = {{
-              name: name,
-              probeversion: probeversion,
-              type: type,
-              group: group,
-              description: description,
-              probeexecutable: probeexecutable,
-              parent: parent,
-              config: config,
-              attributes: attribute,
-              dependency: dependancy,
-              parameter: parameter,
-              flags: flags,
-              files: files,
-              fileparameter: fileparameter
-            }}
-            render = {props => (
-              <Form>
-                <MetricForm
-                  {...props}
-                  obj='metric'
-                  state={this.state}
-                  isHistory={true}
-                />
-              </Form>
-            )}
-            />
-        </BaseArgoView>
-      )
-    }
-    else
-      return null
-  }
-}
+  else if (!loading && metric) {
+    return (
+      <BaseArgoView
+        resourcename={`${name} (${metric.date_created})`}
+        infoview={true}
+      >
+        <Formik
+          initialValues = {{
+            name: name,
+            probeversion: metric.probeversion,
+            type: metric.mtype,
+            group: metric.group,
+            description: metric.description,
+            probeexecutable: metric.probeexecutable,
+            parent: metric.parent,
+            config: metric.config,
+            attributes: metric.attribute,
+            dependency: metric.dependancy,
+            parameter: metric.parameter,
+            flags: metric.flags,
+            files: metric.files,
+            fileparameter: metric.fileparameter
+          }}
+          render = {props => (
+            <Form>
+              <MetricForm
+                {...props}
+                obj_label='metric'
+                isHistory={true}
+                probe={probe}
+                tags={metric.tags}
+              />
+            </Form>
+          )}
+          />
+      </BaseArgoView>
+    );
+  } else
+    return null;
+};

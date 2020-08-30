@@ -22,6 +22,7 @@ SecretKeyPath = %(VENV)s/etc/poem/secret_key
 MetricProfile = https://api.devel.argo.grnet.gr/api/v2/metric_profiles
 AggregationProfile = https://api.devel.argo.grnet.gr/api/v2/aggregation_profiles
 ThresholdsProfile = https://api.devel.argo.grnet.gr/api/v2/thresholds_profiles
+OperationsProfile = https://api.devel.argo.grnet.gr/api/v2/operations_profiles
 
 [GENERAL_ALL]
 PublicPage = tenant.com
@@ -45,6 +46,4 @@ Email =
 UsePlainHttpAuth = False
 HttpUser = xxxx
 HttpPass = xxxx
-ServiceType = https://goc.egi.eu/gocdbpi/private/?method=get_service_types
-VO = http://operations-portal.egi.eu/xml/voIDCard/public/all/true
-Services = https://eosc-hub-devel.agora.grnet.gr/api/v2/service-types/
+ServiceType = https://goc.egi.eu/gocdbpi/public/?method=get_service_types
