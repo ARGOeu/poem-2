@@ -5,7 +5,9 @@ import { useTable, usePagination } from 'react-table';
 import {
   Pagination,
   PaginationItem,
-  PaginationLink
+  PaginationLink,
+  Row,
+  Col
 } from 'reactstrap';
 
 
@@ -36,64 +38,79 @@ function Table({ columns, data }) {
   // Render the UI for your table
   return (
     <React.Fragment>
-      <table className="table table-bordered table-sm table-hover">
-        <thead className="table-active align-middle text-center">
-          {headerGroups.map((headerGroup, thi) => (
-            <tr key={thi}>
-              {headerGroup.headers.map((column, tri) => (
-                <th key={tri}>{column.render('Header')}</th>
+      <Row>
+        <Col>
+          <table className="table table-bordered table-hover">
+            <thead className="table-active align-middle text-center">
+              {headerGroups.map((headerGroup, thi) => (
+                <tr key={thi}>
+                  {headerGroup.headers.map((column, tri) => (
+                    <th key={tri}>{column.render('Header')}</th>
+                  ))}
+                </tr>
               ))}
-            </tr>
-          ))}
-        </thead>
-        <tbody>
-          {page.map((row, row_index) => {
-            prepareRow(row)
-            return (
-              <tr key={row_index}>
-                {row.cells.map((cell, cell_index) => {
-                  if (cell_index === 0)
-                    return <td key={cell_index} className="align-middle text-center table-light">{row_index + 1}</td>
-                  else
-                    return <td key={cell_index} className="align-middle table-light">{cell.render('Cell')}</td>
-                })}
-              </tr>
-            )
-          })}
-        </tbody>
-      </table>
-      <Pagination>
-        <PaginationItem>
-          <PaginationLink first onClick={() => gotoPage(0)} disabled={!canPreviousPage}/>
-        </PaginationItem>
-        <PaginationItem>
-          <PaginationLink previous onClick={() => previousPage()} disabled={!canPreviousPage}/>
-        </PaginationItem>
-        <PaginationItem>
-          <PaginationLink next onClick={() => nextPage()} disabled={!canNextPage}/>
-        </PaginationItem>
-        <PaginationItem>
-          <PaginationLink last onClick={() => gotoPage(pageCount - 1)} disabled={!canNextPage}/>
-        </PaginationItem>
-        <span>
-          Page{' '}
-          <strong>
-            {pageIndex + 1} of {pageOptions.length}
-          </strong>{' '}
-        </span>
-        <select
-          value={pageSize}
-          onChange={e => {
-            setPageSize(Number(e.target.value))
-          }}
-        >
-          {[10, 20, 30, 40, 50].map(pageSize => (
-            <option key={pageSize} value={pageSize}>
-              Show {pageSize}
-            </option>
-          ))}
-        </select>
-      </Pagination>
+            </thead>
+            <tbody>
+              {page.map((row, row_index) => {
+                prepareRow(row)
+                return (
+                  <tr key={row_index}>
+                    {row.cells.map((cell, cell_index) => {
+                      if (cell_index === 0)
+                        return <td key={cell_index} className="align-middle text-center table-light">{row_index + 1}</td>
+                      else
+                        return <td key={cell_index} className="align-middle table-light">{cell.render('Cell')}</td>
+                    })}
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </Col>
+      </Row>
+      <Row >
+        <Col className="d-flex justify-content-center">
+          <Pagination>
+            <PaginationItem>
+              <PaginationLink first onClick={() => gotoPage(0)} disabled={!canPreviousPage}/>
+            </PaginationItem>
+            <PaginationItem>
+              <PaginationLink previous onClick={() => previousPage()} disabled={!canPreviousPage}/>
+            </PaginationItem>
+            {
+              [...Array(pageCount)].map((e, i) =>
+                <PaginationItem active={ pageIndex === i ? true : false } key={i}>
+                  <PaginationLink onClick={() => gotoPage(i)}>
+                    { i + 1}
+                  </PaginationLink>
+                </PaginationItem>
+              )
+            }
+            <PaginationItem>
+              <PaginationLink next onClick={() => nextPage()} disabled={!canNextPage}/>
+            </PaginationItem>
+            <PaginationItem>
+              <PaginationLink last onClick={() => gotoPage(pageCount - 1)} disabled={!canNextPage}/>
+            </PaginationItem>
+            <PaginationItem>
+              <select
+                style={{width: '180px'}}
+                className="custom-select text-primary"
+                value={pageSize}
+                onChange={e => {
+                  setPageSize(Number(e.target.value))
+                }}
+              >
+                {[10, 20, 30, 40, 50].map(pageSize => (
+                  <option key={pageSize} value={pageSize}>
+                    {pageSize} service types
+                  </option>
+                ))}
+              </select>
+            </PaginationItem>
+          </Pagination>
+        </Col>
+      </Row>
     </React.Fragment>
   )
 }
