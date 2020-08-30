@@ -57,7 +57,7 @@ function Table({ columns, data }) {
                   <tr key={row_index}>
                     {row.cells.map((cell, cell_index) => {
                       if (cell_index === 0)
-                        return <td key={cell_index} className="align-middle text-center table-light">{row_index + 1}</td>
+                        return <td key={cell_index} className="align-middle text-center table-light">{(row_index + 1) + (pageIndex * pageSize)}</td>
                       else
                         return <td key={cell_index} className="align-middle table-light">{cell.render('Cell')}</td>
                     })}
