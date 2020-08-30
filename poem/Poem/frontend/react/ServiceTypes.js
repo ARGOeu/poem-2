@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Backend } from './DataManager';
-import { LoadingAnim, BaseArgoView, ErrorComponent } from './UIElements';
+import { LoadingAnim, BaseArgoView, ErrorComponent, Icon } from './UIElements';
 import { useTable, usePagination, useFilters } from 'react-table';
 import {
   Pagination,
@@ -75,11 +75,20 @@ function Table({ columns, data }) {
               {headerGroups.map((headerGroup, thi) => (
                 <React.Fragment key={thi}>
                   <tr>
-                    {headerGroup.headers.map((column, tri) => (
-                      <th key={tri}>
-                        {column.render('Header')}
-                      </th>
-                    ))}
+                    {headerGroup.headers.map((column, tri) => {
+                      if (tri === 1) return (
+                        <th className="p-1 m-1" key={tri}>
+                          <Icon i="servicetypes"/>
+                          {' '}
+                          {column.render('Header')}
+                        </th>
+                      )
+                      else return (
+                        <th className="p-1 m-1" key={tri}>
+                          {column.render('Header')}
+                        </th>
+                      )
+                    })}
                   </tr>
                   <tr className="p-0 m-0">
                     {headerGroup.headers.map((column, tri) => {
