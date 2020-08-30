@@ -73,23 +73,23 @@ function Table({ columns, data }) {
           <table className="table table-bordered table-hover">
             <thead className="table-active align-middle text-center">
               {headerGroups.map((headerGroup, thi) => (
-                <React.Fragment>
-                  <tr key={thi}>
+                <React.Fragment key={thi}>
+                  <tr>
                     {headerGroup.headers.map((column, tri) => (
                       <th key={tri}>
                         {column.render('Header')}
                       </th>
                     ))}
                   </tr>
-                  <tr className="p-0 m-0" key={thi}>
+                  <tr className="p-0 m-0">
                     {headerGroup.headers.map((column, tri) => {
                       if (tri === 0) return(
-                        <th className="p-1 m-1 align-middle" key={tri}>
+                        <th className="p-1 m-1 align-middle" key={tri + 11}>
                           <FontAwesomeIcon icon={faSearch}/>
                         </th>
                       )
                       else return (
-                        <th className="p-1 m-1" key={tri}>
+                        <th className="p-1 m-1" key={tri + 11}>
                           {column.canFilter ? column.render('Filter') : null}
                         </th>
                       )
@@ -116,7 +116,7 @@ function Table({ columns, data }) {
           </table>
         </Col>
       </Row>
-      <Row >
+      <Row>
         <Col className="d-flex justify-content-center">
           <Pagination>
             <PaginationItem disabled={!canPreviousPage}>
@@ -127,7 +127,7 @@ function Table({ columns, data }) {
             </PaginationItem>
             {
               [...Array(pageCount)].map((e, i) =>
-                <PaginationItem active={ pageIndex === i ? true : false } key={i}>
+                <PaginationItem key={i} active={pageIndex === i ? true : false } key={i}>
                   <PaginationLink onClick={() => gotoPage(i)}>
                     { i + 1}
                   </PaginationLink>
