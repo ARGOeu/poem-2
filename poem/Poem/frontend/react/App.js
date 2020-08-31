@@ -10,10 +10,9 @@ import {
 import Home, { PublicHome } from './Home';
 import {
   ProbeList,
-  ProbeChange,
   ProbeVersionCompare,
   ProbeVersionDetails,
-  ProbeClone
+  ProbeComponent
 } from './Probes';
 import {
   MetricChange,
@@ -125,7 +124,7 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, w
         probeview={true}
       />}
     />
-    <Route exact path="/ui/probes/:name" render={props => <ProbeChange {...props}/>}/>
+    <Route exact path="/ui/probes/:name" render={props => <ProbeComponent {...props}/>}/>
     <Route exact path="/ui/metrics" render={props => <ListOfMetrics {...props} type='metrics'/>} />
     <Route exact path="/ui/metrics/:name/history" render={props => <HistoryComponent {...props} object='metric'/>}/>
     <Route exact path="/ui/metrics/:name/history/compare/:id1/:id2" render={props => <CompareMetrics {...props} type='metric'/>}/>
@@ -376,12 +375,12 @@ const SuperAdminRouteSwitch = ({props}) => (
     <Route exact path="/ui/login" render={() => <Redirect to="/ui/administration" />}/>
     <Route exact path="/ui/home" component={Home} />
     <Route exact path="/ui/probes" component={ProbeList} />
-    <Route exact path="/ui/probes/add" render={props => <ProbeChange {...props} addview={true}/>}/>
-    <Route exact path='/ui/probes/:name/clone' render={props => <ProbeClone {...props}/>}/>
+    <Route exact path="/ui/probes/add" render={props => <ProbeComponent {...props} addview={true}/>}/>
+    <Route exact path='/ui/probes/:name/clone' render={props => <ProbeComponent cloneview={true} {...props}/>}/>
     <Route exact path="/ui/probes/:name/history" render={props => <HistoryComponent object='probe' {...props}/>}/>
     <Route exact path="/ui/probes/:name/history/compare/:id1/:id2" render={props => <ProbeVersionCompare {...props}/>}/>
     <Route exact path="/ui/probes/:name/history/:version" render={props => <ProbeVersionDetails {...props}/>}/>
-    <Route exact path="/ui/probes/:name" render={props => <ProbeChange {...props}/>}/>
+    <Route exact path="/ui/probes/:name" render={props => <ProbeComponent {...props}/>}/>
     <Route exact path='/ui/metrictemplates' render={props => <ListOfMetrics type='metrictemplates' {...props} />} />
     <Route exact path='/ui/metrictemplates/add' render={props => <MetricTemplateComponent {...props} addview={true}/>}/>
     <Route exact path='/ui/metrictemplates/:name/clone' render={props => <MetricTemplateComponent {...props} cloneview={true}/>}/>
@@ -578,7 +577,7 @@ class App extends Component {
                 exact path="/ui/public_probes/:name"
                 render={props =>
                   <PublicPage>
-                    <ProbeChange publicView={true} {...props}/>
+                    <ProbeComponent publicView={true} {...props}/>
                   </PublicPage>
                 }
               />
@@ -768,7 +767,7 @@ class App extends Component {
                 exact path="/ui/public_probes/:name"
                 render={props =>
                   <PublicPage>
-                    <ProbeChange publicView={true} {...props}/>
+                    <ProbeComponent publicView={true} {...props}/>
                   </PublicPage>
                 }
               />
