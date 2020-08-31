@@ -65,43 +65,46 @@ import Autosuggest from 'react-autosuggest';
 
 
 var list_pages = ['administration', 'probes',
-                  'metrics', 'metricprofiles', 'aggregationprofiles',
+                  'metrics', 'servicetypes', 'metricprofiles', 'aggregationprofiles',
                   'thresholdsprofiles', 'operationsprofiles'];
-var admin_list_pages = ['administration', 'tenants', 'yumrepos', 'packages',
-                        'probes', 'metrictemplates'];
+var admin_list_pages = [ 'administration', 'tenants',
+                        'yumrepos', 'packages', 'probes', 'metrictemplates'];
 
 var link_title = new Map();
+
 link_title.set('administration', 'Administration');
-link_title.set('reports', 'Reports');
-link_title.set('probes', 'Probes');
-link_title.set('public_probes', 'Public probes');
-link_title.set('public_metrictemplates', 'Public metric templates');
-link_title.set('metrics', 'Metrics');
-link_title.set('public_metrics', 'Public metrics');
-link_title.set('metricprofiles', 'Metric profiles');
-link_title.set('public_metricprofiles', 'Metric profiles');
-link_title.set('public_aggregationprofiles', 'Aggregation profiles');
 link_title.set('aggregationprofiles', 'Aggregation profiles');
-link_title.set('groupofaggregations', 'Groups of aggregations');
-link_title.set('groupofmetrics', 'Groups of metrics');
-link_title.set('groupofmetricprofiles', 'Groups of metric profiles');
-link_title.set('users', 'Users');
 link_title.set('apikey', 'API key');
-link_title.set('metrictemplates', 'Metric templates');
-link_title.set('yumrepos', 'YUM repos');
+link_title.set('groupofaggregations', 'Groups of aggregations');
+link_title.set('groupofmetricprofiles', 'Groups of metric profiles');
+link_title.set('groupofmetrics', 'Groups of metrics');
 link_title.set('groupofthresholdsprofiles', 'Groups of thresholds profiles');
-link_title.set('public_thresholdsprofiles', 'Thresholds profiles');
-link_title.set('thresholdsprofiles', 'Thresholds profiles');
-link_title.set('packages', 'Packages');
-link_title.set('tenants', 'Tenants');
+link_title.set('metricprofiles', 'Metric profiles');
+link_title.set('metrics', 'Metrics');
+link_title.set('metrictemplates', 'Metric templates');
 link_title.set('operationsprofiles', 'Operations profiles');
+link_title.set('packages', 'Packages');
+link_title.set('probes', 'Probes');
+link_title.set('public_aggregationprofiles', 'Aggregation profiles');
+link_title.set('public_metricprofiles', 'Metric profiles');
+link_title.set('public_metrics', 'Public metrics');
+link_title.set('public_metrictemplates', 'Public metric templates');
 link_title.set('public_operationsprofiles', 'Operations profiles');
+link_title.set('public_probes', 'Public probes');
+link_title.set('public_thresholdsprofiles', 'Thresholds profiles');
+link_title.set('reports', 'Reports');
+link_title.set('servicetypes', 'Service types');
+link_title.set('tenants', 'Tenants');
+link_title.set('thresholdsprofiles', 'Thresholds profiles');
+link_title.set('users', 'Users');
+link_title.set('yumrepos', 'YUM repos');
 
 export const Icon = props =>
 {
   let link_icon = new Map();
   link_icon.set('administration', faWrench);
   link_icon.set('serviceflavour', faHighlighter);
+  link_icon.set('servicetypes', faHighlighter);
   link_icon.set('reports', faFileAlt);
   link_icon.set('probes', faServer);
   link_icon.set('metrics', faCog);

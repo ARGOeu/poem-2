@@ -15,9 +15,9 @@ import {
   ErrorComponent,
   ParagraphTitle
 } from './UIElements';
-import ReactTable from 'react-table';
+import ReactTable from 'react-table-6';
 import { Formik, Field, FieldArray, Form } from 'formik';
-import 'react-table/react-table.css';
+import 'react-table-6/react-table.css';
 import { Button } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faTimes, faSearch } from '@fortawesome/free-solid-svg-icons';

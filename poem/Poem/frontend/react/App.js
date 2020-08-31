@@ -51,6 +51,7 @@ import Cookies from 'universal-cookie';
 
 import './App.css';
 import { PackageList, PackageChange, PackageClone } from './Package';
+import { ServiceTypesList } from './ServiceTypes';
 import { TenantList, TenantChange } from './Tenants';
 import { OperationsProfilesList, OperationsProfileDetails } from './OperationsProfiles';
 
@@ -339,6 +340,10 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, w
         webapioperations={webApiOperations}
         webapitoken={token}
       />}
+    />
+    <Route
+      exact path="/ui/servicetypes/"
+      component={ServiceTypesList}
     />
 
     <Route component={NotFound} />
