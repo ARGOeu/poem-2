@@ -129,6 +129,7 @@ export const ReportsList = (props) => {
         resourcename='report'
         location={location}
         listview={true}
+        addnew={false}
       >
         <ReactTable
           data={reports}
