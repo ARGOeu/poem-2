@@ -10,8 +10,7 @@ import {
  } from './UIElements';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTimesCircle, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
-import ReactTable from 'react-table-6';
+import { faTimesCircle, faCheckCircle, faSearch } from '@fortawesome/free-solid-svg-icons';
 import { Formik, Field } from 'formik';
 import {
   Form,
@@ -21,8 +20,165 @@ import {
   InputGroup,
   InputGroupAddon,
   FormText,
-  Label
+  Label,
+  Pagination,
+  PaginationItem,
+  PaginationLink
 } from 'reactstrap';
+import { useTable, usePagination } from 'react-table';
+
+
+const CustomFilter = ({value, setFilter}) => {
+  return (
+    <div className='input-group'>
+      <input
+        className='form-control'
+        placeholder='Search'
+        value={value}
+        onChange={e => setFilter(e.target.value)}
+      />
+      <div className='input-group-append'>
+        <span className='input-group-text' id='basic-addon'>
+          <FontAwesomeIcon icon={faSearch}/>
+        </span>
+      </div>
+    </div>
+  );
+};
+
+
+function Table({ columns, data }) {
+  const {
+    headerGroups,
+    prepareRow,
+    page,
+    canPreviousPage,
+    canNextPage,
+    pageCount,
+    gotoPage,
+    nextPage,
+    previousPage,
+    setPageSize,
+    state: { pageIndex, pageSize }
+  } = useTable(
+    {
+      columns,
+      data,
+      initialState: { pageIndex: 0, pageSize: 15 }
+    },
+    usePagination
+  );
+
+  return (
+    <>
+      <Row>
+        <Col>
+          <table className='table table-bordered table-hover'>
+            <thead className='table-active align-middle text-center'>
+              {
+                headerGroups.map((headerGroup, thi) => (
+                  <React.Fragment key={thi}>
+                    <tr>
+                      {
+                        headerGroup.headers.map((column, tri) => {
+                          return (
+                            <th className='p-1 m-1' key={tri}>
+                              {column.render('Header')}
+                            </th>
+                          )
+                        })
+                      }
+                    </tr>
+                    <tr className='p-0 m-0'>
+                      {
+                        headerGroup.headers.map((column, tri) => {
+                          if (tri === 0)
+                            return (
+                              <th className='p-1 m-1 align-middle' key={tri + 11}>
+                                <FontAwesomeIcon icon={faSearch}/>
+                              </th>
+                            )
+
+                          else
+                            return (
+                              <th className='p-1 m-1' key={tri + 11}>
+                                {column.Filter ? column.render('Filter') : null}
+                              </th>
+                            )
+                        })
+                      }
+                    </tr>
+                  </React.Fragment>
+                ))
+              }
+            </thead>
+            <tbody>
+              {
+                page.map((row, row_index) => {
+                  prepareRow(row);
+                  return (
+                    <tr key={row_index}>
+                      {
+                        row.cells.map((cell, cell_index) => {
+                          if (cell_index === 0)
+                            return <td key={cell_index} className='align-middle text-center'>{(row_index + 1) + (pageIndex * pageSize)}</td>
+
+                          else
+                            return <td key={cell_index} className='align-middle'>{cell.render('Cell')}</td>
+                        })
+                      }
+                    </tr>
+                  )
+                })
+              }
+            </tbody>
+          </table>
+        </Col>
+      </Row>
+      <Row>
+        <Col className='d-flex justify-content-center'>
+          <Pagination>
+            <PaginationItem disabled={!canPreviousPage}>
+              <PaginationLink first onClick={() => gotoPage(0)}/>
+            </PaginationItem>
+            <PaginationItem disabled={!canPreviousPage}>
+              <PaginationLink previous onClick={() => previousPage()}/>
+            </PaginationItem>
+            {
+              [...Array(pageCount)].map((e, i) =>
+                <PaginationItem key={i} active={pageIndex === i ? true : false}>
+                  <PaginationLink onClick={() => gotoPage(i)}>
+                    { i + 1 }
+                  </PaginationLink>
+                </PaginationItem>
+              )
+            }
+            <PaginationItem disabled={!canNextPage}>
+              <PaginationLink next onClick={() => nextPage()}/>
+            </PaginationItem>
+            <PaginationItem disabled={!canNextPage}>
+              <PaginationLink last onClick={() => gotoPage(pageCount + 1)}/>
+            </PaginationItem>
+            <PaginationItem className='pl-2'>
+              <select
+                style={{width: '180px'}}
+                className='custom-select text-primary'
+                value={pageSize}
+                onChange={e => setPageSize(Number(e.target.value))}
+              >
+                {[15, 30, 50, 100].map(pageSize => (
+                  <option key={pageSize} value={pageSize}>
+                    {pageSize} reports
+                  </option>
+                ))}
+              </select>
+            </PaginationItem>
+          </Pagination>
+        </Col>
+      </Row>
+    </>
+  );
+};
 
 
 export const ReportsList = (props) => {
@@ -49,54 +205,25 @@ export const ReportsList = (props) => {
     }
   );
 
-  if (loading)
-    return (<LoadingAnim/>);
-
-  else if (error)
-    return (<ErrorComponent error={error}/>);
-
-  else {
-    const columns = [
+  const columns = React.useMemo(
+    () => [
       {
         Header: '#',
-        id: 'row',
-        minWidth: 12,
-        Cell: (row) =>
-          <div style={{textAlign: 'center'}}>
-            {row.index + 1}
-          </div>
+        accessor: null
       },
       {
         Header: 'Name',
         id: 'name',
-        minWidth: 80,
         accessor: e =>
           <Link to={`/ui/reports/${e.name}`}>
             {e.name}
           </Link>,
-        filterable: true,
-        Filter: (
-          <input
-            value={searchName}
-            onChange={e => setSearchName(e.target.value)}
-            placeholder='Search by name'
-            style={{width: '100%'}}
-          />
-        )
+          Filter: <CustomFilter value={searchName} setFilter={setSearchName}/>
       },
       {
         Header: 'Description',
         accessor: 'description',
-        minWidth: 200,
-        filterable: true,
-        Filter: (
-          <input
-            value={searchDescription}
-            onChange={e => setSearchDescription(e.target.value)}
-            placeholder='Search by description'
-            style={{width: '100%'}}
-          />
-        )
+        Filter: <CustomFilter value={searchDescription} setFilter={setSearchDescription}/>
       },
       {
         Header: 'Enabled',
@@ -111,19 +238,27 @@ export const ReportsList = (props) => {
           :
             <FontAwesomeIcon icon={faCheckCircle} style={{color: '#339900'}}/>
       }
-    ];
+    ]
+  );
 
-    var reports = listReports;
-    if (searchName)
-      reports = reports.filter(
-        row => row.name.toLowerCase().includes(searchName.toLowerCase())
-      );
+  var reports = listReports;
+  if (searchName)
+    reports = reports.filter(
+      row => row.name.toLowerCase().includes(searchName.toLowerCase())
+    );
 
-    if (searchDescription)
-      reports = reports.filter(
-        row => row.description.toLowerCase().includes(searchDescription.toLowerCase())
-      );
+  if (searchDescription)
+    reports = reports.filter(
+      row => row.description.toLowerCase().includes(searchDescription.toLowerCase())
+    );
 
+  if (loading)
+    return (<LoadingAnim/>);
+
+  else if (error)
+    return (<ErrorComponent error={error}/>);
+
+  else {
     return (
       <BaseArgoView
         resourcename='report'
@@ -131,13 +266,9 @@ export const ReportsList = (props) => {
         listview={true}
         addnew={false}
       >
-        <ReactTable
+        <Table
           data={reports}
           columns={columns}
-          className='-highlight'
-          defaultPageSize={12}
-          rowsText='profiles'
-          getTheadThProps={() => ({className: 'table-active font-weight-bold p-2'})}
         />
       </BaseArgoView>
     )
