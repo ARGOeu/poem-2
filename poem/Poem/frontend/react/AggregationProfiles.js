@@ -7,7 +7,6 @@ import {
   DropDown,
   FancyErrorMessage,
   Icon,
-  HistoryComponent,
   DiffElement,
   ProfileMainInfo,
   NotifyError,
@@ -15,8 +14,8 @@ import {
   ParagraphTitle
 } from './UIElements';
 import Autosuggest from 'react-autosuggest';
-import ReactTable from 'react-table';
-import 'react-table/react-table.css';
+import ReactTable from 'react-table-6';
+import 'react-table-6/react-table.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Formik, Field, FieldArray, Form } from 'formik';
 import { faPlus, faTimes, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
@@ -41,8 +40,6 @@ import ReactDiffViewer from 'react-diff-viewer';
 
 import "react-notifications/lib/notifications.css";
 import './AggregationProfiles.css';
-
-export const AggregationProfileHistory = HistoryComponent('aggregationprofile');
 
 
 

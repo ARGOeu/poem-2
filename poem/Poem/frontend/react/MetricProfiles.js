@@ -9,16 +9,15 @@ import {
   FancyErrorMessage,
   NotifyOk,
   Icon,
-  HistoryComponent,
   DiffElement,
   ProfileMainInfo,
   NotifyError,
   ErrorComponent,
   ParagraphTitle
 } from './UIElements';
-import ReactTable from 'react-table';
+import ReactTable from 'react-table-6';
 import { Formik, Field, FieldArray, Form } from 'formik';
-import 'react-table/react-table.css';
+import 'react-table-6/react-table.css';
 import { Button } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faTimes, faSearch } from '@fortawesome/free-solid-svg-icons';
@@ -27,7 +26,6 @@ import ReactDiffViewer from 'react-diff-viewer';
 import './MetricProfiles.css';
 
 
-export const MetricProfileHistory = HistoryComponent('metricprofile');
 export const MetricProfilesClone = MetricProfilesComponent(true);
 export const MetricProfilesChange = MetricProfilesComponent();
 

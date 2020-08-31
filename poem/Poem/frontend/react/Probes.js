@@ -8,13 +8,12 @@ import {
   Checkbox,
   FancyErrorMessage,
   AutocompleteField,
-  HistoryComponent,
   DiffElement,
   NotifyError,
   ErrorComponent,
   ParagraphTitle
 } from './UIElements';
-import ReactTable from 'react-table';
+import ReactTable from 'react-table-6';
 import {
   FormGroup,
   Label,
@@ -28,7 +27,6 @@ import { Formik, Form, Field } from 'formik';
 import * as Yup from 'yup';
 
 
-export const ProbeHistory = HistoryComponent('probe');
 export const ProbeChange = ProbeComponent();
 export const ProbeClone = ProbeComponent(true);
 

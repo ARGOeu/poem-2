@@ -7,14 +7,13 @@ import {
     AutocompleteField,
     NotifyOk,
     FancyErrorMessage,
-    HistoryComponent,
     DiffElement,
     ProfileMainInfo,
     NotifyError,
     ErrorComponent,
     ParagraphTitle
 } from './UIElements';
-import ReactTable from 'react-table';
+import ReactTable from 'react-table-6';
 import {
   Formik,
   Form,
@@ -40,9 +39,6 @@ import * as Yup from 'yup';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes, faPlus, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import ReactDiffViewer from 'react-diff-viewer';
-
-
-export const ThresholdsProfilesHistory = HistoryComponent('thresholdsprofile');
 
 
 const ThresholdsSchema = Yup.object().shape({
