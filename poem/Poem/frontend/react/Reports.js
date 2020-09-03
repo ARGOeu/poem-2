@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { WebApi } from './DataManager';
 import { useQuery } from 'react-query';
 import {
@@ -10,7 +10,7 @@ import {
  } from './UIElements';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTimesCircle, faCheckCircle, faSearch } from '@fortawesome/free-solid-svg-icons';
+import { faTimesCircle, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
 import { Formik, Field } from 'formik';
 import {
   Form,
@@ -26,25 +26,6 @@ import {
   PaginationLink
 } from 'reactstrap';
 import { useTable, usePagination } from 'react-table';
-
-
-const CustomFilter = ({value, setFilter}) => {
-  return (
-    <div className='input-group'>
-      <input
-        className='form-control'
-        placeholder='Search'
-        value={value}
-        onChange={e => setFilter(e.target.value)}
-      />
-      <div className='input-group-append'>
-        <span className='input-group-text' id='basic-addon'>
-          <FontAwesomeIcon icon={faSearch}/>
-        </span>
-      </div>
-    </div>
-  );
-};
 
 
 function Table({ columns, data }) {
@@ -86,25 +67,6 @@ function Table({ columns, data }) {
                               {column.render('Header')}
                             </th>
                           )
-                        })
-                      }
-                    </tr>
-                    <tr className='p-0 m-0'>
-                      {
-                        headerGroup.headers.map((column, tri) => {
-                          if (tri === 0)
-                            return (
-                              <th className='p-1 m-1 align-middle' key={tri + 11}>
-                                <FontAwesomeIcon icon={faSearch}/>
-                              </th>
-                            )
-
-                          else
-                            return (
-                              <th className='p-1 m-1' key={tri + 11}>
-                                {column.Filter ? column.render('Filter') : null}
-                              </th>
-                            )
                         })
                       }
                     </tr>
@@ -189,9 +151,6 @@ export const ReportsList = (props) => {
     reportsConfigurations: props.webapireports
   });
 
-  const [searchName, setSearchName] = useState('');
-  const [searchDescription, setSearchDescription] = useState('');
-
   const { data: listReports, error: error, isLoading: loading } = useQuery(
     'reports_listview', async () => {
       let json = await webapi.fetchReports();
@@ -217,13 +176,11 @@ export const ReportsList = (props) => {
         accessor: e =>
           <Link to={`/ui/reports/${e.name}`}>
             {e.name}
-          </Link>,
-          Filter: <CustomFilter value={searchName} setFilter={setSearchName}/>
+          </Link>
       },
       {
         Header: 'Description',
-        accessor: 'description',
-        Filter: <CustomFilter value={searchDescription} setFilter={setSearchDescription}/>
+        accessor: 'description'
       },
       {
         Header: 'Enabled',
@@ -241,17 +198,6 @@ export const ReportsList = (props) => {
     ]
   );
 
-  var reports = listReports;
-  if (searchName)
-    reports = reports.filter(
-      row => row.name.toLowerCase().includes(searchName.toLowerCase())
-    );
-
-  if (searchDescription)
-    reports = reports.filter(
-      row => row.description.toLowerCase().includes(searchDescription.toLowerCase())
-    );
-
   if (loading)
     return (<LoadingAnim/>);
 
@@ -267,7 +213,7 @@ export const ReportsList = (props) => {
         addnew={false}
       >
         <Table
-          data={reports}
+          data={listReports}
           columns={columns}
         />
       </BaseArgoView>
