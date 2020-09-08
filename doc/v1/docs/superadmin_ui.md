@@ -2,7 +2,7 @@
 
 When the user is logged into SuperAdmin POEM, (s)he is redirected to [Administration page](superadmin_administration.md). 
 
-On the left side, one can see a side bar (shown in the figure below), where the other pages are accessible: [YUM repos](superadmin_repos.md), [packages](superadmin_packages.md), [probes](superadmin_probe.md), and [metric template](superadmin_metric_templates.md) pages.
+On the left side, one can see a side bar (shown in the figure below), where the other pages are accessible: [tenants](superadmin_tenants.md), [YUM repos](superadmin_repos.md), [packages](superadmin_packages.md), [probes](superadmin_probe.md), and [metric template](superadmin_metric_templates.md) pages.
 
 ![SuperAdmin Sidebar](figures/superadmin_sidebar.png)
 
