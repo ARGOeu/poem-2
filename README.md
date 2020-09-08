@@ -28,7 +28,7 @@ Web application is served with Apache web server and uses PostgreSQL as database
 
 Backend: `Django`, `django-rest-auth`, `django-tenant-schemas`, `django-webpack-loader`, `djangorestframework`, `djangorestframework-api-key`, `djangosaml2`, `psycopg2-binary`
 
-Frontend: `ReactJS`, `formik`, `react-autocomplete`, `react-diff-viewer`, `react-dom`, `react-fontawesome`, `react-notifications`, `react-popup`, `react-router`, `react-table`, `reactstrap`, `webpack`, `yup`
+Frontend: `ReactJS`, `formik`, `react-autosuggest`, `react-diff-viewer`, `react-dom`, `react-fontawesome`, `react-notifications`, `react-popup`, `react-router`, `react-select`, `react-table`, `reactstrap`, `webpack`, `yup`
 
 ## User documentation and instances
 
