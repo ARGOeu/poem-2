@@ -28,7 +28,7 @@ Web application is served with Apache web server and uses PostgreSQL as database
 
 Backend: `Django`, `django-rest-auth`, `django-tenant-schemas`, `django-webpack-loader`, `djangorestframework`, `djangorestframework-api-key`, `djangosaml2`, `psycopg2-binary`
 
-Frontend: `ReactJS`, `formik`, `react-autocomplete`, `react-diff-viewer`, `react-dom`, `react-fontawesome`, `react-notifications`, `react-popup`, `react-router`, `react-table`, `reactstrap`, `webpack`, `yup`
+Frontend: `ReactJS`, `formik`, `react-autosuggest`, `react-diff-viewer`, `react-dom`, `react-fontawesome`, `react-notifications`, `react-popup`, `react-router`, `react-select`, `react-table`, `reactstrap`, `webpack`, `yup`
 
 ## User documentation and instances
 
@@ -40,11 +40,8 @@ EGI instances:
 * SuperPOEM - https://poem.argo.grnet.gr
 
 Public pages:
-* https://poem.egi.eu/ui/public_aggregationprofiles
-* https://poem.egi.eu/ui/public_metricprofiles
-* https://poem.egi.eu/ui/public_metrics
-* https://poem.egi.eu/ui/public_probes
-* https://poem.egi.eu/ui/public_thresholdsprofiles
+* https://poem.egi.eu/ui/public_home
+* https://poem.argo.grnet.gr/ui/public_home
 
 ## Installation
 

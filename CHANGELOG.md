@@ -1,5 +1,40 @@
 # Changelog
 
+## [3.3.2] - 2020-09-08
+
+### Added
+
+* ARGO-2404 Set tokens to predefined values from GUI
+* ARGO-2554 Introduce operations profiles page
+* ARGO-2552 Create home page for public pages
+* ARGO-2457 Public tenant pages with list of all available metric templates
+* ARGO-2525 Introduce metric template tagging
+* ARGO-2511 Simple tenant page on SuperAdmin POEM
+* ARGO-2512 Token handling in SuperAdmin POEM
+* ARGO-2484 Add feature to bulk delete metric templates
+
+### Fixed
+
+* ARGO-2555 Public probe page on SuperAdmin POEM is not read-only
+* ARGO-2551 Fetch internal metrics from POEM
+* ARGO-2415 Public pages should have flat fields without actions
+* ARGO-2550 Public metrics page not working
+* ARGO-2540 Use public GOCDB API without explicit client authn
+* ARGO-2539 Add missing packages for the given distro to YUM repo API response
+* ARGO-2532 Bump lodash to resolve security issue
+* ARGO-2531 Ensure synced indexes between filtered and full view of tuples
+* ARGO-2528 When metric template is changed, metrics are updated only for one tenant
+
+### Changed
+
+* ARGO-2535 Use autosuggest in metric and aggregation profiles
+* ARGO-2553 Clickable card on SuperPOEM tenant page
+* ARGO-2536 Stop using react-filtered-multiselect
+* ARGO-2534 Refactor AutocompleteField to use autosuggest instead of autocomplete
+* ARGO-2131 Replace react-autocomplete with react-autosuggest
+* ARGO-2526 Title of paragraphs on each page as separate component
+* ARGO-2524 Update documentation regarding metric templates on SuperPOEM
+
 ## [3.3.1] - 2020-07-08
 
 ### Added
