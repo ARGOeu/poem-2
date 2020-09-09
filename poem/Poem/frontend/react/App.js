@@ -177,6 +177,46 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, w
     <Route exact path="/ui/aggregationprofiles/:name/history/:version"
       render={props => <AggregationProfileVersionDetails {...props}/>}
     />
+    <Route exact path="/ui/thresholdsprofiles" component={ThresholdsProfilesList} />
+    <AddRoute usergroups={userGroups.thresholdsprofiles} exact path="/ui/thresholdsprofiles/add"
+      render={props => <ThresholdsProfilesChange
+        {...props}
+        webapithresholds={webApiThresholds}
+        webapitoken={token}
+        tenantname={tenantName}
+        addview={true}/>}
+    />
+    <Route exact path="/ui/thresholdsprofiles/:name"
+      render={props => <ThresholdsProfilesChange
+        {...props}
+        webapithresholds={webApiThresholds}
+        webapitoken={token}
+        tenantname={tenantName}/>}
+    />
+    <Route exact path="/ui/thresholdsprofiles/:name/history"
+      render={props => <ThresholdsProfilesHistory {...props}/>}
+    />
+    <Route exact path="/ui/thresholdsprofiles/:name/history/compare/:id1/:id2"
+      render={props => <ThresholdsProfileVersionCompare {...props}/>}
+    />
+    <Route exact path="/ui/thresholdsprofiles/:name/history/:version"
+      render={props => <ThresholdsProfileVersionDetail {...props}/>}
+    />
+    <Route
+      exact path="/ui/operationsprofiles"
+      render={props => <OperationsProfilesList
+        {...props}
+        webapioperations={webApiOperations}
+        webapitoken={token}
+      />} />
+    <Route
+      exact path="/ui/operationsprofiles/:name"
+      render={props => <OperationsProfileDetails
+        {...props}
+        webapioperations={webApiOperations}
+        webapitoken={token}
+      />}
+    />
     <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration" component={TenantAdministration} />
     <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/users" component={UsersList} />
     <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/users/add"
@@ -284,47 +324,6 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, w
         title='thresholds profiles'
       />}
     />
-    <Route exact path="/ui/thresholdsprofiles" component={ThresholdsProfilesList} />
-    <AddRoute usergroups={userGroups.thresholdsprofiles} exact path="/ui/thresholdsprofiles/add"
-      render={props => <ThresholdsProfilesChange
-        {...props}
-        webapithresholds={webApiThresholds}
-        webapitoken={token}
-        tenantname={tenantName}
-        addview={true}/>}
-    />
-    <Route exact path="/ui/thresholdsprofiles/:name"
-      render={props => <ThresholdsProfilesChange
-        {...props}
-        webapithresholds={webApiThresholds}
-        webapitoken={token}
-        tenantname={tenantName}/>}
-    />
-    <Route exact path="/ui/thresholdsprofiles/:name/history"
-      render={props => <ThresholdsProfilesHistory {...props}/>}
-    />
-    <Route exact path="/ui/thresholdsprofiles/:name/history/compare/:id1/:id2"
-      render={props => <ThresholdsProfileVersionCompare {...props}/>}
-    />
-    <Route exact path="/ui/thresholdsprofiles/:name/history/:version"
-      render={props => <ThresholdsProfileVersionDetail {...props}/>}
-    />
-    <Route
-      exact path="/ui/operationsprofiles"
-      render={props => <OperationsProfilesList
-        {...props}
-        webapioperations={webApiOperations}
-        webapitoken={token}
-      />} />
-    <Route
-      exact path="/ui/operationsprofiles/:name"
-      render={props => <OperationsProfileDetails
-        {...props}
-        webapioperations={webApiOperations}
-        webapitoken={token}
-      />}
-    />
-
     <Route component={NotFound} />
   </Switch>
 )
