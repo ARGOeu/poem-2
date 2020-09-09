@@ -513,7 +513,7 @@ export const NavigationAbout = ({ location }) => {
       <div className="bg-white border-left border-right pl-2 mt-0 pt-5 text-uppercase">
         <h5>Info</h5>
       </div>
-      <Nav vertical pills id="argo-navlinks" className="border-left border-right sticky-top rounded-bottom">
+      <Nav vertical pills id="argo-navlinks" className="border-left border-right sticky-top rounded-bottom border-bottom pb-2 mb-0">
         <NavLink
           tag="a"
           href='http://argoeu.github.io/poem/v1/'
@@ -571,11 +571,11 @@ const InnerFooter = ({border=false}) =>
         co-funded by <a href="https://www.eosc-hub.eu" title="EOSC-Hub">EOSC-Hub</a> and &nbsp;
         <a href="http://www.egi.eu/" title="EGI.eu">EGI.eu</a>
       </small>
-      <div className="text-center pt-1">
-        <img src={EULogo} id="eulogo" alt="EU logo"/>
-        <img src={EOSCLogo} id="eosclogo" alt="EOSC logo" className="pl-1"/>
-      </div>
     </p>
+    <div className="text-center pb-3 pt-0">
+      <img src={EULogo} id="eulogo" alt="EU logo"/>
+      <img src={EOSCLogo} id="eosclogo" alt="EOSC logo" className="pl-1"/>
+    </div>
   </React.Fragment>
 )
 
@@ -606,7 +606,7 @@ export const LoadingAnim = () =>
       <h4 className="text-dark">Loading data...</h4>
     </CardHeader>
     <CardBody>
-      <img src={ArgoLogoAnim} alt="ARGO logo anim" className="img-responsive" height="400px"/>
+      <img src={ArgoLogoAnim} alt="ARGO logo anim" className="img-responsive" height="410px"/>
     </CardBody>
   </Card>
 )
