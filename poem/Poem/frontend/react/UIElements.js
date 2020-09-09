@@ -96,6 +96,7 @@ link_title.set('packages', 'Packages');
 link_title.set('tenants', 'Tenants');
 link_title.set('operationsprofiles', 'Operations profiles');
 link_title.set('public_operationsprofiles', 'Operations profiles');
+link_title.set('privacypolicy', 'Privacy policies');
 
 export const Icon = props =>
 {
@@ -491,6 +492,19 @@ export const NavigationLinks = ({location, isTenantSchema, userDetails}) => {
           )
         }
     </Nav>
+    )
+}
+
+
+export const NavigationAbout = ({ location }) => {
+  return (
+    <React.Fragment>
+      <div className="bg-white border-left border-right">
+        About ARGO
+      </div>
+      <Nav vertical pills id="argo-navlinks" className="border-left border-right sticky-top rounded-bottom">
+      </Nav>
+    </React.Fragment>
     )
 }
 

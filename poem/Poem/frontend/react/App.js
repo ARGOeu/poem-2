@@ -33,7 +33,7 @@ import { APIKeyList, APIKeyChange } from './APIKey';
 import NotFound from './NotFound';
 import { Route, Switch, BrowserRouter, Redirect, withRouter } from 'react-router-dom';
 import { Container, Row, Col } from 'reactstrap';
-import { NavigationBar, CustomBreadcrumb, NavigationLinks, Footer, PublicPage} from './UIElements';
+import { NavigationBar, NavigationAbout, CustomBreadcrumb, NavigationLinks, Footer, PublicPage } from './UIElements';
 import { NotificationContainer } from 'react-notifications';
 import { Backend } from './DataManager';
 import { YumRepoList, YumRepoChange, YumRepoClone } from './YumRepos';
@@ -44,10 +44,12 @@ import './App.css';
 import { PackageList, PackageChange, PackageClone } from './Package';
 import { TenantList, TenantChange } from './Tenants';
 import { OperationsProfilesList, OperationsProfileDetails } from './OperationsProfiles';
+import { PrivacyPolicy } from './PrivacyPolicy';
 
 
 const NavigationBarWithRouter = withRouter(NavigationBar);
 const NavigationLinksWithRouter = withRouter(NavigationLinks);
+const NavigationAboutWithRouter = withRouter(NavigationAbout);
 const CustomBreadcrumbWithRouter = withRouter(CustomBreadcrumb);
 
 
@@ -217,6 +219,7 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, w
         webapitoken={token}
       />}
     />
+    <Route exact path="/ui/privacypolicy/" component={PrivacyPolicy} />
     <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration" component={TenantAdministration} />
     <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/users" component={UsersList} />
     <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/users/add"
@@ -833,7 +836,8 @@ class App extends Component {
             <Row className="no-gutters">
               <Col sm={{size: 2}} md={{size: 2}} id="sidebar-col" className="d-flex flex-column">
                 <NavigationLinksWithRouter isTenantSchema={this.state.isTenantSchema} userDetails={userDetails}/>
-                <div id="sidebar-grow" className="flex-grow-1 border-left border-right rounded-bottom"/>
+                <div id="sidebar-grow" className="flex-grow-1 border-left border-right"/>
+                <NavigationAboutWithRouter/>
               </Col>
               <Col>
                 <CustomBreadcrumbWithRouter />
