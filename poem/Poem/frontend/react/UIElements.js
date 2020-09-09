@@ -499,7 +499,7 @@ export const NavigationLinks = ({location, isTenantSchema, userDetails}) => {
 export const NavigationAbout = ({ location }) => {
   return (
     <React.Fragment>
-      <div className="bg-white border-left border-right">
+      <div className="bg-white border-left border-right pl-2 mt-0 pt-0">
         About ARGO
       </div>
       <Nav vertical pills id="argo-navlinks" className="border-left border-right sticky-top rounded-bottom">
