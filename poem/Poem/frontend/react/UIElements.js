@@ -548,7 +548,7 @@ export const NavigationAbout = ({ location }) => {
           to="/ui/policies"
         >
           <Icon i="policies"/>{' '}
-          Privacy policies
+          Privacy Policies
         </NavLink>
       </Nav>
     </React.Fragment>
@@ -562,10 +562,6 @@ const InnerFooter = ({border=false}) =>
     {
       border && <div className="pt-1"/>
     }
-    <div className="text-center pt-1">
-      <img src={EULogo} id="eulogo" alt="EU logo"/>
-      <img src={EOSCLogo} id="eosclogo" alt="EOSC logo" className="pl-1"/>
-    </div>
     <p className="text-center">
       <small>
         <strong>ARGO POEM</strong> is a service jointly developed and maintained by &nbsp;
@@ -574,11 +570,11 @@ const InnerFooter = ({border=false}) =>
         <a href="http://www.srce.unizg.hr/" title="University computing centre">SRCE</a>&nbsp;
         co-funded by <a href="https://www.eosc-hub.eu" title="EOSC-Hub">EOSC-Hub</a> and &nbsp;
         <a href="http://www.egi.eu/" title="EGI.eu">EGI.eu</a>
-        <br/>
-        <a href="http://argo.egi.eu/lavoisier/TermsofUse" title="Terms of use">Terms of use</a>
-        ,&nbsp;
-        <a href="http://www.apache.org/licenses/LICENSE-2.0" title="License">License</a>
       </small>
+      <div className="text-center pt-1">
+        <img src={EULogo} id="eulogo" alt="EU logo"/>
+        <img src={EOSCLogo} id="eosclogo" alt="EOSC logo" className="pl-1"/>
+      </div>
     </p>
   </React.Fragment>
 )
