@@ -98,6 +98,13 @@ link_title.set('operationsprofiles', 'Operations profiles');
 link_title.set('public_operationsprofiles', 'Operations profiles');
 link_title.set('privacypolicy', 'Privacy policies');
 
+var list_about_pages = ['policies', 'terms', 'argodoc']
+
+var link_about_title = new Map();
+link_about_title.set('policies', 'Privacy policies');
+link_about_title.set('terms', 'Terms of use');
+link_about_title.set('argodoc', 'ARGO Documentation');
+
 export const Icon = props =>
 {
   let link_icon = new Map();
