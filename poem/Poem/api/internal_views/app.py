@@ -90,6 +90,12 @@ class GetConfigOptions(APIView):
 
     def get(self, request):
         options = dict()
+        version = None
+
+        try:
+            version = pkg_resources.get_distribution('poem').version
+        except pkg_resources.DistributionNotFound:
+            version = 'undefined_version'
 
         tenant = tenant_from_request(request)
         options.update(saml_login_string=saml_login_string(tenant))
@@ -98,7 +104,7 @@ class GetConfigOptions(APIView):
         options.update(webapiaggregation=settings.WEBAPI_AGGREGATION)
         options.update(webapithresholds=settings.WEBAPI_THRESHOLDS)
         options.update(webapioperations=settings.WEBAPI_OPERATIONS)
-        options.update(version=pkg_resources.get_distribution('poem').version)
+        options.update(version=version)
         options.update(tenant_name=tenant)
 
         return Response({'result': options})
