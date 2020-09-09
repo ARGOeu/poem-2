@@ -615,7 +615,7 @@ export const LoadingAnim = () =>
       <h4 className="text-dark">Loading data...</h4>
     </CardHeader>
     <CardBody>
-      <img src={ArgoLogoAnim} alt="ARGO logo anim" className="img-responsive" height="410px"/>
+      <img src={ArgoLogoAnim} alt="ARGO logo anim" className="img-responsive" height="450px"/>
     </CardBody>
   </Card>
 )
