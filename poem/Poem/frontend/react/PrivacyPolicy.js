@@ -1,5 +1,8 @@
-import React, { Component } from 'react';
+import React from 'react';
 import { BaseArgoView } from './UIElements';
+import {
+  Table
+} from 'reactstrap';
 
 export const PrivacyPolicy = (props) =>
   <BaseArgoView
@@ -32,4 +35,30 @@ export const PrivacyPolicy = (props) =>
         "Third Party Cookies" are cookies used by the websites of our partners, as integrated in our own Website or used by websites we link to.
       </li>
     </ul>
+    <h4 className='p-2'>2. Which cookies are placed on your device when using our Website?</h4>
+    <p>
+      When you access and/or use the Website, we place one or more Cookies on your device for the purposes described herein. The following table and relevant information set out the cookies used for the Website.It also provides details of third parties setting cookies:
+    </p>
+    <Table responsive>
+      <thead>
+        <tr>
+          <th>Cookie Type</th>
+          <th>Cookie Provider</th>
+          <th>Cookie Name</th>
+          <th>Third party cookie</th>
+          <th>Persistent or session Cookie</th>
+          <th>Purpose of cookie</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Session State</td>
+          <td>argo.egi.eu</td>
+          <td>JSESSIONID</td>
+          <td>No</td>
+          <td>Session</td>
+          <td>Preserve user session information</td>
+        </tr>
+      </tbody>
+    </Table>
   </BaseArgoView>
