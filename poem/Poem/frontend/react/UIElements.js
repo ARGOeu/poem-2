@@ -581,7 +581,7 @@ const InnerFooter = ({border=false}) =>
         <a href="http://www.egi.eu/" title="EGI.eu">EGI.eu</a>
       </small>
     </p>
-    <div className="text-center pb-3 pt-0">
+    <div className="text-center pb-2 pt-0">
       <img src={EULogo} id="eulogo" alt="EU logo"/>
       <img src={EOSCLogo} id="eosclogo" alt="EOSC logo" className="pl-1"/>
     </div>
