@@ -40,23 +40,28 @@ import EOSCLogo from './eosc.png';
 import './UIElements.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  faSignOutAlt,
-  faSearch,
-  faWrench,
-  faFileAlt,
-  faCog,
-  faServer,
-  faCogs,
-  faHighlighter,
-  faTasks,
-  faKey,
-  faBoxOpen,
-  faExclamation,
-  faSquare,
-  faUser,
+  faBook,
   faBox,
+  faBoxOpen,
+  faCog,
+  faCogs,
+  faExclamation,
+  faFileAlt,
+  faGavel,
+  faHandshake,
+  faHighlighter,
   faIdBadge,
-  faTable} from '@fortawesome/free-solid-svg-icons';
+  faKey,
+  faLink,
+  faSearch,
+  faServer,
+  faSignOutAlt,
+  faSquare,
+  faTable,
+  faTasks,
+  faUser,
+  faWrench}
+from '@fortawesome/free-solid-svg-icons';
 import { NotificationManager } from 'react-notifications';
 import { Field } from 'formik';
 import { Backend } from './DataManager';
@@ -96,14 +101,8 @@ link_title.set('packages', 'Packages');
 link_title.set('tenants', 'Tenants');
 link_title.set('operationsprofiles', 'Operations profiles');
 link_title.set('public_operationsprofiles', 'Operations profiles');
-link_title.set('privacypolicy', 'Privacy policies');
+link_title.set('policies', 'Privacy policies');
 
-var list_about_pages = ['policies', 'terms', 'argodoc']
-
-var link_about_title = new Map();
-link_about_title.set('policies', 'Privacy policies');
-link_about_title.set('terms', 'Terms of use');
-link_about_title.set('argodoc', 'ARGO Documentation');
 
 export const Icon = props =>
 {
@@ -123,6 +122,10 @@ export const Icon = props =>
   link_icon.set('packages', faBox);
   link_icon.set('tenants', faIdBadge);
   link_icon.set('operationsprofiles', faTable);
+  link_icon.set('policies', faGavel);
+  link_icon.set('terms', faHandshake);
+  link_icon.set('argodoc', faLink);
+  link_icon.set('documentation', faBook);
 
   if (props.i.startsWith('groupof'))
     return (
@@ -136,6 +139,7 @@ export const Icon = props =>
   else
     return <FontAwesomeIcon icon={link_icon.get(props.i)} size={props.i === 'yumrepos' || props.i === 'metricprofiles' ? 'sm' : '1x'} fixedWidth/>
 }
+
 
 export const DropDown = ({field, data=[], prefix="", class_name="", isnew=false, errors=undefined}) =>
   <Field component="select"
@@ -487,17 +491,17 @@ export const NavigationLinks = ({location, isTenantSchema, userDetails}) => {
   return (
     <Nav vertical pills id="argo-navlinks" className="border-left border-right border-top rounded-top sticky-top">
       {
-          data.map((item, i) =>
-            <NavItem key={i}>
-              <NavLink
-                tag={Link}
-                active={location.pathname.split('/')[2] === item ? true : false}
-                className={location.pathname.split('/')[2] === item ? "text-white bg-info" : "text-dark"}
-                to={'/ui/' + item}><Icon i={item}/> {link_title.get(item)}
-              </NavLink>
-            </NavItem>
-          )
-        }
+        data.map((item, i) =>
+          <NavItem key={i}>
+            <NavLink
+              tag={Link}
+              active={location.pathname.split('/')[2] === item ? true : false}
+              className={location.pathname.split('/')[2] === item ? "text-white bg-info" : "text-dark"}
+              to={'/ui/' + item}><Icon i={item}/> {link_title.get(item)}
+            </NavLink>
+          </NavItem>
+        )
+      }
     </Nav>
     )
 }
@@ -506,13 +510,49 @@ export const NavigationLinks = ({location, isTenantSchema, userDetails}) => {
 export const NavigationAbout = ({ location }) => {
   return (
     <React.Fragment>
-      <div className="bg-white border-left border-right pl-2 mt-0 pt-0">
-        About ARGO
+      <div className="bg-white border-left border-right pl-2 mt-0 pt-5 text-uppercase">
+        <h5>Info</h5>
       </div>
       <Nav vertical pills id="argo-navlinks" className="border-left border-right sticky-top rounded-bottom">
+        <NavLink
+          tag="a"
+          href='http://argoeu.github.io/poem/v1/'
+          className="text-dark"
+          target="_blank" rel="noopener noreferrer"
+        >
+          <Icon i="documentation"/>{' '}
+          Documentation
+        </NavLink>
+        <NavLink
+          tag="a"
+          href='http://argoeu.github.io/overview'
+          className="text-dark"
+          target="_blank" rel="noopener noreferrer"
+        >
+          <Icon i="argodoc"/>{' '}
+          About ARGO
+        </NavLink>
+        <NavLink
+          tag="a"
+          href='https://ui.argo.grnet.gr/egi/termsofUse'
+          className="text-dark"
+          target="_blank" rel="noopener noreferrer"
+        >
+          <Icon i="terms"/>{' '}
+          Terms
+        </NavLink>
+        <NavLink
+          tag={Link}
+          active={location.pathname.split('/')[2] === 'policies' ? true : false}
+          className={location.pathname.split('/')[2] === 'policies' ? "text-white bg-info" : "text-dark"}
+          to="/ui/policies"
+        >
+          <Icon i="policies"/>{' '}
+          Privacy policies
+        </NavLink>
       </Nav>
     </React.Fragment>
-    )
+  )
 }
 
 
@@ -582,6 +622,7 @@ export const NotifyOk = ({msg='', title='', callback=undefined}) => {
     2000);
   setTimeout(callback, 2000);
 }
+
 
 export const NotifyError = ({msg='', title=''}) => {
   msg = <div>
