@@ -8,7 +8,7 @@ import {
   MetricProfilesClone,
   MetricProfilesList
 } from './MetricProfiles';
-import Home from './Home';
+import Home, { PublicHome } from './Home';
 import { ProbeList, ProbeChange, ProbeHistory, ProbeVersionCompare, ProbeVersionDetails, ProbeClone } from './Probes';
 import { MetricList, MetricChange, MetricHistory, MetricVersonCompare, MetricVersionDetails } from './Metrics';
 import {
@@ -26,14 +26,8 @@ import { AggregationProfilesChange, AggregationProfilesList, AggregationProfileH
 import Reports from './Reports';
 import { UsersList, UserChange, SuperAdminUserChange, ChangePassword } from './Users';
 import {
-  GroupOfMetricsList,
-  GroupOfMetricsChange,
-  GroupOfAggregationsList,
-  GroupOfAggregationsChange,
-  GroupOfMetricProfilesList,
-  GroupOfMetricProfilesChange,
-  GroupOfThresholdsProfilesList,
-  GroupOfThresholdsProfilesChange
+  GroupList,
+  GroupChange
 } from './GroupElements';
 import { APIKeyList, APIKeyChange } from './APIKey';
 import NotFound from './NotFound';
@@ -48,6 +42,8 @@ import Cookies from 'universal-cookie';
 
 import './App.css';
 import { PackageList, PackageChange, PackageClone } from './Package';
+import { TenantList, TenantChange } from './Tenants';
+import { OperationsProfilesList, OperationsProfileDetails } from './OperationsProfiles';
 
 
 const NavigationBarWithRouter = withRouter(NavigationBar);
@@ -104,7 +100,7 @@ const RedirectAfterLogin = ({isSuperUser, ...props}) => {
 }
 
 
-const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, token, tenantName, isSuperUser, userGroups}) => (
+const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, webApiOperations, token, tenantName, isSuperUser, userGroups}) => (
   <Switch>
     <Route exact path="/ui/login" render={props => <RedirectAfterLogin isSuperUser={isSuperUser} {...props}/>}/>
     <Route exact path="/ui/home" component={Home} />
@@ -191,32 +187,61 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, t
     <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/users/:user_name"
       render={props => <UserChange {...props}/>}
     />
-    <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/groupofmetrics" component={GroupOfMetricsList} />
+    <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/groupofmetrics"
+      render={props => <GroupList {...props} group='metrics' id='groupofmetrics' name='group of metrics'/>}
+    />
     <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/groupofmetrics/add"
-      render={props => <GroupOfMetricsChange
+      render={props => <GroupChange
         {...props}
+        group='metrics'
+        id='groupofmetrics'
+        title='metrics'
         addview={true}/>}
     />
-    <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/groupofmetrics/:group"
-      render={props => <GroupOfMetricsChange {...props}/>}
+    <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/groupofmetrics/:name"
+      render={props => <GroupChange
+        {...props}
+        group='metrics'
+        id='groupofmetrics'
+        title='metrics'/>}
     />
-    <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/groupofaggregations" component={GroupOfAggregationsList} />
+    <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/groupofaggregations"
+      render={props => <GroupList {...props} group='aggregations' id='groupofaggregations' name='group of aggregations'/>}
+    />
     <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/groupofaggregations/add"
-      render={props => <GroupOfAggregationsChange
+      render={props => <GroupChange
         {...props}
+        group='aggregations'
+        id='groupofaggregations'
+        title='aggregations'
         addview={true}/>}
     />
-    <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/groupofaggregations/:group"
-      render={props => <GroupOfAggregationsChange {...props}/>}
+    <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/groupofaggregations/:name"
+      render={props => <GroupChange
+        {...props}
+        group='aggregations'
+        id='groupofaggregations'
+        title='aggregations'
+      />}
     />
-    <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/groupofmetricprofiles" component={GroupOfMetricProfilesList} />
+    <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/groupofmetricprofiles"
+      render={props => <GroupList {...props} group='metricprofiles' id='groupofmetricprofiles' name='group of metric profiles'/>}
+    />
     <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/groupofmetricprofiles/add"
-      render={props => <GroupOfMetricProfilesChange
+      render={props => <GroupChange
         {...props}
+        group='metricprofiles'
+        id='groupofmetricprofiles'
+        title='metric profiles'
         addview={true}/>}
     />
-    <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/groupofmetricprofiles/:group"
-      render={props => <GroupOfMetricProfilesChange {...props}/>}
+    <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/groupofmetricprofiles/:name"
+      render={props => <GroupChange
+        {...props}
+        group='metricprofiles'
+        id='groupofmetricprofiles'
+        title='metric profiles'
+      />}
     />
     <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/apikey" component={APIKeyList} />
     <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/apikey/add"
@@ -240,14 +265,24 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, t
     <SuperUserRoute isSuperUser={isSuperUser} exact path='/ui/administration/packages/:nameversion'
       render={props => <PackageChange {...props} disabled={true}/>}
     />
-    <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/groupofthresholdsprofiles" component={GroupOfThresholdsProfilesList} />
+    <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/groupofthresholdsprofiles"
+      render={props => <GroupList {...props} group='thresholdsprofiles' id='groupofthresholdsprofiles' name='group of thresholds profiles'/>}
+    />
     <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/groupofthresholdsprofiles/add"
-      render={props => <GroupOfThresholdsProfilesChange
+      render={props => <GroupChange
         {...props}
+        group='thresholdsprofiles'
+        id='groupofthresholdsprofiles'
+        title='thresholds profiles'
         addview={true}/>}
     />
-    <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/groupofthresholdsprofiles/:group"
-      render={props => <GroupOfThresholdsProfilesChange {...props}/>}
+    <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/groupofthresholdsprofiles/:name"
+      render={props => <GroupChange
+        {...props}
+        group='thresholdsprofiles'
+        id='groupofthresholdsprofiles'
+        title='thresholds profiles'
+      />}
     />
     <Route exact path="/ui/thresholdsprofiles" component={ThresholdsProfilesList} />
     <AddRoute usergroups={userGroups.thresholdsprofiles} exact path="/ui/thresholdsprofiles/add"
@@ -274,6 +309,22 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, t
     <Route exact path="/ui/thresholdsprofiles/:name/history/:version"
       render={props => <ThresholdsProfileVersionDetail {...props}/>}
     />
+    <Route
+      exact path="/ui/operationsprofiles"
+      render={props => <OperationsProfilesList
+        {...props}
+        webapioperations={webApiOperations}
+        webapitoken={token}
+      />} />
+    <Route
+      exact path="/ui/operationsprofiles/:name"
+      render={props => <OperationsProfileDetails
+        {...props}
+        webapioperations={webApiOperations}
+        webapitoken={token}
+      />}
+    />
+
     <Route component={NotFound} />
   </Switch>
 )
@@ -318,6 +369,17 @@ const SuperAdminRouteSwitch = ({props}) => (
     <Route exact path="/ui/administration/users/:user_name"
       render={props => <SuperAdminUserChange {...props}/>}
     />
+    <Route exact path="/ui/administration/apikey" component={APIKeyList} />
+    <Route exact path="/ui/administration/apikey/add"
+      render={props => <APIKeyChange {...props} addview={true}/>}
+    />
+    <Route exact path="/ui/administration/apikey/:name"
+      render={props => <APIKeyChange {...props} />}
+    />
+    <Route exact path="/ui/tenants" component={TenantList}/>
+    <Route exact path="/ui/tenants/:name"
+      render={props => <TenantChange {...props} />}
+    />
     <Route component={NotFound} />
   </Switch>
 )
@@ -337,6 +399,7 @@ class App extends Component {
       webApiAggregation: undefined,
       webApiMetric: undefined,
       webApiThresholds: undefined,
+      webApiOperations: undefined,
       publicView: undefined,
       tenantName: undefined,
       token: undefined,
@@ -379,6 +442,7 @@ class App extends Component {
         webApiMetric: options && options.result.webapimetric,
         webApiAggregation: options && options.result.webapiaggregation,
         webApiThresholds: options && options.result.webapithresholds,
+        webApiOperations: options && options.result.webapioperations,
         tenantName: options && options.result.tenant_name,
         publicView: false,
       });
@@ -395,14 +459,16 @@ class App extends Component {
   async initalizePublicState() {
     let token = await this.backend.fetchPublicToken()
     let options = await this.backend.fetchConfigOptions();
+    let isTenantSchema = await this.backend.isTenantSchema();
     this.setState({
-      isTenantSchema: true,
+      isTenantSchema: isTenantSchema,
       isSessionActive: false,
       userDetails: {username: 'Anonymous'},
       token: token,
       webApiMetric: options && options.result.webapimetric,
       webApiAggregation: options && options.result.webapiaggregation,
       webApiThresholds: options && options.result.webapithresholds,
+      webApiOperations: options && options.result.webapioperations,
       tenantName: options && options.result.tenant_name,
       publicView: true,
     })
@@ -441,125 +507,293 @@ class App extends Component {
   }
 
   render() {
-    let {isSessionActive, userDetails, publicView} = this.state
+    let {isSessionActive, isTenantSchema, userDetails, publicView} = this.state
 
-    if (publicView) {
-      return (
-        <BrowserRouter>
-          <Switch>
-            <Route
-              exact path="/ui/public_probes"
-              render={props =>
-                <PublicPage>
-                  <ProbeList publicView={true} {...props} />
-                </PublicPage>
-              }
-            />
-            <Route
-              exact path="/ui/public_probes/:name"
-              render={props =>
-                <PublicPage>
-                  <ProbeChange publicView={true} {...props}/>
-                </PublicPage>
-              }
-            />
-            <Route exact path="/ui/public_probes/:name/history"
-              render={props =>
-                <PublicPage>
-                  <ProbeHistory publicView={true} {...props}/>
-                </PublicPage>
-              }
-            />
-            <Route exact path="/ui/public_probes/:name/history/compare/:id1/:id2"
-              render={props =>
-                <PublicPage>
-                  <ProbeVersionCompare publicView={true} {...props}/>
-                </PublicPage>
-              }
-            />
-            <Route exact path="/ui/public_probes/:name/history/:version"
-              render={props =>
-                <PublicPage>
-                  <ProbeVersionDetails publicView={true} {...props}/>
-                </PublicPage>
-              }
-            />
-            <Route exact path="/ui/public_metrics"
-              render={props =>
-                <PublicPage>
-                  <MetricList publicView={true} {...props}/>
-                </PublicPage>
-              }
-            />
-            <Route exact path="/ui/public_metrics/:name"
-              render={props =>
-                <PublicPage>
-                  <MetricChange publicView={true} {...props}/>
-                </PublicPage>
-              }
-            />
-          </Switch>
-          <Route exact path="/ui/public_metricprofiles"
-            render={props =>
-              <PublicPage>
-                <MetricProfilesList publicView={true} {...props} />
-              </PublicPage>
-            }
-          />
-          <Route exact path="/ui/public_metricprofiles/:name"
-            render={props =>
-              <PublicPage>
-                <MetricProfilesChange {...props}
-                  webapimetric={this.state.webApiMetric}
-                  webapitoken={this.state.token}
-                  tenantname={this.state.tenantName}
-                  publicView={true}
-                />
-              </PublicPage>
-            }
-          />
-          <Route exact path="/ui/public_aggregationprofiles"
-            render={props =>
-              <PublicPage>
-                <AggregationProfilesList publicView={true} {...props} />
-              </PublicPage>
-            }
-          />
-          <Route exact path="/ui/public_aggregationprofiles/:name"
-            render={props =>
-              <PublicPage>
-                <AggregationProfilesChange {...props}
-                  webapimetric={this.state.webApiMetric}
-                  webapiaggregation={this.state.webApiAggregation}
-                  webapitoken={this.state.token}
-                  tenantname={this.state.tenantName}
-                  publicView={true}
-                />
-              </PublicPage>
-            }
-          />
-          <Route exact path="/ui/public_thresholdsprofiles"
-            render={props =>
-              <PublicPage>
-                <ThresholdsProfilesList publicView={true} {...props} />
-              </PublicPage>
-            }
-          />
-          <Route exact path="/ui/public_thresholdsprofiles/:name"
-            render={props =>
-              <PublicPage>
-                <ThresholdsProfilesChange {...props}
-                  webapithresholds={this.state.webApiThresholds}
-                  webapiaggregation={this.state.webApiAggregation}
-                  webapitoken={this.state.token}
-                  tenantname={this.state.tenantName}
-                  publicView={true}
-                />
-              </PublicPage>
-            }
-          />
-        </BrowserRouter>
-      )
+    if (publicView && isTenantSchema !== undefined) {
+      if (isTenantSchema)
+        return (
+          <BrowserRouter>
+            <Switch>
+              <Route
+                exact path="/ui/public_home"
+                render={props =>
+                  <PublicPage>
+                    <PublicHome/>
+                  </PublicPage>
+                }
+              />
+              <Route
+                exact path="/ui/public_probes"
+                render={props =>
+                  <PublicPage>
+                    <ProbeList publicView={true} {...props} />
+                  </PublicPage>
+                }
+              />
+              <Route
+                exact path="/ui/public_probes/:name"
+                render={props =>
+                  <PublicPage>
+                    <ProbeChange publicView={true} {...props}/>
+                  </PublicPage>
+                }
+              />
+              <Route exact path="/ui/public_probes/:name/history"
+                render={props =>
+                  <PublicPage>
+                    <ProbeHistory publicView={true} {...props}/>
+                  </PublicPage>
+                }
+              />
+              <Route exact path="/ui/public_probes/:name/history/compare/:id1/:id2"
+                render={props =>
+                  <PublicPage>
+                    <ProbeVersionCompare publicView={true} {...props}/>
+                  </PublicPage>
+                }
+              />
+              <Route exact path="/ui/public_probes/:name/history/:version"
+                render={props =>
+                  <PublicPage>
+                    <ProbeVersionDetails publicView={true} {...props}/>
+                  </PublicPage>
+                }
+              />
+              <Route
+                exact path="/ui/public_metrictemplates"
+                render={props =>
+                  <PublicPage>
+                    <TenantMetricTemplateList publicView={true} {...props}/>
+                  </PublicPage>
+                }
+              />
+              <Route
+                exact path="/ui/public_metrictemplates/:name"
+                render={props =>
+                  <PublicPage>
+                    <MetricTemplateChange publicView={true} {...props}/>
+                  </PublicPage>
+                }
+              />
+              <Route
+                exact path="/ui/public_metrictemplates/:name/history"
+                render={props =>
+                  <PublicPage>
+                    <MetricTemplateHistory publicView={true} {...props}/>
+                  </PublicPage>
+                }
+              />
+              <Route
+                exact path="/ui/public_metrictemplates/:name/history/compare/:id1/:id2"
+                render={props =>
+                  <PublicPage>
+                    <MetricTemplateVersionCompare publicView={true} {...props}VersionCompare/>
+                  </PublicPage>
+                }
+              />
+              <Route
+                exact path="/ui/public_metrictemplates/:name/history/:version"
+                render={props =>
+                  <PublicPage>
+                    <MetricTemplateVersionDetails publicView={true} {...props}/>
+                  </PublicPage>
+                }
+              />
+              <Route exact path="/ui/public_metrics"
+                render={props =>
+                  <PublicPage>
+                    <MetricList publicView={true} {...props}/>
+                  </PublicPage>
+                }
+              />
+              <Route exact path="/ui/public_metrics/:name"
+                render={props =>
+                  <PublicPage>
+                    <MetricChange publicView={true} {...props}/>
+                  </PublicPage>
+                }
+              />
+              <Route exact path="/ui/public_metricprofiles"
+                render={props =>
+                  <PublicPage>
+                    <MetricProfilesList publicView={true} {...props} />
+                  </PublicPage>
+                }
+              />
+              <Route exact path="/ui/public_metricprofiles/:name"
+                render={props =>
+                  <PublicPage>
+                    <MetricProfilesChange {...props}
+                      webapimetric={this.state.webApiMetric}
+                      webapitoken={this.state.token}
+                      tenantname={this.state.tenantName}
+                      publicView={true}
+                    />
+                  </PublicPage>
+                }
+              />
+              <Route exact path="/ui/public_aggregationprofiles"
+                render={props =>
+                  <PublicPage>
+                    <AggregationProfilesList publicView={true} {...props} />
+                  </PublicPage>
+                }
+              />
+              <Route exact path="/ui/public_aggregationprofiles/:name"
+                render={props =>
+                  <PublicPage>
+                    <AggregationProfilesChange {...props}
+                      webapimetric={this.state.webApiMetric}
+                      webapiaggregation={this.state.webApiAggregation}
+                      webapitoken={this.state.token}
+                      tenantname={this.state.tenantName}
+                      publicView={true}
+                    />
+                  </PublicPage>
+                }
+              />
+              <Route exact path="/ui/public_thresholdsprofiles"
+                render={props =>
+                  <PublicPage>
+                    <ThresholdsProfilesList publicView={true} {...props} />
+                  </PublicPage>
+                }
+              />
+              <Route exact path="/ui/public_thresholdsprofiles/:name"
+                render={props =>
+                  <PublicPage>
+                    <ThresholdsProfilesChange {...props}
+                      webapithresholds={this.state.webApiThresholds}
+                      webapiaggregation={this.state.webApiAggregation}
+                      webapitoken={this.state.token}
+                      tenantname={this.state.tenantName}
+                      publicView={true}
+                    />
+                  </PublicPage>
+                }
+              />
+              <Route exact path="/ui/public_operationsprofiles"
+                render={props =>
+                  <PublicPage>
+                    <OperationsProfilesList
+                      {...props}
+                      publicView={true}
+                      webapitoken={this.state.token}
+                      webapioperations={this.state.webApiOperations}
+                    />
+                  </PublicPage>
+                }
+              />
+              <Route exact path="/ui/public_operationsprofiles/:name"
+                render={props =>
+                  <PublicPage>
+                    <OperationsProfileDetails
+                      {...props}
+                      publicView={true}
+                      webapitoken={this.state.token}
+                      webapioperations={this.state.webApiOperations}
+                    />
+                  </PublicPage>
+                }
+              />
+              <Route component={NotFound} />
+            </Switch>
+          </BrowserRouter>
+        )
+      else
+        return (
+          <BrowserRouter>
+            <Switch>
+              <Route
+                exact path="/ui/public_home"
+                render={props =>
+                  <PublicPage>
+                    <PublicHome isSuperAdmin={true} {...props}/>
+                  </PublicPage>
+                }
+              />
+              <Route
+                exact path="/ui/public_probes"
+                render={props =>
+                  <PublicPage>
+                    <ProbeList publicView={true} {...props} />
+                  </PublicPage>
+                }
+              />
+              <Route
+                exact path="/ui/public_probes/:name"
+                render={props =>
+                  <PublicPage>
+                    <ProbeChange publicView={true} {...props}/>
+                  </PublicPage>
+                }
+              />
+              <Route exact path="/ui/public_probes/:name/history"
+                render={props =>
+                  <PublicPage>
+                    <ProbeHistory publicView={true} {...props}/>
+                  </PublicPage>
+                }
+              />
+              <Route exact path="/ui/public_probes/:name/history/compare/:id1/:id2"
+                render={props =>
+                  <PublicPage>
+                    <ProbeVersionCompare publicView={true} {...props}/>
+                  </PublicPage>
+                }
+              />
+              <Route exact path="/ui/public_probes/:name/history/:version"
+                render={props =>
+                  <PublicPage>
+                    <ProbeVersionDetails publicView={true} {...props}/>
+                  </PublicPage>
+                }
+              />
+              <Route
+                exact path="/ui/public_metrictemplates"
+                render={props =>
+                  <PublicPage>
+                    <TenantMetricTemplateList publicView={true} {...props}/>
+                  </PublicPage>
+                }
+              />
+              <Route
+                exact path="/ui/public_metrictemplates/:name"
+                render={props =>
+                  <PublicPage>
+                    <MetricTemplateChange publicView={true} {...props}/>
+                  </PublicPage>
+                }
+              />
+              <Route
+                exact path="/ui/public_metrictemplates/:name/history"
+                render={props =>
+                  <PublicPage>
+                    <MetricTemplateHistory publicView={true} {...props}/>
+                  </PublicPage>
+                }
+              />
+              <Route
+                exact path="/ui/public_metrictemplates/:name/history/compare/:id1/:id2"
+                render={props =>
+                  <PublicPage>
+                    <MetricTemplateVersionCompare publicView={true} {...props}VersionCompare/>
+                  </PublicPage>
+                }
+              />
+              <Route
+                exact path="/ui/public_metrictemplates/:name/history/:version"
+                render={props =>
+                  <PublicPage>
+                    <MetricTemplateVersionDetails publicView={true} {...props}/>
+                  </PublicPage>
+                }
+              />
+
+                <Route component={NotFound} />
+            </Switch>
+          </BrowserRouter>
+        );
     }
     else if (!publicView && !isSessionActive) {
       return (
@@ -609,6 +843,7 @@ class App extends Component {
                     webApiMetric={this.state.webApiMetric}
                     webApiAggregation={this.state.webApiAggregation}
                     webApiThresholds={this.state.webApiThresholds}
+                    webApiOperations={this.state.webApiOperations}
                     token={this.state.token}
                     tenantName={this.state.tenantName}
                     isSuperUser={userDetails.is_superuser}

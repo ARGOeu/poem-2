@@ -13,7 +13,7 @@ django-rest-auth==0.9.5
 git+https://github.com/vrdel/django-tenant-schemas
 django-webpack-loader==0.7.0
 djangorestframework==3.11.0
-djangorestframework-api-key==1.4.1
+djangorestframework-api-key==2.0.0
 djangosaml2==0.18.1
 dparse==0.5.0
 filelock==3.0.12

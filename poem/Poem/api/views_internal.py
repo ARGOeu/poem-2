@@ -13,3 +13,4 @@ from Poem.api.internal_views.users import *
 from Poem.api.internal_views.yumrepos import *
 from Poem.api.internal_views.thresholdsprofiles import *
 from Poem.api.internal_views.package import *
+from Poem.api.internal_views.tenants import *

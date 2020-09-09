@@ -1,12 +1,11 @@
-from django.contrib.contenttypes.models import ContentType
-from django.core import serializers
-
-from deepdiff import DeepDiff
 import json
 
 from Poem.poem import models as poem_models
 from Poem.poem_super_admin import models as admin_models
 from Poem.users.models import CustUser
+from deepdiff import DeepDiff
+from django.contrib.contenttypes.models import ContentType
+from django.core import serializers
 
 
 def to_dict(instance):
@@ -70,7 +69,7 @@ def create_history_entry(instance, user, comment):
         )
 
     else:
-        admin_models.MetricTemplateHistory.objects.create(
+        history = admin_models.MetricTemplateHistory.objects.create(
             object_id=instance,
             name=instance.name,
             mtype=instance.mtype,
@@ -88,6 +87,8 @@ def create_history_entry(instance, user, comment):
             version_comment=comment,
             version_user=user
         )
+        for tag in instance.tags.all():
+            history.tags.add(tag)
 
 
 def create_history(instance, user, comment=None):
@@ -309,7 +310,8 @@ def analyze_differences(old_data, new_data):
                             added.append(field)
 
                         else:
-                            changed.append(field)
+                            if field != 'tags':
+                                changed.append(field)
 
                 except KeyError:
                     pass

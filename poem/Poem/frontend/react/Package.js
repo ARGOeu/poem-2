@@ -11,7 +11,8 @@ import{
   NotifyError,
   ErrorComponent,
   DropdownFilterComponent,
-  NotifyWarn
+  NotifyWarn,
+  ParagraphTitle
 } from './UIElements';
 import ReactTable from 'react-table';
 import {
@@ -681,7 +682,7 @@ function PackageComponent(cloneview=false){
                     </Row>
                   </FormGroup>
                   <FormGroup>
-                    <h4 className="mt-2 p-1 pl-3 text-light text-uppercase rounded" style={{"backgroundColor": "#416090"}}>Yum repo</h4>
+                    <ParagraphTitle title='YUM repo'/>
                     <Row>
                       <Col md={8}>
                         {

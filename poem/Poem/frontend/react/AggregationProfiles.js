@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component, useState } from 'react';
 import {Link} from 'react-router-dom';
 import {
   LoadingAnim,
@@ -11,9 +11,10 @@ import {
   DiffElement,
   ProfileMainInfo,
   NotifyError,
-  ErrorComponent
+  ErrorComponent,
+  ParagraphTitle
 } from './UIElements';
-import Autocomplete from 'react-autocomplete';
+import Autosuggest from 'react-autosuggest';
 import ReactTable from 'react-table';
 import 'react-table/react-table.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -44,10 +45,6 @@ import './AggregationProfiles.css';
 export const AggregationProfileHistory = HistoryComponent('aggregationprofile');
 
 
-function matchItem(item, value) {
-  return item.toLowerCase().indexOf(value.toLowerCase()) !== -1;
-}
-
 
 const AggregationProfilesSchema = Yup.object().shape({
   name: Yup.string().required('Required'),
@@ -75,6 +72,50 @@ function insertSelectPlaceholder(data, text) {
     return [text, ...data]
   else
     return [text]
+}
+
+
+const AggregationProfileAutocompleteField = ({suggestions, service, index, form, isNew, groupNew, groupIndex, isMissing}) => {
+  const [suggestionList, setSuggestions] = useState(suggestions)
+
+  return (
+    <Autosuggest
+      inputProps={{
+        className: `"form-control custom-select " ${isNew && !groupNew ? "border-success" : ""} ${isMissing ? "border-primary": ""}`,
+        placeholder: '',
+        onChange: (_, {newValue}) => form.setFieldValue(`groups.${groupIndex}.services.${index}.name`, newValue),
+        value: service.name
+      }}
+      getSuggestionValue={(suggestion) => suggestion}
+      suggestions={suggestionList}
+      renderSuggestion={(suggestion, {query, isHighlighted}) =>
+        <div
+          key={suggestions.indexOf(suggestion)}
+          className={`aggregation-autocomplete-entries ${isHighlighted ?
+              "aggregation-autocomplete-entries-highlighted"
+              : ""}`
+          }>
+          {suggestion ? <Icon i='serviceflavour'/> : ''} {suggestion}
+        </div>}
+      onSuggestionsFetchRequested={({ value }) =>
+        {
+          let result = suggestions.filter(service => service.toLowerCase().includes(value.trim().toLowerCase()))
+          setSuggestions(result)
+        }
+      }
+      onSuggestionsClearRequested={() => {
+        setSuggestions([])
+      }}
+      onSuggestionSelected={(_, {suggestion}) => {
+        form.setFieldValue(`groups.${groupIndex}.services.${index}.name`, suggestion)
+      }}
+      shouldRenderSuggestions={() => true}
+      theme={{
+        suggestionsContainerOpen: 'aggregation-autocomplete-menu',
+        suggestionsList: 'aggregation-autocomplete-list'
+      }}
+    />
+  )
 }
 
 
@@ -214,30 +255,15 @@ const Service = ({name, service, operation, list_services, list_operations,
   <React.Fragment>
     <Row className="d-flex align-items-center service pt-1 pb-1 no-gutters" key={index}>
       <Col md={8}>
-        <Autocomplete
-          inputProps={{
-            className: `"form-control custom-select " ${isnew && !groupnew ? "border-success" : ""} ${ismissing ? "border-primary": ""}`
-          }}
-          getItemValue={(item) => item}
-          items={list_services}
-          value={service.name}
-          renderItem={(item, isHighlighted) =>
-            <div
-              key={list_services.indexOf(item)}
-              className={`aggregation-autocomplete-entries ${isHighlighted ?
-                  "aggregation-autocomplete-entries-highlighted"
-                  : ""}`
-              }>
-              {item ? <Icon i='serviceflavour'/> : ''} {item}
-            </div>}
-          onChange={(e) => form.setFieldValue(`groups.${groupindex}.services.${index}.name`, e.target.value)}
-          onSelect={(val) => {
-            form.setFieldValue(`groups.${groupindex}.services.${index}.name`, val)
-          }}
-          wrapperStyle={{}}
-          shouldItemRender={matchItem}
-          renderMenu={(items) =>
-            <div className='aggregation-autocomplete-menu' children={items}/>}
+        <AggregationProfileAutocompleteField
+          suggestions={list_services}
+          service={service}
+          index={index}
+          form={form}
+          isNew={isnew}
+          groupNew={groupnew}
+          groupIndex={groupindex}
+          isMissing={ismissing}
         />
       </Col>
       <Col md={2}>
@@ -306,7 +332,7 @@ const AggregationProfilesForm = ({ values, errors, historyview=false, write_perm
       }
       profiletype='aggregation'
   />
-    <h4 className="mt-4 alert-info p-1 pl-3 text-light text-uppercase rounded" style={{'backgroundColor': "#416090"}}>Operations, endpoint group and metric profile</h4>
+    <ParagraphTitle title='Operations, endpoint group and metric profile'/>
     <Row className='mt-4'>
       <Col md={4}>
         <FormGroup>
@@ -458,7 +484,7 @@ const AggregationProfilesForm = ({ values, errors, historyview=false, write_perm
         </FormGroup>
       </Col>
     </Row>
-    <h4 className="mt-2 alert-info p-1 pl-3 text-light text-uppercase rounded" style={{'backgroundColor': "#416090"}}>Service flavour groups</h4>
+    <ParagraphTitle title='Service flavour groups'/>
   </>
 );
 
@@ -886,9 +912,10 @@ export class AggregationProfilesChange extends Component
 
       return (
         <BaseArgoView
-          resourcename='aggregation profile'
+          resourcename={this.publicView ? 'Aggregation profile details' : 'aggregation profile'}
           location={this.location}
           modal={true}
+          history={!this.publicView}
           state={this.state}
           toggle={this.toggleAreYouSure}
           addview={this.publicView ? !this.publicView : this.addview}
@@ -921,7 +948,7 @@ export class AggregationProfilesChange extends Component
                 }}
                 />
                 {
-                  is_service_missing &&
+                  (is_service_missing && !this.publicView) &&
                   <Alert color='danger'>
                     <center>
                       <FontAwesomeIcon icon={faInfoCircle} size="lg" color="black"/> &nbsp;
@@ -936,18 +963,81 @@ export class AggregationProfilesChange extends Component
                   endpoint_groups={this.endpoint_groups}
                   list_id_metric_profiles={list_id_metric_profiles}
                   write_perm={write_perm}
+                  historyview={this.publicView}
                 />
-                <FieldArray
-                  name="groups"
-                  render={props => (
-                    <GroupList
-                      {...props}
-                      list_services={list_services}
-                      list_operations={this.logic_operations}
-                      last_service_operation={this.insertOperationFromPrevious}
-                      write_perm={write_perm}
-                    />)}
-                />
+                {
+                  !this.publicView ?
+                    <FieldArray
+                      name="groups"
+                      render={props => (
+                        <GroupList
+                          {...props}
+                          list_services={list_services}
+                          list_operations={this.logic_operations}
+                          last_service_operation={this.insertOperationFromPrevious}
+                          write_perm={write_perm}
+                        />)}
+                    />
+                  :
+                    <FieldArray
+                      name='groups'
+                      render={arrayHelpers => (
+                        <Row className='groups'>
+                          {
+                            props.values['groups'].map((group, i) =>
+                              <FieldArray
+                                key={i}
+                                name='groups'
+                                render={arrayHelpers => (
+                                  <React.Fragment key={i}>
+                                    <Col sm={{size: 8}} md={{size: 5}} className='mt-4 mb-2'>
+                                      <Card>
+                                        <CardHeader className='p-1' color='primary'>
+                                          <Row className='d-flex align-items-center no-gutters'>
+                                            <Col sm={{size: 10}} md={{size: 11}}>
+                                              {props.values.groups[i].name}
+                                            </Col>
+                                          </Row>
+                                        </CardHeader>
+                                        <CardBody className='p-1'>
+                                          {
+                                            group.services.map((service, j) =>
+                                              <FieldArray
+                                                key={j}
+                                                name={`groups.${i}.services`}
+                                                render={arrayHelpers => (
+                                                  <Row className='d-flex align-items-center service pt-1 pb-1 no-gutters' key={j}>
+                                                    <Col md={8}>
+                                                      {props.values.groups[i].services[j].name}
+                                                    </Col>
+                                                    <Col md={2}>
+                                                      {props.values.groups[i].services[j].operation}
+                                                    </Col>
+                                                  </Row>
+                                                )}
+                                              />
+                                            )
+                                          }
+                                        </CardBody>
+                                        <CardFooter className='p-1 d-flex justify-content-center'>
+                                          {props.values.groups[i].operation}
+                                        </CardFooter>
+                                      </Card>
+                                    </Col>
+                                    <Col sm={{size: 4}} md={{size: 1}} className='mt-5'>
+                                      <div className='group-operation' key={i}>
+                                        {props.values.profile_operation}
+                                      </div>
+                                    </Col>
+                                  </React.Fragment>
+                                )}
+                              />
+                            )
+                          }
+                        </Row>
+                      )}
+                    />
+                }
                 {
                   (write_perm) &&
                     <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">

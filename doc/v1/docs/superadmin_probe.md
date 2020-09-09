@@ -1,16 +1,16 @@
 # Probe
 
-Probe is code which implements single or multiple tests. 
+Probe is code which implements single or multiple tests. All of the probes must comply with [the guidelines for monitoring probes](http://argoeu.github.io/monitoring-probes/v1/guidelines_for_monitoring_probes/).
 
 ## List of probes
 
-Probe page is accessible from the menu on the left side. The page is shown in the image below. The list shows the name of the probe, number of available versions, package that contains he probe, and short description.
+Probe page is accessible from the menu on the left side. The page is shown in the image below. The list shows the name of the probe, number of available versions, package that contains the probe, and short description.
 
 ![SuperAdmin Probe](figures/superadmin_probe.png)
 
 ## Probe details
 
-By clicking the probe name, the user is redirected to the particular probe page (example shown in figure below).
+By clicking the probe's name, the user is redirected to the particular probe page (example shown in figure below).
 
 ![SuperAdmin Probe Details](figures/superadmin_probe_detail.png)
 

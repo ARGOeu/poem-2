@@ -11,7 +11,8 @@ import {
     DiffElement,
     ProfileMainInfo,
     NotifyError,
-    ErrorComponent
+    ErrorComponent,
+    ParagraphTitle
 } from './UIElements';
 import ReactTable from 'react-table';
 import {
@@ -255,7 +256,7 @@ const ThresholdsProfilesForm = ({
       profiletype='thresholds'
     />
     <FormGroup>
-      <h4 className="mt-4 p-1 pl-3 text-light text-uppercase rounded" style={{"backgroundColor": "#416090"}}>Thresholds rules</h4>
+      <ParagraphTitle title='Thresholds rules'/>
       <Row>
         <Col md={12}>
           <FieldArray
@@ -1307,9 +1308,10 @@ export class ThresholdsProfilesChange extends Component {
     else if (!loading && thresholds_profile) {
       return (
         <BaseArgoView
-          resourcename='thresholds profile'
+          resourcename={this.publicView ? 'Thresholds profile details' : 'thresholds profile'}
           location={this.location}
           modal={true}
+          history={!this.publicView}
           state={this.state}
           toggle={this.toggleAreYouSure}
           submitperm={write_perm}
@@ -1336,6 +1338,7 @@ export class ThresholdsProfilesChange extends Component {
                   state={this.state}
                   toggleWarningPopOver={this.toggleWarningPopOver}
                   toggleCriticalPopOver={this.toggleCriticalPopOver}
+                  historyview={this.publicView}
                 />
                 {
                   write_perm &&

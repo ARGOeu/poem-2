@@ -4,7 +4,8 @@ from Poem.api.internal_views.utils import one_value_inline, two_value_inline, \
     inline_metric_for_db
 from Poem.api.views import NotFound
 from Poem.helpers.history_helpers import create_history, update_comment
-from Poem.helpers.metrics_helpers import update_metrics
+from Poem.helpers.metrics_helpers import update_metrics, \
+    get_metrics_in_profiles, delete_metrics_from_profile
 from Poem.poem.models import Metric, TenantHistory
 from Poem.poem_super_admin import models as admin_models
 from Poem.tenants.models import Tenant
@@ -47,6 +48,10 @@ class ListMetricTemplates(APIView):
                 for repo in metrictemplate.probekey.package.repos.all():
                     ostag.append(repo.tag.name)
 
+            tags = []
+            for tag in metrictemplate.tags.all():
+                tags.append(tag.name)
+
             if metrictemplate.probekey:
                 probeversion = metrictemplate.probekey.__str__()
             else:
@@ -57,6 +62,7 @@ class ListMetricTemplates(APIView):
                 name=metrictemplate.name,
                 mtype=metrictemplate.mtype.name,
                 ostag=ostag,
+                tags=sorted(tags),
                 probeversion=probeversion,
                 description=metrictemplate.description,
                 parent=parent,
@@ -114,6 +120,17 @@ class ListMetricTemplates(APIView):
                         request.data['fileparameter']
                     )
                 )
+                if 'tags' in dict(request.data):
+                    for tag_name in dict(request.data)['tags']:
+                        try:
+                            tag = admin_models.MetricTags.objects.get(
+                                name=tag_name
+                            )
+                        except admin_models.MetricTags.DoesNotExist:
+                            tag = admin_models.MetricTags.objects.create(
+                                name=tag_name
+                            )
+                        mt.tags.add(tag)
             else:
                 mt = admin_models.MetricTemplate.objects.create(
                     name=request.data['name'],
@@ -161,6 +178,7 @@ class ListMetricTemplates(APIView):
         )
         old_name = metrictemplate.name
         old_probekey = metrictemplate.probekey
+        old_tags = set([tag.name for tag in metrictemplate.tags.all()])
 
         if request.data['parent']:
             parent = json.dumps([request.data['parent']])
@@ -171,6 +189,10 @@ class ListMetricTemplates(APIView):
             probeexecutable = json.dumps([request.data['probeexecutable']])
         else:
             probeexecutable = ''
+
+        new_tags = set()
+        if 'tags' in dict(request.data):
+            new_tags = set(dict(request.data)['tags'])
 
         if request.data['probeversion']:
             try:
@@ -226,6 +248,23 @@ class ListMetricTemplates(APIView):
                 )
                 metrictemplate.save()
 
+                if old_tags.difference(new_tags):
+                    for tag in old_tags.difference(new_tags):
+                        metrictemplate.tags.remove(
+                            admin_models.MetricTags.objects.get(name=tag)
+                        )
+
+                if new_tags.difference(old_tags):
+                    for tag in new_tags.difference(old_tags):
+                        try:
+                            mtag = admin_models.MetricTags.objects.get(name=tag)
+
+                        except admin_models.MetricTags.DoesNotExist:
+                            mtag = admin_models.MetricTags.objects.create(
+                                name=tag
+                            )
+                        metrictemplate.tags.add(mtag)
+
                 create_history(metrictemplate, request.user.username)
 
             else:
@@ -258,6 +297,32 @@ class ListMetricTemplates(APIView):
                     id=request.data['id']
                 ).update(**new_data)
 
+                mt = admin_models.MetricTemplate.objects.get(
+                    pk=request.data['id']
+                )
+
+                tags_to_remove = None
+                if old_tags.difference(new_tags):
+                    tags_to_remove = admin_models.MetricTags.objects.filter(
+                        name__in=old_tags.difference(new_tags)
+                    )
+                    for tag in tags_to_remove:
+                        mt.tags.remove(tag)
+
+                tags_to_add = None
+                if new_tags.difference(old_tags):
+                    tags_to_add = []
+                    for tag in new_tags.difference(old_tags):
+                        try:
+                            mtag = admin_models.MetricTags.objects.get(name=tag)
+
+                        except admin_models.MetricTags.DoesNotExist:
+                            mtag = admin_models.MetricTags.objects.create(
+                                name=tag
+                            )
+                        tags_to_add.append(mtag)
+                        mt.tags.add(mtag)
+
                 new_data.update({
                     'version_comment': update_comment(
                         admin_models.MetricTemplate.objects.get(
@@ -270,9 +335,17 @@ class ListMetricTemplates(APIView):
                     name=old_name, probekey=old_probekey
                 ).update(**new_data)
 
-                mt = admin_models.MetricTemplate.objects.get(
-                    pk=request.data['id']
+                history = admin_models.MetricTemplateHistory.objects.get(
+                    name=request.data['name'], probekey=new_probekey
                 )
+
+                if tags_to_remove:
+                    for tag in tags_to_remove:
+                        history.tags.remove(tag)
+
+                if tags_to_add:
+                    for tag in tags_to_add:
+                        history.tags.add(tag)
 
                 msgs = update_metrics(mt, old_name, old_probekey)
 
@@ -324,6 +397,23 @@ class ListMetricTemplates(APIView):
 
         else:
             return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+class ListPublicMetricTemplates(ListMetricTemplates):
+    authentication_classes = ()
+    permission_classes = ()
+
+    def _denied(self):
+        return Response(status=status.HTTP_403_FORBIDDEN)
+
+    def post(self, request):
+        return self._denied()
+
+    def put(self, request):
+        return self._denied()
+
+    def delete(self, request, name):
+        return self._denied()
 
 
 class ListMetricTemplatesForImport(APIView):
@@ -378,6 +468,7 @@ class ListMetricTemplatesForImport(APIView):
                 dict(
                     name=mt.name,
                     mtype=mt.mtype.name,
+                    tags=sorted([tag.name for tag in mt.tags.all()]),
                     probeversion=probeversion,
                     centos6_probeversion=centos6_probeversion,
                     centos7_probeversion=centos7_probeversion,
@@ -403,6 +494,94 @@ class ListMetricTemplatesForProbeVersion(APIView):
             )
 
 
+class BulkDeleteMetricTemplates(APIView):
+    authentication_classes = (SessionAuthentication,)
+
+    def post(self, request):
+        metrictemplates = dict(request.data)['metrictemplates']
+
+        schemas = list(
+            Tenant.objects.all().values_list('schema_name', flat=True)
+        )
+        schemas.remove(get_public_schema_name())
+
+        warning_message = []
+        for schema in schemas:
+            with schema_context(schema):
+                try:
+                    mip = get_metrics_in_profiles(schema)
+                except Exception as e:
+                    warning_message.append(
+                        '{}: Metrics are not removed from metric profiles. '
+                        'Unable to get metric profiles: {}'.format(
+                            schema, str(e)
+                        )
+                    )
+                    continue
+
+                inter = set(metrictemplates).intersection(set(list(mip.keys())))
+                profiles = dict()
+                for metric in metrictemplates:
+                    try:
+                        instance = Metric.objects.get(name=metric)
+                        TenantHistory.objects.filter(
+                            object_id=instance.id
+                        ).delete()
+                        instance.delete()
+
+                    except Metric.DoesNotExist:
+                        continue
+
+                    for key, value in mip.items():
+                        if metric in inter and key == metric:
+                            for p in value:
+                                if p in profiles:
+                                    profiles.update({p: profiles[p] + [key]})
+                                else:
+                                    profiles.update({p: [key]})
+
+                if profiles:
+                    for key, value in profiles.items():
+                        try:
+                            delete_metrics_from_profile(key, value)
+
+                        except Exception as e:
+                            if len(value) > 1:
+                                noun = 'Metrics {}'.format(', '.join(value))
+                            else:
+                                noun = 'Metric {}'.format(value[0])
+
+                            warning_message.append(
+                                '{}: {} not deleted from profile {}: {}'.format(
+                                    schema, noun, key, str(e)
+                                )
+                            )
+
+        response_message = dict()
+        mt = admin_models.MetricTemplate.objects.filter(
+            name__in=metrictemplates
+        )
+
+        mt.delete()
+
+        if len(metrictemplates) > 1:
+            msg = 'Metric templates {}'.format(', '.join(metrictemplates))
+
+        else:
+            msg = 'Metric template {}'.format(metrictemplates[0])
+
+        response_message.update({
+            'info': '{} successfully deleted.'.format(msg)
+        })
+
+        if warning_message:
+            response_message.update({'warning': '; '.join(warning_message)})
+
+        return Response(
+            data=response_message, status=status.HTTP_200_OK
+        )
+
+
 class ListPublicMetricTemplatesForProbeVersion(ListMetricTemplatesForProbeVersion):
     authentication_classes = ()
     permission_classes = ()
@@ -416,3 +595,22 @@ class ListMetricTemplateTypes(APIView):
             'name', flat=True
         )
         return Response(types)
+
+
+class ListPublicMetricTemplateTypes(ListMetricTemplateTypes):
+    authentication_classes = ()
+    permission_classes = ()
+
+
+class ListMetricTags(APIView):
+    authentication_classes = (SessionAuthentication,)
+
+    def get(self, request):
+        tags = admin_models.MetricTags.objects.all().order_by('name')
+        tags_list = [tag.name for tag in tags]
+        return Response(tags_list)
+
+
+class ListPublicMetricTags(ListMetricTags):
+    authentication_classes = ()
+    permission_classes = ()

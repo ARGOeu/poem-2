@@ -24,10 +24,27 @@ class MetricTemplateType(models.Model):
         return (self.name,)
 
 
+class MetricTags(models.Model):
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=128, blank=True, null=True)
+
+    objects = MetricTemplateManager()
+
+    class Meta:
+        app_label = 'poem_super_admin'
+
+    def __str__(self):
+        return u'%s' % self.name
+
+    def natural_key(self):
+        return (self.name,)
+
+
 class MetricTemplate(models.Model):
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=128, unique=True)
     mtype = models.ForeignKey(MetricTemplateType, on_delete=models.CASCADE)
+    tags = models.ManyToManyField(MetricTags)
     probekey = models.ForeignKey(ProbeHistory, blank=True, null=True,
                                  on_delete=models.SET_NULL)
     description = models.TextField(default='')
@@ -58,6 +75,7 @@ class MetricTemplateHistory(models.Model):
     object_id = models.ForeignKey(MetricTemplate, on_delete=models.CASCADE)
     name = models.CharField(max_length=128)
     mtype = models.ForeignKey(MetricTemplateType, on_delete=models.CASCADE)
+    tags = models.ManyToManyField(MetricTags)
     probekey = models.ForeignKey(ProbeHistory, null=True,
                                  on_delete=models.SET_NULL)
     description = models.TextField(default='')

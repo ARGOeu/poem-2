@@ -13,12 +13,13 @@ import {
   NotifyWarn,
   NotifyError,
   NotifyInfo,
-  ErrorComponent
+  ErrorComponent,
+  ModalAreYouSure,
+  ParagraphTitle
  } from './UIElements';
 import ReactTable from 'react-table';
 import { Formik, Form, Field, FieldArray } from 'formik';
 import {
-  Alert,
   FormGroup,
   Row,
   Col,
@@ -29,11 +30,15 @@ import {
   PopoverBody,
   PopoverHeader,
   InputGroup,
-  InputGroupAddon
+  InputGroupAddon,
+  ButtonToolbar,
+  Badge
 } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faInfoCircle, faMinus, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faInfoCircle, faMinus, faPlus, faCaretDown } from '@fortawesome/free-solid-svg-icons';
 import ReactDiffViewer from 'react-diff-viewer';
+import CreatableSelect from 'react-select/creatable';
+import { components } from 'react-select';
 
 export const MetricList = ListOfMetrics('metric');
 export const MetricHistory = HistoryComponent('metric');
@@ -291,7 +296,8 @@ export function ListOfMetrics(type, imp=false) {
     constructor(props) {
       super(props);
 
-      this.location = props.location
+      this.location = props.location;
+      this.history = props.history;
 
       if (type === 'metric') {
         this.state = {
@@ -300,9 +306,11 @@ export function ListOfMetrics(type, imp=false) {
           list_tags: null,
           list_groups: null,
           list_types: null,
+          list_tags: null,
           search_name: '',
           search_probeversion: '',
           search_type: '',
+          search_tag: '',
           search_group: '',
           userDetails: undefined,
           error: null
@@ -312,14 +320,20 @@ export function ListOfMetrics(type, imp=false) {
           loading: false,
           list_metric: null,
           list_types: null,
+          list_tags: null,
           list_ostags: null,
           search_name: '',
           search_probeversion: '',
           search_ostag: '',
           search_type: '',
+          search_tag: '',
           selected: {},
           selectAll: 0,
           userDetails: undefined,
+          areYouSureModal: false,
+          modalFunc: undefined,
+          modalTitle: undefined,
+          modalMsg: undefined,
           error: null
         }
       }
@@ -329,6 +343,10 @@ export function ListOfMetrics(type, imp=false) {
       this.doFilter = this.doFilter.bind(this);
       this.toggleRow = this.toggleRow.bind(this);
       this.importMetrics = this.importMetrics.bind(this);
+      this.bulkDeleteMetrics = this.bulkDeleteMetrics.bind(this);
+      this.toggleAreYouSure = this.toggleAreYouSure.bind(this);
+      this.toggleAreYouSureSetModal = this.toggleAreYouSureSetModal.bind(this);
+      this.onDelete = this.onDelete.bind(this);
     }
 
     doFilter(list_metric, field, filter) {
@@ -351,15 +369,21 @@ export function ListOfMetrics(type, imp=false) {
       var { list_metric } = this.state;
 
       if (this.state.search_name) {
-        list_metric = this.doFilter(list_metric, 'name', this.state.search_name)
+        list_metric = this.doFilter(list_metric, 'name', this.state.search_name);
       }
 
       if (this.state.search_probeversion) {
-        list_metric = this.doFilter(list_metric, 'probeversion', this.state.search_probeversion)
+        list_metric = this.doFilter(list_metric, 'probeversion', this.state.search_probeversion);
       }
 
       if (this.state.search_type) {
-        list_metric = this.doFilter(list_metric, 'mtype', this.state.search_type)
+        list_metric = this.doFilter(list_metric, 'mtype', this.state.search_type);
+      }
+
+      if (this.state.search_tag) {
+        list_metric = list_metric.filter(row =>
+          row.tags.includes(this.state.search_tag)
+        );
       }
 
       if (this.state.search_ostag) {
@@ -379,6 +403,37 @@ export function ListOfMetrics(type, imp=false) {
         selectAll: this.state.selectAll === 0 ? 1 : 0
       });
     }
+
+    toggleAreYouSure() {
+      this.setState(prevState =>
+        ({areYouSureModal: !prevState.areYouSureModal}));
+    };
+
+    toggleAreYouSureSetModal(msg, title, onyes) {
+      this.setState(prevState =>
+        ({areYouSureModal: !prevState.areYouSureModal,
+          modalFunc: onyes,
+          modalMsg: msg,
+          modalTitle: title,
+        }));
+    }
+
+    onDelete() {
+      let selectedMetrics = this.state.selected;
+      // get only those metrics whose value is true
+      let mt = Object.keys(selectedMetrics).filter(k => selectedMetrics[k]);
+      if (mt.length > 0 ) {
+        let msg = `Are you sure you want to delete metric template${mt.length > 1 ? 's' : ''} ${mt.join(', ')}?`
+        let title = `Delete metric template${mt.length > 1 ? 's' : ''}`;
+
+        this.toggleAreYouSureSetModal(msg, title,
+          () => this.bulkDeleteMetrics(mt));
+      } else
+        NotifyError({
+          msg: 'No metric templates were selected!',
+          title: 'Error'
+        });
+    };
 
     async importMetrics() {
       let selectedMetrics = this.state.selected;
@@ -406,61 +461,77 @@ export function ListOfMetrics(type, imp=false) {
       };
     }
 
+    async bulkDeleteMetrics(mt) {
+      let refreshed_metrics = this.state.list_metric;
+      let response = await this.backend.bulkDeleteMetrics({'metrictemplates': mt});
+      let json = await response.json();
+      if (response.ok) {
+        refreshed_metrics = refreshed_metrics.filter(m => !mt.includes(m.name));
+        if ('info' in json)
+          NotifyOk({msg: json.info, title: 'Deleted'});
+
+        if ('warning' in json)
+          NotifyWarn({msg: json.warn, title: 'Deleted'});
+
+        this.setState({
+          list_metric: refreshed_metrics,
+          selectAll: 0
+        });
+
+      } else
+        NotifyError({
+          msg: `Error deleting metric template${mt.length > 0 ? 's' : ''}`,
+          title: `Error: ${response.status} ${response.statusText}`
+        });
+    };
+
     async componentDidMount() {
       this.setState({loading: true});
 
       let response = await this.backend.isTenantSchema();
+      let alltags = await this.backend.fetchData(`/api/v2/internal/${this.publicView ? 'public_' : ''}metrictags`);
+      alltags.push('none');
       try {
+        let userDetails = {username: 'Anonymous'};
         if (!this.publicView) {
           let sessionActive = await this.backend.isActiveSession(response);
           if (sessionActive.active)
-            if (type === 'metric') {
-              let metrics = await this.backend.fetchData('/api/v2/internal/metric');
-              let groups = await this.backend.fetchResult('/api/v2/internal/usergroups');
-              let types = await this.backend.fetchData('/api/v2/internal/mtypes');
-              this.setState({
-                list_metric: metrics,
-                list_groups: groups['metrics'],
-                list_types: types,
-                loading: false,
-                search_name: '',
-                search_probeversion: '',
-                search_group: '',
-                search_type: '',
-                userDetails: sessionActive.userdetails
-              });
-            } else {
-              let metrictemplates = await this.backend.fetchData(`/api/v2/internal/metrictemplates${imp ? '-import' : ''}`);
-              let types = await this.backend.fetchData('/api/v2/internal/mttypes');
-              let ostags = await this.backend.fetchData('/api/v2/internal/ostags');
-              this.setState({
-                list_metric: metrictemplates,
-                list_types: types,
-                list_ostags: ostags,
-                loading: false,
-                search_name: '',
-                search_probeversion: '',
-                search_type: '',
-                search_ostag: '',
-                userDetails: sessionActive.userdetails
-              });
-            };
-        } else {
-          let metrics = await this.backend.fetchData('/api/v2/internal/public_metric');
-          let groups = await this.backend.fetchResult('/api/v2/internal/public_usergroups');
-          let types = await this.backend.fetchData('/api/v2/internal/public_mtypes');
+            userDetails = sessionActive.userdetails;
+        }
+
+        if (type === 'metric') {
+          let metrics = await this.backend.fetchData(`/api/v2/internal/${this.publicView ? 'public_' : ''}metric`);
+          let groups = await this.backend.fetchResult(`/api/v2/internal/${this.publicView ? 'public_' : ''}usergroups`);
+          let types = await this.backend.fetchData(`/api/v2/internal/${this.publicView ? 'public_' : ''}mtypes`);
           this.setState({
             list_metric: metrics,
             list_groups: groups['metrics'],
             list_types: types,
+            list_tags: alltags,
             loading: false,
             search_name: '',
             search_probeversion: '',
             search_group: '',
             search_type: '',
-            userDetails: {username: 'Anonymous'}
+            userDetails: userDetails
           });
-        }
+        } else {
+          let metrictemplates = await this.backend.fetchData(`/api/v2/internal/${this.publicView ? 'public_metrictemplates' : `metrictemplates${imp ? '-import' : ''}`}`);
+          let types = await this.backend.fetchData(`/api/v2/internal/${this.publicView ? 'public_' : ''}mttypes`);
+          let ostags = await this.backend.fetchData(`/api/v2/internal/${this.publicView ? 'public_' : ''}ostags`);
+          this.setState({
+            list_metric: metrictemplates,
+            list_types: types,
+            list_ostags: ostags,
+            list_tags: alltags,
+            loading: false,
+            search_name: '',
+            search_probeversion: '',
+            search_type: '',
+            search_ostag: '',
+            userDetails: userDetails
+          });
+        };
       } catch(err) {
         this.setState({
           error: err,
@@ -477,10 +548,14 @@ export function ListOfMetrics(type, imp=false) {
         else
           metriclink = '/ui/metrics/'
       } else {
-        if (imp)
-          metriclink = '/ui/administration/metrictemplates/'
+        if (this.publicView)
+          metriclink = '/ui/public_metrictemplates/';
+
+        else if (imp)
+          metriclink = '/ui/administration/metrictemplates/';
+
         else
-          metriclink = '/ui/metrictemplates/'
+          metriclink = '/ui/metrictemplates/';
       }
 
       const columns = [
@@ -567,10 +642,36 @@ export function ListOfMetrics(type, imp=false) {
               data={this.state.list_types}
             />
           )
+        },
+        {
+          Header: 'Tag',
+          minWidth: 30,
+          accessor: 'tags',
+          Cell: row =>
+            <div style={{textAlign: 'center'}}>
+              {
+                row.value.length === 0 ?
+                  <Badge color='dark'>none</Badge>
+                :
+                  row.value.map((tag, i) =>
+                    <Badge className={'mr-1'} key={i} color={tag === 'internal' ? 'success' : tag === 'deprecated' ? 'danger' : 'secondary'}>
+                      {tag}
+                    </Badge>
+                  )
+              }
+            </div>,
+          filterable: true,
+          Filter: (
+            <DropdownFilterComponent
+              value={this.state.tags}
+              onChange={e => this.setState({search_tag: e.target.value})}
+              data={this.state.list_tags}
+            />
+          )
         }
       ];
 
-      if (imp && this.state.userDetails && this.state.userDetails.is_superuser) {
+      if (type == 'metrictemplate' && this.state.userDetails && this.state.userDetails.is_superuser) {
         columns.splice(
           0,
           0,
@@ -589,7 +690,7 @@ export function ListOfMetrics(type, imp=false) {
                 </div>
               );
             },
-            Header: 'Select all',
+            Header: `${imp ? 'Select all' : 'Delete'}`,
             Filter: (
               <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
                 <input
@@ -694,6 +795,17 @@ export function ListOfMetrics(type, imp=false) {
         )
       }
 
+      if (this.state.search_tag) {
+        list_metric = list_metric.filter(row => {
+          if (this.state.search_tag === 'none')
+            return row.tags.length === 0
+
+          else
+            return row.tags.includes(this.state.search_tag)
+        }
+        );
+      };
+
       if (type === 'metric' && this.state.search_group) {
         list_metric = this.doFilter(list_metric, 'group', this.state.search_group)
       }
@@ -753,22 +865,42 @@ export function ListOfMetrics(type, imp=false) {
             )
           else
             return (
-              <BaseArgoView
-                resourcename='metric template'
-                location={this.location}
-                listview={!imp}
-                importlistview={imp}
-                addnew={true}
-              >
-                <ReactTable
-                  data={list_metric}
-                  columns={columns}
-                  className='-highlight'
-                  defaultPageSize={50}
-                  rowsText='metrics'
-                  getTheadThProps={() => ({className: 'table-active font-weight-bold p-2'})}
+              <>
+                <ModalAreYouSure
+                  isOpen={this.state.areYouSureModal}
+                  toggle={this.toggleAreYouSure}
+                  title={this.state.modalTitle}
+                  msg={this.state.modalMsg}
+                  onYes={this.state.modalFunc}
                 />
-              </BaseArgoView>
+                <div className="d-flex align-items-center justify-content-between">
+                  <h2 className="ml-3 mt-1 mb-4">{'Metric templates'}</h2>
+                  {
+                    <ButtonToolbar>
+                      <Link className={`btn btn-secondary ${imp ? '' : 'mr-2'}`} to={this.location.pathname + '/add'} role='button'>Add</Link>
+                      {
+                        !imp &&
+                          <Button
+                            className='btn btn-secondary'
+                            onClick={() => this.onDelete()}
+                          >
+                            Delete
+                          </Button>
+                      }
+                    </ButtonToolbar>
+                  }
+                </div>
+                <div id='argo-contentwrap' className='ml-2 mb-2 mt-2 p-3 border rounded'>
+                  <ReactTable
+                    data={list_metric}
+                    columns={columns}
+                    className='-highlight'
+                    defaultPageSize={50}
+                    rowsText='metrics'
+                    getTheadThProps={() => ({className: 'table-active font-weight-bold p-2'})}
+                  />
+                </div>
+              </>
             )
         }
       }
@@ -777,6 +909,21 @@ export function ListOfMetrics(type, imp=false) {
     }
   }
 }
+
+
+const styles = {
+  multiValue: (base, state) => {
+    return (state.data.value === 'internal') ? { ...base, backgroundColor: '#d4edda' } : (state.data.value === 'deprecated') ? { ...base, backgroundColor: '#f8d7da' } : base;
+  },
+};
+
+const DropdownIndicator = props => {
+  return (
+    <components.DropdownIndicator {...props}>
+      <FontAwesomeIcon icon={faCaretDown}/>
+    </components.DropdownIndicator>
+  );
+};
 
 
 export const MetricForm =
@@ -793,6 +940,7 @@ export const MetricForm =
     state=undefined,
     togglePopOver=undefined,
     onSelect=undefined,
+    onTagChange=undefined,
     isHistory=false,
     isTenantSchema=false,
     addview=false,
@@ -800,6 +948,8 @@ export const MetricForm =
     groups=[],
     metrictemplatelist=[],
     types=[],
+    alltags=[],
+    tags=[],
     publicView=false
   }) =>
     <>
@@ -813,7 +963,7 @@ export const MetricForm =
               name='name'
               className={`form-control ${errors.name && 'border-danger'}`}
               id='name'
-              readOnly={isHistory || isTenantSchema}
+              readOnly={isHistory || isTenantSchema || publicView}
             />
             </InputGroup>
             {
@@ -828,7 +978,7 @@ export const MetricForm =
             <InputGroup>
               <InputGroupAddon addonType='prepend'>Type</InputGroupAddon>
               {
-                (isTenantSchema || isHistory) ?
+                (isTenantSchema || isHistory || publicView) ?
                   <Field
                     type='text'
                     name='type'
@@ -894,7 +1044,7 @@ export const MetricForm =
                   />
                 </InputGroup>
               :
-                (isHistory || isTenantSchema) ?
+                (isHistory || isTenantSchema || publicView) ?
                   <InputGroup>
                     <InputGroupAddon addonType='prepend'>Probe</InputGroupAddon>
                     <Field
@@ -969,18 +1119,60 @@ export const MetricForm =
             </FormText>
           </Col>
         </Row>
-      <Row className='mb-4 mt-2'>
-        <Col md={10}>
-          <Label for='description'>Description:</Label>
-          <Field
-            id='description'
-            className='form-control'
-            component='textarea'
-            name='description'
-            disabled={isTenantSchema || isHistory}
-          />
-        </Col>
-      </Row>
+        {
+          (obj === 'metrictemplate' && (!isHistory && !isTenantSchema && !publicView)) ?
+            <Row className='mb-4 mt-2'>
+              <Col md={10}>
+                <Label>Tags:</Label>
+                <CreatableSelect
+                  closeMenuOnSelect={false}
+                  isMulti
+                  onChange={onTagChange}
+                  options={alltags}
+                  components={{DropdownIndicator}}
+                  defaultValue={tags}
+                  styles={styles}
+                />
+              </Col>
+            </Row>
+          :
+            <Row className='mb-4 mt-2'>
+              <Col md={10}>
+                <Label>Tags:</Label>
+                <div>
+                  {
+                    state.tags.length === 0 ?
+                      <Badge color='dark'>none</Badge>
+                    :
+                      (obj === 'metrictemplate' && !isHistory) ?
+                        state.tags.map((tag, i) =>
+                          <Badge className={'mr-1'} key={i} color={tag.value === 'internal' ? 'success' : tag.value === 'deprecated' ? 'danger' : 'secondary'}>
+                            {tag.value}
+                          </Badge>
+                        )
+                      :
+                        state.tags.map((tag, i) =>
+                          <Badge className={'mr-1'} key={i} color={tag === 'internal' ? 'success' : tag === 'deprecated' ? 'danger' : 'secondary'}>
+                            {tag}
+                          </Badge>
+                        )
+                  }
+                </div>
+              </Col>
+            </Row>
+        }
+        <Row className='mb-4 mt-2'>
+          <Col md={10}>
+            <Label for='description'>Description:</Label>
+            <Field
+              id='description'
+              className='form-control'
+              component='textarea'
+              name='description'
+              disabled={isTenantSchema || isHistory || publicView}
+            />
+          </Col>
+        </Row>
         {
           obj === 'metric' &&
             <Row className='mb-4'>
@@ -988,7 +1180,7 @@ export const MetricForm =
                 <InputGroup>
                   <InputGroupAddon addonType='prepend'>Group</InputGroupAddon>
                   {
-                    isHistory ?
+                    (isHistory || publicView) ?
                       <Field
                         type='text'
                         name='group'
@@ -1019,7 +1211,7 @@ export const MetricForm =
       }
       </FormGroup>
       <FormGroup>
-        <h4 className="mt-2 p-1 pl-3 text-light text-uppercase rounded" style={{"backgroundColor": "#416090"}}>Metric configuration</h4>
+        <ParagraphTitle title='Metric configuration'/>
         <h6 className='mt-4 font-weight-bold text-uppercase' hidden={values.type === 'Passive'}>probe executable</h6>
         <Row>
           <Col md={5}>
@@ -1029,7 +1221,7 @@ export const MetricForm =
             id='probeexecutable'
             className={`form-control ${errors.probeexecutable && 'border-danger'}`}
             hidden={values.type === 'Passive'}
-            readOnly={isTenantSchema || isHistory}
+            readOnly={isTenantSchema || isHistory || publicView}
           />
             {
             errors.probeexecutable &&
@@ -1037,16 +1229,16 @@ export const MetricForm =
           }
           </Col>
         </Row>
-        <InlineFields values={values} errors={errors} field='config' addnew={!isTenantSchema && !isHistory} readonly={obj === 'metrictemplate' && isTenantSchema || isHistory}/>
-        <InlineFields values={values} errors={errors} field='attributes' addnew={!isTenantSchema && !isHistory}/>
-        <InlineFields values={values} errors={errors} field='dependency' addnew={!isTenantSchema && !isHistory}/>
-        <InlineFields values={values} errors={errors} field='parameter' addnew={!isTenantSchema && !isHistory}/>
-        <InlineFields values={values} errors={errors} field='flags' addnew={!isTenantSchema && !isHistory}/>
+        <InlineFields values={values} errors={errors} field='config' addnew={!isTenantSchema && !isHistory} readonly={obj === 'metrictemplate' && isTenantSchema || isHistory || publicView}/>
+        <InlineFields values={values} errors={errors} field='attributes' addnew={!isTenantSchema && !isHistory && !publicView}/>
+        <InlineFields values={values} errors={errors} field='dependency' addnew={!isTenantSchema && !isHistory && !publicView}/>
+        <InlineFields values={values} errors={errors} field='parameter' addnew={!isTenantSchema && !isHistory && !publicView}/>
+        <InlineFields values={values} errors={errors} field='flags' addnew={!isTenantSchema && !isHistory && !publicView}/>
         <h6 className='mt-4 font-weight-bold text-uppercase'>parent</h6>
         <Row>
           <Col md={5}>
             {
-            (isTenantSchema || isHistory) ?
+            (isTenantSchema || isHistory || publicView) ?
               <Field
                 type='text'
                 name='parent'
@@ -1062,7 +1254,6 @@ export const MetricForm =
                   field='parent'
                   val={values.parent}
                   icon='metrics'
-                  className={`form-control ${errors.parent && 'border-danger'}`}
                   onselect_handler={onSelect}
                   req={errors.parent}
                 />
@@ -1086,6 +1277,7 @@ export function CompareMetrics(metrictype) {
       this.version1 = props.match.params.id1;
       this.version2 = props.match.params.id2;
       this.name = props.match.params.name;
+      this.publicView = props.publicView;
 
       this.state = {
         loading: false,
@@ -1129,10 +1321,10 @@ export function CompareMetrics(metrictype) {
       let url = undefined;
 
       if (metrictype === 'metric')
-        url = `/api/v2/internal/tenantversion/metric/${this.name}`;
+        url = `/api/v2/internal/${this.publicView ? 'public_' : ''}tenantversion/metric/${this.name}`;
 
       else
-        url = `/api/v2/internal/version/metrictemplate/${this.name}`;
+        url = `/api/v2/internal/${this.publicView ? 'public_' : ''}version/metrictemplate/${this.name}`;
 
       try {
         let json = await this.backend.fetchData(url);
@@ -1331,6 +1523,7 @@ export class MetricChange extends Component {
 
     this.state = {
       metric: {},
+      tags: [],
       probe: {},
       groups: [],
       probeversions: [],
@@ -1468,6 +1661,7 @@ export class MetricChange extends Component {
               })
               this.setState({
                 metric: metrics,
+                tags: metrics.tags,
                 probe: fields,
                 probeversions: probeversions,
                 allprobeversions: probe,
@@ -1480,6 +1674,7 @@ export class MetricChange extends Component {
             } else {
               this.setState({
                 metric: metrics,
+                tags: metrics.tags,
                 groups: session.userdetails.groups.metrics,
                 loading: false,
                 write_perm: session.userdetails.is_superuser ||
@@ -1501,6 +1696,7 @@ export class MetricChange extends Component {
             })
             this.setState({
               metric: metrics,
+              tags: metrics.tags,
               probe: fields,
               probeversions: probeversions,
               allprobeversions: probe,
@@ -1512,6 +1708,7 @@ export class MetricChange extends Component {
           } else {
             this.setState({
               metric: metrics,
+              tags: metrics.tags,
               groups: [],
               loading: false,
               write_perm: false,
@@ -1542,10 +1739,11 @@ export class MetricChange extends Component {
     else if (!loading) {
       return (
         <BaseArgoView
-          resourcename='metric'
+          resourcename={(this.publicView) ? 'Metric details' : 'metric'}
           location={this.location}
           addview={this.addview}
           modal={true}
+          history={!this.publicView}
           state={this.state}
           toggle={this.toggleAreYouSure}
           publicview={this.publicView}
@@ -1622,6 +1820,7 @@ export class MetricVersionDetails extends Component {
       probe: {'package': ''},
       description: '',
       mtype: '',
+      tags: [],
       group: '',
       probeexecutable: '',
       parent: '',
@@ -1656,6 +1855,7 @@ export class MetricVersionDetails extends Component {
             probe: probe,
             description: e.fields.description,
             type: e.fields.mtype,
+            tags: e.fields.tags,
             group: e.fields.group,
             probeexecutable: e.fields.probeexecutable,
             parent: e.fields.parent,

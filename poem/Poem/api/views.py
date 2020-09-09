@@ -22,7 +22,7 @@ class NotFound(APIException):
 def build_metricconfigs():
     ret = []
 
-    metricsobjs = models.Metric.objects.all()
+    metricsobjs = models.Metric.objects.all().order_by('name')
 
     for m in metricsobjs:
         mdict = dict()
@@ -37,6 +37,10 @@ def build_metricconfigs():
         files = two_value_inline_dict(m.files)
         parameter = two_value_inline_dict(m.parameter)
         fileparameter = two_value_inline_dict(m.fileparameter)
+
+        mdict[m.name].update(
+            {'tags': sorted([tag.name for tag in m.tags.all()])}
+        )
 
         if probeexecutable:
             mdict[m.name].update({'probe': probeexecutable})
@@ -126,8 +130,22 @@ def get_metrics_from_profile(profile):
 class ListMetrics(APIView):
     permission_classes = (MyHasAPIKey,)
 
-    def get(self, request):
-        return Response(build_metricconfigs())
+    def get(self, request, tag=None):
+        if tag:
+            try:
+                admin_models.MetricTags.objects.get(name=tag)
+                metrics = models.Metric.objects.filter(tags__name=tag)
+
+                return Response(sorted([metric.name for metric in metrics]))
+
+            except admin_models.MetricTags.DoesNotExist:
+                return Response(
+                    {'detail': 'Requested tag not found.'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+        else:
+            return Response(build_metricconfigs())
 
 
 class ListRepos(APIView):
@@ -171,12 +189,14 @@ class ListRepos(APIView):
 
             data = dict()
             packagedict = dict()
+            missing_packages = []
             for package in packages:
                 try:
                     repo = package.repos.get(tag=ostag)
 
                 except admin_models.YumRepo.DoesNotExist:
-                    pass
+                    missing_packages.append(package.__str__())
+                    continue
 
                 else:
                     packagedict.update({package: repo})
@@ -209,7 +229,4 @@ class ListRepos(APIView):
                         }
                     )
 
-        if data:
-            return Response([data])
-        else:
-            return Response([])
+        return Response({'data': data, 'missing_packages': missing_packages})

@@ -1,7 +1,7 @@
-import React, { Component } from 'react';
+import React, { Component, useState } from 'react';
 import {Link} from 'react-router-dom';
 import {Backend, WebApi} from './DataManager';
-import Autocomplete from 'react-autocomplete';
+import Autosuggest from 'react-autosuggest';
 import {
   LoadingAnim,
   BaseArgoView,
@@ -13,7 +13,8 @@ import {
   DiffElement,
   ProfileMainInfo,
   NotifyError,
-  ErrorComponent
+  ErrorComponent,
+  ParagraphTitle
 } from './UIElements';
 import ReactTable from 'react-table';
 import { Formik, Field, FieldArray, Form } from 'formik';
@@ -22,7 +23,6 @@ import { Button } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faTimes, faSearch } from '@fortawesome/free-solid-svg-icons';
 import ReactDiffViewer from 'react-diff-viewer';
-import * as Yup from 'yup';
 
 import './MetricProfiles.css';
 
@@ -34,6 +34,57 @@ export const MetricProfilesChange = MetricProfilesComponent();
 
 function matchItem(item, value) {
   return item.toLowerCase().indexOf(value.toLowerCase()) !== -1;
+}
+
+
+const MetricProfileAutocompleteField = ({suggestions, service, index, onselect, icon, form, tupleType, id}) => {
+  const [suggestionList, setSuggestions] = useState(suggestions)
+
+  const changeFieldValue = (newValue) => {
+    form.setFieldValue(`view_services.${index}.${tupleType}`, newValue)
+    form.setFieldValue(`view_services.${index}.${tupleType}Changed`, true)
+    onselect(form.values.view_services[index],
+      tupleType,
+      newValue)
+  }
+
+  return (
+    <Autosuggest
+      inputProps={{
+        className: `"form-control custom-select " ${service.isNew ? "border border-success" : service[tupleType + 'Changed'] ? "border border-danger" : ""}`,
+        placeholder: '',
+        onChange: (_, {newValue}) => changeFieldValue(newValue),
+        value: service[tupleType]
+      }}
+      getSuggestionValue={(suggestion) => suggestion}
+      suggestions={suggestionList}
+      renderSuggestion={(suggestion, {query, isHighlighted}) =>
+        <div
+          key={suggestions.indexOf(suggestion)}
+          className={`metricprofiles-autocomplete-entries ${isHighlighted ?
+              "metricprofiles-autocomplete-entries-highlighted"
+              : ""}`
+          }>
+          {suggestion ? <Icon i={icon}/> : ''} {suggestion}
+        </div>}
+      onSuggestionsFetchRequested={({ value }) =>
+        {
+          let result = suggestions.filter(service => service.toLowerCase().includes(value.trim().toLowerCase()))
+          setSuggestions(result)
+        }
+      }
+      onSuggestionsClearRequested={() => {
+        setSuggestions([])
+      }}
+      onSuggestionSelected={(_, {suggestion}) => changeFieldValue(suggestion) }
+      shouldRenderSuggestions={() => true}
+      theme={{
+        containerOpen: 'metricprofiles-autocomplete-menu',
+        suggestionsList: 'metricprofiles-autocomplete-list'
+      }}
+      id={id}
+    />
+  )
 }
 
 
@@ -104,8 +155,7 @@ const MetricProfileTupleValidate = ({view_services, name, groupname,
 
 
 const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
-  remove_handler, insert_handler, onselect_handler, form, remove, insert}) =>
-(
+  remove_handler, insert_handler, onselect_handler, form, remove, insert}) => (
   <table className="table table-bordered table-sm table-hover">
     <thead className="table-active">
       <tr>
@@ -156,37 +206,15 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
                 {index + 1}
               </td>
               <td className={service.isNew ? "bg-light" : ""}>
-                <Autocomplete
-                  inputProps={{
-                    className: `"form-control custom-select " ${service.isNew ? "border border-success" : service.serviceChanged ? "border border-danger" : ""}`
-                  }}
-                  getItemValue={(item) => item}
-                  items={serviceflavours_all}
-                  value={service.service}
-                  renderItem={(item, isHighlighted) =>
-                    <div
-                      key={serviceflavours_all.indexOf(item)}
-                      className={`metricprofiles-autocomplete-entries ${isHighlighted ?
-                          "metricprofiles-autocomplete-entries-highlighted"
-                          : ""}`
-                      }>
-                      {item ? <Icon i='serviceflavour'/> : ''} {item}
-                    </div>}
-                  onChange={(e) => form.setFieldValue(`view_services.${index}.service`, e.target.value)}
-                  onSelect={(val) => {
-                    form.setFieldValue(`view_services.${index}.service`, val)
-                    form.setFieldValue(`view_services.${index}.serviceChanged`, true)
-                    onselect_handler(form.values.view_services[index],
-                      'service',
-                      val)
-                  }}
-                  wrapperStyle={{}}
-                  shouldItemRender={matchItem}
-                  renderMenu={(items) =>
-                    <div className='metricprofiles-autocomplete-menu'>
-                      {items}
-                    </div>}
-                />
+                <MetricProfileAutocompleteField
+                  suggestions={serviceflavours_all}
+                  service={service}
+                  index={index}
+                  icon='serviceflavour'
+                  onselect={onselect_handler}
+                  form={form}
+                  tupleType='service'
+                  id={`autosuggest-metric-${index}`}/>
                 {
                   form.errors && form.errors.view_services && form.errors.view_services[index]
                     ? form.errors.view_services[index].service
@@ -196,36 +224,15 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
                 }
               </td>
               <td className={service.isNew ? "bg-light" : ""}>
-                <Autocomplete
-                  inputProps={{
-                    className: `"form-control custom-select " ${service.isNew ? "border border-success" : service.metricChanged  ? "border border-danger" : ""}`
-                  }}
-                  getItemValue={(item) => item}
-                  items={metrics_all}
-                  value={service.metric}
-                  renderItem={(item, isHighlighted) =>
-                    <div
-                      key={metrics_all.indexOf(item)}
-                      className={`metricprofiles-autocomplete-entries ${isHighlighted ?
-                          "metricprofiles-autocomplete-entries-highlighted"
-                          : ""}`
-                      }>
-                      {item ? <Icon i='metrics'/> : ''} {item}
-                    </div>}
-                  onChange={(e) => form.setFieldValue(`view_services.${index}.metric`, e.target.value)}
-                  onSelect={(val) => {
-                    form.setFieldValue(`view_services.${index}.metric`, val)
-                    form.setFieldValue(`view_services.${index}.metricChanged`, true)
-                    onselect_handler(form.values.view_services[index],
-                      'metric',
-                      val)
-                  }}
-                  wrapperStyle={{}}
-                  shouldItemRender={matchItem}
-                  renderMenu={(items) =>
-                    <div className='metricprofiles-autocomplete-menu'>
-                      {items}
-                    </div>}
+                <MetricProfileAutocompleteField
+                  suggestions={metrics_all}
+                  service={service}
+                  index={index}
+                  icon='metrics'
+                  onselect={onselect_handler}
+                  form={form}
+                  tupleType='metric'
+                  id={`autosuggest-metric-${index}`}
                 />
                 {
                   form.errors && form.errors.view_services && form.errors.view_services[index]
@@ -384,10 +391,10 @@ function MetricProfilesComponent(cloneview=false) {
                 list_user_groups: sessionActive.userdetails.groups.metricprofiles,
                 write_perm: sessionActive.userdetails.is_superuser ||
                   sessionActive.userdetails.groups.metricprofiles.indexOf(json['groupname']) >= 0,
-                view_services: this.flattenServices(metricp.services).sort(this.sortServices),
+                view_services: this.ensureAlignedIndexes(this.flattenServices(metricp.services).sort(this.sortServices)),
                 serviceflavours_all: serviceflavoursall,
                 metrics_all: metricsall,
-                list_services: this.flattenServices(metricp.services).sort(this.sortServices),
+                list_services: this.ensureAlignedIndexes(this.flattenServices(metricp.services).sort(this.sortServices)),
                 loading: false
               });
             } else {
@@ -445,6 +452,17 @@ function MetricProfilesComponent(cloneview=false) {
       }
     }
 
+    ensureAlignedIndexes(list) {
+      let i = 0
+
+      list.forEach(e => {
+        e.index = i
+        i += 1
+      })
+
+      return list
+    }
+
     handleSearch(e, statefieldlist, statefieldsearch, formikfield,
       alternatestatefield, alternateformikfield) {
       let filtered = this.state[statefieldlist.replace('view_', 'list_')]
@@ -455,14 +473,8 @@ function MetricProfilesComponent(cloneview=false) {
         filtered = this.state[statefieldlist.replace('view_', 'list_')].
           filter((elem) => matchItem(elem[formikfield], e.target.value))
 
-        // reindex after back to full list view
-        let index_update = 0
-        tmp_list_services.forEach((element) => {
-          element.index = index_update;
-          index_update += 1;
-        })
-
         tmp_list_services.sort(this.sortServices);
+        tmp_list_services = this.ensureAlignedIndexes(tmp_list_services)
       }
       else if (e.target.value !== '') {
         filtered = this.state[statefieldlist].filter((elem) =>
@@ -499,14 +511,10 @@ function MetricProfilesComponent(cloneview=false) {
         slice_left_tmp_list_services.push({index: i, service, metric, isNew: true});
 
         // reindex first slice
-        let index_update = 0;
-        slice_left_tmp_list_services.forEach((element) => {
-          element.index = index_update;
-          index_update += 1;
-        })
+        slice_left_tmp_list_services = this.ensureAlignedIndexes(slice_left_tmp_list_services)
 
         // reindex rest of list
-        index_update = slice_left_tmp_list_services.length;
+        let index_update = slice_left_tmp_list_services.length;
         slice_right_tmp_list_services.forEach((element) => {
           element.index = index_update;
           index_update += 1;
@@ -774,18 +782,44 @@ function MetricProfilesComponent(cloneview=false) {
     onRemove(element, group, name, description) {
       let tmp_view_services = []
       let tmp_list_services = []
+      let index = undefined
+      let index_tmp = undefined
 
-      // XXX: this means no duplicate elements allowed
-      let index = this.state.list_services.findIndex(service =>
-        element.index === service.index &&
+      // special case when duplicates are result of explicit add of duplicated
+      // tuple followed by immediate delete of it
+      let dup_list = this.state.list_services.filter(service =>
         element.service === service.service &&
         element.metric === service.metric
-      );
-      let index_tmp = this.state.view_services.findIndex(service =>
-        element.index === service.index &&
+      )
+      let dup_view = this.state.view_services.filter(service =>
         element.service === service.service &&
         element.metric === service.metric
-      );
+      )
+      let dup = dup_list.length >= 2 || dup_view.length >= 2 ? true : false
+
+      if (dup) {
+        // search by index also
+        index = this.state.list_services.findIndex(service =>
+          element.index === service.index &&
+          element.service === service.service &&
+          element.metric === service.metric
+        );
+        index_tmp = this.state.view_services.findIndex(service =>
+          element.index === service.index &&
+          element.service === service.service &&
+          element.metric === service.metric
+        );
+      }
+      else {
+        index = this.state.list_services.findIndex(service =>
+          element.service === service.service &&
+          element.metric === service.metric
+        );
+        index_tmp = this.state.view_services.findIndex(service =>
+          element.service === service.service &&
+          element.metric === service.metric
+        );
+      }
 
       // don't remove last tuple, just reset it to empty values
       if (this.state.view_services.length === 1
@@ -813,21 +847,18 @@ function MetricProfilesComponent(cloneview=false) {
           tmp_list_services[i].index = element_index - 1;
         }
 
-        // this one ends up reindexing already indexed array
-        // limit it so reindexing happens only if first element differs
-        if (tmp_list_services[0].index != tmp_view_services[0].index)
-          for (var i = index_tmp; i < tmp_view_services.length; i++) {
-            let element_index = tmp_view_services[i].index
-            tmp_view_services[i].index = element_index - 1;
-          }
+        for (var i = index_tmp; i < tmp_view_services.length; i++) {
+          let element_index = tmp_view_services[i].index
+          tmp_view_services[i].index = element_index - 1;
+        }
       }
       else {
         tmp_list_services = [...this.state.list_services]
         tmp_view_services = [...this.state.view_services]
       }
       this.setState({
-        list_services: tmp_list_services,
-        view_services: tmp_view_services,
+        list_services: this.ensureAlignedIndexes(tmp_list_services),
+        view_services: this.ensureAlignedIndexes(tmp_view_services),
         groupname: group,
         metric_profile_name: name,
         metric_profile_description: description
@@ -854,12 +885,13 @@ function MetricProfilesComponent(cloneview=false) {
       else if (!loading && metric_profile && view_services) {
         return (
           <BaseArgoView
-            resourcename='Metric profile'
+            resourcename={this.publicView ? 'Metric profile details' : 'metric profile'}
             location={this.location}
             addview={this.addview}
             modal={true}
             cloneview={this.cloneview}
             clone={true}
+            history={!this.publicView}
             state={this.state}
             toggle={this.toggleAreYouSure}
             addview={this.publicView ? !this.publicView : this.addview}
@@ -895,21 +927,80 @@ function MetricProfilesComponent(cloneview=false) {
                         [groupname]
                     }
                     profiletype='metric'
+                    fieldsdisable={this.publicView}
                   />
-                  <h4 className="mt-4 alert-info p-1 pl-3 text-light text-uppercase rounded" style={{'backgroundColor': "#416090"}}>Metric instances</h4>
-                  <FieldArray
-                    name="view_services"
-                    render={props => (
-                      <ServicesList
-                        {...props}
-                        serviceflavours_all={serviceflavours_all}
-                        metrics_all={metrics_all}
-                        search_handler={this.handleSearch}
-                        remove_handler={this.onRemove}
-                        insert_handler={this.onInsert}
-                        onselect_handler={this.onSelect}
-                      />)}
-                  />
+                  <ParagraphTitle title='Metric instances'/>
+                  {
+                    !this.publicView ?
+                      <FieldArray
+                        name="view_services"
+                        render={props => (
+                          <ServicesList
+                            {...props}
+                            serviceflavours_all={serviceflavours_all}
+                            metrics_all={metrics_all}
+                            search_handler={this.handleSearch}
+                            remove_handler={this.onRemove}
+                            insert_handler={this.onInsert}
+                            onselect_handler={this.onSelect}
+                          />)}
+                      />
+                    :
+                      <FieldArray
+                        name='metricinstances'
+                        render={arrayHelpers => (
+                          <table className='table table-bordered table-sm'>
+                            <thead className='table-active'>
+                              <tr>
+                                <th className='align-middle text-center' style={{width: '5%'}}>#</th>
+                                <th style={{width: '47.5%'}}><Icon i='serviceflavour'/>Service flavour</th>
+                                <th style={{width: '47.5%'}}><Icon i='metrics'/>Metric</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <tr style={{background: "#ECECEC"}}>
+                                <td className="align-middle text-center">
+                                  <FontAwesomeIcon icon={faSearch}/>
+                                </td>
+                                <td>
+                                  <Field
+                                    type="text"
+                                    name="search_serviceflavour"
+                                    required={false}
+                                    className="form-control"
+                                    id="searchServiceFlavour"
+                                    onChange={(e) => this.handleSearch(e, 'view_services',
+                                      'searchServiceFlavour', 'service', 'searchMetric', 'metric')}
+                                    component={SearchField}
+                                  />
+                                </td>
+                                <td>
+                                  <Field
+                                    type="text"
+                                    name="search_metric"
+                                    required={false}
+                                    className="form-control"
+                                    id="searchMetric"
+                                    onChange={(e) => this.handleSearch(e, 'view_services', 'searchMetric',
+                                      'metric', 'searchServiceFlavour', 'service')}
+                                    component={SearchField}
+                                  />
+                                </td>
+                              </tr>
+                              {
+                                props.values.view_services.map((service, index) =>
+                                  <tr key={index}>
+                                    <td className='align-middle text-center'>{index + 1}</td>
+                                    <td>{service.service}</td>
+                                    <td>{service.metric}</td>
+                                  </tr>
+                                )
+                              }
+                            </tbody>
+                          </table>
+                        )}
+                      />
+                  }
                   {
                     (write_perm) &&
                       <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
@@ -1256,7 +1347,7 @@ export class MetricProfileVersionDetails extends Component {
                   description='description'
                   profiletype='metric'
                 />
-                <h4 className="mt-4 alert-info p-1 pl-3 text-light text-uppercase rounded" style={{'backgroundColor': "#416090"}}>Metric instances</h4>
+                <ParagraphTitle title='Metric instances'/>
                 <FieldArray
                   name='metricinstances'
                   render={arrayHelpers => (
