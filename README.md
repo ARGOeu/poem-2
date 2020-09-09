@@ -40,11 +40,8 @@ EGI instances:
 * SuperPOEM - https://poem.argo.grnet.gr
 
 Public pages:
-* https://poem.egi.eu/ui/public_aggregationprofiles
-* https://poem.egi.eu/ui/public_metricprofiles
-* https://poem.egi.eu/ui/public_metrics
-* https://poem.egi.eu/ui/public_probes
-* https://poem.egi.eu/ui/public_thresholdsprofiles
+* https://poem.egi.eu/ui/public_home
+* https://poem.argo.grnet.gr/ui/public_home
 
 ## Installation
 
