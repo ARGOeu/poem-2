@@ -405,6 +405,7 @@ class App extends Component {
       publicView: undefined,
       tenantName: undefined,
       token: undefined,
+      version: undefined,
       isTenantSchema: null
     };
 
@@ -445,6 +446,7 @@ class App extends Component {
         webApiAggregation: options && options.result.webapiaggregation,
         webApiThresholds: options && options.result.webapithresholds,
         webApiOperations: options && options.result.webapioperations,
+        version: options && options.result.version,
         tenantName: options && options.result.tenant_name,
         publicView: false,
       });
@@ -837,7 +839,7 @@ class App extends Component {
               <Col sm={{size: 2}} md={{size: 2}} id="sidebar-col" className="d-flex flex-column">
                 <NavigationLinksWithRouter isTenantSchema={this.state.isTenantSchema} userDetails={userDetails}/>
                 <div id="sidebar-grow" className="flex-grow-1 border-left border-right mb-0 pb-5"/>
-                <NavigationAboutWithRouter/>
+                <NavigationAboutWithRouter poemVersion={this.state.version}/>
               </Col>
               <Col>
                 <CustomBreadcrumbWithRouter />

@@ -43,6 +43,7 @@ import {
   faBook,
   faBox,
   faBoxOpen,
+  faCrosshairs,
   faCog,
   faCogs,
   faExclamation,
@@ -507,7 +508,7 @@ export const NavigationLinks = ({location, isTenantSchema, userDetails}) => {
 }
 
 
-export const NavigationAbout = ({ location }) => {
+export const NavigationAbout = ({ location, poemVersion }) => {
   return (
     <React.Fragment>
       <div className="bg-white border-left border-right pl-2 mt-0 pt-5 text-uppercase">
@@ -549,6 +550,14 @@ export const NavigationAbout = ({ location }) => {
         >
           <Icon i="policies"/>{' '}
           Privacy Policies
+        </NavLink>
+        <NavLink
+          tag="a"
+          href='#'
+          className="text-dark font-italic text-monospace"
+        >
+          <FontAwesomeIcon icon={faCrosshairs} size="1x" color="green" fixedWidth/>{' '}
+          { poemVersion }
         </NavLink>
       </Nav>
     </React.Fragment>
