@@ -795,8 +795,7 @@ class App extends Component {
                   </PublicPage>
                 }
               />
-
-                <Route component={NotFound} />
+              <Route component={NotFound} />
             </Switch>
           </BrowserRouter>
         );

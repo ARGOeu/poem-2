@@ -511,7 +511,7 @@ export const NavigationLinks = ({location, isTenantSchema, userDetails}) => {
 export const NavigationAbout = ({ location, poemVersion }) => {
   return (
     <React.Fragment>
-      <div className="bg-white border-left border-right pl-2 mt-0 pt-5 text-uppercase">
+      <div className="bg-white border-left border-right pl-3 mt-0 pt-5 text-uppercase">
         <h5>Info</h5>
       </div>
       <Nav vertical pills id="argo-navlinks" className="border-left border-right sticky-top rounded-bottom border-bottom pb-2 mb-0">
@@ -565,7 +565,7 @@ export const NavigationAbout = ({ location, poemVersion }) => {
 }
 
 
-const InnerFooter = ({border=false}) =>
+const InnerFooter = ({ border=false, publicPage=false }) =>
 (
   <React.Fragment>
     {
@@ -581,27 +581,36 @@ const InnerFooter = ({border=false}) =>
         <a href="http://www.egi.eu/" title="EGI.eu">EGI.eu</a>
       </small>
     </p>
-    <div className="text-center pb-2 pt-0">
+    <div className={`text-center pt-0 ${publicPage ? '' : 'pb-2'}`}>
       <img src={EULogo} id="eulogo" alt="EU logo"/>
       <img src={EOSCLogo} id="eosclogo" alt="EOSC logo" className="pl-1"/>
     </div>
+    {
+      publicPage &&
+      <div className="text-center mt-0 mb-0 pb-0 pt-0">
+        <small>
+          <a href="https://ui.argo.grnet.gr/egi/termsofUse" target="_blank" rel="noopener noreferrer" title="Terms">Terms</a>, &nbsp;
+          <a href="/ui/public_policies" title="Privacy Policies">Privacy Policies</a>
+        </small>
+      </div>
+    }
   </React.Fragment>
 )
 
 
-export const Footer = ({loginPage=false}) =>
+export const Footer = ({ loginPage=false, publicPage=false }) =>
 {
   if (!loginPage) {
     return (
       <div id="argo-footer" className="border rounded">
-        <InnerFooter border={true}/>
+        <InnerFooter border={true} publicPage={publicPage}/>
       </div>
     )
   }
   else {
     return (
       <div id="argo-loginfooter">
-        <InnerFooter />
+        <InnerFooter publicPage={true}/>
       </div>
     )
   }
@@ -685,7 +694,7 @@ export const PublicPage = ({children}) => {
       </Row>
       <Row>
         <Col>
-          <Footer loginPage={false}/>
+          <Footer loginPage={false} publicPage={true}/>
         </Col>
       </Row>
     </Container>
