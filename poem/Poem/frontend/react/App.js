@@ -382,6 +382,7 @@ const SuperAdminRouteSwitch = ({props}) => (
     <Route exact path="/ui/tenants/:name"
       render={props => <TenantChange {...props} />}
     />
+    <Route exact path="/ui/policies/" component={PrivacyPolicy} />
     <Route component={NotFound} />
   </Switch>
 )
