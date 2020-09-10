@@ -98,7 +98,8 @@ class GetConfigOptions(APIView):
             version = 'undefined_version'
 
         tenant = tenant_from_request(request)
-        options.update(saml_login_string=saml_login_string(tenant))
+        if tenant != 'all':
+            options.update(saml_login_string=saml_login_string(tenant))
 
         options.update(webapimetric=settings.WEBAPI_METRIC)
         options.update(webapiaggregation=settings.WEBAPI_AGGREGATION)

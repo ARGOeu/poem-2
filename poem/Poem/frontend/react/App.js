@@ -435,8 +435,8 @@ class App extends Component {
   }
 
   async initalizeState(poemType, response) {
+    let options = await this.backend.fetchConfigOptions();
     if (poemType) {
-      let options = await this.backend.fetchConfigOptions();
       this.setState({
         isTenantSchema: poemType,
         isSessionActive: response.active,
@@ -455,6 +455,7 @@ class App extends Component {
         isTenantSchema: poemType,
         isSessionActive: response.active,
         userDetails: response.userdetails,
+        version: options && options.result.version,
         publicView: false,
       });
     };
