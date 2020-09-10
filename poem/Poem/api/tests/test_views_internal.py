@@ -1,5 +1,6 @@
 import datetime
 import json
+import pkg_resources
 from collections import OrderedDict
 from unittest.mock import patch, call
 
@@ -4085,6 +4086,7 @@ class GetConfigOptionsAPIViewTests(TenantTestCase):
                         'webapiaggregation': 'https://aggregations.com',
                         'webapithresholds': 'https://thresholds.com',
                         'webapioperations': 'https://operations.com',
+                        'version': pkg_resources.get_distribution('poem').version,
                         'tenant_name': 'Tenant'
                     }
                 }

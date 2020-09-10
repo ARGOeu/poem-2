@@ -1,3 +1,5 @@
+import pkg_resources
+
 from django.conf import settings
 from django.db import connection
 from django.contrib.auth import get_user_model
@@ -88,14 +90,22 @@ class GetConfigOptions(APIView):
 
     def get(self, request):
         options = dict()
+        version = None
+
+        try:
+            version = pkg_resources.get_distribution('poem').version
+        except pkg_resources.DistributionNotFound:
+            version = 'undefined_version'
 
         tenant = tenant_from_request(request)
-        options.update(saml_login_string=saml_login_string(tenant))
+        if tenant != 'all':
+            options.update(saml_login_string=saml_login_string(tenant))
 
         options.update(webapimetric=settings.WEBAPI_METRIC)
         options.update(webapiaggregation=settings.WEBAPI_AGGREGATION)
         options.update(webapithresholds=settings.WEBAPI_THRESHOLDS)
         options.update(webapioperations=settings.WEBAPI_OPERATIONS)
+        options.update(version=version)
         options.update(tenant_name=tenant)
 
         return Response({'result': options})
