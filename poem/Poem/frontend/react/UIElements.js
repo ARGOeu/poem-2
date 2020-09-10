@@ -68,6 +68,7 @@ import { Field } from 'formik';
 import { Backend } from './DataManager';
 import ReactDiffViewer from 'react-diff-viewer';
 import Autosuggest from 'react-autosuggest';
+import { PrivacyPolicy } from './PrivacyPolicy';
 
 
 var list_pages = ['administration', 'probes',
@@ -566,36 +567,47 @@ export const NavigationAbout = ({ location, poemVersion }) => {
 
 
 const InnerFooter = ({ border=false, publicPage=false }) =>
-(
-  <React.Fragment>
-    {
-      border && <div className="pt-1"/>
-    }
-    <p className="text-center">
-      <small>
-        <strong>ARGO POEM</strong> is a service jointly developed and maintained by &nbsp;
-        <a href="http://www.cnrs.fr/" title="Centre national de la recherche scientifique">CNRS</a>, &nbsp;
-        <a href="https://grnet.gr/" title="Greek Research and Technology Network">GRNET</a> and &nbsp;
-        <a href="http://www.srce.unizg.hr/" title="University computing centre">SRCE</a>&nbsp;
-        co-funded by <a href="https://www.eosc-hub.eu" title="EOSC-Hub">EOSC-Hub</a> and &nbsp;
-        <a href="http://www.egi.eu/" title="EGI.eu">EGI.eu</a>
-      </small>
-    </p>
-    <div className={`text-center pt-0 ${publicPage ? '' : 'pb-2'}`}>
-      <img src={EULogo} id="eulogo" alt="EU logo"/>
-      <img src={EOSCLogo} id="eosclogo" alt="EOSC logo" className="pl-1"/>
-    </div>
-    {
-      publicPage &&
-      <div className="text-center mt-0 mb-0 pb-0 pt-0">
-        <small>
-          <a href="https://ui.argo.grnet.gr/egi/termsofUse" target="_blank" rel="noopener noreferrer" title="Terms">Terms</a>, &nbsp;
-          <a href="/ui/public_policies" title="Privacy Policies">Privacy Policies</a>
-        </small>
+{
+  const [modal, setModal] = useState(false);
+  const toggle = () => setModal(!modal);
+
+  return (
+    <React.Fragment>
+      {
+        border && <div className="pt-1"/>
+      }
+      <div className="text-center pt-0 pb-2">
+        <img src={EULogo} id="eulogo" alt="EU logo"/>
+        <img src={EOSCLogo} id="eosclogo" alt="EOSC logo" className="pl-1"/>
       </div>
-    }
-  </React.Fragment>
-)
+      <p className={`text-center ${publicPage ? 'mb-0' : 'mb-0 pb-1'}`}>
+        <small>
+          <strong>ARGO POEM</strong> is a service jointly developed and maintained by &nbsp;
+          <a href="http://www.cnrs.fr/" title="Centre national de la recherche scientifique">CNRS</a>, &nbsp;
+          <a href="https://grnet.gr/" title="Greek Research and Technology Network">GRNET</a> and &nbsp;
+          <a href="http://www.srce.unizg.hr/" title="University computing centre">SRCE</a>&nbsp;
+          co-funded by <a href="https://www.eosc-hub.eu" title="EOSC-Hub">EOSC-Hub</a> and &nbsp;
+          <a href="http://www.egi.eu/" title="EGI.eu">EGI.eu</a>
+        </small>
+      </p>
+      {
+        publicPage &&
+        <div className="text-center mb-0 pt-0">
+          <small>
+            <a href="https://ui.argo.grnet.gr/egi/termsofUse" target="_blank" rel="noopener noreferrer" title="Terms">Terms</a>, &nbsp;
+            <a href='#' title="Privacy Policies" onClick={toggle}>Privacy Policies</a>
+          </small>
+          <Modal isOpen={modal} toggle={toggle} size="lg">
+            <ModalHeader toggle={toggle}><h2>Privacy Policies</h2></ModalHeader>
+            <ModalBody>
+              <PrivacyPolicy showTitle={false}/>
+            </ModalBody>
+          </Modal>
+        </div>
+      }
+    </React.Fragment>
+  )
+}
 
 
 export const Footer = ({ loginPage=false, publicPage=false }) =>
