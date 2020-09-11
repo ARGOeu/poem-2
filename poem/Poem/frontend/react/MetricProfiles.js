@@ -1088,13 +1088,9 @@ function MetricProfilesListTable({ columns, data }) {
                   return (
                     <tr key={row_index}>
                       {
-                        row.cells.map((cell, cell_index) => {
-                          if (cell_index === 0)
-                            return <td key={cell_index} className='align-middle text-center'>{(row_index + 1) + (pageIndex * pageSize)}</td>
-
-                          else
-                            return <td key={cell_index} className='align-middle'>{cell.render('Cell')}</td>
-                        })
+                        row.cells.map((cell, cell_index) =>
+                          <td key={cell_index} className='align-middle'>{cell.render('Cell')}</td>
+                        )
                       }
                     </tr>
                   )
