@@ -1027,6 +1027,121 @@ function MetricProfilesComponent(cloneview=false) {
 }
 
 
+function Table({ columns, data }) {
+  const {
+    headerGroups,
+    prepareRow,
+    page,
+    canPreviousPage,
+    canNextPage,
+    pageCount,
+    gotoPage,
+    nextPage,
+    previousPage,
+    setPageSize,
+    state: { pageIndex, pageSize }
+  } = useTable(
+    {
+      columns,
+      data,
+      initialState: { pageIndex: 0, pageSize: 15 }
+    },
+    usePagination
+  );
+
+  return (
+    <>
+      <Row>
+        <Col>
+          <table className='table table-bordered table-hover'>
+            <thead className='table-active align-middle text-center'>
+              {
+                headerGroups.map((headerGroup, thi) => (
+                  <React.Fragment key={thi}>
+                    <tr>
+                      {
+                        headerGroup.headers.map((column, tri) => {
+                          return (
+                            <th className='p-1 m-1' key={tri}>
+                              {column.render('Header')}
+                            </th>
+                          )
+                        })
+                      }
+                    </tr>
+                  </React.Fragment>
+                ))
+              }
+            </thead>
+            <tbody>
+              {
+                page.map((row, row_index) => {
+                  prepareRow(row);
+                  return (
+                    <tr key={row_index}>
+                      {
+                        row.cells.map((cell, cell_index) => {
+                          if (cell_index === 0)
+                            return <td key={cell_index} className='align-middle text-center'>{(row_index + 1) + (pageIndex * pageSize)}</td>
+
+                          else
+                            return <td key={cell_index} className='align-middle'>{cell.render('Cell')}</td>
+                        })
+                      }
+                    </tr>
+                  )
+                })
+              }
+            </tbody>
+          </table>
+        </Col>
+      </Row>
+      <Row>
+        <Col className='d-flex justify-content-center'>
+          <Pagination>
+            <PaginationItem disabled={!canPreviousPage}>
+              <PaginationLink first onClick={() => gotoPage(0)}/>
+            </PaginationItem>
+            <PaginationItem disabled={!canPreviousPage}>
+              <PaginationLink previous onClick={() => previousPage()}/>
+            </PaginationItem>
+            {
+              [...Array(pageCount)].map((e, i) =>
+                <PaginationItem key={i} active={pageIndex === i ? true : false}>
+                  <PaginationLink onClick={() => gotoPage(i)}>
+                    { i + 1 }
+                  </PaginationLink>
+                </PaginationItem>
+              )
+            }
+            <PaginationItem disabled={!canNextPage}>
+              <PaginationLink next onClick={() => nextPage()}/>
+            </PaginationItem>
+            <PaginationItem disabled={!canNextPage}>
+              <PaginationLink last onClick={() => gotoPage(pageCount + 1)}/>
+            </PaginationItem>
+            <PaginationItem className='pl-2'>
+              <select
+                style={{width: '180px'}}
+                className='custom-select text-primary'
+                value={pageSize}
+                onChange={e => setPageSize(Number(e.target.value))}
+              >
+                {[15, 30, 50, 100].map(pageSize => (
+                  <option key={pageSize} value={pageSize}>
+                    {pageSize} metric profiles 
+                  </option>
+                ))}
+              </select>
+            </PaginationItem>
+          </Pagination>
+        </Col>
+      </Row>
+    </>
+  );
+};
+
+
 export class MetricProfilesList extends Component
 {
   constructor(props) {
