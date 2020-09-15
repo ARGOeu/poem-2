@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.3.3] - 2020-09-14
+
+### Added
+
+* ARGO-2574 Cookie policy for ARGO POEM 
+
 ## [3.3.2] - 2020-09-08
 
 ### Added

@@ -33,7 +33,7 @@ import { APIKeyList, APIKeyChange } from './APIKey';
 import NotFound from './NotFound';
 import { Route, Switch, BrowserRouter, Redirect, withRouter } from 'react-router-dom';
 import { Container, Row, Col } from 'reactstrap';
-import { NavigationBar, CustomBreadcrumb, NavigationLinks, Footer, PublicPage} from './UIElements';
+import { NavigationBar, NavigationAbout, CustomBreadcrumb, NavigationLinks, Footer, PublicPage } from './UIElements';
 import { NotificationContainer } from 'react-notifications';
 import { Backend } from './DataManager';
 import { YumRepoList, YumRepoChange, YumRepoClone } from './YumRepos';
@@ -44,10 +44,12 @@ import './App.css';
 import { PackageList, PackageChange, PackageClone } from './Package';
 import { TenantList, TenantChange } from './Tenants';
 import { OperationsProfilesList, OperationsProfileDetails } from './OperationsProfiles';
+import { PrivacyPolicy } from './PrivacyPolicy';
 
 
 const NavigationBarWithRouter = withRouter(NavigationBar);
 const NavigationLinksWithRouter = withRouter(NavigationLinks);
+const NavigationAboutWithRouter = withRouter(NavigationAbout);
 const CustomBreadcrumbWithRouter = withRouter(CustomBreadcrumb);
 
 
@@ -177,6 +179,47 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, w
     <Route exact path="/ui/aggregationprofiles/:name/history/:version"
       render={props => <AggregationProfileVersionDetails {...props}/>}
     />
+    <Route exact path="/ui/thresholdsprofiles" component={ThresholdsProfilesList} />
+    <AddRoute usergroups={userGroups.thresholdsprofiles} exact path="/ui/thresholdsprofiles/add"
+      render={props => <ThresholdsProfilesChange
+        {...props}
+        webapithresholds={webApiThresholds}
+        webapitoken={token}
+        tenantname={tenantName}
+        addview={true}/>}
+    />
+    <Route exact path="/ui/thresholdsprofiles/:name"
+      render={props => <ThresholdsProfilesChange
+        {...props}
+        webapithresholds={webApiThresholds}
+        webapitoken={token}
+        tenantname={tenantName}/>}
+    />
+    <Route exact path="/ui/thresholdsprofiles/:name/history"
+      render={props => <ThresholdsProfilesHistory {...props}/>}
+    />
+    <Route exact path="/ui/thresholdsprofiles/:name/history/compare/:id1/:id2"
+      render={props => <ThresholdsProfileVersionCompare {...props}/>}
+    />
+    <Route exact path="/ui/thresholdsprofiles/:name/history/:version"
+      render={props => <ThresholdsProfileVersionDetail {...props}/>}
+    />
+    <Route
+      exact path="/ui/operationsprofiles"
+      render={props => <OperationsProfilesList
+        {...props}
+        webapioperations={webApiOperations}
+        webapitoken={token}
+      />} />
+    <Route
+      exact path="/ui/operationsprofiles/:name"
+      render={props => <OperationsProfileDetails
+        {...props}
+        webapioperations={webApiOperations}
+        webapitoken={token}
+      />}
+    />
+    <Route exact path="/ui/policies/" component={PrivacyPolicy} />
     <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration" component={TenantAdministration} />
     <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/users" component={UsersList} />
     <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/users/add"
@@ -284,47 +327,6 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, w
         title='thresholds profiles'
       />}
     />
-    <Route exact path="/ui/thresholdsprofiles" component={ThresholdsProfilesList} />
-    <AddRoute usergroups={userGroups.thresholdsprofiles} exact path="/ui/thresholdsprofiles/add"
-      render={props => <ThresholdsProfilesChange
-        {...props}
-        webapithresholds={webApiThresholds}
-        webapitoken={token}
-        tenantname={tenantName}
-        addview={true}/>}
-    />
-    <Route exact path="/ui/thresholdsprofiles/:name"
-      render={props => <ThresholdsProfilesChange
-        {...props}
-        webapithresholds={webApiThresholds}
-        webapitoken={token}
-        tenantname={tenantName}/>}
-    />
-    <Route exact path="/ui/thresholdsprofiles/:name/history"
-      render={props => <ThresholdsProfilesHistory {...props}/>}
-    />
-    <Route exact path="/ui/thresholdsprofiles/:name/history/compare/:id1/:id2"
-      render={props => <ThresholdsProfileVersionCompare {...props}/>}
-    />
-    <Route exact path="/ui/thresholdsprofiles/:name/history/:version"
-      render={props => <ThresholdsProfileVersionDetail {...props}/>}
-    />
-    <Route
-      exact path="/ui/operationsprofiles"
-      render={props => <OperationsProfilesList
-        {...props}
-        webapioperations={webApiOperations}
-        webapitoken={token}
-      />} />
-    <Route
-      exact path="/ui/operationsprofiles/:name"
-      render={props => <OperationsProfileDetails
-        {...props}
-        webapioperations={webApiOperations}
-        webapitoken={token}
-      />}
-    />
-
     <Route component={NotFound} />
   </Switch>
 )
@@ -380,6 +382,7 @@ const SuperAdminRouteSwitch = ({props}) => (
     <Route exact path="/ui/tenants/:name"
       render={props => <TenantChange {...props} />}
     />
+    <Route exact path="/ui/policies/" component={PrivacyPolicy} />
     <Route component={NotFound} />
   </Switch>
 )
@@ -403,6 +406,7 @@ class App extends Component {
       publicView: undefined,
       tenantName: undefined,
       token: undefined,
+      version: undefined,
       isTenantSchema: null
     };
 
@@ -432,8 +436,8 @@ class App extends Component {
   }
 
   async initalizeState(poemType, response) {
+    let options = await this.backend.fetchConfigOptions();
     if (poemType) {
-      let options = await this.backend.fetchConfigOptions();
       this.setState({
         isTenantSchema: poemType,
         isSessionActive: response.active,
@@ -443,6 +447,7 @@ class App extends Component {
         webApiAggregation: options && options.result.webapiaggregation,
         webApiThresholds: options && options.result.webapithresholds,
         webApiOperations: options && options.result.webapioperations,
+        version: options && options.result.version,
         tenantName: options && options.result.tenant_name,
         publicView: false,
       });
@@ -451,6 +456,7 @@ class App extends Component {
         isTenantSchema: poemType,
         isSessionActive: response.active,
         userDetails: response.userdetails,
+        version: options && options.result.version,
         publicView: false,
       });
     };
@@ -789,8 +795,7 @@ class App extends Component {
                   </PublicPage>
                 }
               />
-
-                <Route component={NotFound} />
+              <Route component={NotFound} />
             </Switch>
           </BrowserRouter>
         );
@@ -834,7 +839,8 @@ class App extends Component {
             <Row className="no-gutters">
               <Col sm={{size: 2}} md={{size: 2}} id="sidebar-col" className="d-flex flex-column">
                 <NavigationLinksWithRouter isTenantSchema={this.state.isTenantSchema} userDetails={userDetails}/>
-                <div id="sidebar-grow" className="flex-grow-1 border-left border-right rounded-bottom"/>
+                <div id="sidebar-grow" className="flex-grow-1 border-left border-right mb-0 pb-5"/>
+                <NavigationAboutWithRouter poemVersion={this.state.version}/>
               </Col>
               <Col>
                 <CustomBreadcrumbWithRouter />

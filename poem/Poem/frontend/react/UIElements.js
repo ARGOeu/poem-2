@@ -40,28 +40,35 @@ import EOSCLogo from './eosc.png';
 import './UIElements.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  faSignOutAlt,
-  faSearch,
-  faWrench,
-  faFileAlt,
-  faCog,
-  faServer,
-  faCogs,
-  faHighlighter,
-  faTasks,
-  faKey,
-  faBoxOpen,
-  faExclamation,
-  faSquare,
-  faUser,
+  faBook,
   faBox,
+  faBoxOpen,
+  faCrosshairs,
+  faCog,
+  faCogs,
+  faExclamation,
+  faFileAlt,
+  faGavel,
+  faHandshake,
+  faHighlighter,
   faIdBadge,
-  faTable} from '@fortawesome/free-solid-svg-icons';
+  faKey,
+  faLink,
+  faSearch,
+  faServer,
+  faSignOutAlt,
+  faSquare,
+  faTable,
+  faTasks,
+  faUser,
+  faWrench}
+from '@fortawesome/free-solid-svg-icons';
 import { NotificationManager } from 'react-notifications';
 import { Field } from 'formik';
 import { Backend } from './DataManager';
 import ReactDiffViewer from 'react-diff-viewer';
 import Autosuggest from 'react-autosuggest';
+import { PrivacyPolicy } from './PrivacyPolicy';
 
 
 var list_pages = ['administration', 'probes',
@@ -96,6 +103,8 @@ link_title.set('packages', 'Packages');
 link_title.set('tenants', 'Tenants');
 link_title.set('operationsprofiles', 'Operations profiles');
 link_title.set('public_operationsprofiles', 'Operations profiles');
+link_title.set('policies', 'Privacy policies');
+
 
 export const Icon = props =>
 {
@@ -115,6 +124,10 @@ export const Icon = props =>
   link_icon.set('packages', faBox);
   link_icon.set('tenants', faIdBadge);
   link_icon.set('operationsprofiles', faTable);
+  link_icon.set('policies', faGavel);
+  link_icon.set('terms', faHandshake);
+  link_icon.set('argodoc', faLink);
+  link_icon.set('documentation', faBook);
 
   if (props.i.startsWith('groupof'))
     return (
@@ -128,6 +141,7 @@ export const Icon = props =>
   else
     return <FontAwesomeIcon icon={link_icon.get(props.i)} size={props.i === 'yumrepos' || props.i === 'metricprofiles' ? 'sm' : '1x'} fixedWidth/>
 }
+
 
 export const DropDown = ({field, data=[], prefix="", class_name="", isnew=false, errors=undefined}) =>
   <Field component="select"
@@ -479,63 +493,136 @@ export const NavigationLinks = ({location, isTenantSchema, userDetails}) => {
   return (
     <Nav vertical pills id="argo-navlinks" className="border-left border-right border-top rounded-top sticky-top">
       {
-          data.map((item, i) =>
-            <NavItem key={i}>
-              <NavLink
-                tag={Link}
-                active={location.pathname.split('/')[2] === item ? true : false}
-                className={location.pathname.split('/')[2] === item ? "text-white bg-info" : "text-dark"}
-                to={'/ui/' + item}><Icon i={item}/> {link_title.get(item)}
-              </NavLink>
-            </NavItem>
-          )
-        }
+        data.map((item, i) =>
+          <NavItem key={i}>
+            <NavLink
+              tag={Link}
+              active={location.pathname.split('/')[2] === item ? true : false}
+              className={location.pathname.split('/')[2] === item ? "text-white bg-info" : "text-dark"}
+              to={'/ui/' + item}><Icon i={item}/> {link_title.get(item)}
+            </NavLink>
+          </NavItem>
+        )
+      }
     </Nav>
     )
 }
 
 
-const InnerFooter = ({border=false}) =>
-(
-  <React.Fragment>
-    {
-      border && <div className="pt-1"/>
-    }
-    <div className="text-center pt-1">
-      <img src={EULogo} id="eulogo" alt="EU logo"/>
-      <img src={EOSCLogo} id="eosclogo" alt="EOSC logo" className="pl-1"/>
-    </div>
-    <p className="text-center">
-      <small>
-        <strong>ARGO POEM</strong> is a service jointly developed and maintained by &nbsp;
-        <a href="http://www.cnrs.fr/" title="Centre national de la recherche scientifique">CNRS</a>, &nbsp;
-        <a href="https://grnet.gr/" title="Greek Research and Technology Network">GRNET</a> and &nbsp;
-        <a href="http://www.srce.unizg.hr/" title="University computing centre">SRCE</a>&nbsp;
-        co-funded by <a href="https://www.eosc-hub.eu" title="EOSC-Hub">EOSC-Hub</a> and &nbsp;
-        <a href="http://www.egi.eu/" title="EGI.eu">EGI.eu</a>
-        <br/>
-        <a href="http://argo.egi.eu/lavoisier/TermsofUse" title="Terms of use">Terms of use</a>
-        ,&nbsp;
-        <a href="http://www.apache.org/licenses/LICENSE-2.0" title="License">License</a>
-      </small>
-    </p>
-  </React.Fragment>
-)
+export const NavigationAbout = ({ location, poemVersion }) => {
+  return (
+    <React.Fragment>
+      <div className="bg-white border-left border-right pl-3 mt-0 pt-5 text-uppercase">
+        <h5>Info</h5>
+      </div>
+      <Nav vertical pills id="argo-navlinks" className="border-left border-right sticky-top rounded-bottom border-bottom pb-2 mb-0">
+        <NavLink
+          tag="a"
+          href='http://argoeu.github.io/poem/v1/'
+          className="text-dark"
+          target="_blank" rel="noopener noreferrer"
+        >
+          <Icon i="documentation"/>{' '}
+          Documentation
+        </NavLink>
+        <NavLink
+          tag="a"
+          href='http://argoeu.github.io/overview'
+          className="text-dark"
+          target="_blank" rel="noopener noreferrer"
+        >
+          <Icon i="argodoc"/>{' '}
+          About ARGO
+        </NavLink>
+        <NavLink
+          tag="a"
+          href='https://ui.argo.grnet.gr/egi/termsofUse'
+          className="text-dark"
+          target="_blank" rel="noopener noreferrer"
+        >
+          <Icon i="terms"/>{' '}
+          Terms
+        </NavLink>
+        <NavLink
+          tag={Link}
+          active={location.pathname.split('/')[2] === 'policies' ? true : false}
+          className={location.pathname.split('/')[2] === 'policies' ? "text-white bg-info" : "text-dark"}
+          to="/ui/policies"
+        >
+          <Icon i="policies"/>{' '}
+          Privacy Policies
+        </NavLink>
+        <NavLink
+          tag="a"
+          href='#'
+          className="text-dark font-italic text-monospace"
+        >
+          <FontAwesomeIcon icon={faCrosshairs} size="1x" color="green" fixedWidth/>{' '}
+          { poemVersion }
+        </NavLink>
+      </Nav>
+    </React.Fragment>
+  )
+}
 
 
-export const Footer = ({loginPage=false}) =>
+const InnerFooter = ({ border=false, publicPage=false }) =>
+{
+  const [modal, setModal] = useState(false);
+  const toggle = () => setModal(!modal);
+
+  return (
+    <React.Fragment>
+      {
+        border && <div className="pt-1"/>
+      }
+      <div className="text-center pt-0 pb-2">
+        <img src={EULogo} id="eulogo" alt="EU logo"/>
+        <img src={EOSCLogo} id="eosclogo" alt="EOSC logo" className="pl-1"/>
+      </div>
+      <p className={`text-center ${publicPage ? 'mb-0' : 'mb-0 pb-1'}`}>
+        <small>
+          <strong>ARGO POEM</strong> is a service jointly developed and maintained by &nbsp;
+          <a href="http://www.cnrs.fr/" title="Centre national de la recherche scientifique">CNRS</a>, &nbsp;
+          <a href="https://grnet.gr/" title="Greek Research and Technology Network">GRNET</a> and &nbsp;
+          <a href="http://www.srce.unizg.hr/" title="University computing centre">SRCE</a>&nbsp;
+          co-funded by <a href="https://www.eosc-hub.eu" title="EOSC-Hub">EOSC-Hub</a> and &nbsp;
+          <a href="http://www.egi.eu/" title="EGI.eu">EGI.eu</a>
+        </small>
+      </p>
+      {
+        publicPage &&
+        <div className="text-center mb-0 pt-0">
+          <small>
+            <a href="https://ui.argo.grnet.gr/egi/termsofUse" target="_blank" rel="noopener noreferrer" title="Terms">Terms</a>, &nbsp;
+            <a href='#' title="Privacy Policies" onClick={toggle}>Privacy Policies</a>
+          </small>
+          <Modal isOpen={modal} toggle={toggle} size="lg">
+            <ModalHeader toggle={toggle}><h2>Privacy Policies</h2></ModalHeader>
+            <ModalBody>
+              <PrivacyPolicy showTitle={false}/>
+            </ModalBody>
+          </Modal>
+        </div>
+      }
+    </React.Fragment>
+  )
+}
+
+
+export const Footer = ({ loginPage=false, publicPage=false }) =>
 {
   if (!loginPage) {
     return (
       <div id="argo-footer" className="border rounded">
-        <InnerFooter border={true}/>
+        <InnerFooter border={true} publicPage={publicPage}/>
       </div>
     )
   }
   else {
     return (
       <div id="argo-loginfooter">
-        <InnerFooter />
+        <InnerFooter publicPage={true}/>
       </div>
     )
   }
@@ -549,7 +636,7 @@ export const LoadingAnim = () =>
       <h4 className="text-dark">Loading data...</h4>
     </CardHeader>
     <CardBody>
-      <img src={ArgoLogoAnim} alt="ARGO logo anim" className="img-responsive" height="300px"/>
+      <img src={ArgoLogoAnim} alt="ARGO logo anim" className="img-responsive" height="450px"/>
     </CardBody>
   </Card>
 )
@@ -561,6 +648,7 @@ export const NotifyOk = ({msg='', title='', callback=undefined}) => {
     2000);
   setTimeout(callback, 2000);
 }
+
 
 export const NotifyError = ({msg='', title=''}) => {
   msg = <div>
@@ -618,7 +706,7 @@ export const PublicPage = ({children}) => {
       </Row>
       <Row>
         <Col>
-          <Footer loginPage={false}/>
+          <Footer loginPage={false} publicPage={true}/>
         </Col>
       </Row>
     </Container>
