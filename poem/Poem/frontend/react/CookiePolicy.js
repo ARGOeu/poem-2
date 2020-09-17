@@ -110,7 +110,7 @@ export const CookiePolicy = ({ showTitle=true }) => {
   if (showTitle) {
     return (
       <BaseArgoView
-        resourcename='Cookie policies'
+        resourcename='Cookie Policies'
         infoview={true}
       >
         <Document/>

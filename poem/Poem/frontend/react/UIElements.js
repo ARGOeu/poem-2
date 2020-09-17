@@ -68,7 +68,7 @@ import { Field } from 'formik';
 import { Backend } from './DataManager';
 import ReactDiffViewer from 'react-diff-viewer';
 import Autosuggest from 'react-autosuggest';
-import { PrivacyPolicy } from './PrivacyPolicy';
+import { CookiePolicy } from './CookiePolicy';
 
 
 var list_pages = ['administration', 'probes',
@@ -103,7 +103,7 @@ link_title.set('packages', 'Packages');
 link_title.set('tenants', 'Tenants');
 link_title.set('operationsprofiles', 'Operations profiles');
 link_title.set('public_operationsprofiles', 'Operations profiles');
-link_title.set('policies', 'Privacy policies');
+link_title.set('cookiepolicies', 'Cookie policies');
 
 
 export const Icon = props =>
@@ -547,10 +547,10 @@ export const NavigationAbout = ({ location, poemVersion }) => {
           tag={Link}
           active={location.pathname.split('/')[2] === 'policies' ? true : false}
           className={location.pathname.split('/')[2] === 'policies' ? "text-white bg-info" : "text-dark"}
-          to="/ui/policies"
+          to="/ui/cookiepolicies"
         >
           <Icon i="policies"/>{' '}
-          Privacy Policies
+          Cookie Policies
         </NavLink>
         <NavLink
           tag="a"
@@ -598,9 +598,8 @@ const InnerFooter = ({ border=false, publicPage=false }) =>
             <a href='#' title="Privacy Policies" onClick={toggle}>Privacy Policies</a>
           </small>
           <Modal isOpen={modal} toggle={toggle} size="lg">
-            <ModalHeader toggle={toggle}><h2>Privacy Policies</h2></ModalHeader>
             <ModalBody>
-              <PrivacyPolicy showTitle={false}/>
+              <CookiePolicy showTitle={false}/>
             </ModalBody>
           </Modal>
         </div>
