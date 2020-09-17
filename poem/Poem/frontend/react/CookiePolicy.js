@@ -8,7 +8,7 @@ import {
   CardFooter
 } from 'reactstrap';
 
-export const PrivacyPolicy = ({ showTitle=true }) => {
+export const CookiePolicy = ({ showTitle=true }) => {
   let fqdn = window.location.hostname;
 
   const Document = () => (
@@ -110,7 +110,7 @@ export const PrivacyPolicy = ({ showTitle=true }) => {
   if (showTitle) {
     return (
       <BaseArgoView
-        resourcename='Privacy Policies'
+        resourcename='Cookie policies'
         infoview={true}
       >
         <Document/>

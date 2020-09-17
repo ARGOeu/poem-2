@@ -277,7 +277,7 @@ const UserDetailsToolTip = ({userDetails, isTenantSchema, publicView}) =>
   const NoPermBadge = ({only=false}) =>
     only ?
       <div className="text-center">
-         <Badge color="dark" className="mb-1 mt-1" style={{fontSize: '100%'}}>
+        <Badge color="dark" className="mb-1 mt-1" style={{fontSize: '100%'}}>
           No permissions
         </Badge>
       </div>
@@ -747,7 +747,7 @@ export const BaseArgoView = ({resourcename='', location=undefined,
                 }
                 {
                   (addnew && addperm) &&
-                      <Link className="btn btn-secondary" to={location.pathname + "/add"} role="button">Add</Link>
+                  <Link className="btn btn-secondary" to={location.pathname + "/add"} role="button">Add</Link>
                 }
                 {
                   (addnew && !addperm) &&
@@ -983,13 +983,13 @@ export function HistoryComponent(obj, tenantview=false) {
             list_versions: json,
             loading: false
           });
-        };
+        }
       } catch(err) {
         this.setState({
           error: err,
           loading: false
         });
-      };
+      }
     }
 
     render() {

@@ -44,7 +44,7 @@ import './App.css';
 import { PackageList, PackageChange, PackageClone } from './Package';
 import { TenantList, TenantChange } from './Tenants';
 import { OperationsProfilesList, OperationsProfileDetails } from './OperationsProfiles';
-import { PrivacyPolicy } from './PrivacyPolicy';
+import { CookiePolicy } from './CookiePolicy';
 
 
 const NavigationBarWithRouter = withRouter(NavigationBar);
@@ -219,7 +219,7 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, w
         webapitoken={token}
       />}
     />
-    <Route exact path="/ui/policies/" component={PrivacyPolicy} />
+    <Route exact path="/ui/cookiepolicies/" component={CookiePolicy} />
     <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration" component={TenantAdministration} />
     <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/users" component={UsersList} />
     <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/users/add"
@@ -382,7 +382,7 @@ const SuperAdminRouteSwitch = ({props}) => (
     <Route exact path="/ui/tenants/:name"
       render={props => <TenantChange {...props} />}
     />
-    <Route exact path="/ui/policies/" component={PrivacyPolicy} />
+    <Route exact path="/ui/policies/" component={CookiePolicy} />
     <Route component={NotFound} />
   </Switch>
 )
