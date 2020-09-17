@@ -28,9 +28,6 @@ import { Formik, Form, Field } from 'formik';
 import * as Yup from 'yup';
 import { useQuery, queryCache } from 'react-query';
 
-export const ProbeChange = ProbeComponent();
-export const ProbeClone = ProbeComponent(true);
-
 
 const ProbeSchema = Yup.object().shape({
   name: Yup.string()
