@@ -598,7 +598,7 @@ const InnerFooter = ({ border=false, publicPage=false }) =>
             <a href='#' title="Cookie Policies" onClick={toggle}>Cookie Policies</a>
           </small>
           <Modal isOpen={modal} toggle={toggle} size="lg">
-            <ModalBody>
+            <ModalBody className="p-0">
               <CookiePolicy fromModal={true}/>
             </ModalBody>
           </Modal>
