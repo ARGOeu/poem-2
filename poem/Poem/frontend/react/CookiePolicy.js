@@ -8,11 +8,11 @@ import {
   CardFooter
 } from 'reactstrap';
 
-export const CookiePolicy = ({ showTitle=true }) => {
+export const CookiePolicy = ({ fromModal=false }) => {
   let fqdn = window.location.hostname;
 
   const Document = () => (
-    <Card>
+    <Card className={`${!fromModal ? "ml-2 mb-2 border rounded" : ""}`}>
       <CardHeader>
         <h3 className='p-2'>Cookie Policies</h3>
       </CardHeader>
@@ -107,19 +107,7 @@ export const CookiePolicy = ({ showTitle=true }) => {
     </Card>
   )
 
-  if (showTitle) {
-    return (
-      <BaseArgoView
-        resourcename='Cookie Policies'
-        infoview={true}
-      >
-        <Document/>
-      </BaseArgoView>
-    )
-  }
-  else {
-    return (
-      <Document/>
-    )
-  }
+  return (
+    <Document/>
+  )
 }
