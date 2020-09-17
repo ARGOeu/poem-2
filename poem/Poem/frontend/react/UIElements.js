@@ -595,11 +595,11 @@ const InnerFooter = ({ border=false, publicPage=false }) =>
         <div className="text-center mb-0 pt-0">
           <small>
             <a href="https://ui.argo.grnet.gr/egi/termsofUse" target="_blank" rel="noopener noreferrer" title="Terms">Terms</a>, &nbsp;
-            <a href='#' title="Privacy Policies" onClick={toggle}>Privacy Policies</a>
+            <a href='#' title="Cookie Policies" onClick={toggle}>Cookie Policies</a>
           </small>
           <Modal isOpen={modal} toggle={toggle} size="lg">
             <ModalBody>
-              <CookiePolicy showTitle={false}/>
+              <CookiePolicy fromModal={true}/>
             </ModalBody>
           </Modal>
         </div>
