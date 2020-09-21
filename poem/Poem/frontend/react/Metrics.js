@@ -17,6 +17,7 @@ import {
   ParagraphTitle
  } from './UIElements';
 import ReactTable from 'react-table-6';
+import 'react-table-6/react-table.css';
 import { Formik, Form, Field, FieldArray } from 'formik';
 import {
   FormGroup,
@@ -337,7 +338,7 @@ export const ListOfMetrics = (props) => {
       } else {
         let ostags = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}ostags`);
         return ostags;
-      };
+      }
     }
   );
 
@@ -356,7 +357,7 @@ export const ListOfMetrics = (props) => {
         let sessionActive = await backend.isActiveSession(schema);
         if (sessionActive.active)
           userdetails = sessionActive.userdetails;
-      };
+      }
       return userdetails;
     }
   );
@@ -366,35 +367,35 @@ export const ListOfMetrics = (props) => {
       list_metric.filter(row =>
         eval(`row.${field}`).toLowerCase().includes(filter.toLowerCase()))
     )
-  };
+  }
 
   function toggleRow(name) {
     const newSelected = Object.assign({}, selected);
     newSelected[name] = !selected[name];
     setSelected(newSelected);
     setSelectAll(Object.keys(newSelected).every((k) => !newSelected[k]) ? 0 : 2);
-  };
+  }
 
   function toggleSelectAll() {
     var list_metric = listMetrics;
 
     if (searchName) {
       list_metric = doFilter(list_metric, 'name', searchName);
-    };
+    }
 
     if (searchProbeversion) {
       list_metric = doFilter(list_metric, 'probeversion', searchProbeversion);
-    };
+    }
 
     if (searchType) {
       list_metric = doFilter(list_metric, 'mtype', searchType);
-    };
+    }
 
     if (searchTag) {
       list_metric = list_metric.filter(row =>
         row.tags.includes(searchTag)
       );
-    };
+    }
 
     if (searchOSGroups) {
       type === 'metrics' ?
@@ -403,22 +404,22 @@ export const ListOfMetrics = (props) => {
         list_metric = list_metric.filter(row =>
           `${row.ostag.join(', ')}`.includes(searchOStag)
         );
-    };
+    }
 
     let newSelected = {};
     if (selectAll === 0) {
       list_metric.forEach(x => {
         newSelected[x.name] = true;
       });
-    };
+    }
 
     setSelected(newSelected);
     setSelectAll(selectAll === 0 ? 1 : 0);
-  };
+  }
 
   function toggleAreYouSure() {
     setAreYouSureModal(!areYouSureModal);
-  };
+  }
 
   function onDelete() {
     let selectedMetrics = selected;
@@ -434,7 +435,7 @@ export const ListOfMetrics = (props) => {
         msg: 'No metric templates were selected!',
         title: 'Error'
       });
-  };
+  }
 
   async function importMetrics() {
     let selectedMetrics = selected;
@@ -459,8 +460,8 @@ export const ListOfMetrics = (props) => {
       NotifyError({
         msg: 'No metric templates were selected!',
         title: 'Error'});
-    };
-  };
+    }
+  }
 
   async function bulkDeleteMetrics(mt) {
     //let refreshed_metrics = listMetrics;
@@ -482,7 +483,7 @@ export const ListOfMetrics = (props) => {
         msg: `Error deleting metric template${mt.length > 0 ? 's' : ''}`,
         title: `Error: ${response.status} ${response.statusText}`
       });
-  };
+  }
 
   if (listMetricsLoading || listTypesLoading || listTagsLoading || listOSGroupsLoading || isTenantSchemaLoading || userDetailsLoading)
     return (<LoadingAnim />);
@@ -672,7 +673,7 @@ export const ListOfMetrics = (props) => {
             </div>
         }
       )
-    };
+    }
 
     if (type === 'metrics') {
       columns.splice(
@@ -719,22 +720,22 @@ export const ListOfMetrics = (props) => {
             )
           }
         )
-      };
-    };
+      }
+    }
 
     var list_metric = listMetrics;
 
     if (searchName) {
       list_metric = doFilter(list_metric, 'name', searchName);
-    };
+    }
 
     if (searchProbeversion) {
       list_metric = doFilter(list_metric, 'probeversion', searchProbeversion);
-    };
+    }
 
     if (searchType) {
       list_metric = doFilter(list_metric, 'mtype', searchType);
-    };
+    }
 
     if (searchOSGroups) {
       type === 'metrics' ?
@@ -743,7 +744,7 @@ export const ListOfMetrics = (props) => {
         list_metric = list_metric.filter(row =>
           `${row.ostag.join(', ')}`.toLowerCase().includes(searchOStag.toLowerCase())
         );
-    };
+    }
 
     if (searchTag) {
       list_metric = list_metric.filter(row => {
@@ -753,7 +754,7 @@ export const ListOfMetrics = (props) => {
         else
           return row.tags.includes(searchTag);
       });
-    };
+    }
 
     if (type === 'metrics') {
       return (
@@ -840,8 +841,8 @@ export const ListOfMetrics = (props) => {
             </div>
           </>
         );
-    };
-  };
+    }
+  }
 };
 
 
@@ -1236,9 +1237,9 @@ export const CompareMetrics = (props) => {
         });
       } catch(err) {
         setError(err)
-      };
+      }
       setLoading(false);
-    };
+    }
 
     fetchData();
   }, []);
@@ -1366,11 +1367,11 @@ export const MetricChange = (props) => {
 
   function togglePopOver() {
     setPopoverOpen(!popoverOpen);
-  };
+  }
 
   function toggleAreYouSure() {
     setAreYouSureModal(!areYouSureModal);
-  };
+  }
 
   function onSubmitHandle(values, actions) {
     setModalMsg('Are you sure you want to change metric?');
@@ -1378,7 +1379,7 @@ export const MetricChange = (props) => {
     setFormValues(values);
     setModalFlag('submit');
     toggleAreYouSure();
-  };
+  }
 
   async function doChange() {
     let response = await backend.changeObject(
@@ -1413,13 +1414,13 @@ export const MetricChange = (props) => {
         change_msg = json.detail;
       } catch(err) {
         change_msg = 'Error changing metric';
-      };
+      }
       NotifyError({
         title: `Error: ${response.status} ${response.statusText}`,
         msg: change_msg
       });
-    };
-  };
+    }
+  }
 
   async function doDelete() {
     let response = await backend.deleteObject(`/api/v2/internal/metric/${name}`);
@@ -1441,8 +1442,8 @@ export const MetricChange = (props) => {
         title: `Error: ${response.status} ${response.statusText}`,
         msg: msg
       });
-    };
-  };
+    }
+  }
 
   if (metricLoading || sessionLoading || probeLoading)
     return (<LoadingAnim/>);
@@ -1462,7 +1463,7 @@ export const MetricChange = (props) => {
     if (session.active) {
       groups = session.userdetails.groups.metrics;
       writePerm = session.userdetails.is_superuser || session.userdetails.groups.metrics.indexOf(metric.group >= 0);
-    };
+    }
 
     if (!groups.includes(metric.group))
       groups.push(metric.group);
@@ -1540,7 +1541,7 @@ export const MetricChange = (props) => {
         </BaseArgoView>
       </React.Fragment>
     );
-  };
+  }
 };
 
 
@@ -1571,14 +1572,14 @@ export const MetricVersionDetails = (props) => {
             let m = e.fields;
             m.date_created = e.date_created;
             setMetric(m);
-          };
+          }
         });
       } catch(err) {
         setError(err)
-      };
+      }
 
       setLoading(false);
-    };
+    }
 
     fetchData();
   }, []);

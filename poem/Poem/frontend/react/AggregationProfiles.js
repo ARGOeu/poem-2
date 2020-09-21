@@ -1,4 +1,4 @@
-import React, { Component, useState } from 'react';
+import React, { Component, useState, useMemo } from 'react';
 import {Link} from 'react-router-dom';
 import {
   LoadingAnim,
@@ -14,8 +14,6 @@ import {
   ParagraphTitle
 } from './UIElements';
 import Autosuggest from 'react-autosuggest';
-import ReactTable from 'react-table-6';
-import 'react-table-6/react-table.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Formik, Field, FieldArray, Form } from 'formik';
 import { faPlus, faTimes, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
@@ -31,10 +29,16 @@ import {
   Col,
   FormGroup,
   FormText,
+  Table,
   Label,
+  Pagination,
+  PaginationItem,
+  PaginationLink,
   Row
 } from 'reactstrap';
+import { useQuery } from 'react-query';
 import * as Yup from 'yup';
+import { useTable, usePagination } from 'react-table';
 
 import ReactDiffViewer from 'react-diff-viewer';
 
@@ -98,7 +102,7 @@ const AggregationProfileAutocompleteField = ({suggestions, service, index, form,
         {
           let result = suggestions.filter(service => service.toLowerCase().includes(value.trim().toLowerCase()))
           setSuggestions(result)
-        }
+      }
       }
       onSuggestionsClearRequested={() => {
         setSuggestions([])
@@ -118,7 +122,7 @@ const AggregationProfileAutocompleteField = ({suggestions, service, index, form,
 
 const GroupList = ({name, form, list_services, list_operations, last_service_operation, write_perm}) =>
   <Row className="groups">
-  {
+    {
     form.values[name].map((group, i) =>
       <FieldArray
         key={i}
@@ -278,18 +282,18 @@ const Service = ({name, service, operation, list_services, list_operations,
         <Button size="sm" color="light"
           type="button"
           onClick={() => remove(index)}>
-            <FontAwesomeIcon icon={faTimes}/>
+          <FontAwesomeIcon icon={faTimes}/>
         </Button>
         <Button size="sm" color="light"
           type="button"
           onClick={() => insert(index + 1, {name: '', operation:
             last_service_operation(index, form.values.groups[groupindex].services), isnew: true})}>
-            <FontAwesomeIcon icon={faPlus}/>
+          <FontAwesomeIcon icon={faPlus}/>
         </Button>
       </Col>
     </Row>
     <Row>
-    {
+      {
       form.errors && form.errors.groups && form.errors.groups[groupindex] &&
       form.errors.groups[groupindex].services && form.errors.groups[groupindex].services[index] &&
       form.errors.groups[groupindex].services[index].name &&
@@ -297,7 +301,7 @@ const Service = ({name, service, operation, list_services, list_operations,
             { FancyErrorMessage(form.errors.groups[groupindex].services[index].name) }
         </Col>
     }
-    {
+      {
       form.errors && form.errors.groups && form.errors.groups[groupindex] &&
       form.errors.groups[groupindex].services && form.errors.groups[groupindex].services[index] &&
       form.errors.groups[groupindex].services[index].operation &&
@@ -654,7 +658,7 @@ export class AggregationProfilesChange extends Component
           change_msg = msg_list.join(' ');
         } catch(err) {
           change_msg = 'Web API error changing aggregation profile';
-        };
+        }
         NotifyError({
           title: `Web API error: ${response.status} ${response.statusText}`,
           msg: change_msg
@@ -686,13 +690,13 @@ export class AggregationProfilesChange extends Component
             change_msg = json.detail;
           } catch(err) {
             change_msg = 'Internal API error changing aggregation profile';
-          };
+          }
           NotifyError({
             title: `Internal API error: ${r_internal.status} ${r_internal.statusText}`,
             msg: change_msg
           });
-        };
-      };
+        }
+      }
     } else {
       let response = await this.webapi.addAggregation(values_send);
       if (!response.ok) {
@@ -704,7 +708,7 @@ export class AggregationProfilesChange extends Component
           add_msg = msg_list.join(' ');
         } catch(err) {
           add_msg = `Web API error adding aggregation profile: ${err}`;
-        };
+        }
         NotifyError({
           title: `Web API error: ${response.status} ${response.statusText}`,
           msg: add_msg
@@ -737,14 +741,14 @@ export class AggregationProfilesChange extends Component
             add_msg = json.detail;
           } catch(err) {
             add_msg = 'Internal API error adding aggregation profile';
-          };
+          }
           NotifyError({
             title: `Internal API error: ${r_internal.status} ${r_internal.statusText}`,
             msg: add_msg
           });
-        };
-      };
-    };
+        }
+      }
+    }
   }
 
   async doDelete(idProfile) {
@@ -758,7 +762,7 @@ export class AggregationProfilesChange extends Component
         msg = msg_list.join(' ');
       } catch(err) {
         msg = 'Web API error deleting aggregation profile';
-      };
+      }
       NotifyError({
         title: `Web API error: ${response.status} ${response.statusText}`,
         msg: msg
@@ -778,13 +782,13 @@ export class AggregationProfilesChange extends Component
           msg = json.detail;
         } catch(err) {
           msg = 'Internal API error deleting aggregation profile';
-        };
+        }
         NotifyError({
           title: `Internal API error: ${r.status} ${r.statusText}`,
           msg: msg
         });
-      };
-    };
+      }
+    }
   }
 
   insertDummyGroup(groups) {
@@ -876,15 +880,15 @@ export class AggregationProfilesChange extends Component
               list_services: [],
               loading: false
             });
-          };
-        };
+          }
+        }
       }
     } catch(err) {
       this.setState({
         error: err,
         loading: false
       });
-    };
+    }
   }
 
   render() {
@@ -1062,110 +1066,225 @@ export class AggregationProfilesChange extends Component
 }
 
 
-export class AggregationProfilesList extends Component
-{
-  constructor(props) {
-    super(props);
+function AggregationProfilesListTable({ columns, data }) {
+  const {
+    headerGroups,
+    prepareRow,
+    page,
+    canPreviousPage,
+    canNextPage,
+    pageCount,
+    gotoPage,
+    nextPage,
+    previousPage,
+    setPageSize,
+    state: { pageIndex, pageSize }
+  } = useTable(
+    {
+      columns,
+      data,
+      initialState: { pageIndex: 0, pageSize: 10 }
+    },
+    usePagination
+  );
 
-    this.state = {
-      loading: false,
-      list_aggregations: null,
-      write_perm: false,
-      error: null
-    }
+  return (
+    <>
+      <Row>
+        <Col>
+          <Table className='table-bordered table-hover'>
+            <thead className='table-active align-middle text-center'>
+              {
+                headerGroups.map((headerGroup, thi) => (
+                  <React.Fragment key={thi}>
+                    <tr>
+                      {
+                        headerGroup.headers.map((column, tri) => {
+                          let width = undefined;
 
-    this.location = props.location;
-    this.backend = new Backend();
-    this.publicView = props.publicView
+                          if (tri === 0)
+                            width = '2%'
+                          if (tri === 1)
+                            width = '20%'
+                          else if (tri === 2)
+                            width = '70%'
+                          else if (tri === 3)
+                            width = '8%'
 
-    if (this.publicView)
-      this.apiUrl = '/api/v2/internal/public_aggregations'
-    else
-      this.apiUrl = '/api/v2/internal/aggregations'
+                          return (
+                            <th style={{width: width}} className='p-1 m-1' key={tri}>
+                              {column.render('Header')}
+                            </th>
+                          )
+                        })
+                      }
+                    </tr>
+                  </React.Fragment>
+                ))
+              }
+            </thead>
+            <tbody>
+              {
+                page.map((row, row_index) => {
+                  prepareRow(row);
+                  return (
+                    <tr key={row_index} style={{height: '49px'}}>
+                      {
+                        row.cells.map((cell, cell_index) => {
+                          if (cell_index === 0)
+                            return <td key={cell_index} className='align-middle text-center'>{(row_index + 1) + (pageIndex * pageSize)}</td>
+                          else if (cell_index === row.cells.length - 1)
+                            return <td key={cell_index} className='align-middle text-center'>{cell.render('Cell')}</td>
+                          else
+                            return <td key={cell_index} className='align-middle'>{cell.render('Cell')}</td>
+                        })
+                      }
+                    </tr>
+                  )
+                })
+              }
+            </tbody>
+          </Table>
+        </Col>
+      </Row>
+      <Row>
+        <Col className='d-flex justify-content-center'>
+          <Pagination>
+            <PaginationItem disabled={!canPreviousPage}>
+              <PaginationLink first onClick={() => gotoPage(0)}/>
+            </PaginationItem>
+            <PaginationItem disabled={!canPreviousPage}>
+              <PaginationLink previous onClick={() => previousPage()}/>
+            </PaginationItem>
+            {
+              [...Array(pageCount)].map((e, i) =>
+                <PaginationItem key={i} active={pageIndex === i ? true : false}>
+                  <PaginationLink onClick={() => gotoPage(i)}>
+                    { i + 1 }
+                  </PaginationLink>
+                </PaginationItem>
+              )
+            }
+            <PaginationItem disabled={!canNextPage}>
+              <PaginationLink next onClick={() => nextPage()}/>
+            </PaginationItem>
+            <PaginationItem disabled={!canNextPage}>
+              <PaginationLink last onClick={() => gotoPage(pageCount + 1)}/>
+            </PaginationItem>
+            <PaginationItem className='pl-2'>
+              <select
+                style={{width: '180px'}}
+                className='custom-select text-primary'
+                value={pageSize}
+                onChange={e => setPageSize(Number(e.target.value))}
+              >
+                {[10, 20, 50].map(pageSize => (
+                  <option key={pageSize} value={pageSize}>
+                    {pageSize} aggregation profiles
+                  </option>
+                ))}
+              </select>
+            </PaginationItem>
+          </Pagination>
+        </Col>
+      </Row>
+    </>
+  );
+}
 
-  }
 
-  async componentDidMount() {
-    this.setState({loading: true})
-    try {
-      let json = await this.backend.fetchData(this.apiUrl);
-      if (!this.publicView) {
-        let session = await this.backend.isActiveSession();
-        this.setState({
-          write_perm: session.userdetails.is_superuser || session.userdetails.groups.aggregations.length > 0,
-          list_aggregations: json,
-          loading: false
-        })
-      } else {
-        this.setState({
-          list_aggregations: json,
-          loading: false
-        })
+export const AggregationProfilesList = (props) => {
+  const location = props.location;
+  const backend = new Backend();
+  const publicView = props.publicView
+
+  let apiUrl = null;
+  if (publicView)
+    apiUrl = '/api/v2/internal/public_aggregations'
+  else
+    apiUrl = '/api/v2/internal/aggregations'
+
+  const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails } = useQuery(
+    `session_userdetails`, async () => {
+      const sessionActive = await backend.isActiveSession()
+      if (sessionActive.active) {
+        return sessionActive.userdetails
       }
-    } catch(err) {
-      this.setState({
-        error: err,
-        loading: false
-      });
     }
+  );
 
-  }
+  const { data: listAggregationProfiles, error: errorListAggregationProfiles,
+    isLoading: loadingListAggregationProfiles} = useQuery(
+    `aggregations_listview`, async () => {
+      const fetched = await backend.fetchData(apiUrl)
 
-  render() {
-    const columns = [
-      {
-        Header: 'Name',
-        id: 'name',
-        maxWidth: 350,
-        accessor: e =>
-          <Link to={`/ui/${this.publicView ? 'public_' : ''}aggregationprofiles/` + e.name}>
-            {e.name}
-          </Link>
-      },
-      {
-        Header: 'Description',
-        accessor: 'description',
-      },
-      {
-        Header: 'Group',
-        accessor: 'groupname',
-        className: 'text-center',
-        maxWidth: 150,
-      }
-    ]
-    const {loading, list_aggregations, write_perm, error} = this.state;
+      // 10 is minimal pageSize and these numbers should be aligned
+      let n_elem = 10 - (fetched.length % 10)
+      for (let i = 0; i < n_elem; i++)
+        fetched.push(
+          {'description': '', 'groupname': '', 'name': ''}
+        )
 
-    if (loading)
-      return (<LoadingAnim />)
-
-    else if (error)
-      return (
-        <ErrorComponent error={error}/>
-      )
-
-    else if (!loading && list_aggregations) {
-      return (
-        <BaseArgoView
-          resourcename='aggregation profile'
-          location={this.location}
-          listview={true}
-          addnew={!this.publicView}
-          addperm={write_perm}
-          publicview={this.publicView}>
-          <ReactTable
-            data={list_aggregations}
-            columns={columns}
-            className="-highlight"
-            defaultPageSize={12}
-            rowsText='profiles'
-            getTheadThProps={() => ({className: 'table-active font-weight-bold p-2'})}
-          />
-        </BaseArgoView>
-      )
+      return fetched
+    },
+    {
+      enabled: userDetails
     }
-    else
-      return null
+  );
+
+  const columns = useMemo(() => [
+    {
+      Header: '#',
+      accessor: null
+    },
+    {
+      Header: 'Name',
+      id: 'name',
+      maxWidth: 350,
+      accessor: e =>
+        <Link to={`/ui/${publicView ? 'public_' : ''}aggregationprofiles/` + e.name}>
+          {e.name}
+        </Link>
+    },
+    {
+      Header: 'Description',
+      accessor: 'description',
+    },
+    {
+      Header: 'Group',
+      accessor: 'groupname',
+      className: 'text-center',
+      maxWidth: 150,
+    }
+  ])
+
+  if (loadingUserDetails || loadingListAggregationProfiles)
+    return (<LoadingAnim />)
+
+  else if (errorListAggregationProfiles)
+    return (<ErrorComponent error={errorListAggregationProfiles}/>);
+
+  else if (errorUserDetails)
+    return (<ErrorComponent error={errorUserDetails}/>);
+
+  else if (!loadingUserDetails && !loadingUserDetails && listAggregationProfiles) {
+    return (
+      <BaseArgoView
+        resourcename='aggregation profile'
+        location={location}
+        listview={true}
+        addnew={!publicView}
+        addperm={userDetails.is_superuser || userDetails.groups.metricprofiles.length > 0}
+        publicview={publicView}>
+        <AggregationProfilesListTable
+          data={listAggregationProfiles}
+          columns={columns}
+        />
+      </BaseArgoView>
+    )
   }
+  else
+    return null
 }
 
 
@@ -1275,7 +1394,7 @@ export class AggregationProfileVersionCompare extends Component {
           endpoint_group2 = e.fields.endpoint_group;
           metric_profile2 = e.fields.metric_profile;
           groups2 = e.fields.groups;
-        };
+        }
 
         this.setState({
           name1: name1,

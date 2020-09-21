@@ -1052,7 +1052,7 @@ function MetricProfilesListTable({ columns, data }) {
     {
       columns,
       data,
-      initialState: { pageIndex: 0, pageSize: 15 }
+      initialState: { pageIndex: 0, pageSize: 10 }
     },
     usePagination
   );
@@ -1061,7 +1061,7 @@ function MetricProfilesListTable({ columns, data }) {
     <>
       <Row>
         <Col>
-          <table className='table table-bordered table-hover'>
+          <Table className='table table-bordered table-hover'>
             <thead className='table-active align-middle text-center'>
               {
                 headerGroups.map((headerGroup, thi) => (
@@ -1069,8 +1069,19 @@ function MetricProfilesListTable({ columns, data }) {
                     <tr>
                       {
                         headerGroup.headers.map((column, tri) => {
+                          let width = undefined;
+
+                          if (tri === 0)
+                            width = '2%'
+                          if (tri === 1)
+                            width = '20%'
+                          else if (tri === 2)
+                            width = '70%'
+                          else if (tri === 3)
+                            width = '8%'
+
                           return (
-                            <th className='p-1 m-1' key={tri}>
+                            <th style={{width: width}} className='p-1 m-1' key={tri}>
                               {column.render('Header')}
                             </th>
                           )
@@ -1086,18 +1097,23 @@ function MetricProfilesListTable({ columns, data }) {
                 page.map((row, row_index) => {
                   prepareRow(row);
                   return (
-                    <tr key={row_index}>
+                    <tr key={row_index} style={{height: '49px'}}>
                       {
-                        row.cells.map((cell, cell_index) =>
-                          <td key={cell_index} className='align-middle'>{cell.render('Cell')}</td>
-                        )
+                        row.cells.map((cell, cell_index) => {
+                          if (cell_index === 0)
+                            return <td key={cell_index} className='align-middle text-center'>{(row_index + 1) + (pageIndex * pageSize)}</td>
+                          else if (cell_index === row.cells.length - 1)
+                            return <td key={cell_index} className='align-middle text-center'>{cell.render('Cell')}</td>
+                          else
+                            return <td key={cell_index} className='align-middle'>{cell.render('Cell')}</td>
+                        })
                       }
                     </tr>
                   )
                 })
               }
             </tbody>
-          </table>
+          </Table>
         </Col>
       </Row>
       <Row>
@@ -1131,9 +1147,9 @@ function MetricProfilesListTable({ columns, data }) {
                 value={pageSize}
                 onChange={e => setPageSize(Number(e.target.value))}
               >
-                {[15, 30, 50, 100].map(pageSize => (
+                {[10, 20, 50].map(pageSize => (
                   <option key={pageSize} value={pageSize}>
-                    {pageSize} metric profiles 
+                    {pageSize} metric profiles
                   </option>
                 ))}
               </select>
@@ -1169,6 +1185,14 @@ export const MetricProfilesList = (props) => {
   const { data: listMetricProfiles, error: errorListMetricProfiles, isLoading: loadingListMetricProfiles} = useQuery(
     `metricprofiles_listview`, async () => {
       const fetched = await backend.fetchData(apiUrl)
+
+      // 10 is minimal pageSize and these numbers should be aligned
+      let n_elem = 10 - (fetched.length % 10)
+      for (let i = 0; i < n_elem; i++)
+        fetched.push(
+          {'description': '', 'groupname': '', 'name': ''}
+        )
+
       return fetched
     },
     {
@@ -1177,6 +1201,10 @@ export const MetricProfilesList = (props) => {
   );
 
   const columns = useMemo(() => [
+    {
+      Header: '#',
+      accessor: null
+    },
     {
       Header: 'Name',
       id: 'name',
