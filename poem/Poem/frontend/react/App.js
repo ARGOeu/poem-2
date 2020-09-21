@@ -9,10 +9,12 @@ import {
 } from './MetricProfiles';
 import Home, { PublicHome } from './Home';
 import {
+  ProbeChange,
+  ProbeClone,
+  ProbeComponent,
   ProbeList,
   ProbeVersionCompare,
   ProbeVersionDetails,
-  ProbeComponent
 } from './Probes';
 import {
   MetricChange,
@@ -31,6 +33,7 @@ import {
   AggregationProfileVersionCompare,
   AggregationProfileVersionDetails
 } from './AggregationProfiles';
+import Reports from './Reports';
 import { ReportsList, ReportsComponent } from './Reports';
 import { UsersList, UserChange, SuperAdminUserChange, ChangePassword } from './Users';
 import {
@@ -418,7 +421,6 @@ const SuperAdminRouteSwitch = ({props}) => (
     <Route exact path="/ui/home" component={Home} />
     <Route exact path="/ui/probes" component={ProbeList} />
     <Route exact path="/ui/probes/add" render={props => <ProbeComponent {...props} addview={true}/>}/>
-    <Route exact path='/ui/probes/:name/clone' render={props => <ProbeComponent cloneview={true} {...props}/>}/>
     <Route exact path="/ui/probes/:name/history" render={props => <HistoryComponent object='probe' {...props}/>}/>
     <Route exact path="/ui/probes/:name/history/compare/:id1/:id2" render={props => <ProbeVersionCompare {...props}/>}/>
     <Route exact path="/ui/probes/:name/history/:version" render={props => <ProbeVersionDetails {...props}/>}/>

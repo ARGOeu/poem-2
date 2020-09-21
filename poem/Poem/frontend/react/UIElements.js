@@ -72,7 +72,7 @@ import { CookiePolicy } from './CookiePolicy';
 
 
 var list_pages = ['administration', 'probes',
-                  'metrics', 'reports', servicetypes', 'metricprofiles', 'aggregationprofiles',
+                  'metrics', 'reports', 'servicetypes', 'metricprofiles', 'aggregationprofiles',
                   'thresholdsprofiles', 'operationsprofiles'];
 var admin_list_pages = [ 'administration', 'tenants',
                         'yumrepos', 'packages', 'probes', 'metrictemplates'];
@@ -632,14 +632,18 @@ export const Footer = ({ loginPage=false, publicPage=false }) =>
 
 export const LoadingAnim = () =>
 (
-  <Card className="text-center">
-    <CardHeader className="bg-light">
-      <h4 className="text-dark">Loading data...</h4>
-    </CardHeader>
-    <CardBody>
-      <img src={ArgoLogoAnim} alt="ARGO logo anim" className="img-responsive" height="450px"/>
-    </CardBody>
-  </Card>
+  <Row className="ml-2 mr-1 border rounded" style={{height: '90%', backgroundColor: 'white'}}>
+    <Col className="d-flex flex-column align-items-center align-self-center" md={{size: 8, offset: 2}}>
+      <Card className="text-center border-0">
+        <CardHeader className="bg-light">
+          <h4 className="text-dark">Loading data...</h4>
+        </CardHeader>
+        <CardBody>
+          <img src={ArgoLogoAnim} alt="ARGO logo anim" className="img-responsive" height="400px"/>
+        </CardBody>
+      </Card>
+    </Col>
+  </Row>
 )
 
 
@@ -945,7 +949,6 @@ export const HistoryComponent = (props) => {
     apiUrl = `/api/v2/internal/${publicView ? 'public_' : ''}version/`;
 
   const compareUrl = `/ui/${tenantView ? 'administration/' : ''}${publicView ? 'public_' : ''}${obj}s/${name}/history`;
-
   const backend = new Backend();
 
   useEffect(() => {
