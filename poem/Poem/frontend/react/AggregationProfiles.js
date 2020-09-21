@@ -14,8 +14,6 @@ import {
   ParagraphTitle
 } from './UIElements';
 import Autosuggest from 'react-autosuggest';
-import ReactTable from 'react-table-6';
-import 'react-table-6/react-table.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Formik, Field, FieldArray, Form } from 'formik';
 import { faPlus, faTimes, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
@@ -104,7 +102,7 @@ const AggregationProfileAutocompleteField = ({suggestions, service, index, form,
         {
           let result = suggestions.filter(service => service.toLowerCase().includes(value.trim().toLowerCase()))
           setSuggestions(result)
-        }
+      }
       }
       onSuggestionsClearRequested={() => {
         setSuggestions([])
@@ -124,7 +122,7 @@ const AggregationProfileAutocompleteField = ({suggestions, service, index, form,
 
 const GroupList = ({name, form, list_services, list_operations, last_service_operation, write_perm}) =>
   <Row className="groups">
-  {
+    {
     form.values[name].map((group, i) =>
       <FieldArray
         key={i}
@@ -284,18 +282,18 @@ const Service = ({name, service, operation, list_services, list_operations,
         <Button size="sm" color="light"
           type="button"
           onClick={() => remove(index)}>
-            <FontAwesomeIcon icon={faTimes}/>
+          <FontAwesomeIcon icon={faTimes}/>
         </Button>
         <Button size="sm" color="light"
           type="button"
           onClick={() => insert(index + 1, {name: '', operation:
             last_service_operation(index, form.values.groups[groupindex].services), isnew: true})}>
-            <FontAwesomeIcon icon={faPlus}/>
+          <FontAwesomeIcon icon={faPlus}/>
         </Button>
       </Col>
     </Row>
     <Row>
-    {
+      {
       form.errors && form.errors.groups && form.errors.groups[groupindex] &&
       form.errors.groups[groupindex].services && form.errors.groups[groupindex].services[index] &&
       form.errors.groups[groupindex].services[index].name &&
@@ -303,7 +301,7 @@ const Service = ({name, service, operation, list_services, list_operations,
             { FancyErrorMessage(form.errors.groups[groupindex].services[index].name) }
         </Col>
     }
-    {
+      {
       form.errors && form.errors.groups && form.errors.groups[groupindex] &&
       form.errors.groups[groupindex].services && form.errors.groups[groupindex].services[index] &&
       form.errors.groups[groupindex].services[index].operation &&
@@ -660,7 +658,7 @@ export class AggregationProfilesChange extends Component
           change_msg = msg_list.join(' ');
         } catch(err) {
           change_msg = 'Web API error changing aggregation profile';
-        };
+        }
         NotifyError({
           title: `Web API error: ${response.status} ${response.statusText}`,
           msg: change_msg
@@ -692,13 +690,13 @@ export class AggregationProfilesChange extends Component
             change_msg = json.detail;
           } catch(err) {
             change_msg = 'Internal API error changing aggregation profile';
-          };
+          }
           NotifyError({
             title: `Internal API error: ${r_internal.status} ${r_internal.statusText}`,
             msg: change_msg
           });
-        };
-      };
+        }
+      }
     } else {
       let response = await this.webapi.addAggregation(values_send);
       if (!response.ok) {
@@ -710,7 +708,7 @@ export class AggregationProfilesChange extends Component
           add_msg = msg_list.join(' ');
         } catch(err) {
           add_msg = `Web API error adding aggregation profile: ${err}`;
-        };
+        }
         NotifyError({
           title: `Web API error: ${response.status} ${response.statusText}`,
           msg: add_msg
@@ -743,14 +741,14 @@ export class AggregationProfilesChange extends Component
             add_msg = json.detail;
           } catch(err) {
             add_msg = 'Internal API error adding aggregation profile';
-          };
+          }
           NotifyError({
             title: `Internal API error: ${r_internal.status} ${r_internal.statusText}`,
             msg: add_msg
           });
-        };
-      };
-    };
+        }
+      }
+    }
   }
 
   async doDelete(idProfile) {
@@ -764,7 +762,7 @@ export class AggregationProfilesChange extends Component
         msg = msg_list.join(' ');
       } catch(err) {
         msg = 'Web API error deleting aggregation profile';
-      };
+      }
       NotifyError({
         title: `Web API error: ${response.status} ${response.statusText}`,
         msg: msg
@@ -784,13 +782,13 @@ export class AggregationProfilesChange extends Component
           msg = json.detail;
         } catch(err) {
           msg = 'Internal API error deleting aggregation profile';
-        };
+        }
         NotifyError({
           title: `Internal API error: ${r.status} ${r.statusText}`,
           msg: msg
         });
-      };
-    };
+      }
+    }
   }
 
   insertDummyGroup(groups) {
@@ -882,15 +880,15 @@ export class AggregationProfilesChange extends Component
               list_services: [],
               loading: false
             });
-          };
-        };
+          }
+        }
       }
     } catch(err) {
       this.setState({
         error: err,
         loading: false
       });
-    };
+    }
   }
 
   render() {
@@ -1385,7 +1383,7 @@ export class AggregationProfileVersionCompare extends Component {
           endpoint_group2 = e.fields.endpoint_group;
           metric_profile2 = e.fields.metric_profile;
           groups2 = e.fields.groups;
-        };
+        }
 
         this.setState({
           name1: name1,
