@@ -632,7 +632,7 @@ export const Footer = ({ loginPage=false, publicPage=false }) =>
 
 export const LoadingAnim = () =>
 (
-  <Row className="ml-2 mr-1" style={{height: '90%', backgroundColor: 'red'}}>
+  <Row className="ml-2 mr-1 border rounded" style={{height: '90%', backgroundColor: 'white'}}>
     <Col className="d-flex flex-column align-items-center align-self-center" md={{size: 8, offset: 2}}>
       <Card className="text-center border-0">
         <CardHeader className="bg-light">
