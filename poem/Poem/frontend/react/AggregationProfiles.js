@@ -1212,6 +1212,14 @@ export const AggregationProfilesList = (props) => {
     isLoading: loadingListAggregationProfiles} = useQuery(
     `aggregations_listview`, async () => {
       const fetched = await backend.fetchData(apiUrl)
+
+      // 15 is minimal pageSize and these numbers should be aligned
+      let n_elem = 15 - (fetched.length % 15)
+      for (let i = 0; i < n_elem; i++)
+        fetched.push(
+          {'description': '', 'groupname': '', 'name': ''}
+        )
+
       return fetched
     },
     {
@@ -1251,14 +1259,6 @@ export const AggregationProfilesList = (props) => {
     return (<ErrorComponent error={errorUserDetails}/>);
 
   else if (!loadingUserDetails && !loadingUserDetails && listAggregationProfiles) {
-
-    // 15 is minimal pageSize and these numbers should be aligned
-    let n_elem = 15 - (listAggregationProfiles.length % 15)
-    for (let i = 0; i < n_elem; i++)
-      listAggregationProfiles.push(
-        {'description': '', 'groupname': '', 'name': ''}
-      )
-
     return (
       <BaseArgoView
         resourcename='aggregation profile'

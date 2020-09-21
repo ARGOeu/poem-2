@@ -1061,7 +1061,7 @@ function MetricProfilesListTable({ columns, data }) {
     <>
       <Row>
         <Col>
-          <table className='table table-bordered table-hover'>
+          <Table className='table table-bordered table-hover'>
             <thead className='table-active align-middle text-center'>
               {
                 headerGroups.map((headerGroup, thi) => (
@@ -1106,7 +1106,7 @@ function MetricProfilesListTable({ columns, data }) {
                 })
               }
             </tbody>
-          </table>
+          </Table>
         </Col>
       </Row>
       <Row>
@@ -1178,6 +1178,14 @@ export const MetricProfilesList = (props) => {
   const { data: listMetricProfiles, error: errorListMetricProfiles, isLoading: loadingListMetricProfiles} = useQuery(
     `metricprofiles_listview`, async () => {
       const fetched = await backend.fetchData(apiUrl)
+
+      // 15 is minimal pageSize and these numbers should be aligned
+      let n_elem = 15 - (fetched.length % 15)
+      for (let i = 0; i < n_elem; i++)
+        fetched.push(
+          {'description': '', 'groupname': '', 'name': ''}
+        )
+
       return fetched
     },
     {
@@ -1217,14 +1225,6 @@ export const MetricProfilesList = (props) => {
     return (<ErrorComponent error={errorUserDetails}/>);
 
   else if (!loadingUserDetails && !loadingUserDetails && listMetricProfiles) {
-
-    // 15 is minimal pageSize and these numbers should be aligned
-    let n_elem = 15 - (listMetricProfiles.length % 15)
-    for (let i = 0; i < n_elem; i++)
-      listMetricProfiles.push(
-        {'description': '', 'groupname': '', 'name': ''}
-      )
-
     return (
       <BaseArgoView
         resourcename='metric profile'
