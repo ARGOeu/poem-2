@@ -1072,11 +1072,13 @@ function MetricProfilesListTable({ columns, data }) {
                           let width = undefined;
 
                           if (tri === 0)
+                            width = '2%'
+                          if (tri === 1)
                             width = '20%'
-                          else if (tri === 1)
-                            width = '70%'
                           else if (tri === 2)
-                            width = '10%'
+                            width = '70%'
+                          else if (tri === 3)
+                            width = '8%'
 
                           return (
                             <th style={{width: width}} className='p-1 m-1' key={tri}>
@@ -1097,8 +1099,14 @@ function MetricProfilesListTable({ columns, data }) {
                   return (
                     <tr key={row_index} style={{height: '49px'}}>
                       {
-                        row.cells.map((cell, cell_index) =>
-                          <td key={cell_index} className='align-middle'>{cell.render('Cell')}</td>
+                        row.cells.map((cell, cell_index) => {
+                          if (cell_index === 0)
+                            return <td key={cell_index} className='align-middle text-center'>{(row_index + 1) + (pageIndex * pageSize)}</td>
+                          else if (cell_index === row.cells.length - 1)
+                            return <td key={cell_index} className='align-middle text-center'>{cell.render('Cell')}</td>
+                          else
+                            return <td key={cell_index} className='align-middle'>{cell.render('Cell')}</td>
+                        }
                         )
                       }
                     </tr>
@@ -1194,6 +1202,10 @@ export const MetricProfilesList = (props) => {
   );
 
   const columns = useMemo(() => [
+    {
+      Header: '#',
+      accessor: null
+    },
     {
       Header: 'Name',
       id: 'name',
