@@ -1119,7 +1119,7 @@ function AggregationProfilesListTable({ columns, data }) {
                 page.map((row, row_index) => {
                   prepareRow(row);
                   return (
-                    <tr key={row_index}>
+                    <tr key={row_index} style={{height: '49px'}}>
                       {
                         row.cells.map((cell, cell_index) =>
                           <td key={cell_index} className='align-middle'>{cell.render('Cell')}</td>
@@ -1242,6 +1242,14 @@ export const AggregationProfilesList = (props) => {
     return (<ErrorComponent error={errorUserDetails}/>);
 
   else if (!loadingUserDetails && !loadingUserDetails && listAggregationProfiles) {
+
+    // 15 is minimal pageSize and these numbers should be aligned
+    let n_elem = 15 - (listAggregationProfiles.length % 15)
+    for (let i = 0; i < n_elem; i++)
+      listAggregationProfiles.push(
+        {'description': '', 'groupname': '', 'name': ''}
+      )
+
     return (
       <BaseArgoView
         resourcename='aggregation profile'
