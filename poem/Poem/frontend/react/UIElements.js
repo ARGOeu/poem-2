@@ -984,12 +984,12 @@ export const HistoryComponent = (props) => {
         if (json.length > 1) {
           setCompare1(json[0].version);
           setCompare2(json[1].version);
-        };
+        }
       } catch(err) {
         setError(err);
-      };
+      }
       setLoading(false);
-    };
+    }
 
     fetchData();
   }, []);
@@ -1096,7 +1096,7 @@ export const DiffElement = ({title, item1, item2}) => {
   if (!Array.isArray(item1) && !Array.isArray(item2)) {
     item1 = item1.split('\r\n');
     item2 = item2.split('\r\n');
-  };
+  }
 
   let n = Math.max(item1.length, item2.length);
 

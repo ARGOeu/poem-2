@@ -1,4 +1,4 @@
-import React, { Component, useState } from 'react';
+import React, { Component, useState, useMemo } from 'react';
 import {Link} from 'react-router-dom';
 import {
   LoadingAnim,
@@ -31,10 +31,16 @@ import {
   Col,
   FormGroup,
   FormText,
+  Table,
   Label,
+  Pagination,
+  PaginationItem,
+  PaginationLink,
   Row
 } from 'reactstrap';
+import { useQuery } from 'react-query';
 import * as Yup from 'yup';
+import { useTable, usePagination } from 'react-table';
 
 import ReactDiffViewer from 'react-diff-viewer';
 
@@ -1062,110 +1068,197 @@ export class AggregationProfilesChange extends Component
 }
 
 
-export class AggregationProfilesList extends Component
-{
-  constructor(props) {
-    super(props);
+function AggregationProfilesListTable({ columns, data }) {
+  const {
+    headerGroups,
+    prepareRow,
+    page,
+    canPreviousPage,
+    canNextPage,
+    pageCount,
+    gotoPage,
+    nextPage,
+    previousPage,
+    setPageSize,
+    state: { pageIndex, pageSize }
+  } = useTable(
+    {
+      columns,
+      data,
+      initialState: { pageIndex: 0, pageSize: 15 }
+    },
+    usePagination
+  );
 
-    this.state = {
-      loading: false,
-      list_aggregations: null,
-      write_perm: false,
-      error: null
-    }
+  return (
+    <>
+      <Row>
+        <Col>
+          <Table className='table-bordered table-hover'>
+            <thead className='table-active align-middle text-center'>
+              {
+                headerGroups.map((headerGroup, thi) => (
+                  <React.Fragment key={thi}>
+                    <tr>
+                      {
+                        headerGroup.headers.map((column, tri) => {
+                          return (
+                            <th className='p-1 m-1' key={tri}>
+                              {column.render('Header')}
+                            </th>
+                          )
+                        })
+                      }
+                    </tr>
+                  </React.Fragment>
+                ))
+              }
+            </thead>
+            <tbody>
+              {
+                page.map((row, row_index) => {
+                  prepareRow(row);
+                  return (
+                    <tr key={row_index}>
+                      {
+                        row.cells.map((cell, cell_index) =>
+                          <td key={cell_index} className='align-middle'>{cell.render('Cell')}</td>
+                        )
+                      }
+                    </tr>
+                  )
+                })
+              }
+            </tbody>
+          </Table>
+        </Col>
+      </Row>
+      <Row>
+        <Col className='d-flex justify-content-center'>
+          <Pagination>
+            <PaginationItem disabled={!canPreviousPage}>
+              <PaginationLink first onClick={() => gotoPage(0)}/>
+            </PaginationItem>
+            <PaginationItem disabled={!canPreviousPage}>
+              <PaginationLink previous onClick={() => previousPage()}/>
+            </PaginationItem>
+            {
+              [...Array(pageCount)].map((e, i) =>
+                <PaginationItem key={i} active={pageIndex === i ? true : false}>
+                  <PaginationLink onClick={() => gotoPage(i)}>
+                    { i + 1 }
+                  </PaginationLink>
+                </PaginationItem>
+              )
+            }
+            <PaginationItem disabled={!canNextPage}>
+              <PaginationLink next onClick={() => nextPage()}/>
+            </PaginationItem>
+            <PaginationItem disabled={!canNextPage}>
+              <PaginationLink last onClick={() => gotoPage(pageCount + 1)}/>
+            </PaginationItem>
+            <PaginationItem className='pl-2'>
+              <select
+                style={{width: '180px'}}
+                className='custom-select text-primary'
+                value={pageSize}
+                onChange={e => setPageSize(Number(e.target.value))}
+              >
+                {[15, 30, 50, 100].map(pageSize => (
+                  <option key={pageSize} value={pageSize}>
+                    {pageSize} aggregation profiles
+                  </option>
+                ))}
+              </select>
+            </PaginationItem>
+          </Pagination>
+        </Col>
+      </Row>
+    </>
+  );
+}
 
-    this.location = props.location;
-    this.backend = new Backend();
-    this.publicView = props.publicView
 
-    if (this.publicView)
-      this.apiUrl = '/api/v2/internal/public_aggregations'
-    else
-      this.apiUrl = '/api/v2/internal/aggregations'
+export const AggregationProfilesList = (props) => {
+  const location = props.location;
+  const backend = new Backend();
+  const publicView = props.publicView
 
-  }
+  let apiUrl = null;
+  if (publicView)
+    apiUrl = '/api/v2/internal/public_aggregations'
+  else
+    apiUrl = '/api/v2/internal/aggregations'
 
-  async componentDidMount() {
-    this.setState({loading: true})
-    try {
-      let json = await this.backend.fetchData(this.apiUrl);
-      if (!this.publicView) {
-        let session = await this.backend.isActiveSession();
-        this.setState({
-          write_perm: session.userdetails.is_superuser || session.userdetails.groups.aggregations.length > 0,
-          list_aggregations: json,
-          loading: false
-        })
-      } else {
-        this.setState({
-          list_aggregations: json,
-          loading: false
-        })
+  const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails } = useQuery(
+    `session_userdetails`, async () => {
+      const sessionActive = await backend.isActiveSession()
+      if (sessionActive.active) {
+        return sessionActive.userdetails
       }
-    } catch(err) {
-      this.setState({
-        error: err,
-        loading: false
-      });
     }
+  );
 
-  }
-
-  render() {
-    const columns = [
-      {
-        Header: 'Name',
-        id: 'name',
-        maxWidth: 350,
-        accessor: e =>
-          <Link to={`/ui/${this.publicView ? 'public_' : ''}aggregationprofiles/` + e.name}>
-            {e.name}
-          </Link>
-      },
-      {
-        Header: 'Description',
-        accessor: 'description',
-      },
-      {
-        Header: 'Group',
-        accessor: 'groupname',
-        className: 'text-center',
-        maxWidth: 150,
-      }
-    ]
-    const {loading, list_aggregations, write_perm, error} = this.state;
-
-    if (loading)
-      return (<LoadingAnim />)
-
-    else if (error)
-      return (
-        <ErrorComponent error={error}/>
-      )
-
-    else if (!loading && list_aggregations) {
-      return (
-        <BaseArgoView
-          resourcename='aggregation profile'
-          location={this.location}
-          listview={true}
-          addnew={!this.publicView}
-          addperm={write_perm}
-          publicview={this.publicView}>
-          <ReactTable
-            data={list_aggregations}
-            columns={columns}
-            className="-highlight"
-            defaultPageSize={12}
-            rowsText='profiles'
-            getTheadThProps={() => ({className: 'table-active font-weight-bold p-2'})}
-          />
-        </BaseArgoView>
-      )
+  const { data: listAggregationProfiles, error: errorListAggregationProfiles,
+    isLoading: loadingListAggregationProfiles} = useQuery(
+    `aggregations_listview`, async () => {
+      const fetched = await backend.fetchData(apiUrl)
+      return fetched
+    },
+    {
+      enabled: userDetails
     }
-    else
-      return null
+  );
+
+  const columns = useMemo(() => [
+    {
+      Header: 'Name',
+      id: 'name',
+      maxWidth: 350,
+      accessor: e =>
+        <Link to={`/ui/${publicView ? 'public_' : ''}aggregationprofiles/` + e.name}>
+          {e.name}
+        </Link>
+    },
+    {
+      Header: 'Description',
+      accessor: 'description',
+    },
+    {
+      Header: 'Group',
+      accessor: 'groupname',
+      className: 'text-center',
+      maxWidth: 150,
+    }
+  ])
+
+  if (loadingUserDetails || loadingListAggregationProfiles)
+    return (<LoadingAnim />)
+
+  else if (errorListAggregationProfiles)
+    return (<ErrorComponent error={errorListAggregationProfiles}/>);
+
+  else if (errorUserDetails)
+    return (<ErrorComponent error={errorUserDetails}/>);
+
+  else if (!loadingUserDetails && !loadingUserDetails && listAggregationProfiles) {
+    return (
+      <BaseArgoView
+        resourcename='aggregation profile'
+        location={location}
+        listview={true}
+        addnew={!publicView}
+        addperm={userDetails.is_superuser || userDetails.groups.metricprofiles.length > 0}
+        publicview={publicView}>
+        <AggregationProfilesListTable
+          data={listAggregationProfiles}
+          columns={columns}
+        />
+      </BaseArgoView>
+    )
   }
+  else
+    return null
 }
 
 
