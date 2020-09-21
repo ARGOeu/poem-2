@@ -1083,7 +1083,7 @@ function AggregationProfilesListTable({ columns, data }) {
     {
       columns,
       data,
-      initialState: { pageIndex: 0, pageSize: 15 }
+      initialState: { pageIndex: 0, pageSize: 10 }
     },
     usePagination
   );
@@ -1178,7 +1178,7 @@ function AggregationProfilesListTable({ columns, data }) {
                 value={pageSize}
                 onChange={e => setPageSize(Number(e.target.value))}
               >
-                {[15, 30, 50, 100].map(pageSize => (
+                {[10, 20, 50].map(pageSize => (
                   <option key={pageSize} value={pageSize}>
                     {pageSize} aggregation profiles
                   </option>
@@ -1218,8 +1218,8 @@ export const AggregationProfilesList = (props) => {
     `aggregations_listview`, async () => {
       const fetched = await backend.fetchData(apiUrl)
 
-      // 15 is minimal pageSize and these numbers should be aligned
-      let n_elem = 15 - (fetched.length % 15)
+      // 10 is minimal pageSize and these numbers should be aligned
+      let n_elem = 10 - (fetched.length % 10)
       for (let i = 0; i < n_elem; i++)
         fetched.push(
           {'description': '', 'groupname': '', 'name': ''}

@@ -45,7 +45,7 @@ function Table({ columns, data }) {
     {
       columns,
       data,
-      initialState: { pageIndex: 0, pageSize: 15 }
+      initialState: { pageIndex: 0, pageSize: 10 }
     },
     usePagination
   );
@@ -128,7 +128,7 @@ function Table({ columns, data }) {
                 value={pageSize}
                 onChange={e => setPageSize(Number(e.target.value))}
               >
-                {[15, 30, 50, 100].map(pageSize => (
+                {[10, 20, 50].map(pageSize => (
                   <option key={pageSize} value={pageSize}>
                     {pageSize} reports
                   </option>
@@ -140,7 +140,7 @@ function Table({ columns, data }) {
       </Row>
     </>
   );
-};
+}
 
 
 export const ReportsList = (props) => {
@@ -160,6 +160,14 @@ export const ReportsList = (props) => {
         'description': e.info.description,
         'disabled': e.disabled
       }))
+
+      // 10 is minimal pageSize and these numbers should be aligned
+      let n_elem = 10 - (reports.length % 10)
+      for (let i = 0; i < n_elem; i++)
+        reports.push(
+          {'description': '', 'groupname': '', 'name': ''}
+        )
+
       return reports;
     }
   );
@@ -218,7 +226,7 @@ export const ReportsList = (props) => {
         />
       </BaseArgoView>
     )
-  };
+  }
 };
 
 
@@ -384,19 +392,19 @@ export const ReportsComponent = (props) => {
                     </Field>
                   </Col>
                   <Col md={4}>
-                      <Label to='aggregationProfile'>Aggregation profile:</Label>
-                      <Field
+                    <Label to='aggregationProfile'>Aggregation profile:</Label>
+                    <Field
                         component='select'
                         id='aggregationProfile'
                         className='form-control custom-select'
                         name='aggregationProfile'
                       >
-                        {
+                      {
                           listAggregationProfiles.map((name, i) =>
                             <option key={i} value={name}>{name}</option>
                           )
                         }
-                      </Field>
+                    </Field>
                   </Col>
                   <Col md={4}>
                     <Label to='operationsProfile'>Operations profile:</Label>
