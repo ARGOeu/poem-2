@@ -1102,8 +1102,17 @@ function AggregationProfilesListTable({ columns, data }) {
                     <tr>
                       {
                         headerGroup.headers.map((column, tri) => {
+                          let width = undefined;
+
+                          if (tri === 0)
+                            width = '20%'
+                          else if (tri === 1)
+                            width = '70%'
+                          else if (tri === 2)
+                            width = '10%'
+
                           return (
-                            <th className='p-1 m-1' key={tri}>
+                            <th style={{width: width}} className='p-1 m-1' key={tri}>
                               {column.render('Header')}
                             </th>
                           )

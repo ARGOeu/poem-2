@@ -1069,8 +1069,17 @@ function MetricProfilesListTable({ columns, data }) {
                     <tr>
                       {
                         headerGroup.headers.map((column, tri) => {
+                          let width = undefined;
+
+                          if (tri === 0)
+                            width = '20%'
+                          else if (tri === 1)
+                            width = '70%'
+                          else if (tri === 2)
+                            width = '10%'
+
                           return (
-                            <th className='p-1 m-1' key={tri}>
+                            <th style={{width: width}} className='p-1 m-1' key={tri}>
                               {column.render('Header')}
                             </th>
                           )
@@ -1086,7 +1095,7 @@ function MetricProfilesListTable({ columns, data }) {
                 page.map((row, row_index) => {
                   prepareRow(row);
                   return (
-                    <tr key={row_index}>
+                    <tr key={row_index} style={{height: '49px'}}>
                       {
                         row.cells.map((cell, cell_index) =>
                           <td key={cell_index} className='align-middle'>{cell.render('Cell')}</td>
@@ -1208,6 +1217,14 @@ export const MetricProfilesList = (props) => {
     return (<ErrorComponent error={errorUserDetails}/>);
 
   else if (!loadingUserDetails && !loadingUserDetails && listMetricProfiles) {
+
+    // 15 is minimal pageSize and these numbers should be aligned
+    let n_elem = 15 - (listMetricProfiles.length % 15)
+    for (let i = 0; i < n_elem; i++)
+      listMetricProfiles.push(
+        {'description': '', 'groupname': '', 'name': ''}
+      )
+
     return (
       <BaseArgoView
         resourcename='metric profile'
