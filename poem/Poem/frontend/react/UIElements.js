@@ -650,14 +650,18 @@ export const Footer = ({ loginPage=false, publicPage=false, tenantName='egi' }) 
 
 export const LoadingAnim = () =>
 (
-  <Card className="text-center">
-    <CardHeader className="bg-light">
-      <h4 className="text-dark">Loading data...</h4>
-    </CardHeader>
-    <CardBody>
-      <img src={ArgoLogoAnim} alt="ARGO logo anim" className="img-responsive" height="450px"/>
-    </CardBody>
-  </Card>
+  <Row className="ml-2 mr-1" style={{height: '90%', backgroundColor: 'red'}}>
+    <Col className="d-flex flex-column align-items-center align-self-center" md={{size: 8, offset: 2}}>
+      <Card className="text-center border-0">
+        <CardHeader className="bg-light">
+          <h4 className="text-dark">Loading data...</h4>
+        </CardHeader>
+        <CardBody>
+          <img src={ArgoLogoAnim} alt="ARGO logo anim" className="img-responsive" height="400px"/>
+        </CardBody>
+      </Card>
+    </Col>
+  </Row>
 )
 
 
