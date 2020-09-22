@@ -28,7 +28,7 @@ import {
 import { useTable, usePagination } from 'react-table';
 
 
-function Table({ columns, data }) {
+function ReportsTable({ columns, data }) {
   const {
     headerGroups,
     prepareRow,
@@ -62,8 +62,22 @@ function Table({ columns, data }) {
                     <tr>
                       {
                         headerGroup.headers.map((column, tri) => {
+                          let width = undefined;
+
+                          if (tri === 0)
+                            width = '2%';
+
+                          if (tri === 1)
+                            width = '20%';
+
+                          if (tri === 2)
+                            width = '70%';
+
+                          if (tri === 3)
+                            width = '8%';
+
                           return (
-                            <th className='p-1 m-1' key={tri}>
+                            <th style={{width: width}} className='p-1 m-1' key={tri}>
                               {column.render('Header')}
                             </th>
                           )
@@ -165,7 +179,7 @@ export const ReportsList = (props) => {
       let n_elem = 10 - (reports.length % 10)
       for (let i = 0; i < n_elem; i++)
         reports.push(
-          {'description': '', 'groupname': '', 'name': ''}
+          {'description': '', 'groupname': '', 'name': '', 'disabled': ''}
         )
 
       return reports;
@@ -198,10 +212,13 @@ export const ReportsList = (props) => {
             {row.value}
           </div>,
         accessor: e =>
-          e.disabled ?
-            <FontAwesomeIcon icon={faTimesCircle} style={{color: '#CC0000'}}/>
+          e.disabled === '' ?
+            ''
           :
-            <FontAwesomeIcon icon={faCheckCircle} style={{color: '#339900'}}/>
+            e.disabled ?
+              <FontAwesomeIcon icon={faTimesCircle} style={{color: '#CC0000'}}/>
+            :
+              <FontAwesomeIcon icon={faCheckCircle} style={{color: '#339900'}}/>
       }
     ]
   );
@@ -220,7 +237,7 @@ export const ReportsList = (props) => {
         listview={true}
         addnew={false}
       >
-        <Table
+        <ReportsTable
           data={listReports}
           columns={columns}
         />
