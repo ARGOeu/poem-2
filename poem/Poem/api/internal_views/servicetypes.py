@@ -14,3 +14,8 @@ class ListServiceTypesDescriptions(APIView):
         serviceflavours = ServiceFlavour.objects.all().order_by('name')
         serializer = serializers.ServiceFlavourSerializer(serviceflavours, many=True)
         return Response(serializer.data)
+
+
+class ListPublicServiceTypesDescriptions(ListServiceTypesDescriptions):
+    authentication_classes = ()
+    permission_classes = ()
