@@ -179,7 +179,7 @@ export const ReportsList = (props) => {
       let n_elem = 10 - (reports.length % 10)
       for (let i = 0; i < n_elem; i++)
         reports.push(
-          {'description': '', 'groupname': '', 'name': ''}
+          {'description': '', 'groupname': '', 'name': '', 'disabled': ''}
         )
 
       return reports;
@@ -212,10 +212,13 @@ export const ReportsList = (props) => {
             {row.value}
           </div>,
         accessor: e =>
-          e.disabled ?
-            <FontAwesomeIcon icon={faTimesCircle} style={{color: '#CC0000'}}/>
+          e.disabled === '' ?
+            ''
           :
-            <FontAwesomeIcon icon={faCheckCircle} style={{color: '#339900'}}/>
+            e.disabled ?
+              <FontAwesomeIcon icon={faTimesCircle} style={{color: '#CC0000'}}/>
+            :
+              <FontAwesomeIcon icon={faCheckCircle} style={{color: '#339900'}}/>
       }
     ]
   );
