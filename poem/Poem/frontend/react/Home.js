@@ -149,6 +149,9 @@ export const PublicHome = (props) => {
               <Icon i='metrics'/> <Link to={'/ui/public_metrics'}>Metrics</Link>
             </Row>
             <Row className='p-1 align-items-center'>
+              <Icon i='servicetypes'/> <Link to={'/ui/public_servicetypes'}>Service types</Link>
+            </Row>
+            <Row className='p-1 align-items-center'>
               <Icon i='metricprofiles'/> <Link to={'/ui/public_metricprofiles'}>Metric profiles</Link>
             </Row>
             <Row className='p-1 align-items-center'>
