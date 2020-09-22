@@ -174,7 +174,7 @@ function Table({ columns, data }) {
 
 
 export const ServiceTypesList = (props) => {
-  const location = props.location;
+  const publicView = props.publicView;
   const backend = new Backend();
   const [loading, setLoading] = useState(false);
   const [serviceTypesDescriptions, setServiceTypesDescriptions] = useState([]);
@@ -184,7 +184,7 @@ export const ServiceTypesList = (props) => {
     try {
       const fetchData = async () => {
         setLoading(true);
-        let json = await backend.fetchData('/api/v2/internal/servicetypesdesc');
+        let json = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}servicetypesdesc`);
         setServiceTypesDescriptions(json);
         setLoading(false);
       }

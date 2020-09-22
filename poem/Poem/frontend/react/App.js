@@ -787,6 +787,16 @@ class App extends Component {
                   </PublicPage>
                 }
               />
+              <Route exact path="/ui/public_servicetypes"
+                render={props =>
+                  <PublicPage>
+                    <ServiceTypesList
+                      {...props}
+                      publicView={true}
+                    />
+                  </PublicPage>
+                }
+              />
               <Route component={NotFound} />
             </Switch>
           </BrowserRouter>
