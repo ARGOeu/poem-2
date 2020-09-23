@@ -61,7 +61,7 @@ import {
   faTable,
   faTasks,
   faUser,
-  faWrench}
+  faWrench, faNewspaper}
 from '@fortawesome/free-solid-svg-icons';
 import { NotificationManager } from 'react-notifications';
 import { Field } from 'formik';
@@ -106,6 +106,13 @@ link_title.set('public_operationsprofiles', 'Operations profiles');
 link_title.set('cookiepolicies', 'Cookie policies');
 
 
+var PolicyLinks = new Map();
+PolicyLinks.set('egi', 'https://argo.egi.eu/egi/policies');
+PolicyLinks.set('eudat', 'https://avail.eudat.eu/eudat/policies');
+PolicyLinks.set('sdc', 'https://monitoring.seadatanet.org/sdc/policies');
+PolicyLinks.set('ni4os', 'https://argo.ni4os.eu/ni4os/policies');
+
+
 export const Icon = props =>
 {
   let link_icon = new Map();
@@ -128,6 +135,7 @@ export const Icon = props =>
   link_icon.set('terms', faHandshake);
   link_icon.set('argodoc', faLink);
   link_icon.set('documentation', faBook);
+  link_icon.set('privacy', faNewspaper);
 
   if (props.i.startsWith('groupof'))
     return (
@@ -509,7 +517,7 @@ export const NavigationLinks = ({location, isTenantSchema, userDetails}) => {
 }
 
 
-export const NavigationAbout = ({ location, poemVersion }) => {
+export const NavigationAbout = ({ location, poemVersion, tenantName='egi' }) => {
   return (
     <React.Fragment>
       <div className="bg-white border-left border-right pl-3 mt-0 pt-5 text-uppercase">
@@ -554,6 +562,15 @@ export const NavigationAbout = ({ location, poemVersion }) => {
         </NavLink>
         <NavLink
           tag="a"
+          href={PolicyLinks.get(tenantName.toLowerCase())}
+          className='text-dark'
+          target='_blank' rel='noopener noreferrer'
+        >
+          <Icon i='privacy'/> {' '}
+          Privacy policy
+        </NavLink>
+        <NavLink
+          tag="a"
           href='#'
           className="text-dark font-italic text-monospace"
         >
@@ -566,7 +583,7 @@ export const NavigationAbout = ({ location, poemVersion }) => {
 }
 
 
-const InnerFooter = ({ border=false, publicPage=false }) =>
+const InnerFooter = ({ border=false, publicPage=false, tenantName='egi' }) =>
 {
   const [modal, setModal] = useState(false);
   const toggle = () => setModal(!modal);
@@ -595,7 +612,8 @@ const InnerFooter = ({ border=false, publicPage=false }) =>
         <div className="text-center mb-0 pt-0">
           <small>
             <a href="https://ui.argo.grnet.gr/egi/termsofUse" target="_blank" rel="noopener noreferrer" title="Terms">Terms</a>, &nbsp;
-            <a href='#' title="Cookie Policies" onClick={toggle}>Cookie Policies</a>
+            <a href='#' title="Cookie Policies" onClick={toggle}>Cookie Policies</a>, &nbsp;
+            <a href='#' title='Privacy Policy' href={PolicyLinks.get(tenantName.toLowerCase())} target='_blank' rel='noopener noreferrer'>Privacy Policy</a>
           </small>
           <Modal isOpen={modal} toggle={toggle} size="lg">
             <ModalBody className="p-0">
@@ -609,19 +627,19 @@ const InnerFooter = ({ border=false, publicPage=false }) =>
 }
 
 
-export const Footer = ({ loginPage=false, publicPage=false }) =>
+export const Footer = ({ loginPage=false, publicPage=false, tenantName='egi' }) =>
 {
   if (!loginPage) {
     return (
       <div id="argo-footer" className="border rounded">
-        <InnerFooter border={true} publicPage={publicPage}/>
+        <InnerFooter border={true} publicPage={publicPage} tenantName={tenantName}/>
       </div>
     )
   }
   else {
     return (
       <div id="argo-loginfooter">
-        <InnerFooter publicPage={true}/>
+        <InnerFooter publicPage={true} tenantName={tenantName}/>
       </div>
     )
   }
@@ -676,7 +694,7 @@ export const NotifyInfo = ({msg='', title=''}) => {
 };
 
 
-export const PublicPage = ({children}) => {
+export const PublicPage = ({tenantName=undefined, children}) => {
   let userDetails = {
     username: 'Anonymous'
   }
@@ -705,7 +723,12 @@ export const PublicPage = ({children}) => {
       </Row>
       <Row>
         <Col>
-          <Footer loginPage={false} publicPage={true}/>
+          {
+            tenantName ?
+              <Footer loginPage={false} publicPage={true} tenantName={tenantName}/>
+            :
+              <Footer loginPage={false} publicPage={true}/>
+          }
         </Col>
       </Row>
     </Container>
