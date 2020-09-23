@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Backend } from './DataManager';
 import { Link } from 'react-router-dom';
 import {
@@ -8,13 +8,13 @@ import {
   Checkbox,
   FancyErrorMessage,
   AutocompleteField,
-  HistoryComponent,
   DiffElement,
   NotifyError,
   ErrorComponent,
-  ParagraphTitle
+  ParagraphTitle,
+  ModalAreYouSure
 } from './UIElements';
-import ReactTable from 'react-table';
+import ReactTable from 'react-table-6';
 import {
   FormGroup,
   Label,
@@ -26,11 +26,7 @@ import {
   InputGroupAddon } from 'reactstrap';
 import { Formik, Form, Field } from 'formik';
 import * as Yup from 'yup';
-
-
-export const ProbeHistory = HistoryComponent('probe');
-export const ProbeChange = ProbeComponent();
-export const ProbeClone = ProbeComponent(true);
+import { useQuery, queryCache } from 'react-query';
 
 
 const ProbeSchema = Yup.object().shape({
@@ -62,10 +58,26 @@ const LinkField = ({
 )
 
 
-const ProbeForm = ({isTenantSchema=false, isHistory=false, publicView=false,
-  errors={name: undefined, package: undefined, repository: undefined, docurl: undefined, comment: undefined},
-  state=undefined, addview=false, cloneview=false, list_packages=[], setFieldValue=undefined,
-  values=undefined, onSelect=undefined, metrictemplatelist=[]}) =>
+const ProbeForm = ({
+  isTenantSchema=false,
+  isHistory=false,
+  publicView=false,
+  errors={
+    name: undefined,
+    package: undefined,
+    repository: undefined,
+    docurl: undefined,
+    comment: undefined
+  },
+  addview=false,
+  cloneview=false,
+  list_packages=[],
+  setFieldValue=undefined,
+  values=undefined,
+  onSelect=undefined,
+  metrictemplatelist=[],
+  version=undefined
+}) =>
   <>
     <FormGroup>
       <Row>
@@ -95,7 +107,7 @@ const ProbeForm = ({isTenantSchema=false, isHistory=false, publicView=false,
               type='text'
               name='version'
               className='form-control'
-              value={isHistory ? state.version : state.probe.version}
+              value={version}
               id='version'
               disabled={true}
             />
@@ -266,10 +278,10 @@ const ProbeForm = ({isTenantSchema=false, isHistory=false, publicView=false,
         (!isHistory && !addview && !cloneview) &&
           <Row>
             <Col md={8}>
-              <div>
-                Metric templates:
-                {
-                  metrictemplatelist.length > 0 &&
+              {
+                metrictemplatelist.length > 0 &&
+                <div>
+                  Metric templates:
                     <div>
                       {
                         metrictemplatelist
@@ -289,8 +301,8 @@ const ProbeForm = ({isTenantSchema=false, isHistory=false, publicView=false,
                           ).reduce((prev, curr) => [prev, ', ', curr])
                       }
                     </div>
-                }
-              </div>
+                </div>
+              }
             </Col>
           </Row>
       }
@@ -298,52 +310,37 @@ const ProbeForm = ({isTenantSchema=false, isHistory=false, publicView=false,
   </>
 
 
-export class ProbeList extends Component {
-  constructor(props) {
-    super(props);
+export const ProbeList = (props) => {
+  const location = props.location;
+  const publicView = props.publicView;
 
-    this.location = props.location;
-    this.publicView = props.publicView
+  const [searchName, setSearchName] = useState('');
+  const [searchDescription, setSearchDescription] = useState('');
+  const [searchPackage, setSearchPackage] = useState('');
 
-    this.state = {
-      loading: false,
-      list_probe: null,
-      isTenantSchema: null,
-      search_name: '',
-      search_description: '',
-      search_package: '',
-      error: null
-    };
+  const backend = new Backend();
 
-    this.backend = new Backend();
+  const { data: listProbes, error: listProbesError, isLoading: listProbesLoading } = useQuery(
+    'probe_listview', async () => {
+      let probes = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}probes`);
+      return probes;
+    }
+  );
 
-    if (this.publicView)
-      this.apiListProbes = '/api/v2/internal/public_probes'
-    else
-      this.apiListProbes = '/api/v2/internal/probes'
-  }
+  const { data: isTenantSchema, isLoading: isTenantSchemaLoading } = useQuery(
+    'probe_listview_schema', async () => {
+      let schema = backend.isTenantSchema();
+      return schema;
+    }
+  );
 
-  async componentDidMount() {
-    this.setState({loading: true});
+  if (listProbesLoading || isTenantSchemaLoading)
+    return (<LoadingAnim/>);
 
-    try {
-      let json = await this.backend.fetchData(this.apiListProbes);
-      let isTenantSchema = await this.backend.isTenantSchema();
-      this.setState({
-        list_probe: json,
-        isTenantSchema: isTenantSchema,
-        loading: false,
-        search_name: ''
-      });
-    } catch(err) {
-      this.setState({
-        error: err,
-        loading: false
-      });
-    };
-  }
+  else if (listProbesError)
+    return (<ErrorComponent error={listProbesError.message}/>);
 
-  render() {
+  else {
     const columns = [
       {
         Header: '#',
@@ -359,14 +356,14 @@ export class ProbeList extends Component {
         id: 'name',
         minWidth: 80,
         accessor: e =>
-          <Link to={`/ui/${this.publicView ? 'public_' : ''}probes/${e.name}`}>
+          <Link to={`/ui/${publicView ? 'public_' : ''}probes/${e.name}`}>
             {e.name}
           </Link>,
         filterable: true,
         Filter: (
           <input
-            value={this.state.search_name}
-            onChange={e => this.setState({search_name: e.target.value})}
+            value={searchName}
+            onChange={e => setSearchName(e.target.value)}
             placeholder='Search by name'
             style={{width: "100%"}}
           />
@@ -377,7 +374,7 @@ export class ProbeList extends Component {
         id: 'nv',
         minWidth: 25,
         accessor: e =>
-          <Link to={`/ui/${this.publicView ? 'public_' : ''}probes/${e.name}/history`}>
+          <Link to={`/ui/${publicView ? 'public_' : ''}probes/${e.name}/history`}>
             {e.nv}
           </Link>,
         Cell: row =>
@@ -394,8 +391,8 @@ export class ProbeList extends Component {
           <input
             type='text'
             placeholder='Search by package'
-            value={this.state.search_package}
-            onChange={e => this.setState({search_package: e.target.value})}
+            value={searchPackage}
+            onChange={e => setSearchPackage(e.target.value)}
             style={{width: '100%'}}
           />
         ),
@@ -412,8 +409,8 @@ export class ProbeList extends Component {
           <input
             type='text'
             placeholder='Search by description'
-            value={this.state.search_description}
-            onChange={e=> this.setState({search_description: e.target.value})}
+            value={searchDescription}
+            onChange={e=> setSearchDescription(e.target.value)}
             style={{width: '100%'}}
           />
         ),
@@ -423,660 +420,517 @@ export class ProbeList extends Component {
       }
     ];
 
-    var { isTenantSchema, list_probe, loading, error } = this.state;
-
-    if (this.state.search_name) {
+    var list_probe = listProbes;
+    if (searchName) {
       list_probe = list_probe.filter(row =>
-        row.name.toLowerCase().includes(this.state.search_name.toLowerCase())
+        row.name.toLowerCase().includes(searchName.toLowerCase())
       );
-    }
+    };
 
-    if (this.state.search_description) {
+    if (searchDescription) {
       list_probe = list_probe.filter(row =>
-        row.description.toLowerCase().includes(this.state.search_description.toLowerCase())
+        row.description.toLowerCase().includes(searchDescription.toLowerCase())
       );
-    }
+    };
 
-    if (this.state.search_package) {
+    if (searchPackage) {
       list_probe = list_probe.filter(row =>
-        row.package.toLowerCase().includes(this.state.search_package.toLowerCase())
+        row.package.toLowerCase().includes(searchPackage.toLowerCase())
       );
-    }
+    };
 
-    if (loading)
-      return (<LoadingAnim />);
-
-    else if (error)
-      return (<ErrorComponent error={error}/>);
-
-    else if (!loading && list_probe) {
-      return (
-        <BaseArgoView
-          resourcename='probe'
-          location={this.location}
-          listview={true}
-          addnew={!isTenantSchema && !this.publicView}
-        >
-          <ReactTable
-            data={list_probe}
-            columns={columns}
-            className='-highlight'
-            defaultPageSize={50}
-            rowsText='probes'
-            getTheadThProps={() => ({className: 'table-active font-weight-bold p-2'})}
-          />
-        </BaseArgoView>
-      );
-    } else
-      return null;
-  }
-}
+    return (
+      <BaseArgoView
+        resourcename='probe'
+        location={location}
+        listview={true}
+        addnew={!isTenantSchema && !publicView}
+      >
+        <ReactTable
+          data={list_probe}
+          columns={columns}
+          className='-highlight'
+          defaultPageSize={50}
+          rowsText='probes'
+          getTheadThProps={() => ({className: 'table-active font-weight-bold p-2'})}
+        />
+      </BaseArgoView>
+    );
+  };
+};
 
 
-function ProbeComponent(cloneview=false) {
-  return class extends Component {
-    constructor(props) {
-      super(props);
+export const ProbeComponent = (props) => {
+  const name = props.match.params.name;
+  const addview = props.addview;
+  const cloneview = props.cloneview;
+  const location = props.location;
+  const history = props.history;
+  const publicView = props.publicView;
+  const backend = new Backend();
+  const querykey = `probe_${addview ? `addview` : `${name}_${cloneview ? 'cloneview' : `${publicView ? 'publicview' : 'changeview'}`}`}`;
 
-      this.name = props.match.params.name;
-      this.addview = props.addview;
-      this.location = props.location;
-      this.history = props.history;
-      this.publicView = props.publicView;
-      this.backend = new Backend();
+  const apiListPackages = `/api/v2/internal/${publicView ? 'public_' : ''}packages`;
+  const apiProbeName = `/api/v2/internal/${publicView ? 'public_' : ''}probes`;
+  const apiMetricsForProbes = `/api/v2/internal/${publicView ? 'public_' : ''}metricsforprobes`;
 
-      if (this.publicView) {
-        this.apiListPackages = '/api/v2/internal/public_packages'
-        this.apiProbeName = '/api/v2/internal/public_probes'
-        this.apiMetricsForProbes = '/api/v2/internal/public_metricsforprobes'
-      }
-      else {
-        this.apiListPackages = '/api/v2/internal/packages'
-        this.apiProbeName = '/api/v2/internal/probes'
-        this.apiMetricsForProbes = '/api/v2/internal/metricsforprobes'
-      }
+  const [areYouSureModal, setAreYouSureModal] = useState(false);
+  const [modalFlag, setModalFlag] = useState(undefined);
+  const [modalTitle, setModalTitle] = useState(undefined);
+  const [modalMsg, setModalMsg] = useState(undefined);
+  const [formValues, setFormValues] = useState(undefined);
 
-      this.state = {
-        probe: {
-          'id': '',
-          'name': '',
-          'version': '',
-          'package': '',
-          'repository': '',
-          'docurl': '',
-          'description': '',
-          'comment': ''
-        },
-        isTenantSchema: null,
-        metrictemplatelist: [],
-        list_packages: [],
-        validationVisible: true,
-        update_metrics: false,
-        loading: false,
-        areYouSureModal: false,
-        modalFunc: undefined,
-        modalTitle: undefined,
-        modalMsg: undefined,
-        error: null
+  const { data: probe, error: probeError, isLoading: probeLoading } = useQuery(
+    `${querykey}_probe`, async () => {
+      let prb = {
+        'id': '',
+        'name': '',
+        'version': '',
+        'package': '',
+        'repository': '',
+        'docurl': '',
+        'description': '',
+        'comment': ''
       };
-
-      this.toggleAreYouSure = this.toggleAreYouSure.bind(this);
-      this.toggleAreYouSureSetModal = this.toggleAreYouSureSetModal.bind(this);
-      this.onSubmitHandle = this.onSubmitHandle.bind(this);
-      this.doDelete = this.doDelete.bind(this);
-      this.onDismiss = this.onDismiss.bind(this);
-      this.onSelect = this.onSelect.bind(this);
+      if (!addview)
+        prb = await backend.fetchData(`${apiProbeName}/${name}`);
+      return prb;
     }
+  );
 
-    toggleAreYouSure() {
-      this.setState(prevState =>
-        ({areYouSureModal: !prevState.areYouSureModal}));
+  const { data: isTenantSchema, isLoading: isTenantSchemaLoading } = useQuery(
+    `${querykey}_schema`, async () => {
+      let schema = await backend.isTenantSchema();
+      return schema;
     }
+  );
 
-    toggleAreYouSureSetModal(msg, title, onyes) {
-      this.setState(prevState =>
-        ({areYouSureModal: !prevState.areYouSureModal,
-          modalFunc: onyes,
-          modalMsg: msg,
-          modalTitle: title,
-        }));
+  const { data: metricTemplateList, error: metricTemplateListError, isLoading: metricTemplateListLoading } = useQuery(
+    `${querykey}_metrictemplates`, async () => {
+      let metrics = await backend.fetchData(`${apiMetricsForProbes}/${probe.name}(${probe.version})`);
+      return metrics; },
+    { enabled: probe }
+  );
+
+  const { data: listPackages, error: listPackagesError, isLoading: listPackagesLoading } = useQuery(
+    `${querykey}_packages`, async () => {
+      let pkgs = await backend.fetchData(apiListPackages);
+      let list_packages = [];
+      pkgs.forEach(pkg => list_packages.push(`${pkg.name} (${pkg.version})`));
+      return list_packages;
     }
+  );
 
-    onSubmitHandle(values, actions) {
-      let msg = undefined;
-      let title = undefined;
+  function toggleAreYouSure() {
+    setAreYouSureModal(!areYouSureModal);
+  };
 
-      if (this.addview || cloneview) {
-        msg = 'Are you sure you want to add probe?';
-        title = 'Add probe';
+  function onSubmitHandle(values, actions) {
+    let msg = `Are you sure you want to ${addview || cloneview ? 'add' : 'change'} probe?`;
+    let title = `${addview || cloneview ? 'Add' : 'Change'} probe`;
+
+    setFormValues(values);
+    setModalMsg(msg);
+    setModalTitle(title);
+    setModalFlag('submit');
+    toggleAreYouSure();
+  };
+
+  async function doChange() {
+    if (addview || cloneview) {
+      let cloned_from = undefined;
+      if (cloneview) {
+        cloned_from = formValues.id;
       } else {
-          msg = 'Are you sure you want to change probe?';
-          title = 'Change probe';
+        cloned_from = '';
       }
 
-      this.toggleAreYouSureSetModal(msg, title,
-        () => this.doChange(values, actions));
-    }
-
-    async doChange(values, actions) {
-      if (this.addview || cloneview) {
-        let cloned_from = undefined;
-        if (cloneview) {
-          cloned_from = values.id;
-        } else {
-          cloned_from = '';
+      let response = await backend.addObject(
+        '/api/v2/internal/probes/',
+        {
+          name: formValues.name,
+          package: formValues.package,
+          repository: formValues.repository,
+          docurl: formValues.docurl,
+          description: formValues.description,
+          comment: formValues.comment,
+          cloned_from: cloned_from
         }
-        let response = await this.backend.addObject(
-          '/api/v2/internal/probes/',
-          {
-            name: values.name,
-            package: values.package,
-            repository: values.repository,
-            docurl: values.docurl,
-            description: values.description,
-            comment: values.comment,
-            cloned_from: cloned_from
-          }
-          );
-          if (!response.ok) {
-            let add_msg = '';
-            try {
-              let json = await response.json();
-              add_msg = json.detail;
-            } catch(err) {
-              add_msg = 'Error adding probe';
-            }
-            NotifyError({
-              title: `Error: ${response.status} ${response.statusText}`,
-              msg: add_msg
-            });
-          } else {
-            NotifyOk({
-              msg: 'Probe successfully added',
-              title: 'Added',
-              callback: () => this.history.push('/ui/probes')
-            });
-          };
-      } else {
-        let response = await this.backend.changeObject(
-          '/api/v2/internal/probes/',
-          {
-            id: values.id,
-            name: values.name,
-            package: values.package,
-            repository: values.repository,
-            docurl: values.docurl,
-            description: values.description,
-            comment: values.comment,
-            update_metrics: values.update_metrics
-          }
-        );
-        if (!response.ok) {
-          let change_msg = '';
-          try {
-            let json = await response.json();
-            change_msg = json.detail;
-          } catch(err) {
-            change_msg = 'Error changing probe';
-          };
-          NotifyError({
-            title: `Error: ${response.status} ${response.statusText}`,
-            msg: change_msg
-          });
-        } else {
-          NotifyOk({
-            msg: 'Probe successfully changed',
-            title: 'Changed',
-            callback: () => this.history.push('/ui/probes')
-          });
-        };
-      };
-    }
-
-    async doDelete(name) {
-      let response = await this.backend.deleteObject(`/api/v2/internal/probes/${name}`);
+      );
       if (!response.ok) {
-        let msg = '';
+        let add_msg = '';
         try {
           let json = await response.json();
-          msg = json.detail;
+          add_msg = json.detail;
         } catch(err) {
-          msg = 'Error deleting probe';
-        };
+          add_msg = 'Error adding probe';
+        }
         NotifyError({
           title: `Error: ${response.status} ${response.statusText}`,
-          msg: msg
+          msg: add_msg
         });
       } else {
         NotifyOk({
-          msg: 'Probe successfully deleted',
-          title: 'Deleted',
-          callback: () => this.history.push('/ui/probes')
+          msg: 'Probe successfully added',
+          title: 'Added',
+          callback: () => history.push('/ui/probes')
         });
       };
-    }
-
-    onDismiss() {
-      this.setState({ validationVisible: false });
-    }
-
-    onSelect(field, value) {
-      let probe = this.state.probe;
-      probe[field] = value;
-      try {
-        probe['version'] = value.split(' ')[1].slice(1, -1);
-      } catch(err) {
-        if (err instanceof TypeError)
-          probe['version'] = '';
-      };
-      this.setState({probe: probe});
-    }
-
-    async componentDidMount() {
-      this.setState({loading: true});
-
-      try {
-        let isTenantSchema = await this.backend.isTenantSchema();
-        let pkgs = await this.backend.fetchData(this.apiListPackages);
-        let list_packages = [];
-        pkgs.forEach(e => list_packages.push(`${e.name} (${e.version})`));
-        if (!this.addview) {
-          let probe = await this.backend.fetchData(`${this.apiProbeName}/${this.name}`);
-          let metrics = await this.backend.fetchData(`${this.apiMetricsForProbes}/${probe.name}(${probe.version})`);
-          this.setState({
-            probe: probe,
-            list_packages: list_packages,
-            isTenantSchema: isTenantSchema,
-            metrictemplatelist: metrics,
-            loading: false
-          });
-        } else {
-          this.setState({
-            list_packages: list_packages,
-            isTenantSchema: isTenantSchema,
-            loading: false
-          });
+    } else {
+      let response = await backend.changeObject(
+        '/api/v2/internal/probes/',
+        {
+          id: formValues.id,
+          name: formValues.name,
+          package: formValues.package,
+          repository: formValues.repository,
+          docurl: formValues.docurl,
+          description: formValues.description,
+          comment: formValues.comment,
+          update_metrics: formValues.update_metrics
+        }
+      );
+      if (!response.ok) {
+        let change_msg = '';
+        try {
+          let json = await response.json();
+          change_msg = json.detail;
+        } catch(err) {
+          change_msg = 'Error changing probe';
         };
-      } catch(err) {
-        this.setState({
-          error: err,
-          loading: false
+        NotifyError({
+          title: `Error: ${response.status} ${response.statusText}`,
+          msg: change_msg
+        });
+      } else {
+        NotifyOk({
+          msg: 'Probe successfully changed',
+          title: 'Changed',
+          callback: () => history.push('/ui/probes')
         });
       };
-    }
-
-    render() {
-      const { probe, update_metrics, isTenantSchema, metrictemplatelist,
-        list_packages, loading, error } = this.state;
-
-      if (loading)
-        return(<LoadingAnim/>)
-
-      else if (error)
-        return (<ErrorComponent error={error}/>);
-
-      else if (!loading) {
-        if (!isTenantSchema) {
-          return (
-            <BaseArgoView
-              resourcename={`${this.publicView ? 'Probe details' : 'probe'}`}
-              location={this.location}
-              addview={this.addview}
-              cloneview={cloneview}
-              clone={true}
-              modal={true}
-              state={this.state}
-              publicview={this.publicView}
-              toggle={this.toggleAreYouSure}>
-              <Formik
-                initialValues = {{
-                  id: probe.id,
-                  name: probe.name,
-                  version: probe.version,
-                  package: probe.package,
-                  repository: probe.repository,
-                  docurl: probe.docurl,
-                  description: probe.description,
-                  comment: probe.comment,
-                  update_metrics: update_metrics
-                }}
-                validationSchema={ProbeSchema}
-                onSubmit = {(values, actions) => this.onSubmitHandle(values, actions)}
-              >
-                {props => (
-                  <Form>
-                    <ProbeForm
-                      {...props}
-                      state={this.state}
-                      addview={this.addview}
-                      cloneview={cloneview}
-                      publicView={this.publicView}
-                      list_packages={list_packages}
-                      onSelect={this.onSelect}
-                      metrictemplatelist={metrictemplatelist}
-                    />
-                    {
-                      !this.publicView &&
-                        <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
-                          {
-                            (!this.addview && !cloneview && !this.publicView) ?
-                              <Button
-                                color='danger'
-                                onClick={() => {
-                                  this.toggleAreYouSureSetModal(
-                                    'Are you sure you want to delete probe?',
-                                    'Delete probe',
-                                    () => this.doDelete(props.values.name)
-                                  )}}
-                              >
-                                Delete
-                              </Button>
-                            :
-                              <div></div>
-                          }
-                          <Button
-                            color='success'
-                            id='submit-button'
-                            type='submit'
-                          >
-                            Save
-                          </Button>
-                        </div>
-                  }
-                  </Form>
-                )}
-              </Formik>
-            </BaseArgoView>
-          )
-        } else {
-          return (
-            <BaseArgoView
-              resourcename='Probe details'
-              location={this.location}
-              tenantview={true}
-              history={true}
-            >
-              <Formik
-                initialValues = {{
-                  id: probe.id,
-                  name: probe.name,
-                  version: probe.version,
-                  package: probe.package,
-                  repository: probe.repository,
-                  docurl: probe.docurl,
-                  description: probe.description,
-                  comment: probe.comment
-                }}
-                render = {props => (
-                  <ProbeForm
-                    {...props}
-                    isTenantSchema={true}
-                    publicView={this.publicView}
-                    state={this.state}
-                    metrictemplatelist={metrictemplatelist}
-                  />
-                )}
-              />
-            </BaseArgoView>
-          );
-        }
-      }
-    }
+    };
   };
-}
 
-
-export class ProbeVersionCompare extends Component{
-  constructor(props) {
-    super(props);
-    this.version1 = props.match.params.id1;
-    this.version2 = props.match.params.id2;
-    this.name = props.match.params.name;
-    this.publicView = props.publicView
-
-    this.state = {
-      loading: false,
-      name1: '',
-      version1: '',
-      package1: '',
-      description1: '',
-      repository1: '',
-      docurl1: '',
-      comment1: '',
-      name2: '',
-      version2: '',
-      package2: '',
-      description2: '',
-      repository2: '',
-      docurl2: '',
-      comment2: '',
-      error: null
+  async function doDelete() {
+    let response = await backend.deleteObject(`/api/v2/internal/probes/${name}`);
+    if (!response.ok) {
+      let msg = '';
+      try {
+        let json = await response.json();
+        msg = json.detail;
+      } catch(err) {
+        msg = 'Error deleting probe';
+      };
+      NotifyError({
+        title: `Error: ${response.status} ${response.statusText}`,
+        msg: msg
+      });
+    } else {
+      NotifyOk({
+        msg: 'Probe successfully deleted',
+        title: 'Deleted',
+        callback: () => history.push('/ui/probes')
+      });
     };
+  };
 
-    if (this.publicView)
-      this.apiUrl = '/api/v2/internal/public_version/probe/'
-    else
-      this.apiUrl = '/api/v2/internal/version/probe/'
-
-    this.backend = new Backend();
-  }
-
-  async componentDidMount() {
-    this.setState({loading: true});
-
+  function onSelect(field, value) {
+    let selectedProbe = probe;
+    selectedProbe[field] = value;
     try {
-      let json = await this.backend.fetchData(`${this.apiUrl}/${this.name}`);
-      let name1 = '';
-      let version1 = '';
-      let package1 = '';
-      let description1 = '';
-      let repository1 = '';
-      let docurl1 = '';
-      let comment1 = '';
-      let name2 = ''
-      let version2 = '';
-      let package2 = '';
-      let description2 = '';
-      let repository2 = '';
-      let docurl2 = '';
-      let comment2 = '';
-
-      json.forEach((e) => {
-        if (e.version == this.version1) {
-          name1 = e.fields.name;
-          version1 = e.fields.version;
-          package1 = e.fields.package;
-          description1 = e.fields.description;
-          repository1 = e.fields.repository;
-          docurl1 = e.fields.docurl;
-          comment1 = e.fields.comment;
-        } else if (e.version === this.version2) {
-          name2 = e.fields.name;
-          version2 = e.fields.version;
-          package2 = e.fields.package;
-          description2 = e.fields.description;
-          repository2 = e.fields.repository;
-          docurl2 = e.fields.docurl;
-          comment2 = e.fields.comment;
-        }
-      });
-
-      this.setState({
-        name1: name1,
-        version1: version1,
-        package1: package1,
-        description1: description1,
-        repository1: repository1,
-        docurl1: docurl1,
-        comment1: comment1,
-        name2: name2,
-        version2: version2,
-        package2: package2,
-        description2: description2,
-        repository2: repository2,
-        docurl2: docurl2,
-        comment2: comment2,
-        loading: false
-      });
+      selectedProbe['version'] = value.split(' ')[1].slice(1, -1);
     } catch(err) {
-      this.setState({
-        error: err,
-        loading: false
-      });
+      if (err instanceof TypeError)
+        selectedProbe['version'] = '';
     };
-  }
+    queryCache.setQueryData(`${querykey}_probe`, () => selectedProbe);
+  };
 
-  render() {
-    var { name1, name2, version1, version2, package1, package2,
-      description1, description2, repository1, repository2,
-      docurl1, docurl2, comment1, comment2, loading, error } = this.state;
+  if (probeLoading || isTenantSchemaLoading || metricTemplateListLoading || listPackagesLoading)
+    return(<LoadingAnim/>)
 
-    if (loading)
-      return (<LoadingAnim/>);
+  else if (probeError)
+    return (<ErrorComponent error={probeError.message}/>);
 
-    else if (error)
-      return (<ErrorComponent error={error}/>);
+  else if (metricTemplateListError)
+    return (<ErrorComponent error={metricTemplateListError.message}/>);
 
-    else if (!loading && name1 && name2) {
+  else if (listPackagesError)
+    return (<ErrorComponent error={listPackagesError}/>);
+
+  else {
+    if (!isTenantSchema) {
+      let probePackage = '';
+      if (!addview)
+        probePackage = probe.package;
+
       return (
         <React.Fragment>
-          <div className="d-flex align-items-center justify-content-between">
-            <h2 className='ml-3 mt-1 mb-4'>{'Compare ' + this.name}</h2>
-          </div>
-          {
-            (name1 !== name2) &&
-              <DiffElement title='name' item1={name1} item2={name2}/>
-          }
-
-          {
-            (version1 !== version2) &&
-              <DiffElement title='version' item1={version1} item2={version2}/>
-          }
-
-          {
-            (package1 !== package2) &&
-              <DiffElement title='package' item1={package1} item2={package2}/>
-          }
-
-          {
-            (description1 !== description2) &&
-              <DiffElement title='description' item1={description1} item2={description2}/>
-          }
-
-          {
-            (repository1 !== repository2) &&
-              <DiffElement title='repository' item1={repository1} item2={repository2}/>
-          }
-
-          {
-            (docurl1 !== docurl2) &&
-              <DiffElement title={'documentation'} item1={docurl1} item2={docurl2}/>
-          }
-          {
-            (comment1 !== comment2) &&
-              <DiffElement title={'comment'} item1={comment1} item2={comment2}/>
-          }
+          <ModalAreYouSure
+            isOpen={areYouSureModal}
+            toggle={toggleAreYouSure}
+            title={modalTitle}
+            msg={modalMsg}
+            onYes={modalFlag === 'submit' ? doChange : modalFlag === 'delete' ? doDelete : undefined}
+          />
+          <BaseArgoView
+            resourcename={`${publicView ? 'Probe details' : 'probe'}`}
+            location={location}
+            addview={addview}
+            cloneview={cloneview}
+            clone={true}
+            publicview={publicView}
+          >
+            <Formik
+              initialValues = {{
+                id: probe.id,
+                name: probe.name,
+                version: probe.version,
+                package: probePackage,
+                repository: probe.repository,
+                docurl: probe.docurl,
+                description: probe.description,
+                comment: probe.comment,
+                update_metrics: false
+              }}
+              validationSchema={ProbeSchema}
+              onSubmit = {(values, actions) => onSubmitHandle(values, actions)}
+            >
+              {props => (
+                <Form>
+                  <ProbeForm
+                    {...props}
+                    addview={addview}
+                    cloneview={cloneview}
+                    publicView={publicView}
+                    list_packages={listPackages}
+                    onSelect={onSelect}
+                    metrictemplatelist={metricTemplateList}
+                    version={probe.version}
+                  />
+                  {
+                    !publicView &&
+                      <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
+                        {
+                          (!addview && !cloneview && !publicView) ?
+                            <Button
+                              color='danger'
+                              onClick={() => {
+                                setModalMsg('Are you sure you want to delete probe?');
+                                setModalTitle('Delete probe');
+                                setModalFlag('delete');
+                                toggleAreYouSure();
+                                }}
+                            >
+                              Delete
+                            </Button>
+                          :
+                            <div></div>
+                        }
+                        <Button
+                          color='success'
+                          id='submit-button'
+                          type='submit'
+                        >
+                          Save
+                        </Button>
+                      </div>
+                }
+                </Form>
+              )}
+            </Formik>
+          </BaseArgoView>
         </React.Fragment>
-      );
-    }
-    else
-      return null;
-  }
-}
-
-
-export class ProbeVersionDetails extends Component {
-  constructor(props) {
-    super(props);
-
-    this.name = props.match.params.name;
-    this.version = props.match.params.version;
-    this.publicView = props.publicView
-
-    this.backend = new Backend();
-
-    if (this.publicView)
-      this.apiUrl = '/api/v2/internal/public_version/probe/'
-    else
-      this.apiUrl = '/api/v2/internal/version/probe/'
-
-    this.state = {
-      name: '',
-      version: '',
-      pkg: '',
-      description: '',
-      repository: '',
-      docurl: '',
-      comment: '',
-      loading: false,
-      error: null
-    };
-  }
-
-  async componentDidMount() {
-    this.setState({loading: true});
-
-    try {
-      let json = await this.backend.fetchData(`${this.apiUrl}/${this.name}`);
-      json.forEach((e) => {
-        if (e.version === this.version)
-          this.setState({
-            name: e.fields.name,
-            version: e.fields.version,
-            pkg: e.fields.package,
-            description: e.fields.description,
-            repository: e.fields.repository,
-            docurl: e.fields.docurl,
-            comment: e.fields.comment,
-            loading: false
-          });
-      });
-    } catch(err) {
-      this.setState({
-        error: err,
-        loading: false
-      });
-    };
-  }
-
-  render() {
-    const { name, version, pkg, description, repository,
-      docurl, comment, loading, error } = this.state;
-
-    if (loading)
-      return (<LoadingAnim/>);
-
-    else if (error)
-      return (<ErrorComponent error={error}/>);
-
-    else if (!loading && name) {
+      )
+    } else {
       return (
         <BaseArgoView
-          resourcename={`${name} (${version})`}
-          infoview={true}
+          resourcename='Probe details'
+          location={location}
+          tenantview={true}
+          history={true}
         >
           <Formik
             initialValues = {{
-              name: name,
-              version: version,
-              package: pkg,
-              repository: repository,
-              docurl: docurl,
-              description: description,
-              comment: comment
+              id: probe.id,
+              name: probe.name,
+              version: probe.version,
+              package: probe.package,
+              repository: probe.repository,
+              docurl: probe.docurl,
+              description: probe.description,
+              comment: probe.comment
             }}
             render = {props => (
               <ProbeForm
                 {...props}
-                state={this.state}
-                isHistory={true}
+                isTenantSchema={true}
+                publicView={publicView}
+                metrictemplatelist={metricTemplateList}
+                version={probe.version}
               />
             )}
           />
         </BaseArgoView>
       );
-    }
-    else
-      return null;
+    };
+  };
+};
+
+
+export const ProbeVersionCompare = (props) => {
+  const version1 = props.match.params.id1;
+  const version2 = props.match.params.id2;
+  const name = props.match.params.name;
+  const publicView = props.publicView;
+
+  const [loading, setLoading] = useState(false);
+  const [probe1, setProbe1] = useState({});
+  const [probe2, setProbe2] = useState({});
+  const [error, setError] = useState(null);
+
+  const backend = new Backend();
+
+  useEffect(() => {
+    setLoading(true);
+
+    async function fetchVersions() {
+      try {
+        let json = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}version/probe/${name}`);
+
+        json.forEach((e) => {
+          if (e.version == version1)
+            setProbe1(e.fields);
+          else if (e.version === version2)
+            setProbe2(e.fields);
+        });
+      } catch(err) {
+        setError(err);
+      };
+      setLoading(false);
+    };
+
+    fetchVersions();
+  }, []);
+
+  if (loading)
+    return (<LoadingAnim/>);
+
+  else if (error)
+    return (<ErrorComponent error={error}/>);
+
+  else if (!loading && probe1 && probe2) {
+    return (
+      <React.Fragment>
+        <div className="d-flex align-items-center justify-content-between">
+          <h2 className='ml-3 mt-1 mb-4'>{`Compare ${name}`}</h2>
+        </div>
+        {
+          (probe1.name !== probe2.name) &&
+            <DiffElement title='name' item1={probe1.name} item2={probe2.name}/>
+        }
+
+        {
+          (probe1.version !== probe2.version) &&
+            <DiffElement title='version' item1={probe1.version} item2={probe2.version}/>
+        }
+
+        {
+          (probe1.package !== probe2.package) &&
+            <DiffElement title='package' item1={probe1.package} item2={probe2.package}/>
+        }
+
+        {
+          (probe1.description !== probe2.description) &&
+            <DiffElement title='description' item1={probe1.description} item2={probe2.description}/>
+        }
+
+        {
+          (probe1.repository !== probe2.repository) &&
+            <DiffElement title='repository' item1={probe1.repository} item2={probe2.repository}/>
+        }
+
+        {
+          (probe1.docurl !== probe2.docurl) &&
+            <DiffElement title={'documentation'} item1={probe1.docurl} item2={probe2.docurl}/>
+        }
+        {
+          (probe1.comment !== probe2.comment) &&
+            <DiffElement title={'comment'} item1={probe1.comment} item2={probe2.comment}/>
+        }
+      </React.Fragment>
+    );
   }
-}
+  else
+    return null;
+};
+
+
+export const ProbeVersionDetails = (props) => {
+  const name = props.match.params.name;
+  const version = props.match.params.version;
+  const publicView = props.publicView;
+
+  const backend = new Backend();
+  const apiUrl = `/api/v2/internal/${publicView ? 'public_' : ''}version/probe`;
+
+  const [probe, setProbe] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    setLoading(true);
+
+    async function fetchProbeVersion() {
+      try {
+        let json = await backend.fetchData(`${apiUrl}/${name}`);
+        json.forEach((e) => {
+          if (e.version === version)
+            setProbe(e.fields);
+        });
+      } catch(err) {
+        setError(err);
+      };
+      setLoading(false);
+    };
+
+    fetchProbeVersion();
+  }, []);
+
+  if (loading)
+    return (<LoadingAnim/>);
+
+  else if (error)
+    return (<ErrorComponent error={error}/>);
+
+  else if (!loading && name) {
+    return (
+      <BaseArgoView
+        resourcename={`${name} (${version})`}
+        infoview={true}
+      >
+        <Formik
+          initialValues = {{
+            name: probe.name,
+            version: probe.version,
+            package: probe.package,
+            repository: probe.repository,
+            docurl: probe.docurl,
+            description: probe.description,
+            comment: probe.comment
+          }}
+          render = {props => (
+            <ProbeForm
+              {...props}
+              version={probe.version}
+              isHistory={true}
+            />
+          )}
+        />
+      </BaseArgoView>
+    );
+  }
+  else
+    return null;
+};

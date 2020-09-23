@@ -1,4 +1,4 @@
-import React, { Component, useState } from 'react';
+import React, { Component, useState, useMemo } from 'react';
 import {Link} from 'react-router-dom';
 import {Backend, WebApi} from './DataManager';
 import Autosuggest from 'react-autosuggest';
@@ -9,25 +9,22 @@ import {
   FancyErrorMessage,
   NotifyOk,
   Icon,
-  HistoryComponent,
   DiffElement,
   ProfileMainInfo,
   NotifyError,
   ErrorComponent,
-  ParagraphTitle
+  ParagraphTitle, ProfilesListTable
 } from './UIElements';
-import ReactTable from 'react-table';
 import { Formik, Field, FieldArray, Form } from 'formik';
-import 'react-table/react-table.css';
 import { Button } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faTimes, faSearch } from '@fortawesome/free-solid-svg-icons';
 import ReactDiffViewer from 'react-diff-viewer';
+import { useQuery } from 'react-query';
 
 import './MetricProfiles.css';
 
 
-export const MetricProfileHistory = HistoryComponent('metricprofile');
 export const MetricProfilesClone = MetricProfilesComponent(true);
 export const MetricProfilesChange = MetricProfilesComponent();
 
@@ -71,7 +68,7 @@ const MetricProfileAutocompleteField = ({suggestions, service, index, onselect, 
         {
           let result = suggestions.filter(service => service.toLowerCase().includes(value.trim().toLowerCase()))
           setSuggestions(result)
-        }
+      }
       }
       onSuggestionsClearRequested={() => {
         setSuggestions([])
@@ -156,22 +153,22 @@ const MetricProfileTupleValidate = ({view_services, name, groupname,
 
 const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
   remove_handler, insert_handler, onselect_handler, form, remove, insert}) => (
-  <table className="table table-bordered table-sm table-hover">
-    <thead className="table-active">
-      <tr>
-        <th className="align-middle text-center" style={{width: "5%"}}>#</th>
-        <th style={{width: "42.5%"}}><Icon i="serviceflavour"/> Service flavour</th>
-        <th style={{width: "42.5%"}}><Icon i='metrics'/> Metric</th>
-        <th style={{width: "10%"}}>Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr style={{background: "#ECECEC"}}>
-        <td className="align-middle text-center">
-          <FontAwesomeIcon icon={faSearch}/>
-        </td>
-        <td>
-          <Field
+    <table className="table table-bordered table-sm table-hover">
+      <thead className="table-active">
+        <tr>
+          <th className="align-middle text-center" style={{width: "5%"}}>#</th>
+          <th style={{width: "42.5%"}}><Icon i="serviceflavour"/> Service flavour</th>
+          <th style={{width: "42.5%"}}><Icon i='metrics'/> Metric</th>
+          <th style={{width: "10%"}}>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style={{background: "#ECECEC"}}>
+          <td className="align-middle text-center">
+            <FontAwesomeIcon icon={faSearch}/>
+          </td>
+          <td>
+            <Field
             type="text"
             name="search_serviceflavour"
             required={false}
@@ -181,9 +178,9 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
               'searchServiceFlavour', 'service', 'searchMetric', 'metric')}
             component={SearchField}
           />
-        </td>
-        <td>
-          <Field
+          </td>
+          <td>
+            <Field
             type="text"
             name="search_metric"
             required={false}
@@ -193,12 +190,12 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
               'metric', 'searchServiceFlavour', 'service')}
             component={SearchField}
           />
-        </td>
-        <td>
-          {''}
-        </td>
-      </tr>
-      {
+          </td>
+          <td>
+            {''}
+          </td>
+        </tr>
+        {
         form.values.view_services.map((service, index) =>
           <React.Fragment key={index}>
             <tr key={index}>
@@ -284,8 +281,8 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
           </React.Fragment>
         )
       }
-    </tbody>
-  </table>
+      </tbody>
+    </table>
 )
 
 
@@ -417,15 +414,15 @@ function MetricProfilesComponent(cloneview=false) {
                 list_services: [{service: '', metric: '', index: 0, isNew: true}],
                 loading: false
               });
-            };
+            }
           }
-        };
+        }
       } catch(err) {
         this.setState({
           error: err,
           loading: false
         });
-      };
+      }
     }
 
     toggleAreYouSureSetModal(msg, title, onyes) {
@@ -618,7 +615,7 @@ function MetricProfilesComponent(cloneview=false) {
             change_msg = msg_list.join(' ');
           } catch(err) {
             change_msg = 'Web API error changing metric profile';
-          };
+          }
           NotifyError({
             title: `Web API error: ${response.status} ${response.statusText}`,
             msg: change_msg
@@ -647,13 +644,13 @@ function MetricProfilesComponent(cloneview=false) {
               change_msg = json.detail;
             } catch(err) {
               change_msg = 'Internal API error changing metric profile';
-            };
+            }
             NotifyError({
               title: `Internal API error: ${r.status} ${r.statusText}`,
               msg: change_msg
             });
-          };
-        };
+          }
+        }
       } else {
         services = this.groupMetricsByServices(servicesList);
         dataToSend = {
@@ -671,7 +668,7 @@ function MetricProfilesComponent(cloneview=false) {
             add_msg = msg_list.join(' ');
           } catch(err) {
             add_msg = 'Web API error adding metric profile';
-          };
+          }
           NotifyError({
             title: `Web API error: ${response.status} ${response.statusText}`,
             msg: add_msg
@@ -701,14 +698,14 @@ function MetricProfilesComponent(cloneview=false) {
               add_msg = json.detail;
             } catch(err) {
               add_msg = 'Internal API error adding metric profile';
-            };
+            }
             NotifyError({
               title: `Internal API error: ${r_internal.status} ${r_internal.statusText}`,
               msg: add_msg
             });
           }
-        };
-      };
+        }
+      }
     }
 
     async doDelete(idProfile) {
@@ -722,7 +719,7 @@ function MetricProfilesComponent(cloneview=false) {
           msg = msg_list.join(' ');
         } catch(err) {
           msg = 'Web API error deleting metric profile';
-        };
+        }
         NotifyError({
           title: `Web API error: ${response.status} ${response.statusText}`,
           msg: msg
@@ -742,13 +739,13 @@ function MetricProfilesComponent(cloneview=false) {
             msg = json.detail;
           } catch(err) {
             msg = 'Internal API error deleting metric profile';
-          };
+          }
           NotifyError({
             title: `Internal API error: ${r_internal.status} ${r_internal.statusText}`,
             msg: msg
           });
-        };
-      };
+        }
+      }
     }
 
     onSelect(element, field, value) {
@@ -1029,107 +1026,98 @@ function MetricProfilesComponent(cloneview=false) {
 }
 
 
-export class MetricProfilesList extends Component
-{
-  constructor(props) {
-    super(props);
+export const MetricProfilesList = (props) => {
+  const location = props.location;
+  const backend = new Backend();
+  const publicView = props.publicView
 
-    this.state = {
-      loading: false,
-      list_metricprofiles: null,
-      write_perm: false,
-      error: null
-    }
+  let apiUrl = null;
+  if (publicView)
+    apiUrl = '/api/v2/internal/public_metricprofiles'
+  else
+    apiUrl = '/api/v2/internal/metricprofiles'
 
-    this.location = props.location;
-    this.backend = new Backend();
-    this.publicView = props.publicView
-
-    if (this.publicView)
-      this.apiUrl = '/api/v2/internal/public_metricprofiles'
-    else
-      this.apiUrl = '/api/v2/internal/metricprofiles'
-  }
-
-  async componentDidMount() {
-    this.setState({loading: true})
-
-    try {
-      let json = await this.backend.fetchData(this.apiUrl);
-      if (!this.publicView) {
-        let session = await this.backend.isActiveSession();
-        this.setState({
-          list_metricprofiles: json,
-          loading: false,
-          write_perm: session.userdetails.is_superuser || session.userdetails.groups.metricprofiles.length > 0
-        });
-      } else {
-        this.setState({
-          list_metricprofiles: json,
-          loading: false
-        })
+  const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails } = useQuery(
+    `session_userdetails`, async () => {
+      const sessionActive = await backend.isActiveSession()
+      if (sessionActive.active) {
+        return sessionActive.userdetails
       }
-    } catch(err) {
-      this.setState({
-        error: err,
-        loading: false
-      });
-    };
-  }
-
-  render() {
-    const columns = [
-      {
-        Header: 'Name',
-        id: 'name',
-        maxWidth: 350,
-        accessor: e =>
-          <Link to={`/ui/${this.publicView ? 'public_' : ''}metricprofiles/` + e.name}>
-            {e.name}
-          </Link>
-      },
-      {
-        Header: 'Description',
-        accessor: 'description',
-      },
-      {
-        Header: 'Group',
-        accessor: 'groupname',
-        className: 'text-center',
-        maxWidth: 150,
-      }
-    ]
-    const {loading, list_metricprofiles, write_perm, error} = this.state;
-
-    if (loading)
-      return (<LoadingAnim />)
-
-    else if (error)
-      return (<ErrorComponent error={error}/>);
-
-    else if (!loading && list_metricprofiles) {
-      return (
-        <BaseArgoView
-          resourcename='metric profile'
-          location={this.location}
-          listview={true}
-          addnew={!this.publicView}
-          addperm={write_perm}
-          publicview={this.publicView}>
-          <ReactTable
-            data={list_metricprofiles}
-            columns={columns}
-            className="-highlight"
-            defaultPageSize={12}
-            rowsText='profiles'
-            getTheadThProps={() => ({className: 'table-active font-weight-bold p-2'})}
-          />
-        </BaseArgoView>
-      )
     }
-    else
-      return null
+  );
+
+  const { data: listMetricProfiles, error: errorListMetricProfiles, isLoading: loadingListMetricProfiles} = useQuery(
+    `metricprofiles_listview`, async () => {
+      const fetched = await backend.fetchData(apiUrl)
+
+      // 10 is minimal pageSize and these numbers should be aligned
+      let n_elem = 10 - (fetched.length % 10)
+      for (let i = 0; i < n_elem; i++)
+        fetched.push(
+          {'description': '', 'groupname': '', 'name': ''}
+        )
+
+      return fetched
+    },
+    {
+      enabled: userDetails
+    }
+  );
+
+  const columns = useMemo(() => [
+    {
+      Header: '#',
+      accessor: null
+    },
+    {
+      Header: 'Name',
+      id: 'name',
+      maxWidth: 350,
+      accessor: e =>
+        <Link to={`/ui/${publicView ? 'public_' : ''}metricprofiles/` + e.name}>
+          {e.name}
+        </Link>
+    },
+    {
+      Header: 'Description',
+      accessor: 'description',
+    },
+    {
+      Header: 'Group',
+      accessor: 'groupname',
+      className: 'text-center',
+      maxWidth: 150,
+    }
+  ])
+
+  if (loadingUserDetails || loadingListMetricProfiles)
+    return (<LoadingAnim />)
+
+  else if (errorListMetricProfiles)
+    return (<ErrorComponent error={errorListMetricProfiles}/>);
+
+  else if (errorUserDetails)
+    return (<ErrorComponent error={errorUserDetails}/>);
+
+  else if (!loadingUserDetails && !loadingUserDetails && listMetricProfiles) {
+    return (
+      <BaseArgoView
+        resourcename='metric profile'
+        location={location}
+        listview={true}
+        addnew={!publicView}
+        addperm={userDetails.is_superuser || userDetails.groups.metricprofiles.length > 0}
+        publicview={publicView}>
+        <ProfilesListTable
+          data={listMetricProfiles}
+          columns={columns}
+          type='metric'
+        />
+      </BaseArgoView>
+    )
   }
+  else
+    return null
 }
 
 
@@ -1225,7 +1213,7 @@ export class MetricProfileVersionCompare extends Component {
         error: err,
         loading: false
       });
-    };
+    }
   }
 
   render() {
@@ -1313,7 +1301,7 @@ export class MetricProfileVersionDetails extends Component {
         error: err,
         loading: false
       });
-    };
+    }
   }
 
   render() {
