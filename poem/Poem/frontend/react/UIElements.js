@@ -61,7 +61,7 @@ import {
   faTable,
   faTasks,
   faUser,
-  faWrench}
+  faWrench, faNewspaper}
 from '@fortawesome/free-solid-svg-icons';
 import { NotificationManager } from 'react-notifications';
 import { Field } from 'formik';
@@ -128,6 +128,7 @@ export const Icon = props =>
   link_icon.set('terms', faHandshake);
   link_icon.set('argodoc', faLink);
   link_icon.set('documentation', faBook);
+  link_icon.set('privacy', faNewspaper);
 
   if (props.i.startsWith('groupof'))
     return (
@@ -551,6 +552,15 @@ export const NavigationAbout = ({ location, poemVersion }) => {
         >
           <Icon i="policies"/>{' '}
           Cookie Policies
+        </NavLink>
+        <NavLink
+          tag="a"
+          href='https://argo.egi.eu/egi/policies'
+          className='text-dark'
+          target='_blank' rel='noopener noreferrer'
+        >
+          <Icon i='privacy'/> {' '}
+          Privacy policy
         </NavLink>
         <NavLink
           tag="a"
