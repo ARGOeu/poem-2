@@ -28,6 +28,7 @@ class Login extends Component {
       samlIdpString: null,
       loginFailedVisible: false,
       isTenantSchema: null,
+      tenantName: null,
       loading: false
     };
 
@@ -57,6 +58,7 @@ class Login extends Component {
         this.setState({
           isTenantSchema: response,
           samlIdpString: json.result.saml_login_string,
+          tenantName: json.result.tenant_name,
           loading: false
         })
     } else
@@ -148,7 +150,7 @@ class Login extends Component {
                   </Formik>
                 </CardBody>
                 <CardFooter id="argo-loginfooter">
-                  <Footer loginPage={true}/>
+                  <Footer loginPage={true} tenantName={this.state.tenantName}/>
                 </CardFooter>
               </Card>
             </Col>

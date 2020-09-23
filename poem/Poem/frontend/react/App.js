@@ -523,7 +523,7 @@ class App extends Component {
               <Route
                 exact path="/ui/public_home"
                 render={props =>
-                  <PublicPage>
+                  <PublicPage tenantName={this.state.tenantName}>
                     <PublicHome/>
                   </PublicPage>
                 }
@@ -531,7 +531,7 @@ class App extends Component {
               <Route
                 exact path="/ui/public_probes"
                 render={props =>
-                  <PublicPage>
+                  <PublicPage tenantName={this.state.tenantName}>
                     <ProbeList publicView={true} {...props} />
                   </PublicPage>
                 }
@@ -539,28 +539,28 @@ class App extends Component {
               <Route
                 exact path="/ui/public_probes/:name"
                 render={props =>
-                  <PublicPage>
+                  <PublicPage tenantName={this.state.tenantName}>
                     <ProbeChange publicView={true} {...props}/>
                   </PublicPage>
                 }
               />
               <Route exact path="/ui/public_probes/:name/history"
                 render={props =>
-                  <PublicPage>
+                  <PublicPage tenantName={this.state.tenantName}>
                     <ProbeHistory publicView={true} {...props}/>
                   </PublicPage>
                 }
               />
               <Route exact path="/ui/public_probes/:name/history/compare/:id1/:id2"
                 render={props =>
-                  <PublicPage>
+                  <PublicPage tenantName={this.state.tenantName}>
                     <ProbeVersionCompare publicView={true} {...props}/>
                   </PublicPage>
                 }
               />
               <Route exact path="/ui/public_probes/:name/history/:version"
                 render={props =>
-                  <PublicPage>
+                  <PublicPage tenantName={this.state.tenantName}>
                     <ProbeVersionDetails publicView={true} {...props}/>
                   </PublicPage>
                 }
@@ -568,7 +568,7 @@ class App extends Component {
               <Route
                 exact path="/ui/public_metrictemplates"
                 render={props =>
-                  <PublicPage>
+                  <PublicPage tenantName={this.state.tenantName}>
                     <TenantMetricTemplateList publicView={true} {...props}/>
                   </PublicPage>
                 }
@@ -576,7 +576,7 @@ class App extends Component {
               <Route
                 exact path="/ui/public_metrictemplates/:name"
                 render={props =>
-                  <PublicPage>
+                  <PublicPage tenantName={this.state.tenantName}>
                     <MetricTemplateChange publicView={true} {...props}/>
                   </PublicPage>
                 }
@@ -584,7 +584,7 @@ class App extends Component {
               <Route
                 exact path="/ui/public_metrictemplates/:name/history"
                 render={props =>
-                  <PublicPage>
+                  <PublicPage tenantName={this.state.tenantName}>
                     <MetricTemplateHistory publicView={true} {...props}/>
                   </PublicPage>
                 }
@@ -592,7 +592,7 @@ class App extends Component {
               <Route
                 exact path="/ui/public_metrictemplates/:name/history/compare/:id1/:id2"
                 render={props =>
-                  <PublicPage>
+                  <PublicPage tenantName={this.state.tenantName}>
                     <MetricTemplateVersionCompare publicView={true} {...props}VersionCompare/>
                   </PublicPage>
                 }
@@ -600,35 +600,35 @@ class App extends Component {
               <Route
                 exact path="/ui/public_metrictemplates/:name/history/:version"
                 render={props =>
-                  <PublicPage>
+                  <PublicPage tenantName={this.state.tenantName}>
                     <MetricTemplateVersionDetails publicView={true} {...props}/>
                   </PublicPage>
                 }
               />
               <Route exact path="/ui/public_metrics"
                 render={props =>
-                  <PublicPage>
+                  <PublicPage tenantName={this.state.tenantName}>
                     <MetricList publicView={true} {...props}/>
                   </PublicPage>
                 }
               />
               <Route exact path="/ui/public_metrics/:name"
                 render={props =>
-                  <PublicPage>
+                  <PublicPage tenantName={this.state.tenantName}>
                     <MetricChange publicView={true} {...props}/>
                   </PublicPage>
                 }
               />
               <Route exact path="/ui/public_metricprofiles"
                 render={props =>
-                  <PublicPage>
+                  <PublicPage tenantName={this.state.tenantName}>
                     <MetricProfilesList publicView={true} {...props} />
                   </PublicPage>
                 }
               />
               <Route exact path="/ui/public_metricprofiles/:name"
                 render={props =>
-                  <PublicPage>
+                  <PublicPage tenantName={this.state.tenantName}>
                     <MetricProfilesChange {...props}
                       webapimetric={this.state.webApiMetric}
                       webapitoken={this.state.token}
@@ -640,14 +640,14 @@ class App extends Component {
               />
               <Route exact path="/ui/public_aggregationprofiles"
                 render={props =>
-                  <PublicPage>
+                  <PublicPage tenantName={this.state.tenantName}>
                     <AggregationProfilesList publicView={true} {...props} />
                   </PublicPage>
                 }
               />
               <Route exact path="/ui/public_aggregationprofiles/:name"
                 render={props =>
-                  <PublicPage>
+                  <PublicPage tenantName={this.state.tenantName}>
                     <AggregationProfilesChange {...props}
                       webapimetric={this.state.webApiMetric}
                       webapiaggregation={this.state.webApiAggregation}
@@ -660,14 +660,14 @@ class App extends Component {
               />
               <Route exact path="/ui/public_thresholdsprofiles"
                 render={props =>
-                  <PublicPage>
+                  <PublicPage tenantName={this.state.tenantName}>
                     <ThresholdsProfilesList publicView={true} {...props} />
                   </PublicPage>
                 }
               />
               <Route exact path="/ui/public_thresholdsprofiles/:name"
                 render={props =>
-                  <PublicPage>
+                  <PublicPage tenantName={this.state.tenantName}>
                     <ThresholdsProfilesChange {...props}
                       webapithresholds={this.state.webApiThresholds}
                       webapiaggregation={this.state.webApiAggregation}
@@ -680,7 +680,7 @@ class App extends Component {
               />
               <Route exact path="/ui/public_operationsprofiles"
                 render={props =>
-                  <PublicPage>
+                  <PublicPage tenantName={this.state.tenantName}>
                     <OperationsProfilesList
                       {...props}
                       publicView={true}
@@ -692,7 +692,7 @@ class App extends Component {
               />
               <Route exact path="/ui/public_operationsprofiles/:name"
                 render={props =>
-                  <PublicPage>
+                  <PublicPage tenantName={this.state.tenantName}>
                     <OperationsProfileDetails
                       {...props}
                       publicView={true}
@@ -840,7 +840,7 @@ class App extends Component {
               <Col sm={{size: 2}} md={{size: 2}} id="sidebar-col" className="d-flex flex-column">
                 <NavigationLinksWithRouter isTenantSchema={this.state.isTenantSchema} userDetails={userDetails}/>
                 <div id="sidebar-grow" className="flex-grow-1 border-left border-right mb-0 pb-5"/>
-                <NavigationAboutWithRouter poemVersion={this.state.version}/>
+                <NavigationAboutWithRouter poemVersion={this.state.version} tenantName={this.state.tenantName}/>
               </Col>
               <Col>
                 <CustomBreadcrumbWithRouter />
@@ -861,7 +861,7 @@ class App extends Component {
             </Row>
             <Row>
               <Col>
-                <Footer loginPage={false}/>
+                <Footer loginPage={false} tenantName={this.state.tenantName}/>
               </Col>
             </Row>
           </Container>
