@@ -889,7 +889,7 @@ export const ThresholdsProfilesList = (props) => {
         );
 
       return profiles;
-    }, {enabled: userDetails}
+    }
   )
 
   const columns = React.useMemo(() => [
@@ -934,7 +934,7 @@ export const ThresholdsProfilesList = (props) => {
         location={location}
         listview={true}
         addnew={!publicView}
-        addperm={userDetails.is_superuser || userDetails.groups.thresholdsprofiles.length > 0}
+        addperm={publicView ? false : userDetails.is_superuser || userDetails.groups.thresholdsprofiles.length > 0}
         publicview={publicView}
       >
         <ProfilesListTable

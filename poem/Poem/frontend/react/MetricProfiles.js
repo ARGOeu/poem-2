@@ -1058,9 +1058,6 @@ export const MetricProfilesList = (props) => {
         )
 
       return fetched
-    },
-    {
-      enabled: userDetails
     }
   );
 
@@ -1106,7 +1103,7 @@ export const MetricProfilesList = (props) => {
         location={location}
         listview={true}
         addnew={!publicView}
-        addperm={userDetails.is_superuser || userDetails.groups.metricprofiles.length > 0}
+        addperm={publicView ? false : userDetails.is_superuser || userDetails.groups.metricprofiles.length > 0}
         publicview={publicView}>
         <ProfilesListTable
           data={listMetricProfiles}

@@ -34,7 +34,6 @@ import {
 } from 'reactstrap';
 import { useQuery } from 'react-query';
 import * as Yup from 'yup';
-import { useTable, usePagination } from 'react-table';
 
 import ReactDiffViewer from 'react-diff-viewer';
 
@@ -1095,9 +1094,6 @@ export const AggregationProfilesList = (props) => {
         )
 
       return fetched
-    },
-    {
-      enabled: userDetails
     }
   );
 
@@ -1143,7 +1139,7 @@ export const AggregationProfilesList = (props) => {
         location={location}
         listview={true}
         addnew={!publicView}
-        addperm={userDetails.is_superuser || userDetails.groups.metricprofiles.length > 0}
+        addperm={publicView ? false : userDetails.is_superuser || userDetails.groups.metricprofiles.length > 0}
         publicview={publicView}>
         <ProfilesListTable
           data={listAggregationProfiles}
