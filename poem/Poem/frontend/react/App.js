@@ -9,8 +9,6 @@ import {
 } from './MetricProfiles';
 import Home, { PublicHome } from './Home';
 import {
-  ProbeChange,
-  ProbeClone,
   ProbeComponent,
   ProbeList,
   ProbeVersionCompare,
@@ -33,7 +31,6 @@ import {
   AggregationProfileVersionCompare,
   AggregationProfileVersionDetails
 } from './AggregationProfiles';
-import Reports from './Reports';
 import { ReportsList, ReportsComponent } from './Reports';
 import { UsersList, UserChange, SuperAdminUserChange, ChangePassword } from './Users';
 import {
@@ -211,7 +208,7 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, w
         tenantname={tenantName}/>}
     />
     <Route exact path="/ui/thresholdsprofiles/:name/history"
-      render={props => <ThresholdsProfilesHistory {...props}/>}
+      render={props => <HistoryComponent object='thresholdsprofile' {...props}/>}
     />
     <Route exact path="/ui/thresholdsprofiles/:name/history/compare/:id1/:id2"
       render={props => <ThresholdsProfileVersionCompare {...props}/>}
