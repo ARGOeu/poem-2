@@ -73,7 +73,7 @@ import { Backend } from './DataManager';
 import ReactDiffViewer from 'react-diff-viewer';
 import Autosuggest from 'react-autosuggest';
 import { CookiePolicy } from './CookiePolicy';
-import { useTable, usePagination } from 'react-table';
+import { useTable, usePagination, useFilters } from 'react-table';
 
 
 var list_pages = ['administration', 'probes',
@@ -1244,7 +1244,32 @@ export const ParagraphTitle = ({title}) => (
 )
 
 
-export function ProfilesListTable({ columns, data, type }) {
+export const DefaultColumnFilter = ({column: { filterValue, setFilter }}) => {
+  return (
+    <div className="input-group">
+      <input className="form-control"
+        type="text"
+        placeholder="Search"
+        value={filterValue || ''}
+        onChange={e => {setFilter(e.target.value || undefined)}}
+      />
+      <div className="input-group-append">
+        <span className="input-group-text" id="basic-addon">
+          <FontAwesomeIcon icon={faSearch}/>
+        </span>
+      </div>
+    </div>
+  )
+};
+
+
+export function BaseArgoTable({ columns, data, resourcename, page_size, filter=false }) {
+  const defaultColumn = React.useMemo(
+    () => ({
+      centering: false
+    }),
+    []
+  )
   const {
     headerGroups,
     prepareRow,
@@ -1261,8 +1286,10 @@ export function ProfilesListTable({ columns, data, type }) {
     {
       columns,
       data,
-      initialState: { pageIndex: 0, pageSize: 10 }
+      initialState: { pageIndex: 0, pageSize: page_size },
+      defaultColumn
     },
+    useFilters,
     usePagination
   );
 
@@ -1278,25 +1305,31 @@ export function ProfilesListTable({ columns, data, type }) {
                     <tr>
                       {
                         headerGroup.headers.map((column, tri) => {
-                          let width = undefined;
-
-                          if (tri === 0)
-                            width = '2%'
-                          if (tri === 1)
-                            width = '20%'
-                          else if (tri === 2)
-                            width = '70%'
-                          else if (tri === 3)
-                            width = '8%'
-
                           return (
-                            <th style={{width: width}} className='p-1 m-1' key={tri}>
+                            <th style={{width: column.column_width}} className='p-1 m-1' key={tri}>
                               {column.render('Header')}
                             </th>
                           )
                         })
                       }
                     </tr>
+                    {
+                      filter &&
+                        <tr className='p-0 m-0'>
+                          {headerGroup.headers.map((column, tri) => {
+                            if (tri === 0) return(
+                              <th className="p-1 m-1 align-middle" key={tri + 11}>
+                                <FontAwesomeIcon icon={faSearch}/>
+                              </th>
+                            )
+                            else return (
+                              <th className="p-1 m-1" key={tri + 11}>
+                                {column.canFilter ? column.render('Filter') : null}
+                              </th>
+                            )
+                          })}
+                        </tr>
+                    }
                   </React.Fragment>
                 ))
               }
@@ -1311,8 +1344,6 @@ export function ProfilesListTable({ columns, data, type }) {
                         row.cells.map((cell, cell_index) => {
                           if (cell_index === 0)
                             return <td key={cell_index} className='align-middle text-center'>{(row_index + 1) + (pageIndex * pageSize)}</td>
-                          else if (cell_index === row.cells.length - 1)
-                            return <td key={cell_index} className='align-middle text-center'>{cell.render('Cell')}</td>
                           else
                             return <td key={cell_index} className='align-middle'>{cell.render('Cell')}</td>
                         })
@@ -1356,9 +1387,9 @@ export function ProfilesListTable({ columns, data, type }) {
                 value={pageSize}
                 onChange={e => setPageSize(Number(e.target.value))}
               >
-                {[10, 20, 50].map(pageSize => (
+                {[page_size, 2 * page_size, 3 * page_size].map(pageSize => (
                   <option key={pageSize} value={pageSize}>
-                    {pageSize} {`${type} profiles`}
+                    {pageSize} {`${resourcename}`}
                   </option>
                 ))}
               </select>
@@ -1367,5 +1398,17 @@ export function ProfilesListTable({ columns, data, type }) {
         </Col>
       </Row>
     </>
+  );
+};
+
+
+export const ProfilesListTable = ({ columns, data, type }) => {
+  return (
+    <BaseArgoTable
+      columns={columns}
+      data={data}
+      resourcename={`${type} profiles`}
+      page_size={10}
+    />
   );
 };
