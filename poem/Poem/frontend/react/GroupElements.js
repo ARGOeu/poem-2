@@ -9,9 +9,9 @@ import {
   ParagraphTitle,
   Icon,
   SearchField,
-  ModalAreYouSure
+  ModalAreYouSure,
+  BaseArgoTable
 } from './UIElements';
-import ReactTable from 'react-table-6';
 import { Link } from 'react-router-dom';
 import { Formik, Form, Field, setNestedObjectValues } from 'formik';
 import {
@@ -24,7 +24,6 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes, faSearch } from '@fortawesome/free-solid-svg-icons';
 import Select from 'react-select';
-import Async from 'react-select/async';
 
 
 export const GroupList = (props) => {
@@ -43,7 +42,12 @@ export const GroupList = (props) => {
     async function fetchData() {
       try {
         let json = await backend.fetchResult('/api/v2/internal/usergroups');
-        setListGroups(json[group]);
+        let groups = json[group];
+
+        let n_elem = 10 - (groups.length % 10);
+        let empty = Array(n_elem).fill(' ');
+
+        setListGroups(groups.concat(empty));
       } catch(err) {
         setError(err);
       }
@@ -52,16 +56,23 @@ export const GroupList = (props) => {
     fetchData();
   }, []);
 
-  const columns = [
-    {
-      Header: name.charAt(0).toUpperCase() + name.slice(1),
-      id: id,
-      accessor: e =>
-        <Link to={`/ui/administration/${id}/${e}`}>
-          {e}
-        </Link>
-    }
-  ];
+  const columns = React.useMemo(
+    () => [
+      {
+        Header: '#',
+        accessor: null,
+        column_width: '2%'
+      },
+      {
+        Header: name.charAt(0).toUpperCase() + name.slice(1),
+        accessor: e =>
+          <Link to={`/ui/administration/${id}/${e}`}>
+            {e}
+          </Link>,
+        column_width: '98%'
+      }
+    ]
+  );
 
   if (loading)
     return (<LoadingAnim/>);
@@ -75,13 +86,11 @@ export const GroupList = (props) => {
         resourcename={name}
         location={location}
         listview={true}>
-          <ReactTable
+          <BaseArgoTable
             data={listGroups}
             columns={columns}
-            className='-highlight'
-            defaultPageSize={12}
-            rowsText='groups'
-            getTheadThProps={() => ({className: 'table-active font-weight-bold p-2'})}
+            page_size={10}
+            resourcename='groups'
           />
       </BaseArgoView>
     );
