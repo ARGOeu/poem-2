@@ -926,9 +926,12 @@ export class AggregationProfilesChange extends Component
               profile_operation: aggregation_profile.profile_operation,
               metric_profile: this.correctMetricProfileName(aggregation_profile.metric_profile.id, list_id_metric_profiles),
               endpoint_group: aggregation_profile.endpoint_group,
-              groups: this.insertDummyGroup(
-                this.insertEmptyServiceForNoServices(aggregation_profile.groups)
-              )
+              groups: !this.publicView ?
+                this.insertDummyGroup(
+                  this.insertEmptyServiceForNoServices(aggregation_profile.groups)
+                )
+              :
+                aggregation_profile.groups
             }}
             onSubmit={(values, actions) => this.onSubmitHandle(values, actions)}
             validationSchema={AggregationProfilesSchema}
