@@ -633,6 +633,7 @@ export class AggregationProfilesChange extends Component
 
   async doChange(values, actions) {
     let values_send = JSON.parse(JSON.stringify(values));
+    this.removeDummyGroup(values_send)
 
     values_send.namespace = this.tenant_name
 
@@ -785,6 +786,19 @@ export class AggregationProfilesChange extends Component
     }
   }
 
+  insertDummyGroup(groups) {
+    return  [...groups, {name: 'dummy', operation: 'OR', services: [{name: 'dummy', operation: 'OR'}]}]
+  }
+
+  removeDummyGroup(values) {
+    let last_group_element = values.groups[values.groups.length - 1]
+
+    if (last_group_element['name'] == 'dummy' &&
+      last_group_element.services[0]['name'] == 'dummy') {
+      values.groups.pop()
+    }
+  }
+
   checkIfServiceMissingInMetricProfile(servicesMetricProfile, serviceGroupsAggregationProfile) {
     let servicesInMetricProfiles = new Set(servicesMetricProfile)
     let isMissing = false
@@ -912,7 +926,9 @@ export class AggregationProfilesChange extends Component
               profile_operation: aggregation_profile.profile_operation,
               metric_profile: this.correctMetricProfileName(aggregation_profile.metric_profile.id, list_id_metric_profiles),
               endpoint_group: aggregation_profile.endpoint_group,
-              groups: this.insertEmptyServiceForNoServices(aggregation_profile.groups)
+              groups: this.insertDummyGroup(
+                this.insertEmptyServiceForNoServices(aggregation_profile.groups)
+              )
             }}
             onSubmit={(values, actions) => this.onSubmitHandle(values, actions)}
             validationSchema={AggregationProfilesSchema}
