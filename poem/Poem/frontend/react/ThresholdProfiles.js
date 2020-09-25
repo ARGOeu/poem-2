@@ -11,7 +11,8 @@ import {
     ProfileMainInfo,
     NotifyError,
     ErrorComponent,
-    ParagraphTitle, ProfilesListTable
+    ParagraphTitle,
+    ProfilesListTable
 } from './UIElements';
 import {
   Formik,
@@ -895,26 +896,32 @@ export const ThresholdsProfilesList = (props) => {
   const columns = React.useMemo(() => [
     {
       Header: '#',
-      accessor: null
+      accessor: null,
+      column_width: '2%'
     },
     {
       Header: 'Name',
       id: 'name',
-      maxWidth: 350,
       accessor: e =>
         <Link to={`/ui/${publicView ? 'public_' : ''}thresholdsprofiles/${e.name}`}>
           {e.name}
-        </Link>
+        </Link>,
+      column_width: '20%'
     },
     {
       Header: 'Description',
       accessor: 'description',
+      column_width: '70%'
     },
     {
       Header: 'Group',
       accessor: 'groupname',
       className: 'text-center',
-      maxWidth: 150,
+      column_width: '8%',
+      Cell: row =>
+        <div style={{textAlign: 'center'}}>
+          {row.value}
+        </div>
     }
   ]);
 
