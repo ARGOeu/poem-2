@@ -34,7 +34,6 @@ import {
 } from 'reactstrap';
 import { useQuery } from 'react-query';
 import * as Yup from 'yup';
-import { useTable, usePagination } from 'react-table';
 
 import ReactDiffViewer from 'react-diff-viewer';
 
@@ -927,9 +926,12 @@ export class AggregationProfilesChange extends Component
               profile_operation: aggregation_profile.profile_operation,
               metric_profile: this.correctMetricProfileName(aggregation_profile.metric_profile.id, list_id_metric_profiles),
               endpoint_group: aggregation_profile.endpoint_group,
-              groups: this.insertDummyGroup(
-                this.insertEmptyServiceForNoServices(aggregation_profile.groups)
-              )
+              groups: !this.publicView ?
+                this.insertDummyGroup(
+                  this.insertEmptyServiceForNoServices(aggregation_profile.groups)
+                )
+              :
+                aggregation_profile.groups
             }}
             onSubmit={(values, actions) => this.onSubmitHandle(values, actions)}
             validationSchema={AggregationProfilesSchema}
@@ -1095,9 +1097,6 @@ export const AggregationProfilesList = (props) => {
         )
 
       return fetched
-    },
-    {
-      enabled: userDetails
     }
   );
 
@@ -1143,7 +1142,7 @@ export const AggregationProfilesList = (props) => {
         location={location}
         listview={true}
         addnew={!publicView}
-        addperm={userDetails.is_superuser || userDetails.groups.metricprofiles.length > 0}
+        addperm={publicView ? false : userDetails.is_superuser || userDetails.groups.metricprofiles.length > 0}
         publicview={publicView}>
         <ProfilesListTable
           data={listAggregationProfiles}
