@@ -279,11 +279,6 @@ export const ListOfMetrics = (props) => {
   const type = props.type;
   const publicView = props.publicView;
 
-  const [searchName, setSearchName] = useState('');
-  const [searchProbeversion, setSearchProbeversion] = useState('');
-  const [searchType, setSearchType] = useState('');
-  const [searchTag, setSearchTag] = useState('');
-  const [searchOSGroups, setSearchOSGroups] = useState('');
   const [selected, setSelected] = useState({});
   const [selectAll, setSelectAll] = useState(0);
   const [areYouSureModal, setAreYouSureModal] = useState(false);
@@ -347,13 +342,6 @@ export const ListOfMetrics = (props) => {
     }
   );
 
-  function doFilter(list_metric, field, filter) {
-    return (
-      list_metric.filter(row =>
-        eval(`row.${field}`).toLowerCase().includes(filter.toLowerCase()))
-    )
-  }
-
   function toggleRow(name) {
     const newSelected = Object.assign({}, selected);
     newSelected[name] = !selected[name];
@@ -361,35 +349,10 @@ export const ListOfMetrics = (props) => {
     setSelectAll(Object.keys(newSelected).every((k) => !newSelected[k]) ? 0 : 2);
   }
 
-  function toggleSelectAll() {
-    var list_metric = listMetrics;
+  function toggleSelectAll(instance) {
+    var list_metric = [];
 
-    if (searchName) {
-      list_metric = doFilter(list_metric, 'name', searchName);
-    }
-
-    if (searchProbeversion) {
-      list_metric = doFilter(list_metric, 'probeversion', searchProbeversion);
-    }
-
-    if (searchType) {
-      list_metric = doFilter(list_metric, 'mtype', searchType);
-    }
-
-    if (searchTag) {
-      list_metric = list_metric.filter(row =>
-        row.tags.includes(searchTag)
-      );
-    }
-
-    if (searchOSGroups) {
-      type === 'metrics' ?
-        list_metric = doFilter(list_metric, 'group', searchOSGroups)
-      :
-        list_metric = list_metric.filter(row =>
-          `${row.ostag.join(', ')}`.includes(searchOStag)
-        );
-    }
+    instance.filteredFlatRows.forEach(row => list_metric.push(row.original));
 
     let newSelected = {};
     if (selectAll === 0) {
@@ -559,7 +522,7 @@ export const ListOfMetrics = (props) => {
           );
         },
         Header: `${isTenantSchema ? 'Select all' : 'Delete'}`,
-        Filter: () =>
+        Filter: (instance) => (
           <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
             <input
               type='checkbox'
@@ -570,9 +533,10 @@ export const ListOfMetrics = (props) => {
                   input.indeterminate = selectAll === 2;
                 }
               }}
-              onChange={() => toggleSelectAll()}
+              onChange={() => toggleSelectAll(instance)}
             />
-          </div>,
+          </div>
+        ),
         column_width: '5%'
       }
     );
@@ -685,6 +649,7 @@ export const ListOfMetrics = (props) => {
                 page_size={50}
                 resourcename='metrics'
                 filter={true}
+                selectable={true}
               />
             </div>
           </>
@@ -723,6 +688,7 @@ export const ListOfMetrics = (props) => {
                 page_size={50}
                 resourcename='metric templates'
                 filter={true}
+                selectable={true}
               />
             </div>
           </>
