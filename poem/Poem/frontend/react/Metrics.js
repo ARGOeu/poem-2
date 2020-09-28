@@ -1,4 +1,4 @@
-import React, { Component, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Backend } from './DataManager';
 import { Link } from 'react-router-dom';
 import {
@@ -6,7 +6,6 @@ import {
   BaseArgoView,
   NotifyOk,
   FancyErrorMessage,
-  DropdownFilterComponent,
   DiffElement,
   AutocompleteField,
   NotifyWarn,
@@ -14,10 +13,8 @@ import {
   NotifyInfo,
   ErrorComponent,
   ModalAreYouSure,
-  ParagraphTitle
+  ParagraphTitle, DefaultColumnFilter, SelectColumnFilter, BaseArgoTable
  } from './UIElements';
-import ReactTable from 'react-table-6';
-import 'react-table-6/react-table.css';
 import { Formik, Form, Field, FieldArray } from 'formik';
 import {
   FormGroup,
@@ -40,17 +37,6 @@ import ReactDiffViewer from 'react-diff-viewer';
 import CreatableSelect from 'react-select/creatable';
 import { components } from 'react-select';
 import { useQuery, queryCache } from 'react-query';
-
-
-const DefaultFilterComponent = ({value, onChange, field}) => (
-  <input
-    type='text'
-    placeholder={'Search by ' + field}
-    value={value}
-    onChange={onChange}
-    style={{width: '100%'}}
-  />
-)
 
 
 function validateConfig(value) {
@@ -325,7 +311,6 @@ export const ListOfMetrics = (props) => {
   const { data: listTags, error: listTagsError, isLoading: listTagsLoading } = useQuery(
     `${type}_listview_tags`, async () => {
       let tags = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}metrictags`);
-      tags.push('none');
       return tags;
     }
   );
@@ -483,7 +468,160 @@ export const ListOfMetrics = (props) => {
         msg: `Error deleting metric template${mt.length > 0 ? 's' : ''}`,
         title: `Error: ${response.status} ${response.statusText}`
       });
-  }
+  };
+
+  let metriclink = `/ui/${(type === 'metrictemplates' && isTenantSchema && !publicView) ? 'administration/' : ''}${publicView ? 'public_' : ''}${type}/`;
+
+  const columns = [
+    {
+      Header: 'Name',
+      accessor: 'name',
+      column_width: '39%',
+      Cell: row =>
+        <Link to={`${metriclink}${row.value}`}>
+          {row.value}
+        </Link>,
+      Filter: DefaultColumnFilter
+    },
+    {
+      Header: 'Probe version',
+      column_width: '20%',
+      accessor: 'probeversion',
+      Cell: row => (
+        <div style={{textAlign: 'center'}}>
+          {
+            (row.value) ?
+              <ProbeVersionLink
+                publicView={publicView}
+                probeversion={row.value}
+              />
+            :
+              ""
+              }
+        </div>
+      ),
+      Filter: DefaultColumnFilter
+    },
+    {
+      Header: 'Type',
+      column_width: `${isTenantSchema ? '12%' : '18%'}`,
+      accessor: 'mtype',
+      Cell: row =>
+        <div style={{textAlign: 'center'}}>
+          {row.value}
+        </div>,
+      filterList: listTypes,
+      Filter: SelectColumnFilter
+    },
+    {
+      Header: 'Tag',
+      column_width: `${isTenantSchema ? '12%' : '18%'}`,
+      accessor: 'tags',
+      Cell: row =>
+        <div style={{textAlign: 'center'}}>
+          {
+            row.value.length === 0 ?
+              <Badge color='dark'>none</Badge>
+            :
+              row.value.map((tag, i) =>
+                <Badge className={'mr-1'} key={i} color={tag === 'internal' ? 'success' : tag === 'deprecated' ? 'danger' : 'secondary'}>
+                  {tag}
+                </Badge>
+              )
+          }
+        </div>,
+      filterList: listTags,
+      Filter: SelectColumnFilter
+    }
+  ];
+
+  if (type == 'metrictemplates' && userDetails && userDetails.is_superuser) {
+    columns.splice(
+      0,
+      0,
+      {
+        id: 'checkbox',
+        accessor: null,
+        Cell: (row) => {
+          let original = row.cell.row.original;
+          return (
+            <div style={{display: 'flex', justifyContent: 'center'}}>
+              <input
+                type='checkbox'
+                className='checkbox'
+                checked={selected[original.name] === true}
+                onChange={() => toggleRow(original.name)}
+              />
+            </div>
+          );
+        },
+        Header: `${isTenantSchema ? 'Select all' : 'Delete'}`,
+        Filter: () =>
+          <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
+            <input
+              type='checkbox'
+              className='checkbox'
+              checked={selectAll === 1}
+              ref={input => {
+                if (input) {
+                  input.indeterminate = selectAll === 2;
+                }
+              }}
+              onChange={() => toggleSelectAll()}
+            />
+          </div>,
+        column_width: '5%'
+      }
+    );
+  } else {
+    columns.splice(
+      0,
+      0,
+      {
+        Header: '#',
+        id: 'row',
+        column_width: '5%'
+      }
+    );
+  };
+
+  if (type === 'metrics') {
+    columns.splice(
+      4,
+      0,
+      {
+        Header: 'Group',
+        column_width: '12%',
+        accessor: 'group',
+        Cell: row =>
+          <div style={{textAlign: 'center'}}>
+            {row.value}
+          </div>,
+        filterList: listOSGroups,
+        Filter: SelectColumnFilter
+      }
+    );
+  } else {
+    if (isTenantSchema) {
+      columns.splice(
+        4,
+        0,
+        {
+          Header: 'OS',
+          column_width: '12%',
+          accessor: 'ostag',
+          Cell: row =>
+            <div style={{textAlign: 'center'}}>
+              {row.value.join(', ')}
+            </div>,
+          filterList: listOSGroups,
+          Filter: SelectColumnFilter
+        }
+      );
+    };
+  };
+
+  const memoized_columns = React.useMemo(() => columns);
 
   if (listMetricsLoading || listTypesLoading || listTagsLoading || listOSGroupsLoading || isTenantSchemaLoading || userDetailsLoading)
     return (<LoadingAnim />);
@@ -503,259 +641,7 @@ export const ListOfMetrics = (props) => {
   else if (userDetailsError)
     return (<ErrorComponent error={userDetailsError.message}/>);
 
-  else {
-    let metriclink = `/ui/${(type === 'metrictemplates' && isTenantSchema && !publicView) ? 'administration/' : ''}${publicView ? 'public_' : ''}${type}/`;
-
-    const columns = [
-      {
-        Header: 'Name',
-        id: 'name',
-        minWidth: 100,
-        accessor: e =>
-          <Link
-          to={
-            (type === 'metrictemplates' && isTenantSchema) ?
-              searchOSGroups === 'CentOS 6' && e.centos6_probeversion ?
-                `${metriclink}${e.name}/history/${e.centos6_probeversion.split(' ')[1].substring(1, e.centos6_probeversion.split(' ')[1].length - 1)}`
-              :
-                (searchOSGroups === 'CentOS 7' && e.centos7_probeversion) ?
-                  `${metriclink}${e.name}/history/${e.centos7_probeversion.split(' ')[1].substring(1, e.centos7_probeversion.split(' ')[1].length - 1)}`
-                :
-                  `${metriclink}${e.name}`
-            :
-              `${metriclink}${e.name}`
-          }
-        >
-            {e.name}
-          </Link>,
-        filterable: true,
-        Filter: (
-          <DefaultFilterComponent
-            field='name'
-            value={searchName}
-            onChange={e => setSearchName(e.target.value)}
-          />
-        )
-      },
-      {
-        Header: 'Probe version',
-        id: 'probeversion',
-        minWidth: 80,
-        accessor: e => (
-          e.probeversion ?
-            <ProbeVersionLink
-              publicView={publicView}
-              probeversion={
-                (type === 'metrictemplates' && isTenantSchema) ?
-                  (searchOSGroups.search_ostag === 'CentOS 6' && e.centos6_probeversion) ?
-                    e.centos6_probeversion
-                  :
-                    (searchOSGroups === 'CentOS 7' && e.centos7_probeversion) ?
-                      e.centos7_probeversion
-                    :
-                      e.probeversion
-                :
-                  e.probeversion
-              }
-            />
-          :
-            ""
-        ),
-        Cell: row =>
-          <div style={{textAlign: 'center'}}>
-            {row.value}
-          </div>,
-        filterable: true,
-        Filter: (
-          <DefaultFilterComponent
-            field='probe version'
-            value={searchProbeversion}
-            onChange={e => setSearchProbeversion(e.target.value)}
-          />
-        )
-      },
-      {
-        Header: 'Type',
-        minWidth: 30,
-        accessor: 'mtype',
-        Cell: row =>
-          <div style={{textAlign: 'center'}}>
-            {row.value}
-          </div>,
-        filterable:true,
-        Filter: (
-          <DropdownFilterComponent
-            value={searchType}
-            onChange={e => setSearchType(e.target.value)}
-            data={listTypes}
-          />
-        )
-      },
-      {
-        Header: 'Tag',
-        minWidth: 30,
-        accessor: 'tags',
-        Cell: row =>
-          <div style={{textAlign: 'center'}}>
-            {
-              row.value.length === 0 ?
-                <Badge color='dark'>none</Badge>
-              :
-                row.value.map((tag, i) =>
-                  <Badge className={'mr-1'} key={i} color={tag === 'internal' ? 'success' : tag === 'deprecated' ? 'danger' : 'secondary'}>
-                    {tag}
-                  </Badge>
-                )
-            }
-          </div>,
-        filterable: true,
-        Filter: (
-          <DropdownFilterComponent
-            value={searchTag}
-            onChange={e => setSearchTag(e.target.value)}
-            data={listTags}
-          />
-        )
-      }
-    ];
-
-    if (type == 'metrictemplates' && userDetails && userDetails.is_superuser) {
-      columns.splice(
-        0,
-        0,
-        {
-          id: 'checkbox',
-          accessor: '',
-          Cell: ({original}) => {
-            return (
-              <div style={{display: 'flex', justifyContent: 'center'}}>
-                <input
-                  type='checkbox'
-                  className='checkbox'
-                  checked={selected[original.name] === true}
-                  onChange={() => toggleRow(original.name)}
-                />
-              </div>
-            );
-          },
-          Header: `${isTenantSchema ? 'Select all' : 'Delete'}`,
-          Filter: (
-            <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
-              <input
-                type='checkbox'
-                className='checkbox'
-                checked={selectAll === 1}
-                ref={input => {
-                  if (input) {
-                    input.indeterminate = selectAll === 2;
-                  }
-                }}
-                onChange={() => toggleSelectAll()}
-              />
-            </div>
-            ),
-          filterable: true,
-          sortable: false,
-          minWidth: 12
-        }
-      )
-    } else {
-      columns.splice(
-        0,
-        0,
-        {
-          Header: '#',
-          id: 'row',
-          minWidth: 12,
-          Cell: (row) =>
-            <div style={{textAlign: 'center'}}>
-              {row.index + 1}
-            </div>
-        }
-      )
-    }
-
-    if (type === 'metrics') {
-      columns.splice(
-        4,
-        0,
-        {
-          Header: 'Group',
-          minWidth: 30,
-          accessor: 'group',
-          Cell: row =>
-            <div style={{textAlign: 'center'}}>
-              {row.value}
-            </div>,
-          filterable: true,
-          Filter: (
-            <DropdownFilterComponent
-              value={searchOSGroups}
-              onChange={e => setSearchOSGroups(e.target.value)}
-              data={listOSGroups}
-            />
-          )
-        }
-      )
-    } else {
-      if (isTenantSchema) {
-        columns.splice(
-          4,
-          0,
-          {
-            Header: 'OS',
-            minWidth: 30,
-            accessor: 'ostag',
-            Cell: row =>
-              <div style={{textAlign: 'center'}}>
-                {row.value.join(', ')}
-              </div>,
-            filterable: true,
-            Filter: (
-              <DropdownFilterComponent
-                value={searchOSGroups}
-                onChange={e => setSearchOSGroups(e.target.value)}
-                data={listOSGroups}
-              />
-            )
-          }
-        )
-      }
-    }
-
-    var list_metric = listMetrics;
-
-    if (searchName) {
-      list_metric = doFilter(list_metric, 'name', searchName);
-    }
-
-    if (searchProbeversion) {
-      list_metric = doFilter(list_metric, 'probeversion', searchProbeversion);
-    }
-
-    if (searchType) {
-      list_metric = doFilter(list_metric, 'mtype', searchType);
-    }
-
-    if (searchOSGroups) {
-      type === 'metrics' ?
-        list_metric = doFilter(list_metric, 'group', searchOSGroups)
-      :
-        list_metric = list_metric.filter(row =>
-          `${row.ostag.join(', ')}`.toLowerCase().includes(searchOStag.toLowerCase())
-        );
-    }
-
-    if (searchTag) {
-      list_metric = list_metric.filter(row => {
-        if (searchTag === 'none')
-          return row.tags.length === 0;
-
-        else
-          return row.tags.includes(searchTag);
-      });
-    }
-
+  else if (!listMetricsLoading && !listTypesLoading && !listTagsLoading && !listOSGroupsLoading && !isTenantSchemaLoading && !userDetailsLoading && listMetrics) {
     if (type === 'metrics') {
       return (
         <BaseArgoView
@@ -764,13 +650,12 @@ export const ListOfMetrics = (props) => {
           listview={true}
           addnew={false}
         >
-          <ReactTable
-            data={list_metric}
-            columns={columns}
-            className='-highlight'
-            defaultPageSize={50}
-            rowsText='metrics'
-            getTheadThProps={() => ({className: 'table-active font-weight-bold p-2'})}
+          <BaseArgoTable
+            data={listMetrics}
+            columns={memoized_columns}
+            page_size={50}
+            resourcename='metrics'
+            filter={true}
           />
         </BaseArgoView>
       )
@@ -791,17 +676,16 @@ export const ListOfMetrics = (props) => {
               }
             </div>
             <div id="argo-contentwrap" className="ml-2 mb-2 mt-2 p-3 border rounded">
-              <ReactTable
-                data={list_metric}
-                columns={columns}
-                className='-highlight'
-                defaultPageSize={50}
-                rowsText='metrics'
-                getTheadThProps={() => ({className: 'table-active font-weight-bold p-2'})}
+              <BaseArgoTable
+                data={listMetrics}
+                columns={memoized_columns}
+                page_size={50}
+                resourcename='metrics'
+                filter={true}
               />
             </div>
           </>
-        )
+        );
       else
         return (
           <>
@@ -830,19 +714,19 @@ export const ListOfMetrics = (props) => {
               }
             </div>
             <div id='argo-contentwrap' className='ml-2 mb-2 mt-2 p-3 border rounded'>
-              <ReactTable
-                data={list_metric}
-                columns={columns}
-                className='-highlight'
-                defaultPageSize={50}
-                rowsText='metric templates'
-                getTheadThProps={() => ({className: 'table-active font-weight-bold p-2'})}
+              <BaseArgoTable
+                data={listMetrics}
+                columns={memoized_columns}
+                page_size={50}
+                resourcename='metric templates'
+                filter={true}
               />
             </div>
           </>
         );
-    }
-  }
+    };
+  } else
+    return null;
 };
 
 
