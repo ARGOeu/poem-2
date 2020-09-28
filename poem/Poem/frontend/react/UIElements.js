@@ -65,8 +65,8 @@ import {
   faTable,
   faTasks,
   faUser,
-  faWrench, faNewspaper}
-from '@fortawesome/free-solid-svg-icons';
+  faWrench,
+  faNewspaper} from '@fortawesome/free-solid-svg-icons';
 import { NotificationManager } from 'react-notifications';
 import { Field } from 'formik';
 import { Backend } from './DataManager';
@@ -1259,6 +1259,27 @@ export const DefaultColumnFilter = ({column: { filterValue, setFilter }}) => {
         </span>
       </div>
     </div>
+  )
+};
+
+
+export const SelectColumnFilter = ({column: { filterValue, setFilter, filterList }}) => {
+  const options = React.useMemo(() => filterList);
+
+  return (
+    <select
+      className='form-control custom-select'
+      style={{width: '100%'}}
+      value={filterValue}
+      onChange={e => setFilter(e.target.value || undefined)}
+    >
+      <option value=''>Show all</option>
+      {
+        options.map((option, i) => (
+          <option key={i} value={option}>{option}</option>
+        ))
+      }
+    </select>
   )
 };
 
