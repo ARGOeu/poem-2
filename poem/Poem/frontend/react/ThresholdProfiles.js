@@ -882,13 +882,6 @@ export const ThresholdsProfilesList = (props) => {
     'thresholdsprofiles_listview', async () => {
       let profiles = await backend.fetchData(apiUrl);
 
-      let n_elem = 10 - (profiles.length % 10);
-
-      for (let i = 0; i < n_elem; i++)
-        profiles.push(
-          {'description': '', 'groupname': '', 'name': ''}
-        );
-
       return profiles;
     }
   )

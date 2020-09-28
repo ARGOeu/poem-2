@@ -32,10 +32,6 @@ export const OperationsProfilesList = (props) => {
   const { data: listProfiles, error: error, isLoading: loading } = useQuery(
     'operationsprofiles_listview', async () => {
       let profiles = await webapi.fetchOperationsProfiles();
-      let n_elem = 10 - (profiles.length % 10);
-
-      for (let i = 0; i < n_elem; i++)
-        profiles.push({'name': '', 'description': ''});
 
       return profiles;
     }

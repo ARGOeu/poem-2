@@ -42,12 +42,7 @@ export const GroupList = (props) => {
     async function fetchData() {
       try {
         let json = await backend.fetchResult('/api/v2/internal/usergroups');
-        let groups = json[group];
-
-        let n_elem = 10 - (groups.length % 10);
-        let empty = Array(n_elem).fill(' ');
-
-        setListGroups(groups.concat(empty));
+        setListGroups(json[group]);
       } catch(err) {
         setError(err);
       }
