@@ -1051,13 +1051,6 @@ export const MetricProfilesList = (props) => {
     `metricprofiles_listview`, async () => {
       const fetched = await backend.fetchData(apiUrl)
 
-      // 10 is minimal pageSize and these numbers should be aligned
-      let n_elem = 10 - (fetched.length % 10)
-      for (let i = 0; i < n_elem; i++)
-        fetched.push(
-          {'description': '', 'groupname': '', 'name': ''}
-        )
-
       return fetched
     }
   );

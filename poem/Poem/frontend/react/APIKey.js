@@ -33,12 +33,6 @@ export const APIKeyList = (props) => {
       const fetchDataAndSet = async () => {
         let json = await backend.fetchData('/api/v2/internal/apikeys');
 
-        let n_elem = 5 - (json.length % 5);  // minimum page size is 5
-        for (let i = 0; i < n_elem; i++)
-          json.push({
-            'name': '', 'created': '', 'revoked': ''
-          })
-
         setKeys(json);
         setLoading(false);
       }
