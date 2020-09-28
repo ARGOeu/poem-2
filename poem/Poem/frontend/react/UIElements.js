@@ -1314,6 +1314,11 @@ export function BaseArgoTable({ columns, data, resourcename, page_size, filter=f
     usePagination
   );
 
+  var n_elem = 0;
+
+  if (page.length % page_size > 0)
+    n_elem = page_size - (page.length % page_size);
+
   return (
     <>
       <Row>
@@ -1377,6 +1382,19 @@ export function BaseArgoTable({ columns, data, resourcename, page_size, filter=f
                             return <td key={cell_index} className='align-middle text-center'>{(row_index + 1) + (pageIndex * pageSize)}</td>
                           else
                             return <td key={cell_index} className='align-middle'>{cell.render('Cell')}</td>
+                        })
+                      }
+                    </tr>
+                  )
+                })
+              }
+              {
+                [...Array(n_elem)].map((e, ri) => {
+                  return (
+                    <tr key={page.length + ri} style={{height: '49px'}}>
+                      {
+                        page[page.length - 1].cells.map((e, ci) => {
+                          return <td key={ci} className='align-middle'>{''}</td>
                         })
                       }
                     </tr>
