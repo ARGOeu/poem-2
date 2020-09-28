@@ -1284,7 +1284,7 @@ export const SelectColumnFilter = ({column: { filterValue, setFilter, filterList
 };
 
 
-export function BaseArgoTable({ columns, data, resourcename, page_size, filter=false }) {
+export function BaseArgoTable({ columns, data, resourcename, page_size, filter=false, selectable=false }) {
   const defaultColumn = React.useMemo(
     () => ({
       centering: false
@@ -1338,16 +1338,26 @@ export function BaseArgoTable({ columns, data, resourcename, page_size, filter=f
                       filter &&
                         <tr className='p-0 m-0'>
                           {headerGroup.headers.map((column, tri) => {
-                            if (tri === 0) return(
-                              <th className="p-1 m-1 align-middle" key={tri + 11}>
-                                <FontAwesomeIcon icon={faSearch}/>
-                              </th>
-                            )
-                            else return (
-                              <th className="p-1 m-1" key={tri + 11}>
-                                {column.canFilter ? column.render('Filter') : null}
-                              </th>
-                            )
+                            if (tri === 0) {
+                              if (selectable)
+                                return (
+                                  <th className="p-1 m-1 align-middle" key={tri + 11}>
+                                    {column.render('Filter')}
+                                  </th>
+                                )
+                              else
+                                return(
+                                  <th className="p-1 m-1 align-middle" key={tri + 11}>
+                                    <FontAwesomeIcon icon={faSearch}/>
+                                  </th>
+                                )
+                            } else {
+                              return (
+                                <th className="p-1 m-1" key={tri + 11}>
+                                  {column.canFilter ? column.render('Filter') : null}
+                                </th>
+                              )
+                            }
                           })}
                         </tr>
                     }
@@ -1363,7 +1373,7 @@ export function BaseArgoTable({ columns, data, resourcename, page_size, filter=f
                     <tr key={row_index} style={{height: '49px'}}>
                       {
                         row.cells.map((cell, cell_index) => {
-                          if (cell_index === 0)
+                          if (cell_index === 0 && !selectable)
                             return <td key={cell_index} className='align-middle text-center'>{(row_index + 1) + (pageIndex * pageSize)}</td>
                           else
                             return <td key={cell_index} className='align-middle'>{cell.render('Cell')}</td>
