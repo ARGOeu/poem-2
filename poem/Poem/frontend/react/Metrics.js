@@ -1462,7 +1462,7 @@ export const MetricChange = (props) => {
     var writePerm = false;
     if (session.active) {
       groups = session.userdetails.groups.metrics;
-      writePerm = session.userdetails.is_superuser || session.userdetails.groups.metrics.indexOf(metric.group >= 0);
+      writePerm = session.userdetails.is_superuser || session.userdetails.groups.metrics.indexOf(metric.group) >= 0;
     }
 
     if (!groups.includes(metric.group))
