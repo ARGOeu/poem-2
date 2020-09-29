@@ -1047,7 +1047,7 @@ export const MetricForm =
               <Field
                 type='text'
                 className='form-control'
-                value={probe.package}
+                value={values.type === 'Active' ? probe.package : ''}
                 disabled={true}
               />
             </InputGroup>
