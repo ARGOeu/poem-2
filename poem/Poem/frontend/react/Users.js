@@ -13,6 +13,7 @@ import {
   ParagraphTitle
 } from './UIElements';
 import ReactTable from 'react-table-6';
+import 'react-table-6/react-table.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
 import { Formik, Form, Field } from 'formik';
