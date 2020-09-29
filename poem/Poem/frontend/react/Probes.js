@@ -12,9 +12,10 @@ import {
   NotifyError,
   ErrorComponent,
   ParagraphTitle,
-  ModalAreYouSure
+  ModalAreYouSure,
+  DefaultColumnFilter,
+  BaseArgoTable
 } from './UIElements';
-import ReactTable from 'react-table-6';
 import {
   FormGroup,
   Label,
@@ -314,10 +315,6 @@ export const ProbeList = (props) => {
   const location = props.location;
   const publicView = props.publicView;
 
-  const [searchName, setSearchName] = useState('');
-  const [searchDescription, setSearchDescription] = useState('');
-  const [searchPackage, setSearchPackage] = useState('');
-
   const backend = new Backend();
 
   const { data: listProbes, error: listProbesError, isLoading: listProbesLoading } = useQuery(
@@ -334,111 +331,55 @@ export const ProbeList = (props) => {
     }
   );
 
+  const columns = React.useMemo(() => [
+    {
+      Header: '#',
+      accessor: null,
+      column_width: '2%'
+    },
+    {
+      Header: 'Name',
+      column_width: '20%',
+      accessor: 'name',
+      Cell: e =>
+        <Link to={`/ui/${publicView ? 'public_' : ''}probes/${e.value}`}>
+          {e.value}
+        </Link>,
+      Filter: DefaultColumnFilter
+    },
+    {
+      Header: '#versions',
+      accessor: 'nv',
+      column_width: '3%',
+      Cell: e =>
+        <div style={{textAlign: 'center'}}>
+          <Link to={`/ui/${publicView ? 'public_' : ''}probes/${e.row.original.name}/history`}>
+            {e.value}
+          </Link>
+        </div>,
+      disableFilters: true
+    },
+    {
+      Header: 'Package',
+      column_width: '20%',
+      accessor: 'package',
+      Filter: DefaultColumnFilter
+    },
+    {
+      Header: 'Description',
+      column_width: '55%',
+      accessor: 'description',
+      Filter: DefaultColumnFilter
+    }
+  ]);
+
   if (listProbesLoading || isTenantSchemaLoading)
     return (<LoadingAnim/>);
 
   else if (listProbesError)
     return (<ErrorComponent error={listProbesError.message}/>);
 
-  else {
-    const columns = [
-      {
-        Header: '#',
-        id: 'row',
-        minWidth: 12,
-        Cell: (row) =>
-          <div style={{textAlign: 'center'}}>
-            {row.index + 1}
-          </div>
-      },
-      {
-        Header: 'Name',
-        id: 'name',
-        minWidth: 80,
-        accessor: e =>
-          <Link to={`/ui/${publicView ? 'public_' : ''}probes/${e.name}`}>
-            {e.name}
-          </Link>,
-        filterable: true,
-        Filter: (
-          <input
-            value={searchName}
-            onChange={e => setSearchName(e.target.value)}
-            placeholder='Search by name'
-            style={{width: "100%"}}
-          />
-        )
-      },
-      {
-        Header: '#versions',
-        id: 'nv',
-        minWidth: 25,
-        accessor: e =>
-          <Link to={`/ui/${publicView ? 'public_' : ''}probes/${e.name}/history`}>
-            {e.nv}
-          </Link>,
-        Cell: row =>
-          <div style={{textAlign: 'center'}}>
-            {row.value}
-          </div>
-      },
-      {
-        Header: 'Package',
-        minWidth: 120,
-        accessor: 'package',
-        filterable: true,
-        Filter: (
-          <input
-            type='text'
-            placeholder='Search by package'
-            value={searchPackage}
-            onChange={e => setSearchPackage(e.target.value)}
-            style={{width: '100%'}}
-          />
-        ),
-        filterMethod:
-          (filter, row) =>
-            row[filter.id] !== undefined ? String(row[filter.id]).toLowerCase().includes(filter.value.toLowerCase()) : true
-      },
-      {
-        Header: 'Description',
-        minWidth: 200,
-        accessor: 'description',
-        filterable: true,
-        Filter: (
-          <input
-            type='text'
-            placeholder='Search by description'
-            value={searchDescription}
-            onChange={e=> setSearchDescription(e.target.value)}
-            style={{width: '100%'}}
-          />
-        ),
-        filterMethod:
-          (filter, row) =>
-            row[filter.id] !== undefined ? String(row[filter.id]).toLowerCase().includes(filter.value.toLowerCase()) : true
-      }
-    ];
-
-    var list_probe = listProbes;
-    if (searchName) {
-      list_probe = list_probe.filter(row =>
-        row.name.toLowerCase().includes(searchName.toLowerCase())
-      );
-    };
-
-    if (searchDescription) {
-      list_probe = list_probe.filter(row =>
-        row.description.toLowerCase().includes(searchDescription.toLowerCase())
-      );
-    };
-
-    if (searchPackage) {
-      list_probe = list_probe.filter(row =>
-        row.package.toLowerCase().includes(searchPackage.toLowerCase())
-      );
-    };
-
+  else if (!listProbesLoading && !isTenantSchemaLoading && listProbes) {
     return (
       <BaseArgoView
         resourcename='probe'
@@ -446,17 +387,17 @@ export const ProbeList = (props) => {
         listview={true}
         addnew={!isTenantSchema && !publicView}
       >
-        <ReactTable
-          data={list_probe}
+        <BaseArgoTable
+          data={listProbes}
           columns={columns}
-          className='-highlight'
-          defaultPageSize={50}
-          rowsText='probes'
-          getTheadThProps={() => ({className: 'table-active font-weight-bold p-2'})}
+          page_size={50}
+          resourcename='probes'
+          filter={true}
         />
       </BaseArgoView>
     );
-  };
+  } else
+    return null;
 };
 
 
