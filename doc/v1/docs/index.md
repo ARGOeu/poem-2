@@ -19,6 +19,7 @@
     - [Metric templates](tenant_metric_templates.md)
 - [Probes](tenant_probes.md)
 - [Metrics](tenant_metrics.md)
+- [Service types](tenant_servicetypes.md)
 - [Metric profiles](tenant_metric_profiles.md)
 - [Aggregation profiles](tenant_aggregation_profiles.md)
 - [Thresholds profiles](tenant_thresholds_profiles.md)
