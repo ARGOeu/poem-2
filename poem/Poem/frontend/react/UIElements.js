@@ -1319,6 +1319,63 @@ export function BaseArgoTable({ columns, data, resourcename, page_size, filter=f
   if (page.length % page_size > 0)
     n_elem = page_size - (page.length % page_size);
 
+  let table_body = undefined;
+
+  if (page.length === 0) {
+    let n1 = Math.ceil(page_size / 2);
+    table_body = <tbody>
+      {
+        [...Array(page_size)].map((e, ri) => {
+          return (
+            <tr key={ri}>
+              {
+                ri === n1 - 1 ?
+                  <td colSpan={columns.length} style={{height: '49px'}} className='align-middle text-center text-muted'>{`No ${resourcename}`}</td>
+                :
+                  [...Array(columns.length)].map((e, ci) =>
+                    <td style={{height: '49px'}} key={ci} className='align-middle'>{''}</td>
+                  )
+              }
+            </tr>
+          )
+        })
+      }
+    </tbody>
+  } else {
+    table_body = <tbody>
+      {
+        page.map((row, row_index) => {
+          prepareRow(row);
+          return (
+            <tr key={row_index} style={{height: '49px'}}>
+              {
+                row.cells.map((cell, cell_index) => {
+                  if (cell_index === 0 && !selectable)
+                    return <td key={cell_index} className='align-middle text-center'>{(row_index + 1) + (pageIndex * pageSize)}</td>
+                  else
+                    return <td key={cell_index} className='align-middle'>{cell.render('Cell')}</td>
+                })
+              }
+            </tr>
+          )
+        })
+      }
+      {
+        [...Array(n_elem)].map((e, ri) => {
+          return (
+            <tr key={page.length + ri} style={{height: '49px'}}>
+              {
+                [...Array(columns.length)].map((e, ci) => {
+                  return <td key={ci} className='align-middle'>{''}</td>
+                })
+              }
+            </tr>
+          )
+        })
+      }
+    </tbody>
+  };
+
   return (
     <>
       <Row>
@@ -1370,38 +1427,7 @@ export function BaseArgoTable({ columns, data, resourcename, page_size, filter=f
                 ))
               }
             </thead>
-            <tbody>
-              {
-                page.map((row, row_index) => {
-                  prepareRow(row);
-                  return (
-                    <tr key={row_index} style={{height: '49px'}}>
-                      {
-                        row.cells.map((cell, cell_index) => {
-                          if (cell_index === 0 && !selectable)
-                            return <td key={cell_index} className='align-middle text-center'>{(row_index + 1) + (pageIndex * pageSize)}</td>
-                          else
-                            return <td key={cell_index} className='align-middle'>{cell.render('Cell')}</td>
-                        })
-                      }
-                    </tr>
-                  )
-                })
-              }
-              {
-                [...Array(n_elem)].map((e, ri) => {
-                  return (
-                    <tr key={page.length + ri} style={{height: '49px'}}>
-                      {
-                        page[page.length - 1].cells.map((e, ci) => {
-                          return <td key={ci} className='align-middle'>{''}</td>
-                        })
-                      }
-                    </tr>
-                  )
-                })
-              }
-            </tbody>
+            {table_body}
           </Table>
         </Col>
       </Row>
