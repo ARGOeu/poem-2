@@ -10,11 +10,12 @@ import{
   Checkbox,
   NotifyError,
   ErrorComponent,
-  DropdownFilterComponent,
   NotifyWarn,
-  ParagraphTitle
+  ParagraphTitle,
+  DefaultColumnFilter,
+  SelectColumnFilter,
+  BaseArgoTable
 } from './UIElements';
-import ReactTable from 'react-table-6';
 import {
   FormGroup,
   FormText,
@@ -26,6 +27,7 @@ import {
 } from 'reactstrap';
 import { Formik, Form, Field } from 'formik';
 import * as Yup from 'yup';
+import { useQuery } from 'react-query';
 
 
 export const PackageChange = PackageComponent();
@@ -50,150 +52,96 @@ const PackageSchema = Yup.object().shape({
 !!(value.repo_6 || value.repo_7));
 
 
-export class PackageList extends Component {
-    constructor(props) {
-      super(props);
+export const PackageList = (props) => {
+  const location = props.location;
+  const backend = new Backend();
 
-      this.location = props.location;
-      this.backend = new Backend();
+  const { data: listPackages, error: errorListPackages, isLoading: loadingListPackages } = useQuery(
+    'package_listview', async () => {
+      let pkgs = await backend.fetchData('/api/v2/internal/packages');
+      return pkgs;
+    }
+  );
 
-      this.state = {
-        loading: false,
-        list_packages: null,
-        list_repos: null,
-        search_name: '',
-        search_repo: '',
-        error: null,
-        isTenantSchema: null
-      };
-    };
+  const { data: listRepos, error: errorListRepos, isLoading: loadingListRepos } = useQuery(
+    'package_listview_repos', async () => {
+      let repos = await backend.fetchData('/api/v2/internal/yumrepos');
+      let list_repos = [];
+      repos.forEach(r => list_repos.push(`${r.name} (${r.tag})`));
+      return list_repos;
+    }
+  );
 
-    async componentDidMount() {
-      this.setState({loading: true});
+  const { data: isTenantSchema, isLoading: loadingIsTenantSchema } = useQuery(
+    'session_istenantschema', async () => {
+      let schema = await backend.isTenantSchema();
+      return schema;
+    }
+  );
 
-      try {
-        let pkgs = await this.backend.fetchData('/api/v2/internal/packages');
-        let repos = await this.backend.fetchData('/api/v2/internal/yumrepos');
-        let isTenantSchema = await this.backend.isTenantSchema();
-        let list_repos = [];
-        repos.forEach(e => list_repos.push(e.name + ' (' + e.tag + ')'));
-        this.setState({
-          list_packages: pkgs,
-          list_repos: list_repos,
-          loading: false,
-          isTenantSchema: isTenantSchema
-        });
-      } catch(err) {
-        this.setState({
-          error: err,
-          loading: false
-        });
-      };
-    };
+  const columns = React.useMemo(() => [
+    {
+      Header: '#',
+      accessor: null,
+      column_width: '2%',
+    },
+    {
+      Header: 'Name',
+      accessor: 'name',
+      column_width: '44%',
+      Cell: e =>
+        <Link to={`/ui/${isTenantSchema ? 'administration/' : ''}packages/${e.value}-${e.row.original.version}`}>{e.value}</Link>,
+      Filter: DefaultColumnFilter
+    },
+    {
+      Header: 'Version',
+      accessor: 'version',
+      column_width: '10%',
+      Cell: row =>
+        <div style={{textAlign: 'center'}}>
+          {row.value}
+        </div>,
+      disableFilters: true
+    },
+    {
+      Header: 'Repo',
+      accessor: 'repos',
+      Cell: row =>
+        <div style={{textAlign: 'center'}}>
+          {row.value.join(', ')}
+        </div>,
+      Filter: SelectColumnFilter,
+      filterList: listRepos
+    }
+  ]);
 
-    render() {
-      var { list_packages, isTenantSchema, loading, error } = this.state;
-      let packagelink = undefined;
+  if (loadingListPackages || loadingListRepos || loadingIsTenantSchema)
+    return (<LoadingAnim/>);
 
-      if (!isTenantSchema)
-        packagelink = '/ui/packages/';
+  else if (errorListPackages)
+    return (<ErrorComponent error={errorListPackages}/>);
 
-      else
-        packagelink = '/ui/administration/packages/'
+  else if (errorListRepos)
+    return (<ErrorComponent error={errorListRepos}/>);
 
-      const columns = [
-        {
-          Header: '#',
-          id: 'row',
-          minWidth: 12,
-          Cell: (row) =>
-            <div style={{textAlign: 'center'}}>
-              {row.index + 1}
-            </div>
-        },
-        {
-          Header: 'Name',
-          id: 'name',
-          minWidth: 80,
-          accessor: e =>
-            <Link to={packagelink + e.name + '-' + e.version}>{e.name}</Link>,
-          filterable: true,
-          Filter: (
-            <input
-              value={this.state.search_name}
-              onChange={e => this.setState({search_name: e.target.value})}
-              placeholder='Search by name'
-              style={{width: '100%'}}
-            />
-          )
-        },
-        {
-          Header: 'Version',
-          id: 'version',
-          accessor: 'version',
-          minWidth: 12,
-          Cell: row =>
-            <div style={{textAlign: 'center'}}>
-              {row.value}
-            </div>
-        },
-        {
-          Header: 'Repo',
-          id: 'repo',
-          accessor: 'repos',
-          Cell: row =>
-            <div style={{textAlign: 'center'}}>
-              {row.value.join(', ')}
-            </div>,
-          filterable: true,
-          Filter:
-            <DropdownFilterComponent
-              value={this.state.repo}
-              onChange={e => this.setState({search_repo: e.target.value})}
-              data={this.state.list_repos}
-            />
-        }
-      ];
-
-      if (this.state.search_name) {
-        list_packages = list_packages.filter(row =>
-          row.name.toLowerCase().includes(this.state.search_name.toLowerCase())
-        );
-      };
-
-      if (this.state.search_repo) {
-        list_packages = list_packages.filter(
-          row =>
-            `${row.repos.join(', ')}`.toLowerCase().includes(this.state.search_repo.toLowerCase())
-        );
-      };
-
-      if (loading)
-        return (<LoadingAnim/>);
-
-      else if (error)
-        return (<ErrorComponent error={error}/>);
-
-      else if (!loading && list_packages) {
-        return (
-          <BaseArgoView
-            resourcename='package'
-            location={this.location}
-            listview={true}
-          >
-            <ReactTable
-              data={list_packages}
-              columns={columns}
-              className='-highlight'
-              defaultPageSize={50}
-              rowsText='packages'
-              getTheadThProps={() => ({className: 'table-active font-weight-bold p-2'})}
-            />
-          </BaseArgoView>
-        );
-      } else
-        return null;
-    };
+  else if (!loadingListPackages && !loadingListRepos && !loadingIsTenantSchema && listPackages) {
+    return (
+      <BaseArgoView
+        resourcename='package'
+        location={location}
+        listview={true}
+      >
+        <BaseArgoTable
+          data={listPackages}
+          columns={columns}
+          page_size={30}
+          resourcename='packages'
+          filter={true}
+        />
+      </BaseArgoView>
+    );
+  } else
+    return null;
 };
 
 
