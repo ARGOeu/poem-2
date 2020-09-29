@@ -1316,16 +1316,16 @@ export function BaseArgoTable({ columns, data, resourcename, page_size, filter=f
 
   var n_elem = 0;
 
-  if (page.length % page_size > 0)
-    n_elem = page_size - (page.length % page_size);
+  if (page.length % pageSize > 0)
+    n_elem = pageSize - (page.length % pageSize);
 
   let table_body = undefined;
 
   if (page.length === 0) {
-    let n1 = Math.ceil(page_size / 2);
+    let n1 = Math.ceil(pageSize / 2);
     table_body = <tbody>
       {
-        [...Array(page_size)].map((e, ri) => {
+        [...Array(pageSize)].map((e, ri) => {
           return (
             <tr key={ri}>
               {
@@ -1462,7 +1462,7 @@ export function BaseArgoTable({ columns, data, resourcename, page_size, filter=f
                 value={pageSize}
                 onChange={e => setPageSize(Number(e.target.value))}
               >
-                {[page_size, 2 * page_size, 3 * page_size].map(pageSize => (
+                {[5, 10, 15, 20, 30, 50, 100].map(pageSize => (
                   <option key={pageSize} value={pageSize}>
                     {pageSize} {`${resourcename}`}
                   </option>
