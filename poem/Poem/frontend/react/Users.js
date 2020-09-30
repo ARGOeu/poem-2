@@ -10,9 +10,9 @@ import {
   NotifyError,
   ModalAreYouSure,
   ErrorComponent,
-  ParagraphTitle
+  ParagraphTitle,
+  BaseArgoTable
 } from './UIElements';
-import ReactTable from 'react-table-6';
 import 'react-table-6/react-table.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
@@ -66,6 +66,7 @@ const ChangePasswordSchema = Yup.object().shape({
 
 
 import './Users.css';
+import { useQuery } from 'react-query';
 
 
 export const UserChange = UserChangeComponent(true);
@@ -261,126 +262,113 @@ const CommonUser = ({add, errors, values}) =>
   </>;
 
 
-export class UsersList extends Component
-{
-  constructor(props) {
-    super(props);
+export const UsersList = (props) => {
+    const location = props.location;
+    const backend = new Backend();
 
-    this.state = {
-      loading: false,
-      list_users: null,
-      error: null
-    }
-
-    this.location = props.location;
-    this.backend = new Backend();
-  }
-
-  async componentDidMount() {
-    this.setState({loading: true})
-
-    try {
-      let json = await this.backend.fetchData('/api/v2/internal/users');
-      this.setState({
-        list_users: json,
-        loading: false
-      });
-    } catch(err) {
-      this.setState({
-        error: err,
-        loading: false
-      });
-    };
-  }
-
-  render() {
-    const columns = [
-      {
-        Header: 'Username',
-        id: 'username',
-        accessor: e =>
-        <Link to={'/ui/administration/users/' + e.username}>
-          {e.username}
-        </Link>
-      },
-      {
-        Header: 'First name',
-        accessor: 'first_name',
-        Cell: row =>
-          <div style={{textAlign: 'center'}}>
-            {row.value}
-          </div>
-      },
-      {
-        Header: 'Last name',
-        accessor: 'last_name',
-        Cell: row =>
-          <div style={{textAlign: 'center'}}>
-            {row.value}
-          </div>
-      },
-      {
-        Header: 'Email address',
-        accessor: 'email',
-        Cell: row =>
-          <div style={{textAlign: 'center'}}>
-            {row.value}
-          </div>
-      },
-      {
-        id: 'is_superuser',
-        Header: 'Superuser status',
-        Cell: row =>
-          <div style={{textAlign: "center"}}
-          >{row.value}</div>,
-        accessor: d =>
-        d.is_superuser ?
-          <FontAwesomeIcon icon={faCheckCircle} style={{color: "#339900"}}/>
-        :
-          <FontAwesomeIcon icon={faTimesCircle} style={{color: "#CC0000"}}/>
-      },
-      {
-        Header: 'Active status',
-        id: 'is_active',
-        Cell: row =>
-          <div style={{textAlign: "center"}}
-          >{row.value}</div>,
-        accessor: d =>
-          d.is_active ?
-            <FontAwesomeIcon icon={faCheckCircle} style={{color: "#339900"}}/>
-          :
-            <FontAwesomeIcon icon={faTimesCircle} style={{color: "#CC0000"}}/>
+    const { data: listUsers, error: error, isLoading: loading } = useQuery(
+      'users_listview', async () => {
+        let json = await backend.fetchData('/api/v2/internal/users');
+        return json;
       }
-    ];
-    const { loading, list_users, error } = this.state;
+    );
 
-    if (loading)
-      return (<LoadingAnim />);
-
-    else if (error)
-      return (<ErrorComponent error={error}/>);
-
-    else if (!loading && list_users) {
-      return (
-        <BaseArgoView
-          resourcename='users'
-          location={this.location}
-          listview={true}>
-            <ReactTable
-              data={list_users}
-              columns={columns}
-              className="-highlight"
-              defaultPageSize={20}
-              rowsText='users'
-              getTheadThProps={() => ({className: 'table-active font-weight-bold p-2'})}
-            />
-          </BaseArgoView>
-      );
+  const columns = React.useMemo(() => [
+    {
+      Header: '#',
+      accessor: null,
+      column_width: '2%'
+    },
+    {
+      Header: 'Username',
+      accessor: 'username',
+      column_width: '26%',
+      Cell: e =>
+      <Link to={`/ui/administration/users/${e.value}`}>
+        {e.value}
+      </Link>
+    },
+    {
+      Header: 'First name',
+      accessor: 'first_name',
+      column_width: '26%',
+      Cell: row =>
+        <div style={{textAlign: 'center'}}>
+          {row.value}
+        </div>
+    },
+    {
+      Header: 'Last name',
+      accessor: 'last_name',
+      column_width: '26%',
+      Cell: row =>
+        <div style={{textAlign: 'center'}}>
+          {row.value}
+        </div>
+    },
+    {
+      Header: 'Email address',
+      accessor: 'email',
+      column_width: '26%',
+      Cell: row =>
+        <div style={{textAlign: 'center'}}>
+          {row.value}
+        </div>
+    },
+    {
+      accessor: 'is_superuser',
+      Header: 'Superuser',
+      column_width: '10%',
+      Cell: d =>
+        <div style={{textAlign: "center"}}>
+          {
+            d.value ?
+              <FontAwesomeIcon icon={faCheckCircle} style={{color: "#339900"}}/>
+            :
+              <FontAwesomeIcon icon={faTimesCircle} style={{color: "#CC0000"}}/>
+          }
+        </div>
+    },
+    {
+      Header: 'Active',
+      accessor: 'is_active',
+      column_width: '10%',
+      Cell: d =>
+        <div style={{textAlign: "center"}}>
+          {
+            d.value ?
+              <FontAwesomeIcon icon={faCheckCircle} style={{color: "#339900"}}/>
+            :
+              <FontAwesomeIcon icon={faTimesCircle} style={{color: "#CC0000"}}/>
+          }
+        </div>
     }
-    else
-      return null;
+  ]);
+
+  if (loading)
+    return (<LoadingAnim />);
+
+  else if (error)
+    return (<ErrorComponent error={error}/>);
+
+  else if (!loading && listUsers) {
+    return (
+      <BaseArgoView
+        resourcename='users'
+        location={location}
+        listview={true}>
+          <BaseArgoTable
+            data={listUsers}
+            columns={columns}
+            page_size={20}
+            resourcename='users'
+          />
+        </BaseArgoView>
+    );
   }
-}
+  else
+    return null;
+};
 
 
 function UserChangeComponent(isTenantSchema=false) {
