@@ -6,11 +6,12 @@ import {
   BaseArgoView,
   FancyErrorMessage,
   NotifyOk,
-  DropdownFilterComponent,
   NotifyError,
-  ErrorComponent
+  ErrorComponent,
+  DefaultColumnFilter,
+  SelectColumnFilter,
+  BaseArgoTable
 } from './UIElements';
-import ReactTable from 'react-table-6';
 import { Formik, Form, Field } from 'formik';
 import {
   FormGroup,
@@ -23,6 +24,7 @@ import {
   InputGroupAddon
 } from 'reactstrap';
 import * as Yup from 'yup';
+import { useQuery } from 'react-query';
 
 
 export const YumRepoChange = YumRepoComponent();
@@ -38,162 +40,95 @@ const RepoSchema = Yup.object().shape({
 });
 
 
-export class YumRepoList extends Component {
-  constructor(props) {
-    super(props);
+export const YumRepoList = (props) => {
+  const location = props.location;
 
-    this.location = props.location;
+  const backend = new Backend();
 
-    this.state = {
-      loading: false,
-      list_repos: null,
-      list_tags: null,
-      isTenantSchema: null,
-      search_name: '',
-      search_description: '',
-      search_tag: '',
-      error: null
-    };
-
-    this.backend = new Backend();
-  };
-
-  async componentDidMount() {
-    this.setState({loading: true});
-
-    try {
-      let repos = await this.backend.fetchData('/api/v2/internal/yumrepos');
-      let tags = await this.backend.fetchData('/api/v2/internal/ostags');
-      let isTenantSchema = await this.backend.isTenantSchema();
-      this.setState({
-        list_repos: repos,
-        list_tags: tags,
-        isTenantSchema: isTenantSchema,
-        loading: false
-      });
-    } catch(err) {
-      this.setState({
-        error: err,
-        loading: false
-      });
-    };
-  };
-
-  render() {
-    var { list_repos, isTenantSchema, loading, error } = this.state;
-    let repolink = undefined;
-
-    if (!isTenantSchema)
-      repolink = '/ui/yumrepos/';
-    else
-      repolink = '/ui/administration/yumrepos/'
-
-    const columns = [
-      {
-        Header: '#',
-        id: 'row',
-        minWidth: 12,
-        Cell: (row) =>
-          <div style={{textAlign: 'center'}}>
-            {row.index + 1}
-          </div>
-      },
-      {
-        Header: 'Name',
-        id: 'name',
-        minWidth: 80,
-        accessor: e =>
-          <Link to={repolink + e.name + '-' + e.tag.replace(/\s/g, '').toLowerCase()}>{e.name}</Link>,
-        filterable: true,
-        Filter: (
-          <input
-            value={this.state.search_name}
-            onChange={e => this.setState({search_name: e.target.value})}
-            placeholder='Search by name'
-            style={{width: '100%'}}
-          />
-        )
-      },
-      {
-        Header: 'Description',
-        accessor: 'description',
-        filterable: true,
-        Filter: (
-          <input
-            type='text'
-            placeholder='Search by description'
-            value={this.state.search_description}
-            onChange={e => this.setState({search_description: e.target.value})}
-            style={{width: '100%'}}
-          />
-        )
-      },
-      {
-        Header: 'Tag',
-        accessor: 'tag',
-        Cell: row =>
-          <div style={{textAlign: 'center'}}>
-            {row.value}
-          </div>,
-        filterable: true,
-        Filter: (
-          <DropdownFilterComponent
-            value={this.state.tag}
-            onChange={e => this.setState({search_tag: e.target.value})}
-            data={this.state.list_tags}
-          />
-        )
-      }
-    ];
-
-
-    if (this.state.search_name) {
-      list_repos = list_repos.filter(row =>
-          row.name.toLowerCase().includes(this.state.search_name.toLowerCase())
-        )
-    };
-
-    if (this.state.search_description) {
-      list_repos = list_repos.filter(row =>
-          row.description.toLowerCase().includes(this.state.search_description.toLowerCase())
-        )
-    };
-
-    if (this.state.search_tag) {
-      list_repos = list_repos.filter(row =>
-        row.tag.toLowerCase().includes(this.state.search_tag.toLowerCase())
-      )
-    };
-
-    if (loading)
-      return (<LoadingAnim/>);
-
-    else if (error)
-      return (<ErrorComponent error={error}/>);
-
-    else if (!loading && list_repos) {
-      return (
-        <BaseArgoView
-          resourcename='YUM repo'
-          location={this.location}
-          listview={true}
-          addnew={!isTenantSchema}
-        >
-          <ReactTable
-            data={list_repos}
-            columns={columns}
-            className='-highlight'
-            defaultPageSize={20}
-            rowsText='repos'
-            getTheadThProps={() => ({className: 'table-active font-weight-bold p-2'})}
-          />
-        </BaseArgoView>
-      )
+  const { data: listRepos, error: errorListRepos, isLoading: loadingListRepos } = useQuery(
+    'yumrepos_listview', async () => {
+      let repos = await backend.fetchData('/api/v2/internal/yumrepos');
+      return repos;
     }
-    else
-      return null;
+  );
+
+  const { data: listTags, error: errorListTags, isLoading: loadingListTags } = useQuery(
+    'yumrepos_listview_tags', async () => {
+      let tags = await backend.fetchData('/api/v2/internal/ostags');
+      return tags;
+    }
+  );
+
+  const { data: isTenantSchema, isLoading: loadingIsTenantSchema } = useQuery(
+    'session_istenantschema', async () => {
+      let schema = await backend.isTenantSchema();
+      return schema;
+    }
+  );
+
+  const columns = React.useMemo(() => [
+    {
+      Header: '#',
+      accessor: null,
+      column_width: '2%',
+    },
+    {
+      Header: 'Name',
+      accessor: 'name',
+      column_width: '20%',
+      Cell: e =>
+        <Link to={`/ui/${isTenantSchema ? 'administration/' : ''}yumrepos/${e.value}-${e.row.original.tag.replace(/\s/g, '').toLowerCase()}`}>{e.value}</Link>,
+      Filter: DefaultColumnFilter
+    },
+    {
+      Header: 'Description',
+      accessor: 'description',
+      column_width: '68%',
+      Filter: DefaultColumnFilter
+    },
+    {
+      Header: 'Tag',
+      accessor: 'tag',
+      Cell: row =>
+        <div style={{textAlign: 'center'}}>
+          {row.value}
+        </div>,
+      Filter: SelectColumnFilter,
+      filterList: listTags
+    }
+  ]);
+
+  if (loadingListRepos || loadingListTags || loadingIsTenantSchema)
+    return (<LoadingAnim/>);
+
+  else if (errorListRepos)
+    return (<ErrorComponent error={errorListRepos}/>);
+
+  else if (errorListTags)
+    return (<ErrorComponent error={errorListTags}/>);
+
+  else if (!loadingListRepos && !loadingListTags && !loadingIsTenantSchema && listRepos) {
+    return (
+      <BaseArgoView
+        resourcename='YUM repo'
+        location={location}
+        listview={true}
+        addnew={!isTenantSchema}
+      >
+        <BaseArgoTable
+          data={listRepos}
+          columns={columns}
+          className='-highlight'
+          page_size={20}
+          resourcename='repos'
+          filter={true}
+        />
+      </BaseArgoView>
+    )
   }
-}
+  else
+    return null;
+};
 
 
 function YumRepoComponent(cloneview=false) {
