@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Backend } from './DataManager';
 import {
@@ -67,10 +67,6 @@ const ChangePasswordSchema = Yup.object().shape({
 
 import './Users.css';
 import { useQuery } from 'react-query';
-
-
-export const UserChange = UserChangeComponent(true);
-export const SuperAdminUserChange = UserChangeComponent();
 
 
 const CommonUser = ({add, errors, values}) =>
@@ -371,639 +367,626 @@ export const UsersList = (props) => {
 };
 
 
-function UserChangeComponent(isTenantSchema=false) {
-  return class extends Component {
-    constructor(props) {
-      super(props);
+export const UserChange = (props) => {
+  const user_name = props.match.params.user_name;
+  const addview = props.addview;
+  const isTenantSchema = props.isTenantSchema;
+  const location = props.location;
+  const history = props.history;
+  const querykey = `user_${addview ? 'addview' : `${user_name}_changeview`}`;
 
-      this.user_name = props.match.params.user_name;
-      this.addview = props.addview;
-      this.location = props.location;
-      this.history = props.history;
+  const backend = new Backend();
 
-      this.state = {
-        custuser: {
-          'pk': '',
-          'first_name': '',
-          'last_name': '',
-          'username': '',
-          'is_active': true,
-          'is_superuser': false,
-          'email': '',
-          'last_login': '',
-          'date_joined': ''
-        },
-        password: '',
-        userprofile: {
-          'displayname': '',
-          'subject': '',
-          'egiid': ''
-        },
-        usergroups: {
-          'aggregations': [],
-          'metrics': [],
-          'metricprofiles': [],
-          'thresholdsprofiles': []
-        },
-        allgroups: {
-          'metrics': [],
-          'aggregations': [],
-          'metricprofiles': [],
-          'thresholdsprofiles': []
-        },
-        loading: false,
-        areYouSureModal: false,
-        modalFunc: undefined,
-        modalTitle: undefined,
-        modalMsg: undefined,
-        userdetails: {'userdetails': {'username': ''}},
-        error: null
-      }
-
-      this.backend = new Backend();
-
-      this.toggleAreYouSure = this.toggleAreYouSure.bind(this);
-      this.toggleAreYouSureSetModal = this.toggleAreYouSureSetModal.bind(this);
-      this.onSubmitHandle = this.onSubmitHandle.bind(this);
-      this.doChange = this.doChange.bind(this);
-      this.doDelete = this.doDelete.bind(this);
-    }
-
-    toggleAreYouSure() {
-      this.setState(prevState =>
-        ({areYouSureModal: !prevState.areYouSureModal}));
-    }
-
-    toggleAreYouSureSetModal(msg, title, onyes) {
-      this.setState(prevState =>
-        ({areYouSureModal: !prevState.areYouSureModal,
-          modalFunc: onyes,
-          modalMsg: msg,
-          modalTitle: title,
-        }));
-    }
-
-    onSubmitHandle(values, action) {
-      let msg = undefined;
-      let title = undefined;
-
-      if (this.addview) {
-        msg = 'Are you sure you want to add user?';
-        title = 'Add user';
-      }
-      else {
-        msg = 'Are you sure you want to change user?';
-        title = 'Change user';
-      }
-      this.toggleAreYouSureSetModal(msg, title,
-        () => this.doChange(values, action));
-    }
-
-    async doChange(values, action) {
-      if (!this.addview) {
-        let response = await this.backend.changeObject(
-          '/api/v2/internal/users/',
-          {
-            pk: values.pk,
-            username: values.username,
-            first_name: values.first_name,
-            last_name: values.last_name,
-            email: values.email,
-            is_superuser: values.is_superuser,
-            is_active: values.is_active
-          }
-        );
-        if (!response.ok) {
-          let change_msg = '';
-          try {
-            let json = await response.json();
-            change_msg = json.detail;
-          } catch(err) {
-            change_msg = 'Error changing user';
-          };
-          NotifyError({
-            title: `Error: ${response.status} ${response.statusText}`,
-            msg: change_msg
-          });
-        } else {
-          if (isTenantSchema) {
-            let profile_response = await this.backend.changeObject(
-              '/api/v2/internal/userprofile/',
-              {
-                username: values.username,
-                displayname: values.displayname,
-                subject: values.subject,
-                egiid: values.egiid,
-                groupsofaggregations: values.groupsofaggregations,
-                groupsofmetrics: values.groupsofmetrics,
-                groupsofmetricprofiles: values.groupsofmetricprofiles,
-                groupsofthresholdsprofiles: values.groupsofthresholdsprofiles
-              }
-            );
-            if (profile_response.ok) {
-              NotifyOk({
-                msg: 'User successfully changed',
-                title: 'Changed',
-                callback: () => this.history.push('/ui/administration/users')
-              })
-            } else {
-              let change_msg = '';
-              try {
-                let json = await profile_response.json();
-                change_msg = json.detail;
-              } catch(err) {
-                change_msg = 'Error changing user profile'
-              };
-              NotifyError({
-                title: `Error: ${profile_response.status} ${profile_response.statusText}`,
-                msg: change_msg
-              });
-            };
-          } else {
-            NotifyOk({
-              msg: 'User successfully changed',
-              title: 'Changed',
-              callback: () => this.history.push('/ui/administration/users')
-            });
-          }
-        };
-      } else {
-        let response = await this.backend.addObject(
-          '/api/v2/internal/users/',
-          {
-            username: values.username,
-            password: values.password,
-            first_name: values.first_name,
-            last_name: values.last_name,
-            email: values.email,
-            is_superuser: values.is_superuser,
-            is_active: values.is_active
-          }
-        );
-        if (!response.ok) {
-          let add_msg = '';
-          try {
-            let json = await response.json();
-            add_msg = json.detail;
-          } catch(err) {
-            add_msg = 'Error adding user';
-          };
-          NotifyError({
-            title: `Error: ${response.status} ${response.statusText}`,
-            msg: add_msg
-          });
-        } else {
-          if (isTenantSchema) {
-            let profile_response = await this.backend.addObject(
-              '/api/v2/internal/userprofile/',
-              {
-                username: values.username,
-                displayname: values.displayname,
-                subject: values.subject,
-                egiid: values.egiid,
-                groupsofaggregations: values.groupsofaggregations,
-                groupsofmetrics: values.groupsofmetrics,
-                groupsofmetricprofiles: values.groupsofmetricprofiles,
-                groupsofthresholdsprofiles: values.groupsofthresholdsprofiles
-              }
-            );
-            if (profile_response.ok) {
-              NotifyOk({
-                msg: 'User successfully added',
-                title: 'Added',
-                callback: () => this.history.push('/ui/administration/users')
-              })
-            } else {
-              let add_msg = '';
-              try {
-                let json = await profile_response.json();
-                add_msg = json.detail;
-              } catch(err) {
-                add_msg = 'Error adding user profile';
-              };
-              NotifyError({
-                title: `Error: ${profile_response.status} ${profile_response.statusText}`,
-                msg: add_msg
-              });
-            };
-          } else {
-            NotifyOk({
-              msg: 'User successfully added',
-              title: 'Added',
-              callback: () => this.history.push('/ui/administration/users')
-            });
-          };
-        };
+  const { data: user, error: errorUser, isLoading: loadingUser } = useQuery(
+    `${querykey}`, async () => {
+      let user = {
+        'pk': '',
+        'first_name': '',
+        'last_name': '',
+        'username': '',
+        'is_active': true,
+        'is_superuser': false,
+        'email': '',
+        'last_login': '',
+        'date_joined': ''
       };
-    }
 
-    async doDelete(username) {
-      let response = await this.backend.deleteObject(`/api/v2/internal/users/${username}`);
-      if (response.ok) {
-        NotifyOk({
-          msg: 'User successfully deleted',
-          title: 'Deleted',
-          callback: () => this.history.push('/ui/administration/users')
-        })
-      } else {
-        let msg = '';
+      if (!addview)
+        user = await backend.fetchData(`/api/v2/internal/users/${user_name}`);
+
+      return user;
+    }
+  );
+
+  const { data: userProfile, error: errorUserProfile, isLoading: loadingUserProfile } = useQuery(
+    `${querykey}_userprofile`, async () => {
+      let userprofile = {
+        'displayname': '',
+        'subject': '',
+        'egiid': ''
+      };
+      if (isTenantSchema && !addview)
+        userprofile = await backend.fetchData(`/api/v2/internal/userprofile/${user_name}`);
+
+      return userprofile;
+    }
+  );
+
+  const { data: userGroups, error: errorUserGroups, isLoading: loadingUserGroups } = useQuery(
+    `${querykey}_usergroups`, async () => {
+      let usergroups = {
+        'aggregations': [],
+        'metrics': [],
+        'metricprofiles': [],
+        'thresholdsprofiles': []
+      };
+
+      if (isTenantSchema && !addview)
+        usergroups = await backend.fetchResult(`/api/v2/internal/usergroups/${user_name}`);
+
+      return usergroups;
+    }
+  );
+
+  const { data: allGroups, error: errorAllGroups, isLoading: loadingAllGroups } = useQuery(
+    'user_listview_allgroups', async () => {
+      let allgroups = {
+        'metrics': [],
+        'aggregations': [],
+        'metricprofiles': [],
+        'thresholdsprofiles': []
+      };
+
+      if (isTenantSchema)
+       allgroups = await backend.fetchResult('/api/v2/internal/usergroups');
+
+      return allgroups;
+    }
+  );
+
+  const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails } = useQuery(
+    'session_userdetails', async () => {
+      let arg = isTenantSchema ? true : false;
+      let session = await backend.isActiveSession(arg);
+
+      if (session.active)
+        return session.userdetails;
+    }
+  );
+
+  const [areYouSureModal, setAreYouSureModal] = useState(false);
+  const [modalFlag, setModalFlag] = useState(undefined);
+  const [modalTitle, setModalTitle] = useState(undefined);
+  const [modalMsg, setModalMsg] = useState(undefined);
+  const [formValues, setFormValues] = useState(undefined);
+
+  function toggleAreYouSure() {
+    setAreYouSureModal(!areYouSureModal);
+  };
+
+  function onSubmitHandle(values, action) {
+    let msg = `Are you sure you want to ${addview ? 'add' : 'change'} user?`;
+    let title = `${addview ? 'Add' : 'Change'} user`;
+
+    setModalMsg(msg);
+    setModalTitle(title);
+    setFormValues(values);
+    setModalFlag('submit');
+    toggleAreYouSure();
+  };
+
+  async function doChange() {
+    if (!addview) {
+      let response = await backend.changeObject(
+        '/api/v2/internal/users/',
+        {
+          pk: formValues.pk,
+          username: formValues.username,
+          first_name: formValues.first_name,
+          last_name: formValues.last_name,
+          email: formValues.email,
+          is_superuser: formValues.is_superuser,
+          is_active: formValues.is_active
+        }
+      );
+      if (!response.ok) {
+        let change_msg = '';
         try {
           let json = await response.json();
-          msg = json.detail;
+          change_msg = json.detail;
         } catch(err) {
-          msg = 'Error deleting user';
+          change_msg = 'Error changing user';
         };
         NotifyError({
           title: `Error: ${response.status} ${response.statusText}`,
-          msg: msg
+          msg: change_msg
         });
-      };
-    }
-
-    async componentDidMount() {
-      this.setState({loading: true})
-
-      try {
-        if (!this.addview) {
-          let user = await this.backend.fetchData(`/api/v2/internal/users/${this.user_name}`);
-          if (isTenantSchema) {
-            let userprofile = await this.backend.fetchData(`/api/v2/internal/userprofile/${this.user_name}`);
-            let usergroups = await this.backend.fetchResult(`/api/v2/internal/usergroups/${this.user_name}`);
-            let allgroups = await this.backend.fetchResult('/api/v2/internal/usergroups');
-            this.setState({
-              custuser: user,
-              userprofile: userprofile,
-              usergroups: usergroups,
-              allgroups: allgroups,
-              loading: false
-              });
+      } else {
+        if (isTenantSchema) {
+          let profile_response = await backend.changeObject(
+            '/api/v2/internal/userprofile/',
+            {
+              username: formValues.username,
+              displayname: formValues.displayname,
+              subject: formValues.subject,
+              egiid: formValues.egiid,
+              groupsofaggregations: formValues.groupsofaggregations,
+              groupsofmetrics: formValues.groupsofmetrics,
+              groupsofmetricprofiles: formValues.groupsofmetricprofiles,
+              groupsofthresholdsprofiles: formValues.groupsofthresholdsprofiles
+            }
+          );
+          if (profile_response.ok) {
+            NotifyOk({
+              msg: 'User successfully changed',
+              title: 'Changed',
+              callback: () => history.push('/ui/administration/users')
+            })
           } else {
-            let userdetails = await this.backend.isActiveSession(false);
-            this.setState({
-              custuser: user,
-              userdetails: userdetails,
-              loading: false
-            });
-          }
-        } else {
-          if (isTenantSchema) {
-            let groups = await this.backend.fetchResult('/api/v2/internal/usergroups');
-            this.setState({
-                allgroups: groups,
-                loading: false
-            });
-          } else {
-            this.setState({
-              loading: false
+            let change_msg = '';
+            try {
+              let json = await profile_response.json();
+              change_msg = json.detail;
+            } catch(err) {
+              change_msg = 'Error changing user profile'
+            };
+            NotifyError({
+              title: `Error: ${profile_response.status} ${profile_response.statusText}`,
+              msg: change_msg
             });
           };
-        };
-      } catch(err) {
-        this.setState({
-          error: err,
-          loading: false
-        });
-      };
-    }
-
-    render() {
-      const { custuser, userprofile, usergroups, allgroups, loading,
-      error } = this.state;
-
-      if (loading)
-        return(<LoadingAnim />)
-
-      else if (error)
-        return (<ErrorComponent error={error}/>);
-
-      else if (!loading) {
-        if (isTenantSchema) {
-
-          return (
-            <BaseArgoView
-              resourcename="users"
-              location={this.location}
-              addview={this.addview}
-              history={false}
-              modal={true}
-              state={this.state}
-              toggle={this.toggleAreYouSure}>
-              <Formik
-                initialValues = {{
-                  addview: this.addview,
-                  pk: custuser.pk,
-                  first_name: custuser.first_name,
-                  last_name: custuser.last_name,
-                  username: custuser.username,
-                  password: '',
-                  confirm_password: '',
-                  is_active: custuser.is_active,
-                  is_superuser: custuser.is_superuser,
-                  email: custuser.email,
-                  last_login: custuser.last_login,
-                  date_joined: custuser.date_joined,
-                  groupsofaggregations: usergroups.aggregations,
-                  groupsofmetrics: usergroups.metrics,
-                  groupsofmetricprofiles: usergroups.metricprofiles,
-                  groupsofthresholdsprofiles: usergroups.thresholdsprofiles,
-                  displayname: userprofile.displayname,
-                  subject: userprofile.subject,
-                  egiid: userprofile.egiid
-                }}
-                validationSchema={UserSchema}
-                onSubmit = {(values, actions) => this.onSubmitHandle(values, actions)}
-                render = {props => (
-                  <Form>
-                    <CommonUser
-                      {...props}
-                      add={this.addview}
-                    />
-                    {
-                      isTenantSchema &&
-                        <>
-                          <FormGroup>
-                            <ParagraphTitle title='POEM user permissions'/>
-                            <Row>
-                              <Col md={6}>
-                                <Label for="groupsofmetrics" className="grouplabel">Groups of metrics</Label>
-                                <Field
-                                  component="select"
-                                  name="groupsofmetrics"
-                                  id='select-field'
-                                  onChange={evt =>
-                                    props.setFieldValue(
-                                      "groupsofmetrics",
-                                      [].slice
-                                        .call(evt.target.selectedOptions)
-                                        .map(option => option.value)
-                                    )
-                                  }
-                                  multiple={true}
-                                >
-                                  {allgroups.metrics.map( s => (
-                                    <option key={s} value={s}>
-                                      {s}
-                                    </option>
-                                  ))}
-                                </Field>
-                                <FormText color="muted">
-                                  The groups of metrics that user will control. Hold down "Control" or "Command" on a Mac to select more than one.
-                                </FormText>
-                              </Col>
-                            </Row>
-                            <Row>
-                              <Col md={6}>
-                                <Label for="groupsofmetricprofiles" className="grouplabel">Groups of metric profiles</Label>
-                                <Field
-                                  component="select"
-                                  name="groupsofmetricprofiles"
-                                  id='select-field'
-                                  onChange={evt =>
-                                    props.setFieldValue(
-                                      "groupsofmetricprofiles",
-                                      [].slice
-                                        .call(evt.target.selectedOptions)
-                                        .map(option => option.value)
-                                    )
-                                  }
-                                  multiple={true}
-                                >
-                                  {allgroups.metricprofiles.map( s => (
-                                    <option key={s} value={s}>
-                                      {s}
-                                    </option>
-                                  ))}
-                                </Field>
-                                <FormText color="muted">
-                                  The groups of metric profiles that user will control. Hold down "Control" or "Command" on a Mac to select more than one.
-                              </FormText>
-                              </Col>
-                            </Row>
-                            <Row>
-                              <Col md={6}>
-                                <Label for="groupsofaggregations" className="grouplabel">Groups of aggregations</Label>
-                                <Field
-                                  component="select"
-                                  name="groupsofaggregations"
-                                  id='select-field'
-                                  onChange={evt =>
-                                    props.setFieldValue(
-                                      "groupsofaggregations",
-                                      [].slice
-                                        .call(evt.target.selectedOptions)
-                                        .map(option => option.value)
-                                    )
-                                  }
-                                  multiple={true}
-                                >
-                                  {allgroups.aggregations.map( s => (
-                                    <option key={s} value={s}>
-                                      {s}
-                                    </option>
-                                  ))}
-                                </Field>
-                                <FormText color="muted">
-                                  The groups of aggregations that user will control. Hold down "Control" or "Command" on a Mac to select more than one.
-                                </FormText>
-                              </Col>
-                            </Row>
-                            <Row>
-                              <Col md={6}>
-                                <Label for="groupsofthresholdsprofiles" className="grouplabel">Groups of thresholds profiles</Label>
-                                <Field
-                                  component="select"
-                                  name="groupsofthresholdsprofiles"
-                                  id='select-field'
-                                  onChange={evt =>
-                                    props.setFieldValue(
-                                      "groupsofthresholdsprofiles",
-                                      [].slice
-                                        .call(evt.target.selectedOptions)
-                                        .map(option => option.value)
-                                    )
-                                  }
-                                  multiple={true}
-                                >
-                                  {allgroups.thresholdsprofiles.map( s => (
-                                    <option key={s} value={s}>
-                                      {s}
-                                    </option>
-                                  ))}
-                                </Field>
-                                <FormText color="muted">
-                                  The groups of thresholds profiles that user will control. Hold down "Control" or "Command" on a Mac to select more than one.
-                              </FormText>
-                              </Col>
-                            </Row>
-                          </FormGroup>
-                          <FormGroup>
-                            <ParagraphTitle title='Additional information'/>
-                            <Row>
-                              <Col md={12}>
-                                <InputGroup>
-                                  <InputGroupAddon addonType='prepend'>distinguishedName</InputGroupAddon>
-                                  <Field
-                                    type="text"
-                                    name="subject"
-                                    required={false}
-                                    className="form-control"
-                                    id="distinguishedname"
-                                  />
-                                </InputGroup>
-                              </Col>
-                            </Row>
-                          </FormGroup>
-                          <FormGroup>
-                            <Row>
-                              <Col md={8}>
-                                <InputGroup>
-                                  <InputGroupAddon addonType="prepend">eduPersonUniqueId</InputGroupAddon>
-                                  <Field
-                                    type="text"
-                                    name="egiid"
-                                    required={false}
-                                    className="form-control"
-                                    id='eduid'
-                                  />
-                                </InputGroup>
-                              </Col>
-                            </Row>
-                          </FormGroup>
-                          <FormGroup>
-                            <Row>
-                              <Col md={6}>
-                                <InputGroup>
-                                  <InputGroupAddon addonType="prepend">displayName</InputGroupAddon>
-                                  <Field
-                                    type="text"
-                                    name="displayname"
-                                    required={false}
-                                    className="form-control"
-                                    id="displayname"
-                                  />
-                                </InputGroup>
-                              </Col>
-                            </Row>
-                          </FormGroup>
-                        </>
-                    }
-                    {
-                      <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
-                        {
-                          !this.addview ?
-                            <Button
-                              color="danger"
-                              onClick={() => {
-                                this.toggleAreYouSureSetModal('Are you sure you want to delete User?',
-                                'Delete user',
-                                () => this.doDelete(props.values.username))
-                              }}
-                            >
-                              Delete
-                            </Button>
-                          :
-                            <div></div>
-                        }
-                        <Button
-                          color="success"
-                          id="submit-button"
-                          type="submit"
-                        >
-                          Save
-                        </Button>
-                      </div>
-                    }
-                  </Form>
-                )}
-              />
-            </BaseArgoView>
-          )
         } else {
-          return (
-            <React.Fragment>
-              {
-                <ModalAreYouSure
-                  isOpen={this.state.areYouSureModal}
-                  toggle={this.toggleAreYouSure}
-                  title={this.state.modalTitle}
-                  msg={this.state.modalMsg}
-                  onYes={this.state.modalFunc}
-                />
-              }
-              <div className='d-flex align-items-center justify-content-between'>
-                <h2 className='ml-3 mt-1 mb-4'>{`${this.addview ? 'Add' : 'Change'} user`}</h2>
-                {
-                  (!this.addview && this.state.userdetails.userdetails.username === this.user_name) &&
-                    <Link
-                      className='btn btn-secondary'
-                      to={this.location.pathname + '/change_password'}
-                      role='button'
-                    >
-                      Change password
-                    </Link>
-                }
-              </div>
-              <div id='argo-contentwrap' className='ml-2 mb-2 mt-2 p-3 border rounded'>
-                <Formik
-                  initialValues = {{
-                    addview: this.addview,
-                    pk: custuser.pk,
-                    first_name: custuser.first_name,
-                    last_name: custuser.last_name,
-                    username: custuser.username,
-                    password: '',
-                    confirm_password: '',
-                    is_active: custuser.is_active,
-                    is_superuser: custuser.is_superuser,
-                    email: custuser.email,
-                    last_login: custuser.last_login,
-                    date_joined: custuser.date_joined
-                  }}
-                  validationSchema={UserSchema}
-                  onSubmit = {(values, actions) => this.onSubmitHandle(values, actions)}
-                  render = {props => (
-                    <Form>
-                      <CommonUser
-                        {...props}
-                        add={this.addview}
-                      />
-                      <div className='submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5'>
-                        {
-                          !this.addview ?
-                            <Button
-                              color='danger'
-                              onClick={() => {
-                                this.toggleAreYouSureSetModal(
-                                  `Are you sure you want to delete user ${this.user_name}?`,
-                                  'Delete user',
-                                  () => this.doDelete(props.values.username)
-                                )
-                              }}
-                            >
-                              Delete
-                            </Button>
-                          :
-                            <div></div>
-                        }
-                        <Button
-                          color='success'
-                          id='submit-button'
-                          type='submit'
-                        >
-                          Save
-                        </Button>
-                      </div>
-                    </Form>
-                  )}
-                />
-              </div>
-            </React.Fragment>
-          )
+          NotifyOk({
+            msg: 'User successfully changed',
+            title: 'Changed',
+            callback: () => history.push('/ui/administration/users')
+          });
         }
-      }
-    }
+      };
+    } else {
+      let response = await backend.addObject(
+        '/api/v2/internal/users/',
+        {
+          username: formValues.username,
+          password: formValues.password,
+          first_name: formValues.first_name,
+          last_name: formValues.last_name,
+          email: formValues.email,
+          is_superuser: formValues.is_superuser,
+          is_active: formValues.is_active
+        }
+      );
+      if (!response.ok) {
+        let add_msg = '';
+        try {
+          let json = await response.json();
+          add_msg = json.detail;
+        } catch(err) {
+          add_msg = 'Error adding user';
+        };
+        NotifyError({
+          title: `Error: ${response.status} ${response.statusText}`,
+          msg: add_msg
+        });
+      } else {
+        if (isTenantSchema) {
+          let profile_response = await backend.addObject(
+            '/api/v2/internal/userprofile/',
+            {
+              username: formValues.username,
+              displayname: formValues.displayname,
+              subject: formValues.subject,
+              egiid: formValues.egiid,
+              groupsofaggregations: formValues.groupsofaggregations,
+              groupsofmetrics: formValues.groupsofmetrics,
+              groupsofmetricprofiles: formValues.groupsofmetricprofiles,
+              groupsofthresholdsprofiles: formValues.groupsofthresholdsprofiles
+            }
+          );
+          if (profile_response.ok) {
+            NotifyOk({
+              msg: 'User successfully added',
+              title: 'Added',
+              callback: () => history.push('/ui/administration/users')
+            })
+          } else {
+            let add_msg = '';
+            try {
+              let json = await profile_response.json();
+              add_msg = json.detail;
+            } catch(err) {
+              add_msg = 'Error adding user profile';
+            };
+            NotifyError({
+              title: `Error: ${profile_response.status} ${profile_response.statusText}`,
+              msg: add_msg
+            });
+          };
+        } else {
+          NotifyOk({
+            msg: 'User successfully added',
+            title: 'Added',
+            callback: () => history.push('/ui/administration/users')
+          });
+        };
+      };
+    };
   };
-}
+
+  async function doDelete() {
+    let response = await backend.deleteObject(`/api/v2/internal/users/${user_name}`);
+    if (response.ok) {
+      NotifyOk({
+        msg: 'User successfully deleted',
+        title: 'Deleted',
+        callback: () => history.push('/ui/administration/users')
+      })
+    } else {
+      let msg = '';
+      try {
+        let json = await response.json();
+        msg = json.detail;
+      } catch(err) {
+        msg = 'Error deleting user';
+      };
+      NotifyError({
+        title: `Error: ${response.status} ${response.statusText}`,
+        msg: msg
+      });
+    };
+  };
+
+  if (loadingUser || loadingUserProfile || loadingUserGroups || loadingAllGroups || loadingUserDetails)
+    return(<LoadingAnim />)
+
+  else if (errorUser)
+    return (<ErrorComponent error={errorUser}/>);
+
+  else if (errorUserProfile)
+    return (<ErrorComponent error={errorUserProfile}/>);
+
+  else if (errorUserGroups)
+    return (<ErrorComponent error={errorUserGroups}/>);
+
+  else if (errorAllGroups)
+    return (<ErrorComponent error={errorAllGroups}/>);
+
+  else if (errorUserDetails)
+    return (<ErrorComponent error={errorUserDetails}/>);
+
+  else if (!loadingUser && !loadingUserProfile && !loadingUserGroups && !loadingAllGroups && !loadingUserDetails && user) {
+    if (isTenantSchema) {
+      return (
+        <>
+          <ModalAreYouSure
+            isOpen={areYouSureModal}
+            toggle={toggleAreYouSure}
+            title={modalTitle}
+            msg={modalMsg}
+            onYes={modalFlag === 'submit' ? doChange : modalFlag === 'delete' ? doDelete : undefined}
+          />
+          <BaseArgoView
+            resourcename="users"
+            location={location}
+            addview={addview}
+            history={false}
+          >
+            <Formik
+              initialValues = {{
+                addview: addview,
+                pk: user.pk,
+                first_name: user.first_name,
+                last_name: user.last_name,
+                username: user.username,
+                password: '',
+                confirm_password: '',
+                is_active: user.is_active,
+                is_superuser: user.is_superuser,
+                email: user.email,
+                last_login: user.last_login,
+                date_joined: user.date_joined,
+                groupsofaggregations: userGroups.aggregations,
+                groupsofmetrics: userGroups.metrics,
+                groupsofmetricprofiles: userGroups.metricprofiles,
+                groupsofthresholdsprofiles: userGroups.thresholdsprofiles,
+                displayname: userProfile.displayname,
+                subject: userProfile.subject,
+                egiid: userProfile.egiid
+              }}
+              validationSchema={UserSchema}
+              enableReinitialize={true}
+              onSubmit = {(values, actions) => onSubmitHandle(values, actions)}
+              render = {props => (
+                <Form>
+                  <CommonUser
+                    {...props}
+                    add={addview}
+                  />
+                  {
+                    isTenantSchema &&
+                      <>
+                        <FormGroup>
+                          <ParagraphTitle title='POEM user permissions'/>
+                          <Row>
+                            <Col md={6}>
+                              <Label for="groupsofmetrics" className="grouplabel">Groups of metrics</Label>
+                              <Field
+                                component="select"
+                                name="groupsofmetrics"
+                                id='select-field'
+                                onChange={evt =>
+                                  props.setFieldValue(
+                                    "groupsofmetrics",
+                                    [].slice
+                                      .call(evt.target.selectedOptions)
+                                      .map(option => option.value)
+                                  )
+                                }
+                                multiple={true}
+                              >
+                                {allGroups.metrics.map( s => (
+                                  <option key={s} value={s}>
+                                    {s}
+                                  </option>
+                                ))}
+                              </Field>
+                              <FormText color="muted">
+                                The groups of metrics that user will control. Hold down "Control" or "Command" on a Mac to select more than one.
+                              </FormText>
+                            </Col>
+                          </Row>
+                          <Row>
+                            <Col md={6}>
+                              <Label for="groupsofmetricprofiles" className="grouplabel">Groups of metric profiles</Label>
+                              <Field
+                                component="select"
+                                name="groupsofmetricprofiles"
+                                id='select-field'
+                                onChange={evt =>
+                                  props.setFieldValue(
+                                    "groupsofmetricprofiles",
+                                    [].slice
+                                      .call(evt.target.selectedOptions)
+                                      .map(option => option.value)
+                                  )
+                                }
+                                multiple={true}
+                              >
+                                {allGroups.metricprofiles.map( s => (
+                                  <option key={s} value={s}>
+                                    {s}
+                                  </option>
+                                ))}
+                              </Field>
+                              <FormText color="muted">
+                                The groups of metric profiles that user will control. Hold down "Control" or "Command" on a Mac to select more than one.
+                            </FormText>
+                            </Col>
+                          </Row>
+                          <Row>
+                            <Col md={6}>
+                              <Label for="groupsofaggregations" className="grouplabel">Groups of aggregations</Label>
+                              <Field
+                                component="select"
+                                name="groupsofaggregations"
+                                id='select-field'
+                                onChange={evt =>
+                                  props.setFieldValue(
+                                    "groupsofaggregations",
+                                    [].slice
+                                      .call(evt.target.selectedOptions)
+                                      .map(option => option.value)
+                                  )
+                                }
+                                multiple={true}
+                              >
+                                {allGroups.aggregations.map( s => (
+                                  <option key={s} value={s}>
+                                    {s}
+                                  </option>
+                                ))}
+                              </Field>
+                              <FormText color="muted">
+                                The groups of aggregations that user will control. Hold down "Control" or "Command" on a Mac to select more than one.
+                              </FormText>
+                            </Col>
+                          </Row>
+                          <Row>
+                            <Col md={6}>
+                              <Label for="groupsofthresholdsprofiles" className="grouplabel">Groups of thresholds profiles</Label>
+                              <Field
+                                component="select"
+                                name="groupsofthresholdsprofiles"
+                                id='select-field'
+                                onChange={evt =>
+                                  props.setFieldValue(
+                                    "groupsofthresholdsprofiles",
+                                    [].slice
+                                      .call(evt.target.selectedOptions)
+                                      .map(option => option.value)
+                                  )
+                                }
+                                multiple={true}
+                              >
+                                {allGroups.thresholdsprofiles.map( s => (
+                                  <option key={s} value={s}>
+                                    {s}
+                                  </option>
+                                ))}
+                              </Field>
+                              <FormText color="muted">
+                                The groups of thresholds profiles that user will control. Hold down "Control" or "Command" on a Mac to select more than one.
+                            </FormText>
+                            </Col>
+                          </Row>
+                        </FormGroup>
+                        <FormGroup>
+                          <ParagraphTitle title='Additional information'/>
+                          <Row>
+                            <Col md={12}>
+                              <InputGroup>
+                                <InputGroupAddon addonType='prepend'>distinguishedName</InputGroupAddon>
+                                <Field
+                                  type="text"
+                                  name="subject"
+                                  required={false}
+                                  className="form-control"
+                                  id="distinguishedname"
+                                />
+                              </InputGroup>
+                            </Col>
+                          </Row>
+                        </FormGroup>
+                        <FormGroup>
+                          <Row>
+                            <Col md={8}>
+                              <InputGroup>
+                                <InputGroupAddon addonType="prepend">eduPersonUniqueId</InputGroupAddon>
+                                <Field
+                                  type="text"
+                                  name="egiid"
+                                  required={false}
+                                  className="form-control"
+                                  id='eduid'
+                                />
+                              </InputGroup>
+                            </Col>
+                          </Row>
+                        </FormGroup>
+                        <FormGroup>
+                          <Row>
+                            <Col md={6}>
+                              <InputGroup>
+                                <InputGroupAddon addonType="prepend">displayName</InputGroupAddon>
+                                <Field
+                                  type="text"
+                                  name="displayname"
+                                  required={false}
+                                  className="form-control"
+                                  id="displayname"
+                                />
+                              </InputGroup>
+                            </Col>
+                          </Row>
+                        </FormGroup>
+                      </>
+                  }
+                  {
+                    <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
+                      {
+                        !addview ?
+                          <Button
+                            color="danger"
+                            onClick={() => {
+                              setModalMsg('Are you sure you want to delete user?');
+                              setModalTitle('Delete user');
+                              setModalFlag('delete');
+                              toggleAreYouSure();
+                            }}
+                          >
+                            Delete
+                          </Button>
+                        :
+                          <div></div>
+                      }
+                      <Button
+                        color="success"
+                        id="submit-button"
+                        type="submit"
+                      >
+                        Save
+                      </Button>
+                    </div>
+                  }
+                </Form>
+              )}
+            />
+          </BaseArgoView>
+        </>
+      )
+    } else {
+      return (
+        <React.Fragment>
+          {
+            <ModalAreYouSure
+              isOpen={areYouSureModal}
+              toggle={toggleAreYouSure}
+              title={modalTitle}
+              msg={modalMsg}
+              onYes={modalFlag === 'submit' ? doChange : modalFlag === 'delete' ? doDelete : undefined}
+            />
+          }
+          <div className='d-flex align-items-center justify-content-between'>
+            <h2 className='ml-3 mt-1 mb-4'>{`${addview ? 'Add' : 'Change'} user`}</h2>
+            {
+              (!addview && userDetails.username === user_name) &&
+                <Link
+                  className='btn btn-secondary'
+                  to={location.pathname + '/change_password'}
+                  role='button'
+                >
+                  Change password
+                </Link>
+            }
+          </div>
+          <div id='argo-contentwrap' className='ml-2 mb-2 mt-2 p-3 border rounded'>
+            <Formik
+              initialValues = {{
+                addview: addview,
+                pk: user.pk,
+                first_name: user.first_name,
+                last_name: user.last_name,
+                username: user.username,
+                password: '',
+                confirm_password: '',
+                is_active: user.is_active,
+                is_superuser: user.is_superuser,
+                email: user.email,
+                last_login: user.last_login,
+                date_joined: user.date_joined
+              }}
+              validationSchema={UserSchema}
+              onSubmit = {(values, actions) => onSubmitHandle(values, actions)}
+              render = {props => (
+                <Form>
+                  <CommonUser
+                    {...props}
+                    add={addview}
+                  />
+                  <div className='submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5'>
+                    {
+                      !addview ?
+                        <Button
+                          color='danger'
+                          onClick={() => {
+                            setModalMsg(`Are you sure you want to delete user ${user_name}?`);
+                            setModalTitle('Delete user');
+                            setModalFlag('delete');
+                            toggleAreYouSure();
+                          }}
+                        >
+                          Delete
+                        </Button>
+                      :
+                        <div></div>
+                    }
+                    <Button
+                      color='success'
+                      id='submit-button'
+                      type='submit'
+                    >
+                      Save
+                    </Button>
+                  </div>
+                </Form>
+              )}
+            />
+          </div>
+        </React.Fragment>
+      )
+    };
+  };
+};
 
 
 export class ChangePassword extends Component {
