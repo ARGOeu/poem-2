@@ -1,4 +1,4 @@
-import React, { Component, useState } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Backend } from './DataManager';
 import {
@@ -13,7 +13,6 @@ import {
   ParagraphTitle,
   BaseArgoTable
 } from './UIElements';
-import 'react-table-6/react-table.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
 import { Formik, Form, Field } from 'formik';
@@ -989,62 +988,46 @@ export const UserChange = (props) => {
 };
 
 
-export class ChangePassword extends Component {
-  constructor(props) {
-    super(props);
+export const ChangePassword = (props) => {
+  const name = props.match.params.user_name;
+  const location = props.locaation;
+  const history = props.history;
 
-    this.name = props.match.params.user_name;
-    this.location = props.locaation;
-    this.history = props.history;
-    this.backend = new Backend();
+  const backend = new Backend();
 
-    this.state = {
-      password: '',
-      confirm_password: '',
-      isTenantSchema: null,
-      loading: false,
-      areYouSureModal: false,
-      modalFunc: undefined,
-      modalTitle: undefined,
-      modalMsg: undefined,
-      write_perm: false
-    };
+  const { data: userDetails, isLoading: loading} = useQuery(
+    'session_userdetails', async () => {
+      let session = await backend.isActiveSession(false);
+      if (session.active)
+        return session.userdetails;
+    }
+  );
 
-    this.toggleAreYouSure = this.toggleAreYouSure.bind(this);
-    this.toggleAreYouSureSetModal = this.toggleAreYouSureSetModal.bind(this);
-    this.onSubmitHandle = this.onSubmitHandle.bind(this);
-    this.doChange = this.doChange.bind(this);
+  const [areYouSureModal, setAreYouSureModal] = useState(false);
+  const [modalTitle, setModalTitle] = useState(undefined);
+  const [modalMsg, setModalMsg] = useState(undefined);
+  const [formValues, setFormValues] = useState(undefined);
+
+  function toggleAreYouSure() {
+    setAreYouSureModal(!areYouSureModal);
   };
 
-  toggleAreYouSure() {
-    this.setState(prevState =>
-      ({areYouSureModal: !prevState.areYouSureModal}));
-  };
-
-  toggleAreYouSureSetModal(msg, title, onyes) {
-    this.setState(prevState =>
-      ({areYouSureModal: !prevState.areYouSureModal,
-        modalFunc: onyes,
-        modalMsg: msg,
-        modalTitle: title,
-      }));
-  };
-
-  onSubmitHandle(values, actions) {
+  function onSubmitHandle(values, actions) {
     let msg = 'Are you sure you want to change password?';
     let title = 'Change password';
 
-    this.toggleAreYouSureSetModal(
-      msg, title, () => this.doChange(values, actions)
-    );
+    setModalMsg(msg);
+    setModalTitle(title);
+    setFormValues(values);
+    toggleAreYouSure();
   };
 
-  async doChange(values, actions) {
-    let response = await this.backend.changeObject(
+  async function doChange() {
+    let response = await backend.changeObject(
       '/api/v2/internal/change_password/',
       {
-        username: this.name,
-        new_password: values.confirm_password
+        username: name,
+        new_password: formValues.confirm_password
       }
     );
     if (!response.ok) {
@@ -1060,49 +1043,57 @@ export class ChangePassword extends Component {
         msg: change_msg
       });
     } else {
+      let response = await fetch('/rest-auth/login/', {
+        method: 'POST',
+        mode: 'cors',
+        cache: 'no-cache',
+        credentials: 'same-origin',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Referer': 'same-origin'
+        },
+        body: JSON.stringify({
+          'username': name,
+          'password': formValues.confirm_password
+        })
+      });
       NotifyOk({
         msg: 'Password successfully changed',
         title: 'Changed',
-        callback: () => this.history.push('/ui/administration/users')
-      })
-    }
+        callback: () => history.push('/ui/administration/users')
+      });
+    };
   };
 
-  async componentDidMount() {
-    this.setState({ loading: true });
+  if (loading)
+    return (<LoadingAnim/>);
 
-    let userdetails = await this.backend.isActiveSession(false);
+  else if (!loading && userDetails) {
+    let write_perm = userDetails.username === name;
 
-    this.setState({
-      write_perm: userdetails.userdetails.username === this.name,
-      loading: false
-    });
-  };
-
-  render() {
-    const { loading, password, confirm_password, write_perm } = this.state;
-
-    if (loading)
-      return (<LoadingAnim/>);
-
-    else if (!loading) {
-      return (
+    return (
+      <>
+        <ModalAreYouSure
+          isOpen={areYouSureModal}
+          toggle={toggleAreYouSure}
+          title={modalTitle}
+          msg={modalMsg}
+          onYes={doChange}
+        />
         <BaseArgoView
           resourcename='password'
-          location={this.location}
-          modal={true}
-          state={this.state}
-          toggle={this.toggleAreYouSure}
+          location={location}
           history={false}
           submitperm={write_perm}
         >
           <Formik
             initialValues = {{
-              password: password,
-              confirm_password: confirm_password
+              password: '',
+              confirm_password: ''
             }}
             validationSchema = {ChangePasswordSchema}
-            onSubmit = {(values, actions) => this.onSubmitHandle(values, actions)}
+            onSubmit = {(values, actions) => onSubmitHandle(values, actions)}
             render = {props => (
               <Form>
                 <Row>
@@ -1156,8 +1147,8 @@ export class ChangePassword extends Component {
             )}
           />
         </BaseArgoView>
-      )
-    } else
-      return null;
-  };
+      </>
+    )
+  } else
+    return null;
 };
