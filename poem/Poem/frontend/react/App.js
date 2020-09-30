@@ -44,7 +44,7 @@ import { Container, Row, Col } from 'reactstrap';
 import { NavigationBar, NavigationAbout, CustomBreadcrumb, NavigationLinks, Footer, PublicPage, HistoryComponent} from './UIElements';
 import { NotificationContainer } from 'react-notifications';
 import { Backend } from './DataManager';
-import { YumRepoList, YumRepoChange, YumRepoClone } from './YumRepos';
+import { YumRepoList, YumRepoComponent } from './YumRepos';
 import { ThresholdsProfilesList, ThresholdsProfilesChange, ThresholdsProfileVersionCompare, ThresholdsProfileVersionDetail } from './ThresholdProfiles';
 import Cookies from 'universal-cookie';
 
@@ -317,7 +317,7 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, w
     />
     <SuperUserRoute isSuperUser={isSuperUser} exact path='/ui/administration/yumrepos/' component={YumRepoList}/>
     <SuperUserRoute isSuperUser={isSuperUser} exact path='/ui/administration/yumrepos/:name'
-      render={props => <YumRepoChange {...props} disabled={true}/>}
+      render={props => <YumRepoComponent {...props} disabled={true}/>}
     />
     <SuperUserRoute isSuperUser={isSuperUser} exact path='/ui/administration/packages/' component={PackageList}/>
     <SuperUserRoute isSuperUser={isSuperUser} exact path='/ui/administration/packages/:nameversion'
@@ -431,9 +431,9 @@ const SuperAdminRouteSwitch = ({props}) => (
     <Route exact path='/ui/metrictemplates/:name/history/:version' render={props => <MetricTemplateVersionDetails {...props}/>}/>
     <Route exact path='/ui/metrictemplates/:name' render={props => <MetricTemplateComponent {...props}/>}/>
     <Route exact path='/ui/yumrepos/' render={props => <YumRepoList {...props}/>}/>
-    <Route exact path='/ui/yumrepos/add' render={props => <YumRepoChange addview={true} {...props}/>}/>
-    <Route exact path='/ui/yumrepos/:name/clone' render={props => <YumRepoClone {...props}/>}/>
-    <Route exact path='/ui/yumrepos/:name' render={props => <YumRepoChange {...props}/>}/>
+    <Route exact path='/ui/yumrepos/add' render={props => <YumRepoComponent addview={true} {...props}/>}/>
+    <Route exact path='/ui/yumrepos/:name/clone' render={props => <YumRepoComponent {...props} cloneview={true}/>}/>
+    <Route exact path='/ui/yumrepos/:name' render={props => <YumRepoComponent {...props}/>}/>
     <Route exact path='/ui/packages/' render={props => <PackageList {...props}/>}/>
     <Route exact path='/ui/packages/add' render={props => <PackageComponent addview={true} {...props}/>}/>
     <Route exact path='/ui/packages/:nameversion' render={props => <PackageComponent {...props}/>}/>
