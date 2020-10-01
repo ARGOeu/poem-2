@@ -546,7 +546,7 @@ export const ListOfMetrics = (props) => {
       0,
       {
         Header: '#',
-        id: 'row',
+        accessor: null,
         column_width: '5%'
       }
     );
@@ -649,7 +649,7 @@ export const ListOfMetrics = (props) => {
                 page_size={50}
                 resourcename='metrics'
                 filter={true}
-                selectable={true}
+                selectable={!publicView}
               />
             </div>
           </>
@@ -688,7 +688,7 @@ export const ListOfMetrics = (props) => {
                 page_size={50}
                 resourcename='metric templates'
                 filter={true}
-                selectable={true}
+                selectable={!publicView}
               />
             </div>
           </>
