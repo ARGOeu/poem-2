@@ -664,18 +664,19 @@ export const ListOfMetrics = (props) => {
             <div className="d-flex align-items-center justify-content-between">
               <h2 className="ml-3 mt-1 mb-4">{'Select metric template to change'}</h2>
               {
-                <ButtonToolbar>
-                  <Link className={'btn btn-secondary mr-2'} to={location.pathname + '/add'} role='button'>Add</Link>
-                  {
-                    !isTenantSchema &&
-                      <Button
-                        className='btn btn-secondary'
-                        onClick={() => onDelete()}
-                      >
-                        Delete
-                      </Button>
-                  }
-                </ButtonToolbar>
+                !publicView &&
+                  <ButtonToolbar>
+                    <Link className={'btn btn-secondary mr-2'} to={location.pathname + '/add'} role='button'>Add</Link>
+                    {
+                      !isTenantSchema &&
+                        <Button
+                          className='btn btn-secondary'
+                          onClick={() => onDelete()}
+                        >
+                          Delete
+                        </Button>
+                    }
+                  </ButtonToolbar>
               }
             </div>
             <div id='argo-contentwrap' className='ml-2 mb-2 mt-2 p-3 border rounded'>
