@@ -987,7 +987,7 @@ export const ThresholdsProfilesChange = (props) => {
     }
   );
 
-  const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails } = useQuery(
+  const { data: userDetails, isLoading: loadingUserDetails } = useQuery(
     'session_userdetails', async () => {
       let sessionActive = await backend.isActiveSession();
       if (sessionActive.active)
@@ -1140,7 +1140,6 @@ export const ThresholdsProfilesChange = (props) => {
           msg: change_msg
         });
       } else {
-        let r = await response.json();
         let r_internal = await backend.changeObject(
           '/api/v2/internal/thresholdsprofiles/',
           {
@@ -1262,6 +1261,7 @@ export const ThresholdsProfilesChange = (props) => {
             }}
             validationSchema={ThresholdsSchema}
             onSubmit = {(values, actions) => onSubmitHandle(values, actions)}
+            enableReinitialize={true}
             render = {props => (
               <Form>
                 <ThresholdsProfilesForm
