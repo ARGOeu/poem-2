@@ -663,7 +663,7 @@ class App extends Component {
                 exact path="/ui/public_metrictemplates/:name"
                 render={props =>
                   <PublicPage tenantName={this.state.tenantName}>
-                    <MetricTemplateChange publicView={true} {...props}/>
+                    <MetricTemplateComponent publicView={true} tenantView={true} {...props}/>
                   </PublicPage>
                 }
               />
