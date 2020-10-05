@@ -11,7 +11,8 @@ import {
   ProfileMainInfo,
   NotifyError,
   ErrorComponent,
-  ParagraphTitle, ProfilesListTable
+  ParagraphTitle,
+  ProfilesListTable
 } from './UIElements';
 import Autosuggest from 'react-autosuggest';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -34,7 +35,6 @@ import {
 } from 'reactstrap';
 import { useQuery } from 'react-query';
 import * as Yup from 'yup';
-import { useTable, usePagination } from 'react-table';
 
 import ReactDiffViewer from 'react-diff-viewer';
 
@@ -927,9 +927,12 @@ export class AggregationProfilesChange extends Component
               profile_operation: aggregation_profile.profile_operation,
               metric_profile: this.correctMetricProfileName(aggregation_profile.metric_profile.id, list_id_metric_profiles),
               endpoint_group: aggregation_profile.endpoint_group,
-              groups: this.insertDummyGroup(
-                this.insertEmptyServiceForNoServices(aggregation_profile.groups)
-              )
+              groups: !this.publicView ?
+                this.insertDummyGroup(
+                  this.insertEmptyServiceForNoServices(aggregation_profile.groups)
+                )
+              :
+                aggregation_profile.groups
             }}
             onSubmit={(values, actions) => this.onSubmitHandle(values, actions)}
             validationSchema={AggregationProfilesSchema}
@@ -1087,43 +1090,38 @@ export const AggregationProfilesList = (props) => {
     `aggregations_listview`, async () => {
       const fetched = await backend.fetchData(apiUrl)
 
-      // 10 is minimal pageSize and these numbers should be aligned
-      let n_elem = 10 - (fetched.length % 10)
-      for (let i = 0; i < n_elem; i++)
-        fetched.push(
-          {'description': '', 'groupname': '', 'name': ''}
-        )
-
       return fetched
-    },
-    {
-      enabled: userDetails
     }
   );
 
   const columns = useMemo(() => [
     {
       Header: '#',
-      accessor: null
+      accessor: null,
+      column_width: '2%'
     },
     {
       Header: 'Name',
       id: 'name',
-      maxWidth: 350,
       accessor: e =>
         <Link to={`/ui/${publicView ? 'public_' : ''}aggregationprofiles/` + e.name}>
           {e.name}
-        </Link>
+        </Link>,
+      column_width: '20%'
     },
     {
       Header: 'Description',
       accessor: 'description',
+      column_width: '70%'
     },
     {
       Header: 'Group',
       accessor: 'groupname',
-      className: 'text-center',
-      maxWidth: 150,
+      Cell: row =>
+        <div style={{textAlign: 'center'}}>
+          {row.value}
+        </div>,
+      column_width: '8%'
     }
   ])
 
@@ -1143,7 +1141,7 @@ export const AggregationProfilesList = (props) => {
         location={location}
         listview={true}
         addnew={!publicView}
-        addperm={userDetails.is_superuser || userDetails.groups.metricprofiles.length > 0}
+        addperm={publicView ? false : userDetails.is_superuser || userDetails.groups.metricprofiles.length > 0}
         publicview={publicView}>
         <ProfilesListTable
           data={listAggregationProfiles}

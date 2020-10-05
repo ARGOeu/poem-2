@@ -1,10 +1,9 @@
-import React, { Component, useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Backend } from './DataManager';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
-import { LoadingAnim, BaseArgoView, NotifyOk, Checkbox, NotifyError, ErrorComponent, ParagraphTitle } from './UIElements';
-import ReactTable from 'react-table-6';
+import { LoadingAnim, BaseArgoView, NotifyOk, Checkbox, NotifyError, ErrorComponent, ParagraphTitle, BaseArgoTable } from './UIElements';
 import { Formik, Form, Field } from 'formik';
 import {
   Alert,
@@ -33,6 +32,7 @@ export const APIKeyList = (props) => {
     try {
       const fetchDataAndSet = async () => {
         let json = await backend.fetchData('/api/v2/internal/apikeys');
+
         setKeys(json);
         setLoading(false);
       }
@@ -43,33 +43,50 @@ export const APIKeyList = (props) => {
     };
   }, []);
 
-  const columns = [
-    {
-      Header: 'Name',
-      id: 'name',
-      accessor: e =>
-        <Link to={'/ui/administration/apikey/' + e.name}>
-          {e.name}
-        </Link>
-    },
-    {
-      Header: 'Created',
-      accessor: 'created'
-    },
-    {
-      Header: 'Revoked',
-      id: 'revoked',
-      Cell: row =>
-        <div style={{textAlign: 'center'}}>
-          {row.value}
-        </div>,
-      accessor: e =>
-        e.revoked ?
-        <FontAwesomeIcon icon={faCheckCircle} style={{color: "#339900"}}/>
-        :
-        <FontAwesomeIcon icon={faTimesCircle} style={{color: "#CC0000"}}/>
-    }
-  ];
+  const columns = React.useMemo(
+    () => [
+      {
+        Header: '#',
+        accessor: null,
+        column_width: '2%'
+      },
+      {
+        Header: 'Name',
+        id: 'name',
+        accessor: e =>
+          <Link to={'/ui/administration/apikey/' + e.name}>
+            {e.name}
+          </Link>,
+        column_width: '73%'
+      },
+      {
+        Header: 'Created',
+        accessor: 'created',
+        Cell: row =>
+          <div style={{textAlign: 'center'}}>
+            {row.value}
+          </div>,
+        column_width: '20%'
+      },
+      {
+        Header: 'Revoked',
+        id: 'revoked',
+        Cell: row =>
+          <div style={{textAlign: 'center'}}>
+            {row.value}
+          </div>,
+        accessor: e =>
+          e.revoked === '' ?
+            ''
+          :
+            e.revoked ?
+              <FontAwesomeIcon icon={faCheckCircle} style={{color: "#339900"}}/>
+            :
+              <FontAwesomeIcon icon={faTimesCircle} style={{color: "#CC0000"}}/>,
+        column_width: '5%'
+      }
+    ]
+  );
 
   if (loading)
     return (<LoadingAnim/>);
@@ -84,13 +101,11 @@ export const APIKeyList = (props) => {
         location={location}
         listview={true}
       >
-        <ReactTable
+        <BaseArgoTable
           data={list_keys}
           columns={columns}
-          className='-highlight'
-          defaultPageSize={5}
-          rowsText='keys'
-          getTheadThProps={() => ({className: 'table-active font-weight-bold p-2'})}
+          page_size={5}
+          resourcename='API keys'
         />
       </BaseArgoView>
     )

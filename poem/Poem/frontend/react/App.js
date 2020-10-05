@@ -421,6 +421,7 @@ const SuperAdminRouteSwitch = ({props}) => (
     <Route exact path="/ui/home" component={Home} />
     <Route exact path="/ui/probes" component={ProbeList} />
     <Route exact path="/ui/probes/add" render={props => <ProbeComponent {...props} addview={true}/>}/>
+    <Route exact path="/ui/probes/:name/clone" render={props => <ProbeComponent {...props} cloneview={true}/>}/>
     <Route exact path="/ui/probes/:name/history" render={props => <HistoryComponent object='probe' {...props}/>}/>
     <Route exact path="/ui/probes/:name/history/compare/:id1/:id2" render={props => <ProbeVersionCompare {...props}/>}/>
     <Route exact path="/ui/probes/:name/history/:version" render={props => <ProbeVersionDetails {...props}/>}/>
@@ -662,7 +663,7 @@ class App extends Component {
                 exact path="/ui/public_metrictemplates/:name"
                 render={props =>
                   <PublicPage tenantName={this.state.tenantName}>
-                    <MetricTemplateChange publicView={true} {...props}/>
+                    <MetricTemplateComponent publicView={true} tenantView={true} {...props}/>
                   </PublicPage>
                 }
               />

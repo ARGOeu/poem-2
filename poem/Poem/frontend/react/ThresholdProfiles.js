@@ -11,7 +11,8 @@ import {
     ProfileMainInfo,
     NotifyError,
     ErrorComponent,
-    ParagraphTitle, ProfilesListTable
+    ParagraphTitle,
+    ProfilesListTable
 } from './UIElements';
 import {
   Formik,
@@ -881,40 +882,39 @@ export const ThresholdsProfilesList = (props) => {
     'thresholdsprofiles_listview', async () => {
       let profiles = await backend.fetchData(apiUrl);
 
-      let n_elem = 10 - (profiles.length % 10);
-
-      for (let i = 0; i < n_elem; i++)
-        profiles.push(
-          {'description': '', 'groupname': '', 'name': ''}
-        );
-
       return profiles;
-    }, {enabled: userDetails}
+    }
   )
 
   const columns = React.useMemo(() => [
     {
       Header: '#',
-      accessor: null
+      accessor: null,
+      column_width: '2%'
     },
     {
       Header: 'Name',
       id: 'name',
-      maxWidth: 350,
       accessor: e =>
         <Link to={`/ui/${publicView ? 'public_' : ''}thresholdsprofiles/${e.name}`}>
           {e.name}
-        </Link>
+        </Link>,
+      column_width: '20%'
     },
     {
       Header: 'Description',
       accessor: 'description',
+      column_width: '70%'
     },
     {
       Header: 'Group',
       accessor: 'groupname',
       className: 'text-center',
-      maxWidth: 150,
+      column_width: '8%',
+      Cell: row =>
+        <div style={{textAlign: 'center'}}>
+          {row.value}
+        </div>
     }
   ]);
 
@@ -934,7 +934,7 @@ export const ThresholdsProfilesList = (props) => {
         location={location}
         listview={true}
         addnew={!publicView}
-        addperm={userDetails.is_superuser || userDetails.groups.thresholdsprofiles.length > 0}
+        addperm={publicView ? false : userDetails.is_superuser || userDetails.groups.thresholdsprofiles.length > 0}
         publicview={publicView}
       >
         <ProfilesListTable
