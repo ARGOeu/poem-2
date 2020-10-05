@@ -1453,7 +1453,7 @@ export function BaseArgoTable({ columns, data, resourcename, page_size, filter=f
               <PaginationLink next onClick={() => nextPage()}/>
             </PaginationItem>
             <PaginationItem disabled={!canNextPage}>
-              <PaginationLink last onClick={() => gotoPage(pageCount + 1)}/>
+              <PaginationLink last onClick={() => gotoPage(pageCount - 1)}/>
             </PaginationItem>
             <PaginationItem className='pl-2'>
               <select
