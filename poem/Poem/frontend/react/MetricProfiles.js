@@ -1029,8 +1029,6 @@ function MetricProfilesComponent(cloneview=false) {
 
 export const HooksMetricProfilesComponent = (props) => {
   const tenant_name = props.tenant_name;
-  const token = props.webapi
-  const tenant_name = props.tenant_name;
   const token = props.webapitoken;
   const webapimetric = props.webapimetric;
   const profile_name = props.match.params.name;
@@ -1039,6 +1037,11 @@ export const HooksMetricProfilesComponent = (props) => {
   const location = props.location;
   const cloneview = cloneview;
   const publicView = props.publicView;
+  const backend = new Backend();
+  const webapi = new WebApi({
+        token: props.webapitoken,
+        metricProfiles: props.webapimetric}
+      )
 
   const [metricProfile, setMetricProfile] = useState({});
   const [metricProfileName, setMetricProfileName] = useState(undefined);
@@ -1047,7 +1050,6 @@ export const HooksMetricProfilesComponent = (props) => {
   const [viewServices, setViewServices] = useState(undefined);
   const [listServices, setListServices] = useState(undefined);
   const [writePerm, setWritePerm] = useState(false);
-  const [serviceFlavoursAll, setServiceFlavoursAll] = useState(undefined);
   const [metricsAll, setMetricsAll] = useState(undefined);
   const [modalTitle, setModalTitle] = useState(undefined);
   const [modalFunc, setModalFunc] = useState(undefined);
@@ -1055,6 +1057,28 @@ export const HooksMetricProfilesComponent = (props) => {
   const [searchServiceFlavour, setSearchServiceFlavour] = useState("");
   const [searchMetric, setSearchMetric] = useState("");
   const [error, setError] = useState(null)
+
+  const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails } = useQuery(
+    `session-userdetails`, async () => {
+      const sessionActive = await backend.isActiveSession()
+      if (sessionActive.active) {
+        return sessionActive.userdetails
+      }
+    }
+  );
+
+  const { data: serviceFlavoursAll, error: errorServiceFlavoursAll, isLoading:
+    loadingServiceFlavoursAll} = useQuery(
+      'metricprofiles_changeview_serviceflavoursall', async() => {
+        const fetched = await backend.fetchListOfNames('/api/v2/internal/serviceflavoursall')
+        return fetched
+      },
+      {
+        enabled: requests
+      }
+    )
+
+
 }
 
 
