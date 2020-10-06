@@ -1043,41 +1043,61 @@ export const HooksMetricProfilesComponent = (props) => {
         metricProfiles: props.webapimetric}
       )
 
-  const [metricProfile, setMetricProfile] = useState({});
-  const [metricProfileName, setMetricProfileName] = useState(undefined);
+  const [error, setError] = useState(null)
   const [groupname, setGroupname] = useState(undefined);
-  const [listUserGroups, setListUserGroups] = useState(undefined);
-  const [viewServices, setViewServices] = useState(undefined);
   const [listServices, setListServices] = useState(undefined);
-  const [writePerm, setWritePerm] = useState(false);
+  const [listUserGroups, setListUserGroups] = useState(undefined);
+  const [metricProfileDescription, setMetricProfileDescription] = useState(undefined);
+  const [metricProfileName, setMetricProfileName] = useState(undefined);
   const [metricsAll, setMetricsAll] = useState(undefined);
-  const [modalTitle, setModalTitle] = useState(undefined);
   const [modalFunc, setModalFunc] = useState(undefined);
   const [modalMsg, setModalMsg] = useState(undefined);
-  const [searchServiceFlavour, setSearchServiceFlavour] = useState("");
+  const [modalTitle, setModalTitle] = useState(undefined);
   const [searchMetric, setSearchMetric] = useState("");
-  const [error, setError] = useState(null)
+  const [searchServiceFlavour, setSearchServiceFlavour] = useState("");
+  const [serviceFlavoursAll, setSearchServiceFlavoursAll] = useState(undefined);
+  const [viewServices, setViewServices] = useState(undefined);
+  const [writePerm, setWritePerm] = useState(false);
 
-  const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails } = useQuery(
-    `session-userdetails`, async () => {
-      const sessionActive = await backend.isActiveSession()
-      if (sessionActive.active) {
-        return sessionActive.userdetails
+  const { data: metricProfile, error: errorMetricProfile, isLoading:
+    loadingMetricProfile } = useQuery(
+    'metriprofiles_changeview_metricprofile', async () => {
+      let metricProfile = new Object({
+        id: '',
+        name: '',
+        services: [],
+      });
+      if (publicView) {
+        let json = await backend.fetchData(`/api/v2/internal/public_metricprofiles/${profile_name}`);
+        metricProfile = await webapi.fetchMetricProfile(json.apiid);
+        setMetricProfileName(metricProfile.name);
+        setMetricProfileDescription(metricProfile.description);
+        setGroupname(json['groupname']);
+        setListUserGroups([]);
+        setWritePerm(false);
+        setViewServices(flattenServices(metricProfile.services).sort(sortServices));
+        setSearchServiceFlavoursAll([]);
+        setMetricsAll([]);
+        setListServices(flattenServices(metricProfile.services).sort(sortServices));
+        return metricProfile;
+      }
+      else {
+        const sessionActive = await backend.isActiveSession()
+        if (sessionActive.active) {
+          let serviceFlavoursAll = await backend.fetchListOfNames('/api/v2/internal/serviceflavoursall');
+          let metricsAll = await backend.fetchListOfNames('/api/v2/internal/metricsall');
+          if (!addview || cloneview) {
+            let json = await backend.fetchData(`/api/v2/internal/metricprofiles/${profile_name}`);
+            metricProfile = await webapi.fetchMetricProfile(json.apiid);
+            return metricProfile
+          }
+          else {
+            return metricProfile
+          }
+        }
       }
     }
-  );
-
-  const { data: serviceFlavoursAll, error: errorServiceFlavoursAll, isLoading:
-    loadingServiceFlavoursAll} = useQuery(
-      'metricprofiles_changeview_serviceflavoursall', async() => {
-        const fetched = await backend.fetchListOfNames('/api/v2/internal/serviceflavoursall')
-        return fetched
-      },
-      {
-        enabled: requests
-      }
-    )
-
+  )
 
 }
 
@@ -1171,7 +1191,6 @@ export const MetricProfilesList = (props) => {
   else
     return null
 }
-
 
 const ListDiffElement = ({title, item1, item2}) => {
   let list1 = [];
