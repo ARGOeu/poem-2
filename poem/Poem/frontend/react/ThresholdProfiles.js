@@ -1,4 +1,4 @@
-import React, { Component, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Backend, WebApi } from './DataManager';
 import {
@@ -1438,82 +1438,69 @@ export const ThresholdsProfileVersionCompare = (props) => {
 };
 
 
-export class ThresholdsProfileVersionDetail extends Component {
-  constructor(props) {
-    super(props);
+export const ThresholdsProfileVersionDetail = (props) => {
+  const name = props.match.params.name;
+  const version = props.match.params.version;
 
-    this.name = props.match.params.name;
-    this.version = props.match.params.version;
+  const backend = new Backend();
 
-    this.backend = new Backend();
+  const [profile, setProfile] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-    this.state = {
-      name: '',
-      groupname: '',
-      rules: [],
-      date_created: '',
-      loading: false,
-      error: null
+  useEffect(() => {
+    setLoading(true);
+    fetchProfile();
+
+    async function fetchProfile() {
+      try {
+        let json = await backend.fetchData(`/api/v2/internal/tenantversion/thresholdsprofile/${name}`);
+        json.forEach((e) => {
+          if (e.version == version)
+            setProfile({
+              name: e.fields.name,
+              groupname: e.fields.groupname,
+              rules: thresholdsToValues(e.fields.rules),
+              date_created: e.date_created
+            });
+        });
+      } catch(err) {
+        setError(err);
+      };
+
+      setLoading(false);
     };
-  }
+  }, []);
 
-  async componentDidMount() {
-    this.setState({loading: true});
+  if (loading)
+    return (<LoadingAnim/>);
 
-    try {
-      let json = await this.backend.fetchData(`/api/v2/internal/tenantversion/thresholdsprofile/${this.name}`);
-      json.forEach((e) => {
-        if (e.version == this.version)
-          this.setState({
-            name: e.fields.name,
-            groupname: e.fields.groupname,
-            rules: thresholdsToValues(e.fields.rules),
-            date_created: e.date_created,
-            loading: false
-          });
-      });
-    } catch(err) {
-      this.setState({
-        error: err,
-        loading: false
-      });
-    };
-  }
+  else if (error)
+    return (<ErrorComponent error={error}/>);
 
-  render() {
-    const { name, groupname, rules, date_created, loading,
-      error } = this.state;
-
-    if (loading)
-      return (<LoadingAnim/>);
-
-    else if (error)
-      return (<ErrorComponent error={error}/>);
-
-    else if (!loading && name) {
-      return (
-        <BaseArgoView
-          resourcename={`${name} (${date_created})`}
-          infoview={true}
-        >
-          <Formik
-            initialValues = {{
-              name: name,
-              groupname: groupname,
-              rules: rules
-            }}
-            render = {props => (
-              <Form>
-                <ThresholdsProfilesForm
-                  {...props}
-                  historyview={true}
-                />
-              </Form>
-            )}
-          />
-        </BaseArgoView>
-      );
-    } else
-      return null;
-  }
-}
+  else if (!loading && profile) {
+    return (
+      <BaseArgoView
+        resourcename={`${name} (${profile.date_created})`}
+        infoview={true}
+      >
+        <Formik
+          initialValues = {{
+            name: profile.name,
+            groupname: profile.groupname,
+            rules: profile.rules
+          }}
+          render = {props => (
+            <Form>
+              <ThresholdsProfilesForm
+                {...props}
+                historyview={true}
+              />
+            </Form>
+          )}
+        />
+      </BaseArgoView>
+    );
+  } else
+    return null;
+};
