@@ -1027,6 +1027,37 @@ function MetricProfilesComponent(cloneview=false) {
 }
 
 
+export const HooksMetricProfilesComponent = (props) => {
+  const tenant_name = props.tenant_name;
+  const token = props.webapi
+  const tenant_name = props.tenant_name;
+  const token = props.webapitoken;
+  const webapimetric = props.webapimetric;
+  const profile_name = props.match.params.name;
+  const addview = props.addview
+  const history = props.history;
+  const location = props.location;
+  const cloneview = cloneview;
+  const publicView = props.publicView;
+
+  const [metricProfile, setMetricProfile] = useState({});
+  const [metricProfileName, setMetricProfileName] = useState(undefined);
+  const [groupname, setGroupname] = useState(undefined);
+  const [listUserGroups, setListUserGroups] = useState(undefined);
+  const [viewServices, setViewServices] = useState(undefined);
+  const [listServices, setListServices] = useState(undefined);
+  const [writePerm, setWritePerm] = useState(false);
+  const [serviceFlavoursAll, setServiceFlavoursAll] = useState(undefined);
+  const [metricsAll, setMetricsAll] = useState(undefined);
+  const [modalTitle, setModalTitle] = useState(undefined);
+  const [modalFunc, setModalFunc] = useState(undefined);
+  const [modalMsg, setModalMsg] = useState(undefined);
+  const [searchServiceFlavour, setSearchServiceFlavour] = useState("");
+  const [searchMetric, setSearchMetric] = useState("");
+  const [error, setError] = useState(null)
+}
+
+
 export const MetricProfilesList = (props) => {
   const location = props.location;
   const backend = new Backend();
