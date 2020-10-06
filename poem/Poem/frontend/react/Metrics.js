@@ -456,6 +456,9 @@ export const ListOfMetrics = (props) => {
       if ('unavailable' in json)
         NotifyError({msg: json.unavailable, title: 'Unavailable'});
 
+      setSelected({});
+      setSelectAll(0);
+
     } else {
       NotifyError({
         msg: 'No metric templates were selected!',
