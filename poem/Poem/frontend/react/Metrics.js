@@ -745,7 +745,7 @@ export const ListOfMetrics = (props) => {
         list_metric = doFilter(list_metric, 'group', searchOSGroups)
       :
         list_metric = list_metric.filter(row =>
-          `${row.ostag.join(', ')}`.toLowerCase().includes(searchOStag.toLowerCase())
+          `${row.ostag.join(', ')}`.toLowerCase().includes(searchOSGroups.toLowerCase())
         );
     }
 
