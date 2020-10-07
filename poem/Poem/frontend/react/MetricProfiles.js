@@ -1228,35 +1228,47 @@ export const MetricProfilesComponentHooks = (props) => {
 
   const handleSearch = (e, statefieldlist, statefieldsearch, formikfield,
     alternatestatefield, alternateformikfield) => {
-    let filtered = this.state[statefieldlist.replace('view_', 'list_')]
-    let tmp_list_services = [...this.state.list_services];
+    let filtered = listServices;
+    let tmp_list_services = [...listServices];
+    let searchWhat = statefieldsearch
 
-    if (this.state[statefieldsearch].length > e.target.value.length) {
+    if (statefieldsearch === 'searchServiceFlavour')
+      statefieldsearch = searchServiceFlavour
+    else if (statefieldsearch === 'searchMetric')
+      statefieldsearch = searchMetric
+
+    if (statefieldsearch.length > e.target.value.length) {
       // handle remove of characters of search term
-      filtered = this.state[statefieldlist.replace('view_', 'list_')].
-        filter((elem) => matchItem(elem[formikfield], e.target.value))
+      filtered = listServices.filter((elem) => matchItem(elem[formikfield], e.target.value))
 
-      tmp_list_services.sort(this.sortServices);
-      tmp_list_services = this.ensureAlignedIndexes(tmp_list_services)
+      tmp_list_services.sort(sortServices);
+      tmp_list_services = ensureAlignedIndexes(tmp_list_services)
     }
     else if (e.target.value !== '') {
-      filtered = this.state[statefieldlist].filter((elem) =>
+      filtered = listServices.filter((elem) =>
         matchItem(elem[formikfield], e.target.value))
     }
 
+    if (alternatestatefield === 'searchServiceFlavour')
+      alternatestatefield = searchServiceFlavour
+    else if (alternatestatefield === 'searchMetric')
+      alternatestatefield = searchMetric
+
     // handle multi search
-    if (this.state[alternatestatefield].length) {
+    if (alternatestatefield.length) {
       filtered = filtered.filter((elem) =>
-        matchItem(elem[alternateformikfield], this.state[alternatestatefield]))
+        matchItem(elem[alternateformikfield], alternatestatefield))
     }
 
-    filtered.sort(this.sortServices);
+    filtered.sort(sortServices);
 
-    this.setState({
-      [`${statefieldsearch}`]: e.target.value,
-      [`${statefieldlist}`]: filtered,
-      list_services: tmp_list_services
-    })
+    if (searchWhat === 'searchServiceFlavour')
+      setSearchServiceFlavour(e.target.value);
+    else if (searchWhat === 'searchMetric')
+      setSearchMetric(e.target.value);
+
+    setViewServices(filtered);
+    setListServices(tmp_list_services);
   }
 
   const doDelete = async (idProfile) => {
