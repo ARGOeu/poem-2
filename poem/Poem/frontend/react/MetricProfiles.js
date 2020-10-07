@@ -1083,6 +1083,7 @@ export const MetricProfilesComponentHooks = (props) => {
         metricProfiles: props.webapimetric}
       )
 
+  const [areYouSureModal, setAreYouSureModal] = useState(false)
   const [error, setError] = useState(null)
   const [groupname, setGroupname] = useState(undefined);
   const [listServices, setListServices] = useState(undefined);
@@ -1093,11 +1094,14 @@ export const MetricProfilesComponentHooks = (props) => {
   const [modalFunc, setModalFunc] = useState(undefined);
   const [modalMsg, setModalMsg] = useState(undefined);
   const [modalTitle, setModalTitle] = useState(undefined);
+  const [onYes, setOnYes] = useState('')
   const [searchMetric, setSearchMetric] = useState("");
   const [searchServiceFlavour, setSearchServiceFlavour] = useState("");
   const [serviceFlavoursAll, setServiceFlavoursAll] = useState(undefined);
   const [viewServices, setViewServices] = useState(undefined);
   const [writePerm, setWritePerm] = useState(false);
+  // TODO: useFormik hook with formik 2.x
+  const [formikValues, setFormikValues] = useState({})
 
   const { data: metricProfile, error: errorMetricProfile, isLoading:
     loadingMetricProfile } = useQuery(
@@ -1414,9 +1418,151 @@ export const MetricProfilesComponentHooks = (props) => {
     });
   }
 
-  const toggleAreYouSure = () => {
-    this.setState(prevState =>
-      ({areYouSureModal: !prevState.areYouSureModal}));
+  const doChange = async ({formValues, servicesList}) => {
+    let services = [];
+    let dataToSend = new Object()
+
+    if (!this.addview && !this.cloneview) {
+      const { id } = this.state.metric_profile
+      services = this.groupMetricsByServices(servicesList);
+      dataToSend = {
+        id,
+        name: formValues.name,
+        description: formValues.description,
+        services
+      };
+      let response = await this.webapi.changeMetricProfile(dataToSend);
+      if (!response.ok) {
+        let change_msg = '';
+        try {
+          let json = await response.json();
+          let msg_list = [];
+          json.errors.forEach(e => msg_list.push(e.details));
+          change_msg = msg_list.join(' ');
+        } catch(err) {
+          change_msg = 'Web API error changing metric profile';
+        }
+        NotifyError({
+          title: `Web API error: ${response.status} ${response.statusText}`,
+          msg: change_msg
+        });
+      } else {
+        let r = await this.backend.changeObject(
+          '/api/v2/internal/metricprofiles/',
+          {
+            apiid: dataToSend.id,
+            name: dataToSend.name,
+            description: dataToSend.description,
+            groupname: formValues.groupname,
+            services: formValues.view_services
+          }
+        );
+        if (r.ok)
+          NotifyOk({
+            msg: 'Metric profile succesfully changed',
+            title: 'Changed',
+            callback: () => this.history.push('/ui/metricprofiles')
+          });
+        else {
+          let change_msg = '';
+          try {
+            let json = await r.json();
+            change_msg = json.detail;
+          } catch(err) {
+            change_msg = 'Internal API error changing metric profile';
+          }
+          NotifyError({
+            title: `Internal API error: ${r.status} ${r.statusText}`,
+            msg: change_msg
+          });
+        }
+      }
+    } else {
+      services = this.groupMetricsByServices(servicesList);
+      dataToSend = {
+        name: formValues.name,
+        description: formValues.description,
+        services
+      }
+      let response = await this.webapi.addMetricProfile(dataToSend);
+      if (!response.ok) {
+        let add_msg = '';
+        try {
+          let json = await response.json();
+          let msg_list = [];
+          json.errors.forEach(e => msg_list.push(e.details));
+          add_msg = msg_list.join(' ');
+        } catch(err) {
+          add_msg = 'Web API error adding metric profile';
+        }
+        NotifyError({
+          title: `Web API error: ${response.status} ${response.statusText}`,
+          msg: add_msg
+        });
+      } else {
+        let r_json = await response.json();
+        let r_internal = await this.backend.addObject(
+          '/api/v2/internal/metricprofiles/',
+          {
+            apiid: r_json.data.id,
+            name: dataToSend.name,
+            groupname: formValues.groupname,
+            description: formValues.description,
+            services: formValues.view_services
+          }
+        );
+        if (r_internal.ok)
+          NotifyOk({
+            msg: 'Metric profile successfully added',
+            title: 'Added',
+            callback: () => this.history.push('/ui/metricprofiles')
+          });
+        else {
+          let add_msg = '';
+          try {
+            let json = await r_internal.json();
+            add_msg = json.detail;
+          } catch(err) {
+            add_msg = 'Internal API error adding metric profile';
+          }
+          NotifyError({
+            title: `Internal API error: ${r_internal.status} ${r_internal.statusText}`,
+            msg: add_msg
+          });
+        }
+      }
+    }
+  }
+
+  const onSubmitHandle = async ({formValues, servicesList}) => {
+    let msg = undefined;
+    let title = undefined;
+
+    if (addview || cloneview) {
+      msg = 'Are you sure you want to add Metric profile?'
+      title = 'Add metric profile'
+    }
+    else {
+      msg = 'Are you sure you want to change Metric profile?'
+      title = 'Change metric profile'
+    }
+    setAreYouSureModal(!areYouSureModal);
+    setModalMsg(msg)
+    setModalTitle(title)
+    setOnYes('change')
+    setFormikValues(formValues)
+    setListServices(servicesList)
+  }
+
+  const onYesCallback = () => {
+    if (onYes === 'delete')
+      doDelete(formikValues.id);
+    else if (onYes === 'change')
+      doChange({
+          formValues: formikValues,
+          servicesList: listServices
+        }
+      );
   }
 
   if (loadingMetricProfile)
@@ -1435,8 +1581,8 @@ export const MetricProfilesComponentHooks = (props) => {
         cloneview={cloneview}
         clone={true}
         history={!publicView}
-        state={{}}
-        toggle={toggleAreYouSure}
+        state={{areYouSureModal, 'modalFunc': onYesCallback, modalTitle, modalMsg}}
+        toggle={() => setAreYouSureModal(!areYouSureModal)}
         addview={publicView ? !publicView : addview}
         publicview={publicView}
         submitperm={writePerm}>
@@ -1452,9 +1598,9 @@ export const MetricProfilesComponentHooks = (props) => {
             metrics_all: metricsAll,
             services_all: serviceFlavoursAll
           }}
-          onSubmit = {(values, actions) => this.onSubmitHandle({
+          onSubmit = {(values, actions) => onSubmitHandle({
             formValues: values,
-            servicesList: this.state.list_services
+            servicesList: listServices
           }, actions)}
           enableReinitialize={true}
           validate={MetricProfileTupleValidate}
@@ -1550,9 +1696,10 @@ export const MetricProfilesComponentHooks = (props) => {
                     <Button
                       color="danger"
                       onClick={() => {
-                        toggleAreYouSureSetModal('Are you sure you want to delete Metric profile?',
-                          'Delete metric profile',
-                          () => doDelete(props.values.id))
+                        setModalMsg('Are you sure you want to delete Metric profile?')
+                        setModalTitle('Delete metric profile')
+                        setAreYouSureModal(!areYouSureModal);
+                        setOnYes('delete')
                       }}>
                       Delete
                     </Button>
