@@ -1307,11 +1307,11 @@ export const MetricProfilesComponentHooks = (props) => {
 
     // special case when duplicates are result of explicit add of duplicated
     // tuple followed by immediate delete of it
-    let dup_list = this.state.list_services.filter(service =>
+    let dup_list = listServices.filter(service =>
       element.service === service.service &&
       element.metric === service.metric
     )
-    let dup_view = this.state.view_services.filter(service =>
+    let dup_view = viewServices.filter(service =>
       element.service === service.service &&
       element.metric === service.metric
     )
@@ -1319,31 +1319,31 @@ export const MetricProfilesComponentHooks = (props) => {
 
     if (dup) {
       // search by index also
-      index = this.state.list_services.findIndex(service =>
+      index = listServices.findIndex(service =>
         element.index === service.index &&
         element.service === service.service &&
         element.metric === service.metric
       );
-      index_tmp = this.state.view_services.findIndex(service =>
+      index_tmp = viewServices.findIndex(service =>
         element.index === service.index &&
         element.service === service.service &&
         element.metric === service.metric
       );
     }
     else {
-      index = this.state.list_services.findIndex(service =>
+      index = listServices.findIndex(service =>
         element.service === service.service &&
         element.metric === service.metric
       );
-      index_tmp = this.state.view_services.findIndex(service =>
+      index_tmp = viewServices.findIndex(service =>
         element.service === service.service &&
         element.metric === service.metric
       );
     }
 
     // don't remove last tuple, just reset it to empty values
-    if (this.state.view_services.length === 1
-      && this.state.list_services.length === 1) {
+    if (viewServices.length === 1
+      && listServices.length === 1) {
       tmp_list_services = [{
         index: 0,
         service: "",
@@ -1356,8 +1356,8 @@ export const MetricProfilesComponentHooks = (props) => {
       }]
     }
     else if (index >= 0 && index_tmp >= 0) {
-      tmp_list_services = [...this.state.list_services]
-      tmp_view_services = [...this.state.view_services]
+      tmp_list_services = [...listServices]
+      tmp_view_services = [...viewServices]
       tmp_list_services.splice(index, 1)
       tmp_view_services.splice(index_tmp, 1)
 
@@ -1373,16 +1373,14 @@ export const MetricProfilesComponentHooks = (props) => {
       }
     }
     else {
-      tmp_list_services = [...this.state.list_services]
-      tmp_view_services = [...this.state.view_services]
+      tmp_list_services = [...listServices]
+      tmp_view_services = [...viewServices]
     }
-    this.setState({
-      list_services: this.ensureAlignedIndexes(tmp_list_services),
-      view_services: this.ensureAlignedIndexes(tmp_view_services),
-      groupname: group,
-      metric_profile_name: name,
-      metric_profile_description: description
-    });
+    setListServices(ensureAlignedIndexes(tmp_list_services));
+    setViewServices(ensureAlignedIndexes(tmp_view_services));
+    setGroupname(group);
+    setMetricProfileName(name);
+    setMetricProfileDescription(description);
   }
 
   const onSelect = (element, field, value) => {
