@@ -1167,12 +1167,11 @@ export const MetricProfilesComponentHooks = (props) => {
 
   const onInsert = async (element, i, group, name, description) => {
     // full list of services
-    if (this.state.searchServiceFlavour === ''
-      && this.state.searchMetric === '') {
+    if (searchServiceFlavour === '' && searchMetric === '') {
       let service = element.service;
       let metric = element.metric;
 
-      let tmp_list_services = [...this.state.list_services];
+      let tmp_list_services = [...listServices];
       // split list into two preserving original
       let slice_left_tmp_list_services = [...tmp_list_services].slice(0, i);
       let slice_right_tmp_list_services = [...tmp_list_services].slice(i);
@@ -1180,7 +1179,7 @@ export const MetricProfilesComponentHooks = (props) => {
       slice_left_tmp_list_services.push({index: i, service, metric, isNew: true});
 
       // reindex first slice
-      slice_left_tmp_list_services = this.ensureAlignedIndexes(slice_left_tmp_list_services)
+      slice_left_tmp_list_services = ensureAlignedIndexes(slice_left_tmp_list_services)
 
       // reindex rest of list
       let index_update = slice_left_tmp_list_services.length;
@@ -1192,18 +1191,16 @@ export const MetricProfilesComponentHooks = (props) => {
       // concatenate two slices
       tmp_list_services = [...slice_left_tmp_list_services, ...slice_right_tmp_list_services];
 
-      this.setState({
-        list_services: tmp_list_services,
-        view_services: tmp_list_services,
-        groupname: group,
-        metric_profile_name: name,
-        metric_profile_description: description
-      });
+      setListServices(tmp_list_services);
+      setViewServices(tmp_list_services);
+      setGroupname(group);
+      setMetricProfileName(name);
+      setMetricProfileDescription(description);
     }
     // subset of matched elements of list of services
     else {
-      let tmp_view_services = [...this.state.view_services];
-      let tmp_list_services = [...this.state.list_services];
+      let tmp_view_services = [...viewServices];
+      let tmp_list_services = [...listServices];
 
       let slice_left_view_services = [...tmp_view_services].slice(0, i)
       let slice_right_view_services = [...tmp_view_services].slice(i)
@@ -1224,10 +1221,8 @@ export const MetricProfilesComponentHooks = (props) => {
 
       tmp_list_services.push({...element, isNew: true})
 
-      this.setState({
-        view_services: [...slice_left_view_services, ...slice_right_view_services],
-        list_services: tmp_list_services,
-      });
+      setViewServices([...slice_left_view_services, ...slice_right_view_services]);
+      setListServices(tmp_list_services);
     }
   }
 
