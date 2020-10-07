@@ -1560,7 +1560,7 @@ export const MetricProfilesComponentHooks = (props) => {
     return (<LoadingAnim />)
 
   else if (errorMetricProfile)
-        return (<ErrorComponent error={error}/>);
+    return (<ErrorComponent error={error}/>);
 
   else if (!loadingMetricProfile && metricProfile && viewServices) {
     return (
