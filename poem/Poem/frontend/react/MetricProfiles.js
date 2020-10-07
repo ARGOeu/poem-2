@@ -1387,8 +1387,8 @@ export const MetricProfilesComponentHooks = (props) => {
 
   const onSelect = (element, field, value) => {
     let index = element.index;
-    let tmp_list_services = [...this.state.list_services];
-    let tmp_view_services = [...this.state.view_services];
+    let tmp_list_services = [...listServices];
+    let tmp_view_services = [...viewServices];
     let new_element = tmp_list_services.findIndex(service =>
       service.index === index && service.isNew === true)
 
@@ -1407,10 +1407,8 @@ export const MetricProfilesComponentHooks = (props) => {
         tmp_view_services[i][field + 'Changed'] = true
       }
 
-    this.setState({
-      list_services: tmp_list_services,
-      view_services: tmp_view_services
-    });
+    setListServices(tmp_list_services);
+    setViewServices(tmp_view_services);
   }
 
   const doChange = async ({formValues, servicesList}) => {
