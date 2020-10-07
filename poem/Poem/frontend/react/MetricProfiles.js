@@ -1027,7 +1027,45 @@ function MetricProfilesComponent(cloneview=false) {
 }
 
 
-export const HooksMetricProfilesComponent = (props) => {
+const flattenServices = (services) => {
+  let flat_services = [];
+  let index = 0;
+
+  services.forEach((service_element) => {
+    let service = service_element.service;
+    service_element.metrics.forEach((metric) => {
+      flat_services.push({index, service, metric})
+      index += 1;
+    })
+  })
+  return flat_services
+}
+
+
+const sortServices = (a, b) => {
+  if (a.service.toLowerCase() < b.service.toLowerCase()) return -1;
+  if (a.service.toLowerCase() > b.service.toLowerCase()) return 1;
+  if (a.service.toLowerCase() === b.service.toLowerCase()) {
+    if (a.metric.toLowerCase() < b.metric.toLowerCase()) return -1;
+    if (a.metric.toLowerCase() > b.metric.toLowerCase()) return 1;
+    if (a.metric.toLowerCase() === b.metric.toLowerCase()) return 0;
+  }
+}
+
+
+const ensureAlignedIndexes = (list) => {
+  let i = 0
+
+  list.forEach(e => {
+    e.index = i
+    i += 1
+  })
+
+  return list
+}
+
+
+export const MetricProfilesComponentHooks = (props) => {
   const tenant_name = props.tenant_name;
   const token = props.webapitoken;
   const webapimetric = props.webapimetric;
@@ -1055,28 +1093,23 @@ export const HooksMetricProfilesComponent = (props) => {
   const [modalTitle, setModalTitle] = useState(undefined);
   const [searchMetric, setSearchMetric] = useState("");
   const [searchServiceFlavour, setSearchServiceFlavour] = useState("");
-  const [serviceFlavoursAll, setSearchServiceFlavoursAll] = useState(undefined);
+  const [serviceFlavoursAll, setServiceFlavoursAll] = useState(undefined);
   const [viewServices, setViewServices] = useState(undefined);
   const [writePerm, setWritePerm] = useState(false);
 
   const { data: metricProfile, error: errorMetricProfile, isLoading:
     loadingMetricProfile } = useQuery(
     'metriprofiles_changeview_metricprofile', async () => {
-      let metricProfile = new Object({
-        id: '',
-        name: '',
-        services: [],
-      });
       if (publicView) {
         let json = await backend.fetchData(`/api/v2/internal/public_metricprofiles/${profile_name}`);
-        metricProfile = await webapi.fetchMetricProfile(json.apiid);
+        let metricProfile = await webapi.fetchMetricProfile(json.apiid);
         setMetricProfileName(metricProfile.name);
         setMetricProfileDescription(metricProfile.description);
         setGroupname(json['groupname']);
         setListUserGroups([]);
         setWritePerm(false);
         setViewServices(flattenServices(metricProfile.services).sort(sortServices));
-        setSearchServiceFlavoursAll([]);
+        setServiceFlavoursAll([]);
         setMetricsAll([]);
         setListServices(flattenServices(metricProfile.services).sort(sortServices));
         return metricProfile;
@@ -1088,11 +1121,38 @@ export const HooksMetricProfilesComponent = (props) => {
           let metricsAll = await backend.fetchListOfNames('/api/v2/internal/metricsall');
           if (!addview || cloneview) {
             let json = await backend.fetchData(`/api/v2/internal/metricprofiles/${profile_name}`);
-            metricProfile = await webapi.fetchMetricProfile(json.apiid);
+            let metricProfile = await webapi.fetchMetricProfile(json.apiid);
+            setMetricProfileName(metricProfile.name);
+            setMetricProfileDescription(metricProfile.description);
+            setGroupname(json['groupname']);
+            setListUserGroups(sessionActive.userdetails.groups.metricprofiles);
+            setWritePerm(sessionActive.userdetails.is_superuser ||
+              sessionActive.userdetails.groups.metricprofiles.indexOf(json['groupname']) >= 0);
+            setViewServices(ensureAlignedIndexes(flattenServices(metricProfile.services).sort(sortServices)));
+            setServiceFlavoursAll(serviceFlavoursAll);
+            setMetricsAll(metricsAll);
+            setListServices(ensureAlignedIndexes(flattenServices(metricProfile.services).sort(sortServices)));
+
             return metricProfile
           }
           else {
-            return metricProfile
+            let metricProfile = new Object({
+              id: '',
+              name: '',
+              services: [],
+            });
+            setMetricProfileName('');
+            setMetricProfileDescription('');
+            setGroupname('');
+            setListUserGroups(sessionActive.userdetails.groups.metricprofiles)
+            setWritePerm(sessionActive.userdetails.is_superuser ||
+              sessionActive.userdetails.groups.metricprofiles.length > 0,
+            );
+            setViewServices([{service: '', metric: '', index: 0, isNew: true}]);
+            setServiceFlavoursAll(serviceFlavoursAll);
+            setMetricsAll(metricsAll);
+            setListServices([{service: '', metric: '', index: 0, isNew: true}]);
+            return metricProfile;
           }
         }
       }
