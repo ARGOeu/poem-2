@@ -4,7 +4,6 @@
 
 ### Added
 
-* ARGO-2574 Cookie policy for ARGO POEM
 * ARGO-2598 Privacy Policy sidebar reference to UI
 * ARGO-2611 Public service types pages
 
