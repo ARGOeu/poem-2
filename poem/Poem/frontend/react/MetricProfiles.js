@@ -678,7 +678,7 @@ function MetricProfilesComponent(cloneview=false) {
           });
         } else {
           let r_json = await response.json();
-          let r_internal = await this.backend.addObject(
+          let r_internal = await backend.addObject(
             '/api/v2/internal/metricprofiles/',
             {
               apiid: r_json.data.id,
@@ -1026,44 +1026,6 @@ function MetricProfilesComponent(cloneview=false) {
         return null
     }
   }
-}
-
-
-const flattenServices = (services) => {
-  let flat_services = [];
-  let index = 0;
-
-  services.forEach((service_element) => {
-    let service = service_element.service;
-    service_element.metrics.forEach((metric) => {
-      flat_services.push({index, service, metric})
-      index += 1;
-    })
-  })
-  return flat_services
-}
-
-
-const sortServices = (a, b) => {
-  if (a.service.toLowerCase() < b.service.toLowerCase()) return -1;
-  if (a.service.toLowerCase() > b.service.toLowerCase()) return 1;
-  if (a.service.toLowerCase() === b.service.toLowerCase()) {
-    if (a.metric.toLowerCase() < b.metric.toLowerCase()) return -1;
-    if (a.metric.toLowerCase() > b.metric.toLowerCase()) return 1;
-    if (a.metric.toLowerCase() === b.metric.toLowerCase()) return 0;
-  }
-}
-
-
-const ensureAlignedIndexes = (list) => {
-  let i = 0
-
-  list.forEach(e => {
-    e.index = i
-    i += 1
-  })
-
-  return list
 }
 
 
@@ -1421,20 +1383,37 @@ export const MetricProfilesComponentHooks = (props) => {
     setViewServices(tmp_view_services);
   }
 
+  const groupMetricsByServices = (servicesFlat) => {
+    let services = [];
+
+    servicesFlat.forEach(element => {
+      let service = services.filter(e => e.service === element.service);
+      if (!service.length)
+        services.push({
+          'service': element.service,
+          'metrics': [element.metric]
+        })
+      else
+        service[0].metrics.push(element.metric)
+
+    })
+    return services
+  }
+
   const doChange = async ({formValues, servicesList}) => {
     let services = [];
     let dataToSend = new Object()
 
-    if (!this.addview && !this.cloneview) {
-      const { id } = this.state.metric_profile
-      services = this.groupMetricsByServices(servicesList);
+    if (!addview && !cloneview) {
+      const { id } = metricProfile
+      services = groupMetricsByServices(servicesList);
       dataToSend = {
         id,
         name: formValues.name,
         description: formValues.description,
         services
       };
-      let response = await this.webapi.changeMetricProfile(dataToSend);
+      let response = await webapi.changeMetricProfile(dataToSend);
       if (!response.ok) {
         let change_msg = '';
         try {
@@ -1450,7 +1429,7 @@ export const MetricProfilesComponentHooks = (props) => {
           msg: change_msg
         });
       } else {
-        let r = await this.backend.changeObject(
+        let r = await backend.changeObject(
           '/api/v2/internal/metricprofiles/',
           {
             apiid: dataToSend.id,
@@ -1464,7 +1443,7 @@ export const MetricProfilesComponentHooks = (props) => {
           NotifyOk({
             msg: 'Metric profile succesfully changed',
             title: 'Changed',
-            callback: () => this.history.push('/ui/metricprofiles')
+            callback: () => history.push('/ui/metricprofiles')
           });
         else {
           let change_msg = '';
@@ -1481,13 +1460,13 @@ export const MetricProfilesComponentHooks = (props) => {
         }
       }
     } else {
-      services = this.groupMetricsByServices(servicesList);
+      services = groupMetricsByServices(servicesList);
       dataToSend = {
         name: formValues.name,
         description: formValues.description,
         services
       }
-      let response = await this.webapi.addMetricProfile(dataToSend);
+      let response = await webapi.addMetricProfile(dataToSend);
       if (!response.ok) {
         let add_msg = '';
         try {
@@ -1504,7 +1483,7 @@ export const MetricProfilesComponentHooks = (props) => {
         });
       } else {
         let r_json = await response.json();
-        let r_internal = await this.backend.addObject(
+        let r_internal = await backend.addObject(
           '/api/v2/internal/metricprofiles/',
           {
             apiid: r_json.data.id,
@@ -1518,7 +1497,7 @@ export const MetricProfilesComponentHooks = (props) => {
           NotifyOk({
             msg: 'Metric profile successfully added',
             title: 'Added',
-            callback: () => this.history.push('/ui/metricprofiles')
+            callback: () => history.push('/ui/metricprofiles')
           });
         else {
           let add_msg = '';
@@ -1535,6 +1514,41 @@ export const MetricProfilesComponentHooks = (props) => {
         }
       }
     }
+  }
+
+  const flattenServices = (services) => {
+    let flat_services = [];
+    let index = 0;
+
+    services.forEach((service_element) => {
+      let service = service_element.service;
+      service_element.metrics.forEach((metric) => {
+        flat_services.push({index, service, metric})
+        index += 1;
+      })
+    })
+    return flat_services
+  }
+
+  const sortServices = (a, b) => {
+    if (a.service.toLowerCase() < b.service.toLowerCase()) return -1;
+    if (a.service.toLowerCase() > b.service.toLowerCase()) return 1;
+    if (a.service.toLowerCase() === b.service.toLowerCase()) {
+      if (a.metric.toLowerCase() < b.metric.toLowerCase()) return -1;
+      if (a.metric.toLowerCase() > b.metric.toLowerCase()) return 1;
+      if (a.metric.toLowerCase() === b.metric.toLowerCase()) return 0;
+    }
+  }
+
+  const ensureAlignedIndexes = (list) => {
+    let i = 0
+
+    list.forEach(e => {
+      e.index = i
+      i += 1
+    })
+
+    return list
   }
 
   const onSubmitHandle = async ({formValues, servicesList}) => {
