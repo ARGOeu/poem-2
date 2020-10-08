@@ -7,14 +7,12 @@ import {
     AutocompleteField,
     NotifyOk,
     FancyErrorMessage,
-    HistoryComponent,
     DiffElement,
     ProfileMainInfo,
     NotifyError,
     ErrorComponent,
-    ParagraphTitle
+    ParagraphTitle, ProfilesListTable
 } from './UIElements';
-import ReactTable from 'react-table';
 import {
   Formik,
   Form,
@@ -40,9 +38,7 @@ import * as Yup from 'yup';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes, faPlus, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import ReactDiffViewer from 'react-diff-viewer';
-
-
-export const ThresholdsProfilesHistory = HistoryComponent('thresholdsprofile');
+import { useQuery } from 'react-query';
 
 
 const ThresholdsSchema = Yup.object().shape({
@@ -866,106 +862,91 @@ const ThresholdsProfilesForm = ({
 )
 
 
-export class ThresholdsProfilesList extends Component {
-  constructor(props) {
-    super(props);
-    this.location = props.location;
-    this.backend = new Backend();
-    this.publicView = props.publicView
+export const ThresholdsProfilesList = (props) => {
+  const location = props.location;
+  const backend = new Backend();
+  const publicView = props.publicView
 
-    if (this.publicView)
-      this.apiUrl = '/api/v2/internal/public_thresholdsprofiles'
-    else
-      this.apiUrl = '/api/v2/internal/thresholdsprofiles'
+  const apiUrl = `/api/v2/internal/${publicView ? 'public_' : ''}thresholdsprofiles`;
 
-    this.state = {
-      loading: false,
-      list_thresholdsprofiles: null,
-      write_perm: false,
-      error: null
-    };
-  }
+  const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails} = useQuery(
+    `session_userdetails`, async () => {
+      let sessionActive = await backend.isActiveSession();
+      if (sessionActive.active)
+        return sessionActive.userdetails;
+    }
+  );
 
-  async componentDidMount() {
-    this.setState({loading: true});
+  const { data: listThresholdsProfiles, error: errorListThresholdsProfiles, isLoading: loadingListThresholdsProfiles } = useQuery(
+    'thresholdsprofiles_listview', async () => {
+      let profiles = await backend.fetchData(apiUrl);
 
-    try {
-      let profiles = await this.backend.fetchData(this.apiUrl);
-      if (!this.publicView) {
-        let session = await this.backend.isActiveSession();
-        this.setState({
-          list_thresholdsprofiles: profiles,
-          loading: false,
-          write_perm: session.userdetails.is_superuser || session.userdetails.groups.thresholdsprofiles.length > 0
-        });
-      } else {
-        this.setState({
-          list_thresholdsprofiles: profiles,
-          loading: false
-        });
-      };
-    } catch(err) {
-      this.setState({
-        error: err,
-        loading: false
-      });
-    };
-  }
+      let n_elem = 10 - (profiles.length % 10);
 
-  render() {
-    const columns = [
-      {
-        Header: 'Name',
-        id: 'name',
-        maxWidth: 350,
-        accessor: e =>
-          <Link to={`/ui/${this.publicView ? 'public_' : ''}thresholdsprofiles/` + e.name}>
-            {e.name}
-          </Link>
-      },
-      {
-        Header: 'Description',
-        accessor: 'description',
-      },
-      {
-        Header: 'Group',
-        accessor: 'groupname',
-        className: 'text-center',
-        maxWidth: 150,
-      }
-    ];
-    const { loading, list_thresholdsprofiles, write_perm, error } = this.state;
+      for (let i = 0; i < n_elem; i++)
+        profiles.push(
+          {'description': '', 'groupname': '', 'name': ''}
+        );
 
-    if (loading)
-      return (<LoadingAnim/>);
+      return profiles;
+    }
+  )
 
-    else if (error)
-      return (<ErrorComponent error={error}/>);
+  const columns = React.useMemo(() => [
+    {
+      Header: '#',
+      accessor: null
+    },
+    {
+      Header: 'Name',
+      id: 'name',
+      maxWidth: 350,
+      accessor: e =>
+        <Link to={`/ui/${publicView ? 'public_' : ''}thresholdsprofiles/${e.name}`}>
+          {e.name}
+        </Link>
+    },
+    {
+      Header: 'Description',
+      accessor: 'description',
+    },
+    {
+      Header: 'Group',
+      accessor: 'groupname',
+      className: 'text-center',
+      maxWidth: 150,
+    }
+  ]);
 
-    else if (!loading && list_thresholdsprofiles) {
-      return (
-        <BaseArgoView
-          resourcename='thresholds profile'
-          location={this.location}
-          listview={true}
-          addnew={!this.publicView}
-          addperm={write_perm}
-          publicview={this.publicView}
-        >
-          <ReactTable
-            data={list_thresholdsprofiles}
-            columns={columns}
-            className='-highlight'
-            defaultPageSize={12}
-            rowsText='profiles'
-            getTheadThProps={() => ({className: 'table-active font-weight-bold p-2'})}
-          />
-        </BaseArgoView>
-      );
-    } else
-      return null;
-  }
-}
+  if (loadingUserDetails || loadingListThresholdsProfiles)
+    return (<LoadingAnim/>);
+
+  else if (errorListThresholdsProfiles)
+    return (<ErrorComponent error={errorListThresholdsProfiles}/>);
+
+  else if (errorUserDetails)
+    return (<ErrorComponent error={errorUserDetails}/>);
+
+  else if (!loadingUserDetails && !loadingListThresholdsProfiles && listThresholdsProfiles) {
+    return (
+      <BaseArgoView
+        resourcename='thresholds profile'
+        location={location}
+        listview={true}
+        addnew={!publicView}
+        addperm={publicView ? false : userDetails.is_superuser || userDetails.groups.thresholdsprofiles.length > 0}
+        publicview={publicView}
+      >
+        <ProfilesListTable
+          data={listThresholdsProfiles}
+          columns={columns}
+          type='thresholds'
+        />
+      </BaseArgoView>
+    );
+  } else
+    return null;
+};
 
 
 export class ThresholdsProfilesChange extends Component {

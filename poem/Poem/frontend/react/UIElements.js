@@ -1,4 +1,4 @@
-import React, { Component, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Cookies from 'universal-cookie';
 import {
   Alert,
@@ -30,7 +30,11 @@ import {
   NavbarToggler,
   Row,
   Popover,
-  PopoverBody
+  PopoverBody,
+  Table,
+  Pagination,
+  PaginationItem,
+  PaginationLink,
 } from 'reactstrap';
 import {Link} from 'react-router-dom';
 import ArgoLogo from './argologo_color.svg';
@@ -61,49 +65,59 @@ import {
   faTable,
   faTasks,
   faUser,
-  faWrench}
+  faWrench, faNewspaper}
 from '@fortawesome/free-solid-svg-icons';
 import { NotificationManager } from 'react-notifications';
 import { Field } from 'formik';
 import { Backend } from './DataManager';
 import ReactDiffViewer from 'react-diff-viewer';
 import Autosuggest from 'react-autosuggest';
-import { PrivacyPolicy } from './PrivacyPolicy';
+import { CookiePolicy } from './CookiePolicy';
+import { useTable, usePagination } from 'react-table';
 
 
 var list_pages = ['administration', 'probes',
-                  'metrics', 'metricprofiles', 'aggregationprofiles',
+                  'metrics', 'reports', 'servicetypes', 'metricprofiles', 'aggregationprofiles',
                   'thresholdsprofiles', 'operationsprofiles'];
-var admin_list_pages = ['administration', 'tenants', 'yumrepos', 'packages',
-                        'probes', 'metrictemplates'];
+var admin_list_pages = [ 'administration', 'tenants',
+                        'yumrepos', 'packages', 'probes', 'metrictemplates'];
 
 var link_title = new Map();
+
 link_title.set('administration', 'Administration');
-link_title.set('reports', 'Reports');
-link_title.set('probes', 'Probes');
-link_title.set('public_probes', 'Public probes');
-link_title.set('public_metrictemplates', 'Public metric templates');
-link_title.set('metrics', 'Metrics');
-link_title.set('public_metrics', 'Public metrics');
-link_title.set('metricprofiles', 'Metric profiles');
-link_title.set('public_metricprofiles', 'Metric profiles');
-link_title.set('public_aggregationprofiles', 'Aggregation profiles');
 link_title.set('aggregationprofiles', 'Aggregation profiles');
-link_title.set('groupofaggregations', 'Groups of aggregations');
-link_title.set('groupofmetrics', 'Groups of metrics');
-link_title.set('groupofmetricprofiles', 'Groups of metric profiles');
-link_title.set('users', 'Users');
 link_title.set('apikey', 'API key');
-link_title.set('metrictemplates', 'Metric templates');
-link_title.set('yumrepos', 'YUM repos');
+link_title.set('groupofaggregations', 'Groups of aggregations');
+link_title.set('groupofmetricprofiles', 'Groups of metric profiles');
+link_title.set('groupofmetrics', 'Groups of metrics');
 link_title.set('groupofthresholdsprofiles', 'Groups of thresholds profiles');
-link_title.set('public_thresholdsprofiles', 'Thresholds profiles');
-link_title.set('thresholdsprofiles', 'Thresholds profiles');
-link_title.set('packages', 'Packages');
-link_title.set('tenants', 'Tenants');
+link_title.set('metricprofiles', 'Metric profiles');
+link_title.set('metrics', 'Metrics');
+link_title.set('metrictemplates', 'Metric templates');
 link_title.set('operationsprofiles', 'Operations profiles');
-link_title.set('public_operationsprofiles', 'Operations profiles');
-link_title.set('policies', 'Privacy policies');
+link_title.set('packages', 'Packages');
+link_title.set('probes', 'Probes');
+link_title.set('public_aggregationprofiles', 'Public aggregation profiles');
+link_title.set('public_metricprofiles', 'Public metric profiles');
+link_title.set('public_metrics', 'Public metrics');
+link_title.set('public_metrictemplates', 'Public metric templates');
+link_title.set('public_operationsprofiles', 'Public operations profiles');
+link_title.set('cookiepolicies', 'Cookie policies');
+link_title.set('public_probes', 'Public probes');
+link_title.set('public_thresholdsprofiles', 'Public thresholds profiles');
+link_title.set('reports', 'Reports');
+link_title.set('servicetypes', 'Service types');
+link_title.set('public_servicetypes', 'Public service types');
+link_title.set('tenants', 'Tenants');
+link_title.set('thresholdsprofiles', 'Thresholds profiles');
+link_title.set('users', 'Users');
+link_title.set('yumrepos', 'YUM repos');
+
+var PolicyLinks = new Map();
+PolicyLinks.set('egi', 'https://argo.egi.eu/egi/policies');
+PolicyLinks.set('eudat', 'https://avail.eudat.eu/eudat/policies');
+PolicyLinks.set('sdc', 'https://monitoring.seadatanet.org/sdc/policies');
+PolicyLinks.set('ni4os', 'https://argo.ni4os.eu/ni4os/policies');
 
 
 export const Icon = props =>
@@ -111,6 +125,7 @@ export const Icon = props =>
   let link_icon = new Map();
   link_icon.set('administration', faWrench);
   link_icon.set('serviceflavour', faHighlighter);
+  link_icon.set('servicetypes', faHighlighter);
   link_icon.set('reports', faFileAlt);
   link_icon.set('probes', faServer);
   link_icon.set('metrics', faCog);
@@ -128,6 +143,7 @@ export const Icon = props =>
   link_icon.set('terms', faHandshake);
   link_icon.set('argodoc', faLink);
   link_icon.set('documentation', faBook);
+  link_icon.set('privacy', faNewspaper);
 
   if (props.i.startsWith('groupof'))
     return (
@@ -277,7 +293,7 @@ const UserDetailsToolTip = ({userDetails, isTenantSchema, publicView}) =>
   const NoPermBadge = ({only=false}) =>
     only ?
       <div className="text-center">
-         <Badge color="dark" className="mb-1 mt-1" style={{fontSize: '100%'}}>
+        <Badge color="dark" className="mb-1 mt-1" style={{fontSize: '100%'}}>
           No permissions
         </Badge>
       </div>
@@ -509,7 +525,7 @@ export const NavigationLinks = ({location, isTenantSchema, userDetails}) => {
 }
 
 
-export const NavigationAbout = ({ location, poemVersion }) => {
+export const NavigationAbout = ({ location, poemVersion, tenantName='egi' }) => {
   return (
     <React.Fragment>
       <div className="bg-white border-left border-right pl-3 mt-0 pt-5 text-uppercase">
@@ -547,10 +563,19 @@ export const NavigationAbout = ({ location, poemVersion }) => {
           tag={Link}
           active={location.pathname.split('/')[2] === 'policies' ? true : false}
           className={location.pathname.split('/')[2] === 'policies' ? "text-white bg-info" : "text-dark"}
-          to="/ui/policies"
+          to="/ui/cookiepolicies"
         >
           <Icon i="policies"/>{' '}
-          Privacy Policies
+          Cookie Policies
+        </NavLink>
+        <NavLink
+          tag="a"
+          href={PolicyLinks.get(tenantName.toLowerCase())}
+          className='text-dark'
+          target='_blank' rel='noopener noreferrer'
+        >
+          <Icon i='privacy'/> {' '}
+          Privacy policy
         </NavLink>
         <NavLink
           tag="a"
@@ -566,7 +591,7 @@ export const NavigationAbout = ({ location, poemVersion }) => {
 }
 
 
-const InnerFooter = ({ border=false, publicPage=false }) =>
+const InnerFooter = ({ border=false, publicPage=false, tenantName='egi' }) =>
 {
   const [modal, setModal] = useState(false);
   const toggle = () => setModal(!modal);
@@ -595,12 +620,12 @@ const InnerFooter = ({ border=false, publicPage=false }) =>
         <div className="text-center mb-0 pt-0">
           <small>
             <a href="https://ui.argo.grnet.gr/egi/termsofUse" target="_blank" rel="noopener noreferrer" title="Terms">Terms</a>, &nbsp;
-            <a href='#' title="Privacy Policies" onClick={toggle}>Privacy Policies</a>
+            <a href='#' title="Cookie Policies" onClick={toggle}>Cookie Policies</a>, &nbsp;
+            <a href='#' title='Privacy Policy' href={tenantName ? PolicyLinks.get(tenantName.toLowerCase()) : PolicyLinks.get('egi')} target='_blank' rel='noopener noreferrer'>Privacy Policy</a>
           </small>
           <Modal isOpen={modal} toggle={toggle} size="lg">
-            <ModalHeader toggle={toggle}><h2>Privacy Policies</h2></ModalHeader>
-            <ModalBody>
-              <PrivacyPolicy showTitle={false}/>
+            <ModalBody className="p-0">
+              <CookiePolicy fromModal={true}/>
             </ModalBody>
           </Modal>
         </div>
@@ -610,19 +635,19 @@ const InnerFooter = ({ border=false, publicPage=false }) =>
 }
 
 
-export const Footer = ({ loginPage=false, publicPage=false }) =>
+export const Footer = ({ loginPage=false, publicPage=false, tenantName='egi' }) =>
 {
   if (!loginPage) {
     return (
       <div id="argo-footer" className="border rounded">
-        <InnerFooter border={true} publicPage={publicPage}/>
+        <InnerFooter border={true} publicPage={publicPage} tenantName={tenantName}/>
       </div>
     )
   }
   else {
     return (
       <div id="argo-loginfooter">
-        <InnerFooter publicPage={true}/>
+        <InnerFooter publicPage={true} tenantName={tenantName}/>
       </div>
     )
   }
@@ -631,14 +656,18 @@ export const Footer = ({ loginPage=false, publicPage=false }) =>
 
 export const LoadingAnim = () =>
 (
-  <Card className="text-center">
-    <CardHeader className="bg-light">
-      <h4 className="text-dark">Loading data...</h4>
-    </CardHeader>
-    <CardBody>
-      <img src={ArgoLogoAnim} alt="ARGO logo anim" className="img-responsive" height="450px"/>
-    </CardBody>
-  </Card>
+  <Row className="ml-2 mr-1 border rounded" style={{height: '90%', backgroundColor: 'white'}}>
+    <Col className="d-flex flex-column align-items-center align-self-center" md={{size: 8, offset: 2}}>
+      <Card className="text-center border-0">
+        <CardHeader className="bg-light">
+          <h4 className="text-dark">Loading data...</h4>
+        </CardHeader>
+        <CardBody>
+          <img src={ArgoLogoAnim} alt="ARGO logo anim" className="img-responsive" height="400px"/>
+        </CardBody>
+      </Card>
+    </Col>
+  </Row>
 )
 
 
@@ -677,7 +706,7 @@ export const NotifyInfo = ({msg='', title=''}) => {
 };
 
 
-export const PublicPage = ({children}) => {
+export const PublicPage = ({tenantName=undefined, children}) => {
   let userDetails = {
     username: 'Anonymous'
   }
@@ -706,7 +735,12 @@ export const PublicPage = ({children}) => {
       </Row>
       <Row>
         <Col>
-          <Footer loginPage={false} publicPage={true}/>
+          {
+            tenantName ?
+              <Footer loginPage={false} publicPage={true} tenantName={tenantName}/>
+            :
+              <Footer loginPage={false} publicPage={true}/>
+          }
         </Col>
       </Row>
     </Container>
@@ -747,7 +781,7 @@ export const BaseArgoView = ({resourcename='', location=undefined,
                 }
                 {
                   (addnew && addperm) &&
-                      <Link className="btn btn-secondary" to={location.pathname + "/add"} role="button">Add</Link>
+                  <Link className="btn btn-secondary" to={location.pathname + "/add"} role="button">Add</Link>
                 }
                 {
                   (addnew && !addperm) &&
@@ -924,181 +958,151 @@ export const DropdownFilterComponent = ({value, onChange, data}) => (
 )
 
 
-export function HistoryComponent(obj, tenantview=false) {
-  return class extends Component {
-    constructor(props) {
-      super(props);
+export const HistoryComponent = (props) => {
+  const name = props.match.params.name;
+  const history = props.history;
+  const publicView = props.publicView
+  const tenantView = props.tenantView;
+  const obj = props.object;
 
-      this.name = props.match.params.name;
-      this.history = props.history;
-      this.publicView = props.publicView
+  const [loading, setLoading] = useState(false);
+  const [listVersions, setListVersions] = useState(null);
+  const [compare1, setCompare1] = useState('');
+  const [compare2, setCompare2] = useState('');
+  const [error, setError] = useState(null);
 
-      this.state = {
-        loading: false,
-        list_versions: null,
-        compare1: '',
-        compare2: '',
-        error: null
-      };
+  var apiUrl = undefined;
+  if (['metric', 'metricprofile', 'aggregationprofile', 'thresholdsprofile'].includes(obj))
+    apiUrl = `/api/v2/internal/${publicView ? 'public_' : ''}tenantversion/`;
+  else
+    apiUrl = `/api/v2/internal/${publicView ? 'public_' : ''}version/`;
 
-      if (!this.publicView) {
-        if (['metric', 'metricprofile', 'aggregationprofile', 'thresholdsprofile'].includes(obj))
-          this.apiUrl = '/api/v2/internal/tenantversion/'
-        else
-          this.apiUrl = '/api/v2/internal/version/'
-      }
-      else {
-        if (['metric', 'metricprofile', 'aggregationprofile', 'thresholdsprofile'].includes(obj))
-          this.apiUrl = '/api/v2/internal/public_tenantversion/'
-        else
-          this.apiUrl = '/api/v2/internal/public_version/'
-      }
+  const compareUrl = `/ui/${tenantView ? 'administration/' : ''}${publicView ? 'public_' : ''}${obj}s/${name}/history`;
+  const backend = new Backend();
 
-      if (tenantview)
-        this.compareUrl = `/ui/administration/${obj}s/${this.name}/history`;
-      else {
-        if (this.publicView)
-          this.compareUrl = `/ui/public_${obj}s/${this.name}/history`;
-        else
-          this.compareUrl = `/ui/${obj}s/${this.name}/history`;
-      }
+  useEffect(() => {
+    setLoading(true);
 
-      this.backend = new Backend();
-    }
-
-    async componentDidMount() {
-      this.setState({loading: true});
-
+    async function fetchData() {
       try {
-        let json = await this.backend.fetchData(`${this.apiUrl}/${obj}/${this.name}`);
+        let json = await backend.fetchData(`${apiUrl}/${obj}/${name}`);
+          setListVersions(json);
         if (json.length > 1) {
-          this.setState({
-            list_versions: json,
-            loading: false,
-            compare1: json[0].version,
-            compare2: json[1].version
-          });
-        } else {
-          this.setState({
-            list_versions: json,
-            loading: false
-          });
-        };
+          setCompare1(json[0].version);
+          setCompare2(json[1].version);
+        }
       } catch(err) {
-        this.setState({
-          error: err,
-          loading: false
-        });
-      };
-    }
-
-    render() {
-      const { loading, list_versions, error } = this.state;
-
-      if (loading)
-        return (<LoadingAnim />);
-
-      else if (error)
-        return (<ErrorComponent error={error}/>);
-
-      else if (!loading && list_versions) {
-        return (
-          <BaseArgoView
-            resourcename='Version history'
-            infoview={true}>
-            <table className='table table-sm'>
-              <thead className='table-active'>
-                <tr>
-                  { list_versions.length === 1 ?
-                    <th scope='col'>Compare</th>
-                    :
-                    <th scope='col'>
-                      <Button
-                          color='info'
-                          onClick={() =>
-                            this.history.push(
-                              `${this.compareUrl}/compare/${this.state.compare1}/${this.state.compare2}`,
-                          )
-                          }
-                        >
-                          Compare
-                      </Button>
-                    </th>
-                    }
-                  <th scope='col'>Version</th>
-                  <th scope='col'>Date/time</th>
-                  <th scope='col'>User</th>
-                  <th scope='col'>Comment</th>
-                </tr>
-              </thead>
-              <tbody>
-                {
-                    list_versions.map((e, i) =>
-                      <tr key={i}>
-                        {
-                          list_versions.length === 1 ?
-                            <td>-</td>
-                          :
-                            i === 0 ?
-                              <td>
-                                <input
-                                type='radio'
-                                name='radio-1'
-                                value={e.version}
-                                defaultChecked={true}
-                                onChange={e => this.setState({compare1: e.target.value})}
-                              />
-                              </td>
-                            :
-                              <td>
-                                <input
-                                type='radio'
-                                name='radio-1'
-                                value={e.version}
-                                onChange={e => this.setState({compare1: e.target.value})}
-                              />
-                                {' '}
-                                <input
-                                type='radio'
-                                name='radio-2'
-                                value={e.version}
-                                defaultChecked={i===1}
-                                onChange={e => this.setState({compare2: e.target.value})}
-                              />
-                              </td>
-                        }
-                        {
-                          <td>
-                            {e.version ? <Link to={`${this.compareUrl}/${e.version}`}>{e.version}</Link> : ''}
-                          </td>
-                        }
-                        <td>
-                          {e.date_created ? e.date_created : ''}
-                        </td>
-                        <td>
-                          {e.user ? e.user : ''}
-                        </td>
-                        <td className='col-md-6'>
-                          {e.comment ? e.comment : ''}
-                        </td>
-                      </tr>
-                    )
-                  }
-              </tbody>
-            </table>
-          </BaseArgoView>
-        );
+        setError(err);
       }
-      else
-        return null;
+      setLoading(false);
     }
-  }
-}
+
+    fetchData();
+  }, []);
+
+  if (loading)
+    return (<LoadingAnim />);
+
+  else if (error)
+    return (<ErrorComponent error={error}/>);
+
+  else if (!loading && listVersions) {
+    return (
+      <BaseArgoView
+        resourcename='Version history'
+        infoview={true}>
+        <table className='table table-sm'>
+          <thead className='table-active'>
+            <tr>
+              { listVersions.length === 1 ?
+                <th scope='col'>Compare</th>
+                :
+                <th scope='col'>
+                  <Button
+                      color='info'
+                      onClick={() =>
+                        history.push(
+                          `${compareUrl}/compare/${compare1}/${compare2}`,
+                      )
+                      }
+                    >
+                      Compare
+                  </Button>
+                </th>
+                }
+              <th scope='col'>Version</th>
+              <th scope='col'>Date/time</th>
+              <th scope='col'>User</th>
+              <th scope='col'>Comment</th>
+            </tr>
+          </thead>
+          <tbody>
+            {
+                listVersions.map((e, i) =>
+                  <tr key={i}>
+                    {
+                      listVersions.length === 1 ?
+                        <td>-</td>
+                      :
+                        i === 0 ?
+                          <td>
+                            <input
+                            type='radio'
+                            name='radio-1'
+                            value={e.version}
+                            defaultChecked={true}
+                            onChange={e => setCompare1(e.target.value)}
+                          />
+                          </td>
+                        :
+                          <td>
+                            <input
+                            type='radio'
+                            name='radio-1'
+                            value={e.version}
+                            onChange={e => setCompare1(e.target.value)}
+                          />
+                            {' '}
+                            <input
+                            type='radio'
+                            name='radio-2'
+                            value={e.version}
+                            defaultChecked={i===1}
+                            onChange={e => setCompare2(e.target.value)}
+                          />
+                          </td>
+                    }
+                    {
+                      <td>
+                        {e.version ? <Link to={`${compareUrl}/${e.version}`}>{e.version}</Link> : ''}
+                      </td>
+                    }
+                    <td>
+                      {e.date_created ? e.date_created : ''}
+                    </td>
+                    <td>
+                      {e.user ? e.user : ''}
+                    </td>
+                    <td className='col-md-6'>
+                      {e.comment ? e.comment : ''}
+                    </td>
+                  </tr>
+                )
+              }
+          </tbody>
+        </table>
+      </BaseArgoView>
+    );
+  } else
+    return null;
+};
 
 
 export const DiffElement = ({title, item1, item2}) => {
-  item1 = item1.split('\r\n');
-  item2 = item2.split('\r\n');
+  if (!Array.isArray(item1) && !Array.isArray(item2)) {
+    item1 = item1.split('\r\n');
+    item2 = item2.split('\r\n');
+  }
 
   let n = Math.max(item1.length, item2.length);
 
@@ -1238,3 +1242,130 @@ export const ErrorComponent = ({error}) => {
 export const ParagraphTitle = ({title}) => (
   <h4 className="mt-2 p-1 pl-3 text-uppercase rounded" style={{"backgroundColor": "#c4ccd4"}}>{title}</h4>
 )
+
+
+export function ProfilesListTable({ columns, data, type }) {
+  const {
+    headerGroups,
+    prepareRow,
+    page,
+    canPreviousPage,
+    canNextPage,
+    pageCount,
+    gotoPage,
+    nextPage,
+    previousPage,
+    setPageSize,
+    state: { pageIndex, pageSize }
+  } = useTable(
+    {
+      columns,
+      data,
+      initialState: { pageIndex: 0, pageSize: 10 }
+    },
+    usePagination
+  );
+
+  return (
+    <>
+      <Row>
+        <Col>
+          <Table className='table table-bordered table-hover'>
+            <thead className='table-active align-middle text-center'>
+              {
+                headerGroups.map((headerGroup, thi) => (
+                  <React.Fragment key={thi}>
+                    <tr>
+                      {
+                        headerGroup.headers.map((column, tri) => {
+                          let width = undefined;
+
+                          if (tri === 0)
+                            width = '2%'
+                          if (tri === 1)
+                            width = '20%'
+                          else if (tri === 2)
+                            width = '70%'
+                          else if (tri === 3)
+                            width = '8%'
+
+                          return (
+                            <th style={{width: width}} className='p-1 m-1' key={tri}>
+                              {column.render('Header')}
+                            </th>
+                          )
+                        })
+                      }
+                    </tr>
+                  </React.Fragment>
+                ))
+              }
+            </thead>
+            <tbody>
+              {
+                page.map((row, row_index) => {
+                  prepareRow(row);
+                  return (
+                    <tr key={row_index} style={{height: '49px'}}>
+                      {
+                        row.cells.map((cell, cell_index) => {
+                          if (cell_index === 0)
+                            return <td key={cell_index} className='align-middle text-center'>{(row_index + 1) + (pageIndex * pageSize)}</td>
+                          else if (cell_index === row.cells.length - 1)
+                            return <td key={cell_index} className='align-middle text-center'>{cell.render('Cell')}</td>
+                          else
+                            return <td key={cell_index} className='align-middle'>{cell.render('Cell')}</td>
+                        })
+                      }
+                    </tr>
+                  )
+                })
+              }
+            </tbody>
+          </Table>
+        </Col>
+      </Row>
+      <Row>
+        <Col className='d-flex justify-content-center'>
+          <Pagination>
+            <PaginationItem disabled={!canPreviousPage}>
+              <PaginationLink first onClick={() => gotoPage(0)}/>
+            </PaginationItem>
+            <PaginationItem disabled={!canPreviousPage}>
+              <PaginationLink previous onClick={() => previousPage()}/>
+            </PaginationItem>
+            {
+              [...Array(pageCount)].map((e, i) =>
+                <PaginationItem key={i} active={pageIndex === i ? true : false}>
+                  <PaginationLink onClick={() => gotoPage(i)}>
+                    { i + 1 }
+                  </PaginationLink>
+                </PaginationItem>
+              )
+            }
+            <PaginationItem disabled={!canNextPage}>
+              <PaginationLink next onClick={() => nextPage()}/>
+            </PaginationItem>
+            <PaginationItem disabled={!canNextPage}>
+              <PaginationLink last onClick={() => gotoPage(pageCount + 1)}/>
+            </PaginationItem>
+            <PaginationItem className='pl-2'>
+              <select
+                style={{width: '180px'}}
+                className='custom-select text-primary'
+                value={pageSize}
+                onChange={e => setPageSize(Number(e.target.value))}
+              >
+                {[10, 20, 50].map(pageSize => (
+                  <option key={pageSize} value={pageSize}>
+                    {pageSize} {`${type} profiles`}
+                  </option>
+                ))}
+              </select>
+            </PaginationItem>
+          </Pagination>
+        </Col>
+      </Row>
+    </>
+  );
+};

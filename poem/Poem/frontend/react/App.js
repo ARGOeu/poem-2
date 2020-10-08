@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 import Login from './Login';
 import {
-  MetricProfileHistory,
   MetricProfileVersionCompare,
   MetricProfileVersionDetails,
   MetricProfilesChange,
@@ -9,21 +8,33 @@ import {
   MetricProfilesList
 } from './MetricProfiles';
 import Home, { PublicHome } from './Home';
-import { ProbeList, ProbeChange, ProbeHistory, ProbeVersionCompare, ProbeVersionDetails, ProbeClone } from './Probes';
-import { MetricList, MetricChange, MetricHistory, MetricVersonCompare, MetricVersionDetails } from './Metrics';
 import {
-  MetricTemplateList,
-  MetricTemplateChange,
-  MetricTemplateClone,
-  TenantMetricTemplateList,
-  MetricTemplateHistory,
-  MetricTemplateVersionCompare,
+  ProbeChange,
+  ProbeClone,
+  ProbeComponent,
+  ProbeList,
+  ProbeVersionCompare,
+  ProbeVersionDetails,
+} from './Probes';
+import {
+  MetricChange,
+  MetricVersionDetails,
+  ListOfMetrics,
+  CompareMetrics
+} from './Metrics';
+import {
   MetricTemplateVersionDetails,
-  TenantMetricTemplateHistory
+  MetricTemplateComponent
 } from './MetricTemplates';
 import { TenantAdministration, SuperAdminAdministration } from './Administration';
-import { AggregationProfilesChange, AggregationProfilesList, AggregationProfileHistory, AggregationProfileVersionCompare, AggregationProfileVersionDetails } from './AggregationProfiles';
+import {
+  AggregationProfilesChange,
+  AggregationProfilesList,
+  AggregationProfileVersionCompare,
+  AggregationProfileVersionDetails
+} from './AggregationProfiles';
 import Reports from './Reports';
+import { ReportsList, ReportsComponent } from './Reports';
 import { UsersList, UserChange, SuperAdminUserChange, ChangePassword } from './Users';
 import {
   GroupList,
@@ -33,18 +44,19 @@ import { APIKeyList, APIKeyChange } from './APIKey';
 import NotFound from './NotFound';
 import { Route, Switch, BrowserRouter, Redirect, withRouter } from 'react-router-dom';
 import { Container, Row, Col } from 'reactstrap';
-import { NavigationBar, NavigationAbout, CustomBreadcrumb, NavigationLinks, Footer, PublicPage } from './UIElements';
+import { NavigationBar, NavigationAbout, CustomBreadcrumb, NavigationLinks, Footer, PublicPage, HistoryComponent} from './UIElements';
 import { NotificationContainer } from 'react-notifications';
 import { Backend } from './DataManager';
 import { YumRepoList, YumRepoChange, YumRepoClone } from './YumRepos';
-import { ThresholdsProfilesList, ThresholdsProfilesChange, ThresholdsProfilesHistory, ThresholdsProfileVersionCompare, ThresholdsProfileVersionDetail } from './ThresholdProfiles';
+import { ThresholdsProfilesList, ThresholdsProfilesChange, ThresholdsProfileVersionCompare, ThresholdsProfileVersionDetail } from './ThresholdProfiles';
 import Cookies from 'universal-cookie';
 
 import './App.css';
 import { PackageList, PackageChange, PackageClone } from './Package';
+import { ServiceTypesList } from './ServiceTypes';
 import { TenantList, TenantChange } from './Tenants';
 import { OperationsProfilesList, OperationsProfileDetails } from './OperationsProfiles';
-import { PrivacyPolicy } from './PrivacyPolicy';
+import { CookiePolicy } from './CookiePolicy';
 
 
 const NavigationBarWithRouter = withRouter(NavigationBar);
@@ -102,22 +114,25 @@ const RedirectAfterLogin = ({isSuperUser, ...props}) => {
 }
 
 
-const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, webApiOperations, token, tenantName, isSuperUser, userGroups}) => (
+const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, webApiOperations, webApiReports, token, tenantName, isSuperUser, userGroups}) => (
   <Switch>
     <Route exact path="/ui/login" render={props => <RedirectAfterLogin isSuperUser={isSuperUser} {...props}/>}/>
     <Route exact path="/ui/home" component={Home} />
-    <Route exact path="/ui/reports" component={Reports} />
     <Route exact path="/ui/probes" component={ProbeList} />
-    <Route exact path="/ui/probes/:name/history" render={props => <ProbeHistory {...props}/>}/>
+    <Route exact path="/ui/probes/:name/history" render={props => <HistoryComponent object='probe' {...props}/>}/>
     <Route exact path="/ui/probes/:name/history/compare/:id1/:id2" render={props => <ProbeVersionCompare {...props}/>}/>
     <Route exact path="/ui/probes/:name/history/:version" render={props => <ProbeVersionDetails {...props}/>}/>
     <Route exact path="/ui/probes/:name/:metrictemplatename"
-      render={props => <MetricTemplateChange {...props} tenantview={true} probeview={true}/>}
+      render={props => <MetricTemplateComponent
+        {...props}
+        tenantview={true}
+        probeview={true}
+      />}
     />
-    <Route exact path="/ui/probes/:name" render={props => <ProbeChange {...props}/>}/>
-    <Route exact path="/ui/metrics" component={MetricList} />
-    <Route exact path="/ui/metrics/:name/history" render={props => <MetricHistory {...props}/>}/>
-    <Route exact path="/ui/metrics/:name/history/compare/:id1/:id2" render={props => <MetricVersonCompare {...props}/>}/>
+    <Route exact path="/ui/probes/:name" render={props => <ProbeComponent {...props}/>}/>
+    <Route exact path="/ui/metrics" render={props => <ListOfMetrics {...props} type='metrics'/>} />
+    <Route exact path="/ui/metrics/:name/history" render={props => <HistoryComponent {...props} object='metric'/>}/>
+    <Route exact path="/ui/metrics/:name/history/compare/:id1/:id2" render={props => <CompareMetrics {...props} type='metric'/>}/>
     <Route exact path="/ui/metrics/:name/history/:version" render={props => <MetricVersionDetails {...props}/>}/>
     <Route exact path="/ui/metrics/:name" render={props => <MetricChange {...props}/>}/>
     <Route exact path="/ui/metricprofiles" component={MetricProfilesList} />
@@ -144,7 +159,7 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, w
         tenantname={tenantName}/>}
     />
     <Route exact path="/ui/metricprofiles/:name/history"
-      render={props => <MetricProfileHistory {...props}/>}
+      render={props => <HistoryComponent object='metricprofile' {...props}/>}
     />
     <Route exact path="/ui/metricprofiles/:name/history/compare/:id1/:id2"
       render={props => <MetricProfileVersionCompare {...props}/>}
@@ -171,7 +186,7 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, w
         tenantname={tenantName}/>}
       />
     <Route exact path="/ui/aggregationprofiles/:name/history"
-      render={props => <AggregationProfileHistory {...props}/>}
+      render={props => <HistoryComponent object='aggregationprofile' {...props}/>}
     />
     <Route exact path="/ui/aggregationprofiles/:name/history/compare/:id1/:id2"
       render={props => <AggregationProfileVersionCompare {...props}/>}
@@ -219,7 +234,7 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, w
         webapitoken={token}
       />}
     />
-    <Route exact path="/ui/policies/" component={PrivacyPolicy} />
+    <Route exact path="/ui/cookiepolicies/" component={CookiePolicy} />
     <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration" component={TenantAdministration} />
     <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/users" component={UsersList} />
     <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/users/add"
@@ -290,12 +305,15 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, w
     <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/apikey/add"
       render={props => <APIKeyChange {...props} addview={true}/>}
     />
-    <SuperUserRoute isSuperUser={isSuperUser} exact path='/ui/administration/metrictemplates/' component={TenantMetricTemplateList}/>
+    <SuperUserRoute isSuperUser={isSuperUser} exact path='/ui/administration/metrictemplates/' render={props => <ListOfMetrics type='metrictemplates' {...props} /> } />
     <SuperUserRoute isSuperUser={isSuperUser} exact path='/ui/administration/metrictemplates/:name'
-      render={props => <MetricTemplateChange {...props} tenantview={true}/>}
+      render={props => <MetricTemplateComponent
+        {...props}
+        tenantview={true}
+      />}
     />
-    <SuperUserRoute isSuperUser={isSuperUser} exact path='/ui/administration/metrictemplates/:name/history' render={props => <TenantMetricTemplateHistory {...props}/>}/>
-    <SuperUserRoute isSuperUser={isSuperUser} exact path='/ui/administration/metrictemplates/:name/history/compare/:id1/:id2' render={props => <MetricTemplateVersionCompare {...props}/>}/>
+    <SuperUserRoute isSuperUser={isSuperUser} exact path='/ui/administration/metrictemplates/:name/history' render={props => <HistoryComponent object='metrictemplate' tenantView={true} {...props}/>}/>
+    <SuperUserRoute isSuperUser={isSuperUser} exact path='/ui/administration/metrictemplates/:name/history/compare/:id1/:id2' render={props => <CompareMetrics {...props} type='metrictemplate'/>}/>
     <SuperUserRoute isSuperUser={isSuperUser} exact path='/ui/administration/metrictemplates/:name/history/:version' render={props => <MetricTemplateVersionDetails {...props}/>}/>
     <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/apikey/:name"
       render={props => <APIKeyChange {...props} />}
@@ -327,6 +345,71 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, w
         title='thresholds profiles'
       />}
     />
+    <Route exact path="/ui/thresholdsprofiles" component={ThresholdsProfilesList} />
+    <AddRoute usergroups={userGroups.thresholdsprofiles} exact path="/ui/thresholdsprofiles/add"
+      render={props => <ThresholdsProfilesChange
+        {...props}
+        webapithresholds={webApiThresholds}
+        webapitoken={token}
+        tenantname={tenantName}
+        addview={true}/>}
+    />
+    <Route exact path="/ui/thresholdsprofiles/:name"
+      render={props => <ThresholdsProfilesChange
+        {...props}
+        webapithresholds={webApiThresholds}
+        webapitoken={token}
+        tenantname={tenantName}/>}
+    />
+    <Route exact path="/ui/thresholdsprofiles/:name/history"
+      render={props => <HistoryComponent object='thresholdsprofile' {...props}/>}
+    />
+    <Route exact path="/ui/thresholdsprofiles/:name/history/compare/:id1/:id2"
+      render={props => <ThresholdsProfileVersionCompare {...props}/>}
+    />
+    <Route exact path="/ui/thresholdsprofiles/:name/history/:version"
+      render={props => <ThresholdsProfileVersionDetail {...props}/>}
+    />
+    <Route
+      exact path="/ui/operationsprofiles"
+      render={props => <OperationsProfilesList
+        {...props}
+        webapioperations={webApiOperations}
+        webapitoken={token}
+      />} />
+    <Route
+      exact path="/ui/operationsprofiles/:name"
+      render={props => <OperationsProfileDetails
+        {...props}
+        webapioperations={webApiOperations}
+        webapitoken={token}
+      />}
+    />
+    <Route
+      exact path="/ui/reports"
+      render={props =>
+        <ReportsList
+          {...props}
+          webapitoken={token}
+          webapireports={webApiReports}
+        />
+      }
+    />
+    <Route
+      exact path="/ui/reports/:name"
+      render={props => <ReportsComponent
+        {...props}
+        webapitoken={token}
+        webapireports={webApiReports}
+        webapimetric={webApiMetric}
+        webapiaggregation={webApiAggregation}
+        webapioperations={webApiOperations}
+      />}
+    />
+    <Route
+      exact path="/ui/servicetypes/"
+      component={ServiceTypesList}
+    />
     <Route component={NotFound} />
   </Switch>
 )
@@ -337,19 +420,19 @@ const SuperAdminRouteSwitch = ({props}) => (
     <Route exact path="/ui/login" render={() => <Redirect to="/ui/administration" />}/>
     <Route exact path="/ui/home" component={Home} />
     <Route exact path="/ui/probes" component={ProbeList} />
-    <Route exact path="/ui/probes/add" render={props => <ProbeChange {...props} addview={true}/>}/>
-    <Route exact path='/ui/probes/:name/clone' render={props => <ProbeClone {...props}/>}/>
-    <Route exact path="/ui/probes/:name/history" render={props => <ProbeHistory {...props}/>}/>
+    <Route exact path="/ui/probes/add" render={props => <ProbeComponent {...props} addview={true}/>}/>
+    <Route exact path="/ui/probes/:name/clone" render={props => <ProbeComponent {...props} cloneview={true}/>}/>
+    <Route exact path="/ui/probes/:name/history" render={props => <HistoryComponent object='probe' {...props}/>}/>
     <Route exact path="/ui/probes/:name/history/compare/:id1/:id2" render={props => <ProbeVersionCompare {...props}/>}/>
     <Route exact path="/ui/probes/:name/history/:version" render={props => <ProbeVersionDetails {...props}/>}/>
-    <Route exact path="/ui/probes/:name" render={props => <ProbeChange {...props}/>}/>
-    <Route exact path='/ui/metrictemplates' component={MetricTemplateList}/>
-    <Route exact path='/ui/metrictemplates/add' render={props => <MetricTemplateChange {...props} addview={true}/>}/>
-    <Route exact path='/ui/metrictemplates/:name/clone' render={props => <MetricTemplateClone {...props}/>}/>
-    <Route exact path='/ui/metrictemplates/:name/history' render={props => <MetricTemplateHistory {...props}/>}/>
-    <Route exact path='/ui/metrictemplates/:name/history/compare/:id1/:id2' render={props => <MetricTemplateVersionCompare {...props}/>}/>
+    <Route exact path="/ui/probes/:name" render={props => <ProbeComponent {...props}/>}/>
+    <Route exact path='/ui/metrictemplates' render={props => <ListOfMetrics type='metrictemplates' {...props} />} />
+    <Route exact path='/ui/metrictemplates/add' render={props => <MetricTemplateComponent {...props} addview={true}/>}/>
+    <Route exact path='/ui/metrictemplates/:name/clone' render={props => <MetricTemplateComponent {...props} cloneview={true}/>}/>
+    <Route exact path='/ui/metrictemplates/:name/history' render={props => <HistoryComponent {...props} object='metrictemplate'/>}/>
+    <Route exact path='/ui/metrictemplates/:name/history/compare/:id1/:id2' render={props => <CompareMetrics {...props} type='metrictemplate'/>}/>
     <Route exact path='/ui/metrictemplates/:name/history/:version' render={props => <MetricTemplateVersionDetails {...props}/>}/>
-    <Route exact path='/ui/metrictemplates/:name' render={props => <MetricTemplateChange {...props}/>}/>
+    <Route exact path='/ui/metrictemplates/:name' render={props => <MetricTemplateComponent {...props}/>}/>
     <Route exact path='/ui/yumrepos/' render={props => <YumRepoList {...props}/>}/>
     <Route exact path='/ui/yumrepos/add' render={props => <YumRepoChange addview={true} {...props}/>}/>
     <Route exact path='/ui/yumrepos/:name/clone' render={props => <YumRepoClone {...props}/>}/>
@@ -382,7 +465,7 @@ const SuperAdminRouteSwitch = ({props}) => (
     <Route exact path="/ui/tenants/:name"
       render={props => <TenantChange {...props} />}
     />
-    <Route exact path="/ui/policies/" component={PrivacyPolicy} />
+    <Route exact path="/ui/cookiepolicies/" component={CookiePolicy} />
     <Route component={NotFound} />
   </Switch>
 )
@@ -403,6 +486,7 @@ class App extends Component {
       webApiMetric: undefined,
       webApiThresholds: undefined,
       webApiOperations: undefined,
+      webApiReports: undefined,
       publicView: undefined,
       tenantName: undefined,
       token: undefined,
@@ -448,6 +532,7 @@ class App extends Component {
         webApiThresholds: options && options.result.webapithresholds,
         webApiOperations: options && options.result.webapioperations,
         version: options && options.result.version,
+        webApiReports: options && options.result.webapireports,
         tenantName: options && options.result.tenant_name,
         publicView: false,
       });
@@ -475,6 +560,7 @@ class App extends Component {
       webApiAggregation: options && options.result.webapiaggregation,
       webApiThresholds: options && options.result.webapithresholds,
       webApiOperations: options && options.result.webapioperations,
+      webApiReports: options && options.result.webapireports,
       tenantName: options && options.result.tenant_name,
       publicView: true,
     })
@@ -523,7 +609,7 @@ class App extends Component {
               <Route
                 exact path="/ui/public_home"
                 render={props =>
-                  <PublicPage>
+                  <PublicPage tenantName={this.state.tenantName}>
                     <PublicHome/>
                   </PublicPage>
                 }
@@ -531,7 +617,7 @@ class App extends Component {
               <Route
                 exact path="/ui/public_probes"
                 render={props =>
-                  <PublicPage>
+                  <PublicPage tenantName={this.state.tenantName}>
                     <ProbeList publicView={true} {...props} />
                   </PublicPage>
                 }
@@ -539,28 +625,28 @@ class App extends Component {
               <Route
                 exact path="/ui/public_probes/:name"
                 render={props =>
-                  <PublicPage>
-                    <ProbeChange publicView={true} {...props}/>
+                  <PublicPage tenantName={this.state.tenantName}>
+                    <ProbeComponent publicView={true} {...props}/>
                   </PublicPage>
                 }
               />
               <Route exact path="/ui/public_probes/:name/history"
                 render={props =>
-                  <PublicPage>
-                    <ProbeHistory publicView={true} {...props}/>
+                  <PublicPage tenantName={this.state.tenantName}>
+                    <HistoryComponent object='probe' publicView={true} {...props}/>
                   </PublicPage>
                 }
               />
               <Route exact path="/ui/public_probes/:name/history/compare/:id1/:id2"
                 render={props =>
-                  <PublicPage>
+                  <PublicPage tenantName={this.state.tenantName}>
                     <ProbeVersionCompare publicView={true} {...props}/>
                   </PublicPage>
                 }
               />
               <Route exact path="/ui/public_probes/:name/history/:version"
                 render={props =>
-                  <PublicPage>
+                  <PublicPage tenantName={this.state.tenantName}>
                     <ProbeVersionDetails publicView={true} {...props}/>
                   </PublicPage>
                 }
@@ -568,67 +654,67 @@ class App extends Component {
               <Route
                 exact path="/ui/public_metrictemplates"
                 render={props =>
-                  <PublicPage>
-                    <TenantMetricTemplateList publicView={true} {...props}/>
+                  <PublicPage tenantName={this.state.tenantName}>
+                    <ListOfMetrics type='metrictemplates' publicView={true} {...props}/>
                   </PublicPage>
                 }
               />
               <Route
                 exact path="/ui/public_metrictemplates/:name"
                 render={props =>
-                  <PublicPage>
-                    <MetricTemplateChange publicView={true} {...props}/>
+                  <PublicPage tenantName={this.state.tenantName}>
+                    <MetricTemplateComponent publicView={true} tenantView={true} {...props}/>
                   </PublicPage>
                 }
               />
               <Route
                 exact path="/ui/public_metrictemplates/:name/history"
                 render={props =>
-                  <PublicPage>
-                    <MetricTemplateHistory publicView={true} {...props}/>
+                  <PublicPage tenantName={this.state.tenantName}>
+                    <HistoryComponent publicView={true} object='metrictemplate' {...props}/>
                   </PublicPage>
                 }
               />
               <Route
                 exact path="/ui/public_metrictemplates/:name/history/compare/:id1/:id2"
                 render={props =>
-                  <PublicPage>
-                    <MetricTemplateVersionCompare publicView={true} {...props}VersionCompare/>
+                  <PublicPage tenantName={this.state.tenantName}>
+                    <CompareMetrics publicView={true} {...props} type='metrictemplate'/>
                   </PublicPage>
                 }
               />
               <Route
                 exact path="/ui/public_metrictemplates/:name/history/:version"
                 render={props =>
-                  <PublicPage>
+                  <PublicPage tenantName={this.state.tenantName}>
                     <MetricTemplateVersionDetails publicView={true} {...props}/>
                   </PublicPage>
                 }
               />
               <Route exact path="/ui/public_metrics"
                 render={props =>
-                  <PublicPage>
-                    <MetricList publicView={true} {...props}/>
+                  <PublicPage tenantName={this.state.tenantName}>
+                    <ListOfMetrics type='metrics' publicView={true} {...props}/>
                   </PublicPage>
                 }
               />
               <Route exact path="/ui/public_metrics/:name"
                 render={props =>
-                  <PublicPage>
+                  <PublicPage tenantName={this.state.tenantName}>
                     <MetricChange publicView={true} {...props}/>
                   </PublicPage>
                 }
               />
               <Route exact path="/ui/public_metricprofiles"
                 render={props =>
-                  <PublicPage>
+                  <PublicPage tenantName={this.state.tenantName}>
                     <MetricProfilesList publicView={true} {...props} />
                   </PublicPage>
                 }
               />
               <Route exact path="/ui/public_metricprofiles/:name"
                 render={props =>
-                  <PublicPage>
+                  <PublicPage tenantName={this.state.tenantName}>
                     <MetricProfilesChange {...props}
                       webapimetric={this.state.webApiMetric}
                       webapitoken={this.state.token}
@@ -640,14 +726,14 @@ class App extends Component {
               />
               <Route exact path="/ui/public_aggregationprofiles"
                 render={props =>
-                  <PublicPage>
+                  <PublicPage tenantName={this.state.tenantName}>
                     <AggregationProfilesList publicView={true} {...props} />
                   </PublicPage>
                 }
               />
               <Route exact path="/ui/public_aggregationprofiles/:name"
                 render={props =>
-                  <PublicPage>
+                  <PublicPage tenantName={this.state.tenantName}>
                     <AggregationProfilesChange {...props}
                       webapimetric={this.state.webApiMetric}
                       webapiaggregation={this.state.webApiAggregation}
@@ -660,14 +746,14 @@ class App extends Component {
               />
               <Route exact path="/ui/public_thresholdsprofiles"
                 render={props =>
-                  <PublicPage>
+                  <PublicPage tenantName={this.state.tenantName}>
                     <ThresholdsProfilesList publicView={true} {...props} />
                   </PublicPage>
                 }
               />
               <Route exact path="/ui/public_thresholdsprofiles/:name"
                 render={props =>
-                  <PublicPage>
+                  <PublicPage tenantName={this.state.tenantName}>
                     <ThresholdsProfilesChange {...props}
                       webapithresholds={this.state.webApiThresholds}
                       webapiaggregation={this.state.webApiAggregation}
@@ -680,7 +766,7 @@ class App extends Component {
               />
               <Route exact path="/ui/public_operationsprofiles"
                 render={props =>
-                  <PublicPage>
+                  <PublicPage tenantName={this.state.tenantName}>
                     <OperationsProfilesList
                       {...props}
                       publicView={true}
@@ -692,12 +778,22 @@ class App extends Component {
               />
               <Route exact path="/ui/public_operationsprofiles/:name"
                 render={props =>
-                  <PublicPage>
+                  <PublicPage tenantName={this.state.tenantName}>
                     <OperationsProfileDetails
                       {...props}
                       publicView={true}
                       webapitoken={this.state.token}
                       webapioperations={this.state.webApiOperations}
+                    />
+                  </PublicPage>
+                }
+              />
+              <Route exact path="/ui/public_servicetypes"
+                render={props =>
+                  <PublicPage>
+                    <ServiceTypesList
+                      {...props}
+                      publicView={true}
                     />
                   </PublicPage>
                 }
@@ -730,14 +826,14 @@ class App extends Component {
                 exact path="/ui/public_probes/:name"
                 render={props =>
                   <PublicPage>
-                    <ProbeChange publicView={true} {...props}/>
+                    <ProbeComponent publicView={true} {...props}/>
                   </PublicPage>
                 }
               />
               <Route exact path="/ui/public_probes/:name/history"
                 render={props =>
                   <PublicPage>
-                    <ProbeHistory publicView={true} {...props}/>
+                    <HistoryComponent object='probe' publicView={true} {...props}/>
                   </PublicPage>
                 }
               />
@@ -759,7 +855,7 @@ class App extends Component {
                 exact path="/ui/public_metrictemplates"
                 render={props =>
                   <PublicPage>
-                    <TenantMetricTemplateList publicView={true} {...props}/>
+                    <ListOfMetrics type='metrictemplates' publicView={true} {...props}/>
                   </PublicPage>
                 }
               />
@@ -767,7 +863,7 @@ class App extends Component {
                 exact path="/ui/public_metrictemplates/:name"
                 render={props =>
                   <PublicPage>
-                    <MetricTemplateChange publicView={true} {...props}/>
+                    <MetricTemplateComponent publicView={true} {...props}/>
                   </PublicPage>
                 }
               />
@@ -775,7 +871,7 @@ class App extends Component {
                 exact path="/ui/public_metrictemplates/:name/history"
                 render={props =>
                   <PublicPage>
-                    <MetricTemplateHistory publicView={true} {...props}/>
+                    <HistoryComponent publicView={true} object='metrictemplate' {...props}/>
                   </PublicPage>
                 }
               />
@@ -783,7 +879,7 @@ class App extends Component {
                 exact path="/ui/public_metrictemplates/:name/history/compare/:id1/:id2"
                 render={props =>
                   <PublicPage>
-                    <MetricTemplateVersionCompare publicView={true} {...props}VersionCompare/>
+                    <CompareMetrics publicView={true} {...props} type='metrictemplate'/>
                   </PublicPage>
                 }
               />
@@ -840,7 +936,7 @@ class App extends Component {
               <Col sm={{size: 2}} md={{size: 2}} id="sidebar-col" className="d-flex flex-column">
                 <NavigationLinksWithRouter isTenantSchema={this.state.isTenantSchema} userDetails={userDetails}/>
                 <div id="sidebar-grow" className="flex-grow-1 border-left border-right mb-0 pb-5"/>
-                <NavigationAboutWithRouter poemVersion={this.state.version}/>
+                <NavigationAboutWithRouter poemVersion={this.state.version} tenantName={this.state.tenantName}/>
               </Col>
               <Col>
                 <CustomBreadcrumbWithRouter />
@@ -850,6 +946,7 @@ class App extends Component {
                     webApiAggregation={this.state.webApiAggregation}
                     webApiThresholds={this.state.webApiThresholds}
                     webApiOperations={this.state.webApiOperations}
+                    webApiReports={this.state.webApiReports}
                     token={this.state.token}
                     tenantName={this.state.tenantName}
                     isSuperUser={userDetails.is_superuser}
@@ -861,7 +958,7 @@ class App extends Component {
             </Row>
             <Row>
               <Col>
-                <Footer loginPage={false}/>
+                <Footer loginPage={false} tenantName={this.state.tenantName}/>
               </Col>
             </Row>
           </Container>
