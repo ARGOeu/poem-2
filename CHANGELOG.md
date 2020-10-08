@@ -1,5 +1,24 @@
 # Changelog
 
+## [3.3.4] - 2020-10-08
+
+### Added
+
+* ARGO-2598 Privacy Policy sidebar reference to UI
+* ARGO-2611 Public service types pages
+
+### Fixed
+
+* ARGO-2566 Remove dummy group on public_aggregationprofiles
+* ARGO-2568 Update documentation for October release
+* ARGO-2615 Public metric template changeview not rendering on tenant POEM
+* ARGO-2650 Filtering metric templates by OS tag not working on POEM
+
+### Changed
+
+* ARGO-2589 Refactor profiles changelist view with react-table-v7
+* ARGO-2597 Rename Privacy Policies to Cookie Policies
+
 ## [3.3.3] - 2020-09-14
 
 ### Added
@@ -62,6 +81,7 @@
 * ARGO-2487 Remove hard coded WEB-API devel from /repos call
 
 ## [3.3.0] - 2020-06-09
+
 ### Added
 * ARGO-2398 Create set of group of resources when creating new tenant
 * ARGO-2413 Probes could present the related metrics
@@ -95,6 +115,7 @@
 * ARGO-2429 Remove file parameters & attributes fields from frontend
 
 ## [3.2.0] - 2020-04-24
+
 ### Added
 * ARGO-2278 Create user manual for POEM
 * ARGO-1935 Add description to metrics 
@@ -113,6 +134,7 @@
 * ARGO-2282 Get rid of Promises spaghetti code and use async/await 
 
 ## [3.1.0] - 2020-03-30
+
 ### Added
 
 * ARGO-1805 History of changes for Aggregation profiles
@@ -220,6 +242,7 @@
 * ARGO-2011 Refactor GroupOfMetrics model
 
 ## [2.3.0] - 2019-04-04
+
 ### Added
 - ARGO-1573 Back reference fields on metrics and probes pages
 - ARGO-1693 Hover dropdown info about selected probe on metric page
@@ -243,6 +266,7 @@
 
 
 ## [2.2.0] - 2019-02-05
+
 ### Added 
 - ARGO-1580 Minimal container for tests
 - ARGO-1572 Public profiles, probes and metric pages
@@ -260,6 +284,7 @@
 
 
 ## [2.1.0] - 2018-11-30
+
 ### Added
 - ARGO-1497 Publicly available Probes pages
 - ARGO-1448 Active/Passive metric designation in metric configuration UI page
