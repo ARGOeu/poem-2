@@ -25,8 +25,6 @@ import { useQuery } from 'react-query';
 
 import './MetricProfiles.css';
 
-// export const MetricProfilesClone = MetricProfilesComponent(true);
-// export const MetricProfilesChange = MetricProfilesComponent();
 
 export const MetricProfilesClone = (props) => <MetricProfilesComponent cloneview={true} {...props}/>;
 export const MetricProfilesChange = (props) => <MetricProfilesComponent {...props}/>;
@@ -848,7 +846,8 @@ export const MetricProfilesComponent = (props) => {
   else if (errorMetricProfile)
     return (<ErrorComponent error={error}/>);
 
-  else if (!loadingMetricProfile && metricProfile && viewServices) {
+  else if (!loadingMetricProfile && metricProfile && viewServices &&
+    serviceFlavoursAll && metricsAll) {
     return (
       <BaseArgoView
         resourcename={publicView ? 'Metric profile details' : 'metric profile'}
