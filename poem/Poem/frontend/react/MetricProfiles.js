@@ -322,7 +322,7 @@ export const MetricProfilesComponent = (props) => {
   const [writePerm, setWritePerm] = useState(false);
   // TODO: useFormik hook with formik 2.x
   const [formikValues, setFormikValues] = useState({})
-  const querykey = `metricprofile_${addview ? 'addview' : `${name}_${publicView ? 'publicview' : 'changeview'}`}`;
+  const querykey = `metricprofile_${addview ? 'addview' : `${profile_name}_${publicView ? 'publicview' : 'changeview'}`}`;
 
   const { data: metricProfile, error: errorMetricProfile, isLoading:
     loadingMetricProfile } = useQuery(querykey, async () => {
