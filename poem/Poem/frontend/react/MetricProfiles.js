@@ -490,7 +490,7 @@ export const MetricProfilesComponent = (props) => {
   }
 
   const doDelete = async (idProfile) => {
-    let response = await this.webapi.deleteMetricProfile(idProfile);
+    let response = await webapi.deleteMetricProfile(idProfile);
     if (!response.ok) {
       let msg = '';
       try {
@@ -506,12 +506,12 @@ export const MetricProfilesComponent = (props) => {
         msg: msg
       });
     } else {
-      let r_internal = await this.backend.deleteObject(`/api/v2/internal/metricprofiles/${idProfile}`);
+      let r_internal = await backend.deleteObject(`/api/v2/internal/metricprofiles/${idProfile}`);
       if (r_internal.ok)
         NotifyOk({
           msg: 'Metric profile sucessfully deleted',
           title: 'Deleted',
-          callback: () => this.history.push('/ui/metricprofiles')
+          callback: () => history.push('/ui/metricprofiles')
         });
       else {
         let msg = '';
@@ -1021,6 +1021,7 @@ export const MetricProfilesComponent = (props) => {
                         setModalMsg('Are you sure you want to delete Metric profile?')
                         setModalTitle('Delete metric profile')
                         setAreYouSureModal(!areYouSureModal);
+                        setFormikValues(props.values)
                         setOnYes('delete')
                       }}>
                       Delete
