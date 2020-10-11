@@ -320,44 +320,37 @@ export const MetricProfilesComponent = (props) => {
 
   const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails } = useQuery(
     `session_userdetails`, async () => {
-      const sessionActive = await backend.isActiveSession()
-      if (sessionActive.active) {
-        return sessionActive.userdetails
+      if (!publicView) {
+        const sessionActive = await backend.isActiveSession()
+        if (sessionActive.active) {
+          return sessionActive.userdetails
+        }
       }
     }
   );
 
-  const { data: serviceFlavoursAll, error: errorServiceFlavoursAll, isloading: loadingServiceFlavoursAll} = useQuery(
-    'metricprofiles_serviceflavoursall', async() => {
-        let data = await backend.fetchListOfNames('/api/v2/internal/serviceflavoursall');
-        return data
-    }
-  )
-
-  const { data: metricsAll, error: errorMetricsAll, isloading: loadingMetricsAll} = useQuery(
-    'metricprofiles_metricsall', async() => {
-        let data = await backend.fetchListOfNames('/api/v2/internal/metricsall');
-        return data
-    }
-  )
-
   const { data: metricProfile, error: errorMetricProfile, isLoading:
     loadingMetricProfile } = useQuery(querykey, async () => {
+      let backendMetricProfile = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}metricprofiles/${profile_name}`);
       if (publicView) {
-        let json = await backend.fetchData(`/api/v2/internal/public_metricprofiles/${profile_name}`);
-        let metricProfile = await webapi.fetchMetricProfile(json.apiid);
+        let metricProfile = await webapi.fetchMetricProfile(backendMetricProfile.apiid);
         return {
           profile: metricProfile,
-          groupname: json.groupname
+          groupname: backendMetricProfile.groupname,
+          serviceflavoursall: [],
+          metricsall: [],
         }
       }
       else {
+        let metricsAll = await backend.fetchListOfNames('/api/v2/internal/metricsall');
+        let serviceFlavoursAll = await backend.fetchListOfNames('/api/v2/internal/serviceflavoursall');
         if (!addview || cloneview) {
-          let json = await backend.fetchData(`/api/v2/internal/metricprofiles/${profile_name}`);
-          let metricProfile = await webapi.fetchMetricProfile(json.apiid);
+          let metricProfile = await webapi.fetchMetricProfile(backendMetricProfile.apiid);
           return {
             profile: metricProfile,
-            groupname: json.groupname
+            groupname: backendMetricProfile.groupname,
+            serviceflavoursall: serviceFlavoursAll,
+            metricsall: metricsAll
           }
         }
         else {
@@ -368,7 +361,9 @@ export const MetricProfilesComponent = (props) => {
           });
           return {
             profile: metricProfile,
-            groupname: ''
+            groupname: '',
+            metricsall: metricsAll,
+            serviceflavoursall: serviceFlavoursAll
           }
         }
       }
@@ -830,8 +825,7 @@ export const MetricProfilesComponent = (props) => {
       );
   }
 
-  if (loadingMetricProfile || loadingUserDetails || loadingServiceFlavoursAll
-    || loadingMetricsAll)
+  if (loadingMetricProfile || loadingUserDetails)
     return (<LoadingAnim />)
 
   else if (errorMetricProfile)
@@ -840,14 +834,7 @@ export const MetricProfilesComponent = (props) => {
   else if (errorUserDetails)
     return (<ErrorComponent error={errorUserDetails}/>);
 
-  else if (errorMetricsAll)
-    return (<ErrorComponent error={errorMetricsAll}/>);
-
-  else if (errorServiceFlavoursAll)
-    return (<ErrorComponent error={errorServiceFlavoursAll}/>);
-
-  else if (!loadingMetricProfile && !loadingUserDetails && metricProfile &&
-    serviceFlavoursAll && metricsAll)
+  else if (!loadingMetricProfile && !loadingUserDetails && metricProfile)
   {
     let write_perm = undefined
 
@@ -916,8 +903,8 @@ export const MetricProfilesComponent = (props) => {
             view_services: viewServices,
             search_metric: searchMetric,
             search_serviceflavour: searchServiceFlavour,
-            metrics_all: metricsAll,
-            services_all: serviceFlavoursAll
+            metrics_all: metricProfile.metricsall,
+            services_all: metricProfile.serviceflavoursall
           }}
           onSubmit = {(values, actions) => onSubmitHandle({
             formValues: values,
@@ -947,8 +934,8 @@ export const MetricProfilesComponent = (props) => {
                     render={props => (
                       <ServicesList
                         {...props}
-                        serviceflavours_all={serviceFlavoursAll}
-                        metrics_all={metricsAll}
+                        serviceflavours_all={metricProfile.serviceflavoursall}
+                        metrics_all={metricProfile.metricsall}
                         search_handler={handleSearch}
                         remove_handler={onRemove}
                         insert_handler={onInsert}
@@ -1063,7 +1050,6 @@ export const MetricProfilesList = (props) => {
   const { data: listMetricProfiles, error: errorListMetricProfiles, isLoading: loadingListMetricProfiles} = useQuery(
     `metricprofiles_listview`, async () => {
       const fetched = await backend.fetchData(apiUrl)
-
       return fetched
     }
   );
