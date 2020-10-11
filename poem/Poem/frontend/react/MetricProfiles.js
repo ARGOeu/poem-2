@@ -303,19 +303,17 @@ export const MetricProfilesComponent = (props) => {
         metricProfiles: props.webapimetric}
       )
 
-  const [areYouSureModal, setAreYouSureModal] = useState(false)
-  const [groupname, setGroupname] = useState(undefined);
   const [listServices, setListServices] = useState(undefined);
-  const [listUserGroups, setListUserGroups] = useState(undefined);
+  const [viewServices, setViewServices] = useState(undefined);
+  const [areYouSureModal, setAreYouSureModal] = useState(false)
+  const [groupName, setGroupname] = useState(undefined);
   const [metricProfileDescription, setMetricProfileDescription] = useState(undefined);
   const [metricProfileName, setMetricProfileName] = useState(undefined);
-  const [modalFunc, setModalFunc] = useState(undefined);
   const [modalMsg, setModalMsg] = useState(undefined);
   const [modalTitle, setModalTitle] = useState(undefined);
   const [onYes, setOnYes] = useState('')
   const [searchMetric, setSearchMetric] = useState("");
   const [searchServiceFlavour, setSearchServiceFlavour] = useState("");
-  const [viewServices, setViewServices] = useState(undefined);
   // TODO: useFormik hook with formik 2.x
   const [formikValues, setFormikValues] = useState({})
   const querykey = `metricprofiles_${addview ? 'addview' : `${profile_name}_${publicView ? 'publicview' : 'changeview'}`}`;
@@ -336,18 +334,6 @@ export const MetricProfilesComponent = (props) => {
     }
   )
 
-  const { data: backendMetricProfiles, error: errorBackendMetricProfiles, isloading: loadingBackendMetricProfiles} = useQuery(
-    'metricprofiles_backend', async () => {
-      try {
-        let json = await backend.fetchData(`/api/v2/internal/metricprofiles/${profile_name}`);
-        return json
-      }
-      catch (e) {
-        return new Object()
-      }
-    }
-  )
-
   const { data: metricsAll, error: errorMetricsAll, isloading: loadingMetricsAll} = useQuery(
     'metricprofiles_metricsall', async() => {
         let data = await backend.fetchListOfNames('/api/v2/internal/metricsall');
@@ -360,13 +346,19 @@ export const MetricProfilesComponent = (props) => {
       if (publicView) {
         let json = await backend.fetchData(`/api/v2/internal/public_metricprofiles/${profile_name}`);
         let metricProfile = await webapi.fetchMetricProfile(json.apiid);
-        return metricProfile;
+        return {
+          profile: metricProfile,
+          groupname: json.groupname
+        }
       }
       else {
         if (!addview || cloneview) {
           let json = await backend.fetchData(`/api/v2/internal/metricprofiles/${profile_name}`);
           let metricProfile = await webapi.fetchMetricProfile(json.apiid);
-          return metricProfile
+          return {
+            profile: metricProfile,
+            groupname: json.groupname
+          }
         }
         else {
           let metricProfile = new Object({
@@ -374,13 +366,13 @@ export const MetricProfilesComponent = (props) => {
             name: '',
             services: [],
           });
-          return metricProfile;
+          return {
+            profile: metricProfile,
+            groupname: []
+          }
         }
       }
     },
-    {
-      enabled: backendMetricProfiles
-    }
   )
 
   const onInsert = async (element, i, group, name, description) => {
@@ -839,7 +831,7 @@ export const MetricProfilesComponent = (props) => {
   }
 
   if (loadingMetricProfile || loadingUserDetails || loadingServiceFlavoursAll
-    || loadingMetricsAll || loadingBackendMetricProfiles)
+    || loadingMetricsAll)
     return (<LoadingAnim />)
 
   else if (errorMetricProfile)
@@ -854,30 +846,29 @@ export const MetricProfilesComponent = (props) => {
   else if (errorServiceFlavoursAll)
     return (<ErrorComponent error={errorServiceFlavoursAll}/>);
 
-  else if (!loadingMetricProfile && !loadingUserDetails &&
-    !loadingBackendMetricProfiles && metricProfile &&
-    backendMetricProfiles && serviceFlavoursAll && metricsAll)
+  else if (!loadingMetricProfile && !loadingUserDetails && metricProfile &&
+    serviceFlavoursAll && metricsAll)
   {
     let write_perm = undefined
 
     if (metricProfile && publicView && !listServices && !viewServices) {
-      setMetricProfileName(metricProfile.name);
-      setMetricProfileDescription(metricProfile.description);
-      setGroupname(backendMetricProfiles['groupname']);
-      setViewServices(flattenServices(metricProfile.services).sort(sortServices));
-      setListServices(flattenServices(metricProfile.services).sort(sortServices));
+      setMetricProfileName(metricProfile.profile.name);
+      setMetricProfileDescription(metricProfile.profile.description);
+      setGroupname(metricProfile.groupname);
+      setViewServices(flattenServices(metricProfile.profile.services).sort(sortServices));
+      setListServices(flattenServices(metricProfile.profile.services).sort(sortServices));
     }
     else if (metricProfile && (!addview || !cloneview) && !listServices && !viewServices) {
-      setMetricProfileName(metricProfile.name);
-      setMetricProfileDescription(metricProfile.description);
-      setGroupname(backendMetricProfiles['groupname']);
-      setViewServices(ensureAlignedIndexes(flattenServices(metricProfile.services).sort(sortServices)));
-      setListServices(ensureAlignedIndexes(flattenServices(metricProfile.services).sort(sortServices)));
+      setMetricProfileName(metricProfile.profile.name);
+      setMetricProfileDescription(metricProfile.profile.description);
+      setGroupname(metricProfile.groupname);
+      setViewServices(ensureAlignedIndexes(flattenServices(metricProfile.profile.services).sort(sortServices)));
+      setListServices(ensureAlignedIndexes(flattenServices(metricProfile.profile.services).sort(sortServices)));
     }
-    else if (metricProfile && !listServices && !viewServices) {
+    else if (addview && !viewServices && !listServices) {
       setMetricProfileName('');
       setMetricProfileDescription('');
-      setGroupname('');
+      setGroupname([]);
       setViewServices([{service: '', metric: '', index: 0, isNew: true}]);
       setListServices([{service: '', metric: '', index: 0, isNew: true}]);
     }
@@ -887,7 +878,7 @@ export const MetricProfilesComponent = (props) => {
     }
     else if (!addview || !cloneview) {
       write_perm = userDetails.is_superuser ||
-            userDetails.groups.metricprofiles.indexOf(backendMetricProfiles['groupname']) >= 0;
+            userDetails.groups.metricprofiles.indexOf(metricProfile.groupname) >= 0;
     }
     else {
       write_perm = userDetails.is_superuser ||
@@ -910,10 +901,10 @@ export const MetricProfilesComponent = (props) => {
         submitperm={write_perm}>
         <Formik
           initialValues = {{
-            id: metricProfile.id,
+            id: metricProfile.profile.id,
             name: metricProfileName,
             description: metricProfileDescription,
-            groupname: groupname,
+            groupname: groupName,
             view_services: viewServices,
             search_metric: searchMetric,
             search_serviceflavour: searchServiceFlavour,
@@ -935,7 +926,7 @@ export const MetricProfilesComponent = (props) => {
                   write_perm ?
                     userDetails.groups.metricprofiles
                   :
-                    [groupname]
+                    [groupName]
                 }
                 profiletype='metric'
                 fieldsdisable={publicView}
@@ -1130,6 +1121,7 @@ export const MetricProfilesList = (props) => {
   else
     return null
 }
+
 
 const ListDiffElement = ({title, item1, item2}) => {
   let list1 = [];
