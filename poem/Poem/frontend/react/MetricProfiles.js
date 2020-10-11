@@ -295,7 +295,7 @@ export const MetricProfilesComponent = (props) => {
   const addview = props.addview
   const history = props.history;
   const location = props.location;
-  const cloneview = cloneview;
+  const cloneview = props.cloneview;
   const publicView = props.publicView;
   const backend = new Backend();
   const webapi = new WebApi({
@@ -851,26 +851,34 @@ export const MetricProfilesComponent = (props) => {
   {
     let write_perm = undefined
 
-    if (publicView && !addview && !listServices && !viewServices) {
+    if (publicView && !addview && !cloneview && !listServices && !viewServices) {
       setMetricProfileName(metricProfile.profile.name);
       setMetricProfileDescription(metricProfile.profile.description);
       setGroupname(metricProfile.groupname);
       setViewServices(flattenServices(metricProfile.profile.services).sort(sortServices));
       setListServices(flattenServices(metricProfile.profile.services).sort(sortServices));
     }
-    else if (!addview && !listServices && !viewServices) {
+    else if (!addview && !cloneview && !listServices && !viewServices) {
       setMetricProfileName(metricProfile.profile.name);
       setMetricProfileDescription(metricProfile.profile.description);
       setGroupname(metricProfile.groupname);
       setViewServices(ensureAlignedIndexes(flattenServices(metricProfile.profile.services).sort(sortServices)));
       setListServices(ensureAlignedIndexes(flattenServices(metricProfile.profile.services).sort(sortServices)));
     }
-    else if (addview && !viewServices && !listServices) {
+    else if (addview && !cloneview && !viewServices && !listServices) {
       setMetricProfileName('');
       setMetricProfileDescription('');
       setGroupname('')
       setViewServices([{service: '', metric: '', index: 0, isNew: true}]);
       setListServices([{service: '', metric: '', index: 0, isNew: true}]);
+    }
+    else if (cloneview && !viewServices && !listServices) {
+      setMetricProfileName('Cloned ' + metricProfile.profile.name);
+      metricProfile.profile.id = ''
+      setMetricProfileDescription(metricProfile.profile.description);
+      setGroupname(metricProfile.groupname)
+      setViewServices(ensureAlignedIndexes(flattenServices(metricProfile.profile.services).sort(sortServices)));
+      setListServices(ensureAlignedIndexes(flattenServices(metricProfile.profile.services).sort(sortServices)));
     }
 
     if (publicView) {
