@@ -364,11 +364,11 @@ export const MetricProfilesComponent = (props) => {
           let metricProfile = new Object({
             id: '',
             name: '',
-            services: [],
+            services: undefined,
           });
           return {
             profile: metricProfile,
-            groupname: []
+            groupname: ''
           }
         }
       }
@@ -653,7 +653,7 @@ export const MetricProfilesComponent = (props) => {
     let dataToSend = new Object()
 
     if (!addview && !cloneview) {
-      const { id } = metricProfile
+      const { id } = metricProfile.profile
       services = groupMetricsByServices(servicesList);
       dataToSend = {
         id,
@@ -851,14 +851,14 @@ export const MetricProfilesComponent = (props) => {
   {
     let write_perm = undefined
 
-    if (metricProfile && publicView && !listServices && !viewServices) {
+    if (publicView && !addview && !listServices && !viewServices) {
       setMetricProfileName(metricProfile.profile.name);
       setMetricProfileDescription(metricProfile.profile.description);
       setGroupname(metricProfile.groupname);
       setViewServices(flattenServices(metricProfile.profile.services).sort(sortServices));
       setListServices(flattenServices(metricProfile.profile.services).sort(sortServices));
     }
-    else if (metricProfile && (!addview || !cloneview) && !listServices && !viewServices) {
+    else if (!addview && !listServices && !viewServices) {
       setMetricProfileName(metricProfile.profile.name);
       setMetricProfileDescription(metricProfile.profile.description);
       setGroupname(metricProfile.groupname);
@@ -868,7 +868,7 @@ export const MetricProfilesComponent = (props) => {
     else if (addview && !viewServices && !listServices) {
       setMetricProfileName('');
       setMetricProfileDescription('');
-      setGroupname([]);
+      setGroupname('')
       setViewServices([{service: '', metric: '', index: 0, isNew: true}]);
       setListServices([{service: '', metric: '', index: 0, isNew: true}]);
     }
