@@ -434,7 +434,7 @@ export const ListOfMetrics = (props) => {
         msg: `Error deleting metric template${mt.length > 0 ? 's' : ''}`,
         title: `Error: ${response.status} ${response.statusText}`
       });
-  };
+  }
 
   let metriclink = `/ui/${(type === 'metrictemplates' && isTenantSchema && !publicView) ? 'administration/' : ''}${publicView ? 'public_' : ''}${type}/`;
 
@@ -549,7 +549,7 @@ export const ListOfMetrics = (props) => {
         column_width: '5%'
       }
     );
-  };
+  }
 
   if (type === 'metrics') {
     columns.splice(
@@ -584,8 +584,8 @@ export const ListOfMetrics = (props) => {
           Filter: SelectColumnFilter
         }
       );
-    };
-  };
+    }
+  }
 
   const memoized_columns = React.useMemo(() => columns);
 
@@ -692,7 +692,7 @@ export const ListOfMetrics = (props) => {
             </div>
           </>
         );
-    };
+    }
   } else
     return null;
 };

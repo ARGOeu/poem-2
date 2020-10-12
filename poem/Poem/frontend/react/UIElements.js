@@ -1487,3 +1487,15 @@ export const ProfilesListTable = ({ columns, data, type }) => {
     />
   );
 };
+
+
+export const ProfilesListTable = ({ columns, data, type }) => {
+  return (
+    <BaseArgoTable
+      columns={columns}
+      data={data}
+      resourcename={`${type} profiles`}
+      page_size={10}
+    />
+  );
+};

@@ -49,7 +49,7 @@ import { ThresholdsProfilesList, ThresholdsProfilesChange, ThresholdsProfileVers
 import Cookies from 'universal-cookie';
 
 import './App.css';
-import { PackageList, PackageChange, PackageClone } from './Package';
+import { PackageList, PackageComponent } from './Package';
 import { ServiceTypesList } from './ServiceTypes';
 import { TenantList, TenantChange } from './Tenants';
 import { OperationsProfilesList, OperationsProfileDetails } from './OperationsProfiles';
@@ -321,7 +321,7 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, w
     />
     <SuperUserRoute isSuperUser={isSuperUser} exact path='/ui/administration/packages/' component={PackageList}/>
     <SuperUserRoute isSuperUser={isSuperUser} exact path='/ui/administration/packages/:nameversion'
-      render={props => <PackageChange {...props} disabled={true}/>}
+      render={props => <PackageComponent {...props} disabled={true}/>}
     />
     <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/groupofthresholdsprofiles"
       render={props => <GroupList {...props} group='thresholdsprofiles' id='groupofthresholdsprofiles' name='group of thresholds profiles'/>}
@@ -435,9 +435,9 @@ const SuperAdminRouteSwitch = ({props}) => (
     <Route exact path='/ui/yumrepos/:name/clone' render={props => <YumRepoClone {...props}/>}/>
     <Route exact path='/ui/yumrepos/:name' render={props => <YumRepoChange {...props}/>}/>
     <Route exact path='/ui/packages/' render={props => <PackageList {...props}/>}/>
-    <Route exact path='/ui/packages/add' render={props => <PackageChange addview={true} {...props}/>}/>
-    <Route exact path='/ui/packages/:nameversion' render={props => <PackageChange {...props}/>}/>
-    <Route exact path='/ui/packages/:nameversion/clone' render={props => <PackageClone {...props}/>}/>
+    <Route exact path='/ui/packages/add' render={props => <PackageComponent addview={true} {...props}/>}/>
+    <Route exact path='/ui/packages/:nameversion' render={props => <PackageComponent {...props}/>}/>
+    <Route exact path='/ui/packages/:nameversion/clone' render={props => <PackageComponent {...props} cloneview={true}/>}/>
     <Route exact path="/ui/administration" component={SuperAdminAdministration}/>
     <Route exact path="/ui/administration/users" component={UsersList} />
     <Route exact path="/ui/administration/users/add"
