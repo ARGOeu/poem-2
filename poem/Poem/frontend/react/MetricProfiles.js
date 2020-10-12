@@ -38,13 +38,14 @@ function matchItem(item, value) {
 const MetricProfilesComponentContext = React.createContext();
 
 
-const MetricProfileAutocompleteField = ({suggestions, service, index, onselect, icon, form, tupleType, id}) => {
-  const [suggestionList, setSuggestions] = useState(suggestions)
+const MetricProfileAutocompleteField = ({suggestions, service, index, icon, tupleType, id}) => {
+  const context = useContext(MetricProfilesComponentContext);
+  const [suggestionList, setSuggestions] = useState(suggestions);
 
   const changeFieldValue = (newValue) => {
-    form.setFieldValue(`view_services.${index}.${tupleType}`, newValue)
-    form.setFieldValue(`view_services.${index}.${tupleType}Changed`, true)
-    onselect(form.values.view_services[index],
+    context.formikBag.form.setFieldValue(`view_services.${index}.${tupleType}`, newValue)
+    context.formikBag.form.setFieldValue(`view_services.${index}.${tupleType}Changed`, true)
+    context.onselect_handler(context.formikBag.form.values.view_services[index],
       tupleType,
       newValue)
   }
@@ -156,8 +157,7 @@ const MetricProfileTupleValidate = ({view_services, name, groupname,
 
 
 const ServicesList = () => {
-
-  const contextMetricProfile = useContext(MetricProfilesComponentContext);
+  const context = useContext(MetricProfilesComponentContext);
 
   return (
     <table className="table table-bordered table-sm table-hover">
@@ -181,7 +181,7 @@ const ServicesList = () => {
               required={false}
               className="form-control"
               id="searchServiceFlavour"
-              onChange={(e) => contextMetricProfile.search_handler(e, 'searchServiceFlavour',
+              onChange={(e) => context.search_handler(e, 'searchServiceFlavour',
                 'service', 'searchMetric', 'metric')}
               component={SearchField}
           />
@@ -193,7 +193,7 @@ const ServicesList = () => {
               required={false}
               className="form-control"
               id="searchMetric"
-              onChange={(e) => contextMetricProfile.search_handler(e, 'searchMetric', 'metric',
+              onChange={(e) => context.search_handler(e, 'searchMetric', 'metric',
                 'searchServiceFlavour', 'service')}
               component={SearchField}
           />
@@ -203,7 +203,7 @@ const ServicesList = () => {
           </td>
         </tr>
         {
-        contextMetricProfile.formikBag.form.values.view_services.map((service, index) =>
+        context.formikBag.form.values.view_services.map((service, index) =>
           <React.Fragment key={index}>
             <tr key={index}>
               <td className={service.isNew ? "bg-light align-middle text-center" : "align-middle text-center"}>
@@ -211,39 +211,35 @@ const ServicesList = () => {
               </td>
               <td className={service.isNew ? "bg-light" : ""}>
                 <MetricProfileAutocompleteField
-                  suggestions={contextMetricProfile.serviceflavours_all}
+                  suggestions={context.serviceflavours_all}
                   service={service}
                   index={index}
                   icon='serviceflavour'
-                  onselect={contextMetricProfile.onselect_handler}
-                  form={contextMetricProfile.formikBag.form}
                   tupleType='service'
                   id={`autosuggest-metric-${index}`}/>
                 {
-                  contextMetricProfile.formikBag.form.errors &&
-                    contextMetricProfile.formikBag.form.errors.view_services &&
-                    contextMetricProfile.formikBag.form.errors.view_services[index]
-                    ? contextMetricProfile.formikBag.form.errors.view_services[index].service
-                      ? FancyErrorMessage(contextMetricProfile.formikBag.form.errors.view_services[index].service)
+                  context.formikBag.form.errors &&
+                    context.formikBag.form.errors.view_services &&
+                    context.formikBag.form.errors.view_services[index]
+                    ? context.formikBag.form.errors.view_services[index].service
+                      ? FancyErrorMessage(context.formikBag.form.errors.view_services[index].service)
                       : null
                     : null
                 }
               </td>
               <td className={service.isNew ? "bg-light" : ""}>
                 <MetricProfileAutocompleteField
-                  suggestions={contextMetricProfile.metrics_all}
+                  suggestions={context.metrics_all}
                   service={service}
                   index={index}
                   icon='metrics'
-                  onselect={contextMetricProfile.onselect_handler}
-                  form={contextMetricProfile.formikBag.form}
                   tupleType='metric'
                   id={`autosuggest-metric-${index}`}
                 />
                 {
-                  contextMetricProfile.formikBag.form.errors && contextMetricProfile.formikBag.form.errors.view_services && contextMetricProfile.formikBag.form.errors.view_services[index]
-                    ? contextMetricProfile.formikBag.form.errors.view_services[index].metric
-                      ? FancyErrorMessage(contextMetricProfile.formikBag.form.errors.view_services[index].metric)
+                  context.formikBag.form.errors && context.formikBag.form.errors.view_services && context.formikBag.form.errors.view_services[index]
+                    ? context.formikBag.form.errors.view_services[index].metric
+                      ? FancyErrorMessage(context.formikBag.form.errors.view_services[index].metric)
                       : null
                     : null
                 }
@@ -252,13 +248,13 @@ const ServicesList = () => {
                 <Button size="sm" color="light"
                   type="button"
                   onClick={() => {
-                    contextMetricProfile.remove_handler(contextMetricProfile.formikBag.form.values.view_services[index],
-                      contextMetricProfile.formikBag.form.values.groupname, contextMetricProfile.formikBag.form.values.name,
-                      contextMetricProfile.formikBag.form.values.description);
+                    context.remove_handler(context.formikBag.form.values.view_services[index],
+                      context.formikBag.form.values.groupname, context.formikBag.form.values.name,
+                      context.formikBag.form.values.description);
                     // prevent removal of last tuple
                     if (index > 0 &&
-                      contextMetricProfile.formikBag.form.values.view_services.length > 1)
-                      return contextMetricProfile.formikBag.remove(index)
+                      context.formikBag.form.values.view_services.length > 1)
+                      return context.formikBag.remove(index)
                   }}>
                   <FontAwesomeIcon icon={faTimes}/>
                 </Button>
@@ -266,21 +262,21 @@ const ServicesList = () => {
                   type="button"
                   onClick={() => {
                     let new_element = {index: index + 1, service: '', metric: '', isNew: true}
-                    contextMetricProfile.insert_handler(new_element, index + 1, contextMetricProfile.formikBag.form.values.groupname, contextMetricProfile.formikBag.form.values.name, contextMetricProfile.formikBag.form.values.description)
-                    return contextMetricProfile.formikBag.insert(index + 1, new_element)
+                    context.insert_handler(new_element, index + 1, context.formikBag.form.values.groupname, context.formikBag.form.values.name, context.formikBag.form.values.description)
+                    return context.formikBag.insert(index + 1, new_element)
                   }}>
                   <FontAwesomeIcon icon={faPlus}/>
                 </Button>
               </td>
             </tr>
             {
-              contextMetricProfile.formikBag.form.errors && contextMetricProfile.formikBag.form.errors.view_services && contextMetricProfile.formikBag.form.errors.view_services[index]
-                ? contextMetricProfile.formikBag.form.errors.view_services[index].dup
+              context.formikBag.form.errors && context.formikBag.form.errors.view_services && context.formikBag.form.errors.view_services[index]
+                ? context.formikBag.form.errors.view_services[index].dup
                   ?
-                    <tr key={index + contextMetricProfile.formikBag.form.values.view_services.length}>
+                    <tr key={index + context.formikBag.form.values.view_services.length}>
                       <td className="bg-light"></td>
                       <td colSpan="2" className="bg-light text-center">
-                        {FancyErrorMessage(contextMetricProfile.formikBag.form.errors.view_services[index].dup)}
+                        {FancyErrorMessage(context.formikBag.form.errors.view_services[index].dup)}
                       </td>
                       <td className="bg-light"></td>
                     </tr>
