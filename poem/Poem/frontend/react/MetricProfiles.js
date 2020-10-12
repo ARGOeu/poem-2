@@ -203,89 +203,89 @@ const ServicesList = () => {
           </td>
         </tr>
         {
-        context.formikBag.form.values.view_services.map((service, index) =>
-          <React.Fragment key={index}>
-            <tr key={index}>
-              <td className={service.isNew ? "bg-light align-middle text-center" : "align-middle text-center"}>
-                {index + 1}
-              </td>
-              <td className={service.isNew ? "bg-light" : ""}>
-                <MetricProfileAutocompleteField
-                  suggestions={context.serviceflavours_all}
-                  service={service}
-                  index={index}
-                  icon='serviceflavour'
-                  tupleType='service'
-                  id={`autosuggest-metric-${index}`}/>
-                {
-                  context.formikBag.form.errors &&
-                    context.formikBag.form.errors.view_services &&
-                    context.formikBag.form.errors.view_services[index]
-                    ? context.formikBag.form.errors.view_services[index].service
-                      ? FancyErrorMessage(context.formikBag.form.errors.view_services[index].service)
+          context.formikBag.form.values.view_services.map((service, index) =>
+            <React.Fragment key={index}>
+              <tr key={index}>
+                <td className={service.isNew ? "bg-light align-middle text-center" : "align-middle text-center"}>
+                  {index + 1}
+                </td>
+                <td className={service.isNew ? "bg-light" : ""}>
+                  <MetricProfileAutocompleteField
+                    suggestions={context.serviceflavours_all}
+                    service={service}
+                    index={index}
+                    icon='serviceflavour'
+                    tupleType='service'
+                    id={`autosuggest-metric-${index}`}/>
+                  {
+                    context.formikBag.form.errors &&
+                      context.formikBag.form.errors.view_services &&
+                      context.formikBag.form.errors.view_services[index]
+                      ? context.formikBag.form.errors.view_services[index].service
+                        ? FancyErrorMessage(context.formikBag.form.errors.view_services[index].service)
+                        : null
                       : null
-                    : null
-                }
-              </td>
-              <td className={service.isNew ? "bg-light" : ""}>
-                <MetricProfileAutocompleteField
-                  suggestions={context.metrics_all}
-                  service={service}
-                  index={index}
-                  icon='metrics'
-                  tupleType='metric'
-                  id={`autosuggest-metric-${index}`}
-                />
-                {
-                  context.formikBag.form.errors && context.formikBag.form.errors.view_services && context.formikBag.form.errors.view_services[index]
-                    ? context.formikBag.form.errors.view_services[index].metric
-                      ? FancyErrorMessage(context.formikBag.form.errors.view_services[index].metric)
+                  }
+                </td>
+                <td className={service.isNew ? "bg-light" : ""}>
+                  <MetricProfileAutocompleteField
+                    suggestions={context.metrics_all}
+                    service={service}
+                    index={index}
+                    icon='metrics'
+                    tupleType='metric'
+                    id={`autosuggest-metric-${index}`}
+                  />
+                  {
+                    context.formikBag.form.errors && context.formikBag.form.errors.view_services && context.formikBag.form.errors.view_services[index]
+                      ? context.formikBag.form.errors.view_services[index].metric
+                        ? FancyErrorMessage(context.formikBag.form.errors.view_services[index].metric)
+                        : null
                       : null
+                  }
+                </td>
+                <td className={service.isNew ? "bg-light align-middle pl-3" : "align-middle pl-3"}>
+                  <Button size="sm" color="light"
+                    type="button"
+                    onClick={() => {
+                      context.remove_handler(context.formikBag.form.values.view_services[index],
+                        context.formikBag.form.values.groupname, context.formikBag.form.values.name,
+                        context.formikBag.form.values.description);
+                      // prevent removal of last tuple
+                      if (index > 0 &&
+                        context.formikBag.form.values.view_services.length > 1)
+                        return context.formikBag.remove(index)
+                    }}>
+                    <FontAwesomeIcon icon={faTimes}/>
+                  </Button>
+                  <Button size="sm" color="light"
+                    type="button"
+                    onClick={() => {
+                      let new_element = {index: index + 1, service: '', metric: '', isNew: true}
+                      context.insert_handler(new_element, index + 1, context.formikBag.form.values.groupname, context.formikBag.form.values.name, context.formikBag.form.values.description)
+                      return context.formikBag.insert(index + 1, new_element)
+                    }}>
+                    <FontAwesomeIcon icon={faPlus}/>
+                  </Button>
+                </td>
+              </tr>
+              {
+                context.formikBag.form.errors && context.formikBag.form.errors.view_services && context.formikBag.form.errors.view_services[index]
+                  ? context.formikBag.form.errors.view_services[index].dup
+                    ?
+                      <tr key={index + context.formikBag.form.values.view_services.length}>
+                        <td className="bg-light"></td>
+                        <td colSpan="2" className="bg-light text-center">
+                          {FancyErrorMessage(context.formikBag.form.errors.view_services[index].dup)}
+                        </td>
+                        <td className="bg-light"></td>
+                      </tr>
                     : null
-                }
-              </td>
-              <td className={service.isNew ? "bg-light align-middle pl-3" : "align-middle pl-3"}>
-                <Button size="sm" color="light"
-                  type="button"
-                  onClick={() => {
-                    context.remove_handler(context.formikBag.form.values.view_services[index],
-                      context.formikBag.form.values.groupname, context.formikBag.form.values.name,
-                      context.formikBag.form.values.description);
-                    // prevent removal of last tuple
-                    if (index > 0 &&
-                      context.formikBag.form.values.view_services.length > 1)
-                      return context.formikBag.remove(index)
-                  }}>
-                  <FontAwesomeIcon icon={faTimes}/>
-                </Button>
-                <Button size="sm" color="light"
-                  type="button"
-                  onClick={() => {
-                    let new_element = {index: index + 1, service: '', metric: '', isNew: true}
-                    context.insert_handler(new_element, index + 1, context.formikBag.form.values.groupname, context.formikBag.form.values.name, context.formikBag.form.values.description)
-                    return context.formikBag.insert(index + 1, new_element)
-                  }}>
-                  <FontAwesomeIcon icon={faPlus}/>
-                </Button>
-              </td>
-            </tr>
-            {
-              context.formikBag.form.errors && context.formikBag.form.errors.view_services && context.formikBag.form.errors.view_services[index]
-                ? context.formikBag.form.errors.view_services[index].dup
-                  ?
-                    <tr key={index + context.formikBag.form.values.view_services.length}>
-                      <td className="bg-light"></td>
-                      <td colSpan="2" className="bg-light text-center">
-                        {FancyErrorMessage(context.formikBag.form.errors.view_services[index].dup)}
-                      </td>
-                      <td className="bg-light"></td>
-                    </tr>
                   : null
-                : null
-            }
-          </React.Fragment>
-        )
-      }
+              }
+            </React.Fragment>
+          )
+        }
       </tbody>
     </table>
   )
