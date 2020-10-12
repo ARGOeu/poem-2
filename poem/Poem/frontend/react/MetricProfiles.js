@@ -1202,25 +1202,23 @@ export const MetricProfileVersionCompare = (props) => {
     return (<ErrorComponent error={error}/>);
 
   else if (!loading && metricProfileVersion1 && metricProfileVersion2) {
-    const { name1, description1, metricinstances1, groupname1 } = metricProfileVersion1
-    const { name2, description2, metricinstances2, groupname2 } = metricProfileVersion1
+    const { name: name1, description: description1, metricinstances:
+      metricinstances1, groupname: groupname1 } = metricProfileVersion1
+    const { name: name2, description: description2, metricinstances:
+      metricinstances2, groupname: groupname2 } = metricProfileVersion2
 
     return (
       <React.Fragment>
         <div className='d-flex align-items-center justify-content-between'>
-          <h2 className='ml-3 mt-1 mb-4'>{`Compare ${this.name} versions`}</h2>
+          <h2 className='ml-3 mt-1 mb-4'>{`Compare ${name} versions`}</h2>
         </div>
         {
           (name1 !== name2) &&
             <DiffElement title='name' item1={name1} item2={name2}/>
         }
         {
-          (name1 !== name2) &&
-            <DiffElement title='name' item1={name1} item2={name2}/>
-        }
-        {
           (description1 !== description2) &&
-            <DiffElement title='name' item1={description1} item2={description2}/>
+            <DiffElement title='description' item1={description1} item2={description2}/>
         }
         {
           (groupname1 !== groupname2) &&
