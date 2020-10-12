@@ -1149,13 +1149,15 @@ const ListDiffElement = ({title, item1, item2}) => {
 };
 
 
-export class MetricProfileVersionCompare extends Component {
-  constructor(props) {
-    super(props);
-
-    this.version1 = props.match.params.id1;
-    this.version2 = props.match.params.id2;
-    this.name = props.match.params.name;
+export const MetricProfileVersionCompare = (props) => {
+  const version1 = props.match.params.id1;
+  const version2 = props.match.params.id2;
+  const name = props.match.params.name;
+  const backend = new Backend();
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
+  const [metricProfileVersion1, setMetricProfileVersion1] = useState(undefined)
+  const [metricProfileVersion2, setMetricProfileVersion2] = useState(undefined)
 
     this.state = {
       loading: false,
@@ -1166,100 +1168,84 @@ export class MetricProfileVersionCompare extends Component {
       groupname2: '',
       metricinstances2: [],
       error: null
-    };
 
-    this.backend = new Backend();
   }
 
-  async componentDidMount() {
-    this.setState({loading: true});
-
-    try {
-      let json = await this.backend.fetchData(`/api/v2/internal/tenantversion/metricprofile/${this.name}`);
-      let name1 = '';
-      let groupname1 = '';
-      let description1 = '';
-      let metricinstances1 = [];
-      let name2 = '';
-      let groupname2 = '';
-      let description2 = '';
-      let metricinstances2 = [];
-
-      json.forEach((e) => {
-        if (e.version == this.version1) {
-          name1 = e.fields.name;
-          description1 = e.fields.description;
-          groupname1 = e.fields.groupname;
-          metricinstances1 = e.fields.metricinstances;
-        } else if (e.version == this.version2) {
-          name2 = e.fields.name;
-          groupname2 = e.fields.groupname;
-          description2 = e.fields.description;
-          metricinstances2 = e.fields.metricinstances;
-        }
-      });
-
-      this.setState({
-        name1: name1,
-        groupname1: groupname1,
-        description1: description1,
-        metricinstances1: metricinstances1,
-        name2: name2,
-        description2: description2,
-        groupname2: groupname2,
-        metricinstances2: metricinstances2,
-        loading: false
-      });
-    } catch(err) {
-      this.setState({
-        error: err,
-        loading: false
-      });
+  useEffect(() => {
+    const fetchDataAndSet = async () => {
+      let json = await backend.fetchData(`/api/v2/internal/tenantversion/metricprofile/${name}`);
+      json.forEach((e)=> {
+        if (e.version === version1)
+          setMetricProfileVersion1({
+            name: e.fields.name,
+            groupname: e.fields.groupname,
+            description: e.fields.description,
+            date_created: e.date_created,
+            metricinstances: e.fields.metricinstances,
+          })
+        else if (e.version === version2)
+          setMetricProfileVersion2({
+            name: e.fields.name,
+            groupname: e.fields.groupname,
+            description: e.fields.description,
+            date_created: e.date_created,
+            metricinstances: e.fields.metricinstances,
+          })
+      })
+      setLoading(false);
     }
-  }
+    setLoading(true);
+    try {
+      fetchDataAndSet();
+    }
+    catch (err) {
+      setError(err)
+      setLoading(false);
+    }
 
-  render() {
-    const { name1, name2, description1, description2, groupname1, groupname2,
-      metricinstances1, metricinstances2, loading, error } = this.state;
+  }, [])
 
-    if (loading)
-      return (<LoadingAnim/>);
+  if (loading)
+    return (<LoadingAnim/>);
 
-    if (error)
-      return (<ErrorComponent error={error}/>);
+  if (error)
+    return (<ErrorComponent error={error}/>);
 
-    else if (!loading && name1 && name2) {
-      return (
-        <React.Fragment>
-          <div className='d-flex align-items-center justify-content-between'>
-            <h2 className='ml-3 mt-1 mb-4'>{`Compare ${this.name} versions`}</h2>
-          </div>
-          {
-            (name1 !== name2) &&
-              <DiffElement title='name' item1={name1} item2={name2}/>
-          }
-          {
-            (name1 !== name2) &&
-              <DiffElement title='name' item1={name1} item2={name2}/>
-          }
-          {
-            (description1 !== description2) &&
-              <DiffElement title='name' item1={description1} item2={description2}/>
-          }
-          {
-            (groupname1 !== groupname2) &&
-              <DiffElement title='groupname' item1={groupname1} item2={groupname2}/>
-          }
-          {
-            (metricinstances1 !== metricinstances2) &&
-              <ListDiffElement title='metric instances' item1={metricinstances1} item2={metricinstances2}/>
-          }
-        </React.Fragment>
-      );
-    } else
-      return null;
-  }
+  else if (!loading && metricProfileVersion1 && metricProfileVersion2) {
+    const { name1, description1, metricinstances1, groupname1 } = metricProfileVersion1
+    const { name2, description2, metricinstances2, groupname2 } = metricProfileVersion1
+
+    return (
+      <React.Fragment>
+        <div className='d-flex align-items-center justify-content-between'>
+          <h2 className='ml-3 mt-1 mb-4'>{`Compare ${this.name} versions`}</h2>
+        </div>
+        {
+          (name1 !== name2) &&
+            <DiffElement title='name' item1={name1} item2={name2}/>
+        }
+        {
+          (name1 !== name2) &&
+            <DiffElement title='name' item1={name1} item2={name2}/>
+        }
+        {
+          (description1 !== description2) &&
+            <DiffElement title='name' item1={description1} item2={description2}/>
+        }
+        {
+          (groupname1 !== groupname2) &&
+            <DiffElement title='groupname' item1={groupname1} item2={groupname2}/>
+        }
+        {
+          (metricinstances1 !== metricinstances2) &&
+            <ListDiffElement title='metric instances' item1={metricinstances1} item2={metricinstances2}/>
+        }
+      </React.Fragment>
+    );
+  } else
+    return null;
 }
+
 
 export const MetricProfileVersionDetails = (props) => {
   const name = props.match.params.name;
