@@ -288,9 +288,6 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
 
 
 export const MetricProfilesComponent = (props) => {
-  const tenant_name = props.tenant_name;
-  const token = props.webapitoken;
-  const webapimetric = props.webapimetric;
   const profile_name = props.match.params.name;
   const addview = props.addview
   const history = props.history;
