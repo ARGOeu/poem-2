@@ -1159,18 +1159,6 @@ export const MetricProfileVersionCompare = (props) => {
   const [metricProfileVersion1, setMetricProfileVersion1] = useState(undefined)
   const [metricProfileVersion2, setMetricProfileVersion2] = useState(undefined)
 
-    this.state = {
-      loading: false,
-      name1: '',
-      groupname1: '',
-      metricinstances1: [],
-      name2: '',
-      groupname2: '',
-      metricinstances2: [],
-      error: null
-
-  }
-
   useEffect(() => {
     const fetchDataAndSet = async () => {
       let json = await backend.fetchData(`/api/v2/internal/tenantversion/metricprofile/${name}`);
