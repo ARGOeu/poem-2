@@ -175,8 +175,8 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
             required={false}
             className="form-control"
             id="searchServiceFlavour"
-            onChange={(e) => search_handler(e, 'view_services',
-              'searchServiceFlavour', 'service', 'searchMetric', 'metric')}
+            onChange={(e) => search_handler(e, 'searchServiceFlavour',
+              'service', 'searchMetric', 'metric')}
             component={SearchField}
           />
           </td>
@@ -187,8 +187,8 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
             required={false}
             className="form-control"
             id="searchMetric"
-            onChange={(e) => search_handler(e, 'view_services', 'searchMetric',
-              'metric', 'searchServiceFlavour', 'service')}
+            onChange={(e) => search_handler(e, 'searchMetric', 'metric',
+              'searchServiceFlavour', 'service')}
             component={SearchField}
           />
           </td>
@@ -428,8 +428,8 @@ export const MetricProfilesComponent = (props) => {
     }
   }
 
-  const handleSearch = (e, statefieldsearch, formikfield,
-    alternatestatefield, alternateformikfield) => {
+  const handleSearch = (e, statefieldsearch, formikfield, alternatestatefield,
+    alternateformikfield) => {
     let filtered = listServices;
     let tmp_list_services = [...listServices];
     let searchWhat = statefieldsearch
@@ -972,8 +972,9 @@ export const MetricProfilesComponent = (props) => {
                                 required={false}
                                 className="form-control"
                                 id="searchServiceFlavour"
-                                onChange={(e) => handleSearch(e, 'view_services',
-                                  'searchServiceFlavour', 'service', 'searchMetric', 'metric')}
+                                onChange={(e) => handleSearch(e,
+                                  'searchServiceFlavour', 'service',
+                                  'searchMetric', 'metric')}
                                 component={SearchField}
                               />
                             </td>
@@ -984,8 +985,9 @@ export const MetricProfilesComponent = (props) => {
                                 required={false}
                                 className="form-control"
                                 id="searchMetric"
-                                onChange={(e) => handleSearch(e, 'view_services', 'searchMetric',
-                                  'metric', 'searchServiceFlavour', 'service')}
+                                onChange={(e) => handleSearch(e,
+                                  'searchMetric', 'metric',
+                                  'searchServiceFlavour', 'service')}
                                 component={SearchField}
                               />
                             </td>
