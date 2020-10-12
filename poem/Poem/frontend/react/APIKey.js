@@ -40,7 +40,7 @@ export const APIKeyList = (props) => {
     } catch(err) {
       setError(err);
       setLoading(false);
-    };
+    }
   }, []);
 
   const columns = React.useMemo(
@@ -167,7 +167,7 @@ export const APIKeyChange = (props) => {
           title: `Error: ${response.status} ${response.statusText}`,
           msg: change_msg
         });
-      };
+      }
     } else {
       let response = await backend.addObject(
         '/api/v2/internal/apikeys/',
@@ -194,8 +194,8 @@ export const APIKeyChange = (props) => {
           title: `Error: ${response.status} ${response.statusText}`,
           msg: add_msg
         });
-      };
-    };
+      }
+    }
   };
 
   const onSubmitHandle = (values, actions) => {
@@ -235,12 +235,12 @@ export const APIKeyChange = (props) => {
           token: ''
         });
         setLoading(false);
-      };
+      }
     }
     catch(err) {
       setError(err)
       setLoading(false)
-    };
+    }
   }, []);
 
   const doDelete = async () => {
@@ -263,7 +263,7 @@ export const APIKeyChange = (props) => {
         title: `Error: ${response.status} ${response.statusText}`,
         msg: msg
       });
-    };
+    }
   }
 
   const onYesCallback = () => {
@@ -298,7 +298,7 @@ export const APIKeyChange = (props) => {
         modal={true}
         state={{areYouSureModal, 'modalFunc': onYesCallback, modalTitle, modalMsg}}
         toggle={() => setAreYouSureModal(!areYouSureModal)}>
-          <Formik
+        <Formik
             initialValues = {{
               name: key.name,
               revoked: key.revoked,
@@ -368,7 +368,7 @@ export const APIKeyChange = (props) => {
                       <Col sm={2}>
                         <Button className="btn" color="success" onClick={(e) => copyToClipboard(e)}>
                           <FontAwesomeIcon icon={faClipboard} size="lg" color='white'/>
-                       </Button>
+                        </Button>
                       </Col>
                     }
                   </Row>
@@ -401,7 +401,7 @@ export const APIKeyChange = (props) => {
               </Form>
             )}
           />
-        </BaseArgoView>
+      </BaseArgoView>
     )
   }
 }

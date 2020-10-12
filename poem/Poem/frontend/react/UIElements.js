@@ -1374,7 +1374,7 @@ export function BaseArgoTable({ columns, data, resourcename, page_size, filter=f
         })
       }
     </tbody>
-  };
+  }
 
   return (
     <>
@@ -1474,7 +1474,7 @@ export function BaseArgoTable({ columns, data, resourcename, page_size, filter=f
       </Row>
     </>
   );
-};
+}
 
 
 export const ProfilesListTable = ({ columns, data, type }) => {
