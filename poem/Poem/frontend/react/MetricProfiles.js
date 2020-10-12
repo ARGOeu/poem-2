@@ -21,7 +21,7 @@ import { Button } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faTimes, faSearch } from '@fortawesome/free-solid-svg-icons';
 import ReactDiffViewer from 'react-diff-viewer';
-import { useQuery } from 'react-query';
+import { useQuery, queryCache } from 'react-query';
 
 import './MetricProfiles.css';
 
@@ -643,6 +643,14 @@ export const MetricProfilesComponent = (props) => {
     return services
   }
 
+  const updateCacheKey = (formValues, services) => {
+    let staleMetricProfile = queryCache.getQueryData(querykey)
+    staleMetricProfile.profile.services = services
+    staleMetricProfile.profile.name = formValues.name
+    staleMetricProfile.profile.description = formValues.description
+    queryCache.setQueryData(querykey, staleMetricProfile)
+  }
+
   const doChange = async ({formValues, servicesList}) => {
     let services = [];
     let dataToSend = new Object()
@@ -701,6 +709,7 @@ export const MetricProfilesComponent = (props) => {
             msg: change_msg
           });
         }
+        updateCacheKey(formValues, services)
       }
     } else {
       services = groupMetricsByServices(servicesList);
