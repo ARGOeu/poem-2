@@ -328,7 +328,14 @@ export const MetricProfilesComponent = (props) => {
 
   const { data: metricProfile, error: errorMetricProfile, isLoading:
     loadingMetricProfile } = useQuery(querykey, async () => {
-      let backendMetricProfile = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}metricprofiles/${profile_name}`);
+      let backendMetricProfile = new Object({
+        id: '',
+        name: '',
+        services: undefined,
+      })
+      if (!addview)
+        backendMetricProfile = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}metricprofiles/${profile_name}`);
+
       if (publicView) {
         let metricProfile = await webapi.fetchMetricProfile(backendMetricProfile.apiid);
         return {
@@ -351,13 +358,8 @@ export const MetricProfilesComponent = (props) => {
           }
         }
         else {
-          let metricProfile = new Object({
-            id: '',
-            name: '',
-            services: undefined,
-          });
           return {
-            profile: metricProfile,
+            profile: backendMetricProfile,
             groupname: '',
             metricsall: metricsAll,
             serviceflavoursall: serviceFlavoursAll
