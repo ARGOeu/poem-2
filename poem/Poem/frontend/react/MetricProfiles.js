@@ -428,7 +428,7 @@ export const MetricProfilesComponent = (props) => {
     }
   }
 
-  const handleSearch = (e, statefieldlist, statefieldsearch, formikfield,
+  const handleSearch = (e, statefieldsearch, formikfield,
     alternatestatefield, alternateformikfield) => {
     let filtered = listServices;
     let tmp_list_services = [...listServices];
@@ -1256,118 +1256,6 @@ export class MetricProfileVersionCompare extends Component {
           }
         </React.Fragment>
       );
-    } else
-      return null;
-  }
-}
-
-
-export class MetricProfileVersionDetailsClass extends Component {
-  constructor(props) {
-    super(props);
-
-    this.name = props.match.params.name;
-    this.version = props.match.params.version;
-
-    this.backend = new Backend();
-
-    this.state = {
-      name: '',
-      groupname: '',
-      description: '',
-      date_created: '',
-      metricinstances: [],
-      loading: false,
-      error: null
-    };
-  }
-
-  async componentDidMount() {
-    this.setState({loading: true});
-
-    try {
-      let json = await this.backend.fetchData(`/api/v2/internal/tenantversion/metricprofile/${this.name}`);
-      json.forEach((e) => {
-        if (e.version == this.version)
-          this.setState({
-            name: e.fields.name,
-            groupname: e.fields.groupname,
-            description: e.fields.description,
-            date_created: e.date_created,
-            metricinstances: e.fields.metricinstances,
-            loading: false
-          });
-      });
-    } catch(err) {
-      this.setState({
-        error: err,
-        loading: false
-      });
-    }
-  }
-
-  render() {
-    const { name, description, groupname, date_created, metricinstances,
-      loading, error } = this.state;
-
-    if (loading)
-      return (<LoadingAnim/>);
-
-    else if (error)
-      return (<ErrorComponent error={error}/>);
-
-    else if (!loading && name) {
-      return (
-        <BaseArgoView
-          resourcename={`${name} (${date_created})`}
-          infoview={true}
-        >
-          <Formik
-            initialValues = {{
-              name: name,
-              description: description,
-              groupname: groupname,
-              metricinstances: metricinstances
-            }}
-            render = {props => (
-              <Form>
-                <ProfileMainInfo
-                  {...props}
-                  fieldsdisable={true}
-                  description='description'
-                  profiletype='metric'
-                />
-                <ParagraphTitle title='Metric instances'/>
-                <FieldArray
-                  name='metricinstances'
-                  render={arrayHelpers => (
-                    <table className='table table-bordered table-sm'>
-                      <thead className='table-active'>
-                        <tr>
-                          <th className='align-middle text-center' style={{width: '5%'}}>#</th>
-                          <th style={{width: '47.5%'}}><Icon i='serviceflavour'/>Service flavour</th>
-                          <th style={{width: '47.5%'}}><Icon i='metrics'/>Metric</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {
-                          props.values.metricinstances.map((service, index) =>
-                            <tr key={index}>
-                              <td className='align-middle text-center'>{index + 1}</td>
-                              <td>{service.service}</td>
-                              <td>{service.metric}</td>
-                            </tr>
-                          )
-                        }
-                      </tbody>
-                    </table>
-                  )}
-                />
-              </Form>
-            )}
-          />
-        </BaseArgoView>
-      )
     } else
       return null;
   }
