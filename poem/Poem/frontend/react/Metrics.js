@@ -522,7 +522,7 @@ export const ListOfMetrics = (props) => {
           );
         },
         Header: `${isTenantSchema ? 'Select all' : 'Delete'}`,
-        Filter: () =>
+        Filter: (instance) =>
           <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
             <input
               type='checkbox'
@@ -533,7 +533,7 @@ export const ListOfMetrics = (props) => {
                   input.indeterminate = selectAll === 2;
                 }
               }}
-              onChange={() => toggleSelectAll()}
+              onChange={() => toggleSelectAll(instance)}
             />
           </div>,
         column_width: '5%'
@@ -648,6 +648,7 @@ export const ListOfMetrics = (props) => {
                 page_size={50}
                 resourcename='metrics'
                 filter={true}
+                selectable={!publicView}
               />
             </div>
           </>

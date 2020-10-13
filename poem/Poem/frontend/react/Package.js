@@ -127,6 +127,7 @@ export const PackageList = (props) => {
         resourcename='package'
         location={location}
         listview={true}
+        addnew={!isTenantSchema}
       >
         <BaseArgoTable
           data={listPackages}
