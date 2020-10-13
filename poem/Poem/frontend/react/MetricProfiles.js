@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useContext } from 'react';
 import {Link} from 'react-router-dom';
 import {Backend, WebApi} from './DataManager';
 import Autosuggest from 'react-autosuggest';
@@ -35,13 +35,17 @@ function matchItem(item, value) {
 }
 
 
-const MetricProfileAutocompleteField = ({suggestions, service, index, onselect, icon, form, tupleType, id}) => {
-  const [suggestionList, setSuggestions] = useState(suggestions)
+const MetricProfilesComponentContext = React.createContext();
+
+
+const MetricProfileAutocompleteField = ({suggestions, service, index, icon, tupleType, id}) => {
+  const context = useContext(MetricProfilesComponentContext);
+  const [suggestionList, setSuggestions] = useState(suggestions);
 
   const changeFieldValue = (newValue) => {
-    form.setFieldValue(`view_services.${index}.${tupleType}`, newValue)
-    form.setFieldValue(`view_services.${index}.${tupleType}Changed`, true)
-    onselect(form.values.view_services[index],
+    context.formikBag.form.setFieldValue(`view_services.${index}.${tupleType}`, newValue)
+    context.formikBag.form.setFieldValue(`view_services.${index}.${tupleType}Changed`, true)
+    context.onselect_handler(context.formikBag.form.values.view_services[index],
       tupleType,
       newValue)
   }
@@ -152,8 +156,10 @@ const MetricProfileTupleValidate = ({view_services, name, groupname,
 }
 
 
-const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
-  remove_handler, insert_handler, onselect_handler, form, remove, insert}) => (
+const ServicesList = () => {
+  const context = useContext(MetricProfilesComponentContext);
+
+  return (
     <table className="table table-bordered table-sm table-hover">
       <thead className="table-active">
         <tr>
@@ -170,26 +176,26 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
           </td>
           <td>
             <Field
-            type="text"
-            name="search_serviceflavour"
-            required={false}
-            className="form-control"
-            id="searchServiceFlavour"
-            onChange={(e) => search_handler(e, 'searchServiceFlavour',
-              'service', 'searchMetric', 'metric')}
-            component={SearchField}
+              type="text"
+              name="search_serviceflavour"
+              required={false}
+              className="form-control"
+              id="searchServiceFlavour"
+              onChange={(e) => context.search_handler(e, 'searchServiceFlavour',
+                'service', 'searchMetric', 'metric')}
+              component={SearchField}
           />
           </td>
           <td>
             <Field
-            type="text"
-            name="search_metric"
-            required={false}
-            className="form-control"
-            id="searchMetric"
-            onChange={(e) => search_handler(e, 'searchMetric', 'metric',
-              'searchServiceFlavour', 'service')}
-            component={SearchField}
+              type="text"
+              name="search_metric"
+              required={false}
+              className="form-control"
+              id="searchMetric"
+              onChange={(e) => context.search_handler(e, 'searchMetric', 'metric',
+                'searchServiceFlavour', 'service')}
+              component={SearchField}
           />
           </td>
           <td>
@@ -197,94 +203,93 @@ const ServicesList = ({serviceflavours_all, metrics_all, search_handler,
           </td>
         </tr>
         {
-        form.values.view_services.map((service, index) =>
-          <React.Fragment key={index}>
-            <tr key={index}>
-              <td className={service.isNew ? "bg-light align-middle text-center" : "align-middle text-center"}>
-                {index + 1}
-              </td>
-              <td className={service.isNew ? "bg-light" : ""}>
-                <MetricProfileAutocompleteField
-                  suggestions={serviceflavours_all}
-                  service={service}
-                  index={index}
-                  icon='serviceflavour'
-                  onselect={onselect_handler}
-                  form={form}
-                  tupleType='service'
-                  id={`autosuggest-metric-${index}`}/>
-                {
-                  form.errors && form.errors.view_services && form.errors.view_services[index]
-                    ? form.errors.view_services[index].service
-                      ? FancyErrorMessage(form.errors.view_services[index].service)
+          context.formikBag.form.values.view_services.map((service, index) =>
+            <React.Fragment key={index}>
+              <tr key={index}>
+                <td className={service.isNew ? "bg-light align-middle text-center" : "align-middle text-center"}>
+                  {index + 1}
+                </td>
+                <td className={service.isNew ? "bg-light" : ""}>
+                  <MetricProfileAutocompleteField
+                    suggestions={context.serviceflavours_all}
+                    service={service}
+                    index={index}
+                    icon='serviceflavour'
+                    tupleType='service'
+                    id={`autosuggest-metric-${index}`}/>
+                  {
+                    context.formikBag.form.errors &&
+                      context.formikBag.form.errors.view_services &&
+                      context.formikBag.form.errors.view_services[index]
+                      ? context.formikBag.form.errors.view_services[index].service
+                        ? FancyErrorMessage(context.formikBag.form.errors.view_services[index].service)
+                        : null
                       : null
-                    : null
-                }
-              </td>
-              <td className={service.isNew ? "bg-light" : ""}>
-                <MetricProfileAutocompleteField
-                  suggestions={metrics_all}
-                  service={service}
-                  index={index}
-                  icon='metrics'
-                  onselect={onselect_handler}
-                  form={form}
-                  tupleType='metric'
-                  id={`autosuggest-metric-${index}`}
-                />
-                {
-                  form.errors && form.errors.view_services && form.errors.view_services[index]
-                    ? form.errors.view_services[index].metric
-                      ? FancyErrorMessage(form.errors.view_services[index].metric)
+                  }
+                </td>
+                <td className={service.isNew ? "bg-light" : ""}>
+                  <MetricProfileAutocompleteField
+                    suggestions={context.metrics_all}
+                    service={service}
+                    index={index}
+                    icon='metrics'
+                    tupleType='metric'
+                    id={`autosuggest-metric-${index}`}
+                  />
+                  {
+                    context.formikBag.form.errors && context.formikBag.form.errors.view_services && context.formikBag.form.errors.view_services[index]
+                      ? context.formikBag.form.errors.view_services[index].metric
+                        ? FancyErrorMessage(context.formikBag.form.errors.view_services[index].metric)
+                        : null
                       : null
+                  }
+                </td>
+                <td className={service.isNew ? "bg-light align-middle pl-3" : "align-middle pl-3"}>
+                  <Button size="sm" color="light"
+                    type="button"
+                    onClick={() => {
+                      context.remove_handler(context.formikBag.form.values.view_services[index],
+                        context.formikBag.form.values.groupname, context.formikBag.form.values.name,
+                        context.formikBag.form.values.description);
+                      // prevent removal of last tuple
+                      if (index > 0 &&
+                        context.formikBag.form.values.view_services.length > 1)
+                        return context.formikBag.remove(index)
+                    }}>
+                    <FontAwesomeIcon icon={faTimes}/>
+                  </Button>
+                  <Button size="sm" color="light"
+                    type="button"
+                    onClick={() => {
+                      let new_element = {index: index + 1, service: '', metric: '', isNew: true}
+                      context.insert_handler(new_element, index + 1, context.formikBag.form.values.groupname, context.formikBag.form.values.name, context.formikBag.form.values.description)
+                      return context.formikBag.insert(index + 1, new_element)
+                    }}>
+                    <FontAwesomeIcon icon={faPlus}/>
+                  </Button>
+                </td>
+              </tr>
+              {
+                context.formikBag.form.errors && context.formikBag.form.errors.view_services && context.formikBag.form.errors.view_services[index]
+                  ? context.formikBag.form.errors.view_services[index].dup
+                    ?
+                      <tr key={index + context.formikBag.form.values.view_services.length}>
+                        <td className="bg-light"></td>
+                        <td colSpan="2" className="bg-light text-center">
+                          {FancyErrorMessage(context.formikBag.form.errors.view_services[index].dup)}
+                        </td>
+                        <td className="bg-light"></td>
+                      </tr>
                     : null
-                }
-              </td>
-              <td className={service.isNew ? "bg-light align-middle pl-3" : "align-middle pl-3"}>
-                <Button size="sm" color="light"
-                  type="button"
-                  onClick={() => {
-                    remove_handler(form.values.view_services[index],
-                      form.values.groupname, form.values.name,
-                      form.values.description);
-                    // prevent removal of last tuple
-                    if (index > 0 &&
-                      form.values.view_services.length > 1)
-                      return remove(index)
-                  }}>
-                  <FontAwesomeIcon icon={faTimes}/>
-                </Button>
-                <Button size="sm" color="light"
-                  type="button"
-                  onClick={() => {
-                    let new_element = {index: index + 1, service: '', metric: '', isNew: true}
-                    insert_handler(new_element, index + 1, form.values.groupname, form.values.name, form.values.description)
-                    return insert(index + 1, new_element)
-                  }}>
-                  <FontAwesomeIcon icon={faPlus}/>
-                </Button>
-              </td>
-            </tr>
-            {
-              form.errors && form.errors.view_services && form.errors.view_services[index]
-                ? form.errors.view_services[index].dup
-                  ?
-                    <tr key={index + form.values.view_services.length}>
-                      <td className="bg-light"></td>
-                      <td colSpan="2" className="bg-light text-center">
-                        {FancyErrorMessage(form.errors.view_services[index].dup)}
-                      </td>
-                      <td className="bg-light"></td>
-                    </tr>
                   : null
-                : null
-            }
-          </React.Fragment>
-        )
-      }
+              }
+            </React.Fragment>
+          )
+        }
       </tbody>
     </table>
-)
+  )
+}
 
 
 export const MetricProfilesComponent = (props) => {
@@ -328,7 +333,14 @@ export const MetricProfilesComponent = (props) => {
 
   const { data: metricProfile, error: errorMetricProfile, isLoading:
     loadingMetricProfile } = useQuery(querykey, async () => {
-      let backendMetricProfile = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}metricprofiles/${profile_name}`);
+      let backendMetricProfile = new Object({
+        id: '',
+        name: '',
+        services: undefined,
+      })
+      if (!addview)
+        backendMetricProfile = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}metricprofiles/${profile_name}`);
+
       if (publicView) {
         let metricProfile = await webapi.fetchMetricProfile(backendMetricProfile.apiid);
         return {
@@ -351,13 +363,8 @@ export const MetricProfilesComponent = (props) => {
           }
         }
         else {
-          let metricProfile = new Object({
-            id: '',
-            name: '',
-            services: undefined,
-          });
           return {
-            profile: metricProfile,
+            profile: backendMetricProfile,
             groupname: '',
             metricsall: metricsAll,
             serviceflavoursall: serviceFlavoursAll
@@ -800,7 +807,7 @@ export const MetricProfilesComponent = (props) => {
     return list
   }
 
-  const onSubmitHandle = async ({formValues, servicesList}) => {
+  const onSubmitHandle = async (formValues) => {
     let msg = undefined;
     let title = undefined;
 
@@ -817,7 +824,6 @@ export const MetricProfilesComponent = (props) => {
     setModalTitle(title)
     setOnYes('change')
     setFormikValues(formValues)
-    setListServices(servicesList)
   }
 
   const onYesCallback = () => {
@@ -912,10 +918,7 @@ export const MetricProfilesComponent = (props) => {
             metrics_all: metricProfile.metricsall,
             services_all: metricProfile.serviceflavoursall
           }}
-          onSubmit = {(values, actions) => onSubmitHandle({
-            formValues: values,
-            servicesList: listServices
-          }, actions)}
+          onSubmit = {(values) => onSubmitHandle(values)}
           enableReinitialize={true}
           validate={MetricProfileTupleValidate}
           render = {props => (
@@ -938,15 +941,22 @@ export const MetricProfilesComponent = (props) => {
                   <FieldArray
                     name="view_services"
                     render={props => (
-                      <ServicesList
-                        {...props}
-                        serviceflavours_all={metricProfile.serviceflavoursall}
-                        metrics_all={metricProfile.metricsall}
-                        search_handler={handleSearch}
-                        remove_handler={onRemove}
-                        insert_handler={onInsert}
-                        onselect_handler={onSelect}
-                      />)}
+                      <MetricProfilesComponentContext.Provider value={{
+                        serviceflavours_all: metricProfile.serviceflavoursall,
+                        metrics_all: metricProfile.metricsall,
+                        search_handler: handleSearch,
+                        remove_handler: onRemove,
+                        insert_handler: onInsert,
+                        onselect_handler: onSelect,
+                        formikBag: {
+                          form: props.form,
+                          remove: props.remove,
+                          insert: props.insert
+                        }
+                      }}>
+                        <ServicesList/>
+                      </MetricProfilesComponentContext.Provider>
+                    )}
                   />
                 :
                   <FieldArray
