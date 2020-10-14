@@ -945,6 +945,7 @@ export const UserChange = (props) => {
                 date_joined: user.date_joined
               }}
               validationSchema={UserSchema}
+              enableReinitialize={true}
               onSubmit = {(values, actions) => onSubmitHandle(values, actions)}
               render = {props => (
                 <Form>
