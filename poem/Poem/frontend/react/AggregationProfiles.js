@@ -867,9 +867,21 @@ const AggregationProfilesChange = (props) => {
       <ErrorComponent error={error}/>
     )
 
-  else if (!loadingAggregationProfile && aggregationProfile && token) {
-
+  else if (!loadingAggregationProfile && !loadingUserDetails && aggregationProfile && token) {
     let isServiceMissing = checkIfServiceMissingInMetricProfile(aggregationProfile.listservices, aggregationProfile.profile.groups)
+    let write_perm = undefined
+
+    if (publicView) {
+      write_perm = false
+    }
+    else if (!addview) {
+      write_perm = userDetails.is_superuser ||
+            userDetails.groups.metricprofiles.indexOf(aggregationProfile.profile.groupname) >= 0;
+    }
+    else {
+      write_perm = userDetails.is_superuser ||
+        userDetails.groups.metricprofiles.length > 0;
+    }
 
     return (
       <BaseArgoView
