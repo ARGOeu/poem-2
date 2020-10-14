@@ -497,7 +497,6 @@ const AggregationProfilesChange = (props) => {
   const location = props.location;
   const publicView = props.publicView;
 
-  const [aggregationProfile, setAggregationProfile] = useState(undefined);
   const [groupname, setGroupname] = useState(undefined);
   const [listServices, setListServices] = useState(undefined);
   const [listCompleteMetricProfiles, setListCompleteMetricProfiles] = useState(undefined);
@@ -505,6 +504,7 @@ const AggregationProfilesChange = (props) => {
   const [listUserGroups, setListUserGroups] = useState(undefined);
   const [modalMsg, setModalMsg] = useState(undefined);
   const [modalTitle, setModalTitle] = useState(undefined);
+  const querykey = `aggregationprofiles_${addview ? 'addview' : `${profile_name}_${publicView ? 'publicview' : 'changeview'}`}`;
 
   const backend = new Backend();
   const webapi = new WebApi({
@@ -515,6 +515,48 @@ const AggregationProfilesChange = (props) => {
 
   const logic_operations = ["OR", "AND"];
   const endpoint_groups = ["servicegroups", "sites"];
+
+  const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails } = useQuery(
+    `session_userdetails`, async () => {
+      if (!publicView) {
+        const sessionActive = await backend.isActiveSession()
+        if (sessionActive.active) {
+          return sessionActive.userdetails
+        }
+      }
+    }
+  );
+
+  const { data: aggregationProfile, error: errorAggregationProfile, isLoading: loadingAggregationProfile } = useQuery(querykey, async () => {
+    let backendAggregationProfile = new Object({
+      id: '',
+      name: '',
+      metric_operation: '',
+      profile_operation: '',
+      endpoint_group: '',
+      metric_profile: {
+          name: ''
+      },
+      groups: []
+    })
+    if (!addview)
+      backendAggregationProfile = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}aggregations/${profile_name}`);
+
+    if (publicView) {
+      let metricProfiles = await webapi.fetchMetricProfiles();
+      let aggregationProfile = await webapi.fetchAggregationProfile(backendAggregationProfile.apiid);
+      return {
+        profile: aggregationProfile,
+        groupname: backendAggregationProfile.groupname,
+        listmetricprofiles: metricProfiles,
+        listidmetricprofiles: extractListOfMetricsProfiles(metricProfile),
+        listservices: extractListOfServices(aggregationProfile.metric_profile, metricProfiles),
+        listusergroups: []
+      }
+    }
+
+
+  })
 
   const toggleAreYouSure = () => {
     this.setState(prevState =>
@@ -868,11 +910,6 @@ const AggregationProfilesChange = (props) => {
     }
   }
 
-  const {aggregation_profile, list_id_metric_profiles,
-      list_complete_metric_profiles, list_user_groups, groupname,
-      list_services, write_perm, loading, error} = this.state
-
-
   if (loading)
     return (<LoadingAnim />)
 
@@ -1041,7 +1078,6 @@ const AggregationProfilesChange = (props) => {
   }
   else
     return null
-
 }
 
 
