@@ -679,7 +679,7 @@ export const AggregationProfilesChange = (props) => {
 
     valueSend.namespace = tenant_name
 
-    let match_profile = state.list_id_metric_profiles.filter((e) =>
+    let match_profile = listIdMetricProfiles.filter((e) =>
       valueSend.metric_profile === e.name)
 
     valueSend.metric_profile = match_profile[0]
@@ -876,8 +876,10 @@ export const AggregationProfilesChange = (props) => {
     let isServiceMissing = checkIfServiceMissingInMetricProfile(aggregationProfile.listservices, aggregationProfile.profile.groups)
     let write_perm = undefined
 
-    if (!listServices && !publicView)
+    if (!listServices && !listIdMetricProfiles && !publicView) {
       setListServices(aggregationProfile.listservices)
+      setListIdMetricProfiles(aggregationProfile.listidmetricprofiles)
+    }
 
     if (publicView) {
       write_perm = false
