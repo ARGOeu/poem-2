@@ -587,15 +587,6 @@ export const AggregationProfilesChange = (props) => {
       ({areYouSureModal: !prevState.areYouSureModal}));
   }
 
-  const toggleAreYouSureSetModal = (msg, title, onyes) => {
-    setState(prevState =>
-      ({areYouSureModal: !prevState.areYouSureModal,
-        modalFunc: onyes,
-        modalMsg: msg,
-        modalTitle: title,
-      }));
-  }
-
   const correctMetricProfileName = (metricProfileId, listMetricProfilesWebApi) => {
     let targetProfile = listMetricProfilesWebApi.filter(p => p.id === metricProfileId)
 
@@ -876,7 +867,7 @@ export const AggregationProfilesChange = (props) => {
   if (loadingAggregationProfile)
     return (<LoadingAnim />)
 
-  else if (loadingAggregationProfile)
+  else if (errorAggregationProfile)
     return (
       <ErrorComponent error={error}/>
     )
@@ -907,7 +898,7 @@ export const AggregationProfilesChange = (props) => {
         modal={true}
         history={!publicView}
         state={{areYouSureModal, 'modalFunc': onYesCallback, modalTitle, modalMsg}}
-        toggle={toggleAreYouSure}
+        toggle={() => setAreYouSureModal(!areYouSureModal)}
         addview={publicView ? !publicView : addview}
         publicview={publicView}
         submitperm={write_perm}>
