@@ -675,23 +675,26 @@ const AggregationProfilesChange = (props) => {
       msg = 'Are you sure you want to change Aggregation profile?'
       title = 'Change aggregation profile'
     }
-    toggleAreYouSureSetModal(msg, title,
-      () => doChange(values, action));
+    setAreYouSureModal(!areYouSureModal);
+    setModalMsg(msg)
+    setModalTitle(title)
+    setOnYes('change')
+    setFormikValues(values)
   }
 
   const doChange = async (values, actions) => {
-    let values_send = JSON.parse(JSON.stringify(values));
-    removeDummyGroup(values_send)
+    let valueSend = JSON.parse(JSON.stringify(values));
+    removeDummyGroup(valueSend)
 
-    values_send.namespace = tenant_name
+    valueSend.namespace = tenant_name
 
     let match_profile = state.list_id_metric_profiles.filter((e) =>
-      values_send.metric_profile === e.name)
+      valueSend.metric_profile === e.name)
 
-    values_send.metric_profile = match_profile[0]
+    valueSend.metric_profile = match_profile[0]
 
     if (!addview) {
-      let response = await webapi.changeAggregation(values_send);
+      let response = await webapi.changeAggregation(valueSend);
       if (!response.ok) {
         let change_msg = '';
         try {
@@ -710,14 +713,14 @@ const AggregationProfilesChange = (props) => {
         let r_internal = await backend.changeObject(
           '/api/v2/internal/aggregations/',
           {
-            apiid: values_send.id,
-            name: values_send.name,
-            groupname: values_send.groupname,
-            endpoint_group: values_send.endpoint_group,
-            metric_operation: values_send.metric_operation,
-            profile_operation: values_send.profile_operation,
+            apiid: valueSend.id,
+            name: valueSend.name,
+            groupname: valueSend.groupname,
+            endpoint_group: valueSend.endpoint_group,
+            metric_operation: valueSend.metric_operation,
+            profile_operation: valueSend.profile_operation,
             metric_profile: values.metric_profile,
-            groups: JSON.stringify(values_send.groups)
+            groups: JSON.stringify(valueSend.groups)
           }
         )
         if (r_internal.ok)
@@ -741,7 +744,7 @@ const AggregationProfilesChange = (props) => {
         }
       }
     } else {
-      let response = await webapi.addAggregation(values_send);
+      let response = await webapi.addAggregation(valueSend);
       if (!response.ok) {
         let add_msg = '';
         try {
@@ -762,13 +765,13 @@ const AggregationProfilesChange = (props) => {
           '/api/v2/internal/aggregations/',
           {
             apiid: r.data.id,
-            name: values_send.name,
-            groupname: values_send.groupname,
-            endpoint_group: values_send.endpoint_group,
-            metric_operation: values_send.metric_operation,
-            profile_operation: values_send.profile_operation,
+            name: valueSend.name,
+            groupname: valueSend.groupname,
+            endpoint_group: valueSend.endpoint_group,
+            metric_operation: valueSend.metric_operation,
+            profile_operation: valueSend.profile_operation,
             metric_profile: values.metric_profile,
-            groups: JSON.stringify(values_send.groups)
+            groups: JSON.stringify(valueSend.groups)
           }
         );
         if (r_internal.ok)
@@ -867,11 +870,7 @@ const AggregationProfilesChange = (props) => {
     if (onYes === 'delete')
       doDelete(formikValues.id);
     else if (onYes === 'change')
-      doChange({
-          formValues: formikValues,
-          servicesList: listServices
-        }
-      );
+      doChange(formikValues);
   }
 
   if (loadingAggregationProfile)
@@ -1036,9 +1035,11 @@ const AggregationProfilesChange = (props) => {
                     <Button
                       color="danger"
                       onClick={() => {
-                        toggleAreYouSureSetModal('Are you sure you want to delete Aggregation profile?',
-                          'Delete aggregation profile',
-                          () => doDelete(props.values.id))
+                        setModalMsg('Are you sure you want to delete Aggregation profile?')
+                        setModalTitle('Delete aggregation profile')
+                        setAreYouSureModal(!areYouSureModal);
+                        setFormikValues(props.values)
+                        setOnYes('delete')
                       }}>
                       Delete
                     </Button>
