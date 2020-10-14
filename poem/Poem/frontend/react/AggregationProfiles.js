@@ -486,61 +486,49 @@ const AggregationProfilesForm = ({ values, errors, historyview=false, write_perm
 );
 
 
-export class AggregationProfilesChange extends Component
-{
-  constructor(props) {
-    super(props);
+const AggregationProfilesChange = (props) => {
+  const tenant_name = props.tenant_name;
+  const token = props.webapitoken;
+  const webapiaggregation = props.webapiaggregation;
+  const webapimetric = props.webapimetric;
+  const profile_name = props.match.params.name;
+  const addview = props.addview
+  const history = props.history;
+  const location = props.location;
+  const publicView = props.publicView;
 
-    this.tenant_name = props.tenant_name;
-    this.token = props.webapitoken;
-    this.webapiaggregation = props.webapiaggregation;
-    this.webapimetric = props.webapimetric;
-    this.profile_name = props.match.params.name;
-    this.addview = props.addview
-    this.history = props.history;
-    this.location = props.location;
-    this.publicView = props.publicView;
-
-    this.state = {
-      aggregation_profile: {},
-      groupname: undefined,
-      list_user_groups: [],
-      write_perm: false,
-      list_id_metric_profiles: [],
-      list_services: [],
-      list_complete_metric_profiles: {},
-      areYouSureModal: false,
-      loading: false,
-      modalFunc: undefined,
-      modalTitle: undefined,
-      modalMsg: undefined,
-      error: null
-    }
-
-    this.backend = new Backend();
-    this.webapi = new WebApi({
-      token: props.webapitoken,
-      metricProfiles: props.webapimetric,
-      aggregationProfiles: props.webapiaggregation}
-    )
-
-    this.extractListOfMetricsProfiles = this.extractListOfMetricsProfiles.bind(this);
-    this.toggleAreYouSure = this.toggleAreYouSure.bind(this);
-    this.doChange = this.doChange.bind(this);
-    this.doDelete = this.doDelete.bind(this);
-    this.toggleAreYouSureSetModal = this.toggleAreYouSureSetModal.bind(this);
-    this.onSubmitHandle = this.onSubmitHandle.bind(this);
-
-    this.logic_operations = ["OR", "AND"];
-    this.endpoint_groups = ["servicegroups", "sites"];
+  this.state = {
+    aggregation_profile: {},
+    groupname: undefined,
+    list_user_groups: [],
+    write_perm: false,
+    list_id_metric_profiles: [],
+    list_services: [],
+    list_complete_metric_profiles: {},
+    areYouSureModal: false,
+    loading: false,
+    modalFunc: undefined,
+    modalTitle: undefined,
+    modalMsg: undefined,
+    error: null
   }
 
-  toggleAreYouSure() {
+  const backend = new Backend();
+  const webapi = new WebApi({
+    token: props.webapitoken,
+    metricProfiles: props.webapimetric,
+    aggregationProfiles: props.webapiaggregation}
+  )
+
+  const logic_operations = ["OR", "AND"];
+  const endpoint_groups = ["servicegroups", "sites"];
+
+  const toggleAreYouSure = () => {
     this.setState(prevState =>
       ({areYouSureModal: !prevState.areYouSureModal}));
   }
 
-  toggleAreYouSureSetModal(msg, title, onyes) {
+  const toggleAreYouSureSetModal = (msg, title, onyes) => {
     this.setState(prevState =>
       ({areYouSureModal: !prevState.areYouSureModal,
         modalFunc: onyes,
@@ -549,7 +537,7 @@ export class AggregationProfilesChange extends Component
       }));
   }
 
-  correctMetricProfileName(metricProfileId, listMetricProfilesWebApi) {
+  const correctMetricProfileName = (metricProfileId, listMetricProfilesWebApi) => {
     let targetProfile = listMetricProfilesWebApi.filter(p => p.id === metricProfileId)
 
     if (targetProfile.length)
@@ -558,12 +546,12 @@ export class AggregationProfilesChange extends Component
       return ''
   }
 
-  sortServices(a, b) {
+  const sortServices = (a, b) => {
     if (a.toLowerCase() < b.toLowerCase()) return -1
     if (a.toLowerCase() > b.toLowerCase()) return 1
   }
 
-  extractListOfServices(profileFromAggregation, listMetricProfiles) {
+  const extractListOfServices = (profileFromAggregation, listMetricProfiles) => {
     let targetProfile = listMetricProfiles.filter(p => p.name === profileFromAggregation.name)
 
     if (targetProfile.length === 0)
@@ -577,13 +565,13 @@ export class AggregationProfilesChange extends Component
       return []
   }
 
-  sortMetricProfiles(a, b) {
+  const sortMetricProfiles = (a, b) => {
     if (a.name.toLowerCase() < b.name.toLowerCase()) return -1;
     if (a.name.toLowerCase() > b.name.toLowerCase()) return 1;
     if (a.name.toLowerCase() === b.name.toLowerCase()) return 0;
   }
 
-  extractListOfMetricsProfiles(allProfiles) {
+  const extractListOfMetricsProfiles = (allProfiles) => {
     var list_profiles = []
 
     allProfiles.forEach(profile => {
@@ -597,7 +585,7 @@ export class AggregationProfilesChange extends Component
     return list_profiles.sort(this.sortMetricProfiles)
   }
 
-  insertEmptyServiceForNoServices(groups) {
+  const insertEmptyServiceForNoServices = (groups) => {
     groups.forEach(group => {
       if (group.services.length === 0) {
           group.services.push({name: '', operation: ''})
@@ -606,7 +594,7 @@ export class AggregationProfilesChange extends Component
     return groups
   }
 
-  insertOperationFromPrevious(index, array) {
+  const insertOperationFromPrevious = (index, array) => {
     if (array.length) {
       let last = array.length - 1
 
@@ -616,7 +604,7 @@ export class AggregationProfilesChange extends Component
       return ''
   }
 
-  onSubmitHandle(values, action) {
+  const onSubmitHandle = (values, action) => {
     let msg = undefined;
     let title = undefined;
 
@@ -632,7 +620,7 @@ export class AggregationProfilesChange extends Component
       () => this.doChange(values, action));
   }
 
-  async doChange(values, actions) {
+  const doChange = async (values, actions) => {
     let values_send = JSON.parse(JSON.stringify(values));
     this.removeDummyGroup(values_send)
 
@@ -747,7 +735,7 @@ export class AggregationProfilesChange extends Component
     }
   }
 
-  async doDelete(idProfile) {
+  const doDelete = async (idProfile) => {
     let response = await this.webapi.deleteAggregation(idProfile);
     if (!response.ok) {
       let msg = '';
@@ -787,11 +775,11 @@ export class AggregationProfilesChange extends Component
     }
   }
 
-  insertDummyGroup(groups) {
+  const insertDummyGroup = (groups) => {
     return  [...groups, {name: 'dummy', operation: 'OR', services: [{name: 'dummy', operation: 'OR'}]}]
   }
 
-  removeDummyGroup(values) {
+  const removeDummyGroup = (values) => {
     let last_group_element = values.groups[values.groups.length - 1]
 
     if (last_group_element['name'] == 'dummy' &&
@@ -800,7 +788,7 @@ export class AggregationProfilesChange extends Component
     }
   }
 
-  checkIfServiceMissingInMetricProfile(servicesMetricProfile, serviceGroupsAggregationProfile) {
+  const checkIfServiceMissingInMetricProfile = async (servicesMetricProfile, serviceGroupsAggregationProfile) => {
     let servicesInMetricProfiles = new Set(servicesMetricProfile)
     let isMissing = false
 
@@ -887,181 +875,180 @@ export class AggregationProfilesChange extends Component
     }
   }
 
-  render() {
-    const {aggregation_profile, list_id_metric_profiles,
-        list_complete_metric_profiles, list_user_groups, groupname,
-        list_services, write_perm, loading, error} = this.state
+  const {aggregation_profile, list_id_metric_profiles,
+      list_complete_metric_profiles, list_user_groups, groupname,
+      list_services, write_perm, loading, error} = this.state
 
 
-    if (loading)
-      return (<LoadingAnim />)
+  if (loading)
+    return (<LoadingAnim />)
 
-    else if (error)
-      return (
-        <ErrorComponent error={error}/>
-      )
+  else if (error)
+    return (
+      <ErrorComponent error={error}/>
+    )
 
-    else if (!loading && aggregation_profile &&
-      aggregation_profile.metric_profile && list_user_groups
-      && this.token) {
+  else if (!loading && aggregation_profile &&
+    aggregation_profile.metric_profile && list_user_groups
+    && this.token) {
 
-      let is_service_missing = this.checkIfServiceMissingInMetricProfile(list_services, aggregation_profile.groups)
+    let is_service_missing = this.checkIfServiceMissingInMetricProfile(list_services, aggregation_profile.groups)
 
-      return (
-        <BaseArgoView
-          resourcename={this.publicView ? 'Aggregation profile details' : 'aggregation profile'}
-          location={this.location}
-          modal={true}
-          history={!this.publicView}
-          state={this.state}
-          toggle={this.toggleAreYouSure}
-          addview={this.publicView ? !this.publicView : this.addview}
-          publicview={this.publicView}
-          submitperm={write_perm}>
-          <Formik
-            initialValues = {{
-              id: aggregation_profile.id,
-              name: aggregation_profile.name,
-              groupname: groupname,
-              metric_operation: aggregation_profile.metric_operation,
-              profile_operation: aggregation_profile.profile_operation,
-              metric_profile: this.correctMetricProfileName(aggregation_profile.metric_profile.id, list_id_metric_profiles),
-              endpoint_group: aggregation_profile.endpoint_group,
-              groups: !this.publicView ?
-                this.insertDummyGroup(
-                  this.insertEmptyServiceForNoServices(aggregation_profile.groups)
-                )
-              :
-                aggregation_profile.groups
-            }}
-            onSubmit={(values, actions) => this.onSubmitHandle(values, actions)}
-            validationSchema={AggregationProfilesSchema}
-            render = {props => (
-              <Form>
-                <FormikEffect onChange={(current, prev) => {
-                  if (current.values.metric_profile !== prev.values.metric_profile) {
-                    let selected_profile = {name: current.values.metric_profile}
-                    this.setState({list_services:
-                      this.extractListOfServices(selected_profile,
-                      list_complete_metric_profiles)})
-                  }
-                }}
-                />
-                {
-                  (is_service_missing && !this.publicView) &&
-                  <Alert color='danger'>
-                    <center>
-                      <FontAwesomeIcon icon={faInfoCircle} size="lg" color="black"/> &nbsp;
-                      Some Service Flavours used in Aggregation profile are not presented in associated Metric profile meaning that two profiles are out of sync. Check below for Service Flavours in blue borders.
-                    </center>
-                  </Alert>
+    return (
+      <BaseArgoView
+        resourcename={this.publicView ? 'Aggregation profile details' : 'aggregation profile'}
+        location={this.location}
+        modal={true}
+        history={!this.publicView}
+        state={this.state}
+        toggle={this.toggleAreYouSure}
+        addview={this.publicView ? !this.publicView : this.addview}
+        publicview={this.publicView}
+        submitperm={write_perm}>
+        <Formik
+          initialValues = {{
+            id: aggregation_profile.id,
+            name: aggregation_profile.name,
+            groupname: groupname,
+            metric_operation: aggregation_profile.metric_operation,
+            profile_operation: aggregation_profile.profile_operation,
+            metric_profile: this.correctMetricProfileName(aggregation_profile.metric_profile.id, list_id_metric_profiles),
+            endpoint_group: aggregation_profile.endpoint_group,
+            groups: !this.publicView ?
+              this.insertDummyGroup(
+                this.insertEmptyServiceForNoServices(aggregation_profile.groups)
+              )
+            :
+              aggregation_profile.groups
+          }}
+          onSubmit={(values, actions) => this.onSubmitHandle(values, actions)}
+          validationSchema={AggregationProfilesSchema}
+          render = {props => (
+            <Form>
+              <FormikEffect onChange={(current, prev) => {
+                if (current.values.metric_profile !== prev.values.metric_profile) {
+                  let selected_profile = {name: current.values.metric_profile}
+                  this.setState({list_services:
+                    this.extractListOfServices(selected_profile,
+                    list_complete_metric_profiles)})
                 }
-                <AggregationProfilesForm
-                  {...props}
-                  list_user_groups={list_user_groups}
-                  logic_operations={this.logic_operations}
-                  endpoint_groups={this.endpoint_groups}
-                  list_id_metric_profiles={list_id_metric_profiles}
-                  write_perm={write_perm}
-                  historyview={this.publicView}
-                />
-                {
-                  !this.publicView ?
-                    <FieldArray
-                      name="groups"
-                      render={props => (
-                        <GroupList
-                          {...props}
-                          list_services={list_services}
-                          list_operations={this.logic_operations}
-                          last_service_operation={this.insertOperationFromPrevious}
-                          write_perm={write_perm}
-                        />)}
-                    />
-                  :
-                    <FieldArray
-                      name='groups'
-                      render={arrayHelpers => (
-                        <Row className='groups'>
-                          {
-                            props.values['groups'].map((group, i) =>
-                              <FieldArray
-                                key={i}
-                                name='groups'
-                                render={arrayHelpers => (
-                                  <React.Fragment key={i}>
-                                    <Col sm={{size: 8}} md={{size: 5}} className='mt-4 mb-2'>
-                                      <Card>
-                                        <CardHeader className='p-1' color='primary'>
-                                          <Row className='d-flex align-items-center no-gutters'>
-                                            <Col sm={{size: 10}} md={{size: 11}}>
-                                              {props.values.groups[i].name}
-                                            </Col>
-                                          </Row>
-                                        </CardHeader>
-                                        <CardBody className='p-1'>
-                                          {
-                                            group.services.map((service, j) =>
-                                              <FieldArray
-                                                key={j}
-                                                name={`groups.${i}.services`}
-                                                render={arrayHelpers => (
-                                                  <Row className='d-flex align-items-center service pt-1 pb-1 no-gutters' key={j}>
-                                                    <Col md={8}>
-                                                      {props.values.groups[i].services[j].name}
-                                                    </Col>
-                                                    <Col md={2}>
-                                                      {props.values.groups[i].services[j].operation}
-                                                    </Col>
-                                                  </Row>
-                                                )}
-                                              />
-                                            )
-                                          }
-                                        </CardBody>
-                                        <CardFooter className='p-1 d-flex justify-content-center'>
-                                          {props.values.groups[i].operation}
-                                        </CardFooter>
-                                      </Card>
-                                    </Col>
-                                    <Col sm={{size: 4}} md={{size: 1}} className='mt-5'>
-                                      <div className='group-operation' key={i}>
-                                        {props.values.profile_operation}
-                                      </div>
-                                    </Col>
-                                  </React.Fragment>
-                                )}
-                              />
-                            )
-                          }
-                        </Row>
-                      )}
-                    />
-                }
-                {
-                  (write_perm) &&
-                    <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
-                      <Button
-                        color="danger"
-                        onClick={() => {
-                          this.toggleAreYouSureSetModal('Are you sure you want to delete Aggregation profile?',
-                            'Delete aggregation profile',
-                            () => this.doDelete(props.values.id))
-                        }}>
-                        Delete
-                      </Button>
-                      <Button color="success" id="submit-button" type="submit">Save</Button>
-                    </div>
-                }
-              </Form>
-            )}
-          />
-        </BaseArgoView>
-      )
-    }
-    else
-      return null
+              }}
+              />
+              {
+                (is_service_missing && !this.publicView) &&
+                <Alert color='danger'>
+                  <center>
+                    <FontAwesomeIcon icon={faInfoCircle} size="lg" color="black"/> &nbsp;
+                    Some Service Flavours used in Aggregation profile are not presented in associated Metric profile meaning that two profiles are out of sync. Check below for Service Flavours in blue borders.
+                  </center>
+                </Alert>
+              }
+              <AggregationProfilesForm
+                {...props}
+                list_user_groups={list_user_groups}
+                logic_operations={this.logic_operations}
+                endpoint_groups={this.endpoint_groups}
+                list_id_metric_profiles={list_id_metric_profiles}
+                write_perm={write_perm}
+                historyview={this.publicView}
+              />
+              {
+                !this.publicView ?
+                  <FieldArray
+                    name="groups"
+                    render={props => (
+                      <GroupList
+                        {...props}
+                        list_services={list_services}
+                        list_operations={this.logic_operations}
+                        last_service_operation={this.insertOperationFromPrevious}
+                        write_perm={write_perm}
+                      />)}
+                  />
+                :
+                  <FieldArray
+                    name='groups'
+                    render={arrayHelpers => (
+                      <Row className='groups'>
+                        {
+                          props.values['groups'].map((group, i) =>
+                            <FieldArray
+                              key={i}
+                              name='groups'
+                              render={arrayHelpers => (
+                                <React.Fragment key={i}>
+                                  <Col sm={{size: 8}} md={{size: 5}} className='mt-4 mb-2'>
+                                    <Card>
+                                      <CardHeader className='p-1' color='primary'>
+                                        <Row className='d-flex align-items-center no-gutters'>
+                                          <Col sm={{size: 10}} md={{size: 11}}>
+                                            {props.values.groups[i].name}
+                                          </Col>
+                                        </Row>
+                                      </CardHeader>
+                                      <CardBody className='p-1'>
+                                        {
+                                          group.services.map((service, j) =>
+                                            <FieldArray
+                                              key={j}
+                                              name={`groups.${i}.services`}
+                                              render={arrayHelpers => (
+                                                <Row className='d-flex align-items-center service pt-1 pb-1 no-gutters' key={j}>
+                                                  <Col md={8}>
+                                                    {props.values.groups[i].services[j].name}
+                                                  </Col>
+                                                  <Col md={2}>
+                                                    {props.values.groups[i].services[j].operation}
+                                                  </Col>
+                                                </Row>
+                                              )}
+                                            />
+                                          )
+                                        }
+                                      </CardBody>
+                                      <CardFooter className='p-1 d-flex justify-content-center'>
+                                        {props.values.groups[i].operation}
+                                      </CardFooter>
+                                    </Card>
+                                  </Col>
+                                  <Col sm={{size: 4}} md={{size: 1}} className='mt-5'>
+                                    <div className='group-operation' key={i}>
+                                      {props.values.profile_operation}
+                                    </div>
+                                  </Col>
+                                </React.Fragment>
+                              )}
+                            />
+                          )
+                        }
+                      </Row>
+                    )}
+                  />
+              }
+              {
+                (write_perm) &&
+                  <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
+                    <Button
+                      color="danger"
+                      onClick={() => {
+                        this.toggleAreYouSureSetModal('Are you sure you want to delete Aggregation profile?',
+                          'Delete aggregation profile',
+                          () => this.doDelete(props.values.id))
+                      }}>
+                      Delete
+                    </Button>
+                    <Button color="success" id="submit-button" type="submit">Save</Button>
+                  </div>
+              }
+            </Form>
+          )}
+        />
+      </BaseArgoView>
+    )
   }
+  else
+    return null
+
 }
 
 
