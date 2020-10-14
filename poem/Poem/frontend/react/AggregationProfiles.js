@@ -486,7 +486,7 @@ const AggregationProfilesForm = ({ values, errors, historyview=false, write_perm
 );
 
 
-const AggregationProfilesChange = (props) => {
+export const AggregationProfilesChange = (props) => {
   const tenant_name = props.tenant_name;
   const token = props.webapitoken;
   const webapiaggregation = props.webapiaggregation;
@@ -885,16 +885,19 @@ const AggregationProfilesChange = (props) => {
     let isServiceMissing = checkIfServiceMissingInMetricProfile(aggregationProfile.listservices, aggregationProfile.profile.groups)
     let write_perm = undefined
 
+    if (!publicView)
+      setListServices(aggregationProfile.listservices)
+
     if (publicView) {
       write_perm = false
     }
     else if (!addview) {
       write_perm = userDetails.is_superuser ||
-            userDetails.groups.metricprofiles.indexOf(aggregationProfile.profile.groupname) >= 0;
+            userDetails.groups.aggregationprofiles.indexOf(aggregationProfile.profile.groupname) >= 0;
     }
     else {
       write_perm = userDetails.is_superuser ||
-        userDetails.groups.metricprofiles.length > 0;
+        userDetails.groups.aggregationprofiles.length > 0;
     }
 
     return (
@@ -949,7 +952,7 @@ const AggregationProfilesChange = (props) => {
               }
               <AggregationProfilesForm
                 {...props}
-                list_user_groups={list_user_groups}
+                list_user_groups={userDetails.groups.aggregationprofiles}
                 logic_operations={logic_operations}
                 endpoint_groups={endpoint_groups}
                 list_id_metric_profiles={aggregationProfile.listidmetricprofiles}
@@ -963,7 +966,7 @@ const AggregationProfilesChange = (props) => {
                     render={props => (
                       <GroupList
                         {...props}
-                        list_services={list_services}
+                        list_services={listServices}
                         list_operations={logic_operations}
                         last_service_operation={insertOperationFromPrevious}
                         write_perm={write_perm}
