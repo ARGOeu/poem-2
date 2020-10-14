@@ -843,7 +843,7 @@ const AggregationProfilesChange = (props) => {
     }
   }
 
-  const checkIfServiceMissingInMetricProfile = async (servicesMetricProfile, serviceGroupsAggregationProfile) => {
+  const checkIfServiceMissingInMetricProfile = (servicesMetricProfile, serviceGroupsAggregationProfile) => {
     let servicesInMetricProfiles = new Set(servicesMetricProfile)
     let isMissing = false
 
@@ -859,62 +859,61 @@ const AggregationProfilesChange = (props) => {
     return isMissing
   }
 
-  if (loading)
+  if (loadingAggregationProfile)
     return (<LoadingAnim />)
 
-  else if (error)
+  else if (loadingAggregationProfile)
     return (
       <ErrorComponent error={error}/>
     )
 
-  else if (!loading && aggregation_profile &&
-    aggregation_profile.metric_profile && list_user_groups
-    && this.token) {
+  else if (!loadingAggregationProfile && aggregationProfile && token) {
 
-    let is_service_missing = this.checkIfServiceMissingInMetricProfile(list_services, aggregation_profile.groups)
+    let isServiceMissing = checkIfServiceMissingInMetricProfile(aggregationProfile.listservices, aggregationProfile.profile.groups)
 
     return (
       <BaseArgoView
-        resourcename={this.publicView ? 'Aggregation profile details' : 'aggregation profile'}
-        location={this.location}
+        resourcename={publicView ? 'Aggregation profile details' : 'aggregation profile'}
+        location={location}
         modal={true}
-        history={!this.publicView}
+        history={!publicView}
         state={this.state}
-        toggle={this.toggleAreYouSure}
-        addview={this.publicView ? !this.publicView : this.addview}
-        publicview={this.publicView}
+        toggle={toggleAreYouSure}
+        addview={publicView ? !this.publicView : this.addview}
+        publicview={publicView}
         submitperm={write_perm}>
         <Formik
           initialValues = {{
-            id: aggregation_profile.id,
-            name: aggregation_profile.name,
-            groupname: groupname,
-            metric_operation: aggregation_profile.metric_operation,
-            profile_operation: aggregation_profile.profile_operation,
-            metric_profile: this.correctMetricProfileName(aggregation_profile.metric_profile.id, list_id_metric_profiles),
-            endpoint_group: aggregation_profile.endpoint_group,
-            groups: !this.publicView ?
-              this.insertDummyGroup(
-                this.insertEmptyServiceForNoServices(aggregation_profile.groups)
+            id: aggregationProfile.profile.id,
+            name: aggregationProfile.profile.name,
+            groupname: aggregationProfile.groupname,
+            metric_operation: aggregationProfile.profile.metric_operation,
+            profile_operation: aggregationProfile.profile.profile_operation,
+            metric_profile: correctMetricProfileName(aggregationProfile.profile.metric_profile.id, aggregationProfile.listidmetricprofiles),
+            endpoint_group: aggregationProfile.profile.endpoint_group,
+            groups: !publicView ?
+              insertDummyGroup(
+                insertEmptyServiceForNoServices(aggregationProfile.profile.groups)
               )
             :
-              aggregation_profile.groups
+              aggregationProfile.groups
           }}
-          onSubmit={(values, actions) => this.onSubmitHandle(values, actions)}
+          onSubmit={(values, actions) => onSubmitHandle(values, actions)}
           validationSchema={AggregationProfilesSchema}
           render = {props => (
             <Form>
               <FormikEffect onChange={(current, prev) => {
                 if (current.values.metric_profile !== prev.values.metric_profile) {
-                  let selected_profile = {name: current.values.metric_profile}
-                  this.setState({list_services:
-                    this.extractListOfServices(selected_profile,
-                    list_complete_metric_profiles)})
+                  let selected_profile = {
+                    name: current.values.metric_profile
+                  }
+                  setListServices(extractListOfServices(selected_profile,
+                    aggregationProfile.listmetricprofiles))
                 }
               }}
               />
               {
-                (is_service_missing && !this.publicView) &&
+                (isServiceMissing && !publicView) &&
                 <Alert color='danger'>
                   <center>
                     <FontAwesomeIcon icon={faInfoCircle} size="lg" color="black"/> &nbsp;
@@ -925,22 +924,22 @@ const AggregationProfilesChange = (props) => {
               <AggregationProfilesForm
                 {...props}
                 list_user_groups={list_user_groups}
-                logic_operations={this.logic_operations}
-                endpoint_groups={this.endpoint_groups}
-                list_id_metric_profiles={list_id_metric_profiles}
+                logic_operations={logic_operations}
+                endpoint_groups={endpoint_groups}
+                list_id_metric_profiles={aggregationProfile.listidmetricprofiles}
                 write_perm={write_perm}
                 historyview={this.publicView}
               />
               {
-                !this.publicView ?
+                !publicView ?
                   <FieldArray
                     name="groups"
                     render={props => (
                       <GroupList
                         {...props}
                         list_services={list_services}
-                        list_operations={this.logic_operations}
-                        last_service_operation={this.insertOperationFromPrevious}
+                        list_operations={logic_operations}
+                        last_service_operation={insertOperationFromPrevious}
                         write_perm={write_perm}
                       />)}
                   />
