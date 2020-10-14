@@ -881,11 +881,11 @@ export const AggregationProfilesChange = (props) => {
       <ErrorComponent error={error}/>
     )
 
-  else if (!loadingAggregationProfile && !loadingUserDetails && aggregationProfile && token) {
+  else if (!loadingAggregationProfile && !loadingUserDetails && aggregationProfile) {
     let isServiceMissing = checkIfServiceMissingInMetricProfile(aggregationProfile.listservices, aggregationProfile.profile.groups)
     let write_perm = undefined
 
-    if (!publicView)
+    if (!listServices && !publicView)
       setListServices(aggregationProfile.listservices)
 
     if (publicView) {
