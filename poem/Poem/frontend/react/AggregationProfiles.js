@@ -488,20 +488,13 @@ const AggregationProfilesForm = ({ values, errors, historyview=false, write_perm
 
 export const AggregationProfilesChange = (props) => {
   const tenant_name = props.tenant_name;
-  const token = props.webapitoken;
-  const webapiaggregation = props.webapiaggregation;
-  const webapimetric = props.webapimetric;
   const profile_name = props.match.params.name;
   const addview = props.addview
   const history = props.history;
   const location = props.location;
   const publicView = props.publicView;
 
-  const [groupname, setGroupname] = useState(undefined);
   const [listServices, setListServices] = useState(undefined);
-  const [listCompleteMetricProfiles, setListCompleteMetricProfiles] = useState(undefined);
-  const [listIdMetricProfiles, setListIdMetricProfiles] = useState(undefined);
-  const [listUserGroups, setListUserGroups] = useState(undefined);
   const [areYouSureModal, setAreYouSureModal] = useState(false)
   const [modalMsg, setModalMsg] = useState(undefined);
   const [modalTitle, setModalTitle] = useState(undefined);
@@ -581,11 +574,6 @@ export const AggregationProfilesChange = (props) => {
       }
     }
   })
-
-  const toggleAreYouSure = () => {
-    setState(prevState =>
-      ({areYouSureModal: !prevState.areYouSureModal}));
-  }
 
   const correctMetricProfileName = (metricProfileId, listMetricProfilesWebApi) => {
     let targetProfile = listMetricProfilesWebApi.filter(p => p.id === metricProfileId)
@@ -679,7 +667,7 @@ export const AggregationProfilesChange = (props) => {
 
     valueSend.namespace = tenant_name
 
-    let match_profile = listIdMetricProfiles.filter((e) =>
+    let match_profile = aggregationProfile.listidmetricprofiles.filter((e) =>
       valueSend.metric_profile === e.name)
 
     valueSend.metric_profile = match_profile[0]
@@ -876,10 +864,8 @@ export const AggregationProfilesChange = (props) => {
     let isServiceMissing = checkIfServiceMissingInMetricProfile(aggregationProfile.listservices, aggregationProfile.profile.groups)
     let write_perm = undefined
 
-    if (!listServices && !listIdMetricProfiles && !publicView) {
+    if (!listServices && !publicView && !addview)
       setListServices(aggregationProfile.listservices)
-      setListIdMetricProfiles(aggregationProfile.listidmetricprofiles)
-    }
 
     if (publicView) {
       write_perm = false
