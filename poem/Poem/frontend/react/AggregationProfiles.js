@@ -579,12 +579,12 @@ const AggregationProfilesChange = (props) => {
   })
 
   const toggleAreYouSure = () => {
-    this.setState(prevState =>
+    setState(prevState =>
       ({areYouSureModal: !prevState.areYouSureModal}));
   }
 
   const toggleAreYouSureSetModal = (msg, title, onyes) => {
-    this.setState(prevState =>
+    setState(prevState =>
       ({areYouSureModal: !prevState.areYouSureModal,
         modalFunc: onyes,
         modalMsg: msg,
@@ -614,7 +614,7 @@ const AggregationProfilesChange = (props) => {
 
     if (targetProfile.length) {
       let services = targetProfile[0].services.map(s => s.service)
-      return services.sort(this.sortServices)
+      return services.sort(sortServices)
     }
     else
       return []
@@ -637,7 +637,7 @@ const AggregationProfilesChange = (props) => {
       i += 1
     })
 
-    return list_profiles.sort(this.sortMetricProfiles)
+    return list_profiles.sort(sortMetricProfiles)
   }
 
   const insertEmptyServiceForNoServices = (groups) => {
@@ -663,7 +663,7 @@ const AggregationProfilesChange = (props) => {
     let msg = undefined;
     let title = undefined;
 
-    if (this.addview) {
+    if (addview) {
       msg = 'Are you sure you want to add Aggregation profile?'
       title = 'Add aggregation profile'
     }
@@ -671,23 +671,23 @@ const AggregationProfilesChange = (props) => {
       msg = 'Are you sure you want to change Aggregation profile?'
       title = 'Change aggregation profile'
     }
-    this.toggleAreYouSureSetModal(msg, title,
-      () => this.doChange(values, action));
+    toggleAreYouSureSetModal(msg, title,
+      () => doChange(values, action));
   }
 
   const doChange = async (values, actions) => {
     let values_send = JSON.parse(JSON.stringify(values));
-    this.removeDummyGroup(values_send)
+    removeDummyGroup(values_send)
 
-    values_send.namespace = this.tenant_name
+    values_send.namespace = tenant_name
 
-    let match_profile = this.state.list_id_metric_profiles.filter((e) =>
+    let match_profile = state.list_id_metric_profiles.filter((e) =>
       values_send.metric_profile === e.name)
 
     values_send.metric_profile = match_profile[0]
 
-    if (!this.addview) {
-      let response = await this.webapi.changeAggregation(values_send);
+    if (!addview) {
+      let response = await webapi.changeAggregation(values_send);
       if (!response.ok) {
         let change_msg = '';
         try {
@@ -703,7 +703,7 @@ const AggregationProfilesChange = (props) => {
           msg: change_msg
         });
       } else {
-        let r_internal = await this.backend.changeObject(
+        let r_internal = await backend.changeObject(
           '/api/v2/internal/aggregations/',
           {
             apiid: values_send.id,
@@ -720,7 +720,7 @@ const AggregationProfilesChange = (props) => {
           NotifyOk({
             msg: 'Aggregation profile succesfully changed',
             title: 'Changed',
-            callback: () => this.history.push('/ui/aggregationprofiles')
+            callback: () => history.push('/ui/aggregationprofiles')
           })
         else {
           let change_msg = '';
@@ -737,7 +737,7 @@ const AggregationProfilesChange = (props) => {
         }
       }
     } else {
-      let response = await this.webapi.addAggregation(values_send);
+      let response = await webapi.addAggregation(values_send);
       if (!response.ok) {
         let add_msg = '';
         try {
@@ -754,7 +754,7 @@ const AggregationProfilesChange = (props) => {
         });
       } else {
         let r = await response.json();
-        let r_internal = await this.backend.addObject(
+        let r_internal = await backend.addObject(
           '/api/v2/internal/aggregations/',
           {
             apiid: r.data.id,
@@ -771,7 +771,7 @@ const AggregationProfilesChange = (props) => {
           NotifyOk({
             msg: 'Aggregation profile successfully added',
             title: 'Added',
-            callback: () => this.history.push('/ui/aggregationprofiles')
+            callback: () => history.push('/ui/aggregationprofiles')
           })
         else {
           let add_msg = '';
@@ -791,7 +791,7 @@ const AggregationProfilesChange = (props) => {
   }
 
   const doDelete = async (idProfile) => {
-    let response = await this.webapi.deleteAggregation(idProfile);
+    let response = await webapi.deleteAggregation(idProfile);
     if (!response.ok) {
       let msg = '';
       try {
@@ -807,12 +807,12 @@ const AggregationProfilesChange = (props) => {
         msg: msg
       });
     } else {
-      let r = await this.backend.deleteObject(`/api/v2/internal/aggregations/${idProfile}`);
+      let r = await backend.deleteObject(`/api/v2/internal/aggregations/${idProfile}`);
       if (r.ok)
         NotifyOk({
           msg: 'Aggregation profile sucessfully deleted',
           title: 'Deleted',
-          callback: () => this.history.push('/ui/aggregationprofiles')
+          callback: () => history.push('/ui/aggregationprofiles')
         });
       else {
         let msg = '';
@@ -877,9 +877,9 @@ const AggregationProfilesChange = (props) => {
         location={location}
         modal={true}
         history={!publicView}
-        state={this.state}
+        state={state}
         toggle={toggleAreYouSure}
-        addview={publicView ? !this.publicView : this.addview}
+        addview={publicView ? !publicView : addview}
         publicview={publicView}
         submitperm={write_perm}>
         <Formik
@@ -928,7 +928,7 @@ const AggregationProfilesChange = (props) => {
                 endpoint_groups={endpoint_groups}
                 list_id_metric_profiles={aggregationProfile.listidmetricprofiles}
                 write_perm={write_perm}
-                historyview={this.publicView}
+                historyview={publicView}
               />
               {
                 !publicView ?
@@ -1009,9 +1009,9 @@ const AggregationProfilesChange = (props) => {
                     <Button
                       color="danger"
                       onClick={() => {
-                        this.toggleAreYouSureSetModal('Are you sure you want to delete Aggregation profile?',
+                        toggleAreYouSureSetModal('Are you sure you want to delete Aggregation profile?',
                           'Delete aggregation profile',
-                          () => this.doDelete(props.values.id))
+                          () => doDelete(props.values.id))
                       }}>
                       Delete
                     </Button>
