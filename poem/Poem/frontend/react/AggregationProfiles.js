@@ -893,11 +893,11 @@ export const AggregationProfilesChange = (props) => {
     }
     else if (!addview) {
       write_perm = userDetails.is_superuser ||
-            userDetails.groups.aggregationprofiles.indexOf(aggregationProfile.profile.groupname) >= 0;
+            userDetails.groups.aggregations.indexOf(aggregationProfile.profile.groupname) >= 0;
     }
     else {
       write_perm = userDetails.is_superuser ||
-        userDetails.groups.aggregationprofiles.length > 0;
+        userDetails.groups.aggregations.length > 0;
     }
 
     return (
@@ -952,7 +952,7 @@ export const AggregationProfilesChange = (props) => {
               }
               <AggregationProfilesForm
                 {...props}
-                list_user_groups={userDetails.groups.aggregationprofiles}
+                list_user_groups={userDetails.groups.aggregations}
                 logic_operations={logic_operations}
                 endpoint_groups={endpoint_groups}
                 list_id_metric_profiles={aggregationProfile.listidmetricprofiles}
@@ -1136,7 +1136,7 @@ export const AggregationProfilesList = (props) => {
         location={location}
         listview={true}
         addnew={!publicView}
-        addperm={publicView ? false : userDetails.is_superuser || userDetails.groups.metricprofiles.length > 0}
+        addperm={publicView ? false : userDetails.is_superuser || userDetails.groups.aggregations.length > 0}
         publicview={publicView}>
         <ProfilesListTable
           data={listAggregationProfiles}
