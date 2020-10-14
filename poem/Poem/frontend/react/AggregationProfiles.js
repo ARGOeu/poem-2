@@ -502,8 +502,12 @@ const AggregationProfilesChange = (props) => {
   const [listCompleteMetricProfiles, setListCompleteMetricProfiles] = useState(undefined);
   const [listIdMetricProfiles, setListIdMetricProfiles] = useState(undefined);
   const [listUserGroups, setListUserGroups] = useState(undefined);
+  const [areYouSureModal, setAreYouSureModal] = useState(false)
   const [modalMsg, setModalMsg] = useState(undefined);
   const [modalTitle, setModalTitle] = useState(undefined);
+  const [onYes, setOnYes] = useState('')
+  // TODO: useFormik hook with formik 2.x
+  const [formikValues, setFormikValues] = useState({})
   const querykey = `aggregationprofiles_${addview ? 'addview' : `${profile_name}_${publicView ? 'publicview' : 'changeview'}`}`;
 
   const backend = new Backend();
@@ -859,6 +863,17 @@ const AggregationProfilesChange = (props) => {
     return isMissing
   }
 
+  const onYesCallback = () => {
+    if (onYes === 'delete')
+      doDelete(formikValues.id);
+    else if (onYes === 'change')
+      doChange({
+          formValues: formikValues,
+          servicesList: listServices
+        }
+      );
+  }
+
   if (loadingAggregationProfile)
     return (<LoadingAnim />)
 
@@ -889,7 +904,7 @@ const AggregationProfilesChange = (props) => {
         location={location}
         modal={true}
         history={!publicView}
-        state={state}
+        state={{areYouSureModal, 'modalFunc': onYesCallback, modalTitle, modalMsg}}
         toggle={toggleAreYouSure}
         addview={publicView ? !publicView : addview}
         publicview={publicView}

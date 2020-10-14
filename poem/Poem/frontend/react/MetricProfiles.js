@@ -307,10 +307,10 @@ export const MetricProfilesComponent = (props) => {
 
   const [listServices, setListServices] = useState(undefined);
   const [viewServices, setViewServices] = useState(undefined);
-  const [areYouSureModal, setAreYouSureModal] = useState(false)
   const [groupName, setGroupname] = useState(undefined);
   const [metricProfileDescription, setMetricProfileDescription] = useState(undefined);
   const [metricProfileName, setMetricProfileName] = useState(undefined);
+  const [areYouSureModal, setAreYouSureModal] = useState(false)
   const [modalMsg, setModalMsg] = useState(undefined);
   const [modalTitle, setModalTitle] = useState(undefined);
   const [onYes, setOnYes] = useState('')
