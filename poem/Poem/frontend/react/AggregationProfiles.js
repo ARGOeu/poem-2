@@ -33,7 +33,7 @@ import {
   Label,
   Row
 } from 'reactstrap';
-import { useQuery } from 'react-query';
+import { useQuery, queryCache } from 'react-query';
 import * as Yup from 'yup';
 
 import ReactDiffViewer from 'react-diff-viewer';
@@ -546,7 +546,7 @@ export const AggregationProfilesChange = (props) => {
         profile: aggregationProfile,
         groupname: backendAggregationProfile.groupname,
         listmetricprofiles: metricProfiles,
-        listidmetricprofiles: extractListOfMetricsProfiles(metricProfile),
+        listidmetricprofiles: extractListOfMetricsProfiles(metricProfiles),
         listservices: extractListOfServices(aggregationProfile.metric_profile, metricProfiles),
         listusergroups: []
       }
@@ -904,7 +904,7 @@ export const AggregationProfilesChange = (props) => {
                 insertEmptyServiceForNoServices(aggregationProfile.profile.groups)
               )
             :
-              aggregationProfile.groups
+              aggregationProfile.profile.groups
           }}
           onSubmit={(values, actions) => onSubmitHandle(values, actions)}
           validationSchema={AggregationProfilesSchema}
@@ -931,7 +931,7 @@ export const AggregationProfilesChange = (props) => {
               }
               <AggregationProfilesForm
                 {...props}
-                list_user_groups={userDetails.groups.aggregations}
+                list_user_groups={!publicView ? userDetails.groups.aggregations : []}
                 logic_operations={logic_operations}
                 endpoint_groups={endpoint_groups}
                 list_id_metric_profiles={aggregationProfile.listidmetricprofiles}
