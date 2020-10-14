@@ -554,8 +554,28 @@ const AggregationProfilesChange = (props) => {
         listusergroups: []
       }
     }
-
-
+    else {
+      let metricProfiles = await webapi.fetchMetricProfiles();
+      if (!addview) {
+        let aggregationProfile = await webapi.fetchAggregationProfile(backendAggregationProfile.apiid);
+        return {
+          profile: aggregationProfile,
+          groupname: backendAggregationProfile.groupname,
+          listidmetricprofiles: extractListOfMetricsProfiles(metricProfiles),
+          listservices: extractListOfServices(aggregationProfile.metric_profile, metricProfiles),
+          listmetricprofiles: metricProfiles
+        }
+      }
+      else {
+        return {
+          profile: backendAggregationProfile,
+          groupname: backendAggregationProfile.groupname,
+          listidmetricprofiles: extractListOfMetricsProfiles(metricProfiles),
+          listServices: [],
+          listmetricprofiles: metricProfiles
+        }
+      }
+    }
   })
 
   const toggleAreYouSure = () => {
@@ -837,77 +857,6 @@ const AggregationProfilesChange = (props) => {
     })
 
     return isMissing
-  }
-
-  async componentDidMount() {
-    this.setState({loading: true})
-
-    try {
-      if (this.publicView) {
-        let metricp = await this.webapi.fetchMetricProfiles();
-        let json = await this.backend.fetchData(`/api/v2/internal/public_aggregations/${this.profile_name}`);
-        let aggregp = await this.webapi.fetchAggregationProfile(json.apiid);
-        this.setState({
-          aggregation_profile: aggregp,
-          groupname: json['groupname'],
-          list_user_groups: [],
-          write_perm: false,
-          list_id_metric_profiles: this.extractListOfMetricsProfiles(metricp),
-          list_services: this.extractListOfServices(aggregp.metric_profile, metricp),
-          list_complete_metric_profiles: metricp,
-          loading: false
-        });
-      }
-      else {
-        let sessionActive = await this.backend.isActiveSession();
-        if (sessionActive.active) {
-          let metricp = await this.webapi.fetchMetricProfiles();
-          if (!this.addview) {
-            let json = await this.backend.fetchData(`/api/v2/internal/aggregations/${this.profile_name}`);
-            let aggregp = await this.webapi.fetchAggregationProfile(json.apiid);
-            this.setState({
-              aggregation_profile: aggregp,
-              groupname: json['groupname'],
-              list_user_groups: sessionActive.userdetails.groups.aggregations,
-              write_perm: sessionActive.userdetails.is_superuser ||
-                sessionActive.userdetails.groups.aggregations.indexOf(json['groupname']) >= 0,
-              list_id_metric_profiles: this.extractListOfMetricsProfiles(metricp),
-              list_services: this.extractListOfServices(aggregp.metric_profile, metricp),
-              list_complete_metric_profiles: metricp,
-              loading: false
-            });
-          } else {
-            let empty_aggregation_profile = {
-              id: '',
-              name: '',
-              metric_operation: '',
-              profile_operation: '',
-              endpoint_group: '',
-              metric_profile: {
-                  name: ''
-              },
-              groups: []
-            }
-            this.setState({
-              aggregation_profile: empty_aggregation_profile,
-              groupname: '',
-              list_user_groups: sessionActive.userdetails.groups.aggregations,
-              write_perm: sessionActive.userdetails.is_superuser ||
-                sessionActive.userdetails.groups.aggregations.length > 0,
-              list_id_metric_profiles: this.extractListOfMetricsProfiles(metricp),
-              list_complete_metric_profiles: metricp,
-              list_services: [],
-              loading: false
-            });
-          }
-        }
-      }
-    } catch(err) {
-      this.setState({
-        error: err,
-        loading: false
-      });
-    }
   }
 
   if (loading)
