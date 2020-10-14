@@ -497,21 +497,14 @@ const AggregationProfilesChange = (props) => {
   const location = props.location;
   const publicView = props.publicView;
 
-  this.state = {
-    aggregation_profile: {},
-    groupname: undefined,
-    list_user_groups: [],
-    write_perm: false,
-    list_id_metric_profiles: [],
-    list_services: [],
-    list_complete_metric_profiles: {},
-    areYouSureModal: false,
-    loading: false,
-    modalFunc: undefined,
-    modalTitle: undefined,
-    modalMsg: undefined,
-    error: null
-  }
+  const [aggregationProfile, setAggregationProfile] = useState(undefined);
+  const [groupname, setGroupname] = useState(undefined);
+  const [listServices, setListServices] = useState(undefined);
+  const [listCompleteMetricProfiles, setListCompleteMetricProfiles] = useState(undefined);
+  const [listIdMetricProfiles, setListIdMetricProfiles] = useState(undefined);
+  const [listUserGroups, setListUserGroups] = useState(undefined);
+  const [modalMsg, setModalMsg] = useState(undefined);
+  const [modalTitle, setModalTitle] = useState(undefined);
 
   const backend = new Backend();
   const webapi = new WebApi({
