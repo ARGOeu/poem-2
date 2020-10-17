@@ -844,11 +844,11 @@ export const AggregationProfilesChange = (props) => {
   const removeIsNewFlag = (values) => {
     for (let group of values.groups) {
       let keys = Object.keys(group)
-      if (keys.indexof('isnew') !== -1)
+      if (keys.indexOf('isnew') !== -1)
         delete group.isnew
       for (let service of group.services) {
         let keys = Object.keys(service)
-        if (keys.indexof('isnew') !== -1)
+        if (keys.indexOf('isnew') !== -1)
           delete service.isnew
       }
     }
@@ -1196,39 +1196,37 @@ const ListDiffElement = ({title, item1, item2}) => {
 };
 
 
-export class AggregationProfileVersionCompare extends Component {
-  constructor(props) {
-    super(props);
+export const AggregationProfileVersionCompare = (props) => {
+  const version1 = props.match.params.id1;
+  const version2 = props.match.params.id2;
+  const name = props.match.params.name;
+  const backend = new Backend();
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
+  const [metricProfileVersion1, setMetricProfileVersion1] = useState(undefined)
+  const [metricProfileVersion2, setMetricProfileVersion2] = useState(undefined)
+  const backend = new Backend();
 
-    this.version1 = props.match.params.id1;
-    this.version2 = props.match.params.id2;
-    this.name = props.match.params.name;
+  //name1: '',
+  //groupname1: '',
+  //metric_operation1: '',
+  //profile_operation1: '',
+  //endpoint_group1: '',
+  //metric_profile1: '',
+  //groups1: [],
+  //name2: '',
+  //groupname2: '',
+  //metric_operation2: '',
+  //profile_operation2: '',
+  //endpoint_group2: '',
+  //metric_profile2: '',
+  //groups2: [],
+  //error: null
 
-    this.state = {
-      loading: false,
-      name1: '',
-      groupname1: '',
-      metric_operation1: '',
-      profile_operation1: '',
-      endpoint_group1: '',
-      metric_profile1: '',
-      groups1: [],
-      name2: '',
-      groupname2: '',
-      metric_operation2: '',
-      profile_operation2: '',
-      endpoint_group2: '',
-      metric_profile2: '',
-      groups2: [],
-      error: null
-    };
 
-    this.backend = new Backend();
-  }
-
-  async componentDidMount() {
-    try {
-      let json = await this.backend.fetchData(`/api/v2/internal/tenantversion/aggregationprofile/${this.name}`);
+  useEffect(() => {
+    const fetchDataAndSet = async () => {
+      let json = await backend.fetchData(`/api/v2/internal/tenantversion/aggregationprofile/${this.name}`);
       let name1 = '';
       let groupname1 = '';
       let metric_operation1 = '';
@@ -1245,7 +1243,7 @@ export class AggregationProfileVersionCompare extends Component {
       let groups2 = [];
 
       json.forEach((e) => {
-        if (e.version == this.version1) {
+        if (e.version == version1) {
           name1 = e.fields.name;
           groupname1 = e.fields.groupname;
           metric_operation1 = e.fields.metric_operation;
@@ -1253,7 +1251,8 @@ export class AggregationProfileVersionCompare extends Component {
           endpoint_group1 = e.fields.endpoint_group;
           metric_profile1 = e.fields.metric_profile;
           groups1 = e.fields.groups;
-        } else if (e.version == this.version2) {
+
+        } else if (e.version == version2) {
           name2 = e.fields.name;
           groupname2 = e.fields.groupname;
           metric_operation2 = e.fields.metric_operation;
@@ -1281,69 +1280,63 @@ export class AggregationProfileVersionCompare extends Component {
           loading: false,
         });
       });
+    }
+    try {
+      fetchDataAndSet();
     } catch(err) {
       this.setState({
         error: err,
         loading: false
       });
     }
-  }
+  }, [])
 
-  render() {
-    const {
-      name1, name2, groupname1, groupname2, metric_operation1,
-      metric_operation2, profile_operation1, profile_operation2,
-      endpoint_group1, endpoint_group2, metric_profile1, metric_profile2,
-      groups1, groups2, loading, error
-    } = this.state;
+  if (loading)
+    return (<LoadingAnim/>);
 
-    if (loading)
-      return (<LoadingAnim/>);
+  else if (error)
+    return (
+      <ErrorComponent error={error}/>
+    )
 
-    else if (error)
-      return (
-        <ErrorComponent error={error}/>
-      )
-
-    else if (!loading && name1 && name2) {
-      return (
-        <React.Fragment>
-          <div className='d-flex align-items-center justify-content-between'>
-            <h2 className='ml-3 mt-1 mb-4'>{`Compare ${this.name} versions`}</h2>
-          </div>
-          {
-            (name1 !== name2) &&
-              <DiffElement title='name' item1={name1} item2={name2}/>
-          }
-          {
-            (groupname1 !== groupname2) &&
-              <DiffElement title='group name' item1={groupname1} item2={groupname2}/>
-          }
-          {
-            (metric_operation1 !== metric_operation2) &&
-              <DiffElement title='metric operation' item1={metric_operation1} item2={metric_operation2}/>
-          }
-          {
-            (profile_operation1 !== profile_operation2) &&
-              <DiffElement title='aggregation operation' item1={profile_operation1} item2={profile_operation2}/>
-          }
-          {
-            (endpoint_group1 !== endpoint_group2) &&
-              <DiffElement title='endpoint group' item1={endpoint_group1} item2={endpoint_group2}/>
-          }
-          {
-            (metric_profile1 !== metric_profile2) &&
-              <DiffElement title='metric profile' item1={metric_profile1} item2={metric_profile2}/>
-          }
-          {
-            (groups1 !== groups2) &&
-              <ListDiffElement title='groups' item1={groups1} item2={groups2}/>
-          }
-        </React.Fragment>
-      );
-    } else
-      return null;
-  }
+  else if (!loading && name1 && name2) {
+    return (
+      <React.Fragment>
+        <div className='d-flex align-items-center justify-content-between'>
+          <h2 className='ml-3 mt-1 mb-4'>{`Compare ${this.name} versions`}</h2>
+        </div>
+        {
+          (name1 !== name2) &&
+            <DiffElement title='name' item1={name1} item2={name2}/>
+        }
+        {
+          (groupname1 !== groupname2) &&
+            <DiffElement title='group name' item1={groupname1} item2={groupname2}/>
+        }
+        {
+          (metric_operation1 !== metric_operation2) &&
+            <DiffElement title='metric operation' item1={metric_operation1} item2={metric_operation2}/>
+        }
+        {
+          (profile_operation1 !== profile_operation2) &&
+            <DiffElement title='aggregation operation' item1={profile_operation1} item2={profile_operation2}/>
+        }
+        {
+          (endpoint_group1 !== endpoint_group2) &&
+            <DiffElement title='endpoint group' item1={endpoint_group1} item2={endpoint_group2}/>
+        }
+        {
+          (metric_profile1 !== metric_profile2) &&
+            <DiffElement title='metric profile' item1={metric_profile1} item2={metric_profile2}/>
+        }
+        {
+          (groups1 !== groups2) &&
+            <ListDiffElement title='groups' item1={groups1} item2={groups2}/>
+        }
+      </React.Fragment>
+    );
+  } else
+    return null;
 }
 
 
