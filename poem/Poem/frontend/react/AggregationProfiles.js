@@ -673,6 +673,7 @@ export const AggregationProfilesChange = (props) => {
   const doChange = async (values, actions) => {
     let valueSend = JSON.parse(JSON.stringify(values));
     removeDummyGroup(valueSend)
+    removeIsNewFlag(valueSend)
 
     valueSend.namespace = tenant_name
 
@@ -837,6 +838,19 @@ export const AggregationProfilesChange = (props) => {
     if (last_group_element['name'] == 'dummy' &&
       last_group_element.services[0]['name'] == 'dummy') {
       values.groups.pop()
+    }
+  }
+
+  const removeIsNewFlag = (values) => {
+    for (let group of values.groups) {
+      let keys = Object.keys(group)
+      if (keys.indexof('isnew') !== -1)
+        delete group.isnew
+      for (let service of group.services) {
+        let keys = Object.keys(service)
+        if (keys.indexof('isnew') !== -1)
+          delete service.isnew
+      }
     }
   }
 
