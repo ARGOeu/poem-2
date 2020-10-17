@@ -661,6 +661,15 @@ export const AggregationProfilesChange = (props) => {
     setFormikValues(values)
   }
 
+  const updateCacheKey = (values) => {
+    let staleAggregationProfile = queryCache.getQueryData(querykey)
+    staleAggregationProfile.profile.groups = values.groups
+    staleAggregationProfile.profile.metric_profile = values.metric_profile
+    staleAggregationProfile.profile.profile_operation = values.profile_operation
+    staleAggregationProfile.profile.endpoint_group = values.endpoint_group
+    queryCache.setQueryData(querykey, staleAggregationProfile)
+  }
+
   const doChange = async (values, actions) => {
     let valueSend = JSON.parse(JSON.stringify(values));
     removeDummyGroup(valueSend)
@@ -702,12 +711,14 @@ export const AggregationProfilesChange = (props) => {
             groups: JSON.stringify(valueSend.groups)
           }
         )
-        if (r_internal.ok)
+        if (r_internal.ok) {
           NotifyOk({
             msg: 'Aggregation profile succesfully changed',
             title: 'Changed',
             callback: () => history.push('/ui/aggregationprofiles')
           })
+          updateCacheKey(valueSend)
+        }
         else {
           let change_msg = '';
           try {
