@@ -1,4 +1,4 @@
-import React, { Component, useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {Link} from 'react-router-dom';
 import {
   LoadingAnim,
@@ -1302,37 +1302,20 @@ export const AggregationProfileVersionCompare = (props) => {
 }
 
 
-export class AggregationProfileVersionDetails extends Component {
-  constructor(props) {
-    super(props);
+export const AggregationProfileVersionDetails = (props) => {
+  const name = props.match.params.name;
+  const version = props.match.params.version;
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
+  const backend = new Backend();
+  const [aggregationProfileDetails, setAggregationProfileDetails] = useState(undefined)
 
-    this.name = props.match.params.name;
-    this.version = props.match.params.version;
-
-    this.backend = new Backend();
-
-    this.state = {
-      name: '',
-      groupname: '',
-      metric_operation: '',
-      profile_operation: '',
-      endpoint_group: '',
-      metric_profile: '',
-      groups: [],
-      date_created: '',
-      loading: false,
-      error: null
-    };
-  }
-
-  async componentDidMount() {
-    this.setState({loading: true});
-
-    try {
-      let json = await this.backend.fetchData(`/api/v2/internal/tenantversion/aggregationprofile/${this.name}`);
+  useEffect(() => {
+    const fetchDataAndSet = async () => {
+      let json = await backend.fetchData(`/api/v2/internal/tenantversion/aggregationprofile/${name}`);
       json.forEach((e) => {
-        if (e.version == this.version)
-          this.setState({
+        if (e.version == version)
+          setAggregationProfileDetails({
             name: e.fields.name,
             groupname: e.fields.groupname,
             metric_operation: e.fields.metric_operation,
@@ -1341,112 +1324,113 @@ export class AggregationProfileVersionDetails extends Component {
             metric_profile: e.fields.metric_profile,
             groups: e.fields.groups,
             date_created: e.date_created,
-            loading: false
-          });
-      });
-    } catch(err) {
-      this.setState({
-        error: err,
-        loading: false
-      });
+          })
+      })
+      setLoading(false);
     }
-  }
+    setLoading(true);
+    try {
+      fetchDataAndSet()
+    }
+    catch(err) {
+      setError(error);
+      setLoading(false);
+    }
+  }, [])
 
-  render() {
-    const { name, groupname, metric_operation, profile_operation,
-    endpoint_group, metric_profile, groups, date_created, loading, error } = this.state;
-    if (loading)
-      return (<LoadingAnim/>);
+  if (loading)
+    return (<LoadingAnim/>);
 
-    else if (error)
-      return (<ErrorComponent error={error}/>)
+  else if (error)
+    return (<ErrorComponent error={error}/>)
 
-    else if (!loading && name) {
-      return (
-        <BaseArgoView
-          resourcename={`${name} (${date_created})`}
-          infoview={true}
-        >
-          <Formik
-            initialValues = {{
-              name: name,
-              groupname: groupname,
-              metric_operation: metric_operation,
-              profile_operation: profile_operation,
-              endpoint_group: endpoint_group,
-              metric_profile: metric_profile,
-              groups: groups
-            }}
-            render = {props => (
-              <Form>
-                <AggregationProfilesForm
-                  {...props}
-                  historyview={true}
-                />
-                <FieldArray
-                  name='groups'
-                  render={arrayHelpers => (
-                    <Row className='groups'>
-                      {
-                        props.values['groups'].map((group, i) =>
-                          <FieldArray
-                            key={i}
-                            name='groups'
-                            render={arrayHelpers => (
-                              <React.Fragment key={i}>
-                                <Col sm={{size: 8}} md={{size: 5}} className='mt-4 mb-2'>
-                                  <Card>
-                                    <CardHeader className='p-1' color='primary'>
-                                      <Row className='d-flex align-items-center no-gutters'>
-                                        <Col sm={{size: 10}} md={{size: 11}}>
-                                          {groups[i].name}
-                                        </Col>
-                                      </Row>
-                                    </CardHeader>
-                                    <CardBody className='p-1'>
-                                      {
-                                        group.services.map((service, j) =>
-                                          <FieldArray
-                                            key={j}
-                                            name={`groups.${i}.services`}
-                                            render={arrayHelpers => (
-                                              <Row className='d-flex align-items-center service pt-1 pb-1 no-gutters' key={j}>
-                                                <Col md={8}>
-                                                  {groups[i].services[j].name}
-                                                </Col>
-                                                <Col md={2}>
-                                                  {groups[i].services[j].operation}
-                                                </Col>
-                                              </Row>
-                                            )}
-                                          />
-                                        )
-                                      }
-                                    </CardBody>
-                                    <CardFooter className='p-1 d-flex justify-content-center'>
-                                      {groups[i].operation}
-                                    </CardFooter>
-                                  </Card>
-                                </Col>
-                                <Col sm={{size: 4}} md={{size: 1}} className='mt-5'>
-                                  <div className='group-operation' key={i}>
-                                    {props.values.profile_operation}
-                                  </div>
-                                </Col>
-                              </React.Fragment>
-                            )}
-                          />
-                        )
-                      }
-                    </Row>
-                  )}
-                />
-              </Form>
-            )}
-          />
-        </BaseArgoView>
-      );
-    } else
-      return null;
-  }
+  else if (!loading && aggregationProfileDetails) {
+    const { groups } = aggregationProfileDetails;
+
+    return (
+      <BaseArgoView
+        resourcename={`${name} (${aggregationProfileDetails.date_created})`}
+        infoview={true}
+      >
+        <Formik
+          initialValues = {{
+            name: name,
+            groupname: aggregationProfileDetails.groupname,
+            metric_operation: aggregationProfileDetails.metric_operation,
+            profile_operation: aggregationProfileDetails.profile_operation,
+            endpoint_group: aggregationProfileDetails.endpoint_group,
+            metric_profile: aggregationProfileDetails.metric_profile,
+            groups: aggregationProfileDetails.groups
+          }}
+          render = {props => (
+            <Form>
+              <AggregationProfilesForm
+                {...props}
+                historyview={true}
+              />
+              <FieldArray
+                name='groups'
+                render={arrayHelpers => (
+                  <Row className='groups'>
+                    {
+                      props.values['groups'].map((group, i) =>
+                        <FieldArray
+                          key={i}
+                          name='groups'
+                          render={arrayHelpers => (
+                            <React.Fragment key={i}>
+                              <Col sm={{size: 8}} md={{size: 5}} className='mt-4 mb-2'>
+                                <Card>
+                                  <CardHeader className='p-1' color='primary'>
+                                    <Row className='d-flex align-items-center no-gutters'>
+                                      <Col sm={{size: 10}} md={{size: 11}}>
+                                        {groups[i].name}
+                                      </Col>
+                                    </Row>
+                                  </CardHeader>
+                                  <CardBody className='p-1'>
+                                    {
+                                      group.services.map((service, j) =>
+                                        <FieldArray
+                                          key={j}
+                                          name={`groups.${i}.services`}
+                                          render={arrayHelpers => (
+                                            <Row className='d-flex align-items-center service pt-1 pb-1 no-gutters' key={j}>
+                                              <Col md={8}>
+                                                {groups[i].services[j].name}
+                                              </Col>
+                                              <Col md={2}>
+                                                {groups[i].services[j].operation}
+                                              </Col>
+                                            </Row>
+                                          )}
+                                        />
+                                      )
+                                    }
+                                  </CardBody>
+                                  <CardFooter className='p-1 d-flex justify-content-center'>
+                                    {groups[i].operation}
+                                  </CardFooter>
+                                </Card>
+                              </Col>
+                              <Col sm={{size: 4}} md={{size: 1}} className='mt-5'>
+                                <div className='group-operation' key={i}>
+                                  {props.values.profile_operation}
+                                </div>
+                              </Col>
+                            </React.Fragment>
+                          )}
+                        />
+                      )
+                    }
+                  </Row>
+                )}
+              />
+            </Form>
+          )}
+        />
+      </BaseArgoView>
+    );
+  } else
+    return null;
 }
