@@ -1,4 +1,4 @@
-import React, { Component, useState, useMemo } from 'react';
+import React, { Component, useState, useMemo, useEffect } from 'react';
 import {Link} from 'react-router-dom';
 import {
   LoadingAnim,
@@ -1203,91 +1203,42 @@ export const AggregationProfileVersionCompare = (props) => {
   const backend = new Backend();
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
-  const [metricProfileVersion1, setMetricProfileVersion1] = useState(undefined)
-  const [metricProfileVersion2, setMetricProfileVersion2] = useState(undefined)
-  const backend = new Backend();
-
-  //name1: '',
-  //groupname1: '',
-  //metric_operation1: '',
-  //profile_operation1: '',
-  //endpoint_group1: '',
-  //metric_profile1: '',
-  //groups1: [],
-  //name2: '',
-  //groupname2: '',
-  //metric_operation2: '',
-  //profile_operation2: '',
-  //endpoint_group2: '',
-  //metric_profile2: '',
-  //groups2: [],
-  //error: null
-
+  const [aggregationProfileVersion1, setAggregationProfileVersion1] = useState(undefined)
+  const [aggregationProfileVersion2, setAggregationProfileVersion2] = useState(undefined)
 
   useEffect(() => {
     const fetchDataAndSet = async () => {
-      let json = await backend.fetchData(`/api/v2/internal/tenantversion/aggregationprofile/${this.name}`);
-      let name1 = '';
-      let groupname1 = '';
-      let metric_operation1 = '';
-      let profile_operation1 = '';
-      let endpoint_group1 = '';
-      let metric_profile1 = '';
-      let groups1 = [];
-      let name2 = '';
-      let groupname2 = '';
-      let metric_operation2 = '';
-      let profile_operation2 = '';
-      let endpoint_group2 = '';
-      let metric_profile2 = '';
-      let groups2 = [];
-
+      let json = await backend.fetchData(`/api/v2/internal/tenantversion/aggregationprofile/${name}`);
       json.forEach((e) => {
-        if (e.version == version1) {
-          name1 = e.fields.name;
-          groupname1 = e.fields.groupname;
-          metric_operation1 = e.fields.metric_operation;
-          profile_operation1 = e.fields.profile_operation;
-          endpoint_group1 = e.fields.endpoint_group;
-          metric_profile1 = e.fields.metric_profile;
-          groups1 = e.fields.groups;
-
-        } else if (e.version == version2) {
-          name2 = e.fields.name;
-          groupname2 = e.fields.groupname;
-          metric_operation2 = e.fields.metric_operation;
-          profile_operation2 = e.fields.profile_operation;
-          endpoint_group2 = e.fields.endpoint_group;
-          metric_profile2 = e.fields.metric_profile;
-          groups2 = e.fields.groups;
-        }
-
-        this.setState({
-          name1: name1,
-          groupname1: groupname1,
-          metric_operation1: metric_operation1,
-          profile_operation1: profile_operation1,
-          endpoint_group1: endpoint_group1,
-          metric_profile1: metric_profile1,
-          groups1: groups1,
-          name2: name2,
-          groupname2: groupname2,
-          metric_operation2: metric_operation2,
-          profile_operation2: profile_operation2,
-          endpoint_group2: endpoint_group2,
-          metric_profile2: metric_profile2,
-          groups2: groups2,
-          loading: false,
-        });
-      });
+        if (e.version == version1)
+          setAggregationProfileVersion1({
+            name: e.fields.name,
+            groupname: e.fields.groupname,
+            metric_operation: e.fields.metric_operation,
+            profile_operation: e.fields.profile_operation,
+            endpoint_group: e.fields.endpoint_group,
+            metric_profile: e.fields.metric_profile,
+            groups: e.fields.groups,
+          })
+        else if (e.version == version2)
+          setAggregationProfileVersion2({
+            name: e.fields.name,
+            groupname: e.fields.groupname,
+            metric_operation: e.fields.metric_operation,
+            profile_operation: e.fields.profile_operation,
+            endpoint_group: e.fields.endpoint_group,
+            metric_profile: e.fields.metric_profile,
+            groups: e.fields.groups,
+          })
+        })
+      setLoading(false);
     }
     try {
       fetchDataAndSet();
-    } catch(err) {
-      this.setState({
-        error: err,
-        loading: false
-      });
+    }
+    catch(err) {
+      setError(error);
+      setLoading(false);
     }
   }, [])
 
@@ -1299,11 +1250,22 @@ export const AggregationProfileVersionCompare = (props) => {
       <ErrorComponent error={error}/>
     )
 
-  else if (!loading && name1 && name2) {
+  else if (!loading && aggregationProfileVersion1 && aggregationProfileVersion2) {
+    const {
+      name: name1, groupname: groupname1, metric_operation: metric_operation1,
+      profile_operation: profile_operation1, endpoint_group: endpoint_group1,
+      metric_profile: metric_profile1, groups: groups1
+    } = aggregationProfileVersion1
+    const {
+      name: name2, groupname: groupname2, metric_operation: metric_operation2,
+      profile_operation: profile_operation2, endpoint_group: endpoint_group2,
+      metric_profile: metric_profile2, groups: groups2
+    } = aggregationProfileVersion2
+
     return (
       <React.Fragment>
         <div className='d-flex align-items-center justify-content-between'>
-          <h2 className='ml-3 mt-1 mb-4'>{`Compare ${this.name} versions`}</h2>
+          <h2 className='ml-3 mt-1 mb-4'>{`Compare ${name} versions`}</h2>
         </div>
         {
           (name1 !== name2) &&
