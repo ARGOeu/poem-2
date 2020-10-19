@@ -656,252 +656,257 @@ export const UserChange = (props) => {
   else if (!loadingUser && !loadingUserProfile && !loadingUserGroups && !loadingAllGroups && !loadingUserDetails && user) {
     if (isTenantSchema) {
       return (
-        <>
-          <ModalAreYouSure
-            isOpen={areYouSureModal}
-            toggle={toggleAreYouSure}
-            title={modalTitle}
-            msg={modalMsg}
-            onYes={modalFlag === 'submit' ? doChange : modalFlag === 'delete' ? doDelete : undefined}
+        <BaseArgoView
+          resourcename="users"
+          location={location}
+          addview={addview}
+          history={false}
+          modal={true}
+          state={{
+            areYouSureModal,
+            modalTitle,
+            modalMsg,
+            'modalFunc': modalFlag === 'submit' ?
+              doChange
+            :
+              modalFlag === 'delete' ?
+                doDelete
+              :
+                undefined
+          }}
+          toggle={toggleAreYouSure}
+        >
+          <Formik
+            initialValues = {{
+              addview: addview,
+              pk: user.pk,
+              first_name: user.first_name,
+              last_name: user.last_name,
+              username: user.username,
+              password: '',
+              confirm_password: '',
+              is_active: user.is_active,
+              is_superuser: user.is_superuser,
+              email: user.email,
+              last_login: user.last_login,
+              date_joined: user.date_joined,
+              groupsofaggregations: userGroups.aggregations,
+              groupsofmetrics: userGroups.metrics,
+              groupsofmetricprofiles: userGroups.metricprofiles,
+              groupsofthresholdsprofiles: userGroups.thresholdsprofiles,
+              displayname: userProfile.displayname,
+              subject: userProfile.subject,
+              egiid: userProfile.egiid
+            }}
+            validationSchema={UserSchema}
+            enableReinitialize={true}
+            onSubmit = {(values, actions) => onSubmitHandle(values, actions)}
+            render = {props => (
+              <Form>
+                <CommonUser
+                  {...props}
+                  add={addview}
+                />
+                {
+                  isTenantSchema &&
+                    <>
+                      <FormGroup>
+                        <ParagraphTitle title='POEM user permissions'/>
+                        <Row>
+                          <Col md={6}>
+                            <Label for="groupsofmetrics" className="grouplabel">Groups of metrics</Label>
+                            <Field
+                              component="select"
+                              name="groupsofmetrics"
+                              id='select-field'
+                              onChange={evt =>
+                                props.setFieldValue(
+                                  "groupsofmetrics",
+                                  [].slice
+                                    .call(evt.target.selectedOptions)
+                                    .map(option => option.value)
+                                )
+                              }
+                              multiple={true}
+                            >
+                              {allGroups.metrics.map( s => (
+                                <option key={s} value={s}>
+                                  {s}
+                                </option>
+                              ))}
+                            </Field>
+                            <FormText color="muted">
+                              The groups of metrics that user will control. Hold down "Control" or "Command" on a Mac to select more than one.
+                            </FormText>
+                          </Col>
+                        </Row>
+                        <Row>
+                          <Col md={6}>
+                            <Label for="groupsofmetricprofiles" className="grouplabel">Groups of metric profiles</Label>
+                            <Field
+                              component="select"
+                              name="groupsofmetricprofiles"
+                              id='select-field'
+                              onChange={evt =>
+                                props.setFieldValue(
+                                  "groupsofmetricprofiles",
+                                  [].slice
+                                    .call(evt.target.selectedOptions)
+                                    .map(option => option.value)
+                                )
+                              }
+                              multiple={true}
+                            >
+                              {allGroups.metricprofiles.map( s => (
+                                <option key={s} value={s}>
+                                  {s}
+                                </option>
+                              ))}
+                            </Field>
+                            <FormText color="muted">
+                              The groups of metric profiles that user will control. Hold down "Control" or "Command" on a Mac to select more than one.
+                          </FormText>
+                          </Col>
+                        </Row>
+                        <Row>
+                          <Col md={6}>
+                            <Label for="groupsofaggregations" className="grouplabel">Groups of aggregations</Label>
+                            <Field
+                              component="select"
+                              name="groupsofaggregations"
+                              id='select-field'
+                              onChange={evt =>
+                                props.setFieldValue(
+                                  "groupsofaggregations",
+                                  [].slice
+                                    .call(evt.target.selectedOptions)
+                                    .map(option => option.value)
+                                )
+                              }
+                              multiple={true}
+                            >
+                              {allGroups.aggregations.map( s => (
+                                <option key={s} value={s}>
+                                  {s}
+                                </option>
+                              ))}
+                            </Field>
+                            <FormText color="muted">
+                              The groups of aggregations that user will control. Hold down "Control" or "Command" on a Mac to select more than one.
+                            </FormText>
+                          </Col>
+                        </Row>
+                        <Row>
+                          <Col md={6}>
+                            <Label for="groupsofthresholdsprofiles" className="grouplabel">Groups of thresholds profiles</Label>
+                            <Field
+                              component="select"
+                              name="groupsofthresholdsprofiles"
+                              id='select-field'
+                              onChange={evt =>
+                                props.setFieldValue(
+                                  "groupsofthresholdsprofiles",
+                                  [].slice
+                                    .call(evt.target.selectedOptions)
+                                    .map(option => option.value)
+                                )
+                              }
+                              multiple={true}
+                            >
+                              {allGroups.thresholdsprofiles.map( s => (
+                                <option key={s} value={s}>
+                                  {s}
+                                </option>
+                              ))}
+                            </Field>
+                            <FormText color="muted">
+                              The groups of thresholds profiles that user will control. Hold down "Control" or "Command" on a Mac to select more than one.
+                          </FormText>
+                          </Col>
+                        </Row>
+                      </FormGroup>
+                      <FormGroup>
+                        <ParagraphTitle title='Additional information'/>
+                        <Row>
+                          <Col md={12}>
+                            <InputGroup>
+                              <InputGroupAddon addonType='prepend'>distinguishedName</InputGroupAddon>
+                              <Field
+                                type="text"
+                                name="subject"
+                                required={false}
+                                className="form-control"
+                                id="distinguishedname"
+                              />
+                            </InputGroup>
+                          </Col>
+                        </Row>
+                      </FormGroup>
+                      <FormGroup>
+                        <Row>
+                          <Col md={8}>
+                            <InputGroup>
+                              <InputGroupAddon addonType="prepend">eduPersonUniqueId</InputGroupAddon>
+                              <Field
+                                type="text"
+                                name="egiid"
+                                required={false}
+                                className="form-control"
+                                id='eduid'
+                              />
+                            </InputGroup>
+                          </Col>
+                        </Row>
+                      </FormGroup>
+                      <FormGroup>
+                        <Row>
+                          <Col md={6}>
+                            <InputGroup>
+                              <InputGroupAddon addonType="prepend">displayName</InputGroupAddon>
+                              <Field
+                                type="text"
+                                name="displayname"
+                                required={false}
+                                className="form-control"
+                                id="displayname"
+                              />
+                            </InputGroup>
+                          </Col>
+                        </Row>
+                      </FormGroup>
+                    </>
+                }
+                {
+                  <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
+                    {
+                      !addview ?
+                        <Button
+                          color="danger"
+                          onClick={() => {
+                            setModalMsg('Are you sure you want to delete user?');
+                            setModalTitle('Delete user');
+                            setModalFlag('delete');
+                            toggleAreYouSure();
+                          }}
+                        >
+                          Delete
+                        </Button>
+                      :
+                        <div></div>
+                    }
+                    <Button
+                      color="success"
+                      id="submit-button"
+                      type="submit"
+                    >
+                      Save
+                    </Button>
+                  </div>
+                }
+              </Form>
+            )}
           />
-          <BaseArgoView
-            resourcename="users"
-            location={location}
-            addview={addview}
-            history={false}
-          >
-            <Formik
-              initialValues = {{
-                addview: addview,
-                pk: user.pk,
-                first_name: user.first_name,
-                last_name: user.last_name,
-                username: user.username,
-                password: '',
-                confirm_password: '',
-                is_active: user.is_active,
-                is_superuser: user.is_superuser,
-                email: user.email,
-                last_login: user.last_login,
-                date_joined: user.date_joined,
-                groupsofaggregations: userGroups.aggregations,
-                groupsofmetrics: userGroups.metrics,
-                groupsofmetricprofiles: userGroups.metricprofiles,
-                groupsofthresholdsprofiles: userGroups.thresholdsprofiles,
-                displayname: userProfile.displayname,
-                subject: userProfile.subject,
-                egiid: userProfile.egiid
-              }}
-              validationSchema={UserSchema}
-              enableReinitialize={true}
-              onSubmit = {(values, actions) => onSubmitHandle(values, actions)}
-              render = {props => (
-                <Form>
-                  <CommonUser
-                    {...props}
-                    add={addview}
-                  />
-                  {
-                    isTenantSchema &&
-                      <>
-                        <FormGroup>
-                          <ParagraphTitle title='POEM user permissions'/>
-                          <Row>
-                            <Col md={6}>
-                              <Label for="groupsofmetrics" className="grouplabel">Groups of metrics</Label>
-                              <Field
-                                component="select"
-                                name="groupsofmetrics"
-                                id='select-field'
-                                onChange={evt =>
-                                  props.setFieldValue(
-                                    "groupsofmetrics",
-                                    [].slice
-                                      .call(evt.target.selectedOptions)
-                                      .map(option => option.value)
-                                  )
-                                }
-                                multiple={true}
-                              >
-                                {allGroups.metrics.map( s => (
-                                  <option key={s} value={s}>
-                                    {s}
-                                  </option>
-                                ))}
-                              </Field>
-                              <FormText color="muted">
-                                The groups of metrics that user will control. Hold down "Control" or "Command" on a Mac to select more than one.
-                              </FormText>
-                            </Col>
-                          </Row>
-                          <Row>
-                            <Col md={6}>
-                              <Label for="groupsofmetricprofiles" className="grouplabel">Groups of metric profiles</Label>
-                              <Field
-                                component="select"
-                                name="groupsofmetricprofiles"
-                                id='select-field'
-                                onChange={evt =>
-                                  props.setFieldValue(
-                                    "groupsofmetricprofiles",
-                                    [].slice
-                                      .call(evt.target.selectedOptions)
-                                      .map(option => option.value)
-                                  )
-                                }
-                                multiple={true}
-                              >
-                                {allGroups.metricprofiles.map( s => (
-                                  <option key={s} value={s}>
-                                    {s}
-                                  </option>
-                                ))}
-                              </Field>
-                              <FormText color="muted">
-                                The groups of metric profiles that user will control. Hold down "Control" or "Command" on a Mac to select more than one.
-                            </FormText>
-                            </Col>
-                          </Row>
-                          <Row>
-                            <Col md={6}>
-                              <Label for="groupsofaggregations" className="grouplabel">Groups of aggregations</Label>
-                              <Field
-                                component="select"
-                                name="groupsofaggregations"
-                                id='select-field'
-                                onChange={evt =>
-                                  props.setFieldValue(
-                                    "groupsofaggregations",
-                                    [].slice
-                                      .call(evt.target.selectedOptions)
-                                      .map(option => option.value)
-                                  )
-                                }
-                                multiple={true}
-                              >
-                                {allGroups.aggregations.map( s => (
-                                  <option key={s} value={s}>
-                                    {s}
-                                  </option>
-                                ))}
-                              </Field>
-                              <FormText color="muted">
-                                The groups of aggregations that user will control. Hold down "Control" or "Command" on a Mac to select more than one.
-                              </FormText>
-                            </Col>
-                          </Row>
-                          <Row>
-                            <Col md={6}>
-                              <Label for="groupsofthresholdsprofiles" className="grouplabel">Groups of thresholds profiles</Label>
-                              <Field
-                                component="select"
-                                name="groupsofthresholdsprofiles"
-                                id='select-field'
-                                onChange={evt =>
-                                  props.setFieldValue(
-                                    "groupsofthresholdsprofiles",
-                                    [].slice
-                                      .call(evt.target.selectedOptions)
-                                      .map(option => option.value)
-                                  )
-                                }
-                                multiple={true}
-                              >
-                                {allGroups.thresholdsprofiles.map( s => (
-                                  <option key={s} value={s}>
-                                    {s}
-                                  </option>
-                                ))}
-                              </Field>
-                              <FormText color="muted">
-                                The groups of thresholds profiles that user will control. Hold down "Control" or "Command" on a Mac to select more than one.
-                            </FormText>
-                            </Col>
-                          </Row>
-                        </FormGroup>
-                        <FormGroup>
-                          <ParagraphTitle title='Additional information'/>
-                          <Row>
-                            <Col md={12}>
-                              <InputGroup>
-                                <InputGroupAddon addonType='prepend'>distinguishedName</InputGroupAddon>
-                                <Field
-                                  type="text"
-                                  name="subject"
-                                  required={false}
-                                  className="form-control"
-                                  id="distinguishedname"
-                                />
-                              </InputGroup>
-                            </Col>
-                          </Row>
-                        </FormGroup>
-                        <FormGroup>
-                          <Row>
-                            <Col md={8}>
-                              <InputGroup>
-                                <InputGroupAddon addonType="prepend">eduPersonUniqueId</InputGroupAddon>
-                                <Field
-                                  type="text"
-                                  name="egiid"
-                                  required={false}
-                                  className="form-control"
-                                  id='eduid'
-                                />
-                              </InputGroup>
-                            </Col>
-                          </Row>
-                        </FormGroup>
-                        <FormGroup>
-                          <Row>
-                            <Col md={6}>
-                              <InputGroup>
-                                <InputGroupAddon addonType="prepend">displayName</InputGroupAddon>
-                                <Field
-                                  type="text"
-                                  name="displayname"
-                                  required={false}
-                                  className="form-control"
-                                  id="displayname"
-                                />
-                              </InputGroup>
-                            </Col>
-                          </Row>
-                        </FormGroup>
-                      </>
-                  }
-                  {
-                    <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
-                      {
-                        !addview ?
-                          <Button
-                            color="danger"
-                            onClick={() => {
-                              setModalMsg('Are you sure you want to delete user?');
-                              setModalTitle('Delete user');
-                              setModalFlag('delete');
-                              toggleAreYouSure();
-                            }}
-                          >
-                            Delete
-                          </Button>
-                        :
-                          <div></div>
-                      }
-                      <Button
-                        color="success"
-                        id="submit-button"
-                        type="submit"
-                      >
-                        Save
-                      </Button>
-                    </div>
-                  }
-                </Form>
-              )}
-            />
-          </BaseArgoView>
-        </>
+        </BaseArgoView>
       )
     } else {
       return (
