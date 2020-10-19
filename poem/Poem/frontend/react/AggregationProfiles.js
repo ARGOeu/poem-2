@@ -302,27 +302,27 @@ const Service = ({name, service, operation, groupindex, groupnew, index,
           <Button size="sm" color="light"
             type="button"
             onClick={() => insert(index + 1, {name: '', operation:
-              context.last_service_operation(index, form.values.groups[groupindex].services), isnew: true})}>
+              context.last_service_operation(index, context.formikBag.form.values.groups[groupindex].services), isnew: true})}>
             <FontAwesomeIcon icon={faPlus}/>
           </Button>
         </Col>
       </Row>
       <Row>
         {
-        form.errors && form.errors.groups && form.errors.groups[groupindex] &&
-        form.errors.groups[groupindex].services && form.errors.groups[groupindex].services[index] &&
-        form.errors.groups[groupindex].services[index].name &&
-          <Col md={8}>
-              { FancyErrorMessage(form.errors.groups[groupindex].services[index].name) }
-          </Col>
-      }
+          context.formikBag.form.errors && context.formikBag.form.errors.groups && context.formikBag.form.errors.groups[groupindex] &&
+          context.formikBag.form.errors.groups[groupindex].services && context.formikBag.form.errors.groups[groupindex].services[index] &&
+          context.formikBag.form.errors.groups[groupindex].services[index].name &&
+            <Col md={8}>
+                { FancyErrorMessage(context.formikBag.form.errors.groups[groupindex].services[index].name) }
+            </Col>
+        }
         {
-        form.errors && form.errors.groups && form.errors.groups[groupindex] &&
-        form.errors.groups[groupindex].services && form.errors.groups[groupindex].services[index] &&
-        form.errors.groups[groupindex].services[index].operation &&
-          <Col md={{offset: form.errors.groups[groupindex].services[index].name ? 0 : 8, size: 2}}>
-              { FancyErrorMessage(form.errors.groups[groupindex].services[index].operation) }
-          </Col>
+          context.formikBag.form.errors && context.formikBag.form.errors.groups && context.formikBag.form.errors.groups[groupindex] &&
+          context.formikBag.form.errors.groups[groupindex].services && context.formikBag.form.errors.groups[groupindex].services[index] &&
+          context.formikBag.form.errors.groups[groupindex].services[index].operation &&
+            <Col md={{offset: context.formikBag.form.errors.groups[groupindex].services[index].name ? 0 : 8, size: 2}}>
+                { FancyErrorMessage(context.formikBag.form.errors.groups[groupindex].services[index].operation) }
+            </Col>
       }
       </Row>
     </React.Fragment>
