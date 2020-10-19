@@ -263,69 +263,71 @@ const ServiceList = ({services, groupindex, groupnew=false}) =>
 }
 
 
-const Service = ({name, service, operation, list_services, list_operations,
-  last_service_operation, groupindex, groupnew, index, remove, insert, form,
-  isnew, ismissing}) =>
-(
-  <React.Fragment>
-    <Row className="d-flex align-items-center service pt-1 pb-1 no-gutters" key={index}>
-      <Col md={8}>
-        <AggregationProfileAutocompleteField
-          suggestions={list_services}
-          service={service}
-          index={index}
-          form={form}
-          isNew={isnew}
-          groupNew={groupnew}
-          groupIndex={groupindex}
-          isMissing={ismissing}
-        />
-      </Col>
-      <Col md={2}>
-        <div className="input-group">
-          <DropDown
-            field={{name: "operation", value: operation}}
-            data={insertSelectPlaceholder(list_operations, 'Select')}
-            prefix={`groups.${groupindex}.services.${index}`}
-            class_name="custom-select service-operation"
-            isnew={isnew && !groupnew}
-        />
-        </div>
-      </Col>
-      <Col md={2} className="pl-2">
-        <Button size="sm" color="light"
-          type="button"
-          onClick={() => remove(index)}>
-          <FontAwesomeIcon icon={faTimes}/>
-        </Button>
-        <Button size="sm" color="light"
-          type="button"
-          onClick={() => insert(index + 1, {name: '', operation:
-            last_service_operation(index, form.values.groups[groupindex].services), isnew: true})}>
-          <FontAwesomeIcon icon={faPlus}/>
-        </Button>
-      </Col>
-    </Row>
-    <Row>
-      {
-      form.errors && form.errors.groups && form.errors.groups[groupindex] &&
-      form.errors.groups[groupindex].services && form.errors.groups[groupindex].services[index] &&
-      form.errors.groups[groupindex].services[index].name &&
+const Service = ({name, service, operation, groupindex, groupnew, index,
+  remove, insert, form, isnew, ismissing}) => {
+  const context = useContext(AggregationProfilesChangeContext);
+
+  return (
+    <React.Fragment>
+      <Row className="d-flex align-items-center service pt-1 pb-1 no-gutters" key={index}>
         <Col md={8}>
-            { FancyErrorMessage(form.errors.groups[groupindex].services[index].name) }
+          <AggregationProfileAutocompleteField
+            suggestions={context.list_services}
+            service={service}
+            index={index}
+            form={form}
+            isNew={isnew}
+            groupNew={groupnew}
+            groupIndex={groupindex}
+            isMissing={ismissing}
+          />
         </Col>
-    }
-      {
-      form.errors && form.errors.groups && form.errors.groups[groupindex] &&
-      form.errors.groups[groupindex].services && form.errors.groups[groupindex].services[index] &&
-      form.errors.groups[groupindex].services[index].operation &&
-        <Col md={{offset: form.errors.groups[groupindex].services[index].name ? 0 : 8, size: 2}}>
-            { FancyErrorMessage(form.errors.groups[groupindex].services[index].operation) }
+        <Col md={2}>
+          <div className="input-group">
+            <DropDown
+              field={{name: "operation", value: operation}}
+              data={insertSelectPlaceholder(context.list_operations, 'Select')}
+              prefix={`groups.${groupindex}.services.${index}`}
+              class_name="custom-select service-operation"
+              isnew={isnew && !groupnew}
+          />
+          </div>
         </Col>
-    }
-    </Row>
-  </React.Fragment>
-)
+        <Col md={2} className="pl-2">
+          <Button size="sm" color="light"
+            type="button"
+            onClick={() => remove(index)}>
+            <FontAwesomeIcon icon={faTimes}/>
+          </Button>
+          <Button size="sm" color="light"
+            type="button"
+            onClick={() => insert(index + 1, {name: '', operation:
+              context.last_service_operation(index, form.values.groups[groupindex].services), isnew: true})}>
+            <FontAwesomeIcon icon={faPlus}/>
+          </Button>
+        </Col>
+      </Row>
+      <Row>
+        {
+        form.errors && form.errors.groups && form.errors.groups[groupindex] &&
+        form.errors.groups[groupindex].services && form.errors.groups[groupindex].services[index] &&
+        form.errors.groups[groupindex].services[index].name &&
+          <Col md={8}>
+              { FancyErrorMessage(form.errors.groups[groupindex].services[index].name) }
+          </Col>
+      }
+        {
+        form.errors && form.errors.groups && form.errors.groups[groupindex] &&
+        form.errors.groups[groupindex].services && form.errors.groups[groupindex].services[index] &&
+        form.errors.groups[groupindex].services[index].operation &&
+          <Col md={{offset: form.errors.groups[groupindex].services[index].name ? 0 : 8, size: 2}}>
+              { FancyErrorMessage(form.errors.groups[groupindex].services[index].operation) }
+          </Col>
+      }
+      </Row>
+    </React.Fragment>
+  )
+}
 
 
 const AggregationProfilesForm = ({ values, errors, historyview=false, write_perm=false,
