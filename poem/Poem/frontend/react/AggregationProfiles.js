@@ -263,8 +263,7 @@ const ServiceList = ({services, groupindex, groupnew=false}) =>
 }
 
 
-const Service = ({name, service, operation, groupindex, groupnew, index,
-  remove, insert, isnew, ismissing}) => {
+const Service = ({name, service, operation, groupindex, groupnew, index, isnew, ismissing}) => {
   const context = useContext(AggregationProfilesChangeContext);
 
   return (
@@ -296,12 +295,12 @@ const Service = ({name, service, operation, groupindex, groupnew, index,
         <Col md={2} className="pl-2">
           <Button size="sm" color="light"
             type="button"
-            onClick={() => remove(index)}>
+            onClick={() => context.formikBag.remove(index)}>
             <FontAwesomeIcon icon={faTimes}/>
           </Button>
           <Button size="sm" color="light"
             type="button"
-            onClick={() => insert(index + 1, {name: '', operation:
+            onClick={() => context.formikBag.insert(index + 1, {name: '', operation:
               context.last_service_operation(index, context.formikBag.form.values.groups[groupindex].services), isNew: true})}>
             <FontAwesomeIcon icon={faPlus}/>
           </Button>
