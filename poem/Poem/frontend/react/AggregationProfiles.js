@@ -1,4 +1,4 @@
-import React, { Component, useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {Link} from 'react-router-dom';
 import {
   LoadingAnim,
@@ -33,7 +33,7 @@ import {
   Label,
   Row
 } from 'reactstrap';
-import { useQuery } from 'react-query';
+import { useQuery, queryCache } from 'react-query';
 import * as Yup from 'yup';
 
 import ReactDiffViewer from 'react-diff-viewer';
@@ -486,70 +486,96 @@ const AggregationProfilesForm = ({ values, errors, historyview=false, write_perm
 );
 
 
-export class AggregationProfilesChange extends Component
-{
-  constructor(props) {
-    super(props);
+export const AggregationProfilesChange = (props) => {
+  const tenant_name = props.tenant_name;
+  const profile_name = props.match.params.name;
+  const addview = props.addview
+  const history = props.history;
+  const location = props.location;
+  const publicView = props.publicView;
 
-    this.tenant_name = props.tenant_name;
-    this.token = props.webapitoken;
-    this.webapiaggregation = props.webapiaggregation;
-    this.webapimetric = props.webapimetric;
-    this.profile_name = props.match.params.name;
-    this.addview = props.addview
-    this.history = props.history;
-    this.location = props.location;
-    this.publicView = props.publicView;
+  const [listServices, setListServices] = useState(undefined);
+  const [areYouSureModal, setAreYouSureModal] = useState(false)
+  const [modalMsg, setModalMsg] = useState(undefined);
+  const [modalTitle, setModalTitle] = useState(undefined);
+  const [onYes, setOnYes] = useState('')
+  // TODO: useFormik hook with formik 2.x
+  const [formikValues, setFormikValues] = useState({})
+  const querykey = `aggregationprofiles_${addview ? 'addview' : `${profile_name}_${publicView ? 'publicview' : 'changeview'}`}`;
 
-    this.state = {
-      aggregation_profile: {},
-      groupname: undefined,
-      list_user_groups: [],
-      write_perm: false,
-      list_id_metric_profiles: [],
-      list_services: [],
-      list_complete_metric_profiles: {},
-      areYouSureModal: false,
-      loading: false,
-      modalFunc: undefined,
-      modalTitle: undefined,
-      modalMsg: undefined,
-      error: null
+  const backend = new Backend();
+  const webapi = new WebApi({
+    token: props.webapitoken,
+    metricProfiles: props.webapimetric,
+    aggregationProfiles: props.webapiaggregation}
+  )
+
+  const logic_operations = ["OR", "AND"];
+  const endpoint_groups = ["servicegroups", "sites"];
+
+  const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails } = useQuery(
+    `session_userdetails`, async () => {
+      if (!publicView) {
+        const sessionActive = await backend.isActiveSession()
+        if (sessionActive.active) {
+          return sessionActive.userdetails
+        }
+      }
     }
+  );
 
-    this.backend = new Backend();
-    this.webapi = new WebApi({
-      token: props.webapitoken,
-      metricProfiles: props.webapimetric,
-      aggregationProfiles: props.webapiaggregation}
-    )
+  const { data: aggregationProfile, error: errorAggregationProfile, isLoading: loadingAggregationProfile } = useQuery(querykey, async () => {
+    let backendAggregationProfile = new Object({
+      id: '',
+      name: '',
+      metric_operation: '',
+      profile_operation: '',
+      endpoint_group: '',
+      metric_profile: {
+          name: ''
+      },
+      groups: []
+    })
+    if (!addview)
+      backendAggregationProfile = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}aggregations/${profile_name}`);
 
-    this.extractListOfMetricsProfiles = this.extractListOfMetricsProfiles.bind(this);
-    this.toggleAreYouSure = this.toggleAreYouSure.bind(this);
-    this.doChange = this.doChange.bind(this);
-    this.doDelete = this.doDelete.bind(this);
-    this.toggleAreYouSureSetModal = this.toggleAreYouSureSetModal.bind(this);
-    this.onSubmitHandle = this.onSubmitHandle.bind(this);
+    if (publicView) {
+      let metricProfiles = await webapi.fetchMetricProfiles();
+      let aggregationProfile = await webapi.fetchAggregationProfile(backendAggregationProfile.apiid);
+      return {
+        profile: aggregationProfile,
+        groupname: backendAggregationProfile.groupname,
+        listmetricprofiles: metricProfiles,
+        listidmetricprofiles: extractListOfMetricsProfiles(metricProfiles),
+        listservices: extractListOfServices(aggregationProfile.metric_profile, metricProfiles),
+        listusergroups: []
+      }
+    }
+    else {
+      let metricProfiles = await webapi.fetchMetricProfiles();
+      if (!addview) {
+        let aggregationProfile = await webapi.fetchAggregationProfile(backendAggregationProfile.apiid);
+        return {
+          profile: aggregationProfile,
+          groupname: backendAggregationProfile.groupname,
+          listidmetricprofiles: extractListOfMetricsProfiles(metricProfiles),
+          listservices: extractListOfServices(aggregationProfile.metric_profile, metricProfiles),
+          listmetricprofiles: metricProfiles
+        }
+      }
+      else {
+        return {
+          profile: backendAggregationProfile,
+          groupname: backendAggregationProfile.groupname,
+          listidmetricprofiles: extractListOfMetricsProfiles(metricProfiles),
+          listServices: [],
+          listmetricprofiles: metricProfiles
+        }
+      }
+    }
+  })
 
-    this.logic_operations = ["OR", "AND"];
-    this.endpoint_groups = ["servicegroups", "sites"];
-  }
-
-  toggleAreYouSure() {
-    this.setState(prevState =>
-      ({areYouSureModal: !prevState.areYouSureModal}));
-  }
-
-  toggleAreYouSureSetModal(msg, title, onyes) {
-    this.setState(prevState =>
-      ({areYouSureModal: !prevState.areYouSureModal,
-        modalFunc: onyes,
-        modalMsg: msg,
-        modalTitle: title,
-      }));
-  }
-
-  correctMetricProfileName(metricProfileId, listMetricProfilesWebApi) {
+  const correctMetricProfileName = (metricProfileId, listMetricProfilesWebApi) => {
     let targetProfile = listMetricProfilesWebApi.filter(p => p.id === metricProfileId)
 
     if (targetProfile.length)
@@ -558,12 +584,12 @@ export class AggregationProfilesChange extends Component
       return ''
   }
 
-  sortServices(a, b) {
+  const sortServices = (a, b) => {
     if (a.toLowerCase() < b.toLowerCase()) return -1
     if (a.toLowerCase() > b.toLowerCase()) return 1
   }
 
-  extractListOfServices(profileFromAggregation, listMetricProfiles) {
+  const extractListOfServices = (profileFromAggregation, listMetricProfiles) => {
     let targetProfile = listMetricProfiles.filter(p => p.name === profileFromAggregation.name)
 
     if (targetProfile.length === 0)
@@ -571,19 +597,19 @@ export class AggregationProfilesChange extends Component
 
     if (targetProfile.length) {
       let services = targetProfile[0].services.map(s => s.service)
-      return services.sort(this.sortServices)
+      return services.sort(sortServices)
     }
     else
       return []
   }
 
-  sortMetricProfiles(a, b) {
+  const sortMetricProfiles = (a, b) => {
     if (a.name.toLowerCase() < b.name.toLowerCase()) return -1;
     if (a.name.toLowerCase() > b.name.toLowerCase()) return 1;
     if (a.name.toLowerCase() === b.name.toLowerCase()) return 0;
   }
 
-  extractListOfMetricsProfiles(allProfiles) {
+  const extractListOfMetricsProfiles = (allProfiles) => {
     var list_profiles = []
 
     allProfiles.forEach(profile => {
@@ -594,10 +620,10 @@ export class AggregationProfilesChange extends Component
       i += 1
     })
 
-    return list_profiles.sort(this.sortMetricProfiles)
+    return list_profiles.sort(sortMetricProfiles)
   }
 
-  insertEmptyServiceForNoServices(groups) {
+  const insertEmptyServiceForNoServices = (groups) => {
     groups.forEach(group => {
       if (group.services.length === 0) {
           group.services.push({name: '', operation: ''})
@@ -606,7 +632,7 @@ export class AggregationProfilesChange extends Component
     return groups
   }
 
-  insertOperationFromPrevious(index, array) {
+  const insertOperationFromPrevious = (index, array) => {
     if (array.length) {
       let last = array.length - 1
 
@@ -616,11 +642,11 @@ export class AggregationProfilesChange extends Component
       return ''
   }
 
-  onSubmitHandle(values, action) {
+  const onSubmitHandle = (values, action) => {
     let msg = undefined;
     let title = undefined;
 
-    if (this.addview) {
+    if (addview) {
       msg = 'Are you sure you want to add Aggregation profile?'
       title = 'Add aggregation profile'
     }
@@ -628,23 +654,36 @@ export class AggregationProfilesChange extends Component
       msg = 'Are you sure you want to change Aggregation profile?'
       title = 'Change aggregation profile'
     }
-    this.toggleAreYouSureSetModal(msg, title,
-      () => this.doChange(values, action));
+    setAreYouSureModal(!areYouSureModal);
+    setModalMsg(msg)
+    setModalTitle(title)
+    setOnYes('change')
+    setFormikValues(values)
   }
 
-  async doChange(values, actions) {
-    let values_send = JSON.parse(JSON.stringify(values));
-    this.removeDummyGroup(values_send)
+  const updateCacheKey = (values) => {
+    let staleAggregationProfile = queryCache.getQueryData(querykey)
+    staleAggregationProfile.profile.groups = values.groups
+    staleAggregationProfile.profile.metric_profile = values.metric_profile
+    staleAggregationProfile.profile.profile_operation = values.profile_operation
+    staleAggregationProfile.profile.endpoint_group = values.endpoint_group
+    queryCache.setQueryData(querykey, staleAggregationProfile)
+  }
 
-    values_send.namespace = this.tenant_name
+  const doChange = async (values, actions) => {
+    let valueSend = JSON.parse(JSON.stringify(values));
+    removeDummyGroup(valueSend)
+    removeIsNewFlag(valueSend)
 
-    let match_profile = this.state.list_id_metric_profiles.filter((e) =>
-      values_send.metric_profile === e.name)
+    valueSend.namespace = tenant_name
 
-    values_send.metric_profile = match_profile[0]
+    let match_profile = aggregationProfile.listidmetricprofiles.filter((e) =>
+      valueSend.metric_profile === e.name)
 
-    if (!this.addview) {
-      let response = await this.webapi.changeAggregation(values_send);
+    valueSend.metric_profile = match_profile[0]
+
+    if (!addview) {
+      let response = await webapi.changeAggregation(valueSend);
       if (!response.ok) {
         let change_msg = '';
         try {
@@ -660,25 +699,27 @@ export class AggregationProfilesChange extends Component
           msg: change_msg
         });
       } else {
-        let r_internal = await this.backend.changeObject(
+        let r_internal = await backend.changeObject(
           '/api/v2/internal/aggregations/',
           {
-            apiid: values_send.id,
-            name: values_send.name,
-            groupname: values_send.groupname,
-            endpoint_group: values_send.endpoint_group,
-            metric_operation: values_send.metric_operation,
-            profile_operation: values_send.profile_operation,
+            apiid: valueSend.id,
+            name: valueSend.name,
+            groupname: valueSend.groupname,
+            endpoint_group: valueSend.endpoint_group,
+            metric_operation: valueSend.metric_operation,
+            profile_operation: valueSend.profile_operation,
             metric_profile: values.metric_profile,
-            groups: JSON.stringify(values_send.groups)
+            groups: JSON.stringify(valueSend.groups)
           }
         )
-        if (r_internal.ok)
+        if (r_internal.ok) {
           NotifyOk({
             msg: 'Aggregation profile succesfully changed',
             title: 'Changed',
-            callback: () => this.history.push('/ui/aggregationprofiles')
+            callback: () => history.push('/ui/aggregationprofiles')
           })
+          updateCacheKey(valueSend)
+        }
         else {
           let change_msg = '';
           try {
@@ -694,7 +735,7 @@ export class AggregationProfilesChange extends Component
         }
       }
     } else {
-      let response = await this.webapi.addAggregation(values_send);
+      let response = await webapi.addAggregation(valueSend);
       if (!response.ok) {
         let add_msg = '';
         try {
@@ -711,24 +752,24 @@ export class AggregationProfilesChange extends Component
         });
       } else {
         let r = await response.json();
-        let r_internal = await this.backend.addObject(
+        let r_internal = await backend.addObject(
           '/api/v2/internal/aggregations/',
           {
             apiid: r.data.id,
-            name: values_send.name,
-            groupname: values_send.groupname,
-            endpoint_group: values_send.endpoint_group,
-            metric_operation: values_send.metric_operation,
-            profile_operation: values_send.profile_operation,
+            name: valueSend.name,
+            groupname: valueSend.groupname,
+            endpoint_group: valueSend.endpoint_group,
+            metric_operation: valueSend.metric_operation,
+            profile_operation: valueSend.profile_operation,
             metric_profile: values.metric_profile,
-            groups: JSON.stringify(values_send.groups)
+            groups: JSON.stringify(valueSend.groups)
           }
         );
         if (r_internal.ok)
           NotifyOk({
             msg: 'Aggregation profile successfully added',
             title: 'Added',
-            callback: () => this.history.push('/ui/aggregationprofiles')
+            callback: () => history.push('/ui/aggregationprofiles')
           })
         else {
           let add_msg = '';
@@ -747,8 +788,8 @@ export class AggregationProfilesChange extends Component
     }
   }
 
-  async doDelete(idProfile) {
-    let response = await this.webapi.deleteAggregation(idProfile);
+  const doDelete = async (idProfile) => {
+    let response = await webapi.deleteAggregation(idProfile);
     if (!response.ok) {
       let msg = '';
       try {
@@ -764,12 +805,12 @@ export class AggregationProfilesChange extends Component
         msg: msg
       });
     } else {
-      let r = await this.backend.deleteObject(`/api/v2/internal/aggregations/${idProfile}`);
+      let r = await backend.deleteObject(`/api/v2/internal/aggregations/${idProfile}`);
       if (r.ok)
         NotifyOk({
           msg: 'Aggregation profile sucessfully deleted',
           title: 'Deleted',
-          callback: () => this.history.push('/ui/aggregationprofiles')
+          callback: () => history.push('/ui/aggregationprofiles')
         });
       else {
         let msg = '';
@@ -787,11 +828,11 @@ export class AggregationProfilesChange extends Component
     }
   }
 
-  insertDummyGroup(groups) {
+  const insertDummyGroup = (groups) => {
     return  [...groups, {name: 'dummy', operation: 'OR', services: [{name: 'dummy', operation: 'OR'}]}]
   }
 
-  removeDummyGroup(values) {
+  const removeDummyGroup = (values) => {
     let last_group_element = values.groups[values.groups.length - 1]
 
     if (last_group_element['name'] == 'dummy' &&
@@ -800,7 +841,20 @@ export class AggregationProfilesChange extends Component
     }
   }
 
-  checkIfServiceMissingInMetricProfile(servicesMetricProfile, serviceGroupsAggregationProfile) {
+  const removeIsNewFlag = (values) => {
+    for (let group of values.groups) {
+      let keys = Object.keys(group)
+      if (keys.indexOf('isnew') !== -1)
+        delete group.isnew
+      for (let service of group.services) {
+        let keys = Object.keys(service)
+        if (keys.indexOf('isnew') !== -1)
+          delete service.isnew
+      }
+    }
+  }
+
+  const checkIfServiceMissingInMetricProfile = (servicesMetricProfile, serviceGroupsAggregationProfile) => {
     let servicesInMetricProfiles = new Set(servicesMetricProfile)
     let isMissing = false
 
@@ -816,252 +870,197 @@ export class AggregationProfilesChange extends Component
     return isMissing
   }
 
-  async componentDidMount() {
-    this.setState({loading: true})
-
-    try {
-      if (this.publicView) {
-        let metricp = await this.webapi.fetchMetricProfiles();
-        let json = await this.backend.fetchData(`/api/v2/internal/public_aggregations/${this.profile_name}`);
-        let aggregp = await this.webapi.fetchAggregationProfile(json.apiid);
-        this.setState({
-          aggregation_profile: aggregp,
-          groupname: json['groupname'],
-          list_user_groups: [],
-          write_perm: false,
-          list_id_metric_profiles: this.extractListOfMetricsProfiles(metricp),
-          list_services: this.extractListOfServices(aggregp.metric_profile, metricp),
-          list_complete_metric_profiles: metricp,
-          loading: false
-        });
-      }
-      else {
-        let sessionActive = await this.backend.isActiveSession();
-        if (sessionActive.active) {
-          let metricp = await this.webapi.fetchMetricProfiles();
-          if (!this.addview) {
-            let json = await this.backend.fetchData(`/api/v2/internal/aggregations/${this.profile_name}`);
-            let aggregp = await this.webapi.fetchAggregationProfile(json.apiid);
-            this.setState({
-              aggregation_profile: aggregp,
-              groupname: json['groupname'],
-              list_user_groups: sessionActive.userdetails.groups.aggregations,
-              write_perm: sessionActive.userdetails.is_superuser ||
-                sessionActive.userdetails.groups.aggregations.indexOf(json['groupname']) >= 0,
-              list_id_metric_profiles: this.extractListOfMetricsProfiles(metricp),
-              list_services: this.extractListOfServices(aggregp.metric_profile, metricp),
-              list_complete_metric_profiles: metricp,
-              loading: false
-            });
-          } else {
-            let empty_aggregation_profile = {
-              id: '',
-              name: '',
-              metric_operation: '',
-              profile_operation: '',
-              endpoint_group: '',
-              metric_profile: {
-                  name: ''
-              },
-              groups: []
-            }
-            this.setState({
-              aggregation_profile: empty_aggregation_profile,
-              groupname: '',
-              list_user_groups: sessionActive.userdetails.groups.aggregations,
-              write_perm: sessionActive.userdetails.is_superuser ||
-                sessionActive.userdetails.groups.aggregations.length > 0,
-              list_id_metric_profiles: this.extractListOfMetricsProfiles(metricp),
-              list_complete_metric_profiles: metricp,
-              list_services: [],
-              loading: false
-            });
-          }
-        }
-      }
-    } catch(err) {
-      this.setState({
-        error: err,
-        loading: false
-      });
-    }
+  const onYesCallback = () => {
+    if (onYes === 'delete')
+      doDelete(formikValues.id);
+    else if (onYes === 'change')
+      doChange(formikValues);
   }
 
-  render() {
-    const {aggregation_profile, list_id_metric_profiles,
-        list_complete_metric_profiles, list_user_groups, groupname,
-        list_services, write_perm, loading, error} = this.state
+  if (loadingAggregationProfile)
+    return (<LoadingAnim />)
 
+  else if (errorAggregationProfile)
+    return (
+      <ErrorComponent error={error}/>
+    )
 
-    if (loading)
-      return (<LoadingAnim />)
+  else if (!loadingAggregationProfile && !loadingUserDetails && aggregationProfile) {
+    let isServiceMissing = checkIfServiceMissingInMetricProfile(aggregationProfile.listservices, aggregationProfile.profile.groups)
+    let write_perm = undefined
 
-    else if (error)
-      return (
-        <ErrorComponent error={error}/>
-      )
+    if (!listServices && !publicView && !addview)
+      setListServices(aggregationProfile.listservices)
 
-    else if (!loading && aggregation_profile &&
-      aggregation_profile.metric_profile && list_user_groups
-      && this.token) {
+    if (publicView) {
+      write_perm = false
+    }
+    else if (!addview) {
+      write_perm = userDetails.is_superuser ||
+            userDetails.groups.aggregations.indexOf(aggregationProfile.profile.groupname) >= 0;
+    }
+    else {
+      write_perm = userDetails.is_superuser ||
+        userDetails.groups.aggregations.length > 0;
+    }
 
-      let is_service_missing = this.checkIfServiceMissingInMetricProfile(list_services, aggregation_profile.groups)
-
-      return (
-        <BaseArgoView
-          resourcename={this.publicView ? 'Aggregation profile details' : 'aggregation profile'}
-          location={this.location}
-          modal={true}
-          history={!this.publicView}
-          state={this.state}
-          toggle={this.toggleAreYouSure}
-          addview={this.publicView ? !this.publicView : this.addview}
-          publicview={this.publicView}
-          submitperm={write_perm}>
-          <Formik
-            initialValues = {{
-              id: aggregation_profile.id,
-              name: aggregation_profile.name,
-              groupname: groupname,
-              metric_operation: aggregation_profile.metric_operation,
-              profile_operation: aggregation_profile.profile_operation,
-              metric_profile: this.correctMetricProfileName(aggregation_profile.metric_profile.id, list_id_metric_profiles),
-              endpoint_group: aggregation_profile.endpoint_group,
-              groups: !this.publicView ?
-                this.insertDummyGroup(
-                  this.insertEmptyServiceForNoServices(aggregation_profile.groups)
-                )
-              :
-                aggregation_profile.groups
-            }}
-            onSubmit={(values, actions) => this.onSubmitHandle(values, actions)}
-            validationSchema={AggregationProfilesSchema}
-            render = {props => (
-              <Form>
-                <FormikEffect onChange={(current, prev) => {
-                  if (current.values.metric_profile !== prev.values.metric_profile) {
-                    let selected_profile = {name: current.values.metric_profile}
-                    this.setState({list_services:
-                      this.extractListOfServices(selected_profile,
-                      list_complete_metric_profiles)})
+    return (
+      <BaseArgoView
+        resourcename={publicView ? 'Aggregation profile details' : 'aggregation profile'}
+        location={location}
+        modal={true}
+        history={!publicView}
+        state={{areYouSureModal, 'modalFunc': onYesCallback, modalTitle, modalMsg}}
+        toggle={() => setAreYouSureModal(!areYouSureModal)}
+        addview={publicView ? !publicView : addview}
+        publicview={publicView}
+        submitperm={write_perm}>
+        <Formik
+          initialValues = {{
+            id: aggregationProfile.profile.id,
+            name: aggregationProfile.profile.name,
+            groupname: aggregationProfile.groupname,
+            metric_operation: aggregationProfile.profile.metric_operation,
+            profile_operation: aggregationProfile.profile.profile_operation,
+            metric_profile: correctMetricProfileName(aggregationProfile.profile.metric_profile.id, aggregationProfile.listidmetricprofiles),
+            endpoint_group: aggregationProfile.profile.endpoint_group,
+            groups: !publicView ?
+              insertDummyGroup(
+                insertEmptyServiceForNoServices(aggregationProfile.profile.groups)
+              )
+            :
+              aggregationProfile.profile.groups
+          }}
+          onSubmit={(values, actions) => onSubmitHandle(values, actions)}
+          validationSchema={AggregationProfilesSchema}
+          render = {props => (
+            <Form>
+              <FormikEffect onChange={(current, prev) => {
+                if (current.values.metric_profile !== prev.values.metric_profile) {
+                  let selected_profile = {
+                    name: current.values.metric_profile
                   }
-                }}
-                />
-                {
-                  (is_service_missing && !this.publicView) &&
-                  <Alert color='danger'>
-                    <center>
-                      <FontAwesomeIcon icon={faInfoCircle} size="lg" color="black"/> &nbsp;
-                      Some Service Flavours used in Aggregation profile are not presented in associated Metric profile meaning that two profiles are out of sync. Check below for Service Flavours in blue borders.
-                    </center>
-                  </Alert>
+                  setListServices(extractListOfServices(selected_profile,
+                    aggregationProfile.listmetricprofiles))
                 }
-                <AggregationProfilesForm
-                  {...props}
-                  list_user_groups={list_user_groups}
-                  logic_operations={this.logic_operations}
-                  endpoint_groups={this.endpoint_groups}
-                  list_id_metric_profiles={list_id_metric_profiles}
-                  write_perm={write_perm}
-                  historyview={this.publicView}
-                />
-                {
-                  !this.publicView ?
-                    <FieldArray
-                      name="groups"
-                      render={props => (
-                        <GroupList
-                          {...props}
-                          list_services={list_services}
-                          list_operations={this.logic_operations}
-                          last_service_operation={this.insertOperationFromPrevious}
-                          write_perm={write_perm}
-                        />)}
-                    />
-                  :
-                    <FieldArray
-                      name='groups'
-                      render={arrayHelpers => (
-                        <Row className='groups'>
-                          {
-                            props.values['groups'].map((group, i) =>
-                              <FieldArray
-                                key={i}
-                                name='groups'
-                                render={arrayHelpers => (
-                                  <React.Fragment key={i}>
-                                    <Col sm={{size: 8}} md={{size: 5}} className='mt-4 mb-2'>
-                                      <Card>
-                                        <CardHeader className='p-1' color='primary'>
-                                          <Row className='d-flex align-items-center no-gutters'>
-                                            <Col sm={{size: 10}} md={{size: 11}}>
-                                              {props.values.groups[i].name}
-                                            </Col>
-                                          </Row>
-                                        </CardHeader>
-                                        <CardBody className='p-1'>
-                                          {
-                                            group.services.map((service, j) =>
-                                              <FieldArray
-                                                key={j}
-                                                name={`groups.${i}.services`}
-                                                render={arrayHelpers => (
-                                                  <Row className='d-flex align-items-center service pt-1 pb-1 no-gutters' key={j}>
-                                                    <Col md={8}>
-                                                      {props.values.groups[i].services[j].name}
-                                                    </Col>
-                                                    <Col md={2}>
-                                                      {props.values.groups[i].services[j].operation}
-                                                    </Col>
-                                                  </Row>
-                                                )}
-                                              />
-                                            )
-                                          }
-                                        </CardBody>
-                                        <CardFooter className='p-1 d-flex justify-content-center'>
-                                          {props.values.groups[i].operation}
-                                        </CardFooter>
-                                      </Card>
-                                    </Col>
-                                    <Col sm={{size: 4}} md={{size: 1}} className='mt-5'>
-                                      <div className='group-operation' key={i}>
-                                        {props.values.profile_operation}
-                                      </div>
-                                    </Col>
-                                  </React.Fragment>
-                                )}
-                              />
-                            )
-                          }
-                        </Row>
-                      )}
-                    />
-                }
-                {
-                  (write_perm) &&
-                    <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
-                      <Button
-                        color="danger"
-                        onClick={() => {
-                          this.toggleAreYouSureSetModal('Are you sure you want to delete Aggregation profile?',
-                            'Delete aggregation profile',
-                            () => this.doDelete(props.values.id))
-                        }}>
-                        Delete
-                      </Button>
-                      <Button color="success" id="submit-button" type="submit">Save</Button>
-                    </div>
-                }
-              </Form>
-            )}
-          />
-        </BaseArgoView>
-      )
-    }
-    else
-      return null
+              }}
+              />
+              {
+                (isServiceMissing && !publicView) &&
+                <Alert color='danger'>
+                  <center>
+                    <FontAwesomeIcon icon={faInfoCircle} size="lg" color="black"/> &nbsp;
+                    Some Service Flavours used in Aggregation profile are not presented in associated Metric profile meaning that two profiles are out of sync. Check below for Service Flavours in blue borders.
+                  </center>
+                </Alert>
+              }
+              <AggregationProfilesForm
+                {...props}
+                list_user_groups={!publicView ? userDetails.groups.aggregations : []}
+                logic_operations={logic_operations}
+                endpoint_groups={endpoint_groups}
+                list_id_metric_profiles={aggregationProfile.listidmetricprofiles}
+                write_perm={write_perm}
+                historyview={publicView}
+              />
+              {
+                !publicView ?
+                  <FieldArray
+                    name="groups"
+                    render={props => (
+                      <GroupList
+                        {...props}
+                        list_services={listServices}
+                        list_operations={logic_operations}
+                        last_service_operation={insertOperationFromPrevious}
+                        write_perm={write_perm}
+                      />)}
+                  />
+                :
+                  <FieldArray
+                    name='groups'
+                    render={arrayHelpers => (
+                      <Row className='groups'>
+                        {
+                          props.values['groups'].map((group, i) =>
+                            <FieldArray
+                              key={i}
+                              name='groups'
+                              render={arrayHelpers => (
+                                <React.Fragment key={i}>
+                                  <Col sm={{size: 8}} md={{size: 5}} className='mt-4 mb-2'>
+                                    <Card>
+                                      <CardHeader className='p-1' color='primary'>
+                                        <Row className='d-flex align-items-center no-gutters'>
+                                          <Col sm={{size: 10}} md={{size: 11}}>
+                                            {props.values.groups[i].name}
+                                          </Col>
+                                        </Row>
+                                      </CardHeader>
+                                      <CardBody className='p-1'>
+                                        {
+                                          group.services.map((service, j) =>
+                                            <FieldArray
+                                              key={j}
+                                              name={`groups.${i}.services`}
+                                              render={arrayHelpers => (
+                                                <Row className='d-flex align-items-center service pt-1 pb-1 no-gutters' key={j}>
+                                                  <Col md={8}>
+                                                    {props.values.groups[i].services[j].name}
+                                                  </Col>
+                                                  <Col md={2}>
+                                                    {props.values.groups[i].services[j].operation}
+                                                  </Col>
+                                                </Row>
+                                              )}
+                                            />
+                                          )
+                                        }
+                                      </CardBody>
+                                      <CardFooter className='p-1 d-flex justify-content-center'>
+                                        {props.values.groups[i].operation}
+                                      </CardFooter>
+                                    </Card>
+                                  </Col>
+                                  <Col sm={{size: 4}} md={{size: 1}} className='mt-5'>
+                                    <div className='group-operation' key={i}>
+                                      {props.values.profile_operation}
+                                    </div>
+                                  </Col>
+                                </React.Fragment>
+                              )}
+                            />
+                          )
+                        }
+                      </Row>
+                    )}
+                  />
+              }
+              {
+                (write_perm) &&
+                  <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
+                    <Button
+                      color="danger"
+                      onClick={() => {
+                        setModalMsg('Are you sure you want to delete Aggregation profile?')
+                        setModalTitle('Delete aggregation profile')
+                        setAreYouSureModal(!areYouSureModal);
+                        setFormikValues(props.values)
+                        setOnYes('delete')
+                      }}>
+                      Delete
+                    </Button>
+                    <Button color="success" id="submit-button" type="submit">Save</Button>
+                  </div>
+              }
+            </Form>
+          )}
+        />
+      </BaseArgoView>
+    )
   }
+  else
+    return null
 }
 
 
@@ -1141,7 +1140,7 @@ export const AggregationProfilesList = (props) => {
         location={location}
         listview={true}
         addnew={!publicView}
-        addperm={publicView ? false : userDetails.is_superuser || userDetails.groups.metricprofiles.length > 0}
+        addperm={publicView ? false : userDetails.is_superuser || userDetails.groups.aggregations.length > 0}
         publicview={publicView}>
         <ProfilesListTable
           data={listAggregationProfiles}
@@ -1197,188 +1196,126 @@ const ListDiffElement = ({title, item1, item2}) => {
 };
 
 
-export class AggregationProfileVersionCompare extends Component {
-  constructor(props) {
-    super(props);
+export const AggregationProfileVersionCompare = (props) => {
+  const version1 = props.match.params.id1;
+  const version2 = props.match.params.id2;
+  const name = props.match.params.name;
+  const backend = new Backend();
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
+  const [aggregationProfileVersion1, setAggregationProfileVersion1] = useState(undefined)
+  const [aggregationProfileVersion2, setAggregationProfileVersion2] = useState(undefined)
 
-    this.version1 = props.match.params.id1;
-    this.version2 = props.match.params.id2;
-    this.name = props.match.params.name;
-
-    this.state = {
-      loading: false,
-      name1: '',
-      groupname1: '',
-      metric_operation1: '',
-      profile_operation1: '',
-      endpoint_group1: '',
-      metric_profile1: '',
-      groups1: [],
-      name2: '',
-      groupname2: '',
-      metric_operation2: '',
-      profile_operation2: '',
-      endpoint_group2: '',
-      metric_profile2: '',
-      groups2: [],
-      error: null
-    };
-
-    this.backend = new Backend();
-  }
-
-  async componentDidMount() {
-    try {
-      let json = await this.backend.fetchData(`/api/v2/internal/tenantversion/aggregationprofile/${this.name}`);
-      let name1 = '';
-      let groupname1 = '';
-      let metric_operation1 = '';
-      let profile_operation1 = '';
-      let endpoint_group1 = '';
-      let metric_profile1 = '';
-      let groups1 = [];
-      let name2 = '';
-      let groupname2 = '';
-      let metric_operation2 = '';
-      let profile_operation2 = '';
-      let endpoint_group2 = '';
-      let metric_profile2 = '';
-      let groups2 = [];
-
+  useEffect(() => {
+    const fetchDataAndSet = async () => {
+      let json = await backend.fetchData(`/api/v2/internal/tenantversion/aggregationprofile/${name}`);
       json.forEach((e) => {
-        if (e.version == this.version1) {
-          name1 = e.fields.name;
-          groupname1 = e.fields.groupname;
-          metric_operation1 = e.fields.metric_operation;
-          profile_operation1 = e.fields.profile_operation;
-          endpoint_group1 = e.fields.endpoint_group;
-          metric_profile1 = e.fields.metric_profile;
-          groups1 = e.fields.groups;
-        } else if (e.version == this.version2) {
-          name2 = e.fields.name;
-          groupname2 = e.fields.groupname;
-          metric_operation2 = e.fields.metric_operation;
-          profile_operation2 = e.fields.profile_operation;
-          endpoint_group2 = e.fields.endpoint_group;
-          metric_profile2 = e.fields.metric_profile;
-          groups2 = e.fields.groups;
-        }
-
-        this.setState({
-          name1: name1,
-          groupname1: groupname1,
-          metric_operation1: metric_operation1,
-          profile_operation1: profile_operation1,
-          endpoint_group1: endpoint_group1,
-          metric_profile1: metric_profile1,
-          groups1: groups1,
-          name2: name2,
-          groupname2: groupname2,
-          metric_operation2: metric_operation2,
-          profile_operation2: profile_operation2,
-          endpoint_group2: endpoint_group2,
-          metric_profile2: metric_profile2,
-          groups2: groups2,
-          loading: false,
-        });
-      });
-    } catch(err) {
-      this.setState({
-        error: err,
-        loading: false
-      });
+        if (e.version == version1)
+          setAggregationProfileVersion1({
+            name: e.fields.name,
+            groupname: e.fields.groupname,
+            metric_operation: e.fields.metric_operation,
+            profile_operation: e.fields.profile_operation,
+            endpoint_group: e.fields.endpoint_group,
+            metric_profile: e.fields.metric_profile,
+            groups: e.fields.groups,
+          })
+        else if (e.version == version2)
+          setAggregationProfileVersion2({
+            name: e.fields.name,
+            groupname: e.fields.groupname,
+            metric_operation: e.fields.metric_operation,
+            profile_operation: e.fields.profile_operation,
+            endpoint_group: e.fields.endpoint_group,
+            metric_profile: e.fields.metric_profile,
+            groups: e.fields.groups,
+          })
+        })
+      setLoading(false);
     }
-  }
+    try {
+      fetchDataAndSet();
+    }
+    catch(err) {
+      setError(error);
+      setLoading(false);
+    }
+  }, [])
 
-  render() {
+  if (loading)
+    return (<LoadingAnim/>);
+
+  else if (error)
+    return (
+      <ErrorComponent error={error}/>
+    )
+
+  else if (!loading && aggregationProfileVersion1 && aggregationProfileVersion2) {
     const {
-      name1, name2, groupname1, groupname2, metric_operation1,
-      metric_operation2, profile_operation1, profile_operation2,
-      endpoint_group1, endpoint_group2, metric_profile1, metric_profile2,
-      groups1, groups2, loading, error
-    } = this.state;
+      name: name1, groupname: groupname1, metric_operation: metric_operation1,
+      profile_operation: profile_operation1, endpoint_group: endpoint_group1,
+      metric_profile: metric_profile1, groups: groups1
+    } = aggregationProfileVersion1
+    const {
+      name: name2, groupname: groupname2, metric_operation: metric_operation2,
+      profile_operation: profile_operation2, endpoint_group: endpoint_group2,
+      metric_profile: metric_profile2, groups: groups2
+    } = aggregationProfileVersion2
 
-    if (loading)
-      return (<LoadingAnim/>);
-
-    else if (error)
-      return (
-        <ErrorComponent error={error}/>
-      )
-
-    else if (!loading && name1 && name2) {
-      return (
-        <React.Fragment>
-          <div className='d-flex align-items-center justify-content-between'>
-            <h2 className='ml-3 mt-1 mb-4'>{`Compare ${this.name} versions`}</h2>
-          </div>
-          {
-            (name1 !== name2) &&
-              <DiffElement title='name' item1={name1} item2={name2}/>
-          }
-          {
-            (groupname1 !== groupname2) &&
-              <DiffElement title='group name' item1={groupname1} item2={groupname2}/>
-          }
-          {
-            (metric_operation1 !== metric_operation2) &&
-              <DiffElement title='metric operation' item1={metric_operation1} item2={metric_operation2}/>
-          }
-          {
-            (profile_operation1 !== profile_operation2) &&
-              <DiffElement title='aggregation operation' item1={profile_operation1} item2={profile_operation2}/>
-          }
-          {
-            (endpoint_group1 !== endpoint_group2) &&
-              <DiffElement title='endpoint group' item1={endpoint_group1} item2={endpoint_group2}/>
-          }
-          {
-            (metric_profile1 !== metric_profile2) &&
-              <DiffElement title='metric profile' item1={metric_profile1} item2={metric_profile2}/>
-          }
-          {
-            (groups1 !== groups2) &&
-              <ListDiffElement title='groups' item1={groups1} item2={groups2}/>
-          }
-        </React.Fragment>
-      );
-    } else
-      return null;
-  }
+    return (
+      <React.Fragment>
+        <div className='d-flex align-items-center justify-content-between'>
+          <h2 className='ml-3 mt-1 mb-4'>{`Compare ${name} versions`}</h2>
+        </div>
+        {
+          (name1 !== name2) &&
+            <DiffElement title='name' item1={name1} item2={name2}/>
+        }
+        {
+          (groupname1 !== groupname2) &&
+            <DiffElement title='group name' item1={groupname1} item2={groupname2}/>
+        }
+        {
+          (metric_operation1 !== metric_operation2) &&
+            <DiffElement title='metric operation' item1={metric_operation1} item2={metric_operation2}/>
+        }
+        {
+          (profile_operation1 !== profile_operation2) &&
+            <DiffElement title='aggregation operation' item1={profile_operation1} item2={profile_operation2}/>
+        }
+        {
+          (endpoint_group1 !== endpoint_group2) &&
+            <DiffElement title='endpoint group' item1={endpoint_group1} item2={endpoint_group2}/>
+        }
+        {
+          (metric_profile1 !== metric_profile2) &&
+            <DiffElement title='metric profile' item1={metric_profile1} item2={metric_profile2}/>
+        }
+        {
+          (groups1 !== groups2) &&
+            <ListDiffElement title='groups' item1={groups1} item2={groups2}/>
+        }
+      </React.Fragment>
+    );
+  } else
+    return null;
 }
 
 
-export class AggregationProfileVersionDetails extends Component {
-  constructor(props) {
-    super(props);
+export const AggregationProfileVersionDetails = (props) => {
+  const name = props.match.params.name;
+  const version = props.match.params.version;
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
+  const backend = new Backend();
+  const [aggregationProfileDetails, setAggregationProfileDetails] = useState(undefined)
 
-    this.name = props.match.params.name;
-    this.version = props.match.params.version;
-
-    this.backend = new Backend();
-
-    this.state = {
-      name: '',
-      groupname: '',
-      metric_operation: '',
-      profile_operation: '',
-      endpoint_group: '',
-      metric_profile: '',
-      groups: [],
-      date_created: '',
-      loading: false,
-      error: null
-    };
-  }
-
-  async componentDidMount() {
-    this.setState({loading: true});
-
-    try {
-      let json = await this.backend.fetchData(`/api/v2/internal/tenantversion/aggregationprofile/${this.name}`);
+  useEffect(() => {
+    const fetchDataAndSet = async () => {
+      let json = await backend.fetchData(`/api/v2/internal/tenantversion/aggregationprofile/${name}`);
       json.forEach((e) => {
-        if (e.version == this.version)
-          this.setState({
+        if (e.version == version)
+          setAggregationProfileDetails({
             name: e.fields.name,
             groupname: e.fields.groupname,
             metric_operation: e.fields.metric_operation,
@@ -1387,112 +1324,113 @@ export class AggregationProfileVersionDetails extends Component {
             metric_profile: e.fields.metric_profile,
             groups: e.fields.groups,
             date_created: e.date_created,
-            loading: false
-          });
-      });
-    } catch(err) {
-      this.setState({
-        error: err,
-        loading: false
-      });
+          })
+      })
+      setLoading(false);
     }
-  }
+    setLoading(true);
+    try {
+      fetchDataAndSet()
+    }
+    catch(err) {
+      setError(error);
+      setLoading(false);
+    }
+  }, [])
 
-  render() {
-    const { name, groupname, metric_operation, profile_operation,
-    endpoint_group, metric_profile, groups, date_created, loading, error } = this.state;
-    if (loading)
-      return (<LoadingAnim/>);
+  if (loading)
+    return (<LoadingAnim/>);
 
-    else if (error)
-      return (<ErrorComponent error={error}/>)
+  else if (error)
+    return (<ErrorComponent error={error}/>)
 
-    else if (!loading && name) {
-      return (
-        <BaseArgoView
-          resourcename={`${name} (${date_created})`}
-          infoview={true}
-        >
-          <Formik
-            initialValues = {{
-              name: name,
-              groupname: groupname,
-              metric_operation: metric_operation,
-              profile_operation: profile_operation,
-              endpoint_group: endpoint_group,
-              metric_profile: metric_profile,
-              groups: groups
-            }}
-            render = {props => (
-              <Form>
-                <AggregationProfilesForm
-                  {...props}
-                  historyview={true}
-                />
-                <FieldArray
-                  name='groups'
-                  render={arrayHelpers => (
-                    <Row className='groups'>
-                      {
-                        props.values['groups'].map((group, i) =>
-                          <FieldArray
-                            key={i}
-                            name='groups'
-                            render={arrayHelpers => (
-                              <React.Fragment key={i}>
-                                <Col sm={{size: 8}} md={{size: 5}} className='mt-4 mb-2'>
-                                  <Card>
-                                    <CardHeader className='p-1' color='primary'>
-                                      <Row className='d-flex align-items-center no-gutters'>
-                                        <Col sm={{size: 10}} md={{size: 11}}>
-                                          {groups[i].name}
-                                        </Col>
-                                      </Row>
-                                    </CardHeader>
-                                    <CardBody className='p-1'>
-                                      {
-                                        group.services.map((service, j) =>
-                                          <FieldArray
-                                            key={j}
-                                            name={`groups.${i}.services`}
-                                            render={arrayHelpers => (
-                                              <Row className='d-flex align-items-center service pt-1 pb-1 no-gutters' key={j}>
-                                                <Col md={8}>
-                                                  {groups[i].services[j].name}
-                                                </Col>
-                                                <Col md={2}>
-                                                  {groups[i].services[j].operation}
-                                                </Col>
-                                              </Row>
-                                            )}
-                                          />
-                                        )
-                                      }
-                                    </CardBody>
-                                    <CardFooter className='p-1 d-flex justify-content-center'>
-                                      {groups[i].operation}
-                                    </CardFooter>
-                                  </Card>
-                                </Col>
-                                <Col sm={{size: 4}} md={{size: 1}} className='mt-5'>
-                                  <div className='group-operation' key={i}>
-                                    {props.values.profile_operation}
-                                  </div>
-                                </Col>
-                              </React.Fragment>
-                            )}
-                          />
-                        )
-                      }
-                    </Row>
-                  )}
-                />
-              </Form>
-            )}
-          />
-        </BaseArgoView>
-      );
-    } else
-      return null;
-  }
+  else if (!loading && aggregationProfileDetails) {
+    const { groups } = aggregationProfileDetails;
+
+    return (
+      <BaseArgoView
+        resourcename={`${name} (${aggregationProfileDetails.date_created})`}
+        infoview={true}
+      >
+        <Formik
+          initialValues = {{
+            name: name,
+            groupname: aggregationProfileDetails.groupname,
+            metric_operation: aggregationProfileDetails.metric_operation,
+            profile_operation: aggregationProfileDetails.profile_operation,
+            endpoint_group: aggregationProfileDetails.endpoint_group,
+            metric_profile: aggregationProfileDetails.metric_profile,
+            groups: aggregationProfileDetails.groups
+          }}
+          render = {props => (
+            <Form>
+              <AggregationProfilesForm
+                {...props}
+                historyview={true}
+              />
+              <FieldArray
+                name='groups'
+                render={arrayHelpers => (
+                  <Row className='groups'>
+                    {
+                      props.values['groups'].map((group, i) =>
+                        <FieldArray
+                          key={i}
+                          name='groups'
+                          render={arrayHelpers => (
+                            <React.Fragment key={i}>
+                              <Col sm={{size: 8}} md={{size: 5}} className='mt-4 mb-2'>
+                                <Card>
+                                  <CardHeader className='p-1' color='primary'>
+                                    <Row className='d-flex align-items-center no-gutters'>
+                                      <Col sm={{size: 10}} md={{size: 11}}>
+                                        {groups[i].name}
+                                      </Col>
+                                    </Row>
+                                  </CardHeader>
+                                  <CardBody className='p-1'>
+                                    {
+                                      group.services.map((service, j) =>
+                                        <FieldArray
+                                          key={j}
+                                          name={`groups.${i}.services`}
+                                          render={arrayHelpers => (
+                                            <Row className='d-flex align-items-center service pt-1 pb-1 no-gutters' key={j}>
+                                              <Col md={8}>
+                                                {groups[i].services[j].name}
+                                              </Col>
+                                              <Col md={2}>
+                                                {groups[i].services[j].operation}
+                                              </Col>
+                                            </Row>
+                                          )}
+                                        />
+                                      )
+                                    }
+                                  </CardBody>
+                                  <CardFooter className='p-1 d-flex justify-content-center'>
+                                    {groups[i].operation}
+                                  </CardFooter>
+                                </Card>
+                              </Col>
+                              <Col sm={{size: 4}} md={{size: 1}} className='mt-5'>
+                                <div className='group-operation' key={i}>
+                                  {props.values.profile_operation}
+                                </div>
+                              </Col>
+                            </React.Fragment>
+                          )}
+                        />
+                      )
+                    }
+                  </Row>
+                )}
+              />
+            </Form>
+          )}
+        />
+      </BaseArgoView>
+    );
+  } else
+    return null;
 }
