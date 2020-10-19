@@ -151,78 +151,83 @@ const GroupList = ({name}) => {
 }
 
 
-const Group = ({operation, services, list_operations, list_services,
-  last_service_operation, write_perm, form, groupindex, remove, insert, isnew,
-  last}) =>
-  (!last) ?
-    <React.Fragment key={groupindex}>
-      <Col sm={{size: 8}} md={{size: 5}} className="mt-4 mb-2">
-        <Card className={isnew ? "border-success" : ""}>
-          <CardHeader className="p-1" color="primary">
-            <Row className="d-flex align-items-center no-gutters">
-              <Col sm={{size: 10}} md={{size: 11}}>
-                <Field
-                  name={`groups.${groupindex}.name`}
-                  placeholder="Name of service group"
-                  required={true}
-                  className={`${form.errors && form.errors.groups &&
-                    form.errors.groups[groupindex] &&
-                    form.errors.groups[groupindex].name ? "form-control border-danger" : "form-control"}`}
-                />
-              </Col>
-              <Col sm={{size: 2}} md={{size: 1}} className="pl-1">
-                <Button size="sm" color="danger"
-                  type="button"
-                  onClick={() => (write_perm) && remove(groupindex)}>
-                  <FontAwesomeIcon icon={faTimes}/>
-                </Button>
-              </Col>
-            </Row>
-          </CardHeader>
-          <CardBody className="p-1">
-            <FieldArray
-              name={`groups.${groupindex}`}
-              render={props => (
-                <ServiceList
-                  list_services={list_services}
-                  list_operations={list_operations}
-                  last_service_operation={last_service_operation}
-                  services={services}
-                  groupindex={groupindex}
-                  groupoperation={operation}
-                  groupnew={isnew}
-                  form={form}
-                />)}
-            />
-          </CardBody>
-          <CardFooter className="p-1 d-flex justify-content-center">
+const Group = ({operation, services, groupindex, isnew, last}) => {
+  const context = useContext(AggregationProfilesChangeContext);
+
+  if (!last)
+    return (
+      <React.Fragment key={groupindex}>
+        <Col sm={{size: 8}} md={{size: 5}} className="mt-4 mb-2">
+          <Card className={isnew ? "border-success" : ""}>
+            <CardHeader className="p-1" color="primary">
+              <Row className="d-flex align-items-center no-gutters">
+                <Col sm={{size: 10}} md={{size: 11}}>
+                  <Field
+                    name={`groups.${groupindex}.name`}
+                    placeholder="Name of service group"
+                    required={true}
+                    className={`${context.formikBag.form.errors && context.formikBag.form.errors.groups &&
+                      context.formikBag.form.errors.groups[groupindex] &&
+                      context.formikBag.form.errors.groups[groupindex].name ? "form-control border-danger" : "form-control"}`}
+                  />
+                </Col>
+                <Col sm={{size: 2}} md={{size: 1}} className="pl-1">
+                  <Button size="sm" color="danger"
+                    type="button"
+                    onClick={() => (context.write_perm) && context.formikBag.remove(groupindex)}>
+                    <FontAwesomeIcon icon={faTimes}/>
+                  </Button>
+                </Col>
+              </Row>
+            </CardHeader>
+            <CardBody className="p-1">
+              <FieldArray
+                name={`groups.${groupindex}`}
+                render={props => (
+                  <ServiceList
+                    list_services={context.list_services}
+                    list_operations={context.list_operations}
+                    last_service_operation={context.last_service_operation}
+                    services={services}
+                    groupindex={groupindex}
+                    groupoperation={operation}
+                    groupnew={isnew}
+                    form={context.formikBag.form}
+                  />)}
+              />
+            </CardBody>
+            <CardFooter className="p-1 d-flex justify-content-center">
+              <DropDown
+                field={{name: "operation", value: operation}}
+                data={insertSelectPlaceholder(context.list_operations, 'Select')}
+                prefix={`groups.${groupindex}`}
+                class_name="custom-select col-2"
+                errors={context.formikBag.form.errors && context.formikBag.form.errors.groups && context.formikBag.form.errors.groups[groupindex]}
+              />
+            </CardFooter>
+          </Card>
+        </Col>
+        <Col sm={{size: 4}} md={{size: 1}} className="mt-5">
+          <div className="group-operation" key={groupindex}>
             <DropDown
-              field={{name: "operation", value: operation}}
-              data={insertSelectPlaceholder(list_operations, 'Select')}
-              prefix={`groups.${groupindex}`}
-              class_name="custom-select col-2"
-              errors={form.errors && form.errors.groups && form.errors.groups[groupindex]}
+              field={{name: 'profile_operation', value: context.formikBag.form.values.profile_operation}}
+              data={insertSelectPlaceholder(context.list_operations, 'Select')}
             />
-          </CardFooter>
-        </Card>
+          </div>
+        </Col>
+      </React.Fragment>
+    )
+  else
+    return (
+      <Col sm={{size: 12}} md={{size: 6}} className="mt-4 mb-2 d-flex justify-content-center align-items-center">
+        <Button outline color="secondary" size='lg' disabled={!context.write_perm ? true : false} onClick={
+          () => context.write_perm &&
+            context.formikBag.insert(groupindex, {name: '', operation: '', isNew: true,
+                services: [{name: '', operation: ''}]})
+        }>Add new group</Button>
       </Col>
-      <Col sm={{size: 4}} md={{size: 1}} className="mt-5">
-        <div className="group-operation" key={groupindex}>
-          <DropDown
-            field={{name: 'profile_operation', value: form.values.profile_operation}}
-            data={insertSelectPlaceholder(list_operations, 'Select')}
-          />
-        </div>
-      </Col>
-    </React.Fragment>
-  :
-    <Col sm={{size: 12}} md={{size: 6}} className="mt-4 mb-2 d-flex justify-content-center align-items-center">
-      <Button outline color="secondary" size='lg' disabled={!write_perm ? true : false} onClick={
-        () => write_perm &&
-          insert(groupindex, {name: '', operation: '', isNew: true,
-              services: [{name: '', operation: ''}]})
-      }>Add new group</Button>
-    </Col>
+    )
+}
 
 
 const ServiceList = ({services, list_services=[], list_operations=[], last_service_operation, groupindex, groupnew=false, form}) =>
