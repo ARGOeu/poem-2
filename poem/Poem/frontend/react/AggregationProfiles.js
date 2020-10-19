@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useContext } from 'react';
 import {Link} from 'react-router-dom';
 import {
   LoadingAnim,
@@ -41,6 +41,8 @@ import ReactDiffViewer from 'react-diff-viewer';
 import "react-notifications/lib/notifications.css";
 import './AggregationProfiles.css';
 
+
+const AggregationProfilesChangeContext = React.createContext();
 
 
 const AggregationProfilesSchema = Yup.object().shape({
@@ -116,32 +118,37 @@ const AggregationProfileAutocompleteField = ({suggestions, service, index, form,
 }
 
 
-const GroupList = ({name, form, list_services, list_operations, last_service_operation, write_perm}) =>
-  <Row className="groups">
-    {
-    form.values[name].map((group, i) =>
-      <FieldArray
-        key={i}
-        name="groups"
-        render={props => (
-          <Group
-            {...props}
+const GroupList = ({name}) => {
+  const context = useContext(AggregationProfilesChangeContext);
+
+  return (
+    <Row className="groups">
+      {
+        context.formikBag.form.values[name].map((group, i) =>
+          <FieldArray
             key={i}
-            operation={group.operation}
-            services={group.services}
-            list_services={list_services}
-            list_operations={list_operations}
-            last_service_operation={last_service_operation}
-            write_perm={write_perm}
-            groupindex={i}
-            isnew={group.isNew}
-            last={i === form.values[name].length - 1}
+            name="groups"
+            render={props => (
+              <Group
+                {...props}
+                key={i}
+                operation={group.operation}
+                services={group.services}
+                list_services={context.list_services}
+                list_operations={context.list_operations}
+                last_service_operation={context.last_service_operation}
+                write_perm={context.write_perm}
+                groupindex={i}
+                isnew={group.isNew}
+                last={i === context.formikBag.form.values[name].length - 1}
+              />
+            )}
           />
-        )}
-      />
-    )
-  }
-  </Row>
+        )
+      }
+    </Row>
+  )
+}
 
 
 const Group = ({operation, services, list_operations, list_services,
@@ -968,13 +975,20 @@ export const AggregationProfilesChange = (props) => {
                   <FieldArray
                     name="groups"
                     render={props => (
-                      <GroupList
-                        {...props}
-                        list_services={listServices}
-                        list_operations={logic_operations}
-                        last_service_operation={insertOperationFromPrevious}
-                        write_perm={write_perm}
-                      />)}
+                      <AggregationProfilesChangeContext.Provider value={{
+                        list_services: listServices,
+                        list_operations: logic_operations,
+                        write_perm: write_perm,
+                        last_service_operation: insertOperationFromPrevious,
+                        formikBag: {
+                          form: props.form,
+                          remove: props.remove,
+                          insert: props.insert
+                        }
+                      }}>
+                        <GroupList {...props}/>
+                      </AggregationProfilesChangeContext.Provider>
+                    )}
                   />
                 :
                   <FieldArray
