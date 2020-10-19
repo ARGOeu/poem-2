@@ -230,31 +230,37 @@ const Group = ({operation, services, groupindex, isnew, last}) => {
 }
 
 
-const ServiceList = ({services, list_services=[], list_operations=[], last_service_operation, groupindex, groupnew=false, form}) =>
-  services.map((service, i) =>
-    <FieldArray
-      key={i}
-      name={`groups.${groupindex}.services`}
-      render={props => (
-        <Service
-          {...props}
-          key={i}
-          service={service}
-          operation={service.operation}
-          list_services={list_services}
-          list_operations={list_operations}
-          last_service_operation={last_service_operation}
-          groupindex={groupindex}
-          groupnew={groupnew}
-          index={i}
-          last={i === services.length - 1}
-          form={form}
-          isnew={service.isnew}
-          ismissing={service.name && list_services.indexOf(service.name) === -1}
-        />
-      )}
-    />
+const ServiceList = ({services, groupindex, groupnew=false}) =>
+{
+  const context = useContext(AggregationProfilesChangeContext);
+
+  return (
+    services.map((service, i) =>
+      <FieldArray
+        key={i}
+        name={`groups.${groupindex}.services`}
+        render={props => (
+          <Service
+            {...props}
+            key={i}
+            service={service}
+            operation={service.operation}
+            list_services={context.list_services}
+            list_operations={context.list_operations}
+            last_service_operation={context.last_service_operation}
+            groupindex={groupindex}
+            groupnew={groupnew}
+            index={i}
+            last={i === services.length - 1}
+            form={context.formikBag.form}
+            isnew={service.isnew}
+            ismissing={service.name && context.list_services.indexOf(service.name) === -1}
+          />
+        )}
+      />
+    )
   )
+}
 
 
 const Service = ({name, service, operation, list_services, list_operations,
