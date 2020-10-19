@@ -253,7 +253,7 @@ const ServiceList = ({services, groupindex, groupnew=false}) =>
             index={i}
             last={i === services.length - 1}
             form={context.formikBag.form}
-            isnew={service.isnew}
+            isnew={service.isNew}
             ismissing={service.name && context.list_services.indexOf(service.name) === -1}
           />
         )}
@@ -302,7 +302,7 @@ const Service = ({name, service, operation, groupindex, groupnew, index,
           <Button size="sm" color="light"
             type="button"
             onClick={() => insert(index + 1, {name: '', operation:
-              context.last_service_operation(index, context.formikBag.form.values.groups[groupindex].services), isnew: true})}>
+              context.last_service_operation(index, context.formikBag.form.values.groups[groupindex].services), isNew: true})}>
             <FontAwesomeIcon icon={faPlus}/>
           </Button>
         </Col>
@@ -864,12 +864,12 @@ export const AggregationProfilesChange = (props) => {
   const removeIsNewFlag = (values) => {
     for (let group of values.groups) {
       let keys = Object.keys(group)
-      if (keys.indexOf('isnew') !== -1)
-        delete group.isnew
+      if (keys.indexOf('isNew') !== -1)
+        delete group.isNew
       for (let service of group.services) {
         let keys = Object.keys(service)
-        if (keys.indexOf('isnew') !== -1)
-          delete service.isnew
+        if (keys.indexOf('isNew') !== -1)
+          delete service.isNew
       }
     }
   }
