@@ -14,8 +14,7 @@ import{
   ParagraphTitle,
   DefaultColumnFilter,
   SelectColumnFilter,
-  BaseArgoTable,
-  ModalAreYouSure
+  BaseArgoTable
 } from './UIElements';
 import {
   FormGroup,
@@ -64,7 +63,7 @@ export const PackageList = (props) => {
     'package_listview_repos', async () => {
       let repos = await backend.fetchData('/api/v2/internal/yumrepos');
       let list_repos = [];
-      repos.forEach(r => list_repos.push(`${r.name} (${r.tag})`));
+      repos.forEach(repo => list_repos.push(`${repo.name} (${repo.tag})`));
       return list_repos;
     }
   );
@@ -195,7 +194,7 @@ export const PackageComponent = (props) => {
       if (!addview)
         prb = await backend.fetchData('/api/v2/internal/version/probe');
 
-      return probes;
+      return prb;
     }
   );
 
@@ -221,13 +220,13 @@ export const PackageComponent = (props) => {
 
   function toggleAreYouSure() {
     setAreYouSureModal(!areYouSureModal);
-  };
+  }
 
   function onSelect(field, value) {
     let p = pkg;
     p[field] = value;
     queryCache.setQueryData(`${querykey}`, () => p)
-  };
+  }
 
   function onVersionSelect(value) {
     let initial_version = pkg.initial_version;
@@ -244,11 +243,11 @@ export const PackageComponent = (props) => {
 
         queryCache.setQueryData(`${querykey}`, () => updated_pkg);
         setDisabledButton(value === initial_version);
-      };
+      }
     });
-  };
+  }
 
-  function onSubmitHandle(values, actions) {
+  function onSubmitHandle(values) {
     let msg = `Are you sure you want to ${addview || cloneview ? 'add' : 'change'} package?`;
     let title = `${addview || cloneview ? 'Add' : 'Change'} package`;
 
@@ -257,9 +256,9 @@ export const PackageComponent = (props) => {
     setModalTitle(title);
     setModalFlag('submit');
     toggleAreYouSure();
-  };
+  }
 
-  async function onTenantSubmitHandle(values, actions) {
+  async function onTenantSubmitHandle(values) {
     try {
       let response = await fetch(
         `/api/v2/internal/updatemetricsversions/${values.name}-${values.version}`,
@@ -281,7 +280,7 @@ export const PackageComponent = (props) => {
 
         msgs.push('ARE YOU SURE you want to update metrics?')
 
-        setModalMsg(<div>{msgs.map((m, i) => <p key={i}>{m}</p>)}</div>);
+        setModalMsg(<div>{msgs.map((msg, i) => <p key={i}>{msg}</p>)}</div>);
         setModalTitle(title);
         setFormValues(values);
         setModalFlag('update');
@@ -298,14 +297,14 @@ export const PackageComponent = (props) => {
           title: 'Error',
           msg: error_msg
         });
-      };
+      }
     } catch(err) {
       NotifyError({
         title: 'Error',
         msg: `Error fetching metrics data: ${err}`
       });
-    };
-  };
+    }
+  }
 
   async function updateMetrics() {
     let response = await backend.changeObject(
@@ -322,7 +321,7 @@ export const PackageComponent = (props) => {
         err_msg = json.detail;
       } catch(err) {
         err_msg = 'Error updating metrics';
-      };
+      }
       NotifyError({
         title: `Error: ${response.status} ${response.statusText}`,
         msg: err_msg
@@ -340,8 +339,8 @@ export const PackageComponent = (props) => {
 
       if ('deleted' in json)
         NotifyWarn({msg: json.deleted, title: 'Deleted'});
-    };
-  };
+    }
+  }
 
   async function doChange() {
     let repos = [];
@@ -379,7 +378,7 @@ export const PackageComponent = (props) => {
           title: 'Added',
           callback: () => history.push('/ui/packages')
         });
-      };
+      }
     } else {
       let response = await backend.changeObject(
         '/api/v2/internal/packages/',
@@ -409,9 +408,9 @@ export const PackageComponent = (props) => {
           title: 'Changed',
           callback: () => history.push('/ui/packages')
         });
-      };
-    };
-  };
+      }
+    }
+  }
 
   async function doDelete() {
     let response = await backend.deleteObject(`/api/v2/internal/packages/${nameversion}`);
@@ -422,7 +421,7 @@ export const PackageComponent = (props) => {
         msg = json.detail;
       } catch(err) {
         msg = 'Error deleting package';
-      };
+      }
       NotifyError({
         title: `Error: ${response.status} ${response.statusText}`,
         msg: msg
@@ -433,12 +432,12 @@ export const PackageComponent = (props) => {
         title: 'Deleted',
         callback: () => history.push('/ui/packages')
       });
-    };
-  };
+    }
+  }
 
   function toggleCheckbox() {
     setPresentVersion(!presentVersion);
-  };
+  }
 
   if (loadingPkg || loadingRepos || loadingProbes || loadingPackageVersions)
     return (<LoadingAnim/>);
@@ -464,268 +463,265 @@ export const PackageComponent = (props) => {
 
       if (pkg.repos[i].split('(')[1].slice(0, -1) === 'CentOS 7')
         repo7 = pkg.repos[i];
-    };
+    }
 
 
     var listProbes = [];
     if (probes)
-      probes.forEach(p => {
-        if (p.fields.package === `${pkg.name} (${pkg.version})`)
-          listProbes.push(p.fields.name);
+      probes.forEach(probe => {
+        if (probe.fields.package === `${pkg.name} (${pkg.version})`)
+          listProbes.push(probe.fields.name);
       });
 
     return (
-      <>
-        <ModalAreYouSure
-          isOpen={areYouSureModal}
-          toggle={toggleAreYouSure}
-          title={modalTitle}
-          msg={modalMsg}
-          onYes={
-            modalFlag === 'submit' ?
-              doChange
+      <BaseArgoView
+        resourcename={disabled ? 'Package details' : 'package'}
+        infoview={disabled}
+        location={location}
+        addview={addview}
+        cloneview={cloneview}
+        clone={true}
+        history={false}
+        modal={true}
+        state={{
+          areYouSureModal,
+          modalTitle,
+          modalMsg,
+          'modalFunc': modalFlag === 'submit' ?
+            doChange
+          :
+            modalFlag === 'delete' ?
+              doDelete
             :
-              modalFlag === 'delete' ?
-                doDelete
+              modalFlag === 'update' ?
+                updateMetrics
               :
-                modalFlag === 'update' ?
-                  updateMetrics
-                :
-                  undefined
-            }
-        />
-        <BaseArgoView
-          resourcename={disabled ? 'Package details' : 'package'}
-          infoview={disabled}
-          location={location}
-          addview={addview}
-          cloneview={cloneview}
-          clone={true}
-          history={false}
-        >
-          <Formik
-            initialValues = {{
-              id: pkg.id,
-              name: pkg.name,
-              version: pkg.version,
-              repo_6: repo6,
-              repo_7: repo7,
-              present_version: presentVersion
-            }}
-            onSubmit = {(values, actions) => onSubmitHandle(values, actions)}
-            validationSchema={PackageSchema}
-            enableReinitialize={true}
-            render = {props => (
-              <Form>
-                <FormGroup>
-                  <Row className='align-items-center'>
-                    <Col md={6}>
-                      <InputGroup>
-                        <InputGroupAddon addonType='prepend'>Name</InputGroupAddon>
-                        <Field
-                          type='text'
-                          name='name'
-                          className={`form-control ${props.errors.name && 'border-danger'}`}
-                          id='name'
-                          disabled={disabled}
-                        />
-                      </InputGroup>
-                      {
-                        props.errors.name &&
-                          FancyErrorMessage(props.errors.name)
-                      }
-                      <FormText color='muted'>
-                        Package name.
-                      </FormText>
-                    </Col>
-                    <Col md={2}>
-                      <Row>
-                        <Col md={12}>
-                      <InputGroup>
-                        <InputGroupAddon addonType='prepend'>Version</InputGroupAddon>
+                undefined
+        }}
+        toggle={toggleAreYouSure}
+      >
+        <Formik
+          initialValues = {{
+            id: pkg.id,
+            name: pkg.name,
+            version: pkg.version,
+            repo_6: repo6,
+            repo_7: repo7,
+            present_version: presentVersion
+          }}
+          onSubmit = {(values) => onSubmitHandle(values)}
+          validationSchema={PackageSchema}
+          enableReinitialize={true}
+          render = {props => (
+            <Form>
+              <FormGroup>
+                <Row className='align-items-center'>
+                  <Col md={6}>
+                    <InputGroup>
+                      <InputGroupAddon addonType='prepend'>Name</InputGroupAddon>
+                      <Field
+                        type='text'
+                        name='name'
+                        className={`form-control ${props.errors.name && 'border-danger'}`}
+                        id='name'
+                        disabled={disabled}
+                      />
+                    </InputGroup>
+                    {
+                      props.errors.name &&
+                        FancyErrorMessage(props.errors.name)
+                    }
+                    <FormText color='muted'>
+                      Package name.
+                    </FormText>
+                  </Col>
+                  <Col md={2}>
+                    <Row>
+                      <Col md={12}>
+                        <InputGroup>
+                          <InputGroupAddon addonType='prepend'>Version</InputGroupAddon>
+                          {
+                            disabled ?
+                              <Field
+                                component='select'
+                                name='version'
+                                className='form-control custom-select'
+                                id='version'
+                                onChange={e => onVersionSelect(e.target.value)}
+                              >
+                                {
+                                  packageVersions.map((version, i) =>
+                                    <option key={i} value={version.version}>{version.version}</option>
+                                  )
+                                }
+                              </Field>
+                            :
+                              <Field
+                                type='text'
+                                name='version'
+                                value={props.values.present_version ? 'present' : props.values.version}
+                                disabled={props.values.present_version}
+                                className={`form-control ${props.errors.version && 'border-danger'}`}
+                                id='version'
+                              />
+                          }
+                        </InputGroup>
                         {
-                          disabled ?
-                            <Field
-                              component='select'
-                              name='version'
-                              className='form-control custom-select'
-                              id='version'
-                              onChange={e => onVersionSelect(e.target.value)}
-                            >
-                              {
-                                packageVersions.map((version, i) =>
-                                  <option key={i} value={version.version}>{version.version}</option>
-                                )
-                              }
-                            </Field>
-                          :
-                            <Field
-                              type='text'
-                              name='version'
-                              value={props.values.present_version ? 'present' : props.values.version}
-                              disabled={props.values.present_version}
-                              className={`form-control ${props.errors.version && 'border-danger'}`}
-                              id='version'
-                            />
+                          props.errors.version &&
+                            FancyErrorMessage(props.errors.version)
                         }
-                      </InputGroup>
-                      {
-                        props.errors.version &&
-                          FancyErrorMessage(props.errors.version)
-                      }
-                      <FormText color='muted'>
-                        Package version.
-                      </FormText>
-                    </Col>
-                  </Row>
-                    </Col>
-                    {
-                      !disabled &&
-                        <Col md={3}>
-                          <Field
-                            component={Checkbox}
-                            name='present_version'
-                            className='form-control'
-                            id='checkbox'
-                            label='Use version which is present in repo'
-                            onChange={toggleCheckbox}
-                          />
-                        </Col>
-                    }
-                  </Row>
-                </FormGroup>
-                <FormGroup>
-                  <ParagraphTitle title='YUM repo'/>
-                  <Row>
-                    <Col md={8}>
-                      {
-                        disabled ?
-                          <InputGroup>
-                            <InputGroupAddon addonType='prepend'>CentOS 6 repo</InputGroupAddon>
-                            <Field
-                              type='text'
-                              className='form-control'
-                              name='repo_6'
-                              id='repo_6'
-                              disabled={true}
-                            />
-                          </InputGroup>
-                        :
-                          <AutocompleteField
-                            {...props}
-                            lists={repos.repo6}
-                            icon='yumrepos'
-                            field='repo_6'
-                            val={props.values.repo_6}
-                            onselect_handler={onSelect}
-                            req={props.errors.undefined}
-                            label='CentOS 6 repo'
-                          />
-                      }
-                      {
-                        props.errors.undefined &&
-                          FancyErrorMessage(props.errors.undefined)
-                      }
-                      <FormText color='muted'>
-                        Package is part of selected CentOS 6 repo.
-                      </FormText>
-                    </Col>
-                  </Row>
-                  <Row className='mt-4'>
-                    <Col md={8}>
-                      {
-                        disabled ?
-                          <InputGroup>
-                            <InputGroupAddon addonType='prepend'>CentOS 7 repo</InputGroupAddon>
-                            <Field
-                              type='text'
-                              className='form-control'
-                              name='repo_7'
-                              id='repo_7'
-                              disabled={true}
-                            />
-                          </InputGroup>
-                        :
-                          <AutocompleteField
-                            {...props}
-                            lists={repos.repo7}
-                            icon='yumrepos'
-                            field='repo_7'
-                            val={props.values.repo_7}
-                            onselect_handler={onSelect}
-                            req={props.errors.undefined}
-                            label='CentOS 7 repo'
-                          />
-                      }
-                      {
-                        props.errors.undefined &&
-                          FancyErrorMessage(props.errors.undefined)
-                      }
-                      <FormText color='muted'>
-                        Package is part of selected CentOS 7 repo.
-                      </FormText>
-                    </Col>
-                  </Row>
+                        <FormText color='muted'>
+                          Package version.
+                        </FormText>
+                      </Col>
+                    </Row>
+                  </Col>
                   {
-                    (!addview && !cloneview && listProbes.length > 0) &&
-                      <Row className='mt-3'>
-                        <Col md={8}>
-                          Probes:
-                          <div>
-                            {
-                              listProbes
-                                .map((e, i) => <Link key={i} to={`/ui/probes/${e}/history/${props.values.version}`}>{e}</Link>)
-                                .reduce((prev, curr) => [prev, ', ', curr])
-                            }
-                          </div>
-                        </Col>
-                      </Row>
+                    !disabled &&
+                      <Col md={3}>
+                        <Field
+                          component={Checkbox}
+                          name='present_version'
+                          className='form-control'
+                          id='checkbox'
+                          label='Use version which is present in repo'
+                          onChange={toggleCheckbox}
+                        />
+                      </Col>
                   }
-                </FormGroup>
-                {
-                  <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
-                    {
-                      (!addview && !cloneview && !disabled) ?
-                        <Button
-                          color="danger"
-                          onClick={() => {
-                            setModalMsg('Are you sure you want to delete package?');
-                            setModalTitle('Delete package')
-                            setModalFlag('delete');
-                            toggleAreYouSure();
-                          }}
-                        >
-                          Delete
-                        </Button>
-                      :
-                        <div></div>
-                    }
+                </Row>
+              </FormGroup>
+              <FormGroup>
+                <ParagraphTitle title='YUM repo'/>
+                <Row>
+                  <Col md={8}>
                     {
                       disabled ?
-                        <Button
-                          color='success'
-                          id='import-metrics-button'
-                          disabled={disabled && disabledButton}
-                          onClick={() => onTenantSubmitHandle(props.values)}
-                        >
-                          Update metrics
-                        </Button>
+                        <InputGroup>
+                          <InputGroupAddon addonType='prepend'>CentOS 6 repo</InputGroupAddon>
+                          <Field
+                            type='text'
+                            className='form-control'
+                            name='repo_6'
+                            id='repo_6'
+                            disabled={true}
+                          />
+                        </InputGroup>
                       :
-                        <Button
-                          color="success"
-                          id="submit-button"
-                          type="submit"
-                        >
-                          Save
-                        </Button>
+                        <AutocompleteField
+                          {...props}
+                          lists={repos.repo6}
+                          icon='yumrepos'
+                          field='repo_6'
+                          val={props.values.repo_6}
+                          onselect_handler={onSelect}
+                          req={props.errors.undefined}
+                          label='CentOS 6 repo'
+                        />
                     }
-                  </div>
-            }
-              </Form>
-            )}
-          />
-        </BaseArgoView>
-      </>
+                    {
+                      props.errors.undefined &&
+                        FancyErrorMessage(props.errors.undefined)
+                    }
+                    <FormText color='muted'>
+                      Package is part of selected CentOS 6 repo.
+                    </FormText>
+                  </Col>
+                </Row>
+                <Row className='mt-4'>
+                  <Col md={8}>
+                    {
+                      disabled ?
+                        <InputGroup>
+                          <InputGroupAddon addonType='prepend'>CentOS 7 repo</InputGroupAddon>
+                          <Field
+                            type='text'
+                            className='form-control'
+                            name='repo_7'
+                            id='repo_7'
+                            disabled={true}
+                          />
+                        </InputGroup>
+                      :
+                        <AutocompleteField
+                          {...props}
+                          lists={repos.repo7}
+                          icon='yumrepos'
+                          field='repo_7'
+                          val={props.values.repo_7}
+                          onselect_handler={onSelect}
+                          req={props.errors.undefined}
+                          label='CentOS 7 repo'
+                        />
+                    }
+                    {
+                      props.errors.undefined &&
+                        FancyErrorMessage(props.errors.undefined)
+                    }
+                    <FormText color='muted'>
+                      Package is part of selected CentOS 7 repo.
+                    </FormText>
+                  </Col>
+                </Row>
+                {
+                  (!addview && !cloneview && listProbes.length > 0) &&
+                    <Row className='mt-3'>
+                      <Col md={8}>
+                        Probes:
+                        <div>
+                          {
+                            listProbes
+                              .map((e, i) => <Link key={i} to={`/ui/probes/${e}/history/${props.values.version}`}>{e}</Link>)
+                              .reduce((prev, curr) => [prev, ', ', curr])
+                          }
+                        </div>
+                      </Col>
+                    </Row>
+                }
+              </FormGroup>
+              {
+                <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
+                  {
+                    (!addview && !cloneview && !disabled) ?
+                      <Button
+                        color="danger"
+                        onClick={() => {
+                          setModalMsg('Are you sure you want to delete package?');
+                          setModalTitle('Delete package')
+                          setModalFlag('delete');
+                          toggleAreYouSure();
+                        }}
+                      >
+                        Delete
+                      </Button>
+                    :
+                      <div></div>
+                  }
+                  {
+                    disabled ?
+                      <Button
+                        color='success'
+                        id='import-metrics-button'
+                        disabled={disabled && disabledButton}
+                        onClick={() => onTenantSubmitHandle(props.values)}
+                      >
+                        Update metrics
+                      </Button>
+                    :
+                      <Button
+                        color="success"
+                        id="submit-button"
+                        type="submit"
+                      >
+                        Save
+                      </Button>
+                  }
+                </div>
+          }
+            </Form>
+          )}
+        />
+      </BaseArgoView>
     )
   } else
     return null;
