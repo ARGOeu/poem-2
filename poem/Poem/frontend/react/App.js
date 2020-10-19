@@ -32,7 +32,7 @@ import {
   AggregationProfileVersionDetails
 } from './AggregationProfiles';
 import { ReportsList, ReportsComponent } from './Reports';
-import { UsersList, UserChange, SuperAdminUserChange, ChangePassword } from './Users';
+import { UsersList, UserChange, ChangePassword } from './Users';
 import {
   GroupList,
   GroupChange
@@ -237,10 +237,11 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, w
     <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/users/add"
       render={props => <UserChange
         {...props}
-        addview={true}/>}
+        addview={true}
+        isTenantSchema={true}/>}
     />
     <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/users/:user_name"
-      render={props => <UserChange {...props}/>}
+      render={props => <UserChange {...props} isTenantSchema={true}/>}
     />
     <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/groupofmetrics"
       render={props => <GroupList {...props} group='metrics' id='groupofmetrics' name='group of metrics'/>}
@@ -441,7 +442,7 @@ const SuperAdminRouteSwitch = ({props}) => (
     <Route exact path="/ui/administration" component={SuperAdminAdministration}/>
     <Route exact path="/ui/administration/users" component={UsersList} />
     <Route exact path="/ui/administration/users/add"
-      render={props => <SuperAdminUserChange
+      render={props => <UserChange
         {...props}
         addview={true}/>}
     />
@@ -449,7 +450,7 @@ const SuperAdminRouteSwitch = ({props}) => (
       render={props => <ChangePassword {...props}/>}
     />
     <Route exact path="/ui/administration/users/:user_name"
-      render={props => <SuperAdminUserChange {...props}/>}
+      render={props => <UserChange {...props}/>}
     />
     <Route exact path="/ui/administration/apikey" component={APIKeyList} />
     <Route exact path="/ui/administration/apikey/add"
