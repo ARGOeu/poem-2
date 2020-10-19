@@ -10,8 +10,7 @@ import {
   ErrorComponent,
   DefaultColumnFilter,
   SelectColumnFilter,
-  BaseArgoTable,
-  ModalAreYouSure
+  BaseArgoTable
 } from './UIElements';
 import { Formik, Form, Field } from 'formik';
 import {
@@ -134,7 +133,7 @@ export const YumRepoComponent = (props) => {
   if (props.match.params.name) {
     tag = props.match.params.name.split('-')[props.match.params.name.split('-').length - 1];
     name = props.match.params.name.replace('-' + tag, '');
-  };
+  }
 
   const addview = props.addview;
   const cloneview = props.cloneview;
@@ -177,9 +176,9 @@ export const YumRepoComponent = (props) => {
 
   function toggleAreYouSure() {
     setAreYouSureModal(!areYouSureModal);
-  };
+  }
 
-  function onSubmitHandle(values, actions) {
+  function onSubmitHandle(values) {
     let msg = `Are you sure you want to ${addview || cloneview ? 'add' : 'change'} YUM repo?`;
     let title = `${addview || cloneview ? 'Add' : 'Change'} YUM repo`;
 
@@ -188,7 +187,7 @@ export const YumRepoComponent = (props) => {
     setModalFlag('submit');
     setFormValues(values);
     toggleAreYouSure();
-  };
+  }
 
   async function doChange() {
     if (addview || cloneview) {
@@ -208,7 +207,7 @@ export const YumRepoComponent = (props) => {
           add_msg = json.detail;
         } catch(err) {
           add_msg = 'Error adding YUM repo';
-        };
+        }
         NotifyError({
           title: `Error: ${response.status} ${response.statusText}`,
           msg: add_msg
@@ -219,7 +218,7 @@ export const YumRepoComponent = (props) => {
           title: 'Added',
           callback: () => history.push('/ui/yumrepos')
         });
-      };
+      }
     } else {
       let response = await backend.changeObject(
         '/api/v2/internal/yumrepos/',
@@ -238,7 +237,7 @@ export const YumRepoComponent = (props) => {
           change_msg = json.detail;
         } catch(err) {
           change_msg = 'Error changing YUM repo';
-        };
+        }
         NotifyError({
           title: `Error: ${response.status} ${response.statusText}`,
           msg: change_msg
@@ -249,9 +248,9 @@ export const YumRepoComponent = (props) => {
           title: 'Changed',
           callback: () => history.push('/ui/yumrepos')
         });
-      };
-    };
-  };
+      }
+    }
+  }
 
   async function doDelete() {
     let response = await backend.deleteObject(`/api/v2/internal/yumrepos/${name}/${tag}`);
@@ -262,7 +261,7 @@ export const YumRepoComponent = (props) => {
         msg = json.detail;
       } catch(err) {
         msg = 'Error deleting YUM repo';
-      };
+      }
       NotifyError({
         title: `Error: ${response.status} ${response.statusText}`,
         msg: msg
@@ -273,8 +272,8 @@ export const YumRepoComponent = (props) => {
         title: 'Deleted',
         callback: () => history.push('/ui/yumrepos')
       });
-    };
-  };
+    }
+  }
 
   if (loadingRepo || loadingTags)
     return (<LoadingAnim/>);
@@ -287,161 +286,166 @@ export const YumRepoComponent = (props) => {
 
   else if (!loadingRepo && !loadingTags && repo) {
     return (
-      <>
-        <ModalAreYouSure
-          isOpen={areYouSureModal}
-          toggle={toggleAreYouSure}
-          title={modalTitle}
-          msg={modalMsg}
-          onYes={modalFlag === 'submit' ? doChange : modalFlag === 'delete' ? doDelete : undefined}
-        />
-        <BaseArgoView
-          resourcename='YUM repo'
-          location={location}
-          addview={addview}
-          cloneview={cloneview}
-          clone={!disabled}
-          history={false}
-        >
-          <Formik
-            initialValues = {{
-              id: repo.id,
-              name: repo.name,
-              tag: repo.tag,
-              content: repo.content,
-              description: repo.description
-            }}
-            onSubmit = {(values, actions) => onSubmitHandle(values, actions)}
-            validationSchema={RepoSchema}
-            render = {props => (
-              <Form>
-                <FormGroup>
-                  <Row>
-                    <Col md={6}>
-                      <InputGroup>
-                        <InputGroupAddon addonType='prepend'>Name</InputGroupAddon>
-                        <Field
-                          type='text'
-                          name='name'
-                          className={`form-control ${props.errors.name && 'border-danger'}`}
-                          id='name'
-                          disabled={disabled}
-                        />
-                      </InputGroup>
-                      {
-                        props.errors.name &&
-                          FancyErrorMessage(props.errors.name)
-                      }
-                      <FormText color='muted'>
-                        Name of YUM repo file.
-                      </FormText>
-                    </Col>
-                    <Col md={2}>
-                      <InputGroup>
-                        <InputGroupAddon addonType='prepend'>Tag</InputGroupAddon>
-                        {
-                          disabled ?
-                            <Field
-                              type='text'
-                              name='tag'
-                              className='form-control'
-                              id='tag'
-                              disabled={true}
-                            />
-                          :
-                            <Field
-                              component='select'
-                              name='tag'
-                              className='form-control custom-select'
-                              id='tag'
-                            >
-                              {
-                                tags.map((name, i) =>
-                                  <option key={i} value={name}>{name}</option>
-                                )
-                              }
-                            </Field>
-                        }
-                      </InputGroup>
-                      <FormText color='muted'>
-                        OS tag.
-                      </FormText>
-                    </Col>
-                  </Row>
-                </FormGroup>
-                <FormGroup>
-                  <Row>
-                    <Col md={8}>
-                      <Label for='content'>File content</Label>
+      <BaseArgoView
+        resourcename='YUM repo'
+        location={location}
+        addview={addview}
+        cloneview={cloneview}
+        clone={!disabled}
+        history={false}
+        modal={true}
+        state={{
+          areYouSureModal,
+          modalTitle,
+          modalMsg,
+          'modalFunc': modalFlag === 'submit' ?
+            doChange
+          :
+            modalFlag === 'delete' ?
+              doDelete
+            :
+              undefined
+        }}
+        toggle={toggleAreYouSure}
+      >
+        <Formik
+          initialValues = {{
+            id: repo.id,
+            name: repo.name,
+            tag: repo.tag,
+            content: repo.content,
+            description: repo.description
+          }}
+          onSubmit = {(values) => onSubmitHandle(values)}
+          validationSchema={RepoSchema}
+          render = {props => (
+            <Form>
+              <FormGroup>
+                <Row>
+                  <Col md={6}>
+                    <InputGroup>
+                      <InputGroupAddon addonType='prepend'>Name</InputGroupAddon>
                       <Field
-                        component='textarea'
-                        name='content'
-                        rows='20'
-                        className={`form-control ${props.errors.content && 'border-danger'}`}
-                        id='content'
+                        type='text'
+                        name='name'
+                        className={`form-control ${props.errors.name && 'border-danger'}`}
+                        id='name'
                         disabled={disabled}
                       />
-                      {
-                        props.errors.content &&
-                          FancyErrorMessage(props.errors.content)
-                      }
-                      <FormText color='muted'>
-                        Content of the repo file.
-                      </FormText>
-                    </Col>
-                  </Row>
-                </FormGroup>
-                <FormGroup>
-                  <Row>
-                    <Col md={8}>
-                      <Label for='description'>Description</Label>
-                      <Field
-                        component='textarea'
-                        name='description'
-                        rows='5'
-                        className={`form-control ${props.errors.description && 'border-danger'}`}
-                        id='description'
-                        disabled={disabled}
-                      />
-                      {
-                        props.errors.description &&
-                          FancyErrorMessage(props.errors.description)
-                      }
-                      <FormText color='muted'>
-                        Short free text description.
-                      </FormText>
-                    </Col>
-                  </Row>
-                </FormGroup>
-                {
-                  (!disabled) &&
-                  <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
+                    </InputGroup>
                     {
-                      (!addview && !cloneview) ?
-                        <Button
-                          color='danger'
-                          onClick={() => {
-                            setModalMsg('Are you sure you want to delete YUM repo?');
-                            setModalTitle('Delete YUM repo');
-                            setModalFlag('delete');
-                            toggleAreYouSure();
-                          }}
-                        >
-                          Delete
-                        </Button>
-                      :
-                      <div></div>
+                      props.errors.name &&
+                        FancyErrorMessage(props.errors.name)
                     }
+                    <FormText color='muted'>
+                      Name of YUM repo file.
+                    </FormText>
+                  </Col>
+                  <Col md={2}>
+                    <InputGroup>
+                      <InputGroupAddon addonType='prepend'>Tag</InputGroupAddon>
+                      {
+                        disabled ?
+                          <Field
+                            type='text'
+                            name='tag'
+                            className='form-control'
+                            id='tag'
+                            disabled={true}
+                          />
+                        :
+                          <Field
+                            component='select'
+                            name='tag'
+                            className='form-control custom-select'
+                            id='tag'
+                          >
+                            {
+                              tags.map((name, i) =>
+                                <option key={i} value={name}>{name}</option>
+                              )
+                            }
+                          </Field>
+                      }
+                    </InputGroup>
+                    <FormText color='muted'>
+                      OS tag.
+                    </FormText>
+                  </Col>
+                </Row>
+              </FormGroup>
+              <FormGroup>
+                <Row>
+                  <Col md={8}>
+                    <Label for='content'>File content</Label>
+                    <Field
+                      component='textarea'
+                      name='content'
+                      rows='20'
+                      className={`form-control ${props.errors.content && 'border-danger'}`}
+                      id='content'
+                      disabled={disabled}
+                    />
+                    {
+                      props.errors.content &&
+                        FancyErrorMessage(props.errors.content)
+                    }
+                    <FormText color='muted'>
+                      Content of the repo file.
+                    </FormText>
+                  </Col>
+                </Row>
+              </FormGroup>
+              <FormGroup>
+                <Row>
+                  <Col md={8}>
+                    <Label for='description'>Description</Label>
+                    <Field
+                      component='textarea'
+                      name='description'
+                      rows='5'
+                      className={`form-control ${props.errors.description && 'border-danger'}`}
+                      id='description'
+                      disabled={disabled}
+                    />
+                    {
+                      props.errors.description &&
+                        FancyErrorMessage(props.errors.description)
+                    }
+                    <FormText color='muted'>
+                      Short free text description.
+                    </FormText>
+                  </Col>
+                </Row>
+              </FormGroup>
+              {
+                (!disabled) &&
+                <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
+                  {
+                    (!addview && !cloneview) ?
+                      <Button
+                        color='danger'
+                        onClick={() => {
+                          setModalMsg('Are you sure you want to delete YUM repo?');
+                          setModalTitle('Delete YUM repo');
+                          setModalFlag('delete');
+                          toggleAreYouSure();
+                        }}
+                      >
+                        Delete
+                      </Button>
+                    :
+                      <div></div>
+                  }
                   <Button color='success' id='submit-button' type='submit'>
                     Save
                   </Button>
                 </div>
-                }
-              </Form>
-            )}
-          />
-        </BaseArgoView>
-      </>
+              }
+            </Form>
+          )}
+        />
+      </BaseArgoView>
     )
   } else
     return null;
