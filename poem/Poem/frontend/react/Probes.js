@@ -12,7 +12,6 @@ import {
   NotifyError,
   ErrorComponent,
   ParagraphTitle,
-  ModalAreYouSure,
   DefaultColumnFilter,
   BaseArgoTable
 } from './UIElements';
@@ -50,8 +49,7 @@ const ProbeSchema = Yup.object().shape({
 
 
 const LinkField = ({
-  field: { value },
-  ...props
+  field: { value }
 }) => (
   <div className='form-control' style={{backgroundColor: '#e9ecef', overflow: 'hidden', textOverflow: 'ellipsis'}}>
     <a href={value} style={{'whiteSpace': 'nowrap'}}>{value}</a>
@@ -283,25 +281,25 @@ const ProbeForm = ({
                 metrictemplatelist.length > 0 &&
                 <div>
                   Metric templates:
-                    <div>
-                      {
-                        metrictemplatelist
-                          .map((e, i) => <Link
-                            key={i}
-                            to={
-                              publicView ?
-                                `/ui/public_metrictemplates/${e}`
+                  <div>
+                    {
+                      metrictemplatelist
+                        .map((met, i) => <Link
+                          key={i}
+                          to={
+                            publicView ?
+                              `/ui/public_metrictemplates/${met}`
+                            :
+                              isTenantSchema ?
+                                `/ui/probes/${values.name}/${met}`
                               :
-                                isTenantSchema ?
-                                  `/ui/probes/${values.name}/${e}`
-                                :
-                                  `/ui/metrictemplates/${e}`
+                                `/ui/metrictemplates/${met}`
                             }>
-                              {e}
-                            </Link>
-                          ).reduce((prev, curr) => [prev, ', ', curr])
-                      }
-                    </div>
+                          {met}
+                        </Link>
+                        ).reduce((prev, curr) => [prev, ', ', curr])
+                    }
+                  </div>
                 </div>
               }
             </Col>
@@ -464,9 +462,9 @@ export const ProbeComponent = (props) => {
 
   function toggleAreYouSure() {
     setAreYouSureModal(!areYouSureModal);
-  };
+  }
 
-  function onSubmitHandle(values, actions) {
+  function onSubmitHandle(values) {
     let msg = `Are you sure you want to ${addview || cloneview ? 'add' : 'change'} probe?`;
     let title = `${addview || cloneview ? 'Add' : 'Change'} probe`;
 
@@ -475,7 +473,7 @@ export const ProbeComponent = (props) => {
     setModalTitle(title);
     setModalFlag('submit');
     toggleAreYouSure();
-  };
+  }
 
   async function doChange() {
     if (addview || cloneview) {
@@ -516,7 +514,7 @@ export const ProbeComponent = (props) => {
           title: 'Added',
           callback: () => history.push('/ui/probes')
         });
-      };
+      }
     } else {
       let response = await backend.changeObject(
         '/api/v2/internal/probes/',
@@ -538,7 +536,7 @@ export const ProbeComponent = (props) => {
           change_msg = json.detail;
         } catch(err) {
           change_msg = 'Error changing probe';
-        };
+        }
         NotifyError({
           title: `Error: ${response.status} ${response.statusText}`,
           msg: change_msg
@@ -549,9 +547,9 @@ export const ProbeComponent = (props) => {
           title: 'Changed',
           callback: () => history.push('/ui/probes')
         });
-      };
-    };
-  };
+      }
+    }
+  }
 
   async function doDelete() {
     let response = await backend.deleteObject(`/api/v2/internal/probes/${name}`);
@@ -562,7 +560,7 @@ export const ProbeComponent = (props) => {
         msg = json.detail;
       } catch(err) {
         msg = 'Error deleting probe';
-      };
+      }
       NotifyError({
         title: `Error: ${response.status} ${response.statusText}`,
         msg: msg
@@ -573,8 +571,8 @@ export const ProbeComponent = (props) => {
         title: 'Deleted',
         callback: () => history.push('/ui/probes')
       });
-    };
-  };
+    }
+  }
 
   function onSelect(field, value) {
     let selectedProbe = probe;
@@ -584,9 +582,9 @@ export const ProbeComponent = (props) => {
     } catch(err) {
       if (err instanceof TypeError)
         selectedProbe['version'] = '';
-    };
+    }
     queryCache.setQueryData(`${querykey}_probe`, () => selectedProbe);
-  };
+  }
 
   if (probeLoading || isTenantSchemaLoading || metricTemplateListLoading || listPackagesLoading)
     return(<LoadingAnim/>)
@@ -607,82 +605,88 @@ export const ProbeComponent = (props) => {
         probePackage = probe.package;
 
       return (
-        <React.Fragment>
-          <ModalAreYouSure
-            isOpen={areYouSureModal}
-            toggle={toggleAreYouSure}
-            title={modalTitle}
-            msg={modalMsg}
-            onYes={modalFlag === 'submit' ? doChange : modalFlag === 'delete' ? doDelete : undefined}
-          />
-          <BaseArgoView
-            resourcename={`${publicView ? 'Probe details' : 'probe'}`}
-            location={location}
-            addview={addview}
-            cloneview={cloneview}
-            clone={true}
-            publicview={publicView}
+        <BaseArgoView
+          resourcename={`${publicView ? 'Probe details' : 'probe'}`}
+          location={location}
+          addview={addview}
+          cloneview={cloneview}
+          clone={true}
+          publicview={publicView}
+          modal={true}
+          state={{
+            areYouSureModal,
+            modalTitle,
+            modalMsg,
+            'modalFunc': modalFlag === 'submit' ?
+              doChange
+            :
+              modalFlag === 'delete' ?
+                doDelete
+              :
+                undefined
+          }}
+          toggle={toggleAreYouSure}
+        >
+          <Formik
+            initialValues = {{
+              id: probe.id,
+              name: probe.name,
+              version: probe.version,
+              package: probePackage,
+              repository: probe.repository,
+              docurl: probe.docurl,
+              description: probe.description,
+              comment: probe.comment,
+              update_metrics: false
+            }}
+            validationSchema={ProbeSchema}
+            enableReinitialize={true}
+            onSubmit = {(values) => onSubmitHandle(values)}
           >
-            <Formik
-              initialValues = {{
-                id: probe.id,
-                name: probe.name,
-                version: probe.version,
-                package: probePackage,
-                repository: probe.repository,
-                docurl: probe.docurl,
-                description: probe.description,
-                comment: probe.comment,
-                update_metrics: false
-              }}
-              validationSchema={ProbeSchema}
-              onSubmit = {(values, actions) => onSubmitHandle(values, actions)}
-            >
-              {props => (
-                <Form>
-                  <ProbeForm
-                    {...props}
-                    addview={addview}
-                    cloneview={cloneview}
-                    publicView={publicView}
-                    list_packages={listPackages}
-                    onSelect={onSelect}
-                    metrictemplatelist={metricTemplateList}
-                    version={probe.version}
-                  />
-                  {
-                    !publicView &&
-                      <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
-                        {
-                          (!addview && !cloneview && !publicView) ?
-                            <Button
-                              color='danger'
-                              onClick={() => {
-                                setModalMsg('Are you sure you want to delete probe?');
-                                setModalTitle('Delete probe');
-                                setModalFlag('delete');
-                                toggleAreYouSure();
-                                }}
-                            >
-                              Delete
-                            </Button>
-                          :
-                            <div></div>
-                        }
-                        <Button
-                          color='success'
-                          id='submit-button'
-                          type='submit'
-                        >
-                          Save
-                        </Button>
-                      </div>
-                }
-                </Form>
-              )}
-            </Formik>
-          </BaseArgoView>
-        </React.Fragment>
+            {props => (
+              <Form>
+                <ProbeForm
+                  {...props}
+                  addview={addview}
+                  cloneview={cloneview}
+                  publicView={publicView}
+                  list_packages={listPackages}
+                  onSelect={onSelect}
+                  metrictemplatelist={metricTemplateList}
+                  version={probe.version}
+                />
+                {
+                  !publicView &&
+                    <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
+                      {
+                        (!addview && !cloneview && !publicView) ?
+                          <Button
+                            color='danger'
+                            onClick={() => {
+                              setModalMsg('Are you sure you want to delete probe?');
+                              setModalTitle('Delete probe');
+                              setModalFlag('delete');
+                              toggleAreYouSure();
+                            }}
+                          >
+                            Delete
+                          </Button>
+                        :
+                          <div></div>
+                      }
+                      <Button
+                        color='success'
+                        id='submit-button'
+                        type='submit'
+                      >
+                        Save
+                      </Button>
+                    </div>
+              }
+              </Form>
+            )}
+          </Formik>
+        </BaseArgoView>
       )
     } else {
       return (
@@ -715,8 +719,8 @@ export const ProbeComponent = (props) => {
           />
         </BaseArgoView>
       );
-    };
-  };
+    }
+  }
 };
 
 
@@ -748,9 +752,9 @@ export const ProbeVersionCompare = (props) => {
         });
       } catch(err) {
         setError(err);
-      };
+      }
       setLoading(false);
-    };
+    }
 
     fetchVersions();
   }, []);
@@ -832,9 +836,9 @@ export const ProbeVersionDetails = (props) => {
         });
       } catch(err) {
         setError(err);
-      };
+      }
       setLoading(false);
-    };
+    }
 
     fetchProbeVersion();
   }, []);
