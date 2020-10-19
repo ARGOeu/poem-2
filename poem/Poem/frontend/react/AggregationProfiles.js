@@ -74,22 +74,23 @@ function insertSelectPlaceholder(data, text) {
 }
 
 
-const AggregationProfileAutocompleteField = ({suggestions, service, index, form, isNew, groupNew, groupIndex, isMissing}) => {
-  const [suggestionList, setSuggestions] = useState(suggestions)
+const AggregationProfileAutocompleteField = ({service, index, isNew, groupNew, groupIndex, isMissing}) => {
+  const context = useContext(AggregationProfilesChangeContext);
+  const [suggestionList, setSuggestions] = useState(context.list_services)
 
   return (
     <Autosuggest
       inputProps={{
         className: `"form-control custom-select " ${isNew && !groupNew ? "border-success" : ""} ${isMissing ? "border-primary": ""}`,
         placeholder: '',
-        onChange: (_, {newValue}) => form.setFieldValue(`groups.${groupIndex}.services.${index}.name`, newValue),
+        onChange: (_, {newValue}) => context.formikBag.form.setFieldValue(`groups.${groupIndex}.services.${index}.name`, newValue),
         value: service.name
       }}
       getSuggestionValue={(suggestion) => suggestion}
       suggestions={suggestionList}
       renderSuggestion={(suggestion, {query, isHighlighted}) =>
         <div
-          key={suggestions.indexOf(suggestion)}
+          key={context.list_services.indexOf(suggestion)}
           className={`aggregation-autocomplete-entries ${isHighlighted ?
               "aggregation-autocomplete-entries-highlighted"
               : ""}`
@@ -98,7 +99,7 @@ const AggregationProfileAutocompleteField = ({suggestions, service, index, form,
         </div>}
       onSuggestionsFetchRequested={({ value }) =>
         {
-          let result = suggestions.filter(service => service.toLowerCase().includes(value.trim().toLowerCase()))
+          let result = context.list_services.filter(service => service.toLowerCase().includes(value.trim().toLowerCase()))
           setSuggestions(result)
       }
       }
@@ -106,7 +107,7 @@ const AggregationProfileAutocompleteField = ({suggestions, service, index, form,
         setSuggestions([])
       }}
       onSuggestionSelected={(_, {suggestion}) => {
-        form.setFieldValue(`groups.${groupIndex}.services.${index}.name`, suggestion)
+        context.formikBag.form.setFieldValue(`groups.${groupIndex}.services.${index}.name`, suggestion)
       }}
       shouldRenderSuggestions={() => true}
       theme={{
@@ -259,7 +260,6 @@ const Service = ({service, operation, groupindex, groupnew, index, isnew,
       <Row className="d-flex align-items-center service pt-1 pb-1 no-gutters" key={index}>
         <Col md={8}>
           <AggregationProfileAutocompleteField
-            suggestions={context.list_services}
             service={service}
             index={index}
             form={context.formikBag.form}
