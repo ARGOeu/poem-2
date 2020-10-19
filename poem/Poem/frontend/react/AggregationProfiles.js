@@ -134,10 +134,6 @@ const GroupList = ({name}) => {
                 key={i}
                 operation={group.operation}
                 services={group.services}
-                list_services={context.list_services}
-                list_operations={context.list_operations}
-                last_service_operation={context.last_service_operation}
-                write_perm={context.write_perm}
                 groupindex={i}
                 isnew={group.isNew}
                 last={i === context.formikBag.form.values[name].length - 1}
@@ -174,7 +170,7 @@ const Group = ({operation, services, groupindex, isnew, last}) => {
                 <Col sm={{size: 2}} md={{size: 1}} className="pl-1">
                   <Button size="sm" color="danger"
                     type="button"
-                    onClick={() => (context.write_perm) && context.formikBag.remove(groupindex)}>
+                    onClick={() => (context.write_perm) && context.formikBag.groupRemove(groupindex)}>
                     <FontAwesomeIcon icon={faTimes}/>
                   </Button>
                 </Col>
@@ -185,14 +181,9 @@ const Group = ({operation, services, groupindex, isnew, last}) => {
                 name={`groups.${groupindex}`}
                 render={props => (
                   <ServiceList
-                    list_services={context.list_services}
-                    list_operations={context.list_operations}
-                    last_service_operation={context.last_service_operation}
                     services={services}
                     groupindex={groupindex}
-                    groupoperation={operation}
                     groupnew={isnew}
-                    form={context.formikBag.form}
                   />)}
               />
             </CardBody>
@@ -222,7 +213,7 @@ const Group = ({operation, services, groupindex, isnew, last}) => {
       <Col sm={{size: 12}} md={{size: 6}} className="mt-4 mb-2 d-flex justify-content-center align-items-center">
         <Button outline color="secondary" size='lg' disabled={!context.write_perm ? true : false} onClick={
           () => context.write_perm &&
-            context.formikBag.insert(groupindex, {name: '', operation: '', isNew: true,
+            context.formikBag.groupInsert(groupindex, {name: '', operation: '', isNew: true,
                 services: [{name: '', operation: ''}]})
         }>Add new group</Button>
       </Col>
@@ -241,19 +232,15 @@ const ServiceList = ({services, groupindex, groupnew=false}) =>
         name={`groups.${groupindex}.services`}
         render={props => (
           <Service
-            {...props}
             key={i}
             service={service}
-            operation={service.operation}
-            list_services={context.list_services}
-            list_operations={context.list_operations}
-            last_service_operation={context.last_service_operation}
             groupindex={groupindex}
             groupnew={groupnew}
             index={i}
             last={i === services.length - 1}
-            form={context.formikBag.form}
             isnew={service.isNew}
+            serviceRemove={props.remove}
+            serviceInsert={props.insert}
             ismissing={service.name && context.list_services.indexOf(service.name) === -1}
           />
         )}
@@ -263,7 +250,8 @@ const ServiceList = ({services, groupindex, groupnew=false}) =>
 }
 
 
-const Service = ({name, service, operation, groupindex, groupnew, index, isnew, ismissing}) => {
+const Service = ({service, operation, groupindex, groupnew, index, isnew,
+  serviceInsert, serviceRemove, ismissing}) => {
   const context = useContext(AggregationProfilesChangeContext);
 
   return (
@@ -295,12 +283,12 @@ const Service = ({name, service, operation, groupindex, groupnew, index, isnew, 
         <Col md={2} className="pl-2">
           <Button size="sm" color="light"
             type="button"
-            onClick={() => context.formikBag.remove(index)}>
+            onClick={() => serviceRemove(index)}>
             <FontAwesomeIcon icon={faTimes}/>
           </Button>
           <Button size="sm" color="light"
             type="button"
-            onClick={() => context.formikBag.insert(index + 1, {name: '', operation:
+            onClick={() => serviceInsert(index + 1, {name: '', operation:
               context.last_service_operation(index, context.formikBag.form.values.groups[groupindex].services), isNew: true})}>
             <FontAwesomeIcon icon={faPlus}/>
           </Button>
@@ -994,8 +982,8 @@ export const AggregationProfilesChange = (props) => {
                         last_service_operation: insertOperationFromPrevious,
                         formikBag: {
                           form: props.form,
-                          remove: props.remove,
-                          insert: props.insert
+                          groupRemove: props.remove,
+                          groupInsert: props.insert
                         }
                       }}>
                         <GroupList {...props}/>
