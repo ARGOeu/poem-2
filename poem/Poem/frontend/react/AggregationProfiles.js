@@ -264,7 +264,7 @@ const ServiceList = ({services, groupindex, groupnew=false}) =>
 
 
 const Service = ({name, service, operation, groupindex, groupnew, index,
-  remove, insert, form, isnew, ismissing}) => {
+  remove, insert, isnew, ismissing}) => {
   const context = useContext(AggregationProfilesChangeContext);
 
   return (
@@ -275,7 +275,7 @@ const Service = ({name, service, operation, groupindex, groupnew, index,
             suggestions={context.list_services}
             service={service}
             index={index}
-            form={form}
+            form={context.formikBag.form}
             isNew={isnew}
             groupNew={groupnew}
             groupIndex={groupindex}
