@@ -77,7 +77,7 @@ const AddRoute = ({usergroups, ...props}) => (
 );
 
 
-const RedirectAfterLogin = ({isSuperUser, ...props}) => {
+const RedirectAfterLogin = ({isSuperUser}) => {
   let last = ''
   let before_last = ''
   let destination = ''
@@ -412,7 +412,7 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, w
 )
 
 
-const SuperAdminRouteSwitch = ({props}) => (
+const SuperAdminRouteSwitch = () => (
   <Switch>
     <Route exact path="/ui/login" render={() => <Redirect to="/ui/administration" />}/>
     <Route exact path="/ui/home" component={Home} />
