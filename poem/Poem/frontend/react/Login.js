@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Alert,
   Container,
@@ -11,69 +11,62 @@ import {
   Label,
   CardFooter,
   FormGroup } from 'reactstrap';
-import {Formik, Field, Form} from 'formik';
+import { Formik, Field, Form } from 'formik';
 import ArgoLogo from './argologo_color.svg';
 import './Login.css';
-import {Footer} from './UIElements.js';
-import {Backend} from './DataManager.js';
+import { Footer } from './UIElements.js';
+import { Backend } from './DataManager.js';
 
 
-class Login extends Component {
-  constructor(props) {
-    super(props);
+const Login = (props) => {
+  var _isMounted = false
+  const [samlIdpString, setSamlIdpString] = useState(null);
+  const [loginFailedVisible, setLoginFailedVisible] = useState(false);
+  const [isTenantSchema, setIsTenantSchema] = useState(null);
+  const [tenantName, setTenantName] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-    this._isMounted = false;
+  const backend = new Backend();
+  const AppOnLogin = props.onLogin;
 
-    this.state = {
-      samlIdpString: null,
-      loginFailedVisible: false,
-      isTenantSchema: null,
-      tenantName: null,
-      loading: false
-    };
-
-    this.backend = new Backend()
-    this.dismissLoginAlert = this.dismissLoginAlert.bind(this);
-    this.AppOnLogin = props.onLogin
-  }
-
-  async fetchSamlButtonString() {
+  async function fetchSamlButtonString() {
     try {
       let response = await fetch('/api/v2/internal/config_options');
       let json = await response.json();
       return json;
     } catch(err) {
       alert(`Something went wrong: ${err}`);
-    }
-  }
+    };
+  };
 
-  async componentDidMount() {
-    this._isMounted = true;
-    this.setState({ loading: true});
+  useEffect(() => {
+    _isMounted = true;
+    setLoading(true);
 
-    let response = await this.backend.isTenantSchema();
-    if (response) {
-      let json = await this.fetchSamlButtonString();
-      if (this._isMounted)
-        this.setState({
-          isTenantSchema: response,
-          samlIdpString: json.result.saml_login_string,
-          tenantName: json.result.tenant_name,
-          loading: false
-        })
-    } else
-      if (this._isMounted)
-        this.setState({
-          isTenantSchema: response,
-          loading: false
-        });
-  }
+    async function fetchData() {
+      let response = await backend.isTenantSchema();
+      if (response) {
+        let json = await fetchSamlButtonString();
+        if (_isMounted) {
+          setIsTenantSchema(response);
+          setSamlIdpString(json.result.saml_login_string);
+          setTenantName(json.result.tenant_name);
+        };
+      } else
+        if (_isMounted)
+          setIsTenantSchema(response);
 
-  componentWillUnmount() {
-    this._isMounted = false;
-  }
+      setLoading(false);
+    };
 
-  async doUserPassLogin(username, password) {
+    fetchData();
+
+    return function cleanup() {
+      _isMounted = false;
+    };
+  }, []);
+
+  async function doUserPassLogin(username, password) {
     let response = await fetch('/rest-auth/login/', {
       method: 'POST',
       mode: 'cors',
@@ -89,86 +82,83 @@ class Login extends Component {
         'password': password
       })
     });
-    return this.backend.isActiveSession(this.state.isTenantSchema);
+    return backend.isActiveSession(isTenantSchema);
   }
 
-  dismissLoginAlert() {
-    this._isMounted && this.setState({loginFailedVisible: false});
-  }
+  function dismissLoginAlert() {
+    _isMounted && setLoginFailedVisible(false);
+  };
 
-  render() {
-    let { isTenantSchema, loading } = this.state;
-    if (isTenantSchema !== null && !loading) {
-      return (
-        <Container>
-          <Row className="login-first-row">
-            <Col sm={{size: 4, offset: 4}}>
-              <Card>
-                <CardHeader
-                  id='argo-loginheader'
-                  className="d-sm-inline-flex align-items-center justify-content-around">
-                  <img src={ArgoLogo} id="argologo" alt="ARGO logo"/>
-                  <h4 className="text-light"><strong>ARGO</strong> POEM</h4>
-                </CardHeader>
-                <CardBody>
-                  <Formik
-                    initialValues = {{username: '', password: ''}}
-                    onSubmit = {
-                      async (values) => {
-                        let response = await this.doUserPassLogin(values.username, values.password);
-                        if (response.active) {
-                          this.AppOnLogin(response.userdetails)
-                        }
-                        else {
-                          this.setState({loginFailedVisible: true});
-                        };
+  if (isTenantSchema !== null && !loading) {
+    return (
+      <Container>
+        <Row className="login-first-row">
+          <Col sm={{size: 4, offset: 4}}>
+            <Card>
+              <CardHeader
+                id='argo-loginheader'
+                className="d-sm-inline-flex align-items-center justify-content-around">
+                <img src={ArgoLogo} id="argologo" alt="ARGO logo"/>
+                <h4 className="text-light"><strong>ARGO</strong> POEM</h4>
+              </CardHeader>
+              <CardBody>
+                <Formik
+                  initialValues = {{username: '', password: ''}}
+                  onSubmit = {
+                    async (values) => {
+                      let response = await doUserPassLogin(values.username, values.password);
+                      if (response.active) {
+                        AppOnLogin(response.userdetails)
                       }
-                    }>
-                    <Form>
-                      <FormGroup>
-                        <Label for="username">Username: </Label>
-                        <Field name="username" className="form-control"/>
-                      </FormGroup>
-                      <FormGroup>
-                        <Label for="password">Password: </Label>
-                        <Field name="password" className="form-control" type="password"/>
-                      </FormGroup>
-                      <FormGroup>
-                        <Alert color="danger" isOpen={this.state.loginFailedVisible} toggle={this.dismissLoginAlert} fade={false}>
-                          <p className="text-center">
-                            Login failed, invalid username and password provided
-                          </p>
-                        </Alert>
-                      </FormGroup>
-                      <div className="pt-3">
-                      </div>
-                      <FormGroup>
-                        <Button color="success" type="submit" block>Login using username and password</Button>
-                        {this.state.isTenantSchema && <a className="btn btn-success btn-block" role="button" href="/saml2/login">{this.state.samlIdpString}</a>}
-                      </FormGroup>
-                    </Form>
-                  </Formik>
-                </CardBody>
-                <CardFooter id="argo-loginfooter">
-                  <Footer loginPage={true} tenantName={this.state.tenantName}/>
-                </CardFooter>
-              </Card>
-            </Col>
-          </Row>
-        </Container>
-      );
-    }
-    else if (isTenantSchema === null && !loading) {
-      return (
-        <React.Fragment>
-          <h1>Something went wrong</h1>
-          <p>Cannot obtain schema</p>
-        </React.Fragment>
-      )
-    }
-    else
-      return null;
+                      else {
+                        setLoginFailedVisible(true);
+                      };
+                    }
+                  }>
+                  <Form>
+                    <FormGroup>
+                      <Label for="username">Username: </Label>
+                      <Field name="username" className="form-control"/>
+                    </FormGroup>
+                    <FormGroup>
+                      <Label for="password">Password: </Label>
+                      <Field name="password" className="form-control" type="password"/>
+                    </FormGroup>
+                    <FormGroup>
+                      <Alert color="danger" isOpen={loginFailedVisible} toggle={dismissLoginAlert} fade={false}>
+                        <p className="text-center">
+                          Login failed, invalid username and password provided
+                        </p>
+                      </Alert>
+                    </FormGroup>
+                    <div className="pt-3">
+                    </div>
+                    <FormGroup>
+                      <Button color="success" type="submit" block>Login using username and password</Button>
+                      {isTenantSchema && <a className="btn btn-success btn-block" role="button" href="/saml2/login">{samlIdpString}</a>}
+                    </FormGroup>
+                  </Form>
+                </Formik>
+              </CardBody>
+              <CardFooter id="argo-loginfooter">
+                <Footer loginPage={true} tenantName={tenantName}/>
+              </CardFooter>
+            </Card>
+          </Col>
+        </Row>
+      </Container>
+    );
   }
-}
+  else if (isTenantSchema === null && !loading) {
+    return (
+      <React.Fragment>
+        <h1>Something went wrong</h1>
+        <p>Cannot obtain schema</p>
+      </React.Fragment>
+    )
+  }
+  else
+    return null;
+};
 
 export default Login;
