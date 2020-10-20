@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useContext } from 'react';
 import {Link} from 'react-router-dom';
 import {
   LoadingAnim,
@@ -42,6 +42,8 @@ import "react-notifications/lib/notifications.css";
 import './AggregationProfiles.css';
 
 
+const AggregationProfilesChangeContext = React.createContext();
+
 
 const AggregationProfilesSchema = Yup.object().shape({
   name: Yup.string().required('Required'),
@@ -72,22 +74,23 @@ function insertSelectPlaceholder(data, text) {
 }
 
 
-const AggregationProfileAutocompleteField = ({suggestions, service, index, form, isNew, groupNew, groupIndex, isMissing}) => {
-  const [suggestionList, setSuggestions] = useState(suggestions)
+const AggregationProfileAutocompleteField = ({service, index, isNew, groupNew, groupIndex, isMissing}) => {
+  const context = useContext(AggregationProfilesChangeContext);
+  const [suggestionList, setSuggestions] = useState(context.list_services)
 
   return (
     <Autosuggest
       inputProps={{
         className: `"form-control custom-select " ${isNew && !groupNew ? "border-success" : ""} ${isMissing ? "border-primary": ""}`,
         placeholder: '',
-        onChange: (_, {newValue}) => form.setFieldValue(`groups.${groupIndex}.services.${index}.name`, newValue),
+        onChange: (_, {newValue}) => context.formikBag.form.setFieldValue(`groups.${groupIndex}.services.${index}.name`, newValue),
         value: service.name
       }}
       getSuggestionValue={(suggestion) => suggestion}
       suggestions={suggestionList}
       renderSuggestion={(suggestion, {query, isHighlighted}) =>
         <div
-          key={suggestions.indexOf(suggestion)}
+          key={context.list_services.indexOf(suggestion)}
           className={`aggregation-autocomplete-entries ${isHighlighted ?
               "aggregation-autocomplete-entries-highlighted"
               : ""}`
@@ -96,7 +99,7 @@ const AggregationProfileAutocompleteField = ({suggestions, service, index, form,
         </div>}
       onSuggestionsFetchRequested={({ value }) =>
         {
-          let result = suggestions.filter(service => service.toLowerCase().includes(value.trim().toLowerCase()))
+          let result = context.list_services.filter(service => service.toLowerCase().includes(value.trim().toLowerCase()))
           setSuggestions(result)
       }
       }
@@ -104,7 +107,7 @@ const AggregationProfileAutocompleteField = ({suggestions, service, index, form,
         setSuggestions([])
       }}
       onSuggestionSelected={(_, {suggestion}) => {
-        form.setFieldValue(`groups.${groupIndex}.services.${index}.name`, suggestion)
+        context.formikBag.form.setFieldValue(`groups.${groupIndex}.services.${index}.name`, suggestion)
       }}
       shouldRenderSuggestions={() => true}
       theme={{
@@ -116,198 +119,202 @@ const AggregationProfileAutocompleteField = ({suggestions, service, index, form,
 }
 
 
-const GroupList = ({name, form, list_services, list_operations, last_service_operation, write_perm}) =>
-  <Row className="groups">
-    {
-    form.values[name].map((group, i) =>
+const GroupList = ({name}) => {
+  const context = useContext(AggregationProfilesChangeContext);
+
+  return (
+    <Row className="groups">
+      {
+        context.formikBag.form.values[name].map((group, i) =>
+          <FieldArray
+            key={i}
+            name="groups"
+            render={props => (
+              <Group
+                {...props}
+                key={i}
+                operation={group.operation}
+                services={group.services}
+                groupindex={i}
+                isnew={group.isNew}
+                last={i === context.formikBag.form.values[name].length - 1}
+              />
+            )}
+          />
+        )
+      }
+    </Row>
+  )
+}
+
+
+const Group = ({operation, services, groupindex, isnew, last}) => {
+  const context = useContext(AggregationProfilesChangeContext);
+
+  if (!last)
+    return (
+      <React.Fragment key={groupindex}>
+        <Col sm={{size: 8}} md={{size: 5}} className="mt-4 mb-2">
+          <Card className={isnew ? "border-success" : ""}>
+            <CardHeader className="p-1" color="primary">
+              <Row className="d-flex align-items-center no-gutters">
+                <Col sm={{size: 10}} md={{size: 11}}>
+                  <Field
+                    name={`groups.${groupindex}.name`}
+                    placeholder="Name of service group"
+                    required={true}
+                    className={`${context.formikBag.form.errors && context.formikBag.form.errors.groups &&
+                      context.formikBag.form.errors.groups[groupindex] &&
+                      context.formikBag.form.errors.groups[groupindex].name ? "form-control border-danger" : "form-control"}`}
+                  />
+                </Col>
+                <Col sm={{size: 2}} md={{size: 1}} className="pl-1">
+                  <Button size="sm" color="danger"
+                    type="button"
+                    onClick={() => (context.write_perm) && context.formikBag.groupRemove(groupindex)}>
+                    <FontAwesomeIcon icon={faTimes}/>
+                  </Button>
+                </Col>
+              </Row>
+            </CardHeader>
+            <CardBody className="p-1">
+              <FieldArray
+                name={`groups.${groupindex}`}
+                render={props => (
+                  <ServiceList
+                    services={services}
+                    groupindex={groupindex}
+                    groupnew={isnew}
+                  />)}
+              />
+            </CardBody>
+            <CardFooter className="p-1 d-flex justify-content-center">
+              <DropDown
+                field={{name: "operation", value: operation}}
+                data={insertSelectPlaceholder(context.list_operations, 'Select')}
+                prefix={`groups.${groupindex}`}
+                class_name="custom-select col-2"
+                errors={context.formikBag.form.errors && context.formikBag.form.errors.groups && context.formikBag.form.errors.groups[groupindex]}
+              />
+            </CardFooter>
+          </Card>
+        </Col>
+        <Col sm={{size: 4}} md={{size: 1}} className="mt-5">
+          <div className="group-operation" key={groupindex}>
+            <DropDown
+              field={{name: 'profile_operation', value: context.formikBag.form.values.profile_operation}}
+              data={insertSelectPlaceholder(context.list_operations, 'Select')}
+            />
+          </div>
+        </Col>
+      </React.Fragment>
+    )
+  else
+    return (
+      <Col sm={{size: 12}} md={{size: 6}} className="mt-4 mb-2 d-flex justify-content-center align-items-center">
+        <Button outline color="secondary" size='lg' disabled={!context.write_perm ? true : false} onClick={
+          () => context.write_perm &&
+            context.formikBag.groupInsert(groupindex, {name: '', operation: '', isNew: true,
+                services: [{name: '', operation: ''}]})
+        }>Add new group</Button>
+      </Col>
+    )
+}
+
+
+const ServiceList = ({services, groupindex, groupnew=false}) =>
+{
+  const context = useContext(AggregationProfilesChangeContext);
+
+  return (
+    services.map((service, i) =>
       <FieldArray
         key={i}
-        name="groups"
+        name={`groups.${groupindex}.services`}
         render={props => (
-          <Group
-            {...props}
+          <Service
             key={i}
-            operation={group.operation}
-            services={group.services}
-            list_services={list_services}
-            list_operations={list_operations}
-            last_service_operation={last_service_operation}
-            write_perm={write_perm}
-            groupindex={i}
-            isnew={group.isNew}
-            last={i === form.values[name].length - 1}
+            service={service}
+            groupindex={groupindex}
+            groupnew={groupnew}
+            index={i}
+            last={i === services.length - 1}
+            isnew={service.isNew}
+            serviceRemove={props.remove}
+            serviceInsert={props.insert}
+            ismissing={service.name && context.list_services.indexOf(service.name) === -1}
           />
         )}
       />
     )
-  }
-  </Row>
+  )
+}
 
 
-const Group = ({operation, services, list_operations, list_services,
-  last_service_operation, write_perm, form, groupindex, remove, insert, isnew,
-  last}) =>
-  (!last) ?
-    <React.Fragment key={groupindex}>
-      <Col sm={{size: 8}} md={{size: 5}} className="mt-4 mb-2">
-        <Card className={isnew ? "border-success" : ""}>
-          <CardHeader className="p-1" color="primary">
-            <Row className="d-flex align-items-center no-gutters">
-              <Col sm={{size: 10}} md={{size: 11}}>
-                <Field
-                  name={`groups.${groupindex}.name`}
-                  placeholder="Name of service group"
-                  required={true}
-                  className={`${form.errors && form.errors.groups &&
-                    form.errors.groups[groupindex] &&
-                    form.errors.groups[groupindex].name ? "form-control border-danger" : "form-control"}`}
-                />
-              </Col>
-              <Col sm={{size: 2}} md={{size: 1}} className="pl-1">
-                <Button size="sm" color="danger"
-                  type="button"
-                  onClick={() => (write_perm) && remove(groupindex)}>
-                  <FontAwesomeIcon icon={faTimes}/>
-                </Button>
-              </Col>
-            </Row>
-          </CardHeader>
-          <CardBody className="p-1">
-            <FieldArray
-              name={`groups.${groupindex}`}
-              render={props => (
-                <ServiceList
-                  list_services={list_services}
-                  list_operations={list_operations}
-                  last_service_operation={last_service_operation}
-                  services={services}
-                  groupindex={groupindex}
-                  groupoperation={operation}
-                  groupnew={isnew}
-                  form={form}
-                />)}
-            />
-          </CardBody>
-          <CardFooter className="p-1 d-flex justify-content-center">
+const Service = ({service, operation, groupindex, groupnew, index, isnew,
+  serviceInsert, serviceRemove, ismissing}) => {
+  const context = useContext(AggregationProfilesChangeContext);
+
+  return (
+    <React.Fragment>
+      <Row className="d-flex align-items-center service pt-1 pb-1 no-gutters" key={index}>
+        <Col md={8}>
+          <AggregationProfileAutocompleteField
+            service={service}
+            index={index}
+            form={context.formikBag.form}
+            isNew={isnew}
+            groupNew={groupnew}
+            groupIndex={groupindex}
+            isMissing={ismissing}
+          />
+        </Col>
+        <Col md={2}>
+          <div className="input-group">
             <DropDown
               field={{name: "operation", value: operation}}
-              data={insertSelectPlaceholder(list_operations, 'Select')}
-              prefix={`groups.${groupindex}`}
-              class_name="custom-select col-2"
-              errors={form.errors && form.errors.groups && form.errors.groups[groupindex]}
-            />
-          </CardFooter>
-        </Card>
-      </Col>
-      <Col sm={{size: 4}} md={{size: 1}} className="mt-5">
-        <div className="group-operation" key={groupindex}>
-          <DropDown
-            field={{name: 'profile_operation', value: form.values.profile_operation}}
-            data={insertSelectPlaceholder(list_operations, 'Select')}
+              data={insertSelectPlaceholder(context.list_operations, 'Select')}
+              prefix={`groups.${groupindex}.services.${index}`}
+              class_name="custom-select service-operation"
+              isnew={isnew && !groupnew}
           />
-        </div>
-      </Col>
+          </div>
+        </Col>
+        <Col md={2} className="pl-2">
+          <Button size="sm" color="light"
+            type="button"
+            onClick={() => serviceRemove(index)}>
+            <FontAwesomeIcon icon={faTimes}/>
+          </Button>
+          <Button size="sm" color="light"
+            type="button"
+            onClick={() => serviceInsert(index + 1, {name: '', operation:
+              context.last_service_operation(index, context.formikBag.form.values.groups[groupindex].services), isNew: true})}>
+            <FontAwesomeIcon icon={faPlus}/>
+          </Button>
+        </Col>
+      </Row>
+      <Row>
+        {
+          context.formikBag.form.errors && context.formikBag.form.errors.groups && context.formikBag.form.errors.groups[groupindex] &&
+          context.formikBag.form.errors.groups[groupindex].services && context.formikBag.form.errors.groups[groupindex].services[index] &&
+          context.formikBag.form.errors.groups[groupindex].services[index].name &&
+            <Col md={8}>
+                { FancyErrorMessage(context.formikBag.form.errors.groups[groupindex].services[index].name) }
+            </Col>
+        }
+        {
+          context.formikBag.form.errors && context.formikBag.form.errors.groups && context.formikBag.form.errors.groups[groupindex] &&
+          context.formikBag.form.errors.groups[groupindex].services && context.formikBag.form.errors.groups[groupindex].services[index] &&
+          context.formikBag.form.errors.groups[groupindex].services[index].operation &&
+            <Col md={{offset: context.formikBag.form.errors.groups[groupindex].services[index].name ? 0 : 8, size: 2}}>
+                { FancyErrorMessage(context.formikBag.form.errors.groups[groupindex].services[index].operation) }
+            </Col>
+      }
+      </Row>
     </React.Fragment>
-  :
-    <Col sm={{size: 12}} md={{size: 6}} className="mt-4 mb-2 d-flex justify-content-center align-items-center">
-      <Button outline color="secondary" size='lg' disabled={!write_perm ? true : false} onClick={
-        () => write_perm &&
-          insert(groupindex, {name: '', operation: '', isNew: true,
-              services: [{name: '', operation: ''}]})
-      }>Add new group</Button>
-    </Col>
-
-
-const ServiceList = ({services, list_services=[], list_operations=[], last_service_operation, groupindex, groupnew=false, form}) =>
-  services.map((service, i) =>
-    <FieldArray
-      key={i}
-      name={`groups.${groupindex}.services`}
-      render={props => (
-        <Service
-          {...props}
-          key={i}
-          service={service}
-          operation={service.operation}
-          list_services={list_services}
-          list_operations={list_operations}
-          last_service_operation={last_service_operation}
-          groupindex={groupindex}
-          groupnew={groupnew}
-          index={i}
-          last={i === services.length - 1}
-          form={form}
-          isnew={service.isnew}
-          ismissing={service.name && list_services.indexOf(service.name) === -1}
-        />
-      )}
-    />
   )
-
-
-const Service = ({name, service, operation, list_services, list_operations,
-  last_service_operation, groupindex, groupnew, index, remove, insert, form,
-  isnew, ismissing}) =>
-(
-  <React.Fragment>
-    <Row className="d-flex align-items-center service pt-1 pb-1 no-gutters" key={index}>
-      <Col md={8}>
-        <AggregationProfileAutocompleteField
-          suggestions={list_services}
-          service={service}
-          index={index}
-          form={form}
-          isNew={isnew}
-          groupNew={groupnew}
-          groupIndex={groupindex}
-          isMissing={ismissing}
-        />
-      </Col>
-      <Col md={2}>
-        <div className="input-group">
-          <DropDown
-            field={{name: "operation", value: operation}}
-            data={insertSelectPlaceholder(list_operations, 'Select')}
-            prefix={`groups.${groupindex}.services.${index}`}
-            class_name="custom-select service-operation"
-            isnew={isnew && !groupnew}
-        />
-        </div>
-      </Col>
-      <Col md={2} className="pl-2">
-        <Button size="sm" color="light"
-          type="button"
-          onClick={() => remove(index)}>
-          <FontAwesomeIcon icon={faTimes}/>
-        </Button>
-        <Button size="sm" color="light"
-          type="button"
-          onClick={() => insert(index + 1, {name: '', operation:
-            last_service_operation(index, form.values.groups[groupindex].services), isnew: true})}>
-          <FontAwesomeIcon icon={faPlus}/>
-        </Button>
-      </Col>
-    </Row>
-    <Row>
-      {
-      form.errors && form.errors.groups && form.errors.groups[groupindex] &&
-      form.errors.groups[groupindex].services && form.errors.groups[groupindex].services[index] &&
-      form.errors.groups[groupindex].services[index].name &&
-        <Col md={8}>
-            { FancyErrorMessage(form.errors.groups[groupindex].services[index].name) }
-        </Col>
-    }
-      {
-      form.errors && form.errors.groups && form.errors.groups[groupindex] &&
-      form.errors.groups[groupindex].services && form.errors.groups[groupindex].services[index] &&
-      form.errors.groups[groupindex].services[index].operation &&
-        <Col md={{offset: form.errors.groups[groupindex].services[index].name ? 0 : 8, size: 2}}>
-            { FancyErrorMessage(form.errors.groups[groupindex].services[index].operation) }
-        </Col>
-    }
-    </Row>
-  </React.Fragment>
-)
+}
 
 
 const AggregationProfilesForm = ({ values, errors, historyview=false, write_perm=false,
@@ -844,12 +851,12 @@ export const AggregationProfilesChange = (props) => {
   const removeIsNewFlag = (values) => {
     for (let group of values.groups) {
       let keys = Object.keys(group)
-      if (keys.indexOf('isnew') !== -1)
-        delete group.isnew
+      if (keys.indexOf('isNew') !== -1)
+        delete group.isNew
       for (let service of group.services) {
         let keys = Object.keys(service)
-        if (keys.indexOf('isnew') !== -1)
-          delete service.isnew
+        if (keys.indexOf('isNew') !== -1)
+          delete service.isNew
       }
     }
   }
@@ -968,13 +975,20 @@ export const AggregationProfilesChange = (props) => {
                   <FieldArray
                     name="groups"
                     render={props => (
-                      <GroupList
-                        {...props}
-                        list_services={listServices}
-                        list_operations={logic_operations}
-                        last_service_operation={insertOperationFromPrevious}
-                        write_perm={write_perm}
-                      />)}
+                      <AggregationProfilesChangeContext.Provider value={{
+                        list_services: listServices,
+                        list_operations: logic_operations,
+                        write_perm: write_perm,
+                        last_service_operation: insertOperationFromPrevious,
+                        formikBag: {
+                          form: props.form,
+                          groupRemove: props.remove,
+                          groupInsert: props.insert
+                        }
+                      }}>
+                        <GroupList {...props}/>
+                      </AggregationProfilesChangeContext.Provider>
+                    )}
                   />
                 :
                   <FieldArray
