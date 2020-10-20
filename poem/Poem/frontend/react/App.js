@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { useEffect, useState } from 'react';
 import Login from './Login';
 import {
   MetricProfileVersionCompare,
@@ -46,7 +46,6 @@ import { NotificationContainer } from 'react-notifications';
 import { Backend } from './DataManager';
 import { YumRepoList, YumRepoComponent } from './YumRepos';
 import { ThresholdsProfilesList, ThresholdsProfilesChange, ThresholdsProfileVersionCompare, ThresholdsProfileVersionDetail } from './ThresholdProfiles';
-import Cookies from 'universal-cookie';
 
 import './App.css';
 import { PackageList, PackageComponent } from './Package';
@@ -75,10 +74,10 @@ const AddRoute = ({usergroups, ...props}) => (
     <Route {...props} />
   :
     <Route component={NotFound} />
-);
+)
 
 
-const RedirectAfterLogin = ({isSuperUser, ...props}) => {
+const RedirectAfterLogin = ({isSuperUser}) => {
   let last = ''
   let before_last = ''
   let destination = ''
@@ -413,7 +412,7 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, w
 )
 
 
-const SuperAdminRouteSwitch = ({props}) => (
+const SuperAdminRouteSwitch = () => (
   <Switch>
     <Route exact path="/ui/login" render={() => <Redirect to="/ui/administration" />}/>
     <Route exact path="/ui/home" component={Home} />
@@ -469,511 +468,492 @@ const SuperAdminRouteSwitch = ({props}) => (
 )
 
 
-class App extends Component {
-  constructor(props) {
-    super(props);
+const App = () => {
+  const backend = new Backend();
 
-    this.cookies = new Cookies();
-    this.backend = new Backend();
+  const [isSessionActive, setIsSessionActive] = useState(undefined);
+  const [areYouSureModal, setAreYouSureModal] = useState(false);
+  const [userDetails, setUserDetails] = useState(undefined);
+  const [webApiAggregation, setWebApiAggregation] = useState(undefined);
+  const [webApiMetric, setWebApiMetric] = useState(undefined);
+  const [webApiThresholds, setWebApiThresholds] = useState(undefined);
+  const [webApiOperations, setWebApiOperations] = useState(undefined);
+  const [webApiReports, setWebApiReports] = useState(undefined);
+  const [publicView, setPublicView] = useState(undefined);
+  const [tenantName, setTenantName] = useState(undefined);
+  const [token, setToken] = useState(undefined);
+  const [version, setVersion] = useState(undefined);
+  const [isTenantSchema, setIsTenantSchema] = useState(null);
 
-    this.state = {
-      isSessionActive: undefined,
-      areYouSureModal: false,
-      userDetails: undefined,
-      webApiAggregation: undefined,
-      webApiMetric: undefined,
-      webApiThresholds: undefined,
-      webApiOperations: undefined,
-      webApiReports: undefined,
-      publicView: undefined,
-      tenantName: undefined,
-      token: undefined,
-      version: undefined,
-      isTenantSchema: null
-    };
-
-    this.onLogin = this.onLogin.bind(this);
-    this.onLogout = this.onLogout.bind(this);
-    this.toggleAreYouSure = this.toggleAreYouSure.bind(this);
-  }
-
-  async onLogin(json) {
+  async function onLogin(json) {
     let response = new Object({
       active: true,
       userdetails: json
     })
 
-    let isTenantSchema = await this.backend.isTenantSchema();
-    let initialState = await this.initalizeState(isTenantSchema, response);
+    let isTenantSchema = await backend.isTenantSchema();
+    let initialState = await initalizeState(isTenantSchema, response);
   }
 
-  onLogout() {
-    this.setState({isSessionActive: false});
-    localStorage.removeItem('referrer')
+  function onLogout() {
+    setIsSessionActive(false);
+    localStorage.removeItem('referrer');
   }
 
-  toggleAreYouSure() {
-    this.setState(prevState =>
-      ({areYouSureModal: !prevState.areYouSureModal}));
+  function toggleAreYouSure() {
+    setAreYouSureModal(!areYouSureModal);
   }
 
-  async initalizeState(poemType, response) {
-    let options = await this.backend.fetchConfigOptions();
+  async function initalizeState(poemType, response) {
+    let options = await backend.fetchConfigOptions();
     if (poemType) {
-      this.setState({
-        isTenantSchema: poemType,
-        isSessionActive: response.active,
-        userDetails: response.userdetails,
-        token: response.userdetails.token,
-        webApiMetric: options && options.result.webapimetric,
-        webApiAggregation: options && options.result.webapiaggregation,
-        webApiThresholds: options && options.result.webapithresholds,
-        webApiOperations: options && options.result.webapioperations,
-        version: options && options.result.version,
-        webApiReports: options && options.result.webapireports,
-        tenantName: options && options.result.tenant_name,
-        publicView: false,
-      });
+      setIsTenantSchema(poemType);
+      setIsSessionActive(response.active);
+      setUserDetails(response.userdetails);
+      setToken(response.userdetails.token);
+      setWebApiMetric(options && options.result.webapimetric);
+      setWebApiAggregation(options && options.result.webapiaggregation);
+      setWebApiThresholds(options && options.result.webapithresholds);
+      setWebApiOperations(options && options.result.webapioperations);
+      setVersion(options && options.result.version);
+      setWebApiReports(options && options.result.webapireports);
+      setTenantName(options && options.result.tenant_name);
+      setPublicView(false);
     } else {
-      this.setState({
-        isTenantSchema: poemType,
-        isSessionActive: response.active,
-        userDetails: response.userdetails,
-        version: options && options.result.version,
-        publicView: false,
-      });
-    };
+      setIsTenantSchema(poemType);
+      setIsSessionActive(response.active);
+      setUserDetails(response.userdetails);
+      setVersion(options && options.result.version);
+      setPublicView(false);
+    }
   }
 
-  async initalizePublicState() {
-    let token = await this.backend.fetchPublicToken()
-    let options = await this.backend.fetchConfigOptions();
-    let isTenantSchema = await this.backend.isTenantSchema();
-    this.setState({
-      isTenantSchema: isTenantSchema,
-      isSessionActive: false,
-      userDetails: {username: 'Anonymous'},
-      token: token,
-      webApiMetric: options && options.result.webapimetric,
-      webApiAggregation: options && options.result.webapiaggregation,
-      webApiThresholds: options && options.result.webapithresholds,
-      webApiOperations: options && options.result.webapioperations,
-      webApiReports: options && options.result.webapireports,
-      tenantName: options && options.result.tenant_name,
-      publicView: true,
-    })
+  async function initalizePublicState() {
+    let token = await backend.fetchPublicToken()
+    let options = await backend.fetchConfigOptions();
+    let isTenantSchema = await backend.isTenantSchema();
+    setIsTenantSchema(isTenantSchema);
+    setIsSessionActive(false);
+    setUserDetails({username: 'Anonymous'});
+    setToken(token);
+    setWebApiMetric(options && options.result.webapimetric);
+    setWebApiAggregation(options && options.result.webapiaggregation);
+    setWebApiThresholds(options && options.result.webapithresholds);
+    setWebApiOperations(options && options.result.webapioperations);
+    setWebApiReports(options && options.result.webapireports);
+    setTenantName(options && options.result.tenant_name);
+    setPublicView(true);
   }
 
-  isPublicUrl () {
-    const pathname = window.location.pathname
+  function isPublicUrl () {
+    const pathname = window.location.pathname;
 
-    return pathname.includes('public_')
+    return pathname.includes('public_');
   }
 
-  getAndSetReferrer() {
-    let referrer = localStorage.getItem('referrer')
-    let stackUrls = undefined
+  function getAndSetReferrer() {
+    let referrer = localStorage.getItem('referrer');
+    let stackUrls = undefined;
 
     if (referrer)
-      stackUrls = JSON.parse(referrer)
+      stackUrls = JSON.parse(referrer);
     else
-      stackUrls = new Array()
+      stackUrls = new Array();
 
-    stackUrls.push(window.location.pathname)
-    localStorage.setItem('referrer', JSON.stringify(stackUrls))
+    stackUrls.push(window.location.pathname);
+    localStorage.setItem('referrer', JSON.stringify(stackUrls));
   }
 
-  async componentDidMount() {
-    if (this.isPublicUrl()) {
-      this.initalizePublicState()
-    }
-    else {
-      let isTenantSchema = await this.backend.isTenantSchema();
-      let response = await this.backend.isActiveSession(isTenantSchema);
-      response.active && this.initalizeState(isTenantSchema, response);
-    }
+  useEffect(() => {
+    fetchData();
+    async function fetchData() {
+      if (isPublicUrl()) {
+        initalizePublicState()
+      }
+      else {
+        let isTenantSchema = await backend.isTenantSchema();
+        let response = await backend.isActiveSession(isTenantSchema);
+        response.active && initalizeState(isTenantSchema, response);
+      }
 
-    this.getAndSetReferrer()
-  }
+      getAndSetReferrer()
+    };
+  }, [])
 
-  render() {
-    let {isSessionActive, isTenantSchema, userDetails, publicView} = this.state
-
-    if (publicView && isTenantSchema !== undefined) {
-      if (isTenantSchema)
-        return (
-          <BrowserRouter>
-            <Switch>
-              <Route
-                exact path="/ui/public_home"
-                render={props =>
-                  <PublicPage tenantName={this.state.tenantName}>
-                    <PublicHome/>
-                  </PublicPage>
-                }
-              />
-              <Route
-                exact path="/ui/public_probes"
-                render={props =>
-                  <PublicPage tenantName={this.state.tenantName}>
-                    <ProbeList publicView={true} {...props} />
-                  </PublicPage>
-                }
-              />
-              <Route
-                exact path="/ui/public_probes/:name"
-                render={props =>
-                  <PublicPage tenantName={this.state.tenantName}>
-                    <ProbeComponent publicView={true} {...props}/>
-                  </PublicPage>
-                }
-              />
-              <Route exact path="/ui/public_probes/:name/history"
-                render={props =>
-                  <PublicPage tenantName={this.state.tenantName}>
-                    <HistoryComponent object='probe' publicView={true} {...props}/>
-                  </PublicPage>
-                }
-              />
-              <Route exact path="/ui/public_probes/:name/history/compare/:id1/:id2"
-                render={props =>
-                  <PublicPage tenantName={this.state.tenantName}>
-                    <ProbeVersionCompare publicView={true} {...props}/>
-                  </PublicPage>
-                }
-              />
-              <Route exact path="/ui/public_probes/:name/history/:version"
-                render={props =>
-                  <PublicPage tenantName={this.state.tenantName}>
-                    <ProbeVersionDetails publicView={true} {...props}/>
-                  </PublicPage>
-                }
-              />
-              <Route
-                exact path="/ui/public_metrictemplates"
-                render={props =>
-                  <PublicPage tenantName={this.state.tenantName}>
-                    <ListOfMetrics type='metrictemplates' publicView={true} {...props}/>
-                  </PublicPage>
-                }
-              />
-              <Route
-                exact path="/ui/public_metrictemplates/:name"
-                render={props =>
-                  <PublicPage tenantName={this.state.tenantName}>
-                    <MetricTemplateComponent publicView={true} tenantView={true} {...props}/>
-                  </PublicPage>
-                }
-              />
-              <Route
-                exact path="/ui/public_metrictemplates/:name/history"
-                render={props =>
-                  <PublicPage tenantName={this.state.tenantName}>
-                    <HistoryComponent publicView={true} object='metrictemplate' {...props}/>
-                  </PublicPage>
-                }
-              />
-              <Route
-                exact path="/ui/public_metrictemplates/:name/history/compare/:id1/:id2"
-                render={props =>
-                  <PublicPage tenantName={this.state.tenantName}>
-                    <CompareMetrics publicView={true} {...props} type='metrictemplate'/>
-                  </PublicPage>
-                }
-              />
-              <Route
-                exact path="/ui/public_metrictemplates/:name/history/:version"
-                render={props =>
-                  <PublicPage tenantName={this.state.tenantName}>
-                    <MetricTemplateVersionDetails publicView={true} {...props}/>
-                  </PublicPage>
-                }
-              />
-              <Route exact path="/ui/public_metrics"
-                render={props =>
-                  <PublicPage tenantName={this.state.tenantName}>
-                    <ListOfMetrics type='metrics' publicView={true} {...props}/>
-                  </PublicPage>
-                }
-              />
-              <Route exact path="/ui/public_metrics/:name"
-                render={props =>
-                  <PublicPage tenantName={this.state.tenantName}>
-                    <MetricChange publicView={true} {...props}/>
-                  </PublicPage>
-                }
-              />
-              <Route exact path="/ui/public_metricprofiles"
-                render={props =>
-                  <PublicPage tenantName={this.state.tenantName}>
-                    <MetricProfilesList publicView={true} {...props} />
-                  </PublicPage>
-                }
-              />
-              <Route exact path="/ui/public_metricprofiles/:name"
-                render={props =>
-                  <PublicPage tenantName={this.state.tenantName}>
-                    <MetricProfilesChange {...props}
-                      webapimetric={this.state.webApiMetric}
-                      webapitoken={this.state.token}
-                      tenantname={this.state.tenantName}
-                      publicView={true}
-                    />
-                  </PublicPage>
-                }
-              />
-              <Route exact path="/ui/public_aggregationprofiles"
-                render={props =>
-                  <PublicPage tenantName={this.state.tenantName}>
-                    <AggregationProfilesList publicView={true} {...props} />
-                  </PublicPage>
-                }
-              />
-              <Route exact path="/ui/public_aggregationprofiles/:name"
-                render={props =>
-                  <PublicPage tenantName={this.state.tenantName}>
-                    <AggregationProfilesChange {...props}
-                      webapimetric={this.state.webApiMetric}
-                      webapiaggregation={this.state.webApiAggregation}
-                      webapitoken={this.state.token}
-                      tenantname={this.state.tenantName}
-                      publicView={true}
-                    />
-                  </PublicPage>
-                }
-              />
-              <Route exact path="/ui/public_thresholdsprofiles"
-                render={props =>
-                  <PublicPage tenantName={this.state.tenantName}>
-                    <ThresholdsProfilesList publicView={true} {...props} />
-                  </PublicPage>
-                }
-              />
-              <Route exact path="/ui/public_thresholdsprofiles/:name"
-                render={props =>
-                  <PublicPage tenantName={this.state.tenantName}>
-                    <ThresholdsProfilesChange {...props}
-                      webapithresholds={this.state.webApiThresholds}
-                      webapiaggregation={this.state.webApiAggregation}
-                      webapitoken={this.state.token}
-                      tenantname={this.state.tenantName}
-                      publicView={true}
-                    />
-                  </PublicPage>
-                }
-              />
-              <Route exact path="/ui/public_operationsprofiles"
-                render={props =>
-                  <PublicPage tenantName={this.state.tenantName}>
-                    <OperationsProfilesList
-                      {...props}
-                      publicView={true}
-                      webapitoken={this.state.token}
-                      webapioperations={this.state.webApiOperations}
-                    />
-                  </PublicPage>
-                }
-              />
-              <Route exact path="/ui/public_operationsprofiles/:name"
-                render={props =>
-                  <PublicPage tenantName={this.state.tenantName}>
-                    <OperationsProfileDetails
-                      {...props}
-                      publicView={true}
-                      webapitoken={this.state.token}
-                      webapioperations={this.state.webApiOperations}
-                    />
-                  </PublicPage>
-                }
-              />
-              <Route exact path="/ui/public_servicetypes"
-                render={props =>
-                  <PublicPage>
-                    <ServiceTypesList
-                      {...props}
-                      publicView={true}
-                    />
-                  </PublicPage>
-                }
-              />
-              <Route component={NotFound} />
-            </Switch>
-          </BrowserRouter>
-        )
-      else
-        return (
-          <BrowserRouter>
-            <Switch>
-              <Route
-                exact path="/ui/public_home"
-                render={props =>
-                  <PublicPage>
-                    <PublicHome isSuperAdmin={true} {...props}/>
-                  </PublicPage>
-                }
-              />
-              <Route
-                exact path="/ui/public_probes"
-                render={props =>
-                  <PublicPage>
-                    <ProbeList publicView={true} {...props} />
-                  </PublicPage>
-                }
-              />
-              <Route
-                exact path="/ui/public_probes/:name"
-                render={props =>
-                  <PublicPage>
-                    <ProbeComponent publicView={true} {...props}/>
-                  </PublicPage>
-                }
-              />
-              <Route exact path="/ui/public_probes/:name/history"
-                render={props =>
-                  <PublicPage>
-                    <HistoryComponent object='probe' publicView={true} {...props}/>
-                  </PublicPage>
-                }
-              />
-              <Route exact path="/ui/public_probes/:name/history/compare/:id1/:id2"
-                render={props =>
-                  <PublicPage>
-                    <ProbeVersionCompare publicView={true} {...props}/>
-                  </PublicPage>
-                }
-              />
-              <Route exact path="/ui/public_probes/:name/history/:version"
-                render={props =>
-                  <PublicPage>
-                    <ProbeVersionDetails publicView={true} {...props}/>
-                  </PublicPage>
-                }
-              />
-              <Route
-                exact path="/ui/public_metrictemplates"
-                render={props =>
-                  <PublicPage>
-                    <ListOfMetrics type='metrictemplates' publicView={true} {...props}/>
-                  </PublicPage>
-                }
-              />
-              <Route
-                exact path="/ui/public_metrictemplates/:name"
-                render={props =>
-                  <PublicPage>
-                    <MetricTemplateComponent publicView={true} {...props}/>
-                  </PublicPage>
-                }
-              />
-              <Route
-                exact path="/ui/public_metrictemplates/:name/history"
-                render={props =>
-                  <PublicPage>
-                    <HistoryComponent publicView={true} object='metrictemplate' {...props}/>
-                  </PublicPage>
-                }
-              />
-              <Route
-                exact path="/ui/public_metrictemplates/:name/history/compare/:id1/:id2"
-                render={props =>
-                  <PublicPage>
-                    <CompareMetrics publicView={true} {...props} type='metrictemplate'/>
-                  </PublicPage>
-                }
-              />
-              <Route
-                exact path="/ui/public_metrictemplates/:name/history/:version"
-                render={props =>
-                  <PublicPage>
-                    <MetricTemplateVersionDetails publicView={true} {...props}/>
-                  </PublicPage>
-                }
-              />
-              <Route component={NotFound} />
-            </Switch>
-          </BrowserRouter>
-        );
-    }
-    else if (!publicView && !isSessionActive) {
+  if (publicView && isTenantSchema !== undefined) {
+    if (isTenantSchema)
       return (
         <BrowserRouter>
           <Switch>
             <Route
-              path="/ui/"
+              exact path="/ui/public_home"
               render={props =>
-                <Login onLogin={this.onLogin} {...props} />
+                <PublicPage tenantName={tenantName}>
+                  <PublicHome/>
+                </PublicPage>
+              }
+            />
+            <Route
+              exact path="/ui/public_probes"
+              render={props =>
+                <PublicPage tenantName={tenantName}>
+                  <ProbeList publicView={true} {...props} />
+                </PublicPage>
+              }
+            />
+            <Route
+              exact path="/ui/public_probes/:name"
+              render={props =>
+                <PublicPage tenantName={tenantName}>
+                  <ProbeComponent publicView={true} {...props}/>
+                </PublicPage>
+              }
+            />
+            <Route exact path="/ui/public_probes/:name/history"
+              render={props =>
+                <PublicPage tenantName={tenantName}>
+                  <HistoryComponent object='probe' publicView={true} {...props}/>
+                </PublicPage>
+              }
+            />
+            <Route exact path="/ui/public_probes/:name/history/compare/:id1/:id2"
+              render={props =>
+                <PublicPage tenantName={tenantName}>
+                  <ProbeVersionCompare publicView={true} {...props}/>
+                </PublicPage>
+              }
+            />
+            <Route exact path="/ui/public_probes/:name/history/:version"
+              render={props =>
+                <PublicPage tenantName={tenantName}>
+                  <ProbeVersionDetails publicView={true} {...props}/>
+                </PublicPage>
+              }
+            />
+            <Route
+              exact path="/ui/public_metrictemplates"
+              render={props =>
+                <PublicPage tenantName={tenantName}>
+                  <ListOfMetrics type='metrictemplates' publicView={true} {...props}/>
+                </PublicPage>
+              }
+            />
+            <Route
+              exact path="/ui/public_metrictemplates/:name"
+              render={props =>
+                <PublicPage tenantName={tenantName}>
+                  <MetricTemplateComponent publicView={true} tenantView={true} {...props}/>
+                </PublicPage>
+              }
+            />
+            <Route
+              exact path="/ui/public_metrictemplates/:name/history"
+              render={props =>
+                <PublicPage tenantName={tenantName}>
+                  <HistoryComponent publicView={true} object='metrictemplate' {...props}/>
+                </PublicPage>
+              }
+            />
+            <Route
+              exact path="/ui/public_metrictemplates/:name/history/compare/:id1/:id2"
+              render={props =>
+                <PublicPage tenantName={tenantName}>
+                  <CompareMetrics publicView={true} {...props} type='metrictemplate'/>
+                </PublicPage>
+              }
+            />
+            <Route
+              exact path="/ui/public_metrictemplates/:name/history/:version"
+              render={props =>
+                <PublicPage tenantName={tenantName}>
+                  <MetricTemplateVersionDetails publicView={true} {...props}/>
+                </PublicPage>
+              }
+            />
+            <Route exact path="/ui/public_metrics"
+              render={props =>
+                <PublicPage tenantName={tenantName}>
+                  <ListOfMetrics type='metrics' publicView={true} {...props}/>
+                </PublicPage>
+              }
+            />
+            <Route exact path="/ui/public_metrics/:name"
+              render={props =>
+                <PublicPage tenantName={tenantName}>
+                  <MetricChange publicView={true} {...props}/>
+                </PublicPage>
+              }
+            />
+            <Route exact path="/ui/public_metricprofiles"
+              render={props =>
+                <PublicPage tenantName={tenantName}>
+                  <MetricProfilesList publicView={true} {...props} />
+                </PublicPage>
+              }
+            />
+            <Route exact path="/ui/public_metricprofiles/:name"
+              render={props =>
+                <PublicPage tenantName={tenantName}>
+                  <MetricProfilesChange {...props}
+                    webapimetric={webApiMetric}
+                    webapitoken={token}
+                    tenantname={tenantName}
+                    publicView={true}
+                  />
+                </PublicPage>
+              }
+            />
+            <Route exact path="/ui/public_aggregationprofiles"
+              render={props =>
+                <PublicPage tenantName={tenantName}>
+                  <AggregationProfilesList publicView={true} {...props} />
+                </PublicPage>
+              }
+            />
+            <Route exact path="/ui/public_aggregationprofiles/:name"
+              render={props =>
+                <PublicPage tenantName={tenantName}>
+                  <AggregationProfilesChange {...props}
+                    webapimetric={webApiMetric}
+                    webapiaggregation={webApiAggregation}
+                    webapitoken={token}
+                    tenantname={tenantName}
+                    publicView={true}
+                  />
+                </PublicPage>
+              }
+            />
+            <Route exact path="/ui/public_thresholdsprofiles"
+              render={props =>
+                <PublicPage tenantName={tenantName}>
+                  <ThresholdsProfilesList publicView={true} {...props} />
+                </PublicPage>
+              }
+            />
+            <Route exact path="/ui/public_thresholdsprofiles/:name"
+              render={props =>
+                <PublicPage tenantName={tenantName}>
+                  <ThresholdsProfilesChange {...props}
+                    webapithresholds={webApiThresholds}
+                    webapiaggregation={webApiAggregation}
+                    webapitoken={token}
+                    tenantname={tenantName}
+                    publicView={true}
+                  />
+                </PublicPage>
+              }
+            />
+            <Route exact path="/ui/public_operationsprofiles"
+              render={props =>
+                <PublicPage tenantName={tenantName}>
+                  <OperationsProfilesList
+                    {...props}
+                    publicView={true}
+                    webapitoken={token}
+                    webapioperations={webApiOperations}
+                  />
+                </PublicPage>
+              }
+            />
+            <Route exact path="/ui/public_operationsprofiles/:name"
+              render={props =>
+                <PublicPage tenantName={tenantName}>
+                  <OperationsProfileDetails
+                    {...props}
+                    publicView={true}
+                    webapitoken={token}
+                    webapioperations={webApiOperations}
+                  />
+                </PublicPage>
+              }
+            />
+            <Route exact path="/ui/public_servicetypes"
+              render={props =>
+                <PublicPage>
+                  <ServiceTypesList
+                    {...props}
+                    publicView={true}
+                  />
+                </PublicPage>
               }
             />
             <Route component={NotFound} />
           </Switch>
         </BrowserRouter>
       )
-    }
-    else if (isSessionActive && userDetails &&
-      this.state.isTenantSchema !== null) {
-
+    else
       return (
         <BrowserRouter>
-          <Container fluid>
-            <Row>
-              <NotificationContainer />
-              <Col>
-                <NavigationBarWithRouter
-                  onLogout={this.onLogout}
-                  isOpenModal={this.state.areYouSureModal}
-                  toggle={this.toggleAreYouSure}
-                  titleModal='Log out'
-                  msgModal='Are you sure you want to log out?'
-                  userDetails={userDetails}
-                  isTenantSchema={this.state.isTenantSchema}
-                  publicView={publicView}
-                />
-              </Col>
-            </Row>
-            <Row className="no-gutters">
-              <Col sm={{size: 2}} md={{size: 2}} id="sidebar-col" className="d-flex flex-column">
-                <NavigationLinksWithRouter isTenantSchema={this.state.isTenantSchema} userDetails={userDetails}/>
-                <div id="sidebar-grow" className="flex-grow-1 border-left border-right mb-0 pb-5"/>
-                <NavigationAboutWithRouter poemVersion={this.state.version} tenantName={this.state.tenantName}/>
-              </Col>
-              <Col>
-                <CustomBreadcrumbWithRouter />
-                {this.state.isTenantSchema ?
-                  <TenantRouteSwitch
-                    webApiMetric={this.state.webApiMetric}
-                    webApiAggregation={this.state.webApiAggregation}
-                    webApiThresholds={this.state.webApiThresholds}
-                    webApiOperations={this.state.webApiOperations}
-                    webApiReports={this.state.webApiReports}
-                    token={this.state.token}
-                    tenantName={this.state.tenantName}
-                    isSuperUser={userDetails.is_superuser}
-                    userGroups={userDetails.groups}/>
-                 :
-                  <SuperAdminRouteSwitch/>
-                }
-              </Col>
-            </Row>
-            <Row>
-              <Col>
-                <Footer loginPage={false} tenantName={this.state.tenantName}/>
-              </Col>
-            </Row>
-          </Container>
+          <Switch>
+            <Route
+              exact path="/ui/public_home"
+              render={props =>
+                <PublicPage>
+                  <PublicHome isSuperAdmin={true} {...props}/>
+                </PublicPage>
+              }
+            />
+            <Route
+              exact path="/ui/public_probes"
+              render={props =>
+                <PublicPage>
+                  <ProbeList publicView={true} {...props} />
+                </PublicPage>
+              }
+            />
+            <Route
+              exact path="/ui/public_probes/:name"
+              render={props =>
+                <PublicPage>
+                  <ProbeComponent publicView={true} {...props}/>
+                </PublicPage>
+              }
+            />
+            <Route exact path="/ui/public_probes/:name/history"
+              render={props =>
+                <PublicPage>
+                  <HistoryComponent object='probe' publicView={true} {...props}/>
+                </PublicPage>
+              }
+            />
+            <Route exact path="/ui/public_probes/:name/history/compare/:id1/:id2"
+              render={props =>
+                <PublicPage>
+                  <ProbeVersionCompare publicView={true} {...props}/>
+                </PublicPage>
+              }
+            />
+            <Route exact path="/ui/public_probes/:name/history/:version"
+              render={props =>
+                <PublicPage>
+                  <ProbeVersionDetails publicView={true} {...props}/>
+                </PublicPage>
+              }
+            />
+            <Route
+              exact path="/ui/public_metrictemplates"
+              render={props =>
+                <PublicPage>
+                  <ListOfMetrics type='metrictemplates' publicView={true} {...props}/>
+                </PublicPage>
+              }
+            />
+            <Route
+              exact path="/ui/public_metrictemplates/:name"
+              render={props =>
+                <PublicPage>
+                  <MetricTemplateComponent publicView={true} {...props}/>
+                </PublicPage>
+              }
+            />
+            <Route
+              exact path="/ui/public_metrictemplates/:name/history"
+              render={props =>
+                <PublicPage>
+                  <HistoryComponent publicView={true} object='metrictemplate' {...props}/>
+                </PublicPage>
+              }
+            />
+            <Route
+              exact path="/ui/public_metrictemplates/:name/history/compare/:id1/:id2"
+              render={props =>
+                <PublicPage>
+                  <CompareMetrics publicView={true} {...props} type='metrictemplate'/>
+                </PublicPage>
+              }
+            />
+            <Route
+              exact path="/ui/public_metrictemplates/:name/history/:version"
+              render={props =>
+                <PublicPage>
+                  <MetricTemplateVersionDetails publicView={true} {...props}/>
+                </PublicPage>
+              }
+            />
+            <Route component={NotFound} />
+          </Switch>
         </BrowserRouter>
       )
-    }
-    else if (this.state.isTenantSchema === null && isSessionActive) {
-      return (
-        <React.Fragment>
-          <h1>Something went wrong</h1>
-          <p>Cannot obtain schema.</p>
-        </React.Fragment>
-      )
-    }
-    else
-      return null
   }
+  else if (!publicView && !isSessionActive) {
+    return (
+      <BrowserRouter>
+        <Switch>
+          <Route
+            path="/ui/"
+            render={props =>
+              <Login onLogin={onLogin} {...props} />
+            }
+          />
+          <Route component={NotFound} />
+        </Switch>
+      </BrowserRouter>
+    )
+  }
+  else if (isSessionActive && userDetails &&
+    isTenantSchema !== null) {
+
+    return (
+      <BrowserRouter>
+        <Container fluid>
+          <Row>
+            <NotificationContainer />
+            <Col>
+              <NavigationBarWithRouter
+                onLogout={onLogout}
+                isOpenModal={areYouSureModal}
+                toggle={toggleAreYouSure}
+                titleModal='Log out'
+                msgModal='Are you sure you want to log out?'
+                userDetails={userDetails}
+                isTenantSchema={isTenantSchema}
+                publicView={publicView}
+              />
+            </Col>
+          </Row>
+          <Row className="no-gutters">
+            <Col sm={{size: 2}} md={{size: 2}} id="sidebar-col" className="d-flex flex-column">
+              <NavigationLinksWithRouter isTenantSchema={isTenantSchema} userDetails={userDetails}/>
+              <div id="sidebar-grow" className="flex-grow-1 border-left border-right mb-0 pb-5"/>
+              <NavigationAboutWithRouter poemVersion={version} tenantName={tenantName}/>
+            </Col>
+            <Col>
+              <CustomBreadcrumbWithRouter />
+              {isTenantSchema ?
+                <TenantRouteSwitch
+                  webApiMetric={webApiMetric}
+                  webApiAggregation={webApiAggregation}
+                  webApiThresholds={webApiThresholds}
+                  webApiOperations={webApiOperations}
+                  webApiReports={webApiReports}
+                  token={token}
+                  tenantName={tenantName}
+                  isSuperUser={userDetails.is_superuser}
+                  userGroups={userDetails.groups}/>
+                :
+                <SuperAdminRouteSwitch/>
+              }
+            </Col>
+          </Row>
+          <Row>
+            <Col>
+              <Footer loginPage={false} tenantName={tenantName}/>
+            </Col>
+          </Row>
+        </Container>
+      </BrowserRouter>
+    )
+  }
+  else if (isTenantSchema === null && isSessionActive) {
+    return (
+      <React.Fragment>
+        <h1>Something went wrong</h1>
+        <p>Cannot obtain schema.</p>
+      </React.Fragment>
+    )
+  }
+  else
+    return null
 }
 
 export default App;
