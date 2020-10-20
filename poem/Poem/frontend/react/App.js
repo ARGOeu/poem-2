@@ -74,7 +74,7 @@ const AddRoute = ({usergroups, ...props}) => (
     <Route {...props} />
   :
     <Route component={NotFound} />
-);
+)
 
 
 const RedirectAfterLogin = ({isSuperUser}) => {
@@ -493,16 +493,16 @@ const App = () => {
 
     let isTenantSchema = await backend.isTenantSchema();
     let initialState = await initalizeState(isTenantSchema, response);
-  };
+  }
 
   function onLogout() {
     setIsSessionActive(false);
     localStorage.removeItem('referrer');
-  };
+  }
 
   function toggleAreYouSure() {
     setAreYouSureModal(!areYouSureModal);
-  };
+  }
 
   async function initalizeState(poemType, response) {
     let options = await backend.fetchConfigOptions();
@@ -525,8 +525,8 @@ const App = () => {
       setUserDetails(response.userdetails);
       setVersion(options && options.result.version);
       setPublicView(false);
-    };
-  };
+    }
+  }
 
   async function initalizePublicState() {
     let token = await backend.fetchPublicToken()
@@ -543,13 +543,13 @@ const App = () => {
     setWebApiReports(options && options.result.webapireports);
     setTenantName(options && options.result.tenant_name);
     setPublicView(true);
-  };
+  }
 
   function isPublicUrl () {
     const pathname = window.location.pathname;
 
     return pathname.includes('public_');
-  };
+  }
 
   function getAndSetReferrer() {
     let referrer = localStorage.getItem('referrer');
@@ -562,7 +562,7 @@ const App = () => {
 
     stackUrls.push(window.location.pathname);
     localStorage.setItem('referrer', JSON.stringify(stackUrls));
-  };
+  }
 
   useEffect(() => {
     fetchData();
@@ -578,7 +578,7 @@ const App = () => {
 
       getAndSetReferrer()
     };
-  }, []);
+  }, [])
 
   if (publicView && isTenantSchema !== undefined) {
     if (isTenantSchema)
@@ -873,7 +873,7 @@ const App = () => {
             <Route component={NotFound} />
           </Switch>
         </BrowserRouter>
-      );
+      )
   }
   else if (!publicView && !isSessionActive) {
     return (
@@ -954,6 +954,6 @@ const App = () => {
   }
   else
     return null
-};
+}
 
 export default App;
