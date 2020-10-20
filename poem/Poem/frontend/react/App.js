@@ -46,7 +46,6 @@ import { NotificationContainer } from 'react-notifications';
 import { Backend } from './DataManager';
 import { YumRepoList, YumRepoComponent } from './YumRepos';
 import { ThresholdsProfilesList, ThresholdsProfilesChange, ThresholdsProfileVersionCompare, ThresholdsProfileVersionDetail } from './ThresholdProfiles';
-import Cookies from 'universal-cookie';
 
 import './App.css';
 import { PackageList, PackageComponent } from './Package';
@@ -469,8 +468,7 @@ const SuperAdminRouteSwitch = ({props}) => (
 )
 
 
-const App = (props) => {
-  const cookies = new Cookies();
+const App = () => {
   const backend = new Backend();
 
   const [isSessionActive, setIsSessionActive] = useState(undefined);
