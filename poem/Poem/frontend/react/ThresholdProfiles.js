@@ -12,8 +12,7 @@ import {
   NotifyError,
   ErrorComponent,
   ParagraphTitle,
-  ProfilesListTable,
-  ModalAreYouSure
+  ProfilesListTable
 } from './UIElements';
 import {
   Formik,
@@ -160,10 +159,10 @@ function getUOM(value) {
 
 
 function thresholdsToValues(rules) {
-  rules.forEach((r => {
-    let thresholds_strings = r.thresholds.split(' ');
+  rules.forEach((rule => {
+    let thresholds_strings = rule.thresholds.split(' ');
     let thresholds = [];
-    thresholds_strings.forEach((s => {
+    thresholds_strings.forEach((string => {
       let label = '';
       let value = '';
       let uom = '';
@@ -173,7 +172,7 @@ function thresholdsToValues(rules) {
       let crit2 = '';
       let min = '';
       let max = '';
-      let tokens = s.split('=')
+      let tokens = string.split('=')
       if (tokens.length === 2) {
         label = tokens[0];
         let subtokens = tokens[1].split(';');
@@ -221,7 +220,7 @@ function thresholdsToValues(rules) {
         max: max
       });
     }));
-    r.thresholds = thresholds;
+    rule.thresholds = thresholds;
   }));
   return rules;
 }
@@ -263,7 +262,8 @@ const ThresholdsProfilesForm = ({
           render={arrayHelpers => (
             <div>
               {values.rules && values.rules.length > 0 ? (
-                values.rules.map((rule, index) =>
+                // eslint-disable-next-line @getify/proper-arrows/params
+                values.rules.map((_rule, index) =>
                   <React.Fragment key={`fragment.rules.${index}`}>
                     <Card className={`mt-${index === 0 ? '1' : '4'}`}>
                       <CardHeader className='p-1 font-weight-bold text-uppercase'>
@@ -415,7 +415,8 @@ const ThresholdsProfilesForm = ({
                                           values.rules[index].thresholds &&
                                           values.rules[index].thresholds.length > 0
                                           ) ?
-                                          values.rules[index].thresholds.map((t, i) =>
+                                          // eslint-disable-next-line @getify/proper-arrows/params
+                                          values.rules[index].thresholds.map((_t, i) =>
                                             <tr key={`rule-${index}-threshold-${i}`}>
                                               <td className='align-middle text-center'>
                                                 {i + 1}
@@ -982,7 +983,7 @@ export const ThresholdsProfilesChange = (props) => {
           'groupname': json['groupname'],
           'rules': thresholdsToValues(thresholdsprofile.rules)
         };
-      };
+      }
       return tp;
     }
   );
@@ -1013,15 +1014,15 @@ export const ThresholdsProfilesChange = (props) => {
 
   function toggleAreYouSure() {
     setAreYouSureModal(!areYouSureModal);
-  };
+  }
 
   function toggleWarningPopOver() {
     setPopoverWarningOpen(!popoverWarningOpen);
-  };
+  }
 
   function toggleCriticalPopOver() {
     setPopoverCriticalOpen(!popoverCriticalOpen);
-  };
+  }
 
   function onSelect(field, value) {
     let modifiedThresholdsProfile = thresholdsProfile;
@@ -1034,29 +1035,29 @@ export const ThresholdsProfilesChange = (props) => {
     modifiedThresholdsProfile.rules = thresholds_rules;
 
     queryCache.setQueryData(`${querykey}`, () => modifiedThresholdsProfile);
-  };
+  }
 
   function thresholdsToString(rules) {
-    rules.forEach((r => {
+    rules.forEach((rule => {
       let thresholds = [];
-      if (!r.host)
-        delete r.host;
-      if (!r.endpoint_group)
-        delete r.endpoint_group;
-      r.thresholds.forEach((t => {
+      if (!rule.host)
+        delete rule.host;
+      if (!rule.endpoint_group)
+        delete rule.endpoint_group;
+      rule.thresholds.forEach((thresh => {
         let thresholds_string = undefined;
-        thresholds_string = t.label + '=' + t.value + t.uom + ';' + t.warn1 + ':' + t.warn2 + ';' + t.crit1 + ':' + t.crit2;
-        if (t.min && t.max)
-          thresholds_string = thresholds_string + ';' + t.min + ';' + t.max;
+        thresholds_string = thresh.label + '=' + thresh.value + thresh.uom + ';' + thresh.warn1 + ':' + thresh.warn2 + ';' + thresh.crit1 + ':' + thresh.crit2;
+        if (thresh.min && thresh.max)
+          thresholds_string = thresholds_string + ';' + thresh.min + ';' + thresh.max;
         thresholds.push(thresholds_string)
       }));
       let th = thresholds.join(' ');
-      r.thresholds = th;
+      rule.thresholds = th;
     }));
     return rules;
-  };
+  }
 
-  function onSubmitHandle(values, actions) {
+  function onSubmitHandle(values) {
     let msg = `Are you sure you want to ${addview ? 'add' : 'change'} thresholds profile?`;
     let title = `${addview ? 'Add' : 'Change'} thresholds profile`;
 
@@ -1065,7 +1066,7 @@ export const ThresholdsProfilesChange = (props) => {
     setFormValues(values);
     setModalFlag('submit');
     toggleAreYouSure();
-  };
+  }
 
   async function doChange() {
     let values_send = JSON.parse(JSON.stringify(formValues));
@@ -1083,7 +1084,7 @@ export const ThresholdsProfilesChange = (props) => {
           add_msg = msg_list.join(' ');
         } catch(err) {
           add_msg = 'Web API error adding thresholds profile';
-        };
+        }
         NotifyError({
           title: `Web API error: ${response.status} ${response.statusText}`,
           msg: add_msg
@@ -1112,13 +1113,13 @@ export const ThresholdsProfilesChange = (props) => {
             add_msg = json.detail;
           } catch(err) {
             add_msg = 'Internal API error adding thresholds profile';
-          };
+          }
           NotifyError({
             title: `Internal API error: ${r_internal.status} ${r_internal.statusText}`,
             msg: add_msg
           });
-        };
-      };
+        }
+      }
     } else {
       let response = await webapi.changeThresholdsProfile({
         id: values_send.id,
@@ -1134,7 +1135,7 @@ export const ThresholdsProfilesChange = (props) => {
           change_msg = msg_list.join(' ');
         } catch(err) {
           change_msg = 'Web API error changing thresholds profile';
-        };
+        }
         NotifyError({
           title: `Web API error: ${response.status} ${response.statusText}`,
           msg: change_msg
@@ -1162,15 +1163,15 @@ export const ThresholdsProfilesChange = (props) => {
             change_msg = json.detail;
           } catch(err) {
             change_msg = 'Internal API error changing thresholds profile';
-          };
+          }
           NotifyError({
             title: `Internal API error: ${r_internal.status} ${r_internal.statusText}`,
             msg: change_msg
           });
-        };
-      };
-    };
-  };
+        }
+      }
+    }
+  }
 
   async function doDelete() {
     let response = await webapi.deleteThresholdsProfile(profileId);
@@ -1183,7 +1184,7 @@ export const ThresholdsProfilesChange = (props) => {
         msg = msg_list.join(' ');
       } catch(err) {
         msg = 'Web API error deleting thresholds profile';
-      };
+      }
       NotifyError({
         title: `Web API error: ${response.status} ${response.statusText}`,
         msg: msg
@@ -1203,14 +1204,14 @@ export const ThresholdsProfilesChange = (props) => {
           msg = json.detail;
         } catch(err) {
           msg = 'Internal API error deleting thresholds profile';
-        };
+        }
         NotifyError({
           title: `Internal API error: ${r_internal.status} ${r_internal.statusText}`,
           msg: msg
         });
-      };
-    };
-  };
+      }
+    }
+  }
 
   if (loadingThresholdsProfile || loadingUserDetails || loadingAllMetrics)
     return (<LoadingAnim/>);
@@ -1236,80 +1237,85 @@ export const ThresholdsProfilesChange = (props) => {
       [];
 
     return (
-      <>
-        <ModalAreYouSure
-          isOpen={areYouSureModal}
-          toggle={toggleAreYouSure}
-          title={modalTitle}
-          msg={modalMsg}
-          onYes={modalFlag === 'submit' ? doChange : modalFlag === 'delete' ? doDelete : undefined}
+      <BaseArgoView
+        resourcename={publicView ? 'Thresholds profile details' : 'thresholds profile'}
+        location={location}
+        history={!publicView}
+        submitperm={write_perm}
+        addview={publicView ? !publicView : addview}
+        publicview={publicView}
+        modal={true}
+        state={{
+          areYouSureModal,
+          modalTitle,
+          modalMsg,
+          'modalFunc': modalFlag === 'submit' ?
+            doChange
+          :
+            modalFlag === 'delete' ?
+              doDelete
+            :
+              undefined
+        }}
+        toggle={toggleAreYouSure}
+      >
+        <Formik
+          initialValues = {{
+            id: thresholdsProfile.apiid,
+            name: thresholdsProfile.name,
+            groupname: thresholdsProfile.groupname,
+            rules: thresholdsProfile.rules
+          }}
+          validationSchema={ThresholdsSchema}
+          onSubmit = {(values) => onSubmitHandle(values)}
+          enableReinitialize={true}
+          render = {props => (
+            <Form>
+              <ThresholdsProfilesForm
+                {...props}
+                groups_list={groups_list}
+                metrics_list={allMetrics}
+                write_perm={write_perm}
+                onSelect={onSelect}
+                popoverWarningOpen={popoverWarningOpen}
+                popoverCriticalOpen={popoverCriticalOpen}
+                toggleWarningPopOver={toggleWarningPopOver}
+                toggleCriticalPopOver={toggleCriticalPopOver}
+                historyview={publicView}
+              />
+              {
+                write_perm &&
+                  <div className='submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5'>
+                    {
+                      !addview ?
+                        <Button
+                          color='danger'
+                          onClick={() => {
+                            setModalMsg('Are you sure you want to delete thresholds profile?');
+                            setModalTitle('Delete thresholds profile');
+                            setModalFlag('delete');
+                            setProfileId(props.values.id);
+                            toggleAreYouSure();
+                          }}
+                        >
+                          Delete
+                        </Button>
+                      :
+                        <div></div>
+                    }
+                    <Button
+                      color='success'
+                      id='submit-button'
+                      type='submit'
+                    >
+                      Save
+                    </Button>
+                  </div>
+              }
+            </Form>
+          )}
         />
-        <BaseArgoView
-          resourcename={publicView ? 'Thresholds profile details' : 'thresholds profile'}
-          location={location}
-          history={!publicView}
-          submitperm={write_perm}
-          addview={publicView ? !publicView : addview}
-          publicview={publicView}
-        >
-          <Formik
-            initialValues = {{
-              id: thresholdsProfile.apiid,
-              name: thresholdsProfile.name,
-              groupname: thresholdsProfile.groupname,
-              rules: thresholdsProfile.rules
-            }}
-            validationSchema={ThresholdsSchema}
-            onSubmit = {(values, actions) => onSubmitHandle(values, actions)}
-            enableReinitialize={true}
-            render = {props => (
-              <Form>
-                <ThresholdsProfilesForm
-                  {...props}
-                  groups_list={groups_list}
-                  metrics_list={allMetrics}
-                  write_perm={write_perm}
-                  onSelect={onSelect}
-                  popoverWarningOpen={popoverWarningOpen}
-                  popoverCriticalOpen={popoverCriticalOpen}
-                  toggleWarningPopOver={toggleWarningPopOver}
-                  toggleCriticalPopOver={toggleCriticalPopOver}
-                  historyview={publicView}
-                />
-                {
-                  write_perm &&
-                    <div className='submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5'>
-                      {
-                        !addview ?
-                          <Button
-                            color='danger'
-                            onClick={() => {
-                              setModalMsg('Are you sure you want to delete thresholds profile?');
-                              setModalTitle('Delete thresholds profile');
-                              setModalFlag('delete');
-                              setProfileId(props.values.id);
-                              toggleAreYouSure();
-                            }}
-                          >
-                            Delete
-                          </Button>
-                        :
-                          <div></div>
-                      }
-                      <Button
-                        color='success'
-                        id='submit-button'
-                        type='submit'
-                      >
-                        Save
-                      </Button>
-                    </div>
-                }
-              </Form>
-            )}
-          />
-        </BaseArgoView>
-      </>
+      </BaseArgoView>
     );
   } else
     return null;
@@ -1402,9 +1408,9 @@ export const ThresholdsProfileVersionCompare = (props) => {
         });
       } catch(err) {
         setError(err);
-      };
+      }
       setLoading(false);
-    };
+    }
   }, []);
 
   if (loading)
@@ -1466,10 +1472,10 @@ export const ThresholdsProfileVersionDetail = (props) => {
         });
       } catch(err) {
         setError(err);
-      };
+      }
 
       setLoading(false);
-    };
+    }
   }, []);
 
   if (loading)

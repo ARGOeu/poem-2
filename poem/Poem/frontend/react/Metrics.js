@@ -13,7 +13,10 @@ import {
   NotifyInfo,
   ErrorComponent,
   ModalAreYouSure,
-  ParagraphTitle, DefaultColumnFilter, SelectColumnFilter, BaseArgoTable
+  ParagraphTitle,
+  DefaultColumnFilter,
+  SelectColumnFilter,
+  BaseArgoTable
  } from './UIElements';
 import { Formik, Form, Field, FieldArray } from 'formik';
 import {
@@ -346,7 +349,7 @@ export const ListOfMetrics = (props) => {
     const newSelected = Object.assign({}, selected);
     newSelected[name] = !selected[name];
     setSelected(newSelected);
-    setSelectAll(Object.keys(newSelected).every((k) => !newSelected[k]) ? 0 : 2);
+    setSelectAll(Object.keys(newSelected).every((key) => !newSelected[key]) ? 0 : 2);
   }
 
   function toggleSelectAll(instance) {
@@ -356,8 +359,8 @@ export const ListOfMetrics = (props) => {
 
     let newSelected = {};
     if (selectAll === 0) {
-      list_metric.forEach(x => {
-        newSelected[x.name] = true;
+      list_metric.forEach(met => {
+        newSelected[met.name] = true;
       });
     }
 
@@ -372,7 +375,7 @@ export const ListOfMetrics = (props) => {
   function onDelete() {
     let selectedMetrics = selected;
     // get only those metrics whose value is true
-    let mt = Object.keys(selectedMetrics).filter(k => selectedMetrics[k]);
+    let mt = Object.keys(selectedMetrics).filter(key => selectedMetrics[key]);
     if (mt.length > 0 ) {
       setModalMsg(`Are you sure you want to delete metric template${mt.length > 1 ? 's' : ''} ${mt.join(', ')}?`);
       setModalTitle(`Delete metric template${mt.length > 1 ? 's' : ''}`);
@@ -388,7 +391,7 @@ export const ListOfMetrics = (props) => {
   async function importMetrics() {
     let selectedMetrics = selected;
     // get only those metrics whose value is true
-    let mt = Object.keys(selectedMetrics).filter(k => selectedMetrics[k]);
+    let mt = Object.keys(selectedMetrics).filter(key => selectedMetrics[key]);
     if (mt.length > 0) {
       let response = await backend.importMetrics({'metrictemplates': mt});
       let json = await response.json();
@@ -426,7 +429,7 @@ export const ListOfMetrics = (props) => {
       if ('warning' in json)
         NotifyWarn({msg: json.warning, title: 'Deleted'});
 
-      queryCache.setQueryData(`${type}_listview`, (oldData) => oldData.filter(m => !mt.includes(m.name)));
+      queryCache.setQueryData(`${type}_listview`, (oldData) => oldData.filter(met => !mt.includes(met.name)));
       setSelectAll(0);
 
     } else
@@ -1208,9 +1211,9 @@ export const MetricChange = (props) => {
       let probes = [];
       if (metric.probeversion)
         probes = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}version/probe/${metric.probeversion.split(' ')[0]}`);
-        probes.forEach((p) => {
-          if (p.object_repr === metric.probeversion)
-            probe = p.fields;
+        probes.forEach((prb) => {
+          if (prb.object_repr === metric.probeversion)
+            probe = prb.fields;
         });
 
       return probe;
@@ -1226,7 +1229,7 @@ export const MetricChange = (props) => {
     setAreYouSureModal(!areYouSureModal);
   }
 
-  function onSubmitHandle(values, actions) {
+  function onSubmitHandle(values) {
     setModalMsg('Are you sure you want to change metric?');
     setModalTitle('Change metric');
     setFormValues(values);
@@ -1323,76 +1326,81 @@ export const MetricChange = (props) => {
 
 
     return (
-      <React.Fragment>
-        <ModalAreYouSure
-          isOpen={areYouSureModal}
-          toggle={toggleAreYouSure}
-          title={modalTitle}
-          msg={modalMsg}
-          onYes={modalFlag === 'submit' ? doChange : modalFlag === 'delete' ? doDelete : undefined}
+      <BaseArgoView
+        resourcename={(publicView) ? 'Metric details' : 'metric'}
+        location={location}
+        history={!publicView}
+        publicview={publicView}
+        modal={true}
+        state={{
+          areYouSureModal,
+          modalTitle,
+          modalMsg,
+          'modalFunc': modalFlag === 'submit' ?
+            doChange
+          :
+            modalFlag === 'delete' ?
+              doDelete
+            :
+              undefined
+        }}
+        toggle={toggleAreYouSure}
+        submitperm={writePerm}>
+        <Formik
+          enableReinitialize={true}
+          initialValues = {{
+            name: metric.name,
+            probeversion: metric.probeversion,
+            description: metric.description,
+            type: metric.mtype,
+            group: metric.group,
+            probeexecutable: metric.probeexecutable,
+            parent: metric.parent,
+            config: metric.config,
+            attributes: metric.attribute,
+            dependency: metric.dependancy,
+            parameter: metric.parameter,
+            flags: metric.flags,
+            files: metric.files,
+            file_attributes: metric.files,
+            file_parameters: metric.fileparameter
+          }}
+          onSubmit = {(values) => onSubmitHandle(values)}
+          render = {props => (
+            <Form>
+              <MetricForm
+                {...props}
+                obj_label='metric'
+                obj={metric}
+                probe={probe}
+                tags={metric.tags}
+                isTenantSchema={true}
+                popoverOpen={popoverOpen}
+                togglePopOver={togglePopOver}
+                groups={groups}
+                publicView={publicView}
+              />
+              {
+                (writePerm) &&
+                  <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
+                    <Button
+                      color="danger"
+                      onClick={() => {
+                        setModalMsg('Are you sure you want to delete metric?')
+                        setModalTitle('Delete metric')
+                        setModalFlag('delete');
+                        toggleAreYouSure();
+                      }}
+                    >
+                      Delete
+                    </Button>
+                    <Button color="success" id="submit-button" type="submit">Save</Button>
+                  </div>
+              }
+            </Form>
+          )}
         />
-        <BaseArgoView
-          resourcename={(publicView) ? 'Metric details' : 'metric'}
-          location={location}
-          history={!publicView}
-          publicview={publicView}
-          submitperm={writePerm}>
-          <Formik
-            enableReinitialize={true}
-            initialValues = {{
-              name: metric.name,
-              probeversion: metric.probeversion,
-              description: metric.description,
-              type: metric.mtype,
-              group: metric.group,
-              probeexecutable: metric.probeexecutable,
-              parent: metric.parent,
-              config: metric.config,
-              attributes: metric.attribute,
-              dependency: metric.dependancy,
-              parameter: metric.parameter,
-              flags: metric.flags,
-              files: metric.files,
-              file_attributes: metric.files,
-              file_parameters: metric.fileparameter
-            }}
-            onSubmit = {(values, actions) => onSubmitHandle(values, actions)}
-            render = {props => (
-              <Form>
-                <MetricForm
-                  {...props}
-                  obj_label='metric'
-                  obj={metric}
-                  probe={probe}
-                  tags={metric.tags}
-                  isTenantSchema={true}
-                  popoverOpen={popoverOpen}
-                  togglePopOver={togglePopOver}
-                  groups={groups}
-                  publicView={publicView}
-                />
-                {
-                  (writePerm) &&
-                    <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
-                      <Button
-                        color="danger"
-                        onClick={() => {
-                          setModalMsg('Are you sure you want to delete metric?')
-                          setModalTitle('Delete metric')
-                          setModalFlag('delete');
-                          toggleAreYouSure();
-                        }}
-                      >
-                        Delete
-                      </Button>
-                      <Button color="success" id="submit-button" type="submit">Save</Button>
-                    </div>
-                }
-              </Form>
-            )}
-          />
-        </BaseArgoView>
-      </React.Fragment>
+      </BaseArgoView>
     );
   }
 };
@@ -1418,9 +1426,9 @@ export const MetricVersionDetails = (props) => {
         json.forEach(async (e) => {
           if (e.version == version) {
             let probes = await backend.fetchData(`/api/v2/internal/version/probe/${e.fields.probeversion.split(' ')[0]}`);
-            probes.forEach(p => {
-              if (p.object_repr === e.fields.probeversion)
-                setProbe(p.fields);
+            probes.forEach(prb => {
+              if (prb.object_repr === e.fields.probeversion)
+                setProbe(prb.fields);
             });
             let m = e.fields;
             m.date_created = e.date_created;
