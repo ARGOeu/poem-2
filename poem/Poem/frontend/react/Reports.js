@@ -6,7 +6,8 @@ import {
   ErrorComponent,
   BaseArgoView,
   ParagraphTitle,
-  Checkbox
+  Checkbox,
+  BaseArgoTable
  } from './UIElements';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -20,141 +21,8 @@ import {
   InputGroup,
   InputGroupAddon,
   FormText,
-  Label,
-  Pagination,
-  PaginationItem,
-  PaginationLink
+  Label
 } from 'reactstrap';
-import { useTable, usePagination } from 'react-table';
-
-
-function ReportsTable({ columns, data }) {
-  const {
-    headerGroups,
-    prepareRow,
-    page,
-    canPreviousPage,
-    canNextPage,
-    pageCount,
-    gotoPage,
-    nextPage,
-    previousPage,
-    setPageSize,
-    state: { pageIndex, pageSize }
-  } = useTable(
-    {
-      columns,
-      data,
-      initialState: { pageIndex: 0, pageSize: 10 }
-    },
-    usePagination
-  );
-
-  return (
-    <>
-      <Row>
-        <Col>
-          <table className='table table-bordered table-hover'>
-            <thead className='table-active align-middle text-center'>
-              {
-                headerGroups.map((headerGroup, thi) => (
-                  <React.Fragment key={thi}>
-                    <tr>
-                      {
-                        headerGroup.headers.map((column, tri) => {
-                          let width = undefined;
-
-                          if (tri === 0)
-                            width = '2%';
-
-                          if (tri === 1)
-                            width = '20%';
-
-                          if (tri === 2)
-                            width = '70%';
-
-                          if (tri === 3)
-                            width = '8%';
-
-                          return (
-                            <th style={{width: width}} className='p-1 m-1' key={tri}>
-                              {column.render('Header')}
-                            </th>
-                          )
-                        })
-                      }
-                    </tr>
-                  </React.Fragment>
-                ))
-              }
-            </thead>
-            <tbody>
-              {
-                page.map((row, row_index) => {
-                  prepareRow(row);
-                  return (
-                    <tr key={row_index}>
-                      {
-                        row.cells.map((cell, cell_index) => {
-                          if (cell_index === 0)
-                            return <td key={cell_index} className='align-middle text-center'>{(row_index + 1) + (pageIndex * pageSize)}</td>
-
-                          else
-                            return <td key={cell_index} className='align-middle'>{cell.render('Cell')}</td>
-                        })
-                      }
-                    </tr>
-                  )
-                })
-              }
-            </tbody>
-          </table>
-        </Col>
-      </Row>
-      <Row>
-        <Col className='d-flex justify-content-center'>
-          <Pagination>
-            <PaginationItem disabled={!canPreviousPage}>
-              <PaginationLink first onClick={() => gotoPage(0)}/>
-            </PaginationItem>
-            <PaginationItem disabled={!canPreviousPage}>
-              <PaginationLink previous onClick={() => previousPage()}/>
-            </PaginationItem>
-            {
-              [...Array(pageCount)].map((e, i) =>
-                <PaginationItem key={i} active={pageIndex === i ? true : false}>
-                  <PaginationLink onClick={() => gotoPage(i)}>
-                    { i + 1 }
-                  </PaginationLink>
-                </PaginationItem>
-              )
-            }
-            <PaginationItem disabled={!canNextPage}>
-              <PaginationLink next onClick={() => nextPage()}/>
-            </PaginationItem>
-            <PaginationItem disabled={!canNextPage}>
-              <PaginationLink last onClick={() => gotoPage(pageCount + 1)}/>
-            </PaginationItem>
-            <PaginationItem className='pl-2'>
-              <select
-                style={{width: '180px'}}
-                className='custom-select text-primary'
-                value={pageSize}
-                onChange={e => setPageSize(Number(e.target.value))}
-              >
-                {[10, 20, 50].map(pageSize => (
-                  <option key={pageSize} value={pageSize}>
-                    {pageSize} reports
-                  </option>
-                ))}
-              </select>
-            </PaginationItem>
-          </Pagination>
-        </Col>
-      </Row>
-    </>
-  );
-}
 
 
 export const ReportsList = (props) => {
@@ -175,13 +43,6 @@ export const ReportsList = (props) => {
         'disabled': e.disabled
       }))
 
-      // 10 is minimal pageSize and these numbers should be aligned
-      let n_elem = 10 - (reports.length % 10)
-      for (let i = 0; i < n_elem; i++)
-        reports.push(
-          {'description': '', 'groupname': '', 'name': '', 'disabled': ''}
-        )
-
       return reports;
     }
   );
@@ -190,7 +51,8 @@ export const ReportsList = (props) => {
     () => [
       {
         Header: '#',
-        accessor: null
+        accessor: null,
+        column_width: '2%'
       },
       {
         Header: 'Name',
@@ -198,11 +60,13 @@ export const ReportsList = (props) => {
         accessor: e =>
           <Link to={`/ui/reports/${e.name}`}>
             {e.name}
-          </Link>
+          </Link>,
+        column_width: '20%'
       },
       {
         Header: 'Description',
-        accessor: 'description'
+        accessor: 'description',
+        column_width: '70%'
       },
       {
         Header: 'Enabled',
@@ -218,7 +82,8 @@ export const ReportsList = (props) => {
             e.disabled ?
               <FontAwesomeIcon icon={faTimesCircle} style={{color: '#CC0000'}}/>
             :
-              <FontAwesomeIcon icon={faCheckCircle} style={{color: '#339900'}}/>
+              <FontAwesomeIcon icon={faCheckCircle} style={{color: '#339900'}}/>,
+        column_width: '8%'
       }
     ]
   );
@@ -237,9 +102,11 @@ export const ReportsList = (props) => {
         listview={true}
         addnew={false}
       >
-        <ReportsTable
+        <BaseArgoTable
           data={listReports}
           columns={columns}
+          resourcename='reports'
+          page_size={10}
         />
       </BaseArgoView>
     )

@@ -65,15 +65,15 @@ import {
   faTable,
   faTasks,
   faUser,
-  faWrench, faNewspaper}
-from '@fortawesome/free-solid-svg-icons';
+  faWrench,
+  faNewspaper} from '@fortawesome/free-solid-svg-icons';
 import { NotificationManager } from 'react-notifications';
 import { Field } from 'formik';
 import { Backend } from './DataManager';
 import ReactDiffViewer from 'react-diff-viewer';
 import Autosuggest from 'react-autosuggest';
 import { CookiePolicy } from './CookiePolicy';
-import { useTable, usePagination } from 'react-table';
+import { useTable, usePagination, useFilters } from 'react-table';
 
 
 var list_pages = ['administration', 'probes',
@@ -1244,7 +1244,53 @@ export const ParagraphTitle = ({title}) => (
 )
 
 
-export function ProfilesListTable({ columns, data, type }) {
+export const DefaultColumnFilter = ({column: { filterValue, setFilter }}) => {
+  return (
+    <div className="input-group">
+      <input className="form-control"
+        type="text"
+        placeholder="Search"
+        value={filterValue || ''}
+        onChange={e => {setFilter(e.target.value || undefined)}}
+      />
+      <div className="input-group-append">
+        <span className="input-group-text" id="basic-addon">
+          <FontAwesomeIcon icon={faSearch}/>
+        </span>
+      </div>
+    </div>
+  )
+};
+
+
+export const SelectColumnFilter = ({column: { filterValue, setFilter, filterList }}) => {
+  const options = React.useMemo(() => filterList);
+
+  return (
+    <select
+      className='form-control custom-select'
+      style={{width: '100%'}}
+      value={filterValue}
+      onChange={e => setFilter(e.target.value || undefined)}
+    >
+      <option value=''>Show all</option>
+      {
+        options.map((option, i) => (
+          <option key={i} value={option}>{option}</option>
+        ))
+      }
+    </select>
+  )
+};
+
+
+export function BaseArgoTable({ columns, data, resourcename, page_size, filter=false, selectable=false }) {
+  const defaultColumn = React.useMemo(
+    () => ({
+      centering: false
+    }),
+    []
+  )
   const {
     headerGroups,
     prepareRow,
@@ -1261,10 +1307,74 @@ export function ProfilesListTable({ columns, data, type }) {
     {
       columns,
       data,
-      initialState: { pageIndex: 0, pageSize: 10 }
+      initialState: { pageIndex: 0, pageSize: page_size },
+      defaultColumn
     },
+    useFilters,
     usePagination
   );
+
+  var n_elem = 0;
+
+  if (page.length % pageSize > 0)
+    n_elem = pageSize - (page.length % pageSize);
+
+  let table_body = undefined;
+
+  if (page.length === 0) {
+    let n1 = Math.ceil(pageSize / 2);
+    table_body = <tbody>
+      {
+        [...Array(pageSize)].map((e, ri) => {
+          return (
+            <tr key={ri}>
+              {
+                ri === n1 - 1 ?
+                  <td colSpan={columns.length} style={{height: '49px'}} className='align-middle text-center text-muted'>{`No ${resourcename}`}</td>
+                :
+                  [...Array(columns.length)].map((e, ci) =>
+                    <td style={{height: '49px'}} key={ci} className='align-middle'>{''}</td>
+                  )
+              }
+            </tr>
+          )
+        })
+      }
+    </tbody>
+  } else {
+    table_body = <tbody>
+      {
+        page.map((row, row_index) => {
+          prepareRow(row);
+          return (
+            <tr key={row_index} style={{height: '49px'}}>
+              {
+                row.cells.map((cell, cell_index) => {
+                  if (cell_index === 0 && !selectable)
+                    return <td key={cell_index} className='align-middle text-center'>{(row_index + 1) + (pageIndex * pageSize)}</td>
+                  else
+                    return <td key={cell_index} className='align-middle'>{cell.render('Cell')}</td>
+                })
+              }
+            </tr>
+          )
+        })
+      }
+      {
+        [...Array(n_elem)].map((e, ri) => {
+          return (
+            <tr key={page.length + ri} style={{height: '49px'}}>
+              {
+                [...Array(columns.length)].map((e, ci) => {
+                  return <td key={ci} className='align-middle'>{''}</td>
+                })
+              }
+            </tr>
+          )
+        })
+      }
+    </tbody>
+  }
 
   return (
     <>
@@ -1278,50 +1388,46 @@ export function ProfilesListTable({ columns, data, type }) {
                     <tr>
                       {
                         headerGroup.headers.map((column, tri) => {
-                          let width = undefined;
-
-                          if (tri === 0)
-                            width = '2%'
-                          if (tri === 1)
-                            width = '20%'
-                          else if (tri === 2)
-                            width = '70%'
-                          else if (tri === 3)
-                            width = '8%'
-
                           return (
-                            <th style={{width: width}} className='p-1 m-1' key={tri}>
+                            <th style={{width: column.column_width}} className='p-1 m-1' key={tri}>
                               {column.render('Header')}
                             </th>
                           )
                         })
                       }
                     </tr>
+                    {
+                      filter &&
+                        <tr className='p-0 m-0'>
+                          {headerGroup.headers.map((column, tri) => {
+                            if (tri === 0) {
+                              if (selectable)
+                                return (
+                                  <th className="p-1 m-1 align-middle" key={tri + 11}>
+                                    {column.render('Filter')}
+                                  </th>
+                                )
+                              else
+                                return(
+                                  <th className="p-1 m-1 align-middle" key={tri + 11}>
+                                    <FontAwesomeIcon icon={faSearch}/>
+                                  </th>
+                                )
+                            } else {
+                              return (
+                                <th className="p-1 m-1" key={tri + 11}>
+                                  {column.canFilter ? column.render('Filter') : null}
+                                </th>
+                              )
+                            }
+                          })}
+                        </tr>
+                    }
                   </React.Fragment>
                 ))
               }
             </thead>
-            <tbody>
-              {
-                page.map((row, row_index) => {
-                  prepareRow(row);
-                  return (
-                    <tr key={row_index} style={{height: '49px'}}>
-                      {
-                        row.cells.map((cell, cell_index) => {
-                          if (cell_index === 0)
-                            return <td key={cell_index} className='align-middle text-center'>{(row_index + 1) + (pageIndex * pageSize)}</td>
-                          else if (cell_index === row.cells.length - 1)
-                            return <td key={cell_index} className='align-middle text-center'>{cell.render('Cell')}</td>
-                          else
-                            return <td key={cell_index} className='align-middle'>{cell.render('Cell')}</td>
-                        })
-                      }
-                    </tr>
-                  )
-                })
-              }
-            </tbody>
+            {table_body}
           </Table>
         </Col>
       </Row>
@@ -1347,7 +1453,7 @@ export function ProfilesListTable({ columns, data, type }) {
               <PaginationLink next onClick={() => nextPage()}/>
             </PaginationItem>
             <PaginationItem disabled={!canNextPage}>
-              <PaginationLink last onClick={() => gotoPage(pageCount + 1)}/>
+              <PaginationLink last onClick={() => gotoPage(pageCount - 1)}/>
             </PaginationItem>
             <PaginationItem className='pl-2'>
               <select
@@ -1356,9 +1462,9 @@ export function ProfilesListTable({ columns, data, type }) {
                 value={pageSize}
                 onChange={e => setPageSize(Number(e.target.value))}
               >
-                {[10, 20, 50].map(pageSize => (
+                {[5, 10, 15, 20, 30, 50, 100].map(pageSize => (
                   <option key={pageSize} value={pageSize}>
-                    {pageSize} {`${type} profiles`}
+                    {pageSize} {`${resourcename}`}
                   </option>
                 ))}
               </select>
@@ -1367,5 +1473,17 @@ export function ProfilesListTable({ columns, data, type }) {
         </Col>
       </Row>
     </>
+  );
+}
+
+
+export const ProfilesListTable = ({ columns, data, type }) => {
+  return (
+    <BaseArgoTable
+      columns={columns}
+      data={data}
+      resourcename={`${type} profiles`}
+      page_size={10}
+    />
   );
 };

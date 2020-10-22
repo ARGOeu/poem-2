@@ -1,17 +1,18 @@
-import React, { Component } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Backend, WebApi } from './DataManager';
 import {
-    LoadingAnim,
-    BaseArgoView,
-    AutocompleteField,
-    NotifyOk,
-    FancyErrorMessage,
-    DiffElement,
-    ProfileMainInfo,
-    NotifyError,
-    ErrorComponent,
-    ParagraphTitle, ProfilesListTable
+  LoadingAnim,
+  BaseArgoView,
+  AutocompleteField,
+  NotifyOk,
+  FancyErrorMessage,
+  DiffElement,
+  ProfileMainInfo,
+  NotifyError,
+  ErrorComponent,
+  ParagraphTitle,
+  ProfilesListTable
 } from './UIElements';
 import {
   Formik,
@@ -38,7 +39,7 @@ import * as Yup from 'yup';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes, faPlus, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import ReactDiffViewer from 'react-diff-viewer';
-import { useQuery } from 'react-query';
+import { useQuery, queryCache } from 'react-query';
 
 
 const ThresholdsSchema = Yup.object().shape({
@@ -158,10 +159,10 @@ function getUOM(value) {
 
 
 function thresholdsToValues(rules) {
-  rules.forEach((r => {
-    let thresholds_strings = r.thresholds.split(' ');
+  rules.forEach((rule => {
+    let thresholds_strings = rule.thresholds.split(' ');
     let thresholds = [];
-    thresholds_strings.forEach((s => {
+    thresholds_strings.forEach((string => {
       let label = '';
       let value = '';
       let uom = '';
@@ -171,7 +172,7 @@ function thresholdsToValues(rules) {
       let crit2 = '';
       let min = '';
       let max = '';
-      let tokens = s.split('=')
+      let tokens = string.split('=')
       if (tokens.length === 2) {
         label = tokens[0];
         let subtokens = tokens[1].split(';');
@@ -219,7 +220,7 @@ function thresholdsToValues(rules) {
         max: max
       });
     }));
-    r.thresholds = thresholds;
+    rule.thresholds = thresholds;
   }));
   return rules;
 }
@@ -234,7 +235,8 @@ const ThresholdsProfilesForm = ({
   metrics_list=undefined,
   write_perm=false,
   onSelect,
-  state,
+  popoverWarningOpen,
+  popoverCriticalOpen,
   toggleWarningPopOver,
   toggleCriticalPopOver
 }) => (
@@ -260,7 +262,8 @@ const ThresholdsProfilesForm = ({
           render={arrayHelpers => (
             <div>
               {values.rules && values.rules.length > 0 ? (
-                values.rules.map((rule, index) =>
+                // eslint-disable-next-line @getify/proper-arrows/params
+                values.rules.map((_rule, index) =>
                   <React.Fragment key={`fragment.rules.${index}`}>
                     <Card className={`mt-${index === 0 ? '1' : '4'}`}>
                       <CardHeader className='p-1 font-weight-bold text-uppercase'>
@@ -367,7 +370,7 @@ const ThresholdsProfilesForm = ({
                                           :
                                             <th colSpan={3} style={{width: '13%'}}>
                                               Warning <FontAwesomeIcon id='warning-popover' icon={faInfoCircle} style={{color: '#416090'}}/>
-                                              <Popover placement='bottom' isOpen={state.popoverWarningOpen} target='warning-popover' toggle={toggleWarningPopOver} trigger='hover'>
+                                              <Popover placement='bottom' isOpen={popoverWarningOpen} target='warning-popover' toggle={toggleWarningPopOver} trigger='hover'>
                                                 <PopoverHeader>Warning range</PopoverHeader>
                                                 <PopoverBody>
                                                   <p>Defined in format: <code>@&#123;floor&#125;:&#123;ceil&#125;</code></p>
@@ -384,7 +387,7 @@ const ThresholdsProfilesForm = ({
                                           :
                                             <th colSpan={3} style={{width: '13%'}}>
                                               Critical <FontAwesomeIcon id='critical-popover' icon={faInfoCircle} style={{color: '#416090'}}/>
-                                              <Popover placement='bottom' isOpen={state.popoverCriticalOpen} target='critical-popover' toggle={toggleCriticalPopOver} trigger='hover'>
+                                              <Popover placement='bottom' isOpen={popoverCriticalOpen} target='critical-popover' toggle={toggleCriticalPopOver} trigger='hover'>
                                                 <PopoverHeader>Critical range</PopoverHeader>
                                                 <PopoverBody>
                                                   <p>Defined in format: <code>@&#123;floor&#125;:&#123;ceil&#125;</code></p>
@@ -412,7 +415,8 @@ const ThresholdsProfilesForm = ({
                                           values.rules[index].thresholds &&
                                           values.rules[index].thresholds.length > 0
                                           ) ?
-                                          values.rules[index].thresholds.map((t, i) =>
+                                          // eslint-disable-next-line @getify/proper-arrows/params
+                                          values.rules[index].thresholds.map((_t, i) =>
                                             <tr key={`rule-${index}-threshold-${i}`}>
                                               <td className='align-middle text-center'>
                                                 {i + 1}
@@ -881,13 +885,6 @@ export const ThresholdsProfilesList = (props) => {
     'thresholdsprofiles_listview', async () => {
       let profiles = await backend.fetchData(apiUrl);
 
-      let n_elem = 10 - (profiles.length % 10);
-
-      for (let i = 0; i < n_elem; i++)
-        profiles.push(
-          {'description': '', 'groupname': '', 'name': ''}
-        );
-
       return profiles;
     }
   )
@@ -895,26 +892,32 @@ export const ThresholdsProfilesList = (props) => {
   const columns = React.useMemo(() => [
     {
       Header: '#',
-      accessor: null
+      accessor: null,
+      column_width: '2%'
     },
     {
       Header: 'Name',
       id: 'name',
-      maxWidth: 350,
       accessor: e =>
         <Link to={`/ui/${publicView ? 'public_' : ''}thresholdsprofiles/${e.name}`}>
           {e.name}
-        </Link>
+        </Link>,
+      column_width: '20%'
     },
     {
       Header: 'Description',
       accessor: 'description',
+      column_width: '70%'
     },
     {
       Header: 'Group',
       accessor: 'groupname',
       className: 'text-center',
-      maxWidth: 150,
+      column_width: '8%',
+      Cell: row =>
+        <div style={{textAlign: 'center'}}>
+          {row.value}
+        </div>
     }
   ]);
 
@@ -949,135 +952,128 @@ export const ThresholdsProfilesList = (props) => {
 };
 
 
-export class ThresholdsProfilesChange extends Component {
-  constructor(props) {
-    super(props);
+export const ThresholdsProfilesChange = (props) => {
+  const name = props.match.params.name;
+  const addview = props.addview;
+  const history = props.history;
+  const location = props.location;
+  const publicView = props.publicView;
+  const querykey =`thresholdsprofile_${addview ? 'addview' : `${name}_${publicView ? 'publicview' : 'changeview'}`}`;
 
-    this.name = props.match.params.name;
-    this.addview = props.addview;
-    this.history = props.history;
-    this.location = props.location;
-    this.tenant_name = props.tenantname;
-    this.webapithresholds = props.webapithresholds;
-    this.token = props.webapitoken;
-    this.backend = new Backend();
-    this.webapi = new WebApi({
-      token: this.token,
-      thresholdsProfiles: this.webapithresholds
-    })
-    this.publicView = props.publicView;
+  const backend = new Backend();
+  const webapi = new WebApi({
+    token: props.webapitoken,
+    thresholdsProfiles: props.webapithresholds
+  });
 
-    this.state = {
-      thresholds_profile: {
+  const { data: thresholdsProfile, error: errorThresholdsProfile, isLoading: loadingThresholdsProfile } = useQuery(
+    `${querykey}`, async () => {
+      let tp = {
         'apiid': '',
         'name': '',
-        'groupname': ''
-      },
-      thresholds_rules : [],
-      groups_list: [],
-      metrics_list: [],
-      write_perm: false,
-      areYouSureModal: false,
-      loading: false,
-      modalFunc: undefined,
-      modalTitle: undefined,
-      modalMsg: undefined,
-      popoverWarningOpen: false,
-      popoverCriticalOpen: false,
-      error: null
-    };
+        'groupname': '',
+        'rules': []
+      };
+      if (!addview) {
+        let json = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}thresholdsprofiles/${name}`);
+        let thresholdsprofile = await webapi.fetchThresholdsProfile(json.apiid);
+        tp = {
+          'apiid': thresholdsprofile.id,
+          'name': thresholdsprofile.name,
+          'groupname': json['groupname'],
+          'rules': thresholdsToValues(thresholdsprofile.rules)
+        };
+      }
+      return tp;
+    }
+  );
 
-    this.toggleAreYouSure = this.toggleAreYouSure.bind(this);
-    this.toggleAreYouSureSetModal = this.toggleAreYouSureSetModal.bind(this);
-    this.onSelect = this.onSelect.bind(this);
-    this.toggleWarningPopOver = this.toggleWarningPopOver.bind(this);
-    this.toggleCriticalPopOver = this.toggleCriticalPopOver.bind(this);
-    this.thresholdsToString = this.thresholdsToString.bind(this);
-    this.onSubmitHandle = this.onSubmitHandle.bind(this);
-    this.doChange = this.doChange.bind(this);
-    this.doDelete = this.doDelete.bind(this);
+  const { data: userDetails, isLoading: loadingUserDetails } = useQuery(
+    'session_userdetails', async () => {
+      let sessionActive = await backend.isActiveSession();
+      if (sessionActive.active)
+        return sessionActive.userdetails;
+    }
+  );
+
+  const { data: allMetrics, error: errorAllMetrics, isLoading: loadingAllMetrics } = useQuery(
+    'thresholdsprofile_allmetrics', async () => {
+      let metrics = await backend.fetchListOfNames(`/api/v2/internal/${publicView ? 'public_' : ''}metricsall`);
+      return metrics;
+    }
+  );
+
+  const [areYouSureModal, setAreYouSureModal] = useState(false);
+  const [modalMsg, setModalMsg] = useState(undefined);
+  const [modalTitle, setModalTitle] = useState(undefined);
+  const [modalFlag, setModalFlag] = useState(undefined);
+  const [formValues, setFormValues] = useState(undefined);
+  const [profileId, setProfileId] = useState(undefined);
+  const [popoverWarningOpen, setPopoverWarningOpen] = useState(false);
+  const [popoverCriticalOpen, setPopoverCriticalOpen] = useState(false);
+
+  function toggleAreYouSure() {
+    setAreYouSureModal(!areYouSureModal);
   }
 
-  toggleAreYouSureSetModal(msg, title, onyes) {
-    this.setState(prevState =>
-      ({areYouSureModal: !prevState.areYouSureModal,
-        modalFunc: onyes,
-        modalMsg: msg,
-        modalTitle: title,
-      }));
+  function toggleWarningPopOver() {
+    setPopoverWarningOpen(!popoverWarningOpen);
   }
 
-  toggleAreYouSure() {
-    this.setState(prevState =>
-      ({areYouSureModal: !prevState.areYouSureModal}));
+  function toggleCriticalPopOver() {
+    setPopoverCriticalOpen(!popoverCriticalOpen);
   }
 
-  toggleWarningPopOver() {
-    this.setState({
-      popoverWarningOpen: !this.state.popoverWarningOpen
-    });
-  }
-
-  toggleCriticalPopOver() {
-    this.setState({
-      popoverCriticalOpen: !this.state.popoverCriticalOpen
-    });
-  }
-
-  onSelect(field, value) {
-    let thresholds_rules = this.state.thresholds_rules;
+  function onSelect(field, value) {
+    let modifiedThresholdsProfile = thresholdsProfile;
+    let thresholds_rules = modifiedThresholdsProfile.rules;
     let index = field.split('[')[1].split(']')[0]
     if (thresholds_rules.length == index) {
       thresholds_rules.push({'metric': '', thresholds: [], 'host': '', 'endpoint_group': ''})
     }
     thresholds_rules[index].metric = value;
-    this.setState({
-      thresholds_rules: thresholds_rules
-    });
+    modifiedThresholdsProfile.rules = thresholds_rules;
+
+    queryCache.setQueryData(`${querykey}`, () => modifiedThresholdsProfile);
   }
 
-  thresholdsToString(rules) {
-    rules.forEach((r => {
+  function thresholdsToString(rules) {
+    rules.forEach((rule => {
       let thresholds = [];
-      if (!r.host)
-        delete r.host;
-      if (!r.endpoint_group)
-        delete r.endpoint_group;
-      r.thresholds.forEach((t => {
+      if (!rule.host)
+        delete rule.host;
+      if (!rule.endpoint_group)
+        delete rule.endpoint_group;
+      rule.thresholds.forEach((thresh => {
         let thresholds_string = undefined;
-        thresholds_string = t.label + '=' + t.value + t.uom + ';' + t.warn1 + ':' + t.warn2 + ';' + t.crit1 + ':' + t.crit2;
-        if (t.min && t.max)
-          thresholds_string = thresholds_string + ';' + t.min + ';' + t.max;
+        thresholds_string = thresh.label + '=' + thresh.value + thresh.uom + ';' + thresh.warn1 + ':' + thresh.warn2 + ';' + thresh.crit1 + ':' + thresh.crit2;
+        if (thresh.min && thresh.max)
+          thresholds_string = thresholds_string + ';' + thresh.min + ';' + thresh.max;
         thresholds.push(thresholds_string)
       }));
       let th = thresholds.join(' ');
-      r.thresholds = th;
+      rule.thresholds = th;
     }));
     return rules;
   }
 
-  onSubmitHandle(values, actions) {
-    let msg = undefined;
-    let title = undefined;
+  function onSubmitHandle(values) {
+    let msg = `Are you sure you want to ${addview ? 'add' : 'change'} thresholds profile?`;
+    let title = `${addview ? 'Add' : 'Change'} thresholds profile`;
 
-    if (this.addview) {
-      msg = 'Are you sure you want to add thresholds profile?';
-      title = 'Add thresholds profile';
-    } else {
-      msg = 'Are you sure you want to change thresholds profile?';
-      title = 'Change thresholds profile';
-    }
-
-    this.toggleAreYouSureSetModal(msg, title,
-      () => this.doChange(values, actions));
+    setModalMsg(msg);
+    setModalTitle(title);
+    setFormValues(values);
+    setModalFlag('submit');
+    toggleAreYouSure();
   }
 
-  async doChange(values, actions) {
-    let values_send = JSON.parse(JSON.stringify(values));
-    if (this.addview) {
-      let response = await this.webapi.addThresholdsProfile({
+  async function doChange() {
+    let values_send = JSON.parse(JSON.stringify(formValues));
+    if (addview) {
+      let response = await webapi.addThresholdsProfile({
         name: values_send.name,
-        rules: this.thresholdsToString(values_send.rules)
+        rules: thresholdsToString(values_send.rules)
       });
       if (!response.ok) {
         let add_msg = '';
@@ -1088,19 +1084,19 @@ export class ThresholdsProfilesChange extends Component {
           add_msg = msg_list.join(' ');
         } catch(err) {
           add_msg = 'Web API error adding thresholds profile';
-        };
+        }
         NotifyError({
           title: `Web API error: ${response.status} ${response.statusText}`,
           msg: add_msg
         });
       } else {
         let r = await response.json();
-        let r_internal = await this.backend.addObject(
+        let r_internal = await backend.addObject(
           '/api/v2/internal/thresholdsprofiles/',
           {
             apiid: r.data.id,
             name: values_send.name,
-            groupname: values.groupname,
+            groupname: formValues.groupname,
             rules: values_send.rules
           }
         );
@@ -1108,7 +1104,7 @@ export class ThresholdsProfilesChange extends Component {
           NotifyOk({
             msg: 'Thresholds profile successfully added',
             title: 'Added',
-            callback: () => this.history.push('/ui/thresholdsprofiles')
+            callback: () => history.push('/ui/thresholdsprofiles')
           })
         else {
           let add_msg = '';
@@ -1117,18 +1113,18 @@ export class ThresholdsProfilesChange extends Component {
             add_msg = json.detail;
           } catch(err) {
             add_msg = 'Internal API error adding thresholds profile';
-          };
+          }
           NotifyError({
             title: `Internal API error: ${r_internal.status} ${r_internal.statusText}`,
             msg: add_msg
           });
-        };
-      };
+        }
+      }
     } else {
-      let response = await this.webapi.changeThresholdsProfile({
+      let response = await webapi.changeThresholdsProfile({
         id: values_send.id,
         name: values_send.name,
-        rules: this.thresholdsToString(values_send.rules)
+        rules: thresholdsToString(values_send.rules)
       });
       if (!response.ok) {
         let change_msg = '';
@@ -1139,19 +1135,18 @@ export class ThresholdsProfilesChange extends Component {
           change_msg = msg_list.join(' ');
         } catch(err) {
           change_msg = 'Web API error changing thresholds profile';
-        };
+        }
         NotifyError({
           title: `Web API error: ${response.status} ${response.statusText}`,
           msg: change_msg
         });
       } else {
-        let r = await response.json();
-        let r_internal = await this.backend.changeObject(
+        let r_internal = await backend.changeObject(
           '/api/v2/internal/thresholdsprofiles/',
           {
             apiid: values_send.id,
             name: values_send.name,
-            groupname: values.groupname,
+            groupname: formValues.groupname,
             rules: values_send.rules
           }
         );
@@ -1159,7 +1154,7 @@ export class ThresholdsProfilesChange extends Component {
           NotifyOk({
             msg: 'Thresholds profile successfully changed',
             title: 'Changed',
-            callback: () => this.history.push('/ui/thresholdsprofiles')
+            callback: () => history.push('/ui/thresholdsprofiles')
           })
         else {
           let change_msg = '';
@@ -1168,18 +1163,18 @@ export class ThresholdsProfilesChange extends Component {
             change_msg = json.detail;
           } catch(err) {
             change_msg = 'Internal API error changing thresholds profile';
-          };
+          }
           NotifyError({
             title: `Internal API error: ${r_internal.status} ${r_internal.statusText}`,
             msg: change_msg
           });
-        };
-      };
+        }
+      }
     }
   }
 
-  async doDelete(profileId) {
-    let response = await this.webapi.deleteThresholdsProfile(profileId);
+  async function doDelete() {
+    let response = await webapi.deleteThresholdsProfile(profileId);
     if (!response.ok) {
       let msg = '';
       try {
@@ -1189,18 +1184,18 @@ export class ThresholdsProfilesChange extends Component {
         msg = msg_list.join(' ');
       } catch(err) {
         msg = 'Web API error deleting thresholds profile';
-      };
+      }
       NotifyError({
         title: `Web API error: ${response.status} ${response.statusText}`,
         msg: msg
       });
     } else {
-      let r_internal = await this.backend.deleteObject(`/api/v2/internal/thresholdsprofiles/${profileId}`);
+      let r_internal = await backend.deleteObject(`/api/v2/internal/thresholdsprofiles/${profileId}`);
       if (r_internal)
         NotifyOk({
           msg: 'Thresholds profile successfully deleted',
           title: 'Deleted',
-          callback: () => this.history.push('/ui/thresholdsprofiles')
+          callback: () => history.push('/ui/thresholdsprofiles')
         })
       else {
         let msg = '';
@@ -1209,156 +1204,122 @@ export class ThresholdsProfilesChange extends Component {
           msg = json.detail;
         } catch(err) {
           msg = 'Internal API error deleting thresholds profile';
-        };
+        }
         NotifyError({
           title: `Internal API error: ${r_internal.status} ${r_internal.statusText}`,
           msg: msg
         });
-      };
-    };
-  }
-
-  async componentDidMount() {
-    this.setState({loading: true});
-
-    try {
-      if (this.publicView) {
-        let json = await this.backend.fetchData(`/api/v2/internal/public_thresholdsprofiles/${this.name}`);
-        let thresholdsprofile = await this.webapi.fetchThresholdsProfile(json.apiid);
-        let metricslist =await this.backend.fetchListOfNames('/api/v2/internal/public_metricsall');
-        this.setState({
-          thresholds_profile: {
-            'apiid': thresholdsprofile.id,
-            'name': thresholdsprofile.name,
-            'groupname': json['groupname']
-          },
-          thresholds_rules: thresholdsToValues(thresholdsprofile.rules),
-          groups_list: [],
-          metrics_list: metricslist,
-          write_perm: false,
-          loading: false
-        });
       }
-      else {
-        let sessionActive = await this.backend.isActiveSession();
-        let metricsall = await this.backend.fetchListOfNames('/api/v2/internal/metricsall');
-        if (this.addview) {
-          this.setState({
-            loading: false,
-            groups_list: sessionActive.userdetails.groups.thresholdsprofiles,
-            metrics_list: metricsall,
-            write_perm: sessionActive.userdetails.is_superuser ||
-              sessionActive.userdetails.groups.thresholdsprofiles.length > 0,
-          });
-        } else {
-          let json = await this.backend.fetchData(`/api/v2/internal/thresholdsprofiles/${this.name}`);
-          let thresholdsprofile = await this.webapi.fetchThresholdsProfile(json.apiid);
-          this.setState({
-            thresholds_profile: {
-              'apiid': thresholdsprofile.id,
-              'name': thresholdsprofile.name,
-              'groupname': json['groupname']
-            },
-            thresholds_rules: thresholdsToValues(thresholdsprofile.rules),
-            groups_list: sessionActive.userdetails.groups.thresholdsprofiles,
-            metrics_list: metricsall,
-            write_perm: sessionActive.userdetails.is_superuser ||
-              sessionActive.userdetails.groups.thresholdsprofiles.indexOf(json['groupname']) >= 0,
-            loading: false
-          });
-        };
-      }
-    } catch(err) {
-      this.setState({
-        error: err,
-        loading: false
-      });
-    };
+    }
   }
 
-  render() {
-    const { thresholds_profile, thresholds_rules, metrics_list, groups_list,
-      loading, write_perm, error } = this.state;
+  if (loadingThresholdsProfile || loadingUserDetails || loadingAllMetrics)
+    return (<LoadingAnim/>);
 
-    if (loading)
-      return (<LoadingAnim/>);
+  else if (errorThresholdsProfile)
+    return (<ErrorComponent error={errorThresholdsProfile}/>);
 
-    else if (error)
-      return (<ErrorComponent error={error}/>);
+  else if (errorAllMetrics)
+    return (<ErrorComponent error={errorAllMetrics}/>);
 
-    else if (!loading && thresholds_profile) {
-      return (
-        <BaseArgoView
-          resourcename={this.publicView ? 'Thresholds profile details' : 'thresholds profile'}
-          location={this.location}
-          modal={true}
-          history={!this.publicView}
-          state={this.state}
-          toggle={this.toggleAreYouSure}
-          submitperm={write_perm}
-          addview={this.publicView ? !this.publicView : this.addview}
-          publicview={this.publicView}
-        >
-          <Formik
-            initialValues = {{
-              id: thresholds_profile.apiid,
-              name: thresholds_profile.name,
-              groupname: thresholds_profile.groupname,
-              rules: thresholds_rules
-            }}
-            validationSchema={ThresholdsSchema}
-            onSubmit = {(values, actions) => this.onSubmitHandle(values, actions)}
-            render = {props => (
-              <Form>
-                <ThresholdsProfilesForm
-                  {...props}
-                  groups_list={groups_list}
-                  metrics_list={metrics_list}
-                  write_perm={write_perm}
-                  onSelect={this.onSelect}
-                  state={this.state}
-                  toggleWarningPopOver={this.toggleWarningPopOver}
-                  toggleCriticalPopOver={this.toggleCriticalPopOver}
-                  historyview={this.publicView}
-                />
-                {
-                  write_perm &&
-                    <div className='submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5'>
-                      {
-                        !this.addview ?
-                          <Button
-                            color='danger'
-                            onClick={() => {
-                              this.toggleAreYouSureSetModal(
-                                'Are you sure you want to delete thresholds profile?',
-                                'Delete thresholds profile',
-                                () => this.doDelete(props.values.id)
-                              )
-                            }}
-                          >
-                            Delete
-                          </Button>
-                        :
-                          <div></div>
-                      }
-                      <Button
-                        color='success'
-                        id='submit-button'
-                        type='submit'
-                      >
-                        Save
-                      </Button>
-                    </div>
-                }
-              </Form>
-            )}
-          />
-        </BaseArgoView>
-      );
-    } else
-      return null;
-  }
-}
+  else if (!loadingThresholdsProfile && !loadingUserDetails && !loadingAllMetrics && thresholdsProfile) {
+    let write_perm = userDetails ?
+      addview ?
+        userDetails.is_superuser || userDetails.groups.thresholdsprofiles.length > 0
+      :
+        userDetails.is_superuser || userDetails.groups.thresholdsprofiles.indexOf(thresholdsProfile.groupname) >= 0
+    :
+      false;
+
+    let groups_list = userDetails ?
+      userDetails.groups.thresholdsprofiles
+    :
+      [];
+
+    return (
+      <BaseArgoView
+        resourcename={publicView ? 'Thresholds profile details' : 'thresholds profile'}
+        location={location}
+        history={!publicView}
+        submitperm={write_perm}
+        addview={publicView ? !publicView : addview}
+        publicview={publicView}
+        modal={true}
+        state={{
+          areYouSureModal,
+          modalTitle,
+          modalMsg,
+          'modalFunc': modalFlag === 'submit' ?
+            doChange
+          :
+            modalFlag === 'delete' ?
+              doDelete
+            :
+              undefined
+        }}
+        toggle={toggleAreYouSure}
+      >
+        <Formik
+          initialValues = {{
+            id: thresholdsProfile.apiid,
+            name: thresholdsProfile.name,
+            groupname: thresholdsProfile.groupname,
+            rules: thresholdsProfile.rules
+          }}
+          validationSchema={ThresholdsSchema}
+          onSubmit = {(values) => onSubmitHandle(values)}
+          enableReinitialize={true}
+          render = {props => (
+            <Form>
+              <ThresholdsProfilesForm
+                {...props}
+                groups_list={groups_list}
+                metrics_list={allMetrics}
+                write_perm={write_perm}
+                onSelect={onSelect}
+                popoverWarningOpen={popoverWarningOpen}
+                popoverCriticalOpen={popoverCriticalOpen}
+                toggleWarningPopOver={toggleWarningPopOver}
+                toggleCriticalPopOver={toggleCriticalPopOver}
+                historyview={publicView}
+              />
+              {
+                write_perm &&
+                  <div className='submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5'>
+                    {
+                      !addview ?
+                        <Button
+                          color='danger'
+                          onClick={() => {
+                            setModalMsg('Are you sure you want to delete thresholds profile?');
+                            setModalTitle('Delete thresholds profile');
+                            setModalFlag('delete');
+                            setProfileId(props.values.id);
+                            toggleAreYouSure();
+                          }}
+                        >
+                          Delete
+                        </Button>
+                      :
+                        <div></div>
+                    }
+                    <Button
+                      color='success'
+                      id='submit-button'
+                      type='submit'
+                    >
+                      Save
+                    </Button>
+                  </div>
+              }
+            </Form>
+          )}
+        />
+      </BaseArgoView>
+    );
+  } else
+    return null;
+};
 
 
 const ListDiffElement = ({title, item1, item2}) => {
@@ -1418,179 +1379,134 @@ function arraysEqual(arr1, arr2) {
 }
 
 
-export class ThresholdsProfileVersionCompare extends Component {
-  constructor(props) {
-    super(props);
+export const ThresholdsProfileVersionCompare = (props) => {
+  const version1 = props.match.params.id1;
+  const version2 = props.match.params.id2;
+  const name = props.match.params.name;
 
-    this.version1 = props.match.params.id1;
-    this.version2 = props.match.params.id2;
-    this.name = props.match.params.name;
+  const backend = new Backend();
 
-    this.state = {
-      loading: false,
-      name1: '',
-      groupname1: '',
-      rules1: [],
-      name2: '',
-      groupname2: '',
-      rules2: [],
-      error: null
-    };
+  const [loading, setLoading] = useState(false);
+  const [profile1, setProfile1] = useState(undefined);
+  const [profile2, setProfile2] = useState(undefined);
+  const [error, setError] = useState(null);
 
-    this.backend = new Backend();
-  }
+  useEffect(() => {
+    setLoading(true);
+    fetchVersions();
 
-  async componentDidMount() {
-    try {
-      let json = await this.backend.fetchData(`/api/v2/internal/tenantversion/thresholdsprofile/${this.name}`);
-      let name1 = '';
-      let groupname1 = '';
-      let rules1 = [];
-      let name2 = '';
-      let groupname2 = '';
-      let rules2 = [];
+    async function fetchVersions() {
+      try {
+        let json = await backend.fetchData(`/api/v2/internal/tenantversion/thresholdsprofile/${name}`);
 
-      json.forEach((e) => {
-        if (e.version == this.version1) {
-          name1 = e.fields.name;
-          groupname1 = e.fields.groupname;
-          rules1 = e.fields.rules;
-        } else if (e.version == this.version2) {
-          name2 = e.fields.name;
-          groupname2 = e.fields.groupname;
-          rules2 = e.fields.rules;
+        json.forEach((e) => {
+          if (e.version == version1)
+            setProfile1(e.fields);
+
+          else if (e.version == version2)
+            setProfile2(e.fields);
+        });
+      } catch(err) {
+        setError(err);
+      }
+      setLoading(false);
+    }
+  }, []);
+
+  if (loading)
+    return (<LoadingAnim/>);
+
+  else if (error)
+    return (<ErrorComponent error={error}/>);
+
+  else if (!loading && profile1 && profile2) {
+    return (
+      <React.Fragment>
+        <div className='d-flex align-items-center justify-content-between'>
+          <h2 className='ml-3 mt-1 mb-4'>{`Compare ${name} versions`}</h2>
+        </div>
+        {
+          (profile1.name !== profile2.name) &&
+            <DiffElement title='name' item1={profile1.name} item2={profile2.name}/>
         }
-      });
-
-      this.setState({
-        name1: name1,
-        groupname1: groupname1,
-        rules1: rules1,
-        name2: name2,
-        groupname2: groupname2,
-        rules2: rules2,
-        loading: false
-      });
-    } catch(err) {
-      this.setState({
-        error: err,
-        loading: false
-      });
-    };
-  }
-
-  render() {
-    const { name1, name2, groupname1, groupname2, rules1, rules2, loading,
-    error } = this.state;
-
-    if (loading)
-      return (<LoadingAnim/>);
-
-    else if (error)
-      return (<ErrorComponent error={error}/>);
-
-    else if (!loading && name1 && name2) {
-      return (
-        <React.Fragment>
-          <div className='d-flex align-items-center justify-content-between'>
-            <h2 className='ml-3 mt-1 mb-4'>{`Compare ${this.name} versions`}</h2>
-          </div>
-          {
-            (name1 !== name2) &&
-              <DiffElement title='name' item1={name1} item2={name2}/>
-          }
-          {
-            (groupname1 !== groupname2) &&
-              <DiffElement title='group name' item1={groupname1} item2={groupname2}/>
-          }
-          {
-            (!arraysEqual(rules1, rules2)) &&
-              <ListDiffElement title='rules' item1={rules1} item2={rules2}/>
-          }
-        </React.Fragment>
-      );
-    } else
-      return null;
-  }
-}
+        {
+          (profile1.groupname !== profile2.groupname) &&
+            <DiffElement title='group name' item1={profile1.groupname} item2={profile2.groupname}/>
+        }
+        {
+          (!arraysEqual(profile1.rules, profile2.rules)) &&
+            <ListDiffElement title='rules' item1={profile1.rules} item2={profile2.rules}/>
+        }
+      </React.Fragment>
+    );
+  } else
+    return null;
+};
 
 
-export class ThresholdsProfileVersionDetail extends Component {
-  constructor(props) {
-    super(props);
+export const ThresholdsProfileVersionDetail = (props) => {
+  const name = props.match.params.name;
+  const version = props.match.params.version;
 
-    this.name = props.match.params.name;
-    this.version = props.match.params.version;
+  const backend = new Backend();
 
-    this.backend = new Backend();
+  const [profile, setProfile] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-    this.state = {
-      name: '',
-      groupname: '',
-      rules: [],
-      date_created: '',
-      loading: false,
-      error: null
-    };
-  }
+  useEffect(() => {
+    setLoading(true);
+    fetchProfile();
 
-  async componentDidMount() {
-    this.setState({loading: true});
+    async function fetchProfile() {
+      try {
+        let json = await backend.fetchData(`/api/v2/internal/tenantversion/thresholdsprofile/${name}`);
+        json.forEach((e) => {
+          if (e.version == version)
+            setProfile({
+              name: e.fields.name,
+              groupname: e.fields.groupname,
+              rules: thresholdsToValues(e.fields.rules),
+              date_created: e.date_created
+            });
+        });
+      } catch(err) {
+        setError(err);
+      }
 
-    try {
-      let json = await this.backend.fetchData(`/api/v2/internal/tenantversion/thresholdsprofile/${this.name}`);
-      json.forEach((e) => {
-        if (e.version == this.version)
-          this.setState({
-            name: e.fields.name,
-            groupname: e.fields.groupname,
-            rules: thresholdsToValues(e.fields.rules),
-            date_created: e.date_created,
-            loading: false
-          });
-      });
-    } catch(err) {
-      this.setState({
-        error: err,
-        loading: false
-      });
-    };
-  }
+      setLoading(false);
+    }
+  }, []);
 
-  render() {
-    const { name, groupname, rules, date_created, loading,
-      error } = this.state;
+  if (loading)
+    return (<LoadingAnim/>);
 
-    if (loading)
-      return (<LoadingAnim/>);
+  else if (error)
+    return (<ErrorComponent error={error}/>);
 
-    else if (error)
-      return (<ErrorComponent error={error}/>);
-
-    else if (!loading && name) {
-      return (
-        <BaseArgoView
-          resourcename={`${name} (${date_created})`}
-          infoview={true}
-        >
-          <Formik
-            initialValues = {{
-              name: name,
-              groupname: groupname,
-              rules: rules
-            }}
-            render = {props => (
-              <Form>
-                <ThresholdsProfilesForm
-                  {...props}
-                  historyview={true}
-                />
-              </Form>
-            )}
-          />
-        </BaseArgoView>
-      );
-    } else
-      return null;
-  }
-}
+  else if (!loading && profile) {
+    return (
+      <BaseArgoView
+        resourcename={`${name} (${profile.date_created})`}
+        infoview={true}
+      >
+        <Formik
+          initialValues = {{
+            name: profile.name,
+            groupname: profile.groupname,
+            rules: profile.rules
+          }}
+          render = {props => (
+            <Form>
+              <ThresholdsProfilesForm
+                {...props}
+                historyview={true}
+              />
+            </Form>
+          )}
+        />
+      </BaseArgoView>
+    );
+  } else
+    return null;
+};
