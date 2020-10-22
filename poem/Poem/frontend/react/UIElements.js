@@ -68,7 +68,7 @@ import {
   faWrench,
   faNewspaper} from '@fortawesome/free-solid-svg-icons';
 import { NotificationManager } from 'react-notifications';
-import { Field } from 'formik';
+import { ErrorMessage, Field } from 'formik';
 import { Backend } from './DataManager';
 import ReactDiffViewer from 'react-diff-viewer';
 import Autosuggest from 'react-autosuggest';
@@ -176,7 +176,7 @@ export const DropDown = ({field, data=[], prefix="", class_name="", isnew=false,
   </Field>
 
 
-export const SearchField = ({form, field, ...rest}) =>
+export const SearchField = ({field, ...rest}) =>
   <div className="input-group">
     <input type="text" placeholder="Search" {...field} {...rest}/>
     <div className="input-group-append">
@@ -227,7 +227,7 @@ export const ModalAreYouSure = ({isOpen, toggle, title, msg, onYes}) =>
 )
 
 
-export const CustomBreadcrumb = ({location, history, publicView=false}) =>
+export const CustomBreadcrumb = ({location, publicView=false}) =>
 {
   let spliturl = new Array()
   let breadcrumb_elements = new Array()
@@ -846,8 +846,7 @@ export const Checkbox = ({
   field: { name, value, onChange, onBlur },
   form: { errors, touched },
   id,
-  label,
-  ...props
+  label
 }) => {
   return (
     <div>
@@ -869,6 +868,11 @@ export const Checkbox = ({
 
 export const FancyErrorMessage = (msg) => (
   <div style={{color: '#FF0000', fontSize: 'small'}}>{msg}</div>
+)
+
+
+export const CustomErrorMessage = ({...props}) => (
+  <ErrorMessage {...props} render={msg => <div style={{color: '#FF0000', fontSize: 'small'}}>{msg}</div>} />
 )
 
 
@@ -1325,15 +1329,15 @@ export function BaseArgoTable({ columns, data, resourcename, page_size, filter=f
     let n1 = Math.ceil(pageSize / 2);
     table_body = <tbody>
       {
-        [...Array(pageSize)].map((e, ri) => {
+        [...Array(pageSize)].map((e, i) => {
           return (
-            <tr key={ri}>
+            <tr key={i}>
               {
-                ri === n1 - 1 ?
+                i === n1 - 1 ?
                   <td colSpan={columns.length} style={{height: '49px'}} className='align-middle text-center text-muted'>{`No ${resourcename}`}</td>
                 :
-                  [...Array(columns.length)].map((e, ci) =>
-                    <td style={{height: '49px'}} key={ci} className='align-middle'>{''}</td>
+                  [...Array(columns.length)].map((e, j) =>
+                    <td style={{height: '49px'}} key={j} className='align-middle'>{''}</td>
                   )
               }
             </tr>
@@ -1361,12 +1365,12 @@ export function BaseArgoTable({ columns, data, resourcename, page_size, filter=f
         })
       }
       {
-        [...Array(n_elem)].map((e, ri) => {
+        [...Array(n_elem)].map((e, i) => {
           return (
-            <tr key={page.length + ri} style={{height: '49px'}}>
+            <tr key={page.length + i} style={{height: '49px'}}>
               {
-                [...Array(columns.length)].map((e, ci) => {
-                  return <td key={ci} className='align-middle'>{''}</td>
+                [...Array(columns.length)].map((e, j) => {
+                  return <td key={j} className='align-middle'>{''}</td>
                 })
               }
             </tr>
