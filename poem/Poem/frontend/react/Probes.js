@@ -61,21 +61,13 @@ const ProbeForm = ({
   isTenantSchema=false,
   isHistory=false,
   publicView=false,
-  errors={
-    name: undefined,
-    package: undefined,
-    repository: undefined,
-    docurl: undefined,
-    comment: undefined
-  },
   addview=false,
   cloneview=false,
   list_packages=[],
-  setFieldValue=undefined,
-  values=undefined,
   onSelect=undefined,
   metrictemplatelist=[],
-  version=undefined
+  version=undefined,
+  ...props
 }) =>
   <>
     <FormGroup>
@@ -86,14 +78,14 @@ const ProbeForm = ({
             <Field
               type='text'
               name='name'
-              className={`form-control ${errors.name && 'border-danger'}`}
+              className={`form-control ${props.errors.name && 'border-danger'}`}
               id='name'
               disabled={isTenantSchema || isHistory || publicView}
             />
           </InputGroup>
           {
-            errors.name &&
-              FancyErrorMessage(errors.name)
+            props.errors.name &&
+              FancyErrorMessage(props.errors.name)
           }
           <FormText color="muted">
             Name of this probe.
@@ -148,18 +140,18 @@ const ProbeForm = ({
             :
               <>
                 <AutocompleteField
-                  setFieldValue={setFieldValue}
+                  setFieldValue={props.setFieldValue}
                   lists={list_packages}
                   icon='packages'
                   field='package'
-                  val={values.package}
+                  val={props.values.package}
                   onselect_handler={onSelect}
-                  req={errors.package}
+                  req={props.errors.package}
                   label='Package'
                 />
                 {
-                  errors.package &&
-                    FancyErrorMessage(errors.package)
+                  props.errors.package &&
+                    FancyErrorMessage(props.errors.package)
                 }
               </>
           }
@@ -188,14 +180,14 @@ const ProbeForm = ({
                 <Field
                   type='text'
                   name='repository'
-                  className={`form-control ${errors.repository && 'border-danger'}`}
+                  className={`form-control ${props.errors.repository && 'border-danger'}`}
                   id='repository'
                 />
             }
           </InputGroup>
           {
-            errors.repository &&
-              FancyErrorMessage(errors.repository)
+            props.errors.repository &&
+              FancyErrorMessage(props.errors.repository)
           }
           <FormText color='muted'>
             Probe repository URL.
@@ -219,14 +211,14 @@ const ProbeForm = ({
                 <Field
                   type='text'
                   name='docurl'
-                  className={`form-control ${errors.docurl && 'border-danger'}`}
+                  className={`form-control ${props.errors.docurl && 'border-danger'}`}
                   id='docurl'
                 />
             }
           </InputGroup>
           {
-            errors.docurl &&
-              FancyErrorMessage(errors.docurl)
+            props.errors.docurl &&
+              FancyErrorMessage(props.errors.docurl)
           }
           <FormText color='muted'>
             Documentation URL.
@@ -240,13 +232,13 @@ const ProbeForm = ({
             component='textarea'
             name='description'
             rows='15'
-            className={`form-control ${errors.description && 'border-danger'}`}
+            className={`form-control ${props.errors.description && 'border-danger'}`}
             id='description'
             disabled={isTenantSchema || isHistory || publicView}
           />
           {
-            errors.description &&
-              FancyErrorMessage(errors.description)
+            props.errors.description &&
+              FancyErrorMessage(props.errors.description)
           }
           <FormText color='muted'>
             Free text description outlining the purpose of this probe.
@@ -260,13 +252,13 @@ const ProbeForm = ({
             component='textarea'
             name='comment'
             rows='5'
-            className={`form-control ${errors.comment && 'border-danger'}`}
+            className={`form-control ${props.errors.comment && 'border-danger'}`}
             id='comment'
             disabled={isTenantSchema || isHistory || publicView}
           />
           {
-            errors.comment &&
-              FancyErrorMessage(errors.comment)
+            props.errors.comment &&
+              FancyErrorMessage(props.errors.comment)
           }
           <FormText color='muted'>
             Short comment about this version.
@@ -291,7 +283,7 @@ const ProbeForm = ({
                               `/ui/public_metrictemplates/${met}`
                             :
                               isTenantSchema ?
-                                `/ui/probes/${values.name}/${met}`
+                                `/ui/probes/${props.values.name}/${met}`
                               :
                                 `/ui/metrictemplates/${met}`
                             }>
