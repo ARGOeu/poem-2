@@ -5,7 +5,6 @@ import {
   LoadingAnim,
   BaseArgoView,
   NotifyOk,
-  Checkbox,
   FancyErrorMessage,
   AutocompleteField,
   DiffElement,
@@ -110,13 +109,14 @@ const ProbeForm = ({
         {
           (!addview && !cloneview && !isTenantSchema && !isHistory && !publicView) &&
             <Col md={2}>
-              <Field
-                component={Checkbox}
-                name='update_metrics'
-                className='form-control'
-                id='checkbox'
-                label='Update metric templates'
-              />
+              <label>
+                <Field
+                  type='checkbox'
+                  name='update_metrics'
+                  className='mr-1'
+                />
+                Update metric templates
+              </label>
               <FormText color='muted'>
                 Update all associated metric templates.
               </FormText>
