@@ -663,7 +663,8 @@ export const ProbeComponent = (props) => {
               description: `${probe ? probe.description : ''}`,
               comment: `${probe ? probe.comment : ''}`
             }}
-            render = {props => (
+          >
+            {props => (
               <ProbeForm
                 {...props}
                 isTenantSchema={true}
@@ -671,7 +672,7 @@ export const ProbeComponent = (props) => {
                 metrictemplatelist={metricTemplateList}
               />
             )}
-          />
+          </Formik>
         </BaseArgoView>
       );
     }
@@ -820,14 +821,15 @@ export const ProbeVersionDetails = (props) => {
             description: probe.description,
             comment: probe.comment
           }}
-          render = {props => (
+          >
+          {props => (
             <ProbeForm
               {...props}
               version={probe.version}
               isHistory={true}
             />
           )}
-        />
+        </Formik>
       </BaseArgoView>
     );
   }
