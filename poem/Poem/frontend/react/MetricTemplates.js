@@ -156,23 +156,6 @@ export const MetricTemplateComponent = (props) => {
     { enabled: allProbeVersions, }
   );
 
-  function onSelect(field, value) {
-    if (field === 'probeversion') {
-      let metrictemplate = metricTemplate;
-      let probe = {};
-      for (let probeversion of allProbeVersions) {
-        if (probeversion.object_repr === value) {
-          probe = probeversion.fields;
-          break;
-        } else {
-          probe = {'package': ''};
-        }
-      }
-      metrictemplate.probe = probe;
-      queryCache.setQueryData(`${querykey}_metrictemplate`, () => metrictemplate);
-    }
-  }
-
   function onTagChange(value) {
     let metrictemplate = metricTemplate;
     metrictemplate.tags = value;
@@ -401,7 +384,6 @@ export const MetricTemplateComponent = (props) => {
                 isTenantSchema={tenantview}
                 publicView={publicView}
                 addview={addview}
-                onSelect={onSelect}
                 popoverOpen={popoverOpen}
                 togglePopOver={togglePopOver}
                 onTagChange={onTagChange}
