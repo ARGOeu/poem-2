@@ -23,7 +23,7 @@ import {
   Button,
   InputGroup,
   InputGroupAddon } from 'reactstrap';
-import { Formik, Form, Field } from 'formik';
+import { Formik, Form, Field, useFormikContext, useField } from 'formik';
 import * as Yup from 'yup';
 import { useQuery } from 'react-query';
 
@@ -32,7 +32,7 @@ const ProbeSchema = Yup.object().shape({
   name: Yup.string()
     .matches(/^\S*$/, 'Name cannot contain white spaces')
     .required('Required'),
-  package: Yup.string()
+  pkg: Yup.string()
     .required('Required'),
   repository: Yup.string()
     .url('Invalid url')
@@ -56,6 +56,30 @@ const LinkField = ({
 )
 
 
+const VersionField = (props) => {
+  const {
+    values: { pkg },
+    setFieldValue
+  } = useFormikContext();
+
+  const [field] = useField(props);
+
+  useEffect(() => {
+    if (pkg !== '') {
+      let version = undefined;
+      try {
+        version = pkg.split('(')[1].slice(0, -1);
+      } catch(err) {
+        version = '';
+      }
+      setFieldValue(props.name, version);
+    }
+  }, [pkg, setFieldValue, props.name]);
+
+  return (<input {...field} {...props} />)
+}
+
+
 const ProbeForm = ({
   isTenantSchema=false,
   isHistory=false,
@@ -64,7 +88,6 @@ const ProbeForm = ({
   cloneview=false,
   list_packages=[],
   metrictemplatelist=[],
-  version=undefined,
   ...props
 }) =>
   <>
@@ -89,11 +112,10 @@ const ProbeForm = ({
         <Col md={2}>
           <InputGroup>
             <InputGroupAddon addonType='prepend'>Version</InputGroupAddon>
-            <Field
+            <VersionField
               type='text'
               name='version'
               className='form-control'
-              value={version}
               disabled={true}
             />
           </InputGroup>
@@ -126,7 +148,7 @@ const ProbeForm = ({
                 <InputGroupAddon addonType='prepend'>Package</InputGroupAddon>
                 <Field
                   type='text'
-                  name='package'
+                  name='pkg'
                   className='form-control'
                   disabled={true}
                 />
@@ -137,7 +159,7 @@ const ProbeForm = ({
                   {...props}
                   lists={list_packages}
                   icon='packages'
-                  field='package'
+                  field='pkg'
                   label='Package'
                 />
               </>
@@ -382,11 +404,12 @@ export const ProbeComponent = (props) => {
 
   const { data: probe, error: probeError, isLoading: probeLoading } = useQuery(
     `${querykey}_probe`, async () => {
-      let prb = undefined;
-      if (!addview)
-        prb = await backend.fetchData(`${apiProbeName}/${name}`);
-      return prb;
-    }
+      if (!addview) {
+        let prb = await backend.fetchData(`${apiProbeName}/${name}`);
+        return prb;
+      }
+    },
+    {enabled: !addview}
   );
 
   const { data: isTenantSchema, isLoading: isTenantSchemaLoading } = useQuery(
@@ -440,7 +463,7 @@ export const ProbeComponent = (props) => {
         '/api/v2/internal/probes/',
         {
           name: formValues.name,
-          package: formValues.package,
+          package: formValues.pkg,
           repository: formValues.repository,
           docurl: formValues.docurl,
           description: formValues.description,
@@ -473,7 +496,7 @@ export const ProbeComponent = (props) => {
         {
           id: formValues.id,
           name: formValues.name,
-          package: formValues.package,
+          package: formValues.pkg,
           repository: formValues.repository,
           docurl: formValues.docurl,
           description: formValues.description,
@@ -568,7 +591,7 @@ export const ProbeComponent = (props) => {
               id: `${probe ? probe.id : ''}`,
               name: `${probe ? probe.name : ''}`,
               version: `${probe ? probe.version : ''}`,
-              package: `${probe ? probe.package : ''}`,
+              pkg: `${probe ? probe.package : ''}`,
               repository: `${probe ? probe.repository : ''}`,
               docurl: `${probe ? probe.docurl : ''}`,
               description: `${probe ? probe.description : ''}`,
@@ -576,7 +599,6 @@ export const ProbeComponent = (props) => {
               update_metrics: false
             }}
             validationSchema={ProbeSchema}
-            enableReinitialize={true}
             onSubmit = {(values) => onSubmitHandle(values)}
           >
             {props => (
@@ -588,7 +610,6 @@ export const ProbeComponent = (props) => {
                   publicView={publicView}
                   list_packages={listPackages}
                   metrictemplatelist={metricTemplateList}
-                  version={`${probe ? probe.version : ''}`}
                 />
                 {
                   !publicView &&
@@ -636,7 +657,7 @@ export const ProbeComponent = (props) => {
               id: `${probe ? probe.id : ''}`,
               name: `${probe ? probe.name : ''}`,
               version: `${probe ? probe.version : ''}`,
-              package: `${probe ? probe.package : ''}`,
+              pkg: `${probe ? probe.package : ''}`,
               repository: `${probe ? probe.repository : ''}`,
               docurl: `${probe ? probe.docurl : ''}`,
               description: `${probe ? probe.description : ''}`,
@@ -648,7 +669,6 @@ export const ProbeComponent = (props) => {
                 isTenantSchema={true}
                 publicView={publicView}
                 metrictemplatelist={metricTemplateList}
-                version={probe.version}
               />
             )}
           />
@@ -794,7 +814,7 @@ export const ProbeVersionDetails = (props) => {
           initialValues = {{
             name: probe.name,
             version: probe.version,
-            package: probe.package,
+            pkg: probe.package,
             repository: probe.repository,
             docurl: probe.docurl,
             description: probe.description,
