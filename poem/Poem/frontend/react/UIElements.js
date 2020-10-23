@@ -876,11 +876,13 @@ export const CustomErrorMessage = ({...props}) => (
 )
 
 
-export const AutocompleteField = ({setFieldValue, lists=[], val='', icon, field, req, label, onselect_handler}) => {
-  const [inputValue, setInputValue] = useState(val);
+export const AutocompleteField = ({lists=[], field, icon, label, onselect_handler, ...props}) => {
+  const [inputValue, setInputValue] = useState(props.values[field]);
   const [suggestions, setSuggestions] = useState(lists);
+  const [touched, setTouched] = useState(false);
 
   const getSuggestions = value => {
+    setTouched(true);
     return (
       lists.filter(suggestion =>
         suggestion.toLowerCase().includes(value.trim().toLowerCase())
@@ -903,12 +905,15 @@ export const AutocompleteField = ({setFieldValue, lists=[], val='', icon, field,
   const renderInputComponent = inputProps => {
     if (label)
       return (
-        <div className='input-group mb-3'>
-          <div className='input-group-prepend'>
-            <span className='input-group-text' id='basic-addon1'>{label}</span>
+        <div>
+          <div className='input-group mb-3'>
+            <div className='input-group-prepend'>
+              <span className='input-group-text' id='basic-addon1'>{label}</span>
+            </div>
+            <input {...inputProps} type='text'
+            className={`form-control ${props.errors[field] && touched && 'border-danger'}`} aria-label='label' />
           </div>
-          <input {...inputProps} type='text'
-          className={`form-control ${req && 'border-danger'}`} aria-label='label'/>
+          {props.errors[field] && touched && <div style={{color: '#FF0000', fontSize: 'small'}}>{props.errors[field]}</div>}
         </div>
       );
     else
@@ -930,7 +935,7 @@ export const AutocompleteField = ({setFieldValue, lists=[], val='', icon, field,
           value: inputValue,
           onChange: (_, { newValue }) => {
             setInputValue(newValue);
-            setFieldValue(field, newValue);
+            props.setFieldValue(field, newValue);
             onselect_handler(field, newValue);
           }
         }}
@@ -944,7 +949,6 @@ export const AutocompleteField = ({setFieldValue, lists=[], val='', icon, field,
     </div>
   );
 };
-
 
 export const DropdownFilterComponent = ({value, onChange, data}) => (
   <select
