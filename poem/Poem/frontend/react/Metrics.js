@@ -7,7 +7,7 @@ import {
   NotifyOk,
   FancyErrorMessage,
   DiffElement,
-  _AutocompleteField,
+  AutocompleteField,
   NotifyWarn,
   NotifyError,
   NotifyInfo,
@@ -16,7 +16,8 @@ import {
   ParagraphTitle,
   DefaultColumnFilter,
   SelectColumnFilter,
-  BaseArgoTable
+  BaseArgoTable,
+  CustomErrorMessage
  } from './UIElements';
 import { Formik, Form, Field, FieldArray } from 'formik';
 import {
@@ -295,8 +296,7 @@ export const ListOfMetrics = (props) => {
     `${type}_listview`, async () => {
       let metrics =await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}${type === 'metrics' ? 'metric' : type}`);
       return metrics;
-    },
-    { retry: false }
+    }
   );
 
   const { data: listTypes, error: listTypesError, isLoading: listTypesLoading } = useQuery(
@@ -719,20 +719,11 @@ const DropdownIndicator = props => {
 
 export const MetricForm =
   ({
-    values=undefined,
-    errors={
-      name: undefined,
-      probeversion: undefined,
-      probeexecutable: undefined
-    },
-    setFieldValue=undefined,
-    handleChange,
     obj_label='',
     obj=undefined,
     probe=undefined,
     popoverOpen=undefined,
     togglePopOver=undefined,
-    onSelect=undefined,
     onTagChange=undefined,
     isHistory=false,
     isTenantSchema=false,
@@ -743,7 +734,8 @@ export const MetricForm =
     types=[],
     alltags=[],
     tags=[],
-    publicView=false
+    publicView=false,
+    ...props
   }) =>
     <>
       <FormGroup>
@@ -754,15 +746,12 @@ export const MetricForm =
               <Field
               type='text'
               name='name'
-              className={`form-control ${errors.name && 'border-danger'}`}
+              className={`form-control ${props.errors.name && props.touched.name && 'border-danger'}`}
               id='name'
               readOnly={isHistory || isTenantSchema || publicView}
             />
             </InputGroup>
-            {
-              errors.name &&
-                FancyErrorMessage(errors.name)
-            }
+            <CustomErrorMessage name='name' />
             <FormText color='muted'>
             Metric name.
             </FormText>
@@ -786,27 +775,27 @@ export const MetricForm =
                     className='form-control custom-select'
                     id='mtype'
                     onChange={e => {
-                      handleChange(e);
+                      props.handleChange(e);
                       if (e.target.value === 'Passive') {
-                        let ind = values.flags.length;
-                        if (ind === 1 && values.flags[0].key === '') {
-                          setFieldValue('flags[0].key', 'PASSIVE');
-                          setFieldValue('flags[0].value', '1');
+                        let ind = props.values.flags.length;
+                        if (ind === 1 && props.values.flags[0].key === '') {
+                          props.setFieldValue('flags[0].key', 'PASSIVE');
+                          props.setFieldValue('flags[0].value', '1');
                         } else {
-                          setFieldValue(`flags[${ind}].key`, 'PASSIVE')
-                          setFieldValue(`flags[${ind}].value`, '1')
+                          props.setFieldValue(`flags[${ind}].key`, 'PASSIVE')
+                          props.setFieldValue(`flags[${ind}].value`, '1')
                         }
                       } else if (e.target.value === 'Active') {
                         let ind = undefined;
-                        values.flags.forEach((e, index) => {
+                        props.values.flags.forEach((e, index) => {
                           if (e.key === 'PASSIVE') {
                             ind = index;
                           }
                         });
-                        if (values.flags.length === 1)
-                          values.flags.splice(ind, 1, {'key': '', 'value': ''})
+                        if (props.values.flags.length === 1)
+                          props.values.flags.splice(ind, 1, {'key': '', 'value': ''})
                         else
-                          values.flags.splice(ind, 1)
+                          props.values.flags.splice(ind, 1)
                       }
                     }}
                   >
@@ -826,7 +815,7 @@ export const MetricForm =
         <Row>
           <Col md={6}>
             {
-              values.type === 'Passive' ?
+              props.values.type === 'Passive' ?
                 <InputGroup>
                   <InputGroupAddon addonType='prepend'>Probe</InputGroupAddon>
                   <input
@@ -844,28 +833,20 @@ export const MetricForm =
                       type='text'
                       name='probeversion'
                       className='form-control'
-                      id='probeversion'
                       disabled={true}
                     />
                   </InputGroup>
                 :
-                  <_AutocompleteField
-                    setFieldValue={setFieldValue}
+                  <AutocompleteField
+                    {...props}
                     lists={probeversions}
                     icon='probes'
                     field='probeversion'
-                    val={values.probeversion}
-                    onselect_handler={onSelect}
-                    req={errors.probeversion}
                     label='Probe'
                   />
             }
             {
-              errors.probeversion &&
-                FancyErrorMessage(errors.probeversion)
-            }
-            {
-              values.type === 'Active' &&
+              props.values.type === 'Active' &&
                 <FormText color='muted'>
                   Probe name and version&nbsp;
                   {
@@ -903,7 +884,7 @@ export const MetricForm =
               <Field
                 type='text'
                 className='form-control'
-                value={values.type === 'Active' ? probe.package : ''}
+                value={props.values.type === 'Active' ? probe.package : ''}
                 disabled={true}
               />
             </InputGroup>
@@ -958,7 +939,6 @@ export const MetricForm =
           <Col md={10}>
             <Label for='description'>Description:</Label>
             <Field
-              id='description'
               className='form-control'
               component='textarea'
               name='description'
@@ -979,14 +959,12 @@ export const MetricForm =
                         name='group'
                         className='form-control'
                         disabled={true}
-                        id='group'
                       />
                     :
                       <Field
                         component='select'
                         name='group'
                         className='form-control custom-select'
-                        id='group'
                       >
                         {
                           groups.map((name, i) =>
@@ -1005,28 +983,24 @@ export const MetricForm =
       </FormGroup>
       <FormGroup>
         <ParagraphTitle title='Metric configuration'/>
-        <h6 className='mt-4 font-weight-bold text-uppercase' hidden={values.type === 'Passive'}>probe executable</h6>
+        <h6 className='mt-4 font-weight-bold text-uppercase' hidden={props.values.type === 'Passive'}>probe executable</h6>
         <Row>
           <Col md={5}>
             <Field
-            type='text'
-            name='probeexecutable'
-            id='probeexecutable'
-            className={`form-control ${errors.probeexecutable && 'border-danger'}`}
-            hidden={values.type === 'Passive'}
-            readOnly={isTenantSchema || isHistory || publicView}
-          />
-            {
-            errors.probeexecutable &&
-              FancyErrorMessage(errors.probeexecutable)
-          }
+              type='text'
+              name='probeexecutable'
+              className={`form-control ${props.errors.probeexecutable && props.touched.probeexecutable && 'border-danger'}`}
+              hidden={props.values.type === 'Passive'}
+              readOnly={isTenantSchema || isHistory || publicView}
+            />
+            <CustomErrorMessage name='probeexecutable' />
           </Col>
         </Row>
-        <InlineFields values={values} errors={errors} field='config' addnew={!isTenantSchema && !isHistory} readonly={obj_label === 'metrictemplate' && isTenantSchema || isHistory || publicView}/>
-        <InlineFields values={values} errors={errors} field='attributes' addnew={!isTenantSchema && !isHistory && !publicView}/>
-        <InlineFields values={values} errors={errors} field='dependency' addnew={!isTenantSchema && !isHistory && !publicView}/>
-        <InlineFields values={values} errors={errors} field='parameter' addnew={!isTenantSchema && !isHistory && !publicView}/>
-        <InlineFields values={values} errors={errors} field='flags' addnew={!isTenantSchema && !isHistory && !publicView}/>
+        <InlineFields values={props.values} errors={props.errors} field='config' addnew={!isTenantSchema && !isHistory} readonly={obj_label === 'metrictemplate' && isTenantSchema || isHistory || publicView}/>
+        <InlineFields values={props.values} errors={props.errors} field='attributes' addnew={!isTenantSchema && !isHistory && !publicView}/>
+        <InlineFields values={props.values} errors={props.errors} field='dependency' addnew={!isTenantSchema && !isHistory && !publicView}/>
+        <InlineFields values={props.values} errors={props.errors} field='parameter' addnew={!isTenantSchema && !isHistory && !publicView}/>
+        <InlineFields values={props.values} errors={props.errors} field='flags' addnew={!isTenantSchema && !isHistory && !publicView}/>
         <h6 className='mt-4 font-weight-bold text-uppercase'>parent</h6>
         <Row>
           <Col md={5}>
@@ -1035,25 +1009,17 @@ export const MetricForm =
               <Field
                 type='text'
                 name='parent'
-                id='parent'
                 className='form-control'
                 readOnly={true}
               />
             :
               <>
-                <_AutocompleteField
-                  setFieldValue={setFieldValue}
+                <AutocompleteField
+                  {...props}
                   lists={metrictemplatelist}
                   field='parent'
-                  val={values.parent}
                   icon='metrics'
-                  onselect_handler={onSelect}
-                  req={errors.parent}
                 />
-                {
-                  errors.parent &&
-                    FancyErrorMessage(errors.parent)
-                }
               </>
           }
           </Col>
