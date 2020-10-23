@@ -4,7 +4,7 @@ import { Backend, WebApi } from './DataManager';
 import {
   LoadingAnim,
   BaseArgoView,
-  AutocompleteField,
+  _AutocompleteField,
   NotifyOk,
   FancyErrorMessage,
   DiffElement,
@@ -298,7 +298,7 @@ const ThresholdsProfilesForm = ({
                                   />
                                 </InputGroup>
                               :
-                                <AutocompleteField
+                                <_AutocompleteField
                                   req={
                                     errors.rules &&
                                     errors.rules.length > index &&
