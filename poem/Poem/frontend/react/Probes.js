@@ -25,7 +25,7 @@ import {
   InputGroupAddon } from 'reactstrap';
 import { Formik, Form, Field } from 'formik';
 import * as Yup from 'yup';
-import { useQuery, queryCache } from 'react-query';
+import { useQuery } from 'react-query';
 
 
 const ProbeSchema = Yup.object().shape({
@@ -63,7 +63,6 @@ const ProbeForm = ({
   addview=false,
   cloneview=false,
   list_packages=[],
-  onSelect=undefined,
   metrictemplatelist=[],
   version=undefined,
   ...props
@@ -139,7 +138,6 @@ const ProbeForm = ({
                   lists={list_packages}
                   icon='packages'
                   field='package'
-                  onselect_handler={onSelect}
                   label='Package'
                 />
               </>
@@ -384,16 +382,7 @@ export const ProbeComponent = (props) => {
 
   const { data: probe, error: probeError, isLoading: probeLoading } = useQuery(
     `${querykey}_probe`, async () => {
-      let prb = {
-        'id': '',
-        'name': '',
-        'version': '',
-        'package': '',
-        'repository': '',
-        'docurl': '',
-        'description': '',
-        'comment': ''
-      };
+      let prb = undefined;
       if (!addview)
         prb = await backend.fetchData(`${apiProbeName}/${name}`);
       return prb;
@@ -537,18 +526,6 @@ export const ProbeComponent = (props) => {
     }
   }
 
-  function onSelect(field, value) {
-    let selectedProbe = probe;
-    selectedProbe[field] = value;
-    try {
-      selectedProbe['version'] = value.split(' ')[1].slice(1, -1);
-    } catch(err) {
-      if (err instanceof TypeError)
-        selectedProbe['version'] = '';
-    }
-    queryCache.setQueryData(`${querykey}_probe`, () => selectedProbe);
-  }
-
   if (probeLoading || isTenantSchemaLoading || metricTemplateListLoading || listPackagesLoading)
     return(<LoadingAnim/>)
 
@@ -563,10 +540,6 @@ export const ProbeComponent = (props) => {
 
   else {
     if (!isTenantSchema) {
-      let probePackage = '';
-      if (!addview)
-        probePackage = probe.package;
-
       return (
         <BaseArgoView
           resourcename={`${publicView ? 'Probe details' : 'probe'}`}
@@ -592,14 +565,14 @@ export const ProbeComponent = (props) => {
         >
           <Formik
             initialValues = {{
-              id: probe.id,
-              name: probe.name,
-              version: probe.version,
-              package: probePackage,
-              repository: probe.repository,
-              docurl: probe.docurl,
-              description: probe.description,
-              comment: probe.comment,
+              id: `${probe ? probe.id : ''}`,
+              name: `${probe ? probe.name : ''}`,
+              version: `${probe ? probe.version : ''}`,
+              package: `${probe ? probe.package : ''}`,
+              repository: `${probe ? probe.repository : ''}`,
+              docurl: `${probe ? probe.docurl : ''}`,
+              description: `${probe ? probe.description : ''}`,
+              comment: `${probe ? probe.comment : ''}`,
               update_metrics: false
             }}
             validationSchema={ProbeSchema}
@@ -614,9 +587,8 @@ export const ProbeComponent = (props) => {
                   cloneview={cloneview}
                   publicView={publicView}
                   list_packages={listPackages}
-                  onSelect={onSelect}
                   metrictemplatelist={metricTemplateList}
-                  version={probe.version}
+                  version={`${probe ? probe.version : ''}`}
                 />
                 {
                   !publicView &&
@@ -661,14 +633,14 @@ export const ProbeComponent = (props) => {
         >
           <Formik
             initialValues = {{
-              id: probe.id,
-              name: probe.name,
-              version: probe.version,
-              package: probe.package,
-              repository: probe.repository,
-              docurl: probe.docurl,
-              description: probe.description,
-              comment: probe.comment
+              id: `${probe ? probe.id : ''}`,
+              name: `${probe ? probe.name : ''}`,
+              version: `${probe ? probe.version : ''}`,
+              package: `${probe ? probe.package : ''}`,
+              repository: `${probe ? probe.repository : ''}`,
+              docurl: `${probe ? probe.docurl : ''}`,
+              description: `${probe ? probe.description : ''}`,
+              comment: `${probe ? probe.comment : ''}`
             }}
             render = {props => (
               <ProbeForm
