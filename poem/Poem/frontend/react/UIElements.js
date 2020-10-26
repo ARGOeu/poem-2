@@ -946,7 +946,7 @@ export const _AutocompleteField = ({setFieldValue, lists=[], val='', icon, field
   );
 };
 
-export const AutocompleteField = ({lists=[], field, icon, label, ...props}) => {
+export const AutocompleteField = ({lists=[], field, icon, label, onselect_handler=undefined, ...props}) => {
   const [inputValue, setInputValue] = useState(props.values[field]);
   const [suggestions, setSuggestions] = useState(lists);
   const [touched, setTouched] = useState(false);
@@ -1006,7 +1006,7 @@ export const AutocompleteField = ({lists=[], field, icon, label, ...props}) => {
           onChange: (_, { newValue }) => {
             setInputValue(newValue);
             props.setFieldValue(field, newValue);
-            //onselect_handler(field, newValue);
+            onselect_handler && onselect_handler(newValue);
           }
         }}
         renderInputComponent={renderInputComponent}
