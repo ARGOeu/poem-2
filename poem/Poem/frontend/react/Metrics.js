@@ -732,296 +732,309 @@ export const MetricForm =
     alltags=[],
     publicView=false,
     ...props
-  }) =>
-    <>
-      <FormGroup>
-        <Row className='mb-3'>
-          <Col md={6}>
-            <InputGroup>
-              <InputGroupAddon addonType='prepend'>Name</InputGroupAddon>
-              <Field
-              type='text'
-              name='name'
-              className={`form-control ${props.errors.name && props.touched.name && 'border-danger'}`}
-              id='name'
-              readOnly={isHistory || isTenantSchema || publicView}
-            />
-            </InputGroup>
-            <CustomErrorMessage name='name' />
-            <FormText color='muted'>
-            Metric name.
-            </FormText>
-          </Col>
-          <Col md={4} className='mt-1'>
-            <InputGroup>
-              <InputGroupAddon addonType='prepend'>Type</InputGroupAddon>
-              {
-                (isTenantSchema || isHistory || publicView) ?
-                  <Field
-                    type='text'
-                    name='type'
-                    className='form-control'
-                    id='mtype'
-                    readOnly={true}
-                  />
-                :
-                  <Field
-                    component='select'
-                    name='type'
-                    className='form-control custom-select'
-                    id='mtype'
-                    onChange={e => {
-                      props.handleChange(e);
-                      if (e.target.value === 'Passive') {
-                        let ind = props.values.flags.length;
-                        if (ind === 1 && props.values.flags[0].key === '') {
-                          props.setFieldValue('flags[0].key', 'PASSIVE');
-                          props.setFieldValue('flags[0].value', '1');
-                        } else {
-                          props.setFieldValue(`flags[${ind}].key`, 'PASSIVE')
-                          props.setFieldValue(`flags[${ind}].value`, '1')
-                        }
-                      } else if (e.target.value === 'Active') {
-                        let ind = undefined;
-                        props.values.flags.forEach((e, index) => {
-                          if (e.key === 'PASSIVE') {
-                            ind = index;
-                          }
-                        });
-                        if (props.values.flags.length === 1)
-                          props.values.flags.splice(ind, 1, {'key': '', 'value': ''})
-                        else
-                          props.values.flags.splice(ind, 1)
-                      }
-                    }}
-                  >
-                    {
-                      types.map((name, i) =>
-                        <option key={i} value={name}>{name}</option>
-                      )
-                    }
-                  </Field>
-              }
-            </InputGroup>
-            <FormText color='muted'>
-            Metric is of given type.
-            </FormText>
-          </Col>
-        </Row>
-        <Row>
-          <Col md={6}>
-            {
-              props.values.type === 'Passive' ?
-                <InputGroup>
-                  <InputGroupAddon addonType='prepend'>Probe</InputGroupAddon>
-                  <input
-                    type='text'
-                    className='form-control'
-                    disabled={true}
-                    id='passive-probeversion'
-                  />
-                </InputGroup>
-              :
-                (isHistory || isTenantSchema || publicView) ?
-                  <InputGroup>
-                    <InputGroupAddon addonType='prepend'>Probe</InputGroupAddon>
+  }) => {
+    let list_probes = [];
+    probeversions.forEach(prv => list_probes.push(prv.object_repr));
+
+    return (
+      <>
+        <FormGroup>
+          <Row className='mb-3'>
+            <Col md={6}>
+              <InputGroup>
+                <InputGroupAddon addonType='prepend'>Name</InputGroupAddon>
+                <Field
+                type='text'
+                name='name'
+                className={`form-control ${props.errors.name && props.touched.name && 'border-danger'}`}
+                id='name'
+                readOnly={isHistory || isTenantSchema || publicView}
+              />
+              </InputGroup>
+              <CustomErrorMessage name='name' />
+              <FormText color='muted'>
+              Metric name.
+              </FormText>
+            </Col>
+            <Col md={4} className='mt-1'>
+              <InputGroup>
+                <InputGroupAddon addonType='prepend'>Type</InputGroupAddon>
+                {
+                  (isTenantSchema || isHistory || publicView) ?
                     <Field
                       type='text'
-                      name='probeversion'
+                      name='type'
+                      className='form-control'
+                      id='mtype'
+                      readOnly={true}
+                    />
+                  :
+                    <Field
+                      component='select'
+                      name='type'
+                      className='form-control custom-select'
+                      id='mtype'
+                      onChange={e => {
+                        props.handleChange(e);
+                        if (e.target.value === 'Passive') {
+                          let ind = props.values.flags.length;
+                          if (ind === 1 && props.values.flags[0].key === '') {
+                            props.setFieldValue('flags[0].key', 'PASSIVE');
+                            props.setFieldValue('flags[0].value', '1');
+                          } else {
+                            props.setFieldValue(`flags[${ind}].key`, 'PASSIVE')
+                            props.setFieldValue(`flags[${ind}].value`, '1')
+                          }
+                        } else if (e.target.value === 'Active') {
+                          let ind = undefined;
+                          props.values.flags.forEach((e, index) => {
+                            if (e.key === 'PASSIVE') {
+                              ind = index;
+                            }
+                          });
+                          if (props.values.flags.length === 1)
+                            props.values.flags.splice(ind, 1, {'key': '', 'value': ''})
+                          else
+                            props.values.flags.splice(ind, 1)
+                        }
+                      }}
+                    >
+                      {
+                        types.map((name, i) =>
+                          <option key={i} value={name}>{name}</option>
+                        )
+                      }
+                    </Field>
+                }
+              </InputGroup>
+              <FormText color='muted'>
+              Metric is of given type.
+              </FormText>
+            </Col>
+          </Row>
+          <Row>
+            <Col md={6}>
+              {
+                props.values.type === 'Passive' ?
+                  <InputGroup>
+                    <InputGroupAddon addonType='prepend'>Probe</InputGroupAddon>
+                    <input
+                      type='text'
                       className='form-control'
                       disabled={true}
+                      id='passive-probeversion'
                     />
                   </InputGroup>
                 :
-                  <AutocompleteField
-                    {...props}
-                    lists={probeversions}
-                    icon='probes'
-                    field='probeversion'
-                    label='Probe'
-                  />
-            }
-            {
-              props.values.type === 'Active' &&
-                <FormText color='muted'>
-                  Probe name and version&nbsp;
-                  {
-                    !isHistory &&
-                      <>
-                        <FontAwesomeIcon
-                          id='probe-popover'
-                          hidden={props.values.mtype === 'Passive' || addview}
-                          icon={faInfoCircle}
-                          style={{color: '#416090'}}
-                        />
-                        <Popover
-                          placement='bottom'
-                          isOpen={popoverOpen}
-                          target='probe-popover'
-                          toggle={togglePopOver}
-                          trigger='click'
-                        >
-                          <PopoverHeader>
-                            <ProbeVersionLink
-                              probeversion={props.values.probeversion}
-                              publicView={publicView}
-                            />
-                          </PopoverHeader>
-                          <PopoverBody>{props.values.probe.description}</PopoverBody>
-                        </Popover>
-                      </>
-                  }
-                </FormText>
-          }
-          </Col>
-          <Col md={4} className='mt-1'>
-            <InputGroup>
-              <InputGroupAddon addonType='prepend'>Package</InputGroupAddon>
-              <Field
-                type='text'
-                className='form-control'
-                value={props.values.type === 'Active' ? props.values.probe.package : ''}
-                disabled={true}
-              />
-            </InputGroup>
-            <FormText color='muted'>
-              Package which contains probe.
-            </FormText>
-          </Col>
-        </Row>
-        {
-          (obj_label === 'metrictemplate' && (!isHistory && !isTenantSchema && !publicView)) ?
-            <Row className='mb-4 mt-2'>
-              <Col md={10}>
-                <Label>Tags:</Label>
-                <CreatableSelect
-                  closeMenuOnSelect={false}
-                  isMulti
-                  onChange={(value) => props.setFieldValue('tags', value)}
-                  options={alltags}
-                  components={{DropdownIndicator}}
-                  defaultValue={props.values.tags}
-                  styles={styles}
-                />
-              </Col>
-            </Row>
-          :
-            <Row className='mb-4 mt-2'>
-              <Col md={10}>
-                <Label>Tags:</Label>
-                <div>
-                  {
-                    props.values.tags.length === 0 ?
-                      <Badge color='dark'>none</Badge>
-                    :
-                      (obj_label === 'metrictemplate' && !isHistory) ?
-                        props.values.tags.map((tag, i) =>
-                          <Badge className={'mr-1'} key={i} color={tag.value === 'internal' ? 'success' : tag.value === 'deprecated' ? 'danger' : 'secondary'}>
-                            {tag.value}
-                          </Badge>
-                        )
-                      :
-                        props.values.tags.map((tag, i) =>
-                          <Badge className={'mr-1'} key={i} color={tag === 'internal' ? 'success' : tag === 'deprecated' ? 'danger' : 'secondary'}>
-                            {tag}
-                          </Badge>
-                        )
-                  }
-                </div>
-              </Col>
-            </Row>
-        }
-        <Row className='mb-4 mt-2'>
-          <Col md={10}>
-            <Label for='description'>Description:</Label>
-            <Field
-              className='form-control'
-              component='textarea'
-              name='description'
-              disabled={isTenantSchema || isHistory || publicView}
-            />
-          </Col>
-        </Row>
-        {
-          obj_label === 'metric' &&
-            <Row className='mb-4'>
-              <Col md={3}>
-                <InputGroup>
-                  <InputGroupAddon addonType='prepend'>Group</InputGroupAddon>
-                  {
-                    (isHistory || publicView) ?
+                  (isHistory || isTenantSchema || publicView) ?
+                    <InputGroup>
+                      <InputGroupAddon addonType='prepend'>Probe</InputGroupAddon>
                       <Field
                         type='text'
-                        name='group'
+                        name='probeversion'
                         className='form-control'
                         disabled={true}
                       />
-                    :
-                      <Field
-                        component='select'
-                        name='group'
-                        className='form-control custom-select'
-                      >
-                        {
-                          groups.map((name, i) =>
-                            <option key={i} value={name}>{name}</option>
+                    </InputGroup>
+                  :
+                    <AutocompleteField
+                      {...props}
+                      lists={list_probes}
+                      icon='probes'
+                      field='probeversion'
+                      onselect_handler={(newValue) => {
+                        let probeversion = probeversions.find(prv => prv.object_repr === newValue);
+                        if (probeversion)
+                          props.setFieldValue('probe', probeversion.fields)
+                        else
+                          props.setFieldValue('probe', {'package': ''})
+                      }}
+                      label='Probe'
+                    />
+              }
+              {
+                props.values.type === 'Active' &&
+                  <FormText color='muted'>
+                    Probe name and version&nbsp;
+                    {
+                      !isHistory &&
+                        <>
+                          <FontAwesomeIcon
+                            id='probe-popover'
+                            hidden={props.values.mtype === 'Passive' || addview}
+                            icon={faInfoCircle}
+                            style={{color: '#416090'}}
+                          />
+                          <Popover
+                            placement='bottom'
+                            isOpen={popoverOpen}
+                            target='probe-popover'
+                            toggle={togglePopOver}
+                            trigger='click'
+                          >
+                            <PopoverHeader>
+                              <ProbeVersionLink
+                                probeversion={props.values.probeversion}
+                                publicView={publicView}
+                              />
+                            </PopoverHeader>
+                            <PopoverBody>{props.values.probe.description}</PopoverBody>
+                          </Popover>
+                        </>
+                    }
+                  </FormText>
+            }
+            </Col>
+            <Col md={4} className='mt-1'>
+              <InputGroup>
+                <InputGroupAddon addonType='prepend'>Package</InputGroupAddon>
+                <Field
+                  type='text'
+                  className='form-control'
+                  value={props.values.type === 'Active' ? props.values.probe.package : ''}
+                  disabled={true}
+                />
+              </InputGroup>
+              <FormText color='muted'>
+                Package which contains probe.
+              </FormText>
+            </Col>
+          </Row>
+          {
+            (obj_label === 'metrictemplate' && (!isHistory && !isTenantSchema && !publicView)) ?
+              <Row className='mb-4 mt-2'>
+                <Col md={10}>
+                  <Label>Tags:</Label>
+                  <CreatableSelect
+                    closeMenuOnSelect={false}
+                    isMulti
+                    onChange={(value) => props.setFieldValue('tags', value)}
+                    options={alltags}
+                    components={{DropdownIndicator}}
+                    defaultValue={props.values.tags}
+                    styles={styles}
+                  />
+                </Col>
+              </Row>
+            :
+              <Row className='mb-4 mt-2'>
+                <Col md={10}>
+                  <Label>Tags:</Label>
+                  <div>
+                    {
+                      props.values.tags.length === 0 ?
+                        <Badge color='dark'>none</Badge>
+                      :
+                        (obj_label === 'metrictemplate' && !isHistory) ?
+                          props.values.tags.map((tag, i) =>
+                            <Badge className={'mr-1'} key={i} color={tag.value === 'internal' ? 'success' : tag.value === 'deprecated' ? 'danger' : 'secondary'}>
+                              {tag.value}
+                            </Badge>
                           )
-                        }
-                      </Field>
-                  }
-                </InputGroup>
-                <FormText color='muted'>
-                  Metric is member of selected group.
-                </FormText>
-              </Col>
-            </Row>
-      }
-      </FormGroup>
-      <FormGroup>
-        <ParagraphTitle title='Metric configuration'/>
-        <h6 className='mt-4 font-weight-bold text-uppercase' hidden={props.values.type === 'Passive'}>probe executable</h6>
-        <Row>
-          <Col md={5}>
-            <Field
-              type='text'
-              name='probeexecutable'
-              className={`form-control ${props.errors.probeexecutable && props.touched.probeexecutable && 'border-danger'}`}
-              hidden={props.values.type === 'Passive'}
-              readOnly={isTenantSchema || isHistory || publicView}
-            />
-            <CustomErrorMessage name='probeexecutable' />
-          </Col>
-        </Row>
-        <InlineFields values={props.values} errors={props.errors} field='config' addnew={!isTenantSchema && !isHistory} readonly={obj_label === 'metrictemplate' && isTenantSchema || isHistory || publicView}/>
-        <InlineFields values={props.values} errors={props.errors} field='attributes' addnew={!isTenantSchema && !isHistory && !publicView}/>
-        <InlineFields values={props.values} errors={props.errors} field='dependency' addnew={!isTenantSchema && !isHistory && !publicView}/>
-        <InlineFields values={props.values} errors={props.errors} field='parameter' addnew={!isTenantSchema && !isHistory && !publicView}/>
-        <InlineFields values={props.values} errors={props.errors} field='flags' addnew={!isTenantSchema && !isHistory && !publicView}/>
-        <h6 className='mt-4 font-weight-bold text-uppercase'>parent</h6>
-        <Row>
-          <Col md={5}>
-            {
-            (isTenantSchema || isHistory || publicView) ?
+                        :
+                          props.values.tags.map((tag, i) =>
+                            <Badge className={'mr-1'} key={i} color={tag === 'internal' ? 'success' : tag === 'deprecated' ? 'danger' : 'secondary'}>
+                              {tag}
+                            </Badge>
+                          )
+                    }
+                  </div>
+                </Col>
+              </Row>
+          }
+          <Row className='mb-4 mt-2'>
+            <Col md={10}>
+              <Label for='description'>Description:</Label>
+              <Field
+                className='form-control'
+                component='textarea'
+                name='description'
+                disabled={isTenantSchema || isHistory || publicView}
+              />
+            </Col>
+          </Row>
+          {
+            obj_label === 'metric' &&
+              <Row className='mb-4'>
+                <Col md={3}>
+                  <InputGroup>
+                    <InputGroupAddon addonType='prepend'>Group</InputGroupAddon>
+                    {
+                      (isHistory || publicView) ?
+                        <Field
+                          type='text'
+                          name='group'
+                          className='form-control'
+                          disabled={true}
+                        />
+                      :
+                        <Field
+                          component='select'
+                          name='group'
+                          className='form-control custom-select'
+                        >
+                          {
+                            groups.map((name, i) =>
+                              <option key={i} value={name}>{name}</option>
+                            )
+                          }
+                        </Field>
+                    }
+                  </InputGroup>
+                  <FormText color='muted'>
+                    Metric is member of selected group.
+                  </FormText>
+                </Col>
+              </Row>
+        }
+        </FormGroup>
+        <FormGroup>
+          <ParagraphTitle title='Metric configuration'/>
+          <h6 className='mt-4 font-weight-bold text-uppercase' hidden={props.values.type === 'Passive'}>probe executable</h6>
+          <Row>
+            <Col md={5}>
               <Field
                 type='text'
-                name='parent'
-                className='form-control'
-                readOnly={true}
+                name='probeexecutable'
+                className={`form-control ${props.errors.probeexecutable && props.touched.probeexecutable && 'border-danger'}`}
+                hidden={props.values.type === 'Passive'}
+                readOnly={isTenantSchema || isHistory || publicView}
               />
-            :
-              <>
-                <AutocompleteField
-                  {...props}
-                  lists={metrictemplatelist}
-                  field='parent'
-                  icon='metrics'
+              <CustomErrorMessage name='probeexecutable' />
+            </Col>
+          </Row>
+          <InlineFields values={props.values} errors={props.errors} field='config' addnew={!isTenantSchema && !isHistory} readonly={obj_label === 'metrictemplate' && isTenantSchema || isHistory || publicView}/>
+          <InlineFields values={props.values} errors={props.errors} field='attributes' addnew={!isTenantSchema && !isHistory && !publicView}/>
+          <InlineFields values={props.values} errors={props.errors} field='dependency' addnew={!isTenantSchema && !isHistory && !publicView}/>
+          <InlineFields values={props.values} errors={props.errors} field='parameter' addnew={!isTenantSchema && !isHistory && !publicView}/>
+          <InlineFields values={props.values} errors={props.errors} field='flags' addnew={!isTenantSchema && !isHistory && !publicView}/>
+          <h6 className='mt-4 font-weight-bold text-uppercase'>parent</h6>
+          <Row>
+            <Col md={5}>
+              {
+              (isTenantSchema || isHistory || publicView) ?
+                <Field
+                  type='text'
+                  name='parent'
+                  className='form-control'
+                  readOnly={true}
                 />
-              </>
-          }
-          </Col>
-        </Row>
-      </FormGroup>
-    </>
+              :
+                <>
+                  <AutocompleteField
+                    {...props}
+                    lists={metrictemplatelist}
+                    field='parent'
+                    icon='metrics'
+                  />
+                </>
+            }
+            </Col>
+          </Row>
+        </FormGroup>
+      </>
+    )
+  }
 
 
 export const CompareMetrics = (props) => {

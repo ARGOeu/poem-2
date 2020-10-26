@@ -296,9 +296,6 @@ export const MetricTemplateComponent = (props) => {
     return (<ErrorComponent error={listMetricTemplatesError.message}/>);
 
   else {
-    var probeVersionsNames = [];
-    allProbeVersions.forEach(prv => probeVersionsNames.push(prv.object_repr));
-
     return (
       <BaseArgoView
         resourcename={(tenantview || publicView) ? 'Metric template details' : 'metric template'}
@@ -368,7 +365,7 @@ export const MetricTemplateComponent = (props) => {
                 togglePopOver={togglePopOver}
                 types={types}
                 alltags={allTags}
-                probeversions={probeVersionsNames}
+                probeversions={allProbeVersions}
                 metrictemplatelist={listMetricTemplates}
               />
               {
