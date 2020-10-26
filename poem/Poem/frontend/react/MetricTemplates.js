@@ -465,7 +465,9 @@ export const MetricTemplateVersionDetails = (props) => {
             parameter: metricTemplate.parameter,
             flags: metricTemplate.flags,
             file_attributes: metricTemplate.files,
-            file_parameters: metricTemplate.fileparameter
+            file_parameters: metricTemplate.fileparameter,
+            probe: probe,
+            tags: metricTemplate.tags
           }}
         >
           {props => (
@@ -474,8 +476,6 @@ export const MetricTemplateVersionDetails = (props) => {
                 {...props}
                 obj_label='metrictemplate'
                 isHistory={true}
-                probe={probe}
-                tags={metricTemplate.tags}
               />
             </Form>
           )}
