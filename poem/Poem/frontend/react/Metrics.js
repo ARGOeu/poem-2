@@ -720,11 +720,8 @@ const DropdownIndicator = props => {
 export const MetricForm =
   ({
     obj_label='',
-    obj=undefined,
-    probe=undefined,
     popoverOpen=undefined,
     togglePopOver=undefined,
-    onTagChange=undefined,
     isHistory=false,
     isTenantSchema=false,
     addview=false,
@@ -733,7 +730,6 @@ export const MetricForm =
     metrictemplatelist=[],
     types=[],
     alltags=[],
-    tags=[],
     publicView=false,
     ...props
   }) =>
@@ -854,7 +850,7 @@ export const MetricForm =
                       <>
                         <FontAwesomeIcon
                           id='probe-popover'
-                          hidden={`${obj}.mtype` === 'Passive' || addview}
+                          hidden={props.values.mtype === 'Passive' || addview}
                           icon={faInfoCircle}
                           style={{color: '#416090'}}
                         />
@@ -867,11 +863,11 @@ export const MetricForm =
                         >
                           <PopoverHeader>
                             <ProbeVersionLink
-                              probeversion={obj.probeversion}
+                              probeversion={props.values.probeversion}
                               publicView={publicView}
                             />
                           </PopoverHeader>
-                          <PopoverBody>{probe.description}</PopoverBody>
+                          <PopoverBody>{props.values.probe.description}</PopoverBody>
                         </Popover>
                       </>
                   }
@@ -884,7 +880,7 @@ export const MetricForm =
               <Field
                 type='text'
                 className='form-control'
-                value={props.values.type === 'Active' ? probe.package : ''}
+                value={props.values.type === 'Active' ? props.values.probe.package : ''}
                 disabled={true}
               />
             </InputGroup>
@@ -901,10 +897,10 @@ export const MetricForm =
                 <CreatableSelect
                   closeMenuOnSelect={false}
                   isMulti
-                  onChange={onTagChange}
+                  onChange={(value) => props.setFieldValue('tags', value)}
                   options={alltags}
                   components={{DropdownIndicator}}
-                  defaultValue={tags}
+                  defaultValue={props.values.tags}
                   styles={styles}
                 />
               </Col>
@@ -915,17 +911,17 @@ export const MetricForm =
                 <Label>Tags:</Label>
                 <div>
                   {
-                    tags.length === 0 ?
+                    props.values.tags.length === 0 ?
                       <Badge color='dark'>none</Badge>
                     :
                       (obj_label === 'metrictemplate' && !isHistory) ?
-                        tags.map((tag, i) =>
+                        props.values.tags.map((tag, i) =>
                           <Badge className={'mr-1'} key={i} color={tag.value === 'internal' ? 'success' : tag.value === 'deprecated' ? 'danger' : 'secondary'}>
                             {tag.value}
                           </Badge>
                         )
                       :
-                        tags.map((tag, i) =>
+                        props.values.tags.map((tag, i) =>
                           <Badge className={'mr-1'} key={i} color={tag === 'internal' ? 'success' : tag === 'deprecated' ? 'danger' : 'secondary'}>
                             {tag}
                           </Badge>
@@ -1329,7 +1325,9 @@ export const MetricChange = (props) => {
             flags: metric.flags,
             files: metric.files,
             file_attributes: metric.files,
-            file_parameters: metric.fileparameter
+            file_parameters: metric.fileparameter,
+            probe: probe,
+            tags: metric.tags
           }}
           onSubmit = {(values) => onSubmitHandle(values)}
           render = {props => (
@@ -1337,9 +1335,6 @@ export const MetricChange = (props) => {
               <MetricForm
                 {...props}
                 obj_label='metric'
-                obj={metric}
-                probe={probe}
-                tags={metric.tags}
                 isTenantSchema={true}
                 popoverOpen={popoverOpen}
                 togglePopOver={togglePopOver}
@@ -1438,7 +1433,9 @@ export const MetricVersionDetails = (props) => {
             parameter: metric.parameter,
             flags: metric.flags,
             files: metric.files,
-            fileparameter: metric.fileparameter
+            fileparameter: metric.fileparameter,
+            probe: probe,
+            tags: metric.tags
           }}
           render = {props => (
             <Form>
@@ -1446,8 +1443,6 @@ export const MetricVersionDetails = (props) => {
                 {...props}
                 obj_label='metric'
                 isHistory={true}
-                probe={probe}
-                tags={metric.tags}
               />
             </Form>
           )}

@@ -12,7 +12,7 @@ import {
 import { Formik, Form } from 'formik';
 import { Button } from 'reactstrap';
 import * as Yup from 'yup';
-import { useQuery, queryCache } from 'react-query';
+import { useQuery } from 'react-query';
 
 
 const MetricTemplateSchema = Yup.object().shape({
@@ -92,6 +92,7 @@ export const MetricTemplateComponent = (props) => {
   const {data: metricTemplate, error: metricTemplateError, isLoading: metricTemplateLoading } = useQuery(
     `${querykey}_metrictemplate`,
     async () => {
+      /*
       let metrictemplate = {
         id: '',
         name: '',
@@ -116,9 +117,10 @@ export const MetricTemplateComponent = (props) => {
         tags: [],
         probe: {'package': ''}
       };
+      */
 
       if (!addview) {
-        metrictemplate = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}metrictemplates/${name}`);
+        let metrictemplate = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}metrictemplates/${name}`);
 
         let tags = []
         metrictemplate.tags.forEach(tag => tags.push({value: tag, label: tag}));
@@ -149,18 +151,12 @@ export const MetricTemplateComponent = (props) => {
 
         if (metrictemplate.fileparameter.length === 0)
           metrictemplate.fileparameter = [{'key': '', 'value': ''}];
+
+          return metrictemplate;
         }
-
-      return metrictemplate;
     },
-    { enabled: allProbeVersions, }
+    { enabled: allProbeVersions && !addview, }
   );
-
-  function onTagChange(value) {
-    let metrictemplate = metricTemplate;
-    metrictemplate.tags = value;
-    queryCache.setQueryData(`${querykey}_metrictemplate`, () => metrictemplate);
-  }
 
   function togglePopOver() {
     setPopoverOpen(!popoverOpen);
@@ -184,7 +180,7 @@ export const MetricTemplateComponent = (props) => {
     }
 
     let tagNames = [];
-    metricTemplate.tags.forEach(tag => tagNames.push(tag.value));
+    formValues.tags.forEach(tag => tagNames.push(tag.value));
     let unique = tagNames.filter( onlyUnique );
 
     if (addview || cloneview) {
@@ -357,20 +353,31 @@ export const MetricTemplateComponent = (props) => {
       >
         <Formik
           initialValues = {{
-            id: metricTemplate.id,
-            name: metricTemplate.name,
-            probeversion: metricTemplate.probeversion,
-            type: metricTemplate.mtype,
-            description: metricTemplate.description,
-            probeexecutable: metricTemplate.probeexecutable,
-            parent: metricTemplate.parent,
-            config: metricTemplate.config,
-            attributes: metricTemplate.attribute,
-            dependency: metricTemplate.dependency,
-            parameter: metricTemplate.parameter,
-            flags: metricTemplate.flags,
-            file_attributes: metricTemplate.files,
-            file_parameters: metricTemplate.fileparameter
+            id: metricTemplate ? metricTemplate.id : '',
+            name: metricTemplate ? metricTemplate.name : '',
+            probeversion: metricTemplate ? metricTemplate.probeversion : '',
+            type: metricTemplate ? metricTemplate.mtype : 'Active',
+            description: metricTemplate ? metricTemplate.description : '',
+            probeexecutable: metricTemplate ? metricTemplate.probeexecutable : '',
+            parent: metricTemplate ? metricTemplate.parent : '',
+            config: metricTemplate ?
+              metricTemplate.config
+            :
+              [
+                {'key': 'maxCheckAttempts', 'value': ''},
+                {'key': 'timeout', 'value': ''},
+                {'key': 'path', 'value': ''},
+                {'key': 'interval', 'value': ''},
+                {'key': 'retryInterval', 'value': ''}
+              ],
+            attributes: metricTemplate ? metricTemplate.attribute : [{'key': '', 'value': ''}],
+            dependency: metricTemplate ? metricTemplate.dependency : [{'key': '', 'value': ''}],
+            parameter: metricTemplate ? metricTemplate.parameter : [{'key': '', 'value': ''}],
+            flags: metricTemplate ? metricTemplate.flags : [{'key': '', 'value': ''}],
+            file_attributes: metricTemplate ? metricTemplate.files : [{'key': '', 'value': ''}],
+            file_parameters: metricTemplate ? metricTemplate.fileparameter : [{'key': '', 'value': ''}],
+            tags: metricTemplate ? metricTemplate.tags : [],
+            probe: metricTemplate ? metricTemplate.probe : {'package': ''}
           }}
           onSubmit = {(values) => onSubmitHandle(values)}
           validationSchema={MetricTemplateSchema}
@@ -379,17 +386,13 @@ export const MetricTemplateComponent = (props) => {
               <MetricForm
                 {...props}
                 obj_label='metrictemplate'
-                obj={metricTemplate}
-                probe={metricTemplate.probe}
                 isTenantSchema={tenantview}
                 publicView={publicView}
                 addview={addview}
                 popoverOpen={popoverOpen}
                 togglePopOver={togglePopOver}
-                onTagChange={onTagChange}
                 types={types}
                 alltags={allTags}
-                tags={addview ? [] : metricTemplate.tags}
                 probeversions={probeVersionsNames}
                 metrictemplatelist={listMetricTemplates}
               />
