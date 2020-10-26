@@ -345,29 +345,6 @@ export const ListOfMetrics = (props) => {
     }
   );
 
-  function toggleRow(name) {
-    const newSelected = Object.assign({}, selected);
-    newSelected[name] = !selected[name];
-    setSelected(newSelected);
-    setSelectAll(Object.keys(newSelected).every((key) => !newSelected[key]) ? 0 : 2);
-  }
-
-  function toggleSelectAll(instance) {
-    var list_metric = [];
-
-    instance.filteredFlatRows.forEach(row => list_metric.push(row.original));
-
-    let newSelected = {};
-    if (selectAll === 0) {
-      list_metric.forEach(met => {
-        newSelected[met.name] = true;
-      });
-    }
-
-    setSelected(newSelected);
-    setSelectAll(selectAll === 0 ? 1 : 0);
-  }
-
   function toggleAreYouSure() {
     setAreYouSureModal(!areYouSureModal);
   }
@@ -441,156 +418,181 @@ export const ListOfMetrics = (props) => {
 
   let metriclink = `/ui/${(type === 'metrictemplates' && isTenantSchema && !publicView) ? 'administration/' : ''}${publicView ? 'public_' : ''}${type}/`;
 
-  const columns = [
-    {
-      Header: 'Name',
-      accessor: 'name',
-      column_width: '39%',
-      Cell: row =>
-        <Link to={`${metriclink}${row.value}`}>
-          {row.value}
-        </Link>,
-      Filter: DefaultColumnFilter
-    },
-    {
-      Header: 'Probe version',
-      column_width: '20%',
-      accessor: 'probeversion',
-      Cell: row => (
-        <div style={{textAlign: 'center'}}>
-          {
-            (row.value) ?
-              <ProbeVersionLink
-                publicView={publicView}
-                probeversion={row.value}
-              />
-            :
-              ""
-              }
-        </div>
-      ),
-      Filter: DefaultColumnFilter
-    },
-    {
-      Header: 'Type',
-      column_width: `${isTenantSchema ? '12%' : '18%'}`,
-      accessor: 'mtype',
-      Cell: row =>
-        <div style={{textAlign: 'center'}}>
-          {row.value}
-        </div>,
-      filterList: listTypes,
-      Filter: SelectColumnFilter
-    },
-    {
-      Header: 'Tag',
-      column_width: `${isTenantSchema ? '12%' : '18%'}`,
-      accessor: 'tags',
-      Cell: row =>
-        <div style={{textAlign: 'center'}}>
-          {
-            row.value.length === 0 ?
-              <Badge color='dark'>none</Badge>
-            :
-              row.value.map((tag, i) =>
-                <Badge className={'mr-1'} key={i} color={tag === 'internal' ? 'success' : tag === 'deprecated' ? 'danger' : 'secondary'}>
-                  {tag}
-                </Badge>
-              )
-          }
-        </div>,
-      filterList: listTags,
-      Filter: SelectColumnFilter
+  const memoized_columns = React.useMemo(() => {
+    function toggleRow(name) {
+      const newSelected = Object.assign({}, selected);
+      newSelected[name] = !selected[name];
+      setSelected(newSelected);
+      setSelectAll(Object.keys(newSelected).every((key) => !newSelected[key]) ? 0 : 2);
     }
-  ];
 
-  if (type == 'metrictemplates' && userDetails && userDetails.is_superuser) {
-    columns.splice(
-      0,
-      0,
+    function toggleSelectAll(instance) {
+      var list_metric = [];
+
+      instance.filteredFlatRows.forEach(row => list_metric.push(row.original));
+
+      let newSelected = {};
+      if (selectAll === 0) {
+        list_metric.forEach(met => {
+          newSelected[met.name] = true;
+        });
+      }
+
+      setSelected(newSelected);
+      setSelectAll(selectAll === 0 ? 1 : 0);
+    }
+
+    let columns = [
       {
-        id: 'checkbox',
-        accessor: null,
-        Cell: (row) => {
-          let original = row.cell.row.original;
-          return (
-            <div style={{display: 'flex', justifyContent: 'center'}}>
-              <input
-                type='checkbox'
-                className='checkbox'
-                checked={selected[original.name] === true}
-                onChange={() => toggleRow(original.name)}
-              />
-            </div>
-          );
-        },
-        Header: `${isTenantSchema ? 'Select all' : 'Delete'}`,
-        Filter: (instance) =>
-          <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
-            <input
-              type='checkbox'
-              className='checkbox'
-              checked={selectAll === 1}
-              ref={input => {
-                if (input) {
-                  input.indeterminate = selectAll === 2;
+        Header: 'Name',
+        accessor: 'name',
+        column_width: '39%',
+        Cell: row =>
+          <Link to={`${metriclink}${row.value}`}>
+            {row.value}
+          </Link>,
+        Filter: DefaultColumnFilter
+      },
+      {
+        Header: 'Probe version',
+        column_width: '20%',
+        accessor: 'probeversion',
+        Cell: row => (
+          <div style={{textAlign: 'center'}}>
+            {
+              (row.value) ?
+                <ProbeVersionLink
+                  publicView={publicView}
+                  probeversion={row.value}
+                />
+              :
+                ""
                 }
-              }}
-              onChange={() => toggleSelectAll(instance)}
-            />
-          </div>,
-        column_width: '5%'
-      }
-    );
-  } else {
-    columns.splice(
-      0,
-      0,
+          </div>
+        ),
+        Filter: DefaultColumnFilter
+      },
       {
-        Header: '#',
-        id: 'row',
-        column_width: '5%'
-      }
-    );
-  }
-
-  if (type === 'metrics') {
-    columns.splice(
-      4,
-      0,
-      {
-        Header: 'Group',
-        column_width: '12%',
-        accessor: 'group',
+        Header: 'Type',
+        column_width: `${isTenantSchema ? '12%' : '18%'}`,
+        accessor: 'mtype',
         Cell: row =>
           <div style={{textAlign: 'center'}}>
             {row.value}
           </div>,
-        filterList: listOSGroups,
+        filterList: listTypes,
+        Filter: SelectColumnFilter
+      },
+      {
+        Header: 'Tag',
+        column_width: `${isTenantSchema ? '12%' : '18%'}`,
+        accessor: 'tags',
+        Cell: row =>
+          <div style={{textAlign: 'center'}}>
+            {
+              row.value.length === 0 ?
+                <Badge color='dark'>none</Badge>
+              :
+                row.value.map((tag, i) =>
+                  <Badge className={'mr-1'} key={i} color={tag === 'internal' ? 'success' : tag === 'deprecated' ? 'danger' : 'secondary'}>
+                    {tag}
+                  </Badge>
+                )
+            }
+          </div>,
+        filterList: listTags,
         Filter: SelectColumnFilter
       }
-    );
-  } else {
-    if (isTenantSchema) {
+    ];
+
+    if (type == 'metrictemplates' && userDetails && userDetails.is_superuser) {
+      columns.splice(
+        0,
+        0,
+        {
+          id: 'checkbox',
+          accessor: null,
+          Cell: (row) => {
+            let original = row.cell.row.original;
+            return (
+              <div style={{display: 'flex', justifyContent: 'center'}}>
+                <input
+                  type='checkbox'
+                  className='checkbox'
+                  checked={selected[original.name] === true}
+                  onChange={() => toggleRow(original.name)}
+                />
+              </div>
+            );
+          },
+          Header: `${isTenantSchema ? 'Select all' : 'Delete'}`,
+          Filter: (instance) =>
+            <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
+              <input
+                type='checkbox'
+                className='checkbox'
+                checked={selectAll === 1}
+                ref={input => {
+                  if (input) {
+                    input.indeterminate = selectAll === 2;
+                  }
+                }}
+                onChange={() => toggleSelectAll(instance)}
+              />
+            </div>,
+          column_width: '5%'
+        }
+      );
+    } else {
+      columns.splice(
+        0,
+        0,
+        {
+          Header: '#',
+          id: 'row',
+          column_width: '5%'
+        }
+      );
+    }
+
+    if (type === 'metrics') {
       columns.splice(
         4,
         0,
         {
-          Header: 'OS',
+          Header: 'Group',
           column_width: '12%',
-          accessor: 'ostag',
+          accessor: 'group',
           Cell: row =>
             <div style={{textAlign: 'center'}}>
-              {row.value.join(', ')}
+              {row.value}
             </div>,
           filterList: listOSGroups,
           Filter: SelectColumnFilter
         }
       );
+    } else {
+      if (isTenantSchema) {
+        columns.splice(
+          4,
+          0,
+          {
+            Header: 'OS',
+            column_width: '12%',
+            accessor: 'ostag',
+            Cell: row =>
+              <div style={{textAlign: 'center'}}>
+                {row.value.join(', ')}
+              </div>,
+            filterList: listOSGroups,
+            Filter: SelectColumnFilter
+          }
+        );
+      }
     }
-  }
 
-  const memoized_columns = React.useMemo(() => columns);
+    return columns;
+  }, [isTenantSchema, listOSGroups, listTags, listTypes, metriclink, publicView, selectAll, selected, type, userDetails])
 
   if (listMetricsLoading || listTypesLoading || listTagsLoading || listOSGroupsLoading || isTenantSchemaLoading || userDetailsLoading)
     return (<LoadingAnim />);
@@ -1049,10 +1051,10 @@ export const CompareMetrics = (props) => {
   const [metric2, setMetric2] = useState(undefined);
   const [error, setError] = useState(undefined);
 
-  const backend = new Backend();
 
   useEffect(() => {
     setLoading(true);
+    const backend = new Backend();
 
     async function fetchData() {
       try {
@@ -1073,7 +1075,7 @@ export const CompareMetrics = (props) => {
     }
 
     fetchData();
-  }, []);
+  }, [name, type, publicView, version1, version2]);
 
   if (loading)
     return (<LoadingAnim/>);
@@ -1386,14 +1388,13 @@ export const MetricVersionDetails = (props) => {
   const name = props.match.params.name;
   const version = props.match.params.version;
 
-  const backend = new Backend();
-
   const [loading, setLoading] = useState(false);
   const [metric, setMetric] = useState(null);
   const [probe, setProbe] = useState({'package': ''})
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    const backend = new Backend();
     setLoading(true);
 
     async function fetchData() {
@@ -1419,7 +1420,7 @@ export const MetricVersionDetails = (props) => {
     }
 
     fetchData();
-  }, []);
+  }, [name, version]);
 
   if (loading)
     return (<LoadingAnim/>);

@@ -404,7 +404,6 @@ export const MetricTemplateVersionDetails = (props) => {
   const version = props.match.params.version;
   const publicView = props.publicView;
 
-  const backend = new Backend();
 
   const [metricTemplate, setMetricTemplate] = useState(null);
   const [probe, setProbe] = useState({'package': ''});
@@ -412,6 +411,7 @@ export const MetricTemplateVersionDetails = (props) => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    const backend = new Backend();
     setLoading(true);
 
     async function fetchData() {
@@ -437,7 +437,7 @@ export const MetricTemplateVersionDetails = (props) => {
     }
 
     fetchData();
-  }, []);
+  }, [publicView, name, version]);
 
   if (loading)
     return (<LoadingAnim/>);
