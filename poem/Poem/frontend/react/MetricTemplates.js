@@ -92,33 +92,6 @@ export const MetricTemplateComponent = (props) => {
   const {data: metricTemplate, error: metricTemplateError, isLoading: metricTemplateLoading } = useQuery(
     `${querykey}_metrictemplate`,
     async () => {
-      /*
-      let metrictemplate = {
-        id: '',
-        name: '',
-        probeversion: '',
-        mtype: 'Active',
-        description: '',
-        probeexecutable: '',
-        parent: '',
-        config: [
-          {'key': 'maxCheckAttempts', 'value': ''},
-          {'key': 'timeout', 'value': ''},
-          {'key': 'path', 'value': ''},
-          {'key': 'interval', 'value': ''},
-          {'key': 'retryInterval', 'value': ''}
-        ],
-        attribute: [{'key': '', 'value': ''}],
-        dependency: [{'key': '', 'value': ''}],
-        parameter: [{'key': '', 'value': ''}],
-        flags: [{'key': '', 'value': ''}],
-        files: [{'key': '', 'value': ''}],
-        fileparameter: [{'key': '', 'value': ''}],
-        tags: [],
-        probe: {'package': ''}
-      };
-      */
-
       if (!addview) {
         let metrictemplate = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}metrictemplates/${name}`);
 
@@ -381,7 +354,9 @@ export const MetricTemplateComponent = (props) => {
           }}
           onSubmit = {(values) => onSubmitHandle(values)}
           validationSchema={MetricTemplateSchema}
-          render = {props => (
+          enableReinitialize={true}
+        >
+          {props => (
             <Form>
               <MetricForm
                 {...props}
@@ -420,7 +395,7 @@ export const MetricTemplateComponent = (props) => {
               }
             </Form>
           )}
-        />
+        </Formik>
       </BaseArgoView>
     );
   }
@@ -495,7 +470,8 @@ export const MetricTemplateVersionDetails = (props) => {
             file_attributes: metricTemplate.files,
             file_parameters: metricTemplate.fileparameter
           }}
-          render = {props => (
+        >
+          {props => (
             <Form>
               <MetricForm
                 {...props}
@@ -506,7 +482,7 @@ export const MetricTemplateVersionDetails = (props) => {
               />
             </Form>
           )}
-        />
+        </Formik>
       </BaseArgoView>
     );
   } else

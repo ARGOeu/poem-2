@@ -1330,7 +1330,8 @@ export const MetricChange = (props) => {
             tags: metric.tags
           }}
           onSubmit = {(values) => onSubmitHandle(values)}
-          render = {props => (
+        >
+          {props => (
             <Form>
               <MetricForm
                 {...props}
@@ -1360,7 +1361,8 @@ export const MetricChange = (props) => {
               }
             </Form>
           )}
-        />
+
+        </Formik>
       </BaseArgoView>
     );
   }
@@ -1437,7 +1439,8 @@ export const MetricVersionDetails = (props) => {
             probe: probe,
             tags: metric.tags
           }}
-          render = {props => (
+        >
+          {props => (
             <Form>
               <MetricForm
                 {...props}
@@ -1446,7 +1449,7 @@ export const MetricVersionDetails = (props) => {
               />
             </Form>
           )}
-          />
+        </Formik>
       </BaseArgoView>
     );
   } else
