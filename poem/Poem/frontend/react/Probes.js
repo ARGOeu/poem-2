@@ -352,7 +352,7 @@ export const ProbeList = (props) => {
       accessor: 'description',
       Filter: DefaultColumnFilter
     }
-  ]);
+  ], [publicView]);
 
   if (listProbesLoading || isTenantSchemaLoading)
     return (<LoadingAnim/>);
@@ -599,6 +599,7 @@ export const ProbeComponent = (props) => {
               update_metrics: false
             }}
             validationSchema={ProbeSchema}
+            enableReinitialize={true}
             onSubmit = {(values) => onSubmitHandle(values)}
           >
             {props => (
@@ -691,9 +692,9 @@ export const ProbeVersionCompare = (props) => {
   const [probe2, setProbe2] = useState({});
   const [error, setError] = useState(null);
 
-  const backend = new Backend();
 
   useEffect(() => {
+    const backend = new Backend();
     setLoading(true);
 
     async function fetchVersions() {
@@ -713,7 +714,7 @@ export const ProbeVersionCompare = (props) => {
     }
 
     fetchVersions();
-  }, []);
+  }, [name, publicView, version1, version2]);
 
   if (loading)
     return (<LoadingAnim/>);
@@ -773,7 +774,6 @@ export const ProbeVersionDetails = (props) => {
   const version = props.match.params.version;
   const publicView = props.publicView;
 
-  const backend = new Backend();
   const apiUrl = `/api/v2/internal/${publicView ? 'public_' : ''}version/probe`;
 
   const [probe, setProbe] = useState({});
@@ -781,6 +781,7 @@ export const ProbeVersionDetails = (props) => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    const backend = new Backend();
     setLoading(true);
 
     async function fetchProbeVersion() {
@@ -797,7 +798,7 @@ export const ProbeVersionDetails = (props) => {
     }
 
     fetchProbeVersion();
-  }, []);
+  }, [apiUrl, name, version]);
 
   if (loading)
     return (<LoadingAnim/>);
