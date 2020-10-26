@@ -3,9 +3,9 @@ import {
   Row,
   Card,
   CardHeader,
-  CardBody} from 'reactstrap';
+  CardBody
+} from 'reactstrap';
 import { Icon } from './UIElements';
-import { Form } from 'formik';
 import { Link } from 'react-router-dom';
 
 
@@ -16,9 +16,9 @@ export const CustomCardHeader = ({title}) => (
 )
 
 
-export const TenantAdministration = (props) =>
+export const TenantAdministration = () =>
 (
-  <Form className='ml-2 mb-2 mt-2'>
+  <>
     <h2 className='ml-3 mt-1 mb-4'>Administration</h2>
     <Card className='mb-2'>
       <CustomCardHeader title='Poem'/>
@@ -67,10 +67,10 @@ export const TenantAdministration = (props) =>
       <CustomCardHeader title='SuperAdmin POEM data'/>
       <CardBody>
         <Row className='p-1 align-items-center'>
-            <Icon i="yumrepos"/> <Link to={'/ui/administration/yumrepos'}>YUM repos</Link>
+          <Icon i="yumrepos"/> <Link to={'/ui/administration/yumrepos'}>YUM repos</Link>
         </Row>
         <Row className='p-1 align-items-center'>
-            <Icon i="packages"/> <Link to={'/ui/administration/packages'}>Packages</Link>
+          <Icon i="packages"/> <Link to={'/ui/administration/packages'}>Packages</Link>
         </Row>
         <Row className="p-1 align-items-center">
           <Icon i="metrics"/> <Link to={'/ui/administration/metrictemplates'}>Metric templates</Link>
@@ -85,13 +85,13 @@ export const TenantAdministration = (props) =>
         </Row>
       </CardBody>
     </Card>
-  </Form>
+  </>
 )
 
 
-export const SuperAdminAdministration = (props) =>
+export const SuperAdminAdministration = () =>
 (
-  <Form className='ml-2 mb-2 mt-2'>
+  <>
     <h2 className='ml-3 mt-1 mb-4'>Administration</h2>
     <Card className='mb-2'>
       <CustomCardHeader title='Poem'/>
@@ -129,5 +129,5 @@ export const SuperAdminAdministration = (props) =>
         </Row>
       </CardBody>
     </Card>
-  </Form>
+  </>
 )
