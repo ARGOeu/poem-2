@@ -7,7 +7,7 @@ import {
   NotifyOk,
   FancyErrorMessage,
   DiffElement,
-  AutocompleteField,
+  _AutocompleteField,
   NotifyWarn,
   NotifyError,
   NotifyInfo,
@@ -849,7 +849,7 @@ export const MetricForm =
                     />
                   </InputGroup>
                 :
-                  <AutocompleteField
+                  <_AutocompleteField
                     setFieldValue={setFieldValue}
                     lists={probeversions}
                     icon='probes'
@@ -1041,7 +1041,7 @@ export const MetricForm =
               />
             :
               <>
-                <AutocompleteField
+                <_AutocompleteField
                   setFieldValue={setFieldValue}
                   lists={metrictemplatelist}
                   field='parent'

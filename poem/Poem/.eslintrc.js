@@ -32,6 +32,6 @@ module.exports = {
         "react/jsx-indent": [2, 2, {checkAttributes: true}],
         "react-hooks/rules-of-hooks": "error", // Checks rules of Hooks
         "react-hooks/exhaustive-deps": "warn", // Checks effect dependencies
-        "@getify/proper-arrows/params": ["error", {"unused": "all", "count": 30, "length": 3, "allowed": ["e", "err", "i", "id", "a", "b"], "trivial": false}],
+        "@getify/proper-arrows/params": ["error", {"unused": "all", "count": 30, "length": 3, "allowed": ["e", "err", "i", "j", "k", "id", "a", "b", "_"], "trivial": false}],
     }
 };
