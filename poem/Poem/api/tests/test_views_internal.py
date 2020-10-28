@@ -10938,6 +10938,25 @@ class MetricsHelpersTests(TransactionTestCase):
             name='nagios-plugins-fedcloud',
             version='0.5.2'
         )
+        package5.repos.add(repo1)
+
+        package6 = admin_models.Package.objects.create(
+            name='test_package_1',
+            version='1.1.0'
+        )
+        package6.repos.add(repo1, repo2)
+
+        package7 = admin_models.Package.objects.create(
+            name='test_package_1',
+            version='1.2.0'
+        )
+        package7.repos.add(repo1, repo2)
+
+        package8 = admin_models.Package.objects.create(
+            name='test_package_2',
+            version='2.0.0'
+        )
+        package8.repos.add(repo1, repo2)
 
         probe1 = admin_models.Probe.objects.create(
             name='ams-probe',
@@ -11119,6 +11138,85 @@ class MetricsHelpersTests(TransactionTestCase):
             docurl=probe5.docurl,
             date_created=datetime.datetime.now(),
             version_comment='Newest version.',
+            version_user=self.user.username
+        )
+
+        probe6 = admin_models.Probe.objects.create(
+            name='test-probe',
+            package=package6,
+            description='Some description.',
+            comment='Initial version.',
+            repository='https://repo.com',
+            docurl='https://documentation.com'
+        )
+
+        probeversion6_1 = admin_models.ProbeHistory.objects.create(
+            object_id=probe6,
+            name=probe6.name,
+            package=probe6.package,
+            description=probe6.description,
+            comment=probe6.comment,
+            repository=probe6.repository,
+            docurl=probe6.docurl,
+            date_created=datetime.datetime.now(),
+            version_comment='Initial version.',
+            version_user=self.user.username
+        )
+
+        probe6.package = package7
+        probe6.comment = 'Newer version.'
+        probe6.save()
+
+        probeversion6_2 = admin_models.ProbeHistory.objects.create(
+            object_id=probe6,
+            name=probe6.name,
+            package=probe6.package,
+            description=probe6.description,
+            comment=probe6.comment,
+            repository=probe6.repository,
+            docurl=probe6.docurl,
+            date_created=datetime.datetime.now(),
+            version_comment='Newer version.',
+            version_user=self.user.username
+        )
+
+        probe7 = admin_models.Probe.objects.create(
+            name='test-probe-2',
+            package=package8,
+            description='Description for the probe.',
+            comment='Initial version.',
+            repository='https://probe-repo.com',
+            docurl='https://probe-documentation.com'
+        )
+
+        admin_models.ProbeHistory.objects.create(
+            object_id=probe7,
+            name=probe7.name,
+            package=probe7.package,
+            description=probe7.description,
+            comment=probe7.comment,
+            repository=probe7.repository,
+            docurl=probe7.docurl,
+            date_created=datetime.datetime.now(),
+            version_comment='Initial version.',
+            version_user=self.user.username
+        )
+
+        probe7.package = package6
+        probe7.description = 'Description for the probe, which was changed.'
+        probe7.comment = 'Changed version.'
+        probe7.save()
+
+        probeversion7_2 = admin_models.ProbeHistory.objects.create(
+            object_id=probe7,
+            name=probe7.name,
+            package=probe7.package,
+            description=probe7.description,
+            comment=probe7.comment,
+            repository=probe7.repository,
+            docurl=probe7.docurl,
+            date_created=datetime.datetime.now(),
+            version_comment='Changed version.',
             version_user=self.user.username
         )
 
@@ -11514,6 +11612,96 @@ class MetricsHelpersTests(TransactionTestCase):
             version_comment='Initial version.',
         )
 
+        metrictemplate10 = admin_models.MetricTemplate.objects.create(
+            name='test.Metric-Template',
+            mtype=self.mt_active,
+            probekey=probeversion6_1,
+            description='Metric template for testing probe.',
+            probeexecutable='["test-probe"]',
+            config='["maxCheckAttempts 3", "timeout 60",'
+                   ' "path /path", "interval 5", "retryInterval 3"]'
+        )
+        metrictemplate10.tags.add(self.mtag1)
+
+        mt10_history1 = admin_models.MetricTemplateHistory.objects.create(
+            object_id=metrictemplate10,
+            name=metrictemplate10.name,
+            mtype=metrictemplate10.mtype,
+            probekey=metrictemplate10.probekey,
+            description=metrictemplate10.description,
+            probeexecutable=metrictemplate10.probeexecutable,
+            config=metrictemplate10.config,
+            attribute=metrictemplate10.attribute,
+            dependency=metrictemplate10.dependency,
+            flags=metrictemplate10.flags,
+            files=metrictemplate10.files,
+            parameter=metrictemplate10.parameter,
+            fileparameter=metrictemplate10.fileparameter,
+            date_created=datetime.datetime.now(),
+            version_user=self.user.username,
+            version_comment='Initial version.'
+        )
+        mt10_history1.tags.add(self.mtag1)
+
+        metrictemplate10.probekey = probeversion6_2
+        metrictemplate10.save()
+
+        self.mt10_history2 = admin_models.MetricTemplateHistory.objects.create(
+            object_id=metrictemplate10,
+            name=metrictemplate10.name,
+            mtype=metrictemplate10.mtype,
+            probekey=metrictemplate10.probekey,
+            description=metrictemplate10.description,
+            probeexecutable=metrictemplate10.probeexecutable,
+            config=metrictemplate10.config,
+            attribute=metrictemplate10.attribute,
+            dependency=metrictemplate10.dependency,
+            flags=metrictemplate10.flags,
+            files=metrictemplate10.files,
+            parameter=metrictemplate10.parameter,
+            fileparameter=metrictemplate10.fileparameter,
+            date_created=datetime.datetime.now(),
+            version_user=self.user.username,
+            version_comment='Newer version.'
+        )
+        mt10_history1.tags.add(self.mtag1)
+
+        metrictemplate11 = admin_models.MetricTemplate.objects.create(
+            name='test.MetricTemplate',
+            mtype=self.mt_active,
+            probekey=probeversion7_2,
+            description='Metric template for something.',
+            probeexecutable='["test-probe-2"]',
+            config='["maxCheckAttempts 3", "timeout 60",'
+                   ' "path /path", "interval 5", "retryInterval 3"]',
+            attribute='["attribute1 lower", "attribute2 bigger"]',
+            dependency='["depend none"]',
+            parameter='["-y yes", "-n no"]',
+            flags='["OBSESS 1"]',
+            parent='["test.Metric-Template"]'
+        )
+        metrictemplate11.tags.add(self.mtag1, self.mtag2)
+
+        admin_models.MetricTemplateHistory.objects.create(
+            object_id=metrictemplate11,
+            name=metrictemplate11.name,
+            mtype=metrictemplate11.mtype,
+            probekey=metrictemplate11.probekey,
+            description=metrictemplate11.description,
+            probeexecutable=metrictemplate11.probeexecutable,
+            config=metrictemplate11.config,
+            attribute=metrictemplate11.attribute,
+            dependency=metrictemplate11.dependency,
+            flags=metrictemplate11.flags,
+            files=metrictemplate11.files,
+            parameter=metrictemplate11.parameter,
+            fileparameter=metrictemplate11.fileparameter,
+            date_created=datetime.datetime.now(),
+            version_user=self.user.username,
+            version_comment='Initial version.'
+        )
+        mt10_history1.tags.add(self.mtag1, self.mtag2)
+
         self.group = poem_models.GroupOfMetrics.objects.create(
             name=self.tenant.name.upper()
         )
@@ -11642,8 +11830,39 @@ class MetricsHelpersTests(TransactionTestCase):
             user=self.user.username
         )
 
+        self.metric5 = poem_models.Metric.objects.create(
+            name=metrictemplate10.name,
+            group=self.group,
+            mtype=self.m_active,
+            description=metrictemplate10.description,
+            probekey=metrictemplate10.probekey,
+            probeexecutable=metrictemplate10.probeexecutable,
+            config=metrictemplate10.config,
+            attribute=metrictemplate10.attribute,
+            dependancy=metrictemplate10.dependency,
+            flags=metrictemplate10.flags,
+            files=metrictemplate10.files,
+            parameter=metrictemplate10.parameter,
+            fileparameter=metrictemplate10.fileparameter,
+        )
+        self.metric5.tags.add(self.mtag1, self.mtag2)
+
+        poem_models.TenantHistory.objects.create(
+            object_id=self.metric5.id,
+            object_repr=self.metric5.__str__(),
+            serialized_data=serializers.serialize(
+                'json', [self.metric5],
+                use_natural_foreign_keys=True,
+                use_natural_primary_keys=True
+            ),
+            content_type=self.ct,
+            date_created=datetime.datetime.now(),
+            comment='Initial version.',
+            user=self.user.username
+        )
+
     def test_import_active_metrics_successfully(self):
-        self.assertEqual(poem_models.Metric.objects.all().count(), 4)
+        self.assertEqual(poem_models.Metric.objects.all().count(), 5)
         success, warning, error, unavailable = import_metrics(
             ['eu.egi.cloud.OpenStack-VM', 'org.nagios.CertLifetime2'],
             self.tenant, self.user
@@ -11654,7 +11873,7 @@ class MetricsHelpersTests(TransactionTestCase):
         self.assertEqual(warning, [])
         self.assertEqual(error, [])
         self.assertEqual(unavailable, [])
-        self.assertEqual(poem_models.Metric.objects.all().count(), 6)
+        self.assertEqual(poem_models.Metric.objects.all().count(), 7)
         metric1 = poem_models.Metric.objects.get(
             name='eu.egi.cloud.OpenStack-VM'
         )
@@ -11755,7 +11974,7 @@ class MetricsHelpersTests(TransactionTestCase):
         )
 
     def test_import_passive_metric_successfully(self):
-        self.assertEqual(poem_models.Metric.objects.all().count(), 4)
+        self.assertEqual(poem_models.Metric.objects.all().count(), 5)
         success, warning, error, unavailable = import_metrics(
             ['eu.egi.sec.ARC-CE-result'], self.tenant, self.user
         )
@@ -11763,7 +11982,7 @@ class MetricsHelpersTests(TransactionTestCase):
         self.assertEqual(warning, [])
         self.assertEqual(error, [])
         self.assertEqual(unavailable, [])
-        self.assertEqual(poem_models.Metric.objects.all().count(), 5)
+        self.assertEqual(poem_models.Metric.objects.all().count(), 6)
         metric1 = poem_models.Metric.objects.get(
             name='eu.egi.sec.ARC-CE-result'
         )
@@ -11810,7 +12029,7 @@ class MetricsHelpersTests(TransactionTestCase):
         )
 
     def test_import_active_metric_with_warning(self):
-        self.assertEqual(poem_models.Metric.objects.all().count(), 4)
+        self.assertEqual(poem_models.Metric.objects.all().count(), 5)
         success, warning, error, unavailable = import_metrics(
             ['argo.AMSPublisher-Check'], self.tenant, self.user
         )
@@ -11818,7 +12037,7 @@ class MetricsHelpersTests(TransactionTestCase):
         self.assertEqual(warning, ['argo.AMSPublisher-Check'])
         self.assertEqual(error, [])
         self.assertEqual(unavailable, [])
-        self.assertEqual(poem_models.Metric.objects.all().count(), 5)
+        self.assertEqual(poem_models.Metric.objects.all().count(), 6)
         metric1 = poem_models.Metric.objects.get(
             name='argo.AMSPublisher-Check'
         )
@@ -11868,8 +12087,76 @@ class MetricsHelpersTests(TransactionTestCase):
             serialized_data1['fileparameter'], metric1.fileparameter
         )
 
+    def test_import_active_metric_if_package_already_exists_with_diff_version(self):
+        self.assertEqual(poem_models.Metric.objects.all().count(), 5)
+        success, warning, error, unavailable = import_metrics(
+            ['test.Metric-Template', 'test.MetricTemplate'],
+            self.tenant, self.user
+        )
+        self.assertEqual(success, [])
+        self.assertEqual(warning, [])
+        self.assertEqual(error, ['test.Metric-Template'])
+        self.assertEqual(unavailable, ['test.MetricTemplate'])
+        self.assertEqual(poem_models.Metric.objects.all().count(), 5)
+        metric1 = poem_models.Metric.objects.get(name='test.Metric-Template')
+        history1 = poem_models.TenantHistory.objects.filter(
+            object_id=metric1.id
+        ).order_by('-date_created')
+        serialized_data1 = json.loads(history1[0].serialized_data)[0]['fields']
+        self.assertEqual(history1.count(), 1)
+        self.assertEqual(metric1.name, self.metric5.name)
+        self.assertEqual(metric1.mtype, self.metric5.mtype)
+        self.assertEqual(metric1.tags, self.metric5.tags)
+        self.assertEqual(metric1.group, self.metric5.group)
+        self.assertEqual(metric1.description, self.metric5.description)
+        self.assertEqual(metric1.probekey, self.metric5.probekey)
+        self.assertEqual(
+            metric1.probeexecutable, self.metric5.probeexecutable
+        )
+        self.assertEqual(metric1.config, self.metric5.config)
+        self.assertEqual(metric1.attribute, self.metric5.attribute)
+        self.assertEqual(metric1.dependancy, self.metric5.dependancy)
+        self.assertEqual(metric1.flags, self.metric5.flags)
+        self.assertEqual(metric1.files, self.metric5.files)
+        self.assertEqual(metric1.parameter, self.metric5.parameter)
+        self.assertEqual(
+            metric1.fileparameter, self.metric5.fileparameter
+        )
+        self.assertEqual(serialized_data1['name'], metric1.name)
+        self.assertEqual(serialized_data1['mtype'][0], metric1.mtype.name)
+        self.assertEqual(
+            serialized_data1['tags'], [['test_tag1'], ['test_tag2']]
+        )
+        self.assertEqual(serialized_data1['group'][0], metric1.group.name)
+        self.assertEqual(serialized_data1['description'], metric1.description)
+        self.assertEqual(
+            serialized_data1['probekey'],
+            [metric1.probekey.name, metric1.probekey.package.version]
+        )
+        self.assertEqual(
+            serialized_data1['probeexecutable'], metric1.probeexecutable
+        )
+        self.assertEqual(serialized_data1['config'], metric1.config)
+        self.assertEqual(serialized_data1['attribute'], metric1.attribute)
+        self.assertEqual(serialized_data1['dependancy'], metric1.dependancy)
+        self.assertEqual(serialized_data1['flags'], metric1.flags)
+        self.assertEqual(serialized_data1['files'], metric1.files)
+        self.assertEqual(serialized_data1['parameter'], metric1.parameter)
+        self.assertEqual(
+            serialized_data1['fileparameter'], metric1.fileparameter
+        )
+        poem_models.Metric.objects.get(name='argo.AMS-Check')
+        poem_models.Metric.objects.get(name='org.nagios.CertLifetime')
+        poem_models.Metric.objects.get(name='eu.egi.cloud.OpenStack-Swift')
+        poem_models.Metric.objects.get(name='org.apel.APEL-Pub')
+        self.assertRaises(
+            poem_models.Metric.DoesNotExist,
+            poem_models.Metric.objects.get,
+            name='test.MetricTemplate'
+        )
+
     def test_import_active_metrics_with_error(self):
-        self.assertEqual(poem_models.Metric.objects.all().count(), 4)
+        self.assertEqual(poem_models.Metric.objects.all().count(), 5)
         success, warning, error, unavailable = import_metrics(
             ['argo.AMS-Check', 'org.nagios.CertLifetime'],
             self.tenant, self.user
@@ -11878,7 +12165,7 @@ class MetricsHelpersTests(TransactionTestCase):
         self.assertEqual(warning, [])
         self.assertEqual(error, ['argo.AMS-Check', 'org.nagios.CertLifetime'])
         self.assertEqual(unavailable, [])
-        self.assertEqual(poem_models.Metric.objects.all().count(), 4)
+        self.assertEqual(poem_models.Metric.objects.all().count(), 5)
         metric1 = poem_models.Metric.objects.get(name='argo.AMS-Check')
         history1 = poem_models.TenantHistory.objects.filter(
             object_id=metric1.id
@@ -11976,7 +12263,7 @@ class MetricsHelpersTests(TransactionTestCase):
         )
 
     def test_import_metric_older_version_than_tenants_package(self):
-        self.assertEqual(poem_models.Metric.objects.all().count(), 4)
+        self.assertEqual(poem_models.Metric.objects.all().count(), 5)
         success, warning, error, unavailable = import_metrics(
             ['argo.AMS-Check-Old'], self.tenant, self.user
         )
@@ -11984,11 +12271,12 @@ class MetricsHelpersTests(TransactionTestCase):
         self.assertEqual(warning, [])
         self.assertEqual(error, [])
         self.assertEqual(unavailable, ['argo.AMS-Check-Old'])
-        self.assertEqual(poem_models.Metric.objects.all().count(), 4)
+        self.assertEqual(poem_models.Metric.objects.all().count(), 5)
         poem_models.Metric.objects.get(name='argo.AMS-Check')
         poem_models.Metric.objects.get(name='org.nagios.CertLifetime')
         poem_models.Metric.objects.get(name='eu.egi.cloud.OpenStack-Swift')
         poem_models.Metric.objects.get(name='org.apel.APEL-Pub')
+        poem_models.Metric.objects.get(name='test.Metric-Template')
         self.assertRaises(
             poem_models.Metric.DoesNotExist,
             poem_models.Metric.objects.get,
