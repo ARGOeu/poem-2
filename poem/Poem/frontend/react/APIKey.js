@@ -21,12 +21,12 @@ import { faClipboard } from '@fortawesome/free-solid-svg-icons';
 
 export const APIKeyList = (props) => {
   const location = props.location;
-  const backend = new Backend();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(undefined);
   const [list_keys, setKeys] = useState(null);
 
   useEffect(() => {
+    const backend = new Backend();
     setLoading(true);
 
     try {
@@ -85,7 +85,7 @@ export const APIKeyList = (props) => {
               <FontAwesomeIcon icon={faTimesCircle} style={{color: "#CC0000"}}/>,
         column_width: '5%'
       }
-    ]
+    ], []
   );
 
   if (loading)
