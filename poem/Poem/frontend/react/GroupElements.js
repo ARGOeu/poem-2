@@ -282,8 +282,9 @@ export const GroupChange = (props) => {
             name: name,
             items: items
           }}
-          onSubmit = {(values, action) => onSubmitHandle(values, action)}
-          render = {() => (
+          onSubmit = {(values) => onSubmitHandle(values)}
+        >
+          {() => (
             <Form>
               <FormGroup>
                 <Row>
@@ -428,7 +429,7 @@ export const GroupChange = (props) => {
               }
             </Form>
           )}
-        />
+        </Formik>
       </BaseArgoView>
     );
   }
