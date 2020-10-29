@@ -3,7 +3,15 @@ import { Backend } from './DataManager';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
-import { LoadingAnim, BaseArgoView, NotifyOk, Checkbox, NotifyError, ErrorComponent, ParagraphTitle, BaseArgoTable } from './UIElements';
+import {
+  LoadingAnim,
+  BaseArgoView,
+  NotifyOk,
+  NotifyError,
+  ErrorComponent,
+  ParagraphTitle,
+  BaseArgoTable
+} from './UIElements';
 import { Formik, Form, Field } from 'formik';
 import {
   Alert,
@@ -317,13 +325,14 @@ export const APIKeyChange = (props) => {
                 </Row>
                 <Row className='mt-2'>
                   <Col md={6}>
-                    <Field
-                      component={Checkbox}
-                      name='revoked'
-                      className='form-control'
-                      id='checkbox'
-                      label='Revoked'
-                    />
+                    <label>
+                      <Field
+                        type='checkbox'
+                        name='revoked'
+                        id='checkbox'
+                      />
+                      Revoked
+                    </label>
                     <FormText color='muted'>
                       If the API key is revoked, clients cannot use it any more. (This cannot be undone.)
                     </FormText>
