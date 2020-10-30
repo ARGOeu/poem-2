@@ -109,7 +109,7 @@ export const PackageList = (props) => {
       Filter: SelectColumnFilter,
       filterList: listRepos
     }
-  ]);
+  ], [isTenantSchema, listRepos]);
 
   if (loadingListPackages || loadingListRepos || loadingIsTenantSchema)
     return (<LoadingAnim/>);
