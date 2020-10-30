@@ -510,7 +510,8 @@ export const PackageComponent = (props) => {
           onSubmit = {(values) => onSubmitHandle(values)}
           validationSchema={PackageSchema}
           enableReinitialize={true}
-          render = {props => (
+        >
+          {props => (
             <Form>
               <FormGroup>
                 <Row className='align-items-center'>
@@ -711,10 +712,10 @@ export const PackageComponent = (props) => {
                       </Button>
                   }
                 </div>
-          }
+              }
             </Form>
           )}
-        />
+        </Formik>
       </BaseArgoView>
     )
   } else
