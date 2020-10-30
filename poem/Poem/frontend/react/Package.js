@@ -149,25 +149,20 @@ export const PackageComponent = (props) => {
   const disabled = props.disabled;
   const location = props.location;
   const history = props.history;
-  const querykey = `package_${addview ? 'addview' : `${nameversion}_${cloneview ? 'cloneview' : 'changeview'}`}`;
+  const querykey = `package_${nameversion}_${cloneview ? 'cloneview' : 'changeview'}`;
 
   const backend = new Backend();
 
   const { data: pkg, error: errorPkg, isLoading: loadingPkg } = useQuery(
     `${querykey}`, async () => {
-      let pkg = {
-        id: '',
-        name: '',
-        version: '',
-        repos: [],
-        initial_version: undefined
-      };
-
-      if (!addview)
-        pkg = await backend.fetchData(`/api/v2/internal/packages/${nameversion}`);
-        pkg.initial_version = pkg.version;
-        return pkg;
-    }
+      let pkg = await backend.fetchData(`/api/v2/internal/packages/${nameversion}`);
+      let [repo6, repo7] = splitRepos(pkg.repos);
+      pkg.initial_version = pkg.version;
+      pkg.repo_6 = repo6;
+      pkg.repo_7 = repo7;
+      return pkg;
+    },
+    { enabled: !addview }
   );
 
   const { data: repos, error: errorRepos, isLoading: loadingRepos } = useQuery(
@@ -189,13 +184,10 @@ export const PackageComponent = (props) => {
 
   const { data: probes, error: errorProbes, isLoading: loadingProbes } = useQuery(
     'package_component_probes', async () => {
-      let prb = [];
-
-      if (!addview)
-        prb = await backend.fetchData('/api/v2/internal/version/probe');
-
+      let prb = await backend.fetchData('/api/v2/internal/version/probe');
       return prb;
-    }
+    },
+    { enabled: !addview}
   );
 
   const { data: packageVersions, error: errorPackageVersions, isLoading: loadingPackageVersions } = useQuery(
@@ -228,17 +220,33 @@ export const PackageComponent = (props) => {
     queryCache.setQueryData(`${querykey}`, () => p)
   }
 
+  function splitRepos(repos) {
+    let repo6 = '';
+    let repo7 = '';
+    for (let i = 0; i < repos.length; i++) {
+      if (repos[i].split('(')[1].slice(0, -1) === 'CentOS 6')
+        repo6 = repos[i];
+
+      if (repos[i].split('(')[1].slice(0, -1) === 'CentOS 7')
+        repo7 = repos[i];
+    }
+
+    return [repo6, repo7];
+  }
+
   function onVersionSelect(value) {
     let initial_version = pkg.initial_version;
     packageVersions.forEach(pkgv => {
       if (pkgv.version === value) {
+        let [repo6, repo7] = splitRepos(pkgv.repos);
         let updated_pkg = {
           id: pkgv.id,
           name: pkgv.name,
           version: pkgv.version,
           initial_version: initial_version,
           use_present_version: pkgv.use_present_version,
-          repos: pkgv.repos
+          repo_6: repo6,
+          repo_7: repo7
         };
 
         queryCache.setQueryData(`${querykey}`, () => updated_pkg);
@@ -454,24 +462,14 @@ export const PackageComponent = (props) => {
   else if (errorPackageVersions)
     return (<ErrorComponent error={errorPackageVersions}/>);
 
-  else if (!loadingPkg && !loadingRepos && !loadingProbes && !loadingPackageVersions && pkg) {
-    var repo6 = '';
-    var repo7 = '';
-    for (let i = 0; i < pkg.repos.length; i++) {
-      if (pkg.repos[i].split('(')[1].slice(0, -1) === 'CentOS 6')
-        repo6 = pkg.repos[i];
-
-      if (pkg.repos[i].split('(')[1].slice(0, -1) === 'CentOS 7')
-        repo7 = pkg.repos[i];
-    }
-
-
+  else if (!loadingPkg && !loadingRepos && !loadingProbes && !loadingPackageVersions && repos) {
     var listProbes = [];
-    if (probes)
+    if (pkg && probes) {
       probes.forEach(probe => {
         if (probe.fields.package === `${pkg.name} (${pkg.version})`)
           listProbes.push(probe.fields.name);
       });
+    }
 
     return (
       <BaseArgoView
@@ -502,11 +500,11 @@ export const PackageComponent = (props) => {
       >
         <Formik
           initialValues = {{
-            id: pkg.id,
-            name: pkg.name,
-            version: pkg.version,
-            repo_6: repo6,
-            repo_7: repo7,
+            id: `${pkg ? pkg.id : ''}`,
+            name: `${pkg ? pkg.name : ''}`,
+            version: `${pkg ? pkg.version : ''}`,
+            repo_6: `${pkg ? pkg.repo_6 : ''}`,
+            repo_7: `${pkg ? pkg.repo_7 : ''}`,
             present_version: presentVersion
           }}
           onSubmit = {(values) => onSubmitHandle(values)}
@@ -613,9 +611,7 @@ export const PackageComponent = (props) => {
                           lists={repos.repo6}
                           icon='yumrepos'
                           field='repo_6'
-                          val={props.values.repo_6}
-                          onselect_handler={onSelect}
-                          req={props.errors.undefined}
+                          onselect_handler={!addview ? (newValue) => onSelect('repo_6', newValue) : undefined}
                           label='CentOS 6 repo'
                         />
                     }
@@ -648,9 +644,7 @@ export const PackageComponent = (props) => {
                           lists={repos.repo7}
                           icon='yumrepos'
                           field='repo_7'
-                          val={props.values.repo_7}
-                          onselect_handler={onSelect}
-                          req={props.errors.undefined}
+                          onselect_handler={!addview ? (newValue) => onSelect('repo_7', newValue) : undefined}
                           label='CentOS 7 repo'
                         />
                     }
