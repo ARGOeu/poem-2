@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import { Form } from 'formik';
+import React from 'react';
 import { Card, CardBody, Row, CardTitle, CardSubtitle, CardGroup } from 'reactstrap';
 import { CustomCardHeader } from './Administration';
 import { Icon, LoadingAnim, ErrorComponent, ParagraphTitle } from './UIElements';
@@ -7,11 +6,12 @@ import { Link } from 'react-router-dom';
 import { Backend } from './DataManager';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faIdBadge } from '@fortawesome/free-solid-svg-icons';
+import { useQuery } from 'react-query';
 
-const Home = (props) =>
+const Home = () =>
 (
   <div>
-    "I'm Home"
+    &quot;I am Home&quot;
   </div>
 )
 
@@ -21,32 +21,22 @@ export default Home;
 export const PublicHome = (props) => {
   const isSuperAdmin = props.isSuperAdmin;
 
+  const backend = new Backend();
+
+  const { data: tenants, error: error, isLoading: loading } = useQuery(
+    'public_home_tenants', async () => {
+      let json = await backend.fetchData('/api/v2/internal/public_tenants');
+      let tenants_without_SP = []
+      json.forEach(e => {
+        if (e.name !== 'SuperPOEM Tenant')
+          tenants_without_SP.push(e);
+      })
+      return tenants_without_SP;
+    },
+    { enabled: isSuperAdmin }
+  )
+
   if (isSuperAdmin) {
-    const [loading, setLoading] = useState(false);
-    const [tenants, setTenants] = useState(null);
-    const [error, setError] = useState(null);
-
-    const backend = new Backend();
-
-    useEffect(() => {
-      setLoading(true);
-      async function fetchData() {
-        try {
-          let json = await backend.fetchData('/api/v2/internal/public_tenants');
-          let tenants_without_SP = []
-          json.forEach(e => {
-            if (e.name !== 'SuperPOEM Tenant')
-              tenants_without_SP.push(e);
-          })
-          setTenants(tenants_without_SP);
-        } catch(err) {
-          setError(err);
-        };
-        setLoading(false);
-      };
-      fetchData();
-    }, []);
-
     if (loading)
       return (<LoadingAnim/>);
 
@@ -100,13 +90,13 @@ export const PublicHome = (props) => {
         groups.push(
           <CardGroup key={i} className='mb-3' style={{width: group_width}}>
             {
-              cards.map((card, k) => card)
+              cards.map((card) => card)
             }
           </CardGroup>
         )
       }
       return (
-        <Form className='ml-2 mb-2 mt-2'>
+        <>
           <h2 className='ml-3 mt-1 mb-4'>Public pages</h2>
           <Card className='mb-2'>
             <CustomCardHeader title='Shared resources'/>
@@ -121,15 +111,15 @@ export const PublicHome = (props) => {
           </Card>
           <ParagraphTitle title='Tenants'/>
           {
-            groups.map((group, k) => group)
+            groups.map((group) => group)
           }
-        </Form>
+        </>
       )
     } else
       return null;
   } else {
     return (
-      <Form className='ml-2 mb-2 mt-2'>
+      <>
         <h2 className='ml-3 mt-1 mb-4'>Public pages</h2>
         <Card className='mb-2'>
           <CustomCardHeader title='Shared resources'/>
@@ -165,7 +155,7 @@ export const PublicHome = (props) => {
             </Row>
           </CardBody>
         </Card>
-      </Form>
+      </>
     );
   }
 };
