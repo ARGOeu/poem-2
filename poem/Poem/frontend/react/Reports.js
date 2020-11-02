@@ -6,7 +6,6 @@ import {
   ErrorComponent,
   BaseArgoView,
   ParagraphTitle,
-  Checkbox,
   BaseArgoTable
  } from './UIElements';
 import { Link } from 'react-router-dom';
@@ -230,13 +229,14 @@ export const ReportsComponent = (props) => {
                     </FormText>
                   </Col>
                   <Col md={2}>
-                    <Field
-                      component={Checkbox}
-                      name='disabled'
-                      className='form-control'
-                      id='checkbox'
-                      label='Disabled'
-                    />
+                    <label>
+                      <Field
+                        type='checkbox'
+                        name='disabled'
+                        className='mr-1'
+                      />
+                      Disabled
+                    </label>
                     <FormText color='muted'>
                       Mark report as disabled.
                     </FormText>
