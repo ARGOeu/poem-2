@@ -209,7 +209,6 @@ export const PackageComponent = (props) => {
     { enabled: pkg}
   );
 
-  const [presentVersion, setPresentVersion] = useState(false);
   const [disabledButton, setDisabledButton] = useState(true);
   const [areYouSureModal, setAreYouSureModal] = useState(false);
   const [modalFlag, setModalFlag] = useState(undefined);
@@ -450,10 +449,6 @@ export const PackageComponent = (props) => {
     }
   }
 
-  function toggleCheckbox() {
-    setPresentVersion(!presentVersion);
-  }
-
   if (loadingPkg || loadingRepos || loadingProbes || loadingPackageVersions)
     return (<LoadingAnim/>);
 
@@ -471,11 +466,17 @@ export const PackageComponent = (props) => {
 
   else if (!loadingPkg && !loadingRepos && !loadingProbes && !loadingPackageVersions && repos) {
     var listProbes = [];
-    if (pkg && probes) {
-      probes.forEach(probe => {
-        if (probe.fields.package === `${pkg.name} (${pkg.version})`)
-          listProbes.push(probe.fields.name);
-      });
+    let presentVersion = false;
+    if (pkg) {
+      if (pkg.version === 'present')
+        presentVersion = true;
+
+      if (probes) {
+        probes.forEach(probe => {
+          if (probe.fields.package === `${pkg.name} (${pkg.version})`)
+            listProbes.push(probe.fields.name);
+        });
+      }
     }
 
     return (
@@ -584,7 +585,6 @@ export const PackageComponent = (props) => {
                             type='checkbox'
                             name='present_version'
                             className='mr-1'
-                            onChange={toggleCheckbox}
                           />
                           Use version which is present in repo
                         </label>
