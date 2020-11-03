@@ -4,7 +4,6 @@ import { Link } from 'react-router-dom';
 import{
   LoadingAnim,
   BaseArgoView,
-  FancyErrorMessage,
   AutocompleteField,
   NotifyOk,
   Checkbox,
@@ -14,7 +13,8 @@ import{
   ParagraphTitle,
   DefaultColumnFilter,
   SelectColumnFilter,
-  BaseArgoTable
+  BaseArgoTable,
+  CustomErrorMessage
 } from './UIElements';
 import {
   FormGroup,
@@ -23,29 +23,37 @@ import {
   Col,
   Button,
   InputGroup,
-  InputGroupAddon
+  InputGroupAddon,
+  Alert
 } from 'reactstrap';
 import { Formik, Form, Field } from 'formik';
-import * as Yup from 'yup';
 import { queryCache, useQuery } from 'react-query';
 
 
-const PackageSchema = Yup.object().shape({
-  name: Yup.string()
-    .matches(/^\S*$/, 'Name cannot contain white spaces')
-    .required('Required'),
-  present_version: Yup.boolean(),
-  version: Yup.string()
-    .matches(/^\S*$/, 'Version cannot contain white spaces')
-    .when('present_version', {
-      is: false,
-      then: Yup.string().required('Required')
-    }),
-  repo_6: Yup.string(),
-  repo_7: Yup.string()
-})
-.test('undefined', 'You must provide at least one repo!', value =>
-!!(value.repo_6 || value.repo_7));
+const packageValidate = (values) => {
+  const errors = {};
+
+  if (!values.name)
+    errors.name = 'Required';
+
+  else if (!/^\S*$/.test(values.name))
+    errors.name = 'Name cannot contain white spaces';
+
+  if (!values.present_version) {
+    if (!values.version)
+      errors.version = 'Required';
+
+    else if (!/^\S*$/.test(values.version))
+      errors.version = 'Version cannot contain white spaces'
+  }
+
+  if (!values.repo_6 && !values.repo_7) {
+    errors.repo_6 = 'You must provide at least one repo!';
+    errors.repo_7 = 'You must provide at least one repo!';
+  }
+
+  return errors;
+}
 
 
 export const PackageList = (props) => {
@@ -508,7 +516,7 @@ export const PackageComponent = (props) => {
             present_version: presentVersion
           }}
           onSubmit = {(values) => onSubmitHandle(values)}
-          validationSchema={PackageSchema}
+          validate={packageValidate}
           enableReinitialize={true}
         >
           {props => (
@@ -521,15 +529,12 @@ export const PackageComponent = (props) => {
                       <Field
                         type='text'
                         name='name'
-                        className={`form-control ${props.errors.name && 'border-danger'}`}
+                        className={`form-control ${props.errors.name && props.touched.name && 'border-danger'}`}
                         id='name'
                         disabled={disabled}
                       />
                     </InputGroup>
-                    {
-                      props.errors.name &&
-                        FancyErrorMessage(props.errors.name)
-                    }
+                    <CustomErrorMessage name='name' />
                     <FormText color='muted'>
                       Package name.
                     </FormText>
@@ -560,15 +565,12 @@ export const PackageComponent = (props) => {
                                 name='version'
                                 value={props.values.present_version ? 'present' : props.values.version}
                                 disabled={props.values.present_version}
-                                className={`form-control ${props.errors.version && 'border-danger'}`}
+                                className={`form-control ${props.errors.version && props.touched.version && 'border-danger'}`}
                                 id='version'
                               />
                           }
                         </InputGroup>
-                        {
-                          props.errors.version &&
-                            FancyErrorMessage(props.errors.version)
-                        }
+                        <CustomErrorMessage name='version' />
                         <FormText color='muted'>
                           Package version.
                         </FormText>
@@ -592,6 +594,14 @@ export const PackageComponent = (props) => {
               </FormGroup>
               <FormGroup>
                 <ParagraphTitle title='YUM repo'/>
+                {
+                  (props.errors.repo_6 || props.errors.repo_7) &&
+                    <Alert color='danger'>
+                      <center>
+                        You must provide at least one repo!
+                      </center>
+                    </Alert>
+                }
                 <Row>
                   <Col md={8}>
                     {
@@ -614,11 +624,8 @@ export const PackageComponent = (props) => {
                           field='repo_6'
                           onselect_handler={!addview ? (newValue) => onSelect('repo_6', newValue) : undefined}
                           label='CentOS 6 repo'
+                          hide_error={true}
                         />
-                    }
-                    {
-                      props.errors.undefined &&
-                        FancyErrorMessage(props.errors.undefined)
                     }
                     <FormText color='muted'>
                       Package is part of selected CentOS 6 repo.
@@ -647,11 +654,8 @@ export const PackageComponent = (props) => {
                           field='repo_7'
                           onselect_handler={!addview ? (newValue) => onSelect('repo_7', newValue) : undefined}
                           label='CentOS 7 repo'
+                          hide_error={true}
                         />
-                    }
-                    {
-                      props.errors.undefined &&
-                        FancyErrorMessage(props.errors.undefined)
                     }
                     <FormText color='muted'>
                       Package is part of selected CentOS 7 repo.
