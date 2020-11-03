@@ -6,7 +6,6 @@ import{
   BaseArgoView,
   AutocompleteField,
   NotifyOk,
-  Checkbox,
   NotifyError,
   ErrorComponent,
   NotifyWarn,
@@ -580,14 +579,15 @@ export const PackageComponent = (props) => {
                   {
                     !disabled &&
                       <Col md={3}>
-                        <Field
-                          component={Checkbox}
-                          name='present_version'
-                          className='form-control'
-                          id='checkbox'
-                          label='Use version which is present in repo'
-                          onChange={toggleCheckbox}
-                        />
+                        <label>
+                          <Field
+                            type='checkbox'
+                            name='present_version'
+                            className='mr-1'
+                            onChange={toggleCheckbox}
+                          />
+                          Use version which is present in repo
+                        </label>
                       </Col>
                   }
                 </Row>
