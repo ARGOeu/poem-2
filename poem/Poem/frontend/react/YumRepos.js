@@ -4,13 +4,13 @@ import { Link } from 'react-router-dom';
 import {
   LoadingAnim,
   BaseArgoView,
-  FancyErrorMessage,
   NotifyOk,
   NotifyError,
   ErrorComponent,
   DefaultColumnFilter,
   SelectColumnFilter,
-  BaseArgoTable
+  BaseArgoTable,
+  CustomErrorMessage
 } from './UIElements';
 import { Formik, Form, Field } from 'formik';
 import {
@@ -323,15 +323,12 @@ export const YumRepoComponent = (props) => {
                       <Field
                         type='text'
                         name='name'
-                        className={`form-control ${props.errors.name && 'border-danger'}`}
+                        className={`form-control ${props.errors.name && props.touched.name && 'border-danger'}`}
                         id='name'
                         disabled={disabled}
                       />
                     </InputGroup>
-                    {
-                      props.errors.name &&
-                        FancyErrorMessage(props.errors.name)
-                    }
+                    <CustomErrorMessage name='name' />
                     <FormText color='muted'>
                       Name of YUM repo file.
                     </FormText>
@@ -377,14 +374,11 @@ export const YumRepoComponent = (props) => {
                       component='textarea'
                       name='content'
                       rows='20'
-                      className={`form-control ${props.errors.content && 'border-danger'}`}
+                      className={`form-control ${props.errors.content && props.touched.content && 'border-danger'}`}
                       id='content'
                       disabled={disabled}
                     />
-                    {
-                      props.errors.content &&
-                        FancyErrorMessage(props.errors.content)
-                    }
+                    <CustomErrorMessage name='content' />
                     <FormText color='muted'>
                       Content of the repo file.
                     </FormText>
@@ -399,14 +393,11 @@ export const YumRepoComponent = (props) => {
                       component='textarea'
                       name='description'
                       rows='5'
-                      className={`form-control ${props.errors.description && 'border-danger'}`}
+                      className={`form-control ${props.errors.description && props.touched.description && 'border-danger'}`}
                       id='description'
                       disabled={disabled}
                     />
-                    {
-                      props.errors.description &&
-                        FancyErrorMessage(props.errors.description)
-                    }
+                    <CustomErrorMessage name='description' />
                     <FormText color='muted'>
                       Short free text description.
                     </FormText>
