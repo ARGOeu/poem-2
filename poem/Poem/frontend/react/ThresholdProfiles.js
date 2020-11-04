@@ -1269,7 +1269,8 @@ export const ThresholdsProfilesChange = (props) => {
           validationSchema={ThresholdsSchema}
           onSubmit = {(values) => onSubmitHandle(values)}
           enableReinitialize={true}
-          render = {props => (
+        >
+          {props => (
             <Form>
               <ThresholdsProfilesForm
                 {...props}
@@ -1314,7 +1315,7 @@ export const ThresholdsProfilesChange = (props) => {
               }
             </Form>
           )}
-        />
+        </Formik>
       </BaseArgoView>
     );
   } else
