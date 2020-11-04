@@ -919,7 +919,7 @@ export const ThresholdsProfilesList = (props) => {
           {row.value}
         </div>
     }
-  ]);
+  ], [publicView]);
 
   if (loadingUserDetails || loadingListThresholdsProfiles)
     return (<LoadingAnim/>);
