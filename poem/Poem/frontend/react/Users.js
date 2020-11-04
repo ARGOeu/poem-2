@@ -4,7 +4,6 @@ import { Backend } from './DataManager';
 import {
   LoadingAnim,
   BaseArgoView,
-  Checkbox,
   NotifyOk,
   FancyErrorMessage,
   NotifyError,
@@ -213,13 +212,14 @@ const CommonUser = ({add, ...props}) =>
       <ParagraphTitle title='permissions'/>
       <Row>
         <Col md={6}>
-          <Field
-            component={Checkbox}
-            name="is_superuser"
-            className="form-control"
-            id="checkbox"
-            label="Superuser status"
-          />
+          <label>
+            <Field
+              type="checkbox"
+              name="is_superuser"
+              className="mr-1"
+            />
+            Superuser status
+          </label>
           <FormText color="muted">
             Designates that this user has all permissions without explicitly assigning them.
           </FormText>
@@ -227,13 +227,14 @@ const CommonUser = ({add, ...props}) =>
       </Row>
       <Row>
         <Col md={6}>
-          <Field
-            component={Checkbox}
-            name="is_active"
-            className="form-control"
-            id="checkbox"
-            label="Active"
-          />
+          <label>
+            <Field
+              type="checkbox"
+              name="is_active"
+              className="mr-1"
+            />
+            Active
+          </label>
           <FormText color="muted">
             Designates whether this user should be treated as active. Unselect this instead of deleting accounts.
           </FormText>
