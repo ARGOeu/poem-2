@@ -11,7 +11,8 @@ import {
   ModalAreYouSure,
   ErrorComponent,
   ParagraphTitle,
-  BaseArgoTable
+  BaseArgoTable,
+  CustomErrorMessage
 } from './UIElements';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
@@ -68,7 +69,7 @@ import './Users.css';
 import { useQuery } from 'react-query';
 
 
-const CommonUser = ({add, errors}) =>
+const CommonUser = ({add, ...props}) =>
   <>
     {
       (add) ?
@@ -80,14 +81,11 @@ const CommonUser = ({add, errors}) =>
                 <Field
                   type="text"
                   name="username"
-                  className={`form-control ${errors.username && 'border-danger'}`}
+                  className={`form-control ${props.errors.username && props.touched.username && 'border-danger'}`}
                   id="userUsername"
                 />
               </InputGroup>
-              {
-                errors.username &&
-                  FancyErrorMessage(errors.username)
-              }
+              <CustomErrorMessage name='username' />
             </Col>
           </Row>
           <Row>
@@ -97,14 +95,11 @@ const CommonUser = ({add, errors}) =>
                 <Field
                 type="password"
                 name="password"
-                className={`form-control ${errors.password && 'border-danger'}`}
+                className={`form-control ${props.errors.password && props.touched.password && 'border-danger'}`}
                 id="password"
               />
               </InputGroup>
-              {
-                errors.password &&
-                  FancyErrorMessage(errors.password)
-              }
+              <CustomErrorMessage name='password' />
             </Col>
           </Row>
           <Row>
@@ -114,14 +109,11 @@ const CommonUser = ({add, errors}) =>
                 <Field
                   type='password'
                   name='confirm_password'
-                  className={`form-control ${errors.confirm_password && 'border-danger'}`}
+                  className={`form-control ${props.errors.confirm_password && props.touched.confirm_password && 'border-danger'}`}
                   id='confirm_password'
                 />
               </InputGroup>
-              {
-                errors.confirm_password &&
-                  FancyErrorMessage(errors.confirm_password)
-              }
+              <CustomErrorMessage name='confirm_password' />
             </Col>
           </Row>
         </FormGroup>
@@ -134,14 +126,11 @@ const CommonUser = ({add, errors}) =>
                 <Field
                   type="text"
                   name='username'
-                  className="form-control"
+                  className={`form-control ${props.errors.username && props.touched.username && 'border-danger'}`}
                   id='userUsername'
                 />
               </InputGroup>
-              {
-                errors.username &&
-                  FancyErrorMessage(errors.username)
-              }
+              <CustomErrorMessage name='username' />
             </Col>
           </Row>
         </FormGroup>
@@ -181,14 +170,11 @@ const CommonUser = ({add, errors}) =>
             <Field
               type="text"
               name="email"
-              className={`form-control ${errors.email && 'border-danger'}`}
+              className={`form-control ${props.errors.email && props.touched.email && 'border-danger'}`}
               id="userEmail"
             />
           </InputGroup>
-          {
-            errors.email &&
-              FancyErrorMessage(errors.email)
-          }
+          <CustomErrorMessage name='email' />
         </Col>
       </Row>
       {
