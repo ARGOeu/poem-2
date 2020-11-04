@@ -621,7 +621,7 @@ const InnerFooter = ({ border=false, publicPage=false, tenantName='egi' }) =>
           <small>
             <a href="https://ui.argo.grnet.gr/egi/termsofUse" target="_blank" rel="noopener noreferrer" title="Terms">Terms</a>, &nbsp;
             <a href='#' title="Cookie Policies" onClick={toggle}>Cookie Policies</a>, &nbsp;
-            <a href='#' title='Privacy Policy' href={tenantName ? PolicyLinks.get(tenantName.toLowerCase()) : PolicyLinks.get('egi')} target='_blank' rel='noopener noreferrer'>Privacy Policy</a>
+            <a title='Privacy Policy' href={tenantName ? PolicyLinks.get(tenantName.toLowerCase()) : PolicyLinks.get('egi')} target='_blank' rel='noopener noreferrer'>Privacy Policy</a>
           </small>
           <Modal isOpen={modal} toggle={toggle} size="lg">
             <ModalBody className="p-0">
@@ -684,7 +684,7 @@ export const NotifyError = ({msg='', title=''}) => {
     <p>{msg}</p>
     <p>Click to dismiss.</p>
   </div>
-  NotificationManager.error(msg=msg, title, 0, () => true);
+  NotificationManager.error(msg, title, 0, () => true);
 };
 
 
@@ -840,30 +840,6 @@ export const BaseArgoView = ({resourcename='', location=undefined,
     </div>
   </React.Fragment>
 )
-
-
-export const Checkbox = ({
-  field: { name, value, onChange, onBlur },
-  form: { errors, touched },
-  id,
-  label
-}) => {
-  return (
-    <div>
-      <input
-        name={name}
-        id={id}
-        type='checkbox'
-        value={value}
-        checked={value}
-        onChange={onChange}
-        onBlur={onBlur}
-      />
-      <label htmlFor={id}>{label}</label>
-      {touched[name] && errors[name] && <div className="error">{errors[name]}</div>}
-    </div>
-  );
-};
 
 
 export const FancyErrorMessage = (msg) => (
@@ -1056,9 +1032,9 @@ export const HistoryComponent = (props) => {
     apiUrl = `/api/v2/internal/${publicView ? 'public_' : ''}version/`;
 
   const compareUrl = `/ui/${tenantView ? 'administration/' : ''}${publicView ? 'public_' : ''}${obj}s/${name}/history`;
-  const backend = new Backend();
 
   useEffect(() => {
+    const backend = new Backend();
     setLoading(true);
 
     async function fetchData() {
@@ -1076,7 +1052,7 @@ export const HistoryComponent = (props) => {
     }
 
     fetchData();
-  }, []);
+  }, [obj, name, apiUrl]);
 
   if (loading)
     return (<LoadingAnim />);
