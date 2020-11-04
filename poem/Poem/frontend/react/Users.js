@@ -1058,7 +1058,8 @@ export const ChangePassword = (props) => {
           }}
           validationSchema = {ChangePasswordSchema}
           onSubmit = {(values) => onSubmitHandle(values)}
-          render = {props => (
+        >
+          {props => (
             <Form>
               <Row>
                 <Col md={6}>
@@ -1109,7 +1110,7 @@ export const ChangePassword = (props) => {
               }
             </Form>
           )}
-        />
+        </Formik>
       </BaseArgoView>
     )
   } else
