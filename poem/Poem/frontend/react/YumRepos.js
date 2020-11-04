@@ -144,21 +144,15 @@ export const YumRepoComponent = (props) => {
   const backend = new Backend();
 
   const { data: repo, error: errorRepo, isLoading: loadingRepo } = useQuery(
-    `yumrepo_${addview ? 'addview' : `${name}_${tag}_${cloneview ? 'cloneview' : 'changeview'}`}`,
+    `yumrepo_${name}_${tag}_${cloneview ? 'cloneview' : 'changeview'}`,
     async () => {
-      let repo = {
-        id: '',
-        name: '',
-        tag: 'CentOS 6',
-        content: '',
-        description: ''
-      };
+      if (!addview) {
+        let repo = await backend.fetchData(`/api/v2/internal/yumrepos/${name}/${tag}`);
 
-      if (!addview)
-        repo = await backend.fetchData(`/api/v2/internal/yumrepos/${name}/${tag}`);
-
-      return repo;
-    }
+        return repo;
+      }
+    },
+    { enabled: !addview }
   );
 
   const { data: tags, error: errorTags, isLoading: loadingTags } = useQuery(
@@ -284,7 +278,7 @@ export const YumRepoComponent = (props) => {
   else if (errorTags)
     return (<ErrorComponent error={errorTags}/>);
 
-  else if (!loadingRepo && !loadingTags && repo) {
+  else if (!loadingRepo && !loadingTags && tags) {
     return (
       <BaseArgoView
         resourcename='YUM repo'
@@ -310,11 +304,11 @@ export const YumRepoComponent = (props) => {
       >
         <Formik
           initialValues = {{
-            id: repo.id,
-            name: repo.name,
-            tag: repo.tag,
-            content: repo.content,
-            description: repo.description
+            id: repo ? repo.id : '',
+            name: repo ? repo.name : '',
+            tag: repo ? repo.tag : 'CentOS 6',
+            content: repo ? repo.content : '',
+            description: repo ? repo.description : ''
           }}
           onSubmit = {(values) => onSubmitHandle(values)}
           validationSchema={RepoSchema}
