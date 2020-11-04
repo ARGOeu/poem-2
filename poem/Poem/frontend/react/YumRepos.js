@@ -312,7 +312,8 @@ export const YumRepoComponent = (props) => {
           }}
           onSubmit = {(values) => onSubmitHandle(values)}
           validationSchema={RepoSchema}
-          render = {props => (
+        >
+          {props => (
             <Form>
               <FormGroup>
                 <Row>
@@ -438,7 +439,7 @@ export const YumRepoComponent = (props) => {
               }
             </Form>
           )}
-        />
+        </Formik>
       </BaseArgoView>
     )
   } else
