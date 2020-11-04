@@ -5,7 +5,6 @@ import {
   LoadingAnim,
   BaseArgoView,
   NotifyOk,
-  FancyErrorMessage,
   NotifyError,
   ModalAreYouSure,
   ErrorComponent,
@@ -1068,14 +1067,11 @@ export const ChangePassword = (props) => {
                     <Field
                     type="password"
                     name="password"
-                    className={`form-control ${props.errors.password && 'border-danger'}`}
+                    className={`form-control ${props.errors.password && props.touched.password && 'border-danger'}`}
                     id="password"
                   />
                   </InputGroup>
-                  {
-                    props.errors.password &&
-                      FancyErrorMessage(props.errors.password)
-                  }
+                  <CustomErrorMessage name='password' />
                 </Col>
               </Row>
               <Row>
@@ -1085,14 +1081,11 @@ export const ChangePassword = (props) => {
                     <Field
                       type='password'
                       name='confirm_password'
-                      className={`form-control ${props.errors.confirm_password && 'border-danger'}`}
+                      className={`form-control ${props.errors.confirm_password && props.touched.confirm_password && 'border-danger'}`}
                       id='confirm_password'
                     />
                   </InputGroup>
-                  {
-                    props.errors.confirm_password &&
-                      FancyErrorMessage(props.errors.confirm_password)
-                  }
+                  <CustomErrorMessage name='confirm_password' />
                 </Col>
               </Row>
               {
