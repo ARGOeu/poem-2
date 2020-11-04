@@ -41,16 +41,21 @@ def import_metrics(metrictemplates, tenant, user):
                         package for package in packages
                         if package.name == mt.probekey.package.name
                     ][0]
-                    ver = admin_models.ProbeHistory.objects.get(
-                        name=mt.probekey.name,
-                        package=package_version
-                    )
                     try:
+                        ver = admin_models.ProbeHistory.objects.get(
+                            name=mt.probekey.name,
+                            package=package_version
+                        )
+
                         metrictemplate = \
                             admin_models.MetricTemplateHistory.objects.get(
                                 name=mt.name, probekey=ver
                             )
                         imported_different_version = True
+
+                    except admin_models.ProbeHistory.DoesNotExist:
+                        unavailable.append(mt.name)
+                        continue
 
                     except admin_models.MetricTemplateHistory.DoesNotExist:
                         unavailable.append(mt.name)
