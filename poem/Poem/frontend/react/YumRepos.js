@@ -92,7 +92,7 @@ export const YumRepoList = (props) => {
       Filter: SelectColumnFilter,
       filterList: listTags
     }
-  ]);
+  ], [isTenantSchema, listTags]);
 
   if (loadingListRepos || loadingListTags || loadingIsTenantSchema)
     return (<LoadingAnim/>);
