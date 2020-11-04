@@ -965,7 +965,7 @@ export const ThresholdsProfilesChange = (props) => {
   const history = props.history;
   const location = props.location;
   const publicView = props.publicView;
-  const querykey =`thresholdsprofile_${addview ? 'addview' : `${name}_${publicView ? 'publicview' : 'changeview'}`}`;
+  const querykey =`thresholdsprofile_${name}_${publicView ? 'publicview' : 'changeview'}`;
 
   const backend = new Backend();
   const webapi = new WebApi({
@@ -975,24 +975,19 @@ export const ThresholdsProfilesChange = (props) => {
 
   const { data: thresholdsProfile, error: errorThresholdsProfile, isLoading: loadingThresholdsProfile } = useQuery(
     `${querykey}`, async () => {
-      let tp = {
-        'apiid': '',
-        'name': '',
-        'groupname': '',
-        'rules': []
-      };
       if (!addview) {
         let json = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}thresholdsprofiles/${name}`);
         let thresholdsprofile = await webapi.fetchThresholdsProfile(json.apiid);
-        tp = {
+        let tp = {
           'apiid': thresholdsprofile.id,
           'name': thresholdsprofile.name,
           'groupname': json['groupname'],
           'rules': thresholdsToValues(thresholdsprofile.rules)
         };
+        return tp;
       }
-      return tp;
-    }
+    },
+    { enabled: !addview }
   );
 
   const { data: userDetails, isLoading: loadingUserDetails } = useQuery(
@@ -1229,7 +1224,7 @@ export const ThresholdsProfilesChange = (props) => {
   else if (errorAllMetrics)
     return (<ErrorComponent error={errorAllMetrics}/>);
 
-  else if (!loadingThresholdsProfile && !loadingUserDetails && !loadingAllMetrics && thresholdsProfile) {
+  else if (!loadingThresholdsProfile && !loadingUserDetails && !loadingAllMetrics && allMetrics) {
     let write_perm = userDetails ?
       addview ?
         userDetails.is_superuser || userDetails.groups.thresholdsprofiles.length > 0
@@ -1268,10 +1263,10 @@ export const ThresholdsProfilesChange = (props) => {
       >
         <Formik
           initialValues = {{
-            id: thresholdsProfile.apiid,
-            name: thresholdsProfile.name,
-            groupname: thresholdsProfile.groupname,
-            rules: thresholdsProfile.rules
+            id: thresholdsProfile ? thresholdsProfile.apiid : '',
+            name: thresholdsProfile ? thresholdsProfile.name : '',
+            groupname: thresholdsProfile ? thresholdsProfile.groupname : '',
+            rules: thresholdsProfile ? thresholdsProfile.rules : []
           }}
           validationSchema={ThresholdsSchema}
           onSubmit = {(values) => onSubmitHandle(values)}
