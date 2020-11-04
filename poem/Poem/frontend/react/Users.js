@@ -678,7 +678,8 @@ export const UserChange = (props) => {
             validationSchema={UserSchema}
             enableReinitialize={true}
             onSubmit = {(values) => onSubmitHandle(values)}
-            render = {props => (
+          >
+            {props => (
               <Form>
                 <CommonUser
                   {...props}
@@ -878,7 +879,7 @@ export const UserChange = (props) => {
                 }
               </Form>
             )}
-          />
+          </Formik>
         </BaseArgoView>
       )
     } else {
@@ -925,7 +926,8 @@ export const UserChange = (props) => {
               validationSchema={UserSchema}
               enableReinitialize={true}
               onSubmit = {(values, actions) => onSubmitHandle(values, actions)}
-              render = {props => (
+            >
+              {props => (
                 <Form>
                   <CommonUser
                     {...props}
@@ -958,7 +960,7 @@ export const UserChange = (props) => {
                   </div>
                 </Form>
               )}
-            />
+            </Formik>
           </div>
         </React.Fragment>
       )
