@@ -64,20 +64,23 @@ const ThresholdsSchema = Yup.object().shape({
             .test('greater-than',
             'Should be greater than lower warning limit',
             function(value) {
-              const lowerLimit = this.parent.warn1.charAt(0) === '@' ?
-                this.parent.warn1.substr(1) :
-                this.parent.warn1;
-              if (!lowerLimit || !value) {
-                return true;
-              } else {
-                if (lowerLimit === '~')
+              if (this.parent.warn1) {
+                const lowerLimit = this.parent.warn1.charAt(0) === '@' ?
+                  this.parent.warn1.substr(1) :
+                  this.parent.warn1;
+                if (!lowerLimit || !value) {
                   return true;
-                else
-                  if (!isNaN(Number(lowerLimit)) && !isNaN(Number(value)))
-                    return Number(lowerLimit) <= Number(value);
-                  else
+                } else {
+                  if (lowerLimit === '~')
                     return true;
-              }
+                  else
+                    if (!isNaN(Number(lowerLimit)) && !isNaN(Number(value)))
+                      return Number(lowerLimit) <= Number(value);
+                    else
+                      return true;
+                }
+              } else
+                return true;
             }),
           crit1: Yup.string()
             .matches(/^[@]?(~|[-](?=\.?\d))?(\d+)?(\.\d+)?$/, 'Must be a number.')
@@ -87,19 +90,23 @@ const ThresholdsSchema = Yup.object().shape({
             .test('greater-than',
             'Should be greater than lower critical limit',
             function(value) {
-              const lowerLimit = this.parent.crit1.charAt(0) === '@' ?
-                this.parent.crit1.substr(1) :
-                this.parent.crit1;
-              if (!lowerLimit || !value) {
-                return true;
-              } else {
-                if (lowerLimit === '~')
+              if (this.parent.crit1) {
+                const lowerLimit = this.parent.crit1.charAt(0) === '@' ?
+                  this.parent.crit1.substr(1) :
+                  this.parent.crit1;
+                if (!lowerLimit || !value) {
                   return true;
-                else
-                  if (!isNaN(Number(lowerLimit)) && !isNaN(Number(value)))
-                    return Number(lowerLimit) <= Number(value);
-                  else
+                } else {
+                  if (lowerLimit === '~')
                     return true;
+                  else
+                    if (!isNaN(Number(lowerLimit)) && !isNaN(Number(value)))
+                      return Number(lowerLimit) <= Number(value);
+                    else
+                      return true;
+                }
+              } else {
+                return true;
               }
             }),
           min: Yup.string()
