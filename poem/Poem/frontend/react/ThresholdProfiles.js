@@ -1390,14 +1390,13 @@ export const ThresholdsProfileVersionCompare = (props) => {
   const version2 = props.match.params.id2;
   const name = props.match.params.name;
 
-  const backend = new Backend();
-
   const [loading, setLoading] = useState(false);
   const [profile1, setProfile1] = useState(undefined);
   const [profile2, setProfile2] = useState(undefined);
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    const backend = new Backend();
     setLoading(true);
     fetchVersions();
 
@@ -1417,7 +1416,7 @@ export const ThresholdsProfileVersionCompare = (props) => {
       }
       setLoading(false);
     }
-  }, []);
+  }, [name, version1, version2]);
 
   if (loading)
     return (<LoadingAnim/>);
@@ -1454,13 +1453,12 @@ export const ThresholdsProfileVersionDetail = (props) => {
   const name = props.match.params.name;
   const version = props.match.params.version;
 
-  const backend = new Backend();
-
   const [profile, setProfile] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    const backend = new Backend();
     setLoading(true);
     fetchProfile();
 
@@ -1482,7 +1480,7 @@ export const ThresholdsProfileVersionDetail = (props) => {
 
       setLoading(false);
     }
-  }, []);
+  }, [name, version]);
 
   if (loading)
     return (<LoadingAnim/>);
@@ -1502,7 +1500,8 @@ export const ThresholdsProfileVersionDetail = (props) => {
             groupname: profile.groupname,
             rules: profile.rules
           }}
-          render = {props => (
+        >
+          {props => (
             <Form>
               <ThresholdsProfilesForm
                 {...props}
@@ -1510,7 +1509,7 @@ export const ThresholdsProfileVersionDetail = (props) => {
               />
             </Form>
           )}
-        />
+        </Formik>
       </BaseArgoView>
     );
   } else
