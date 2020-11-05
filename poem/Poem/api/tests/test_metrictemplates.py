@@ -2893,68 +2893,6 @@ class CommentsTests(TenantTestCase):
         )
 
 
-class ChangePasswordTests(TenantTestCase):
-    def setUp(self):
-        self.factory = TenantRequestFactory(self.tenant)
-        self.view = views.ChangePassword.as_view()
-        self.url = '/api/v2/internal/change_password'
-        self.user1 = CustUser.objects.create_user(
-            username='testuser',
-            first_name='Test',
-            last_name='User',
-            email='testuser@example.com',
-            date_joined=datetime.datetime(2015, 1, 1, 0, 0, 0)
-        )
-
-        self.user2 = CustUser.objects.create(
-            username='anotheruser',
-            first_name='Another',
-            last_name='Test',
-            email='anotheruser@example.com',
-            date_joined=datetime.datetime(2015, 1, 1, 0, 0, 0)
-        )
-
-    def test_change_password(self):
-        data = {
-            'username': 'testuser',
-            'new_password': 'extra-cool-passwd'
-        }
-        content, content_type = encode_data(data)
-        request = self.factory.put(self.url, content, content_type=content_type)
-        force_authenticate(request, user=self.user1)
-        response = self.view(request)
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        user = CustUser.objects.get(username=self.user1.username)
-        self.assertTrue(user.check_password('extra-cool-passwd'))
-
-    def test_try_change_password_for_different_user(self):
-        data = {
-            'username': 'anotheruser',
-            'new_password': 'extra-cool-passwd'
-        }
-        content, content_type = encode_data(data)
-        request = self.factory.put(self.url, content, content_type=content_type)
-        force_authenticate(request, user=self.user1)
-        response = self.view(request)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-        self.assertEqual(
-            response.data['detail'],
-            'Trying to change password for another user.'
-        )
-
-    def test_change_password_for_nonexisting_user(self):
-        data = {
-            'username': 'nonexisting',
-            'new_password': 'extra-cool-passwd'
-        }
-        content, content_type = encode_data(data)
-        request = self.factory.put(self.url, content, content_type=content_type)
-        force_authenticate(request, user=self.user1)
-        response = self.view(request)
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertEqual(response.data['detail'], 'User not found.')
-
-
 class MetricsHelpersTests(TransactionTestCase):
     """
     Using TransactionTestCase because of handling of IntegrityError. The extra
