@@ -12,7 +12,7 @@ import {
 import { Formik, Form } from 'formik';
 import { Button } from 'reactstrap';
 import * as Yup from 'yup';
-import { useQuery, queryCache } from 'react-query';
+import { useQuery } from 'react-query';
 
 
 const MetricTemplateSchema = Yup.object().shape({
@@ -92,33 +92,8 @@ export const MetricTemplateComponent = (props) => {
   const {data: metricTemplate, error: metricTemplateError, isLoading: metricTemplateLoading } = useQuery(
     `${querykey}_metrictemplate`,
     async () => {
-      let metrictemplate = {
-        id: '',
-        name: '',
-        probeversion: '',
-        mtype: 'Active',
-        description: '',
-        probeexecutable: '',
-        parent: '',
-        config: [
-          {'key': 'maxCheckAttempts', 'value': ''},
-          {'key': 'timeout', 'value': ''},
-          {'key': 'path', 'value': ''},
-          {'key': 'interval', 'value': ''},
-          {'key': 'retryInterval', 'value': ''}
-        ],
-        attribute: [{'key': '', 'value': ''}],
-        dependency: [{'key': '', 'value': ''}],
-        parameter: [{'key': '', 'value': ''}],
-        flags: [{'key': '', 'value': ''}],
-        files: [{'key': '', 'value': ''}],
-        fileparameter: [{'key': '', 'value': ''}],
-        tags: [],
-        probe: {'package': ''}
-      };
-
       if (!addview) {
-        metrictemplate = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}metrictemplates/${name}`);
+        let metrictemplate = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}metrictemplates/${name}`);
 
         let tags = []
         metrictemplate.tags.forEach(tag => tags.push({value: tag, label: tag}));
@@ -149,35 +124,12 @@ export const MetricTemplateComponent = (props) => {
 
         if (metrictemplate.fileparameter.length === 0)
           metrictemplate.fileparameter = [{'key': '', 'value': ''}];
-        }
 
-      return metrictemplate;
+          return metrictemplate;
+        }
     },
-    { enabled: allProbeVersions, }
+    { enabled: allProbeVersions && !addview, }
   );
-
-  function onSelect(field, value) {
-    if (field === 'probeversion') {
-      let metrictemplate = metricTemplate;
-      let probe = {};
-      for (let probeversion of allProbeVersions) {
-        if (probeversion.object_repr === value) {
-          probe = probeversion.fields;
-          break;
-        } else {
-          probe = {'package': ''};
-        }
-      }
-      metrictemplate.probe = probe;
-      queryCache.setQueryData(`${querykey}_metrictemplate`, () => metrictemplate);
-    }
-  }
-
-  function onTagChange(value) {
-    let metrictemplate = metricTemplate;
-    metrictemplate.tags = value;
-    queryCache.setQueryData(`${querykey}_metrictemplate`, () => metrictemplate);
-  }
 
   function togglePopOver() {
     setPopoverOpen(!popoverOpen);
@@ -201,7 +153,7 @@ export const MetricTemplateComponent = (props) => {
     }
 
     let tagNames = [];
-    metricTemplate.tags.forEach(tag => tagNames.push(tag.value));
+    formValues.tags.forEach(tag => tagNames.push(tag.value));
     let unique = tagNames.filter( onlyUnique );
 
     if (addview || cloneview) {
@@ -344,9 +296,6 @@ export const MetricTemplateComponent = (props) => {
     return (<ErrorComponent error={listMetricTemplatesError.message}/>);
 
   else {
-    var probeVersionsNames = [];
-    allProbeVersions.forEach(prv => probeVersionsNames.push(prv.object_repr));
-
     return (
       <BaseArgoView
         resourcename={(tenantview || publicView) ? 'Metric template details' : 'metric template'}
@@ -374,41 +323,49 @@ export const MetricTemplateComponent = (props) => {
       >
         <Formik
           initialValues = {{
-            id: metricTemplate.id,
-            name: metricTemplate.name,
-            probeversion: metricTemplate.probeversion,
-            type: metricTemplate.mtype,
-            description: metricTemplate.description,
-            probeexecutable: metricTemplate.probeexecutable,
-            parent: metricTemplate.parent,
-            config: metricTemplate.config,
-            attributes: metricTemplate.attribute,
-            dependency: metricTemplate.dependency,
-            parameter: metricTemplate.parameter,
-            flags: metricTemplate.flags,
-            file_attributes: metricTemplate.files,
-            file_parameters: metricTemplate.fileparameter
+            id: metricTemplate ? metricTemplate.id : '',
+            name: metricTemplate ? metricTemplate.name : '',
+            probeversion: metricTemplate ? metricTemplate.probeversion : '',
+            type: metricTemplate ? metricTemplate.mtype : 'Active',
+            description: metricTemplate ? metricTemplate.description : '',
+            probeexecutable: metricTemplate ? metricTemplate.probeexecutable : '',
+            parent: metricTemplate ? metricTemplate.parent : '',
+            config: metricTemplate ?
+              metricTemplate.config
+            :
+              [
+                {'key': 'maxCheckAttempts', 'value': ''},
+                {'key': 'timeout', 'value': ''},
+                {'key': 'path', 'value': ''},
+                {'key': 'interval', 'value': ''},
+                {'key': 'retryInterval', 'value': ''}
+              ],
+            attributes: metricTemplate ? metricTemplate.attribute : [{'key': '', 'value': ''}],
+            dependency: metricTemplate ? metricTemplate.dependency : [{'key': '', 'value': ''}],
+            parameter: metricTemplate ? metricTemplate.parameter : [{'key': '', 'value': ''}],
+            flags: metricTemplate ? metricTemplate.flags : [{'key': '', 'value': ''}],
+            file_attributes: metricTemplate ? metricTemplate.files : [{'key': '', 'value': ''}],
+            file_parameters: metricTemplate ? metricTemplate.fileparameter : [{'key': '', 'value': ''}],
+            tags: metricTemplate ? metricTemplate.tags : [],
+            probe: metricTemplate ? metricTemplate.probe : {'package': ''}
           }}
           onSubmit = {(values) => onSubmitHandle(values)}
           validationSchema={MetricTemplateSchema}
-          render = {props => (
+          enableReinitialize={true}
+        >
+          {props => (
             <Form>
               <MetricForm
                 {...props}
                 obj_label='metrictemplate'
-                obj={metricTemplate}
-                probe={metricTemplate.probe}
                 isTenantSchema={tenantview}
                 publicView={publicView}
                 addview={addview}
-                onSelect={onSelect}
                 popoverOpen={popoverOpen}
                 togglePopOver={togglePopOver}
-                onTagChange={onTagChange}
                 types={types}
                 alltags={allTags}
-                tags={addview ? [] : metricTemplate.tags}
-                probeversions={probeVersionsNames}
+                probeversions={allProbeVersions}
                 metrictemplatelist={listMetricTemplates}
               />
               {
@@ -435,7 +392,7 @@ export const MetricTemplateComponent = (props) => {
               }
             </Form>
           )}
-        />
+        </Formik>
       </BaseArgoView>
     );
   }
@@ -447,7 +404,6 @@ export const MetricTemplateVersionDetails = (props) => {
   const version = props.match.params.version;
   const publicView = props.publicView;
 
-  const backend = new Backend();
 
   const [metricTemplate, setMetricTemplate] = useState(null);
   const [probe, setProbe] = useState({'package': ''});
@@ -455,6 +411,7 @@ export const MetricTemplateVersionDetails = (props) => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    const backend = new Backend();
     setLoading(true);
 
     async function fetchData() {
@@ -480,7 +437,7 @@ export const MetricTemplateVersionDetails = (props) => {
     }
 
     fetchData();
-  }, []);
+  }, [publicView, name, version]);
 
   if (loading)
     return (<LoadingAnim/>);
@@ -508,20 +465,21 @@ export const MetricTemplateVersionDetails = (props) => {
             parameter: metricTemplate.parameter,
             flags: metricTemplate.flags,
             file_attributes: metricTemplate.files,
-            file_parameters: metricTemplate.fileparameter
+            file_parameters: metricTemplate.fileparameter,
+            probe: probe,
+            tags: metricTemplate.tags
           }}
-          render = {props => (
+        >
+          {props => (
             <Form>
               <MetricForm
                 {...props}
                 obj_label='metrictemplate'
                 isHistory={true}
-                probe={probe}
-                tags={metricTemplate.tags}
               />
             </Form>
           )}
-        />
+        </Formik>
       </BaseArgoView>
     );
   } else
