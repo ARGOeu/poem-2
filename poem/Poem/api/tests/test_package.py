@@ -8,20 +8,13 @@ from Poem.tenants.models import Tenant
 from Poem.users.models import CustUser
 from django.contrib.contenttypes.models import ContentType
 from django.core import serializers
-from django.test.client import encode_multipart
 from rest_framework import status
 from rest_framework.test import force_authenticate
 from tenant_schemas.test.cases import TenantTestCase
 from tenant_schemas.test.client import TenantRequestFactory
 from tenant_schemas.utils import schema_context, get_public_schema_name
 
-
-def encode_data(data):
-    content = encode_multipart('BoUnDaRyStRiNg', data)
-    content_type = 'multipart/form-data; boundary=BoUnDaRyStRiNg'
-
-    return content, content_type
-
+from .utils_test import encode_data
 
 
 class ListPackagesAPIViewTests(TenantTestCase):

@@ -1,18 +1,12 @@
 from Poem.api import views_internal as views
 from Poem.poem_super_admin import models as admin_models
 from Poem.users.models import CustUser
-from django.test.client import encode_multipart
 from rest_framework import status
 from rest_framework.test import force_authenticate
 from tenant_schemas.test.cases import TenantTestCase
 from tenant_schemas.test.client import TenantRequestFactory
 
-
-def encode_data(data):
-    content = encode_multipart('BoUnDaRyStRiNg', data)
-    content_type = 'multipart/form-data; boundary=BoUnDaRyStRiNg'
-
-    return content, content_type
+from .utils_test import encode_data
 
 
 class ListYumReposAPIViewTests(TenantTestCase):

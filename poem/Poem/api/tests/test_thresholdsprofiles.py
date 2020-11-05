@@ -7,22 +7,12 @@ from Poem.poem import models as poem_models
 from Poem.users.models import CustUser
 from django.contrib.contenttypes.models import ContentType
 from django.core import serializers
-from django.test.client import encode_multipart
 from rest_framework import status
 from rest_framework.test import force_authenticate
 from tenant_schemas.test.cases import TenantTestCase
 from tenant_schemas.test.client import TenantRequestFactory
 
-
-def encode_data(data):
-    content = encode_multipart('BoUnDaRyStRiNg', data)
-    content_type = 'multipart/form-data; boundary=BoUnDaRyStRiNg'
-
-    return content, content_type
-
-
-def mocked_func(*args, **kwargs):
-    pass
+from .utils_test import mocked_func, encode_data
 
 
 class ListThresholdsProfilesAPIViewTests(TenantTestCase):
