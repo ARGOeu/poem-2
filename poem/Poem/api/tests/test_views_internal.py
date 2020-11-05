@@ -1,22 +1,14 @@
 import datetime
 import json
-from collections import OrderedDict
-from unittest.mock import patch
 
 import requests
-from Poem.api import views_internal as views
-from Poem.api.models import MyAPIKey
 from Poem.helpers.history_helpers import create_comment, update_comment
 from Poem.poem import models as poem_models
 from Poem.poem_super_admin import models as admin_models
-from Poem.users.models import CustUser
 from django.contrib.contenttypes.models import ContentType
 from django.core import serializers
 from django.test.client import encode_multipart
-from rest_framework.test import force_authenticate
 from tenant_schemas.test.cases import TenantTestCase
-from tenant_schemas.test.client import TenantRequestFactory
-from tenant_schemas.utils import get_public_schema_name
 
 ALLOWED_TEST_DOMAIN = '.test.com'
 
@@ -333,103 +325,6 @@ def mocked_web_api_metric_profile_put(*args, **kwargs):
             }
         }, 200
     )
-
-
-class GetSessionDetailsAPIViewTests(TenantTestCase):
-    def setUp(self):
-        self.factory = TenantRequestFactory(self.tenant)
-        self.view = views.IsSessionActive.as_view()
-        self.url = '/api/v2/internal/sessionactive/'
-        self.user = CustUser.objects.create(username='testuser')
-
-        self.userprofile = poem_models.UserProfile.objects.create(
-            user=self.user,
-            subject='subject',
-            displayname='First_User',
-            egiid='blablabla'
-        )
-        MyAPIKey.objects.create(
-            id=1,
-            name='WEB-API',
-            prefix='foo',
-            token='mocked_token_rw'
-        )
-        MyAPIKey.objects.create(
-            id=2,
-            name='WEB-API-RO',
-            token='mocked_token_ro',
-            prefix='bar'
-        )
-
-    def test_unauth(self):
-        request = self.factory.get(self.url + 'true')
-        response = self.view(request)
-        self.assertEqual(response.status_code, 403)
-
-    def test_auth_crud(self):
-        gm = poem_models.GroupOfMetrics.objects.create(
-            name='GROUP-metrics'
-        )
-        ga = poem_models.GroupOfAggregations.objects.create(
-            name='GROUP-aggregations'
-        )
-        gmp = poem_models.GroupOfMetricProfiles.objects.create(
-            name='GROUP-metricprofiles'
-        )
-        gtp = poem_models.GroupOfThresholdsProfiles.objects.create(
-            name='GROUP-thresholds'
-        )
-
-        self.userprofile.groupsofmetrics.add(gm)
-        self.userprofile.groupsofaggregations.add(ga)
-        self.userprofile.groupsofmetricprofiles.add(gmp)
-        self.userprofile.groupsofthresholdsprofiles.add(gtp)
-
-        request = self.factory.get(self.url + 'true')
-        force_authenticate(request, user=self.user)
-        response = self.view(request, 'true')
-        self.assertEqual(response.status_code, 200)
-        self.assertTrue(response.data['active'])
-        self.assertFalse(response.data['userdetails']['is_superuser'])
-        self.assertEqual(response.data['userdetails']['username'], 'testuser')
-        self.assertEqual(response.data['userdetails']['groups'], OrderedDict([
-            ('aggregations', ['GROUP-aggregations']),
-            ('metricprofiles', ['GROUP-metricprofiles']),
-            ('metrics', ['GROUP-metrics']),
-            ('thresholdsprofiles', ['GROUP-thresholds'])]
-        ))
-        self.assertEqual(response.data['userdetails']['token'], 'mocked_token_rw')
-
-    def test_auth_readonly(self):
-        request = self.factory.get(self.url + 'true')
-        force_authenticate(request, user=self.user)
-        response = self.view(request, 'true')
-        self.assertEqual(response.data['userdetails']['token'], 'mocked_token_ro')
-
-
-class GetIsTenantSchemaAPIViewTests(TenantTestCase):
-    def setUp(self):
-        self.factory = TenantRequestFactory(self.tenant)
-        self.view = views.GetIsTenantSchema.as_view()
-        self.url = '/api/v2/internal/istenantschema/'
-
-    def test_get_tenant_schema(self):
-        request = self.factory.get(self.url)
-        response = self.view(request)
-        self.assertEqual(
-            response.data,
-            {'isTenantSchema': True}
-        )
-
-    @patch('Poem.api.internal_views.app.connection')
-    def test_get_schema_name_if_public_schema(self, args):
-        args.schema_name = get_public_schema_name()
-        request = self.factory.get(self.url)
-        response = self.view(request)
-        self.assertEqual(
-            response.data,
-            {'isTenantSchema': False}
-        )
 
 
 class HistoryHelpersTests(TenantTestCase):
