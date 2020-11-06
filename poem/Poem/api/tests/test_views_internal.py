@@ -435,6 +435,17 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual('EGI2', changed_entry.name)
 
+    def test_put_apikey_without_changing_name(self):
+        data = {'id': self.id1, 'name': 'EGI', 'revoked': True}
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        key = MyAPIKey.objects.get(id=self.id1)
+        self.assertEqual(key.name, 'EGI')
+        self.assertTrue(key.revoked)
+
     def test_put_apikey_with_name_that_already_exists(self):
         data = {'id': self.id1, 'name': 'EUDAT', 'revoked': False}
         content, content_type = encode_data(data)
