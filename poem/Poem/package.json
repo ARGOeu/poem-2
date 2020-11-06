@@ -7,7 +7,8 @@
   "scripts": {
     "build-devel": "webpack --config webpack.config.js --progress --colors --mode development",
     "build-prod": "webpack --config webpack.config.js --progress --colors --mode production",
-    "watch": "webpack --config webpack.config.js --watch --mode development"
+    "watch": "webpack --config webpack.config.js --watch --mode development",
+    "test": "jest"
   },
   "repository": {
     "type": "git",
