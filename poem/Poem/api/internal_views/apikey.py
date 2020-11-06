@@ -2,7 +2,7 @@ import datetime
 
 from Poem.api.models import MyAPIKey
 from Poem.api.views import NotFound
-
+from django.db.models import Q
 from rest_framework import status
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
@@ -45,7 +45,9 @@ class ListAPIKeys(APIView):
 
     def put(self, request):
         try:
-            names = MyAPIKey.objects.all().values_list('name', flat=True)
+            names = MyAPIKey.objects.filter(
+                ~Q(id=request.data['id'])
+            ).values_list('name', flat=True)
             if request.data['name'] not in names:
                 obj = MyAPIKey.objects.get(id=request.data['id'])
                 obj.name = request.data['name']
