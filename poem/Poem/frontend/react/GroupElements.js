@@ -34,10 +34,10 @@ export const GroupList = (props) => {
   const name = props.name;
   const id = props.id;
   const group = props.group;
-  const backend = new Backend();
 
   useEffect(() => {
     setLoading(true);
+    const backend = new Backend();
     async function fetchData() {
       try {
         let json = await backend.fetchResult('/api/v2/internal/usergroups');
@@ -48,7 +48,7 @@ export const GroupList = (props) => {
       setLoading(false);
     }
     fetchData();
-  }, []);
+  }, [group]);
 
   const columns = React.useMemo(
     () => [
@@ -65,7 +65,7 @@ export const GroupList = (props) => {
           </Link>,
         column_width: '98%'
       }
-    ]
+    ], [name, id]
   );
 
   if (loading)
@@ -282,8 +282,9 @@ export const GroupChange = (props) => {
             name: name,
             items: items
           }}
-          onSubmit = {(values, action) => onSubmitHandle(values, action)}
-          render = {() => (
+          onSubmit = {(values) => onSubmitHandle(values)}
+        >
+          {() => (
             <Form>
               <FormGroup>
                 <Row>
@@ -428,7 +429,7 @@ export const GroupChange = (props) => {
               }
             </Form>
           )}
-        />
+        </Formik>
       </BaseArgoView>
     );
   }
