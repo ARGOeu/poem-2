@@ -10,6 +10,12 @@
     "watch": "webpack --config webpack.config.js --watch --mode development",
     "test": "jest"
   },
+  "jest": {
+    "moduleNameMapper": {
+      "\\.(jpg|ico|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$": "<rootDir>/frontend/react/__mocks__/fileMock.js",
+      "\\.(css|less)$": "<rootDir>/frontend/react/__mocks__/fileMock.js"
+    }
+},
   "repository": {
     "type": "git",
     "url": "git+https://github.com/ARGOeu/poem-2.git"
