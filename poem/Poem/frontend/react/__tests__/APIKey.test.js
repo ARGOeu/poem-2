@@ -1,9 +1,10 @@
-import React from "react";
-import { render, waitFor, screen } from '@testing-library/react';
-import { APIKeyList } from '../APIKey';
-import { Backend } from '../DataManager';
-import { Router, Route } from 'react-router-dom';
+import '@testing-library/jest-dom/extend-expect';
+import { render, screen, waitFor } from '@testing-library/react';
 import { createMemoryHistory } from 'history';
+import React from "react";
+import { Route, Router } from 'react-router-dom';
+import { APIKeyChange, APIKeyList } from '../APIKey';
+import { Backend } from '../DataManager';
 
 jest.mock('../DataManager')
 
@@ -92,5 +93,45 @@ describe("Tests for API keys listview", () => {
     expect(screen.getAllByRole('row', {name: ''})).toHaveLength(4)
     expect(screen.getByRole('row', {name: /no/i}).textContent).toBe('No API keys')
     expect(screen.getByRole('button', {name: 'Add'})).toBeTruthy()
+  })
+})
+
+describe('Tests for API key change', () => {
+  it('Test that page renders properly', async () => {
+    const fakeData = {
+      id: 1,
+      name: 'FIRST_TOKEN',
+      token: '123456',
+      created: '2020-11-09 13:00:00',
+      revoked: false
+    };
+
+    Backend.mockImplementation(() => {
+      return {
+        fetchData: () => Promise.resolve(fakeData)
+      }
+    })
+
+    const history = createMemoryHistory();
+
+    render(
+      <Router history={history}>
+        <Route render={props => <APIKeyChange {...props} />} />
+      </Router>
+    )
+
+    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', {name: /api/i}).textContent).toBe('Change API key')
+    });
+    expect(screen.getByRole('heading', {name: /credent/i}).textContent).toBe('Credentials')
+    expect(screen.getByRole('textbox', {name: /name/i}).value).toBe('FIRST_TOKEN');
+    expect(screen.getByRole('checkbox', {name: /revoked/i}).value).toBe('false');
+    expect(screen.getByDisplayValue(/123/i).value).toBe('123456');
+    expect(screen.getByDisplayValue(/123/i)).toBeDisabled();
+    expect(screen.getByRole('button', {name: /save/i})).toBeInTheDocument();
+    expect(screen.getByRole('button', {name: /delete/i})).toBeInTheDocument();
+    expect(screen.getByRole('button', {name: ''})).toBeInTheDocument();
   })
 })
