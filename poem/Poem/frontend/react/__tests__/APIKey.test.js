@@ -12,7 +12,7 @@ beforeEach(() => {
 })
 
 describe("Tests for API keys listview", () => {
-  beforeAll(() => {
+  it('Render properly', async () => {
     const fakeData = [
       {
         id: 1,
@@ -35,9 +35,7 @@ describe("Tests for API keys listview", () => {
         fetchData: () => Promise.resolve(fakeData)
       }
     })
-  })
 
-  it('Render properly', async () => {
     const history = createMemoryHistory();
 
     render(
@@ -63,6 +61,36 @@ describe("Tests for API keys listview", () => {
     expect(screen.getByRole('row', {name: /second_token/i}).textContent).toBe('2SECOND_TOKEN2020-11-09 13:10:01')
     expect(screen.getByRole('link', {name: /first/i})).toHaveProperty('href', 'http://localhost/ui/administration/apikey/FIRST_TOKEN')
     expect(screen.getByRole('link', {name: /second/i})).toHaveProperty('href', 'http://localhost/ui/administration/apikey/SECOND_TOKEN')
+    expect(screen.getByRole('button', {name: 'Add'})).toBeTruthy()
+  })
+
+  it('Render empty table properly', async () => {
+    Backend.mockImplementation(() => {
+      return {
+        fetchData: () => Promise.resolve([])
+      }
+    })
+
+    const history = createMemoryHistory();
+
+    render(
+      <Router history={history}>
+        <Route render={props => <APIKeyList {...props} />} />
+      </Router>
+    )
+    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', {name: /api/i}).textContent).toBe('Select API key to change')
+    })
+    expect(screen.getAllByRole('columnheader')).toHaveLength(4)
+    expect(screen.getByRole('columnheader', {name: /name/i}).textContent).toBe('Name')
+    expect(screen.getByRole('columnheader', {name: /#/i}).textContent).toBe('#')
+    expect(screen.getByRole('columnheader', {name: /created/i}).textContent).toBe('Created')
+    expect(screen.getByRole('columnheader', {name: /revoked/i}).textContent).toBe('Revoked')
+    expect(screen.getAllByRole('row')).toHaveLength(6)
+    expect(screen.getAllByRole('row', {name: ''})).toHaveLength(4)
+    expect(screen.getByRole('row', {name: /no/i}).textContent).toBe('No API keys')
     expect(screen.getByRole('button', {name: 'Add'})).toBeTruthy()
   })
 })
