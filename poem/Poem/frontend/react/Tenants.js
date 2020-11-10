@@ -18,31 +18,21 @@ import {
 } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faIdBadge } from '@fortawesome/free-solid-svg-icons';
+import { useQuery } from 'react-query';
 
 
 export const TenantList = (props) => {
-  const [listTenants, setListTenants] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null)
-
   const location = props.location;
   const history = props.history;
 
   const backend = new Backend();
 
-  useEffect(() => {
-    setLoading(true);
-    async function fetchData() {
-      try {
-        let json = await backend.fetchData('/api/v2/internal/tenants');
-        setListTenants(json);
-      } catch(err) {
-        setError(err);
-      };
-      setLoading(false);
-    };
-    fetchData();
-  }, [])
+  const { data: listTenants, error: error, isLoading: loading } = useQuery(
+    'tenant_listview', async () => {
+      let json = await backend.fetchData('/api/v2/internal/tenants');
+      return json;
+    }
+  );
 
   if (loading)
     return (<LoadingAnim/>);
@@ -97,7 +87,7 @@ export const TenantList = (props) => {
       groups.push(
         <CardGroup key={i} className='mb-3' style={{width: group_width}}>
           {
-            cards.map((card, k) => card)
+            cards.map((card) => card)
           }
         </CardGroup>
       )
@@ -111,7 +101,7 @@ export const TenantList = (props) => {
         addnew={false}
       >
         {
-          groups.map((group, k) => group)
+          groups.map((group) => group)
         }
       </BaseArgoView>
     );
@@ -140,9 +130,9 @@ export const TenantChange = (props) => {
         setTenant(json)
       } catch(err) {
         setError(err);
-      };
+      }
       setLoading(false);
-    };
+    }
     fetchData();
   }, []);
 
@@ -169,7 +159,7 @@ export const TenantChange = (props) => {
             nr_metrics: tenant.nr_metrics,
             nr_probes: tenant.nr_probes
           }}
-          render = {props => (
+          render = {() => (
             <Form>
               <FormGroup>
                 <Row>

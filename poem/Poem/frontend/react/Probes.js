@@ -12,9 +12,9 @@ import {
   NotifyError,
   ErrorComponent,
   ParagraphTitle,
-  ModalAreYouSure
+  DefaultColumnFilter,
+  BaseArgoTable
 } from './UIElements';
-import ReactTable from 'react-table-6';
 import {
   FormGroup,
   Label,
@@ -49,8 +49,7 @@ const ProbeSchema = Yup.object().shape({
 
 
 const LinkField = ({
-  field: { value },
-  ...props
+  field: { value }
 }) => (
   <div className='form-control' style={{backgroundColor: '#e9ecef', overflow: 'hidden', textOverflow: 'ellipsis'}}>
     <a href={value} style={{'whiteSpace': 'nowrap'}}>{value}</a>
@@ -282,25 +281,25 @@ const ProbeForm = ({
                 metrictemplatelist.length > 0 &&
                 <div>
                   Metric templates:
-                    <div>
-                      {
-                        metrictemplatelist
-                          .map((e, i) => <Link
-                            key={i}
-                            to={
-                              publicView ?
-                                `/ui/public_metrictemplates/${e}`
+                  <div>
+                    {
+                      metrictemplatelist
+                        .map((met, i) => <Link
+                          key={i}
+                          to={
+                            publicView ?
+                              `/ui/public_metrictemplates/${met}`
+                            :
+                              isTenantSchema ?
+                                `/ui/probes/${values.name}/${met}`
                               :
-                                isTenantSchema ?
-                                  `/ui/probes/${values.name}/${e}`
-                                :
-                                  `/ui/metrictemplates/${e}`
+                                `/ui/metrictemplates/${met}`
                             }>
-                              {e}
-                            </Link>
-                          ).reduce((prev, curr) => [prev, ', ', curr])
-                      }
-                    </div>
+                          {met}
+                        </Link>
+                        ).reduce((prev, curr) => [prev, ', ', curr])
+                    }
+                  </div>
                 </div>
               }
             </Col>
@@ -313,10 +312,6 @@ const ProbeForm = ({
 export const ProbeList = (props) => {
   const location = props.location;
   const publicView = props.publicView;
-
-  const [searchName, setSearchName] = useState('');
-  const [searchDescription, setSearchDescription] = useState('');
-  const [searchPackage, setSearchPackage] = useState('');
 
   const backend = new Backend();
 
@@ -334,111 +329,55 @@ export const ProbeList = (props) => {
     }
   );
 
+  const columns = React.useMemo(() => [
+    {
+      Header: '#',
+      accessor: null,
+      column_width: '2%'
+    },
+    {
+      Header: 'Name',
+      column_width: '20%',
+      accessor: 'name',
+      Cell: e =>
+        <Link to={`/ui/${publicView ? 'public_' : ''}probes/${e.value}`}>
+          {e.value}
+        </Link>,
+      Filter: DefaultColumnFilter
+    },
+    {
+      Header: '#versions',
+      accessor: 'nv',
+      column_width: '3%',
+      Cell: e =>
+        <div style={{textAlign: 'center'}}>
+          <Link to={`/ui/${publicView ? 'public_' : ''}probes/${e.row.original.name}/history`}>
+            {e.value}
+          </Link>
+        </div>,
+      disableFilters: true
+    },
+    {
+      Header: 'Package',
+      column_width: '20%',
+      accessor: 'package',
+      Filter: DefaultColumnFilter
+    },
+    {
+      Header: 'Description',
+      column_width: '55%',
+      accessor: 'description',
+      Filter: DefaultColumnFilter
+    }
+  ]);
+
   if (listProbesLoading || isTenantSchemaLoading)
     return (<LoadingAnim/>);
 
   else if (listProbesError)
     return (<ErrorComponent error={listProbesError.message}/>);
 
-  else {
-    const columns = [
-      {
-        Header: '#',
-        id: 'row',
-        minWidth: 12,
-        Cell: (row) =>
-          <div style={{textAlign: 'center'}}>
-            {row.index + 1}
-          </div>
-      },
-      {
-        Header: 'Name',
-        id: 'name',
-        minWidth: 80,
-        accessor: e =>
-          <Link to={`/ui/${publicView ? 'public_' : ''}probes/${e.name}`}>
-            {e.name}
-          </Link>,
-        filterable: true,
-        Filter: (
-          <input
-            value={searchName}
-            onChange={e => setSearchName(e.target.value)}
-            placeholder='Search by name'
-            style={{width: "100%"}}
-          />
-        )
-      },
-      {
-        Header: '#versions',
-        id: 'nv',
-        minWidth: 25,
-        accessor: e =>
-          <Link to={`/ui/${publicView ? 'public_' : ''}probes/${e.name}/history`}>
-            {e.nv}
-          </Link>,
-        Cell: row =>
-          <div style={{textAlign: 'center'}}>
-            {row.value}
-          </div>
-      },
-      {
-        Header: 'Package',
-        minWidth: 120,
-        accessor: 'package',
-        filterable: true,
-        Filter: (
-          <input
-            type='text'
-            placeholder='Search by package'
-            value={searchPackage}
-            onChange={e => setSearchPackage(e.target.value)}
-            style={{width: '100%'}}
-          />
-        ),
-        filterMethod:
-          (filter, row) =>
-            row[filter.id] !== undefined ? String(row[filter.id]).toLowerCase().includes(filter.value.toLowerCase()) : true
-      },
-      {
-        Header: 'Description',
-        minWidth: 200,
-        accessor: 'description',
-        filterable: true,
-        Filter: (
-          <input
-            type='text'
-            placeholder='Search by description'
-            value={searchDescription}
-            onChange={e=> setSearchDescription(e.target.value)}
-            style={{width: '100%'}}
-          />
-        ),
-        filterMethod:
-          (filter, row) =>
-            row[filter.id] !== undefined ? String(row[filter.id]).toLowerCase().includes(filter.value.toLowerCase()) : true
-      }
-    ];
-
-    var list_probe = listProbes;
-    if (searchName) {
-      list_probe = list_probe.filter(row =>
-        row.name.toLowerCase().includes(searchName.toLowerCase())
-      );
-    };
-
-    if (searchDescription) {
-      list_probe = list_probe.filter(row =>
-        row.description.toLowerCase().includes(searchDescription.toLowerCase())
-      );
-    };
-
-    if (searchPackage) {
-      list_probe = list_probe.filter(row =>
-        row.package.toLowerCase().includes(searchPackage.toLowerCase())
-      );
-    };
-
+  else if (!listProbesLoading && !isTenantSchemaLoading && listProbes) {
     return (
       <BaseArgoView
         resourcename='probe'
@@ -446,17 +385,17 @@ export const ProbeList = (props) => {
         listview={true}
         addnew={!isTenantSchema && !publicView}
       >
-        <ReactTable
-          data={list_probe}
+        <BaseArgoTable
+          data={listProbes}
           columns={columns}
-          className='-highlight'
-          defaultPageSize={50}
-          rowsText='probes'
-          getTheadThProps={() => ({className: 'table-active font-weight-bold p-2'})}
+          page_size={50}
+          resourcename='probes'
+          filter={true}
         />
       </BaseArgoView>
     );
-  };
+  } else
+    return null;
 };
 
 
@@ -523,9 +462,9 @@ export const ProbeComponent = (props) => {
 
   function toggleAreYouSure() {
     setAreYouSureModal(!areYouSureModal);
-  };
+  }
 
-  function onSubmitHandle(values, actions) {
+  function onSubmitHandle(values) {
     let msg = `Are you sure you want to ${addview || cloneview ? 'add' : 'change'} probe?`;
     let title = `${addview || cloneview ? 'Add' : 'Change'} probe`;
 
@@ -534,7 +473,7 @@ export const ProbeComponent = (props) => {
     setModalTitle(title);
     setModalFlag('submit');
     toggleAreYouSure();
-  };
+  }
 
   async function doChange() {
     if (addview || cloneview) {
@@ -575,7 +514,7 @@ export const ProbeComponent = (props) => {
           title: 'Added',
           callback: () => history.push('/ui/probes')
         });
-      };
+      }
     } else {
       let response = await backend.changeObject(
         '/api/v2/internal/probes/',
@@ -597,7 +536,7 @@ export const ProbeComponent = (props) => {
           change_msg = json.detail;
         } catch(err) {
           change_msg = 'Error changing probe';
-        };
+        }
         NotifyError({
           title: `Error: ${response.status} ${response.statusText}`,
           msg: change_msg
@@ -608,9 +547,9 @@ export const ProbeComponent = (props) => {
           title: 'Changed',
           callback: () => history.push('/ui/probes')
         });
-      };
-    };
-  };
+      }
+    }
+  }
 
   async function doDelete() {
     let response = await backend.deleteObject(`/api/v2/internal/probes/${name}`);
@@ -621,7 +560,7 @@ export const ProbeComponent = (props) => {
         msg = json.detail;
       } catch(err) {
         msg = 'Error deleting probe';
-      };
+      }
       NotifyError({
         title: `Error: ${response.status} ${response.statusText}`,
         msg: msg
@@ -632,8 +571,8 @@ export const ProbeComponent = (props) => {
         title: 'Deleted',
         callback: () => history.push('/ui/probes')
       });
-    };
-  };
+    }
+  }
 
   function onSelect(field, value) {
     let selectedProbe = probe;
@@ -643,9 +582,9 @@ export const ProbeComponent = (props) => {
     } catch(err) {
       if (err instanceof TypeError)
         selectedProbe['version'] = '';
-    };
+    }
     queryCache.setQueryData(`${querykey}_probe`, () => selectedProbe);
-  };
+  }
 
   if (probeLoading || isTenantSchemaLoading || metricTemplateListLoading || listPackagesLoading)
     return(<LoadingAnim/>)
@@ -666,82 +605,88 @@ export const ProbeComponent = (props) => {
         probePackage = probe.package;
 
       return (
-        <React.Fragment>
-          <ModalAreYouSure
-            isOpen={areYouSureModal}
-            toggle={toggleAreYouSure}
-            title={modalTitle}
-            msg={modalMsg}
-            onYes={modalFlag === 'submit' ? doChange : modalFlag === 'delete' ? doDelete : undefined}
-          />
-          <BaseArgoView
-            resourcename={`${publicView ? 'Probe details' : 'probe'}`}
-            location={location}
-            addview={addview}
-            cloneview={cloneview}
-            clone={true}
-            publicview={publicView}
+        <BaseArgoView
+          resourcename={`${publicView ? 'Probe details' : 'probe'}`}
+          location={location}
+          addview={addview}
+          cloneview={cloneview}
+          clone={true}
+          publicview={publicView}
+          modal={true}
+          state={{
+            areYouSureModal,
+            modalTitle,
+            modalMsg,
+            'modalFunc': modalFlag === 'submit' ?
+              doChange
+            :
+              modalFlag === 'delete' ?
+                doDelete
+              :
+                undefined
+          }}
+          toggle={toggleAreYouSure}
+        >
+          <Formik
+            initialValues = {{
+              id: probe.id,
+              name: probe.name,
+              version: probe.version,
+              package: probePackage,
+              repository: probe.repository,
+              docurl: probe.docurl,
+              description: probe.description,
+              comment: probe.comment,
+              update_metrics: false
+            }}
+            validationSchema={ProbeSchema}
+            enableReinitialize={true}
+            onSubmit = {(values) => onSubmitHandle(values)}
           >
-            <Formik
-              initialValues = {{
-                id: probe.id,
-                name: probe.name,
-                version: probe.version,
-                package: probePackage,
-                repository: probe.repository,
-                docurl: probe.docurl,
-                description: probe.description,
-                comment: probe.comment,
-                update_metrics: false
-              }}
-              validationSchema={ProbeSchema}
-              onSubmit = {(values, actions) => onSubmitHandle(values, actions)}
-            >
-              {props => (
-                <Form>
-                  <ProbeForm
-                    {...props}
-                    addview={addview}
-                    cloneview={cloneview}
-                    publicView={publicView}
-                    list_packages={listPackages}
-                    onSelect={onSelect}
-                    metrictemplatelist={metricTemplateList}
-                    version={probe.version}
-                  />
-                  {
-                    !publicView &&
-                      <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
-                        {
-                          (!addview && !cloneview && !publicView) ?
-                            <Button
-                              color='danger'
-                              onClick={() => {
-                                setModalMsg('Are you sure you want to delete probe?');
-                                setModalTitle('Delete probe');
-                                setModalFlag('delete');
-                                toggleAreYouSure();
-                                }}
-                            >
-                              Delete
-                            </Button>
-                          :
-                            <div></div>
-                        }
-                        <Button
-                          color='success'
-                          id='submit-button'
-                          type='submit'
-                        >
-                          Save
-                        </Button>
-                      </div>
-                }
-                </Form>
-              )}
-            </Formik>
-          </BaseArgoView>
-        </React.Fragment>
+            {props => (
+              <Form>
+                <ProbeForm
+                  {...props}
+                  addview={addview}
+                  cloneview={cloneview}
+                  publicView={publicView}
+                  list_packages={listPackages}
+                  onSelect={onSelect}
+                  metrictemplatelist={metricTemplateList}
+                  version={probe.version}
+                />
+                {
+                  !publicView &&
+                    <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
+                      {
+                        (!addview && !cloneview && !publicView) ?
+                          <Button
+                            color='danger'
+                            onClick={() => {
+                              setModalMsg('Are you sure you want to delete probe?');
+                              setModalTitle('Delete probe');
+                              setModalFlag('delete');
+                              toggleAreYouSure();
+                            }}
+                          >
+                            Delete
+                          </Button>
+                        :
+                          <div></div>
+                      }
+                      <Button
+                        color='success'
+                        id='submit-button'
+                        type='submit'
+                      >
+                        Save
+                      </Button>
+                    </div>
+              }
+              </Form>
+            )}
+          </Formik>
+        </BaseArgoView>
       )
     } else {
       return (
@@ -774,8 +719,8 @@ export const ProbeComponent = (props) => {
           />
         </BaseArgoView>
       );
-    };
-  };
+    }
+  }
 };
 
 
@@ -807,9 +752,9 @@ export const ProbeVersionCompare = (props) => {
         });
       } catch(err) {
         setError(err);
-      };
+      }
       setLoading(false);
-    };
+    }
 
     fetchVersions();
   }, []);
@@ -891,9 +836,9 @@ export const ProbeVersionDetails = (props) => {
         });
       } catch(err) {
         setError(err);
-      };
+      }
       setLoading(false);
-    };
+    }
 
     fetchProbeVersion();
   }, []);

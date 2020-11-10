@@ -1,5 +1,26 @@
 # Changelog
 
+## [3.3.5] - 2020-11-05
+
+### Added
+
+* ARGO-2614 Use caching on tenant page
+
+### Fixed
+
+* ARGO-2679 Bug with metric template import
+
+### Changed
+
+* ARGO-2567 Refactor metric profile by using React Context
+* ARGO-2606 Switch 'Login' component to React Hooks
+* ARGO-2608 Switch 'Users' components to React Hooks
+* ARGO-2613 Use 'state' variable in BaseArgoView
+* ARGO-2653 Refactor metric profiles to React Hooks
+* ARGO-2654 Refactor aggregation profiles to React Hooks
+* ARGO-2655 Refactor aggregation profiles by using React Context
+* ARGO-2658 Switch 'App' component to React Hooks
+
 ## [3.3.4] - 2020-10-08
 
 ### Added

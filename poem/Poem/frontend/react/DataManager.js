@@ -66,7 +66,7 @@ export class Backend {
       }
     } catch (err) {
       error_msg = `${err}; in fetch ${url}`;
-    };
+    }
     if (error_msg)
       throw Error(error_msg);
   }
@@ -90,7 +90,7 @@ export class Backend {
       }
     } catch(err) {
       error_msg = `${err}; in fetch ${url}`;
-    };
+    }
     if (error_msg)
       throw Error(error_msg);
   }
@@ -108,11 +108,11 @@ export class Backend {
           error_msg = `${response.status} ${response.statusText}; in fetch ${url}; ${json.detail}`;
         } catch(err1) {
           error_msg = `${response.status} ${response.statusText}; in fetch ${url}`;
-        };
+        }
       }
     } catch(err) {
       error_msg = `${err}; in fetch ${url}`;
-    };
+    }
     if (error_msg)
       throw Error(error_msg);
   }
@@ -203,30 +203,30 @@ export class WebApi {
           err_msg = `${response.status} ${response.statusText}; in fetch ${url}; ${json.status.details}`;
         } catch(err) {
           err_msg = `${response.status} ${response.statusText}; in fetch ${url}`;
-        };
-      };
+        }
+      }
     } catch(err) {
       err_msg = `${err}; in fetch ${url}`;
-    };
+    }
     if (err_msg)
       throw Error(err_msg);
-  };
+  }
 
   async fetchMetricProfiles() {
     return this.fetchProfiles(this.metricprofiles);
-  };
+  }
 
   async fetchAggregationProfiles() {
     return this.fetchProfiles(this.aggregationprofiles);
-  };
+  }
 
   async fetchOperationsProfiles() {
     return this.fetchProfiles(this.operationsprofiles);
-  };
+  }
 
   async fetchReports() {
     return this.fetchProfiles(this.reports);
-  };
+  }
 
   fetchMetricProfile(id) {
     return this.fetchProfile(`${this.metricprofiles}/${id}`);
@@ -250,7 +250,7 @@ export class WebApi {
         report = r;
     });
     return report;
-  };
+  }
 
   fetchAggregationProfile(id) {
     return this.fetchProfile(`${this.aggregationprofiles}/${id}`);
@@ -324,11 +324,11 @@ export class WebApi {
             err_msg = `${response.status} ${response.statusText}; in fetch ${url}`;
         } catch(err1) {
           err_msg = `${response.status} ${response.statusText}; in fetch ${url}`;
-        };
-      };
+        }
+      }
     } catch(err) {
       err_msg = `${err}; in fetch ${url}`;
-    };
+    }
     if (err_msg)
       throw Error(err_msg);
   }
