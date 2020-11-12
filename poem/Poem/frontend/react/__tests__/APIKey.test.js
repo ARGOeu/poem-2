@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom/extend-expect';
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { createMemoryHistory } from 'history';
 import React from "react";
 import { Route, Router } from 'react-router-dom';
@@ -7,6 +7,12 @@ import { APIKeyChange, APIKeyList } from '../APIKey';
 import { Backend } from '../DataManager';
 
 jest.mock('../DataManager')
+
+Object.assign(navigator, {
+  clipboard: {
+    writeText: () => {},
+  },
+});
 
 beforeEach(() => {
   Backend.mockClear();
@@ -97,7 +103,8 @@ describe("Tests for API keys listview", () => {
 })
 
 describe('Tests for API key change', () => {
-  it('Test that page renders properly', async () => {
+  jest.spyOn(navigator.clipboard, "writeText");
+  beforeAll(() => {
     const fakeData = {
       id: 1,
       name: 'FIRST_TOKEN',
@@ -111,7 +118,9 @@ describe('Tests for API key change', () => {
         fetchData: () => Promise.resolve(fakeData)
       }
     })
+  })
 
+  it('Test that page renders properly', async () => {
     const history = createMemoryHistory();
 
     render(
@@ -133,5 +142,21 @@ describe('Tests for API key change', () => {
     expect(screen.getByRole('button', {name: /save/i})).toBeInTheDocument();
     expect(screen.getByRole('button', {name: /delete/i})).toBeInTheDocument();
     expect(screen.getByRole('button', {name: ''})).toBeInTheDocument();
+  })
+
+  it('Test copy to clipbord button', async () => {
+    const history = createMemoryHistory();
+
+    render(
+      <Router history={history}>
+        <Route render={props => <APIKeyChange {...props} />} />
+      </Router>
+    )
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', {name: ''})).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', {name: ''}))
+    expect(navigator.clipboard.writeText).toHaveBeenCalledWith('123456')
   })
 })
