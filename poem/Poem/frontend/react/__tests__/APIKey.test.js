@@ -5,8 +5,36 @@ import React from "react";
 import { Route, Router } from 'react-router-dom';
 import { APIKeyChange, APIKeyList } from '../APIKey';
 import { Backend } from '../DataManager';
+import { NotificationManager } from 'react-notifications';
 
-jest.mock('../DataManager')
+const mockAPIKeys = [
+  {
+    id: 1,
+    name: 'FIRST_TOKEN',
+    token: '123456',
+    created: '2020-11-09 13:00:00',
+    revoked: false
+  },
+  {
+    id: 2,
+    name: 'SECOND_TOKEN',
+    token: 'abcdef',
+    created: '2020-11-09 13:10:01',
+    revoked: false
+  }
+];
+
+const mockChangeObject = jest.fn();
+
+jest.mock('../DataManager', () => {
+  return {
+    Backend: jest.fn().mockImplementation(() => {
+      return {
+        fetchData: () => Promise.resolve(mockAPIKeys)
+      }
+    })
+  }
+})
 
 Object.assign(navigator, {
   clipboard: {
@@ -16,33 +44,11 @@ Object.assign(navigator, {
 
 beforeEach(() => {
   Backend.mockClear();
+  mockChangeObject.mockClear();
 })
 
 describe("Tests for API keys listview", () => {
   it('Render properly', async () => {
-    const fakeData = [
-      {
-        id: 1,
-        name: 'FIRST_TOKEN',
-        token: '123456',
-        created: '2020-11-09 13:00:00',
-        revoked: false
-      },
-      {
-        id: 2,
-        name: 'SECOND_TOKEN',
-        token: 'abcdef',
-        created: '2020-11-09 13:10:01',
-        revoked: false
-      }
-    ];
-
-    Backend.mockImplementation(() => {
-      return {
-        fetchData: () => Promise.resolve(fakeData)
-      }
-    })
-
     const history = createMemoryHistory();
 
     render(
@@ -104,8 +110,9 @@ describe("Tests for API keys listview", () => {
 
 describe('Tests for API key change', () => {
   jest.spyOn(navigator.clipboard, "writeText");
+  jest.spyOn(NotificationManager, "success");
   beforeAll(() => {
-    const fakeData = {
+    const mockAPIKey = {
       id: 1,
       name: 'FIRST_TOKEN',
       token: '123456',
@@ -115,7 +122,8 @@ describe('Tests for API key change', () => {
 
     Backend.mockImplementation(() => {
       return {
-        fetchData: () => Promise.resolve(fakeData)
+        fetchData: () => Promise.resolve(mockAPIKey),
+        changeObject: mockChangeObject
       }
     })
   })
@@ -158,5 +166,63 @@ describe('Tests for API key change', () => {
     })
     fireEvent.click(screen.getByRole('button', {name: ''}))
     expect(navigator.clipboard.writeText).toHaveBeenCalledWith('123456')
+  })
+
+  it('Test change API key name and save', async () => {
+    mockChangeObject.mockReturnValue(Promise.resolve({ok: true, status_code: 200}));
+
+    const history = createMemoryHistory();
+
+    render(
+      <Router history={history}>
+        <Route render={props => <APIKeyChange {...props} />} />
+      </Router>
+    )
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', {name: /save/i})).toBeInTheDocument()
+    })
+    fireEvent.change(screen.getByRole('textbox', {name: /name/i}), {target: {value: 'NEW_NAME'}})
+    fireEvent.click(screen.getByRole('button', {name: /save/i}))
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', {title: /change/i})).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByRole('button', {name: /yes/i}))
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        '/api/v2/internal/apikeys/',
+        {id: 1, revoked: false, name: 'NEW_NAME'}
+      )
+    })
+    expect(NotificationManager.success).toHaveBeenCalledWith('API key successfully changed', 'Changed', 2000)
+  })
+
+  it('Test revoke API key and save', async () => {
+    mockChangeObject.mockReturnValue(Promise.resolve({ok: true, status_code: 200}));
+
+    const history = createMemoryHistory();
+
+    render(
+      <Router history={history}>
+        <Route render={props => <APIKeyChange {...props} />} />
+      </Router>
+    )
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', {name: /save/i})).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByRole('checkbox', {name: /revoked/i}))
+    fireEvent.click(screen.getByRole('button', {name: /save/i}))
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', {title: /change/i})).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByRole('button', {name: /yes/i}))
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        '/api/v2/internal/apikeys/',
+        {id: 1, revoked: true, name: 'FIRST_TOKEN'}
+      )
+    })
+    expect(NotificationManager.success).toHaveBeenCalledWith('API key successfully changed', 'Changed', 2000)
   })
 })
