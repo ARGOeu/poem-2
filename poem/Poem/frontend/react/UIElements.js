@@ -946,7 +946,7 @@ export const _AutocompleteField = ({setFieldValue, lists=[], val='', icon, field
   );
 };
 
-export const AutocompleteField = ({lists=[], field, icon, label, onselect_handler=undefined, ...props}) => {
+export const AutocompleteField = ({lists=[], field, icon, label, onselect_handler=undefined, hide_error=false, ...props}) => {
   const [inputValue, setInputValue] = useState(props.values[field]);
   const [suggestions, setSuggestions] = useState(lists);
   const [touched, setTouched] = useState(false);
@@ -983,7 +983,7 @@ export const AutocompleteField = ({lists=[], field, icon, label, onselect_handle
             <input {...inputProps} type='text'
             className={`form-control ${props.errors[field] && touched && 'border-danger'}`} aria-label='label' />
           </div>
-          {props.errors[field] && touched && <div style={{color: '#FF0000', fontSize: 'small'}}>{props.errors[field]}</div>}
+          {!hide_error && props.errors[field] && touched && <div style={{color: '#FF0000', fontSize: 'small'}}>{props.errors[field]}</div>}
         </div>
       );
     else
