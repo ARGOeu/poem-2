@@ -6,7 +6,6 @@ import {
   ErrorComponent,
   BaseArgoView,
   ParagraphTitle,
-  Checkbox,
   BaseArgoTable
  } from './UIElements';
 import { Link } from 'react-router-dom';
@@ -85,7 +84,7 @@ export const ReportsList = (props) => {
               <FontAwesomeIcon icon={faCheckCircle} style={{color: '#339900'}}/>,
         column_width: '8%'
       }
-    ]
+    ], []
   );
 
   if (loading)
@@ -138,7 +137,7 @@ export const ReportsComponent = (props) => {
     `${querykey}_metricprofiles`, async () => {
       let mp = await webapi.fetchMetricProfiles();
       let metricprofiles = [];
-      mp.forEach(p => metricprofiles.push(p.name));
+      mp.forEach(profile => metricprofiles.push(profile.name));
       return metricprofiles;
     }
   );
@@ -147,7 +146,7 @@ export const ReportsComponent = (props) => {
     `${querykey}_aggregationprofiles`, async () => {
       let ap = await webapi.fetchAggregationProfiles();
       let aggregations = [];
-      ap.forEach(p => aggregations.push(p.name));
+      ap.forEach(profile => aggregations.push(profile.name));
       return aggregations;
     }
   );
@@ -156,7 +155,7 @@ export const ReportsComponent = (props) => {
     `${querykey}_operationsprofiles`, async () => {
       let op = await webapi.fetchOperationsProfiles();
       let operations = [];
-      op.forEach(p => operations.push(p.name));
+      op.forEach(profile => operations.push(profile.name));
       return operations;
     }
   );
@@ -180,15 +179,15 @@ export const ReportsComponent = (props) => {
     let metricProfile = '';
     let aggregationProfile = '';
     let operationsProfile = '';
-    report.profiles.forEach(p => {
-      if (p.type === 'metric')
-        metricProfile = p.name;
+    report.profiles.forEach(profile => {
+      if (profile.type === 'metric')
+        metricProfile = profile.name;
 
-      if (p.type === 'aggregation')
-        aggregationProfile = p.name;
+      if (profile.type === 'aggregation')
+        aggregationProfile = profile.name;
 
-      if (p.type === 'operations')
-        operationsProfile = p.name;
+      if (profile.type === 'operations')
+        operationsProfile = profile.name;
     })
     return (
       <BaseArgoView
@@ -209,10 +208,10 @@ export const ReportsComponent = (props) => {
             reliabilityThreshold: report.thresholds.reliability,
             uptimeThreshold: report.thresholds.uptime,
             unknownThreshold: report.thresholds.unknown,
-            downtimeThreshold: report.thresholds.downtime,
-            disabled: report.disabled
+            downtimeThreshold: report.thresholds.downtime
           }}
-          render = {props => (
+        >
+          {() => (
             <Form>
               <FormGroup>
                 <Row className='align-items-center'>
@@ -230,13 +229,14 @@ export const ReportsComponent = (props) => {
                     </FormText>
                   </Col>
                   <Col md={2}>
-                    <Field
-                      component={Checkbox}
-                      name='disabled'
-                      className='form-control'
-                      id='checkbox'
-                      label='Disabled'
-                    />
+                    <label>
+                      <Field
+                        type='checkbox'
+                        name='disabled'
+                        className='mr-1'
+                      />
+                      Disabled
+                    </label>
                     <FormText color='muted'>
                       Mark report as disabled.
                     </FormText>
@@ -354,7 +354,7 @@ export const ReportsComponent = (props) => {
               </FormGroup>
             </Form>
           )}
-        />
+        </Formik>
       </BaseArgoView>
     )
   }
