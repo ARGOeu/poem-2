@@ -42,9 +42,8 @@ Object.assign(navigator, {
   },
 });
 
-beforeEach(() => {
-  Backend.mockClear();
-  mockChangeObject.mockClear();
+afterEach(() => {
+  jest.clearAllMocks();
 })
 
 describe("Tests for API keys listview", () => {
@@ -111,6 +110,7 @@ describe("Tests for API keys listview", () => {
 describe('Tests for API key change', () => {
   jest.spyOn(navigator.clipboard, "writeText");
   jest.spyOn(NotificationManager, "success");
+  jest.spyOn(NotificationManager, "error");
   beforeAll(() => {
     const mockAPIKey = {
       id: 1,
@@ -198,7 +198,7 @@ describe('Tests for API key change', () => {
   })
 
   it('Test revoke API key and save', async () => {
-    mockChangeObject.mockReturnValue(Promise.resolve({ok: true, status_code: 200}));
+    mockChangeObject.mockReturnValue(Promise.resolve({ok: true, status: 200}));
 
     const history = createMemoryHistory();
 
@@ -224,5 +224,90 @@ describe('Tests for API key change', () => {
       )
     })
     expect(NotificationManager.success).toHaveBeenCalledWith('API key successfully changed', 'Changed', 2000)
+  })
+
+  it('Test change API key with backend error message', async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({
+        json: () => Promise.resolve({detail: 'API key with this name already exists'}),
+        status: 400,
+        statusText: 'BAD REQUEST'
+      })
+    )
+
+    const history = createMemoryHistory();
+
+    render(
+      <Router history={history}>
+        <Route render={props => <APIKeyChange {...props} />} />
+      </Router>
+    )
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', {name: /save/i})).toBeInTheDocument();
+    })
+    fireEvent.change(screen.getByRole('textbox', {name: /name/i}), {target: {value: 'SECOND_TOKEN'}})
+    fireEvent.click(screen.getByRole('button', {name: /save/i}))
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', {title: /change/i})).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByRole('button', {name: /yes/i}))
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        '/api/v2/internal/apikeys/',
+        {id: 1, revoked: false, name: 'SECOND_TOKEN'}
+      )
+    })
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>API key with this name already exists</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Error: 400 BAD REQUEST',
+      0,
+      expect.any(Function)
+    )
+  })
+
+  it('Test change API key with backend error without message', async () => {
+    mockChangeObject.mockReturnValue(
+      Promise.resolve({
+        status: 500,
+        statusText: 'SERVER ERROR'
+      })
+    )
+
+    const history = createMemoryHistory();
+
+    render(
+      <Router history={history}>
+        <Route render={props => <APIKeyChange {...props} />} />
+      </Router>
+    )
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', {name: /save/i})).toBeInTheDocument();
+    })
+    fireEvent.change(screen.getByRole('textbox', {name: /name/i}), {target: {value: 'SECOND_TOKEN'}})
+    fireEvent.click(screen.getByRole('button', {name: /save/i}))
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', {title: /change/i})).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByRole('button', {name: /yes/i}))
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        '/api/v2/internal/apikeys/',
+        {id: 1, revoked: false, name: 'SECOND_TOKEN'}
+      )
+    })
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>Error changing API key</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Error: 500 SERVER ERROR',
+      0,
+      expect.any(Function)
+    )
   })
 })
