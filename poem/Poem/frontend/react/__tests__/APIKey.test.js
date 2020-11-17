@@ -7,6 +7,24 @@ import { APIKeyChange, APIKeyList } from '../APIKey';
 import { Backend } from '../DataManager';
 import { NotificationManager } from 'react-notifications';
 
+function renderWithRouterMatch(
+  ui,
+  {
+    path = "/",
+    route = "/",
+    history = createMemoryHistory({ initialEntries: [route] })
+  } = {}
+) {
+  return {
+    ...render(
+      <Router history={history}>
+        <Route path={path} component={ui} />
+      </Router>
+    )
+  };
+}
+
+
 const mockAPIKeys = [
   {
     id: 1,
@@ -26,6 +44,7 @@ const mockAPIKeys = [
 
 const mockChangeObject = jest.fn();
 const mockAddObject = jest.fn();
+const mockDeleteObject = jest.fn();
 
 jest.mock('../DataManager', () => {
   return {
@@ -124,7 +143,8 @@ describe('Tests for API key change', () => {
     Backend.mockImplementation(() => {
       return {
         fetchData: () => Promise.resolve(mockAPIKey),
-        changeObject: mockChangeObject
+        changeObject: mockChangeObject,
+        deleteObject: mockDeleteObject
       }
     })
   })
@@ -310,6 +330,32 @@ describe('Tests for API key change', () => {
       0,
       expect.any(Function)
     )
+  })
+
+  test('Test API key deletion', async () => {
+    mockDeleteObject.mockReturnValue(
+      Promise.resolve({ok: true, status_code: 204})
+    );
+
+    renderWithRouterMatch(APIKeyChange, {
+      path: '/ui/administration/apikey/:name',
+      route: '/ui/administration/apikey/FIRST_TOKEN'
+    })
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', {name: /delete/i})).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByRole('button', {name: /delete/i}))
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', {title: /delete/i})).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByRole('button', {name: /yes/i}))
+    await waitFor(() => {
+      expect(mockDeleteObject).toHaveBeenCalledWith(
+        '/api/v2/internal/apikeys/FIRST_TOKEN'
+      )
+    })
+    expect(NotificationManager.success).toHaveBeenCalledWith('API key successfully deleted', 'Deleted', 2000)
   })
 })
 
