@@ -25,6 +25,7 @@ const mockAPIKeys = [
 ];
 
 const mockChangeObject = jest.fn();
+const mockAddObject = jest.fn();
 
 jest.mock('../DataManager', () => {
   return {
@@ -333,5 +334,72 @@ describe('Tests for API key addview', () => {
     expect(screen.getByTestId('token')).toBeEnabled();
     expect(screen.getByRole('button', {name: /save/i})).toBeInTheDocument();
     expect(screen.queryByText(/delete/i)).not.toBeInTheDocument();
+  })
+
+  it ('Test adding new API key', async () => {
+    mockAddObject.mockReturnValue(Promise.resolve({ok: true, status_code: 200}));
+
+    Backend.mockImplementation(() => {
+      return {
+        addObject: mockAddObject
+      }
+    })
+
+    const history = createMemoryHistory();
+
+    render (
+      <Router history={history}>
+        <Route render={props => <APIKeyChange {...props} addview={true} />} />
+      </Router>
+    )
+
+    fireEvent.change(screen.getByRole('textbox', {name: /name/i}), {target: {value: 'APIKEY'}});
+    fireEvent.click(screen.getByRole('button', {name: /save/i}))
+
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', {title: /add/i})).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByRole('button', {name: /yes/i}))
+    await waitFor(() => {
+      expect(mockAddObject).toHaveBeenCalledWith(
+        '/api/v2/internal/apikeys/',
+        {name: 'APIKEY', token: ''}
+      )
+    })
+    expect(NotificationManager.success).toHaveBeenCalledWith('API key successfully added', 'Added', 2000)
+  })
+
+  it ('Test adding new API key with predefined token', async () => {
+    mockAddObject.mockReturnValue(Promise.resolve({ok: true, status_code: 200}));
+
+    Backend.mockImplementation(() => {
+      return {
+        addObject: mockAddObject
+      }
+    })
+
+    const history = createMemoryHistory();
+
+    render (
+      <Router history={history}>
+        <Route render={props => <APIKeyChange {...props} addview={true} />} />
+      </Router>
+    )
+
+    fireEvent.change(screen.getByRole('textbox', {name: /name/i}), {target: {value: 'APIKEY'}});
+    fireEvent.change(screen.getByTestId('token'), {target: {value: 'token123'}})
+    fireEvent.click(screen.getByRole('button', {name: /save/i}))
+
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', {title: /add/i})).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByRole('button', {name: /yes/i}))
+    await waitFor(() => {
+      expect(mockAddObject).toHaveBeenCalledWith(
+        '/api/v2/internal/apikeys/',
+        {name: 'APIKEY', token: 'token123'}
+      )
+    })
+    expect(NotificationManager.success).toHaveBeenCalledWith('API key successfully added', 'Added', 2000)
   })
 })
