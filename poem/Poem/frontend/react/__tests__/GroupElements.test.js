@@ -7,6 +7,22 @@ import { render, waitFor, screen } from '@testing-library/react';
 import { Backend } from '../DataManager';
 
 
+function renderListView(
+  group = 'metrics',
+  id = 'groupofmetrics',
+  name = 'group of metrics'
+) {
+  const history = createMemoryHistory();
+
+  return {
+    ...render(
+      <Router history={history}>
+        <Route render={props => <GroupList {...props} group={group} id={id} name={name} />} />
+      </Router>
+    )
+  }
+}
+
 const mockListGroups = {
   'aggregations': ['aggrgroup1', 'aggrgroup2'],
   'metrics': ['metricgroup1', 'metricgroup2'],
@@ -30,13 +46,7 @@ afterEach(() => {
 
 describe('Tests for groups listviews', () => {
   test('Render group of metrics listview', async () => {
-    const history = createMemoryHistory();
-
-    render(
-      <Router history={history}>
-        <Route render={props => <GroupList {...props} group='metrics' id='groupofmetrics' name='group of metrics' />} />
-      </Router>
-    )
+    renderListView()
 
     expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
 
@@ -57,13 +67,7 @@ describe('Tests for groups listviews', () => {
   })
 
   test('Render group of aggregations listview', async () => {
-    const history = createMemoryHistory();
-
-    render(
-      <Router history={history}>
-        <Route render={props => <GroupList {...props} group='aggregations' id='groupofaggregations' name='group of aggregations' />} />
-      </Router>
-    )
+    renderListView('aggregations', 'groupofaggregations', 'group of aggregations')
 
     expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
 
@@ -84,13 +88,7 @@ describe('Tests for groups listviews', () => {
   })
 
   test('Render group of metric profiles listview', async () => {
-    const history = createMemoryHistory();
-
-    render(
-      <Router history={history}>
-        <Route render={props => <GroupList {...props} group='metricprofiles' id='groupofmetricprofiles' name='group of metric profiles' />} />
-      </Router>
-    )
+    renderListView('metricprofiles', 'groupofmetricprofiles', 'group of metric profiles')
 
     expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
 
@@ -111,13 +109,7 @@ describe('Tests for groups listviews', () => {
   })
 
   test('Render group of thresholds profiles listview', async () => {
-    const history = createMemoryHistory();
-
-    render(
-      <Router history={history}>
-        <Route render={props => <GroupList {...props} group='thresholdsprofiles' id='groupofthresholdsprofiles' name='group of thresholds profiles' />} />
-      </Router>
-    )
+    renderListView('thresholdsprofiles', 'groupofthresholdsprofiles', 'group of thresholds profiles')
 
     expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
 
@@ -149,13 +141,8 @@ describe('Tests for groups listviews', () => {
       }
     })
 
-    const history = createMemoryHistory();
+    renderListView()
 
-    render(
-      <Router history={history}>
-        <Route render={props => <GroupList {...props} group='metrics' id='groupofmetrics' name='group of metrics' />} />
-      </Router>
-    )
     expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
 
     await waitFor(() => {
