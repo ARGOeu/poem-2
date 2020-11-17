@@ -24,6 +24,18 @@ function renderWithRouterMatch(
   };
 }
 
+function renderAddview() {
+  const history = createMemoryHistory();
+
+  return {
+    ...render(
+      <Router history={history}>
+        <Route render={props => <APIKeyChange {...props} addview={true} />} />
+      </Router>
+    )
+  }
+}
+
 
 const mockAPIKeys = [
   {
@@ -68,13 +80,7 @@ afterEach(() => {
 
 describe("Tests for API keys listview", () => {
   it('Render properly', async () => {
-    const history = createMemoryHistory();
-
-    render(
-      <Router history={history}>
-        <Route render={props => <APIKeyList {...props} />}/>
-      </Router>
-    )
+    renderWithRouterMatch(APIKeyList)
 
     expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
 
@@ -103,13 +109,8 @@ describe("Tests for API keys listview", () => {
       }
     })
 
-    const history = createMemoryHistory();
+    renderWithRouterMatch(APIKeyList)
 
-    render(
-      <Router history={history}>
-        <Route render={props => <APIKeyList {...props} />} />
-      </Router>
-    )
     expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
 
     await waitFor(() => {
@@ -150,13 +151,7 @@ describe('Tests for API key change', () => {
   })
 
   it('Test that page renders properly', async () => {
-    const history = createMemoryHistory();
-
-    render(
-      <Router history={history}>
-        <Route render={props => <APIKeyChange {...props} />} />
-      </Router>
-    )
+    renderWithRouterMatch(APIKeyChange)
 
     expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
 
@@ -174,13 +169,7 @@ describe('Tests for API key change', () => {
   })
 
   it('Test copy to clipbord button', async () => {
-    const history = createMemoryHistory();
-
-    render(
-      <Router history={history}>
-        <Route render={props => <APIKeyChange {...props} />} />
-      </Router>
-    )
+    renderWithRouterMatch(APIKeyChange)
 
     await waitFor(() => {
       expect(screen.getByRole('button', {name: ''})).toBeInTheDocument();
@@ -192,13 +181,7 @@ describe('Tests for API key change', () => {
   it('Test change API key name and save', async () => {
     mockChangeObject.mockReturnValue(Promise.resolve({ok: true, status_code: 200}));
 
-    const history = createMemoryHistory();
-
-    render(
-      <Router history={history}>
-        <Route render={props => <APIKeyChange {...props} />} />
-      </Router>
-    )
+    renderWithRouterMatch(APIKeyChange)
 
     await waitFor(() => {
       expect(screen.getByRole('button', {name: /save/i})).toBeInTheDocument()
@@ -221,13 +204,7 @@ describe('Tests for API key change', () => {
   it('Test revoke API key and save', async () => {
     mockChangeObject.mockReturnValue(Promise.resolve({ok: true, status: 200}));
 
-    const history = createMemoryHistory();
-
-    render(
-      <Router history={history}>
-        <Route render={props => <APIKeyChange {...props} />} />
-      </Router>
-    )
+    renderWithRouterMatch(APIKeyChange)
 
     await waitFor(() => {
       expect(screen.getByRole('button', {name: /save/i})).toBeInTheDocument()
@@ -256,13 +233,7 @@ describe('Tests for API key change', () => {
       })
     )
 
-    const history = createMemoryHistory();
-
-    render(
-      <Router history={history}>
-        <Route render={props => <APIKeyChange {...props} />} />
-      </Router>
-    )
+    renderWithRouterMatch(APIKeyChange)
 
     await waitFor(() => {
       expect(screen.getByRole('button', {name: /save/i})).toBeInTheDocument();
@@ -298,13 +269,7 @@ describe('Tests for API key change', () => {
       })
     )
 
-    const history = createMemoryHistory();
-
-    render(
-      <Router history={history}>
-        <Route render={props => <APIKeyChange {...props} />} />
-      </Router>
-    )
+    renderWithRouterMatch(APIKeyChange)
 
     await waitFor(() => {
       expect(screen.getByRole('button', {name: /save/i})).toBeInTheDocument();
@@ -364,13 +329,7 @@ describe('Tests for API key addview', () => {
   jest.spyOn(NotificationManager, "error");
 
   it ('Test that addview renders properly', () => {
-    const history = createMemoryHistory();
-
-    render(
-      <Router history={history}>
-        <Route render={props => <APIKeyChange {...props} addview={true} />} />
-      </Router>
-    )
+    renderAddview()
 
     expect(screen.getByRole('heading', {name: /api/i}).textContent).toBe('Add API key')
     expect(screen.getByRole('heading', {name: /credent/i}).textContent).toBe('Credentials')
@@ -392,13 +351,7 @@ describe('Tests for API key addview', () => {
       }
     })
 
-    const history = createMemoryHistory();
-
-    render (
-      <Router history={history}>
-        <Route render={props => <APIKeyChange {...props} addview={true} />} />
-      </Router>
-    )
+    renderAddview()
 
     fireEvent.change(screen.getByRole('textbox', {name: /name/i}), {target: {value: 'APIKEY'}});
     fireEvent.click(screen.getByRole('button', {name: /save/i}))
@@ -425,13 +378,7 @@ describe('Tests for API key addview', () => {
       }
     })
 
-    const history = createMemoryHistory();
-
-    render (
-      <Router history={history}>
-        <Route render={props => <APIKeyChange {...props} addview={true} />} />
-      </Router>
-    )
+    renderAddview()
 
     fireEvent.change(screen.getByRole('textbox', {name: /name/i}), {target: {value: 'APIKEY'}});
     fireEvent.change(screen.getByTestId('token'), {target: {value: 'token123'}})
@@ -465,13 +412,7 @@ describe('Tests for API key addview', () => {
       }
     })
 
-    const history = createMemoryHistory();
-
-    render (
-      <Router history={history}>
-        <Route render={props => <APIKeyChange {...props} addview={true} />} />
-      </Router>
-    )
+    renderAddview()
 
     fireEvent.change(screen.getByRole('textbox', {name: /name/i}), {target: {value: 'APIKEY'}});
     fireEvent.change(screen.getByTestId('token'), {target: {value: 'token123'}})
@@ -512,13 +453,7 @@ describe('Tests for API key addview', () => {
       }
     })
 
-    const history = createMemoryHistory();
-
-    render (
-      <Router history={history}>
-        <Route render={props => <APIKeyChange {...props} addview={true} />} />
-      </Router>
-    )
+    renderAddview()
 
     fireEvent.change(screen.getByRole('textbox', {name: /name/i}), {target: {value: 'APIKEY'}});
     fireEvent.change(screen.getByTestId('token'), {target: {value: 'token123'}})
