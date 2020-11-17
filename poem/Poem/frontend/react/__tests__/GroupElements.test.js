@@ -54,4 +54,31 @@ describe('Tests for groups listviews', () => {
     expect(screen.getByRole('link', {name: /2/i})).toHaveProperty('href', 'http://localhost/ui/administration/groupofmetrics/metricgroup2')
     expect(screen.getByRole('button', {name: 'Add'})).toBeTruthy()
   })
+
+  test('Render group of aggregations listview', async () => {
+    const history = createMemoryHistory();
+
+    render(
+      <Router history={history}>
+        <Route render={props => <GroupList {...props} group='aggregations' id='groupofaggregations' name='group of aggregations' />} />
+      </Router>
+    )
+
+    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', {name: /group/i}).textContent).toBe('Select group of aggregations to change')
+    })
+    expect(screen.getAllByRole('columnheader')).toHaveLength(2);
+    expect(screen.getByRole('columnheader', {name: /group/i}).textContent).toBe('Group of aggregations');
+    expect(screen.getByRole('columnheader', {name: '#'})).toBeInTheDocument();
+    expect(screen.getAllByRole('row')).toHaveLength(11);
+    expect(screen.getAllByRole('row', {name: ''})).toHaveLength(8);
+    expect(screen.getAllByRole('row', {name: /aggrgroup/i})).toHaveLength(2);
+    expect(screen.getByRole('row', {name: /aggrgroup1/i}).textContent).toBe('1aggrgroup1')
+    expect(screen.getByRole('row', {name: /aggrgroup2/i}).textContent).toBe('2aggrgroup2')
+    expect(screen.getByRole('link', {name: /1/i})).toHaveProperty('href', 'http://localhost/ui/administration/groupofaggregations/aggrgroup1')
+    expect(screen.getByRole('link', {name: /2/i})).toHaveProperty('href', 'http://localhost/ui/administration/groupofaggregations/aggrgroup2')
+    expect(screen.getByRole('button', {name: 'Add'})).toBeTruthy()
+  })
 })
