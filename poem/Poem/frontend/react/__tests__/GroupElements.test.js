@@ -108,4 +108,31 @@ describe('Tests for groups listviews', () => {
     expect(screen.getByRole('link', {name: /2/i})).toHaveProperty('href', 'http://localhost/ui/administration/groupofmetricprofiles/metricprofilegroup2')
     expect(screen.getByRole('button', {name: 'Add'})).toBeTruthy()
   })
+
+  test('Render group of thresholds profiles listview', async () => {
+    const history = createMemoryHistory();
+
+    render(
+      <Router history={history}>
+        <Route render={props => <GroupList {...props} group='thresholdsprofiles' id='groupofthresholdsprofiles' name='group of thresholds profiles' />} />
+      </Router>
+    )
+
+    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', {name: /group/i}).textContent).toBe('Select group of thresholds profiles to change')
+    })
+    expect(screen.getAllByRole('columnheader')).toHaveLength(2);
+    expect(screen.getByRole('columnheader', {name: /group/i}).textContent).toBe('Group of thresholds profiles');
+    expect(screen.getByRole('columnheader', {name: '#'})).toBeInTheDocument();
+    expect(screen.getAllByRole('row')).toHaveLength(11);
+    expect(screen.getAllByRole('row', {name: ''})).toHaveLength(8);
+    expect(screen.getAllByRole('row', {name: /thresholdsgroup/i})).toHaveLength(2);
+    expect(screen.getByRole('row', {name: /group1/i}).textContent).toBe('1thresholdsgroup1')
+    expect(screen.getByRole('row', {name: /group2/i}).textContent).toBe('2thresholdsgroup2')
+    expect(screen.getByRole('link', {name: /1/i})).toHaveProperty('href', 'http://localhost/ui/administration/groupofthresholdsprofiles/thresholdsgroup1')
+    expect(screen.getByRole('link', {name: /2/i})).toHaveProperty('href', 'http://localhost/ui/administration/groupofthresholdsprofiles/thresholdsgroup2')
+    expect(screen.getByRole('button', {name: 'Add'})).toBeTruthy()
+  })
 })
