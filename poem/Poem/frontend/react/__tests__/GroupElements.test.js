@@ -81,4 +81,31 @@ describe('Tests for groups listviews', () => {
     expect(screen.getByRole('link', {name: /2/i})).toHaveProperty('href', 'http://localhost/ui/administration/groupofaggregations/aggrgroup2')
     expect(screen.getByRole('button', {name: 'Add'})).toBeTruthy()
   })
+
+  test('Render group of metric profiles listview', async () => {
+    const history = createMemoryHistory();
+
+    render(
+      <Router history={history}>
+        <Route render={props => <GroupList {...props} group='metricprofiles' id='groupofmetricprofiles' name='group of metric profiles' />} />
+      </Router>
+    )
+
+    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', {name: /group/i}).textContent).toBe('Select group of metric profiles to change')
+    })
+    expect(screen.getAllByRole('columnheader')).toHaveLength(2);
+    expect(screen.getByRole('columnheader', {name: /group/i}).textContent).toBe('Group of metric profiles');
+    expect(screen.getByRole('columnheader', {name: '#'})).toBeInTheDocument();
+    expect(screen.getAllByRole('row')).toHaveLength(11);
+    expect(screen.getAllByRole('row', {name: ''})).toHaveLength(8);
+    expect(screen.getAllByRole('row', {name: /metricprofilegroup/i})).toHaveLength(2);
+    expect(screen.getByRole('row', {name: /group1/i}).textContent).toBe('1metricprofilegroup1')
+    expect(screen.getByRole('row', {name: /group2/i}).textContent).toBe('2metricprofilegroup2')
+    expect(screen.getByRole('link', {name: /1/i})).toHaveProperty('href', 'http://localhost/ui/administration/groupofmetricprofiles/metricprofilegroup1')
+    expect(screen.getByRole('link', {name: /2/i})).toHaveProperty('href', 'http://localhost/ui/administration/groupofmetricprofiles/metricprofilegroup2')
+    expect(screen.getByRole('button', {name: 'Add'})).toBeTruthy()
+  })
 })
