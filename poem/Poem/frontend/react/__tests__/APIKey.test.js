@@ -330,6 +330,7 @@ describe('Tests for API key addview', () => {
     expect(screen.getByRole('heading', {name: /credent/i}).textContent).toBe('Credentials')
     expect(screen.getByRole('textbox', {name: /name/i}).value).toBe('');
     expect(screen.getByRole('checkbox', {name: /revoked/i}).value).toBe('false');
+    expect(screen.getByRole('alert').textContent).toBe('If token field is left empty, value will be automatically generated on save.')
     expect(screen.getByTestId('token').value).toBe('');
     expect(screen.getByTestId('token')).toBeEnabled();
     expect(screen.getByRole('button', {name: /save/i})).toBeInTheDocument();
