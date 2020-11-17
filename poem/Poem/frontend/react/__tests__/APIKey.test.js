@@ -402,4 +402,99 @@ describe('Tests for API key addview', () => {
     })
     expect(NotificationManager.success).toHaveBeenCalledWith('API key successfully added', 'Added', 2000)
   })
+
+  it('Test add API key with backend error message', async () => {
+    mockAddObject.mockReturnValueOnce(
+      Promise.resolve({
+        json: () => Promise.resolve({detail: 'API key with this name already exists'}),
+        status: 400,
+        statusText: 'BAD REQUEST'
+      })
+    )
+
+    Backend.mockImplementation(() => {
+      return {
+        addObject: mockAddObject
+      }
+    })
+
+    const history = createMemoryHistory();
+
+    render (
+      <Router history={history}>
+        <Route render={props => <APIKeyChange {...props} addview={true} />} />
+      </Router>
+    )
+
+    fireEvent.change(screen.getByRole('textbox', {name: /name/i}), {target: {value: 'APIKEY'}});
+    fireEvent.change(screen.getByTestId('token'), {target: {value: 'token123'}})
+    fireEvent.click(screen.getByRole('button', {name: /save/i}))
+
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', {title: /add/i})).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByRole('button', {name: /yes/i}))
+    await waitFor(() => {
+      expect(mockAddObject).toHaveBeenCalledWith(
+        '/api/v2/internal/apikeys/',
+        {name: 'APIKEY', token: 'token123'}
+      )
+    })
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>API key with this name already exists</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Error: 400 BAD REQUEST',
+      0,
+      expect.any(Function)
+    )
+  })
+
+  it('Test add API key with backend error without message', async () => {
+    mockAddObject.mockReturnValueOnce(
+      Promise.resolve({
+        status: 500,
+        statusText: 'SERVER ERROR'
+      })
+    )
+
+    Backend.mockImplementation(() => {
+      return {
+        addObject: mockAddObject
+      }
+    })
+
+    const history = createMemoryHistory();
+
+    render (
+      <Router history={history}>
+        <Route render={props => <APIKeyChange {...props} addview={true} />} />
+      </Router>
+    )
+
+    fireEvent.change(screen.getByRole('textbox', {name: /name/i}), {target: {value: 'APIKEY'}});
+    fireEvent.change(screen.getByTestId('token'), {target: {value: 'token123'}})
+    fireEvent.click(screen.getByRole('button', {name: /save/i}))
+
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', {title: /add/i})).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByRole('button', {name: /yes/i}))
+    await waitFor(() => {
+      expect(mockAddObject).toHaveBeenCalledWith(
+        '/api/v2/internal/apikeys/',
+        {name: 'APIKEY', token: 'token123'}
+      )
+    })
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>Error adding API key</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Error: 500 SERVER ERROR',
+      0,
+      expect.any(Function)
+    )
+  })
 })
