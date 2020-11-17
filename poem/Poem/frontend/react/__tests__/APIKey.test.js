@@ -311,3 +311,27 @@ describe('Tests for API key change', () => {
     )
   })
 })
+
+describe('Tests for API key addview', () => {
+  jest.spyOn(NotificationManager, "success");
+  jest.spyOn(NotificationManager, "error");
+
+  it ('Test that addview renders properly', () => {
+    const history = createMemoryHistory();
+
+    render(
+      <Router history={history}>
+        <Route render={props => <APIKeyChange {...props} addview={true} />} />
+      </Router>
+    )
+
+    expect(screen.getByRole('heading', {name: /api/i}).textContent).toBe('Add API key')
+    expect(screen.getByRole('heading', {name: /credent/i}).textContent).toBe('Credentials')
+    expect(screen.getByRole('textbox', {name: /name/i}).value).toBe('');
+    expect(screen.getByRole('checkbox', {name: /revoked/i}).value).toBe('false');
+    expect(screen.getByTestId('token').value).toBe('');
+    expect(screen.getByTestId('token')).toBeEnabled();
+    expect(screen.getByRole('button', {name: /save/i})).toBeInTheDocument();
+    expect(screen.queryByText(/delete/i)).not.toBeInTheDocument();
+  })
+})
