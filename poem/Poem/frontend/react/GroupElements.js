@@ -246,7 +246,7 @@ export const GroupChange = (props) => {
   var filteredItems = items;
   if (searchItem)
     filteredItems = filteredItems.filter(filteredRow =>
-      filteredRow.toLowerCase().includes(searchItem)
+      filteredRow.toLowerCase().includes(searchItem.toLowerCase())
     );
 
   if (loading)
@@ -358,6 +358,7 @@ export const GroupChange = (props) => {
                         <Field
                           type='text'
                           name='search_items'
+                          data-testid='search_items'
                           className='form-control'
                           onChange={(e) => setSearchItem(e.target.value)}
                           component={SearchField}

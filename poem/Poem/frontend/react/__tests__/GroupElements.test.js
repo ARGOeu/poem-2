@@ -3,7 +3,7 @@ import React from 'react';
 import { createMemoryHistory } from 'history';
 import { Route, Router } from 'react-router-dom';
 import { GroupList, GroupChange } from '../GroupElements';
-import { render, waitFor, screen } from '@testing-library/react';
+import { render, waitFor, screen, fireEvent } from '@testing-library/react';
 import { Backend } from '../DataManager';
 
 
@@ -221,7 +221,7 @@ describe('Tests for group elements changeview', () => {
   })
 
   test('Test changeview renders properly if no elements in group', async () => {
-    Backend.mockImplementation(() => {
+    Backend.mockImplementationOnce(() => {
       return {
         fetchResult: () => Promise.resolve([])
       }
@@ -244,6 +244,21 @@ describe('Tests for group elements changeview', () => {
     expect(screen.getByRole('columnheader', {name: 'Remove'})).toBeInTheDocument();
     expect(screen.getAllByRole('row')).toHaveLength(2);
     expect(screen.getByPlaceholderText(/search/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', {name: /save/i})).toBeInTheDocument();
+    expect(screen.getByRole('button', {name: /delete/i})).toBeInTheDocument();
+  })
+
+  test('Test search items in group', async () => {
+    renderChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByTestId('search_items')).toBeInTheDocument()
+    })
+    expect(screen.getAllByRole('row')).toHaveLength(6);
+    fireEvent.change(screen.getByTestId('search_items'), { target: { value: 'nAGios' } })
+    expect(screen.getAllByRole('row')).toHaveLength(4);
+    expect(screen.getByRole('row', {name: /1/i}).textContent).toBe('1org.nagios.AmsDirSize')
+    expect(screen.getByRole('row', {name: /2/i}).textContent).toBe('2org.nagios.CertLifetime')
     expect(screen.getByRole('button', {name: /save/i})).toBeInTheDocument();
     expect(screen.getByRole('button', {name: /delete/i})).toBeInTheDocument();
   })
