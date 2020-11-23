@@ -184,6 +184,7 @@ describe('Tests for groups listviews', () => {
 
 describe('Tests for group elements changeview', () => {
   jest.spyOn(NotificationManager, 'success');
+  jest.spyOn(NotificationManager, 'error');
   beforeAll(() => {
     const mockMetricGroup = [
       'argo.AMS-Check',
@@ -302,6 +303,83 @@ describe('Tests for group elements changeview', () => {
       'Changed',
       2000
     );
+  })
+
+  test('Test failed saving of group with error message', async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({
+        json: () => Promise.resolve({ detail: 'There is something wrong with your group.' }),
+        status: 400,
+        statusText: 'BAD REQUEST' })
+    )
+
+    renderChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /group/i })).toBeInTheDocument();
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument()
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }))
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        '/api/v2/internal/metricsgroup/',
+        { name: 'TestGroup', items: ['argo.AMS-Check', 'argo.AMSPublisher-Check', 'org.nagios.AmsDirSize', 'org.nagios.CertLifetime'] }
+      )
+    })
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>There is something wrong with your group.</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Error: 400 BAD REQUEST',
+      0,
+      expect.any(Function)
+    )
+  })
+
+  test('Test failed saving of group without error message', async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({
+        status: 500,
+        statusText: 'SERVER ERROR' })
+    )
+
+    renderChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /group/i })).toBeInTheDocument();
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument()
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }))
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        '/api/v2/internal/metricsgroup/',
+        { name: 'TestGroup', items: ['argo.AMS-Check', 'argo.AMSPublisher-Check', 'org.nagios.AmsDirSize', 'org.nagios.CertLifetime'] }
+      )
+    })
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>Error changing group of metrics</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Error: 500 SERVER ERROR',
+      0,
+      expect.any(Function)
+    )
   })
 
   test('Test delete a group', async () => {
