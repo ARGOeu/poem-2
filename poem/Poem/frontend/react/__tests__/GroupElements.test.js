@@ -219,4 +219,32 @@ describe('Tests for group elements changeview', () => {
     expect(screen.getByRole('button', {name: /save/i})).toBeInTheDocument();
     expect(screen.getByRole('button', {name: /delete/i})).toBeInTheDocument();
   })
+
+  test('Test changeview renders properly if no elements in group', async () => {
+    Backend.mockImplementation(() => {
+      return {
+        fetchResult: () => Promise.resolve([])
+      }
+    })
+
+    renderChangeView();
+
+    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', {name: /group/i}).textContent).toBe('Change group of metrics')
+    });
+    expect(screen.getByRole('heading', {name: 'metrics'})).toBeInTheDocument();
+    expect(screen.getByTestId('name').value).toBe('TestGroup');
+    expect(screen.getByTestId('name')).toBeDisabled();
+    expect(screen.getByRole('button', {name: /add/i}).textContent).toBe('Add new metrics to group');
+    expect(screen.getAllByRole('columnheader')).toHaveLength(3);
+    expect(screen.getByRole('columnheader', {name: '#'})).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', {name: /group/i}).textContent).toBe(' Metrics in group');
+    expect(screen.getByRole('columnheader', {name: 'Remove'})).toBeInTheDocument();
+    expect(screen.getAllByRole('row')).toHaveLength(2);
+    expect(screen.getByPlaceholderText(/search/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', {name: /save/i})).toBeInTheDocument();
+    expect(screen.getByRole('button', {name: /delete/i})).toBeInTheDocument();
+  })
 })
