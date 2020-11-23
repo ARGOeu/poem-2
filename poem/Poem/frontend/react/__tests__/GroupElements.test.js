@@ -5,6 +5,7 @@ import { Route, Router } from 'react-router-dom';
 import { GroupList, GroupChange } from '../GroupElements';
 import { render, waitFor, screen, fireEvent } from '@testing-library/react';
 import { Backend } from '../DataManager';
+import { NotificationManager } from 'react-notifications';
 
 
 function renderListView(
@@ -59,6 +60,8 @@ jest.mock('../DataManager', () => {
     })
   }
 })
+
+const mockChangeObject = jest.fn();
 
 afterEach(() => {
   jest.clearAllMocks();
@@ -179,6 +182,7 @@ describe('Tests for groups listviews', () => {
 })
 
 describe('Tests for group elements changeview', () => {
+  jest.spyOn(NotificationManager, 'success');
   beforeAll(() => {
     const mockMetricGroup = [
       'argo.AMS-Check',
@@ -189,7 +193,8 @@ describe('Tests for group elements changeview', () => {
 
     Backend.mockImplementation(() => {
       return {
-        fetchResult: () => Promise.resolve(mockMetricGroup)
+        fetchResult: () => Promise.resolve(mockMetricGroup),
+        changeObject: mockChangeObject
       }
     })
   })
@@ -261,5 +266,39 @@ describe('Tests for group elements changeview', () => {
     expect(screen.getByRole('row', {name: /2/i}).textContent).toBe('2org.nagios.CertLifetime')
     expect(screen.getByRole('button', {name: /save/i})).toBeInTheDocument();
     expect(screen.getByRole('button', {name: /delete/i})).toBeInTheDocument();
+  })
+
+  test('Test remove item from group and save', async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 200 })
+    )
+
+    renderChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByTestId('search_items')).toBeInTheDocument()
+    })
+
+    fireEvent.change(screen.getByTestId('search_items'), { target: { value: 'ams-check' } })
+    fireEvent.click(screen.getByRole('button', { name: '' }))
+    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument()
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }))
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        '/api/v2/internal/metricsgroup/',
+        { name: 'TestGroup', items: ['argo.AMSPublisher-Check', 'org.nagios.AmsDirSize', 'org.nagios.CertLifetime'] }
+      )
+    })
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'Group of metrics successfully changed',
+      'Changed',
+      2000
+    );
   })
 })
