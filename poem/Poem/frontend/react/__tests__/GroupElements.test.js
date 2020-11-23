@@ -2,7 +2,7 @@ import '@testing-library/jest-dom/extend-expect';
 import React from 'react';
 import { createMemoryHistory } from 'history';
 import { Route, Router } from 'react-router-dom';
-import { GroupList } from '../GroupElements';
+import { GroupList, GroupChange } from '../GroupElements';
 import { render, waitFor, screen } from '@testing-library/react';
 import { Backend } from '../DataManager';
 
@@ -18,6 +18,26 @@ function renderListView(
     ...render(
       <Router history={history}>
         <Route render={props => <GroupList {...props} group={group} id={id} name={name} />} />
+      </Router>
+    )
+  }
+}
+
+function renderChangeView() {
+  const route = '/ui/administration/group/TestGroup';
+  const history = createMemoryHistory({ initialEntries: [route] });
+
+  return {
+    ...render(
+      <Router history={history}>
+        <Route path='/ui/administration/group/:name' render={
+          props => <GroupChange
+            {...props}
+            group='metrics'
+            id='groupofmetrics'
+            title='metrics'
+          />}
+        />
       </Router>
     )
   }
@@ -155,5 +175,48 @@ describe('Tests for groups listviews', () => {
     expect(screen.getAllByRole('row', {name: ''})).toHaveLength(9)
     expect(screen.getByRole('row', {name: /no/i}).textContent).toBe('No groups')
     expect(screen.getByRole('button', {name: 'Add'})).toBeTruthy()
+  })
+})
+
+describe('Tests for group elements changeview', () => {
+  beforeAll(() => {
+    const mockMetricGroup = [
+      'argo.AMS-Check',
+      'argo.AMSPublisher-Check',
+      'org.nagios.AmsDirSize',
+      'org.nagios.CertLifetime'
+    ];
+
+    Backend.mockImplementation(() => {
+      return {
+        fetchResult: () => Promise.resolve(mockMetricGroup)
+      }
+    })
+  })
+
+  test('Test changeview renders properly', async () => {
+    renderChangeView();
+
+    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', {name: /group/i}).textContent).toBe('Change group of metrics')
+    });
+    expect(screen.getByRole('heading', {name: 'metrics'})).toBeInTheDocument();
+    expect(screen.getByTestId('name').value).toBe('TestGroup');
+    expect(screen.getByTestId('name')).toBeDisabled();
+    expect(screen.getByRole('button', {name: /add/i}).textContent).toBe('Add new metrics to group');
+    expect(screen.getAllByRole('columnheader')).toHaveLength(3);
+    expect(screen.getByRole('columnheader', {name: '#'})).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', {name: /group/i}).textContent).toBe(' Metrics in group');
+    expect(screen.getByRole('columnheader', {name: 'Remove'})).toBeInTheDocument();
+    expect(screen.getAllByRole('row')).toHaveLength(6);
+    expect(screen.getByPlaceholderText(/search/i)).toBeInTheDocument();
+    expect(screen.getByRole('row', {name: /1/i}).textContent).toBe('1argo.AMS-Check')
+    expect(screen.getByRole('row', {name: /2/i}).textContent).toBe('2argo.AMSPublisher-Check')
+    expect(screen.getByRole('row', {name: /3/i}).textContent).toBe('3org.nagios.AmsDirSize')
+    expect(screen.getByRole('row', {name: /4/i}).textContent).toBe('4org.nagios.CertLifetime')
+    expect(screen.getByRole('button', {name: /save/i})).toBeInTheDocument();
+    expect(screen.getByRole('button', {name: /delete/i})).toBeInTheDocument();
   })
 })

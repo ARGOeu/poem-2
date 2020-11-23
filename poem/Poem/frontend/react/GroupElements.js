@@ -294,6 +294,7 @@ export const GroupChange = (props) => {
                       <Field
                         type='text'
                         name='name'
+                        data-testid='name'
                         required={true}
                         className='form-control'
                         id='groupname'
