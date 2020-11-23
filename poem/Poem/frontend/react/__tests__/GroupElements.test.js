@@ -62,6 +62,7 @@ jest.mock('../DataManager', () => {
 })
 
 const mockChangeObject = jest.fn();
+const mockDeleteObject = jest.fn();
 
 afterEach(() => {
   jest.clearAllMocks();
@@ -194,7 +195,8 @@ describe('Tests for group elements changeview', () => {
     Backend.mockImplementation(() => {
       return {
         fetchResult: () => Promise.resolve(mockMetricGroup),
-        changeObject: mockChangeObject
+        changeObject: mockChangeObject,
+        deleteObject: mockDeleteObject
       }
     })
   })
@@ -300,5 +302,30 @@ describe('Tests for group elements changeview', () => {
       'Changed',
       2000
     );
+  })
+
+  test('Test delete a group', async () => {
+    mockDeleteObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status_code: 204 })
+    );
+
+    renderChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /delete/i }))
+
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /delete/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockDeleteObject).toHaveBeenCalledWith(
+        '/api/v2/internal/metricsgroup/TestGroup'
+      )
+    })
   })
 })
