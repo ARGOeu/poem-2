@@ -523,6 +523,7 @@ describe('Tests for group elements changeview', () => {
 
 describe('Tests for groups addviews', () => {
   jest.spyOn(NotificationManager, 'success');
+  jest.spyOn(NotificationManager, 'error');
 
   beforeAll(() => {
     const mockAvailableMetrics = [
@@ -624,5 +625,90 @@ describe('Tests for groups addviews', () => {
       )
     })
     expect(NotificationManager.success).toHaveBeenCalledWith('Group of metrics successfully added', 'Added', 2000)
+  })
+
+  test('Test error adding new group with message', async () => {
+    mockAddObject.mockReturnValueOnce(
+      Promise.resolve({
+        json: () => Promise.resolve({ detail: 'Group of metrics with this name already exists.' }),
+        status: 400,
+        statusText: 'BAD REQUEST'
+      })
+    );
+
+    renderAddView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /group/i })).toBeInTheDocument();
+    })
+    fireEvent.change(screen.getByTestId('name'), { target: { value: 'NewGroup' } });
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /add/i }).textContent).toContain('Are you sure you want to add group of metrics?')
+    })
+    expect(screen.getByRole('dialog', { title: /add/i }).textContent).toContain('Add group of metrics');
+
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }))
+
+    expect(mockAddObject).toHaveBeenCalledTimes(1);
+    await waitFor(() => {
+      expect(mockAddObject).toHaveBeenCalledWith(
+        '/api/v2/internal/metricsgroup/',
+        { name: 'NewGroup', items: [] }
+      )
+    })
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>Group of metrics with this name already exists.</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Error: 400 BAD REQUEST',
+      0,
+      expect.any(Function)
+    )
+  })
+
+  test('Test error adding new group without message', async () => {
+    mockAddObject.mockReturnValueOnce(
+      Promise.resolve({
+        status: 500,
+        statusText: 'SERVER ERROR'
+      })
+    );
+
+    renderAddView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /group/i })).toBeInTheDocument();
+    })
+    fireEvent.change(screen.getByTestId('name'), { target: { value: 'NewGroup' } });
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /add/i }).textContent).toContain('Are you sure you want to add group of metrics?')
+    })
+    expect(screen.getByRole('dialog', { title: /add/i }).textContent).toContain('Add group of metrics');
+
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }))
+
+    expect(mockAddObject).toHaveBeenCalledTimes(1);
+    await waitFor(() => {
+      expect(mockAddObject).toHaveBeenCalledWith(
+        '/api/v2/internal/metricsgroup/',
+        { name: 'NewGroup', items: [] }
+      )
+    })
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>Error adding group of metrics</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Error: 500 SERVER ERROR',
+      0,
+      expect.any(Function)
+    )
   })
 })
