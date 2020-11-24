@@ -597,4 +597,32 @@ describe('Tests for groups addviews', () => {
 
     expect(NotificationManager.success).toHaveBeenCalledWith('Group of metrics successfully added', 'Added', 2000)
   })
+
+  test('Test creating new groups without assigned resources', async () => {
+    mockAddObject.mockReturnValueOnce(Promise.resolve({ ok: true, status: 200 }));
+
+    renderAddView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /group/i })).toBeInTheDocument();
+    })
+    fireEvent.change(screen.getByTestId('name'), { target: { value: 'NewGroup' } });
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /add/i }).textContent).toContain('Are you sure you want to add group of metrics?')
+    })
+    expect(screen.getByRole('dialog', { title: /add/i }).textContent).toContain('Add group of metrics');
+
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }))
+    expect(mockAddObject).toHaveBeenCalledTimes(1);
+    await waitFor(() => {
+      expect(mockAddObject).toHaveBeenCalledWith(
+        '/api/v2/internal/metricsgroup/',
+        { name: 'NewGroup', items: [] }
+      )
+    })
+    expect(NotificationManager.success).toHaveBeenCalledWith('Group of metrics successfully added', 'Added', 2000)
+  })
 })
