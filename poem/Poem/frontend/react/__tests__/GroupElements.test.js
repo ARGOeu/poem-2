@@ -3,7 +3,7 @@ import React from 'react';
 import { createMemoryHistory } from 'history';
 import { Route, Router } from 'react-router-dom';
 import { GroupList, GroupChange } from '../GroupElements';
-import { render, waitFor, screen, fireEvent } from '@testing-library/react';
+import { render, waitFor, screen, fireEvent, within } from '@testing-library/react';
 import { Backend } from '../DataManager';
 import { NotificationManager } from 'react-notifications';
 
@@ -37,6 +37,27 @@ function renderChangeView() {
             group='metrics'
             id='groupofmetrics'
             title='metrics'
+          />}
+        />
+      </Router>
+    )
+  }
+}
+
+function renderAddView() {
+  const route = '/ui/administration/group/add';
+  const history = createMemoryHistory({ initialEntries: [route] });
+
+  return {
+    ...render(
+      <Router history={history}>
+        <Route render={
+          props => <GroupChange
+            {...props}
+            group='metrics'
+            id='groupofmetrics'
+            title='metrics'
+            addview={true}
           />}
         />
       </Router>
@@ -440,5 +461,32 @@ describe('Tests for group elements changeview', () => {
       0,
       expect.any(Function)
     )
+  })
+})
+
+describe('Tests for groups addviews', () => {
+  test('Test that addview renders properly', async () => {
+    renderAddView();
+
+    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', {name: /group/i}).textContent).toBe('Add group of metrics')
+    });
+
+    expect(screen.getByRole('heading', { name: 'metrics' })).toBeInTheDocument();
+    expect(screen.getByTestId('name').value).toBe('');
+    expect(screen.getByTestId('name')).toBeEnabled();
+    const selectField = screen.getByTestId('available_metrics');
+    expect(within(selectField).getByRole('textbox').textContent).toBe('')
+    expect(screen.getByRole('button', { name: /add/i }).textContent).toBe('Add new metrics to group');
+    expect(screen.getAllByRole('columnheader')).toHaveLength(3);
+    expect(screen.getByRole('columnheader', { name: '#' })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: /group/i }).textContent).toBe(' Metrics in group');
+    expect(screen.getByRole('columnheader', { name: 'Remove' })).toBeInTheDocument();
+    expect(screen.getAllByRole('row')).toHaveLength(2);
+    expect(screen.getByPlaceholderText(/search/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
+    expect(screen.queryByText(/delete/i)).not.toBeInTheDocument();
   })
 })

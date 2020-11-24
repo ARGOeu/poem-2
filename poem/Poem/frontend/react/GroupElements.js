@@ -307,7 +307,7 @@ export const GroupChange = (props) => {
               <FormGroup>
                 <ParagraphTitle title={title}/>
                 <Row className='mb-2'>
-                  <Col md={8}>
+                  <Col md={8} data-testid='available_metrics' >
                     <Select
                       closeMenuOnSelect={false}
                       placeholder={`Search available ${title}`}
