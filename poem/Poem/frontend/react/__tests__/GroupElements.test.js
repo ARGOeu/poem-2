@@ -84,6 +84,7 @@ jest.mock('../DataManager', () => {
 
 const mockChangeObject = jest.fn();
 const mockDeleteObject = jest.fn();
+const mockAddObject = jest.fn();
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -458,7 +459,7 @@ describe('Tests for group elements changeview', () => {
       2000
     );
   })
-  
+
   test('Test delete a group', async () => {
     mockDeleteObject.mockReturnValueOnce(
       Promise.resolve({ ok: true, status_code: 204 })
@@ -521,6 +522,22 @@ describe('Tests for group elements changeview', () => {
 })
 
 describe('Tests for groups addviews', () => {
+  jest.spyOn(NotificationManager, 'success');
+
+  beforeAll(() => {
+    const mockAvailableMetrics = [
+      'test.AMS-Check',
+      'argo.CE-Check'
+    ];
+
+    Backend.mockImplementation(() => {
+      return {
+        fetchResult: () => Promise.resolve(mockAvailableMetrics),
+        addObject: mockAddObject
+      }
+    })
+  })
+
   test('Test that addview renders properly', async () => {
     renderAddView();
 
@@ -544,5 +561,40 @@ describe('Tests for groups addviews', () => {
     expect(screen.getByPlaceholderText(/search/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     expect(screen.queryByText(/delete/i)).not.toBeInTheDocument();
+  })
+
+  test('Test creating new group', async () => {
+    mockAddObject.mockReturnValueOnce(Promise.resolve({ ok: true, status: 200 }));
+
+    renderAddView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /group/i })).toBeInTheDocument();
+    })
+
+    fireEvent.change(screen.getByTestId('name'), { target: { value: 'NewGroup' } });
+
+    const selectField = screen.getByTestId('available_metrics');
+    fireEvent.change(within(selectField).getByRole('textbox'), { target: { value: 'test' } })
+    fireEvent.click(within(selectField).getByText('test.AMS-Check'))
+    fireEvent.click(screen.getByRole('button', { name: /add/i }))
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /add/i }).textContent).toContain('Are you sure you want to add group of metrics?')
+    })
+    expect(screen.getByRole('dialog', { title: /add/i }).textContent).toContain('Add group of metrics');
+
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }))
+    expect(mockAddObject).toHaveBeenCalledTimes(1);
+    await waitFor(() => {
+      expect(mockAddObject).toHaveBeenCalledWith(
+        '/api/v2/internal/metricsgroup/',
+        { name: 'NewGroup', items: ['test.AMS-Check'] }
+      )
+    })
+
+    expect(NotificationManager.success).toHaveBeenCalledWith('Group of metrics successfully added', 'Added', 2000)
   })
 })
