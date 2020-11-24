@@ -85,7 +85,7 @@ jest.mock('../DataManager', () => {
 const mockChangeObject = jest.fn();
 const mockDeleteObject = jest.fn();
 
-afterEach(() => {
+beforeEach(() => {
   jest.clearAllMocks();
 })
 
@@ -214,9 +214,22 @@ describe('Tests for group elements changeview', () => {
       'org.nagios.CertLifetime'
     ];
 
+    const mockAvailableMetrics = [
+      'test.AMS-Check',
+      'argo.CE-Check'
+    ];
+
     Backend.mockImplementation(() => {
       return {
-        fetchResult: () => Promise.resolve(mockMetricGroup),
+        fetchResult: (path) => {
+          switch (path) {
+            case '/api/v2/internal/metricsgroup':
+              return Promise.resolve(mockAvailableMetrics)
+
+            case '/api/v2/internal/metricsgroup/TestGroup':
+              return Promise.resolve(mockMetricGroup)
+          }
+        },
         changeObject: mockChangeObject,
         deleteObject: mockDeleteObject
       }
@@ -234,6 +247,8 @@ describe('Tests for group elements changeview', () => {
     expect(screen.getByRole('heading', {name: 'metrics'})).toBeInTheDocument();
     expect(screen.getByTestId('name').value).toBe('TestGroup');
     expect(screen.getByTestId('name')).toBeDisabled();
+    const selectField = screen.getByTestId('available_metrics');
+    expect(within(selectField).getByRole('textbox').textContent).toBe('');
     expect(screen.getByRole('button', {name: /add/i}).textContent).toBe('Add new metrics to group');
     expect(screen.getAllByRole('columnheader')).toHaveLength(3);
     expect(screen.getByRole('columnheader', {name: '#'})).toBeInTheDocument();
@@ -266,6 +281,8 @@ describe('Tests for group elements changeview', () => {
     expect(screen.getByRole('heading', {name: 'metrics'})).toBeInTheDocument();
     expect(screen.getByTestId('name').value).toBe('TestGroup');
     expect(screen.getByTestId('name')).toBeDisabled();
+    const selectField = screen.getByTestId('available_metrics');
+    expect(within(selectField).getByRole('textbox').textContent).toBe('');
     expect(screen.getByRole('button', {name: /add/i}).textContent).toBe('Add new metrics to group');
     expect(screen.getAllByRole('columnheader')).toHaveLength(3);
     expect(screen.getByRole('columnheader', {name: '#'})).toBeInTheDocument();
@@ -288,8 +305,6 @@ describe('Tests for group elements changeview', () => {
     expect(screen.getAllByRole('row')).toHaveLength(4);
     expect(screen.getByRole('row', {name: /1/i}).textContent).toBe('1org.nagios.AmsDirSize')
     expect(screen.getByRole('row', {name: /2/i}).textContent).toBe('2org.nagios.CertLifetime')
-    expect(screen.getByRole('button', {name: /save/i})).toBeInTheDocument();
-    expect(screen.getByRole('button', {name: /delete/i})).toBeInTheDocument();
   })
 
   test('Test remove item from group and save', async () => {
@@ -349,6 +364,7 @@ describe('Tests for group elements changeview', () => {
     fireEvent.click(screen.getByRole('button', { name: /yes/i }))
 
     await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledTimes(1);
       expect(mockChangeObject).toHaveBeenCalledWith(
         '/api/v2/internal/metricsgroup/',
         { name: 'TestGroup', items: ['argo.AMS-Check', 'argo.AMSPublisher-Check', 'org.nagios.AmsDirSize', 'org.nagios.CertLifetime'] }
@@ -403,6 +419,46 @@ describe('Tests for group elements changeview', () => {
     )
   })
 
+  test('Test add item to group and save', async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 200 })
+    )
+
+    renderChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /group/i })).toBeInTheDocument();
+    })
+
+    expect(screen.getAllByRole('row')).toHaveLength(6);
+
+    const selectField = screen.getByTestId('available_metrics');
+    fireEvent.change(within(selectField).getByRole('textbox'), { target: { value: 'test' } })
+    fireEvent.click(within(selectField).getByText('test.AMS-Check'))
+    fireEvent.click(screen.getByRole('button', { name: /add/i }))
+    expect(screen.getAllByRole('row')).toHaveLength(7);
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument()
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }))
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        '/api/v2/internal/metricsgroup/',
+        { name: 'TestGroup', items: ['argo.AMS-Check', 'argo.AMSPublisher-Check', 'org.nagios.AmsDirSize', 'org.nagios.CertLifetime', 'test.AMS-Check'] }
+      )
+    })
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'Group of metrics successfully changed',
+      'Changed',
+      2000
+    );
+  })
+  
   test('Test delete a group', async () => {
     mockDeleteObject.mockReturnValueOnce(
       Promise.resolve({ ok: true, status_code: 204 })
