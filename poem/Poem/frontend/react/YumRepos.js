@@ -312,6 +312,7 @@ export const YumRepoComponent = (props) => {
           }}
           onSubmit = {(values) => onSubmitHandle(values)}
           validationSchema={RepoSchema}
+          enableReinitialize={true}
         >
           {props => (
             <Form>
