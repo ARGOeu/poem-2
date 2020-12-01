@@ -4,6 +4,7 @@ import { createMemoryHistory } from 'history';
 import { render, screen, waitFor } from '@testing-library/react';
 import { Route, Router } from 'react-router-dom';
 import { ListOfMetrics } from '../Metrics';
+import { Backend } from '../DataManager';
 
 
 const mockListOfMetrics = [
@@ -186,6 +187,52 @@ describe('Tests for metrics listview', () => {
     expect(screen.getByRole('link', { name: /argo.ams-publisher/i }).closest('a')).toHaveAttribute('href', '/ui/metrics/argo.AMS-Publisher');
     expect(screen.getByRole('link', { name: /ams-publisher-probe/i }).closest('a')).toHaveAttribute('href', '/ui/probes/ams-publisher-probe/history/0.1.12')
     expect(screen.getByRole('link', { name: /apel/i }).closest('a')).toHaveAttribute('href', '/ui/metrics/org.apel.APEL-Pub');
+    expect(screen.queryByText(/add/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/import/i)).not.toBeInTheDocument();
+  })
+
+  test('Render empty table properly', async () => {
+    Backend.mockImplementation(() => {
+      return {
+        fetchData: (path) => {
+          switch (path) {
+            case '/api/v2/internal/mtypes':
+              return Promise.resolve(['Active', 'Passive'])
+
+            case '/api/v2/internal/metrictags':
+              return Promise.resolve(['test_tag1', 'test_tag2', 'internal'])
+
+            case '/api/v2/internal/metric':
+              return Promise.resolve([])
+          }
+        }
+      }
+    })
+
+    renderListView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', {name: /metric/i}).textContent).toBe('Select metric for details')
+    })
+    expect(screen.getAllByRole('columnheader')).toHaveLength(12);
+    expect(screen.getByRole('columnheader', { name: '#' })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: /name/i }).textContent).toBe('Name');
+    expect(screen.getByRole('columnheader', { name: /probe/i }).textContent).toBe('Probe version');
+    expect(screen.getByRole('columnheader', { name: /type/i }).textContent).toBe('Type');
+    expect(screen.getByRole('columnheader', { name: /group/i }).textContent).toBe('Group');
+    expect(screen.getByRole('columnheader', { name: /tag/i }).textContent).toBe('Tag');
+    expect(screen.getAllByPlaceholderText('Search')).toHaveLength(2);
+    expect(screen.getAllByRole('columnheader', { name: 'Show all' })).toHaveLength(3);
+    expect(screen.getAllByRole('option', { name: 'Show all' })).toHaveLength(3);
+    expect(screen.getByRole('option', { name: /active/i })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: /passive/i })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: /egi/i })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: /argotest/i })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: /internal/i })).toBeInTheDocument();
+    expect(screen.getAllByRole('option', { name: /test_tag/i })).toHaveLength(2);
+    expect(screen.getAllByRole('row')).toHaveLength(52);
+    expect(screen.getAllByRole('row', { name: '' })).toHaveLength(49);
+    expect(screen.getByRole('row', { name: /no/i }).textContent).toBe('No metrics');
     expect(screen.queryByText(/add/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/import/i)).not.toBeInTheDocument();
   })
