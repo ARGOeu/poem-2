@@ -55,7 +55,7 @@
     "webpack-bundle-tracker": "^0.4.3",
     "webpack-cli": "^3.3.11",
     "word-wrap": "^1.2.3",
-    "yup": "^0.27.0"
+    "yup": "^0.29.3"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^1.2.17",
