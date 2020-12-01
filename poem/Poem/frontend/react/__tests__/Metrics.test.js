@@ -3,7 +3,7 @@ import '@testing-library/jest-dom/extend-expect';
 import { createMemoryHistory } from 'history';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { Route, Router } from 'react-router-dom';
-import { ListOfMetrics } from '../Metrics';
+import { ListOfMetrics, MetricChange } from '../Metrics';
 import { Backend } from '../DataManager';
 
 
@@ -151,6 +151,23 @@ function renderListView() {
 }
 
 
+function renderChangeView() {
+  const route = '/ui/metrics/argo.AMS-Check';
+  const history = createMemoryHistory({ initialEntries: [route] });
+
+  return {
+    ...render(
+      <Router history={history}>
+        <Route
+          path='/ui/metrics/:name'
+          render={ props => <MetricChange {...props} /> }
+        />
+      </Router>
+    )
+  }
+}
+
+
 describe('Tests for metrics listview', () => {
   test('Test that metrics listview renders properly', async () => {
     renderListView();
@@ -260,5 +277,182 @@ describe('Tests for metrics listview', () => {
     expect(screen.getByRole('row', { name: /no/i }).textContent).toBe('No metrics');
     expect(screen.queryByText(/add/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/import/i)).not.toBeInTheDocument();
+  })
+})
+
+describe('Tests for metric change', () => {
+  beforeAll(() => {
+    const mockMetric = {
+      id: 1,
+      name: 'argo.AMS-Check',
+      mtype: 'Active',
+      tags: ['test_tag1', 'test_tag2'],
+      probeversion: 'ams-probe (0.1.12)',
+      group: 'EGI',
+      description: 'Description of argo.AMS-Check metric',
+      parent: '',
+      probeexecutable: 'ams-probe',
+      config: [
+        { key: 'maxCheckAttempts', value: '3' },
+        { key: 'timeout', value: '60' },
+        { key: 'interval', value: '5' },
+        { key: 'retryInterval', value: '3' },
+        { key: 'path', value: '/usr/libexec/argo-monitoring/probes/argo' }
+      ],
+      attribute: [
+        { key: 'argo.ams_TOKEN', value: '--token' }
+      ],
+      dependancy: '',
+      flags: [
+        { key: 'OBSESS', value: '1' }
+      ],
+      parameter: [
+        { key: '--project', value: 'EGI' }
+      ],
+      fileparameter: []
+    };
+
+    const mockProbe = [{
+      id: '13',
+      object_repr: 'ams-probe (0.1.12)',
+      fields: {
+        name: 'ams-probe',
+        version: '0.1.12',
+        package: 'nagios-plugins-argo (0.1.12)',
+        description: 'Probe description',
+        comment: 'Initial version',
+        repository: 'https://github.com/ARGOeu/nagios-plugins-argo',
+        docurl: 'https://github.com/ARGOeu/nagios-plugins-argo/blob/master/README.md'
+      },
+      user: 'testuser',
+      date_created: '2020_11_30 12:00:00',
+      comment: 'Initial version.',
+      version: '0.1.12'
+    }];
+
+    Backend.mockImplementation(() => {
+      return {
+        fetchData: (path) => {
+          switch (path) {
+            case '/api/v2/internal/metric/argo.AMS-Check':
+              return Promise.resolve(mockMetric)
+
+            case '/api/v2/internal/version/probe/ams-probe':
+              return Promise.resolve(mockProbe)
+          }
+        },
+        isActiveSession: () => Promise.resolve({
+          active: true,
+          userdetails: {
+            is_superuser: false,
+            username: 'testuser',
+            groups: {
+              aggregations: ['EGI'],
+              metricprofiles: ['EGI'],
+              metrics: ['EGI', 'ARGOTEST'],
+              thresholdsprofiles: ['EGI']
+            },
+            token: '1234token_rw'
+          }
+        })
+      }
+    })
+  })
+
+  test('Test that page renders properly', async () => {
+    renderChangeView();
+
+    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change metric/i }).textContent).toBe('Change metric');
+    })
+
+    const nameField = screen.getByTestId('name');
+    const typeField = screen.getByTestId('mtype');
+    const probeField = screen.getByTestId('probeversion');
+    const packageField = screen.getByTestId('package');
+    const descriptionField = screen.getByTestId('description');
+    const groupField = screen.getByTestId('group');
+    const executableField = screen.getByTestId('probeexecutable');
+    const configKey1 = screen.getByTestId('config.0.key');
+    const configKey2 = screen.getByTestId('config.1.key');
+    const configKey3 = screen.getByTestId('config.2.key');
+    const configKey4 = screen.getByTestId('config.3.key');
+    const configKey5 = screen.getByTestId('config.4.key');
+    const configVal1 = screen.getByTestId('config.0.value');
+    const configVal2 = screen.getByTestId('config.1.value');
+    const configVal3 = screen.getByTestId('config.2.value');
+    const configVal4 = screen.getByTestId('config.3.value');
+    const configVal5 = screen.getByTestId('config.4.value');
+    const attributeKey = screen.getByTestId('attributes.0.key');
+    const attributeVal = screen.getByTestId('attributes.0.value')
+    const dependencyKey = screen.getByTestId('empty-key.dependency');
+    const dependencyVal = screen.getByTestId('empty-value.dependency');
+    const parameterKey = screen.getByTestId('parameter.0.key');
+    const parameterVal = screen.getByTestId('parameter.0.value');
+    const flagKey = screen.getByTestId('flags.0.key');
+    const flagVal = screen.getByTestId('flags.0.value');
+    const parentField = screen.getByTestId('parent');
+
+    expect(nameField.value).toBe('argo.AMS-Check');
+    expect(nameField).toHaveAttribute('readOnly');
+    expect(typeField.value).toBe('Active');
+    expect(typeField).toHaveAttribute('readonly');
+    expect(probeField.value).toBe('ams-probe (0.1.12)');
+    expect(probeField).toBeDisabled();
+    expect(packageField.value).toBe('nagios-plugins-argo (0.1.12)');
+    expect(packageField).toBeDisabled();
+    expect(screen.queryAllByText(/test_tag/i)).toHaveLength(2);
+    expect(descriptionField.value).toBe('Description of argo.AMS-Check metric');
+    expect(descriptionField).toBeDisabled();
+    expect(groupField.value).toBe('EGI');
+    expect(screen.getByRole('option', { name: /egi/i })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: /argotest/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /metric conf/i }).textContent).toBe('Metric configuration');
+    expect(screen.getByRole('heading', { name: /exec/i }).textContent).toBe('probe executable');
+    expect(executableField.value).toBe('ams-probe');
+    expect(executableField).toHaveAttribute('readonly');
+    expect(configKey1.value).toBe('maxCheckAttempts');
+    expect(configKey1).toHaveAttribute('readonly');
+    expect(configVal1.value).toBe('3');
+    expect(configVal1).not.toHaveAttribute('readonly');
+    expect(configKey2.value).toBe('timeout');
+    expect(configKey2).toHaveAttribute('readonly');
+    expect(configVal2.value).toBe('60');
+    expect(configVal2).not.toHaveAttribute('readonly');
+    expect(configKey3.value).toBe('interval');
+    expect(configKey3).toHaveAttribute('readonly');
+    expect(configVal3.value).toBe('5')
+    expect(configVal3).not.toHaveAttribute('readonly');
+    expect(configKey4.value).toBe('retryInterval');
+    expect(configKey4).toHaveAttribute('readonly');
+    expect(configVal4.value).toBe('3')
+    expect(configVal4).not.toHaveAttribute('readonly');
+    expect(configKey5.value).toBe('path');
+    expect(configKey5).toHaveAttribute('readonly');
+    expect(configVal5.value).toBe('/usr/libexec/argo-monitoring/probes/argo');
+    expect(configVal5).toHaveAttribute('readonly');
+    expect(attributeKey.value).toBe('argo.ams_TOKEN');
+    expect(attributeKey).toHaveAttribute('readonly');
+    expect(attributeVal.value).toBe('--token');
+    expect(attributeVal).toHaveAttribute('readonly');
+    expect(dependencyKey.value).toBe('');
+    expect(dependencyKey).toHaveAttribute('readonly');
+    expect(dependencyVal.value).toBe('');
+    expect(dependencyVal).toHaveAttribute('readonly');
+    expect(parameterKey.value).toBe('--project');
+    expect(parameterKey).toHaveAttribute('readonly');
+    expect(parameterVal.value).toBe('EGI');
+    expect(parameterVal).toHaveAttribute('readonly');
+    expect(flagKey.value).toBe('OBSESS');
+    expect(flagKey).toHaveAttribute('readonly');
+    expect(flagVal.value).toBe('1');
+    expect(flagVal).toHaveAttribute('readonly');
+    expect(parentField.value).toBe('');
+    expect(parentField).toHaveAttribute('readonly');
+    expect(screen.getByRole('button', { name: /history/i }).closest('a')).toHaveAttribute('href', '/ui/metrics/argo.AMS-Check/history')
+    expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
   })
 })
