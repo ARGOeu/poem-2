@@ -1,7 +1,7 @@
 import React from 'react';
 import '@testing-library/jest-dom/extend-expect';
 import { createMemoryHistory } from 'history';
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { Route, Router } from 'react-router-dom';
 import { ListOfMetrics } from '../Metrics';
 import { Backend } from '../DataManager';
@@ -189,6 +189,31 @@ describe('Tests for metrics listview', () => {
     expect(screen.getByRole('link', { name: /apel/i }).closest('a')).toHaveAttribute('href', '/ui/metrics/org.apel.APEL-Pub');
     expect(screen.queryByText(/add/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/import/i)).not.toBeInTheDocument();
+  })
+
+  test('Test filter metrics', async () => {
+    renderListView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', {name: /metric/i}).textContent).toBe('Select metric for details')
+    })
+
+    fireEvent.change(screen.getAllByPlaceholderText('Search')[0], { target: { value: 'argo' } });
+    expect(screen.getAllByRole('row')).toHaveLength(52);
+    expect(screen.getAllByRole('row', { name: '' })).toHaveLength(48);
+    expect(screen.getByRole('row', { name: /ams-check/i }).textContent).toBe('1argo.AMS-Checkams-probe (0.1.12)ActiveEGItest_tag1test_tag2')
+    expect(screen.getByRole('row', { name: /ams-publisher/i }).textContent).toBe('2argo.AMS-Publisherams-publisher-probe (0.1.12)ActiveEGIinternal')
+    expect(screen.getByRole('link', { name: /argo.ams-check/i }).closest('a')).toHaveAttribute('href', '/ui/metrics/argo.AMS-Check');
+    expect(screen.getByRole('link', { name: /ams-probe/i }).closest('a')).toHaveAttribute('href', '/ui/probes/ams-probe/history/0.1.12')
+    expect(screen.getByRole('link', { name: /argo.ams-publisher/i }).closest('a')).toHaveAttribute('href', '/ui/metrics/argo.AMS-Publisher');
+    expect(screen.getByRole('link', { name: /ams-publisher-probe/i }).closest('a')).toHaveAttribute('href', '/ui/probes/ams-publisher-probe/history/0.1.12')
+
+    fireEvent.change(screen.getAllByDisplayValue('Show all')[2], { target: { value: 'internal' } })
+    expect(screen.getAllByRole('row')).toHaveLength(52);
+    expect(screen.getAllByRole('row', { name: '' })).toHaveLength(49);
+    expect(screen.getByRole('row', { name: /ams-publisher/i }).textContent).toBe('1argo.AMS-Publisherams-publisher-probe (0.1.12)ActiveEGIinternal')
+    expect(screen.getByRole('link', { name: /argo.ams-publisher/i }).closest('a')).toHaveAttribute('href', '/ui/metrics/argo.AMS-Publisher');
+    expect(screen.getByRole('link', { name: /ams-publisher-probe/i }).closest('a')).toHaveAttribute('href', '/ui/probes/ams-publisher-probe/history/0.1.12')
   })
 
   test('Render empty table properly', async () => {
