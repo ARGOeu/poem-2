@@ -921,7 +921,8 @@ export const MetricProfilesComponent = (props) => {
           onSubmit = {(values) => onSubmitHandle(values)}
           enableReinitialize={true}
           validate={MetricProfileTupleValidate}
-          render = {props => (
+        >
+          {props => (
             <Form>
               <ProfileMainInfo
                 {...props}
@@ -1035,7 +1036,7 @@ export const MetricProfilesComponent = (props) => {
               }
             </Form>
           )}
-        />
+        </Formik>
       </BaseArgoView>
     )
   }
@@ -1102,7 +1103,7 @@ export const MetricProfilesList = (props) => {
         </div>,
       column_width: '8%'
     }
-  ])
+  ], [])
 
   if (loadingUserDetails || loadingListMetricProfiles)
     return (<LoadingAnim />)
@@ -1277,7 +1278,7 @@ export const MetricProfileVersionDetails = (props) => {
       setError(err)
       setLoading(false);
     }
-  }, [])
+  })
 
   if (loading)
     return (<LoadingAnim/>);
