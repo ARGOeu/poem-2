@@ -1299,7 +1299,8 @@ export const MetricProfileVersionDetails = (props) => {
             groupname: metricProfileVersion.groupname,
             metricinstances: metricProfileVersion.metricinstances
           }}
-          render = {props => (
+        >
+          {props => (
             <Form>
               <ProfileMainInfo
                 {...props}
@@ -1335,7 +1336,7 @@ export const MetricProfileVersionDetails = (props) => {
               />
             </Form>
           )}
-        />
+        </Formik>
       </BaseArgoView>
     )
   } else
