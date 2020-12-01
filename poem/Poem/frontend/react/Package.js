@@ -622,7 +622,7 @@ export const PackageComponent = (props) => {
                           lists={repos.repo6}
                           icon='yumrepos'
                           field='repo_6'
-                          onselect_handler={!addview ? (newValue) => onSelect('repo_6', newValue) : undefined}
+                          onselect_handler={!addview ? (_, newValue) => onSelect('repo_6', newValue) : undefined}
                           label='CentOS 6 repo'
                           hide_error={true}
                         />
@@ -652,7 +652,7 @@ export const PackageComponent = (props) => {
                           lists={repos.repo7}
                           icon='yumrepos'
                           field='repo_7'
-                          onselect_handler={!addview ? (newValue) => onSelect('repo_7', newValue) : undefined}
+                          onselect_handler={!addview ? (_, newValue) => onSelect('repo_7', newValue) : undefined}
                           label='CentOS 7 repo'
                           hide_error={true}
                         />

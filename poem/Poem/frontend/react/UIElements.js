@@ -852,78 +852,24 @@ export const CustomErrorMessage = ({...props}) => (
 )
 
 
-// Leaving the old AutocompleteField until all the other forms using it have been refactored
-export const _AutocompleteField = ({setFieldValue, lists=[], val='', icon, field, req, label, onselect_handler}) => {
-  const [inputValue, setInputValue] = useState(val);
-  const [suggestions, setSuggestions] = useState(lists);
-
-  const getSuggestions = value => {
-    return (
-      lists.filter(suggestion =>
-        suggestion.toLowerCase().includes(value.trim().toLowerCase())
-      )
-    );
-  };
-
-  const getSuggestionValue = suggestion => suggestion;
-
-  const renderSuggestion = (suggestion, {isHighlighted}) => (
-    <div
-      key={lists.indexOf(suggestion)}
-      className={`argo-autocomplete-entries ${isHighlighted ?
-        'argo-autocomplete-entries-highlighted' : ''}`}
-    >
-      {suggestion ? <Icon i={icon}/> : ''} {suggestion}
-    </div>
-  );
-
-  const renderInputComponent = inputProps => {
-    if (label)
-      return (
-        <div className='input-group mb-3'>
-          <div className='input-group-prepend'>
-            <span className='input-group-text' id='basic-addon1'>{label}</span>
-          </div>
-          <input {...inputProps} type='text'
-          className={`form-control ${req && 'border-danger'}`} aria-label='label'/>
-        </div>
-      );
-    else
-      return (<input {...inputProps} type='text' className='form-control'/>);
-  }
-
-  return (
-    <div>
-      <Autosuggest
-        suggestions={suggestions}
-        onSuggestionsClearRequested={() => setSuggestions([])}
-        onSuggestionsFetchRequested={({ value }) => {
-          setInputValue(value);
-          setSuggestions(getSuggestions(value));
-        }}
-        getSuggestionValue={getSuggestionValue}
-        renderSuggestion={renderSuggestion}
-        inputProps={{
-          value: inputValue,
-          onChange: (_, { newValue }) => {
-            setInputValue(newValue);
-            setFieldValue(field, newValue);
-            onselect_handler(field, newValue);
-          }
-        }}
-        renderInputComponent={renderInputComponent}
-        shouldRenderSuggestions={() => true}
-        theme={{
-          containerOpen: 'argo-autocomplete-menu',
-          suggestionsList: 'argo-autocomplete-list'
-        }}
-      />
-    </div>
-  );
-};
-
 export const AutocompleteField = ({lists=[], field, icon, label, onselect_handler=undefined, hide_error=false, ...props}) => {
-  const [inputValue, setInputValue] = useState(props.values[field]);
+  return (
+    <_AutocompleteField
+      lists={lists}
+      field={field}
+      icon={icon}
+      label={label}
+      val={props.values[field]}
+      err={props.errors[field]}
+      setFieldValue={props.setFieldValue}
+      onselect_handler={onselect_handler}
+      hide_error={hide_error}
+    />
+  )
+}
+
+export const _AutocompleteField = ({lists=[], field, val, err, setFieldValue, icon, label, onselect_handler=undefined, hide_error=false}) => {
+  const [inputValue, setInputValue] = useState(val);
   const [suggestions, setSuggestions] = useState(lists);
   const [touched, setTouched] = useState(false);
 
@@ -957,9 +903,9 @@ export const AutocompleteField = ({lists=[], field, icon, label, onselect_handle
               <span className='input-group-text' id='basic-addon1'>{label}</span>
             </div>
             <input {...inputProps} type='text'
-            className={`form-control ${props.errors[field] && touched && 'border-danger'}`} aria-label='label' />
+            className={`form-control ${err && touched && 'border-danger'}`} aria-label='label' />
           </div>
-          {!hide_error && props.errors[field] && touched && <div style={{color: '#FF0000', fontSize: 'small'}}>{props.errors[field]}</div>}
+          {!hide_error && err && touched && <div style={{color: '#FF0000', fontSize: 'small'}}>{err}</div>}
         </div>
       );
     else
@@ -981,8 +927,8 @@ export const AutocompleteField = ({lists=[], field, icon, label, onselect_handle
           value: inputValue,
           onChange: (_, { newValue }) => {
             setInputValue(newValue);
-            props.setFieldValue(field, newValue);
-            onselect_handler && onselect_handler(newValue);
+            setFieldValue(field, newValue);
+            onselect_handler && onselect_handler(field, newValue);
           }
         }}
         renderInputComponent={renderInputComponent}
