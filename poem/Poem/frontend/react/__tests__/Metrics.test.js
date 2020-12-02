@@ -5,6 +5,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { Route, Router } from 'react-router-dom';
 import { ListOfMetrics, MetricChange } from '../Metrics';
 import { Backend } from '../DataManager';
+import { NotificationManager } from 'react-notifications';
 
 
 const mockListOfMetrics = [
@@ -89,6 +90,8 @@ const mockListOfMetrics = [
     fileparameter: []
   }
 ];
+
+const mockChangeObject = jest.fn();
 
 jest.mock('../DataManager', () => {
   return {
@@ -280,56 +283,57 @@ describe('Tests for metrics listview', () => {
   })
 })
 
+const mockMetric = {
+  id: 1,
+  name: 'argo.AMS-Check',
+  mtype: 'Active',
+  tags: ['test_tag1', 'test_tag2'],
+  probeversion: 'ams-probe (0.1.12)',
+  group: 'EGI',
+  description: 'Description of argo.AMS-Check metric',
+  parent: '',
+  probeexecutable: 'ams-probe',
+  config: [
+    { key: 'maxCheckAttempts', value: '3' },
+    { key: 'timeout', value: '60' },
+    { key: 'interval', value: '5' },
+    { key: 'retryInterval', value: '3' },
+    { key: 'path', value: '/usr/libexec/argo-monitoring/probes/argo' }
+  ],
+  attribute: [
+    { key: 'argo.ams_TOKEN', value: '--token' }
+  ],
+  dependancy: '',
+  flags: [
+    { key: 'OBSESS', value: '1' }
+  ],
+  parameter: [
+    { key: '--project', value: 'EGI' }
+  ],
+  fileparameter: []
+};
+
+const mockProbe = [{
+  id: '13',
+  object_repr: 'ams-probe (0.1.12)',
+  fields: {
+    name: 'ams-probe',
+    version: '0.1.12',
+    package: 'nagios-plugins-argo (0.1.12)',
+    description: 'Probe description',
+    comment: 'Initial version',
+    repository: 'https://github.com/ARGOeu/nagios-plugins-argo',
+    docurl: 'https://github.com/ARGOeu/nagios-plugins-argo/blob/master/README.md'
+  },
+  user: 'testuser',
+  date_created: '2020_11_30 12:00:00',
+  comment: 'Initial version.',
+  version: '0.1.12'
+}];
+
 describe('Tests for metric change', () => {
+  jest.spyOn(NotificationManager, 'success');
   beforeAll(() => {
-    const mockMetric = {
-      id: 1,
-      name: 'argo.AMS-Check',
-      mtype: 'Active',
-      tags: ['test_tag1', 'test_tag2'],
-      probeversion: 'ams-probe (0.1.12)',
-      group: 'EGI',
-      description: 'Description of argo.AMS-Check metric',
-      parent: '',
-      probeexecutable: 'ams-probe',
-      config: [
-        { key: 'maxCheckAttempts', value: '3' },
-        { key: 'timeout', value: '60' },
-        { key: 'interval', value: '5' },
-        { key: 'retryInterval', value: '3' },
-        { key: 'path', value: '/usr/libexec/argo-monitoring/probes/argo' }
-      ],
-      attribute: [
-        { key: 'argo.ams_TOKEN', value: '--token' }
-      ],
-      dependancy: '',
-      flags: [
-        { key: 'OBSESS', value: '1' }
-      ],
-      parameter: [
-        { key: '--project', value: 'EGI' }
-      ],
-      fileparameter: []
-    };
-
-    const mockProbe = [{
-      id: '13',
-      object_repr: 'ams-probe (0.1.12)',
-      fields: {
-        name: 'ams-probe',
-        version: '0.1.12',
-        package: 'nagios-plugins-argo (0.1.12)',
-        description: 'Probe description',
-        comment: 'Initial version',
-        repository: 'https://github.com/ARGOeu/nagios-plugins-argo',
-        docurl: 'https://github.com/ARGOeu/nagios-plugins-argo/blob/master/README.md'
-      },
-      user: 'testuser',
-      date_created: '2020_11_30 12:00:00',
-      comment: 'Initial version.',
-      version: '0.1.12'
-    }];
-
     Backend.mockImplementation(() => {
       return {
         fetchData: (path) => {
@@ -354,7 +358,8 @@ describe('Tests for metric change', () => {
             },
             token: '1234token_rw'
           }
-        })
+        }),
+        changeObject: mockChangeObject
       }
     })
   })
@@ -454,5 +459,65 @@ describe('Tests for metric change', () => {
     expect(screen.getByRole('button', { name: /history/i }).closest('a')).toHaveAttribute('href', '/ui/metrics/argo.AMS-Check/history')
     expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
+  })
+
+  test('Test successfully changing metric', async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
+    )
+
+    renderChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change metric/i }).textContent).toBe('Change metric');
+    })
+
+    const configVal1 = screen.getByTestId('config.0.value');
+    const configVal2 = screen.getByTestId('config.1.value');
+    const configVal3 = screen.getByTestId('config.2.value');
+    const configVal4 = screen.getByTestId('config.3.value');
+    const groupField = screen.getByTestId('group');
+
+    fireEvent.change(configVal1, { target: { value: '4' } });
+    fireEvent.change(configVal2, { target: { value: '70' } });
+    fireEvent.change(configVal3, { target: { value: '4' } });
+    fireEvent.change(configVal4, { target: { value: '2' } });
+    fireEvent.change(groupField, { target: { value: 'ARGOTEST' } });
+    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        '/api/v2/internal/metric/',
+        {
+          name: mockMetric.name,
+          mtype: mockMetric.mtype,
+          group: 'ARGOTEST',
+          description: mockMetric.description,
+          parent: mockMetric.parent,
+          probeversion: mockMetric.probeversion,
+          probeexecutable: mockMetric.probeexecutable,
+          config: [
+            { key: 'maxCheckAttempts', value: '4' },
+            { key: 'timeout', value: '70' },
+            { key: 'interval', value: '4' },
+            { key: 'retryInterval', value: '2' },
+            { key: 'path', value: '/usr/libexec/argo-monitoring/probes/argo'}
+          ],
+          attribute: mockMetric.attribute,
+          dependancy: mockMetric.dependancy,
+          flags: mockMetric.flags,
+          parameter: mockMetric.parameter,
+          fileparameter: mockMetric.fileparameter
+        }
+      )
+    })
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'Metric successfully changed', 'Changed', 2000
+    )
   })
 })
