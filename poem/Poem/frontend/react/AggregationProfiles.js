@@ -940,7 +940,11 @@ export const AggregationProfilesChange = (props) => {
           }}
           onSubmit={(values, actions) => onSubmitHandle(values, actions)}
           validationSchema={AggregationProfilesSchema}
-          render = {props => (
+          validateOnBlur={false}
+          validateOnMount={false}
+          validateOnChange={true}
+        >
+          {props => (
             <Form>
               <FormikEffect onChange={(current, prev) => {
                 if (current.values.metric_profile !== prev.values.metric_profile) {
@@ -1069,7 +1073,7 @@ export const AggregationProfilesChange = (props) => {
               }
             </Form>
           )}
-        />
+        </Formik>
       </BaseArgoView>
     )
   }
