@@ -1278,7 +1278,7 @@ export const MetricProfileVersionDetails = (props) => {
       setError(err)
       setLoading(false);
     }
-  })
+  }, [])
 
   if (loading)
     return (<LoadingAnim/>);
