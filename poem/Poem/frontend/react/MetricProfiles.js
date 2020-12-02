@@ -1103,7 +1103,7 @@ export const MetricProfilesList = (props) => {
         </div>,
       column_width: '8%'
     }
-  ], [])
+  ], [publicView])
 
   if (loadingUserDetails || loadingListMetricProfiles)
     return (<LoadingAnim />)
@@ -1166,13 +1166,13 @@ export const MetricProfileVersionCompare = (props) => {
   const version1 = props.match.params.id1;
   const version2 = props.match.params.id2;
   const name = props.match.params.name;
-  const backend = new Backend();
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [metricProfileVersion1, setMetricProfileVersion1] = useState(undefined)
   const [metricProfileVersion2, setMetricProfileVersion2] = useState(undefined)
 
   useEffect(() => {
+    const backend = new Backend();
     const fetchDataAndSet = async () => {
       let json = await backend.fetchData(`/api/v2/internal/tenantversion/metricprofile/${name}`);
       json.forEach((e)=> {
@@ -1203,8 +1203,7 @@ export const MetricProfileVersionCompare = (props) => {
       setError(err)
       setLoading(false);
     }
-
-  }, [])
+  }, [name, version1, version2])
 
   if (loading)
     return (<LoadingAnim/>);
@@ -1253,9 +1252,9 @@ export const MetricProfileVersionDetails = (props) => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
-  const backend = new Backend();
 
   useEffect(() => {
+    const backend = new Backend();
     const fetchDataAndSet = async () => {
       let json = await backend.fetchData(`/api/v2/internal/tenantversion/metricprofile/${name}`);
       json.forEach((e)=> {
@@ -1278,7 +1277,7 @@ export const MetricProfileVersionDetails = (props) => {
       setError(err)
       setLoading(false);
     }
-  }, [])
+  }, [name, version])
 
   if (loading)
     return (<LoadingAnim/>);
