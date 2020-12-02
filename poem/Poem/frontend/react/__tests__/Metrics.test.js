@@ -592,4 +592,70 @@ describe('Tests for metric change', () => {
       expect.any(Function)
     )
   })
+
+  test('Test error in saving metric without error message', async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
+    )
+
+    renderChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change metric/i }).textContent).toBe('Change metric');
+    })
+
+    const configVal1 = screen.getByTestId('config.0.value');
+    const configVal2 = screen.getByTestId('config.1.value');
+    const configVal3 = screen.getByTestId('config.2.value');
+    const configVal4 = screen.getByTestId('config.3.value');
+    const groupField = screen.getByTestId('group');
+
+    fireEvent.change(configVal1, { target: { value: '4' } });
+    fireEvent.change(configVal2, { target: { value: '70' } });
+    fireEvent.change(configVal3, { target: { value: '4' } });
+    fireEvent.change(configVal4, { target: { value: '2' } });
+    fireEvent.change(groupField, { target: { value: 'ARGOTEST' } });
+    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        '/api/v2/internal/metric/',
+        {
+          name: mockMetric.name,
+          mtype: mockMetric.mtype,
+          group: 'ARGOTEST',
+          description: mockMetric.description,
+          parent: mockMetric.parent,
+          probeversion: mockMetric.probeversion,
+          probeexecutable: mockMetric.probeexecutable,
+          config: [
+            { key: 'maxCheckAttempts', value: '4' },
+            { key: 'timeout', value: '70' },
+            { key: 'interval', value: '4' },
+            { key: 'retryInterval', value: '2' },
+            { key: 'path', value: '/usr/libexec/argo-monitoring/probes/argo'}
+          ],
+          attribute: mockMetric.attribute,
+          dependancy: mockMetric.dependancy,
+          flags: mockMetric.flags,
+          parameter: mockMetric.parameter,
+          fileparameter: mockMetric.fileparameter
+        }
+      )
+    })
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>Error changing metric</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Error: 500 SERVER ERROR',
+      0,
+      expect.any(Function)
+    )
+  })
 })
