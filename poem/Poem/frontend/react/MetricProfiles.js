@@ -316,7 +316,6 @@ export const MetricProfilesComponent = (props) => {
   const [onYes, setOnYes] = useState('')
   const [searchMetric, setSearchMetric] = useState("");
   const [searchServiceFlavour, setSearchServiceFlavour] = useState("");
-  // TODO: useFormik hook with formik 2.x
   const [formikValues, setFormikValues] = useState({})
   const querykey = `metricprofiles_${addview ? 'addview' : `${profile_name}_${publicView ? 'publicview' : 'changeview'}`}`;
 
