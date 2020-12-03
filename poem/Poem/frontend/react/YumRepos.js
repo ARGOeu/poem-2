@@ -4,13 +4,13 @@ import { Link } from 'react-router-dom';
 import {
   LoadingAnim,
   BaseArgoView,
-  FancyErrorMessage,
   NotifyOk,
   NotifyError,
   ErrorComponent,
   DefaultColumnFilter,
   SelectColumnFilter,
-  BaseArgoTable
+  BaseArgoTable,
+  CustomErrorMessage
 } from './UIElements';
 import { Formik, Form, Field } from 'formik';
 import {
@@ -92,7 +92,7 @@ export const YumRepoList = (props) => {
       Filter: SelectColumnFilter,
       filterList: listTags
     }
-  ]);
+  ], [isTenantSchema, listTags]);
 
   if (loadingListRepos || loadingListTags || loadingIsTenantSchema)
     return (<LoadingAnim/>);
@@ -144,21 +144,15 @@ export const YumRepoComponent = (props) => {
   const backend = new Backend();
 
   const { data: repo, error: errorRepo, isLoading: loadingRepo } = useQuery(
-    `yumrepo_${addview ? 'addview' : `${name}_${tag}_${cloneview ? 'cloneview' : 'changeview'}`}`,
+    `yumrepo_${name}_${tag}_${cloneview ? 'cloneview' : 'changeview'}`,
     async () => {
-      let repo = {
-        id: '',
-        name: '',
-        tag: 'CentOS 6',
-        content: '',
-        description: ''
-      };
+      if (!addview) {
+        let repo = await backend.fetchData(`/api/v2/internal/yumrepos/${name}/${tag}`);
 
-      if (!addview)
-        repo = await backend.fetchData(`/api/v2/internal/yumrepos/${name}/${tag}`);
-
-      return repo;
-    }
+        return repo;
+      }
+    },
+    { enabled: !addview }
   );
 
   const { data: tags, error: errorTags, isLoading: loadingTags } = useQuery(
@@ -284,7 +278,7 @@ export const YumRepoComponent = (props) => {
   else if (errorTags)
     return (<ErrorComponent error={errorTags}/>);
 
-  else if (!loadingRepo && !loadingTags && repo) {
+  else if (!loadingRepo && !loadingTags && tags) {
     return (
       <BaseArgoView
         resourcename='YUM repo'
@@ -310,15 +304,17 @@ export const YumRepoComponent = (props) => {
       >
         <Formik
           initialValues = {{
-            id: repo.id,
-            name: repo.name,
-            tag: repo.tag,
-            content: repo.content,
-            description: repo.description
+            id: repo ? repo.id : '',
+            name: repo ? repo.name : '',
+            tag: repo ? repo.tag : 'CentOS 6',
+            content: repo ? repo.content : '',
+            description: repo ? repo.description : ''
           }}
           onSubmit = {(values) => onSubmitHandle(values)}
           validationSchema={RepoSchema}
-          render = {props => (
+          enableReinitialize={true}
+        >
+          {props => (
             <Form>
               <FormGroup>
                 <Row>
@@ -328,15 +324,12 @@ export const YumRepoComponent = (props) => {
                       <Field
                         type='text'
                         name='name'
-                        className={`form-control ${props.errors.name && 'border-danger'}`}
+                        className={`form-control ${props.errors.name && props.touched.name && 'border-danger'}`}
                         id='name'
                         disabled={disabled}
                       />
                     </InputGroup>
-                    {
-                      props.errors.name &&
-                        FancyErrorMessage(props.errors.name)
-                    }
+                    <CustomErrorMessage name='name' />
                     <FormText color='muted'>
                       Name of YUM repo file.
                     </FormText>
@@ -382,14 +375,11 @@ export const YumRepoComponent = (props) => {
                       component='textarea'
                       name='content'
                       rows='20'
-                      className={`form-control ${props.errors.content && 'border-danger'}`}
+                      className={`form-control ${props.errors.content && props.touched.content && 'border-danger'}`}
                       id='content'
                       disabled={disabled}
                     />
-                    {
-                      props.errors.content &&
-                        FancyErrorMessage(props.errors.content)
-                    }
+                    <CustomErrorMessage name='content' />
                     <FormText color='muted'>
                       Content of the repo file.
                     </FormText>
@@ -404,14 +394,11 @@ export const YumRepoComponent = (props) => {
                       component='textarea'
                       name='description'
                       rows='5'
-                      className={`form-control ${props.errors.description && 'border-danger'}`}
+                      className={`form-control ${props.errors.description && props.touched.description && 'border-danger'}`}
                       id='description'
                       disabled={disabled}
                     />
-                    {
-                      props.errors.description &&
-                        FancyErrorMessage(props.errors.description)
-                    }
+                    <CustomErrorMessage name='description' />
                     <FormText color='muted'>
                       Short free text description.
                     </FormText>
@@ -444,7 +431,7 @@ export const YumRepoComponent = (props) => {
               }
             </Form>
           )}
-        />
+        </Formik>
       </BaseArgoView>
     )
   } else

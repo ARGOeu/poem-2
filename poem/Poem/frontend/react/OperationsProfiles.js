@@ -57,7 +57,7 @@ export const OperationsProfilesList = (props) => {
       accessor: 'description',
       column_width: '78%'
     }
-  ]);
+  ], [publicView]);
 
   if (loading)
     return (<LoadingAnim/>);
@@ -92,13 +92,15 @@ export const OperationsProfileDetails = (props) => {
   const [error, setError] = useState(null);
 
   const name = props.match.params.name;
-
-  const webapi = new WebApi({
-    token: props.webapitoken,
-    operationsProfiles: props.webapioperations
-  });
+  const token = props.webapitoken;
+  const webapioperations = props.webapioperations;
 
   useEffect(() => {
+    const webapi = new WebApi({
+      token: token,
+      operationsProfiles: webapioperations
+    });
+
     setLoading(true);
 
     async function fetchData() {
@@ -107,11 +109,11 @@ export const OperationsProfileDetails = (props) => {
           setProfile(json);
       } catch(err) {
         setError(err);
-      };
+      }
       setLoading(false);
-    };
+    }
     fetchData();
-  }, []);
+  }, [name, token, webapioperations]);
 
   if (loading)
     return (<LoadingAnim/>);
@@ -129,7 +131,8 @@ export const OperationsProfileDetails = (props) => {
           initialValues = {{
             name: profile.name
           }}
-          render = {props => (
+        >
+          {() => (
             <Form>
               <FormGroup>
                 <Row>
@@ -199,8 +202,8 @@ export const OperationsProfileDetails = (props) => {
               <ParagraphTitle title='Operations'/>
               <Row>
                 {
-                  profile.operations.map((operation, oi) =>
-                    <Col md={5} key={oi}>
+                  profile.operations.map((operation, oin) =>
+                    <Col md={5} key={oin}>
                       <h3 className='text-center'>{operation.name}</h3>
                       <Table bordered size='sm'>
                         <thead>
@@ -228,7 +231,7 @@ export const OperationsProfileDetails = (props) => {
               </Row>
             </Form>
           )}
-        />
+        </Formik>
       </BaseArgoView>
     );
   else

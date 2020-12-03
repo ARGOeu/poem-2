@@ -4,14 +4,13 @@ import { Backend } from './DataManager';
 import {
   LoadingAnim,
   BaseArgoView,
-  Checkbox,
   NotifyOk,
-  FancyErrorMessage,
   NotifyError,
   ModalAreYouSure,
   ErrorComponent,
   ParagraphTitle,
-  BaseArgoTable
+  BaseArgoTable,
+  CustomErrorMessage
 } from './UIElements';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
@@ -68,7 +67,7 @@ import './Users.css';
 import { useQuery } from 'react-query';
 
 
-const CommonUser = ({add, errors}) =>
+const CommonUser = ({add, ...props}) =>
   <>
     {
       (add) ?
@@ -80,14 +79,11 @@ const CommonUser = ({add, errors}) =>
                 <Field
                   type="text"
                   name="username"
-                  className={`form-control ${errors.username && 'border-danger'}`}
+                  className={`form-control ${props.errors.username && props.touched.username && 'border-danger'}`}
                   id="userUsername"
                 />
               </InputGroup>
-              {
-                errors.username &&
-                  FancyErrorMessage(errors.username)
-              }
+              <CustomErrorMessage name='username' />
             </Col>
           </Row>
           <Row>
@@ -97,14 +93,11 @@ const CommonUser = ({add, errors}) =>
                 <Field
                 type="password"
                 name="password"
-                className={`form-control ${errors.password && 'border-danger'}`}
+                className={`form-control ${props.errors.password && props.touched.password && 'border-danger'}`}
                 id="password"
               />
               </InputGroup>
-              {
-                errors.password &&
-                  FancyErrorMessage(errors.password)
-              }
+              <CustomErrorMessage name='password' />
             </Col>
           </Row>
           <Row>
@@ -114,14 +107,11 @@ const CommonUser = ({add, errors}) =>
                 <Field
                   type='password'
                   name='confirm_password'
-                  className={`form-control ${errors.confirm_password && 'border-danger'}`}
+                  className={`form-control ${props.errors.confirm_password && props.touched.confirm_password && 'border-danger'}`}
                   id='confirm_password'
                 />
               </InputGroup>
-              {
-                errors.confirm_password &&
-                  FancyErrorMessage(errors.confirm_password)
-              }
+              <CustomErrorMessage name='confirm_password' />
             </Col>
           </Row>
         </FormGroup>
@@ -134,14 +124,11 @@ const CommonUser = ({add, errors}) =>
                 <Field
                   type="text"
                   name='username'
-                  className="form-control"
+                  className={`form-control ${props.errors.username && props.touched.username && 'border-danger'}`}
                   id='userUsername'
                 />
               </InputGroup>
-              {
-                errors.username &&
-                  FancyErrorMessage(errors.username)
-              }
+              <CustomErrorMessage name='username' />
             </Col>
           </Row>
         </FormGroup>
@@ -181,14 +168,11 @@ const CommonUser = ({add, errors}) =>
             <Field
               type="text"
               name="email"
-              className={`form-control ${errors.email && 'border-danger'}`}
+              className={`form-control ${props.errors.email && props.touched.email && 'border-danger'}`}
               id="userEmail"
             />
           </InputGroup>
-          {
-            errors.email &&
-              FancyErrorMessage(errors.email)
-          }
+          <CustomErrorMessage name='email' />
         </Col>
       </Row>
       {
@@ -227,13 +211,14 @@ const CommonUser = ({add, errors}) =>
       <ParagraphTitle title='permissions'/>
       <Row>
         <Col md={6}>
-          <Field
-            component={Checkbox}
-            name="is_superuser"
-            className="form-control"
-            id="checkbox"
-            label="Superuser status"
-          />
+          <label>
+            <Field
+              type="checkbox"
+              name="is_superuser"
+              className="mr-1"
+            />
+            Superuser status
+          </label>
           <FormText color="muted">
             Designates that this user has all permissions without explicitly assigning them.
           </FormText>
@@ -241,13 +226,14 @@ const CommonUser = ({add, errors}) =>
       </Row>
       <Row>
         <Col md={6}>
-          <Field
-            component={Checkbox}
-            name="is_active"
-            className="form-control"
-            id="checkbox"
-            label="Active"
-          />
+          <label>
+            <Field
+              type="checkbox"
+              name="is_active"
+              className="mr-1"
+            />
+            Active
+          </label>
           <FormText color="muted">
             Designates whether this user should be treated as active. Unselect this instead of deleting accounts.
           </FormText>
@@ -338,7 +324,7 @@ export const UsersList = (props) => {
           }
         </div>
     }
-  ]);
+  ], []);
 
   if (loading)
     return (<LoadingAnim />);
@@ -378,69 +364,46 @@ export const UserChange = (props) => {
 
   const { data: user, error: errorUser, isLoading: loadingUser } = useQuery(
     `${querykey}`, async () => {
-      let user = {
-        'pk': '',
-        'first_name': '',
-        'last_name': '',
-        'username': '',
-        'is_active': true,
-        'is_superuser': false,
-        'email': '',
-        'last_login': '',
-        'date_joined': ''
-      };
+      if (!addview) {
+        let user = await backend.fetchData(`/api/v2/internal/users/${user_name}`);
 
-      if (!addview)
-        user = await backend.fetchData(`/api/v2/internal/users/${user_name}`);
-
-      return user;
-    }
+        return user;
+      }
+    },
+    { enabled: !addview }
   );
 
   const { data: userProfile, error: errorUserProfile, isLoading: loadingUserProfile } = useQuery(
     `${querykey}_userprofile`, async () => {
-      let userprofile = {
-        'displayname': '',
-        'subject': '',
-        'egiid': ''
-      };
-      if (isTenantSchema && !addview)
-        userprofile = await backend.fetchData(`/api/v2/internal/userprofile/${user_name}`);
+      if (isTenantSchema && !addview) {
+        let userprofile = await backend.fetchData(`/api/v2/internal/userprofile/${user_name}`);
 
-      return userprofile;
-    }
+        return userprofile;
+      }
+    },
+    { enabled: !addview && isTenantSchema}
   );
 
   const { data: userGroups, error: errorUserGroups, isLoading: loadingUserGroups } = useQuery(
     `${querykey}_usergroups`, async () => {
-      let usergroups = {
-        'aggregations': [],
-        'metrics': [],
-        'metricprofiles': [],
-        'thresholdsprofiles': []
-      };
+      if (isTenantSchema && !addview) {
+        let usergroups = await backend.fetchResult(`/api/v2/internal/usergroups/${user_name}`);
 
-      if (isTenantSchema && !addview)
-        usergroups = await backend.fetchResult(`/api/v2/internal/usergroups/${user_name}`);
-
-      return usergroups;
-    }
+        return usergroups;
+      }
+    },
+    { enabled: isTenantSchema && !addview}
   );
 
   const { data: allGroups, error: errorAllGroups, isLoading: loadingAllGroups } = useQuery(
     'user_listview_allgroups', async () => {
-      let allgroups = {
-        'metrics': [],
-        'aggregations': [],
-        'metricprofiles': [],
-        'thresholdsprofiles': []
-      };
+      if (isTenantSchema) {
+       let allgroups = await backend.fetchResult('/api/v2/internal/usergroups');
 
-      if (isTenantSchema)
-       allgroups = await backend.fetchResult('/api/v2/internal/usergroups');
-
-      return allgroups;
-    }
+        return allgroups;
+      }
+    },
+    { enabled: isTenantSchema}
   );
 
   const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails } = useQuery(
@@ -653,7 +616,7 @@ export const UserChange = (props) => {
   else if (errorUserDetails)
     return (<ErrorComponent error={errorUserDetails}/>);
 
-  else if (!loadingUser && !loadingUserProfile && !loadingUserGroups && !loadingAllGroups && !loadingUserDetails && user) {
+  else {
     if (isTenantSchema) {
       return (
         <BaseArgoView
@@ -679,29 +642,30 @@ export const UserChange = (props) => {
           <Formik
             initialValues = {{
               addview: addview,
-              pk: user.pk,
-              first_name: user.first_name,
-              last_name: user.last_name,
-              username: user.username,
+              pk: user ? user.pk : '',
+              first_name: user ? user.first_name : '',
+              last_name: user ? user.last_name : '',
+              username: user ? user.username : '',
               password: '',
               confirm_password: '',
-              is_active: user.is_active,
-              is_superuser: user.is_superuser,
-              email: user.email,
-              last_login: user.last_login,
-              date_joined: user.date_joined,
-              groupsofaggregations: userGroups.aggregations,
-              groupsofmetrics: userGroups.metrics,
-              groupsofmetricprofiles: userGroups.metricprofiles,
-              groupsofthresholdsprofiles: userGroups.thresholdsprofiles,
-              displayname: userProfile.displayname,
-              subject: userProfile.subject,
-              egiid: userProfile.egiid
+              is_active: user ? user.is_active : true,
+              is_superuser: user ? user.is_superuser : false,
+              email: user ? user.email : '',
+              last_login: user ? user.last_login : '',
+              date_joined: user ? user.date_joined : '',
+              groupsofaggregations: userGroups ? userGroups.aggregations : [],
+              groupsofmetrics: userGroups ? userGroups.metrics : [],
+              groupsofmetricprofiles: userGroups ? userGroups.metricprofiles : [],
+              groupsofthresholdsprofiles: userGroups ? userGroups.thresholdsprofiles : [],
+              displayname: userProfile ? userProfile.displayname : '',
+              subject: userProfile ? userProfile.subject : '',
+              egiid: userProfile ? userProfile.egiid : ''
             }}
             validationSchema={UserSchema}
             enableReinitialize={true}
             onSubmit = {(values) => onSubmitHandle(values)}
-            render = {props => (
+          >
+            {props => (
               <Form>
                 <CommonUser
                   {...props}
@@ -901,7 +865,7 @@ export const UserChange = (props) => {
                 }
               </Form>
             )}
-          />
+          </Formik>
         </BaseArgoView>
       )
     } else {
@@ -933,22 +897,23 @@ export const UserChange = (props) => {
             <Formik
               initialValues = {{
                 addview: addview,
-                pk: user.pk,
-                first_name: user.first_name,
-                last_name: user.last_name,
-                username: user.username,
+                pk: user ? user.pk : '',
+                first_name: user ? user.first_name : '',
+                last_name: user ? user.last_name : '',
+                username: user ? user.username : '',
                 password: '',
                 confirm_password: '',
-                is_active: user.is_active,
-                is_superuser: user.is_superuser,
-                email: user.email,
-                last_login: user.last_login,
-                date_joined: user.date_joined
+                is_active: user ? user.is_active : true,
+                is_superuser: user ? user.is_superuser : false,
+                email: user ? user.email : '',
+                last_login: user ? user.last_login : '',
+                date_joined: user ? user.date_joined : ''
               }}
               validationSchema={UserSchema}
               enableReinitialize={true}
               onSubmit = {(values, actions) => onSubmitHandle(values, actions)}
-              render = {props => (
+            >
+              {props => (
                 <Form>
                   <CommonUser
                     {...props}
@@ -981,7 +946,7 @@ export const UserChange = (props) => {
                   </div>
                 </Form>
               )}
-            />
+            </Formik>
           </div>
         </React.Fragment>
       )
@@ -1092,7 +1057,8 @@ export const ChangePassword = (props) => {
           }}
           validationSchema = {ChangePasswordSchema}
           onSubmit = {(values) => onSubmitHandle(values)}
-          render = {props => (
+        >
+          {props => (
             <Form>
               <Row>
                 <Col md={6}>
@@ -1101,14 +1067,11 @@ export const ChangePassword = (props) => {
                     <Field
                     type="password"
                     name="password"
-                    className={`form-control ${props.errors.password && 'border-danger'}`}
+                    className={`form-control ${props.errors.password && props.touched.password && 'border-danger'}`}
                     id="password"
                   />
                   </InputGroup>
-                  {
-                    props.errors.password &&
-                      FancyErrorMessage(props.errors.password)
-                  }
+                  <CustomErrorMessage name='password' />
                 </Col>
               </Row>
               <Row>
@@ -1118,14 +1081,11 @@ export const ChangePassword = (props) => {
                     <Field
                       type='password'
                       name='confirm_password'
-                      className={`form-control ${props.errors.confirm_password && 'border-danger'}`}
+                      className={`form-control ${props.errors.confirm_password && props.touched.confirm_password && 'border-danger'}`}
                       id='confirm_password'
                     />
                   </InputGroup>
-                  {
-                    props.errors.confirm_password &&
-                      FancyErrorMessage(props.errors.confirm_password)
-                  }
+                  <CustomErrorMessage name='confirm_password' />
                 </Col>
               </Row>
               {
@@ -1143,7 +1103,7 @@ export const ChangePassword = (props) => {
               }
             </Form>
           )}
-        />
+        </Formik>
       </BaseArgoView>
     )
   } else

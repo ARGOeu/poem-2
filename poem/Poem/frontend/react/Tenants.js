@@ -118,9 +118,9 @@ export const TenantChange = (props) => {
   const name = props.match.params.name;
   const location = props.location;
 
-  const backend = new Backend();
 
   useEffect(() => {
+    const backend = new Backend();
     setLoading(true);
     async function fetchData() {
       try {
@@ -134,7 +134,7 @@ export const TenantChange = (props) => {
       setLoading(false);
     }
     fetchData();
-  }, []);
+  }, [name]);
 
   if (loading)
     return (<LoadingAnim/>);
@@ -159,7 +159,8 @@ export const TenantChange = (props) => {
             nr_metrics: tenant.nr_metrics,
             nr_probes: tenant.nr_probes
           }}
-          render = {() => (
+        >
+          {() => (
             <Form>
               <FormGroup>
                 <Row>
@@ -224,7 +225,7 @@ export const TenantChange = (props) => {
               </FormGroup>
             </Form>
           )}
-        />
+        </Formik>
       </BaseArgoView>
     );
   } else
