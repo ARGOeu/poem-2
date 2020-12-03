@@ -1324,10 +1324,10 @@ export const AggregationProfileVersionDetails = (props) => {
   const version = props.match.params.version;
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
-  const backend = new Backend();
   const [aggregationProfileDetails, setAggregationProfileDetails] = useState(undefined)
 
   useEffect(() => {
+    const backend = new Backend();
     const fetchDataAndSet = async () => {
       let json = await backend.fetchData(`/api/v2/internal/tenantversion/aggregationprofile/${name}`);
       json.forEach((e) => {
@@ -1353,7 +1353,7 @@ export const AggregationProfileVersionDetails = (props) => {
       setError(error);
       setLoading(false);
     }
-  }, [])
+  }, [error, name, version])
 
   if (loading)
     return (<LoadingAnim/>);
@@ -1379,7 +1379,8 @@ export const AggregationProfileVersionDetails = (props) => {
             metric_profile: aggregationProfileDetails.metric_profile,
             groups: aggregationProfileDetails.groups
           }}
-          render = {props => (
+        >
+          {props => (
             <Form>
               <AggregationProfilesForm
                 {...props}
@@ -1445,7 +1446,7 @@ export const AggregationProfileVersionDetails = (props) => {
               />
             </Form>
           )}
-        />
+        </Formik>
       </BaseArgoView>
     );
   } else
