@@ -1217,13 +1217,13 @@ export const AggregationProfileVersionCompare = (props) => {
   const version1 = props.match.params.id1;
   const version2 = props.match.params.id2;
   const name = props.match.params.name;
-  const backend = new Backend();
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [aggregationProfileVersion1, setAggregationProfileVersion1] = useState(undefined)
   const [aggregationProfileVersion2, setAggregationProfileVersion2] = useState(undefined)
 
   useEffect(() => {
+    const backend = new Backend();
     const fetchDataAndSet = async () => {
       let json = await backend.fetchData(`/api/v2/internal/tenantversion/aggregationprofile/${name}`);
       json.forEach((e) => {
@@ -1257,7 +1257,7 @@ export const AggregationProfileVersionCompare = (props) => {
       setError(error);
       setLoading(false);
     }
-  }, [])
+  }, [error, name, version1, version2])
 
   if (loading)
     return (<LoadingAnim/>);
