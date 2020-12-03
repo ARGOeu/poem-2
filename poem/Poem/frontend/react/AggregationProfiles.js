@@ -940,9 +940,8 @@ export const AggregationProfilesChange = (props) => {
           }}
           onSubmit={(values, actions) => onSubmitHandle(values, actions)}
           validationSchema={AggregationProfilesSchema}
-          validateOnBlur={false}
-          validateOnMount={false}
-          validateOnChange={true}
+          validateOnBlur={true}
+          validateOnChange={false}
         >
           {props => (
             <Form>
