@@ -580,7 +580,11 @@ export const AggregationProfilesChange = (props) => {
         }
       }
     }
-  })
+  },
+    {
+      enabled: userDetails
+    }
+  )
 
   const correctMetricProfileName = (metricProfileId, listMetricProfilesWebApi) => {
     let targetProfile = listMetricProfilesWebApi.filter(p => p.id === metricProfileId)
