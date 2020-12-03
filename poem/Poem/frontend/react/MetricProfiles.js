@@ -919,6 +919,7 @@ export const MetricProfilesComponent = (props) => {
           }}
           onSubmit = {(values) => onSubmitHandle(values)}
           enableReinitialize={true}
+          validateOnBlur={false}
           validate={MetricProfileTupleValidate}
         >
           {props => (
