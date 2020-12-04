@@ -1294,7 +1294,7 @@ export const ThresholdsProfilesChange = (props) => {
                 historyview={publicView}
               />
               {
-                write_perm &&
+                (write_perm && !publicView) &&
                   <div className='submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5'>
                     {
                       !addview ?

@@ -1364,7 +1364,7 @@ export const MetricChange = (props) => {
                 publicView={publicView}
               />
               {
-                (writePerm) &&
+                (writePerm && !publicView) &&
                   <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
                     <Button
                       color="danger"
