@@ -894,6 +894,9 @@ export const ThresholdsProfilesList = (props) => {
       let profiles = await backend.fetchData(apiUrl);
 
       return profiles;
+    },
+    {
+      enabled: userDetails
     }
   )
 
