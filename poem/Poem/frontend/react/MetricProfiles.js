@@ -1073,6 +1073,9 @@ export const MetricProfilesList = (props) => {
     `metricprofiles_listview`, async () => {
       const fetched = await backend.fetchData(apiUrl)
       return fetched
+    },
+    {
+      enabled: userDetails
     }
   );
 
