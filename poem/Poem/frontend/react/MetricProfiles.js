@@ -373,7 +373,7 @@ export const MetricProfilesComponent = (props) => {
       }
   },
     {
-      enabled: userDetails
+      enabled: !publicView ? userDetails : true
     }
   )
   const onInsert = async (element, i, group, name, description) => {
