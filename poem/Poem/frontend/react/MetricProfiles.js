@@ -376,6 +376,7 @@ export const MetricProfilesComponent = (props) => {
       enabled: !publicView ? userDetails : true
     }
   )
+
   const onInsert = async (element, i, group, name, description) => {
     // full list of services
     if (searchServiceFlavour === '' && searchMetric === '') {
@@ -1075,7 +1076,7 @@ export const MetricProfilesList = (props) => {
       return fetched
     },
     {
-      enabled: userDetails
+      enabled: !publicView ? userDetails : true
     }
   );
 
