@@ -580,7 +580,7 @@ export const AggregationProfilesChange = (props) => {
         }
       }
     }
-  },
+    },
     {
       enabled: userDetails
     }
@@ -1111,6 +1111,9 @@ export const AggregationProfilesList = (props) => {
       const fetched = await backend.fetchData(apiUrl)
 
       return fetched
+    },
+    {
+      enabled: userDetails
     }
   );
 
