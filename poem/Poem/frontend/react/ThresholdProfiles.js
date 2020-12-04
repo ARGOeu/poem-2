@@ -1000,7 +1000,7 @@ export const ThresholdsProfilesChange = (props) => {
         return tp;
       }
     },
-    { enabled: !addview && userDetails }
+    { enabled: !publicView ? !addview && userDetails : true }
   );
 
   const { data: allMetrics, error: errorAllMetrics, isLoading: loadingAllMetrics } = useQuery(

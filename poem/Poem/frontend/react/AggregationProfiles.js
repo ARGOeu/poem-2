@@ -582,7 +582,7 @@ export const AggregationProfilesChange = (props) => {
     }
     },
     {
-      enabled: userDetails
+      enabled: !publicView ? userDetails : true
     }
   )
 

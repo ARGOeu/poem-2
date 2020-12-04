@@ -1184,7 +1184,7 @@ export const MetricChange = (props) => {
       return metric;
     },
     {
-      enabled: session
+      enabled: !publicView ? session : true
     }
   );
 
