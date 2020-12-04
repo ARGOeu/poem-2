@@ -292,10 +292,26 @@ export const ListOfMetrics = (props) => {
 
   const backend = new Backend();
 
+  const { data: userDetails, error: userDetailsError, isLoading: userDetailsLoading } = useQuery(
+    `${type}_listview_userdetails`, async () => {
+      let userdetails = { username: 'Anonymous' };
+      let schema = backend.isTenantSchema();
+      if (!publicView) {
+        let sessionActive = await backend.isActiveSession(schema);
+        if (sessionActive.active)
+          userdetails = sessionActive.userdetails;
+      }
+      return userdetails;
+    }
+  );
+
   const { data: listMetrics, error: listMetricsError, isLoading: listMetricsLoading } = useQuery(
     `${type}_listview`, async () => {
       let metrics =await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}${type === 'metrics' ? 'metric' : type}`);
       return metrics;
+    },
+    {
+      enabled: userDetails
     }
   );
 
@@ -303,7 +319,7 @@ export const ListOfMetrics = (props) => {
     `${type}_listview_mtypes`, async () => {
       let types = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}mt${type=='metrictemplates' ? 't' : ''}ypes`);
       return types;
-    }
+    },
   );
 
   const { data: listTags, error: listTagsError, isLoading: listTagsLoading } = useQuery(
@@ -329,19 +345,6 @@ export const ListOfMetrics = (props) => {
     `${type}_listview_schema`, async () => {
       let schema = backend.isTenantSchema();
       return schema;
-    }
-  );
-
-  const { data: userDetails, error: userDetailsError, isLoading: userDetailsLoading } = useQuery(
-    `${type}_listview_userdetails`, async () => {
-      let userdetails = { username: 'Anonymous' };
-      let schema = backend.isTenantSchema();
-      if (!publicView) {
-        let sessionActive = await backend.isActiveSession(schema);
-        if (sessionActive.active)
-          userdetails = sessionActive.userdetails;
-      }
-      return userdetails;
     }
   );
 
@@ -1168,17 +1171,20 @@ export const MetricChange = (props) => {
   const [modalFlag, setModalFlag] = useState(undefined);
   const [formValues, setFormValues] = useState(undefined);
 
-  const { data: metric, error: metricError, isLoading: metricLoading } = useQuery(
-    `${querykey}_metric`, async () => {
-      let metric = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}metric/${name}`);
-      return metric;
-    }
-  );
-
   const { data: session, error: sessionError, isLoading: sessionLoading } = useQuery(
     `${querykey}_session`, async () => {
       let session = await backend.isActiveSession();
       return session;
+    }
+  );
+
+  const { data: metric, error: metricError, isLoading: metricLoading } = useQuery(
+    `${querykey}_metric`, async () => {
+      let metric = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}metric/${name}`);
+      return metric;
+    },
+    {
+      enabled: session
     }
   );
 

@@ -301,9 +301,9 @@ export const MetricProfilesComponent = (props) => {
   const publicView = props.publicView;
   const backend = new Backend();
   const webapi = new WebApi({
-        token: props.webapitoken,
-        metricProfiles: props.webapimetric}
-      )
+    token: props.webapitoken,
+    metricProfiles: props.webapimetric
+  })
 
   const [listServices, setListServices] = useState(undefined);
   const [viewServices, setViewServices] = useState(undefined);
@@ -337,8 +337,9 @@ export const MetricProfilesComponent = (props) => {
         name: '',
         services: undefined,
       })
-      if (!addview)
+      if (!addview) {
         backendMetricProfile = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}metricprofiles/${profile_name}`);
+      }
 
       if (publicView) {
         let metricProfile = await webapi.fetchMetricProfile(backendMetricProfile.apiid);
@@ -370,9 +371,11 @@ export const MetricProfilesComponent = (props) => {
           }
         }
       }
-    },
+  },
+    {
+      enabled: userDetails
+    }
   )
-
   const onInsert = async (element, i, group, name, description) => {
     // full list of services
     if (searchServiceFlavour === '' && searchMetric === '') {
@@ -1070,6 +1073,9 @@ export const MetricProfilesList = (props) => {
     `metricprofiles_listview`, async () => {
       const fetched = await backend.fetchData(apiUrl)
       return fetched
+    },
+    {
+      enabled: userDetails
     }
   );
 

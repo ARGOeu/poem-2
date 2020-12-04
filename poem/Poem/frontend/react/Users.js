@@ -362,6 +362,16 @@ export const UserChange = (props) => {
 
   const backend = new Backend();
 
+  const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails } = useQuery(
+    'session_userdetails', async () => {
+      let arg = isTenantSchema ? true : false;
+      let session = await backend.isActiveSession(arg);
+
+      if (session.active)
+        return session.userdetails;
+    }
+  );
+
   const { data: user, error: errorUser, isLoading: loadingUser } = useQuery(
     `${querykey}`, async () => {
       if (!addview) {
@@ -370,7 +380,7 @@ export const UserChange = (props) => {
         return user;
       }
     },
-    { enabled: !addview }
+    { enabled: !addview && userDetails}
   );
 
   const { data: userProfile, error: errorUserProfile, isLoading: loadingUserProfile } = useQuery(
@@ -404,16 +414,6 @@ export const UserChange = (props) => {
       }
     },
     { enabled: isTenantSchema}
-  );
-
-  const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails } = useQuery(
-    'session_userdetails', async () => {
-      let arg = isTenantSchema ? true : false;
-      let session = await backend.isActiveSession(arg);
-
-      if (session.active)
-        return session.userdetails;
-    }
   );
 
   const [areYouSureModal, setAreYouSureModal] = useState(false);

@@ -894,6 +894,9 @@ export const ThresholdsProfilesList = (props) => {
       let profiles = await backend.fetchData(apiUrl);
 
       return profiles;
+    },
+    {
+      enabled: userDetails
     }
   )
 
@@ -974,6 +977,15 @@ export const ThresholdsProfilesChange = (props) => {
     thresholdsProfiles: props.webapithresholds
   });
 
+
+  const { data: userDetails, isLoading: loadingUserDetails } = useQuery(
+    'session_userdetails', async () => {
+      let sessionActive = await backend.isActiveSession();
+      if (sessionActive.active)
+        return sessionActive.userdetails;
+    }
+  );
+
   const { data: thresholdsProfile, error: errorThresholdsProfile, isLoading: loadingThresholdsProfile } = useQuery(
     `${querykey}`, async () => {
       if (!addview) {
@@ -988,15 +1000,7 @@ export const ThresholdsProfilesChange = (props) => {
         return tp;
       }
     },
-    { enabled: !addview }
-  );
-
-  const { data: userDetails, isLoading: loadingUserDetails } = useQuery(
-    'session_userdetails', async () => {
-      let sessionActive = await backend.isActiveSession();
-      if (sessionActive.active)
-        return sessionActive.userdetails;
-    }
+    { enabled: !addview && userDetails }
   );
 
   const { data: allMetrics, error: errorAllMetrics, isLoading: loadingAllMetrics } = useQuery(
