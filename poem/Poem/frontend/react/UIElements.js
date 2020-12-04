@@ -74,6 +74,7 @@ import ReactDiffViewer from 'react-diff-viewer';
 import Autosuggest from 'react-autosuggest';
 import { CookiePolicy } from './CookiePolicy';
 import { useTable, usePagination, useFilters } from 'react-table';
+import { Helmet } from 'react-helmet';
 
 
 var list_pages = ['administration', 'probes',
@@ -713,6 +714,7 @@ export const PublicPage = ({tenantName=undefined, children}) => {
 
   return (
     <Container fluid>
+      <DocumentTitle publicView={true}/>
       <Row>
         <Col>
           <NavigationBar
@@ -1487,3 +1489,42 @@ export const ProfilesListTable = ({ columns, data, type }) => {
     />
   );
 };
+
+
+export const DocumentTitle = ({ location, publicView=false }) => {
+  let url = new Array();
+
+  if (!publicView)
+    url = location.pathname.split('/');
+
+  else
+    url = window.location.pathname.split('/');
+
+  const ui_index = url.indexOf('ui');
+  url = url.slice(ui_index + 1, url.length);
+
+  if (publicView && url[0] === 'public_home')
+    url[0] = 'Public home';
+
+  else
+    url[0] = link_title.get(url[0]);
+
+  if (url.length > 1 && url[0] === 'Administration')
+    url[1] = link_title.get(url[1]);
+
+  let title = '';
+  if (url.length === 1)
+    title = url[0];
+  else if (url.length === 2)
+    title = url.join(' | ');
+  else if (url.length === 3)
+    title = `${url.slice(0, 2).join(' / ')} | ${url[url.length - 1]}`;
+  else
+    title = `${url.slice(Math.max(url.length - 3, 0), url.length - 1).join(' / ')} | ${url[url.length - 1]}`;
+
+  return (
+    <Helmet>
+      <title>{ title }</title>
+    </Helmet>
+  )
+}
