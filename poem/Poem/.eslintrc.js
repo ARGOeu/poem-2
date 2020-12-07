@@ -1,6 +1,7 @@
 module.exports = {
     parser: "babel-eslint",
     "env": {
+	"jest": true,
         "browser": true,
         "es6": true
     },
@@ -21,7 +22,7 @@ module.exports = {
     "plugins": [
         "react",
         "react-hooks",
-         "@getify/proper-arrows"
+        "@getify/proper-arrows"
     ],
     "rules": {
         "no-unused-vars": ["error", { "vars": "all", "args": "after-used", "ignoreRestSiblings": false }],
