@@ -1516,11 +1516,11 @@ export const DocumentTitle = ({ location, publicView=false }) => {
   if (url.length === 1)
     title = url[0];
   else if (url.length === 2)
-    title = url.join(' | ');
-  else if (url.length === 3)
-    title = `${url.slice(0, 2).join(' / ')} | ${url[url.length - 1]}`;
+    title = url.join(' / ');
   else
-    title = `${url.slice(Math.max(url.length - 3, 0), url.length - 1).join(' / ')} | ${url[url.length - 1]}`;
+    title = url.slice(Math.max(url.length - 2, 0), url.length).join(' / ');
+
+  title = `${title} | ARGO POEM`
 
   return (
     <Helmet>
