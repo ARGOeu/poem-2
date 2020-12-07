@@ -40,7 +40,7 @@ six==1.14.0
 sqlparse==0.3.1
 toml==0.10.0
 Unidecode==1.1.1
-urllib3==1.25.8
+urllib3==1.25.11
 virtualenv==20.0.15
 virtualenv-clone==0.5.4
 zipp==3.1.0
