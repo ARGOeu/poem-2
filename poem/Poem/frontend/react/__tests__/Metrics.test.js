@@ -3,7 +3,7 @@ import '@testing-library/jest-dom/extend-expect';
 import { createMemoryHistory } from 'history';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { Route, Router } from 'react-router-dom';
-import { ListOfMetrics, MetricChange, MetricVersionDetails } from '../Metrics';
+import { CompareMetrics, ListOfMetrics, MetricChange, MetricVersionDetails } from '../Metrics';
 import { Backend } from '../DataManager';
 import { NotificationManager } from 'react-notifications';
 
@@ -169,7 +169,7 @@ const mockMetricVersion = [
       name: 'argo.AMS-Check-new',
       mtype: 'Active',
       tags: ['test_tag1', 'test_tag2'],
-      group: 'EGI',
+      group: 'ARGOTEST',
       probeversion: 'ams-probe(0.1.13)',
       description: 'Description of argo.AMS-Check-new',
       parent: 'new-parent',
@@ -196,7 +196,7 @@ const mockMetricVersion = [
     },
     user: 'testuser',
     date_created: '2020-12-07 13:18:23',
-    comment: 'Added tags field "test_tag3". Changed config fields "maxCheckAttempts", "retryInterval" and "timeout". Added description. Changed group and probekey.',
+    comment: 'Changed config fields "maxCheckAttempts", "retryInterval" and "timeout". Added description. Changed group and probekey.',
     version: '20201207-131823'
   },
   {
@@ -293,6 +293,23 @@ function renderVersionDetailsView() {
         <Route
           path='/ui/metrics/:name/history/:version'
           render={ props => <MetricVersionDetails {...props} />}
+        />
+      </Router>
+    )
+  }
+}
+
+
+function renderCompareView() {
+  const route = '/ui/metrics/argo.AMS-Check/history/compare/20201130-132348/20201207-131823';
+  const history = createMemoryHistory({ initialEntries: [route] });
+
+  return {
+    ...render(
+      <Router history={history}>
+        <Route
+          path='/ui/metrics/:name/history/compare/:id1/:id2'
+          render={ props => <CompareMetrics {...props} type='metric' /> }
         />
       </Router>
     )
@@ -972,8 +989,8 @@ describe('Tests for metric change', () => {
 
 
 describe('Tests for metric history', () => {
-  test('Test that version details page renders properly', async () => {
-    Backend.mockImplementationOnce(() => {
+  beforeAll(() => {
+    Backend.mockImplementation(() => {
       return {
         fetchData: (path) => {
           switch (path) {
@@ -986,7 +1003,9 @@ describe('Tests for metric history', () => {
         }
       }
     })
+  })
 
+  test('Test that version details page renders properly', async () => {
     renderVersionDetailsView();
 
     expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
@@ -1080,5 +1099,28 @@ describe('Tests for metric history', () => {
     expect(screen.queryByText(/history/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/save/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/delete/i)).not.toBeInTheDocument();
+  })
+
+  test('Test for metric compare versions view', async () => {
+    renderCompareView();
+
+    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /compare/i }).textContent).toBe('Compare argo.AMS-Check');
+    })
+    expect(screen.getByRole('heading', { name: 'name' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'probe version' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'type' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'tags' })).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'group' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'description' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'probe executable' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'parent' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'config' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'attribute' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'dependency' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'parameter' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'flags' })).toBeInTheDocument();
   })
 })
