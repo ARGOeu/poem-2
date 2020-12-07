@@ -1315,16 +1315,18 @@ export const MetricChange = (props) => {
     return (<ErrorComponent error={probeError}/>);
 
   else {
-    var groups = [];
-    var writePerm = false;
-    if (session.active) {
-      groups = session.userdetails.groups.metrics;
-      writePerm = session.userdetails.is_superuser || session.userdetails.groups.metrics.indexOf(metric.group) >= 0;
-    }
+    const writePerm = session.active ?
+      session.userdetails.is_superuser || session.userdetails.groups.metrics.indexOf(metric.group) >= 0
+    :
+      false;
 
-    if (!groups.includes(metric.group))
-      groups.push(metric.group);
-
+    const groups = session.active ?
+      session.userdetails.groups.metrics.indexOf(metric.group) < 0 ?
+        [...session.userdetails.groups.metrics, metric.group]
+      :
+        session.userdetails.groups.metrics
+    :
+      [metric.group];
 
     return (
       <BaseArgoView
