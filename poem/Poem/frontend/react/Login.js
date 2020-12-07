@@ -36,8 +36,8 @@ const Login = (props) => {
       return json;
     } catch(err) {
       alert(`Something went wrong: ${err}`);
-    };
-  };
+    }
+  }
 
   useEffect(() => {
     _isMounted = true;
@@ -51,13 +51,13 @@ const Login = (props) => {
           setIsTenantSchema(response);
           setSamlIdpString(json.result.saml_login_string);
           setTenantName(json.result.tenant_name);
-        };
+        }
       } else
         if (_isMounted)
           setIsTenantSchema(response);
 
       setLoading(false);
-    };
+    }
 
     fetchData();
 
@@ -67,7 +67,7 @@ const Login = (props) => {
   }, []);
 
   async function doUserPassLogin(username, password) {
-    let response = await fetch('/rest-auth/login/', {
+    await fetch('/rest-auth/login/', {
       method: 'POST',
       mode: 'cors',
       cache: 'no-cache',
@@ -87,7 +87,7 @@ const Login = (props) => {
 
   function dismissLoginAlert() {
     _isMounted && setLoginFailedVisible(false);
-  };
+  }
 
   if (isTenantSchema !== null && !loading) {
     return (
@@ -112,9 +112,8 @@ const Login = (props) => {
                       }
                       else {
                         setLoginFailedVisible(true);
-                      };
-                    }
-                  }>
+                      }
+                  }}>
                   <Form>
                     <FormGroup>
                       <Label for="username">Username: </Label>
