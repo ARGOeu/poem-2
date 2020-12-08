@@ -1315,12 +1315,15 @@ export const MetricChange = (props) => {
     return (<ErrorComponent error={probeError}/>);
 
   else {
-    const writePerm = session.active ?
-      session.userdetails.is_superuser || session.userdetails.groups.metrics.indexOf(metric.group) >= 0
+    const writePerm = publicView ?
+      false
     :
-      false;
+      session.active ?
+        session.userdetails.is_superuser || session.userdetails.groups.metrics.indexOf(metric.group) >= 0
+      :
+        false;
 
-    const groups = session.active ?
+    const groups = session && session.active ?
       session.userdetails.groups.metrics.indexOf(metric.group) < 0 ?
         [...session.userdetails.groups.metrics, metric.group]
       :
