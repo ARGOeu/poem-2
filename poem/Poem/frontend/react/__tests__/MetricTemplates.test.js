@@ -206,4 +206,53 @@ describe('Test list of metric templates on SuperPOEM', () => {
     expect(screen.getByRole('button', { name: /add/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
   })
+
+  test('Test that listview renders properly when empty list', async () => {
+    Backend.mockImplementationOnce(() => {
+      return {
+        fetchData: (path) => {
+          switch (path) {
+            case '/api/v2/internal/metrictemplates':
+              return Promise.resolve([])
+
+            case '/api/v2/internal/mttypes':
+              return Promise.resolve(['Active', 'Passive'])
+
+            case '/api/v2/internal/metrictags':
+              return Promise.resolve(['test_tag1', 'test_tag2', 'internal', 'deprecated'])
+
+            case '/api/v2/internal/ostags':
+              return Promise.resolve(['CentOS 6', 'CentOS 7'])
+          }
+        },
+        isTenantSchema: () => Promise.resolve(false),
+        isActiveSession: () => Promise.resolve(mockActiveSession)
+      }
+    })
+
+    renderListView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', {name: /metric/i}).textContent).toBe('Select metric template to change')
+    })
+    expect(screen.getAllByRole('columnheader')).toHaveLength(10);
+    expect(screen.getByRole('columnheader', { name: 'Delete' })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: /name/i }).textContent).toBe('Name');
+    expect(screen.getByRole('columnheader', { name: /probe/i }).textContent).toBe('Probe version');
+    expect(screen.getByRole('columnheader', { name: /type/i }).textContent).toBe('Type');
+    expect(screen.getByRole('columnheader', { name: /tag/i }).textContent).toBe('Tag');
+    expect(screen.getAllByPlaceholderText('Search')).toHaveLength(2);
+    expect(screen.getAllByRole('columnheader', { name: 'Show all' })).toHaveLength(2);
+    expect(screen.getAllByRole('option', { name: 'Show all' })).toHaveLength(2);
+    expect(screen.getByRole('option', { name: /active/i })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: /passive/i })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: /internal/i })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: /deprecated/i })).toBeInTheDocument();
+    expect(screen.getAllByRole('option', { name: /test_tag/i })).toHaveLength(2);
+    expect(screen.getAllByRole('row')).toHaveLength(52);
+    expect(screen.getAllByRole('row', { name: '' })).toHaveLength(49);
+    expect(screen.getByRole('row', { name: /no/i }).textContent).toBe('No metric templates');
+    expect(screen.getByRole('button', { name: /add/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
+  })
 })
