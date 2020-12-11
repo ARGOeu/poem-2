@@ -405,8 +405,8 @@ export const ListOfMetrics = (props) => {
   async function bulkDeleteMetrics(mt) {
     //let refreshed_metrics = listMetrics;
     let response = await backend.bulkDeleteMetrics({'metrictemplates': mt});
-    let json = await response.json();
     if (response.ok) {
+      let json = await response.json();
       //refreshed_metrics = refreshed_metrics.filter(m => !mt.includes(m.name));
       if ('info' in json)
         NotifyOk({msg: json.info, title: 'Deleted'});
@@ -527,6 +527,7 @@ export const ListOfMetrics = (props) => {
                 <input
                   type='checkbox'
                   className='checkbox'
+                  data-testid={`checkbox-${original.name}`}
                   checked={selected[original.name] === true}
                   onChange={() => toggleRow(original.name)}
                 />
@@ -538,6 +539,7 @@ export const ListOfMetrics = (props) => {
             <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
               <input
                 type='checkbox'
+                data-testid='checkbox-select-all'
                 className='checkbox'
                 checked={selectAll === 1}
                 ref={input => {

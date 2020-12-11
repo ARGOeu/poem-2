@@ -5,6 +5,7 @@ import { createMemoryHistory } from 'history';
 import { Route, Router } from 'react-router-dom';
 import { ListOfMetrics } from '../Metrics';
 import { Backend } from '../DataManager';
+import { NotificationManager } from 'react-notifications';
 
 
 jest.mock('../DataManager', () => {
@@ -12,6 +13,8 @@ jest.mock('../DataManager', () => {
     Backend: jest.fn()
   }
 })
+
+const mockBulkDeleteMetrics = jest.fn();
 
 
 beforeEach(() => {
@@ -145,6 +148,10 @@ function renderListView(publicView=false) {
 
 
 describe('Test list of metric templates on SuperPOEM', () => {
+  jest.spyOn(NotificationManager, 'success');
+  jest.spyOn(NotificationManager, 'error');
+  jest.spyOn(NotificationManager, 'warning');
+
   beforeAll(() => {
     Backend.mockImplementation(() => {
       return {
@@ -164,7 +171,8 @@ describe('Test list of metric templates on SuperPOEM', () => {
           }
         },
         isTenantSchema: () => Promise.resolve(false),
-        isActiveSession: () => Promise.resolve(mockActiveSession)
+        isActiveSession: () => Promise.resolve(mockActiveSession),
+        bulkDeleteMetrics: mockBulkDeleteMetrics
       }
     })
   })
@@ -280,5 +288,228 @@ describe('Test list of metric templates on SuperPOEM', () => {
     expect(screen.getByRole('row', { name: /ams-publisher/i }).textContent).toBe('argo.AMS-Publisherams-publisher-probe (0.1.12)Activeinternal')
     expect(screen.getByRole('link', { name: /argo.ams-publisher/i }).closest('a')).toHaveAttribute('href', '/ui/metrictemplates/argo.AMS-Publisher');
     expect(screen.getByRole('link', { name: /ams-publisher-probe/i }).closest('a')).toHaveAttribute('href', '/ui/probes/ams-publisher-probe/history/0.1.12')
+  })
+
+  test('Test bulk delete metric templates', async () => {
+    mockBulkDeleteMetrics.mockReturnValueOnce(
+      Promise.resolve({
+        json: () => Promise.resolve({
+          info: 'Metric templates argo.AMS-Check, org.apel.APEL-Pub successfully deleted.'
+        }),
+        status: 200,
+        ok: true,
+      })
+    )
+
+    renderListView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', {name: /metric/i}).textContent).toBe('Select metric template to change')
+    })
+
+    fireEvent.click(screen.getByTestId('checkbox-argo.AMS-Check'));
+    fireEvent.click(screen.getByTestId('checkbox-org.apel.APEL-Pub'));
+
+    fireEvent.click(screen.getByRole('button', { name: /delete/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /delete/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockBulkDeleteMetrics).toHaveBeenCalledWith(
+        { metrictemplates: ['argo.AMS-Check', 'org.apel.APEL-Pub'] }
+      )
+    })
+
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'Metric templates argo.AMS-Check, org.apel.APEL-Pub successfully deleted.',
+      'Deleted',
+      2000
+    );
+  })
+
+  test('Test bulk delete select all filtered metric templates', async () => {
+    mockBulkDeleteMetrics.mockReturnValueOnce(
+      Promise.resolve({
+        json: () => Promise.resolve({
+          info: 'Metric templates argo.AMS-Check, argo.AMS-Publisher successfully deleted.'
+        }),
+        status: 200,
+        ok: true,
+      })
+    )
+
+    renderListView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /metric/i }).textContent).toBe('Select metric template to change')
+    })
+
+    fireEvent.change(screen.getAllByPlaceholderText('Search')[0], { target: { value: 'argo' } });
+    fireEvent.click(screen.getByTestId('checkbox-select-all'));
+
+    fireEvent.click(screen.getByRole('button', { name: /delete/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /delete/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockBulkDeleteMetrics).toHaveBeenCalledWith(
+        { metrictemplates: ['argo.AMS-Check', 'argo.AMS-Publisher'] }
+      )
+    })
+
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'Metric templates argo.AMS-Check, argo.AMS-Publisher successfully deleted.',
+      'Deleted',
+      2000
+    );
+  })
+
+  test('Test warning if clicked delete without selecting any metric template', async () => {
+    renderListView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /metric/i }).textContent).toBe('Select metric template to change')
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /delete/i }));
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>No metric templates were selected!</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Error', 0, expect.any(Function)
+    )
+  })
+
+  test('Test bulk delete metric template with info and warning', async () => {
+    mockBulkDeleteMetrics.mockReturnValueOnce(
+      Promise.resolve({
+        json: () => Promise.resolve({
+          info: 'Metric template argo.AMS-Check successfully deleted.',
+          warning: 'Metric template org.apel.APEL-Pub not deleted: something went wrong'
+        }),
+        status: 200,
+        ok: true,
+      })
+    )
+
+    renderListView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', {name: /metric/i}).textContent).toBe('Select metric template to change')
+    })
+
+    fireEvent.click(screen.getByTestId('checkbox-argo.AMS-Check'));
+    fireEvent.click(screen.getByTestId('checkbox-org.apel.APEL-Pub'));
+
+    fireEvent.click(screen.getByRole('button', { name: /delete/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /delete/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockBulkDeleteMetrics).toHaveBeenCalledWith(
+        { metrictemplates: ['argo.AMS-Check', 'org.apel.APEL-Pub'] }
+      )
+    })
+
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'Metric template argo.AMS-Check successfully deleted.',
+      'Deleted',
+      2000
+    );
+    expect(NotificationManager.warning).toHaveBeenCalledWith(
+      <div>
+        <p>Metric template org.apel.APEL-Pub not deleted: something went wrong</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Deleted', 0, expect.any(Function)
+    )
+  })
+
+  test('Test bulk delete metric template with warning only', async () => {
+    mockBulkDeleteMetrics.mockReturnValueOnce(
+      Promise.resolve({
+        json: () => Promise.resolve({
+          warning: 'Metric template argo.AMS-Check, org.apel.APEL-Pub not deleted: something went wrong'
+        }),
+        status: 200,
+        ok: true,
+      })
+    )
+
+    renderListView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', {name: /metric/i}).textContent).toBe('Select metric template to change')
+    })
+
+    fireEvent.click(screen.getByTestId('checkbox-argo.AMS-Check'));
+    fireEvent.click(screen.getByTestId('checkbox-org.apel.APEL-Pub'));
+
+    fireEvent.click(screen.getByRole('button', { name: /delete/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /delete/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockBulkDeleteMetrics).toHaveBeenCalledWith(
+        { metrictemplates: ['argo.AMS-Check', 'org.apel.APEL-Pub'] }
+      )
+    })
+
+    expect(NotificationManager.success).not.toHaveBeenCalled();
+    expect(NotificationManager.warning).toHaveBeenCalledWith(
+      <div>
+        <p>Metric template argo.AMS-Check, org.apel.APEL-Pub not deleted: something went wrong</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Deleted', 0, expect.any(Function)
+    )
+  })
+
+  test('Test bulk delete metric template with error', async () => {
+    mockBulkDeleteMetrics.mockReturnValueOnce(
+      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
+    )
+
+    renderListView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', {name: /metric/i}).textContent).toBe('Select metric template to change')
+    })
+
+    fireEvent.click(screen.getByTestId('checkbox-argo.AMS-Check'));
+    fireEvent.click(screen.getByTestId('checkbox-org.apel.APEL-Pub'));
+
+    fireEvent.click(screen.getByRole('button', { name: /delete/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /delete/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockBulkDeleteMetrics).toHaveBeenCalledWith(
+        { metrictemplates: ['argo.AMS-Check', 'org.apel.APEL-Pub'] }
+      )
+    })
+
+    expect(NotificationManager.success).not.toHaveBeenCalled();
+    expect(NotificationManager.warning).not.toHaveBeenCalled();
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>Error deleting metric templates</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Error: 500 SERVER ERROR',
+      0,
+      expect.any(Function)
+    )
   })
 })
