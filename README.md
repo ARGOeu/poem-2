@@ -384,7 +384,9 @@ In two-argument-mode it is used to generate a token for its REST API that will b
 poem-token -t EGI -s egi
 ```
 
-## Development environment
+## Development 
+
+### Container environment
 
 Development environment is based on Docker containers and container building instructions and helper scripts are provided in `docker/` folder. Environment is implemented as multi-container Docker application that can be spawned with `docker-compose`. Prior starting application, container that will be running Django/React code needs to be built. Container that will be running PostgreSQL is pulled from Docker registry.
 
@@ -403,3 +405,14 @@ Starting of multi-container application:
 docker/ $ docker-compose up
 ```
 
+### Packaging
+
+Deployment of new versions is done with wheel packages that contain both backend Python and frontend Javascript code. Packages are build using setuptools and helper make target rules are provided in [Makefile](Makefile) and in [poem/Poem/Makefile](poem/Poem/Makefile). Latter is used to create a devel or production bundle of frontend Javascript code and place it as Django staticfiles, while the first is used to create Python wheel package. 
+
+* frontend `Makefile` package targets:
+  - `make devel` - create a development Webpack bundle
+  - `make prod` - create a production Webpack bundle
+  - `make place-new-bundle` - place created bundle as Django staticfile
+* backend `Makefile` package targets:
+  - `make wheel-devel` - create date-tagged wheel package
+  - `make wheel-prod` - create versioned wheel package picking up the version from `setuptools`
