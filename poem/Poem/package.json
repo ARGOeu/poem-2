@@ -47,7 +47,6 @@
     "react-notifications": "^1.6.0",
     "react-router-dom": "^5.1.2",
     "react-table": "^7.5.0",
-    "react-table-6": "^6.11.0",
     "reactstrap": "^8.1.1",
     "style-loader": "^0.23.1",
     "url-loader": "^1.1.2",
