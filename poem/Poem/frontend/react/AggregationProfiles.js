@@ -212,7 +212,7 @@ const Group = ({operation, services, groupindex, isnew, last}) => {
   else
     return (
       <Col sm={{size: 12}} md={{size: 6}} className="mt-4 mb-2 d-flex justify-content-center align-items-center">
-        <Button outline color="secondary" size='lg' disabled={!context.write_perm ? true : false} onClick={
+        <Button outline color="secondary" size='lg' disabled={!context.write_perm || !context.list_services ? true : false} onClick={
           () => context.write_perm &&
             context.formikBag.groupInsert(groupindex, {name: '', operation: '', isNew: true,
                 services: [{name: '', operation: ''}]})
