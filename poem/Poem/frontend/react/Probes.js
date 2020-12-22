@@ -5,15 +5,14 @@ import {
   LoadingAnim,
   BaseArgoView,
   NotifyOk,
-  Checkbox,
-  FancyErrorMessage,
   AutocompleteField,
   DiffElement,
   NotifyError,
   ErrorComponent,
   ParagraphTitle,
   DefaultColumnFilter,
-  BaseArgoTable
+  BaseArgoTable,
+  CustomErrorMessage
 } from './UIElements';
 import {
   FormGroup,
@@ -24,16 +23,16 @@ import {
   Button,
   InputGroup,
   InputGroupAddon } from 'reactstrap';
-import { Formik, Form, Field } from 'formik';
+import { Formik, Form, Field, useFormikContext, useField } from 'formik';
 import * as Yup from 'yup';
-import { useQuery, queryCache } from 'react-query';
+import { useQuery } from 'react-query';
 
 
 const ProbeSchema = Yup.object().shape({
   name: Yup.string()
     .matches(/^\S*$/, 'Name cannot contain white spaces')
     .required('Required'),
-  package: Yup.string()
+  pkg: Yup.string()
     .required('Required'),
   repository: Yup.string()
     .url('Invalid url')
@@ -57,25 +56,39 @@ const LinkField = ({
 )
 
 
+const VersionField = (props) => {
+  const {
+    values: { pkg },
+    setFieldValue
+  } = useFormikContext();
+
+  const [field] = useField(props);
+
+  useEffect(() => {
+    if (pkg !== '') {
+      let version = undefined;
+      try {
+        version = pkg.split('(')[1].slice(0, -1);
+      } catch(err) {
+        version = '';
+      }
+      setFieldValue(props.name, version);
+    }
+  }, [pkg, setFieldValue, props.name]);
+
+  return (<input {...field} {...props} />)
+}
+
+
 const ProbeForm = ({
   isTenantSchema=false,
   isHistory=false,
   publicView=false,
-  errors={
-    name: undefined,
-    package: undefined,
-    repository: undefined,
-    docurl: undefined,
-    comment: undefined
-  },
   addview=false,
   cloneview=false,
   list_packages=[],
-  setFieldValue=undefined,
-  values=undefined,
-  onSelect=undefined,
   metrictemplatelist=[],
-  version=undefined
+  ...props
 }) =>
   <>
     <FormGroup>
@@ -86,15 +99,12 @@ const ProbeForm = ({
             <Field
               type='text'
               name='name'
-              className={`form-control ${errors.name && 'border-danger'}`}
-              id='name'
+              className={
+                `form-control ${props.errors.name && props.touched.name && 'border-danger'}`}
               disabled={isTenantSchema || isHistory || publicView}
             />
           </InputGroup>
-          {
-            errors.name &&
-              FancyErrorMessage(errors.name)
-          }
+          <CustomErrorMessage name='name' />
           <FormText color="muted">
             Name of this probe.
           </FormText>
@@ -102,12 +112,10 @@ const ProbeForm = ({
         <Col md={2}>
           <InputGroup>
             <InputGroupAddon addonType='prepend'>Version</InputGroupAddon>
-            <Field
+            <VersionField
               type='text'
               name='version'
               className='form-control'
-              value={version}
-              id='version'
               disabled={true}
             />
           </InputGroup>
@@ -118,13 +126,14 @@ const ProbeForm = ({
         {
           (!addview && !cloneview && !isTenantSchema && !isHistory && !publicView) &&
             <Col md={2}>
-              <Field
-                component={Checkbox}
-                name='update_metrics'
-                className='form-control'
-                id='checkbox'
-                label='Update metric templates'
-              />
+              <label>
+                <Field
+                  type='checkbox'
+                  name='update_metrics'
+                  className='mr-1'
+                />
+                Update metric templates
+              </label>
               <FormText color='muted'>
                 Update all associated metric templates.
               </FormText>
@@ -139,28 +148,20 @@ const ProbeForm = ({
                 <InputGroupAddon addonType='prepend'>Package</InputGroupAddon>
                 <Field
                   type='text'
-                  name='package'
+                  name='pkg'
                   className='form-control'
-                  id='package'
                   disabled={true}
                 />
               </InputGroup>
             :
               <>
                 <AutocompleteField
-                  setFieldValue={setFieldValue}
+                  {...props}
                   lists={list_packages}
                   icon='packages'
-                  field='package'
-                  val={values.package}
-                  onselect_handler={onSelect}
-                  req={errors.package}
+                  field='pkg'
                   label='Package'
                 />
-                {
-                  errors.package &&
-                    FancyErrorMessage(errors.package)
-                }
               </>
           }
           <FormText color='muted'>
@@ -181,22 +182,17 @@ const ProbeForm = ({
                   component={LinkField}
                   name='repository'
                   className='form-control'
-                  id='repository'
                   disabled={true}
                 />
               :
                 <Field
                   type='text'
                   name='repository'
-                  className={`form-control ${errors.repository && 'border-danger'}`}
-                  id='repository'
+                  className={`form-control ${props.errors.repository && props.touched.repository && 'border-danger'}`}
                 />
             }
           </InputGroup>
-          {
-            errors.repository &&
-              FancyErrorMessage(errors.repository)
-          }
+          <CustomErrorMessage name='repository' />
           <FormText color='muted'>
             Probe repository URL.
           </FormText>
@@ -212,22 +208,17 @@ const ProbeForm = ({
                   component={LinkField}
                   name='docurl'
                   className='form-control'
-                  id='docurl'
                   disabled={true}
                 />
               :
                 <Field
                   type='text'
                   name='docurl'
-                  className={`form-control ${errors.docurl && 'border-danger'}`}
-                  id='docurl'
+                  className={`form-control ${props.errors.docurl && props.touched.docurl && 'border-danger'}`}
                 />
             }
           </InputGroup>
-          {
-            errors.docurl &&
-              FancyErrorMessage(errors.docurl)
-          }
+          <CustomErrorMessage name='docurl' />
           <FormText color='muted'>
             Documentation URL.
           </FormText>
@@ -240,14 +231,10 @@ const ProbeForm = ({
             component='textarea'
             name='description'
             rows='15'
-            className={`form-control ${errors.description && 'border-danger'}`}
-            id='description'
+            className={`form-control ${props.errors.description && props.touched.description && 'border-danger'}`}
             disabled={isTenantSchema || isHistory || publicView}
           />
-          {
-            errors.description &&
-              FancyErrorMessage(errors.description)
-          }
+          <CustomErrorMessage name='description' />
           <FormText color='muted'>
             Free text description outlining the purpose of this probe.
           </FormText>
@@ -260,14 +247,10 @@ const ProbeForm = ({
             component='textarea'
             name='comment'
             rows='5'
-            className={`form-control ${errors.comment && 'border-danger'}`}
-            id='comment'
+            className={`form-control ${props.errors.comment && props.touched.comment && 'border-danger'}`}
             disabled={isTenantSchema || isHistory || publicView}
           />
-          {
-            errors.comment &&
-              FancyErrorMessage(errors.comment)
-          }
+          <CustomErrorMessage name='comment' />
           <FormText color='muted'>
             Short comment about this version.
           </FormText>
@@ -291,7 +274,7 @@ const ProbeForm = ({
                               `/ui/public_metrictemplates/${met}`
                             :
                               isTenantSchema ?
-                                `/ui/probes/${values.name}/${met}`
+                                `/ui/probes/${props.values.name}/${met}`
                               :
                                 `/ui/metrictemplates/${met}`
                             }>
@@ -369,7 +352,7 @@ export const ProbeList = (props) => {
       accessor: 'description',
       Filter: DefaultColumnFilter
     }
-  ]);
+  ], [publicView]);
 
   if (listProbesLoading || isTenantSchemaLoading)
     return (<LoadingAnim/>);
@@ -421,20 +404,12 @@ export const ProbeComponent = (props) => {
 
   const { data: probe, error: probeError, isLoading: probeLoading } = useQuery(
     `${querykey}_probe`, async () => {
-      let prb = {
-        'id': '',
-        'name': '',
-        'version': '',
-        'package': '',
-        'repository': '',
-        'docurl': '',
-        'description': '',
-        'comment': ''
-      };
-      if (!addview)
-        prb = await backend.fetchData(`${apiProbeName}/${name}`);
-      return prb;
-    }
+      if (!addview) {
+        let prb = await backend.fetchData(`${apiProbeName}/${name}`);
+        return prb;
+      }
+    },
+    {enabled: !addview}
   );
 
   const { data: isTenantSchema, isLoading: isTenantSchemaLoading } = useQuery(
@@ -488,7 +463,7 @@ export const ProbeComponent = (props) => {
         '/api/v2/internal/probes/',
         {
           name: formValues.name,
-          package: formValues.package,
+          package: formValues.pkg,
           repository: formValues.repository,
           docurl: formValues.docurl,
           description: formValues.description,
@@ -521,7 +496,7 @@ export const ProbeComponent = (props) => {
         {
           id: formValues.id,
           name: formValues.name,
-          package: formValues.package,
+          package: formValues.pkg,
           repository: formValues.repository,
           docurl: formValues.docurl,
           description: formValues.description,
@@ -574,18 +549,6 @@ export const ProbeComponent = (props) => {
     }
   }
 
-  function onSelect(field, value) {
-    let selectedProbe = probe;
-    selectedProbe[field] = value;
-    try {
-      selectedProbe['version'] = value.split(' ')[1].slice(1, -1);
-    } catch(err) {
-      if (err instanceof TypeError)
-        selectedProbe['version'] = '';
-    }
-    queryCache.setQueryData(`${querykey}_probe`, () => selectedProbe);
-  }
-
   if (probeLoading || isTenantSchemaLoading || metricTemplateListLoading || listPackagesLoading)
     return(<LoadingAnim/>)
 
@@ -600,10 +563,6 @@ export const ProbeComponent = (props) => {
 
   else {
     if (!isTenantSchema) {
-      let probePackage = '';
-      if (!addview)
-        probePackage = probe.package;
-
       return (
         <BaseArgoView
           resourcename={`${publicView ? 'Probe details' : 'probe'}`}
@@ -629,14 +588,14 @@ export const ProbeComponent = (props) => {
         >
           <Formik
             initialValues = {{
-              id: probe.id,
-              name: probe.name,
-              version: probe.version,
-              package: probePackage,
-              repository: probe.repository,
-              docurl: probe.docurl,
-              description: probe.description,
-              comment: probe.comment,
+              id: `${probe ? probe.id : ''}`,
+              name: `${probe ? probe.name : ''}`,
+              version: `${probe ? probe.version : ''}`,
+              pkg: `${probe ? probe.package : ''}`,
+              repository: `${probe ? probe.repository : ''}`,
+              docurl: `${probe ? probe.docurl : ''}`,
+              description: `${probe ? probe.description : ''}`,
+              comment: `${probe ? probe.comment : ''}`,
               update_metrics: false
             }}
             validationSchema={ProbeSchema}
@@ -651,9 +610,7 @@ export const ProbeComponent = (props) => {
                   cloneview={cloneview}
                   publicView={publicView}
                   list_packages={listPackages}
-                  onSelect={onSelect}
                   metrictemplatelist={metricTemplateList}
-                  version={probe.version}
                 />
                 {
                   !publicView &&
@@ -698,25 +655,25 @@ export const ProbeComponent = (props) => {
         >
           <Formik
             initialValues = {{
-              id: probe.id,
-              name: probe.name,
-              version: probe.version,
-              package: probe.package,
-              repository: probe.repository,
-              docurl: probe.docurl,
-              description: probe.description,
-              comment: probe.comment
+              id: `${probe ? probe.id : ''}`,
+              name: `${probe ? probe.name : ''}`,
+              version: `${probe ? probe.version : ''}`,
+              pkg: `${probe ? probe.package : ''}`,
+              repository: `${probe ? probe.repository : ''}`,
+              docurl: `${probe ? probe.docurl : ''}`,
+              description: `${probe ? probe.description : ''}`,
+              comment: `${probe ? probe.comment : ''}`
             }}
-            render = {props => (
+          >
+            {props => (
               <ProbeForm
                 {...props}
                 isTenantSchema={true}
                 publicView={publicView}
                 metrictemplatelist={metricTemplateList}
-                version={probe.version}
               />
             )}
-          />
+          </Formik>
         </BaseArgoView>
       );
     }
@@ -735,9 +692,9 @@ export const ProbeVersionCompare = (props) => {
   const [probe2, setProbe2] = useState({});
   const [error, setError] = useState(null);
 
-  const backend = new Backend();
 
   useEffect(() => {
+    const backend = new Backend();
     setLoading(true);
 
     async function fetchVersions() {
@@ -757,7 +714,7 @@ export const ProbeVersionCompare = (props) => {
     }
 
     fetchVersions();
-  }, []);
+  }, [name, publicView, version1, version2]);
 
   if (loading)
     return (<LoadingAnim/>);
@@ -817,7 +774,6 @@ export const ProbeVersionDetails = (props) => {
   const version = props.match.params.version;
   const publicView = props.publicView;
 
-  const backend = new Backend();
   const apiUrl = `/api/v2/internal/${publicView ? 'public_' : ''}version/probe`;
 
   const [probe, setProbe] = useState({});
@@ -825,6 +781,7 @@ export const ProbeVersionDetails = (props) => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    const backend = new Backend();
     setLoading(true);
 
     async function fetchProbeVersion() {
@@ -841,7 +798,7 @@ export const ProbeVersionDetails = (props) => {
     }
 
     fetchProbeVersion();
-  }, []);
+  }, [apiUrl, name, version]);
 
   if (loading)
     return (<LoadingAnim/>);
@@ -859,20 +816,21 @@ export const ProbeVersionDetails = (props) => {
           initialValues = {{
             name: probe.name,
             version: probe.version,
-            package: probe.package,
+            pkg: probe.package,
             repository: probe.repository,
             docurl: probe.docurl,
             description: probe.description,
             comment: probe.comment
           }}
-          render = {props => (
+          >
+          {props => (
             <ProbeForm
               {...props}
               version={probe.version}
               isHistory={true}
             />
           )}
-        />
+        </Formik>
       </BaseArgoView>
     );
   }

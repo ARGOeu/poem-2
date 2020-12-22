@@ -301,9 +301,9 @@ export const MetricProfilesComponent = (props) => {
   const publicView = props.publicView;
   const backend = new Backend();
   const webapi = new WebApi({
-        token: props.webapitoken,
-        metricProfiles: props.webapimetric}
-      )
+    token: props.webapitoken,
+    metricProfiles: props.webapimetric
+  })
 
   const [listServices, setListServices] = useState(undefined);
   const [viewServices, setViewServices] = useState(undefined);
@@ -316,7 +316,6 @@ export const MetricProfilesComponent = (props) => {
   const [onYes, setOnYes] = useState('')
   const [searchMetric, setSearchMetric] = useState("");
   const [searchServiceFlavour, setSearchServiceFlavour] = useState("");
-  // TODO: useFormik hook with formik 2.x
   const [formikValues, setFormikValues] = useState({})
   const querykey = `metricprofiles_${addview ? 'addview' : `${profile_name}_${publicView ? 'publicview' : 'changeview'}`}`;
 
@@ -338,8 +337,9 @@ export const MetricProfilesComponent = (props) => {
         name: '',
         services: undefined,
       })
-      if (!addview)
+      if (!addview) {
         backendMetricProfile = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}metricprofiles/${profile_name}`);
+      }
 
       if (publicView) {
         let metricProfile = await webapi.fetchMetricProfile(backendMetricProfile.apiid);
@@ -371,7 +371,10 @@ export const MetricProfilesComponent = (props) => {
           }
         }
       }
-    },
+  },
+    {
+      enabled: !publicView ? userDetails : true
+    }
   )
 
   const onInsert = async (element, i, group, name, description) => {
@@ -920,8 +923,10 @@ export const MetricProfilesComponent = (props) => {
           }}
           onSubmit = {(values) => onSubmitHandle(values)}
           enableReinitialize={true}
+          validateOnBlur={false}
           validate={MetricProfileTupleValidate}
-          render = {props => (
+        >
+          {props => (
             <Form>
               <ProfileMainInfo
                 {...props}
@@ -1035,7 +1040,7 @@ export const MetricProfilesComponent = (props) => {
               }
             </Form>
           )}
-        />
+        </Formik>
       </BaseArgoView>
     )
   }
@@ -1069,6 +1074,9 @@ export const MetricProfilesList = (props) => {
     `metricprofiles_listview`, async () => {
       const fetched = await backend.fetchData(apiUrl)
       return fetched
+    },
+    {
+      enabled: !publicView ? userDetails : true
     }
   );
 
@@ -1102,7 +1110,7 @@ export const MetricProfilesList = (props) => {
         </div>,
       column_width: '8%'
     }
-  ])
+  ], [publicView])
 
   if (loadingUserDetails || loadingListMetricProfiles)
     return (<LoadingAnim />)
@@ -1165,13 +1173,13 @@ export const MetricProfileVersionCompare = (props) => {
   const version1 = props.match.params.id1;
   const version2 = props.match.params.id2;
   const name = props.match.params.name;
-  const backend = new Backend();
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [metricProfileVersion1, setMetricProfileVersion1] = useState(undefined)
   const [metricProfileVersion2, setMetricProfileVersion2] = useState(undefined)
 
   useEffect(() => {
+    const backend = new Backend();
     const fetchDataAndSet = async () => {
       let json = await backend.fetchData(`/api/v2/internal/tenantversion/metricprofile/${name}`);
       json.forEach((e)=> {
@@ -1202,8 +1210,7 @@ export const MetricProfileVersionCompare = (props) => {
       setError(err)
       setLoading(false);
     }
-
-  }, [])
+  }, [name, version1, version2])
 
   if (loading)
     return (<LoadingAnim/>);
@@ -1252,9 +1259,9 @@ export const MetricProfileVersionDetails = (props) => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
-  const backend = new Backend();
 
   useEffect(() => {
+    const backend = new Backend();
     const fetchDataAndSet = async () => {
       let json = await backend.fetchData(`/api/v2/internal/tenantversion/metricprofile/${name}`);
       json.forEach((e)=> {
@@ -1277,7 +1284,7 @@ export const MetricProfileVersionDetails = (props) => {
       setError(err)
       setLoading(false);
     }
-  }, [])
+  }, [name, version])
 
   if (loading)
     return (<LoadingAnim/>);
@@ -1298,7 +1305,8 @@ export const MetricProfileVersionDetails = (props) => {
             groupname: metricProfileVersion.groupname,
             metricinstances: metricProfileVersion.metricinstances
           }}
-          render = {props => (
+        >
+          {props => (
             <Form>
               <ProfileMainInfo
                 {...props}
@@ -1334,7 +1342,7 @@ export const MetricProfileVersionDetails = (props) => {
               />
             </Form>
           )}
-        />
+        </Formik>
       </BaseArgoView>
     )
   } else

@@ -68,12 +68,13 @@ import {
   faWrench,
   faNewspaper} from '@fortawesome/free-solid-svg-icons';
 import { NotificationManager } from 'react-notifications';
-import { Field } from 'formik';
+import { ErrorMessage, Field } from 'formik';
 import { Backend } from './DataManager';
 import ReactDiffViewer from 'react-diff-viewer';
 import Autosuggest from 'react-autosuggest';
 import { CookiePolicy } from './CookiePolicy';
 import { useTable, usePagination, useFilters } from 'react-table';
+import { Helmet } from 'react-helmet';
 
 
 var list_pages = ['administration', 'probes',
@@ -176,7 +177,7 @@ export const DropDown = ({field, data=[], prefix="", class_name="", isnew=false,
   </Field>
 
 
-export const SearchField = ({form, field, ...rest}) =>
+export const SearchField = ({field, ...rest}) =>
   <div className="input-group">
     <input type="text" placeholder="Search" {...field} {...rest}/>
     <div className="input-group-append">
@@ -227,7 +228,7 @@ export const ModalAreYouSure = ({isOpen, toggle, title, msg, onYes}) =>
 )
 
 
-export const CustomBreadcrumb = ({location, history, publicView=false}) =>
+export const CustomBreadcrumb = ({location, publicView=false}) =>
 {
   let spliturl = new Array()
   let breadcrumb_elements = new Array()
@@ -621,7 +622,7 @@ const InnerFooter = ({ border=false, publicPage=false, tenantName='egi' }) =>
           <small>
             <a href="https://ui.argo.grnet.gr/egi/termsofUse" target="_blank" rel="noopener noreferrer" title="Terms">Terms</a>, &nbsp;
             <a href='#' title="Cookie Policies" onClick={toggle}>Cookie Policies</a>, &nbsp;
-            <a href='#' title='Privacy Policy' href={tenantName ? PolicyLinks.get(tenantName.toLowerCase()) : PolicyLinks.get('egi')} target='_blank' rel='noopener noreferrer'>Privacy Policy</a>
+            <a title='Privacy Policy' href={tenantName ? PolicyLinks.get(tenantName.toLowerCase()) : PolicyLinks.get('egi')} target='_blank' rel='noopener noreferrer'>Privacy Policy</a>
           </small>
           <Modal isOpen={modal} toggle={toggle} size="lg">
             <ModalBody className="p-0">
@@ -684,7 +685,7 @@ export const NotifyError = ({msg='', title=''}) => {
     <p>{msg}</p>
     <p>Click to dismiss.</p>
   </div>
-  NotificationManager.error(msg=msg, title, 0, () => true);
+  NotificationManager.error(msg, title, 0, () => true);
 };
 
 
@@ -713,6 +714,7 @@ export const PublicPage = ({tenantName=undefined, children}) => {
 
   return (
     <Container fluid>
+      <DocumentTitle publicView={true}/>
       <Row>
         <Col>
           <NavigationBar
@@ -842,41 +844,39 @@ export const BaseArgoView = ({resourcename='', location=undefined,
 )
 
 
-export const Checkbox = ({
-  field: { name, value, onChange, onBlur },
-  form: { errors, touched },
-  id,
-  label,
-  ...props
-}) => {
-  return (
-    <div>
-      <input
-        name={name}
-        id={id}
-        type='checkbox'
-        value={value}
-        checked={value}
-        onChange={onChange}
-        onBlur={onBlur}
-      />
-      <label htmlFor={id}>{label}</label>
-      {touched[name] && errors[name] && <div className="error">{errors[name]}</div>}
-    </div>
-  );
-};
-
-
 export const FancyErrorMessage = (msg) => (
   <div style={{color: '#FF0000', fontSize: 'small'}}>{msg}</div>
 )
 
 
-export const AutocompleteField = ({setFieldValue, lists=[], val='', icon, field, req, label, onselect_handler}) => {
+export const CustomErrorMessage = ({...props}) => (
+  <ErrorMessage {...props} render={msg => <div style={{color: '#FF0000', fontSize: 'small'}}>{msg}</div>} />
+)
+
+
+export const AutocompleteField = ({lists=[], field, icon, label, onselect_handler=undefined, hide_error=false, ...props}) => {
+  return (
+    <_AutocompleteField
+      lists={lists}
+      field={field}
+      icon={icon}
+      label={label}
+      val={props.values[field]}
+      err={props.errors[field]}
+      setFieldValue={props.setFieldValue}
+      onselect_handler={onselect_handler}
+      hide_error={hide_error}
+    />
+  )
+}
+
+export const _AutocompleteField = ({lists=[], field, val, err, setFieldValue, icon, label, onselect_handler=undefined, hide_error=false}) => {
   const [inputValue, setInputValue] = useState(val);
   const [suggestions, setSuggestions] = useState(lists);
+  const [touched, setTouched] = useState(false);
 
   const getSuggestions = value => {
+    setTouched(true);
     return (
       lists.filter(suggestion =>
         suggestion.toLowerCase().includes(value.trim().toLowerCase())
@@ -899,12 +899,15 @@ export const AutocompleteField = ({setFieldValue, lists=[], val='', icon, field,
   const renderInputComponent = inputProps => {
     if (label)
       return (
-        <div className='input-group mb-3'>
-          <div className='input-group-prepend'>
-            <span className='input-group-text' id='basic-addon1'>{label}</span>
+        <div>
+          <div className='input-group mb-3'>
+            <div className='input-group-prepend'>
+              <span className='input-group-text' id='basic-addon1'>{label}</span>
+            </div>
+            <input {...inputProps} type='text'
+            className={`form-control ${err && touched && 'border-danger'}`} aria-label='label' />
           </div>
-          <input {...inputProps} type='text'
-          className={`form-control ${req && 'border-danger'}`} aria-label='label'/>
+          {!hide_error && err && touched && <div style={{color: '#FF0000', fontSize: 'small'}}>{err}</div>}
         </div>
       );
     else
@@ -927,7 +930,7 @@ export const AutocompleteField = ({setFieldValue, lists=[], val='', icon, field,
           onChange: (_, { newValue }) => {
             setInputValue(newValue);
             setFieldValue(field, newValue);
-            onselect_handler(field, newValue);
+            onselect_handler && onselect_handler(field, newValue);
           }
         }}
         renderInputComponent={renderInputComponent}
@@ -940,7 +943,6 @@ export const AutocompleteField = ({setFieldValue, lists=[], val='', icon, field,
     </div>
   );
 };
-
 
 export const DropdownFilterComponent = ({value, onChange, data}) => (
   <select
@@ -978,9 +980,9 @@ export const HistoryComponent = (props) => {
     apiUrl = `/api/v2/internal/${publicView ? 'public_' : ''}version/`;
 
   const compareUrl = `/ui/${tenantView ? 'administration/' : ''}${publicView ? 'public_' : ''}${obj}s/${name}/history`;
-  const backend = new Backend();
 
   useEffect(() => {
+    const backend = new Backend();
     setLoading(true);
 
     async function fetchData() {
@@ -998,7 +1000,7 @@ export const HistoryComponent = (props) => {
     }
 
     fetchData();
-  }, []);
+  }, [obj, name, apiUrl]);
 
   if (loading)
     return (<LoadingAnim />);
@@ -1325,15 +1327,15 @@ export function BaseArgoTable({ columns, data, resourcename, page_size, filter=f
     let n1 = Math.ceil(pageSize / 2);
     table_body = <tbody>
       {
-        [...Array(pageSize)].map((e, ri) => {
+        [...Array(pageSize)].map((e, i) => {
           return (
-            <tr key={ri}>
+            <tr key={i}>
               {
-                ri === n1 - 1 ?
+                i === n1 - 1 ?
                   <td colSpan={columns.length} style={{height: '49px'}} className='align-middle text-center text-muted'>{`No ${resourcename}`}</td>
                 :
-                  [...Array(columns.length)].map((e, ci) =>
-                    <td style={{height: '49px'}} key={ci} className='align-middle'>{''}</td>
+                  [...Array(columns.length)].map((e, j) =>
+                    <td style={{height: '49px'}} key={j} className='align-middle'>{''}</td>
                   )
               }
             </tr>
@@ -1361,12 +1363,12 @@ export function BaseArgoTable({ columns, data, resourcename, page_size, filter=f
         })
       }
       {
-        [...Array(n_elem)].map((e, ri) => {
+        [...Array(n_elem)].map((e, i) => {
           return (
-            <tr key={page.length + ri} style={{height: '49px'}}>
+            <tr key={page.length + i} style={{height: '49px'}}>
               {
-                [...Array(columns.length)].map((e, ci) => {
-                  return <td key={ci} className='align-middle'>{''}</td>
+                [...Array(columns.length)].map((e, j) => {
+                  return <td key={j} className='align-middle'>{''}</td>
                 })
               }
             </tr>
@@ -1487,3 +1489,42 @@ export const ProfilesListTable = ({ columns, data, type }) => {
     />
   );
 };
+
+
+export const DocumentTitle = ({ location, publicView=false }) => {
+  let url = new Array();
+
+  if (!publicView)
+    url = location.pathname.split('/');
+
+  else
+    url = window.location.pathname.split('/');
+
+  const ui_index = url.indexOf('ui');
+  url = url.slice(ui_index + 1, url.length);
+
+  if (publicView && url[0] === 'public_home')
+    url[0] = 'Public home';
+
+  else
+    url[0] = link_title.get(url[0]);
+
+  if (url.length > 1 && url[0] === 'Administration')
+    url[1] = link_title.get(url[1]);
+
+  let title = '';
+  if (url.length === 1)
+    title = url[0];
+  else if (url.length === 2)
+    title = url.join(' / ');
+  else
+    title = url.slice(Math.max(url.length - 2, 0), url.length).join(' / ');
+
+  title = `${title} | ARGO POEM`
+
+  return (
+    <Helmet>
+      <title>{ title }</title>
+    </Helmet>
+  )
+}

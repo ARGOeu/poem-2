@@ -4,17 +4,16 @@ import { Link } from 'react-router-dom';
 import{
   LoadingAnim,
   BaseArgoView,
-  FancyErrorMessage,
   AutocompleteField,
   NotifyOk,
-  Checkbox,
   NotifyError,
   ErrorComponent,
   NotifyWarn,
   ParagraphTitle,
   DefaultColumnFilter,
   SelectColumnFilter,
-  BaseArgoTable
+  BaseArgoTable,
+  CustomErrorMessage
 } from './UIElements';
 import {
   FormGroup,
@@ -23,29 +22,37 @@ import {
   Col,
   Button,
   InputGroup,
-  InputGroupAddon
+  InputGroupAddon,
+  Alert
 } from 'reactstrap';
 import { Formik, Form, Field } from 'formik';
-import * as Yup from 'yup';
 import { queryCache, useQuery } from 'react-query';
 
 
-const PackageSchema = Yup.object().shape({
-  name: Yup.string()
-    .matches(/^\S*$/, 'Name cannot contain white spaces')
-    .required('Required'),
-  present_version: Yup.boolean(),
-  version: Yup.string()
-    .matches(/^\S*$/, 'Version cannot contain white spaces')
-    .when('present_version', {
-      is: false,
-      then: Yup.string().required('Required')
-    }),
-  repo_6: Yup.string(),
-  repo_7: Yup.string()
-})
-.test('undefined', 'You must provide at least one repo!', value =>
-!!(value.repo_6 || value.repo_7));
+const packageValidate = (values) => {
+  const errors = {};
+
+  if (!values.name)
+    errors.name = 'Required';
+
+  else if (!/^\S*$/.test(values.name))
+    errors.name = 'Name cannot contain white spaces';
+
+  if (!values.present_version) {
+    if (!values.version)
+      errors.version = 'Required';
+
+    else if (!/^\S*$/.test(values.version))
+      errors.version = 'Version cannot contain white spaces'
+  }
+
+  if (!values.repo_6 && !values.repo_7) {
+    errors.repo_6 = 'You must provide at least one repo!';
+    errors.repo_7 = 'You must provide at least one repo!';
+  }
+
+  return errors;
+}
 
 
 export const PackageList = (props) => {
@@ -109,7 +116,7 @@ export const PackageList = (props) => {
       Filter: SelectColumnFilter,
       filterList: listRepos
     }
-  ]);
+  ], [isTenantSchema, listRepos]);
 
   if (loadingListPackages || loadingListRepos || loadingIsTenantSchema)
     return (<LoadingAnim/>);
@@ -149,25 +156,20 @@ export const PackageComponent = (props) => {
   const disabled = props.disabled;
   const location = props.location;
   const history = props.history;
-  const querykey = `package_${addview ? 'addview' : `${nameversion}_${cloneview ? 'cloneview' : 'changeview'}`}`;
+  const querykey = `package_${nameversion}_${cloneview ? 'cloneview' : 'changeview'}`;
 
   const backend = new Backend();
 
   const { data: pkg, error: errorPkg, isLoading: loadingPkg } = useQuery(
     `${querykey}`, async () => {
-      let pkg = {
-        id: '',
-        name: '',
-        version: '',
-        repos: [],
-        initial_version: undefined
-      };
-
-      if (!addview)
-        pkg = await backend.fetchData(`/api/v2/internal/packages/${nameversion}`);
-        pkg.initial_version = pkg.version;
-        return pkg;
-    }
+      let pkg = await backend.fetchData(`/api/v2/internal/packages/${nameversion}`);
+      let [repo6, repo7] = splitRepos(pkg.repos);
+      pkg.initial_version = pkg.version;
+      pkg.repo_6 = repo6;
+      pkg.repo_7 = repo7;
+      return pkg;
+    },
+    { enabled: !addview }
   );
 
   const { data: repos, error: errorRepos, isLoading: loadingRepos } = useQuery(
@@ -189,13 +191,10 @@ export const PackageComponent = (props) => {
 
   const { data: probes, error: errorProbes, isLoading: loadingProbes } = useQuery(
     'package_component_probes', async () => {
-      let prb = [];
-
-      if (!addview)
-        prb = await backend.fetchData('/api/v2/internal/version/probe');
-
+      let prb = await backend.fetchData('/api/v2/internal/version/probe');
       return prb;
-    }
+    },
+    { enabled: !addview}
   );
 
   const { data: packageVersions, error: errorPackageVersions, isLoading: loadingPackageVersions } = useQuery(
@@ -210,7 +209,6 @@ export const PackageComponent = (props) => {
     { enabled: pkg}
   );
 
-  const [presentVersion, setPresentVersion] = useState(false);
   const [disabledButton, setDisabledButton] = useState(true);
   const [areYouSureModal, setAreYouSureModal] = useState(false);
   const [modalFlag, setModalFlag] = useState(undefined);
@@ -228,17 +226,33 @@ export const PackageComponent = (props) => {
     queryCache.setQueryData(`${querykey}`, () => p)
   }
 
+  function splitRepos(repos) {
+    let repo6 = '';
+    let repo7 = '';
+    for (let i = 0; i < repos.length; i++) {
+      if (repos[i].split('(')[1].slice(0, -1) === 'CentOS 6')
+        repo6 = repos[i];
+
+      if (repos[i].split('(')[1].slice(0, -1) === 'CentOS 7')
+        repo7 = repos[i];
+    }
+
+    return [repo6, repo7];
+  }
+
   function onVersionSelect(value) {
     let initial_version = pkg.initial_version;
     packageVersions.forEach(pkgv => {
       if (pkgv.version === value) {
+        let [repo6, repo7] = splitRepos(pkgv.repos);
         let updated_pkg = {
           id: pkgv.id,
           name: pkgv.name,
           version: pkgv.version,
           initial_version: initial_version,
           use_present_version: pkgv.use_present_version,
-          repos: pkgv.repos
+          repo_6: repo6,
+          repo_7: repo7
         };
 
         queryCache.setQueryData(`${querykey}`, () => updated_pkg);
@@ -435,10 +449,6 @@ export const PackageComponent = (props) => {
     }
   }
 
-  function toggleCheckbox() {
-    setPresentVersion(!presentVersion);
-  }
-
   if (loadingPkg || loadingRepos || loadingProbes || loadingPackageVersions)
     return (<LoadingAnim/>);
 
@@ -454,24 +464,20 @@ export const PackageComponent = (props) => {
   else if (errorPackageVersions)
     return (<ErrorComponent error={errorPackageVersions}/>);
 
-  else if (!loadingPkg && !loadingRepos && !loadingProbes && !loadingPackageVersions && pkg) {
-    var repo6 = '';
-    var repo7 = '';
-    for (let i = 0; i < pkg.repos.length; i++) {
-      if (pkg.repos[i].split('(')[1].slice(0, -1) === 'CentOS 6')
-        repo6 = pkg.repos[i];
-
-      if (pkg.repos[i].split('(')[1].slice(0, -1) === 'CentOS 7')
-        repo7 = pkg.repos[i];
-    }
-
-
+  else if (!loadingPkg && !loadingRepos && !loadingProbes && !loadingPackageVersions && repos) {
     var listProbes = [];
-    if (probes)
-      probes.forEach(probe => {
-        if (probe.fields.package === `${pkg.name} (${pkg.version})`)
-          listProbes.push(probe.fields.name);
-      });
+    let presentVersion = false;
+    if (pkg) {
+      if (pkg.version === 'present')
+        presentVersion = true;
+
+      if (probes) {
+        probes.forEach(probe => {
+          if (probe.fields.package === `${pkg.name} (${pkg.version})`)
+            listProbes.push(probe.fields.name);
+        });
+      }
+    }
 
     return (
       <BaseArgoView
@@ -502,17 +508,18 @@ export const PackageComponent = (props) => {
       >
         <Formik
           initialValues = {{
-            id: pkg.id,
-            name: pkg.name,
-            version: pkg.version,
-            repo_6: repo6,
-            repo_7: repo7,
+            id: `${pkg ? pkg.id : ''}`,
+            name: `${pkg ? pkg.name : ''}`,
+            version: `${pkg ? pkg.version : ''}`,
+            repo_6: `${pkg ? pkg.repo_6 : ''}`,
+            repo_7: `${pkg ? pkg.repo_7 : ''}`,
             present_version: presentVersion
           }}
           onSubmit = {(values) => onSubmitHandle(values)}
-          validationSchema={PackageSchema}
+          validate={packageValidate}
           enableReinitialize={true}
-          render = {props => (
+        >
+          {props => (
             <Form>
               <FormGroup>
                 <Row className='align-items-center'>
@@ -522,15 +529,12 @@ export const PackageComponent = (props) => {
                       <Field
                         type='text'
                         name='name'
-                        className={`form-control ${props.errors.name && 'border-danger'}`}
+                        className={`form-control ${props.errors.name && props.touched.name && 'border-danger'}`}
                         id='name'
                         disabled={disabled}
                       />
                     </InputGroup>
-                    {
-                      props.errors.name &&
-                        FancyErrorMessage(props.errors.name)
-                    }
+                    <CustomErrorMessage name='name' />
                     <FormText color='muted'>
                       Package name.
                     </FormText>
@@ -561,15 +565,12 @@ export const PackageComponent = (props) => {
                                 name='version'
                                 value={props.values.present_version ? 'present' : props.values.version}
                                 disabled={props.values.present_version}
-                                className={`form-control ${props.errors.version && 'border-danger'}`}
+                                className={`form-control ${props.errors.version && props.touched.version && 'border-danger'}`}
                                 id='version'
                               />
                           }
                         </InputGroup>
-                        {
-                          props.errors.version &&
-                            FancyErrorMessage(props.errors.version)
-                        }
+                        <CustomErrorMessage name='version' />
                         <FormText color='muted'>
                           Package version.
                         </FormText>
@@ -579,20 +580,28 @@ export const PackageComponent = (props) => {
                   {
                     !disabled &&
                       <Col md={3}>
-                        <Field
-                          component={Checkbox}
-                          name='present_version'
-                          className='form-control'
-                          id='checkbox'
-                          label='Use version which is present in repo'
-                          onChange={toggleCheckbox}
-                        />
+                        <label>
+                          <Field
+                            type='checkbox'
+                            name='present_version'
+                            className='mr-1'
+                          />
+                          Use version which is present in repo
+                        </label>
                       </Col>
                   }
                 </Row>
               </FormGroup>
               <FormGroup>
                 <ParagraphTitle title='YUM repo'/>
+                {
+                  (props.errors.repo_6 || props.errors.repo_7) &&
+                    <Alert color='danger'>
+                      <center>
+                        You must provide at least one repo!
+                      </center>
+                    </Alert>
+                }
                 <Row>
                   <Col md={8}>
                     {
@@ -613,15 +622,10 @@ export const PackageComponent = (props) => {
                           lists={repos.repo6}
                           icon='yumrepos'
                           field='repo_6'
-                          val={props.values.repo_6}
-                          onselect_handler={onSelect}
-                          req={props.errors.undefined}
+                          onselect_handler={!addview ? (_, newValue) => onSelect('repo_6', newValue) : undefined}
                           label='CentOS 6 repo'
+                          hide_error={true}
                         />
-                    }
-                    {
-                      props.errors.undefined &&
-                        FancyErrorMessage(props.errors.undefined)
                     }
                     <FormText color='muted'>
                       Package is part of selected CentOS 6 repo.
@@ -648,15 +652,10 @@ export const PackageComponent = (props) => {
                           lists={repos.repo7}
                           icon='yumrepos'
                           field='repo_7'
-                          val={props.values.repo_7}
-                          onselect_handler={onSelect}
-                          req={props.errors.undefined}
+                          onselect_handler={!addview ? (_, newValue) => onSelect('repo_7', newValue) : undefined}
                           label='CentOS 7 repo'
+                          hide_error={true}
                         />
-                    }
-                    {
-                      props.errors.undefined &&
-                        FancyErrorMessage(props.errors.undefined)
                     }
                     <FormText color='muted'>
                       Package is part of selected CentOS 7 repo.
@@ -717,10 +716,10 @@ export const PackageComponent = (props) => {
                       </Button>
                   }
                 </div>
-          }
+              }
             </Form>
           )}
-        />
+        </Formik>
       </BaseArgoView>
     )
   } else

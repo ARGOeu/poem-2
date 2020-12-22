@@ -212,7 +212,7 @@ const Group = ({operation, services, groupindex, isnew, last}) => {
   else
     return (
       <Col sm={{size: 12}} md={{size: 6}} className="mt-4 mb-2 d-flex justify-content-center align-items-center">
-        <Button outline color="secondary" size='lg' disabled={!context.write_perm ? true : false} onClick={
+        <Button outline color="secondary" size='lg' disabled={!context.write_perm || !context.list_services ? true : false} onClick={
           () => context.write_perm &&
             context.formikBag.groupInsert(groupindex, {name: '', operation: '', isNew: true,
                 services: [{name: '', operation: ''}]})
@@ -580,7 +580,11 @@ export const AggregationProfilesChange = (props) => {
         }
       }
     }
-  })
+    },
+    {
+      enabled: !publicView ? userDetails : true
+    }
+  )
 
   const correctMetricProfileName = (metricProfileId, listMetricProfilesWebApi) => {
     let targetProfile = listMetricProfilesWebApi.filter(p => p.id === metricProfileId)
@@ -940,7 +944,10 @@ export const AggregationProfilesChange = (props) => {
           }}
           onSubmit={(values, actions) => onSubmitHandle(values, actions)}
           validationSchema={AggregationProfilesSchema}
-          render = {props => (
+          validateOnBlur={true}
+          validateOnChange={false}
+        >
+          {props => (
             <Form>
               <FormikEffect onChange={(current, prev) => {
                 if (current.values.metric_profile !== prev.values.metric_profile) {
@@ -1069,7 +1076,7 @@ export const AggregationProfilesChange = (props) => {
               }
             </Form>
           )}
-        />
+        </Formik>
       </BaseArgoView>
     )
   }
@@ -1104,6 +1111,9 @@ export const AggregationProfilesList = (props) => {
       const fetched = await backend.fetchData(apiUrl)
 
       return fetched
+    },
+    {
+      enabled: !publicView ? userDetails : true
     }
   );
 
@@ -1214,13 +1224,13 @@ export const AggregationProfileVersionCompare = (props) => {
   const version1 = props.match.params.id1;
   const version2 = props.match.params.id2;
   const name = props.match.params.name;
-  const backend = new Backend();
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [aggregationProfileVersion1, setAggregationProfileVersion1] = useState(undefined)
   const [aggregationProfileVersion2, setAggregationProfileVersion2] = useState(undefined)
 
   useEffect(() => {
+    const backend = new Backend();
     const fetchDataAndSet = async () => {
       let json = await backend.fetchData(`/api/v2/internal/tenantversion/aggregationprofile/${name}`);
       json.forEach((e) => {
@@ -1254,7 +1264,7 @@ export const AggregationProfileVersionCompare = (props) => {
       setError(error);
       setLoading(false);
     }
-  }, [])
+  }, [error, name, version1, version2])
 
   if (loading)
     return (<LoadingAnim/>);
@@ -1321,10 +1331,10 @@ export const AggregationProfileVersionDetails = (props) => {
   const version = props.match.params.version;
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
-  const backend = new Backend();
   const [aggregationProfileDetails, setAggregationProfileDetails] = useState(undefined)
 
   useEffect(() => {
+    const backend = new Backend();
     const fetchDataAndSet = async () => {
       let json = await backend.fetchData(`/api/v2/internal/tenantversion/aggregationprofile/${name}`);
       json.forEach((e) => {
@@ -1350,7 +1360,7 @@ export const AggregationProfileVersionDetails = (props) => {
       setError(error);
       setLoading(false);
     }
-  }, [])
+  }, [error, name, version])
 
   if (loading)
     return (<LoadingAnim/>);
@@ -1376,7 +1386,8 @@ export const AggregationProfileVersionDetails = (props) => {
             metric_profile: aggregationProfileDetails.metric_profile,
             groups: aggregationProfileDetails.groups
           }}
-          render = {props => (
+        >
+          {props => (
             <Form>
               <AggregationProfilesForm
                 {...props}
@@ -1442,7 +1453,7 @@ export const AggregationProfileVersionDetails = (props) => {
               />
             </Form>
           )}
-        />
+        </Formik>
       </BaseArgoView>
     );
   } else

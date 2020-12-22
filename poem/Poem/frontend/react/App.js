@@ -41,7 +41,7 @@ import { APIKeyList, APIKeyChange } from './APIKey';
 import NotFound from './NotFound';
 import { Route, Switch, BrowserRouter, Redirect, withRouter } from 'react-router-dom';
 import { Container, Row, Col } from 'reactstrap';
-import { NavigationBar, NavigationAbout, CustomBreadcrumb, NavigationLinks, Footer, PublicPage, HistoryComponent} from './UIElements';
+import { NavigationBar, NavigationAbout, CustomBreadcrumb, NavigationLinks, Footer, PublicPage, HistoryComponent, DocumentTitle} from './UIElements';
 import { NotificationContainer } from 'react-notifications';
 import { Backend } from './DataManager';
 import { YumRepoList, YumRepoComponent } from './YumRepos';
@@ -59,6 +59,7 @@ const NavigationBarWithRouter = withRouter(NavigationBar);
 const NavigationLinksWithRouter = withRouter(NavigationLinks);
 const NavigationAboutWithRouter = withRouter(NavigationAbout);
 const CustomBreadcrumbWithRouter = withRouter(CustomBreadcrumb);
+const DocumentTitleWithRouter = withRouter(DocumentTitle);
 
 
 const SuperUserRoute = ({isSuperUser, ...props}) => (
@@ -896,6 +897,7 @@ const App = () => {
     return (
       <BrowserRouter>
         <Container fluid>
+          <DocumentTitleWithRouter />
           <Row>
             <NotificationContainer />
             <Col>
