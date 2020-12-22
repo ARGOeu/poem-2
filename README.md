@@ -378,7 +378,7 @@ poem-token -t WEB-API -s egi -o xxxx
 ```
 
 `poem-token` tools takes two or three arguments. In three-arguments-mode, it's setting token name provided after `-t` within schema provided after `-s` to a predefined value provided after `-o`. If `-o` is omitted, than value will be automatically created.
-
+ 
 In two-argument-mode it is used to generate a token for its REST API that will be consumed by monitoring boxes:
 ```
 poem-token -t EGI -s egi
@@ -416,3 +416,14 @@ Deployment of new versions is done with wheel packages that contain both backend
 * backend `Makefile` package targets:
   - `make wheel-devel` - create date-tagged wheel package
   - `make wheel-prod` - create versioned wheel package picking up the version from `setuptools`
+
+### Security vulnerabilities
+
+Security vulnerabilites happens ocassionally and are more often in environments and applications built from multiple software stacks. That's the case with ARGO POEM - two software stacks needs to be maintained: Django (Python) and React (Node.js/Javascript). Therefore, helpers are introduced to timely identify and resolve security issues:
+* Python `Makefile` security audit:
+    - `make py-audit-view`
+    - bump proposed package versions in `requirements.txt`
+* Javascript `Makefile` security audit:
+    - `make js-audit-view`
+    - `make js-audit-fix`
+Those are introduced in [poem/Poem/Makefile](poem/Poem/Makefile).
