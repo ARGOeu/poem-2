@@ -1,5 +1,32 @@
 # Changelog
 
+## [3.3.6] - 2020-12-22
+
+### Added
+
+* ARGO-2776 Individual pages should have meaningful document title
+* ARGO-2775 Optional service type sync for tenants
+
+### Fixed
+
+* ARGO-2801 Prevent adding of new service type groups if metric profiles is not associated
+* ARGO-2796 Bump ini js package
+* ARGO-2779 Fix linting errors in Login.js
+* ARGO-2777 React-POEM backend updates
+* ARGO-2778 Public tenant resources not rendering
+* ARGO-2774 Browser refresh or direct visit of resource changeview triggers queries with uninitialized variables
+
+### Changed
+
+* ARGO-2633 Switch aggregation profiles changeview to formik v2
+* ARGO-2638 Switch metric profiles to formik v2
+* ARGO-2680 Reorganize python unit tests in multiple files
+* ARGO-2646 Switch thresholds profiles to formik v2
+* ARGO-2648 Switch YUM repos page to formik v2
+* ARGO-2647 Switch users page to formik v2
+* ARGO-2645 Switch tenants page to formik v2
+* ARGO-2644 Switch reports to formik v2
+
 ## [3.3.5] - 2020-11-05
 
 ### Added
