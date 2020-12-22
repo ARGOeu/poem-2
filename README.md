@@ -35,7 +35,7 @@ Frontend: `ReactJS`, `formik`, `react-autosuggest`, `react-diff-viewer`, `react-
 User documentation: http://argoeu.github.io/poem/v1/
 
 EGI instances:
-* devel - https://egi.poem.devel.argo.grnet.gr
+* devel - https://poem-devel.egi.eu
 * production - https://poem.egi.eu
 * SuperPOEM - https://poem.argo.grnet.gr
 
