@@ -59,23 +59,24 @@ Layout of POEM web service files on the filesystem depends on the location of vi
 VENV = /home/pyvenv/poem/
 ```
 
-| File Types								    | Destination                                                               |
-|------------------------------ |---------------------------------------------------------------------------|
-| Configuration - General		    | `VENV/etc/poem/poem.conf`                                                 |
-| Configuration - Logging		    | `VENV/etc/poem/poem_logging.conf`                                         |
-| Configuration - Apache		    | `/opt/rh/httpd24/root/etc/httpd/conf.d/`                                  |
-| Cron jobs									    | `/etc/cron.d/poem-clearsessions, poem-sync, poem-db_backup`               |
-| Logrotate 								    | `/etc/logrotate.d/poem-db_backup`                                         |
-| Database handler					    | `VENV/bin/poem-db`                                                        |
-| Sync (Service, Service types) | `VENV/bin/poem-syncservtype, poem-syncservices, poem-syncmetricinstances` |
-| Security key generator        | `VENV/bin/poem-genseckey`                                                 |
-| Token set/create 					    | `VENV/bin/poem-token`                                                     |
-| Tenant management					    | `VENV/bin/poem-tenant`                                                    |
-| Django `manage.py` wrapper    | `VENV/bin/poem-manage`                                                    |
-| Static data served by Apache  | `VENV/usr/share/poem/`                                                    |
-| Main application code         | `VENV/lib/python3.6/site-packages/Poem/`                                  |
-| Log file                      | `VENV/var/log/poem`                                                       |
-| DB backups                    | `VENV/var/db_backups/`                                                    |
+| File Types                      | Destination                                                                   |
+| ------------------------------- | ----------------------------------------------------------------------------- |
+| Configuration - General         | `VENV/etc/poem/poem.conf`                                                     |
+| Configuration - Logging         | `VENV/etc/poem/poem_logging.conf`                                             |
+| Configuration - Apache          | `/opt/rh/httpd24/root/etc/httpd/conf.d/`                                      |
+| Cron jobs                       | `/etc/cron.d/poem-clearsessions, poem-sync, poem-db_backup`                   |
+| Logrotate                       | `/etc/logrotate.d/poem-db_backup`                                             |
+| Database handler                | `VENV/bin/poem-db`                                                            |
+| Sync (Service types)            | `VENV/bin/poem-syncservtype`                                                  |
+| Security key generator          | `VENV/bin/poem-genseckey`                                                     |
+| Token set/create                | `VENV/bin/poem-token`                                                         |
+| Tenant management               | `VENV/bin/poem-tenant`                                                        |
+| Django `manage.py` wrapper      | `VENV/bin/poem-manage`                                                        |
+| Static data served by Apache    | `VENV/usr/share/poem/`                                                        |
+| Main application code           | `VENV/lib/python3.6/site-packages/Poem/`                                      |
+| Log file                        | `VENV/var/log/poem`                                                           |
+| DB backups                      | `VENV/var/db_backups/`                                                        |
+
 
 If the default location of virtual environment is inappropriate and needs to be changed, change of it should be reflected by adapting `VENV` configuration variable in `etc/poem/poem.conf`, `etc/poem/poem_logging.conf`, `/etc/httpd/conf.d/poem.conf` and `site-packages/Poem/settings.py`.
 
@@ -256,6 +257,8 @@ Initial superuser credentials that can be used to sign in to POEM with username 
 
 ### SYNC_<tenant_name>
 
+> Section is _optional_ and is of particular interest for tenants that comes with GOCDB-like service whose service types are defined there and should be periodically pulled and presented in the ARGO POEM. 
+
 These control options are used by sync scripts that fetch all available services types from GOCDB-like service. Additionally, if GOCDB-like service supports only Basic HTTP Authentication, it should be enabled by setting `UsePlainHttpAuth` and specifying credentials in `HttpUser` and `HttpPass`.
 
     [SYNC_EGI]
@@ -378,7 +381,7 @@ poem-token -t WEB-API -s egi -o xxxx
 ```
 
 `poem-token` tools takes two or three arguments. In three-arguments-mode, it's setting token name provided after `-t` within schema provided after `-s` to a predefined value provided after `-o`. If `-o` is omitted, than value will be automatically created.
-
+ 
 In two-argument-mode it is used to generate a token for its REST API that will be consumed by monitoring boxes:
 ```
 poem-token -t EGI -s egi
@@ -416,3 +419,14 @@ Deployment of new versions is done with wheel packages that contain both backend
 * backend `Makefile` package targets:
   - `make wheel-devel` - create date-tagged wheel package
   - `make wheel-prod` - create versioned wheel package picking up the version from `setuptools`
+
+### Security vulnerabilities
+
+Security vulnerabilites happens ocassionally and are more often in environments and applications built from multiple software stacks. That's the case with ARGO POEM - two software stacks needs to be maintained: Django (Python) and React (Node.js/Javascript). Therefore, helpers are introduced to timely identify and resolve security issues:
+* Python `Makefile` security audit:
+    - `make py-audit-view`
+    - bump proposed package versions in `requirements.txt`
+* Javascript `Makefile` security audit:
+    - `make js-audit-view`
+    - `make js-audit-fix`
+Those are introduced in [poem/Poem/Makefile](poem/Poem/Makefile).
