@@ -257,6 +257,8 @@ Initial superuser credentials that can be used to sign in to POEM with username 
 
 ### SYNC_<tenant_name>
 
+> Section is _optional_ and is of particular interest for tenants that comes with GOCDB-like service whose service types are defined there and should be periodically pulled and presented in the ARGO POEM. 
+
 These control options are used by sync scripts that fetch all available services types from GOCDB-like service. Additionally, if GOCDB-like service supports only Basic HTTP Authentication, it should be enabled by setting `UsePlainHttpAuth` and specifying credentials in `HttpUser` and `HttpPass`.
 
     [SYNC_EGI]
