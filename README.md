@@ -59,23 +59,24 @@ Layout of POEM web service files on the filesystem depends on the location of vi
 VENV = /home/pyvenv/poem/
 ```
 
-| File Types								    | Destination                                                               |
-|------------------------------ |---------------------------------------------------------------------------|
-| Configuration - General		    | `VENV/etc/poem/poem.conf`                                                 |
-| Configuration - Logging		    | `VENV/etc/poem/poem_logging.conf`                                         |
-| Configuration - Apache		    | `/opt/rh/httpd24/root/etc/httpd/conf.d/`                                  |
-| Cron jobs									    | `/etc/cron.d/poem-clearsessions, poem-sync, poem-db_backup`               |
-| Logrotate 								    | `/etc/logrotate.d/poem-db_backup`                                         |
-| Database handler					    | `VENV/bin/poem-db`                                                        |
-| Sync (Service, Service types) | `VENV/bin/poem-syncservtype, poem-syncservices, poem-syncmetricinstances` |
-| Security key generator        | `VENV/bin/poem-genseckey`                                                 |
-| Token set/create 					    | `VENV/bin/poem-token`                                                     |
-| Tenant management					    | `VENV/bin/poem-tenant`                                                    |
-| Django `manage.py` wrapper    | `VENV/bin/poem-manage`                                                    |
-| Static data served by Apache  | `VENV/usr/share/poem/`                                                    |
-| Main application code         | `VENV/lib/python3.6/site-packages/Poem/`                                  |
-| Log file                      | `VENV/var/log/poem`                                                       |
-| DB backups                    | `VENV/var/db_backups/`                                                    |
+| File Types                      | Destination                                                                   |
+| ------------------------------- | ----------------------------------------------------------------------------- |
+| Configuration - General         | `VENV/etc/poem/poem.conf`                                                     |
+| Configuration - Logging         | `VENV/etc/poem/poem_logging.conf`                                             |
+| Configuration - Apache          | `/opt/rh/httpd24/root/etc/httpd/conf.d/`                                      |
+| Cron jobs                       | `/etc/cron.d/poem-clearsessions, poem-sync, poem-db_backup`                   |
+| Logrotate                       | `/etc/logrotate.d/poem-db_backup`                                             |
+| Database handler                | `VENV/bin/poem-db`                                                            |
+| Sync (Service types)            | `VENV/bin/poem-syncservtype`                                                  |
+| Security key generator          | `VENV/bin/poem-genseckey`                                                     |
+| Token set/create                | `VENV/bin/poem-token`                                                         |
+| Tenant management               | `VENV/bin/poem-tenant`                                                        |
+| Django `manage.py` wrapper      | `VENV/bin/poem-manage`                                                        |
+| Static data served by Apache    | `VENV/usr/share/poem/`                                                        |
+| Main application code           | `VENV/lib/python3.6/site-packages/Poem/`                                      |
+| Log file                        | `VENV/var/log/poem`                                                           |
+| DB backups                      | `VENV/var/db_backups/`                                                        |
+
 
 If the default location of virtual environment is inappropriate and needs to be changed, change of it should be reflected by adapting `VENV` configuration variable in `etc/poem/poem.conf`, `etc/poem/poem_logging.conf`, `/etc/httpd/conf.d/poem.conf` and `site-packages/Poem/settings.py`.
 
