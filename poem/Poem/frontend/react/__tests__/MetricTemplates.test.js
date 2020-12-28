@@ -120,7 +120,7 @@ const mockActiveSession = {
   }
 }
 
-function renderListView(publicView=false) {
+function renderListView(publicView=undefined) {
   const route = `/ui/${publicView ? 'public_' : ''}metrictemplates`;
   const history = createMemoryHistory({ initialEntries: [route] });
 
@@ -160,13 +160,25 @@ describe('Test list of metric templates on SuperPOEM', () => {
             case '/api/v2/internal/metrictemplates':
               return Promise.resolve(mockListOfMetricTemplates)
 
+            case '/api/v2/internal/public_metrictemplates':
+              return Promise.resolve(mockListOfMetricTemplates)
+
             case '/api/v2/internal/mttypes':
+              return Promise.resolve(['Active', 'Passive'])
+
+            case '/api/v2/internal/public_mttypes':
               return Promise.resolve(['Active', 'Passive'])
 
             case '/api/v2/internal/metrictags':
               return Promise.resolve(['test_tag1', 'test_tag2', 'internal', 'deprecated'])
 
+            case '/api/v2/internal/public_metrictags':
+              return Promise.resolve(['test_tag1', 'test_tag2', 'internal', 'deprecated'])
+
             case '/api/v2/internal/ostags':
+              return Promise.resolve(['CentOS 6', 'CentOS 7'])
+
+            case '/api/v2/internal/public_ostags':
               return Promise.resolve(['CentOS 6', 'CentOS 7'])
           }
         },
@@ -214,6 +226,45 @@ describe('Test list of metric templates on SuperPOEM', () => {
     expect(screen.getByRole('link', { name: /apel/i }).closest('a')).toHaveAttribute('href', '/ui/metrictemplates/org.apel.APEL-Pub');
     expect(screen.getByRole('button', { name: /add/i }).closest('a')).toHaveAttribute('href', '/ui/metrictemplates/add')
     expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
+  })
+
+  test('Test that public listview renders properly', async () => {
+    renderListView(true);
+
+    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /metric/i }).textContent).toBe('Select metric template for details')
+    })
+
+    // double column header length because search fields are also th
+    expect(screen.getAllByRole('columnheader')).toHaveLength(10);
+    expect(screen.getByRole('columnheader', { name: '#' })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: /name/i }).textContent).toBe('Name');
+    expect(screen.getByRole('columnheader', { name: /probe/i }).textContent).toBe('Probe version');
+    expect(screen.getByRole('columnheader', { name: /type/i }).textContent).toBe('Type');
+    expect(screen.getByRole('columnheader', { name: /tag/i }).textContent).toBe('Tag');
+    expect(screen.getAllByPlaceholderText('Search')).toHaveLength(2);
+    expect(screen.getAllByRole('columnheader', { name: 'Show all' })).toHaveLength(2);
+    expect(screen.getAllByRole('option', { name: 'Show all' })).toHaveLength(2);
+    expect(screen.getByRole('option', { name: 'Active' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Passive' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'test_tag1' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'test_tag2' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'internal' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'deprecated' })).toBeInTheDocument();
+    expect(screen.getAllByRole('row')).toHaveLength(52);
+    expect(screen.getAllByRole('row', { name: '' })).toHaveLength(47);
+    expect(screen.getByRole('row', { name: /ams-check/i }).textContent).toBe('1argo.AMS-Checkams-probe (0.1.12)Activetest_tag1test_tag2')
+    expect(screen.getByRole('row', { name: /ams-publisher/i }).textContent).toBe('2argo.AMS-Publisherams-publisher-probe (0.1.12)Activeinternal')
+    expect(screen.getByRole('row', { name: /apel/i }).textContent).toBe('3org.apel.APEL-PubPassivenone')
+    expect(screen.getByRole('link', { name: /argo.ams-check/i }).closest('a')).toHaveAttribute('href', '/ui/public_metrictemplates/argo.AMS-Check');
+    expect(screen.getByRole('link', { name: /ams-probe/i }).closest('a')).toHaveAttribute('href', '/ui/public_probes/ams-probe/history/0.1.12')
+    expect(screen.getByRole('link', { name: /argo.ams-publisher/i }).closest('a')).toHaveAttribute('href', '/ui/public_metrictemplates/argo.AMS-Publisher');
+    expect(screen.getByRole('link', { name: /ams-publisher-probe/i }).closest('a')).toHaveAttribute('href', '/ui/public_probes/ams-publisher-probe/history/0.1.12')
+    expect(screen.getByRole('link', { name: /apel/i }).closest('a')).toHaveAttribute('href', '/ui/public_metrictemplates/org.apel.APEL-Pub');
+    expect(screen.queryByRole('button', { name: /add/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
   })
 
   test('Test that listview renders properly when empty list', async () => {
