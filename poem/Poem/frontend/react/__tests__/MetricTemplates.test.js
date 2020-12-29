@@ -16,6 +16,7 @@ jest.mock('../DataManager', () => {
 })
 
 const mockBulkDeleteMetrics = jest.fn();
+const mockImportMetrics = jest.fn();
 
 
 beforeEach(() => {
@@ -647,6 +648,8 @@ describe('Test list of metric templates on SuperPOEM if empty list', () => {
 })
 
 describe('Test list of metric templates on tenant POEM', () => {
+  jest.spyOn(NotificationManager, 'success');
+
   beforeAll(() => {
     Backend.mockImplementation(() => {
       return {
@@ -666,7 +669,8 @@ describe('Test list of metric templates on tenant POEM', () => {
           }
         },
         isTenantSchema: () => Promise.resolve(true),
-        isActiveSession: () => Promise.resolve(mockTenantActiveSession)
+        isActiveSession: () => Promise.resolve(mockTenantActiveSession),
+        importMetrics: mockImportMetrics
       }
     })
   })
@@ -748,5 +752,39 @@ describe('Test list of metric templates on tenant POEM', () => {
     expect(screen.getAllByRole('row', { name: '' })).toHaveLength(49);
     expect(screen.getByRole('row', { name: /ams-check/i }).textContent).toBe('argo.AMS-Checkams-probe (0.1.12)ActiveCentOS 6, CentOS 7test_tag1test_tag2')
     expect(screen.getByRole('link', { name: /ams-probe/i }).closest('a')).toHaveAttribute('href', '/ui/probes/ams-probe/history/0.1.12')
+  })
+
+  test('Test import metric templates', async () => {
+    mockImportMetrics.mockReturnValueOnce(
+      Promise.resolve({
+        json: () => Promise.resolve({
+          imported: 'argo.AMS-Check, argo.AMS-Publisher have been successfully imported.'
+        }),
+        status: 200,
+        ok: true
+      })
+    )
+
+    renderTenantListView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /metric/i }).textContent).toBe('Select metric template(s) to import');
+    })
+
+    fireEvent.click(screen.getByTestId('checkbox-argo.AMS-Check'));
+    fireEvent.click(screen.getByTestId('checkbox-argo.AMS-Publisher'));
+
+    fireEvent.click(screen.getByRole('button', { name: /import/i }));
+    await waitFor(() => {
+      expect(mockImportMetrics).toHaveBeenCalledWith(
+        { metrictemplates: ['argo.AMS-Check', 'argo.AMS-Publisher'] }
+      )
+    })
+
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'argo.AMS-Check, argo.AMS-Publisher have been successfully imported.',
+      'Imported',
+      2000
+    );
   })
 })
