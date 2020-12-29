@@ -61,7 +61,7 @@ const mockListOfMetricTemplates = [
     mtype: 'Active',
     tags: ['internal'],
     probeversion: 'ams-publisher-probe (0.1.12)',
-    ostag: ['CentOS 6', 'CentOS 7'],
+    ostag: ['CentOS 7'],
     description: '',
     parent: '',
     probeexecutable: 'ams-publisher-probe',
@@ -702,7 +702,7 @@ describe('Test list of metric templates on tenant POEM', () => {
     expect(screen.getAllByRole('row')).toHaveLength(52);
     expect(screen.getAllByRole('row', { name: '' })).toHaveLength(47);
     expect(screen.getByRole('row', { name: /ams-check/i }).textContent).toBe('argo.AMS-Checkams-probe (0.1.12)ActiveCentOS 6, CentOS 7test_tag1test_tag2')
-    expect(screen.getByRole('row', { name: /ams-publisher/i }).textContent).toBe('argo.AMS-Publisherams-publisher-probe (0.1.12)ActiveCentOS 6, CentOS 7internal')
+    expect(screen.getByRole('row', { name: /ams-publisher/i }).textContent).toBe('argo.AMS-Publisherams-publisher-probe (0.1.12)ActiveCentOS 7internal')
     expect(screen.getByRole('row', { name: /apel/i }).textContent).toBe('org.apel.APEL-PubPassivenone')
     expect(screen.getByRole('link', { name: /argo.ams-check/i }).closest('a')).toHaveAttribute('href', '/ui/administration/metrictemplates/argo.AMS-Check');
     expect(screen.getByRole('link', { name: /ams-probe/i }).closest('a')).toHaveAttribute('href', '/ui/probes/ams-probe/history/0.1.12')
@@ -712,5 +712,41 @@ describe('Test list of metric templates on tenant POEM', () => {
     expect(screen.getByRole('button', { name: /import/i })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /add/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
+  })
+
+  test('Test filter metric templates list', async () => {
+    renderTenantListView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', {name: /metric/i}).textContent).toBe('Select metric template(s) to import')
+    })
+
+    fireEvent.change(screen.getAllByPlaceholderText('Search')[0], { target: { value: 'argo' } });
+    expect(screen.getAllByRole('row')).toHaveLength(52);
+    expect(screen.getAllByRole('row', { name: '' })).toHaveLength(48);
+    expect(screen.getByRole('row', { name: /ams-check/i }).textContent).toBe('argo.AMS-Checkams-probe (0.1.12)ActiveCentOS 6, CentOS 7test_tag1test_tag2')
+    expect(screen.getByRole('row', { name: /ams-publisher/i }).textContent).toBe('argo.AMS-Publisherams-publisher-probe (0.1.12)ActiveCentOS 7internal')
+    expect(screen.getByRole('link', { name: /argo.ams-check/i }).closest('a')).toHaveAttribute('href', '/ui/administration/metrictemplates/argo.AMS-Check');
+    expect(screen.getByRole('link', { name: /ams-probe/i }).closest('a')).toHaveAttribute('href', '/ui/probes/ams-probe/history/0.1.12')
+    expect(screen.getByRole('link', { name: /argo.ams-publisher/i }).closest('a')).toHaveAttribute('href', '/ui/administration/metrictemplates/argo.AMS-Publisher');
+    expect(screen.getByRole('link', { name: /ams-publisher-probe/i }).closest('a')).toHaveAttribute('href', '/ui/probes/ams-publisher-probe/history/0.1.12')
+
+    fireEvent.change(screen.getAllByDisplayValue('Show all')[2], { target: { value: 'internal' } })
+    expect(screen.getAllByRole('row')).toHaveLength(52);
+    expect(screen.getAllByRole('row', { name: '' })).toHaveLength(49);
+    expect(screen.getByRole('row', { name: /ams-publisher/i }).textContent).toBe('argo.AMS-Publisherams-publisher-probe (0.1.12)ActiveCentOS 7internal')
+    expect(screen.getByRole('link', { name: /argo.ams-publisher/i }).closest('a')).toHaveAttribute('href', '/ui/administration/metrictemplates/argo.AMS-Publisher');
+    expect(screen.getByRole('link', { name: /ams-publisher-probe/i }).closest('a')).toHaveAttribute('href', '/ui/probes/ams-publisher-probe/history/0.1.12')
+
+    fireEvent.change(screen.getAllByDisplayValue('Show all')[1], { target: { value: 'CentOS 6' } })
+    expect(screen.getAllByRole('row')).toHaveLength(52);
+    expect(screen.getAllByRole('row', { name: '' })).toHaveLength(49);
+    expect(screen.getByRole('row', { name: /no/i }).textContent).toBe('No metric templates');
+
+    fireEvent.change(screen.getByDisplayValue('internal'), { target: { value: 'Show all' } })
+    expect(screen.getAllByRole('row')).toHaveLength(52);
+    expect(screen.getAllByRole('row', { name: '' })).toHaveLength(49);
+    expect(screen.getByRole('row', { name: /ams-check/i }).textContent).toBe('argo.AMS-Checkams-probe (0.1.12)ActiveCentOS 6, CentOS 7test_tag1test_tag2')
+    expect(screen.getByRole('link', { name: /ams-probe/i }).closest('a')).toHaveAttribute('href', '/ui/probes/ams-probe/history/0.1.12')
   })
 })

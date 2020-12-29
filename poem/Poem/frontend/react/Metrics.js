@@ -662,7 +662,7 @@ export const ListOfMetrics = (props) => {
                 data={listMetrics}
                 columns={memoized_columns}
                 page_size={50}
-                resourcename='metrics'
+                resourcename='metric templates'
                 filter={true}
                 selectable={!publicView}
               />
