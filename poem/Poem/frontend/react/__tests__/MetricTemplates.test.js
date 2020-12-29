@@ -6,6 +6,7 @@ import { Route, Router } from 'react-router-dom';
 import { ListOfMetrics } from '../Metrics';
 import { Backend } from '../DataManager';
 import { NotificationManager } from 'react-notifications';
+import { queryCache } from 'react-query'
 
 
 jest.mock('../DataManager', () => {
@@ -18,7 +19,8 @@ const mockBulkDeleteMetrics = jest.fn();
 
 
 beforeEach(() => {
-  jest.clearAllMocks()
+  jest.clearAllMocks();
+  queryCache.clear();
 })
 
 
@@ -120,6 +122,21 @@ const mockActiveSession = {
   }
 }
 
+const mockTenantActiveSession = {
+  active: true,
+  userdetails: {
+    is_superuser: true,
+    username: 'testuser',
+    groups: {
+      aggregations: ['EGI'],
+      metricprofiles: ['EGI'],
+      metrics: ['EGI', 'ARGOTEST'],
+      thresholdsprofiles: ['EGI']
+    },
+    token: '1234token_rw'
+  }
+}
+
 function renderListView(publicView=undefined) {
   const route = `/ui/${publicView ? 'public_' : ''}metrictemplates`;
   const history = createMemoryHistory({ initialEntries: [route] });
@@ -144,6 +161,21 @@ function renderListView(publicView=undefined) {
         </Router>
       )
     }
+}
+
+function renderTenantListView() {
+  const route = '/ui/administration/metrictemplates';
+  const history = createMemoryHistory({ initialEntries: [route] });
+
+  return {
+    ...render(
+      <Router history={history} >
+        <Route
+          render={props => <ListOfMetrics {...props} type='metrictemplates' />}
+        />
+      </Router>
+    )
+  }
 }
 
 
@@ -265,55 +297,6 @@ describe('Test list of metric templates on SuperPOEM', () => {
     expect(screen.getByRole('link', { name: /apel/i }).closest('a')).toHaveAttribute('href', '/ui/public_metrictemplates/org.apel.APEL-Pub');
     expect(screen.queryByRole('button', { name: /add/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
-  })
-
-  test('Test that listview renders properly when empty list', async () => {
-    Backend.mockImplementationOnce(() => {
-      return {
-        fetchData: (path) => {
-          switch (path) {
-            case '/api/v2/internal/metrictemplates':
-              return Promise.resolve([])
-
-            case '/api/v2/internal/mttypes':
-              return Promise.resolve(['Active', 'Passive'])
-
-            case '/api/v2/internal/metrictags':
-              return Promise.resolve(['test_tag1', 'test_tag2', 'internal', 'deprecated'])
-
-            case '/api/v2/internal/ostags':
-              return Promise.resolve(['CentOS 6', 'CentOS 7'])
-          }
-        },
-        isTenantSchema: () => Promise.resolve(false),
-        isActiveSession: () => Promise.resolve(mockActiveSession)
-      }
-    })
-
-    renderListView();
-
-    await waitFor(() => {
-      expect(screen.getByRole('heading', {name: /metric/i}).textContent).toBe('Select metric template to change')
-    })
-    expect(screen.getAllByRole('columnheader')).toHaveLength(10);
-    expect(screen.getByRole('columnheader', { name: 'Delete' })).toBeInTheDocument();
-    expect(screen.getByRole('columnheader', { name: /name/i }).textContent).toBe('Name');
-    expect(screen.getByRole('columnheader', { name: /probe/i }).textContent).toBe('Probe version');
-    expect(screen.getByRole('columnheader', { name: /type/i }).textContent).toBe('Type');
-    expect(screen.getByRole('columnheader', { name: /tag/i }).textContent).toBe('Tag');
-    expect(screen.getAllByPlaceholderText('Search')).toHaveLength(2);
-    expect(screen.getAllByRole('columnheader', { name: 'Show all' })).toHaveLength(2);
-    expect(screen.getAllByRole('option', { name: 'Show all' })).toHaveLength(2);
-    expect(screen.getByRole('option', { name: /active/i })).toBeInTheDocument();
-    expect(screen.getByRole('option', { name: /passive/i })).toBeInTheDocument();
-    expect(screen.getByRole('option', { name: /internal/i })).toBeInTheDocument();
-    expect(screen.getByRole('option', { name: /deprecated/i })).toBeInTheDocument();
-    expect(screen.getAllByRole('option', { name: /test_tag/i })).toHaveLength(2);
-    expect(screen.getAllByRole('row')).toHaveLength(52);
-    expect(screen.getAllByRole('row', { name: '' })).toHaveLength(49);
-    expect(screen.getByRole('row', { name: /no/i }).textContent).toBe('No metric templates');
-    expect(screen.getByRole('button', { name: /add/i }).closest('a')).toHaveAttribute('href', '/ui/metrictemplates/add');
-    expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
   })
 
   test('Test filter metric templates list', async () => {
@@ -562,5 +545,172 @@ describe('Test list of metric templates on SuperPOEM', () => {
       0,
       expect.any(Function)
     )
+  })
+})
+
+
+describe('Test list of metric templates on SuperPOEM if empty list', () => {
+  jest.spyOn(NotificationManager, 'success');
+  jest.spyOn(NotificationManager, 'error');
+  jest.spyOn(NotificationManager, 'warning');
+
+  beforeAll(() => {
+    Backend.mockImplementation(() => {
+      return {
+        fetchData: (path) => {
+          switch (path) {
+            case '/api/v2/internal/metrictemplates':
+              return Promise.resolve([]);
+
+            case '/api/v2/internal/public_metrictemplates':
+              return Promise.resolve([]);
+
+            case '/api/v2/internal/mttypes':
+              return Promise.resolve(['Active', 'Passive'])
+
+            case '/api/v2/internal/public_mttypes':
+              return Promise.resolve(['Active', 'Passive'])
+
+            case '/api/v2/internal/metrictags':
+              return Promise.resolve(['test_tag1', 'test_tag2', 'internal', 'deprecated'])
+
+            case '/api/v2/internal/public_metrictags':
+              return Promise.resolve(['test_tag1', 'test_tag2', 'internal', 'deprecated'])
+
+            case '/api/v2/internal/ostags':
+              return Promise.resolve(['CentOS 6', 'CentOS 7'])
+
+            case '/api/v2/internal/public_ostags':
+              return Promise.resolve(['CentOS 6', 'CentOS 7'])
+          }
+        },
+        isTenantSchema: () => Promise.resolve(false),
+        isActiveSession: () => Promise.resolve(mockActiveSession),
+        bulkDeleteMetrics: mockBulkDeleteMetrics
+      }
+    })
+  })
+
+  test('Test that listview renders properly', async () => {
+    renderListView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', {name: /metric/i}).textContent).toBe('Select metric template to change')
+    })
+    expect(screen.getAllByRole('columnheader')).toHaveLength(10);
+    expect(screen.getByRole('columnheader', { name: 'Delete' })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: /name/i }).textContent).toBe('Name');
+    expect(screen.getByRole('columnheader', { name: /probe/i }).textContent).toBe('Probe version');
+    expect(screen.getByRole('columnheader', { name: /type/i }).textContent).toBe('Type');
+    expect(screen.getByRole('columnheader', { name: /tag/i }).textContent).toBe('Tag');
+    expect(screen.getAllByPlaceholderText('Search')).toHaveLength(2);
+    expect(screen.getAllByRole('columnheader', { name: 'Show all' })).toHaveLength(2);
+    expect(screen.getAllByRole('option', { name: 'Show all' })).toHaveLength(2);
+    expect(screen.getByRole('option', { name: /active/i })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: /passive/i })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: /internal/i })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: /deprecated/i })).toBeInTheDocument();
+    expect(screen.getAllByRole('option', { name: /test_tag/i })).toHaveLength(2);
+    expect(screen.getAllByRole('row')).toHaveLength(52);
+    expect(screen.getAllByRole('row', { name: '' })).toHaveLength(49);
+    expect(screen.getByRole('row', { name: /no/i }).textContent).toBe('No metric templates');
+    expect(screen.getByRole('button', { name: /add/i }).closest('a')).toHaveAttribute('href', '/ui/metrictemplates/add');
+    expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
+  })
+
+  test('Test that public listview renders properly', async () => {
+    renderListView(true);
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', {name: /metric/i}).textContent).toBe('Select metric template for details')
+    })
+    expect(screen.getAllByRole('columnheader')).toHaveLength(10);
+    expect(screen.getByRole('columnheader', { name: '#' })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: /name/i }).textContent).toBe('Name');
+    expect(screen.getByRole('columnheader', { name: /probe/i }).textContent).toBe('Probe version');
+    expect(screen.getByRole('columnheader', { name: /type/i }).textContent).toBe('Type');
+    expect(screen.getByRole('columnheader', { name: /tag/i }).textContent).toBe('Tag');
+    expect(screen.getAllByPlaceholderText('Search')).toHaveLength(2);
+    expect(screen.getAllByRole('columnheader', { name: 'Show all' })).toHaveLength(2);
+    expect(screen.getAllByRole('option', { name: 'Show all' })).toHaveLength(2);
+    expect(screen.getByRole('option', { name: /active/i })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: /passive/i })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: /internal/i })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: /deprecated/i })).toBeInTheDocument();
+    expect(screen.getAllByRole('option', { name: /test_tag/i })).toHaveLength(2);
+    expect(screen.getAllByRole('row')).toHaveLength(52);
+    expect(screen.getAllByRole('row', { name: '' })).toHaveLength(49);
+    expect(screen.getByRole('row', { name: /no/i }).textContent).toBe('No metric templates');
+    expect(screen.queryByRole('button', { name: /add/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
+  })
+})
+
+describe('Test list of metric templates on tenant POEM', () => {
+  beforeAll(() => {
+    Backend.mockImplementation(() => {
+      return {
+        fetchData: (path) => {
+          switch (path) {
+            case '/api/v2/internal/metrictemplates':
+              return Promise.resolve(mockListOfMetricTemplates)
+
+            case '/api/v2/internal/mttypes':
+              return Promise.resolve(['Active', 'Passive'])
+
+            case '/api/v2/internal/metrictags':
+              return Promise.resolve(['test_tag1', 'test_tag2', 'internal', 'deprecated'])
+
+            case '/api/v2/internal/ostags':
+              return Promise.resolve(['CentOS 6', 'CentOS 7'])
+          }
+        },
+        isTenantSchema: () => Promise.resolve(true),
+        isActiveSession: () => Promise.resolve(mockTenantActiveSession)
+      }
+    })
+  })
+
+  test('Test that listview renders properly', async () => {
+    renderTenantListView();
+
+    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /metric/i }).textContent).toBe('Select metric template(s) to import')
+    })
+
+    // double column header length because search fields are also th
+    expect(screen.getAllByRole('columnheader')).toHaveLength(12);
+    expect(screen.getByRole('columnheader', { name: 'Select all' })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: /name/i }).textContent).toBe('Name');
+    expect(screen.getByRole('columnheader', { name: /probe/i }).textContent).toBe('Probe version');
+    expect(screen.getByRole('columnheader', { name: /type/i }).textContent).toBe('Type');
+    expect(screen.getByRole('columnheader', { name: /os/i }).textContent).toBe('OS');
+    expect(screen.getByRole('columnheader', { name: /tag/i }).textContent).toBe('Tag');
+    expect(screen.getAllByPlaceholderText('Search')).toHaveLength(2);
+    expect(screen.getAllByRole('columnheader', { name: 'Show all' })).toHaveLength(3);
+    expect(screen.getAllByRole('option', { name: 'Show all' })).toHaveLength(3);
+    expect(screen.getByRole('option', { name: 'Active' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Passive' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'test_tag1' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'test_tag2' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'internal' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'deprecated' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'CentOS 6' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'CentOS 7' })).toBeInTheDocument();
+    expect(screen.getAllByRole('row')).toHaveLength(52);
+    expect(screen.getAllByRole('row', { name: '' })).toHaveLength(47);
+    expect(screen.getByRole('row', { name: /ams-check/i }).textContent).toBe('argo.AMS-Checkams-probe (0.1.12)ActiveCentOS 6, CentOS 7test_tag1test_tag2')
+    expect(screen.getByRole('row', { name: /ams-publisher/i }).textContent).toBe('argo.AMS-Publisherams-publisher-probe (0.1.12)ActiveCentOS 6, CentOS 7internal')
+    expect(screen.getByRole('row', { name: /apel/i }).textContent).toBe('org.apel.APEL-PubPassivenone')
+    expect(screen.getByRole('link', { name: /argo.ams-check/i }).closest('a')).toHaveAttribute('href', '/ui/administration/metrictemplates/argo.AMS-Check');
+    expect(screen.getByRole('link', { name: /ams-probe/i }).closest('a')).toHaveAttribute('href', '/ui/probes/ams-probe/history/0.1.12')
+    expect(screen.getByRole('link', { name: /argo.ams-publisher/i }).closest('a')).toHaveAttribute('href', '/ui/administration/metrictemplates/argo.AMS-Publisher');
+    expect(screen.getByRole('link', { name: /ams-publisher-probe/i }).closest('a')).toHaveAttribute('href', '/ui/probes/ams-publisher-probe/history/0.1.12')
+    expect(screen.getByRole('link', { name: /apel/i }).closest('a')).toHaveAttribute('href', '/ui/administration/metrictemplates/org.apel.APEL-Pub');
+    expect(screen.getByRole('button', { name: /import/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /add/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
   })
 })
