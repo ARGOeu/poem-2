@@ -860,7 +860,6 @@ export const MetricForm =
                       lists={list_probes}
                       icon='probes'
                       field='probeversion'
-                      data-testid='probeversion'
                       onselect_handler={(_, newValue) => {
                         let probeversion = probeversions.find(prv => prv.object_repr === newValue);
                         if (probeversion)
@@ -1051,7 +1050,6 @@ export const MetricForm =
                     lists={metrictemplatelist}
                     field='parent'
                     icon='metrics'
-                    data-testid='parent'
                   />
                 </>
             }
