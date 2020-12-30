@@ -649,6 +649,9 @@ describe('Test list of metric templates on SuperPOEM if empty list', () => {
 
 describe('Test list of metric templates on tenant POEM', () => {
   jest.spyOn(NotificationManager, 'success');
+  jest.spyOn(NotificationManager, 'error');
+  jest.spyOn(NotificationManager, 'info');
+  jest.spyOn(NotificationManager, 'warning');
 
   beforeAll(() => {
     Backend.mockImplementation(() => {
@@ -786,5 +789,186 @@ describe('Test list of metric templates on tenant POEM', () => {
       'Imported',
       2000
     );
+  })
+
+  test('Test importing of metric templates if no metric template has been selected', async () => {
+    renderTenantListView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /metric/i }).textContent).toBe('Select metric template(s) to import');
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /import/i }));
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>No metric templates were selected!</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Error', 0, expect.any(Function)
+    )
+
+    await waitFor(() => {
+      expect(mockImportMetrics).not.toHaveBeenCalled()
+    })
+  })
+
+  test('Test importing of metric templates if warn message', async () => {
+    mockImportMetrics.mockReturnValueOnce(
+      Promise.resolve({
+        json: () => Promise.resolve({
+          warn: 'argo.AMS-Check, argo.AMS-Publisher have been imported with older probe version. If you wish to use more recent probe version, you should update package version you use.'
+        }),
+        status: 200,
+        ok: true
+      })
+    )
+
+    renderTenantListView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /metric/i }).textContent).toBe('Select metric template(s) to import');
+    })
+
+    fireEvent.click(screen.getByTestId('checkbox-argo.AMS-Check'));
+    fireEvent.click(screen.getByTestId('checkbox-argo.AMS-Publisher'));
+
+    fireEvent.click(screen.getByRole('button', { name: /import/i }));
+    await waitFor(() => {
+      expect(mockImportMetrics).toHaveBeenCalledWith(
+        { metrictemplates: ['argo.AMS-Check', 'argo.AMS-Publisher'] }
+      )
+    })
+
+    expect(NotificationManager.info).toHaveBeenCalledWith(
+      <div>
+        <p>argo.AMS-Check, argo.AMS-Publisher have been imported with older probe version. If you wish to use more recent probe version, you should update package version you use.</p>
+        <p>Click to dismiss.</p>
+      </div>,
+     'Imported with older probe version', 0, expect.any(Function)
+    )
+  })
+
+  test('Test importing of metric templates if err message', async () => {
+    mockImportMetrics.mockReturnValueOnce(
+      Promise.resolve({
+        json: () => Promise.resolve({
+          err: 'argo.AMS-Check, argo.AMS-Publisher have not been imported since they already exist in the database.'
+        }),
+        status: 200,
+        ok: true
+      })
+    )
+
+    renderTenantListView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /metric/i }).textContent).toBe('Select metric template(s) to import');
+    })
+
+    fireEvent.click(screen.getByTestId('checkbox-argo.AMS-Check'));
+    fireEvent.click(screen.getByTestId('checkbox-argo.AMS-Publisher'));
+
+    fireEvent.click(screen.getByRole('button', { name: /import/i }));
+    await waitFor(() => {
+      expect(mockImportMetrics).toHaveBeenCalledWith(
+        { metrictemplates: ['argo.AMS-Check', 'argo.AMS-Publisher'] }
+      )
+    })
+
+    expect(NotificationManager.warning).toHaveBeenCalledWith(
+      <div>
+        <p>argo.AMS-Check, argo.AMS-Publisher have not been imported since they already exist in the database.</p>
+        <p>Click to dismiss.</p>
+      </div>,
+     'Not imported', 0, expect.any(Function)
+    )
+  })
+
+  test('Test importing of metric templates if unavailable message', async () => {
+    mockImportMetrics.mockReturnValueOnce(
+      Promise.resolve({
+        json: () => Promise.resolve({
+          unavailable: 'argo.AMS-Check, argo.AMS-Publisher have not been imported, since they are not available for the package version you use. If you wish to use the metric, you should change the package version, and try to import again.'
+        }),
+        status: 200,
+        ok: true
+      })
+    )
+
+    renderTenantListView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /metric/i }).textContent).toBe('Select metric template(s) to import');
+    })
+
+    fireEvent.click(screen.getByTestId('checkbox-argo.AMS-Check'));
+    fireEvent.click(screen.getByTestId('checkbox-argo.AMS-Publisher'));
+
+    fireEvent.click(screen.getByRole('button', { name: /import/i }));
+    await waitFor(() => {
+      expect(mockImportMetrics).toHaveBeenCalledWith(
+        { metrictemplates: ['argo.AMS-Check', 'argo.AMS-Publisher'] }
+      )
+    })
+
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>argo.AMS-Check, argo.AMS-Publisher have not been imported, since they are not available for the package version you use. If you wish to use the metric, you should change the package version, and try to import again.</p>
+        <p>Click to dismiss.</p>
+      </div>,
+     'Unavailable', 0, expect.any(Function)
+    )
+  })
+
+  test('Test importing of metric templates if mixed messages', async () => {
+    mockImportMetrics.mockReturnValueOnce(
+      Promise.resolve({
+        json: () => Promise.resolve({
+          imported: 'argo.AMS-Check has been successfully imported.',
+          warn: 'argo.AMS-Publisher has been imported with older probe version. If you wish to use more recent probe version, you should update package version you use.',
+          err: 'org.apel.APEL-Pub has not been imported since it already exists in the database.'
+        }),
+        status: 200,
+        ok: true
+      })
+    )
+
+    renderTenantListView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /metric/i }).textContent).toBe('Select metric template(s) to import');
+    })
+
+    fireEvent.click(screen.getByTestId('checkbox-argo.AMS-Check'));
+    fireEvent.click(screen.getByTestId('checkbox-argo.AMS-Publisher'));
+    fireEvent.click(screen.getByTestId('checkbox-org.apel.APEL-Pub'));
+
+    fireEvent.click(screen.getByRole('button', { name: /import/i }));
+    await waitFor(() => {
+      expect(mockImportMetrics).toHaveBeenCalledWith(
+        { metrictemplates: ['argo.AMS-Check', 'argo.AMS-Publisher', 'org.apel.APEL-Pub'] }
+      )
+    })
+
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'argo.AMS-Check has been successfully imported.',
+      'Imported', 2000
+    )
+
+    expect(NotificationManager.info).toHaveBeenCalledWith(
+      <div>
+        <p>argo.AMS-Publisher has been imported with older probe version. If you wish to use more recent probe version, you should update package version you use.</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Imported with older probe version', 0, expect.any(Function)
+    )
+
+    expect(NotificationManager.warning).toHaveBeenCalledWith(
+      <div>
+        <p>org.apel.APEL-Pub has not been imported since it already exists in the database.</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Not imported', 0, expect.any(Function)
+    )
   })
 })
