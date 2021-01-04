@@ -95,17 +95,13 @@ export const MetricTemplateComponent = (props) => {
       if (!addview) {
         let metrictemplate = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}metrictemplates/${name}`);
 
-        let tags = []
-        metrictemplate.tags.forEach(tag => tags.push({value: tag, label: tag}));
-        metrictemplate.tags = tags;
-
         if (metrictemplate.probeversion) {
           let probe = {};
           allProbeVersions.forEach(prv => {
             if (prv.object_repr === metrictemplate.probeversion)
               probe = prv.fields;
           });
-              metrictemplate.probe = probe;
+          metrictemplate.probe = probe;
         }
 
         if (metrictemplate.attribute.length === 0)
@@ -125,8 +121,8 @@ export const MetricTemplateComponent = (props) => {
         if (metrictemplate.fileparameter.length === 0)
           metrictemplate.fileparameter = [{'key': '', 'value': ''}];
 
-          return metrictemplate;
-        }
+        return metrictemplate;
+      }
     },
     { enabled: allProbeVersions && !addview, }
   );
@@ -296,6 +292,10 @@ export const MetricTemplateComponent = (props) => {
     return (<ErrorComponent error={listMetricTemplatesError.message}/>);
 
   else {
+    var tags = [];
+    if (metricTemplate)
+      metricTemplate.tags.forEach(tag => tags.push({ value: tag, label: tag }));
+
     return (
       <BaseArgoView
         resourcename={(tenantview || publicView) ? 'Metric template details' : 'metric template'}
@@ -346,7 +346,7 @@ export const MetricTemplateComponent = (props) => {
             flags: metricTemplate ? metricTemplate.flags : [{'key': '', 'value': ''}],
             file_attributes: metricTemplate ? metricTemplate.files : [{'key': '', 'value': ''}],
             file_parameters: metricTemplate ? metricTemplate.fileparameter : [{'key': '', 'value': ''}],
-            tags: metricTemplate ? metricTemplate.tags : [],
+            tags: tags,
             probe: metricTemplate ? metricTemplate.probe : {'package': ''}
           }}
           onSubmit = {(values) => onSubmitHandle(values)}

@@ -1,6 +1,6 @@
 import React from 'react';
 import '@testing-library/jest-dom/extend-expect';
-import { render, screen, waitFor, fireEvent, within } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { createMemoryHistory } from 'history';
 import { Route, Router } from 'react-router-dom';
 import { ListOfMetrics } from '../Metrics';
@@ -18,6 +18,7 @@ jest.mock('../DataManager', () => {
 
 const mockBulkDeleteMetrics = jest.fn();
 const mockImportMetrics = jest.fn();
+const mockChangeObject = jest.fn();
 
 
 beforeEach(() => {
@@ -238,6 +239,23 @@ const mockProbeVersions = [
     date_created: '2020-12-15 10:45:59',
     comment: 'Newer version',
     version: '0.1.12'
+  },
+  {
+    id: '11',
+    object_repr: 'ams-probe-new (0.1.13)',
+    fields: {
+      name: 'ams-probe-new',
+      version: '0.1.13',
+      package: 'nagios-plugins-argo (0.1.13)',
+      description: 'Probe is inspecting AMS service.',
+      comment: 'Newest version',
+      repository: 'https://github.com/ARGOeu/nagios-plugins-argo',
+      docurl: 'https://github.com/ARGOeu/nagios-plugins-argo/blob/master/README.md'
+    },
+    user: 'testuser',
+    date_created: '2020-12-31 08:57:15',
+    comment: 'Newest version',
+    version: '0.1.13'
   }
 ];
 
@@ -1158,6 +1176,8 @@ describe('Test list of metric templates on tenant POEM', () => {
 })
 
 describe('Test metric template changeview on SuperPOEM', () => {
+  jest.spyOn(NotificationManager, 'success');
+
   beforeAll(() => {
     Backend.mockImplementation(() => {
       return {
@@ -1178,7 +1198,8 @@ describe('Test metric template changeview on SuperPOEM', () => {
             case '/api/v2/internal/version/probe':
               return Promise.resolve(mockProbeVersions)
           }
-        }
+        },
+        changeObject: mockChangeObject
       }
     })
   })
@@ -1262,5 +1283,107 @@ describe('Test metric template changeview on SuperPOEM', () => {
     expect(screen.getByRole('button', { name: /clone/i }).closest('a')).toHaveAttribute('href', '/ui/metrictemplates/argo.AMS-Check/clone');
     expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
+  })
+
+  test('Test change metric template and save', async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
+    )
+
+    renderChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change metric/i }).textContent).toBe('Change metric template');
+    })
+
+    const nameField = screen.getByTestId('name');
+    const probeField = screen.getByTestId('autocomplete-probeversion')
+    const packageField = screen.getByTestId('package');
+    const descriptionField = screen.getByTestId('description');
+    const executableField = screen.getByTestId('probeexecutable');
+    const configVal1 = screen.getByTestId('config.0.value');
+    const configVal2 = screen.getByTestId('config.1.value');
+    const configVal4 = screen.getByTestId('config.3.value');
+    const configVal5 = screen.getByTestId('config.4.value');
+    const dependencyKey = screen.getByTestId('dependency.0.key');
+    const dependencyVal = screen.getByTestId('dependency.0.value');
+
+    fireEvent.change(nameField, { target: { value: 'argo.AMS-Check-new' } })
+    fireEvent.change(probeField, { target: { value: 'ams-probe-new (0.1.13)' } });
+    expect(packageField.value).toBe('nagios-plugins-argo (0.1.13)')
+    expect(packageField).toBeDisabled();
+
+    fireEvent.change(descriptionField, { target: { value: 'New description for metric template.' } });
+    fireEvent.change(executableField, { target: { value: 'ams-probe-new' } })
+
+    expect(screen.queryByTestId('config.0.remove')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('config.1.remove')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('config.2.remove')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('config.3.remove')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('config.4.remove')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('config.addnew')).not.toBeInTheDocument();
+    fireEvent.change(configVal1, { target: { value: '5' } });
+    fireEvent.change(configVal2, { target: { value: '80' } });
+    fireEvent.change(configVal4, { target: { value: '6' } });
+    fireEvent.change(configVal5, { target: { value: '4' } });
+
+    fireEvent.click(screen.getByTestId('attributes.addnew'));
+    fireEvent.change(screen.getByTestId('attributes.1.key'), { target: { value: 'ATTRIBUTE' } });
+    fireEvent.change(screen.getByTestId('attributes.1.value'), { target: { value: '--meh' } });
+
+    fireEvent.change(dependencyKey, { target: { value: 'some-dep' } });
+    fireEvent.change(dependencyVal, { target: { value: 'some-dep-value' } });
+
+    fireEvent.click(screen.getByTestId('parameter.0.remove'));
+
+    fireEvent.click(screen.getByTestId('flags.addnew'));
+    fireEvent.change(screen.getByTestId('flags.1.key'), { target: { value: 'NOHOSTNAME' } });
+    fireEvent.change(screen.getByTestId('flags.1.value'), { target: { value: '1' } });
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        '/api/v2/internal/metrictemplates/',
+        {
+          'id': '1',
+          'name': 'argo.AMS-Check-new',
+          'mtype': 'Active',
+          'tags': ['test_tag1', 'test_tag2'],
+          'description': 'New description for metric template.',
+          'probeversion': 'ams-probe-new (0.1.13)',
+          'parent': '',
+          'probeexecutable': 'ams-probe-new',
+          'config': [
+            { key: 'maxCheckAttempts', value: '5' },
+            { key: 'timeout', value: '80' },
+            { key: 'path', value: '/usr/libexec/argo-monitoring/' },
+            { key: 'interval', value: '6' },
+            { key: 'retryInterval', value: '4' }
+          ],
+          'attribute': [
+            { key: 'argo.ams_TOKEN', value: '--token' },
+            { key: 'ATTRIBUTE', value: '--meh', isNew: true }
+          ],
+          'dependency': [
+            { key: 'some-dep', value: 'some-dep-value' }
+          ],
+          'parameter': [{ key: '', value: '' }],
+          'flags': [
+            { key: 'OBSESS', value: '1' },
+            { key: 'NOHOSTNAME', value: '1', isNew: true }
+          ],
+          'files': [{ key: '', value: '' }],
+          'fileparameter': [{ key: '', value: '' }]
+        }
+      )
+    })
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'Metric template successfully changed', 'Changed', 2000
+    )
   })
 })

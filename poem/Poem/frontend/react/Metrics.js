@@ -193,6 +193,7 @@ const InlineFields = ({values, errors, field, addnew=false, readonly=false}) => 
                         size='sm'
                         color='danger'
                         type='button'
+                        data-testid={`${field}.${index}.remove`}
                         onClick={() => {
                           arrayHelpers.remove(index)
                           if (values[field].length === 1) {
@@ -215,6 +216,7 @@ const InlineFields = ({values, errors, field, addnew=false, readonly=false}) => 
                       size='sm'
                       color='success'
                       type='button'
+                      data-testid={`${field}.addnew`}
                       onClick={() => arrayHelpers.push({key: '', value: '', isNew: true})}
                     >
                       <FontAwesomeIcon icon={faPlus}/> Add another {field.slice(-1) === 's' ? field.slice(0, -1).replace('_', ' '): field.replace('_', ' ')}
