@@ -1177,6 +1177,7 @@ describe('Test list of metric templates on tenant POEM', () => {
 
 describe('Test metric template changeview on SuperPOEM', () => {
   jest.spyOn(NotificationManager, 'success');
+  jest.spyOn(NotificationManager, 'error');
 
   beforeAll(() => {
     Backend.mockImplementation(() => {
@@ -1384,6 +1385,146 @@ describe('Test metric template changeview on SuperPOEM', () => {
     })
     expect(NotificationManager.success).toHaveBeenCalledWith(
       'Metric template successfully changed', 'Changed', 2000
+    )
+  })
+
+  test('Test error in saving metric template with error message', async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({
+        json: () => Promise.resolve({ detail: 'You should choose existing probe version!' }),
+        status: 400,
+        statusText: 'BAD REQUEST'
+      })
+    )
+
+    renderChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change metric/i }).textContent).toBe('Change metric template')
+    })
+
+    const probeField = screen.getByTestId('autocomplete-probeversion')
+    const packageField = screen.getByTestId('package');
+
+    fireEvent.change(probeField, { target: { value: 'ams-probe-new' } });
+    expect(packageField.value).toBe('');
+    expect(packageField).toBeDisabled();
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        '/api/v2/internal/metrictemplates/',
+        {
+          'id': '1',
+          'name': 'argo.AMS-Check',
+          'mtype': 'Active',
+          'tags': ['test_tag1', 'test_tag2'],
+          'description': 'Some description of argo.AMS-Check metric template.',
+          'probeversion': 'ams-probe-new',
+          'parent': '',
+          'probeexecutable': 'ams-probe',
+          'config': [
+            { key: 'maxCheckAttempts', value: '4' },
+            { key: 'timeout', value: '70' },
+            { key: 'path', value: '/usr/libexec/argo-monitoring/' },
+            { key: 'interval', value: '5' },
+            { key: 'retryInterval', value: '3' }
+          ],
+          'attribute': [
+            { key: 'argo.ams_TOKEN', value: '--token' }
+          ],
+          'dependency': [{ key: '', value: '' }],
+          'parameter': [{ key: '--project', value: 'EGI' }],
+          'flags': [
+            { key: 'OBSESS', value: '1' }
+          ],
+          'files': [{ key: '', value: '' }],
+          'fileparameter': [{ key: '', value: '' }]
+        }
+      )
+    })
+
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>You should choose existing probe version!</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Error: 400 BAD REQUEST',
+      0,
+      expect.any(Function)
+    )
+  })
+
+  test('Test error in saving metric template without error message', async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
+    )
+
+    renderChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change metric/i }).textContent).toBe('Change metric template')
+    })
+
+    const probeField = screen.getByTestId('autocomplete-probeversion')
+    const packageField = screen.getByTestId('package');
+
+    fireEvent.change(probeField, { target: { value: 'ams-probe-new' } });
+    expect(packageField.value).toBe('');
+    expect(packageField).toBeDisabled();
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        '/api/v2/internal/metrictemplates/',
+        {
+          'id': '1',
+          'name': 'argo.AMS-Check',
+          'mtype': 'Active',
+          'tags': ['test_tag1', 'test_tag2'],
+          'description': 'Some description of argo.AMS-Check metric template.',
+          'probeversion': 'ams-probe-new',
+          'parent': '',
+          'probeexecutable': 'ams-probe',
+          'config': [
+            { key: 'maxCheckAttempts', value: '4' },
+            { key: 'timeout', value: '70' },
+            { key: 'path', value: '/usr/libexec/argo-monitoring/' },
+            { key: 'interval', value: '5' },
+            { key: 'retryInterval', value: '3' }
+          ],
+          'attribute': [
+            { key: 'argo.ams_TOKEN', value: '--token' }
+          ],
+          'dependency': [{ key: '', value: '' }],
+          'parameter': [{ key: '--project', value: 'EGI' }],
+          'flags': [
+            { key: 'OBSESS', value: '1' }
+          ],
+          'files': [{ key: '', value: '' }],
+          'fileparameter': [{ key: '', value: '' }]
+        }
+      )
+    })
+
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>Error changing metric template</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Error: 500 SERVER ERROR',
+      0,
+      expect.any(Function)
     )
   })
 })
