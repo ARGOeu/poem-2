@@ -259,6 +259,28 @@ const mockProbeVersions = [
   }
 ];
 
+const mockPassiveMetricTemplate = {
+  id: 2,
+  name: 'org.apel.APEL-Pub',
+  mtype: 'Passive',
+  description: '',
+  ostag: [],
+  tags: [],
+  probeversion: '',
+  parent: '',
+  probeexecutable: '',
+  config: [],
+  attribute: [],
+  dependency: [],
+  flags: [
+    { key: 'OBSESS', value: '1' },
+    { key: 'PASSIVE', value: '1' }
+  ],
+  files: [],
+  parameter: [],
+  fileparameter: []
+};
+
 function renderListView(publicView=undefined) {
   const route = `/ui/${publicView ? 'public_' : ''}metrictemplates`;
   const history = createMemoryHistory({ initialEntries: [route] });
@@ -300,8 +322,8 @@ function renderTenantListView() {
   }
 }
 
-function renderChangeView() {
-  const route = '/ui/metrictemplates/argo.AMS-Check';
+function renderChangeView(passive=false) {
+  const route = `/ui/metrictemplates/${passive ? 'org.apel.APEL-Pub' : 'argo.AMS-Check'}`;
   const history = createMemoryHistory({ initialEntries: [route] });
 
   return {
@@ -1190,6 +1212,9 @@ describe('Test metric template changeview on SuperPOEM', () => {
             case '/api/v2/internal/metrictemplates/argo.AMS-Check':
               return Promise.resolve(mockMetricTemplate)
 
+            case '/api/v2/internal/metrictemplates/org.apel.APEL-Pub':
+              return Promise.resolve(mockPassiveMetricTemplate)
+
             case '/api/v2/internal/mttypes':
               return Promise.resolve(['Active', 'Passive'])
 
@@ -1525,6 +1550,377 @@ describe('Test metric template changeview on SuperPOEM', () => {
       'Error: 500 SERVER ERROR',
       0,
       expect.any(Function)
+    )
+  })
+
+  test('Test that passive metric template page renders properly', async () => {
+    renderChangeView(true);
+
+    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change metric/i }).textContent).toBe('Change metric template');
+    })
+
+    const nameField = screen.getByTestId('name');
+    const typeField = screen.getByTestId('mtype');
+    const probeField = screen.getByTestId('probeversion')
+    const packageField = screen.getByTestId('package');
+    const descriptionField = screen.getByTestId('description');
+    const groupField = screen.queryByTestId('group');
+    const executableField = screen.queryByTestId('probeexecutable');
+    const configKey1 = screen.queryByTestId('config.0.key');
+    const configKey2 = screen.queryByTestId('config.1.key');
+    const configKey3 = screen.queryByTestId('config.2.key');
+    const configKey4 = screen.queryByTestId('config.3.key');
+    const configKey5 = screen.queryByTestId('config.4.key');
+    const configVal1 = screen.queryByTestId('config.0.value');
+    const configVal2 = screen.queryByTestId('config.1.value');
+    const configVal3 = screen.queryByTestId('config.2.value');
+    const configVal4 = screen.queryByTestId('config.3.value');
+    const configVal5 = screen.queryByTestId('config.4.value');
+    const attributeKey = screen.queryByTestId('attributes.0.key');
+    const attributeVal = screen.queryByTestId('attributes.0.value')
+    const dependencyKey = screen.queryByTestId('dependency.0.key');
+    const dependencyVal = screen.queryByTestId('dependency.0.value');
+    const parameterKey = screen.queryByTestId('parameter.0.key');
+    const parameterVal = screen.queryByTestId('parameter.0.value');
+    const flagKey1 = screen.getByTestId('flags.0.key');
+    const flagVal1 = screen.getByTestId('flags.0.value');
+    const flagKey2 = screen.getByTestId('flags.1.key');
+    const flagVal2 = screen.getByTestId('flags.1.value');
+    const parentField = screen.getByTestId('autocomplete-parent');
+
+    expect(nameField.value).toBe('org.apel.APEL-Pub');
+    expect(typeField.value).toBe('Passive');
+    expect(screen.getByRole('option', { name: /active/i })).toBeInTheDocument()
+    expect(screen.getByRole('option', { name: /passive/i })).toBeInTheDocument()
+    expect(probeField.value).toBe('');
+    expect(probeField).toBeDisabled();
+    expect(packageField.value).toBe('');
+    expect(packageField).toBeDisabled();
+    expect(descriptionField.value).toBe('');
+    expect(groupField).not.toBeInTheDocument();
+    expect(executableField).not.toBeInTheDocument();
+    expect(configKey1).not.toBeInTheDocument();
+    expect(configVal1).not.toBeInTheDocument();
+    expect(configKey2).not.toBeInTheDocument();
+    expect(configVal2).not.toBeInTheDocument();
+    expect(configKey3).not.toBeInTheDocument();
+    expect(configVal3).not.toBeInTheDocument();
+    expect(configKey4).not.toBeInTheDocument();
+    expect(configVal4).not.toBeInTheDocument();
+    expect(configKey5).not.toBeInTheDocument();
+    expect(configVal5).not.toBeInTheDocument();
+    expect(attributeKey).not.toBeInTheDocument()
+    expect(attributeVal).not.toBeInTheDocument();
+    expect(dependencyKey).not.toBeInTheDocument();
+    expect(dependencyVal).not.toBeInTheDocument();
+    expect(parameterKey).not.toBeInTheDocument();
+    expect(parameterVal).not.toBeInTheDocument();
+    expect(flagKey1.value).toBe('OBSESS');
+    expect(flagVal1.value).toBe('1');
+    expect(flagKey2.value).toBe('PASSIVE');
+    expect(flagVal2.value).toBe('1');
+    expect(flagKey2).toHaveAttribute('readonly');
+    expect(flagVal2).toHaveAttribute('readonly');
+    expect(parentField.value).toBe('');
+    expect(screen.getByRole('button', { name: /history/i }).closest('a')).toHaveAttribute('href', '/ui/metrictemplates/org.apel.APEL-Pub/history');
+    expect(screen.getByRole('button', { name: /clone/i }).closest('a')).toHaveAttribute('href', '/ui/metrictemplates/org.apel.APEL-Pub/clone');
+    expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
+  })
+
+  test('Test changing passive/active metric template', async () => {
+    renderChangeView(true);
+
+    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change metric/i }).textContent).toBe('Change metric template');
+    })
+
+    const nameField = screen.getByTestId('name');
+    const typeField = screen.getByTestId('mtype');
+
+    fireEvent.change(typeField, { target: { value: 'Active' } });
+
+    const probeField = screen.getByTestId('autocomplete-probeversion')
+    const packageField = screen.getByTestId('package');
+    const descriptionField = screen.getByTestId('description');
+    const groupField = screen.queryByTestId('group');
+    const executableField = screen.getByTestId('probeexecutable');
+    const configKey1 = screen.getByTestId('config.0.key');
+    const configKey2 = screen.getByTestId('config.1.key');
+    const configKey3 = screen.getByTestId('config.2.key');
+    const configKey4 = screen.getByTestId('config.3.key');
+    const configKey5 = screen.getByTestId('config.4.key');
+    const configVal1 = screen.getByTestId('config.0.value');
+    const configVal2 = screen.getByTestId('config.1.value');
+    const configVal3 = screen.getByTestId('config.2.value');
+    const configVal4 = screen.getByTestId('config.3.value');
+    const configVal5 = screen.getByTestId('config.4.value');
+    const attributeKey = screen.getByTestId('attributes.0.key');
+    const attributeVal = screen.getByTestId('attributes.0.value')
+    const dependencyKey = screen.getByTestId('dependency.0.key');
+    const dependencyVal = screen.getByTestId('dependency.0.value');
+    const parameterKey = screen.getByTestId('parameter.0.key');
+    const parameterVal = screen.getByTestId('parameter.0.value');
+    const flagKey1 = screen.getByTestId('flags.0.key');
+    const flagVal1 = screen.getByTestId('flags.0.value');
+    const flagKey2 = screen.queryByTestId('flags.1.key');
+    const flagVal2 = screen.queryByTestId('flags.1.value');
+    const parentField = screen.getByTestId('autocomplete-parent');
+
+    expect(nameField.value).toBe('org.apel.APEL-Pub');
+    expect(probeField.value).toBe('');
+    expect(probeField).toBeEnabled();
+    expect(packageField.value).toBe('');
+    expect(packageField).toBeDisabled();
+    expect(descriptionField.value).toBe('');
+    expect(groupField).not.toBeInTheDocument();
+    expect(executableField.value).toBe('');
+    expect(executableField).not.toHaveAttribute('hidden');
+    expect(configKey1.value).toBe('maxCheckAttempts');
+    expect(configKey1).toHaveAttribute('readonly');
+    expect(configVal1.value).toBe('');
+    expect(configVal1).not.toHaveAttribute('readonly');
+    expect(configKey2.value).toBe('timeout');
+    expect(configKey2).toHaveAttribute('readonly');
+    expect(configVal2.value).toBe('');
+    expect(configVal2).not.toHaveAttribute('readonly');
+    expect(configKey3.value).toBe('path');
+    expect(configKey3).toHaveAttribute('readonly');
+    expect(configVal3.value).toBe('');
+    expect(configVal3).not.toHaveAttribute('readonly');
+    expect(configKey4.value).toBe('interval');
+    expect(configKey4).toHaveAttribute('readonly');
+    expect(configVal4.value).toBe('');
+    expect(configVal4).not.toHaveAttribute('readonly');
+    expect(configKey5.value).toBe('retryInterval');
+    expect(configKey5).toHaveAttribute('readonly');
+    expect(configVal5.value).toBe('');
+    expect(configVal5).not.toHaveAttribute('readonly');
+    expect(attributeKey.value).toBe('');
+    expect(attributeKey).not.toHaveAttribute('hidden');
+    expect(attributeVal.value).toBe('');
+    expect(attributeVal).not.toHaveAttribute('hidden');
+    expect(dependencyKey.value).toBe('');
+    expect(dependencyKey).not.toHaveAttribute('hidden');
+    expect(dependencyVal.value).toBe('');
+    expect(dependencyVal).not.toHaveAttribute('hidden');
+    expect(parameterKey.value).toBe('');
+    expect(parameterKey).not.toHaveAttribute('hidden');
+    expect(parameterVal.value).toBe('');
+    expect(parameterVal).not.toHaveAttribute('hidden');
+    expect(flagKey1.value).toBe('OBSESS');
+    expect(flagVal1.value).toBe('1');
+    expect(flagKey2).not.toBeInTheDocument();
+    expect(flagVal2).not.toBeInTheDocument();
+    expect(parentField.value).toBe('');
+  })
+
+  test('Test changing active/passive metric template', async () => {
+    renderChangeView(false);
+
+    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change metric/i }).textContent).toBe('Change metric template');
+    })
+
+    const nameField = screen.getByTestId('name');
+    const typeField = screen.getByTestId('mtype');
+
+    fireEvent.change(typeField, { target: { value: 'Passive' } });
+
+    const probeField = screen.getByTestId('probeversion')
+    const packageField = screen.getByTestId('package');
+    const descriptionField = screen.getByTestId('description');
+    const groupField = screen.queryByTestId('group');
+    const executableField = screen.queryByTestId('probeexecutable');
+    const configKey1 = screen.queryByTestId('config.0.key');
+    const configKey2 = screen.queryByTestId('config.1.key');
+    const configKey3 = screen.queryByTestId('config.2.key');
+    const configKey4 = screen.queryByTestId('config.3.key');
+    const configKey5 = screen.queryByTestId('config.4.key');
+    const configVal1 = screen.queryByTestId('config.0.value');
+    const configVal2 = screen.queryByTestId('config.1.value');
+    const configVal3 = screen.queryByTestId('config.2.value');
+    const configVal4 = screen.queryByTestId('config.3.value');
+    const configVal5 = screen.queryByTestId('config.4.value');
+    const attributeKey = screen.queryByTestId('attributes.0.key');
+    const attributeVal = screen.queryByTestId('attributes.0.value')
+    const dependencyKey = screen.queryByTestId('dependency.0.key');
+    const dependencyVal = screen.queryByTestId('dependency.0.value');
+    const parameterKey = screen.queryByTestId('parameter.0.key');
+    const parameterVal = screen.queryByTestId('parameter.0.value');
+    const flagKey1 = screen.queryByTestId('flags.0.key');
+    const flagVal1 = screen.queryByTestId('flags.0.value');
+    const flagKey2 = screen.queryByTestId('flags.1.key');
+    const flagVal2 = screen.queryByTestId('flags.1.value');
+    const parentField = screen.getByTestId('autocomplete-parent');
+
+    expect(nameField.value).toBe('argo.AMS-Check');
+    expect(probeField.value).toBe('');
+    expect(probeField).toBeDisabled();
+    expect(packageField.value).toBe('');
+    expect(packageField).toBeDisabled();
+    expect(descriptionField.value).toBe('Some description of argo.AMS-Check metric template.');
+    expect(groupField).not.toBeInTheDocument();
+    expect(executableField).not.toBeInTheDocument();
+    expect(configKey1).not.toBeInTheDocument();
+    expect(configVal1).not.toBeInTheDocument();
+    expect(configKey2).not.toBeInTheDocument();
+    expect(configVal2).not.toBeInTheDocument();
+    expect(configKey3).not.toBeInTheDocument();
+    expect(configVal3).not.toBeInTheDocument();
+    expect(configKey4).not.toBeInTheDocument();
+    expect(configVal4).not.toBeInTheDocument();
+    expect(configKey5).not.toBeInTheDocument();
+    expect(configVal5).not.toBeInTheDocument();
+    expect(attributeKey).not.toBeInTheDocument();
+    expect(attributeVal).not.toBeInTheDocument();
+    expect(dependencyKey).not.toBeInTheDocument();
+    expect(dependencyVal).not.toBeInTheDocument();
+    expect(parameterKey).not.toBeInTheDocument();
+    expect(parameterVal).not.toBeInTheDocument();
+    expect(flagKey1.value).toBe('OBSESS');
+    expect(flagVal1.value).toBe('1');
+    expect(flagKey2.value).toBe('PASSIVE');
+    expect(flagKey2).toHaveAttribute('readonly');
+    expect(flagVal2.value).toBe('1');
+    expect(flagVal2).toHaveAttribute('readonly');
+    expect(parentField.value).toBe('');
+
+    fireEvent.change(typeField, { target: { value: 'Active' } });
+
+    const probeField2 = screen.getByTestId('autocomplete-probeversion')
+    const packageField2 = screen.getByTestId('package');
+    const descriptionField2 = screen.getByTestId('description');
+    const groupField2 = screen.queryByTestId('group');
+    const executableField2 = screen.getByTestId('probeexecutable');
+    const configKey1a = screen.getByTestId('config.0.key');
+    const configKey2a = screen.getByTestId('config.1.key');
+    const configKey3a = screen.getByTestId('config.2.key');
+    const configKey4a = screen.getByTestId('config.3.key');
+    const configKey5a = screen.getByTestId('config.4.key');
+    const configVal1a = screen.getByTestId('config.0.value');
+    const configVal2a = screen.queryByTestId('config.1.value');
+    const configVal3a = screen.queryByTestId('config.2.value');
+    const configVal4a = screen.queryByTestId('config.3.value');
+    const configVal5a = screen.queryByTestId('config.4.value');
+    const attributeKey2 = screen.queryByTestId('attributes.0.key');
+    const attributeVal2 = screen.queryByTestId('attributes.0.value')
+    const dependencyKey2 = screen.queryByTestId('dependency.0.key');
+    const dependencyVal2 = screen.queryByTestId('dependency.0.value');
+    const parameterKey2 = screen.queryByTestId('parameter.0.key');
+    const parameterVal2 = screen.queryByTestId('parameter.0.value');
+    const flagKey1a = screen.queryByTestId('flags.0.key');
+    const flagVal1a = screen.queryByTestId('flags.0.value');
+    const flagKey2a = screen.queryByTestId('flags.1.key');
+    const flagVal2a = screen.queryByTestId('flags.1.value');
+    const parentField2 = screen.getByTestId('autocomplete-parent');
+
+    expect(nameField.value).toBe('argo.AMS-Check');
+    expect(probeField2.value).toBe('ams-probe (0.1.12)');
+    expect(probeField2).toBeEnabled();
+    expect(packageField2.value).toBe('nagios-plugins-argo (0.1.12)');
+    expect(packageField2).toBeDisabled();
+    expect(descriptionField2.value).toBe('Some description of argo.AMS-Check metric template.');
+    expect(groupField2).not.toBeInTheDocument();
+    expect(executableField2.value).toBe('ams-probe');
+    expect(configKey1a.value).toBe('maxCheckAttempts');
+    expect(configKey1a).toHaveAttribute('readonly');
+    expect(configVal1a.value).toBe('4');
+    expect(configVal1a).not.toHaveAttribute('readonly');
+    expect(configKey2a.value).toBe('timeout');
+    expect(configKey2a).toHaveAttribute('readonly');
+    expect(configVal2a.value).toBe('70');
+    expect(configVal2a).not.toHaveAttribute('readonly');
+    expect(configKey3a.value).toBe('path');
+    expect(configKey3a).toHaveAttribute('readonly');
+    expect(configVal3a.value).toBe('/usr/libexec/argo-monitoring/');
+    expect(configVal3a).not.toHaveAttribute('readonly');
+    expect(configKey4a.value).toBe('interval');
+    expect(configKey4a).toHaveAttribute('readonly');
+    expect(configVal4a.value).toBe('5');
+    expect(configVal4a).not.toHaveAttribute('readonly');
+    expect(configKey5a.value).toBe('retryInterval');
+    expect(configKey5a).toHaveAttribute('readonly');
+    expect(configVal5a.value).toBe('3');
+    expect(configVal5a).not.toHaveAttribute('readonly');
+    expect(attributeKey2.value).toBe('argo.ams_TOKEN');
+    expect(attributeVal2.value).toBe('--token');
+    expect(dependencyKey2.value).toBe('');
+    expect(dependencyVal2.value).toBe('');
+    expect(parameterKey2.value).toBe('--project');
+    expect(parameterVal2.value).toBe('EGI')
+    expect(flagKey1a.value).toBe('OBSESS');
+    expect(flagVal1a.value).toBe('1');
+    expect(flagKey2a).not.toBeInTheDocument();
+    expect(flagVal2a).not.toBeInTheDocument();
+    expect(parentField2.value).toBe('');
+  })
+
+  test('Test changing active/passive metric template and save', async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
+    )
+
+    renderChangeView(false);
+
+    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change metric/i }).textContent).toBe('Change metric template');
+    })
+
+    const nameField = screen.getByTestId('name');
+    const typeField = screen.getByTestId('mtype');
+
+    fireEvent.change(typeField, { target: { value: 'Passive' } });
+
+    const descriptionField = screen.getByTestId('description');
+    const parentField = screen.getByTestId('autocomplete-parent');
+
+    fireEvent.change(nameField, { target: { value: 'passive.AMS-Check' } });
+    fireEvent.change(parentField, { target: { value: 'argo.AMS-Check' } });
+    fireEvent.change(descriptionField, { target: { value: 'New description for passive metric template.' } });
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        '/api/v2/internal/metrictemplates/',
+        {
+          'id': '1',
+          'name': 'passive.AMS-Check',
+          'mtype': 'Passive',
+          'tags': ['test_tag1', 'test_tag2'],
+          'description': 'New description for passive metric template.',
+          'probeversion': '',
+          'parent': 'argo.AMS-Check',
+          'probeexecutable': '',
+          'config': [{ key: '', value: '' }],
+          'attribute': [{ key: '', value: '' }],
+          'dependency': [{ key: '', value: '' }],
+          'parameter': [{ key: '', value: '' }],
+          'flags': [
+            { key: 'OBSESS', value: '1' },
+            { key: 'PASSIVE', value: '1' }
+          ],
+          'files': [{ key: '', value: '' }],
+          'fileparameter': [{ key: '', value: '' }]
+        }
+      )
+    })
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'Metric template successfully changed', 'Changed', 2000
     )
   })
 })

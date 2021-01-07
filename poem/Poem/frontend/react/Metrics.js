@@ -121,26 +121,31 @@ const InlineFields = ({values, errors, field, addnew=false, readonly=false}) => 
         (values[field] && values[field].length > 0) ? (
           values[field].map((item, index) => (
             <React.Fragment key={`fragment.${field}.${index}`}>
+              {
+                !(values.type === 'Passive' && field !== 'flags') &&
+                  <Row>
+                    <Col md={5}>
+                      {(index === 0) && <Label for={`${field}.0.key`}>Key</Label>}
+                    </Col>
+                    <Col md={5}>
+                      {(index === 0) && <Label for={`${field}.0.value`}>Value</Label>}
+                    </Col>
+                  </Row>
+              }
               <Row>
-                <Col md={5}>
-                  {(index === 0) && <Label hidden={values.type === 'Passive' && field !== 'flags'} for={`${field}.0.key`}>Key</Label>}
-                </Col>
-                <Col md={5}>
-                  {(index === 0) && <Label hidden={values.type === 'Passive' && field !== 'flags'} for={`${field}.0.value`}>Value</Label>}
-                </Col>
-              </Row>
-              <Row>
-                <Col md={5}>
-                  <Field
-                    type='text'
-                    name={`${field}.${index}.key`}
-                    id={`${field}.${index}.key`}
-                    data-testid={`${field}.${index}.key`}
-                    className={`form-control ${values[field][index].isNew && 'border-success'}`}
-                    readOnly={!addnew || field === 'config' || (values.type === 'Passive' && item.key === 'PASSIVE')}
-                    hidden={values.type === 'Passive' && field !== 'flags'}
-                  />
-                </Col>
+                {
+                  !(values.type === 'Passive' && field !== 'flags') &&
+                    <Col md={5}>
+                      <Field
+                        type='text'
+                        name={`${field}.${index}.key`}
+                        id={`${field}.${index}.key`}
+                        data-testid={`${field}.${index}.key`}
+                        className={`form-control ${values[field][index].isNew && 'border-success'}`}
+                        readOnly={!addnew || field === 'config' || (values.type === 'Passive' && item.key === 'PASSIVE')}
+                      />
+                    </Col>
+                }
                 <Col md={5}>
                   {
                     values.type === 'Active' && field === 'config' ?
@@ -154,16 +159,16 @@ const InlineFields = ({values, errors, field, addnew=false, readonly=false}) => 
                         validate={validateConfig}
                       />
                     :
-                      <Field
-                        type='text'
-                        name={`${field}.${index}.value`}
-                        id={`${field}.${index}.value`}
-                        data-testid={`${field}.${index}.value`}
-                        className={`form-control ${values[field][index].isNew && 'border-success'}`}
-                        style={{overflowX : 'auto'}}
-                        readOnly={readonly || (!addnew && (field !== 'config' || field === 'config' && item.key === 'path')) || values.type === 'Passive' && item.key === 'PASSIVE'}
-                        hidden={values.type === 'Passive' && field !== 'flags'}
-                      />
+                      !(values.type === 'Passive' && field !== 'flags') &&
+                        <Field
+                          type='text'
+                          name={`${field}.${index}.value`}
+                          id={`${field}.${index}.value`}
+                          data-testid={`${field}.${index}.value`}
+                          className={`form-control ${values[field][index].isNew && 'border-success'}`}
+                          style={{overflowX : 'auto'}}
+                          readOnly={readonly || (!addnew && (field !== 'config' || field === 'config' && item.key === 'path')) || values.type === 'Passive' && item.key === 'PASSIVE'}
+                        />
                   }
                   {
                     errors.config && field === 'config' &&
@@ -227,50 +232,48 @@ const InlineFields = ({values, errors, field, addnew=false, readonly=false}) => 
             </React.Fragment>
           ))
         ) : (
-          <React.Fragment key={`fragment.${field}`}>
-            <Row>
-              <Col md={5}>
-                <Label to={'empty-key'} hidden={values.type === 'Passive' && field !== 'flags'}>Key</Label>
-                <Field
-                  type='text'
-                  className='form-control'
-                  value=''
-                  id='empty-key'
-                  data-testid={`empty-key.${field}`}
-                  readOnly={!addnew}
-                  hidden={values.type === 'Passive' && field !== 'flags'}
-                />
-              </Col>
-              <Col md={5}>
-                <Label to={'empty-value'} hidden={values.type === 'Passive' && field !== 'flags'}>Value</Label>
-                <Field
-                  type='text'
-                  value=''
-                  className='form-control'
-                  id='empty-value'
-                  data-testid={`empty-value.${field}`}
-                  readOnly={!addnew}
-                  hidden={values.type === 'Passive' && field !== 'flags'}
-                />
-              </Col>
-            </Row>
-            {
-              addnew &&
-                <Row className={values.type === 'Passive' ? 'mt-0' : 'mt-2'}>
-                  <Col md={2}>
-                    <Button
-                      hidden={values.type === 'Passive' && field !== 'flags'}
-                      size='sm'
-                      color='success'
-                      type='button'
-                      onClick={() => arrayHelpers.push({key: '', value: ''})}
-                    >
-                      <FontAwesomeIcon icon={faPlus}/> Add another {field.slice(-1) === 's' ? field.slice(0, -1).replace('_', ' ') : field.replace('_', ' ')}
-                    </Button>
-                  </Col>
-                </Row>
-            }
-          </React.Fragment>
+          !(values.type === 'Passive' && field !== 'flags') &&
+            <React.Fragment key={`fragment.${field}`}>
+              <Row>
+                <Col md={5}>
+                  <Label to={'empty-key'}>Key</Label>
+                  <Field
+                    type='text'
+                    className='form-control'
+                    value=''
+                    id='empty-key'
+                    data-testid={`empty-key.${field}`}
+                    readOnly={!addnew}
+                  />
+                </Col>
+                <Col md={5}>
+                  <Label to={'empty-value'}>Value</Label>
+                  <Field
+                    type='text'
+                    value=''
+                    className='form-control'
+                    id='empty-value'
+                    data-testid={`empty-value.${field}`}
+                    readOnly={!addnew}
+                  />
+                </Col>
+              </Row>
+              {
+                addnew &&
+                  <Row className={values.type === 'Passive' ? 'mt-0' : 'mt-2'}>
+                    <Col md={2}>
+                      <Button
+                        size='sm'
+                        color='success'
+                        type='button'
+                        onClick={() => arrayHelpers.push({key: '', value: ''})}
+                      >
+                        <FontAwesomeIcon icon={faPlus}/> Add another {field.slice(-1) === 's' ? field.slice(0, -1).replace('_', ' ') : field.replace('_', ' ')}
+                      </Button>
+                    </Col>
+                  </Row>
+              }
+            </React.Fragment>
         )
       )}
     />
@@ -804,6 +807,21 @@ export const MetricForm =
                             props.setFieldValue(`flags[${ind}].value`, '1')
                           }
                         } else if (e.target.value === 'Active') {
+                          if (!props.values.probe)
+                            props.setFieldValue('probe', {'package': ''})
+
+                          if (props.values.config.length !== 5)
+                            props.setFieldValue(
+                              'config',
+                              [
+                                { key: 'maxCheckAttempts', value: '' },
+                                { key: 'timeout', value: '' },
+                                { key: 'path', value: '' },
+                                { key: 'interval', value: '' },
+                                { key: 'retryInterval', value: '' },
+                              ]
+                            )
+
                           let ind = undefined;
                           props.values.flags.forEach((e, index) => {
                             if (e.key === 'PASSIVE') {
@@ -1015,19 +1033,21 @@ export const MetricForm =
         <FormGroup>
           <ParagraphTitle title='Metric configuration'/>
           <h6 className='mt-4 font-weight-bold text-uppercase' hidden={props.values.type === 'Passive'}>probe executable</h6>
-          <Row>
-            <Col md={5}>
-              <Field
-                type='text'
-                name='probeexecutable'
-                data-testid='probeexecutable'
-                className={`form-control ${props.errors.probeexecutable && props.touched.probeexecutable && 'border-danger'}`}
-                hidden={props.values.type === 'Passive'}
-                readOnly={isTenantSchema || isHistory || publicView}
-              />
-              <CustomErrorMessage name='probeexecutable' />
-            </Col>
-          </Row>
+          {
+            props.values.type === 'Active' &&
+              <Row>
+                <Col md={5}>
+                  <Field
+                    type='text'
+                    name='probeexecutable'
+                    data-testid='probeexecutable'
+                    className={`form-control ${props.errors.probeexecutable && props.touched.probeexecutable && 'border-danger'}`}
+                    readOnly={isTenantSchema || isHistory || publicView}
+                  />
+                  <CustomErrorMessage name='probeexecutable' />
+                </Col>
+              </Row>
+          }
           <InlineFields values={props.values} errors={props.errors} field='config' addnew={!isTenantSchema && !isHistory} readonly={obj_label === 'metrictemplate' && isTenantSchema || isHistory || publicView}/>
           <InlineFields values={props.values} errors={props.errors} field='attributes' addnew={!isTenantSchema && !isHistory && !publicView}/>
           <InlineFields values={props.values} errors={props.errors} field='dependency' addnew={!isTenantSchema && !isHistory && !publicView}/>

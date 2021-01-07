@@ -201,24 +201,27 @@ export const MetricTemplateComponent = (props) => {
         });
       }
     } else {
+      const empty_field = [{ key: '', value: '' }];
+
       let response = await backend.changeObject(
         '/api/v2/internal/metrictemplates/',
         {
           id: formValues.id,
           name: formValues.name,
-          probeversion: formValues.probeversion,
+          probeversion: formValues.type === 'Active' ? formValues.probeversion : '',
           mtype: formValues.type,
           tags: unique,
           description: formValues.description,
-          probeexecutable: formValues.probeexecutable,
+          probeexecutable: formValues.type === 'Active' ? formValues.probeexecutable : '',
           parent: formValues.parent,
-          config: formValues.config,
-          attribute: formValues.attributes,
-          dependency: formValues.dependency,
-          parameter: formValues.parameter,
+          config: formValues.type === 'Active' ? formValues.config : empty_field,
+          attribute: formValues.type === 'Active' ? formValues.attributes : empty_field,
+          dependency: formValues.type === 'Active' ? formValues.dependency : empty_field,
+          parameter: formValues.type === 'Active' ? formValues.parameter : empty_field,
           flags: formValues.flags,
-          files: formValues.file_attributes,
-          fileparameter: formValues.file_parameters
+          files: formValues.type === 'Active' ? formValues.file_attributes : empty_field,
+          fileparameter: formValues.type === 'Active' ? formValues.file_parameters : empty_field
+
         }
       );
 
