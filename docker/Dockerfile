@@ -40,6 +40,7 @@ RUN passwd -d apache; usermod --shell /bin/bash apache
 RUN scl enable rh-python36 'pip install -U pip' && \
     scl enable rh-python36 'pip3 install virtualenv virtualenvwrapper'
 COPY venv_poem.sh /etc/profile.d/
+COPY scl-psql.sh /etc/profile.d/
 RUN scl enable rh-python36 'source /etc/profile.d/venv_poem.sh; \
     mkdir -p $WORKON_HOME; \
     mkvirtualenv poem'
