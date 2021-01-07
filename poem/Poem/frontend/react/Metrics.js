@@ -112,7 +112,7 @@ function arraysEqual(arr1, arr2) {
 }
 
 
-const InlineFields = ({values, errors, field, addnew=false, readonly=false}) => (
+const InlineFields = ({values, errors, field, addnew=false, readonly=false, addview=undefined}) => (
   <div>
     <h6 className='mt-4 font-weight-bold text-uppercase' hidden={values.type === 'Passive' && field !== 'flags'}>{field.replace('_', ' ')}</h6>
     <FieldArray
@@ -222,7 +222,12 @@ const InlineFields = ({values, errors, field, addnew=false, readonly=false}) => 
                       color='success'
                       type='button'
                       data-testid={`${field}.addnew`}
-                      onClick={() => arrayHelpers.push({key: '', value: '', isNew: true})}
+                      onClick={() => {
+                        addview ?
+                          arrayHelpers.push({ key: '', value: '' })
+                        :
+                          arrayHelpers.push({ key: '', value: '', isNew: true })
+                      }}
                     >
                       <FontAwesomeIcon icon={faPlus}/> Add another {field.slice(-1) === 's' ? field.slice(0, -1).replace('_', ' '): field.replace('_', ' ')}
                     </Button>
@@ -1048,11 +1053,11 @@ export const MetricForm =
                 </Col>
               </Row>
           }
-          <InlineFields values={props.values} errors={props.errors} field='config' addnew={!isTenantSchema && !isHistory} readonly={obj_label === 'metrictemplate' && isTenantSchema || isHistory || publicView}/>
-          <InlineFields values={props.values} errors={props.errors} field='attributes' addnew={!isTenantSchema && !isHistory && !publicView}/>
-          <InlineFields values={props.values} errors={props.errors} field='dependency' addnew={!isTenantSchema && !isHistory && !publicView}/>
-          <InlineFields values={props.values} errors={props.errors} field='parameter' addnew={!isTenantSchema && !isHistory && !publicView}/>
-          <InlineFields values={props.values} errors={props.errors} field='flags' addnew={!isTenantSchema && !isHistory && !publicView}/>
+          <InlineFields values={props.values} errors={props.errors} field='config' addview={addview} addnew={!isTenantSchema && !isHistory} readonly={obj_label === 'metrictemplate' && isTenantSchema || isHistory || publicView}/>
+          <InlineFields values={props.values} errors={props.errors} field='attributes' addview={addview} addnew={!isTenantSchema && !isHistory && !publicView}/>
+          <InlineFields values={props.values} errors={props.errors} field='dependency' addview={addview} addnew={!isTenantSchema && !isHistory && !publicView}/>
+          <InlineFields values={props.values} errors={props.errors} field='parameter' addview={addview} addnew={!isTenantSchema && !isHistory && !publicView}/>
+          <InlineFields values={props.values} errors={props.errors} field='flags' addview={addview} addnew={!isTenantSchema && !isHistory && !publicView}/>
           <h6 className='mt-4 font-weight-bold text-uppercase'>parent</h6>
           <Row>
             <Col md={5}>
