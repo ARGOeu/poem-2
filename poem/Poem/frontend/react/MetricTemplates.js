@@ -407,7 +407,6 @@ export const MetricTemplateVersionDetails = (props) => {
   const version = props.match.params.version;
   const publicView = props.publicView;
 
-
   const [metricTemplate, setMetricTemplate] = useState(null);
   const [probe, setProbe] = useState({'package': ''});
   const [loading, setLoading] = useState(false);

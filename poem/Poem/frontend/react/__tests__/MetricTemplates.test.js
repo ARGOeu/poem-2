@@ -7,7 +7,7 @@ import { ListOfMetrics } from '../Metrics';
 import { Backend } from '../DataManager';
 import { NotificationManager } from 'react-notifications';
 import { queryCache } from 'react-query'
-import { MetricTemplateComponent } from '../MetricTemplates';
+import { MetricTemplateComponent, MetricTemplateVersionDetails } from '../MetricTemplates';
 
 
 jest.mock('../DataManager', () => {
@@ -282,6 +282,157 @@ const mockPassiveMetricTemplate = {
   fileparameter: []
 };
 
+const mockMetricTemplateVersions = [
+  {
+    id: '13',
+    object_repr: 'argo.AMS-Check [ams-probe (0.1.12)]',
+    fields: {
+      name: 'argo.AMS-Check',
+      mtype: 'Active',
+      tags: ['test_tag1', 'test_tag2'],
+      probeversion: 'ams-probe (0.1.12)',
+      description: 'Some description of argo.AMS-Check metric template.',
+      parent: '',
+      probeexecutable: 'ams-probe',
+      config: [
+        { key: 'maxCheckAttempts', value: '4' },
+        { key: 'timeout', value: '70' },
+        { key: 'path', value: '/usr/libexec/argo-monitoring/probes/argo' },
+        { key: 'interval', value: '5' },
+        { key: 'retryInterval', value: '3' }
+      ],
+      attribute: [
+        { key: 'argo.ams_TOKEN', value: '--token' }
+      ],
+      dependency: [],
+      flags: [{ key: 'OBSESS', value: '1' }],
+      files: [],
+      parameter: [{ key: '--project', value: 'EGI' }],
+      fileparameter: []
+    },
+    user: 'testuser',
+    date_created: '2020-01-01 00:00:00',
+    comment: 'Changed probekey. Added tags field "test_tag2".',
+    version: '0.1.12'
+  },
+  {
+    id: '4',
+    object_repr: 'argo.AMS-Check [ams-probe (0.1.11)]',
+    fields: {
+      name: 'argo.AMS-Check',
+      mtype: 'Active',
+      tags: ['test_tag1'],
+      probeversion: 'ams-probe (0.1.11)',
+      description: 'Some description of argo.AMS-Check metric template.',
+      parent: '',
+      probeexecutable: 'ams-probe',
+      config: [
+        { key: 'maxCheckAttempts', value: '4' },
+        { key: 'timeout', value: '70' },
+        { key: 'path', value: '/usr/libexec/argo-monitoring/probes/argo' },
+        { key: 'interval', value: '5' },
+        { key: 'retryInterval', value: '3' }
+      ],
+      attribute: [
+        { key: 'argo.ams_TOKEN', value: '--token' }
+      ],
+      dependency: [],
+      flags: [{ key: 'OBSESS', value: '1' }],
+      files: [],
+      parameter: [{ key: '--project', value: 'EGI' }],
+      fileparameter: []
+    },
+    user: 'testuser',
+    date_created: '2019-10-01 00:00:00',
+    comment: 'Initial version.',
+    version: '0.1.11'
+  }
+];
+
+const amsProbeVersions = [
+  {
+    id: '11',
+    object_repr: 'ams-probe-new (0.1.13)',
+    fields: {
+      name: 'ams-probe-new',
+      version: '0.1.13',
+      package: 'nagios-plugins-argo (0.1.13)',
+      description: 'Probe is inspecting AMS service.',
+      comment: 'Newest version',
+      repository: 'https://github.com/ARGOeu/nagios-plugins-argo',
+      docurl: 'https://github.com/ARGOeu/nagios-plugins-argo/blob/master/README.md'
+    },
+    user: 'testuser',
+    date_created: '2020-12-31 08:57:15',
+    comment: 'Newest version',
+    version: '0.1.13'
+  },
+  {
+    id: '6',
+    object_repr: 'ams-probe (0.1.12)',
+    fields: {
+      name: 'ams-probe',
+      version: '0.1.12',
+      package: 'nagios-plugins-argo (0.1.12)',
+      description: 'Probe is inspecting AMS service.',
+      comment: 'Newer version',
+      repository: 'https://github.com/ARGOeu/nagios-plugins-argo',
+      docurl: 'https://github.com/ARGOeu/nagios-plugins-argo/blob/master/README.md'
+    },
+    user: 'testuser',
+    date_created: '2020-12-15 09:28:14',
+    comment: 'Newer version',
+    version: '0.1.12'
+  },
+  {
+    id: '3',
+    object_repr: 'ams-probe (0.1.11)',
+    fields: {
+      name: 'ams-probe',
+      version: '0.1.11',
+      package: 'nagios-plugins-argo (0.1.11)',
+      description: 'Probe is inspecting AMS service.',
+      comment: 'Initial version',
+      repository: 'https://github.com/ARGOeu/nagios-plugins-argo',
+      docurl: 'https://github.com/ARGOeu/nagios-plugins-argo/blob/master/README.md'
+    },
+    user: 'testuser',
+    date_created: '2020-11-30 08:43:25',
+    comment: 'Initial version',
+    version: '0.1.11'
+  }
+];
+
+const passiveMetricTemplateVersions = [
+  {
+    id: "74",
+    object_repr: "org.apel.APEL-Pub",
+    fields: {
+      name: "org.apel.APEL-Pub",
+      mtype: "Passive",
+      tags: [],
+      probeversion: "",
+      description: "",
+      parent: "",
+      probeexecutable: "",
+      config: [],
+      attribute: [],
+      dependency: [],
+      flags: [
+        { key: "OBSESS", value: "1" },
+        { key: "PASSIVE", value: "1" }
+      ],
+      files: [],
+      parameter: [],
+      fileparameter: []
+    },
+    user: "poem",
+    date_created: "2019-12-09 09:24:20",
+    comment: "Initial version.",
+    version: "20191209-092420"
+  }
+]
+
 function renderListView(publicView=undefined) {
   const route = `/ui/${publicView ? 'public_' : ''}metrictemplates`;
   const history = createMemoryHistory({ initialEntries: [route] });
@@ -400,6 +551,23 @@ function renderTenantChangeView(options = { passive: false }) {
         <Route
           path='/ui/administration/metrictemplates/:name'
           render={ props => <MetricTemplateComponent {...props} tenantview={true} /> }
+        />
+      </Router>
+    )
+  }
+}
+
+
+function renderVersionDetailsView(options = { passive: false }) {
+  const route = `/ui/metrictemplates/${options.passive ? 'org.apel.APEL-Pub' : 'argo.AMS-Check'}/history/${options.passive ? '20191209-092420' : '0.1.12'}`
+  const history = createMemoryHistory({ initialEntries: [route] });
+
+  return {
+    ...render(
+      <Router history={history}>
+        <Route
+          path='/ui/metrictemplates/:name/history/:version'
+          render={ props => <MetricTemplateVersionDetails {...props} /> }
         />
       </Router>
     )
@@ -3330,6 +3498,238 @@ describe('Test metric template detail view on tenant POEM', () => {
     expect(parentField.value).toBe('');
     expect(parentField).toHaveAttribute('readonly');
     expect(screen.getByRole('button', { name: /history/i }).closest('a')).toHaveAttribute('href', '/ui/administration/metrictemplates/argo.AMS-Check/history');
+    expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /save/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
+  })
+})
+
+describe('Test metric template version detail view', () => {
+  beforeAll(() => {
+    Backend.mockImplementation(() => {
+      return {
+        fetchData: (path) => {
+          switch (path) {
+            case '/api/v2/internal/version/metrictemplate/argo.AMS-Check':
+              return Promise.resolve(mockMetricTemplateVersions)
+
+            case '/api/v2/internal/version/metrictemplate/org.apel.APEL-Pub':
+              return Promise.resolve(passiveMetricTemplateVersions)
+
+            case '/api/v2/internal/version/probe/ams-probe':
+              return Promise.resolve(amsProbeVersions)
+
+            case '/api/v2/internal/version/probe/':
+              return Promise.resolve(mockProbeVersions)
+          }
+        }
+      }
+    })
+  })
+
+  test('Test that active metric template version detail page renders properly', async () => {
+    renderVersionDetailsView();
+
+    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /ams-check/i }).textContent).toBe('argo.AMS-Check [ams-probe (0.1.12)]');
+    })
+
+    const nameField = screen.getByTestId('name');
+    const typeField = screen.getByTestId('mtype');
+    const probeField = screen.getByTestId('probeversion')
+    const packageField = screen.getByTestId('package');
+    const descriptionField = screen.getByTestId('description');
+    const groupField = screen.queryByTestId('group');
+    const executableField = screen.getByTestId('probeexecutable');
+    const configKey1 = screen.getByTestId('config.0.key');
+    const configKey2 = screen.getByTestId('config.1.key');
+    const configKey3 = screen.getByTestId('config.2.key');
+    const configKey4 = screen.getByTestId('config.3.key');
+    const configKey5 = screen.getByTestId('config.4.key');
+    const configVal1 = screen.getByTestId('config.0.value');
+    const configVal2 = screen.getByTestId('config.1.value');
+    const configVal3 = screen.getByTestId('config.2.value');
+    const configVal4 = screen.getByTestId('config.3.value');
+    const configVal5 = screen.getByTestId('config.4.value');
+    const attributeKey = screen.getByTestId('attributes.0.key');
+    const attributeVal = screen.getByTestId('attributes.0.value')
+    const dependencyKey = screen.getByTestId('empty-key.dependency');
+    const dependencyVal = screen.getByTestId('empty-value.dependency');
+    const parameterKey = screen.getByTestId('parameter.0.key');
+    const parameterVal = screen.getByTestId('parameter.0.value');
+    const flagKey = screen.getByTestId('flags.0.key');
+    const flagVal = screen.getByTestId('flags.0.value');
+    const parentField = screen.getByTestId('parent');
+
+    expect(nameField.value).toBe('argo.AMS-Check');
+    expect(nameField).toHaveAttribute('readonly')
+    expect(typeField.value).toBe('Active');
+    expect(typeField).toHaveAttribute('readonly');
+    expect(screen.queryByRole('option', { name: /active/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('option', { name: /passive/i })).not.toBeInTheDocument()
+    expect(probeField.value).toBe('ams-probe (0.1.12)');
+    expect(probeField).toBeDisabled();
+    expect(packageField.value).toBe('nagios-plugins-argo (0.1.12)')
+    expect(packageField).toBeDisabled();
+    expect(descriptionField.value).toBe('Some description of argo.AMS-Check metric template.');
+    expect(descriptionField).toBeDisabled();
+    expect(groupField).not.toBeInTheDocument();
+    expect(executableField.value).toBe('ams-probe');
+    expect(executableField).toHaveAttribute('readonly');
+    expect(configKey1.value).toBe('maxCheckAttempts');
+    expect(configKey1).toHaveAttribute('readonly');
+    expect(configVal1.value).toBe('4');
+    expect(configVal1).toHaveAttribute('readonly');
+    expect(configVal1).toHaveAttribute('readonly');
+    expect(screen.queryByTestId('config.0.remove')).not.toBeInTheDocument();
+    expect(configKey2.value).toBe('timeout');
+    expect(configKey2).toHaveAttribute('readonly');
+    expect(configVal2.value).toBe('70');
+    expect(configVal2).toHaveAttribute('readonly');
+    expect(screen.queryByTestId('config.1.remove')).not.toBeInTheDocument();
+    expect(configKey3.value).toBe('path');
+    expect(configKey3).toHaveAttribute('readonly');
+    expect(configVal3.value).toBe('/usr/libexec/argo-monitoring/probes/argo');
+    expect(configVal3).toHaveAttribute('readonly');
+    expect(screen.queryByTestId('config.2.remove')).not.toBeInTheDocument();
+    expect(configKey4.value).toBe('interval');
+    expect(configKey4).toHaveAttribute('readonly');
+    expect(configVal4.value).toBe('5');
+    expect(configVal4).toHaveAttribute('readonly');
+    expect(screen.queryByTestId('config.3.remove')).not.toBeInTheDocument();
+    expect(configKey5.value).toBe('retryInterval');
+    expect(configKey5).toHaveAttribute('readonly');
+    expect(configVal5.value).toBe('3');
+    expect(configVal5).toHaveAttribute('readonly');
+    expect(screen.queryByTestId('config.4.remove')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('config.addnew')).not.toBeInTheDocument();
+    expect(attributeKey.value).toBe('argo.ams_TOKEN');
+    expect(attributeKey).toHaveAttribute('readonly');
+    expect(attributeVal.value).toBe('--token');
+    expect(attributeVal).toHaveAttribute('readonly');
+    expect(screen.queryByTestId('attributes.0.remove')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('attributes.addnew')).not.toBeInTheDocument();
+    expect(dependencyKey.value).toBe('');
+    expect(dependencyKey).toHaveAttribute('readonly');
+    expect(dependencyVal.value).toBe('');
+    expect(dependencyVal).toHaveAttribute('readonly');
+    expect(screen.queryByTestId('dependency.0.remove')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('dependency.addnew')).not.toBeInTheDocument();
+    expect(parameterKey.value).toBe('--project');
+    expect(parameterKey).toHaveAttribute('readonly');
+    expect(parameterVal.value).toBe('EGI');
+    expect(parameterVal).toHaveAttribute('readonly');
+    expect(screen.queryByTestId('parameter.0.remove')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('parameter.addnew')).not.toBeInTheDocument();
+    expect(flagKey.value).toBe('OBSESS');
+    expect(flagKey).toHaveAttribute('readonly');
+    expect(flagVal.value).toBe('1');
+    expect(flagVal).toHaveAttribute('readonly');
+    expect(screen.queryByTestId('flags.0.remove')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('flags.addnew')).not.toBeInTheDocument();
+    expect(parentField.value).toBe('');
+    expect(parentField).toHaveAttribute('readonly');
+    expect(screen.queryByRole('button', { name: /history/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /save/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
+  })
+
+  test('Test that passive metric template version detail page renders properly', async () => {
+    renderVersionDetailsView({ passive: true });
+
+    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /apel-pub/i }).textContent).toBe('org.apel.APEL-Pub ');
+    })
+
+    const nameField = screen.getByTestId('name');
+    const typeField = screen.getByTestId('mtype');
+    const probeField = screen.getByTestId('probeversion')
+    const packageField = screen.getByTestId('package');
+    const descriptionField = screen.getByTestId('description');
+    const groupField = screen.queryByTestId('group');
+    const executableField = screen.queryByTestId('probeexecutable');
+    const configKey1 = screen.queryByTestId('config.0.key');
+    const configKey2 = screen.queryByTestId('config.1.key');
+    const configKey3 = screen.queryByTestId('config.2.key');
+    const configKey4 = screen.queryByTestId('config.3.key');
+    const configKey5 = screen.queryByTestId('config.4.key');
+    const configVal1 = screen.queryByTestId('config.0.value');
+    const configVal2 = screen.queryByTestId('config.1.value');
+    const configVal3 = screen.queryByTestId('config.2.value');
+    const configVal4 = screen.queryByTestId('config.3.value');
+    const configVal5 = screen.queryByTestId('config.4.value');
+    const attributeKey = screen.queryByTestId('empty-key.attributes');
+    const attributeVal = screen.queryByTestId('empty-value.attributes')
+    const dependencyKey = screen.queryByTestId('empty-key.dependency');
+    const dependencyVal = screen.queryByTestId('empty-value.dependency');
+    const parameterKey = screen.queryByTestId('empty-key.parameter');
+    const parameterVal = screen.queryByTestId('empty-value.parameter');
+    const flagKey1 = screen.getByTestId('flags.0.key');
+    const flagVal1 = screen.getByTestId('flags.0.value');
+    const flagKey2 = screen.getByTestId('flags.1.key');
+    const flagVal2 = screen.getByTestId('flags.1.value');
+    const parentField = screen.getByTestId('parent');
+
+    expect(nameField.value).toBe('org.apel.APEL-Pub');
+    expect(nameField).toHaveAttribute('readonly')
+    expect(typeField.value).toBe('Passive');
+    expect(typeField).toHaveAttribute('readonly');
+    expect(screen.queryByRole('option', { name: /active/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('option', { name: /passive/i })).not.toBeInTheDocument()
+    expect(probeField.value).toBe('');
+    expect(probeField).toBeDisabled();
+    expect(packageField.value).toBe('');
+    expect(packageField).toBeDisabled();
+    expect(descriptionField.value).toBe('');
+    expect(descriptionField).toBeDisabled();
+    expect(groupField).not.toBeInTheDocument();
+    expect(executableField).not.toBeInTheDocument();
+    expect(configKey1).not.toBeInTheDocument();
+    expect(configVal1).not.toBeInTheDocument();
+    expect(screen.queryByTestId('config.0.remove')).not.toBeInTheDocument();
+    expect(configKey2).not.toBeInTheDocument();
+    expect(configVal2).not.toBeInTheDocument();
+    expect(screen.queryByTestId('config.1.remove')).not.toBeInTheDocument();
+    expect(configKey3).not.toBeInTheDocument();
+    expect(configVal3).not.toBeInTheDocument();
+    expect(screen.queryByTestId('config.2.remove')).not.toBeInTheDocument();
+    expect(configKey4).not.toBeInTheDocument();
+    expect(configVal4).not.toBeInTheDocument();
+    expect(screen.queryByTestId('config.3.remove')).not.toBeInTheDocument();
+    expect(configKey5).not.toBeInTheDocument();
+    expect(configVal5).not.toBeInTheDocument();
+    expect(screen.queryByTestId('config.4.remove')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('config.addnew')).not.toBeInTheDocument();
+    expect(attributeKey).not.toBeInTheDocument();
+    expect(attributeVal).not.toBeInTheDocument();
+    expect(screen.queryByTestId('attributes.0.remove')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('attributes.addnew')).not.toBeInTheDocument();
+    expect(dependencyKey).not.toBeInTheDocument();
+    expect(dependencyVal).not.toBeInTheDocument();
+    expect(screen.queryByTestId('dependency.0.remove')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('dependency.addnew')).not.toBeInTheDocument();
+    expect(parameterKey).not.toBeInTheDocument();
+    expect(parameterVal).not.toBeInTheDocument();
+    expect(screen.queryByTestId('parameter.0.remove')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('parameter.addnew')).not.toBeInTheDocument();
+    expect(flagKey1.value).toBe('OBSESS');
+    expect(flagKey1).toHaveAttribute('readonly');
+    expect(flagVal1.value).toBe('1');
+    expect(flagVal1).toHaveAttribute('readonly');
+    expect(screen.queryByTestId('flags.0.remove')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('flags.addnew')).not.toBeInTheDocument();
+    expect(flagKey2.value).toBe('PASSIVE');
+    expect(flagKey2).toHaveAttribute('readonly');
+    expect(flagVal2.value).toBe('1');
+    expect(flagVal2).toHaveAttribute('readonly');
+    expect(parentField.value).toBe('');
+    expect(parentField).toHaveAttribute('readonly');
+    expect(screen.queryByRole('button', { name: /history/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /save/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
