@@ -390,6 +390,23 @@ function renderCloneView(options = {passive: false}) {
 }
 
 
+function renderTenantChangeView(options = { passive: false }) {
+  const route = `/ui/administration/metrictemplates/${options.passive ? 'org.apel.APEL-Pub' : 'argo.AMS-Check'}`;
+  const history = createMemoryHistory({ initialEntries: [route] });
+
+  return {
+    ...render(
+      <Router history={history}>
+        <Route
+          path='/ui/administration/metrictemplates/:name'
+          render={ props => <MetricTemplateComponent {...props} tenantview={true} /> }
+        />
+      </Router>
+    )
+  }
+}
+
+
 describe('Test list of metric templates on SuperPOEM', () => {
   jest.spyOn(NotificationManager, 'success');
   jest.spyOn(NotificationManager, 'error');
@@ -3175,5 +3192,146 @@ describe('Test metric template cloneview on SuperPOEM', () => {
       0,
       expect.any(Function)
     )
+  })
+})
+
+
+describe('Test metric template detail view on tenant POEM', () => {
+  beforeAll(() => {
+    Backend.mockImplementation(() => {
+      return {
+        fetchData: (path) => {
+          switch (path) {
+            case '/api/v2/internal/metrictemplates':
+              return Promise.resolve(mockListOfMetricTemplates)
+
+            case '/api/v2/internal/metrictemplates/argo.AMS-Check':
+              return Promise.resolve(mockMetricTemplate)
+
+            case '/api/v2/internal/metrictemplates/org.apel.APEL-Pub':
+              return Promise.resolve(mockPassiveMetricTemplate)
+
+            case '/api/v2/internal/mttypes':
+              return Promise.resolve(['Active', 'Passive'])
+
+            case '/api/v2/internal/metrictags':
+              return Promise.resolve(['test_tag1', 'test_tag2', 'internal', 'deprecated'])
+
+            case '/api/v2/internal/version/probe':
+              return Promise.resolve(mockProbeVersions)
+          }
+        }
+      }
+    })
+  })
+
+  test('Test that page renders properly', async () => {
+    renderTenantChangeView();
+
+    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /metric template/i }).textContent).toBe('Metric template details');
+    })
+
+    const nameField = screen.getByTestId('name');
+    const typeField = screen.getByTestId('mtype');
+    const probeField = screen.getByTestId('probeversion')
+    const packageField = screen.getByTestId('package');
+    const descriptionField = screen.getByTestId('description');
+    const groupField = screen.queryByTestId('group');
+    const executableField = screen.getByTestId('probeexecutable');
+    const configKey1 = screen.getByTestId('config.0.key');
+    const configKey2 = screen.getByTestId('config.1.key');
+    const configKey3 = screen.getByTestId('config.2.key');
+    const configKey4 = screen.getByTestId('config.3.key');
+    const configKey5 = screen.getByTestId('config.4.key');
+    const configVal1 = screen.getByTestId('config.0.value');
+    const configVal2 = screen.getByTestId('config.1.value');
+    const configVal3 = screen.getByTestId('config.2.value');
+    const configVal4 = screen.getByTestId('config.3.value');
+    const configVal5 = screen.getByTestId('config.4.value');
+    const attributeKey = screen.getByTestId('attributes.0.key');
+    const attributeVal = screen.getByTestId('attributes.0.value')
+    const dependencyKey = screen.getByTestId('dependency.0.key');
+    const dependencyVal = screen.getByTestId('dependency.0.value');
+    const parameterKey = screen.getByTestId('parameter.0.key');
+    const parameterVal = screen.getByTestId('parameter.0.value');
+    const flagKey = screen.getByTestId('flags.0.key');
+    const flagVal = screen.getByTestId('flags.0.value');
+    const parentField = screen.getByTestId('parent');
+
+    expect(nameField.value).toBe('argo.AMS-Check');
+    expect(nameField).toHaveAttribute('readonly')
+    expect(typeField.value).toBe('Active');
+    expect(typeField).toHaveAttribute('readonly');
+    expect(screen.queryByRole('option', { name: /active/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('option', { name: /passive/i })).not.toBeInTheDocument()
+    expect(probeField.value).toBe('ams-probe (0.1.12)');
+    expect(probeField).toBeDisabled();
+    expect(packageField.value).toBe('nagios-plugins-argo (0.1.12)')
+    expect(packageField).toBeDisabled();
+    expect(descriptionField.value).toBe('Some description of argo.AMS-Check metric template.');
+    expect(descriptionField).toBeDisabled();
+    expect(groupField).not.toBeInTheDocument();
+    expect(executableField.value).toBe('ams-probe');
+    expect(executableField).toHaveAttribute('readonly');
+    expect(configKey1.value).toBe('maxCheckAttempts');
+    expect(configKey1).toHaveAttribute('readonly');
+    expect(configVal1.value).toBe('4');
+    expect(configVal1).toHaveAttribute('readonly');
+    expect(configVal1).toHaveAttribute('readonly');
+    expect(screen.queryByTestId('config.0.remove')).not.toBeInTheDocument();
+    expect(configKey2.value).toBe('timeout');
+    expect(configKey2).toHaveAttribute('readonly');
+    expect(configVal2.value).toBe('70');
+    expect(configVal2).toHaveAttribute('readonly');
+    expect(screen.queryByTestId('config.1.remove')).not.toBeInTheDocument();
+    expect(configKey3.value).toBe('path');
+    expect(configKey3).toHaveAttribute('readonly');
+    expect(configVal3.value).toBe('/usr/libexec/argo-monitoring/');
+    expect(configVal3).toHaveAttribute('readonly');
+    expect(screen.queryByTestId('config.2.remove')).not.toBeInTheDocument();
+    expect(configKey4.value).toBe('interval');
+    expect(configKey4).toHaveAttribute('readonly');
+    expect(configVal4.value).toBe('5');
+    expect(configVal4).toHaveAttribute('readonly');
+    expect(screen.queryByTestId('config.3.remove')).not.toBeInTheDocument();
+    expect(configKey5.value).toBe('retryInterval');
+    expect(configKey5).toHaveAttribute('readonly');
+    expect(configVal5.value).toBe('3');
+    expect(configVal5).toHaveAttribute('readonly');
+    expect(screen.queryByTestId('config.4.remove')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('config.addnew')).not.toBeInTheDocument();
+    expect(attributeKey.value).toBe('argo.ams_TOKEN');
+    expect(attributeKey).toHaveAttribute('readonly');
+    expect(attributeVal.value).toBe('--token');
+    expect(attributeVal).toHaveAttribute('readonly');
+    expect(screen.queryByTestId('attributes.0.remove')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('attributes.addnew')).not.toBeInTheDocument();
+    expect(dependencyKey.value).toBe('');
+    expect(dependencyKey).toHaveAttribute('readonly');
+    expect(dependencyVal.value).toBe('');
+    expect(dependencyVal).toHaveAttribute('readonly');
+    expect(screen.queryByTestId('dependency.0.remove')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('dependency.addnew')).not.toBeInTheDocument();
+    expect(parameterKey.value).toBe('--project');
+    expect(parameterKey).toHaveAttribute('readonly');
+    expect(parameterVal.value).toBe('EGI');
+    expect(parameterVal).toHaveAttribute('readonly');
+    expect(screen.queryByTestId('parameter.0.remove')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('parameter.addnew')).not.toBeInTheDocument();
+    expect(flagKey.value).toBe('OBSESS');
+    expect(flagKey).toHaveAttribute('readonly');
+    expect(flagVal.value).toBe('1');
+    expect(flagVal).toHaveAttribute('readonly');
+    expect(screen.queryByTestId('flags.0.remove')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('flags.addnew')).not.toBeInTheDocument();
+    expect(parentField.value).toBe('');
+    expect(parentField).toHaveAttribute('readonly');
+    expect(screen.getByRole('button', { name: /history/i }).closest('a')).toHaveAttribute('href', '/ui/administration/metrictemplates/argo.AMS-Check/history');
+    expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /save/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
   })
 })
