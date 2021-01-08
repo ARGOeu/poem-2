@@ -354,6 +354,7 @@ export const APIKeyChange = (props) => {
                       <Field
                         type='text'
                         name='token'
+                        data-testid='token'
                         id='token'
                         disabled={addview ? false : true}
                         className='form-control'
