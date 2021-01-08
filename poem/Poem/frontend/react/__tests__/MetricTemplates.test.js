@@ -373,6 +373,23 @@ function renderAddView() {
 }
 
 
+function renderCloneView(options = {passive: false}) {
+  const route = `/ui/metrictemplates/${options.passive ? 'org.apel.APEL-Pub' : 'argo.AMS-Check'}/clone`
+  const history = createMemoryHistory({ initialEntries: [route] })
+
+  return {
+    ...render(
+      <Router history={history}>
+        <Route
+          path='/ui/metrictemplates/:name/clone'
+          render={ props => <MetricTemplateComponent {...props} cloneview={true} /> }
+        />
+      </Router>
+    )
+  }
+}
+
+
 describe('Test list of metric templates on SuperPOEM', () => {
   jest.spyOn(NotificationManager, 'success');
   jest.spyOn(NotificationManager, 'error');
@@ -2697,6 +2714,451 @@ describe('Test metric template addview on SuperPOEM', () => {
             { key: 'NOHOSTNAME', value: '1' },
             { key: 'NOTIMEOUT', value: '1' },
             { key: 'NOPUBLISH', value: '1' }
+          ],
+          'files': [{ key: '', value: '' }],
+          'fileparameter': [{ key: '', value: '' }]
+        }
+      )
+    })
+
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>Error adding metric template</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Error: 500 SERVER ERROR',
+      0,
+      expect.any(Function)
+    )
+  })
+})
+
+
+describe('Test metric template cloneview on SuperPOEM', () => {
+  jest.spyOn(NotificationManager, 'success');
+  jest.spyOn(NotificationManager, 'error');
+
+  beforeAll(() => {
+    Backend.mockImplementation(() => {
+      return {
+        fetchData: (path) => {
+          switch (path) {
+            case '/api/v2/internal/metrictemplates':
+              return Promise.resolve(mockListOfMetricTemplates)
+
+            case '/api/v2/internal/metrictemplates/argo.AMS-Check':
+              return Promise.resolve(mockMetricTemplate)
+
+            case '/api/v2/internal/metrictemplates/org.apel.APEL-Pub':
+              return Promise.resolve({
+                id: 2,
+                name: 'org.apel.APEL-Pub',
+                mtype: 'Passive',
+                description: '',
+                ostag: [],
+                tags: [],
+                probeversion: '',
+                parent: '',
+                probeexecutable: '',
+                config: [],
+                attribute: [],
+                dependency: [],
+                flags: [
+                  { key: 'OBSESS', value: '1' },
+                  { key: 'PASSIVE', value: '1' }
+                ],
+                files: [],
+                parameter: [],
+                fileparameter: []
+              })
+
+            case '/api/v2/internal/mttypes':
+              return Promise.resolve(['Active', 'Passive'])
+
+            case '/api/v2/internal/metrictags':
+              return Promise.resolve(['test_tag1', 'test_tag2', 'internal', 'deprecated'])
+
+            case '/api/v2/internal/version/probe':
+              return Promise.resolve(mockProbeVersions)
+          }
+        },
+        addObject: mockAddObject
+      }
+    })
+  })
+
+  test('Test clone active metric template and save', async () => {
+    mockAddObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 201, statusText: 'CREATED' })
+    )
+
+    renderCloneView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /clone metric/i }).textContent).toBe('Clone metric template');
+    })
+
+    const nameField = screen.getByTestId('name');
+    const typeField = screen.getByTestId('mtype');
+    const probeField = screen.getByTestId('autocomplete-probeversion')
+    const packageField = screen.getByTestId('package');
+    const descriptionField = screen.getByTestId('description');
+    const groupField = screen.queryByTestId('group');
+    const executableField = screen.getByTestId('probeexecutable');
+    const configKey1 = screen.getByTestId('config.0.key');
+    const configKey2 = screen.getByTestId('config.1.key');
+    const configKey3 = screen.getByTestId('config.2.key');
+    const configKey4 = screen.getByTestId('config.3.key');
+    const configKey5 = screen.getByTestId('config.4.key');
+    const configVal1 = screen.getByTestId('config.0.value');
+    const configVal2 = screen.getByTestId('config.1.value');
+    const configVal3 = screen.getByTestId('config.2.value');
+    const configVal4 = screen.getByTestId('config.3.value');
+    const configVal5 = screen.getByTestId('config.4.value');
+    const attributeKey = screen.getByTestId('attributes.0.key');
+    const attributeVal = screen.getByTestId('attributes.0.value')
+    const dependencyKey = screen.getByTestId('dependency.0.key');
+    const dependencyVal = screen.getByTestId('dependency.0.value');
+    const parameterKey = screen.getByTestId('parameter.0.key');
+    const parameterVal = screen.getByTestId('parameter.0.value');
+    const flagKey = screen.getByTestId('flags.0.key');
+    const flagVal = screen.getByTestId('flags.0.value');
+    const parentField = screen.getByTestId('autocomplete-parent');
+
+    expect(nameField.value).toBe('argo.AMS-Check');
+    expect(typeField.value).toBe('Active');
+    expect(screen.getByRole('option', { name: /active/i })).toBeInTheDocument()
+    expect(screen.getByRole('option', { name: /passive/i })).toBeInTheDocument()
+    expect(probeField.value).toBe('ams-probe (0.1.12)');
+    expect(packageField.value).toBe('nagios-plugins-argo (0.1.12)')
+    expect(packageField).toBeDisabled();
+    expect(descriptionField.value).toBe('Some description of argo.AMS-Check metric template.');
+    expect(groupField).not.toBeInTheDocument();
+    expect(executableField.value).toBe('ams-probe');
+    expect(configKey1.value).toBe('maxCheckAttempts');
+    expect(configKey1).toHaveAttribute('readonly');
+    expect(configVal1.value).toBe('4');
+    expect(configVal1).not.toHaveAttribute('readonly');
+    expect(configKey2.value).toBe('timeout');
+    expect(configKey2).toHaveAttribute('readonly');
+    expect(configVal2.value).toBe('70');
+    expect(configVal2).not.toHaveAttribute('readonly');
+    expect(configKey3.value).toBe('path');
+    expect(configKey3).toHaveAttribute('readonly');
+    expect(configVal3.value).toBe('/usr/libexec/argo-monitoring/');
+    expect(configVal3).not.toHaveAttribute('readonly');
+    expect(configKey4.value).toBe('interval');
+    expect(configKey4).toHaveAttribute('readonly');
+    expect(configVal4.value).toBe('5');
+    expect(configVal4).not.toHaveAttribute('readonly');
+    expect(configKey5.value).toBe('retryInterval');
+    expect(configKey5).toHaveAttribute('readonly');
+    expect(configVal5.value).toBe('3');
+    expect(configVal5).not.toHaveAttribute('readonly');
+    expect(attributeKey.value).toBe('argo.ams_TOKEN');
+    expect(attributeVal.value).toBe('--token');
+    expect(dependencyKey.value).toBe('');
+    expect(dependencyVal.value).toBe('');
+    expect(parameterKey.value).toBe('--project');
+    expect(parameterVal.value).toBe('EGI');
+    expect(flagKey.value).toBe('OBSESS');
+    expect(flagVal.value).toBe('1');
+    expect(parentField.value).toBe('');
+    expect(screen.queryByRole('button', { name: /history/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
+
+    fireEvent.change(nameField, { target: { value: 'argo.AMS-Check-clone' } })
+    fireEvent.change(configVal2, { target: { value: '80' } });
+    fireEvent.click(screen.getByTestId('attributes.0.remove'));
+    fireEvent.click(screen.getByTestId('flags.addnew'));
+    fireEvent.change(screen.getByTestId('flags.1.key'), { target: { value: 'NOHOSTNAME' } });
+    fireEvent.change(screen.getByTestId('flags.1.value'), { target: { value: '1' } });
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /add/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddObject).toHaveBeenCalledWith(
+        '/api/v2/internal/metrictemplates/',
+        {
+          'cloned_from': '1',
+          'name': 'argo.AMS-Check-clone',
+          'mtype': 'Active',
+          'tags': ['test_tag1', 'test_tag2'],
+          'description': 'Some description of argo.AMS-Check metric template.',
+          'probeversion': 'ams-probe (0.1.12)',
+          'parent': '',
+          'probeexecutable': 'ams-probe',
+          'config': [
+            { key: 'maxCheckAttempts', value: '4' },
+            { key: 'timeout', value: '80' },
+            { key: 'path', value: '/usr/libexec/argo-monitoring/' },
+            { key: 'interval', value: '5' },
+            { key: 'retryInterval', value: '3' }
+          ],
+          'attribute': [{ key: '', value: '' }],
+          'dependency': [{ key: '', value: '' }],
+          'parameter': [{ key: '--project', value: 'EGI' }],
+          'flags': [
+            { key: 'OBSESS', value: '1' },
+            { key: 'NOHOSTNAME', value: '1', isNew: true }
+          ],
+          'files': [{ key: '', value: '' }],
+          'fileparameter': [{ key: '', value: '' }]
+        }
+      )
+    })
+
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'Metric template successfully added', 'Added', 2000
+    )
+  })
+
+  test('Test clone passive metric template and save', async () => {
+    mockAddObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 201, statusText: 'CREATED' })
+    )
+
+    renderCloneView({ passive: true });
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /clone metric/i }).textContent).toBe('Clone metric template');
+    })
+
+    const nameField = screen.getByTestId('name');
+    const typeField = screen.getByTestId('mtype');
+    const probeField = screen.getByTestId('probeversion')
+    const packageField = screen.getByTestId('package');
+    const descriptionField = screen.getByTestId('description');
+    const groupField = screen.queryByTestId('group');
+    const executableField = screen.queryByTestId('probeexecutable');
+    const configKey1 = screen.queryByTestId('config.0.key');
+    const configKey2 = screen.queryByTestId('config.1.key');
+    const configKey3 = screen.queryByTestId('config.2.key');
+    const configKey4 = screen.queryByTestId('config.3.key');
+    const configKey5 = screen.queryByTestId('config.4.key');
+    const configVal1 = screen.queryByTestId('config.0.value');
+    const configVal2 = screen.queryByTestId('config.1.value');
+    const configVal3 = screen.queryByTestId('config.2.value');
+    const configVal4 = screen.queryByTestId('config.3.value');
+    const configVal5 = screen.queryByTestId('config.4.value');
+    const attributeKey = screen.queryByTestId('attributes.0.key');
+    const attributeVal = screen.queryByTestId('attributes.0.value')
+    const dependencyKey = screen.queryByTestId('dependency.0.key');
+    const dependencyVal = screen.queryByTestId('dependency.0.value');
+    const parameterKey = screen.queryByTestId('parameter.0.key');
+    const parameterVal = screen.queryByTestId('parameter.0.value');
+    const flagKey1 = screen.getByTestId('flags.0.key');
+    const flagVal1 = screen.getByTestId('flags.0.value');
+    const flagKey2 = screen.getByTestId('flags.1.key');
+    const flagVal2 = screen.getByTestId('flags.1.value');
+    const parentField = screen.getByTestId('autocomplete-parent');
+
+    expect(nameField.value).toBe('org.apel.APEL-Pub');
+    expect(typeField.value).toBe('Passive');
+    expect(screen.getByRole('option', { name: /active/i })).toBeInTheDocument()
+    expect(screen.getByRole('option', { name: /passive/i })).toBeInTheDocument()
+    expect(probeField.value).toBe('');
+    expect(probeField).toBeDisabled();
+    expect(packageField.value).toBe('');
+    expect(packageField).toBeDisabled();
+    expect(descriptionField.value).toBe('');
+    expect(groupField).not.toBeInTheDocument();
+    expect(executableField).not.toBeInTheDocument();
+    expect(configKey1).not.toBeInTheDocument();
+    expect(configVal1).not.toBeInTheDocument();
+    expect(configKey2).not.toBeInTheDocument();
+    expect(configVal2).not.toBeInTheDocument();
+    expect(configKey3).not.toBeInTheDocument();
+    expect(configVal3).not.toBeInTheDocument();
+    expect(configKey4).not.toBeInTheDocument();
+    expect(configVal4).not.toBeInTheDocument();
+    expect(configKey5).not.toBeInTheDocument();
+    expect(configVal5).not.toBeInTheDocument();
+    expect(attributeKey).not.toBeInTheDocument()
+    expect(attributeVal).not.toBeInTheDocument();
+    expect(dependencyKey).not.toBeInTheDocument();
+    expect(dependencyVal).not.toBeInTheDocument();
+    expect(parameterKey).not.toBeInTheDocument();
+    expect(parameterVal).not.toBeInTheDocument();
+    expect(flagKey1.value).toBe('OBSESS');
+    expect(flagVal1.value).toBe('1');
+    expect(flagKey2.value).toBe('PASSIVE');
+    expect(flagVal2.value).toBe('1');
+    expect(flagKey2).toHaveAttribute('readonly');
+    expect(flagVal2).toHaveAttribute('readonly');
+    expect(parentField.value).toBe('');
+    expect(screen.queryByRole('button', { name: /history/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
+
+    fireEvent.change(nameField, { target: { value: 'org.apel.APEL-Clone' } });
+    fireEvent.click(screen.getByTestId('flags.addnew'));
+    fireEvent.change(screen.getByTestId('flags.2.key'), { target: { value: 'NOHOSTNAME' } });
+    fireEvent.change(screen.getByTestId('flags.2.value'), { target: { value: '1' } });
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /add/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddObject).toHaveBeenCalledWith(
+        '/api/v2/internal/metrictemplates/',
+        {
+          'cloned_from': 2,
+          'name': 'org.apel.APEL-Clone',
+          'mtype': 'Passive',
+          'tags': [],
+          'description': '',
+          'probeversion': '',
+          'parent': '',
+          'probeexecutable': '',
+          'config': [{ key: '', value: '' }],
+          'attribute': [{ key: '', value: '' }],
+          'dependency': [{ key: '', value: '' }],
+          'parameter': [{ key: '', value: '' }],
+          'flags': [
+            { key: 'OBSESS', value: '1' },
+            { key: 'PASSIVE', value: '1' },
+            { key: 'NOHOSTNAME', value: '1', isNew: true }
+          ],
+          'files': [{ key: '', value: '' }],
+          'fileparameter': [{ key: '', value: '' }]
+        }
+      )
+    })
+
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'Metric template successfully added', 'Added', 2000
+    )
+  })
+
+  test('Test error in saving cloned metric template with error message', async () => {
+    mockAddObject.mockReturnValueOnce(
+      Promise.resolve({
+        json: () => Promise.resolve({ detail: 'Metric template with this name already exists' }),
+        status: 400,
+        statusText: 'BAD REQUEST'
+      })
+    )
+
+    renderCloneView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /clone metric/i }).textContent).toBe('Clone metric template')
+    })
+
+    fireEvent.change(screen.getByTestId('config.1.value'), { target: { value: '80' } });
+    fireEvent.click(screen.getByTestId('attributes.0.remove'));
+    fireEvent.click(screen.getByTestId('flags.addnew'));
+    fireEvent.change(screen.getByTestId('flags.1.key'), { target: { value: 'NOHOSTNAME' } });
+    fireEvent.change(screen.getByTestId('flags.1.value'), { target: { value: '1' } });
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /add/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddObject).toHaveBeenCalledWith(
+        '/api/v2/internal/metrictemplates/',
+        {
+          'cloned_from': '1',
+          'name': 'argo.AMS-Check',
+          'mtype': 'Active',
+          'tags': ['test_tag1', 'test_tag2'],
+          'description': 'Some description of argo.AMS-Check metric template.',
+          'probeversion': 'ams-probe (0.1.12)',
+          'parent': '',
+          'probeexecutable': 'ams-probe',
+          'config': [
+            { key: 'maxCheckAttempts', value: '4' },
+            { key: 'timeout', value: '80' },
+            { key: 'path', value: '/usr/libexec/argo-monitoring/' },
+            { key: 'interval', value: '5' },
+            { key: 'retryInterval', value: '3' }
+          ],
+          'attribute': [{ key: '', value: '' }],
+          'dependency': [{ key: '', value: '' }],
+          'parameter': [{ key: '--project', value: 'EGI' }],
+          'flags': [
+            { key: 'OBSESS', value: '1' },
+            { key: 'NOHOSTNAME', value: '1', isNew: true }
+          ],
+          'files': [{ key: '', value: '' }],
+          'fileparameter': [{ key: '', value: '' }]
+        }
+      )
+    })
+
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>Metric template with this name already exists</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Error: 400 BAD REQUEST',
+      0,
+      expect.any(Function)
+    )
+  })
+
+  test('Test error in saving metric template without error message', async () => {
+    mockAddObject.mockReturnValueOnce(
+      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
+    )
+
+    renderCloneView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /clone metric/i }).textContent).toBe('Clone metric template')
+    })
+
+    fireEvent.change(screen.getByTestId('config.1.value'), { target: { value: '80' } });
+    fireEvent.click(screen.getByTestId('attributes.0.remove'));
+    fireEvent.click(screen.getByTestId('flags.addnew'));
+    fireEvent.change(screen.getByTestId('flags.1.key'), { target: { value: 'NOHOSTNAME' } });
+    fireEvent.change(screen.getByTestId('flags.1.value'), { target: { value: '1' } });
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /add/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddObject).toHaveBeenCalledWith(
+        '/api/v2/internal/metrictemplates/',
+        {
+          'cloned_from': '1',
+          'name': 'argo.AMS-Check',
+          'mtype': 'Active',
+          'tags': ['test_tag1', 'test_tag2'],
+          'description': 'Some description of argo.AMS-Check metric template.',
+          'probeversion': 'ams-probe (0.1.12)',
+          'parent': '',
+          'probeexecutable': 'ams-probe',
+          'config': [
+            { key: 'maxCheckAttempts', value: '4' },
+            { key: 'timeout', value: '80' },
+            { key: 'path', value: '/usr/libexec/argo-monitoring/' },
+            { key: 'interval', value: '5' },
+            { key: 'retryInterval', value: '3' }
+          ],
+          'attribute': [{ key: '', value: '' }],
+          'dependency': [{ key: '', value: '' }],
+          'parameter': [{ key: '--project', value: 'EGI' }],
+          'flags': [
+            { key: 'OBSESS', value: '1' },
+            { key: 'NOHOSTNAME', value: '1', isNew: true }
           ],
           'files': [{ key: '', value: '' }],
           'fileparameter': [{ key: '', value: '' }]
