@@ -572,7 +572,7 @@ class ListVersionsAPIViewTests(TenantTestCase):
                     ),
                     'comment': 'Changed name.',
                     'version': datetime.datetime.strftime(
-                        self.ver7.date_created, '%Y-%m-%d %H:%M:%S'
+                        self.ver7.date_created, '%Y%m%d-%H%M%S'
                     )
                 },
                 {
@@ -604,7 +604,7 @@ class ListVersionsAPIViewTests(TenantTestCase):
                     ),
                     'comment': 'Initial version.',
                     'version': datetime.datetime.strftime(
-                        self.ver6.date_created, '%Y-%m-%d %H:%M:%S'
+                        self.ver6.date_created, '%Y%m%d-%H%M%S'
                     )
                 }
             ]
