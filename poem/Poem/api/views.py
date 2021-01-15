@@ -170,6 +170,13 @@ class ListRepos(APIView):
             for profile in profiles:
                 metrics = metrics.union(get_metrics_from_profile(profile))
 
+            internal_metrics = set([
+                metric.name for metric in models.Metric.objects.filter(
+                    tags__name='internal'
+                )
+            ])
+            metrics = metrics.union(internal_metrics)
+
             if tag == 'centos7':
                 ostag = admin_models.OSTag.objects.get(name='CentOS 7')
             elif tag == 'centos6':
@@ -229,4 +236,11 @@ class ListRepos(APIView):
                         }
                     )
 
-        return Response({'data': data, 'missing_packages': missing_packages})
+                data[value.name]['packages'] = sorted(
+                    data[value.name]['packages'], key=lambda i: i['name']
+                )
+
+        return Response({
+            'data': data,
+            'missing_packages': sorted(missing_packages)
+        })
