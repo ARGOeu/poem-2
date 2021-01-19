@@ -8,6 +8,7 @@ import { Backend } from '../DataManager';
 import { NotificationManager } from 'react-notifications';
 import { queryCache } from 'react-query'
 import { MetricTemplateComponent, MetricTemplateVersionDetails } from '../MetricTemplates';
+import selectEvent from 'react-select-event';
 
 
 jest.mock('../DataManager', () => {
@@ -1499,6 +1500,7 @@ describe('Test metric template changeview on SuperPOEM', () => {
     const packageField = screen.getByTestId('package');
     const descriptionField = screen.getByTestId('description');
     const groupField = screen.queryByTestId('group');
+    const tagsElement = screen.getByLabelText('Tags:')
     const executableField = screen.getByTestId('probeexecutable');
     const configKey1 = screen.getByTestId('config.0.key');
     const configKey2 = screen.getByTestId('config.1.key');
@@ -1529,6 +1531,8 @@ describe('Test metric template changeview on SuperPOEM', () => {
     expect(packageField).toBeDisabled();
     expect(descriptionField.value).toBe('Some description of argo.AMS-Check metric template.');
     expect(groupField).not.toBeInTheDocument();
+    expect(tagsElement).toBeInTheDocument()
+    expect(screen.getByTestId('metric-form')).toHaveFormValues({ tags: ['test_tag1', 'test_tag2'] })
     expect(executableField.value).toBe('ams-probe');
     expect(configKey1.value).toBe('maxCheckAttempts');
     expect(configKey1).toHaveAttribute('readonly');
@@ -1580,6 +1584,8 @@ describe('Test metric template changeview on SuperPOEM', () => {
     const packageField = screen.getByTestId('package');
     const descriptionField = screen.getByTestId('description');
     const groupField = screen.queryByTestId('group');
+    const tagBadge1 = screen.getByText(/test_tag1/i);
+    const tagBadge2 = screen.getByText(/test_tag2/i);
     const executableField = screen.getByTestId('probeexecutable');
     const configKey1 = screen.getByTestId('config.0.key');
     const configKey2 = screen.getByTestId('config.1.key');
@@ -1614,6 +1620,8 @@ describe('Test metric template changeview on SuperPOEM', () => {
     expect(descriptionField.value).toBe('Some description of argo.AMS-Check metric template.');
     expect(descriptionField).toBeDisabled();
     expect(groupField).not.toBeInTheDocument();
+    expect(tagBadge1.textContent).toBe('test_tag1');
+    expect(tagBadge2.textContent).toBe('test_tag2');
     expect(executableField.value).toBe('ams-probe');
     expect(executableField).toHaveAttribute('readonly');
     expect(configKey1.value).toBe('maxCheckAttempts');
@@ -1690,6 +1698,7 @@ describe('Test metric template changeview on SuperPOEM', () => {
     const probeField = screen.getByTestId('autocomplete-probeversion')
     const packageField = screen.getByTestId('package');
     const descriptionField = screen.getByTestId('description');
+    const tagsField = screen.getByLabelText('Tags:');
     const executableField = screen.getByTestId('probeexecutable');
     const configVal1 = screen.getByTestId('config.0.value');
     const configVal2 = screen.getByTestId('config.1.value');
@@ -1705,6 +1714,8 @@ describe('Test metric template changeview on SuperPOEM', () => {
 
     fireEvent.change(descriptionField, { target: { value: 'New description for metric template.' } });
     fireEvent.change(executableField, { target: { value: 'ams-probe-new' } })
+
+    await selectEvent.create(tagsField, 'test_tag3')
 
     expect(screen.queryByTestId('config.0.remove')).not.toBeInTheDocument();
     expect(screen.queryByTestId('config.1.remove')).not.toBeInTheDocument();
@@ -1743,7 +1754,7 @@ describe('Test metric template changeview on SuperPOEM', () => {
           'id': '1',
           'name': 'argo.AMS-Check-new',
           'mtype': 'Active',
-          'tags': ['test_tag1', 'test_tag2'],
+          'tags': ['test_tag1', 'test_tag2', 'test_tag3'],
           'description': 'New description for metric template.',
           'probeversion': 'ams-probe-new (0.1.13)',
           'parent': '',
@@ -1932,6 +1943,7 @@ describe('Test metric template changeview on SuperPOEM', () => {
     const packageField = screen.getByTestId('package');
     const descriptionField = screen.getByTestId('description');
     const groupField = screen.queryByTestId('group');
+    const tagsField = screen.getByLabelText('Tags:');
     const executableField = screen.queryByTestId('probeexecutable');
     const configKey1 = screen.queryByTestId('config.0.key');
     const configKey2 = screen.queryByTestId('config.1.key');
@@ -1965,6 +1977,8 @@ describe('Test metric template changeview on SuperPOEM', () => {
     expect(packageField).toBeDisabled();
     expect(descriptionField.value).toBe('');
     expect(groupField).not.toBeInTheDocument();
+    expect(tagsField).toBeInTheDocument();
+    expect(screen.getByTestId('metric-form')).toHaveFormValues({ tags: '' });
     expect(executableField).not.toBeInTheDocument();
     expect(configKey1).not.toBeInTheDocument();
     expect(configVal1).not.toBeInTheDocument();
@@ -2010,6 +2024,7 @@ describe('Test metric template changeview on SuperPOEM', () => {
     const packageField = screen.getByTestId('package');
     const descriptionField = screen.getByTestId('description');
     const groupField = screen.queryByTestId('group');
+    const tagBadge = screen.getByText(/none/i);
     const executableField = screen.queryByTestId('probeexecutable');
     const configKey1 = screen.queryByTestId('config.0.key');
     const configKey2 = screen.queryByTestId('config.1.key');
@@ -2046,6 +2061,7 @@ describe('Test metric template changeview on SuperPOEM', () => {
     expect(descriptionField.value).toBe('');
     expect(descriptionField).toBeDisabled();
     expect(groupField).not.toBeInTheDocument();
+    expect(tagBadge).toBeInTheDocument();
     expect(executableField).not.toBeInTheDocument();
     expect(configKey1).not.toBeInTheDocument();
     expect(configVal1).not.toBeInTheDocument();
@@ -2097,6 +2113,7 @@ describe('Test metric template changeview on SuperPOEM', () => {
     expect(screen.queryByRole('button', { name: /save/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
   })
+
   test('Test changing passive/active metric template', async () => {
     renderChangeView({ passive: true });
 
@@ -2115,6 +2132,7 @@ describe('Test metric template changeview on SuperPOEM', () => {
     const packageField = screen.getByTestId('package');
     const descriptionField = screen.getByTestId('description');
     const groupField = screen.queryByTestId('group');
+    const tagsField = screen.getByLabelText('Tags:');
     const executableField = screen.getByTestId('probeexecutable');
     const configKey1 = screen.getByTestId('config.0.key');
     const configKey2 = screen.getByTestId('config.1.key');
@@ -2145,6 +2163,8 @@ describe('Test metric template changeview on SuperPOEM', () => {
     expect(packageField).toBeDisabled();
     expect(descriptionField.value).toBe('');
     expect(groupField).not.toBeInTheDocument();
+    expect(tagsField).toBeInTheDocument();
+    expect(screen.getByTestId('metric-form')).toHaveFormValues({ tags: '' });
     expect(executableField.value).toBe('');
     expect(executableField).not.toHaveAttribute('hidden');
     expect(configKey1.value).toBe('maxCheckAttempts');
@@ -2204,6 +2224,7 @@ describe('Test metric template changeview on SuperPOEM', () => {
     const packageField = screen.getByTestId('package');
     const descriptionField = screen.getByTestId('description');
     const groupField = screen.queryByTestId('group');
+    const tagsField = screen.getByLabelText('Tags:');
     const executableField = screen.queryByTestId('probeexecutable');
     const configKey1 = screen.queryByTestId('config.0.key');
     const configKey2 = screen.queryByTestId('config.1.key');
@@ -2234,6 +2255,8 @@ describe('Test metric template changeview on SuperPOEM', () => {
     expect(packageField).toBeDisabled();
     expect(descriptionField.value).toBe('Some description of argo.AMS-Check metric template.');
     expect(groupField).not.toBeInTheDocument();
+    expect(tagsField).toBeInTheDocument();
+    expect(screen.getByTestId('metric-form')).toHaveFormValues({ tags: ['test_tag1', 'test_tag2'] });
     expect(executableField).not.toBeInTheDocument();
     expect(configKey1).not.toBeInTheDocument();
     expect(configVal1).not.toBeInTheDocument();
@@ -2265,6 +2288,8 @@ describe('Test metric template changeview on SuperPOEM', () => {
     const packageField2 = screen.getByTestId('package');
     const descriptionField2 = screen.getByTestId('description');
     const groupField2 = screen.queryByTestId('group');
+    const tagsField2 = screen.getByLabelText('Tags:');
+    expect(screen.getByTestId('metric-form')).toHaveFormValues({ tags: ['test_tag1', 'test_tag2'] });
     const executableField2 = screen.getByTestId('probeexecutable');
     const configKey1a = screen.getByTestId('config.0.key');
     const configKey2a = screen.getByTestId('config.1.key');
@@ -2295,6 +2320,8 @@ describe('Test metric template changeview on SuperPOEM', () => {
     expect(packageField2).toBeDisabled();
     expect(descriptionField2.value).toBe('Some description of argo.AMS-Check metric template.');
     expect(groupField2).not.toBeInTheDocument();
+    expect(tagsField2).toBeInTheDocument();
+    expect(screen.getByTestId('metric-form')).toHaveFormValues({ tags: ['test_tag1', 'test_tag2'] });
     expect(executableField2.value).toBe('ams-probe');
     expect(configKey1a.value).toBe('maxCheckAttempts');
     expect(configKey1a).toHaveAttribute('readonly');
@@ -2434,6 +2461,7 @@ describe('Test metric template addview on SuperPOEM', () => {
     const packageField = screen.getByTestId('package');
     const descriptionField = screen.getByTestId('description');
     const groupField = screen.queryByTestId('group');
+    const tagsField = screen.getByLabelText('Tags:');
     const executableField = screen.getByTestId('probeexecutable');
     const configKey1 = screen.getByTestId('config.0.key');
     const configKey2 = screen.getByTestId('config.1.key');
@@ -2464,6 +2492,8 @@ describe('Test metric template addview on SuperPOEM', () => {
     expect(packageField).toBeDisabled();
     expect(descriptionField.value).toBe('');
     expect(groupField).not.toBeInTheDocument();
+    expect(tagsField).toBeInTheDocument();
+    expect(screen.getByTestId('metric-form')).toHaveFormValues({ tags: '' })
     expect(executableField.value).toBe('');
     expect(configKey1.value).toBe('maxCheckAttempts');
     expect(configKey1).toHaveAttribute('readonly');
@@ -2514,6 +2544,7 @@ describe('Test metric template addview on SuperPOEM', () => {
     const nameField = screen.getByTestId('name');
     const probeField = screen.getByTestId('autocomplete-probeversion')
     const packageField = screen.getByTestId('package');
+    const tagsField = screen.getByLabelText('Tags:');
     const executableField = screen.getByTestId('probeexecutable');
     const configVal1 = screen.getByTestId('config.0.value');
     const configVal2 = screen.getByTestId('config.1.value');
@@ -2525,6 +2556,9 @@ describe('Test metric template addview on SuperPOEM', () => {
     fireEvent.change(probeField, { target: { value: 'ams-publisher-probe (0.1.12)' } });
     expect(packageField.value).toBe('nagios-plugins-argo (0.1.12)')
     expect(packageField).toBeDisabled();
+
+    await selectEvent.select(tagsField, ['internal', 'test_tag1']);
+    await selectEvent.create(tagsField, 'test_tag3');
 
     fireEvent.change(executableField, { target: { value: 'ams-publisher-probe' } })
 
@@ -2562,7 +2596,7 @@ describe('Test metric template addview on SuperPOEM', () => {
           'cloned_from': '',
           'name': 'argo.AMSPublisher-Check',
           'mtype': 'Active',
-          'tags': [],
+          'tags': ['internal', 'test_tag1', 'test_tag3'],
           'description': '',
           'probeversion': 'ams-publisher-probe (0.1.12)',
           'parent': '',
@@ -2608,6 +2642,9 @@ describe('Test metric template addview on SuperPOEM', () => {
     })
 
     const typeField = screen.getByTestId('mtype');
+    const tagsField = screen.getByLabelText('Tags:');
+
+    await selectEvent.select(tagsField, 'test_tag1');
 
     fireEvent.change(typeField, { target: { value: 'Passive' } })
     const flagKey = screen.getByTestId('flags.0.key');
@@ -2685,7 +2722,7 @@ describe('Test metric template addview on SuperPOEM', () => {
           'cloned_from': '',
           'name': 'org.apel.APEL-Sync',
           'mtype': 'Passive',
-          'tags': [],
+          'tags': ['test_tag1'],
           'description': '',
           'probeversion': '',
           'parent': '',

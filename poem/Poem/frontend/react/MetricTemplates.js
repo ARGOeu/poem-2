@@ -357,7 +357,7 @@ export const MetricTemplateComponent = (props) => {
           enableReinitialize={true}
         >
           {props => (
-            <Form>
+            <Form data-testid='metric-form'>
               <MetricForm
                 {...props}
                 obj_label='metrictemplate'

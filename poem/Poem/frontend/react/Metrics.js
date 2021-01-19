@@ -948,8 +948,10 @@ export const MetricForm =
             (obj_label === 'metrictemplate' && (!isHistory && !isTenantSchema && !publicView)) ?
               <Row className='mb-4 mt-2'>
                 <Col md={10}>
-                  <Label>Tags:</Label>
+                  <Label for='tags'>Tags:</Label>
                   <CreatableSelect
+                    inputId='tags'
+                    name='tags'
                     closeMenuOnSelect={false}
                     isMulti
                     onChange={(value) => props.setFieldValue('tags', value)}
