@@ -1,6 +1,6 @@
 import React from 'react';
 import '@testing-library/jest-dom/extend-expect';
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { createMemoryHistory } from 'history';
 import { Route, Router } from 'react-router-dom';
 import { ProbeList } from '../Probes';
@@ -162,5 +162,55 @@ describe('Test list of probes on SuperAdmin POEM', () => {
     expect(screen.getAllByRole('link', { name: '1' })[1].closest('a')).toHaveAttribute('href', '/ui/public_probes/argo-web-api/history')
     expect(screen.getByRole('link', { name: '2' }).closest('a')).toHaveAttribute('href', '/ui/public_probes/ams-probe/history')
     expect(screen.queryByRole('button', { name: /add/i })).not.toBeInTheDocument();
+  })
+
+  test('Test filter list of probes', async () => {
+    renderListView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /probe/i }).textContent).toBe('Select probe to change')
+    })
+
+    fireEvent.change(screen.getAllByPlaceholderText('Search')[0], { target: { value: 'ams' } })
+    expect(screen.getAllByRole('row')).toHaveLength(52);
+    expect(screen.getAllByRole('row', { name: '' })).toHaveLength(48);
+    expect(screen.getByRole('row', { name: /ams-probe/i }).textContent).toBe('1ams-probe2nagios-plugins-argo (0.1.11)Probe is inspecting AMS service by trying to publish and consume randomly generated messages.')
+    expect(screen.getByRole('row', { name: /ams-publisher/i }).textContent).toBe('2ams-publisher-probe1nagios-plugins-argo (0.1.11)Probe is inspecting AMS publisher running on Nagios monitoring instances.')
+    expect(screen.getByRole('link', { name: /ams-probe/i }).closest('a')).toHaveAttribute('href', '/ui/probes/ams-probe');
+    expect(screen.getByRole('link', { name: /ams-publisher/i }).closest('a')).toHaveAttribute('href', '/ui/probes/ams-publisher-probe');
+    expect(screen.getByRole('link', { name: '1' }).closest('a')).toHaveAttribute('href', '/ui/probes/ams-publisher-probe/history')
+    expect(screen.getByRole('link', { name: '2' }).closest('a')).toHaveAttribute('href', '/ui/probes/ams-probe/history')
+
+    fireEvent.change(screen.getAllByPlaceholderText('Search')[2], { target: { value: 'publisher' } });
+    expect(screen.getAllByRole('row')).toHaveLength(52);
+    expect(screen.getAllByRole('row', { name: '' })).toHaveLength(49);
+    expect(screen.getByRole('row', { name: /ams-publisher/i }).textContent).toBe('1ams-publisher-probe1nagios-plugins-argo (0.1.11)Probe is inspecting AMS publisher running on Nagios monitoring instances.')
+    expect(screen.getByRole('link', { name: /ams-publisher/i }).closest('a')).toHaveAttribute('href', '/ui/probes/ams-publisher-probe');
+    expect(screen.getByRole('link', { name: '1' }).closest('a')).toHaveAttribute('href', '/ui/probes/ams-publisher-probe/history')
+  })
+
+  test('Test filter public list of probes', async () => {
+    renderListView(true);
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /probe/i }).textContent).toBe('Select probe for details')
+    })
+
+    fireEvent.change(screen.getAllByPlaceholderText('Search')[0], { target: { value: 'ams' } })
+    expect(screen.getAllByRole('row')).toHaveLength(52);
+    expect(screen.getAllByRole('row', { name: '' })).toHaveLength(48);
+    expect(screen.getByRole('row', { name: /ams-probe/i }).textContent).toBe('1ams-probe2nagios-plugins-argo (0.1.11)Probe is inspecting AMS service by trying to publish and consume randomly generated messages.')
+    expect(screen.getByRole('row', { name: /ams-publisher/i }).textContent).toBe('2ams-publisher-probe1nagios-plugins-argo (0.1.11)Probe is inspecting AMS publisher running on Nagios monitoring instances.')
+    expect(screen.getByRole('link', { name: /ams-probe/i }).closest('a')).toHaveAttribute('href', '/ui/public_probes/ams-probe');
+    expect(screen.getByRole('link', { name: /ams-publisher/i }).closest('a')).toHaveAttribute('href', '/ui/public_probes/ams-publisher-probe');
+    expect(screen.getByRole('link', { name: '1' }).closest('a')).toHaveAttribute('href', '/ui/public_probes/ams-publisher-probe/history')
+    expect(screen.getByRole('link', { name: '2' }).closest('a')).toHaveAttribute('href', '/ui/public_probes/ams-probe/history')
+
+    fireEvent.change(screen.getAllByPlaceholderText('Search')[2], { target: { value: 'publisher' } });
+    expect(screen.getAllByRole('row')).toHaveLength(52);
+    expect(screen.getAllByRole('row', { name: '' })).toHaveLength(49);
+    expect(screen.getByRole('row', { name: /ams-publisher/i }).textContent).toBe('1ams-publisher-probe1nagios-plugins-argo (0.1.11)Probe is inspecting AMS publisher running on Nagios monitoring instances.')
+    expect(screen.getByRole('link', { name: /ams-publisher/i }).closest('a')).toHaveAttribute('href', '/ui/public_probes/ams-publisher-probe');
+    expect(screen.getByRole('link', { name: '1' }).closest('a')).toHaveAttribute('href', '/ui/public_probes/ams-publisher-probe/history')
   })
 })
