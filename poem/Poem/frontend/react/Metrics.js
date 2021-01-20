@@ -135,6 +135,7 @@ const InlineFields = ({values, errors, field, addnew=false, readonly=false}) => 
                     type='text'
                     name={`${field}.${index}.key`}
                     id={`${field}.${index}.key`}
+                    data-testid={`${field}.${index}.key`}
                     className={`form-control ${values[field][index].isNew && 'border-success'}`}
                     readOnly={!addnew || field === 'config' || (values.type === 'Passive' && item.key === 'PASSIVE')}
                     hidden={values.type === 'Passive' && field !== 'flags'}
@@ -147,6 +148,7 @@ const InlineFields = ({values, errors, field, addnew=false, readonly=false}) => 
                         type='text'
                         name={`${field}.${index}.value`}
                         id={`${field}.${index}.value`}
+                        data-testid={`${field}.${index}.value`}
                         className={`form-control ${(errors.config && errors.config[index]) && 'border-danger'}`}
                         readOnly={readonly || (!addnew && field === 'config' && item.key === 'path')}
                         validate={validateConfig}
@@ -156,6 +158,7 @@ const InlineFields = ({values, errors, field, addnew=false, readonly=false}) => 
                         type='text'
                         name={`${field}.${index}.value`}
                         id={`${field}.${index}.value`}
+                        data-testid={`${field}.${index}.value`}
                         className={`form-control ${values[field][index].isNew && 'border-success'}`}
                         style={{overflowX : 'auto'}}
                         readOnly={readonly || (!addnew && (field !== 'config' || field === 'config' && item.key === 'path')) || values.type === 'Passive' && item.key === 'PASSIVE'}
@@ -231,6 +234,7 @@ const InlineFields = ({values, errors, field, addnew=false, readonly=false}) => 
                   className='form-control'
                   value=''
                   id='empty-key'
+                  data-testid={`empty-key.${field}`}
                   readOnly={!addnew}
                   hidden={values.type === 'Passive' && field !== 'flags'}
                 />
@@ -242,6 +246,7 @@ const InlineFields = ({values, errors, field, addnew=false, readonly=false}) => 
                   value=''
                   className='form-control'
                   id='empty-value'
+                  data-testid={`empty-value.${field}`}
                   readOnly={!addnew}
                   hidden={values.type === 'Passive' && field !== 'flags'}
                 />
@@ -749,16 +754,17 @@ export const MetricForm =
               <InputGroup>
                 <InputGroupAddon addonType='prepend'>Name</InputGroupAddon>
                 <Field
-                type='text'
-                name='name'
-                className={`form-control ${props.errors.name && props.touched.name && 'border-danger'}`}
-                id='name'
-                readOnly={isHistory || isTenantSchema || publicView}
-              />
+                  type='text'
+                  name='name'
+                  className={`form-control ${props.errors.name && props.touched.name && 'border-danger'}`}
+                  id='name'
+                  data-testid='name'
+                  readOnly={isHistory || isTenantSchema || publicView}
+                />
               </InputGroup>
               <CustomErrorMessage name='name' />
               <FormText color='muted'>
-              Metric name.
+                Metric name.
               </FormText>
             </Col>
             <Col md={4} className='mt-1'>
@@ -771,6 +777,7 @@ export const MetricForm =
                       name='type'
                       className='form-control'
                       id='mtype'
+                      data-testid='mtype'
                       readOnly={true}
                     />
                   :
@@ -779,6 +786,7 @@ export const MetricForm =
                       name='type'
                       className='form-control custom-select'
                       id='mtype'
+                      data-testid='mtype'
                       onChange={e => {
                         props.handleChange(e);
                         if (e.target.value === 'Passive') {
@@ -813,7 +821,7 @@ export const MetricForm =
                 }
               </InputGroup>
               <FormText color='muted'>
-              Metric is of given type.
+                Metric is of given type.
               </FormText>
             </Col>
           </Row>
@@ -828,6 +836,7 @@ export const MetricForm =
                       className='form-control'
                       disabled={true}
                       id='passive-probeversion'
+                      data-testid='probeversion'
                     />
                   </InputGroup>
                 :
@@ -837,6 +846,7 @@ export const MetricForm =
                       <Field
                         type='text'
                         name='probeversion'
+                        data-testid='probeversion'
                         className='form-control'
                         disabled={true}
                       />
@@ -847,6 +857,7 @@ export const MetricForm =
                       lists={list_probes}
                       icon='probes'
                       field='probeversion'
+                      data-testid='probeversion'
                       onselect_handler={(_, newValue) => {
                         let probeversion = probeversions.find(prv => prv.object_repr === newValue);
                         if (probeversion)
@@ -898,6 +909,7 @@ export const MetricForm =
                   className='form-control'
                   value={props.values.type === 'Active' ? props.values.probe.package : ''}
                   disabled={true}
+                  data-testid='package'
                 />
               </InputGroup>
               <FormText color='muted'>
@@ -954,6 +966,7 @@ export const MetricForm =
                 className='form-control'
                 component='textarea'
                 name='description'
+                data-testid='description'
                 disabled={isTenantSchema || isHistory || publicView}
               />
             </Col>
@@ -969,6 +982,7 @@ export const MetricForm =
                         <Field
                           type='text'
                           name='group'
+                          data-testid='group'
                           className='form-control'
                           disabled={true}
                         />
@@ -976,6 +990,7 @@ export const MetricForm =
                         <Field
                           component='select'
                           name='group'
+                          data-testid='group'
                           className='form-control custom-select'
                         >
                           {
@@ -1001,6 +1016,7 @@ export const MetricForm =
               <Field
                 type='text'
                 name='probeexecutable'
+                data-testid='probeexecutable'
                 className={`form-control ${props.errors.probeexecutable && props.touched.probeexecutable && 'border-danger'}`}
                 hidden={props.values.type === 'Passive'}
                 readOnly={isTenantSchema || isHistory || publicView}
@@ -1022,6 +1038,7 @@ export const MetricForm =
                   type='text'
                   name='parent'
                   className='form-control'
+                  data-testid='parent'
                   readOnly={true}
                 />
               :
@@ -1031,6 +1048,7 @@ export const MetricForm =
                     lists={metrictemplatelist}
                     field='parent'
                     icon='metrics'
+                    data-testid='parent'
                   />
                 </>
             }
@@ -1297,16 +1315,21 @@ export const MetricChange = (props) => {
     return (<ErrorComponent error={probeError}/>);
 
   else {
-    var groups = [];
-    var writePerm = false;
-    if (session.active) {
-      groups = session.userdetails.groups.metrics;
-      writePerm = session.userdetails.is_superuser || session.userdetails.groups.metrics.indexOf(metric.group) >= 0;
-    }
+    const writePerm = publicView ?
+      false
+    :
+      session.active ?
+        session.userdetails.is_superuser || session.userdetails.groups.metrics.indexOf(metric.group) >= 0
+      :
+        false;
 
-    if (!groups.includes(metric.group))
-      groups.push(metric.group);
-
+    const groups = session && session.active ?
+      session.userdetails.groups.metrics.indexOf(metric.group) < 0 ?
+        [...session.userdetails.groups.metrics, metric.group]
+      :
+        session.userdetails.groups.metrics
+    :
+      [metric.group];
 
     return (
       <BaseArgoView
