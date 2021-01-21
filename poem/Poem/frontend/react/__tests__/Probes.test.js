@@ -182,6 +182,23 @@ function renderAddView() {
 }
 
 
+function renderCloneView() {
+  const route = '/ui/probes/ams-probe/clone';
+  const history = createMemoryHistory({ initialEntries: [route] });
+
+  return {
+    ...render(
+      <Router history={history}>
+        <Route
+          path='/ui/probes/:name/clone'
+          render = { props => <ProbeComponent {...props} cloneview={true} /> }
+        />
+      </Router>
+    )
+  }
+}
+
+
 describe('Test list of probes on SuperAdmin POEM', () => {
   beforeAll(() => {
     Backend.mockImplementation(() => {
@@ -1087,6 +1104,246 @@ describe('Test probe addview', () => {
           repository: 'https://github.com/nagios-plugins/nagios-plugins',
           docurl: 'http://nagios-plugins.org/doc/man/check_nagios.html',
           cloned_from: ''
+        }
+      )
+    })
+
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>Error adding probe</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Error: 500 SERVER ERROR',
+      0,
+      expect.any(Function)
+    )
+  })
+})
+
+
+describe('Test probe cloneview', () => {
+  jest.spyOn(NotificationManager, 'success');
+  jest.spyOn(NotificationManager, 'error');
+
+  beforeAll(() => {
+    Backend.mockImplementation(() => {
+      return {
+        fetchData: (path) => {
+          switch (path) {
+            case '/api/v2/internal/probes/ams-probe':
+              return Promise.resolve(mockProbe)
+
+            case '/api/v2/internal/public_probes/ams-probe':
+              return Promise.resolve(mockProbe)
+
+            case '/api/v2/internal/metricsforprobes/ams-probe(0.1.11)':
+              return Promise.resolve(['argo.AMS-Check', 'test.AMS-Check'])
+
+            case '/api/v2/internal/public_metricsforprobes/ams-probe(0.1.11)':
+              return Promise.resolve(['argo.AMS-Check', 'test.AMS-Check'])
+
+            case '/api/v2/internal/packages':
+              return Promise.resolve(mockPackages)
+
+            case '/api/v2/internal/public_packages':
+              return Promise.resolve(mockPackages)
+          }
+        },
+        isTenantSchema: () => Promise.resolve(false),
+        addObject: mockAddObject
+      }
+    })
+  })
+
+  test('Test that page renders properly', async () => {
+    renderCloneView();
+
+    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /clone probe/i }).textContent).toBe('Clone probe');
+    })
+
+    const nameField = screen.getByTestId('name')
+    const versionField = screen.getByTestId('version');
+    const checkField = screen.queryByRole('checkbox', { name: /update/i });
+    const packageField = screen.getByTestId('autocomplete-pkg')
+    const repositoryField = screen.getByTestId('repository');
+    const docurlField = screen.getByTestId('docurl');
+    const descriptionField = screen.getByLabelText(/description/i);
+    const commentField = screen.getByLabelText(/comment/i)
+    const metricLinks = screen.queryAllByRole('link', { name: /ams-check/i })
+
+    expect(nameField.value).toBe('ams-probe');
+    expect(nameField).toBeEnabled();
+    expect(versionField.value).toBe('0.1.11');
+    expect(versionField).toBeDisabled();
+    expect(checkField).not.toBeInTheDocument();
+    expect(packageField.value).toBe('nagios-plugins-argo (0.1.11)');
+    expect(repositoryField.value).toBe('https://github.com/ARGOeu/nagios-plugins-argo');
+    expect(repositoryField).toBeEnabled();
+    expect(docurlField.value).toBe('https://github.com/ARGOeu/nagios-plugins-argo/blob/master/README.md')
+    expect(docurlField).toBeEnabled();
+    expect(descriptionField.value).toBe('Probe is inspecting AMS service by trying to publish and consume randomly generated messages.')
+    expect(descriptionField).toBeEnabled();
+    expect(commentField.value).toBe('Newer version.')
+    expect(commentField).toBeEnabled();
+    expect(metricLinks.length).toBe(0);
+
+    expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /history/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
+  })
+
+  test('Test save cloned probe', async () => {
+    mockAddObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
+    )
+
+    renderCloneView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /clone probe/i }).textContent).toBe('Clone probe')
+    })
+
+    const nameField = screen.getByTestId('name');
+    const packageField = screen.getByTestId('autocomplete-pkg');
+    const commentField = screen.getByLabelText(/comment/i)
+
+    fireEvent.change(nameField, { target: { value: 'cloned-ams-probe' } });
+    fireEvent.change(packageField, { target: { value: 'nagios-plugins-argo (0.1.12)' } });
+    const versionField = screen.getByTestId('version');
+    expect(versionField.value).toBe('0.1.12');
+    expect(versionField).toBeDisabled();
+
+    fireEvent.change(commentField, { target: { value: 'Changed name with the new version.' } })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /add/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddObject).toHaveBeenCalledWith(
+        '/api/v2/internal/probes/',
+        {
+          name: 'cloned-ams-probe',
+          package: 'nagios-plugins-argo (0.1.12)',
+          comment: 'Changed name with the new version.',
+          docurl: 'https://github.com/ARGOeu/nagios-plugins-argo/blob/master/README.md',
+          description: 'Probe is inspecting AMS service by trying to publish and consume randomly generated messages.',
+          repository: 'https://github.com/ARGOeu/nagios-plugins-argo',
+          cloned_from: '1'
+        }
+      )
+    })
+
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'Probe successfully added', 'Added', 2000
+    )
+  })
+
+  test('Test error in saving cloned probe with error message', async () => {
+    mockAddObject.mockReturnValueOnce(
+      Promise.resolve({
+        json: () => Promise.resolve({ detail: 'Probe with this name already exists.' }),
+        status: 400,
+        statusText: 'BAD REQUEST'
+      })
+    )
+
+    renderCloneView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /clone probe/i }).textContent).toBe('Clone probe')
+    })
+
+    const nameField = screen.getByTestId('name');
+    const packageField = screen.getByTestId('autocomplete-pkg');
+    const commentField = screen.getByLabelText(/comment/i)
+
+    fireEvent.change(nameField, { target: { value: 'test-ams-probe' } });
+    fireEvent.change(packageField, { target: { value: 'nagios-plugins-argo (0.1.12)' } });
+    const versionField = screen.getByTestId('version');
+    expect(versionField.value).toBe('0.1.12');
+    expect(versionField).toBeDisabled();
+
+    fireEvent.change(commentField, { target: { value: 'Changed name with the new version.' } })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddObject).toHaveBeenCalledWith(
+        '/api/v2/internal/probes/',
+        {
+          name: 'test-ams-probe',
+          package: 'nagios-plugins-argo (0.1.12)',
+          comment: 'Changed name with the new version.',
+          docurl: 'https://github.com/ARGOeu/nagios-plugins-argo/blob/master/README.md',
+          description: 'Probe is inspecting AMS service by trying to publish and consume randomly generated messages.',
+          repository: 'https://github.com/ARGOeu/nagios-plugins-argo',
+          cloned_from: '1'
+        }
+      )
+    })
+
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>Probe with this name already exists.</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Error: 400 BAD REQUEST',
+      0,
+      expect.any(Function)
+    )
+  })
+
+  test('Test error in saving cloned probe without error message', async () => {
+    mockAddObject.mockReturnValueOnce(
+      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
+    )
+
+    renderCloneView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /clone probe/i }).textContent).toBe('Clone probe')
+    })
+
+    const nameField = screen.getByTestId('name');
+    const packageField = screen.getByTestId('autocomplete-pkg');
+    const commentField = screen.getByLabelText(/comment/i)
+
+    fireEvent.change(nameField, { target: { value: 'test-ams-probe' } });
+    fireEvent.change(packageField, { target: { value: 'nagios-plugins-argo (0.1.12)' } });
+    const versionField = screen.getByTestId('version');
+    expect(versionField.value).toBe('0.1.12');
+    expect(versionField).toBeDisabled();
+
+    fireEvent.change(commentField, { target: { value: 'Changed name with the new version.' } })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddObject).toHaveBeenCalledWith(
+        '/api/v2/internal/probes/',
+        {
+          name: 'test-ams-probe',
+          package: 'nagios-plugins-argo (0.1.12)',
+          comment: 'Changed name with the new version.',
+          docurl: 'https://github.com/ARGOeu/nagios-plugins-argo/blob/master/README.md',
+          description: 'Probe is inspecting AMS service by trying to publish and consume randomly generated messages.',
+          repository: 'https://github.com/ARGOeu/nagios-plugins-argo',
+          cloned_from: '1'
         }
       )
     })
