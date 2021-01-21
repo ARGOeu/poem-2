@@ -16,6 +16,7 @@ jest.mock('../DataManager', () => {
 })
 
 const mockChangeObject = jest.fn();
+const mockAddObject = jest.fn();
 
 
 beforeEach(() => {
@@ -161,6 +162,23 @@ function renderChangeView(publicView=false) {
         </Router>
       )
     }
+}
+
+
+function renderAddView() {
+  const route = '/ui/probes/add';
+  const history = createMemoryHistory({ initialEntries: [route] });
+
+  return {
+    ...render(
+      <Router history={history}>
+        <Route
+          path='/ui/probes/add'
+          render = { props => <ProbeComponent {...props} addview={true} /> }
+        />
+      </Router>
+    )
+  }
 }
 
 
@@ -838,5 +856,249 @@ describe('Test probe changeview on tenant POEM', () => {
     expect(screen.getByRole('button', { name: /history/i }).closest('a')).toHaveAttribute('href', '/ui/probes/ams-probe/history')
     expect(screen.queryByRole('button', { name: /save/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
+  })
+})
+
+
+describe('Test probe addview', () => {
+  jest.spyOn(NotificationManager, 'success');
+  jest.spyOn(NotificationManager, 'error');
+
+  beforeAll(() => {
+    Backend.mockImplementation(() => {
+      return {
+        fetchData: (path) => {
+          switch (path) {
+            case '/api/v2/internal/packages':
+              return Promise.resolve(mockPackages)
+
+            case '/api/v2/internal/public_packages':
+              return Promise.resolve(mockPackages)
+          }
+        },
+        isTenantSchema: () => Promise.resolve(false),
+        addObject: mockAddObject
+      }
+    })
+  })
+
+  test('Test that page renders properly', async () => {
+    renderAddView();
+
+    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /add probe/i }).textContent).toBe('Add probe');
+    })
+
+    const nameField = screen.getByTestId('name')
+    const versionField = screen.getByTestId('version');
+    const checkField = screen.queryByRole('checkbox', { name: /update/i });
+    const packageField = screen.getByTestId('autocomplete-pkg');
+    const repositoryField = screen.getByTestId('repository');
+    const docurlField = screen.getByTestId('docurl');
+    const descriptionField = screen.getByLabelText(/description/i);
+    const commentField = screen.getByLabelText(/comment/i)
+    const metricLinks = screen.queryAllByRole('link');
+
+    expect(nameField.value).toBe('');
+    expect(nameField).toBeEnabled();
+    expect(versionField.value).toBe('');
+    expect(versionField).toBeDisabled();
+    expect(checkField).not.toBeInTheDocument();
+    expect(packageField.value).toBe('');
+    expect(packageField).toBeEnabled();
+    expect(repositoryField.value).toBe('');
+    expect(repositoryField).toBeEnabled();
+    expect(docurlField.value).toBe('');
+    expect(docurlField).toBeEnabled();
+    expect(descriptionField.value).toBe('');
+    expect(descriptionField).toBeEnabled();
+    expect(commentField.value).toBe('');
+    expect(commentField).toBeEnabled();
+    expect(metricLinks.length).toBe(0);
+
+    expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /history/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
+  })
+
+  test('Test adding a new probe and saving', async () => {
+    mockAddObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 201, statusText: 'CREATED' })
+    )
+
+    renderAddView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /add probe/i }).textContent).toBe('Add probe');
+    })
+
+    const nameField = screen.getByTestId('name')
+    const versionField = screen.getByTestId('version');
+    const packageField = screen.getByTestId('autocomplete-pkg');
+    const repositoryField = screen.getByTestId('repository');
+    const docurlField = screen.getByTestId('docurl');
+    const descriptionField = screen.getByLabelText(/description/i);
+    const commentField = screen.getByLabelText(/comment/i)
+
+    fireEvent.change(nameField, { target: { value: 'check_nagios' } });
+    fireEvent.change(packageField, { target: { value: 'nagios-plugins-argo (0.1.11)' } });
+    expect(versionField.value).toBe('0.1.11')
+    expect(versionField).toBeDisabled();
+    fireEvent.change(repositoryField, { target: { value: 'https://github.com/nagios-plugins/nagios-plugins' } });
+    fireEvent.change(docurlField, { target: { value: 'http://nagios-plugins.org/doc/man/check_nagios.html' } });
+    fireEvent.change(descriptionField, { target: { value: 'This plugin checks the status of the Nagios process on the local machine.' } })
+    fireEvent.change(commentField, { target: { value: 'Initial version.' } })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /add/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddObject).toHaveBeenCalledWith(
+        '/api/v2/internal/probes/',
+        {
+          name: 'check_nagios',
+          package: 'nagios-plugins-argo (0.1.11)',
+          description: 'This plugin checks the status of the Nagios process on the local machine.',
+          comment: 'Initial version.',
+          repository: 'https://github.com/nagios-plugins/nagios-plugins',
+          docurl: 'http://nagios-plugins.org/doc/man/check_nagios.html',
+          cloned_from: ''
+        }
+      )
+    })
+
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'Probe successfully added', 'Added', 2000
+    )
+  })
+
+  test('Test error adding a new probe with message', async () => {
+    mockAddObject.mockReturnValueOnce(
+      Promise.resolve({
+        json: () => Promise.resolve({ detail: 'Probe with this name already exists.' }),
+        status: 400,
+        statusText: 'BAD REQUEST'
+      })
+    )
+
+    renderAddView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /add probe/i }).textContent).toBe('Add probe');
+    })
+
+    const nameField = screen.getByTestId('name')
+    const versionField = screen.getByTestId('version');
+    const packageField = screen.getByTestId('autocomplete-pkg');
+    const repositoryField = screen.getByTestId('repository');
+    const docurlField = screen.getByTestId('docurl');
+    const descriptionField = screen.getByLabelText(/description/i);
+    const commentField = screen.getByLabelText(/comment/i)
+
+    fireEvent.change(nameField, { target: { value: 'check_nagios' } });
+    fireEvent.change(packageField, { target: { value: 'nagios-plugins-argo (0.1.11)' } });
+    expect(versionField.value).toBe('0.1.11')
+    expect(versionField).toBeDisabled();
+    fireEvent.change(repositoryField, { target: { value: 'https://github.com/nagios-plugins/nagios-plugins' } });
+    fireEvent.change(docurlField, { target: { value: 'http://nagios-plugins.org/doc/man/check_nagios.html' } });
+    fireEvent.change(descriptionField, { target: { value: 'This plugin checks the status of the Nagios process on the local machine.' } })
+    fireEvent.change(commentField, { target: { value: 'Initial version.' } })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /add/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddObject).toHaveBeenCalledWith(
+        '/api/v2/internal/probes/',
+        {
+          name: 'check_nagios',
+          package: 'nagios-plugins-argo (0.1.11)',
+          description: 'This plugin checks the status of the Nagios process on the local machine.',
+          comment: 'Initial version.',
+          repository: 'https://github.com/nagios-plugins/nagios-plugins',
+          docurl: 'http://nagios-plugins.org/doc/man/check_nagios.html',
+          cloned_from: ''
+        }
+      )
+    })
+
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>Probe with this name already exists.</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Error: 400 BAD REQUEST',
+      0,
+      expect.any(Function)
+    )
+  })
+
+  test('Test error adding a new probe without message', async () => {
+    mockAddObject.mockReturnValueOnce(
+      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
+    )
+
+    renderAddView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /add probe/i }).textContent).toBe('Add probe');
+    })
+
+    const nameField = screen.getByTestId('name')
+    const versionField = screen.getByTestId('version');
+    const packageField = screen.getByTestId('autocomplete-pkg');
+    const repositoryField = screen.getByTestId('repository');
+    const docurlField = screen.getByTestId('docurl');
+    const descriptionField = screen.getByLabelText(/description/i);
+    const commentField = screen.getByLabelText(/comment/i)
+
+    fireEvent.change(nameField, { target: { value: 'check_nagios' } });
+    fireEvent.change(packageField, { target: { value: 'nagios-plugins-argo (0.1.11)' } });
+    expect(versionField.value).toBe('0.1.11')
+    expect(versionField).toBeDisabled();
+    fireEvent.change(repositoryField, { target: { value: 'https://github.com/nagios-plugins/nagios-plugins' } });
+    fireEvent.change(docurlField, { target: { value: 'http://nagios-plugins.org/doc/man/check_nagios.html' } });
+    fireEvent.change(descriptionField, { target: { value: 'This plugin checks the status of the Nagios process on the local machine.' } })
+    fireEvent.change(commentField, { target: { value: 'Initial version.' } })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /add/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddObject).toHaveBeenCalledWith(
+        '/api/v2/internal/probes/',
+        {
+          name: 'check_nagios',
+          package: 'nagios-plugins-argo (0.1.11)',
+          description: 'This plugin checks the status of the Nagios process on the local machine.',
+          comment: 'Initial version.',
+          repository: 'https://github.com/nagios-plugins/nagios-plugins',
+          docurl: 'http://nagios-plugins.org/doc/man/check_nagios.html',
+          cloned_from: ''
+        }
+      )
+    })
+
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>Error adding probe</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Error: 500 SERVER ERROR',
+      0,
+      expect.any(Function)
+    )
   })
 })
