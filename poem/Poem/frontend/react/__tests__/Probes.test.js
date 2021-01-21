@@ -766,3 +766,77 @@ describe('Test probe changeview on SuperAdmin POEM', () => {
     )
   })
 })
+
+
+describe('Test probe changeview on tenant POEM', () => {
+  beforeAll(() => {
+    Backend.mockImplementation(() => {
+      return {
+        fetchData: (path) => {
+          switch (path) {
+            case '/api/v2/internal/probes/ams-probe':
+              return Promise.resolve(mockProbe)
+
+            case '/api/v2/internal/public_probes/ams-probe':
+              return Promise.resolve(mockProbe)
+
+            case '/api/v2/internal/metricsforprobes/ams-probe(0.1.11)':
+              return Promise.resolve(['argo.AMS-Check', 'test.AMS-Check'])
+
+            case '/api/v2/internal/public_metricsforprobes/ams-probe(0.1.11)':
+              return Promise.resolve(['argo.AMS-Check', 'test.AMS-Check'])
+
+            case '/api/v2/internal/packages':
+              return Promise.resolve(mockPackages)
+
+            case '/api/v2/internal/public_packages':
+              return Promise.resolve(mockPackages)
+          }
+        },
+        isTenantSchema: () => Promise.resolve(true)
+      }
+    })
+  })
+
+  test('Test that page renders properly', async () => {
+    renderChangeView();
+
+    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /probe details/i }).textContent).toBe('Probe details');
+    })
+
+    const nameField = screen.getByTestId('name')
+    const versionField = screen.getByTestId('version');
+    const checkField = screen.queryByRole('checkbox', { name: /update/i });
+    const packageField = screen.getByTestId('pkg')
+    const urlField = screen.queryAllByRole('link', { name: /argoeu/i })
+    const repositoryField = urlField[0];
+    const docurlField = urlField[1];
+    const descriptionField = screen.getByLabelText(/description/i);
+    const commentField = screen.getByLabelText(/comment/i)
+    const metricLinks = screen.getAllByRole('link', { name: /ams-check/i })
+
+    expect(nameField.value).toBe('ams-probe');
+    expect(nameField).toBeDisabled();
+    expect(versionField.value).toBe('0.1.11');
+    expect(versionField).toBeDisabled();
+    expect(checkField).not.toBeInTheDocument();
+    expect(packageField.value).toBe('nagios-plugins-argo (0.1.11)');
+    expect(repositoryField.closest('a')).toHaveAttribute('href', 'https://github.com/ARGOeu/nagios-plugins-argo');
+    expect(docurlField.closest('a')).toHaveAttribute('href', 'https://github.com/ARGOeu/nagios-plugins-argo/blob/master/README.md')
+    expect(descriptionField.value).toBe('Probe is inspecting AMS service by trying to publish and consume randomly generated messages.')
+    expect(descriptionField).toBeDisabled();
+    expect(commentField.value).toBe('Newer version.')
+    expect(commentField).toBeDisabled();
+
+    expect(metricLinks[0].closest('a')).toHaveAttribute('href', '/ui/probes/ams-probe/argo.AMS-Check');
+    expect(metricLinks[1].closest('a')).toHaveAttribute('href', '/ui/probes/ams-probe/test.AMS-Check');
+
+    expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /history/i }).closest('a')).toHaveAttribute('href', '/ui/probes/ams-probe/history')
+    expect(screen.queryByRole('button', { name: /save/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
+  })
+})
