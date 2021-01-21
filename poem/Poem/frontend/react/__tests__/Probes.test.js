@@ -6,6 +6,7 @@ import { Route, Router } from 'react-router-dom';
 import { ProbeComponent, ProbeList } from '../Probes';
 import { Backend } from '../DataManager';
 import { queryCache } from 'react-query';
+import { NotificationManager } from 'react-notifications';
 
 
 jest.mock('../DataManager', () => {
@@ -13,6 +14,8 @@ jest.mock('../DataManager', () => {
     Backend: jest.fn()
   }
 })
+
+const mockChangeObject = jest.fn();
 
 
 beforeEach(() => {
@@ -74,6 +77,12 @@ const mockPackages = [
   {
     'name': 'nagios-plugins-argo',
     'version': '0.1.11',
+    'use_present_version': false,
+    'repos': ['repo-1 (CentOS 6)', 'repo-2 (CentOS 7)']
+  },
+  {
+    'name': 'nagios-plugins-argo',
+    'version': '0.1.12',
     'use_present_version': false,
     'repos': ['repo-1 (CentOS 6)', 'repo-2 (CentOS 7)']
   },
@@ -420,6 +429,9 @@ describe('Test list of probes on tenant POEM', () => {
 
 
 describe('Test probe changeview on SuperAdmin POEM', () => {
+  jest.spyOn(NotificationManager, 'success');
+  jest.spyOn(NotificationManager, 'error');
+
   beforeAll(() => {
     Backend.mockImplementation(() => {
       return {
@@ -444,7 +456,8 @@ describe('Test probe changeview on SuperAdmin POEM', () => {
               return Promise.resolve(mockPackages)
           }
         },
-        isTenantSchema: () => Promise.resolve(false)
+        isTenantSchema: () => Promise.resolve(false),
+        changeObject: mockChangeObject
       }
     })
   })
@@ -535,4 +548,221 @@ describe('Test probe changeview on SuperAdmin POEM', () => {
     expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
   })
 
+  test('Test change probe and save', async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
+    )
+
+    renderChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change probe/i }).textContent).toBe('Change probe')
+    })
+
+    const nameField = screen.getByTestId('name');
+    const checkField = screen.getByRole('checkbox', { name: /update/i });
+    const packageField = screen.getByTestId('autocomplete-pkg');
+    const commentField = screen.getByLabelText(/comment/i)
+
+    fireEvent.change(nameField, { target: { value: 'new-ams-probe' } });
+    fireEvent.change(packageField, { target: { value: 'nagios-plugins-argo (0.1.12)' } });
+    const versionField = screen.getByTestId('version');
+    expect(versionField.value).toBe('0.1.12');
+    expect(versionField).toBeDisabled();
+
+    fireEvent.click(checkField);
+    fireEvent.change(commentField, { target: { value: 'Changed name with the new version.' } })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        '/api/v2/internal/probes/',
+        {
+          id: '1',
+          name: 'new-ams-probe',
+          package: 'nagios-plugins-argo (0.1.12)',
+          comment: 'Changed name with the new version.',
+          docurl: 'https://github.com/ARGOeu/nagios-plugins-argo/blob/master/README.md',
+          description: 'Probe is inspecting AMS service by trying to publish and consume randomly generated messages.',
+          repository: 'https://github.com/ARGOeu/nagios-plugins-argo',
+          update_metrics: true
+        }
+      )
+    })
+
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'Probe successfully changed', 'Changed', 2000
+    )
+  })
+
+  test('Test change probe without metric template update and save', async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
+    )
+
+    renderChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change probe/i }).textContent).toBe('Change probe')
+    })
+
+    const nameField = screen.getByTestId('name');
+    const packageField = screen.getByTestId('autocomplete-pkg');
+    const commentField = screen.getByLabelText(/comment/i)
+
+    fireEvent.change(nameField, { target: { value: 'new-ams-probe' } });
+    fireEvent.change(packageField, { target: { value: 'nagios-plugins-argo (0.1.12)' } });
+    const versionField = screen.getByTestId('version');
+    expect(versionField.value).toBe('0.1.12');
+    expect(versionField).toBeDisabled();
+
+    fireEvent.change(commentField, { target: { value: 'Changed name with the new version.' } })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        '/api/v2/internal/probes/',
+        {
+          id: '1',
+          name: 'new-ams-probe',
+          package: 'nagios-plugins-argo (0.1.12)',
+          comment: 'Changed name with the new version.',
+          docurl: 'https://github.com/ARGOeu/nagios-plugins-argo/blob/master/README.md',
+          description: 'Probe is inspecting AMS service by trying to publish and consume randomly generated messages.',
+          repository: 'https://github.com/ARGOeu/nagios-plugins-argo',
+          update_metrics: false
+        }
+      )
+    })
+
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'Probe successfully changed', 'Changed', 2000
+    )
+  })
+
+  test('Test error in saving probe with error message', async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({
+        json: () => Promise.resolve({ detail: 'Probe with this name already exists.' }),
+        status: 400,
+        statusText: 'BAD REQUEST'
+      })
+    )
+
+    renderChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change probe/i }).textContent).toBe('Change probe')
+    })
+
+    const nameField = screen.getByTestId('name');
+    const packageField = screen.getByTestId('autocomplete-pkg');
+    const commentField = screen.getByLabelText(/comment/i)
+
+    fireEvent.change(nameField, { target: { value: 'test-ams-probe' } });
+    fireEvent.change(packageField, { target: { value: 'nagios-plugins-argo (0.1.12)' } });
+    const versionField = screen.getByTestId('version');
+    expect(versionField.value).toBe('0.1.12');
+    expect(versionField).toBeDisabled();
+
+    fireEvent.change(commentField, { target: { value: 'Changed name with the new version.' } })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        '/api/v2/internal/probes/',
+        {
+          id: '1',
+          name: 'test-ams-probe',
+          package: 'nagios-plugins-argo (0.1.12)',
+          comment: 'Changed name with the new version.',
+          docurl: 'https://github.com/ARGOeu/nagios-plugins-argo/blob/master/README.md',
+          description: 'Probe is inspecting AMS service by trying to publish and consume randomly generated messages.',
+          repository: 'https://github.com/ARGOeu/nagios-plugins-argo',
+          update_metrics: false
+        }
+      )
+    })
+
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>Probe with this name already exists.</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Error: 400 BAD REQUEST',
+      0,
+      expect.any(Function)
+    )
+  })
+
+  test('Test error in saving probe without error message', async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
+    )
+
+    renderChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change probe/i }).textContent).toBe('Change probe')
+    })
+
+    const nameField = screen.getByTestId('name');
+    const packageField = screen.getByTestId('autocomplete-pkg');
+    const commentField = screen.getByLabelText(/comment/i)
+
+    fireEvent.change(nameField, { target: { value: 'test-ams-probe' } });
+    fireEvent.change(packageField, { target: { value: 'nagios-plugins-argo (0.1.12)' } });
+    const versionField = screen.getByTestId('version');
+    expect(versionField.value).toBe('0.1.12');
+    expect(versionField).toBeDisabled();
+
+    fireEvent.change(commentField, { target: { value: 'Changed name with the new version.' } })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        '/api/v2/internal/probes/',
+        {
+          id: '1',
+          name: 'test-ams-probe',
+          package: 'nagios-plugins-argo (0.1.12)',
+          comment: 'Changed name with the new version.',
+          docurl: 'https://github.com/ARGOeu/nagios-plugins-argo/blob/master/README.md',
+          description: 'Probe is inspecting AMS service by trying to publish and consume randomly generated messages.',
+          repository: 'https://github.com/ARGOeu/nagios-plugins-argo',
+          update_metrics: false
+        }
+      )
+    })
+
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>Error changing probe</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Error: 500 SERVER ERROR',
+      0,
+      expect.any(Function)
+    )
+  })
 })
