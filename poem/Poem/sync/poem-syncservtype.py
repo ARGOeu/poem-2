@@ -41,9 +41,8 @@ def tenant_servtype_data(tenant):
 
 def should_sync(tenant):
     sections = config.sections()
-    found = filter(lambda sec: 'SYNC_' + tenant.upper() in sec, sections)
 
-    if len(list(found)) > 0:
+    if 'SYNC_' + tenant.upper() in sections:
         return True
     else:
         return False
