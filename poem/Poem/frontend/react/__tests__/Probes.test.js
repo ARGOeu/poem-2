@@ -3,7 +3,7 @@ import '@testing-library/jest-dom/extend-expect';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { createMemoryHistory } from 'history';
 import { Route, Router } from 'react-router-dom';
-import { ProbeComponent, ProbeList } from '../Probes';
+import { ProbeComponent, ProbeList, ProbeVersionDetails } from '../Probes';
 import { Backend } from '../DataManager';
 import { queryCache } from 'react-query';
 import { NotificationManager } from 'react-notifications';
@@ -108,6 +108,44 @@ const mockPackages = [
 ];
 
 
+const mockProbeVersions = [
+  {
+    id: '6',
+    object_repr: 'ams-probe (0.1.12)',
+    fields: {
+      name: 'ams-probe',
+      version: '0.1.12',
+      package: 'nagios-plugins-argo (0.1.12)',
+      description: 'Probe is inspecting AMS service.',
+      comment: 'Newer version',
+      repository: 'https://github.com/ARGOeu/nagios-plugins-argo',
+      docurl: 'https://github.com/ARGOeu/nagios-plugins-argo/blob/master/README.md'
+    },
+    user: 'testuser',
+    date_created: '2020-12-15 09:28:14',
+    comment: 'Newer version',
+    version: '0.1.12'
+  },
+  {
+    id: '3',
+    object_repr: 'ams-probe (0.1.11)',
+    fields: {
+      name: 'ams-probe',
+      version: '0.1.11',
+      package: 'nagios-plugins-argo (0.1.11)',
+      description: 'Probe is inspecting AMS service.',
+      comment: 'Initial version',
+      repository: 'https://github.com/ARGOeu/nagios-plugins-argo',
+      docurl: 'https://github.com/ARGOeu/nagios-plugins-argo/blob/master/README.md'
+    },
+    user: 'testuser',
+    date_created: '2020-11-30 08:43:25',
+    comment: 'Initial version',
+    version: '0.1.11'
+  }
+];
+
+
 function renderListView(publicView=false) {
   const route = `/ui/${publicView ? 'public_' : ''}probes`;
   const history = createMemoryHistory({ initialEntries: [route] });
@@ -196,6 +234,35 @@ function renderCloneView() {
       </Router>
     )
   }
+}
+
+
+function renderVersionDetailsView(publicView=false) {
+  const route = `/ui/${publicView ? 'public_' : ''}probes/ams-probe/history/0.1.12`;
+  const history = createMemoryHistory({ initialEntries: [route] });
+
+  if (publicView)
+    return {
+      ...render(
+        <Router history={history}>
+          <Route
+            path='/ui/public_probes/:name/history/:version'
+            render={ props => <ProbeVersionDetails {...props} publicView={true} /> }
+          />
+        </Router>
+      )
+    }
+  else
+    return {
+      ...render(
+        <Router history={history}>
+          <Route
+            path='/ui/probes/:name/history/:version'
+            render = { props => <ProbeVersionDetails {...props} /> }
+          />
+        </Router>
+      )
+    }
 }
 
 
@@ -1358,4 +1425,106 @@ describe('Test probe cloneview', () => {
       expect.any(Function)
     )
   })
+})
+
+
+describe('Test probe version details view', () => {
+  beforeAll(() => {
+    Backend.mockImplementation(() => {
+      return {
+        fetchData: (path) => {
+          switch (path) {
+            case '/api/v2/internal/version/probe/ams-probe':
+              return Promise.resolve(mockProbeVersions)
+
+            case '/api/v2/internal/public_version/probe/ams-probe':
+              return Promise.resolve(mockProbeVersions)
+          }
+        }
+      }
+    })
+  })
+
+  test('Test page renders properly', async () => {
+    renderVersionDetailsView();
+
+    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /ams-probe/i }).textContent).toBe('ams-probe (0.1.12)')
+    })
+
+    const nameField = screen.getByTestId('name')
+    const versionField = screen.getByTestId('version');
+    const checkField = screen.queryByRole('checkbox', { name: /update/i });
+    const packageField = screen.getByTestId('pkg')
+    const linkFields = screen.getAllByRole('link', { name: /github/i });
+    const repositoryField = linkFields[0];
+    const docurlField = linkFields[1];
+    const descriptionField = screen.getByLabelText(/description/i);
+    const commentField = screen.getByLabelText(/comment/i)
+    const metricLinks = screen.queryAllByRole('link', { name: /ams-check/i })
+
+    expect(nameField.value).toBe('ams-probe');
+    expect(nameField).toBeDisabled();
+    expect(versionField.value).toBe('0.1.12');
+    expect(versionField).toBeDisabled();
+    expect(checkField).not.toBeInTheDocument();
+    expect(packageField.value).toBe('nagios-plugins-argo (0.1.12)');
+    expect(packageField).toBeDisabled();
+    expect(repositoryField.closest('a')).toHaveAttribute('href', 'https://github.com/ARGOeu/nagios-plugins-argo');
+    expect(docurlField.closest('a')).toHaveAttribute('href', 'https://github.com/ARGOeu/nagios-plugins-argo/blob/master/README.md')
+    expect(descriptionField.value).toBe('Probe is inspecting AMS service.');
+    expect(descriptionField).toBeDisabled();
+    expect(commentField.value).toBe('Newer version');
+    expect(commentField).toBeDisabled();
+    expect(metricLinks.length).toBe(0);
+
+    expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /history/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /save/i })).not.toBeInTheDocument();
+  })
+
+  test('Test public page renders properly', async () => {
+    renderVersionDetailsView(true);
+
+    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /ams-probe/i }).textContent).toBe('ams-probe (0.1.12)')
+    })
+
+    const nameField = screen.getByTestId('name')
+    const versionField = screen.getByTestId('version');
+    const checkField = screen.queryByRole('checkbox', { name: /update/i });
+    const packageField = screen.getByTestId('pkg')
+    const linkFields = screen.getAllByRole('link', { name: /github/i });
+    const repositoryField = linkFields[0];
+    const docurlField = linkFields[1];
+    const descriptionField = screen.getByLabelText(/description/i);
+    const commentField = screen.getByLabelText(/comment/i)
+    const metricLinks = screen.queryAllByRole('link', { name: /ams-check/i })
+
+    expect(nameField.value).toBe('ams-probe');
+    expect(nameField).toBeDisabled();
+    expect(versionField.value).toBe('0.1.12');
+    expect(versionField).toBeDisabled();
+    expect(checkField).not.toBeInTheDocument();
+    expect(packageField.value).toBe('nagios-plugins-argo (0.1.12)');
+    expect(packageField).toBeDisabled();
+    expect(repositoryField.closest('a')).toHaveAttribute('href', 'https://github.com/ARGOeu/nagios-plugins-argo');
+    expect(docurlField.closest('a')).toHaveAttribute('href', 'https://github.com/ARGOeu/nagios-plugins-argo/blob/master/README.md')
+    expect(descriptionField.value).toBe('Probe is inspecting AMS service.');
+    expect(descriptionField).toBeDisabled();
+    expect(commentField.value).toBe('Newer version');
+    expect(commentField).toBeDisabled();
+    expect(metricLinks.length).toBe(0);
+
+    expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /history/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /save/i })).not.toBeInTheDocument();
+  })
+
 })
