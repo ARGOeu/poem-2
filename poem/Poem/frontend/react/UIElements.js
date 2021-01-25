@@ -904,14 +904,14 @@ export const _AutocompleteField = ({lists=[], field, val, err, setFieldValue, ic
             <div className='input-group-prepend'>
               <span className='input-group-text' id='basic-addon1'>{label}</span>
             </div>
-            <input {...inputProps} type='text'
+            <input {...inputProps} type='text' data-testid={`autocomplete-${field}`}
             className={`form-control ${err && touched && 'border-danger'}`} aria-label='label' />
           </div>
           {!hide_error && err && touched && <div style={{color: '#FF0000', fontSize: 'small'}}>{err}</div>}
         </div>
       );
     else
-      return (<input {...inputProps} type='text' className='form-control'/>);
+      return (<input {...inputProps} type='text' data-testid={`autocomplete-${field}`} className='form-control'/>);
   }
 
   return (

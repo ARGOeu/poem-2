@@ -95,17 +95,13 @@ export const MetricTemplateComponent = (props) => {
       if (!addview) {
         let metrictemplate = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}metrictemplates/${name}`);
 
-        let tags = []
-        metrictemplate.tags.forEach(tag => tags.push({value: tag, label: tag}));
-        metrictemplate.tags = tags;
-
         if (metrictemplate.probeversion) {
           let probe = {};
           allProbeVersions.forEach(prv => {
             if (prv.object_repr === metrictemplate.probeversion)
               probe = prv.fields;
           });
-              metrictemplate.probe = probe;
+          metrictemplate.probe = probe;
         }
 
         if (metrictemplate.attribute.length === 0)
@@ -125,8 +121,8 @@ export const MetricTemplateComponent = (props) => {
         if (metrictemplate.fileparameter.length === 0)
           metrictemplate.fileparameter = [{'key': '', 'value': ''}];
 
-          return metrictemplate;
-        }
+        return metrictemplate;
+      }
     },
     { enabled: allProbeVersions && !addview, }
   );
@@ -156,6 +152,8 @@ export const MetricTemplateComponent = (props) => {
     formValues.tags.forEach(tag => tagNames.push(tag.value));
     let unique = tagNames.filter( onlyUnique );
 
+    const empty_field = [{ key: '', value: '' }];
+
     if (addview || cloneview) {
       let cloned_from = undefined;
       if (cloneview) {
@@ -169,19 +167,19 @@ export const MetricTemplateComponent = (props) => {
         {
           cloned_from: cloned_from,
           name: formValues.name,
-          probeversion: formValues.probeversion,
+          probeversion: formValues.type === 'Active' ? formValues.probeversion : '',
           mtype: formValues.type,
           tags: unique,
           description: formValues.description,
-          probeexecutable: formValues.probeexecutable,
+          probeexecutable: formValues.type === 'Active' ? formValues.probeexecutable : '',
           parent: formValues.parent,
-          config: formValues.config,
-          attribute: formValues.attributes,
-          dependency: formValues.dependency,
-          parameter: formValues.parameter,
+          config: formValues.type === 'Active' ? formValues.config : empty_field,
+          attribute: formValues.type === 'Active' ? formValues.attributes : empty_field,
+          dependency: formValues.type === 'Active' ? formValues.dependency : empty_field,
+          parameter: formValues.type === 'Active' ? formValues.parameter : empty_field,
           flags: formValues.flags,
-          files: formValues.file_attributes,
-          fileparameter: formValues.file_parameters
+          files: formValues.type === 'Active' ? formValues.file_attributes : empty_field,
+          fileparameter: formValues.type === 'Active' ? formValues.file_parameters : empty_field
         }
       );
 
@@ -210,19 +208,20 @@ export const MetricTemplateComponent = (props) => {
         {
           id: formValues.id,
           name: formValues.name,
-          probeversion: formValues.probeversion,
+          probeversion: formValues.type === 'Active' ? formValues.probeversion : '',
           mtype: formValues.type,
           tags: unique,
           description: formValues.description,
-          probeexecutable: formValues.probeexecutable,
+          probeexecutable: formValues.type === 'Active' ? formValues.probeexecutable : '',
           parent: formValues.parent,
-          config: formValues.config,
-          attribute: formValues.attributes,
-          dependency: formValues.dependency,
-          parameter: formValues.parameter,
+          config: formValues.type === 'Active' ? formValues.config : empty_field,
+          attribute: formValues.type === 'Active' ? formValues.attributes : empty_field,
+          dependency: formValues.type === 'Active' ? formValues.dependency : empty_field,
+          parameter: formValues.type === 'Active' ? formValues.parameter : empty_field,
           flags: formValues.flags,
-          files: formValues.file_attributes,
-          fileparameter: formValues.file_parameters
+          files: formValues.type === 'Active' ? formValues.file_attributes : empty_field,
+          fileparameter: formValues.type === 'Active' ? formValues.file_parameters : empty_field
+
         }
       );
 
@@ -296,6 +295,10 @@ export const MetricTemplateComponent = (props) => {
     return (<ErrorComponent error={listMetricTemplatesError.message}/>);
 
   else {
+    var tags = [];
+    if (metricTemplate)
+      metricTemplate.tags.forEach(tag => tags.push({ value: tag, label: tag }));
+
     return (
       <BaseArgoView
         resourcename={(tenantview || publicView) ? 'Metric template details' : 'metric template'}
@@ -346,7 +349,7 @@ export const MetricTemplateComponent = (props) => {
             flags: metricTemplate ? metricTemplate.flags : [{'key': '', 'value': ''}],
             file_attributes: metricTemplate ? metricTemplate.files : [{'key': '', 'value': ''}],
             file_parameters: metricTemplate ? metricTemplate.fileparameter : [{'key': '', 'value': ''}],
-            tags: metricTemplate ? metricTemplate.tags : [],
+            tags: tags,
             probe: metricTemplate ? metricTemplate.probe : {'package': ''}
           }}
           onSubmit = {(values) => onSubmitHandle(values)}
@@ -354,7 +357,7 @@ export const MetricTemplateComponent = (props) => {
           enableReinitialize={true}
         >
           {props => (
-            <Form>
+            <Form data-testid='metric-form'>
               <MetricForm
                 {...props}
                 obj_label='metrictemplate'
@@ -403,7 +406,6 @@ export const MetricTemplateVersionDetails = (props) => {
   const name = props.match.params.name;
   const version = props.match.params.version;
   const publicView = props.publicView;
-
 
   const [metricTemplate, setMetricTemplate] = useState(null);
   const [probe, setProbe] = useState({'package': ''});
