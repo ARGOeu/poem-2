@@ -22,8 +22,10 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faTimes, faSearch } from '@fortawesome/free-solid-svg-icons';
 import ReactDiffViewer from 'react-diff-viewer';
 import { useQuery, queryCache } from 'react-query';
+import PapaParse from 'papaparse';
 
 import './MetricProfiles.css';
+import ButtonGroup from 'reactstrap/lib/ButtonGroup';
 
 
 export const MetricProfilesClone = (props) => <MetricProfilesComponent cloneview={true} {...props}/>;
@@ -941,6 +943,27 @@ export const MetricProfilesComponent = (props) => {
                 fieldsdisable={publicView}
               />
               <ParagraphTitle title='Metric instances'/>
+              <div className='mb-1'>
+                <ButtonGroup>
+                  {
+                    !(addview && cloneview) &&
+                      <Button
+                        color='info'
+                        size='sm'
+                        onClick={() => {
+                          let csvContent = PapaParse.unparse(props.values.view_services);
+                          const link = document.createElement('a');
+                          link.setAttribute('href', encodeURI(`data:text/csv;charset=utf8,\ufeff${csvContent}`));
+                          link.setAttribute('download', `${props.values.name}.csv`);
+                          link.click();
+                          link.remove();
+                        }}
+                      >
+                        Export table
+                      </Button>
+                  }
+                </ButtonGroup>
+              </div>
               {
                 !publicView ?
                   <FieldArray
