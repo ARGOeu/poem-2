@@ -923,9 +923,12 @@ export const MetricProfilesComponent = (props) => {
             <DropdownMenu>
               <DropdownItem
                 onClick={() => {
-                  let csvContent = PapaParse.unparse(viewServices);
+                  let csvContent = [];
+                  viewServices.forEach((service) => {
+                    csvContent.push({service: service.service, metric: service.metric})
+                  })
                   const link = document.createElement('a');
-                  link.setAttribute('href', encodeURI(`data:text/csv;charset=utf8,\ufeff${csvContent}`));
+                  link.setAttribute('href', encodeURI(`data:text/csv;charset=utf8,\ufeff${PapaParse.unparse(csvContent)}`));
                   link.setAttribute('download', `${profile_name}.csv`);
                   link.click();
                   link.remove();
@@ -948,7 +951,7 @@ export const MetricProfilesComponent = (props) => {
                   complete: (results) => {
                     var imported = viewServices;
                     results.data.forEach((item) => {
-                      if ('service' in item) {
+                      if ('service' in item && 'metric' in item) {
                         if (imported.filter(obj => {return obj.service === item.service && obj.metric === item.metric}).length === 0)
                           imported.push(item)
                       }
