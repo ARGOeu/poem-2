@@ -320,6 +320,7 @@ export const MetricProfilesComponent = (props) => {
   const [searchServiceFlavour, setSearchServiceFlavour] = useState("");
   const [formikValues, setFormikValues] = useState({})
   const querykey = `metricprofiles_${addview ? 'addview' : `${profile_name}_${publicView ? 'publicview' : 'changeview'}`}`;
+  const hiddenFileInput = React.useRef(null);
 
   const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails } = useQuery(
     `session_userdetails`, async () => {
@@ -962,6 +963,33 @@ export const MetricProfilesComponent = (props) => {
                         Export table
                       </Button>
                   }
+                  <Button
+                    color='info'
+                    size='sm'
+                    onClick={() => {hiddenFileInput.current.click()}}
+                  >
+                    Import table
+                  </Button>
+                  <input
+                    type='file'
+                    ref={hiddenFileInput}
+                    onChange={(e) => {
+                      PapaParse.parse(e.target.files[0], {
+                        header: true,
+                        complete: (results) => {
+                          var imported = viewServices;
+                          results.data.forEach((item) => {
+                            if ('service' in item) {
+                              if (imported.filter(obj => {return obj.service === item.service && obj.metric === item.metric}).length === 0)
+                                imported.push(item)
+                            }
+                          })
+                          setViewServices(ensureAlignedIndexes(imported).sort(sortServices));
+                        }
+                      })
+                    }}
+                    style={{display: 'none'}}
+                  />
                 </ButtonGroup>
               </div>
               {
