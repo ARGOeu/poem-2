@@ -772,7 +772,10 @@ export const BaseArgoView = ({resourcename='', location=undefined,
           <h2 className="ml-3 mt-1 mb-4">{resourcename}</h2>
         :
           addview ?
-            <h2 className="ml-3 mt-1 mb-4">{`Add ${resourcename}`}</h2>
+            <React.Fragment>
+              <h2 className="ml-3 mt-1 mb-4">{`Add ${resourcename}`}</h2>
+              { extra_button }
+            </React.Fragment>
           :
             listview ?
               <React.Fragment>
@@ -817,9 +820,7 @@ export const BaseArgoView = ({resourcename='', location=undefined,
                   <React.Fragment>
                     <h2 className="ml-3 mt-1 mb-4">{`Change ${resourcename}`}</h2>
                     <ButtonToolbar>
-                      {
-                        extra_button
-                      }
+                      { extra_button }
                       {
                           clone && !publicview &&
                             <Link className="btn btn-secondary mr-2" to={location.pathname + "/clone"} role="button">Clone</Link>

@@ -933,6 +933,7 @@ export const MetricProfilesComponent = (props) => {
                   link.click();
                   link.remove();
                 }}
+                disabled={addview}
               >
                 Export to .csv
               </DropdownItem>
@@ -956,6 +957,12 @@ export const MetricProfilesComponent = (props) => {
                           imported.push(item)
                       }
                     })
+                    // remove empty line if there is any
+                    imported = imported.filter(
+                      obj => {
+                        return obj.service !== '' && obj.metric !== ''
+                      }
+                    )
                     setViewServices(ensureAlignedIndexes(imported).sort(sortServices));
                   }
                 })
