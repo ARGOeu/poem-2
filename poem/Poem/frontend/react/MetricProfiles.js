@@ -916,7 +916,52 @@ export const MetricProfilesComponent = (props) => {
         toggle={() => setAreYouSureModal(!areYouSureModal)}
         addview={publicView ? !publicView : addview}
         publicview={publicView}
-        submitperm={write_perm}>
+        submitperm={write_perm}
+        extra_button={
+          <ButtonDropdown className='mr-2' isOpen={dropdownOpen} toggle={() => setDropdownOpen(!dropdownOpen)}>
+            <DropdownToggle caret color='info'>Import/export</DropdownToggle>
+            <DropdownMenu>
+              <DropdownItem
+                onClick={() => {
+                  let csvContent = PapaParse.unparse(viewServices);
+                  const link = document.createElement('a');
+                  link.setAttribute('href', encodeURI(`data:text/csv;charset=utf8,\ufeff${csvContent}`));
+                  link.setAttribute('download', `${profile_name}.csv`);
+                  link.click();
+                  link.remove();
+                }}
+              >
+                Export to .csv
+              </DropdownItem>
+              <DropdownItem
+                onClick={() => {hiddenFileInput.current.click()}}
+              >
+                Import from .csv
+              </DropdownItem>
+            </DropdownMenu>
+            <input
+              type='file'
+              ref={hiddenFileInput}
+              onChange={(e) => {
+                PapaParse.parse(e.target.files[0], {
+                  header: true,
+                  complete: (results) => {
+                    var imported = viewServices;
+                    results.data.forEach((item) => {
+                      if ('service' in item) {
+                        if (imported.filter(obj => {return obj.service === item.service && obj.metric === item.metric}).length === 0)
+                          imported.push(item)
+                      }
+                    })
+                    setViewServices(ensureAlignedIndexes(imported).sort(sortServices));
+                  }
+                })
+              }}
+              style={{display: 'none'}}
+            />
+          </ButtonDropdown>
+        }
+      >
         <Formik
           initialValues = {{
             id: metricProfile.profile.id,
@@ -949,50 +994,6 @@ export const MetricProfilesComponent = (props) => {
                 fieldsdisable={publicView}
               />
               <ParagraphTitle title='Metric instances'/>
-              <div className='mb-1'>
-                <ButtonDropdown isOpen={dropdownOpen} toggle={() => setDropdownOpen(!dropdownOpen)}>
-                  <DropdownToggle caret size='sm' color='info'>Import/export</DropdownToggle>
-                  <DropdownMenu>
-                    <DropdownItem
-                      onClick={() => {
-                        let csvContent = PapaParse.unparse(props.values.view_services);
-                        const link = document.createElement('a');
-                        link.setAttribute('href', encodeURI(`data:text/csv;charset=utf8,\ufeff${csvContent}`));
-                        link.setAttribute('download', `${props.values.name}.csv`);
-                        link.click();
-                        link.remove();
-                      }}
-                    >
-                      Export to .csv
-                    </DropdownItem>
-                    <DropdownItem
-                      onClick={() => {hiddenFileInput.current.click()}}
-                    >
-                      Import from .csv
-                    </DropdownItem>
-                  </DropdownMenu>
-                  <input
-                    type='file'
-                    ref={hiddenFileInput}
-                    onChange={(e) => {
-                      PapaParse.parse(e.target.files[0], {
-                        header: true,
-                        complete: (results) => {
-                          var imported = viewServices;
-                          results.data.forEach((item) => {
-                            if ('service' in item) {
-                              if (imported.filter(obj => {return obj.service === item.service && obj.metric === item.metric}).length === 0)
-                                imported.push(item)
-                            }
-                          })
-                          setViewServices(ensureAlignedIndexes(imported).sort(sortServices));
-                        }
-                      })
-                    }}
-                    style={{display: 'none'}}
-                  />
-                </ButtonDropdown>
-              </div>
               {
                 !publicView ?
                   <FieldArray
