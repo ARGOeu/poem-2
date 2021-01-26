@@ -17,7 +17,13 @@ import {
   ProfilesListTable
 } from './UIElements';
 import { Formik, Field, FieldArray, Form } from 'formik';
-import { Button } from 'reactstrap';
+import {
+  Button,
+  ButtonDropdown,
+  DropdownToggle,
+  DropdownMenu,
+  DropdownItem
+} from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faTimes, faSearch } from '@fortawesome/free-solid-svg-icons';
 import ReactDiffViewer from 'react-diff-viewer';
@@ -25,7 +31,6 @@ import { useQuery, queryCache } from 'react-query';
 import PapaParse from 'papaparse';
 
 import './MetricProfiles.css';
-import ButtonGroup from 'reactstrap/lib/ButtonGroup';
 
 
 export const MetricProfilesClone = (props) => <MetricProfilesComponent cloneview={true} {...props}/>;
@@ -319,6 +324,7 @@ export const MetricProfilesComponent = (props) => {
   const [searchMetric, setSearchMetric] = useState("");
   const [searchServiceFlavour, setSearchServiceFlavour] = useState("");
   const [formikValues, setFormikValues] = useState({})
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const querykey = `metricprofiles_${addview ? 'addview' : `${profile_name}_${publicView ? 'publicview' : 'changeview'}`}`;
   const hiddenFileInput = React.useRef(null);
 
@@ -902,7 +908,6 @@ export const MetricProfilesComponent = (props) => {
       <BaseArgoView
         resourcename={publicView ? 'Metric profile details' : 'metric profile'}
         location={location}
-        addview={addview}
         modal={true}
         cloneview={cloneview}
         clone={true}
@@ -945,31 +950,27 @@ export const MetricProfilesComponent = (props) => {
               />
               <ParagraphTitle title='Metric instances'/>
               <div className='mb-1'>
-                <ButtonGroup>
-                  {
-                    !(addview && cloneview) &&
-                      <Button
-                        color='info'
-                        size='sm'
-                        onClick={() => {
-                          let csvContent = PapaParse.unparse(props.values.view_services);
-                          const link = document.createElement('a');
-                          link.setAttribute('href', encodeURI(`data:text/csv;charset=utf8,\ufeff${csvContent}`));
-                          link.setAttribute('download', `${props.values.name}.csv`);
-                          link.click();
-                          link.remove();
-                        }}
-                      >
-                        Export table
-                      </Button>
-                  }
-                  <Button
-                    color='info'
-                    size='sm'
-                    onClick={() => {hiddenFileInput.current.click()}}
-                  >
-                    Import table
-                  </Button>
+                <ButtonDropdown isOpen={dropdownOpen} toggle={() => setDropdownOpen(!dropdownOpen)}>
+                  <DropdownToggle caret size='sm' color='info'>Import/export</DropdownToggle>
+                  <DropdownMenu>
+                    <DropdownItem
+                      onClick={() => {
+                        let csvContent = PapaParse.unparse(props.values.view_services);
+                        const link = document.createElement('a');
+                        link.setAttribute('href', encodeURI(`data:text/csv;charset=utf8,\ufeff${csvContent}`));
+                        link.setAttribute('download', `${props.values.name}.csv`);
+                        link.click();
+                        link.remove();
+                      }}
+                    >
+                      Export to .csv
+                    </DropdownItem>
+                    <DropdownItem
+                      onClick={() => {hiddenFileInput.current.click()}}
+                    >
+                      Import from .csv
+                    </DropdownItem>
+                  </DropdownMenu>
                   <input
                     type='file'
                     ref={hiddenFileInput}
@@ -990,7 +991,7 @@ export const MetricProfilesComponent = (props) => {
                     }}
                     style={{display: 'none'}}
                   />
-                </ButtonGroup>
+                </ButtonDropdown>
               </div>
               {
                 !publicView ?
