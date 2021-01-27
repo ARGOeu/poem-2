@@ -919,7 +919,7 @@ export const MetricProfilesComponent = (props) => {
         submitperm={write_perm}
         extra_button={
           <ButtonDropdown className='mr-2' isOpen={dropdownOpen} toggle={() => setDropdownOpen(!dropdownOpen)}>
-            <DropdownToggle caret color='info'>Import/export</DropdownToggle>
+            <DropdownToggle caret color='info'>CSV</DropdownToggle>
             <DropdownMenu>
               <DropdownItem
                 onClick={() => {
@@ -935,12 +935,12 @@ export const MetricProfilesComponent = (props) => {
                 }}
                 disabled={addview}
               >
-                Export to .csv
+                Export
               </DropdownItem>
               <DropdownItem
                 onClick={() => {hiddenFileInput.current.click()}}
               >
-                Import from .csv
+                Import
               </DropdownItem>
             </DropdownMenu>
             <input
