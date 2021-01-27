@@ -98,6 +98,7 @@ const ProbeForm = ({
             <InputGroupAddon addonType='prepend'>Name</InputGroupAddon>
             <Field
               type='text'
+              data-testid='name'
               name='name'
               className={
                 `form-control ${props.errors.name && props.touched.name && 'border-danger'}`}
@@ -114,6 +115,7 @@ const ProbeForm = ({
             <InputGroupAddon addonType='prepend'>Version</InputGroupAddon>
             <VersionField
               type='text'
+              data-testid='version'
               name='version'
               className='form-control'
               disabled={true}
@@ -149,6 +151,7 @@ const ProbeForm = ({
                 <Field
                   type='text'
                   name='pkg'
+                  data-testid='pkg'
                   className='form-control'
                   disabled={true}
                 />
@@ -187,6 +190,7 @@ const ProbeForm = ({
               :
                 <Field
                   type='text'
+                  data-testid='repository'
                   name='repository'
                   className={`form-control ${props.errors.repository && props.touched.repository && 'border-danger'}`}
                 />
@@ -214,6 +218,7 @@ const ProbeForm = ({
                 <Field
                   type='text'
                   name='docurl'
+                  data-testid='docurl'
                   className={`form-control ${props.errors.docurl && props.touched.docurl && 'border-danger'}`}
                 />
             }
@@ -230,6 +235,7 @@ const ProbeForm = ({
           <Field
             component='textarea'
             name='description'
+            id='description'
             rows='15'
             className={`form-control ${props.errors.description && props.touched.description && 'border-danger'}`}
             disabled={isTenantSchema || isHistory || publicView}
@@ -246,6 +252,7 @@ const ProbeForm = ({
           <Field
             component='textarea'
             name='comment'
+            id='comment'
             rows='5'
             className={`form-control ${props.errors.comment && props.touched.comment && 'border-danger'}`}
             disabled={isTenantSchema || isHistory || publicView}
@@ -422,7 +429,8 @@ export const ProbeComponent = (props) => {
   const { data: metricTemplateList, error: metricTemplateListError, isLoading: metricTemplateListLoading } = useQuery(
     `${querykey}_metrictemplates`, async () => {
       let metrics = await backend.fetchData(`${apiMetricsForProbes}/${probe.name}(${probe.version})`);
-      return metrics; },
+      return metrics;
+    },
     { enabled: probe }
   );
 
