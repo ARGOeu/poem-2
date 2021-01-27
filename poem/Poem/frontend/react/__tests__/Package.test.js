@@ -3,7 +3,7 @@ import '@testing-library/jest-dom/extend-expect';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { createMemoryHistory } from 'history';
 import { Route, Router } from 'react-router-dom';
-import { PackageList } from '../Package';
+import { PackageComponent, PackageList } from '../Package';
 import { Backend } from '../DataManager';
 import { queryCache } from 'react-query';
 
@@ -65,6 +65,89 @@ const mockYUMRepos = [
   }
 ];
 
+const mockPackage = {
+  'id': '5',
+  'name': 'nagios-plugins-argo',
+  'version': '0.1.11',
+  'use_present_version': false,
+  'repos': ['repo-1 (CentOS 6)', 'repo-2 (CentOS 7)']
+}
+
+const mockProbeVersions = [
+  {
+    'id': '8',
+    'object_repr': 'ams-publisher-probe (0.1.11)',
+    'fields': {
+        'name': 'ams-publisher-probe',
+        'version': '0.1.11',
+        'package': 'nagios-plugins-argo (0.1.11)',
+        'description': 'Probe is inspecting AMS publisher',
+        'comment': 'Initial version',
+        'repository': 'https://github.com/ARGOeu/nagios-plugins-argo',
+        'docurl': 'https://github.com/ARGOeu/nagios-plugins-argo/blob/master/README.md'
+    },
+    'user': 'testuser',
+    'date_created': '2019-12-13 14:30:58',
+    'comment': 'Initial version.',
+    'version': '0.1.11'
+  },
+  {
+    'id': '2',
+    'object_repr': 'poem-probe (0.1.7)',
+    'fields': {
+        'name': 'poem-probe',
+        'version': '0.1.7',
+        'package': 'nagios-plugins-argo (0.1.7)',
+        'description': 'Probe inspects POEM service.',
+        'comment': 'Initial version.',
+        'repository': 'https://github.com/ARGOeu/nagios-plugins-argo',
+        'docurl': 'https://github.com/ARGOeu/nagios-plugins-argo/blob/master/README.md',
+    },
+    'user': 'testuser',
+    'date_created': '2019-01-14 15:30:28',
+    'comment': 'Initial version.',
+    'version': '0.1.7'
+  },
+  {
+    'id': '5',
+    'object_repr': 'poem-probe-new (0.1.11)',
+    'fields': {
+        'name': 'poem-probe-new',
+        'version': '0.1.11',
+        'package': 'nagios-plugins-argo (0.1.11)',
+        'description': 'Probe inspects new POEM service.',
+        'comment': 'This version added: Check POEM metric configuration API',
+        'repository': 'https://github.com/ARGOeu/nagios-plugins-argo2',
+        'docurl': 'https://github.com/ARGOeu/nagios-plugins-argo2/blob/master/README.md'
+    },
+    'user': 'testuser',
+    'date_created': '2019-01-14 15:40:38',
+    'comment': 'Changed name, comment, description, repository and docurl.',
+    'version': '0.1.11'
+  }
+]
+
+const mockPackageVersions = [
+  {
+    'name': 'nagios-plugins-argo',
+    'version': '0.1.12',
+    'use_present_version': false,
+    'repos': ['repo-1 (CentOS 6)', 'repo-2 (CentOS 7)']
+  },
+  {
+    'name': 'nagios-plugins-argo',
+    'version': '0.1.11',
+    'use_present_version': false,
+    'repos': ['repo-1 (CentOS 6)', 'repo-2 (CentOS 7)']
+  },
+  {
+    'name': 'nagios-plugins-argo',
+    'version': '0.1.7',
+    'use_present_version': false,
+    'repos': ['repo-1 (CentOS 6)', 'repo-2 (CentOS 7)']
+  }
+]
+
 
 function renderListView() {
   const route = '/ui/packages';
@@ -91,6 +174,23 @@ function renderTenantListView() {
       <Router history={history}>
         <Route
           render={ props => <PackageList {...props} /> }
+        />
+      </Router>
+    )
+  }
+}
+
+
+function renderChangeView() {
+  const route = '/ui/packages/nagios-plugins-argo-0.1.11';
+  const history = createMemoryHistory({ initialEntries: [route] });
+
+  return {
+    ...render(
+      <Router history={history}>
+        <Route
+          path='/ui/packages/:nameversion'
+          render={ props => <PackageComponent {...props} /> }
         />
       </Router>
     )
@@ -270,5 +370,65 @@ describe('Test list of packages on tenant POEM', () => {
     expect(screen.getByRole('link', { name: /fedcloud/i }).closest('a')).toHaveAttribute('href', '/ui/administration/packages/nagios-plugins-fedcloud-0.5.0');
     expect(screen.getByRole('link', { name: /globus/i }).closest('a')).toHaveAttribute('href', '/ui/administration/packages/nagios-plugins-globus-0.1.5');
     expect(screen.getByRole('link', { name: /http/i }).closest('a')).toHaveAttribute('href', '/ui/administration/packages/nagios-plugins-http-present');
+  })
+})
+
+
+describe('Tests for package changeview on SuperAdmin POEM', () => {
+  beforeAll(() => {
+    Backend.mockImplementation(() => {
+      return {
+        fetchData: (path) => {
+          switch (path) {
+            case '/api/v2/internal/packages/nagios-plugins-argo-0.1.11':
+              return Promise.resolve(mockPackage)
+
+            case '/api/v2/internal/yumrepos':
+              return Promise.resolve(mockYUMRepos)
+
+            case '/api/v2/internal/version/probe':
+              return Promise.resolve(mockProbeVersions)
+
+            case '/api/v2/internal/packageversions/nagios-plugins-argo':
+              return Promise.resolve(mockPackageVersions)
+          }
+        }
+      }
+    })
+  })
+
+  test('Test that page renders properly', async () => {
+    renderChangeView();
+
+    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /package/i }).textContent).toBe('Change package');
+    })
+
+    const nameField = screen.getByTestId('name');
+    const versionField = screen.getByTestId('version');
+    const repo6Field = screen.getByTestId('autocomplete-repo_6');
+    const repo7Field = screen.getByTestId('autocomplete-repo_7');
+    const checkboxField = screen.getByRole('checkbox', { name: /version/i });
+
+    expect(nameField.value).toBe('nagios-plugins-argo');
+    expect(nameField).toBeEnabled();
+    expect(versionField.value).toBe('0.1.11');
+    expect(versionField).toBeEnabled();
+    expect(checkboxField).toBeInTheDocument();
+    expect(checkboxField.checked).toEqual(false);
+    expect(repo6Field.value).toBe('repo-1 (CentOS 6)');
+    expect(repo6Field).toBeEnabled();
+    expect(repo7Field.value).toBe('repo-2 (CentOS 7)');
+    expect(repo7Field).toBeEnabled();
+
+    expect(screen.getByRole('link', { name: /ams/i }).closest('a')).toHaveAttribute('href', '/ui/probes/ams-publisher-probe/history/0.1.11')
+    expect(screen.getByRole('link', { name: /poem/i }).closest('a')).toHaveAttribute('href', '/ui/probes/poem-probe-new/history/0.1.11');
+
+    expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /clone/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /clone/i }).closest('a')).toHaveAttribute('href', '/ui/packages/nagios-plugins-argo-0.1.11/clone');
   })
 })

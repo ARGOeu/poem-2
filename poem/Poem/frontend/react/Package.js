@@ -525,6 +525,7 @@ export const PackageComponent = (props) => {
                         name='name'
                         className={`form-control ${props.errors.name && props.touched.name && 'border-danger'}`}
                         id='name'
+                        data-testid='name'
                         disabled={disabled}
                       />
                     </InputGroup>
@@ -545,6 +546,7 @@ export const PackageComponent = (props) => {
                                 name='version'
                                 className='form-control custom-select'
                                 id='version'
+                                data-testid='version'
                                 onChange={e => onVersionSelect(e.target.value)}
                               >
                                 {
@@ -557,6 +559,7 @@ export const PackageComponent = (props) => {
                               <Field
                                 type='text'
                                 name='version'
+                                data-testid='version'
                                 value={props.values.present_version ? 'present' : props.values.version}
                                 disabled={props.values.present_version}
                                 className={`form-control ${props.errors.version && props.touched.version && 'border-danger'}`}
@@ -606,6 +609,7 @@ export const PackageComponent = (props) => {
                             type='text'
                             className='form-control'
                             name='repo_6'
+                            data-testid='repo_6'
                             id='repo_6'
                             disabled={true}
                           />
@@ -636,6 +640,7 @@ export const PackageComponent = (props) => {
                             type='text'
                             className='form-control'
                             name='repo_7'
+                            data-testid='repo_7'
                             id='repo_7'
                             disabled={true}
                           />
