@@ -17,11 +17,18 @@ import {
   ProfilesListTable
 } from './UIElements';
 import { Formik, Field, FieldArray, Form } from 'formik';
-import { Button } from 'reactstrap';
+import {
+  Button,
+  ButtonDropdown,
+  DropdownToggle,
+  DropdownMenu,
+  DropdownItem
+} from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faTimes, faSearch } from '@fortawesome/free-solid-svg-icons';
 import ReactDiffViewer from 'react-diff-viewer';
 import { useQuery, queryCache } from 'react-query';
+import PapaParse from 'papaparse';
 
 import './MetricProfiles.css';
 
@@ -317,7 +324,9 @@ export const MetricProfilesComponent = (props) => {
   const [searchMetric, setSearchMetric] = useState("");
   const [searchServiceFlavour, setSearchServiceFlavour] = useState("");
   const [formikValues, setFormikValues] = useState({})
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const querykey = `metricprofiles_${addview ? 'addview' : `${profile_name}_${publicView ? 'publicview' : 'changeview'}`}`;
+  const hiddenFileInput = React.useRef(null);
 
   const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails } = useQuery(
     `session_userdetails`, async () => {
@@ -899,7 +908,6 @@ export const MetricProfilesComponent = (props) => {
       <BaseArgoView
         resourcename={publicView ? 'Metric profile details' : 'metric profile'}
         location={location}
-        addview={addview}
         modal={true}
         cloneview={cloneview}
         clone={true}
@@ -908,7 +916,57 @@ export const MetricProfilesComponent = (props) => {
         toggle={() => setAreYouSureModal(!areYouSureModal)}
         addview={publicView ? !publicView : addview}
         publicview={publicView}
-        submitperm={write_perm}>
+        submitperm={write_perm}
+        extra_button={
+          <ButtonDropdown className='mr-2' isOpen={dropdownOpen} toggle={() => setDropdownOpen(!dropdownOpen)}>
+            <DropdownToggle caret color='info'>CSV</DropdownToggle>
+            <DropdownMenu>
+              <DropdownItem
+                onClick={() => {
+                  let csvContent = [];
+                  viewServices.forEach((service) => {
+                    csvContent.push({service: service.service, metric: service.metric})
+                  })
+                  const link = document.createElement('a');
+                  link.setAttribute('href', encodeURI(`data:text/csv;charset=utf8,\ufeff${PapaParse.unparse(csvContent)}`));
+                  link.setAttribute('download', `${profile_name}.csv`);
+                  link.click();
+                  link.remove();
+                }}
+                disabled={addview}
+              >
+                Export
+              </DropdownItem>
+              <DropdownItem
+                onClick={() => {hiddenFileInput.current.click()}}
+              >
+                Import
+              </DropdownItem>
+            </DropdownMenu>
+            <input
+              type='file'
+              ref={hiddenFileInput}
+              onChange={(e) => {
+                PapaParse.parse(e.target.files[0], {
+                  header: true,
+                  complete: (results) => {
+                    var imported = results.data;
+                    // remove entries without keys if there is any
+                    imported = imported.filter(
+                      obj => {
+                        return 'service' in obj && 'metric' in obj
+                      }
+                    )
+                    setViewServices(ensureAlignedIndexes(imported).sort(sortServices));
+                    setListServices(ensureAlignedIndexes(imported).sort(sortServices));
+                  }
+                })
+              }}
+              style={{display: 'none'}}
+            />
+          </ButtonDropdown>
+        }
+      >
         <Formik
           initialValues = {{
             id: metricProfile.profile.id,
