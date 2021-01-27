@@ -1,6 +1,6 @@
 import React from 'react';
 import '@testing-library/jest-dom/extend-expect';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { createMemoryHistory } from 'history';
 import { Route, Router } from 'react-router-dom';
 import { PackageList } from '../Package';
@@ -120,6 +120,42 @@ describe('Test list of packages on SuperAdmin POEM', () => {
     expect(screen.getByRole('option', { name: 'Show all' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'repo-1 (CentOS 6)' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'repo-2 (CentOS 7)' })).toBeInTheDocument();
+    expect(screen.getAllByRole('row')).toHaveLength(32);
+    expect(screen.getAllByRole('row', { name: '' })).toHaveLength(26);
+    expect(screen.getByRole('row', { name: /argo/i }).textContent).toBe('1nagios-plugins-argo0.1.11repo-1 (CentOS 6), repo-2 (CentOS 7)');
+    expect(screen.getByRole('row', { name: /fedcloud/i }).textContent).toBe('2nagios-plugins-fedcloud0.5.0repo-2 (CentOS 7)');
+    expect(screen.getByRole('row', { name: /globus/i }).textContent).toBe('3nagios-plugins-globus0.1.5repo-2 (CentOS 7)');
+    expect(screen.getByRole('row', { name: /http/i }).textContent).toBe('4nagios-plugins-httppresentrepo-1 (CentOS 6), repo-2 (CentOS 7)');
+    expect(screen.getByRole('link', { name: /argo/i }).closest('a')).toHaveAttribute('href', '/ui/packages/nagios-plugins-argo-0.1.11');
+    expect(screen.getByRole('link', { name: /fedcloud/i }).closest('a')).toHaveAttribute('href', '/ui/packages/nagios-plugins-fedcloud-0.5.0');
+    expect(screen.getByRole('link', { name: /globus/i }).closest('a')).toHaveAttribute('href', '/ui/packages/nagios-plugins-globus-0.1.5');
+    expect(screen.getByRole('link', { name: /http/i }).closest('a')).toHaveAttribute('href', '/ui/packages/nagios-plugins-http-present');
+    expect(screen.getByRole('button', { name: /add/i })).toBeInTheDocument();
+  })
+
+  test('Test filter packages', async () => {
+    renderListView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /package/i }).textContent).toBe('Select package to change');
+    })
+
+    fireEvent.change(screen.getByDisplayValue('Show all'), { target: { value: 'repo-1 (CentOS 6)' } });
+    expect(screen.getAllByRole('row')).toHaveLength(32);
+    expect(screen.getAllByRole('row', { name: '' })).toHaveLength(28);
+    expect(screen.getByRole('row', { name: /argo/i }).textContent).toBe('1nagios-plugins-argo0.1.11repo-1 (CentOS 6), repo-2 (CentOS 7)');
+    expect(screen.getByRole('row', { name: /http/i }).textContent).toBe('2nagios-plugins-httppresentrepo-1 (CentOS 6), repo-2 (CentOS 7)');
+    expect(screen.getByRole('link', { name: /argo/i }).closest('a')).toHaveAttribute('href', '/ui/packages/nagios-plugins-argo-0.1.11');
+    expect(screen.getByRole('link', { name: /http/i }).closest('a')).toHaveAttribute('href', '/ui/packages/nagios-plugins-http-present');
+
+    fireEvent.change(screen.getByPlaceholderText('Search'), { target: { value: 'argo' } });
+    expect(screen.getAllByRole('row')).toHaveLength(32);
+    expect(screen.getAllByRole('row', { name: '' })).toHaveLength(29);
+    expect(screen.getByRole('row', { name: /-argo/i }).textContent).toBe('1nagios-plugins-argo0.1.11repo-1 (CentOS 6), repo-2 (CentOS 7)');
+    expect(screen.getByRole('link', { name: /argo/i }).closest('a')).toHaveAttribute('href', '/ui/packages/nagios-plugins-argo-0.1.11');
+
+    fireEvent.change(screen.getByDisplayValue('argo'), { target: { value: '' } });
+    fireEvent.change(screen.getByDisplayValue('repo-1 (CentOS 6)'), { target: { value: 'repo-2 (CentOS 7)' } });
     expect(screen.getAllByRole('row')).toHaveLength(32);
     expect(screen.getAllByRole('row', { name: '' })).toHaveLength(26);
     expect(screen.getByRole('row', { name: /argo/i }).textContent).toBe('1nagios-plugins-argo0.1.11repo-1 (CentOS 6), repo-2 (CentOS 7)');
