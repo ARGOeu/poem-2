@@ -950,20 +950,15 @@ export const MetricProfilesComponent = (props) => {
                 PapaParse.parse(e.target.files[0], {
                   header: true,
                   complete: (results) => {
-                    var imported = viewServices;
-                    results.data.forEach((item) => {
-                      if ('service' in item && 'metric' in item) {
-                        if (imported.filter(obj => {return obj.service === item.service && obj.metric === item.metric}).length === 0)
-                          imported.push(item)
-                      }
-                    })
-                    // remove empty line if there is any
+                    var imported = results.data;
+                    // remove entries without keys if there is any
                     imported = imported.filter(
                       obj => {
-                        return obj.service !== '' && obj.metric !== ''
+                        return 'service' in obj && 'metric' in obj
                       }
                     )
                     setViewServices(ensureAlignedIndexes(imported).sort(sortServices));
+                    setListServices(ensureAlignedIndexes(imported).sort(sortServices));
                   }
                 })
               }}
