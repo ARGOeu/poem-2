@@ -22,6 +22,7 @@ beforeEach(() => {
 })
 
 const mockChangeObject = jest.fn();
+const mockDeleteObject = jest.fn();
 
 
 const mockListPackages = [
@@ -408,7 +409,8 @@ describe('Tests for package changeview on SuperAdmin POEM', () => {
               return Promise.resolve(mockPackageVersions)
           }
         },
-        changeObject: mockChangeObject
+        changeObject: mockChangeObject,
+        deleteObject: mockDeleteObject
       }
     })
   })
@@ -642,6 +644,124 @@ describe('Tests for package changeview on SuperAdmin POEM', () => {
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
         <p>Error changing package</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Error: 500 SERVER ERROR',
+      0,
+      expect.any(Function)
+    )
+  })
+
+  test('Test successfully deleting package', async () => {
+    mockDeleteObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 204, statusText: 'NO CONTENT' })
+    )
+
+    renderChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /package/i }).textContent).toBe('Change package');
+    })
+
+    const nameField = screen.getByTestId('name');
+    const versionField = screen.getByTestId('version');
+
+    fireEvent.change(nameField, { target: { value: 'new-nagios-plugins-argo' } });
+    fireEvent.change(versionField, { target: { value: '0.1.12' } });
+
+    fireEvent.click(screen.getByRole('button', { name: /delete/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: 'delete' })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockDeleteObject).toHaveBeenCalledWith(
+        '/api/v2/internal/packages/nagios-plugins-argo-0.1.11',
+      )
+    })
+
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'Package successfully deleted', 'Deleted', 2000
+    )
+  })
+
+  test('Test error deleting package with error message', async () => {
+    mockDeleteObject.mockReturnValueOnce(
+      Promise.resolve({
+        json: () => Promise.resolve({ detail: 'You cannot delete package with associated probes!' }),
+        status: 400,
+        statusText: 'BAD REQUEST'
+      })
+    )
+
+    renderChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /package/i }).textContent).toBe('Change package');
+    })
+
+    const nameField = screen.getByTestId('name');
+    const versionField = screen.getByTestId('version');
+
+    fireEvent.change(nameField, { target: { value: 'new-nagios-plugins-argo' } });
+    fireEvent.change(versionField, { target: { value: '0.1.12' } });
+
+    fireEvent.click(screen.getByRole('button', { name: /delete/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: 'delete' })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockDeleteObject).toHaveBeenCalledWith(
+        '/api/v2/internal/packages/nagios-plugins-argo-0.1.11',
+      )
+    })
+
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>You cannot delete package with associated probes!</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Error: 400 BAD REQUEST',
+      0,
+      expect.any(Function)
+    )
+  })
+
+  test('Test error deleting package without error message', async () => {
+    mockDeleteObject.mockReturnValueOnce(
+      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
+    )
+
+    renderChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /package/i }).textContent).toBe('Change package');
+    })
+
+    const nameField = screen.getByTestId('name');
+    const versionField = screen.getByTestId('version');
+
+    fireEvent.change(nameField, { target: { value: 'new-nagios-plugins-argo' } });
+    fireEvent.change(versionField, { target: { value: '0.1.12' } });
+
+    fireEvent.click(screen.getByRole('button', { name: /delete/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: 'delete' })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockDeleteObject).toHaveBeenCalledWith(
+        '/api/v2/internal/packages/nagios-plugins-argo-0.1.11',
+      )
+    })
+
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>Error deleting package</p>
         <p>Click to dismiss.</p>
       </div>,
       'Error: 500 SERVER ERROR',
