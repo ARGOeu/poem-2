@@ -388,6 +388,7 @@ describe('Test list of packages on tenant POEM', () => {
 
 describe('Tests for package changeview on SuperAdmin POEM', () => {
   jest.spyOn(NotificationManager, 'success');
+  jest.spyOn(NotificationManager, 'error');
 
   beforeAll(() => {
     Backend.mockImplementation(() => {
@@ -543,4 +544,109 @@ describe('Tests for package changeview on SuperAdmin POEM', () => {
     )
   })
 
+  test('Test error changing package with error message', async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({
+        json: () => Promise.resolve({ detail: 'Package with this name and version already exists.' }),
+        status: 400,
+        statusText: 'BAD REQUEST'
+      })
+    )
+
+    renderChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /package/i }).textContent).toBe('Change package');
+    })
+
+    const nameField = screen.getByTestId('name');
+    const versionField = screen.getByTestId('version');
+    const repo6Field = screen.getByTestId('autocomplete-repo_6');
+    const repo7Field = screen.getByTestId('autocomplete-repo_7');
+
+    fireEvent.change(nameField, { target: { value: 'new-nagios-plugins-argo' } });
+    fireEvent.change(versionField, { target: { value: '0.1.12' } });
+    fireEvent.change(repo6Field, { target: { value: '' } });
+    fireEvent.change(repo7Field, { target: { value: 'repo-3 (CentOS 7)' } });
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: 'change' })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        '/api/v2/internal/packages/',
+        {
+          id: '5',
+          name: 'new-nagios-plugins-argo',
+          version: '0.1.12',
+          use_present_version: false,
+          repos: ['repo-3 (CentOS 7)']
+        }
+      )
+    })
+
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>Package with this name and version already exists.</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Error: 400 BAD REQUEST',
+      0,
+      expect.any(Function)
+    )
+  })
+
+  test('Test error changing package without error message', async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
+    )
+
+    renderChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /package/i }).textContent).toBe('Change package');
+    })
+
+    const nameField = screen.getByTestId('name');
+    const versionField = screen.getByTestId('version');
+    const repo6Field = screen.getByTestId('autocomplete-repo_6');
+    const repo7Field = screen.getByTestId('autocomplete-repo_7');
+
+    fireEvent.change(nameField, { target: { value: 'new-nagios-plugins-argo' } });
+    fireEvent.change(versionField, { target: { value: '0.1.12' } });
+    fireEvent.change(repo6Field, { target: { value: '' } });
+    fireEvent.change(repo7Field, { target: { value: 'repo-3 (CentOS 7)' } });
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: 'change' })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        '/api/v2/internal/packages/',
+        {
+          id: '5',
+          name: 'new-nagios-plugins-argo',
+          version: '0.1.12',
+          use_present_version: false,
+          repos: ['repo-3 (CentOS 7)']
+        }
+      )
+    })
+
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>Error changing package</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Error: 500 SERVER ERROR',
+      0,
+      expect.any(Function)
+    )
+  })
 })
