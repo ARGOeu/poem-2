@@ -6,6 +6,7 @@ import { Route, Router } from 'react-router-dom';
 import { PackageComponent, PackageList } from '../Package';
 import { Backend } from '../DataManager';
 import { queryCache } from 'react-query';
+import { NotificationManager } from 'react-notifications';
 
 
 jest.mock('../DataManager', () => {
@@ -19,6 +20,8 @@ beforeEach(() => {
   jest.clearAllMocks();
   queryCache.clear();
 })
+
+const mockChangeObject = jest.fn();
 
 
 const mockListPackages = [
@@ -62,6 +65,13 @@ const mockYUMRepos = [
     'tag': 'CentOS 7',
     'content': 'content1=content1\ncontent2=content2',
     'description': 'Repo 2 description.'
+  },
+  {
+    'id': '3',
+    'name': 'repo-3',
+    'tag': 'CentOS 7',
+    'content': 'content1=content1\ncontent2=content2',
+    'description': 'Repo 3 description'
   }
 ];
 
@@ -232,10 +242,11 @@ describe('Test list of packages on SuperAdmin POEM', () => {
     expect(screen.getByRole('columnheader', { name: /repo/i }).textContent).toBe('Repo');
     expect(screen.getAllByPlaceholderText('Search')).toHaveLength(1);
     expect(screen.getAllByRole('columnheader', { name: 'Show all' })).toHaveLength(1);
-    expect(screen.getAllByRole('option', { name: /repo/i })).toHaveLength(2);
+    expect(screen.getAllByRole('option', { name: /repo/i })).toHaveLength(3);
     expect(screen.getByRole('option', { name: 'Show all' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'repo-1 (CentOS 6)' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'repo-2 (CentOS 7)' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'repo-3 (CentOS 7)' })).toBeInTheDocument();
     expect(screen.getAllByRole('row')).toHaveLength(32);
     expect(screen.getAllByRole('row', { name: '' })).toHaveLength(26);
     expect(screen.getByRole('row', { name: /argo/i }).textContent).toBe('1nagios-plugins-argo0.1.11repo-1 (CentOS 6), repo-2 (CentOS 7)');
@@ -320,10 +331,11 @@ describe('Test list of packages on tenant POEM', () => {
     expect(screen.getByRole('columnheader', { name: /repo/i }).textContent).toBe('Repo');
     expect(screen.getAllByPlaceholderText('Search')).toHaveLength(1);
     expect(screen.getAllByRole('columnheader', { name: 'Show all' })).toHaveLength(1);
-    expect(screen.getAllByRole('option', { name: /repo/i })).toHaveLength(2);
+    expect(screen.getAllByRole('option', { name: /repo/i })).toHaveLength(3);
     expect(screen.getByRole('option', { name: 'Show all' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'repo-1 (CentOS 6)' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'repo-2 (CentOS 7)' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'repo-3 (CentOS 7)' })).toBeInTheDocument();
     expect(screen.getAllByRole('row')).toHaveLength(32);
     expect(screen.getAllByRole('row', { name: '' })).toHaveLength(26);
     expect(screen.getByRole('row', { name: /argo/i }).textContent).toBe('1nagios-plugins-argo0.1.11repo-1 (CentOS 6), repo-2 (CentOS 7)');
@@ -375,6 +387,8 @@ describe('Test list of packages on tenant POEM', () => {
 
 
 describe('Tests for package changeview on SuperAdmin POEM', () => {
+  jest.spyOn(NotificationManager, 'success');
+
   beforeAll(() => {
     Backend.mockImplementation(() => {
       return {
@@ -392,7 +406,8 @@ describe('Tests for package changeview on SuperAdmin POEM', () => {
             case '/api/v2/internal/packageversions/nagios-plugins-argo':
               return Promise.resolve(mockPackageVersions)
           }
-        }
+        },
+        changeObject: mockChangeObject
       }
     })
   })
@@ -431,4 +446,101 @@ describe('Tests for package changeview on SuperAdmin POEM', () => {
     expect(screen.getByRole('button', { name: /clone/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /clone/i }).closest('a')).toHaveAttribute('href', '/ui/packages/nagios-plugins-argo-0.1.11/clone');
   })
+
+  test('Test successfully changing package', async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
+    )
+
+    renderChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /package/i }).textContent).toBe('Change package');
+    })
+
+    const nameField = screen.getByTestId('name');
+    const versionField = screen.getByTestId('version');
+    const repo6Field = screen.getByTestId('autocomplete-repo_6');
+    const repo7Field = screen.getByTestId('autocomplete-repo_7');
+
+    fireEvent.change(nameField, { target: { value: 'new-nagios-plugins-argo' } });
+    fireEvent.change(versionField, { target: { value: '0.1.12' } });
+    fireEvent.change(repo6Field, { target: { value: '' } });
+    fireEvent.change(repo7Field, { target: { value: 'repo-3 (CentOS 7)' } });
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: 'change' })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        '/api/v2/internal/packages/',
+        {
+          id: '5',
+          name: 'new-nagios-plugins-argo',
+          version: '0.1.12',
+          use_present_version: false,
+          repos: ['repo-3 (CentOS 7)']
+        }
+      )
+    })
+
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'Package successfully changed', 'Changed', 2000
+    )
+  })
+
+  test('Test successfully changing package with present version', async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
+    )
+
+    renderChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /package/i }).textContent).toBe('Change package');
+    })
+
+    const nameField = screen.getByTestId('name');
+    const versionField = screen.getByTestId('version');
+    const checkField = screen.getByRole('checkbox', { name: /version/i });
+    const repo6Field = screen.getByTestId('autocomplete-repo_6');
+    const repo7Field = screen.getByTestId('autocomplete-repo_7');
+
+    fireEvent.change(nameField, { target: { value: 'new-nagios-plugins-argo' } });
+    fireEvent.change(versionField, { target: { value: '0.1.12' } });
+
+    fireEvent.click(checkField);
+    expect(versionField.value).toBe('present');
+    expect(versionField).toBeDisabled();
+
+    fireEvent.change(repo6Field, { target: { value: '' } });
+    fireEvent.change(repo7Field, { target: { value: 'repo-3 (CentOS 7)' } });
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: 'change' })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        '/api/v2/internal/packages/',
+        {
+          id: '5',
+          name: 'new-nagios-plugins-argo',
+          version: '0.1.12',
+          use_present_version: true,
+          repos: ['repo-3 (CentOS 7)']
+        }
+      )
+    })
+
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'Package successfully changed', 'Changed', 2000
+    )
+  })
+
 })
