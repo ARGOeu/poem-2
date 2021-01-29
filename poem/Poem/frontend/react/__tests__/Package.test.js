@@ -15,14 +15,24 @@ jest.mock('../DataManager', () => {
   }
 })
 
+global.fetch = jest.fn(() => {
+  return Promise.resolve({
+    ok: true,
+    status: 200,
+    statusText: 'OK',
+    json: () => Promise.resolve({ updated: 'Metrics argo.AMS-Check and argo.AMSPublisher-Check will be updated.' })
+  })
+})
 
 beforeEach(() => {
   jest.clearAllMocks();
+  fetch.mockClear();
   queryCache.clear();
 })
 
 const mockChangeObject = jest.fn();
 const mockDeleteObject = jest.fn();
+
 
 
 const mockListPackages = [
@@ -140,10 +150,10 @@ const mockProbeVersions = [
 
 const mockPackageVersions = [
   {
-    'name': 'nagios-plugins-argo',
+    'name': 'nagios-plugins-argo-new',
     'version': '0.1.12',
     'use_present_version': false,
-    'repos': ['repo-1 (CentOS 6)', 'repo-2 (CentOS 7)']
+    'repos': ['repo-2 (CentOS 7)']
   },
   {
     'name': 'nagios-plugins-argo',
@@ -202,6 +212,23 @@ function renderChangeView() {
         <Route
           path='/ui/packages/:nameversion'
           render={ props => <PackageComponent {...props} /> }
+        />
+      </Router>
+    )
+  }
+}
+
+
+function renderTenantChangeView() {
+  const route='/ui/administration/packages/nagios-plugins-argo-0.1.11';
+  const history = createMemoryHistory({ initialEntries: [route] });
+
+  return {
+    ...render(
+      <Router history={history}>
+        <Route
+          path='/ui/administration/packages/:nameversion'
+          render={ props => <PackageComponent {...props} disabled={true} /> }
         />
       </Router>
     )
@@ -768,5 +795,343 @@ describe('Tests for package changeview on SuperAdmin POEM', () => {
       0,
       expect.any(Function)
     )
+  })
+})
+
+
+describe('Tests for package changeview on tenant POEM', () => {
+  jest.spyOn(NotificationManager, 'success');
+  jest.spyOn(NotificationManager, 'warning');
+
+  beforeAll(() => {
+    Backend.mockImplementation(() => {
+      return {
+        fetchData: (path) => {
+          switch (path) {
+            case '/api/v2/internal/packages/nagios-plugins-argo-0.1.11':
+              return Promise.resolve(mockPackage)
+
+            case '/api/v2/internal/yumrepos':
+              return Promise.resolve(mockYUMRepos)
+
+            case '/api/v2/internal/version/probe':
+              return Promise.resolve(mockProbeVersions)
+
+            case '/api/v2/internal/packageversions/nagios-plugins-argo':
+              return Promise.resolve(mockPackageVersions)
+          }
+        },
+        changeObject: mockChangeObject
+      }
+    })
+  })
+
+  test('Test that page renders properly', async() => {
+    renderTenantChangeView();
+
+    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /package/i }).textContent).toBe('Package details');
+    })
+
+    const nameField = screen.getByTestId('name');
+    const versionField = screen.getByTestId('version');
+    const repo6Field = screen.getByTestId('repo_6');
+    const repo7Field = screen.getByTestId('repo_7');
+    const updateButton = screen.getByRole('button', { name: /update/i });
+
+    expect(nameField.value).toBe('nagios-plugins-argo');
+    expect(nameField).toBeDisabled();
+    expect(versionField.value).toBe('0.1.11');
+    expect(versionField).toBeEnabled();
+    expect(screen.getAllByRole('option')).toHaveLength(3);
+    expect(screen.getByRole('option', { name: '0.1.12' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: '0.1.11' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: '0.1.7' })).toBeInTheDocument();
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+    expect(repo6Field.value).toBe('repo-1 (CentOS 6)');
+    expect(repo6Field).toBeDisabled();
+    expect(repo7Field.value).toBe('repo-2 (CentOS 7)');
+    expect(repo7Field).toBeDisabled();
+
+    expect(screen.getByRole('link', { name: /ams/i }).closest('a')).toHaveAttribute('href', '/ui/probes/ams-publisher-probe/history/0.1.11')
+    expect(screen.getByRole('link', { name: /poem/i }).closest('a')).toHaveAttribute('href', '/ui/probes/poem-probe-new/history/0.1.11');
+
+    expect(updateButton).toBeInTheDocument();
+    expect(updateButton).toBeDisabled();
+    expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
+  })
+
+  test('Test changing package version', async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        json: () => Promise.resolve({ updated: 'Metrics argo.AMS-Check and argo.AMSPublisher-Check have been successfully updated.' })
+      })
+    )
+
+    renderTenantChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /package/i }).textContent).toBe('Package details');
+    })
+
+    const versionField = screen.getByTestId('version');
+
+    fireEvent.change(versionField, { target: { value: '0.1.12' } });
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /update/i })).toBeEnabled();
+    })
+    const nameField = screen.getByTestId('name');
+    const repo6Field = screen.getByTestId('repo_6');
+    const repo7Field = screen.getByTestId('repo_7');
+    expect(screen.getByTestId('name').value).toBe('nagios-plugins-argo-new');
+    expect(nameField).toBeDisabled();
+    expect(repo6Field.value).toBe('');
+    expect(repo6Field).toBeDisabled();
+    expect(repo7Field.value).toBe('repo-2 (CentOS 7)');
+    expect(repo7Field).toBeDisabled();
+
+    fireEvent.change(versionField, { target: { value: '0.1.11' } });
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /update/i })).toBeDisabled();
+    })
+    expect(nameField.value).toBe('nagios-plugins-argo');
+    expect(nameField).toBeDisabled();
+    expect(repo6Field.value).toBe('repo-1 (CentOS 6)');
+    expect(repo6Field).toBeDisabled();
+    expect(repo7Field.value).toBe('repo-2 (CentOS 7)');
+    expect(repo7Field).toBeDisabled();
+
+    fireEvent.change(versionField, { target: { value: '0.1.12' } });
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /update/i })).toBeEnabled();
+    })
+    expect(nameField.value).toBe('nagios-plugins-argo-new');
+    expect(nameField).toBeDisabled();
+    expect(repo6Field.value).toBe('');
+    expect(repo6Field).toBeDisabled();
+    expect(repo7Field.value).toBe('repo-2 (CentOS 7)');
+    expect(repo7Field).toBeDisabled();
+
+    fireEvent.click(screen.getByRole('button', { name: /update/i }));
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalledWith(
+        '/api/v2/internal/updatemetricsversions/nagios-plugins-argo-new-0.1.12'
+      )
+    })
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /update/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        '/api/v2/internal/updatemetricsversions/',
+        {
+          name: 'nagios-plugins-argo-new',
+          version: '0.1.12'
+        }
+      )
+    })
+
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'Metrics argo.AMS-Check and argo.AMSPublisher-Check have been successfully updated.',
+      'Updated', 2000
+    )
+  })
+
+  test('Test changing package version with warnings', async () => {
+    fetch.mockImplementationOnce(() => {
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        json: () => Promise.resolve({
+          updated: 'Metric argo.AMS-Check will be updated.',
+          deleted: 'Metric argo.AMSPublisher-Check will be deleted, since its probe is not part of the chosen package.',
+          warning: 'Metric template history instance of test.AMS-Check has not been found.'
+        })
+      })
+    })
+
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        json: () => Promise.resolve({
+          updated: 'Metric argo.AMS-Check has been successfully updated.',
+          deleted: 'Metric argo.AMSPublisher-Check has been deleted, since its probe is not part of the chosen package.',
+          warning: 'Metric template history instance of test.AMS-Check has not been found.'
+        })
+      })
+    )
+
+    renderTenantChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /package/i }).textContent).toBe('Package details');
+    })
+
+    const versionField = screen.getByTestId('version');
+
+    fireEvent.change(versionField, { target: { value: '0.1.12' } });
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /update/i })).toBeEnabled();
+    })
+    const nameField = screen.getByTestId('name');
+    const repo6Field = screen.getByTestId('repo_6');
+    const repo7Field = screen.getByTestId('repo_7');
+    expect(screen.getByTestId('name').value).toBe('nagios-plugins-argo-new');
+    expect(nameField).toBeDisabled();
+    expect(repo6Field.value).toBe('');
+    expect(repo6Field).toBeDisabled();
+    expect(repo7Field.value).toBe('repo-2 (CentOS 7)');
+    expect(repo7Field).toBeDisabled();
+
+    fireEvent.change(versionField, { target: { value: '0.1.11' } });
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /update/i })).toBeDisabled();
+    })
+    expect(nameField.value).toBe('nagios-plugins-argo');
+    expect(nameField).toBeDisabled();
+    expect(repo6Field.value).toBe('repo-1 (CentOS 6)');
+    expect(repo6Field).toBeDisabled();
+    expect(repo7Field.value).toBe('repo-2 (CentOS 7)');
+    expect(repo7Field).toBeDisabled();
+
+    fireEvent.change(versionField, { target: { value: '0.1.12' } });
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /update/i })).toBeEnabled();
+    })
+    expect(nameField.value).toBe('nagios-plugins-argo-new');
+    expect(nameField).toBeDisabled();
+    expect(repo6Field.value).toBe('');
+    expect(repo6Field).toBeDisabled();
+    expect(repo7Field.value).toBe('repo-2 (CentOS 7)');
+    expect(repo7Field).toBeDisabled();
+
+    fireEvent.click(screen.getByRole('button', { name: /update/i }));
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalledWith(
+        '/api/v2/internal/updatemetricsversions/nagios-plugins-argo-new-0.1.12'
+      )
+    })
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /update/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        '/api/v2/internal/updatemetricsversions/',
+        {
+          name: 'nagios-plugins-argo-new',
+          version: '0.1.12'
+        }
+      )
+    })
+
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'Metric argo.AMS-Check has been successfully updated.',
+      'Updated', 2000
+    )
+
+    expect(NotificationManager.warning).toHaveBeenCalledTimes(2);
+    expect(NotificationManager.warning).toHaveBeenCalledWith(
+      <div>
+        <p>Metric argo.AMSPublisher-Check has been deleted, since its probe is not part of the chosen package.</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Deleted',
+      0,
+      expect.any(Function)
+    )
+    expect(NotificationManager.warning).toHaveBeenCalledWith(
+      <div>
+        <p>Metric template history instance of test.AMS-Check has not been found.</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Warning',
+      0,
+      expect.any(Function)
+    )
+  })
+
+  test('Test changing package version with error', async () => {
+    fetch.mockImplementationOnce(() => {
+      return Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
+    })
+
+    renderTenantChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /package/i }).textContent).toBe('Package details');
+    })
+
+    const versionField = screen.getByTestId('version');
+
+    fireEvent.change(versionField, { target: { value: '0.1.12' } });
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /update/i })).toBeEnabled();
+    })
+    const nameField = screen.getByTestId('name');
+    const repo6Field = screen.getByTestId('repo_6');
+    const repo7Field = screen.getByTestId('repo_7');
+    expect(screen.getByTestId('name').value).toBe('nagios-plugins-argo-new');
+    expect(nameField).toBeDisabled();
+    expect(repo6Field.value).toBe('');
+    expect(repo6Field).toBeDisabled();
+    expect(repo7Field.value).toBe('repo-2 (CentOS 7)');
+    expect(repo7Field).toBeDisabled();
+
+    fireEvent.change(versionField, { target: { value: '0.1.11' } });
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /update/i })).toBeDisabled();
+    })
+    expect(nameField.value).toBe('nagios-plugins-argo');
+    expect(nameField).toBeDisabled();
+    expect(repo6Field.value).toBe('repo-1 (CentOS 6)');
+    expect(repo6Field).toBeDisabled();
+    expect(repo7Field.value).toBe('repo-2 (CentOS 7)');
+    expect(repo7Field).toBeDisabled();
+
+    fireEvent.change(versionField, { target: { value: '0.1.12' } });
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /update/i })).toBeEnabled();
+    })
+    expect(nameField.value).toBe('nagios-plugins-argo-new');
+    expect(nameField).toBeDisabled();
+    expect(repo6Field.value).toBe('');
+    expect(repo6Field).toBeDisabled();
+    expect(repo7Field.value).toBe('repo-2 (CentOS 7)');
+    expect(repo7Field).toBeDisabled();
+
+    fireEvent.click(screen.getByRole('button', { name: /update/i }));
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalledWith(
+        '/api/v2/internal/updatemetricsversions/nagios-plugins-argo-new-0.1.12'
+      )
+    })
+
+    await waitFor(() => {
+      expect(NotificationManager.error).toHaveBeenCalledWith(
+        <div>
+          <p>500 SERVER ERROR</p>
+          <p>Click to dismiss.</p>
+        </div>,
+        'Error',
+        0,
+        expect.any(Function)
+      )
+    })
+
+    expect(mockChangeObject).not.toHaveBeenCalled();
   })
 })
