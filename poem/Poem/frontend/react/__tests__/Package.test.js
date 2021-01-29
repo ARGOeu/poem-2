@@ -253,6 +253,23 @@ function renderAddView() {
 }
 
 
+function renderCloneView() {
+  const route = '/ui/packages/nagios-plugins-argo-0.1.11/clone';
+  const history = createMemoryHistory({ initialEntries: [route] });
+
+  return {
+    ...render(
+      <Router history={history}>
+        <Route
+          path='/ui/packages/:nameversion/clone'
+          render={ props => <PackageComponent {...props} cloneview={true} /> }
+        />
+      </Router>
+    )
+  }
+}
+
+
 describe('Test list of packages on SuperAdmin POEM', () => {
   beforeAll(() => {
     Backend.mockImplementation(() => {
@@ -1365,6 +1382,246 @@ describe('Tests for package addview', () => {
     fireEvent.change(versionField, { target: { value: '1.1.0' } });
     fireEvent.change(repo6Field, { target: { value: 'repo-1 (CentOS 6)' } });
     fireEvent.change(repo7Field, { target: { value: 'repo-2 (CentOS 7)' } });
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: 'add' })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddObject).toHaveBeenCalledWith(
+        '/api/v2/internal/packages/',
+        {
+          name: 'argo-nagios-tools',
+          version: '1.1.0',
+          use_present_version: false,
+          repos: ['repo-1 (CentOS 6)', 'repo-2 (CentOS 7)']
+        }
+      )
+    })
+
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>Error adding package</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Error: 500 SERVER ERROR',
+      0,
+      expect.any(Function)
+    )
+  })
+})
+
+
+describe('Tests for package cloneview', () => {
+  jest.spyOn(NotificationManager, 'success');
+  jest.spyOn(NotificationManager, 'error');
+
+  beforeAll(() => {
+    Backend.mockImplementation(() => {
+      return {
+        fetchData: (path) => {
+          switch (path) {
+            case '/api/v2/internal/packages/nagios-plugins-argo-0.1.11':
+              return Promise.resolve(mockPackage)
+
+            case '/api/v2/internal/yumrepos':
+              return Promise.resolve(mockYUMRepos)
+
+            case '/api/v2/internal/version/probe':
+              return Promise.resolve(mockProbeVersions)
+
+            case '/api/v2/internal/packageversions/nagios-plugins-argo':
+              return Promise.resolve(mockPackageVersions)
+          }
+        },
+        addObject: mockAddObject
+      }
+    })
+  })
+
+  test('Test that page renders properly', async () => {
+    renderCloneView();
+
+    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /package/i }).textContent).toBe('Clone package');
+    })
+
+    const nameField = screen.getByTestId('name');
+    const versionField = screen.getByTestId('version');
+    const repo6Field = screen.getByTestId('autocomplete-repo_6');
+    const repo7Field = screen.getByTestId('autocomplete-repo_7');
+    const checkboxField = screen.getByRole('checkbox', { name: /version/i });
+
+    expect(nameField.value).toBe('nagios-plugins-argo');
+    expect(nameField).toBeEnabled();
+    expect(versionField.value).toBe('0.1.11');
+    expect(versionField).toBeEnabled();
+    expect(checkboxField).toBeInTheDocument();
+    expect(checkboxField.checked).toEqual(false);
+    expect(repo6Field.value).toBe('repo-1 (CentOS 6)');
+    expect(repo6Field).toBeEnabled();
+    expect(repo7Field.value).toBe('repo-2 (CentOS 7)');
+    expect(repo7Field).toBeEnabled();
+
+    expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
+  })
+
+  test('Test cloning successfully new package', async () => {
+    mockAddObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 201, statusText: 'CREATED' })
+    )
+
+    renderCloneView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /package/i }).textContent).toBe('Clone package');
+    })
+
+    const nameField = screen.getByTestId('name');
+    const versionField = screen.getByTestId('version');
+    const repo6Field = screen.getByTestId('autocomplete-repo_6');
+
+    fireEvent.change(nameField, { target: { value: 'argo-nagios-tools' } });
+    fireEvent.change(versionField, { target: { value: '1.1.0' } });
+    fireEvent.change(repo6Field, { target: { value: '' } });
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: 'add' })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddObject).toHaveBeenCalledWith(
+        '/api/v2/internal/packages/',
+        {
+          name: 'argo-nagios-tools',
+          version: '1.1.0',
+          use_present_version: false,
+          repos: ['repo-2 (CentOS 7)']
+        }
+      )
+    })
+
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'Package successfully added', 'Added', 2000
+    )
+  })
+
+  test('Test adding successfully new package with present version', async () => {
+    mockAddObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 201, statusText: 'CREATED' })
+    )
+
+    renderCloneView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /package/i }).textContent).toBe('Clone package');
+    })
+
+    const nameField = screen.getByTestId('name');
+    const checkField = screen.getByRole('checkbox', { name: /version/i });
+    const repo6Field = screen.getByTestId('autocomplete-repo_6');
+
+    fireEvent.change(nameField, { target: { value: 'argo-nagios-tools' } });
+    fireEvent.click(checkField);
+    fireEvent.change(repo6Field, { target: { value: '' } });
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: 'add' })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddObject).toHaveBeenCalledWith(
+        '/api/v2/internal/packages/',
+        {
+          name: 'argo-nagios-tools',
+          version: '0.1.11',
+          use_present_version: true,
+          repos: ['repo-2 (CentOS 7)']
+        }
+      )
+    })
+
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'Package successfully added', 'Added', 2000
+    )
+  })
+
+  test('Test error cloning package with error message', async () => {
+    mockAddObject.mockReturnValueOnce(
+      Promise.resolve({
+        json: () => Promise.resolve({ detail: 'There has been an error.' }),
+        status: 400,
+        statusText: 'BAD REQUEST'
+      })
+    )
+
+    renderCloneView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /package/i }).textContent).toBe('Clone package');
+    })
+
+    const nameField = screen.getByTestId('name');
+    const versionField = screen.getByTestId('version');
+
+    fireEvent.change(nameField, { target: { value: 'argo-nagios-tools' } });
+    fireEvent.change(versionField, { target: { value: '1.1.0' } });
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: 'add' })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddObject).toHaveBeenCalledWith(
+        '/api/v2/internal/packages/',
+        {
+          name: 'argo-nagios-tools',
+          version: '1.1.0',
+          use_present_version: false,
+          repos: ['repo-1 (CentOS 6)', 'repo-2 (CentOS 7)']
+        }
+      )
+    })
+
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>There has been an error.</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Error: 400 BAD REQUEST',
+      0,
+      expect.any(Function)
+    )
+  })
+
+  test('Test error cloning package without error message', async () => {
+    mockAddObject.mockReturnValueOnce(
+      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
+    )
+
+    renderCloneView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /package/i }).textContent).toBe('Clone package');
+    })
+
+    const nameField = screen.getByTestId('name');
+    const versionField = screen.getByTestId('version');
+
+    fireEvent.change(nameField, { target: { value: 'argo-nagios-tools' } });
+    fireEvent.change(versionField, { target: { value: '1.1.0' } });
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }));
     await waitFor(() => {
