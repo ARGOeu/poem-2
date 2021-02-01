@@ -1,5 +1,27 @@
 # Changelog
 
+## [3.3.7] - 2020-02-01
+
+### Added
+
+* ARGO-2533 Import/export csv for metric profiles
+* ARGO-2717 Create tests for probes
+* ARGO-2714 Create tests for metric templates
+* ARGO-2859 Expose internal metric info when fetching repos
+* ARGO-2713 Create tests for metrics
+* ARGO-2710 Create tests for group elements
+* ARGO-2691 Create tests for API key components
+
+### Fixed
+
+* ARGO-2928 When changing repo in package changeview version is reset to previous value
+* ARGO-2925 Bump pysaml to resolve security issue
+* ARGO-2912 sync-servtype not returning properly if tenant service types should be synced
+
+### Changed 
+
+* ARGO-2924 Update documentation regarding import/export csv for metric profiles
+
 ## [3.3.6] - 2020-12-22
 
 ### Added
