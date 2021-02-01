@@ -14,7 +14,7 @@ from tenant_schemas.test.client import TenantRequestFactory
 
 def mock_function(profile):
     if profile == 'ARGO-MON':
-        return {'argo.AMS-Check', 'argo.AMSPublisher-Check'}
+        return {'argo.AMS-Check'}
 
     if profile == 'MON-TEST':
         return {
@@ -277,6 +277,12 @@ def mock_db_for_repos_tests():
     )
     package5.repos.add(repo6)
 
+    package6 = admin_models.Package.objects.create(
+        name='nagios-plugins-nagiosexchange',
+        version='1.0.0'
+    )
+    package6.repos.add(repo2)
+
     probe1 = admin_models.Probe.objects.create(
         name='ams-probe',
         package=package1,
@@ -332,6 +338,19 @@ def mock_db_for_repos_tests():
         repository='https://github.com/EGI-Foundation/nagios-promoo',
         docurl='https://wiki.egi.eu/wiki/Cloud_SAM_tests',
         description='Probe checks the existence of OCCI Infra kinds.',
+        comment='Initial version',
+        user='testuser',
+        datetime=datetime.datetime.now()
+    )
+
+    probe6 = admin_models.Probe.objects.create(
+        name='check_dirsize',
+        package=package6,
+        repository='https://github.com/ARGOeu/nagios-plugins-nagiosexchange',
+        docurl='https://exchange.nagios.org/directory/Plugins/Operating-Systems'
+               '/Linux/CheckDirSize/details',
+        description='This plugin determines the size of a directory.',
+        comment='Initial version',
         user='testuser',
         datetime=datetime.datetime.now()
     )
@@ -417,8 +436,24 @@ def mock_db_for_repos_tests():
         version_user='testuser'
     )
 
+    probehistory7 = admin_models.ProbeHistory.objects.create(
+        object_id=probe6,
+        name=probe6.name,
+        package=probe6.package,
+        repository=probe6.repository,
+        docurl=probe6.docurl,
+        description=probe6.description,
+        comment=probe6.comment,
+        date_created=datetime.datetime.now(),
+        version_comment='Initial version',
+        version_user='testuser'
+    )
+
     mtype1 = admin_models.MetricTemplateType.objects.create(name='Active')
     mtype2 = admin_models.MetricTemplateType.objects.create(name='Passive')
+
+    mtag1 = admin_models.MetricTags.objects.create(name='internal')
+    mtag2 = admin_models.MetricTags.objects.create(name='tag1')
 
     mt1 = admin_models.MetricTemplate.objects.create(
         name='argo.AMS-Check',
@@ -443,6 +478,7 @@ def mock_db_for_repos_tests():
                '"interval 180", "retryInterval 1"]',
         flags='["NOHOSTNAME 1", "NOTIMEOUT 1"]'
     )
+    mt2.tags.add(mtag1)
 
     mt3 = admin_models.MetricTemplate.objects.create(
         name='eu.seadatanet.org.downloadmanager-check',
@@ -455,6 +491,7 @@ def mock_db_for_repos_tests():
         parameter='["-f follow", "-s OK"]',
         flags='["PNP 1", "OBSESS 1"]'
     )
+    mt3.tags.add(mtag2)
 
     mt4 = admin_models.MetricTemplate.objects.create(
         name='eu.seadatanet.org.nvs2-check',
@@ -466,6 +503,7 @@ def mock_db_for_repos_tests():
                '"retryInterval 3", "timeout 30"]',
         attribute='["voc_collection -u"]'
     )
+    mt4.tags.add(mtag2)
 
     mt5 = admin_models.MetricTemplate.objects.create(
         name='org.apel.APEL-Pub',
@@ -477,7 +515,7 @@ def mock_db_for_repos_tests():
         name='eu.egi.cloud.OCCI-Categories',
         probekey=probehistory6,
         mtype=mtype1,
-        probeexecutable='nagios-promoo occi categories',
+        probeexecutable='["nagios-promoo occi categories"]',
         config='["maxCheckAttempts 2", "path /opt/nagios-promoo/bin", '
                '"interval 60", "retryInterval 15"]',
         attribute='["OCCI_URL --endpoint", "X509_USER_PROXY --token"]',
@@ -485,6 +523,20 @@ def mock_db_for_repos_tests():
         parameter='["-t 300", "--check-location 0"]',
         flags='["OBSESS 1", "NOHOSTNAME 1", "NOTIMEOUT 1", "VO 1"]'
     )
+
+    mt7 = admin_models.MetricTemplate.objects.create(
+        name='org.nagios.AmsDirSize',
+        probekey=probehistory7,
+        mtype=mtype1,
+        probeexecutable='["check_dirsize.sh"]',
+        config='["maxCheckAttempts 3", "timeout 15", '
+               '"path /usr/libexec/argo-monitoring/probes/nagiosexchange", '
+               '"interval 60", "retryInterval 5"]',
+        parameter='["-d /var/spool/argo-nagios-ams-publisher", "-w 10000", '
+                  '"-c 100000", "-f 0"]',
+        flags='["NOHOSTNAME 1", "NOPUBLISH 1"]'
+    )
+    mt7.tags.add(mtag1)
 
     group = poem_models.GroupOfMetrics.objects.create(name='TEST')
 
@@ -505,7 +557,7 @@ def mock_db_for_repos_tests():
         fileparameter=mt1.fileparameter
     )
 
-    poem_models.Metric.objects.create(
+    metric2 = poem_models.Metric.objects.create(
         name=mt2.name,
         group=group,
         mtype=metric_type,
@@ -519,8 +571,9 @@ def mock_db_for_repos_tests():
         parameter=mt2.parameter,
         fileparameter=mt2.fileparameter
     )
+    metric2.tags.add(mtag1)
 
-    poem_models.Metric.objects.create(
+    metric3 = poem_models.Metric.objects.create(
         name=mt3.name,
         group=group,
         mtype=metric_type,
@@ -534,8 +587,9 @@ def mock_db_for_repos_tests():
         parameter=mt3.parameter,
         fileparameter=mt3.fileparameter
     )
+    metric3.tags.add(mtag2)
 
-    poem_models.Metric.objects.create(
+    metric4 = poem_models.Metric.objects.create(
         name=mt4.name,
         group=group,
         mtype=metric_type,
@@ -549,6 +603,7 @@ def mock_db_for_repos_tests():
         parameter=mt4.parameter,
         fileparameter=mt4.fileparameter
     )
+    metric4.tags.add(mtag2)
 
     poem_models.Metric.objects.create(
         name=mt5.name,
@@ -579,6 +634,22 @@ def mock_db_for_repos_tests():
         parameter=mt6.parameter,
         fileparameter=mt6.fileparameter
     )
+
+    metric7 = poem_models.Metric.objects.create(
+        name=mt7.name,
+        group=group,
+        mtype=metric_type,
+        probekey=probehistory7,
+        probeexecutable=mt7.probeexecutable,
+        config=mt7.config,
+        attribute=mt7.attribute,
+        dependancy=mt7.dependency,
+        flags=mt7.flags,
+        files=mt7.files,
+        parameter=mt7.parameter,
+        fileparameter=mt7.fileparameter
+    )
+    metric7.tags.add(mtag1)
 
 
 def create_credentials():
@@ -808,6 +879,10 @@ class ListReposAPIViewTests(TenantTestCase):
                                 'version': '0.1.11'
                             },
                             {
+                                'name': 'nagios-plugins-nagiosexchange',
+                                'version': '1.0.0'
+                            },
+                            {
                                 'name': 'nagios-plugins-seadatacloud-nvs2',
                                 'version': '1.0.1'
                             }
@@ -887,7 +962,10 @@ class ListReposAPIViewTests(TenantTestCase):
                         ]
                     }
                 },
-                'missing_packages': ['nagios-plugins-seadatacloud-nvs2 (1.0.1)']
+                'missing_packages': [
+                    'nagios-plugins-nagiosexchange (1.0.0)',
+                    'nagios-plugins-seadatacloud-nvs2 (1.0.1)'
+                ]
             }
         )
 
@@ -902,7 +980,23 @@ class ListReposAPIViewTests(TenantTestCase):
         response = self.view(request, 'centos6')
         mock_get_metrics.assert_called_once()
         mock_get_metrics.assert_called_with('EMPTY')
-        self.assertEqual(response.data, {'data': {}, 'missing_packages': []})
+        self.assertEqual(
+            response.data,
+            {
+                'data': {
+                    'repo-1': {
+                        'content': 'content1\ncontent2\n',
+                        'packages': [
+                            {
+                                'name': 'nagios-plugins-argo',
+                                'version': '0.1.11'
+                            }
+                        ]
+                    }
+                },
+                'missing_packages': ['nagios-plugins-nagiosexchange (1.0.0)']
+            }
+        )
 
     @patch('Poem.api.views.get_metrics_from_profile')
     def test_list_repos_if_nonexisting_tag(self, mock_get_metrics):
@@ -959,7 +1053,10 @@ class ListReposAPIViewTests(TenantTestCase):
                         ]
                     }
                 },
-                'missing_packages': ['nagios-plugins-seadatacloud-nvs2 (1.0.1)']
+                'missing_packages': [
+                    'nagios-plugins-nagiosexchange (1.0.0)',
+                    'nagios-plugins-seadatacloud-nvs2 (1.0.1)'
+                ]
             }
         )
 
@@ -978,6 +1075,15 @@ class ListReposAPIViewTests(TenantTestCase):
             response.data,
             {
                 'data': {
+                    'repo-1': {
+                        'content': 'content1\ncontent2\n',
+                        'packages': [
+                            {
+                                'name': 'nagios-plugins-argo',
+                                'version': '0.1.11'
+                            }
+                        ]
+                    },
                     'promoo': {
                         'content': 'content9\ncontent10',
                         'packages': [
@@ -988,7 +1094,7 @@ class ListReposAPIViewTests(TenantTestCase):
                         ]
                     }
                 },
-                'missing_packages': []
+                'missing_packages': ['nagios-plugins-nagiosexchange (1.0.0)']
             }
         )
 
@@ -1006,7 +1112,21 @@ class ListReposAPIViewTests(TenantTestCase):
         self.assertEqual(
             response.data,
             {
-                'data': {},
+                'data': {
+                    'repo-1': {
+                        'content': 'content3\ncontent4\n',
+                        'packages': [
+                            {
+                                'name': 'nagios-plugins-argo',
+                                'version': '0.1.11'
+                            },
+                            {
+                                'name': 'nagios-plugins-nagiosexchange',
+                                'version': '1.0.0'
+                            }
+                        ]
+                    }
+                },
                 'missing_packages': ['nagios-promoo (1.4.0)']
             }
         )

@@ -753,7 +753,8 @@ export const PublicPage = ({tenantName=undefined, children}) => {
 export const BaseArgoView = ({resourcename='', location=undefined,
   infoview=false, addview=false, listview=false, modal=false, state=undefined,
   toggle=undefined, submitperm=true, history=true, addnew=true, clone=false,
-  cloneview=false, tenantview=false, publicview=false, addperm=true, children}) =>
+  cloneview=false, tenantview=false, publicview=false, addperm=true, extra_button=undefined,
+  children}) =>
 (
   <React.Fragment>
     {
@@ -771,7 +772,10 @@ export const BaseArgoView = ({resourcename='', location=undefined,
           <h2 className="ml-3 mt-1 mb-4">{resourcename}</h2>
         :
           addview ?
-            <h2 className="ml-3 mt-1 mb-4">{`Add ${resourcename}`}</h2>
+            <React.Fragment>
+              <h2 className="ml-3 mt-1 mb-4">{`Add ${resourcename}`}</h2>
+              { extra_button }
+            </React.Fragment>
           :
             listview ?
               <React.Fragment>
@@ -816,6 +820,7 @@ export const BaseArgoView = ({resourcename='', location=undefined,
                   <React.Fragment>
                     <h2 className="ml-3 mt-1 mb-4">{`Change ${resourcename}`}</h2>
                     <ButtonToolbar>
+                      { extra_button }
                       {
                           clone && !publicview &&
                             <Link className="btn btn-secondary mr-2" to={location.pathname + "/clone"} role="button">Clone</Link>
@@ -904,14 +909,14 @@ export const _AutocompleteField = ({lists=[], field, val, err, setFieldValue, ic
             <div className='input-group-prepend'>
               <span className='input-group-text' id='basic-addon1'>{label}</span>
             </div>
-            <input {...inputProps} type='text'
+            <input {...inputProps} type='text' data-testid={`autocomplete-${field}`}
             className={`form-control ${err && touched && 'border-danger'}`} aria-label='label' />
           </div>
           {!hide_error && err && touched && <div style={{color: '#FF0000', fontSize: 'small'}}>{err}</div>}
         </div>
       );
     else
-      return (<input {...inputProps} type='text' className='form-control'/>);
+      return (<input {...inputProps} type='text' data-testid={`autocomplete-${field}`} className='form-control'/>);
   }
 
   return (

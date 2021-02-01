@@ -112,7 +112,7 @@ function arraysEqual(arr1, arr2) {
 }
 
 
-const InlineFields = ({values, errors, field, addnew=false, readonly=false}) => (
+const InlineFields = ({values, errors, field, addnew=false, readonly=false, addview=undefined}) => (
   <div>
     <h6 className='mt-4 font-weight-bold text-uppercase' hidden={values.type === 'Passive' && field !== 'flags'}>{field.replace('_', ' ')}</h6>
     <FieldArray
@@ -121,25 +121,31 @@ const InlineFields = ({values, errors, field, addnew=false, readonly=false}) => 
         (values[field] && values[field].length > 0) ? (
           values[field].map((item, index) => (
             <React.Fragment key={`fragment.${field}.${index}`}>
+              {
+                !(values.type === 'Passive' && field !== 'flags') &&
+                  <Row>
+                    <Col md={5}>
+                      {(index === 0) && <Label for={`${field}.0.key`}>Key</Label>}
+                    </Col>
+                    <Col md={5}>
+                      {(index === 0) && <Label for={`${field}.0.value`}>Value</Label>}
+                    </Col>
+                  </Row>
+              }
               <Row>
-                <Col md={5}>
-                  {(index === 0) && <Label hidden={values.type === 'Passive' && field !== 'flags'} for={`${field}.0.key`}>Key</Label>}
-                </Col>
-                <Col md={5}>
-                  {(index === 0) && <Label hidden={values.type === 'Passive' && field !== 'flags'} for={`${field}.0.value`}>Value</Label>}
-                </Col>
-              </Row>
-              <Row>
-                <Col md={5}>
-                  <Field
-                    type='text'
-                    name={`${field}.${index}.key`}
-                    id={`${field}.${index}.key`}
-                    className={`form-control ${values[field][index].isNew && 'border-success'}`}
-                    readOnly={!addnew || field === 'config' || (values.type === 'Passive' && item.key === 'PASSIVE')}
-                    hidden={values.type === 'Passive' && field !== 'flags'}
-                  />
-                </Col>
+                {
+                  !(values.type === 'Passive' && field !== 'flags') &&
+                    <Col md={5}>
+                      <Field
+                        type='text'
+                        name={`${field}.${index}.key`}
+                        id={`${field}.${index}.key`}
+                        data-testid={`${field}.${index}.key`}
+                        className={`form-control ${values[field][index].isNew && 'border-success'}`}
+                        readOnly={!addnew || field === 'config' || (values.type === 'Passive' && item.key === 'PASSIVE')}
+                      />
+                    </Col>
+                }
                 <Col md={5}>
                   {
                     values.type === 'Active' && field === 'config' ?
@@ -147,20 +153,22 @@ const InlineFields = ({values, errors, field, addnew=false, readonly=false}) => 
                         type='text'
                         name={`${field}.${index}.value`}
                         id={`${field}.${index}.value`}
+                        data-testid={`${field}.${index}.value`}
                         className={`form-control ${(errors.config && errors.config[index]) && 'border-danger'}`}
                         readOnly={readonly || (!addnew && field === 'config' && item.key === 'path')}
                         validate={validateConfig}
                       />
                     :
-                      <Field
-                        type='text'
-                        name={`${field}.${index}.value`}
-                        id={`${field}.${index}.value`}
-                        className={`form-control ${values[field][index].isNew && 'border-success'}`}
-                        style={{overflowX : 'auto'}}
-                        readOnly={readonly || (!addnew && (field !== 'config' || field === 'config' && item.key === 'path')) || values.type === 'Passive' && item.key === 'PASSIVE'}
-                        hidden={values.type === 'Passive' && field !== 'flags'}
-                      />
+                      !(values.type === 'Passive' && field !== 'flags') &&
+                        <Field
+                          type='text'
+                          name={`${field}.${index}.value`}
+                          id={`${field}.${index}.value`}
+                          data-testid={`${field}.${index}.value`}
+                          className={`form-control ${values[field][index].isNew && 'border-success'}`}
+                          style={{overflowX : 'auto'}}
+                          readOnly={readonly || (!addnew && (field !== 'config' || field === 'config' && item.key === 'path')) || values.type === 'Passive' && item.key === 'PASSIVE'}
+                        />
                   }
                   {
                     errors.config && field === 'config' &&
@@ -190,6 +198,7 @@ const InlineFields = ({values, errors, field, addnew=false, readonly=false}) => 
                         size='sm'
                         color='danger'
                         type='button'
+                        data-testid={`${field}.${index}.remove`}
                         onClick={() => {
                           arrayHelpers.remove(index)
                           if (values[field].length === 1) {
@@ -212,7 +221,13 @@ const InlineFields = ({values, errors, field, addnew=false, readonly=false}) => 
                       size='sm'
                       color='success'
                       type='button'
-                      onClick={() => arrayHelpers.push({key: '', value: '', isNew: true})}
+                      data-testid={`${field}.addnew`}
+                      onClick={() => {
+                        addview ?
+                          arrayHelpers.push({ key: '', value: '' })
+                        :
+                          arrayHelpers.push({ key: '', value: '', isNew: true })
+                      }}
                     >
                       <FontAwesomeIcon icon={faPlus}/> Add another {field.slice(-1) === 's' ? field.slice(0, -1).replace('_', ' '): field.replace('_', ' ')}
                     </Button>
@@ -222,48 +237,48 @@ const InlineFields = ({values, errors, field, addnew=false, readonly=false}) => 
             </React.Fragment>
           ))
         ) : (
-          <React.Fragment key={`fragment.${field}`}>
-            <Row>
-              <Col md={5}>
-                <Label to={'empty-key'} hidden={values.type === 'Passive' && field !== 'flags'}>Key</Label>
-                <Field
-                  type='text'
-                  className='form-control'
-                  value=''
-                  id='empty-key'
-                  readOnly={!addnew}
-                  hidden={values.type === 'Passive' && field !== 'flags'}
-                />
-              </Col>
-              <Col md={5}>
-                <Label to={'empty-value'} hidden={values.type === 'Passive' && field !== 'flags'}>Value</Label>
-                <Field
-                  type='text'
-                  value=''
-                  className='form-control'
-                  id='empty-value'
-                  readOnly={!addnew}
-                  hidden={values.type === 'Passive' && field !== 'flags'}
-                />
-              </Col>
-            </Row>
-            {
-              addnew &&
-                <Row className={values.type === 'Passive' ? 'mt-0' : 'mt-2'}>
-                  <Col md={2}>
-                    <Button
-                      hidden={values.type === 'Passive' && field !== 'flags'}
-                      size='sm'
-                      color='success'
-                      type='button'
-                      onClick={() => arrayHelpers.push({key: '', value: ''})}
-                    >
-                      <FontAwesomeIcon icon={faPlus}/> Add another {field.slice(-1) === 's' ? field.slice(0, -1).replace('_', ' ') : field.replace('_', ' ')}
-                    </Button>
-                  </Col>
-                </Row>
-            }
-          </React.Fragment>
+          !(values.type === 'Passive' && field !== 'flags') &&
+            <React.Fragment key={`fragment.${field}`}>
+              <Row>
+                <Col md={5}>
+                  <Label to={'empty-key'}>Key</Label>
+                  <Field
+                    type='text'
+                    className='form-control'
+                    value=''
+                    id='empty-key'
+                    data-testid={`empty-key.${field}`}
+                    readOnly={!addnew}
+                  />
+                </Col>
+                <Col md={5}>
+                  <Label to={'empty-value'}>Value</Label>
+                  <Field
+                    type='text'
+                    value=''
+                    className='form-control'
+                    id='empty-value'
+                    data-testid={`empty-value.${field}`}
+                    readOnly={!addnew}
+                  />
+                </Col>
+              </Row>
+              {
+                addnew &&
+                  <Row className={values.type === 'Passive' ? 'mt-0' : 'mt-2'}>
+                    <Col md={2}>
+                      <Button
+                        size='sm'
+                        color='success'
+                        type='button'
+                        onClick={() => arrayHelpers.push({key: '', value: ''})}
+                      >
+                        <FontAwesomeIcon icon={faPlus}/> Add another {field.slice(-1) === 's' ? field.slice(0, -1).replace('_', ' ') : field.replace('_', ' ')}
+                      </Button>
+                    </Col>
+                  </Row>
+              }
+            </React.Fragment>
         )
       )}
     />
@@ -282,6 +297,7 @@ export const ListOfMetrics = (props) => {
   const location = props.location;
   const type = props.type;
   const publicView = props.publicView;
+  const queryKey = `${type}_${publicView ? 'public_' : ''}_listview`;
 
   const [selected, setSelected] = useState({});
   const [selectAll, setSelectAll] = useState(0);
@@ -293,7 +309,7 @@ export const ListOfMetrics = (props) => {
   const backend = new Backend();
 
   const { data: userDetails, error: userDetailsError, isLoading: userDetailsLoading } = useQuery(
-    `${type}_listview_userdetails`, async () => {
+    `${queryKey}_userdetails`, async () => {
       let userdetails = { username: 'Anonymous' };
       let schema = backend.isTenantSchema();
       if (!publicView) {
@@ -306,7 +322,7 @@ export const ListOfMetrics = (props) => {
   );
 
   const { data: listMetrics, error: listMetricsError, isLoading: listMetricsLoading } = useQuery(
-    `${type}_listview`, async () => {
+    `${queryKey}`, async () => {
       let metrics =await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}${type === 'metrics' ? 'metric' : type}`);
       return metrics;
     },
@@ -316,21 +332,21 @@ export const ListOfMetrics = (props) => {
   );
 
   const { data: listTypes, error: listTypesError, isLoading: listTypesLoading } = useQuery(
-    `${type}_listview_mtypes`, async () => {
+    `${queryKey}_mtypes`, async () => {
       let types = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}mt${type=='metrictemplates' ? 't' : ''}ypes`);
       return types;
     },
   );
 
   const { data: listTags, error: listTagsError, isLoading: listTagsLoading } = useQuery(
-    `${type}_listview_tags`, async () => {
+    `${queryKey}_tags`, async () => {
       let tags = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}metrictags`);
       return tags;
     }
   );
 
   const { data: listOSGroups, error: listOSGroupsError, isLoading: listOSGroupsLoading } = useQuery(
-    `${type}_listview_osgroups`, async () => {
+    `${queryKey}_osgroups`, async () => {
       if (type === 'metrics') {
         let groups = await backend.fetchResult(`/api/v2/internal/${publicView ? 'public_' : ''}usergroups`);
         return groups['metrics'];
@@ -342,7 +358,7 @@ export const ListOfMetrics = (props) => {
   );
 
   const { data: isTenantSchema, isLoading: isTenantSchemaLoading } = useQuery(
-    `${type}_listview_schema`, async () => {
+    `${queryKey}_schema`, async () => {
       let schema = backend.isTenantSchema();
       return schema;
     }
@@ -400,8 +416,8 @@ export const ListOfMetrics = (props) => {
   async function bulkDeleteMetrics(mt) {
     //let refreshed_metrics = listMetrics;
     let response = await backend.bulkDeleteMetrics({'metrictemplates': mt});
-    let json = await response.json();
     if (response.ok) {
+      let json = await response.json();
       //refreshed_metrics = refreshed_metrics.filter(m => !mt.includes(m.name));
       if ('info' in json)
         NotifyOk({msg: json.info, title: 'Deleted'});
@@ -409,7 +425,7 @@ export const ListOfMetrics = (props) => {
       if ('warning' in json)
         NotifyWarn({msg: json.warning, title: 'Deleted'});
 
-      queryCache.setQueryData(`${type}_listview`, (oldData) => oldData.filter(met => !mt.includes(met.name)));
+      queryCache.setQueryData(`${queryKey}`, (oldData) => oldData.filter(met => !mt.includes(met.name)));
       setSelectAll(0);
 
     } else
@@ -522,6 +538,7 @@ export const ListOfMetrics = (props) => {
                 <input
                   type='checkbox'
                   className='checkbox'
+                  data-testid={`checkbox-${original.name}`}
                   checked={selected[original.name] === true}
                   onChange={() => toggleRow(original.name)}
                 />
@@ -533,6 +550,7 @@ export const ListOfMetrics = (props) => {
             <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
               <input
                 type='checkbox'
+                data-testid='checkbox-select-all'
                 className='checkbox'
                 checked={selectAll === 1}
                 ref={input => {
@@ -654,7 +672,7 @@ export const ListOfMetrics = (props) => {
                 data={listMetrics}
                 columns={memoized_columns}
                 page_size={50}
-                resourcename='metrics'
+                resourcename='metric templates'
                 filter={true}
                 selectable={!publicView}
               />
@@ -672,7 +690,7 @@ export const ListOfMetrics = (props) => {
               onYes={() => bulkDeleteMetrics(modalVar)}
             />
             <div className="d-flex align-items-center justify-content-between">
-              <h2 className="ml-3 mt-1 mb-4">{'Select metric template to change'}</h2>
+              <h2 className="ml-3 mt-1 mb-4">{`Select metric template ${publicView ? 'for details' : 'to change'}`}</h2>
               {
                 !publicView &&
                   <ButtonToolbar>
@@ -749,16 +767,17 @@ export const MetricForm =
               <InputGroup>
                 <InputGroupAddon addonType='prepend'>Name</InputGroupAddon>
                 <Field
-                type='text'
-                name='name'
-                className={`form-control ${props.errors.name && props.touched.name && 'border-danger'}`}
-                id='name'
-                readOnly={isHistory || isTenantSchema || publicView}
-              />
+                  type='text'
+                  name='name'
+                  className={`form-control ${props.errors.name && props.touched.name && 'border-danger'}`}
+                  id='name'
+                  data-testid='name'
+                  readOnly={isHistory || isTenantSchema || publicView}
+                />
               </InputGroup>
               <CustomErrorMessage name='name' />
               <FormText color='muted'>
-              Metric name.
+                Metric name.
               </FormText>
             </Col>
             <Col md={4} className='mt-1'>
@@ -771,6 +790,7 @@ export const MetricForm =
                       name='type'
                       className='form-control'
                       id='mtype'
+                      data-testid='mtype'
                       readOnly={true}
                     />
                   :
@@ -779,6 +799,7 @@ export const MetricForm =
                       name='type'
                       className='form-control custom-select'
                       id='mtype'
+                      data-testid='mtype'
                       onChange={e => {
                         props.handleChange(e);
                         if (e.target.value === 'Passive') {
@@ -791,6 +812,21 @@ export const MetricForm =
                             props.setFieldValue(`flags[${ind}].value`, '1')
                           }
                         } else if (e.target.value === 'Active') {
+                          if (!props.values.probe)
+                            props.setFieldValue('probe', {'package': ''})
+
+                          if (props.values.config.length !== 5)
+                            props.setFieldValue(
+                              'config',
+                              [
+                                { key: 'maxCheckAttempts', value: '' },
+                                { key: 'timeout', value: '' },
+                                { key: 'path', value: '' },
+                                { key: 'interval', value: '' },
+                                { key: 'retryInterval', value: '' },
+                              ]
+                            )
+
                           let ind = undefined;
                           props.values.flags.forEach((e, index) => {
                             if (e.key === 'PASSIVE') {
@@ -813,7 +849,7 @@ export const MetricForm =
                 }
               </InputGroup>
               <FormText color='muted'>
-              Metric is of given type.
+                Metric is of given type.
               </FormText>
             </Col>
           </Row>
@@ -828,6 +864,7 @@ export const MetricForm =
                       className='form-control'
                       disabled={true}
                       id='passive-probeversion'
+                      data-testid='probeversion'
                     />
                   </InputGroup>
                 :
@@ -837,6 +874,7 @@ export const MetricForm =
                       <Field
                         type='text'
                         name='probeversion'
+                        data-testid='probeversion'
                         className='form-control'
                         disabled={true}
                       />
@@ -898,6 +936,7 @@ export const MetricForm =
                   className='form-control'
                   value={props.values.type === 'Active' ? props.values.probe.package : ''}
                   disabled={true}
+                  data-testid='package'
                 />
               </InputGroup>
               <FormText color='muted'>
@@ -909,8 +948,10 @@ export const MetricForm =
             (obj_label === 'metrictemplate' && (!isHistory && !isTenantSchema && !publicView)) ?
               <Row className='mb-4 mt-2'>
                 <Col md={10}>
-                  <Label>Tags:</Label>
+                  <Label for='tags'>Tags:</Label>
                   <CreatableSelect
+                    inputId='tags'
+                    name='tags'
                     closeMenuOnSelect={false}
                     isMulti
                     onChange={(value) => props.setFieldValue('tags', value)}
@@ -954,6 +995,7 @@ export const MetricForm =
                 className='form-control'
                 component='textarea'
                 name='description'
+                data-testid='description'
                 disabled={isTenantSchema || isHistory || publicView}
               />
             </Col>
@@ -969,6 +1011,7 @@ export const MetricForm =
                         <Field
                           type='text'
                           name='group'
+                          data-testid='group'
                           className='form-control'
                           disabled={true}
                         />
@@ -976,6 +1019,7 @@ export const MetricForm =
                         <Field
                           component='select'
                           name='group'
+                          data-testid='group'
                           className='form-control custom-select'
                         >
                           {
@@ -996,23 +1040,26 @@ export const MetricForm =
         <FormGroup>
           <ParagraphTitle title='Metric configuration'/>
           <h6 className='mt-4 font-weight-bold text-uppercase' hidden={props.values.type === 'Passive'}>probe executable</h6>
-          <Row>
-            <Col md={5}>
-              <Field
-                type='text'
-                name='probeexecutable'
-                className={`form-control ${props.errors.probeexecutable && props.touched.probeexecutable && 'border-danger'}`}
-                hidden={props.values.type === 'Passive'}
-                readOnly={isTenantSchema || isHistory || publicView}
-              />
-              <CustomErrorMessage name='probeexecutable' />
-            </Col>
-          </Row>
-          <InlineFields values={props.values} errors={props.errors} field='config' addnew={!isTenantSchema && !isHistory} readonly={obj_label === 'metrictemplate' && isTenantSchema || isHistory || publicView}/>
-          <InlineFields values={props.values} errors={props.errors} field='attributes' addnew={!isTenantSchema && !isHistory && !publicView}/>
-          <InlineFields values={props.values} errors={props.errors} field='dependency' addnew={!isTenantSchema && !isHistory && !publicView}/>
-          <InlineFields values={props.values} errors={props.errors} field='parameter' addnew={!isTenantSchema && !isHistory && !publicView}/>
-          <InlineFields values={props.values} errors={props.errors} field='flags' addnew={!isTenantSchema && !isHistory && !publicView}/>
+          {
+            props.values.type === 'Active' &&
+              <Row>
+                <Col md={5}>
+                  <Field
+                    type='text'
+                    name='probeexecutable'
+                    data-testid='probeexecutable'
+                    className={`form-control ${props.errors.probeexecutable && props.touched.probeexecutable && 'border-danger'}`}
+                    readOnly={isTenantSchema || isHistory || publicView}
+                  />
+                  <CustomErrorMessage name='probeexecutable' />
+                </Col>
+              </Row>
+          }
+          <InlineFields values={props.values} errors={props.errors} field='config' addview={addview} addnew={!isTenantSchema && !isHistory} readonly={obj_label === 'metrictemplate' && isTenantSchema || isHistory || publicView}/>
+          <InlineFields values={props.values} errors={props.errors} field='attributes' addview={addview} addnew={!isTenantSchema && !isHistory && !publicView}/>
+          <InlineFields values={props.values} errors={props.errors} field='dependency' addview={addview} addnew={!isTenantSchema && !isHistory && !publicView}/>
+          <InlineFields values={props.values} errors={props.errors} field='parameter' addview={addview} addnew={!isTenantSchema && !isHistory && !publicView}/>
+          <InlineFields values={props.values} errors={props.errors} field='flags' addview={addview} addnew={!isTenantSchema && !isHistory && !publicView}/>
           <h6 className='mt-4 font-weight-bold text-uppercase'>parent</h6>
           <Row>
             <Col md={5}>
@@ -1022,6 +1069,7 @@ export const MetricForm =
                   type='text'
                   name='parent'
                   className='form-control'
+                  data-testid='parent'
                   readOnly={true}
                 />
               :
@@ -1297,16 +1345,21 @@ export const MetricChange = (props) => {
     return (<ErrorComponent error={probeError}/>);
 
   else {
-    var groups = [];
-    var writePerm = false;
-    if (session.active) {
-      groups = session.userdetails.groups.metrics;
-      writePerm = session.userdetails.is_superuser || session.userdetails.groups.metrics.indexOf(metric.group) >= 0;
-    }
+    const writePerm = publicView ?
+      false
+    :
+      session.active ?
+        session.userdetails.is_superuser || session.userdetails.groups.metrics.indexOf(metric.group) >= 0
+      :
+        false;
 
-    if (!groups.includes(metric.group))
-      groups.push(metric.group);
-
+    const groups = session && session.active ?
+      session.userdetails.groups.metrics.indexOf(metric.group) < 0 ?
+        [...session.userdetails.groups.metrics, metric.group]
+      :
+        session.userdetails.groups.metrics
+    :
+      [metric.group];
 
     return (
       <BaseArgoView

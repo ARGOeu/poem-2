@@ -246,7 +246,7 @@ export const GroupChange = (props) => {
   var filteredItems = items;
   if (searchItem)
     filteredItems = filteredItems.filter(filteredRow =>
-      filteredRow.toLowerCase().includes(searchItem)
+      filteredRow.toLowerCase().includes(searchItem.toLowerCase())
     );
 
   if (loading)
@@ -294,6 +294,7 @@ export const GroupChange = (props) => {
                       <Field
                         type='text'
                         name='name'
+                        data-testid='name'
                         required={true}
                         className='form-control'
                         id='groupname'
@@ -306,7 +307,7 @@ export const GroupChange = (props) => {
               <FormGroup>
                 <ParagraphTitle title={title}/>
                 <Row className='mb-2'>
-                  <Col md={8}>
+                  <Col md={8} data-testid='available_metrics' >
                     <Select
                       closeMenuOnSelect={false}
                       placeholder={`Search available ${title}`}
@@ -357,6 +358,7 @@ export const GroupChange = (props) => {
                         <Field
                           type='text'
                           name='search_items'
+                          data-testid='search_items'
                           className='form-control'
                           onChange={(e) => setSearchItem(e.target.value)}
                           component={SearchField}

@@ -47,6 +47,14 @@ Adding or editing of pairs in _filtered view_ is also allowed, but what should b
 ![Tenant Metric Profile Tuples Search Edit](figures/tenant_metric_profiles_tuple_search_edit.png)
 ![Tenant Metric Profile Tuples Search Sorted](figures/tenant_metric_profiles_tuple_sorted.png)
 
+### Import/export CSV
+
+There is a feature of importing and exporting table in the **Metric instances** section in a .csv file. 
+
+When exporting, user clicks **Export** in **CSV** dropdown button, and file is stored to the computer. The name of the file is *PROFILE_NAME.csv* (in this example it would be *FEDCLOUD.csv*).
+
+When importing, user clicks **Import** in **CSV** dropdown button, and selects the file (s)he wants to import. Metric instances are then overridden with values from imported .csv file.
+
 ### Metric profile history
 
 By clicking the **History** button, the user can see all the changes made to the profile, when they were made and by whom (image below).
