@@ -47,7 +47,7 @@ export const TenantList = (props) => {
       for (let j = 0; j < 3; j++) {
         if ((i + j) < listTenants.length)
           cards.push(
-            <Card className='mr-3' key={j + 1} tag='a' onClick={() => history.push(`/ui/tenants/${listTenants[i + j].name}`)} style={{cursor: 'pointer'}}>
+            <Card data-testid={`${listTenants[i + j].name}-card`} className='mr-3' key={j + 1} tag='a' onClick={() => history.push(`/ui/tenants/${listTenants[i + j].name}`)} style={{cursor: 'pointer'}}>
               <CardTitle className='text-center'>
                 <h3>{listTenants[i + j].name}</h3>
               </CardTitle>
@@ -55,21 +55,21 @@ export const TenantList = (props) => {
                 <FontAwesomeIcon icon={faIdBadge} size='5x'/>
               </CardSubtitle>
               <CardFooter>
-                <CardText className='mb-1'>
+                <CardText data-testid={`${listTenants[i + j].name}-schema`} className='mb-1'>
                   <b>Schema name:</b> {listTenants[i + j].schema_name}
                 </CardText>
-                <CardText>
+                <CardText data-testid={`${listTenants[i + j].name}-poem`}>
                   <b>POEM url:</b> {listTenants[i + j].domain_url}
                 </CardText>
                 <div className='mb-1'>
-                  <Badge color='info' className='mr-2'>
+                  <Badge color='info' className='mr-2' data-testid={`${listTenants[i + j].name}-metrics`}>
                     {`Metric${listTenants[i + j].schema_name == 'public' ? ' templates ' : 's '
                     }`}
                     <Badge style={{fontSize: '10pt'}} color='light'>{listTenants[i + j].nr_metrics}</Badge>
                   </Badge>
                 </div>
                 <div>
-                  <Badge color='success'>
+                  <Badge color='success' data-testid={`${listTenants[i + j].name}-probes`}>
                     Probes <Badge style={{fontSize: '10pt'}} color='light'>{listTenants[i + j].nr_probes}</Badge>
                   </Badge>
                 </div>
