@@ -335,7 +335,7 @@ export const UsersList = (props) => {
   else if (!loading && listUsers) {
     return (
       <BaseArgoView
-        resourcename='users'
+        resourcename='user'
         location={location}
         listview={true}>
         <BaseArgoTable
