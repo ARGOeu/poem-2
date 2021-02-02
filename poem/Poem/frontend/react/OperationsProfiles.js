@@ -142,11 +142,12 @@ export const OperationsProfileDetails = (props) => {
                       <Field
                         type='text'
                         name='name'
+                        data-testid='name'
                         className='form-control form-control-lg'
                         readOnly
                       />
                     </InputGroup>
-                    <FormText color='text-muted'>
+                    <FormText color='muted'>
                       Name of operations profile.
                     </FormText>
                   </Col>
@@ -155,7 +156,7 @@ export const OperationsProfileDetails = (props) => {
               <ParagraphTitle title='States'/>
               <Row>
                 <Col md={4}>
-                  <Table bordered size='sm'>
+                  <Table data-testid='tbl-states' bordered size='sm'>
                     <thead>
                       <tr>
                         <th style={{backgroundColor: '#ececec'}}>#</th>
@@ -175,7 +176,7 @@ export const OperationsProfileDetails = (props) => {
                   </Table>
                 </Col>
                 <Col md={5}>
-                  <Table bordered>
+                  <Table data-testid='tbl-default' bordered>
                     <thead>
                       <tr>
                         <th style={{backgroundColor: '#ececec'}}>Default</th>
@@ -205,7 +206,7 @@ export const OperationsProfileDetails = (props) => {
                   profile.operations.map((operation, oin) =>
                     <Col md={5} key={oin}>
                       <h3 className='text-center'>{operation.name}</h3>
-                      <Table bordered size='sm'>
+                      <Table data-testid={`tbl-operations-${operation.name}`} bordered size='sm'>
                         <thead>
                           <tr>
                             <th style={{backgroundColor: '#ececec'}}>State A</th>
