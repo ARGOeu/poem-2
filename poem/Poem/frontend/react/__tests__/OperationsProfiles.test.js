@@ -1,10 +1,10 @@
 import React from 'react';
 import '@testing-library/jest-dom/extend-expect';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import { createMemoryHistory } from 'history';
 import { Route, Router } from 'react-router-dom';
 import { queryCache } from 'react-query';
-import { OperationsProfilesList } from '../OperationsProfiles';
+import { OperationsProfileDetails, OperationsProfilesList } from '../OperationsProfiles';
 import { WebApi } from '../DataManager';
 
 
@@ -303,6 +303,45 @@ function renderListView(publicView=undefined) {
 }
 
 
+function renderDetailsView(publicView=undefined) {
+  const route = `/ui/${publicView ? 'public_' : ''}operationsprofiles/egi_ops`;
+  const history = createMemoryHistory({ initialEntries: [route] });
+
+  if (publicView)
+    return {
+      ...render(
+        <Router history={history}>
+          <Route
+            path='/ui/public_operationsprofiles/:name'
+            render={ props => <OperationsProfileDetails
+              {...props}
+              publicView={true}
+              webapioperations={'https://mock.operations.com'}
+              webapitoken={'token'}
+            /> }
+          />
+        </Router>
+      )
+    }
+
+  else
+    return {
+      ...render(
+        <Router history={history}>
+          <Route
+            path='/ui/operationsprofiles/:name'
+            render={ props => <OperationsProfileDetails
+              {...props}
+              webapioperations={'https://mock.operations.com'}
+              webapitoken={'token'}
+            /> }
+          />
+        </Router>
+      )
+    }
+}
+
+
 describe('Test list of operations profiles', () => {
   beforeAll(() => {
     WebApi.mockImplementation(() => {
@@ -350,5 +389,192 @@ describe('Test list of operations profiles', () => {
     expect(screen.getByRole('row', { name: /egi/i }).textContent).toBe('1egi_ops');
     expect(screen.getByRole('link', { name: /egi/i }).closest('a')).toHaveAttribute('href', '/ui/public_operationsprofiles/egi_ops');
     expect(screen.queryByRole('button', { name: /add/i })).not.toBeInTheDocument();
+  })
+})
+
+
+describe('Tests for operations profiles detail view', () => {
+  beforeAll(() => {
+    WebApi.mockImplementation(() => {
+      return {
+        fetchOperationProfile: () => Promise.resolve(mockOperationsProfiles[0])
+      }
+    })
+  })
+
+  test('Test that page renders properly', async () => {
+    renderDetailsView();
+
+    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Operations profile details')
+    })
+
+    expect(screen.getAllByRole('table')).toHaveLength(4);
+
+    const nameField = screen.getByTestId('name');
+    const stateTbl = within(screen.getByTestId('tbl-states'));
+    const defaultStateTbl = within(screen.getByTestId('tbl-default'));
+    const andOpsTbl = within(screen.getByTestId('tbl-operations-AND'));
+    const orOpsTbl = within(screen.getByTestId('tbl-operations-OR'));
+
+    expect(nameField.value).toBe('egi_ops');
+    expect(nameField).toHaveAttribute('readonly');
+
+    const stateTblRows = stateTbl.getAllByRole('row');
+    expect(stateTblRows).toHaveLength(7);
+    expect(stateTblRows[0].textContent).toBe('#Available states');
+    expect(stateTblRows[1].textContent).toBe('1OK');
+    expect(stateTblRows[2].textContent).toBe('2WARNING');
+    expect(stateTblRows[3].textContent).toBe('3UNKNOWN');
+    expect(stateTblRows[4].textContent).toBe('4MISSING');
+    expect(stateTblRows[5].textContent).toBe('5CRITICAL');
+    expect(stateTblRows[6].textContent).toBe('6DOWNTIME');
+
+    const defaultStateTblRows = defaultStateTbl.getAllByRole('row')
+    expect(defaultStateTblRows).toHaveLength(4);
+    expect(defaultStateTblRows[0].textContent).toBe('DefaultState to be used');
+    expect(defaultStateTblRows[1].textContent).toBe('default_downtimeDOWNTIME');
+    expect(defaultStateTblRows[2].textContent).toBe('default_missingMISSING');
+    expect(defaultStateTblRows[3].textContent).toBe('default_unknownUNKNOWN');
+
+    const andOpsTblRows = andOpsTbl.getAllByRole('row');
+    expect(andOpsTblRows).toHaveLength(22);
+    expect(andOpsTblRows[0].textContent).toBe('State AState BResult');
+    expect(andOpsTblRows[1].textContent).toBe('OKOKOK');
+    expect(andOpsTblRows[2].textContent).toBe('OKWARNINGWARNING');
+    expect(andOpsTblRows[3].textContent).toBe('OKUNKNOWNUNKNOWN');
+    expect(andOpsTblRows[4].textContent).toBe('OKMISSINGMISSING');
+    expect(andOpsTblRows[5].textContent).toBe('OKCRITICALCRITICAL');
+    expect(andOpsTblRows[6].textContent).toBe('OKDOWNTIMEDOWNTIME');
+    expect(andOpsTblRows[7].textContent).toBe('WARNINGWARNINGWARNING');
+    expect(andOpsTblRows[8].textContent).toBe('WARNINGUNKNOWNUNKNOWN');
+    expect(andOpsTblRows[9].textContent).toBe('WARNINGMISSINGMISSING');
+    expect(andOpsTblRows[10].textContent).toBe('WARNINGCRITICALCRITICAL');
+    expect(andOpsTblRows[11].textContent).toBe('WARNINGDOWNTIMEDOWNTIME');
+    expect(andOpsTblRows[12].textContent).toBe('UNKNOWNUNKNOWNUNKNOWN');
+    expect(andOpsTblRows[13].textContent).toBe('UNKNOWNMISSINGMISSING');
+    expect(andOpsTblRows[14].textContent).toBe('UNKNOWNCRITICALCRITICAL');
+    expect(andOpsTblRows[15].textContent).toBe('UNKNOWNDOWNTIMEDOWNTIME');
+    expect(andOpsTblRows[16].textContent).toBe('MISSINGMISSINGMISSING');
+    expect(andOpsTblRows[17].textContent).toBe('MISSINGCRITICALCRITICAL');
+    expect(andOpsTblRows[18].textContent).toBe('MISSINGDOWNTIMEDOWNTIME');
+    expect(andOpsTblRows[19].textContent).toBe('CRITICALCRITICALCRITICAL');
+    expect(andOpsTblRows[20].textContent).toBe('CRITICALDOWNTIMECRITICAL');
+    expect(andOpsTblRows[21].textContent).toBe('DOWNTIMEDOWNTIMEDOWNTIME');
+
+    const orOpsTblRows = orOpsTbl.getAllByRole('row');
+    expect(orOpsTblRows).toHaveLength(22);
+    expect(orOpsTblRows[0].textContent).toBe('State AState BResult');
+    expect(orOpsTblRows[1].textContent).toBe('OKOKOK');
+    expect(orOpsTblRows[2].textContent).toBe('OKWARNINGOK');
+    expect(orOpsTblRows[3].textContent).toBe('OKUNKNOWNOK');
+    expect(orOpsTblRows[4].textContent).toBe('OKMISSINGOK');
+    expect(orOpsTblRows[5].textContent).toBe('OKCRITICALOK');
+    expect(orOpsTblRows[6].textContent).toBe('OKDOWNTIMEOK');
+    expect(orOpsTblRows[7].textContent).toBe('WARNINGWARNINGWARNING');
+    expect(orOpsTblRows[8].textContent).toBe('WARNINGUNKNOWNWARNING');
+    expect(orOpsTblRows[9].textContent).toBe('WARNINGMISSINGWARNING');
+    expect(orOpsTblRows[10].textContent).toBe('WARNINGCRITICALWARNING');
+    expect(orOpsTblRows[11].textContent).toBe('WARNINGDOWNTIMEWARNING');
+    expect(orOpsTblRows[12].textContent).toBe('UNKNOWNUNKNOWNUNKNOWN');
+    expect(orOpsTblRows[13].textContent).toBe('UNKNOWNMISSINGUNKNOWN');
+    expect(orOpsTblRows[14].textContent).toBe('UNKNOWNCRITICALCRITICAL');
+    expect(orOpsTblRows[15].textContent).toBe('UNKNOWNDOWNTIMEUNKNOWN');
+    expect(orOpsTblRows[16].textContent).toBe('MISSINGMISSINGMISSING');
+    expect(orOpsTblRows[17].textContent).toBe('MISSINGCRITICALCRITICAL');
+    expect(orOpsTblRows[18].textContent).toBe('MISSINGDOWNTIMEDOWNTIME');
+    expect(orOpsTblRows[19].textContent).toBe('CRITICALCRITICALCRITICAL');
+    expect(orOpsTblRows[20].textContent).toBe('CRITICALDOWNTIMECRITICAL');
+    expect(orOpsTblRows[21].textContent).toBe('DOWNTIMEDOWNTIMEDOWNTIME');
+  })
+
+  test('Test that public page renders properly', async () => {
+    renderDetailsView(true);
+
+    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Operations profile details')
+    })
+
+    expect(screen.getAllByRole('table')).toHaveLength(4);
+
+    const nameField = screen.getByTestId('name');
+    const stateTbl = within(screen.getByTestId('tbl-states'));
+    const defaultStateTbl = within(screen.getByTestId('tbl-default'));
+    const andOpsTbl = within(screen.getByTestId('tbl-operations-AND'));
+    const orOpsTbl = within(screen.getByTestId('tbl-operations-OR'));
+
+    expect(nameField.value).toBe('egi_ops');
+    expect(nameField).toHaveAttribute('readonly');
+
+    const stateTblRows = stateTbl.getAllByRole('row');
+    expect(stateTblRows).toHaveLength(7);
+    expect(stateTblRows[0].textContent).toBe('#Available states');
+    expect(stateTblRows[1].textContent).toBe('1OK');
+    expect(stateTblRows[2].textContent).toBe('2WARNING');
+    expect(stateTblRows[3].textContent).toBe('3UNKNOWN');
+    expect(stateTblRows[4].textContent).toBe('4MISSING');
+    expect(stateTblRows[5].textContent).toBe('5CRITICAL');
+    expect(stateTblRows[6].textContent).toBe('6DOWNTIME');
+
+    const defaultStateTblRows = defaultStateTbl.getAllByRole('row')
+    expect(defaultStateTblRows).toHaveLength(4);
+    expect(defaultStateTblRows[0].textContent).toBe('DefaultState to be used');
+    expect(defaultStateTblRows[1].textContent).toBe('default_downtimeDOWNTIME');
+    expect(defaultStateTblRows[2].textContent).toBe('default_missingMISSING');
+    expect(defaultStateTblRows[3].textContent).toBe('default_unknownUNKNOWN');
+
+    const andOpsTblRows = andOpsTbl.getAllByRole('row');
+    expect(andOpsTblRows).toHaveLength(22);
+    expect(andOpsTblRows[0].textContent).toBe('State AState BResult');
+    expect(andOpsTblRows[1].textContent).toBe('OKOKOK');
+    expect(andOpsTblRows[2].textContent).toBe('OKWARNINGWARNING');
+    expect(andOpsTblRows[3].textContent).toBe('OKUNKNOWNUNKNOWN');
+    expect(andOpsTblRows[4].textContent).toBe('OKMISSINGMISSING');
+    expect(andOpsTblRows[5].textContent).toBe('OKCRITICALCRITICAL');
+    expect(andOpsTblRows[6].textContent).toBe('OKDOWNTIMEDOWNTIME');
+    expect(andOpsTblRows[7].textContent).toBe('WARNINGWARNINGWARNING');
+    expect(andOpsTblRows[8].textContent).toBe('WARNINGUNKNOWNUNKNOWN');
+    expect(andOpsTblRows[9].textContent).toBe('WARNINGMISSINGMISSING');
+    expect(andOpsTblRows[10].textContent).toBe('WARNINGCRITICALCRITICAL');
+    expect(andOpsTblRows[11].textContent).toBe('WARNINGDOWNTIMEDOWNTIME');
+    expect(andOpsTblRows[12].textContent).toBe('UNKNOWNUNKNOWNUNKNOWN');
+    expect(andOpsTblRows[13].textContent).toBe('UNKNOWNMISSINGMISSING');
+    expect(andOpsTblRows[14].textContent).toBe('UNKNOWNCRITICALCRITICAL');
+    expect(andOpsTblRows[15].textContent).toBe('UNKNOWNDOWNTIMEDOWNTIME');
+    expect(andOpsTblRows[16].textContent).toBe('MISSINGMISSINGMISSING');
+    expect(andOpsTblRows[17].textContent).toBe('MISSINGCRITICALCRITICAL');
+    expect(andOpsTblRows[18].textContent).toBe('MISSINGDOWNTIMEDOWNTIME');
+    expect(andOpsTblRows[19].textContent).toBe('CRITICALCRITICALCRITICAL');
+    expect(andOpsTblRows[20].textContent).toBe('CRITICALDOWNTIMECRITICAL');
+    expect(andOpsTblRows[21].textContent).toBe('DOWNTIMEDOWNTIMEDOWNTIME');
+
+    const orOpsTblRows = orOpsTbl.getAllByRole('row');
+    expect(orOpsTblRows).toHaveLength(22);
+    expect(orOpsTblRows[0].textContent).toBe('State AState BResult');
+    expect(orOpsTblRows[1].textContent).toBe('OKOKOK');
+    expect(orOpsTblRows[2].textContent).toBe('OKWARNINGOK');
+    expect(orOpsTblRows[3].textContent).toBe('OKUNKNOWNOK');
+    expect(orOpsTblRows[4].textContent).toBe('OKMISSINGOK');
+    expect(orOpsTblRows[5].textContent).toBe('OKCRITICALOK');
+    expect(orOpsTblRows[6].textContent).toBe('OKDOWNTIMEOK');
+    expect(orOpsTblRows[7].textContent).toBe('WARNINGWARNINGWARNING');
+    expect(orOpsTblRows[8].textContent).toBe('WARNINGUNKNOWNWARNING');
+    expect(orOpsTblRows[9].textContent).toBe('WARNINGMISSINGWARNING');
+    expect(orOpsTblRows[10].textContent).toBe('WARNINGCRITICALWARNING');
+    expect(orOpsTblRows[11].textContent).toBe('WARNINGDOWNTIMEWARNING');
+    expect(orOpsTblRows[12].textContent).toBe('UNKNOWNUNKNOWNUNKNOWN');
+    expect(orOpsTblRows[13].textContent).toBe('UNKNOWNMISSINGUNKNOWN');
+    expect(orOpsTblRows[14].textContent).toBe('UNKNOWNCRITICALCRITICAL');
+    expect(orOpsTblRows[15].textContent).toBe('UNKNOWNDOWNTIMEUNKNOWN');
+    expect(orOpsTblRows[16].textContent).toBe('MISSINGMISSINGMISSING');
+    expect(orOpsTblRows[17].textContent).toBe('MISSINGCRITICALCRITICAL');
+    expect(orOpsTblRows[18].textContent).toBe('MISSINGDOWNTIMEDOWNTIME');
+    expect(orOpsTblRows[19].textContent).toBe('CRITICALCRITICALCRITICAL');
+    expect(orOpsTblRows[20].textContent).toBe('CRITICALDOWNTIMECRITICAL');
+    expect(orOpsTblRows[21].textContent).toBe('DOWNTIMEDOWNTIMEDOWNTIME');
   })
 })
