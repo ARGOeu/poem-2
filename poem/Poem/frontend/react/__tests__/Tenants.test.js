@@ -3,7 +3,7 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
 import { createMemoryHistory } from 'history';
 import { Route, Router } from 'react-router-dom';
-import { TenantList } from '../Tenants';
+import { TenantChange, TenantList } from '../Tenants';
 import { Backend } from '../DataManager';
 
 
@@ -61,6 +61,23 @@ function renderTenantList() {
 }
 
 
+function renderTenantChangeView() {
+  const route = '/ui/tenants/TENANT1';
+  const history = createMemoryHistory({ initialEntries: [route] });
+
+  return {
+    ...render(
+      <Router history={history}>
+        <Route
+          path='/ui/tenants/:name'
+          render={ props => <TenantChange {...props} /> }
+        />
+      </Router>
+    )
+  }
+}
+
+
 describe('Test list of tenants', () => {
   beforeAll(() => {
     Backend.mockImplementation(() => {
@@ -96,5 +113,51 @@ describe('Test list of tenants', () => {
     expect(tenant3.getByTestId('TENANT3-poem').textContent).toBe('POEM url: tenant3.tenant.com');
     expect(tenant3.getByTestId('TENANT3-metrics').textContent).toBe('Metrics 6');
     expect(tenant3.getByTestId('TENANT3-probes').textContent).toBe('Probes 6');
+
+    expect(screen.queryByRole('button', { name: /add/i })).not.toBeInTheDocument();
+  })
+})
+
+
+describe('Test tenants changeview', () => {
+  beforeAll(() => {
+    Backend.mockImplementation(() => {
+      return {
+        fetchData: (path) => {
+          switch (path) {
+            case '/api/v2/internal/tenants/TENANT1':
+              return Promise.resolve(mockTenants[0])
+          }
+        }
+      }
+    })
+  })
+
+  test('Test that page renders properly', async () => {
+    renderTenantChangeView();
+
+    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /tenant/i }).textContent).toBe('Tenant details');
+    })
+
+    const nameField = screen.getByTestId('name');
+    const schemaField = screen.getByTestId('schema');
+    const urlField = screen.getByTestId('url');
+    const createdField = screen.getByTestId('created_on');
+
+    expect(nameField.value).toBe('TENANT1');
+    expect(nameField).toHaveAttribute('readonly');
+    expect(schemaField.value).toBe('tenant1');
+    expect(schemaField).toHaveAttribute('readonly');
+    expect(urlField.value).toBe('tenant1.tenant.com');
+    expect(urlField).toHaveAttribute('readonly');
+    expect(createdField.value).toBe('2020-02-02');
+    expect(createdField).toHaveAttribute('readonly');
+
+    expect(screen.queryByRole('button', { name: /save/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
   })
 })

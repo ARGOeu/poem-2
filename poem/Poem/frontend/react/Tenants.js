@@ -171,6 +171,7 @@ export const TenantChange = (props) => {
                         type='text'
                         name='name'
                         id='name'
+                        data-testid='name'
                         readOnly
                         className='form-control form-control-lg'
                       />
@@ -188,6 +189,7 @@ export const TenantChange = (props) => {
                         type='text'
                         name='schema'
                         id='schema'
+                        data-testid='schema'
                         readOnly
                         className='form-control'
                       />
@@ -202,6 +204,7 @@ export const TenantChange = (props) => {
                         type='text'
                         name='url'
                         id='url'
+                        data-testid='url'
                         readOnly
                         className='form-control'
                       />
@@ -216,6 +219,7 @@ export const TenantChange = (props) => {
                         type='text'
                         name='created_on'
                         id='created_on'
+                        data-testid='created_on'
                         readOnly
                         className='form-control'
                       />
