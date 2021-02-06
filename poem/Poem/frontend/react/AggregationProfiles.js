@@ -908,7 +908,7 @@ export const AggregationProfilesChange = (props) => {
     }
     else if (!addview) {
       write_perm = userDetails.is_superuser ||
-            userDetails.groups.aggregations.indexOf(aggregationProfile.profile.groupname) >= 0;
+            userDetails.groups.aggregations.indexOf(aggregationProfile.groupname) >= 0;
     }
     else {
       write_perm = userDetails.is_superuser ||
