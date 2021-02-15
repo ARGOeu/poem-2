@@ -16,6 +16,7 @@ jest.mock('../DataManager', () => {
 })
 
 const mockChangeObject = jest.fn();
+const mockDeleteObject = jest.fn();
 
 
 beforeEach(() => {
@@ -159,7 +160,8 @@ describe('Test user changeview on SuperAdmin POEM', () => {
       return {
         fetchData: () => Promise.resolve(mockUser),
         isActiveSession: () => Promise.resolve(mockActiveSession),
-        changeObject: mockChangeObject
+        changeObject: mockChangeObject,
+        deleteObject: mockDeleteObject
       }
     })
   })
@@ -345,5 +347,105 @@ describe('Test user changeview on SuperAdmin POEM', () => {
         expect.any(Function)
       )
     })
+  })
+
+  test('Test successfully deleting user', async () => {
+    mockDeleteObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 204, statusText: 'NO CONTENT' })
+    );
+
+    renderChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /user/i }).textContent).toBe('Change user')
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /delete/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /delete/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockDeleteObject).toHaveBeenCalledWith(
+        '/api/v2/internal/users/Alan_Ford'
+      )
+    })
+
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'User successfully deleted', 'Deleted', 2000
+    )
+  })
+
+  test('Test error deleting user with error message', async () => {
+    mockDeleteObject.mockReturnValueOnce(
+      Promise.resolve({
+        json: () => Promise.resolve({ detail: 'There has been an error.' }),
+        status: 400,
+        statusText: 'BAD REQUEST'
+      })
+    );
+
+    renderChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /user/i }).textContent).toBe('Change user')
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /delete/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /delete/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockDeleteObject).toHaveBeenCalledWith(
+        '/api/v2/internal/users/Alan_Ford'
+      )
+    })
+
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>There has been an error.</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Error: 400 BAD REQUEST',
+      0,
+      expect.any(Function)
+    )
+  })
+
+  test('Test error deleting user without error message', async () => {
+    mockDeleteObject.mockReturnValueOnce(
+      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
+    );
+
+    renderChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /user/i }).textContent).toBe('Change user')
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /delete/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /delete/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockDeleteObject).toHaveBeenCalledWith(
+        '/api/v2/internal/users/Alan_Ford'
+      )
+    })
+
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>Error deleting user</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Error: 500 SERVER ERROR',
+      0,
+      expect.any(Function)
+    )
   })
 })
