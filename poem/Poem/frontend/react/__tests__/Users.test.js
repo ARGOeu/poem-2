@@ -1,11 +1,12 @@
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
 import { createMemoryHistory } from 'history';
 import { Route, Router } from 'react-router-dom';
 import { queryCache } from 'react-query';
 import { UserChange, UsersList } from '../Users';
 import { Backend } from '../DataManager';
+import { NotificationManager } from 'react-notifications';
 
 
 jest.mock('../DataManager', () => {
@@ -13,6 +14,8 @@ jest.mock('../DataManager', () => {
     Backend: jest.fn()
   }
 })
+
+const mockChangeObject = jest.fn();
 
 
 beforeEach(() => {
@@ -148,11 +151,15 @@ describe('Test users listview', () => {
 
 
 describe('Test user changeview on SuperAdmin POEM', () => {
+  jest.spyOn(NotificationManager, 'success');
+  jest.spyOn(NotificationManager, 'error');
+
   beforeAll(() => {
     Backend.mockImplementation(() => {
       return {
         fetchData: () => Promise.resolve(mockUser),
-        isActiveSession: () => Promise.resolve(mockActiveSession)
+        isActiveSession: () => Promise.resolve(mockActiveSession),
+        changeObject: mockChangeObject
       }
     })
   })
@@ -193,5 +200,150 @@ describe('Test user changeview on SuperAdmin POEM', () => {
     expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
+  })
+
+  test('Test successfully changing and saving user', async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
+    )
+
+    renderChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /user/i }).textContent).toBe('Change user');
+    })
+
+    fireEvent.change(screen.getByTestId('username'), { target: { value: 'Alan.Ford' } });
+    fireEvent.change(screen.getByTestId('first_name'), { target: { value: 'Al' } });
+    fireEvent.change(screen.getByTestId('last_name'), { target: { value: 'Fordy' } });
+    fireEvent.change(screen.getByTestId('email'), { target: { value: 'alan.ford@group-tnt.com' } });
+    fireEvent.click(screen.getByRole('checkbox', { name: /superuser/i }))
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: 'change' })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        '/api/v2/internal/users/',
+        {
+          pk: 2,
+          username: 'Alan.Ford',
+          first_name: 'Al',
+          last_name: 'Fordy',
+          email: 'alan.ford@group-tnt.com',
+          is_superuser: true,
+          is_active: true
+        }
+      )
+
+      expect(NotificationManager.success).toHaveBeenCalledWith(
+        'User successfully changed', 'Changed', 2000
+      )
+    })
+  })
+
+  test('Test error changing and saving user with error message', async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({
+        json: () => Promise.resolve({ detail: 'User with this username already exists.' }),
+        status: 400,
+        statusText: 'BAD REQUEST'
+      })
+    )
+
+    renderChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /user/i }).textContent).toBe('Change user');
+    })
+
+    fireEvent.change(screen.getByTestId('username'), { target: { value: 'Alan.Ford' } });
+    fireEvent.change(screen.getByTestId('first_name'), { target: { value: 'Al' } });
+    fireEvent.change(screen.getByTestId('last_name'), { target: { value: 'Fordy' } });
+    fireEvent.change(screen.getByTestId('email'), { target: { value: 'alan.ford@group-tnt.com' } });
+    fireEvent.click(screen.getByRole('checkbox', { name: /superuser/i }))
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: 'change' })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        '/api/v2/internal/users/',
+        {
+          pk: 2,
+          username: 'Alan.Ford',
+          first_name: 'Al',
+          last_name: 'Fordy',
+          email: 'alan.ford@group-tnt.com',
+          is_superuser: true,
+          is_active: true
+        }
+      )
+
+      expect(NotificationManager.error).toHaveBeenCalledWith(
+        <div>
+          <p>User with this username already exists.</p>
+          <p>Click to dismiss.</p>
+        </div>,
+        'Error: 400 BAD REQUEST',
+        0,
+        expect.any(Function)
+      )
+    })
+  })
+
+  test('Test error changing and saving user without error message', async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
+    )
+
+    renderChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /user/i }).textContent).toBe('Change user');
+    })
+
+    fireEvent.change(screen.getByTestId('username'), { target: { value: 'Alan.Ford' } });
+    fireEvent.change(screen.getByTestId('first_name'), { target: { value: 'Al' } });
+    fireEvent.change(screen.getByTestId('last_name'), { target: { value: 'Fordy' } });
+    fireEvent.change(screen.getByTestId('email'), { target: { value: 'alan.ford@group-tnt.com' } });
+    fireEvent.click(screen.getByRole('checkbox', { name: /superuser/i }))
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: 'change' })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        '/api/v2/internal/users/',
+        {
+          pk: 2,
+          username: 'Alan.Ford',
+          first_name: 'Al',
+          last_name: 'Fordy',
+          email: 'alan.ford@group-tnt.com',
+          is_superuser: true,
+          is_active: true
+        }
+      )
+
+      expect(NotificationManager.error).toHaveBeenCalledWith(
+        <div>
+          <p>Error changing user</p>
+          <p>Click to dismiss.</p>
+        </div>,
+        'Error: 500 SERVER ERROR',
+        0,
+        expect.any(Function)
+      )
+    })
   })
 })
