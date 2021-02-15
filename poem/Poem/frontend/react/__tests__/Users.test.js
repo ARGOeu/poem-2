@@ -71,7 +71,8 @@ const mockActiveSession = {
     is_active: true,
     is_superuser: true,
     email: 'test@email.com',
-    date_joined: '2019-07-08T12:58:08',
+    date_joined: '2019-07-08 12:58:08',
+    last_login: '2020-02-15 14:51:42',
     id: '1'
   }
 }
@@ -91,8 +92,8 @@ function renderListView() {
 }
 
 
-function renderChangeView() {
-  const route = '/ui/administration/users/Alan_Ford';
+function renderChangeView(username='Alan_Ford') {
+  const route = `/ui/administration/users/${username}`;
   const history = createMemoryHistory({ initialEntries: [route] });
 
   return {
@@ -151,6 +152,8 @@ describe('Test users listview', () => {
 })
 
 
+const mockFetchData = jest.fn();
+
 describe('Test user changeview on SuperAdmin POEM', () => {
   jest.spyOn(NotificationManager, 'success');
   jest.spyOn(NotificationManager, 'error');
@@ -158,7 +161,7 @@ describe('Test user changeview on SuperAdmin POEM', () => {
   beforeAll(() => {
     Backend.mockImplementation(() => {
       return {
-        fetchData: () => Promise.resolve(mockUser),
+        fetchData: mockFetchData,
         isActiveSession: () => Promise.resolve(mockActiveSession),
         changeObject: mockChangeObject,
         deleteObject: mockDeleteObject
@@ -167,6 +170,7 @@ describe('Test user changeview on SuperAdmin POEM', () => {
   })
 
   test('Test that page renders properly', async () => {
+    mockFetchData.mockReturnValue(Promise.resolve(mockUser))
     renderChangeView();
 
     expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
@@ -202,6 +206,50 @@ describe('Test user changeview on SuperAdmin POEM', () => {
     expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /password/i })).not.toBeInTheDocument();
+  })
+
+  test('Test that page renders properly if changeview of logged in user', async () => {
+    mockFetchData.mockReturnValueOnce(
+      Promise.resolve(mockActiveSession['userdetails'])
+    )
+
+    renderChangeView('poem');
+
+    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /user/i }).textContent).toBe('Change user');
+    })
+
+    const usernameField = screen.getByTestId('username');
+    const firstNameField = screen.getByTestId('first_name');
+    const lastNameField = screen.getByTestId('last_name');
+    const emailField = screen.getByTestId('email');
+    const lastLoginField = screen.getByTestId('last_login');
+    const dateJoinedField = screen.getByTestId('date_joined');
+    const superUserCheckbox = screen.getByRole('checkbox', { name: /superuser/i });
+    const activeCheckbox = screen.getByRole('checkbox', { name: /active/i })
+
+    expect(usernameField.value).toBe('poem');
+    expect(usernameField).toBeEnabled();
+    expect(firstNameField.value).toBe('');
+    expect(firstNameField).toBeEnabled();
+    expect(lastNameField.value).toBe('');
+    expect(lastNameField).toBeEnabled();
+    expect(emailField.value).toBe('test@email.com');
+    expect(emailField).toBeEnabled();
+    expect(lastLoginField.value).toBe('2020-02-15 14:51:42');
+    expect(lastLoginField).toHaveAttribute('readonly');
+    expect(dateJoinedField.value).toBe('2019-07-08 12:58:08');
+    expect(dateJoinedField).toHaveAttribute('readonly');
+    expect(superUserCheckbox.checked).toBeTruthy();
+    expect(activeCheckbox.checked).toBeTruthy();
+
+    expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /password/i })).toBeInTheDocument();
   })
 
   test('Test successfully changing and saving user', async () => {
