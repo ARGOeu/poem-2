@@ -4,7 +4,7 @@ import '@testing-library/jest-dom/extend-expect';
 import { createMemoryHistory } from 'history';
 import { Route, Router } from 'react-router-dom';
 import { queryCache } from 'react-query';
-import { UsersList } from '../Users';
+import { UserChange, UsersList } from '../Users';
 import { Backend } from '../DataManager';
 
 
@@ -46,6 +46,32 @@ const mockUsers = [
   }
 ]
 
+const mockUser = {
+    first_name: 'Alan',
+    last_name: 'Ford',
+    username: 'Alan_Ford',
+    is_active: true,
+    is_superuser: false,
+    email: 'alan.ford@tnt.com',
+    date_joined: '2020-02-02 15:17:23',
+    last_login: '',
+    pk: 2
+}
+
+const mockActiveSession = {
+  active: true,
+  userdetails: {
+    first_name: '',
+    last_name: '',
+    username: 'poem',
+    is_active: true,
+    is_superuser: true,
+    email: 'test@email.com',
+    date_joined: '2019-07-08T12:58:08',
+    id: '1'
+  }
+}
+
 
 function renderListView() {
   const route = '/ui/administration/users';
@@ -55,6 +81,23 @@ function renderListView() {
     ...render(
       <Router history={history}>
         <Route path='/ui/administration/users' component={UsersList}/>
+      </Router>
+    )
+  }
+}
+
+
+function renderChangeView() {
+  const route = '/ui/administration/users/Alan_Ford';
+  const history = createMemoryHistory({ initialEntries: [route] });
+
+  return {
+    ...render(
+      <Router history={history}>
+        <Route
+          path='/ui/administration/users/:user_name'
+          render={ props => <UserChange {...props} /> }
+        />
       </Router>
     )
   }
@@ -100,5 +143,55 @@ describe('Test users listview', () => {
     expect(screen.getByRole('link', { name: /number/i }).closest('a')).toHaveAttribute('href', '/ui/administration/users/number1');
 
     expect(screen.getByRole('button', { name: /add/i })).toBeInTheDocument();
+  })
+})
+
+
+describe('Test user changeview on SuperAdmin POEM', () => {
+  beforeAll(() => {
+    Backend.mockImplementation(() => {
+      return {
+        fetchData: () => Promise.resolve(mockUser),
+        isActiveSession: () => Promise.resolve(mockActiveSession)
+      }
+    })
+  })
+
+  test('Test that page renders properly', async () => {
+    renderChangeView();
+
+    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /user/i }).textContent).toBe('Change user');
+    })
+
+    const usernameField = screen.getByTestId('username');
+    const firstNameField = screen.getByTestId('first_name');
+    const lastNameField = screen.getByTestId('last_name');
+    const emailField = screen.getByTestId('email');
+    const lastLoginField = screen.getByTestId('last_login');
+    const dateJoinedField = screen.getByTestId('date_joined');
+    const superUserCheckbox = screen.getByRole('checkbox', { name: /superuser/i });
+    const activeCheckbox = screen.getByRole('checkbox', { name: /active/i })
+
+    expect(usernameField.value).toBe('Alan_Ford');
+    expect(usernameField).toBeEnabled();
+    expect(firstNameField.value).toBe('Alan');
+    expect(firstNameField).toBeEnabled();
+    expect(lastNameField.value).toBe('Ford');
+    expect(lastNameField).toBeEnabled();
+    expect(emailField.value).toBe('alan.ford@tnt.com');
+    expect(emailField).toBeEnabled();
+    expect(lastLoginField.value).toBe('');
+    expect(lastLoginField).toHaveAttribute('readonly');
+    expect(dateJoinedField.value).toBe('2020-02-02 15:17:23');
+    expect(dateJoinedField).toHaveAttribute('readonly');
+    expect(superUserCheckbox.checked).toBeFalsy();
+    expect(activeCheckbox.checked).toBeTruthy();
+
+    expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
   })
 })

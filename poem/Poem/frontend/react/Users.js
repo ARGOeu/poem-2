@@ -79,6 +79,7 @@ const CommonUser = ({add, ...props}) =>
                 <Field
                   type="text"
                   name="username"
+                  data-testid="username"
                   className={`form-control ${props.errors.username && props.touched.username && 'border-danger'}`}
                   id="userUsername"
                 />
@@ -93,6 +94,7 @@ const CommonUser = ({add, ...props}) =>
                 <Field
                 type="password"
                 name="password"
+                data-testid="password"
                 className={`form-control ${props.errors.password && props.touched.password && 'border-danger'}`}
                 id="password"
               />
@@ -107,6 +109,7 @@ const CommonUser = ({add, ...props}) =>
                 <Field
                   type='password'
                   name='confirm_password'
+                  data-testid='confirm_password'
                   className={`form-control ${props.errors.confirm_password && props.touched.confirm_password && 'border-danger'}`}
                   id='confirm_password'
                 />
@@ -124,6 +127,7 @@ const CommonUser = ({add, ...props}) =>
                 <Field
                   type="text"
                   name='username'
+                  data-testid='username'
                   className={`form-control ${props.errors.username && props.touched.username && 'border-danger'}`}
                   id='userUsername'
                 />
@@ -142,6 +146,7 @@ const CommonUser = ({add, ...props}) =>
             <Field
               type="text"
               name="first_name"
+              data-testid="first_name"
               className="form-control"
               id="userFirstName"
             />
@@ -155,6 +160,7 @@ const CommonUser = ({add, ...props}) =>
             <Field
               type="text"
               name="last_name"
+              data-testid="last_name"
               className="form-control"
               id="userLastName"
             />
@@ -168,6 +174,7 @@ const CommonUser = ({add, ...props}) =>
             <Field
               type="text"
               name="email"
+              data-testid="email"
               className={`form-control ${props.errors.email && props.touched.email && 'border-danger'}`}
               id="userEmail"
             />
@@ -185,6 +192,7 @@ const CommonUser = ({add, ...props}) =>
                   <Field
                     type='text'
                     name='last_login'
+                    data-testid='last_login'
                     className='form-control'
                     readOnly
                   />
@@ -198,6 +206,7 @@ const CommonUser = ({add, ...props}) =>
                   <Field
                     type='text'
                     name='date_joined'
+                    data-testid='date_joined'
                     className='form-control'
                     readOnly
                   />
