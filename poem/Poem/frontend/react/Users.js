@@ -629,7 +629,7 @@ export const UserChange = (props) => {
     if (isTenantSchema) {
       return (
         <BaseArgoView
-          resourcename="users"
+          resourcename="user"
           location={location}
           addview={addview}
           history={false}
@@ -691,7 +691,7 @@ export const UserChange = (props) => {
                             <Field
                               component="select"
                               name="groupsofmetrics"
-                              id='select-field'
+                              id='groupsofmetrics'
                               onChange={evt =>
                                 props.setFieldValue(
                                   "groupsofmetrics",
@@ -702,7 +702,7 @@ export const UserChange = (props) => {
                               multiple={true}
                             >
                               {allGroups.metrics.map( grp => (
-                                <option key={grp} value={grp}>
+                                <option data-testid='groupsofmetrics-option' key={grp} value={grp}>
                                   {grp}
                                 </option>
                               ))}
@@ -718,7 +718,7 @@ export const UserChange = (props) => {
                             <Field
                               component="select"
                               name="groupsofmetricprofiles"
-                              id='select-field'
+                              id='groupsofmetricprofiles'
                               onChange={evt =>
                                 props.setFieldValue(
                                   "groupsofmetricprofiles",
@@ -729,7 +729,7 @@ export const UserChange = (props) => {
                               multiple={true}
                             >
                               {allGroups.metricprofiles.map( grp => (
-                                <option key={grp} value={grp}>
+                                <option data-testid='groupsofmetricprofiles-option' key={grp} value={grp}>
                                   {grp}
                                 </option>
                               ))}
@@ -745,7 +745,7 @@ export const UserChange = (props) => {
                             <Field
                               component="select"
                               name="groupsofaggregations"
-                              id='select-field'
+                              id='groupsofaggregations'
                               onChange={evt =>
                                 props.setFieldValue(
                                   "groupsofaggregations",
@@ -756,7 +756,7 @@ export const UserChange = (props) => {
                               multiple={true}
                             >
                               {allGroups.aggregations.map( grp => (
-                                <option key={grp} value={grp}>
+                                <option data-testid='groupsofaggregations-option' key={grp} value={grp}>
                                   {grp}
                                 </option>
                               ))}
@@ -772,7 +772,7 @@ export const UserChange = (props) => {
                             <Field
                               component="select"
                               name="groupsofthresholdsprofiles"
-                              id='select-field'
+                              id='groupsofthresholdsprofiles'
                               onChange={evt =>
                                 props.setFieldValue(
                                   "groupsofthresholdsprofiles",
@@ -783,7 +783,7 @@ export const UserChange = (props) => {
                               multiple={true}
                             >
                               {allGroups.thresholdsprofiles.map( grp => (
-                                <option key={grp} value={grp}>
+                                <option data-testid='groupsofthresholdsprofiles-option' key={grp} value={grp}>
                                   {grp}
                                 </option>
                               ))}
@@ -806,6 +806,7 @@ export const UserChange = (props) => {
                                 required={false}
                                 className="form-control"
                                 id="distinguishedname"
+                                data-testid="subject"
                               />
                             </InputGroup>
                           </Col>
@@ -822,6 +823,7 @@ export const UserChange = (props) => {
                                 required={false}
                                 className="form-control"
                                 id='eduid'
+                                data-testid="egiid"
                               />
                             </InputGroup>
                           </Col>
@@ -838,6 +840,7 @@ export const UserChange = (props) => {
                                 required={false}
                                 className="form-control"
                                 id="displayname"
+                                data-testid="displayname"
                               />
                             </InputGroup>
                           </Col>

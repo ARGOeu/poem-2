@@ -78,6 +78,26 @@ const mockActiveSession = {
   }
 }
 
+const mockUserProfile = {
+  subject: 'some subject',
+  egiid: 'id',
+  displayname: 'Alan_Ford'
+}
+
+const mockUsersGroups = {
+  aggregations: ['aggr-group1'],
+  metrics: ['metric-group1', 'metric-group2'],
+  metricprofiles: ['mp-group1'],
+  thresholdsprofiles: ['threshold-group3']
+}
+
+const mockAllUserGroups = {
+  aggregations: ['aggr-group1', 'aggr-group2'],
+  metrics: ['metric-group1', 'metric-group2', 'metric-group3'],
+  metricprofiles: ['mp-group1'],
+  thresholdsprofiles: ['threshold-group2', 'threshold-group3']
+}
+
 
 function renderListView() {
   const route = '/ui/administration/users';
@@ -120,6 +140,23 @@ function renderAddView() {
         <Route
           path='/ui/administration/users/add'
           render={ props => <UserChange {...props} addview={true} /> }
+        />
+      </Router>
+    )
+  }
+}
+
+
+function renderTenantChangeView(username='Alan_Ford') {
+  const route = `/ui/administration/users/${username}`;
+  const history = createMemoryHistory({ initialEntries: [route] });
+
+  return {
+    ...render(
+      <Router history={history}>
+        <Route
+          path='/ui/administration/users/:user_name'
+          render={ props => <UserChange {...props} isTenantSchema={true} /> }
         />
       </Router>
     )
@@ -760,5 +797,596 @@ describe('Tests for user addview on SuperAdmin POEM', () => {
         expect.any(Function)
       )
     })
+  })
+})
+
+
+describe('Tests for user changeview on tenant POEM', () => {
+  jest.spyOn(NotificationManager, 'success');
+  jest.spyOn(NotificationManager, 'error');
+
+  beforeAll(() => {
+    Backend.mockImplementation(() => {
+      return {
+        isActiveSession: () => Promise.resolve(mockActiveSession),
+        fetchData: (path) => {
+          switch (path) {
+            case '/api/v2/internal/users/Alan_Ford':
+              return Promise.resolve(mockUser)
+
+            case '/api/v2/internal/userprofile/Alan_Ford':
+              return Promise.resolve(mockUserProfile)
+          }
+        },
+        fetchResult: (path) => {
+          switch (path) {
+            case '/api/v2/internal/usergroups/Alan_Ford':
+              return Promise.resolve(mockUsersGroups)
+
+            case '/api/v2/internal/usergroups':
+              return Promise.resolve(mockAllUserGroups)
+          }
+        },
+        changeObject: mockChangeObject,
+        deleteObject: mockDeleteObject
+      }
+    })
+  })
+
+  test('Test that page renders properly', async () => {
+    renderTenantChangeView();
+
+    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change user/i }).textContent).toBe('Change user')
+    })
+
+    const usernameField = screen.getByTestId('username');
+    const passwordField = screen.queryByTestId('password');
+    const confirmPasswordField = screen.queryByTestId('confirm_password');
+    const firstNameField = screen.getByTestId('first_name');
+    const lastNameField = screen.getByTestId('last_name');
+    const emailField = screen.getByTestId('email');
+    const lastLoginField = screen.getByTestId('last_login');
+    const dateJoinedField = screen.getByTestId('date_joined');
+    const superUserCheckbox = screen.getByRole('checkbox', { name: /superuser/i });
+    const activeCheckbox = screen.getByRole('checkbox', { name: /active/i })
+    const groupsOfMetricsField = screen.getByLabelText(/groups of metrics/i);
+    const groupsOfMetricsOptions = screen.getAllByTestId('groupsofmetrics-option');
+    const groupsOfMetricProfilesField = screen.getByLabelText(/groups of metric profiles/i);
+    const groupsOfMetricProfilesOptions = screen.getAllByTestId('groupsofmetricprofiles-option');
+    const groupsOfAggregationsField = screen.getByLabelText(/groups of aggregation/i);
+    const groupsOfAggregationsOptions = screen.getAllByTestId('groupsofaggregations-option');
+    const groupsOfThresholdsField = screen.getByLabelText(/groups of threshold/i)
+    const groupsOfThresholdsOptions = screen.getAllByTestId('groupsofthresholdsprofiles-option');
+    const subjectField = screen.getByTestId('subject');
+    const egiidField = screen.getByTestId('egiid');
+    const displayNameField = screen.getByTestId('displayname');
+
+    expect(usernameField.value).toBe('Alan_Ford');
+    expect(usernameField).toBeEnabled();
+    expect(passwordField).not.toBeInTheDocument();
+    expect(confirmPasswordField).not.toBeInTheDocument();
+    expect(firstNameField.value).toBe('Alan');
+    expect(firstNameField).toBeEnabled();
+    expect(lastNameField.value).toBe('Ford');
+    expect(lastNameField).toBeEnabled();
+    expect(emailField.value).toBe('alan.ford@tnt.com');
+    expect(emailField).toBeEnabled();
+    expect(lastLoginField.value).toBe('');
+    expect(lastLoginField).toHaveAttribute('readonly');
+    expect(dateJoinedField.value).toBe('2020-02-02 15:17:23');
+    expect(dateJoinedField).toHaveAttribute('readonly');
+    expect(superUserCheckbox.checked).toBeFalsy();
+    expect(activeCheckbox.checked).toBeTruthy();
+    expect(groupsOfMetricsField).toBeInTheDocument();
+    expect(groupsOfMetricsOptions).toHaveLength(3);
+    expect(groupsOfMetricsOptions[0].selected).toBeTruthy();
+    expect(groupsOfMetricsOptions[1].selected).toBeTruthy();
+    expect(groupsOfMetricsOptions[2].selected).toBeFalsy();
+    expect(groupsOfMetricProfilesField).toBeInTheDocument();
+    expect(groupsOfMetricProfilesOptions).toHaveLength(1);
+    expect(groupsOfMetricProfilesOptions[0].selected).toBeTruthy();
+    expect(groupsOfAggregationsField).toBeInTheDocument();
+    expect(groupsOfAggregationsOptions).toHaveLength(2);
+    expect(groupsOfAggregationsOptions[0].selected).toBeTruthy();
+    expect(groupsOfAggregationsOptions[1].selected).toBeFalsy();
+    expect(groupsOfThresholdsField).toBeInTheDocument();
+    expect(groupsOfThresholdsOptions).toHaveLength(2);
+    expect(groupsOfThresholdsOptions[0].selected).toBeFalsy();
+    expect(groupsOfThresholdsOptions[1].selected).toBeTruthy();
+    expect(subjectField.value).toBe('some subject');
+    expect(subjectField).toBeEnabled();
+    expect(egiidField.value).toBe('id');
+    expect(egiidField).toBeEnabled();
+    expect(displayNameField.value).toBe('Alan_Ford');
+    expect(displayNameField).toBeEnabled();
+
+    expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /password/i })).not.toBeInTheDocument();
+  })
+
+  test('Test successfully changing and saving user', async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
+    ).mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
+    )
+
+    renderTenantChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change user/i }).textContent).toBe('Change user')
+    })
+
+    fireEvent.change(screen.getByTestId('username'), { target: { value: 'Alan.Ford' } });
+    fireEvent.change(screen.getByTestId('first_name'), { target: { value: 'Al' } });
+    fireEvent.change(screen.getByTestId('last_name'), { target: { value: 'Fordy' } });
+    fireEvent.change(screen.getByTestId('email'), { target: { value: 'alan.ford@group-tnt.com' } });
+    fireEvent.click(screen.getByRole('checkbox', { name: /superuser/i }))
+
+    const metricGroups = screen.getByLabelText(/groups of metrics/i)
+
+    Array.from(metricGroups.children, (option, i) => {
+      if (i == 0) { option.selected = false; }
+      else { option.selected = true; }
+    })
+    fireEvent.change(metricGroups)
+
+    fireEvent.change(screen.getByTestId('subject'), { target: { value: '' } });
+    fireEvent.change(screen.getByTestId('egiid'), { target: { value: '' } });
+    fireEvent.change(screen.getByTestId('displayname'), { target: { value: '' } })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: 'change' })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockChangeObject.mock.calls).toEqual([
+        [
+          '/api/v2/internal/users/',
+          {
+            pk: 2,
+            username: 'Alan.Ford',
+            first_name: 'Al',
+            last_name: 'Fordy',
+            email: 'alan.ford@group-tnt.com',
+            is_superuser: true,
+            is_active: true
+          }
+        ],
+        [
+          '/api/v2/internal/userprofile/',
+          {
+            username: 'Alan.Ford',
+            displayname: '',
+            egiid: '',
+            subject: '',
+            groupsofaggregations: ['aggr-group1'],
+            groupsofmetrics: ['metric-group2', 'metric-group3'],
+            groupsofmetricprofiles: ['mp-group1'],
+            groupsofthresholdsprofiles: ['threshold-group3']
+          }
+        ]
+      ])
+    })
+
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'User successfully changed', 'Changed', 2000
+    )
+  })
+
+  test('Test form validation when changing user', async () => {
+    renderTenantChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change user/i }).textContent).toBe('Change user')
+    })
+
+    fireEvent.change(screen.getByTestId('username'), { target: { value: '' } })
+    fireEvent.change(screen.getByTestId('first_name'), { target: { value: '' } })
+    fireEvent.change(screen.getByTestId('last_name'), { target: { value: '' } })
+    fireEvent.change(screen.getByTestId('email'), { target: { value: '' } })
+    fireEvent.click(screen.getByRole('checkbox', { name: /superuser/i }));
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+
+    expect(await screen.findAllByTestId('error-msg')).toHaveLength(2);
+    expect(mockChangeObject).not.toHaveBeenCalled();
+  })
+
+  test('Test error changing user with error message', async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({
+        json: () => Promise.resolve({ detail: 'User with this username already exists.' }),
+        status: 400,
+        statusText: 'BAD REQUEST'
+      })
+    )
+
+    renderTenantChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change user/i }).textContent).toBe('Change user')
+    })
+
+    fireEvent.change(screen.getByTestId('username'), { target: { value: 'Alan.Ford' } });
+    fireEvent.change(screen.getByTestId('first_name'), { target: { value: 'Al' } });
+    fireEvent.change(screen.getByTestId('last_name'), { target: { value: 'Fordy' } });
+    fireEvent.change(screen.getByTestId('email'), { target: { value: 'alan.ford@group-tnt.com' } });
+    fireEvent.click(screen.getByRole('checkbox', { name: /superuser/i }))
+
+    const metricGroups = screen.getByLabelText(/groups of metrics/i)
+
+    Array.from(metricGroups.children, (option, i) => {
+      if (i == 0) { option.selected = false; }
+      else { option.selected = true; }
+    })
+    fireEvent.change(metricGroups)
+
+    fireEvent.change(screen.getByTestId('subject'), { target: { value: '' } });
+    fireEvent.change(screen.getByTestId('egiid'), { target: { value: '' } });
+    fireEvent.change(screen.getByTestId('displayname'), { target: { value: '' } })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: 'change' })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledTimes(1)
+    })
+    expect(mockChangeObject).toHaveBeenCalledWith(
+      '/api/v2/internal/users/',
+      {
+        pk: 2,
+        username: 'Alan.Ford',
+        first_name: 'Al',
+        last_name: 'Fordy',
+        email: 'alan.ford@group-tnt.com',
+        is_superuser: true,
+        is_active: true
+      }
+    )
+
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>User with this username already exists.</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Error: 400 BAD REQUEST',
+      0,
+      expect.any(Function)
+    )
+  })
+
+  test('Test error changing user profile with error message', async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
+    ).mockReturnValueOnce(
+      Promise.resolve({
+        json: () => Promise.resolve({ detail: 'You cannot change this userprofile.' }),
+        status: 400,
+        statusText: 'BAD REQUEST'
+      })
+    )
+
+    renderTenantChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change user/i }).textContent).toBe('Change user')
+    })
+
+    fireEvent.change(screen.getByTestId('username'), { target: { value: 'Alan.Ford' } });
+    fireEvent.change(screen.getByTestId('first_name'), { target: { value: 'Al' } });
+    fireEvent.change(screen.getByTestId('last_name'), { target: { value: 'Fordy' } });
+    fireEvent.change(screen.getByTestId('email'), { target: { value: 'alan.ford@group-tnt.com' } });
+    fireEvent.click(screen.getByRole('checkbox', { name: /superuser/i }))
+
+    const metricGroups = screen.getByLabelText(/groups of metrics/i)
+
+    Array.from(metricGroups.children, (option, i) => {
+      if (i == 0) { option.selected = false; }
+      else { option.selected = true; }
+    })
+    fireEvent.change(metricGroups)
+
+    fireEvent.change(screen.getByTestId('subject'), { target: { value: '' } });
+    fireEvent.change(screen.getByTestId('egiid'), { target: { value: '' } });
+    fireEvent.change(screen.getByTestId('displayname'), { target: { value: '' } })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: 'change' })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledTimes(2)
+    })
+    expect(mockChangeObject.mock.calls).toEqual([
+      [
+        '/api/v2/internal/users/',
+        {
+          pk: 2,
+          username: 'Alan.Ford',
+          first_name: 'Al',
+          last_name: 'Fordy',
+          email: 'alan.ford@group-tnt.com',
+          is_superuser: true,
+          is_active: true
+        }
+      ],
+      [
+          '/api/v2/internal/userprofile/',
+          {
+            username: 'Alan.Ford',
+            displayname: '',
+            egiid: '',
+            subject: '',
+            groupsofaggregations: ['aggr-group1'],
+            groupsofmetrics: ['metric-group2', 'metric-group3'],
+            groupsofmetricprofiles: ['mp-group1'],
+            groupsofthresholdsprofiles: ['threshold-group3']
+          }
+      ]
+    ])
+
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>You cannot change this userprofile.</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Error: 400 BAD REQUEST',
+      0,
+      expect.any(Function)
+    )
+  })
+
+  test('Test error changing user without error message', async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
+    )
+
+    renderTenantChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change user/i }).textContent).toBe('Change user')
+    })
+
+    fireEvent.change(screen.getByTestId('username'), { target: { value: 'Alan.Ford' } });
+    fireEvent.change(screen.getByTestId('first_name'), { target: { value: 'Al' } });
+    fireEvent.change(screen.getByTestId('last_name'), { target: { value: 'Fordy' } });
+    fireEvent.change(screen.getByTestId('email'), { target: { value: 'alan.ford@group-tnt.com' } });
+    fireEvent.click(screen.getByRole('checkbox', { name: /superuser/i }))
+
+    const metricGroups = screen.getByLabelText(/groups of metrics/i)
+
+    Array.from(metricGroups.children, (option, i) => {
+      if (i == 0) { option.selected = false; }
+      else { option.selected = true; }
+    })
+    fireEvent.change(metricGroups)
+
+    fireEvent.change(screen.getByTestId('subject'), { target: { value: '' } });
+    fireEvent.change(screen.getByTestId('egiid'), { target: { value: '' } });
+    fireEvent.change(screen.getByTestId('displayname'), { target: { value: '' } })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: 'change' })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledTimes(1)
+    })
+    expect(mockChangeObject).toHaveBeenCalledWith(
+      '/api/v2/internal/users/',
+      {
+        pk: 2,
+        username: 'Alan.Ford',
+        first_name: 'Al',
+        last_name: 'Fordy',
+        email: 'alan.ford@group-tnt.com',
+        is_superuser: true,
+        is_active: true
+      }
+    )
+
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>Error changing user</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Error: 500 SERVER ERROR',
+      0,
+      expect.any(Function)
+    )
+  })
+
+  test('Test error changing userprofile without error message', async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
+    ).mockReturnValueOnce(
+      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
+    )
+
+    renderTenantChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change user/i }).textContent).toBe('Change user')
+    })
+
+    fireEvent.change(screen.getByTestId('username'), { target: { value: 'Alan.Ford' } });
+    fireEvent.change(screen.getByTestId('first_name'), { target: { value: 'Al' } });
+    fireEvent.change(screen.getByTestId('last_name'), { target: { value: 'Fordy' } });
+    fireEvent.change(screen.getByTestId('email'), { target: { value: 'alan.ford@group-tnt.com' } });
+    fireEvent.click(screen.getByRole('checkbox', { name: /superuser/i }))
+
+    const metricGroups = screen.getByLabelText(/groups of metrics/i)
+
+    Array.from(metricGroups.children, (option, i) => {
+      if (i == 0) { option.selected = false; }
+      else { option.selected = true; }
+    })
+    fireEvent.change(metricGroups)
+
+    fireEvent.change(screen.getByTestId('subject'), { target: { value: '' } });
+    fireEvent.change(screen.getByTestId('egiid'), { target: { value: '' } });
+    fireEvent.change(screen.getByTestId('displayname'), { target: { value: '' } })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: 'change' })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledTimes(2)
+    })
+    expect(mockChangeObject.mock.calls).toEqual([
+      [
+        '/api/v2/internal/users/',
+        {
+          pk: 2,
+          username: 'Alan.Ford',
+          first_name: 'Al',
+          last_name: 'Fordy',
+          email: 'alan.ford@group-tnt.com',
+          is_superuser: true,
+          is_active: true
+        }
+      ],
+      [
+          '/api/v2/internal/userprofile/',
+          {
+            username: 'Alan.Ford',
+            displayname: '',
+            egiid: '',
+            subject: '',
+            groupsofaggregations: ['aggr-group1'],
+            groupsofmetrics: ['metric-group2', 'metric-group3'],
+            groupsofmetricprofiles: ['mp-group1'],
+            groupsofthresholdsprofiles: ['threshold-group3']
+          }
+      ]
+    ])
+
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>Error changing user profile</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Error: 500 SERVER ERROR',
+      0,
+      expect.any(Function)
+    )
+  })
+
+  test('Test successfully deleting user', async () => {
+    mockDeleteObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 204, statusText: 'NO CONTENT' })
+    )
+
+    renderTenantChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change user/i }).textContent).toBe('Change user')
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /delete/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /delete/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockDeleteObject).toHaveBeenCalledWith(
+        '/api/v2/internal/users/Alan_Ford'
+      )
+    })
+
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'User successfully deleted', 'Deleted', 2000
+    )
+  })
+
+  test('Test error deleting user with error message', async () => {
+    mockDeleteObject.mockReturnValueOnce(
+      Promise.resolve({
+        json: () => Promise.resolve({ detail: 'There has been an error.' }),
+        status: 400,
+        statusText: 'BAD REQUEST'
+      })
+    )
+
+    renderTenantChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change user/i }).textContent).toBe('Change user')
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /delete/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /delete/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockDeleteObject).toHaveBeenCalledWith(
+        '/api/v2/internal/users/Alan_Ford'
+      )
+    })
+
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>There has been an error.</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Error: 400 BAD REQUEST',
+      0,
+      expect.any(Function)
+    )
+  })
+
+  test('Test error deleting user without error message', async () => {
+    mockDeleteObject.mockReturnValueOnce(
+      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
+    )
+
+    renderTenantChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change user/i }).textContent).toBe('Change user')
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /delete/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /delete/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockDeleteObject).toHaveBeenCalledWith(
+        '/api/v2/internal/users/Alan_Ford'
+      )
+    })
+
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>Error deleting user</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Error: 500 SERVER ERROR',
+      0,
+      expect.any(Function)
+    )
   })
 })
