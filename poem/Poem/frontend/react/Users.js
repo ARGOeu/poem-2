@@ -92,12 +92,12 @@ const CommonUser = ({add, ...props}) =>
               <InputGroup>
                 <InputGroupAddon addonType='prepend'>Password</InputGroupAddon>
                 <Field
-                type="password"
-                name="password"
-                data-testid="password"
-                className={`form-control ${props.errors.password && props.touched.password && 'border-danger'}`}
-                id="password"
-              />
+                  type="password"
+                  name="password"
+                  data-testid="password"
+                  className={`form-control ${props.errors.password && props.touched.password && 'border-danger'}`}
+                  id="password"
+                />
               </InputGroup>
               <CustomErrorMessage name='password' />
             </Col>

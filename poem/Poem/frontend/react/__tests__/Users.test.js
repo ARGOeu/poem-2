@@ -17,6 +17,7 @@ jest.mock('../DataManager', () => {
 
 const mockChangeObject = jest.fn();
 const mockDeleteObject = jest.fn();
+const mockAddObject = jest.fn();
 
 
 beforeEach(() => {
@@ -109,6 +110,23 @@ function renderChangeView(username='Alan_Ford') {
 }
 
 
+function renderAddView() {
+  const route = '/ui/administration/users/add';
+  const history = createMemoryHistory({ initialEntries: [route] });
+
+  return {
+    ...render(
+      <Router history={history}>
+        <Route
+          path='/ui/administration/users/add'
+          render={ props => <UserChange {...props} addview={true} /> }
+        />
+      </Router>
+    )
+  }
+}
+
+
 describe('Test users listview', () => {
   beforeAll(() => {
     Backend.mockImplementation(() => {
@@ -180,6 +198,8 @@ describe('Test user changeview on SuperAdmin POEM', () => {
     })
 
     const usernameField = screen.getByTestId('username');
+    const passwordField = screen.queryByTestId('password');
+    const confirmPasswordField = screen.queryByTestId('confirm_password');
     const firstNameField = screen.getByTestId('first_name');
     const lastNameField = screen.getByTestId('last_name');
     const emailField = screen.getByTestId('email');
@@ -190,6 +210,8 @@ describe('Test user changeview on SuperAdmin POEM', () => {
 
     expect(usernameField.value).toBe('Alan_Ford');
     expect(usernameField).toBeEnabled();
+    expect(passwordField).not.toBeInTheDocument();
+    expect(confirmPasswordField).not.toBeInTheDocument();
     expect(firstNameField.value).toBe('Alan');
     expect(firstNameField).toBeEnabled();
     expect(lastNameField.value).toBe('Ford');
@@ -223,6 +245,8 @@ describe('Test user changeview on SuperAdmin POEM', () => {
     })
 
     const usernameField = screen.getByTestId('username');
+    const passwordField = screen.queryByTestId('password');
+    const confirmPasswordField = screen.queryByTestId('confirm_password');
     const firstNameField = screen.getByTestId('first_name');
     const lastNameField = screen.getByTestId('last_name');
     const emailField = screen.getByTestId('email');
@@ -233,6 +257,8 @@ describe('Test user changeview on SuperAdmin POEM', () => {
 
     expect(usernameField.value).toBe('poem');
     expect(usernameField).toBeEnabled();
+    expect(passwordField).not.toBeInTheDocument();
+    expect(confirmPasswordField).not.toBeInTheDocument();
     expect(firstNameField.value).toBe('');
     expect(firstNameField).toBeEnabled();
     expect(lastNameField.value).toBe('');
@@ -496,4 +522,209 @@ describe('Test user changeview on SuperAdmin POEM', () => {
       expect.any(Function)
     )
   })
+})
+
+
+describe('Tests for user addview on SuperAdmin POEM', () => {
+  jest.spyOn(NotificationManager, 'success');
+  jest.spyOn(NotificationManager, 'error');
+
+  beforeAll(() => {
+    Backend.mockImplementation(() => {
+      return {
+        isActiveSession: () => Promise.resolve(mockActiveSession),
+        addObject: mockAddObject
+      }
+    })
+  })
+
+  test('Test page renders properly', async () => {
+    renderAddView();
+
+    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /user/i }).textContent).toBe('Add user');
+    })
+
+    const usernameField = screen.getByTestId('username');
+    const passwordField = screen.getByTestId('password');
+    const confirmPasswordField = screen.getByTestId('confirm_password');
+    const firstNameField = screen.getByTestId('first_name');
+    const lastNameField = screen.getByTestId('last_name');
+    const emailField = screen.getByTestId('email');
+    const lastLoginField = screen.queryByTestId('last_login');
+    const dateJoinedField = screen.queryByTestId('date_joined');
+    const superUserCheckbox = screen.getByRole('checkbox', { name: /superuser/i });
+    const activeCheckbox = screen.getByRole('checkbox', { name: /active/i })
+
+    expect(usernameField.value).toBe('');
+    expect(usernameField).toBeEnabled();
+    expect(passwordField.value).toBe('');
+    expect(passwordField).toBeEnabled();
+    expect(confirmPasswordField.value).toBe('')
+    expect(confirmPasswordField).toBeEnabled();
+    expect(firstNameField.value).toBe('');
+    expect(firstNameField).toBeEnabled();
+    expect(lastNameField.value).toBe('');
+    expect(lastNameField).toBeEnabled();
+    expect(emailField.value).toBe('');
+    expect(emailField).toBeEnabled();
+    expect(lastLoginField).not.toBeInTheDocument();
+    expect(dateJoinedField).not.toBeInTheDocument();
+    expect(superUserCheckbox.checked).toBeFalsy();
+    expect(activeCheckbox.checked).toBeTruthy();
+
+    expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
+  })
+
+  test('Test successfully adding user', async () => {
+    mockAddObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
+    )
+
+    renderAddView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /user/i }).textContent).toBe('Add user');
+    })
+
+    fireEvent.change(screen.getByTestId('username'), { target: { value: 'Bob_Rock' } });
+    fireEvent.change(screen.getByTestId('password'), { target: { value: 'foobar28' } });
+    fireEvent.change(screen.getByTestId('confirm_password'), { target: { value: 'foobar28' } });
+    fireEvent.change(screen.getByTestId('first_name'), { target: { value: 'Bob' } });
+    fireEvent.change(screen.getByTestId('last_name'), { target: { value: 'Rock' } });
+    fireEvent.change(screen.getByTestId('email'), { target: { value: 'bob.rock@tnt.com' } });
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: 'add' })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddObject).toHaveBeenCalledWith(
+        '/api/v2/internal/users/',
+        {
+          username: 'Bob_Rock',
+          first_name: 'Bob',
+          last_name: 'Rock',
+          email: 'bob.rock@tnt.com',
+          is_superuser: false,
+          is_active: true,
+          password: 'foobar28'
+        }
+      )
+
+      expect(NotificationManager.success).toHaveBeenCalledWith(
+        'User successfully added', 'Added', 2000
+      )
+    })
+  })
+
+  test('Test error adding user with error message', async () => {
+    mockAddObject.mockReturnValueOnce(
+      Promise.resolve({
+        json: () => Promise.resolve({ detail: 'User with this username already exists.' }),
+        status: 400,
+        statusText: 'BAD REQUEST'
+      })
+    )
+
+    renderAddView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /user/i }).textContent).toBe('Add user');
+    })
+
+    fireEvent.change(screen.getByTestId('username'), { target: { value: 'Bob_Rock' } });
+    fireEvent.change(screen.getByTestId('password'), { target: { value: 'foobar28' } });
+    fireEvent.change(screen.getByTestId('confirm_password'), { target: { value: 'foobar28' } });
+    fireEvent.change(screen.getByTestId('first_name'), { target: { value: 'Bob' } });
+    fireEvent.change(screen.getByTestId('last_name'), { target: { value: 'Rock' } });
+    fireEvent.change(screen.getByTestId('email'), { target: { value: 'bob.rock@tnt.com' } });
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: 'add' })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddObject).toHaveBeenCalledWith(
+        '/api/v2/internal/users/',
+        {
+          username: 'Bob_Rock',
+          first_name: 'Bob',
+          last_name: 'Rock',
+          email: 'bob.rock@tnt.com',
+          is_superuser: false,
+          is_active: true,
+          password: 'foobar28'
+        }
+      )
+
+      expect(NotificationManager.error).toHaveBeenCalledWith(
+        <div>
+          <p>User with this username already exists.</p>
+          <p>Click to dismiss.</p>
+        </div>,
+        'Error: 400 BAD REQUEST',
+        0,
+        expect.any(Function)
+      )
+    })
+  })
+
+  test('Test error adding user without error message', async () => {
+    mockAddObject.mockReturnValueOnce(
+      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
+    )
+
+    renderAddView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /user/i }).textContent).toBe('Add user');
+    })
+
+    fireEvent.change(screen.getByTestId('username'), { target: { value: 'Bob_Rock' } });
+    fireEvent.change(screen.getByTestId('password'), { target: { value: 'foobar28' } });
+    fireEvent.change(screen.getByTestId('confirm_password'), { target: { value: 'foobar28' } });
+    fireEvent.change(screen.getByTestId('first_name'), { target: { value: 'Bob' } });
+    fireEvent.change(screen.getByTestId('last_name'), { target: { value: 'Rock' } });
+    fireEvent.change(screen.getByTestId('email'), { target: { value: 'bob.rock@tnt.com' } });
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: 'add' })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddObject).toHaveBeenCalledWith(
+        '/api/v2/internal/users/',
+        {
+          username: 'Bob_Rock',
+          first_name: 'Bob',
+          last_name: 'Rock',
+          email: 'bob.rock@tnt.com',
+          is_superuser: false,
+          is_active: true,
+          password: 'foobar28'
+        }
+      )
+
+      expect(NotificationManager.error).toHaveBeenCalledWith(
+        <div>
+          <p>Error adding user</p>
+          <p>Click to dismiss.</p>
+        </div>,
+        'Error: 500 SERVER ERROR',
+        0,
+        expect.any(Function)
+      )
+    })
+  })
+
 })
