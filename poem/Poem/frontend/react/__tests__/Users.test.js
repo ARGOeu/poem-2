@@ -164,6 +164,23 @@ function renderTenantChangeView(username='Alan_Ford') {
 }
 
 
+function renderTenantAddview() {
+  const route = '/ui/administration/users/add';
+  const history = createMemoryHistory({ initialEntries: [route] });
+
+  return {
+    ...render(
+      <Router history={history}>
+        <Route
+          path='/ui/administration/users/add'
+          render={ props => <UserChange {...props} addview={true} isTenantSchema={true} /> }
+        />
+      </Router>
+    )
+  }
+}
+
+
 describe('Test users listview', () => {
   beforeAll(() => {
     Backend.mockImplementation(() => {
@@ -1382,6 +1399,550 @@ describe('Tests for user changeview on tenant POEM', () => {
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
         <p>Error deleting user</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Error: 500 SERVER ERROR',
+      0,
+      expect.any(Function)
+    )
+  })
+})
+
+
+describe('Tests for user addview on tenant POEM', () => {
+  jest.spyOn(NotificationManager, 'success');
+  jest.spyOn(NotificationManager, 'error');
+
+  beforeAll(() => {
+    Backend.mockImplementation(() => {
+      return {
+        isActiveSession: () => Promise.resolve(mockActiveSession),
+        fetchResult: (path) => {
+          switch (path) {
+            case '/api/v2/internal/usergroups':
+              return Promise.resolve(mockAllUserGroups)
+          }
+        },
+        addObject: mockAddObject
+      }
+    })
+  })
+
+  test('Test page renders properly', async () => {
+    renderTenantAddview();
+
+    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /add user/i }).textContent).toBe('Add user');
+    })
+
+    const usernameField = screen.getByTestId('username');
+    const passwordField = screen.getByTestId('password');
+    const confirmPasswordField = screen.getByTestId('confirm_password');
+    const firstNameField = screen.getByTestId('first_name');
+    const lastNameField = screen.getByTestId('last_name');
+    const emailField = screen.getByTestId('email');
+    const lastLoginField = screen.queryByTestId('last_login');
+    const dateJoinedField = screen.queryByTestId('date_joined');
+    const superUserCheckbox = screen.getByRole('checkbox', { name: /superuser/i });
+    const activeCheckbox = screen.getByRole('checkbox', { name: /active/i })
+    const groupsOfMetricsField = screen.getByLabelText(/groups of metrics/i);
+    const groupsOfMetricsOptions = screen.getAllByTestId('groupsofmetrics-option');
+    const groupsOfMetricProfilesField = screen.getByLabelText(/groups of metric profiles/i);
+    const groupsOfMetricProfilesOptions = screen.getAllByTestId('groupsofmetricprofiles-option');
+    const groupsOfAggregationsField = screen.getByLabelText(/groups of aggregation/i);
+    const groupsOfAggregationsOptions = screen.getAllByTestId('groupsofaggregations-option');
+    const groupsOfThresholdsField = screen.getByLabelText(/groups of threshold/i)
+    const groupsOfThresholdsOptions = screen.getAllByTestId('groupsofthresholdsprofiles-option');
+    const subjectField = screen.getByTestId('subject');
+    const egiidField = screen.getByTestId('egiid');
+    const displayNameField = screen.getByTestId('displayname');
+
+    expect(usernameField.value).toBe('');
+    expect(usernameField).toBeEnabled();
+    expect(passwordField.value).toBe('');
+    expect(passwordField).toBeEnabled();
+    expect(confirmPasswordField.value).toBe('')
+    expect(confirmPasswordField).toBeEnabled();
+    expect(firstNameField.value).toBe('');
+    expect(firstNameField).toBeEnabled();
+    expect(lastNameField.value).toBe('');
+    expect(lastNameField).toBeEnabled();
+    expect(emailField.value).toBe('');
+    expect(emailField).toBeEnabled();
+    expect(lastLoginField).not.toBeInTheDocument();
+    expect(dateJoinedField).not.toBeInTheDocument();
+    expect(superUserCheckbox.checked).toBeFalsy();
+    expect(activeCheckbox.checked).toBeTruthy();
+    expect(groupsOfMetricsField).toBeInTheDocument();
+    expect(groupsOfMetricsOptions).toHaveLength(3);
+    expect(groupsOfMetricsOptions[0].selected).toBeFalsy();
+    expect(groupsOfMetricsOptions[1].selected).toBeFalsy();
+    expect(groupsOfMetricsOptions[2].selected).toBeFalsy();
+    expect(groupsOfMetricProfilesField).toBeInTheDocument();
+    expect(groupsOfMetricProfilesOptions).toHaveLength(1);
+    expect(groupsOfMetricProfilesOptions[0].selected).toBeFalsy();
+    expect(groupsOfAggregationsField).toBeInTheDocument();
+    expect(groupsOfAggregationsOptions).toHaveLength(2);
+    expect(groupsOfAggregationsOptions[0].selected).toBeFalsy();
+    expect(groupsOfAggregationsOptions[1].selected).toBeFalsy();
+    expect(groupsOfThresholdsField).toBeInTheDocument();
+    expect(groupsOfThresholdsOptions).toHaveLength(2);
+    expect(groupsOfThresholdsOptions[0].selected).toBeFalsy();
+    expect(groupsOfThresholdsOptions[1].selected).toBeFalsy();
+    expect(subjectField.value).toBe('');
+    expect(subjectField).toBeEnabled();
+    expect(egiidField.value).toBe('');
+    expect(egiidField).toBeEnabled();
+    expect(displayNameField.value).toBe('');
+    expect(displayNameField).toBeEnabled();
+
+    expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /password/i })).not.toBeInTheDocument();
+  })
+
+  test('Test successfully saving user', async () => {
+    mockAddObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
+    ).mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
+    )
+
+    renderTenantAddview();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /add user/i }).textContent).toBe('Add user')
+    })
+
+    fireEvent.change(screen.getByTestId('username'), { target: { value: 'Bob_Rock' } });
+    fireEvent.change(screen.getByTestId('password'), { target: { value: 'foobar28' } })
+    fireEvent.change(screen.getByTestId('confirm_password'), { target: { value: 'foobar28' } })
+    fireEvent.change(screen.getByTestId('first_name'), { target: { value: 'Bob' } });
+    fireEvent.change(screen.getByTestId('last_name'), { target: { value: 'Rock' } });
+    fireEvent.change(screen.getByTestId('email'), { target: { value: 'bob.rock@group-tnt.com' } });
+
+    const metricGroups = screen.getByLabelText(/groups of metrics/i);
+    const metricProfilesGroups = screen.getByLabelText(/groups of metric profile/i);
+    const aggrGroups = screen.getByLabelText(/groups of aggregation/i);
+    const thresholdsGroups = screen.getByLabelText(/groups of threshold/i);
+
+    Array.from(metricGroups.children, (option, i) => {
+      if (i == 0) { option.selected = true; }
+    })
+    fireEvent.change(metricGroups);
+
+    Array.from(metricProfilesGroups.children, (option, i) => {
+      if (i == 0) { option.selected = true; }
+    })
+    fireEvent.change(metricProfilesGroups);
+
+    Array.from(aggrGroups.children, (option, i) => {
+      if (i == 1) { option.selected = true }
+    })
+    fireEvent.change(aggrGroups);
+
+    Array.from(thresholdsGroups.children, (option, i) => {
+      if (i == 1) { option.selected = true; }
+    })
+    fireEvent.change(thresholdsGroups);
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: 'add' })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddObject.mock.calls).toEqual([
+        [
+          '/api/v2/internal/users/',
+          {
+            username: 'Bob_Rock',
+            first_name: 'Bob',
+            last_name: 'Rock',
+            email: 'bob.rock@group-tnt.com',
+            is_superuser: false,
+            is_active: true,
+            password: 'foobar28'
+          }
+        ],
+        [
+          '/api/v2/internal/userprofile/',
+          {
+            username: 'Bob_Rock',
+            displayname: '',
+            egiid: '',
+            subject: '',
+            groupsofaggregations: ['aggr-group2'],
+            groupsofmetrics: ['metric-group1'],
+            groupsofmetricprofiles: ['mp-group1'],
+            groupsofthresholdsprofiles: ['threshold-group3']
+          }
+        ]
+      ])
+    })
+
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'User successfully added', 'Added', 2000
+    )
+  })
+
+  test('Test form validation when adding user', async () => {
+    renderTenantAddview();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /add user/i }).textContent).toBe('Add user')
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+
+    expect(await screen.findAllByTestId('error-msg')).toHaveLength(4);
+    expect(mockAddObject).not.toHaveBeenCalled();
+  })
+
+  test('Test error saving user with error message', async () => {
+    mockAddObject.mockReturnValueOnce(
+      Promise.resolve({
+        json: () => Promise.resolve({ detail: 'User with this username already exists.' }),
+        status: 400,
+        statusText: 'BAD REQUEST'
+      })
+    )
+
+    renderTenantAddview();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /add user/i }).textContent).toBe('Add user')
+    })
+
+    fireEvent.change(screen.getByTestId('username'), { target: { value: 'Bob_Rock' } });
+    fireEvent.change(screen.getByTestId('password'), { target: { value: 'foobar28' } })
+    fireEvent.change(screen.getByTestId('confirm_password'), { target: { value: 'foobar28' } })
+    fireEvent.change(screen.getByTestId('first_name'), { target: { value: 'Bob' } });
+    fireEvent.change(screen.getByTestId('last_name'), { target: { value: 'Rock' } });
+    fireEvent.change(screen.getByTestId('email'), { target: { value: 'bob.rock@group-tnt.com' } });
+
+    const metricGroups = screen.getByLabelText(/groups of metrics/i);
+    const metricProfilesGroups = screen.getByLabelText(/groups of metric profile/i);
+    const aggrGroups = screen.getByLabelText(/groups of aggregation/i);
+    const thresholdsGroups = screen.getByLabelText(/groups of threshold/i);
+
+    Array.from(metricGroups.children, (option, i) => {
+      if (i == 0) { option.selected = true; }
+    })
+    fireEvent.change(metricGroups);
+
+    Array.from(metricProfilesGroups.children, (option, i) => {
+      if (i == 0) { option.selected = true; }
+    })
+    fireEvent.change(metricProfilesGroups);
+
+    Array.from(aggrGroups.children, (option, i) => {
+      if (i == 1) { option.selected = true }
+    })
+    fireEvent.change(aggrGroups);
+
+    Array.from(thresholdsGroups.children, (option, i) => {
+      if (i == 1) { option.selected = true; }
+    })
+    fireEvent.change(thresholdsGroups);
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: 'add' })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddObject).toHaveBeenCalledTimes(1);
+    })
+    expect(mockAddObject).toHaveBeenCalledWith(
+      '/api/v2/internal/users/',
+      {
+        username: 'Bob_Rock',
+        first_name: 'Bob',
+        last_name: 'Rock',
+        email: 'bob.rock@group-tnt.com',
+        is_superuser: false,
+        is_active: true,
+        password: 'foobar28'
+      }
+    )
+
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>User with this username already exists.</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Error: 400 BAD REQUEST',
+      0,
+      expect.any(Function)
+    )
+  })
+
+  test('Test error saving user without error message', async () => {
+    mockAddObject.mockReturnValueOnce(
+      Promise.resolve({status: 500, statusText: 'SERVER ERROR' })
+    )
+
+    renderTenantAddview();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /add user/i }).textContent).toBe('Add user')
+    })
+
+    fireEvent.change(screen.getByTestId('username'), { target: { value: 'Bob_Rock' } });
+    fireEvent.change(screen.getByTestId('password'), { target: { value: 'foobar28' } })
+    fireEvent.change(screen.getByTestId('confirm_password'), { target: { value: 'foobar28' } })
+    fireEvent.change(screen.getByTestId('first_name'), { target: { value: 'Bob' } });
+    fireEvent.change(screen.getByTestId('last_name'), { target: { value: 'Rock' } });
+    fireEvent.change(screen.getByTestId('email'), { target: { value: 'bob.rock@group-tnt.com' } });
+
+    const metricGroups = screen.getByLabelText(/groups of metrics/i);
+    const metricProfilesGroups = screen.getByLabelText(/groups of metric profile/i);
+    const aggrGroups = screen.getByLabelText(/groups of aggregation/i);
+    const thresholdsGroups = screen.getByLabelText(/groups of threshold/i);
+
+    Array.from(metricGroups.children, (option, i) => {
+      if (i == 0) { option.selected = true; }
+    })
+    fireEvent.change(metricGroups);
+
+    Array.from(metricProfilesGroups.children, (option, i) => {
+      if (i == 0) { option.selected = true; }
+    })
+    fireEvent.change(metricProfilesGroups);
+
+    Array.from(aggrGroups.children, (option, i) => {
+      if (i == 1) { option.selected = true }
+    })
+    fireEvent.change(aggrGroups);
+
+    Array.from(thresholdsGroups.children, (option, i) => {
+      if (i == 1) { option.selected = true; }
+    })
+    fireEvent.change(thresholdsGroups);
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: 'add' })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddObject).toHaveBeenCalledTimes(1);
+    })
+    expect(mockAddObject).toHaveBeenCalledWith(
+      '/api/v2/internal/users/',
+      {
+        username: 'Bob_Rock',
+        first_name: 'Bob',
+        last_name: 'Rock',
+        email: 'bob.rock@group-tnt.com',
+        is_superuser: false,
+        is_active: true,
+        password: 'foobar28'
+      }
+    )
+
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>Error adding user</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Error: 500 SERVER ERROR',
+      0,
+      expect.any(Function)
+    )
+  })
+
+  test('Test error saving user profile with error message', async () => {
+    mockAddObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
+    ).mockReturnValueOnce(
+      Promise.resolve({
+        json: () => Promise.resolve({ detail: 'There has been an error.' }),
+        status: 400,
+        statusText: 'BAD REQUEST'
+      })
+    )
+
+    renderTenantAddview();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /add user/i }).textContent).toBe('Add user')
+    })
+
+    fireEvent.change(screen.getByTestId('username'), { target: { value: 'Bob_Rock' } });
+    fireEvent.change(screen.getByTestId('password'), { target: { value: 'foobar28' } })
+    fireEvent.change(screen.getByTestId('confirm_password'), { target: { value: 'foobar28' } })
+    fireEvent.change(screen.getByTestId('first_name'), { target: { value: 'Bob' } });
+    fireEvent.change(screen.getByTestId('last_name'), { target: { value: 'Rock' } });
+    fireEvent.change(screen.getByTestId('email'), { target: { value: 'bob.rock@group-tnt.com' } });
+
+    const metricGroups = screen.getByLabelText(/groups of metrics/i);
+    const metricProfilesGroups = screen.getByLabelText(/groups of metric profile/i);
+    const aggrGroups = screen.getByLabelText(/groups of aggregation/i);
+    const thresholdsGroups = screen.getByLabelText(/groups of threshold/i);
+
+    Array.from(metricGroups.children, (option, i) => {
+      if (i == 0) { option.selected = true; }
+    })
+    fireEvent.change(metricGroups);
+
+    Array.from(metricProfilesGroups.children, (option, i) => {
+      if (i == 0) { option.selected = true; }
+    })
+    fireEvent.change(metricProfilesGroups);
+
+    Array.from(aggrGroups.children, (option, i) => {
+      if (i == 1) { option.selected = true }
+    })
+    fireEvent.change(aggrGroups);
+
+    Array.from(thresholdsGroups.children, (option, i) => {
+      if (i == 1) { option.selected = true; }
+    })
+    fireEvent.change(thresholdsGroups);
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: 'add' })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddObject).toHaveBeenCalledTimes(2);
+    })
+
+    expect(mockAddObject.mock.calls).toEqual([
+      [
+        '/api/v2/internal/users/',
+        {
+          username: 'Bob_Rock',
+          first_name: 'Bob',
+          last_name: 'Rock',
+          email: 'bob.rock@group-tnt.com',
+          is_superuser: false,
+          is_active: true,
+          password: 'foobar28'
+        }
+      ],
+      [
+        '/api/v2/internal/userprofile/',
+        {
+          username: 'Bob_Rock',
+          displayname: '',
+          egiid: '',
+          subject: '',
+          groupsofaggregations: ['aggr-group2'],
+          groupsofmetrics: ['metric-group1'],
+          groupsofmetricprofiles: ['mp-group1'],
+          groupsofthresholdsprofiles: ['threshold-group3']
+        }
+      ]
+    ])
+
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>There has been an error.</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Error: 400 BAD REQUEST',
+      0,
+      expect.any(Function)
+    )
+  })
+
+  test('Test error saving user profile without error message', async () => {
+    mockAddObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
+    ).mockReturnValueOnce(
+      Promise.resolve({status: 500, statusText: 'SERVER ERROR' })
+    )
+
+    renderTenantAddview();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /add user/i }).textContent).toBe('Add user')
+    })
+
+    fireEvent.change(screen.getByTestId('username'), { target: { value: 'Bob_Rock' } });
+    fireEvent.change(screen.getByTestId('password'), { target: { value: 'foobar28' } })
+    fireEvent.change(screen.getByTestId('confirm_password'), { target: { value: 'foobar28' } })
+    fireEvent.change(screen.getByTestId('first_name'), { target: { value: 'Bob' } });
+    fireEvent.change(screen.getByTestId('last_name'), { target: { value: 'Rock' } });
+    fireEvent.change(screen.getByTestId('email'), { target: { value: 'bob.rock@group-tnt.com' } });
+
+    const metricGroups = screen.getByLabelText(/groups of metrics/i);
+    const metricProfilesGroups = screen.getByLabelText(/groups of metric profile/i);
+    const aggrGroups = screen.getByLabelText(/groups of aggregation/i);
+    const thresholdsGroups = screen.getByLabelText(/groups of threshold/i);
+
+    Array.from(metricGroups.children, (option, i) => {
+      if (i == 0) { option.selected = true; }
+    })
+    fireEvent.change(metricGroups);
+
+    Array.from(metricProfilesGroups.children, (option, i) => {
+      if (i == 0) { option.selected = true; }
+    })
+    fireEvent.change(metricProfilesGroups);
+
+    Array.from(aggrGroups.children, (option, i) => {
+      if (i == 1) { option.selected = true }
+    })
+    fireEvent.change(aggrGroups);
+
+    Array.from(thresholdsGroups.children, (option, i) => {
+      if (i == 1) { option.selected = true; }
+    })
+    fireEvent.change(thresholdsGroups);
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: 'add' })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddObject).toHaveBeenCalledTimes(2);
+    })
+
+    expect(mockAddObject.mock.calls).toEqual([
+      [
+        '/api/v2/internal/users/',
+        {
+          username: 'Bob_Rock',
+          first_name: 'Bob',
+          last_name: 'Rock',
+          email: 'bob.rock@group-tnt.com',
+          is_superuser: false,
+          is_active: true,
+          password: 'foobar28'
+        }
+      ],
+      [
+        '/api/v2/internal/userprofile/',
+        {
+          username: 'Bob_Rock',
+          displayname: '',
+          egiid: '',
+          subject: '',
+          groupsofaggregations: ['aggr-group2'],
+          groupsofmetrics: ['metric-group1'],
+          groupsofmetricprofiles: ['mp-group1'],
+          groupsofthresholdsprofiles: ['threshold-group3']
+        }
+      ]
+    ])
+
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>Error adding user profile</p>
         <p>Click to dismiss.</p>
       </div>,
       'Error: 500 SERVER ERROR',
