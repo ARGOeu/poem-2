@@ -321,6 +321,25 @@ describe('Test user changeview on SuperAdmin POEM', () => {
     })
   })
 
+  test('Test form validation when changing user', async () => {
+    renderChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /user/i }).textContent).toBe('Change user')
+    })
+
+    fireEvent.change(screen.getByTestId('username'), { target: { value: '' } })
+    fireEvent.change(screen.getByTestId('first_name'), { target: { value: '' } })
+    fireEvent.change(screen.getByTestId('last_name'), { target: { value: '' } })
+    fireEvent.change(screen.getByTestId('email'), { target: { value: '' } })
+    fireEvent.click(screen.getByRole('checkbox', { name: /superuser/i }));
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+
+    expect(await screen.findAllByTestId('error-msg')).toHaveLength(2);
+    expect(mockChangeObject).not.toHaveBeenCalled();
+  })
+
   test('Test error changing and saving user with error message', async () => {
     mockChangeObject.mockReturnValueOnce(
       Promise.resolve({
@@ -623,6 +642,22 @@ describe('Tests for user addview on SuperAdmin POEM', () => {
     })
   })
 
+  test('Test form validation when adding user', async () => {
+    renderAddView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /user/i }).textContent).toBe('Add user');
+    })
+
+    fireEvent.change(screen.getByTestId('password'), { target: { value: 'foobar28' } })
+    fireEvent.change(screen.getByTestId('confirm_password'), { target: { value: 'foobar25' } })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+
+    expect(await screen.findAllByTestId('error-msg')).toHaveLength(3);
+    expect(mockAddObject).not.toHaveBeenCalled();
+  })
+
   test('Test error adding user with error message', async () => {
     mockAddObject.mockReturnValueOnce(
       Promise.resolve({
@@ -726,5 +761,4 @@ describe('Tests for user addview on SuperAdmin POEM', () => {
       )
     })
   })
-
 })

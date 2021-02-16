@@ -855,7 +855,7 @@ export const FancyErrorMessage = (msg) => (
 
 
 export const CustomErrorMessage = ({...props}) => (
-  <ErrorMessage {...props} render={msg => <div style={{color: '#FF0000', fontSize: 'small'}}>{msg}</div>} />
+  <ErrorMessage {...props} render={msg => <div style={{color: '#FF0000', fontSize: 'small'}} data-testid='error-msg'>{msg}</div>} />
 )
 
 
