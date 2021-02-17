@@ -4,7 +4,7 @@ import '@testing-library/jest-dom/extend-expect';
 import { createMemoryHistory } from 'history';
 import { Route, Router } from 'react-router-dom';
 import { queryCache } from 'react-query';
-import { UserChange, UsersList } from '../Users';
+import { ChangePassword, UserChange, UsersList } from '../Users';
 import { Backend } from '../DataManager';
 import { NotificationManager } from 'react-notifications';
 
@@ -15,6 +15,8 @@ jest.mock('../DataManager', () => {
   }
 })
 
+global.fetch = jest.fn();
+
 const mockChangeObject = jest.fn();
 const mockDeleteObject = jest.fn();
 const mockAddObject = jest.fn();
@@ -22,6 +24,7 @@ const mockAddObject = jest.fn();
 
 beforeEach(() => {
   jest.clearAllMocks();
+  fetch.mockClear();
   queryCache.clear();
 })
 
@@ -174,6 +177,23 @@ function renderTenantAddview() {
         <Route
           path='/ui/administration/users/add'
           render={ props => <UserChange {...props} addview={true} isTenantSchema={true} /> }
+        />
+      </Router>
+    )
+  }
+}
+
+
+function renderChangePassword() {
+  const route = '/ui/administration/users/poem/change_password';
+  const history = createMemoryHistory({ initialEntries: [route] });
+
+  return {
+    ...render(
+      <Router history={history}>
+        <Route
+          path='/ui/administration/users/:user_name/change_password'
+          render={ props => <ChangePassword {...props} /> }
         />
       </Router>
     )
@@ -1950,4 +1970,226 @@ describe('Tests for user addview on tenant POEM', () => {
       expect.any(Function)
     )
   })
+})
+
+
+describe('Tests for changing password', () => {
+  jest.spyOn(NotificationManager, 'success');
+  jest.spyOn(NotificationManager, 'error');
+
+  beforeAll(() => {
+    Backend.mockImplementation(() => {
+      return {
+        isActiveSession: () => Promise.resolve(mockActiveSession),
+        changeObject: mockChangeObject
+      }
+    })
+  })
+
+  test('Test that page renders properly', async () => {
+    renderChangePassword();
+
+    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /password/i }).textContent).toBe('Change password')
+    })
+
+    const passwordField = screen.getByTestId('password');
+    const confirmPasswordField = screen.getByTestId('confirm_password');
+
+    expect(passwordField.value).toBe('');
+    expect(passwordField).toBeEnabled();
+    expect(confirmPasswordField.value).toBe('');
+    expect(confirmPasswordField).toBeEnabled();
+
+    expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /password/i })).not.toBeInTheDocument();
+  })
+
+  test('Test form validation if missing confirm password entry', async () => {
+    renderChangePassword();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /password/i }).textContent).toBe('Change password');
+    })
+
+    fireEvent.change(screen.getByTestId('password'), { target: { value: 'foobar28' } });
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    expect(await screen.findAllByTestId('error-msg')).toHaveLength(1);
+    expect(mockChangeObject).not.toHaveBeenCalled();
+  })
+
+  test('Test form validation if passwords not equal', async () => {
+    renderChangePassword();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /password/i }).textContent).toBe('Change password');
+    })
+
+    fireEvent.change(screen.getByTestId('password'), { target: { value: 'foobar28' } });
+    fireEvent.change(screen.getByTestId('confirm_password'), { target: { value: 'foobar38' } })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    expect(await screen.findAllByTestId('error-msg')).toHaveLength(1);
+    expect(mockChangeObject).not.toHaveBeenCalled();
+  })
+
+  test('Test form validation if password not valid', async () => {
+    renderChangePassword();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /password/i }).textContent).toBe('Change password');
+    })
+
+    fireEvent.change(screen.getByTestId('password'), { target: { value: 'foobar' } });
+    fireEvent.change(screen.getByTestId('confirm_password'), { target: { value: 'foobar' } })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    expect(await screen.findAllByTestId('error-msg')).toHaveLength(1);
+    expect(mockChangeObject).not.toHaveBeenCalled();
+  })
+
+  test('Test form validation if no password entered', async () => {
+    renderChangePassword();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /password/i }).textContent).toBe('Change password');
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    expect(await screen.findAllByTestId('error-msg')).toHaveLength(2);
+    expect(mockChangeObject).not.toHaveBeenCalled();
+  })
+
+  test('Test successfully changing password', async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
+    )
+
+    renderChangePassword();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /password/i }).textContent).toBe('Change password');
+    })
+
+    fireEvent.change(screen.getByTestId('password'), { target: { value: 'foobar28' } });
+    fireEvent.change(screen.getByTestId('confirm_password'), { target: { value: 'foobar28' } })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: 'change' })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    expect(mockChangeObject).toHaveBeenCalledWith(
+      '/api/v2/internal/change_password/',
+      {
+        username: 'poem',
+        new_password: 'foobar28'
+      }
+    )
+
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalledTimes(1)
+    })
+
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'Password successfully changed', 'Changed', 2000
+    )
+  })
+
+  test('Test error changing password with error message', async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({
+        json: () => Promise.resolve({ detail: 'There has been an error.' }),
+        status: 403,
+        statusText: 'FORBIDDEN'
+      })
+    )
+
+    renderChangePassword();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /password/i }).textContent).toBe('Change password');
+    })
+
+    fireEvent.change(screen.getByTestId('password'), { target: { value: 'foobar28' } });
+    fireEvent.change(screen.getByTestId('confirm_password'), { target: { value: 'foobar28' } })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: 'change' })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    expect(mockChangeObject).toHaveBeenCalledWith(
+      '/api/v2/internal/change_password/',
+      {
+        username: 'poem',
+        new_password: 'foobar28'
+      }
+    )
+
+    await waitFor(() => {
+      expect(fetch).not.toHaveBeenCalled()
+    })
+
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>There has been an error.</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Error: 403 FORBIDDEN',
+      0,
+      expect.any(Function)
+    )
+  })
+
+  test('Test error changing password without error message', async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
+    )
+
+    renderChangePassword();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /password/i }).textContent).toBe('Change password');
+    })
+
+    fireEvent.change(screen.getByTestId('password'), { target: { value: 'foobar28' } });
+    fireEvent.change(screen.getByTestId('confirm_password'), { target: { value: 'foobar28' } })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: 'change' })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    expect(mockChangeObject).toHaveBeenCalledWith(
+      '/api/v2/internal/change_password/',
+      {
+        username: 'poem',
+        new_password: 'foobar28'
+      }
+    )
+
+    await waitFor(() => {
+      expect(fetch).not.toHaveBeenCalled()
+    })
+
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>Error changing password</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Error: 500 SERVER ERROR',
+      0,
+      expect.any(Function)
+    )
+  })
+
 })

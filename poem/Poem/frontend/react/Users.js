@@ -1077,11 +1077,12 @@ export const ChangePassword = (props) => {
                   <InputGroup>
                     <InputGroupAddon addonType='prepend'>New password</InputGroupAddon>
                     <Field
-                    type="password"
-                    name="password"
-                    className={`form-control ${props.errors.password && props.touched.password && 'border-danger'}`}
-                    id="password"
-                  />
+                      type="password"
+                      name="password"
+                      className={`form-control ${props.errors.password && props.touched.password && 'border-danger'}`}
+                      id="password"
+                      data-testid="password"
+                    />
                   </InputGroup>
                   <CustomErrorMessage name='password' />
                 </Col>
@@ -1095,6 +1096,7 @@ export const ChangePassword = (props) => {
                       name='confirm_password'
                       className={`form-control ${props.errors.confirm_password && props.touched.confirm_password && 'border-danger'}`}
                       id='confirm_password'
+                      data-testid='confirm_password'
                     />
                   </InputGroup>
                   <CustomErrorMessage name='confirm_password' />
