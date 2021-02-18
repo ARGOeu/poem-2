@@ -448,7 +448,10 @@ export const ListOfMetrics = (props) => {
     function toggleSelectAll(instance) {
       var list_metric = [];
 
-      instance.filteredFlatRows.forEach(row => list_metric.push(row.original));
+      instance.filteredFlatRows.forEach(row => {
+        if ((isTenantSchema && row.original.importable) || !isTenantSchema)
+          list_metric.push(row.original)
+      });
 
       let newSelected = {};
       if (selectAll === 0) {
@@ -540,6 +543,7 @@ export const ListOfMetrics = (props) => {
                   className='checkbox'
                   data-testid={`checkbox-${original.name}`}
                   checked={selected[original.name] === true}
+                  disabled={isTenantSchema && !original.importable}
                   onChange={() => toggleRow(original.name)}
                 />
               </div>
