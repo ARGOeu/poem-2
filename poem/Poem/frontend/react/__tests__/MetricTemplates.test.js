@@ -1310,6 +1310,11 @@ describe('Test list of metric templates on tenant POEM', () => {
       'Imported',
       2000
     );
+
+    expect(screen.getByTestId('checkbox-argo.AMS-Check')).toBeDisabled();
+    expect(screen.getByTestId('checkbox-argo.AMS-Publisher')).toBeDisabled();
+    expect(screen.getByTestId('checkbox-argo.POEM-API-MON')).toBeEnabled();
+    expect(screen.getByTestId('checkbox-org.apel.APEL-Pub')).toBeDisabled();
   })
 
   test('Test importing of metric templates if no metric template has been selected', async () => {
@@ -1367,6 +1372,11 @@ describe('Test list of metric templates on tenant POEM', () => {
       </div>,
      'Imported with older probe version', 0, expect.any(Function)
     )
+
+    expect(screen.getByTestId('checkbox-argo.AMS-Check')).toBeDisabled();
+    expect(screen.getByTestId('checkbox-argo.AMS-Publisher')).toBeDisabled();
+    expect(screen.getByTestId('checkbox-argo.POEM-API-MON')).toBeEnabled();
+    expect(screen.getByTestId('checkbox-org.apel.APEL-Pub')).toBeDisabled();
   })
 
   test('Test importing of metric templates if err message', async () => {
@@ -1403,6 +1413,11 @@ describe('Test list of metric templates on tenant POEM', () => {
       </div>,
      'Not imported', 0, expect.any(Function)
     )
+
+    expect(screen.getByTestId('checkbox-argo.AMS-Check')).toBeEnabled();
+    expect(screen.getByTestId('checkbox-argo.AMS-Publisher')).toBeDisabled();
+    expect(screen.getByTestId('checkbox-argo.POEM-API-MON')).toBeEnabled();
+    expect(screen.getByTestId('checkbox-org.apel.APEL-Pub')).toBeEnabled();
   })
 
   test('Test importing of metric templates if unavailable message', async () => {
@@ -1439,6 +1454,11 @@ describe('Test list of metric templates on tenant POEM', () => {
       </div>,
      'Unavailable', 0, expect.any(Function)
     )
+
+    expect(screen.getByTestId('checkbox-argo.AMS-Check')).toBeEnabled();
+    expect(screen.getByTestId('checkbox-argo.AMS-Publisher')).toBeDisabled();
+    expect(screen.getByTestId('checkbox-argo.POEM-API-MON')).toBeEnabled();
+    expect(screen.getByTestId('checkbox-org.apel.APEL-Pub')).toBeEnabled();
   })
 
   test('Test importing of metric templates if mixed messages', async () => {
@@ -1491,6 +1511,11 @@ describe('Test list of metric templates on tenant POEM', () => {
       </div>,
       'Not imported', 0, expect.any(Function)
     )
+
+    expect(screen.getByTestId('checkbox-argo.AMS-Check')).toBeDisabled();
+    expect(screen.getByTestId('checkbox-argo.AMS-Publisher')).toBeDisabled();
+    expect(screen.getByTestId('checkbox-argo.POEM-API-MON')).toBeDisabled();
+    expect(screen.getByTestId('checkbox-org.apel.APEL-Pub')).toBeEnabled();
   })
 
   test('Test select all when importing metric templates', async () => {
@@ -1523,6 +1548,11 @@ describe('Test list of metric templates on tenant POEM', () => {
       'argo.AMS-Check, argo.POEM-API-MON, org.apel.APEL-Pub have been successfully imported.',
       'Imported', 2000
     )
+
+    expect(screen.getByTestId('checkbox-argo.AMS-Check')).toBeDisabled();
+    expect(screen.getByTestId('checkbox-argo.AMS-Publisher')).toBeDisabled();
+    expect(screen.getByTestId('checkbox-argo.POEM-API-MON')).toBeDisabled();
+    expect(screen.getByTestId('checkbox-org.apel.APEL-Pub')).toBeDisabled();
   })
 
   test('Test select all when importing metric templates if filtered', async () => {
@@ -1556,6 +1586,10 @@ describe('Test list of metric templates on tenant POEM', () => {
       'argo.AMS-Check, argo.POEM-API-MON have been successfully imported.',
       'Imported', 2000
     )
+
+    expect(screen.getByTestId('checkbox-argo.AMS-Check')).toBeDisabled();
+    expect(screen.getByTestId('checkbox-argo.AMS-Publisher')).toBeDisabled();
+    expect(screen.getByTestId('checkbox-argo.POEM-API-MON')).toBeDisabled();
   })
 })
 
