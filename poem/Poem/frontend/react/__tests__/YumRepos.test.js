@@ -5,6 +5,7 @@ import { createMemoryHistory } from 'history';
 import { Route, Router } from 'react-router-dom';
 import { YumRepoList } from '../YumRepos';
 import { Backend } from '../DataManager';
+import { queryCache } from 'react-query';
 
 
 jest.mock('../DataManager', () => {
@@ -16,6 +17,7 @@ jest.mock('../DataManager', () => {
 
 beforeEach(() => {
   jest.clearAllMocks();
+  queryCache.clear();
 })
 
 
@@ -44,8 +46,8 @@ const mockListYUMRepos = [
 ];
 
 
-function renderListView() {
-  const route = '/ui/yumrepos';
+function renderListView(tenant=false) {
+  const route = `/ui/${tenant ? 'administration/' : ''}yumrepos`;
   const history = createMemoryHistory({ initialEntries: [route] });
 
   return {
@@ -132,5 +134,81 @@ describe('Test list of YUM repos on SuperAdmin POEM', () => {
     expect(screen.getAllByRole('row', { name: '' })).toHaveLength(19);
     expect(screen.getByRole('row', { name: /repo-2/i }).textContent).toBe('1repo-2Repo 2 description.CentOS 7');
     expect(screen.getByRole('link', { name: /repo-2/ }).closest('a')).toHaveAttribute('href', '/ui/yumrepos/repo-2-centos7');
+  })
+})
+
+
+describe('Test list of YUM repos on tenant POEM', () => {
+  beforeAll(() => {
+    Backend.mockImplementation(() => {
+      return {
+        fetchData: (path) => {
+          switch (path) {
+            case '/api/v2/internal/yumrepos':
+              return Promise.resolve(mockListYUMRepos)
+
+            case '/api/v2/internal/ostags':
+              return Promise.resolve(['CentOS 6', 'CentOS 7'])
+          }
+        },
+        isTenantSchema: () => Promise.resolve(true)
+      }
+    })
+  })
+
+  test('Test that page renders properly', async () => {
+    renderListView();
+
+    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /repo/i }).textContent).toBe('Select YUM repo for details')
+    })
+
+    expect(screen.getAllByRole('columnheader')).toHaveLength(8);
+    expect(screen.getByRole('columnheader', { name: '#' })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: /name/i })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: /description/i })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: /tag/i })).toBeInTheDocument();
+    expect(screen.getAllByPlaceholderText('Search')).toHaveLength(2);
+    expect(screen.getAllByRole('columnheader', { name: 'Show all' })).toHaveLength(1);
+    expect(screen.getAllByRole('option', { name: /centos/i })).toHaveLength(2);
+    expect(screen.getByRole('option', { name: 'Show all' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'CentOS 6' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'CentOS 7' })).toBeInTheDocument();
+    expect(screen.getAllByRole('row')).toHaveLength(22);
+    expect(screen.getAllByRole('row', { name: '' })).toHaveLength(17);
+    expect(screen.getByRole('row', { name: /repo-1/i }).textContent).toBe('1repo-1Repo 1 description.CentOS 6');
+    expect(screen.getByRole('row', { name: /repo-2/i }).textContent).toBe('2repo-2Repo 2 description.CentOS 7');
+    expect(screen.getByRole('row', { name: /repo-3/i }).textContent).toBe('3repo-3Repo 3 descriptionCentOS 7');
+    expect(screen.getByRole('link', { name: /repo-1/ }).closest('a')).toHaveAttribute('href', '/ui/administration/yumrepos/repo-1-centos6');
+    expect(screen.getByRole('link', { name: /repo-2/ }).closest('a')).toHaveAttribute('href', '/ui/administration/yumrepos/repo-2-centos7');
+    expect(screen.getByRole('link', { name: /repo-3/ }).closest('a')).toHaveAttribute('href', '/ui/administration/yumrepos/repo-3-centos7');
+    expect(screen.queryByRole('button', { name: /add/i })).not.toBeInTheDocument();
+  })
+
+  test('Test filter repos', async () => {
+    renderListView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /repo/i })).toBeInTheDocument()
+    })
+
+    fireEvent.change(screen.getByDisplayValue('Show all'), { target: { value: 'CentOS 6' } });
+    expect(screen.getAllByRole('row', { name: '' })).toHaveLength(19);
+    expect(screen.getByRole('row', { name: /repo-1/i }).textContent).toBe('1repo-1Repo 1 description.CentOS 6');
+    expect(screen.getByRole('link', { name: /repo-1/ }).closest('a')).toHaveAttribute('href', '/ui/administration/yumrepos/repo-1-centos6');
+
+    fireEvent.change(screen.getByDisplayValue('CentOS 6'), { target: { value: 'CentOS 7' } });
+    expect(screen.getAllByRole('row', { name: '' })).toHaveLength(18);
+    expect(screen.getByRole('row', { name: /repo-2/i }).textContent).toBe('1repo-2Repo 2 description.CentOS 7');
+    expect(screen.getByRole('row', { name: /repo-3/i }).textContent).toBe('2repo-3Repo 3 descriptionCentOS 7');
+    expect(screen.getByRole('link', { name: /repo-2/ }).closest('a')).toHaveAttribute('href', '/ui/administration/yumrepos/repo-2-centos7');
+    expect(screen.getByRole('link', { name: /repo-3/ }).closest('a')).toHaveAttribute('href', '/ui/administration/yumrepos/repo-3-centos7');
+
+    fireEvent.change(screen.getAllByPlaceholderText('Search')[0], { target: { value: '2' } })
+    expect(screen.getAllByRole('row', { name: '' })).toHaveLength(19);
+    expect(screen.getByRole('row', { name: /repo-2/i }).textContent).toBe('1repo-2Repo 2 description.CentOS 7');
+    expect(screen.getByRole('link', { name: /repo-2/ }).closest('a')).toHaveAttribute('href', '/ui/administration/yumrepos/repo-2-centos7');
   })
 })
