@@ -326,6 +326,7 @@ export const YumRepoComponent = (props) => {
                         name='name'
                         className={`form-control ${props.errors.name && props.touched.name && 'border-danger'}`}
                         id='name'
+                        data-testid='name'
                         disabled={disabled}
                       />
                     </InputGroup>
@@ -344,6 +345,7 @@ export const YumRepoComponent = (props) => {
                             name='tag'
                             className='form-control'
                             id='tag'
+                            data-testid='tag'
                             disabled={true}
                           />
                         :
@@ -351,6 +353,7 @@ export const YumRepoComponent = (props) => {
                             component='select'
                             name='tag'
                             className='form-control custom-select'
+                            data-testid='tag'
                             id='tag'
                           >
                             {
