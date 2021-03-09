@@ -281,10 +281,11 @@ export const YumRepoComponent = (props) => {
   else if (!loadingRepo && !loadingTags && tags) {
     return (
       <BaseArgoView
-        resourcename='YUM repo'
+        resourcename={`${disabled ? 'YUM repo details' : 'YUM repo'}`}
         location={location}
         addview={addview}
         cloneview={cloneview}
+        infoview={disabled}
         clone={!disabled}
         history={false}
         modal={true}

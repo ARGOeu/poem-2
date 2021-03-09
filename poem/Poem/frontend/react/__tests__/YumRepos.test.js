@@ -76,20 +76,33 @@ function renderListView(tenant=false) {
 }
 
 
-function renderChangeView() {
-  const route = '/ui/yumrepos/argo-centos6';
+function renderChangeView(tenant=false) {
+  const route = `/ui/${tenant ? 'administration/' : ''}yumrepos/argo-centos6`;
   const history = createMemoryHistory({ initialEntries: [route] });
 
-  return {
-    ...render(
-      <Router history={history}>
-        <Route
-          path='/ui/yumrepos/:name'
-          render={ props => <YumRepoComponent {...props} /> }
-        />
-      </Router>
-    )
-  }
+  if (tenant)
+    return {
+      ...render(
+        <Router history={history}>
+          <Route
+            path='/ui/administration/yumrepos/:name'
+            render={ props => <YumRepoComponent {...props} disabled={true} /> }
+          />
+        </Router>
+      )
+    }
+
+  else
+    return {
+      ...render(
+        <Router history={history}>
+          <Route
+            path='/ui/yumrepos/:name'
+            render={ props => <YumRepoComponent {...props} /> }
+          />
+        </Router>
+      )
+    }
 }
 
 
@@ -548,5 +561,52 @@ describe('Tests for YUM repos changeview on SuperAdmin POEM', () => {
       0,
       expect.any(Function)
     )
+  })
+})
+
+
+describe('Tests for YUM repos changeview on tenant POEM', () => {
+  beforeAll(() => {
+    Backend.mockImplementation(() => {
+      return {
+        fetchData: (path) => {
+          switch (path) {
+            case '/api/v2/internal/yumrepos/argo/centos6':
+              return Promise.resolve(mockYUMRepo)
+
+            case '/api/v2/internal/ostags':
+              return Promise.resolve(['CentOS 6', 'CentOS 7'])
+          }
+        }
+      }
+    })
+  })
+
+  test('Test that page renders properly', async () => {
+    renderChangeView(true);
+
+    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /yum/i }).textContent).toBe('YUM repo details')
+    })
+
+    const nameField = screen.getByTestId('name');
+    const tagField = screen.getByTestId('tag');
+    const contentField = screen.getByLabelText('File content');
+    const descriptionField = screen.getByLabelText('Description');
+
+    expect(nameField.value).toBe('argo');
+    expect(nameField).toBeDisabled();
+    expect(tagField.value).toBe('CentOS 6');
+    expect(tagField).toBeDisabled();
+    expect(contentField.value).toBe('[argo-devel]\nname=ARGO Product Repository\nbaseurl=http://rpm-repo.argo.grnet.gr/ARGO/devel/centos6/\ngpgcheck=0enabled=1\npriority=99\nexclude=\nincludepkgs=')
+    expect(contentField).toBeDisabled();
+    expect(descriptionField.value).toBe('ARGO Product Repository - devel CentOS 6')
+    expect(descriptionField).toBeDisabled();
+
+    expect(screen.queryByRole('button', { name: /save/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
   })
 })
