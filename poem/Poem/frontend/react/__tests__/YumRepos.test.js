@@ -124,6 +124,23 @@ function renderAddView() {
 }
 
 
+function renderCloneView() {
+  const route = '/ui/yumrepos/argo-centos6/clone'
+  const history = createMemoryHistory({ initialEntries: [route] });
+
+  return {
+    ...render(
+      <Router history={history}>
+        <Route
+          path='/ui/yumrepos/:name/clone'
+          render={ props => <YumRepoComponent {...props} cloneview={true} /> }
+        />
+      </Router>
+    )
+  }
+}
+
+
 describe('Test list of YUM repos on SuperAdmin POEM', () => {
   beforeAll(() => {
     Backend.mockImplementation(() => {
@@ -789,6 +806,208 @@ describe('Tests for YUM repo addview', () => {
           tag: 'CentOS 7',
           content: '[etf]\nname=CERN ETF Repo\nbaseurl=http://linuxsoft.cern.ch/internal/repos/etf7-qa/x86_64/os/\ngpgcheck=0\nenabled=1\npriority=99',
           description: 'CERN ETF Repo'
+        }
+      )
+    })
+
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>Error adding YUM repo</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Error: 500 SERVER ERROR',
+      0,
+      expect.any(Function)
+    )
+  })
+})
+
+
+describe('Tests for YUM repo cloneview', () => {
+  jest.spyOn(NotificationManager, 'success');
+  jest.spyOn(NotificationManager, 'error');
+
+  beforeAll(() => {
+    Backend.mockImplementation(() => {
+      return {
+        fetchData: (path) => {
+          switch (path) {
+            case '/api/v2/internal/yumrepos/argo/centos6':
+              return Promise.resolve(mockYUMRepo)
+
+            case '/api/v2/internal/ostags':
+              return Promise.resolve(['CentOS 6', 'CentOS 7'])
+          }
+        },
+        addObject: mockAddObject
+      }
+    })
+  })
+
+  test('Test that page renders properly', async () => {
+    renderCloneView();
+
+    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /yum/i }).textContent).toBe('Clone YUM repo')
+    })
+
+    const nameField = screen.getByTestId('name');
+    const tagField = screen.getByTestId('tag');
+    const contentField = screen.getByLabelText('File content');
+    const descriptionField = screen.getByLabelText('Description');
+
+    expect(nameField.value).toBe('argo');
+    expect(nameField).toBeEnabled();
+    expect(tagField.value).toBe('CentOS 6');
+    expect(tagField).toBeEnabled();
+    expect(screen.getAllByRole('option')).toHaveLength(2);
+    expect(screen.getByRole('option', { name: 'CentOS 6' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'CentOS 7' })).toBeInTheDocument();
+    expect(contentField.value).toBe('[argo-devel]\nname=ARGO Product Repository\nbaseurl=http://rpm-repo.argo.grnet.gr/ARGO/devel/centos6/\ngpgcheck=0enabled=1\npriority=99\nexclude=\nincludepkgs=')
+    expect(contentField).toBeEnabled();
+    expect(descriptionField.value).toBe('ARGO Product Repository - devel CentOS 6')
+    expect(descriptionField).toBeEnabled();
+
+    expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
+  })
+
+  test('Test successfully cloning new YUM repo', async () => {
+    mockAddObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 201, statusText: 'CREATED' })
+    )
+
+    renderCloneView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /yum/i })).toBeInTheDocument();
+    })
+
+    const nameField = screen.getByTestId('name');
+    const tagField = screen.getByTestId('tag');
+    const contentField = screen.getByLabelText('File content');
+    const descriptionField = screen.getByLabelText('Description');
+
+    fireEvent.change(nameField, { target: { value: 'argo-devel' } });
+    fireEvent.change(tagField, { target: { value: 'CentOS 7' } });
+    fireEvent.change(contentField, { target: { value: '[argo-devel]\nname=ARGO Product Repository\nbaseurl=http://rpm-repo.argo.grnet.gr/ARGO/devel/centos7/enabled=1'} })
+    fireEvent.change(descriptionField, { target: { value: 'ARGO Product Repository - devel CentOS 7' } })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: 'change' })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddObject).toHaveBeenCalledWith(
+        '/api/v2/internal/yumrepos/',
+        {
+          name: 'argo-devel',
+          tag: 'CentOS 7',
+          content: '[argo-devel]\nname=ARGO Product Repository\nbaseurl=http://rpm-repo.argo.grnet.gr/ARGO/devel/centos7/enabled=1',
+          description: 'ARGO Product Repository - devel CentOS 7'
+        }
+      )
+    })
+
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'YUM repo successfully added', 'Added', 2000
+    )
+  })
+
+  test('Test error cloning new YUM repo with error message', async () => {
+    mockAddObject.mockReturnValueOnce(
+      Promise.resolve({
+        json: () => Promise.resolve({ detail: 'YUM repo with this name and tag already exists.' }),
+        status: 400,
+        statusText: 'BAD REQUEST'
+      })
+    )
+
+    renderCloneView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /yum/i })).toBeInTheDocument();
+    })
+
+    const nameField = screen.getByTestId('name');
+    const tagField = screen.getByTestId('tag');
+    const contentField = screen.getByLabelText('File content');
+    const descriptionField = screen.getByLabelText('Description');
+
+    fireEvent.change(nameField, { target: { value: 'argo-devel' } });
+    fireEvent.change(tagField, { target: { value: 'CentOS 7' } });
+    fireEvent.change(contentField, { target: { value: '[argo-devel]\nname=ARGO Product Repository\nbaseurl=http://rpm-repo.argo.grnet.gr/ARGO/devel/centos7/enabled=1'} })
+    fireEvent.change(descriptionField, { target: { value: 'ARGO Product Repository - devel CentOS 7' } })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: 'change' })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddObject).toHaveBeenCalledWith(
+        '/api/v2/internal/yumrepos/',
+        {
+          name: 'argo-devel',
+          tag: 'CentOS 7',
+          content: '[argo-devel]\nname=ARGO Product Repository\nbaseurl=http://rpm-repo.argo.grnet.gr/ARGO/devel/centos7/enabled=1',
+          description: 'ARGO Product Repository - devel CentOS 7'
+        }
+      )
+    })
+
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>YUM repo with this name and tag already exists.</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Error: 400 BAD REQUEST',
+      0,
+      expect.any(Function)
+    )
+  })
+
+  test('Test error cloning new YUM repo without error message', async () => {
+    mockAddObject.mockReturnValueOnce(
+      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
+    )
+
+    renderCloneView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /yum/i })).toBeInTheDocument();
+    })
+
+    const nameField = screen.getByTestId('name');
+    const tagField = screen.getByTestId('tag');
+    const contentField = screen.getByLabelText('File content');
+    const descriptionField = screen.getByLabelText('Description');
+
+    fireEvent.change(nameField, { target: { value: 'argo-devel' } });
+    fireEvent.change(tagField, { target: { value: 'CentOS 7' } });
+    fireEvent.change(contentField, { target: { value: '[argo-devel]\nname=ARGO Product Repository\nbaseurl=http://rpm-repo.argo.grnet.gr/ARGO/devel/centos7/enabled=1'} })
+    fireEvent.change(descriptionField, { target: { value: 'ARGO Product Repository - devel CentOS 7' } })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: 'change' })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddObject).toHaveBeenCalledWith(
+        '/api/v2/internal/yumrepos/',
+        {
+          name: 'argo-devel',
+          tag: 'CentOS 7',
+          content: '[argo-devel]\nname=ARGO Product Repository\nbaseurl=http://rpm-repo.argo.grnet.gr/ARGO/devel/centos7/enabled=1',
+          description: 'ARGO Product Repository - devel CentOS 7'
         }
       )
     })
