@@ -24,6 +24,7 @@ beforeEach(() => {
 
 const mockChangeObject = jest.fn();
 const mockDeleteObject = jest.fn();
+const mockAddObject = jest.fn();
 
 
 const mockListYUMRepos = [
@@ -103,6 +104,23 @@ function renderChangeView(tenant=false) {
         </Router>
       )
     }
+}
+
+
+function renderAddView() {
+  const route = '/ui/yumrepos/add';
+  const history = createMemoryHistory({ initialEntries: [route] });
+
+  return {
+    ...render(
+      <Router history={history}>
+        <Route
+          path='/ui/yumrepos/add'
+          render={ props => <YumRepoComponent {...props} addview={true} /> }
+        />
+      </Router>
+    )
+  }
 }
 
 
@@ -608,5 +626,181 @@ describe('Tests for YUM repos changeview on tenant POEM', () => {
     expect(screen.queryByRole('button', { name: /save/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
+  })
+})
+
+
+describe('Tests for YUM repo addview', () => {
+  jest.spyOn(NotificationManager, 'success');
+  jest.spyOn(NotificationManager, 'error');
+
+  beforeAll(() => {
+    Backend.mockImplementation(() => {
+      return {
+        fetchData: () => Promise.resolve(['CentOS 6', 'CentOS 7']),
+        addObject: mockAddObject
+      }
+    })
+  })
+
+  test('Test that page renders properly', async () => {
+    renderAddView();
+
+    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /yum/i }).textContent).toBe('Add YUM repo')
+    })
+
+    const nameField = screen.getByTestId('name');
+    const tagField = screen.getByTestId('tag');
+    const contentField = screen.getByLabelText('File content');
+    const descriptionField = screen.getByLabelText('Description');
+
+    expect(nameField.value).toBe('');
+    expect(nameField).toBeEnabled();
+    expect(tagField.value).toBe('CentOS 6');
+    expect(tagField).toBeEnabled();
+    expect(contentField.value).toBe('');
+    expect(contentField).toBeEnabled();
+    expect(descriptionField.value).toBe('');
+    expect(descriptionField).toBeEnabled();
+
+    expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
+  })
+
+  test('Test successfully adding new YUM repo', async() => {
+    mockAddObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 201, statusText: 'CREATED' })
+    )
+
+    renderAddView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /yum/i })).toBeInTheDocument();
+    })
+
+    fireEvent.change(screen.getByTestId('name'), { target: { value: 'etf' } });
+    fireEvent.change(screen.getByTestId('tag'), { target: { value: 'CentOS 7' } });
+    fireEvent.change(screen.getByLabelText('File content'), { target: { value: '[etf]\nname=CERN ETF Repo\nbaseurl=http://linuxsoft.cern.ch/internal/repos/etf7-qa/x86_64/os/\ngpgcheck=0\nenabled=1\npriority=99' } });
+    fireEvent.change(screen.getByLabelText('Description'), { target: { value: 'CERN ETF Repo' } });
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: 'add' })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddObject).toHaveBeenCalledWith(
+        '/api/v2/internal/yumrepos/',
+        {
+          name: 'etf',
+          tag: 'CentOS 7',
+          content: '[etf]\nname=CERN ETF Repo\nbaseurl=http://linuxsoft.cern.ch/internal/repos/etf7-qa/x86_64/os/\ngpgcheck=0\nenabled=1\npriority=99',
+          description: 'CERN ETF Repo'
+        }
+      )
+    })
+
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'YUM repo successfully added', 'Added', 2000
+    )
+  })
+
+  test('Test error adding new YUM repo with error message', async() => {
+    mockAddObject.mockReturnValueOnce(
+      Promise.resolve({
+        json: () => Promise.resolve({ detail: 'YUM repo with this name and tag already exists.' }),
+        status: 400,
+        statusText: 'BAD REQUEST'
+      })
+    )
+
+    renderAddView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /yum/i })).toBeInTheDocument();
+    })
+
+    fireEvent.change(screen.getByTestId('name'), { target: { value: 'etf' } });
+    fireEvent.change(screen.getByTestId('tag'), { target: { value: 'CentOS 7' } });
+    fireEvent.change(screen.getByLabelText('File content'), { target: { value: '[etf]\nname=CERN ETF Repo\nbaseurl=http://linuxsoft.cern.ch/internal/repos/etf7-qa/x86_64/os/\ngpgcheck=0\nenabled=1\npriority=99' } });
+    fireEvent.change(screen.getByLabelText('Description'), { target: { value: 'CERN ETF Repo' } });
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: 'add' })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddObject).toHaveBeenCalledWith(
+        '/api/v2/internal/yumrepos/',
+        {
+          name: 'etf',
+          tag: 'CentOS 7',
+          content: '[etf]\nname=CERN ETF Repo\nbaseurl=http://linuxsoft.cern.ch/internal/repos/etf7-qa/x86_64/os/\ngpgcheck=0\nenabled=1\npriority=99',
+          description: 'CERN ETF Repo'
+        }
+      )
+    })
+
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>YUM repo with this name and tag already exists.</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Error: 400 BAD REQUEST',
+      0,
+      expect.any(Function)
+    )
+  })
+
+  test('Test error adding new YUM repo without error message', async() => {
+    mockAddObject.mockReturnValueOnce(
+      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
+    )
+
+    renderAddView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /yum/i })).toBeInTheDocument();
+    })
+
+    fireEvent.change(screen.getByTestId('name'), { target: { value: 'etf' } });
+    fireEvent.change(screen.getByTestId('tag'), { target: { value: 'CentOS 7' } });
+    fireEvent.change(screen.getByLabelText('File content'), { target: { value: '[etf]\nname=CERN ETF Repo\nbaseurl=http://linuxsoft.cern.ch/internal/repos/etf7-qa/x86_64/os/\ngpgcheck=0\nenabled=1\npriority=99' } });
+    fireEvent.change(screen.getByLabelText('Description'), { target: { value: 'CERN ETF Repo' } });
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: 'add' })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddObject).toHaveBeenCalledWith(
+        '/api/v2/internal/yumrepos/',
+        {
+          name: 'etf',
+          tag: 'CentOS 7',
+          content: '[etf]\nname=CERN ETF Repo\nbaseurl=http://linuxsoft.cern.ch/internal/repos/etf7-qa/x86_64/os/\ngpgcheck=0\nenabled=1\npriority=99',
+          description: 'CERN ETF Repo'
+        }
+      )
+    })
+
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>Error adding YUM repo</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Error: 500 SERVER ERROR',
+      0,
+      expect.any(Function)
+    )
   })
 })
