@@ -547,7 +547,7 @@ export const ListOfMetrics = (props) => {
                   type='checkbox'
                   className='checkbox'
                   data-testid={`checkbox-${original.name}`}
-                  checked={selected[original.name] === true}
+                  checked={selected[original.name] === true || (isTenantSchema && (!original.importable || disabled.includes(original.name)))}
                   disabled={isTenantSchema && (!original.importable || disabled.includes(original.name))}
                   onChange={() => toggleRow(original.name)}
                 />

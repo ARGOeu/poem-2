@@ -1232,6 +1232,7 @@ describe('Test list of metric templates on tenant POEM', () => {
     expect(screen.getByRole('link', { name: /apel/i }).closest('a')).toHaveAttribute('href', '/ui/administration/metrictemplates/org.apel.APEL-Pub');
     expect(screen.getByTestId('checkbox-argo.AMS-Check')).toBeEnabled();
     expect(screen.getByTestId('checkbox-argo.AMS-Publisher')).toBeDisabled();
+    expect(screen.getByTestId('checkbox-argo.AMS-Publisher').checked).toBeTruthy();
     expect(screen.getByTestId('checkbox-argo.POEM-API-MON')).toBeEnabled();
     expect(screen.getByTestId('checkbox-org.apel.APEL-Pub')).toBeEnabled();
     expect(screen.getByRole('button', { name: /import/i })).toBeInTheDocument();
@@ -1312,9 +1313,12 @@ describe('Test list of metric templates on tenant POEM', () => {
     );
 
     expect(screen.getByTestId('checkbox-argo.AMS-Check')).toBeDisabled();
+    expect(screen.getByTestId('checkbox-argo.AMS-Check').checked).toBeTruthy();
     expect(screen.getByTestId('checkbox-argo.AMS-Publisher')).toBeDisabled();
+    expect(screen.getByTestId('checkbox-argo.AMS-Publisher').checked).toBeTruthy();
     expect(screen.getByTestId('checkbox-argo.POEM-API-MON')).toBeEnabled();
     expect(screen.getByTestId('checkbox-org.apel.APEL-Pub')).toBeDisabled();
+    expect(screen.getByTestId('checkbox-org.apel.APEL-Pub').checked).toBeTruthy();
   })
 
   test('Test importing of metric templates if no metric template has been selected', async () => {
@@ -1374,9 +1378,12 @@ describe('Test list of metric templates on tenant POEM', () => {
     )
 
     expect(screen.getByTestId('checkbox-argo.AMS-Check')).toBeDisabled();
+    expect(screen.getByTestId('checkbox-argo.AMS-Check').checked).toBeTruthy();
     expect(screen.getByTestId('checkbox-argo.AMS-Publisher')).toBeDisabled();
+    expect(screen.getByTestId('checkbox-argo.AMS-Publisher').checked).toBeTruthy();
     expect(screen.getByTestId('checkbox-argo.POEM-API-MON')).toBeEnabled();
     expect(screen.getByTestId('checkbox-org.apel.APEL-Pub')).toBeDisabled();
+    expect(screen.getByTestId('checkbox-org.apel.APEL-Pub').checked).toBeTruthy();
   })
 
   test('Test importing of metric templates if err message', async () => {
@@ -1416,6 +1423,7 @@ describe('Test list of metric templates on tenant POEM', () => {
 
     expect(screen.getByTestId('checkbox-argo.AMS-Check')).toBeEnabled();
     expect(screen.getByTestId('checkbox-argo.AMS-Publisher')).toBeDisabled();
+    expect(screen.getByTestId('checkbox-argo.AMS-Publisher').checked).toBeTruthy();
     expect(screen.getByTestId('checkbox-argo.POEM-API-MON')).toBeEnabled();
     expect(screen.getByTestId('checkbox-org.apel.APEL-Pub')).toBeEnabled();
   })
@@ -1457,6 +1465,7 @@ describe('Test list of metric templates on tenant POEM', () => {
 
     expect(screen.getByTestId('checkbox-argo.AMS-Check')).toBeEnabled();
     expect(screen.getByTestId('checkbox-argo.AMS-Publisher')).toBeDisabled();
+    expect(screen.getByTestId('checkbox-argo.AMS-Publisher').checked).toBeTruthy();
     expect(screen.getByTestId('checkbox-argo.POEM-API-MON')).toBeEnabled();
     expect(screen.getByTestId('checkbox-org.apel.APEL-Pub')).toBeEnabled();
   })
@@ -1513,8 +1522,11 @@ describe('Test list of metric templates on tenant POEM', () => {
     )
 
     expect(screen.getByTestId('checkbox-argo.AMS-Check')).toBeDisabled();
+    expect(screen.getByTestId('checkbox-argo.AMS-Check').checked).toBeTruthy();
     expect(screen.getByTestId('checkbox-argo.AMS-Publisher')).toBeDisabled();
+    expect(screen.getByTestId('checkbox-argo.AMS-Publisher').checked).toBeTruthy();
     expect(screen.getByTestId('checkbox-argo.POEM-API-MON')).toBeDisabled();
+    expect(screen.getByTestId('checkbox-argo.POEM-API-MON').checked).toBeTruthy();
     expect(screen.getByTestId('checkbox-org.apel.APEL-Pub')).toBeEnabled();
   })
 
@@ -1550,9 +1562,13 @@ describe('Test list of metric templates on tenant POEM', () => {
     )
 
     expect(screen.getByTestId('checkbox-argo.AMS-Check')).toBeDisabled();
+    expect(screen.getByTestId('checkbox-argo.AMS-Check').checked).toBeTruthy();
     expect(screen.getByTestId('checkbox-argo.AMS-Publisher')).toBeDisabled();
+    expect(screen.getByTestId('checkbox-argo.AMS-Publisher').checked).toBeTruthy();
     expect(screen.getByTestId('checkbox-argo.POEM-API-MON')).toBeDisabled();
+    expect(screen.getByTestId('checkbox-argo.POEM-API-MON').checked).toBeTruthy();
     expect(screen.getByTestId('checkbox-org.apel.APEL-Pub')).toBeDisabled();
+    expect(screen.getByTestId('checkbox-org.apel.APEL-Pub').checked).toBeTruthy();
   })
 
   test('Test select all when importing metric templates if filtered', async () => {
@@ -1588,8 +1604,9 @@ describe('Test list of metric templates on tenant POEM', () => {
     )
 
     expect(screen.getByTestId('checkbox-argo.AMS-Check')).toBeDisabled();
-    expect(screen.getByTestId('checkbox-argo.AMS-Publisher')).toBeDisabled();
-    expect(screen.getByTestId('checkbox-argo.POEM-API-MON')).toBeDisabled();
+    expect(screen.getByTestId('checkbox-argo.AMS-Check').checked).toBeTruthy();
+    expect(screen.getByTestId('checkbox-argo.AMS-Publisher').checked).toBeTruthy();
+    expect(screen.getByTestId('checkbox-argo.POEM-API-MON').checked).toBeTruthy();
   })
 })
 
@@ -3726,8 +3743,6 @@ describe('Test metric template version detail view', () => {
   test('Test that active metric template version detail page renders properly', async () => {
     renderVersionDetailsView();
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /ams-check/i }).textContent).toBe('argo.AMS-Check [ams-probe (0.1.12)]');
     })
@@ -3835,8 +3850,6 @@ describe('Test metric template version detail view', () => {
 
   test('Test that passive metric template version detail page renders properly', async () => {
     renderVersionDetailsView({ passive: true });
-
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /apel-pub/i }).textContent).toBe('org.apel.APEL-Pub ');
