@@ -129,12 +129,37 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             version_user=self.user.username
         )
 
+        probe2 = admin_models.Probe.objects.create(
+            name='ams-publisher-probe',
+            package=package3,
+            description='Probe is inspecting AMS publisher running on Nagios '
+                        'monitoring instances.',
+            comment='Initial version.',
+            repository='https://github.com/ARGOeu/nagios-plugins-argo',
+            docurl='https://github.com/ARGOeu/nagios-plugins-argo/blob/master/'
+                   'README.md'
+        )
+
+        self.probeversion4 = admin_models.ProbeHistory.objects.create(
+            object_id=probe2,
+            name=probe2.name,
+            package=probe2.package,
+            description=probe2.description,
+            comment=probe2.comment,
+            repository=probe2.repository,
+            docurl=probe2.docurl,
+            date_created=datetime.datetime.now(),
+            version_comment='Initial version.',
+            version_user=self.user.username
+        )
+
         for schema in [self.tenant.schema_name, get_public_schema_name()]:
             with schema_context(schema):
                 if schema == get_public_schema_name():
-                    Tenant.objects.create(name='public',
-                                          domain_url='public',
-                                          schema_name=get_public_schema_name())
+                    Tenant.objects.create(
+                        name='public', domain_url='public',
+                        schema_name=get_public_schema_name()
+                    )
 
         self.metrictemplate1 = admin_models.MetricTemplate.objects.create(
             name='argo.AMS-Check',
@@ -157,6 +182,19 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             mtype=template_passive
         )
         self.metrictemplate2.tags.add(self.tag2)
+
+        self.metrictemplate3 = admin_models.MetricTemplate.objects.create(
+            name='argo.AMSPublisher-Check',
+            mtype=self.template_active,
+            probekey=self.probeversion4,
+            description='',
+            probeexecutable='["ams-publisher-probe"]',
+            config='["interval 180", "maxCheckAttempts 1", '
+                   '"path /usr/libexec/argo-monitoring/probes/argo", '
+                   '"retryInterval 1", "timeout 120"]',
+            parameter='["-s /var/run/argo-nagios-ams-publisher/sock"]',
+            flags='["NOHOSTNAME 1", "NOTIMEOUT 1", "NOPUBLISH 1"]'
+        )
 
         mt1_history = admin_models.MetricTemplateHistory.objects.create(
             object_id=self.metrictemplate1,
@@ -224,6 +262,25 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         )
         mt1_history2.tags.add(self.tag3, self.tag4)
 
+        admin_models.MetricTemplateHistory.objects.create(
+            object_id=self.metrictemplate3,
+            name=self.metrictemplate3.name,
+            mtype=self.metrictemplate3.mtype,
+            description=self.metrictemplate3.description,
+            probekey=self.metrictemplate3.probekey,
+            probeexecutable=self.metrictemplate3.probeexecutable,
+            config=self.metrictemplate3.config,
+            attribute=self.metrictemplate3.attribute,
+            dependency=self.metrictemplate3.dependency,
+            flags=self.metrictemplate3.flags,
+            files=self.metrictemplate3.files,
+            parameter=self.metrictemplate3.parameter,
+            fileparameter=self.metrictemplate3.fileparameter,
+            date_created=datetime.datetime.now(),
+            version_user=self.user.username,
+            version_comment=create_comment(self.metrictemplate3)
+        )
+
         group = poem_models.GroupOfMetrics.objects.create(name='TEST')
 
         self.metric1 = poem_models.Metric.objects.create(
@@ -286,8 +343,10 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             user=self.user.username
         )
 
-    def test_get_metric_template_list(self):
+    def test_get_metric_template_list_public_tenant(self):
+        public_tenant = Tenant.objects.get(schema_name=get_public_schema_name())
         request = self.factory.get(self.url)
+        request.tenant = public_tenant
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(
@@ -349,8 +408,218 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
                     'fileparameter': []
                 },
                 {
+                    'id': self.metrictemplate3.id,
+                    'name': 'argo.AMSPublisher-Check',
+                    'mtype': 'Active',
+                    'description': '',
+                    'ostag': ['CentOS 7'],
+                    'tags': [],
+                    'probeversion': 'ams-publisher-probe (0.1.11)',
+                    'parent': '',
+                    'probeexecutable': 'ams-publisher-probe',
+                    'config': [
+                        {
+                            'key': 'interval',
+                            'value': '180'
+                        },
+                        {
+                            'key': 'maxCheckAttempts',
+                            'value': '1'
+                        },
+                        {
+                            'key': 'path',
+                            'value': '/usr/libexec/argo-monitoring/probes/argo'
+                        },
+                        {
+                            'key': 'retryInterval',
+                            'value': '1'
+                        },
+                        {
+                            'key': 'timeout',
+                            'value': '120'
+                        }
+                    ],
+                    'attribute': [],
+                    'dependency': [],
+                    'flags': [
+                        {
+                            'key': 'NOHOSTNAME',
+                            'value': '1'
+                        },
+                        {
+                            'key': 'NOTIMEOUT',
+                            'value': '1'
+                        },
+                        {
+                            'key': 'NOPUBLISH',
+                            'value': '1'
+                        }
+                    ],
+                    'files': [],
+                    'parameter': [
+                        {
+                            'key': '-s',
+                            'value': '/var/run/argo-nagios-ams-publisher/sock'
+                        }
+                    ],
+                    'fileparameter': []
+                },
+                {
                     'id': self.metrictemplate2.id,
                     'name': 'org.apel.APEL-Pub',
+                    'mtype': 'Passive',
+                    'description': '',
+                    'ostag': [],
+                    'tags': ['deprecated'],
+                    'probeversion': '',
+                    'parent': '',
+                    'probeexecutable': '',
+                    'config': [],
+                    'attribute': [],
+                    'dependency': [],
+                    'flags': [
+                        {
+                            'key': 'OBSESS',
+                            'value': '1'
+                        },
+                        {
+                            'key': 'PASSIVE',
+                            'value': '1'
+                        }
+                    ],
+                    'files': [],
+                    'parameter': [],
+                    'fileparameter': []
+                }
+            ]
+        )
+
+    def test_get_metric_template_list_regular_tenant(self):
+        request = self.factory.get(self.url)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(
+            response.data,
+            [
+                {
+                    'id': self.metrictemplate1.id,
+                    'importable': False,
+                    'name': 'argo.AMS-Check',
+                    'mtype': 'Active',
+                    'description': 'Some description of argo.AMS-Check metric '
+                                   'template.',
+                    'ostag': ['CentOS 6', 'CentOS 7'],
+                    'tags': ['test_tag1', 'test_tag2'],
+                    'probeversion': 'ams-probe (0.1.8)',
+                    'parent': '',
+                    'probeexecutable': 'ams-probe',
+                    'config': [
+                        {
+                            'key': 'maxCheckAttempts',
+                            'value': '4'
+                        },
+                        {
+                            'key': 'timeout',
+                            'value': '70'
+                        },
+                        {
+                            'key': 'path',
+                            'value': '/usr/libexec/argo-monitoring/'
+                        },
+                        {
+                            'key': 'interval',
+                            'value': '5'
+                        },
+                        {
+                            'key': 'retryInterval',
+                            'value': '3'
+                        }
+                    ],
+                    'attribute': [
+                        {
+                            'key': 'argo.ams_TOKEN',
+                            'value': '--token'
+                        }
+                    ],
+                    'dependency': [],
+                    'flags': [
+                        {
+                            'key': 'OBSESS',
+                            'value': '1'
+                        }
+                    ],
+                    'files': [],
+                    'parameter': [
+                        {
+                            'key': '--project',
+                            'value': 'EGI'
+                        }
+                    ],
+                    'fileparameter': []
+                },
+                {
+                    'id': self.metrictemplate3.id,
+                    'name': 'argo.AMSPublisher-Check',
+                    'importable': True,
+                    'mtype': 'Active',
+                    'description': '',
+                    'ostag': ['CentOS 7'],
+                    'tags': [],
+                    'probeversion': 'ams-publisher-probe (0.1.11)',
+                    'parent': '',
+                    'probeexecutable': 'ams-publisher-probe',
+                    'config': [
+                        {
+                            'key': 'interval',
+                            'value': '180'
+                        },
+                        {
+                            'key': 'maxCheckAttempts',
+                            'value': '1'
+                        },
+                        {
+                            'key': 'path',
+                            'value': '/usr/libexec/argo-monitoring/probes/argo'
+                        },
+                        {
+                            'key': 'retryInterval',
+                            'value': '1'
+                        },
+                        {
+                            'key': 'timeout',
+                            'value': '120'
+                        }
+                    ],
+                    'attribute': [],
+                    'dependency': [],
+                    'flags': [
+                        {
+                            'key': 'NOHOSTNAME',
+                            'value': '1'
+                        },
+                        {
+                            'key': 'NOTIMEOUT',
+                            'value': '1'
+                        },
+                        {
+                            'key': 'NOPUBLISH',
+                            'value': '1'
+                        }
+                    ],
+                    'files': [],
+                    'parameter': [
+                        {
+                            'key': '-s',
+                            'value': '/var/run/argo-nagios-ams-publisher/sock'
+                        }
+                    ],
+                    'fileparameter': []
+                },
+                {
+                    'id': self.metrictemplate2.id,
+                    'name': 'org.apel.APEL-Pub',
+                    'importable': False,
                     'mtype': 'Passive',
                     'description': '',
                     'ostag': [],
@@ -1781,12 +2050,12 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
     def test_delete_metric_template(self):
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 2)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 3)
         request = self.factory.delete(self.url + 'argo.AMS-Check')
         force_authenticate(request, user=self.user)
         response = self.view(request, 'argo.AMS-Check')
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 1)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 2)
 
     def test_delete_nonexisting_metric_template(self):
         request = self.factory.delete(self.url + 'nonexisting')

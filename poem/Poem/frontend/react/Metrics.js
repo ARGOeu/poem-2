@@ -301,6 +301,7 @@ export const ListOfMetrics = (props) => {
 
   const [selected, setSelected] = useState({});
   const [selectAll, setSelectAll] = useState(0);
+  const [disabled, setDisabled] = useState('');
   const [areYouSureModal, setAreYouSureModal] = useState(false);
   const [modalVar, setModalVar] = useState(undefined);
   const [modalTitle, setModalTitle] = useState(undefined);
@@ -391,11 +392,14 @@ export const ListOfMetrics = (props) => {
     if (mt.length > 0) {
       let response = await backend.importMetrics({'metrictemplates': mt});
       let json = await response.json();
+      let dis = ''
       if ('imported' in json)
         NotifyOk({msg: json.imported, title: 'Imported'})
+        dis += json.imported
 
       if ('warn' in json)
         NotifyInfo({msg: json.warn, title: 'Imported with older probe version'});
+        dis += json.warn
 
       if ('err' in json)
         NotifyWarn({msg: json.err, title: 'Not imported'});
@@ -403,6 +407,7 @@ export const ListOfMetrics = (props) => {
       if ('unavailable' in json)
         NotifyError({msg: json.unavailable, title: 'Unavailable'});
 
+      setDisabled(dis);
       setSelected({});
       setSelectAll(0);
 
@@ -448,7 +453,10 @@ export const ListOfMetrics = (props) => {
     function toggleSelectAll(instance) {
       var list_metric = [];
 
-      instance.filteredFlatRows.forEach(row => list_metric.push(row.original));
+      instance.filteredFlatRows.forEach(row => {
+        if ((isTenantSchema && row.original.importable) || !isTenantSchema)
+          list_metric.push(row.original)
+      });
 
       let newSelected = {};
       if (selectAll === 0) {
@@ -539,7 +547,8 @@ export const ListOfMetrics = (props) => {
                   type='checkbox'
                   className='checkbox'
                   data-testid={`checkbox-${original.name}`}
-                  checked={selected[original.name] === true}
+                  checked={selected[original.name] === true || (isTenantSchema && (!original.importable || disabled.includes(original.name)))}
+                  disabled={isTenantSchema && (!original.importable || disabled.includes(original.name))}
                   onChange={() => toggleRow(original.name)}
                 />
               </div>
