@@ -1157,6 +1157,7 @@ export const ProfileMainInfo = ({errors, grouplist=undefined, description=undefi
             <Field
             type='text'
             name='name'
+            data-testid='name'
             className={`form-control form-control-lg ${errors.name && 'border-danger'}`}
             disabled={fieldsdisable}
           />
@@ -1196,12 +1197,14 @@ export const ProfileMainInfo = ({errors, grouplist=undefined, description=undefi
               <Field
                 type='text'
                 name='groupname'
+                data-testid='groupname'
                 className='form-control'
                 disabled={true}
               />
             :
               <Field
                 name='groupname'
+                data-testid='groupname'
                 component='select'
                 className={`form-control custom-select ${errors.groupname && 'border-danger'}`}
               >
