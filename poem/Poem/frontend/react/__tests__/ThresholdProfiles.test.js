@@ -20,6 +20,8 @@ const mockChangeObject = jest.fn();
 const mockChangeThresholdsProfile = jest.fn();
 const mockDeleteObject = jest.fn();
 const mockDeleteThresholdsProfile = jest.fn();
+const mockAddObject = jest.fn();
+const mockAddThresholdsProfile = jest.fn();
 
 
 beforeEach(() => {
@@ -154,6 +156,29 @@ function renderChangeView(publicView=false) {
         </Router>
       )
     }
+}
+
+
+function renderAddView() {
+  const route = '/ui/thresholdsprofiles/add';
+  const history = createMemoryHistory({ initialEntries: [route] });
+
+  return {
+    ...render(
+      <Router history={history}>
+        <Route
+          path='/ui/thresholdsprofiles/add'
+          render={ props => <ThresholdsProfilesChange
+            {...props}
+            webapithresholds='https://mock.thresholds.com'
+            webapitoken='token'
+            tenantname='TENANT'
+            addview={true}
+          /> }
+        />
+      </Router>
+    )
+  }
 }
 
 
@@ -1154,6 +1179,629 @@ describe('Tests for threshols profile changeview', () => {
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
         <p>Internal API error deleting thresholds profile</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Internal API error: 500 SERVER ERROR',
+      0,
+      expect.any(Function)
+    )
+  })
+})
+
+
+describe('Tests for thresholds profiles addview', () => {
+  jest.spyOn(NotificationManager, 'success');
+  jest.spyOn(NotificationManager, 'error');
+
+  beforeAll(() => {
+    WebApi.mockImplementation(() => {
+      return {
+        addThresholdsProfile: mockAddThresholdsProfile
+      }
+    })
+    Backend.mockImplementation(() => {
+      return {
+        fetchListOfNames: () => Promise.resolve(['argo.AMS-Check', 'argo.AMSPublisher-Check', 'argo.POEM-API-MON', 'argo.API-Status-Check']),
+        isActiveSession: () => Promise.resolve(mockActiveSession),
+        addObject: mockAddObject
+      }
+    })
+  })
+
+  test('Test that page renders properly', async () => {
+    renderAddView();
+
+    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Add thresholds profile');
+    })
+
+    const nameField = screen.getByTestId('name');
+    const groupField = screen.getByTestId('groupname');
+
+    expect(nameField.value).toBe('');
+    expect(nameField).toBeEnabled();
+    expect(groupField.value).toBe('');
+    expect(groupField).toBeEnabled();
+
+    expect(screen.queryByTestId('rules.0')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('rules.0.remove')).not.toBeInTheDocument();
+    expect(screen.queryAllByRole('table')).toHaveLength(0);
+
+    expect(screen.getByRole('button', { name: 'Add a rule' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /history/i })).not.toBeInTheDocument();
+  })
+
+  test('Test successfully adding thresholds profile', async () => {
+    mockAddThresholdsProfile.mockReturnValueOnce(
+      Promise.resolve({
+        json: () => Promise.resolve({
+          status: {
+            message: 'Thresholds profile Created',
+            code: "200"
+          },
+          data: {
+            id: '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
+            links: {
+              self: 'string'
+            }
+          }
+        }),
+        ok: true,
+        status: 200,
+        statusText: 'Thresholds profile Created'
+      })
+    )
+    mockAddObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 201, statusText: 'CREATED' })
+    )
+
+    renderAddView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Add thresholds profile');
+    })
+
+    fireEvent.change(screen.getByTestId('name'), { target: { value: 'TEST_PROFILE2' } });
+    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'TEST' } });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add a rule' }));
+
+    fireEvent.change(screen.getByTestId('rules.0.endpoint_group'), { target: { value: 'Group 1a' } });
+    fireEvent.change(screen.getByTestId('rules.0.host'), { target: { value: 'host.foo-bar.baz' } });
+    fireEvent.change(screen.getByTestId('autocomplete-rules[0].metric'), { target: { value: 'argo.AMSPublisher-Check' } });
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.label'), { target: { value: 'freshness' } });
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.value'), { target: { value: '1' } });
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.uom'), { target: { value: 's' } });
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.warn1'), { target: { value: '1' } });
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.warn2'), { target: { value: '15' } });
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.crit1'), { target: { value: '10' } });
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.crit2'), { target: { value: '20' } });
+
+    fireEvent.click(screen.getByTestId('values.rules.0.thresholds.0.add'));
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.1.label'), { target: { value: 'entries' } });
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.1.value'), { target: { value: '2' } });
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.1.uom'), { target: { value: 'B' } });
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.1.warn1'), { target: { value: '0' } });
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.1.crit1'), { target: { value: '2' } });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add new rule' }));
+    fireEvent.change(screen.getByTestId('rules.1.endpoint_group'), { target: { value: 'Group 2a' } });
+    fireEvent.change(screen.getByTestId('autocomplete-rules[1].metric'), { target: { value: 'argo.POEM-API-MON' } });
+    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.label'), { target: { value: 'test' } });
+    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.value'), { target: { value: '2' } });
+    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.uom'), { target: { value: 'TB' } });
+    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.warn1'), { target: { value: '2' } });
+    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.warn2'), { target: { value: '8' } });
+    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.crit1'), { target: { value: '3' } });
+    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.crit2'), { target: { value: '8' } });
+    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.min'), { target: { value: '0' } });
+    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.max'), { target: { value: '10' } });
+
+    fireEvent.click(screen.getByTestId('values.rules.0.thresholds.1.remove'));
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /add/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddThresholdsProfile).toHaveBeenCalledWith({
+        name: 'TEST_PROFILE2',
+        rules: [
+          {
+            endpoint_group: 'Group 1a',
+            host: 'host.foo-bar.baz',
+            metric: 'argo.AMSPublisher-Check',
+            thresholds: 'freshness=1s;1:15;10:20'
+          },
+          {
+            endpoint_group: 'Group 2a',
+            metric: 'argo.POEM-API-MON',
+            thresholds: 'test=2TB;2:8;3:8;0;10'
+          }
+        ]
+      })
+    })
+
+    await waitFor(() => {
+      expect(mockAddObject).toHaveBeenCalledWith(
+        '/api/v2/internal/thresholdsprofiles/',
+        {
+          apiid: '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
+          name: 'TEST_PROFILE2',
+          groupname: 'TEST',
+          rules: [
+            {
+              endpoint_group: 'Group 1a',
+              host: 'host.foo-bar.baz',
+              metric: 'argo.AMSPublisher-Check',
+              thresholds: 'freshness=1s;1:15;10:20'
+            },
+            {
+              endpoint_group: 'Group 2a',
+              metric: 'argo.POEM-API-MON',
+              thresholds: 'test=2TB;2:8;3:8;0;10'
+            }
+          ]
+        }
+      )
+    })
+
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'Thresholds profile successfully added', 'Added', 2000
+    )
+  })
+
+  test('Test error adding thresholds profile in web api with error message', async () => {
+    mockAddThresholdsProfile.mockReturnValueOnce(
+      Promise.resolve({
+        json: () => Promise.resolve({
+          code: '406',
+          message: 'Content Not acceptable',
+          errors: [
+            {
+              message: 'Content Not acceptable',
+              code: '406',
+              details: 'There has been an error.'
+            }
+          ],
+          details: 'There has been an error.'
+        }),
+        status: 406,
+        statusText: 'Content Not acceptable'
+      })
+    )
+
+    renderAddView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Add thresholds profile');
+    })
+
+    fireEvent.change(screen.getByTestId('name'), { target: { value: 'TEST_PROFILE2' } });
+    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'TEST' } });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add a rule' }));
+
+    fireEvent.change(screen.getByTestId('rules.0.endpoint_group'), { target: { value: 'Group 1a' } });
+    fireEvent.change(screen.getByTestId('rules.0.host'), { target: { value: 'host.foo-bar.baz' } });
+    fireEvent.change(screen.getByTestId('autocomplete-rules[0].metric'), { target: { value: 'argo.AMSPublisher-Check' } });
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.label'), { target: { value: 'freshness' } });
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.value'), { target: { value: '1' } });
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.uom'), { target: { value: 's' } });
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.warn1'), { target: { value: '1' } });
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.warn2'), { target: { value: '15' } });
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.crit1'), { target: { value: '10' } });
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.crit2'), { target: { value: '20' } });
+
+    fireEvent.click(screen.getByTestId('values.rules.0.thresholds.0.add'));
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.1.label'), { target: { value: 'entries' } });
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.1.value'), { target: { value: '2' } });
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.1.uom'), { target: { value: 'B' } });
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.1.warn1'), { target: { value: '0' } });
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.1.crit1'), { target: { value: '2' } });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add new rule' }));
+    fireEvent.change(screen.getByTestId('rules.1.endpoint_group'), { target: { value: 'Group 2a' } });
+    fireEvent.change(screen.getByTestId('autocomplete-rules[1].metric'), { target: { value: 'argo.POEM-API-MON' } });
+    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.label'), { target: { value: 'test' } });
+    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.value'), { target: { value: '2' } });
+    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.uom'), { target: { value: 'TB' } });
+    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.warn1'), { target: { value: '2' } });
+    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.warn2'), { target: { value: '8' } });
+    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.crit1'), { target: { value: '3' } });
+    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.crit2'), { target: { value: '8' } });
+    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.min'), { target: { value: '0' } });
+    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.max'), { target: { value: '10' } });
+
+    fireEvent.click(screen.getByTestId('values.rules.0.thresholds.1.remove'));
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /add/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddThresholdsProfile).toHaveBeenCalledWith({
+        name: 'TEST_PROFILE2',
+        rules: [
+          {
+            endpoint_group: 'Group 1a',
+            host: 'host.foo-bar.baz',
+            metric: 'argo.AMSPublisher-Check',
+            thresholds: 'freshness=1s;1:15;10:20'
+          },
+          {
+            endpoint_group: 'Group 2a',
+            metric: 'argo.POEM-API-MON',
+            thresholds: 'test=2TB;2:8;3:8;0;10'
+          }
+        ]
+      })
+    })
+
+    await waitFor(() => {
+      expect(mockAddObject).not.toHaveBeenCalled()
+    })
+
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>There has been an error.</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Web API error: 406 Content Not acceptable',
+      0,
+      expect.any(Function)
+    )
+  })
+
+  test('Test error adding thresholds profile in web api without error message', async () => {
+    mockAddThresholdsProfile.mockReturnValueOnce(
+      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
+    )
+
+    renderAddView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Add thresholds profile');
+    })
+
+    fireEvent.change(screen.getByTestId('name'), { target: { value: 'TEST_PROFILE2' } });
+    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'TEST' } });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add a rule' }));
+
+    fireEvent.change(screen.getByTestId('rules.0.endpoint_group'), { target: { value: 'Group 1a' } });
+    fireEvent.change(screen.getByTestId('rules.0.host'), { target: { value: 'host.foo-bar.baz' } });
+    fireEvent.change(screen.getByTestId('autocomplete-rules[0].metric'), { target: { value: 'argo.AMSPublisher-Check' } });
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.label'), { target: { value: 'freshness' } });
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.value'), { target: { value: '1' } });
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.uom'), { target: { value: 's' } });
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.warn1'), { target: { value: '1' } });
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.warn2'), { target: { value: '15' } });
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.crit1'), { target: { value: '10' } });
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.crit2'), { target: { value: '20' } });
+
+    fireEvent.click(screen.getByTestId('values.rules.0.thresholds.0.add'));
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.1.label'), { target: { value: 'entries' } });
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.1.value'), { target: { value: '2' } });
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.1.uom'), { target: { value: 'B' } });
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.1.warn1'), { target: { value: '0' } });
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.1.crit1'), { target: { value: '2' } });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add new rule' }));
+    fireEvent.change(screen.getByTestId('rules.1.endpoint_group'), { target: { value: 'Group 2a' } });
+    fireEvent.change(screen.getByTestId('autocomplete-rules[1].metric'), { target: { value: 'argo.POEM-API-MON' } });
+    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.label'), { target: { value: 'test' } });
+    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.value'), { target: { value: '2' } });
+    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.uom'), { target: { value: 'TB' } });
+    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.warn1'), { target: { value: '2' } });
+    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.warn2'), { target: { value: '8' } });
+    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.crit1'), { target: { value: '3' } });
+    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.crit2'), { target: { value: '8' } });
+    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.min'), { target: { value: '0' } });
+    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.max'), { target: { value: '10' } });
+
+    fireEvent.click(screen.getByTestId('values.rules.0.thresholds.1.remove'));
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /add/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddThresholdsProfile).toHaveBeenCalledWith({
+        name: 'TEST_PROFILE2',
+        rules: [
+          {
+            endpoint_group: 'Group 1a',
+            host: 'host.foo-bar.baz',
+            metric: 'argo.AMSPublisher-Check',
+            thresholds: 'freshness=1s;1:15;10:20'
+          },
+          {
+            endpoint_group: 'Group 2a',
+            metric: 'argo.POEM-API-MON',
+            thresholds: 'test=2TB;2:8;3:8;0;10'
+          }
+        ]
+      })
+    })
+
+    await waitFor(() => {
+      expect(mockAddObject).not.toHaveBeenCalled()
+    })
+
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>Web API error adding thresholds profile</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Web API error: 500 SERVER ERROR',
+      0,
+      expect.any(Function)
+    )
+  })
+
+  test('Test error adding thresholds profile in internal api with error message', async () => {
+    mockAddThresholdsProfile.mockReturnValueOnce(
+      Promise.resolve({
+        json: () => Promise.resolve({
+          status: {
+            message: 'Thresholds profile Created',
+            code: "200"
+          },
+          data: {
+            id: '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
+            links: {
+              self: 'string'
+            }
+          }
+        }),
+        ok: true,
+        status: 200,
+        statusText: 'Thresholds profile Created'
+      })
+    )
+    mockAddObject.mockReturnValueOnce(
+      Promise.resolve({
+        json: () => Promise.resolve({ detail: 'There has been an error.' }),
+        status: 400,
+        statusText: 'BAD REQUEST'
+      })
+    )
+
+    renderAddView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Add thresholds profile');
+    })
+
+    fireEvent.change(screen.getByTestId('name'), { target: { value: 'TEST_PROFILE2' } });
+    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'TEST' } });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add a rule' }));
+
+    fireEvent.change(screen.getByTestId('rules.0.endpoint_group'), { target: { value: 'Group 1a' } });
+    fireEvent.change(screen.getByTestId('rules.0.host'), { target: { value: 'host.foo-bar.baz' } });
+    fireEvent.change(screen.getByTestId('autocomplete-rules[0].metric'), { target: { value: 'argo.AMSPublisher-Check' } });
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.label'), { target: { value: 'freshness' } });
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.value'), { target: { value: '1' } });
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.uom'), { target: { value: 's' } });
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.warn1'), { target: { value: '1' } });
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.warn2'), { target: { value: '15' } });
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.crit1'), { target: { value: '10' } });
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.crit2'), { target: { value: '20' } });
+
+    fireEvent.click(screen.getByTestId('values.rules.0.thresholds.0.add'));
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.1.label'), { target: { value: 'entries' } });
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.1.value'), { target: { value: '2' } });
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.1.uom'), { target: { value: 'B' } });
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.1.warn1'), { target: { value: '0' } });
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.1.crit1'), { target: { value: '2' } });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add new rule' }));
+    fireEvent.change(screen.getByTestId('rules.1.endpoint_group'), { target: { value: 'Group 2a' } });
+    fireEvent.change(screen.getByTestId('autocomplete-rules[1].metric'), { target: { value: 'argo.POEM-API-MON' } });
+    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.label'), { target: { value: 'test' } });
+    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.value'), { target: { value: '2' } });
+    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.uom'), { target: { value: 'TB' } });
+    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.warn1'), { target: { value: '2' } });
+    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.warn2'), { target: { value: '8' } });
+    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.crit1'), { target: { value: '3' } });
+    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.crit2'), { target: { value: '8' } });
+    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.min'), { target: { value: '0' } });
+    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.max'), { target: { value: '10' } });
+
+    fireEvent.click(screen.getByTestId('values.rules.0.thresholds.1.remove'));
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /add/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddThresholdsProfile).toHaveBeenCalledWith({
+        name: 'TEST_PROFILE2',
+        rules: [
+          {
+            endpoint_group: 'Group 1a',
+            host: 'host.foo-bar.baz',
+            metric: 'argo.AMSPublisher-Check',
+            thresholds: 'freshness=1s;1:15;10:20'
+          },
+          {
+            endpoint_group: 'Group 2a',
+            metric: 'argo.POEM-API-MON',
+            thresholds: 'test=2TB;2:8;3:8;0;10'
+          }
+        ]
+      })
+    })
+
+    await waitFor(() => {
+      expect(mockAddObject).toHaveBeenCalledWith(
+        '/api/v2/internal/thresholdsprofiles/',
+        {
+          apiid: '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
+          name: 'TEST_PROFILE2',
+          groupname: 'TEST',
+          rules: [
+            {
+              endpoint_group: 'Group 1a',
+              host: 'host.foo-bar.baz',
+              metric: 'argo.AMSPublisher-Check',
+              thresholds: 'freshness=1s;1:15;10:20'
+            },
+            {
+              endpoint_group: 'Group 2a',
+              metric: 'argo.POEM-API-MON',
+              thresholds: 'test=2TB;2:8;3:8;0;10'
+            }
+          ]
+        }
+      )
+    })
+
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>There has been an error.</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Internal API error: 400 BAD REQUEST',
+      0,
+      expect.any(Function)
+    )
+  })
+
+  test('Test error adding thresholds profile in internal api without error message', async () => {
+    mockAddThresholdsProfile.mockReturnValueOnce(
+      Promise.resolve({
+        json: () => Promise.resolve({
+          status: {
+            message: 'Thresholds profile Created',
+            code: "200"
+          },
+          data: {
+            id: '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
+            links: {
+              self: 'string'
+            }
+          }
+        }),
+        ok: true,
+        status: 200,
+        statusText: 'Thresholds profile Created'
+      })
+    )
+    mockAddObject.mockReturnValueOnce(
+      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
+    )
+
+    renderAddView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Add thresholds profile');
+    })
+
+    fireEvent.change(screen.getByTestId('name'), { target: { value: 'TEST_PROFILE2' } });
+    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'TEST' } });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add a rule' }));
+
+    fireEvent.change(screen.getByTestId('rules.0.endpoint_group'), { target: { value: 'Group 1a' } });
+    fireEvent.change(screen.getByTestId('rules.0.host'), { target: { value: 'host.foo-bar.baz' } });
+    fireEvent.change(screen.getByTestId('autocomplete-rules[0].metric'), { target: { value: 'argo.AMSPublisher-Check' } });
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.label'), { target: { value: 'freshness' } });
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.value'), { target: { value: '1' } });
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.uom'), { target: { value: 's' } });
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.warn1'), { target: { value: '1' } });
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.warn2'), { target: { value: '15' } });
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.crit1'), { target: { value: '10' } });
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.crit2'), { target: { value: '20' } });
+
+    fireEvent.click(screen.getByTestId('values.rules.0.thresholds.0.add'));
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.1.label'), { target: { value: 'entries' } });
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.1.value'), { target: { value: '2' } });
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.1.uom'), { target: { value: 'B' } });
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.1.warn1'), { target: { value: '0' } });
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.1.crit1'), { target: { value: '2' } });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add new rule' }));
+    fireEvent.change(screen.getByTestId('rules.1.endpoint_group'), { target: { value: 'Group 2a' } });
+    fireEvent.change(screen.getByTestId('autocomplete-rules[1].metric'), { target: { value: 'argo.POEM-API-MON' } });
+    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.label'), { target: { value: 'test' } });
+    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.value'), { target: { value: '2' } });
+    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.uom'), { target: { value: 'TB' } });
+    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.warn1'), { target: { value: '2' } });
+    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.warn2'), { target: { value: '8' } });
+    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.crit1'), { target: { value: '3' } });
+    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.crit2'), { target: { value: '8' } });
+    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.min'), { target: { value: '0' } });
+    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.max'), { target: { value: '10' } });
+
+    fireEvent.click(screen.getByTestId('values.rules.0.thresholds.1.remove'));
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /add/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddThresholdsProfile).toHaveBeenCalledWith({
+        name: 'TEST_PROFILE2',
+        rules: [
+          {
+            endpoint_group: 'Group 1a',
+            host: 'host.foo-bar.baz',
+            metric: 'argo.AMSPublisher-Check',
+            thresholds: 'freshness=1s;1:15;10:20'
+          },
+          {
+            endpoint_group: 'Group 2a',
+            metric: 'argo.POEM-API-MON',
+            thresholds: 'test=2TB;2:8;3:8;0;10'
+          }
+        ]
+      })
+    })
+
+    await waitFor(() => {
+      expect(mockAddObject).toHaveBeenCalledWith(
+        '/api/v2/internal/thresholdsprofiles/',
+        {
+          apiid: '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
+          name: 'TEST_PROFILE2',
+          groupname: 'TEST',
+          rules: [
+            {
+              endpoint_group: 'Group 1a',
+              host: 'host.foo-bar.baz',
+              metric: 'argo.AMSPublisher-Check',
+              thresholds: 'freshness=1s;1:15;10:20'
+            },
+            {
+              endpoint_group: 'Group 2a',
+              metric: 'argo.POEM-API-MON',
+              thresholds: 'test=2TB;2:8;3:8;0;10'
+            }
+          ]
+        }
+      )
+    })
+
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>Internal API error adding thresholds profile</p>
         <p>Click to dismiss.</p>
       </div>,
       'Internal API error: 500 SERVER ERROR',
