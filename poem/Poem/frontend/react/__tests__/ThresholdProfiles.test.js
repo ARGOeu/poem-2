@@ -3,7 +3,7 @@ import '@testing-library/jest-dom/extend-expect';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { createMemoryHistory } from 'history';
 import { Route, Router } from 'react-router-dom';
-import { ThresholdsProfilesChange, ThresholdsProfilesList } from '../ThresholdProfiles';
+import { ThresholdsProfilesChange, ThresholdsProfilesList, ThresholdsProfileVersionDetail } from '../ThresholdProfiles';
 import { Backend, WebApi } from '../DataManager';
 import { queryCache } from 'react-query';
 import { NotificationManager } from 'react-notifications';
@@ -92,6 +92,53 @@ const mockBackendProfile = {
 }
 
 
+const mockThresholdProfileVersions = [
+  {
+    id: '14',
+    object_repr: 'TEST_PROFILE2',
+    fields: {
+      name: 'TEST_PROFILE2',
+      description: '',
+      groupname: 'NEW_GROUP',
+      apiid: '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
+      rules: [
+        {
+          host: 'hostFoo',
+          metric: 'newMetric',
+          endpoint_group: 'test',
+          thresholds: 'entries=1;3:;0:2'
+        }
+      ]
+    },
+    user: 'testuser',
+    date_created: '2021-03-26 10:21:48',
+    comment: 'Changed name and groupname. Added rule for metric "newMetric". Deleted rule for metric "metricA".',
+    version: '20210326-102148'
+  },
+  {
+    id: '10',
+    object_repr: 'TEST_PROFILE',
+    fields: {
+      name: 'TEST_PROFILE',
+      description: '',
+      groupname: 'GROUP',
+      apiid: '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
+      rules: [
+        {
+          host: 'hostFoo',
+          metric: 'metricA',
+          thresholds: 'freshness=1s;10:;9:;0;25 entries=1;3:;0:2'
+        }
+      ]
+    },
+    user: 'testuser',
+    date_created: '2020-12-24 03:58:47',
+    comment: 'Initial version.',
+    version: '20201224-035847'
+  }
+];
+
+
 function renderListView(publicView=false) {
   const route = `/ui/${publicView ? 'public_' : ''}thresholdsprofiles`;
   const history = createMemoryHistory({ initialEntries: [route] })
@@ -175,6 +222,23 @@ function renderAddView() {
             tenantname='TENANT'
             addview={true}
           /> }
+        />
+      </Router>
+    )
+  }
+}
+
+
+function renderVersionDetailsView() {
+  const route = '/ui/thresholdsprofiles/TEST_PROFILE/history/20201224-035847';
+  const history = createMemoryHistory({ initialEntries: [route] });
+
+  return {
+    ...render(
+      <Router history={history}>
+        <Route
+          path='/ui/thresholdsprofiles/:name/history/:version'
+          render={ props =>  <ThresholdsProfileVersionDetail {...props} />}
         />
       </Router>
     )
@@ -1808,5 +1872,71 @@ describe('Tests for thresholds profiles addview', () => {
       0,
       expect.any(Function)
     )
+  })
+})
+
+
+describe('Tests for thresholds profile version detail page', () => {
+  beforeAll(() => {
+    Backend.mockImplementation(() => {
+      return {
+        fetchData: () => Promise.resolve(mockThresholdProfileVersions)
+      }
+    })
+  })
+
+  test('Test that page renders properly', async () => {
+    renderVersionDetailsView();
+
+    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('TEST_PROFILE (2020-12-24 03:58:47)');
+    })
+
+    const nameField = screen.getByTestId('name');
+    const groupField = screen.getByTestId('groupname');
+
+    expect(screen.getByTestId('rules.0')).toBeInTheDocument();
+    expect(screen.queryByTestId('rules.0.remove')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('rules.1')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('rules.1.remove')).not.toBeInTheDocument();
+    expect(screen.getAllByRole('table')).toHaveLength(1);
+
+    const metric1 = screen.getByTestId('rules.0.metric');
+    const host1 = screen.getByTestId('rules.0.host');
+    const endpoint1 = screen.getByTestId('rules.0.endpoint_group');
+    const table1 = within(screen.getByTestId('rules.0.thresholds'));
+
+    expect(nameField.value).toBe('TEST_PROFILE');
+    expect(nameField).toBeDisabled();
+    expect(groupField.value).toBe('GROUP');
+    expect(groupField).toBeDisabled();
+
+    expect(metric1.value).toBe('metricA');
+    expect(metric1).toBeDisabled();
+    expect(host1.value).toBe('hostFoo');
+    expect(host1).toBeDisabled();
+    expect(endpoint1.value).toBe('');
+    expect(endpoint1).toBeDisabled();
+
+    const table1Rows = table1.getAllByRole('row');
+    expect(table1Rows).toHaveLength(3);
+    expect(table1.getAllByRole('columnheader')).toHaveLength(7);
+    expect(table1.getByRole('columnheader', { name: '#' })).toBeInTheDocument();
+    expect(table1.getByRole('columnheader', { name: 'Label' })).toBeInTheDocument();
+    expect(table1.getByRole('columnheader', { name: 'Value' })).toBeInTheDocument();
+    expect(table1.getByRole('columnheader', { name: 'Warning' })).toBeInTheDocument();
+    expect(table1.getByRole('columnheader', { name: 'Critical' })).toBeInTheDocument();
+    expect(table1.getByRole('columnheader', { name: 'min' })).toBeInTheDocument();
+    expect(table1.getByRole('columnheader', { name: 'max' })).toBeInTheDocument();
+    expect(table1Rows[1].textContent).toBe('1freshness1s10:9:025')
+    expect(table1Rows[2].textContent).toBe('2entries13:0:2')
+
+    expect(screen.queryByRole('button', { name: 'Add new rule' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /save/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /history/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
   })
 })
