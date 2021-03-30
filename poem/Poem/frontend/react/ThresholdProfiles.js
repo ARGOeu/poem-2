@@ -190,67 +190,69 @@ function getUOM(value) {
 
 function thresholdsToValues(rules) {
   rules.forEach((rule => {
-    let thresholds_strings = rule.thresholds.split(' ');
-    let thresholds = [];
-    thresholds_strings.forEach((string => {
-      let label = '';
-      let value = '';
-      let uom = '';
-      let warn1 = '';
-      let warn2 = '';
-      let crit1 = '';
-      let crit2 = '';
-      let min = '';
-      let max = '';
-      let tokens = string.split('=')
-      if (tokens.length === 2) {
-        label = tokens[0];
-        let subtokens = tokens[1].split(';');
-        if (subtokens.length > 0) {
-          uom = getUOM(subtokens[0]);
-          value = subtokens[0].replace(uom, '');
-          if (subtokens.length > 1) {
-            for (let i = 1; i < subtokens.length; i++) {
-              if (i === 1) {
-                let warn = subtokens[i].split(':');
-                if (warn.length > 1) {
-                  warn1 = warn[0];
-                  warn2 = warn[1];
-                } else {
-                  warn1 = '0';
-                  warn2 = subtokens[i];
+    if (typeof rule.thresholds === 'string' || rule.thresholds instanceof String) {
+      let thresholds_strings = rule.thresholds.split(' ');
+      let thresholds = [];
+      thresholds_strings.forEach((string => {
+        let label = '';
+        let value = '';
+        let uom = '';
+        let warn1 = '';
+        let warn2 = '';
+        let crit1 = '';
+        let crit2 = '';
+        let min = '';
+        let max = '';
+        let tokens = string.split('=')
+        if (tokens.length === 2) {
+          label = tokens[0];
+          let subtokens = tokens[1].split(';');
+          if (subtokens.length > 0) {
+            uom = getUOM(subtokens[0]);
+            value = subtokens[0].replace(uom, '');
+            if (subtokens.length > 1) {
+              for (let i = 1; i < subtokens.length; i++) {
+                if (i === 1) {
+                  let warn = subtokens[i].split(':');
+                  if (warn.length > 1) {
+                    warn1 = warn[0];
+                    warn2 = warn[1];
+                  } else {
+                    warn1 = '0';
+                    warn2 = subtokens[i];
+                  }
+                } else if (i === 2) {
+                  let crit = subtokens[i].split(':');
+                  if (crit.length > 1) {
+                    crit1 = crit[0];
+                    crit2 = crit[1];
+                  } else {
+                    crit1 = '0';
+                    crit2 = subtokens[i];
+                  }
+                } else if (i === 3) {
+                  min = subtokens[i];
+                } else if (i === 4) {
+                  max = subtokens[i];
                 }
-              } else if (i === 2) {
-                let crit = subtokens[i].split(':');
-                if (crit.length > 1) {
-                  crit1 = crit[0];
-                  crit2 = crit[1];
-                } else {
-                  crit1 = '0';
-                  crit2 = subtokens[i];
-                }
-              } else if (i === 3) {
-                min = subtokens[i];
-              } else if (i === 4) {
-                max = subtokens[i];
               }
             }
           }
         }
-      }
-      thresholds.push({
-        label: label,
-        value: value,
-        uom: uom,
-        warn1: warn1,
-        warn2: warn2,
-        crit1: crit1,
-        crit2: crit2,
-        min: min,
-        max: max
-      });
-    }));
-    rule.thresholds = thresholds;
+        thresholds.push({
+          label: label,
+          value: value,
+          uom: uom,
+          warn1: warn1,
+          warn2: warn2,
+          crit1: crit1,
+          crit2: crit2,
+          min: min,
+          max: max
+        });
+      }));
+      rule.thresholds = thresholds;
+    }
   }));
   return rules;
 }
@@ -292,7 +294,7 @@ const ThresholdsProfilesForm = ({
                 // eslint-disable-next-line @getify/proper-arrows/params
                 props.values.rules.map((_rule, index) =>
                   <React.Fragment key={`fragment.rules.${index}`}>
-                    <Card className={`mt-${index === 0 ? '1' : '4'}`}>
+                    <Card className={`mt-${index === 0 ? '1' : '4'}`} data-testid={`rules.${index}`}>
                       <CardHeader className='p-1 font-weight-bold text-uppercase'>
                         <div className='d-flex align-items-center justify-content-between no-gutters'>
                           Rule {index + 1}
@@ -302,6 +304,7 @@ const ThresholdsProfilesForm = ({
                                 size='sm'
                                 color='danger'
                                 type='button'
+                                data-testid={`rules.${index}.remove`}
                                 onClick={
                                   () => (write_perm) && arrayHelpers.remove(index)
                                 }
@@ -320,6 +323,7 @@ const ThresholdsProfilesForm = ({
                                   <InputGroupAddon addonType='prepend'>Metric</InputGroupAddon>
                                   <Field
                                     name={`rules.${index}.metric`}
+                                    data-testid={`rules.${index}.metric`}
                                     className='form-control'
                                     disabled={true}
                                   />
@@ -339,6 +343,7 @@ const ThresholdsProfilesForm = ({
                               <InputGroupAddon addonType='prepend'>Host</InputGroupAddon>
                               <Field
                                 name={`rules.${index}.host`}
+                                data-testid={`rules.${index}.host`}
                                 className='form-control'
                                 disabled={historyview}
                               />
@@ -351,6 +356,7 @@ const ThresholdsProfilesForm = ({
                               <InputGroupAddon addonType='prepend'>Endpoint group</InputGroupAddon>
                               <Field
                                 name={`rules.${index}.endpoint_group`}
+                                data-testid={`rules.${index}.endpoint_group`}
                                 className='form-control'
                                 disabled={historyview}
                               />
@@ -366,7 +372,7 @@ const ThresholdsProfilesForm = ({
                               name={`rules.${index}.thresholds`}
                               render={thresholdHelpers => (
                                 <div>
-                                  <table className='table table-bordered table-sm'>
+                                  <table className='table table-bordered table-sm' data-testid={`rules.${index}.thresholds`}>
                                     <thead className='table-active'>
                                       <tr className='align-middle text-center'>
                                         <th style={{width: '4%'}}>#</th>
@@ -451,6 +457,7 @@ const ThresholdsProfilesForm = ({
                                                     }
                                                     name={`rules[${index}].thresholds[${i}].label`}
                                                     id={`values.rules.${index}.thresholds.${i}.label`}
+                                                    data-testid={`values.rules.${index}.thresholds.${i}.label`}
                                                   />
                                               }
                                                 {
@@ -487,6 +494,7 @@ const ThresholdsProfilesForm = ({
                                                     }`}
                                                     name={`rules.${index}.thresholds.${i}.value`}
                                                     id={`values.rules.${index}.thresholds.${i}.value`}
+                                                    data-testid={`values.rules.${index}.thresholds.${i}.value`}
                                                   />
                                               }
                                                 {
@@ -512,6 +520,7 @@ const ThresholdsProfilesForm = ({
                                                     className='form-control custom-select'
                                                     name={`rules.${index}.thresholds.${i}.uom`}
                                                     id={`values.rules.${index}.thresholds.${i}.uom`}
+                                                    data-testid={`values.rules.${index}.thresholds.${i}.uom`}
                                                   >
                                                     <option key='option-0' value=''></option>
                                                     <option key='option-1' value='s'>s</option>
@@ -547,6 +556,7 @@ const ThresholdsProfilesForm = ({
                                                     }`}
                                                     name={`rules.${index}.thresholds.${i}.warn1`}
                                                     id={`values.rules.${index}.thresholds.${i}.warn1`}
+                                                    data-testid={`values.rules.${index}.thresholds.${i}.warn1`}
                                                   />
                                               }
                                                 {
@@ -586,6 +596,7 @@ const ThresholdsProfilesForm = ({
                                                     }`}
                                                     name={`rules.${index}.thresholds.${i}.warn2`}
                                                     id={`values.rules.${index}.thresholds.${i}.warn2`}
+                                                    data-testid={`values.rules.${index}.thresholds.${i}.warn2`}
                                                   />
                                               }
                                                 {
@@ -622,6 +633,7 @@ const ThresholdsProfilesForm = ({
                                                     }`}
                                                     name={`rules.${index}.thresholds.${i}.crit1`}
                                                     id={`values.rules.${index}.thresholds.${i}.crit1`}
+                                                    data-testid={`values.rules.${index}.thresholds.${i}.crit1`}
                                                   />
                                               }
                                                 {
@@ -661,6 +673,7 @@ const ThresholdsProfilesForm = ({
                                                     }`}
                                                     name={`rules.${index}.thresholds.${i}.crit2`}
                                                     id={`values.rules.${index}.thresholds.${i}.crit2`}
+                                                    data-testid={`values.rules.${index}.thresholds.${i}.crit2`}
                                                   />
                                               }
                                                 {
@@ -697,6 +710,7 @@ const ThresholdsProfilesForm = ({
                                                     }`}
                                                     name={`rules.${index}.thresholds.${i}.min`}
                                                     id={`values.rules.${index}.thresholds.${i}.min`}
+                                                    data-testid={`values.rules.${index}.thresholds.${i}.min`}
                                                   />
                                               }
                                                 {
@@ -733,6 +747,7 @@ const ThresholdsProfilesForm = ({
                                                     }`}
                                                     name={`rules.${index}.thresholds.${i}.max`}
                                                     id={`values.rules.${index}.thresholds.${i}.max`}
+                                                    data-testid={`values.rules.${index}.thresholds.${i}.max`}
                                                   />
                                               }
                                                 {
@@ -755,6 +770,7 @@ const ThresholdsProfilesForm = ({
                                                     size='sm'
                                                     color='light'
                                                     type='button'
+                                                    data-testid={`values.rules.${index}.thresholds.${i}.remove`}
                                                     onClick={() => {
                                                       thresholdHelpers.remove(i);
                                                       if (props.values.rules[index].thresholds.length === 1) {
@@ -778,6 +794,7 @@ const ThresholdsProfilesForm = ({
                                                     size='sm'
                                                     color='light'
                                                     type='button'
+                                                    data-testid={`values.rules.${index}.thresholds.${i}.add`}
                                                     onClick={() => thresholdHelpers.push({
                                                       label: '',
                                                       value: '',
@@ -1004,7 +1021,7 @@ export const ThresholdsProfilesChange = (props) => {
   );
 
   const { data: allMetrics, error: errorAllMetrics, isLoading: loadingAllMetrics } = useQuery(
-    'thresholdsprofile_allmetrics', async () => {
+    `thresholdsprofile_${publicView ? 'public_' : ''}_allmetrics`, async () => {
       let metrics = await backend.fetchListOfNames(`/api/v2/internal/${publicView ? 'public_' : ''}metricsall`);
       return metrics;
     }
@@ -1138,7 +1155,7 @@ export const ThresholdsProfilesChange = (props) => {
       if (!response.ok) {
         let change_msg = '';
         try {
-          let json = response.json();
+          let json = await response.json();
           let msg_list = [];
           json.errors.forEach(e => msg_list.push(e.details));
           change_msg = msg_list.join(' ');
@@ -1200,7 +1217,7 @@ export const ThresholdsProfilesChange = (props) => {
       });
     } else {
       let r_internal = await backend.deleteObject(`/api/v2/internal/thresholdsprofiles/${profileId}`);
-      if (r_internal)
+      if (r_internal.ok)
         NotifyOk({
           msg: 'Thresholds profile successfully deleted',
           title: 'Deleted',
