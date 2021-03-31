@@ -20,6 +20,8 @@ const mockChangeObject = jest.fn();
 const mockChangeAggregation = jest.fn();
 const mockDeleteObject = jest.fn();
 const mockDeleteAggregation = jest.fn();
+const mockAddAggregation = jest.fn();
+const mockAddObject = jest.fn();
 
 
 beforeEach(() => {
@@ -290,6 +292,30 @@ function renderChangeView(publicView=false) {
 }
 
 
+function renderAddview() {
+  const route = '/ui/aggregationprofiles/add';
+  const history = createMemoryHistory({ initialEntries: [route] });
+
+  return {
+    ...render(
+      <Router history={history}>
+        <Route
+          path='/ui/aggregationprofiles/add'
+          render={ props => <AggregationProfilesChange
+            {...props}
+            webapiaggregation='https://mock.aggregations.com'
+            webapimetric='https://mock.metrics.com'
+            webapitoken='token'
+            tenantname='TENANT'
+            addview={true}
+          /> }
+        />
+      </Router>
+    )
+  }
+}
+
+
 describe('Tests for aggregation profiles listview', () => {
   beforeAll(() => {
     Backend.mockImplementation(() => {
@@ -473,7 +499,6 @@ describe('Tests for aggregation profiles changeview', () => {
     expect(screen.getByRole('button', { name: /history/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /history/i }).closest('a')).toHaveAttribute('href', '/ui/aggregationprofiles/TEST_PROFILE/history')
     expect(screen.getByRole('button', { name: 'Add new group' })).toBeInTheDocument();
-
 
     expect(screen.getByRole('alert')).toBeInTheDocument();
   })
@@ -1525,6 +1550,754 @@ describe('Tests for aggregation profiles changeview', () => {
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
         <p>Internal API error deleting aggregation profile</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Internal API error: 500 SERVER ERROR',
+      0,
+      expect.any(Function)
+    )
+  })
+})
+
+
+describe('Tests for aggregation profile addview', () => {
+  jest.spyOn(NotificationManager, 'success');
+  jest.spyOn(NotificationManager, 'error');
+
+  beforeAll(() => {
+    WebApi.mockImplementation(() => {
+      return {
+        fetchMetricProfiles: () => Promise.resolve(mockWebApiMetricProfiles),
+        addAggregation: mockAddAggregation
+      }
+    })
+    Backend.mockImplementation(() => {
+      return {
+        isActiveSession: () => Promise.resolve(mockActiveSession),
+        addObject: mockAddObject
+      }
+    })
+  })
+
+  test('Test that page renders properly', async () => {
+    renderAddview();
+
+    await waitFor(() => {
+      expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
+    })
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /aggregation profile/i }).textContent).toBe('Add aggregation profile');
+    })
+
+    const nameField = screen.getByTestId('name');
+    const groupField = screen.getByTestId('groupname');
+    const metricOperation = screen.getByTestId('metric_operation').firstChild;
+    const aggrOperation = screen.getByTestId('profile_operation').firstChild;
+    const endpointGroup = screen.getByTestId('endpoint_group').firstChild;
+    const metricProfileRow = within(screen.getByTestId('metric_profile_row'));
+    const metricProfileField = metricProfileRow.getByRole('combobox');
+
+    expect(nameField.value).toBe('');
+    expect(nameField).toBeEnabled();
+    expect(groupField.value).toBe('');
+    expect(groupField).toBeEnabled();
+
+    expect(metricOperation.value).toBe('');
+    expect(metricOperation).toBeEnabled();
+    expect(aggrOperation.value).toBe('');
+    expect(aggrOperation).toBeEnabled();
+    expect(endpointGroup.value).toBe('');
+    expect(endpointGroup).toBeEnabled();
+    expect(metricProfileField.value).toBe('');
+    expect(metricProfileField).toBeEnabled();
+
+    expect(screen.getByRole('button', { name: 'Add new group' })).toBeInTheDocument();
+    expect(screen.queryAllByTestId(/card-/)).toHaveLength(0);
+
+    expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /history/i })).not.toBeInTheDocument();
+  })
+
+  test('Test successfully adding an aggregation profile', async () => {
+    mockAddAggregation.mockReturnValueOnce(
+      Promise.resolve({
+        json: () => Promise.resolve({
+          status: {
+            message: 'Aggregation profile Created',
+            code: "200"
+          },
+          data: {
+            id: '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
+            links: {
+              self: 'string'
+            }
+          }
+        }),
+        ok: true,
+        status: 200,
+        statusText: 'Aggregation profile Created'
+      })
+    )
+    mockAddObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 201, statusText: 'CREATED' })
+    )
+
+    renderAddview();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /aggregation profile/i }).textContent).toBe('Add aggregation profile');
+    })
+
+    fireEvent.change(screen.getByTestId('name'), { target: { value: 'NEW_PROFILE' } });
+    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'ARGO' } });
+
+    fireEvent.change(screen.getByTestId('metric_operation').firstChild, { target: { value: 'AND' } });
+    fireEvent.change(screen.getByTestId('profile_operation').firstChild, { target: { value: 'AND' } })
+    fireEvent.change(screen.getByTestId('endpoint_group').firstChild, { target: { value: 'servicegroups' } });
+    fireEvent.change(within(screen.getByTestId('metric_profile_row')).getByRole('combobox'), { target: { value: 'ARGO_MON_CRITICAL' } })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add new group' }));
+    const card0 = within(screen.getByTestId('card-0'));
+    const textFields0 = card0.getAllByRole('textbox');
+    fireEvent.change(textFields0[0], { target: { value: 'Group 1' } });
+    fireEvent.change(textFields0[1], { target: { value: 'ARC-CE' } });
+    fireEvent.change(card0.getByTestId('operation-0').firstChild, { target: { value: 'OR' } });
+    fireEvent.click(card0.getByTestId('insert-0'));
+    fireEvent.change(card0.getAllByRole('textbox')[2], { target: { value: 'GRAM5' } });
+    fireEvent.change(card0.getByTestId('operation-1').firstChild, { target: { value: 'OR' } });
+    fireEvent.change(card0.getByTestId('operation').firstChild, { target: { value: 'OR' } });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add new group' }));
+    const card1 = within(screen.getByTestId('card-1'))
+    const textFields1 = card1.getAllByRole('textbox');
+    fireEvent.change(textFields1[0], { target: { value: 'cloud' } });
+    fireEvent.change(textFields1[1], { target: { value: 'org.openstack.nova' } });
+    fireEvent.change(card1.getByTestId('operation-0').firstChild, { target: { value: 'OR' } });
+    fireEvent.change(card1.getByTestId('operation').firstChild, { target: { value: 'OR' } })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /add/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddAggregation).toHaveBeenCalledWith({
+        profile_operation: 'AND',
+        endpoint_group: 'servicegroups',
+        groupname: 'ARGO',
+        name: 'NEW_PROFILE',
+        metric_operation: 'AND',
+        namespace: 'TENANT',
+        groups: [
+          {
+            name: 'Group 1',
+            operation: 'OR',
+            services: [
+              {
+                operation: 'OR',
+                name: 'ARC-CE'
+              },
+              {
+                operation: 'OR',
+                name: 'GRAM5'
+              }
+            ],
+          },
+          {
+            name: 'cloud',
+            operation: 'OR',
+            services: [
+              {
+                operation: 'OR',
+                name: 'org.openstack.nova'
+              }
+            ]
+          }
+        ],
+        metric_profile: {
+          name: 'ARGO_MON_CRITICAL',
+          id: '12341234-oooo-kkkk-aaaa-aaeekkccnnee'
+        },
+        id: ''
+      })
+    })
+
+    await waitFor(() => {
+      expect(mockAddObject).toHaveBeenCalledWith(
+        '/api/v2/internal/aggregations/',
+        {
+          apiid: '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
+          profile_operation: 'AND',
+          endpoint_group: 'servicegroups',
+          groupname: 'ARGO',
+          name: 'NEW_PROFILE',
+          metric_operation: 'AND',
+          metric_profile: 'ARGO_MON_CRITICAL',
+          groups: JSON.stringify([
+            {
+              name: 'Group 1',
+              operation: 'OR',
+              services: [
+                {
+                  name: 'ARC-CE',
+                  operation: 'OR'
+                },
+                {
+                  name: 'GRAM5',
+                  operation: 'OR'
+                }
+              ],
+            },
+            {
+              name: 'cloud',
+              operation: 'OR',
+              services: [
+                {
+                  name: 'org.openstack.nova',
+                  operation: 'OR'
+                }
+              ]
+            }
+          ])
+        }
+      )
+    })
+
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'Aggregation profile successfully added', 'Added', 2000
+    )
+  })
+
+  test('Test error adding aggregation profile in web api with error message', async () => {
+    mockAddAggregation.mockReturnValueOnce(
+      Promise.resolve({
+        json: () => Promise.resolve({
+          code: '406',
+          message: 'Content Not acceptable',
+          errors: [
+            {
+              message: 'Content Not acceptable',
+              code: '406',
+              details: 'There has been an error.'
+            }
+          ],
+          details: 'There has been an error.'
+        }),
+        status: 406,
+        statusText: 'Content Not acceptable'
+      })
+    )
+
+    renderAddview();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /aggregation profile/i }).textContent).toBe('Add aggregation profile');
+    })
+
+    fireEvent.change(screen.getByTestId('name'), { target: { value: 'NEW_PROFILE' } });
+    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'ARGO' } });
+
+    fireEvent.change(screen.getByTestId('metric_operation').firstChild, { target: { value: 'AND' } });
+    fireEvent.change(screen.getByTestId('profile_operation').firstChild, { target: { value: 'AND' } })
+    fireEvent.change(screen.getByTestId('endpoint_group').firstChild, { target: { value: 'servicegroups' } });
+    fireEvent.change(within(screen.getByTestId('metric_profile_row')).getByRole('combobox'), { target: { value: 'ARGO_MON_CRITICAL' } })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add new group' }));
+    const card0 = within(screen.getByTestId('card-0'));
+    const textFields0 = card0.getAllByRole('textbox');
+    fireEvent.change(textFields0[0], { target: { value: 'Group 1' } });
+    fireEvent.change(textFields0[1], { target: { value: 'ARC-CE' } });
+    fireEvent.change(card0.getByTestId('operation-0').firstChild, { target: { value: 'OR' } });
+    fireEvent.click(card0.getByTestId('insert-0'));
+    fireEvent.change(card0.getAllByRole('textbox')[2], { target: { value: 'GRAM5' } });
+    fireEvent.change(card0.getByTestId('operation-1').firstChild, { target: { value: 'OR' } });
+    fireEvent.change(card0.getByTestId('operation').firstChild, { target: { value: 'OR' } });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add new group' }));
+    const card1 = within(screen.getByTestId('card-1'))
+    const textFields1 = card1.getAllByRole('textbox');
+    fireEvent.change(textFields1[0], { target: { value: 'cloud' } });
+    fireEvent.change(textFields1[1], { target: { value: 'org.openstack.nova' } });
+    fireEvent.change(card1.getByTestId('operation-0').firstChild, { target: { value: 'OR' } });
+    fireEvent.change(card1.getByTestId('operation').firstChild, { target: { value: 'OR' } })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /add/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddAggregation).toHaveBeenCalledWith({
+        profile_operation: 'AND',
+        endpoint_group: 'servicegroups',
+        groupname: 'ARGO',
+        name: 'NEW_PROFILE',
+        metric_operation: 'AND',
+        namespace: 'TENANT',
+        groups: [
+          {
+            name: 'Group 1',
+            operation: 'OR',
+            services: [
+              {
+                operation: 'OR',
+                name: 'ARC-CE'
+              },
+              {
+                operation: 'OR',
+                name: 'GRAM5'
+              }
+            ],
+          },
+          {
+            name: 'cloud',
+            operation: 'OR',
+            services: [
+              {
+                operation: 'OR',
+                name: 'org.openstack.nova'
+              }
+            ]
+          }
+        ],
+        metric_profile: {
+          name: 'ARGO_MON_CRITICAL',
+          id: '12341234-oooo-kkkk-aaaa-aaeekkccnnee'
+        },
+        id: ''
+      })
+    })
+
+    await waitFor(() => {
+      expect(mockAddObject).not.toHaveBeenCalled();
+    })
+
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>There has been an error.</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Web API error: 406 Content Not acceptable',
+      0,
+      expect.any(Function)
+    )
+  })
+
+  test('Test error adding aggregation profile in web api without error message', async () => {
+    mockAddAggregation.mockReturnValueOnce(
+      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
+    )
+
+    renderAddview();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /aggregation profile/i }).textContent).toBe('Add aggregation profile');
+    })
+
+    fireEvent.change(screen.getByTestId('name'), { target: { value: 'NEW_PROFILE' } });
+    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'ARGO' } });
+
+    fireEvent.change(screen.getByTestId('metric_operation').firstChild, { target: { value: 'AND' } });
+    fireEvent.change(screen.getByTestId('profile_operation').firstChild, { target: { value: 'AND' } })
+    fireEvent.change(screen.getByTestId('endpoint_group').firstChild, { target: { value: 'servicegroups' } });
+    fireEvent.change(within(screen.getByTestId('metric_profile_row')).getByRole('combobox'), { target: { value: 'ARGO_MON_CRITICAL' } })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add new group' }));
+    const card0 = within(screen.getByTestId('card-0'));
+    const textFields0 = card0.getAllByRole('textbox');
+    fireEvent.change(textFields0[0], { target: { value: 'Group 1' } });
+    fireEvent.change(textFields0[1], { target: { value: 'ARC-CE' } });
+    fireEvent.change(card0.getByTestId('operation-0').firstChild, { target: { value: 'OR' } });
+    fireEvent.click(card0.getByTestId('insert-0'));
+    fireEvent.change(card0.getAllByRole('textbox')[2], { target: { value: 'GRAM5' } });
+    fireEvent.change(card0.getByTestId('operation-1').firstChild, { target: { value: 'OR' } });
+    fireEvent.change(card0.getByTestId('operation').firstChild, { target: { value: 'OR' } });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add new group' }));
+    const card1 = within(screen.getByTestId('card-1'))
+    const textFields1 = card1.getAllByRole('textbox');
+    fireEvent.change(textFields1[0], { target: { value: 'cloud' } });
+    fireEvent.change(textFields1[1], { target: { value: 'org.openstack.nova' } });
+    fireEvent.change(card1.getByTestId('operation-0').firstChild, { target: { value: 'OR' } });
+    fireEvent.change(card1.getByTestId('operation').firstChild, { target: { value: 'OR' } })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /add/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddAggregation).toHaveBeenCalledWith({
+        profile_operation: 'AND',
+        endpoint_group: 'servicegroups',
+        groupname: 'ARGO',
+        name: 'NEW_PROFILE',
+        metric_operation: 'AND',
+        namespace: 'TENANT',
+        groups: [
+          {
+            name: 'Group 1',
+            operation: 'OR',
+            services: [
+              {
+                operation: 'OR',
+                name: 'ARC-CE'
+              },
+              {
+                operation: 'OR',
+                name: 'GRAM5'
+              }
+            ],
+          },
+          {
+            name: 'cloud',
+            operation: 'OR',
+            services: [
+              {
+                operation: 'OR',
+                name: 'org.openstack.nova'
+              }
+            ]
+          }
+        ],
+        metric_profile: {
+          name: 'ARGO_MON_CRITICAL',
+          id: '12341234-oooo-kkkk-aaaa-aaeekkccnnee'
+        },
+        id: ''
+      })
+    })
+
+    await waitFor(() => {
+      expect(mockAddObject).not.toHaveBeenCalled();
+    })
+
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>Web API error adding aggregation profile</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Web API error: 500 SERVER ERROR',
+      0,
+      expect.any(Function)
+    )
+  })
+
+  test('Test error adding an aggregation profile in internal api with error message', async () => {
+    mockAddAggregation.mockReturnValueOnce(
+      Promise.resolve({
+        json: () => Promise.resolve({
+          status: {
+            message: 'Aggregation profile Created',
+            code: "200"
+          },
+          data: {
+            id: '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
+            links: {
+              self: 'string'
+            }
+          }
+        }),
+        ok: true,
+        status: 200,
+        statusText: 'Aggregation profile Created'
+      })
+    )
+    mockAddObject.mockReturnValueOnce(
+      Promise.resolve({
+        json: () => Promise.resolve({ detail: 'There has been an error.' }),
+        status: 400,
+        statusText: 'BAD REQUEST'
+      })
+    )
+
+    renderAddview();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /aggregation profile/i }).textContent).toBe('Add aggregation profile');
+    })
+
+    fireEvent.change(screen.getByTestId('name'), { target: { value: 'NEW_PROFILE' } });
+    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'ARGO' } });
+
+    fireEvent.change(screen.getByTestId('metric_operation').firstChild, { target: { value: 'AND' } });
+    fireEvent.change(screen.getByTestId('profile_operation').firstChild, { target: { value: 'AND' } })
+    fireEvent.change(screen.getByTestId('endpoint_group').firstChild, { target: { value: 'servicegroups' } });
+    fireEvent.change(within(screen.getByTestId('metric_profile_row')).getByRole('combobox'), { target: { value: 'ARGO_MON_CRITICAL' } })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add new group' }));
+    const card0 = within(screen.getByTestId('card-0'));
+    const textFields0 = card0.getAllByRole('textbox');
+    fireEvent.change(textFields0[0], { target: { value: 'Group 1' } });
+    fireEvent.change(textFields0[1], { target: { value: 'ARC-CE' } });
+    fireEvent.change(card0.getByTestId('operation-0').firstChild, { target: { value: 'OR' } });
+    fireEvent.click(card0.getByTestId('insert-0'));
+    fireEvent.change(card0.getAllByRole('textbox')[2], { target: { value: 'GRAM5' } });
+    fireEvent.change(card0.getByTestId('operation-1').firstChild, { target: { value: 'OR' } });
+    fireEvent.change(card0.getByTestId('operation').firstChild, { target: { value: 'OR' } });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add new group' }));
+    const card1 = within(screen.getByTestId('card-1'))
+    const textFields1 = card1.getAllByRole('textbox');
+    fireEvent.change(textFields1[0], { target: { value: 'cloud' } });
+    fireEvent.change(textFields1[1], { target: { value: 'org.openstack.nova' } });
+    fireEvent.change(card1.getByTestId('operation-0').firstChild, { target: { value: 'OR' } });
+    fireEvent.change(card1.getByTestId('operation').firstChild, { target: { value: 'OR' } })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /add/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddAggregation).toHaveBeenCalledWith({
+        profile_operation: 'AND',
+        endpoint_group: 'servicegroups',
+        groupname: 'ARGO',
+        name: 'NEW_PROFILE',
+        metric_operation: 'AND',
+        namespace: 'TENANT',
+        groups: [
+          {
+            name: 'Group 1',
+            operation: 'OR',
+            services: [
+              {
+                operation: 'OR',
+                name: 'ARC-CE'
+              },
+              {
+                operation: 'OR',
+                name: 'GRAM5'
+              }
+            ],
+          },
+          {
+            name: 'cloud',
+            operation: 'OR',
+            services: [
+              {
+                operation: 'OR',
+                name: 'org.openstack.nova'
+              }
+            ]
+          }
+        ],
+        metric_profile: {
+          name: 'ARGO_MON_CRITICAL',
+          id: '12341234-oooo-kkkk-aaaa-aaeekkccnnee'
+        },
+        id: ''
+      })
+    })
+
+    await waitFor(() => {
+      expect(mockAddObject).toHaveBeenCalledWith(
+        '/api/v2/internal/aggregations/',
+        {
+          apiid: '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
+          profile_operation: 'AND',
+          endpoint_group: 'servicegroups',
+          groupname: 'ARGO',
+          name: 'NEW_PROFILE',
+          metric_operation: 'AND',
+          metric_profile: 'ARGO_MON_CRITICAL',
+          groups: JSON.stringify([
+            {
+              name: 'Group 1',
+              operation: 'OR',
+              services: [
+                {
+                  name: 'ARC-CE',
+                  operation: 'OR'
+                },
+                {
+                  name: 'GRAM5',
+                  operation: 'OR'
+                }
+              ],
+            },
+            {
+              name: 'cloud',
+              operation: 'OR',
+              services: [
+                {
+                  name: 'org.openstack.nova',
+                  operation: 'OR'
+                }
+              ]
+            }
+          ])
+        }
+      )
+    })
+
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>There has been an error.</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Internal API error: 400 BAD REQUEST',
+      0,
+      expect.any(Function)
+    )
+  })
+
+  test('Test error adding an aggregation profile in internal api without error message', async () => {
+    mockAddAggregation.mockReturnValueOnce(
+      Promise.resolve({
+        json: () => Promise.resolve({
+          status: {
+            message: 'Aggregation profile Created',
+            code: "200"
+          },
+          data: {
+            id: '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
+            links: {
+              self: 'string'
+            }
+          }
+        }),
+        ok: true,
+        status: 200,
+        statusText: 'Aggregation profile Created'
+      })
+    )
+    mockAddObject.mockReturnValueOnce(
+      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
+    )
+
+    renderAddview();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /aggregation profile/i }).textContent).toBe('Add aggregation profile');
+    })
+
+    fireEvent.change(screen.getByTestId('name'), { target: { value: 'NEW_PROFILE' } });
+    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'ARGO' } });
+
+    fireEvent.change(screen.getByTestId('metric_operation').firstChild, { target: { value: 'AND' } });
+    fireEvent.change(screen.getByTestId('profile_operation').firstChild, { target: { value: 'AND' } })
+    fireEvent.change(screen.getByTestId('endpoint_group').firstChild, { target: { value: 'servicegroups' } });
+    fireEvent.change(within(screen.getByTestId('metric_profile_row')).getByRole('combobox'), { target: { value: 'ARGO_MON_CRITICAL' } })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add new group' }));
+    const card0 = within(screen.getByTestId('card-0'));
+    const textFields0 = card0.getAllByRole('textbox');
+    fireEvent.change(textFields0[0], { target: { value: 'Group 1' } });
+    fireEvent.change(textFields0[1], { target: { value: 'ARC-CE' } });
+    fireEvent.change(card0.getByTestId('operation-0').firstChild, { target: { value: 'OR' } });
+    fireEvent.click(card0.getByTestId('insert-0'));
+    fireEvent.change(card0.getAllByRole('textbox')[2], { target: { value: 'GRAM5' } });
+    fireEvent.change(card0.getByTestId('operation-1').firstChild, { target: { value: 'OR' } });
+    fireEvent.change(card0.getByTestId('operation').firstChild, { target: { value: 'OR' } });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add new group' }));
+    const card1 = within(screen.getByTestId('card-1'))
+    const textFields1 = card1.getAllByRole('textbox');
+    fireEvent.change(textFields1[0], { target: { value: 'cloud' } });
+    fireEvent.change(textFields1[1], { target: { value: 'org.openstack.nova' } });
+    fireEvent.change(card1.getByTestId('operation-0').firstChild, { target: { value: 'OR' } });
+    fireEvent.change(card1.getByTestId('operation').firstChild, { target: { value: 'OR' } })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /add/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddAggregation).toHaveBeenCalledWith({
+        profile_operation: 'AND',
+        endpoint_group: 'servicegroups',
+        groupname: 'ARGO',
+        name: 'NEW_PROFILE',
+        metric_operation: 'AND',
+        namespace: 'TENANT',
+        groups: [
+          {
+            name: 'Group 1',
+            operation: 'OR',
+            services: [
+              {
+                operation: 'OR',
+                name: 'ARC-CE'
+              },
+              {
+                operation: 'OR',
+                name: 'GRAM5'
+              }
+            ],
+          },
+          {
+            name: 'cloud',
+            operation: 'OR',
+            services: [
+              {
+                operation: 'OR',
+                name: 'org.openstack.nova'
+              }
+            ]
+          }
+        ],
+        metric_profile: {
+          name: 'ARGO_MON_CRITICAL',
+          id: '12341234-oooo-kkkk-aaaa-aaeekkccnnee'
+        },
+        id: ''
+      })
+    })
+
+    await waitFor(() => {
+      expect(mockAddObject).toHaveBeenCalledWith(
+        '/api/v2/internal/aggregations/',
+        {
+          apiid: '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
+          profile_operation: 'AND',
+          endpoint_group: 'servicegroups',
+          groupname: 'ARGO',
+          name: 'NEW_PROFILE',
+          metric_operation: 'AND',
+          metric_profile: 'ARGO_MON_CRITICAL',
+          groups: JSON.stringify([
+            {
+              name: 'Group 1',
+              operation: 'OR',
+              services: [
+                {
+                  name: 'ARC-CE',
+                  operation: 'OR'
+                },
+                {
+                  name: 'GRAM5',
+                  operation: 'OR'
+                }
+              ],
+            },
+            {
+              name: 'cloud',
+              operation: 'OR',
+              services: [
+                {
+                  name: 'org.openstack.nova',
+                  operation: 'OR'
+                }
+              ]
+            }
+          ])
+        }
+      )
+    })
+
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>Internal API error adding aggregation profile</p>
         <p>Click to dismiss.</p>
       </div>,
       'Internal API error: 500 SERVER ERROR',

@@ -758,7 +758,7 @@ export const AggregationProfilesChange = (props) => {
           json.errors.forEach(e => msg_list.push(e.details));
           add_msg = msg_list.join(' ');
         } catch(err) {
-          add_msg = `Web API error adding aggregation profile: ${err}`;
+          add_msg = `Web API error adding aggregation profile`;
         }
         NotifyError({
           title: `Web API error: ${response.status} ${response.statusText}`,
@@ -1063,17 +1063,22 @@ export const AggregationProfilesChange = (props) => {
               {
                 (write_perm) &&
                   <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
-                    <Button
-                      color="danger"
-                      onClick={() => {
-                        setModalMsg('Are you sure you want to delete Aggregation profile?')
-                        setModalTitle('Delete aggregation profile')
-                        setAreYouSureModal(!areYouSureModal);
-                        setFormikValues(props.values)
-                        setOnYes('delete')
-                      }}>
-                      Delete
-                    </Button>
+                    {
+                      !addview ?
+                        <Button
+                          color="danger"
+                          onClick={() => {
+                            setModalMsg('Are you sure you want to delete Aggregation profile?')
+                            setModalTitle('Delete aggregation profile')
+                            setAreYouSureModal(!areYouSureModal);
+                            setFormikValues(props.values)
+                            setOnYes('delete')
+                          }}>
+                          Delete
+                        </Button>
+                      :
+                        <div></div>
+                    }
                     <Button color="success" id="submit-button" type="submit">Save</Button>
                   </div>
               }
