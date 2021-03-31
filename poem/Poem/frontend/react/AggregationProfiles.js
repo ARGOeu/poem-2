@@ -155,7 +155,7 @@ const Group = ({operation, services, groupindex, isnew, last}) => {
     return (
       <React.Fragment key={groupindex}>
         <Col sm={{size: 8}} md={{size: 5}} className="mt-4 mb-2">
-          <Card className={isnew ? "border-success" : ""}>
+          <Card className={isnew ? "border-success" : ""} data-testid={`card-${groupindex}`}>
             <CardHeader className="p-1" color="primary">
               <Row className="d-flex align-items-center no-gutters">
                 <Col sm={{size: 10}} md={{size: 11}}>
@@ -170,6 +170,7 @@ const Group = ({operation, services, groupindex, isnew, last}) => {
                 </Col>
                 <Col sm={{size: 2}} md={{size: 1}} className="pl-1">
                   <Button size="sm" color="danger"
+                    data-testid='remove-group'
                     type="button"
                     onClick={() => (context.write_perm) && context.formikBag.groupRemove(groupindex)}>
                     <FontAwesomeIcon icon={faTimes}/>
@@ -180,7 +181,7 @@ const Group = ({operation, services, groupindex, isnew, last}) => {
             <CardBody className="p-1">
               <FieldArray
                 name={`groups.${groupindex}`}
-                render={props => (
+                render={() => (
                   <ServiceList
                     services={services}
                     groupindex={groupindex}
@@ -188,7 +189,7 @@ const Group = ({operation, services, groupindex, isnew, last}) => {
                   />)}
               />
             </CardBody>
-            <CardFooter className="p-1 d-flex justify-content-center">
+            <CardFooter className="p-1 d-flex justify-content-center" data-testid='operation'>
               <DropDown
                 field={{name: "operation", value: operation}}
                 data={insertSelectPlaceholder(context.list_operations, 'Select')}
@@ -200,7 +201,7 @@ const Group = ({operation, services, groupindex, isnew, last}) => {
           </Card>
         </Col>
         <Col sm={{size: 4}} md={{size: 1}} className="mt-5">
-          <div className="group-operation" key={groupindex}>
+          <div className="group-operation" key={groupindex} data-testid={`group-operation-${groupindex}`}>
             <DropDown
               field={{name: 'profile_operation', value: context.formikBag.form.values.profile_operation}}
               data={insertSelectPlaceholder(context.list_operations, 'Select')}
@@ -270,7 +271,7 @@ const Service = ({service, operation, groupindex, groupnew, index, isnew,
           />
         </Col>
         <Col md={2}>
-          <div className="input-group">
+          <div className="input-group" data-testid={`operation-${index}`}>
             <DropDown
               field={{name: "operation", value: operation}}
               data={insertSelectPlaceholder(context.list_operations, 'Select')}
@@ -283,11 +284,13 @@ const Service = ({service, operation, groupindex, groupnew, index, isnew,
         <Col md={2} className="pl-2">
           <Button size="sm" color="light"
             type="button"
+            data-testid={`remove-${index}`}
             onClick={() => serviceRemove(index)}>
             <FontAwesomeIcon icon={faTimes}/>
           </Button>
           <Button size="sm" color="light"
             type="button"
+            data-testid={`insert-${index}`}
             onClick={() => serviceInsert(index + 1, {name: '', operation:
               context.last_service_operation(index, context.formikBag.form.values.groups[groupindex].services), isNew: true})}>
             <FontAwesomeIcon icon={faPlus}/>
@@ -346,7 +349,7 @@ const AggregationProfilesForm = ({ values, errors, historyview=false, write_perm
             </Col>
           </Row>
           <Row>
-            <Col md={5}>
+            <Col md={5} data-testid='metric_operation'>
               {
                 historyview ?
                   <Field
@@ -387,7 +390,7 @@ const AggregationProfilesForm = ({ values, errors, historyview=false, write_perm
             <Col md={12}>
               <Label for='aggregationOperation'>Aggregation operation:</Label>
             </Col>
-            <Col md={5}>
+            <Col md={5} data-testid='profile_operation'>
               {
                 historyview ?
                   <Field
@@ -428,7 +431,7 @@ const AggregationProfilesForm = ({ values, errors, historyview=false, write_perm
             <Col md={12}>
               <Label for='aggregationEndpointGroup'>Endpoint group:</Label>
             </Col>
-            <Col md={5}>
+            <Col md={5} data-testid='endpoint_group'>
               {
                 historyview ?
                   <Field
@@ -459,7 +462,7 @@ const AggregationProfilesForm = ({ values, errors, historyview=false, write_perm
     </Row>
     <Row className='mt-4'>
       <Col md={5}>
-        <FormGroup>
+        <FormGroup data-testid='metric_profile_row'>
           <Label for='metricProfile'>Metric profile:</Label>
           {
             historyview ?
@@ -494,7 +497,7 @@ const AggregationProfilesForm = ({ values, errors, historyview=false, write_perm
 
 
 export const AggregationProfilesChange = (props) => {
-  const tenant_name = props.tenant_name;
+  const tenant_name = props.tenantname;
   const profile_name = props.match.params.name;
   const addview = props.addview
   const history = props.history;
@@ -520,7 +523,7 @@ export const AggregationProfilesChange = (props) => {
   const logic_operations = ["OR", "AND"];
   const endpoint_groups = ["servicegroups", "sites"];
 
-  const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails } = useQuery(
+  const { data: userDetails, isLoading: loadingUserDetails } = useQuery(
     `session_userdetails`, async () => {
       if (!publicView) {
         const sessionActive = await backend.isActiveSession()
@@ -587,7 +590,7 @@ export const AggregationProfilesChange = (props) => {
   )
 
   const correctMetricProfileName = (metricProfileId, listMetricProfilesWebApi) => {
-    let targetProfile = listMetricProfilesWebApi.filter(p => p.id === metricProfileId)
+    let targetProfile = listMetricProfilesWebApi.filter(profile => profile.id === metricProfileId)
 
     if (targetProfile.length)
       return targetProfile[0].name
@@ -601,13 +604,13 @@ export const AggregationProfilesChange = (props) => {
   }
 
   const extractListOfServices = (profileFromAggregation, listMetricProfiles) => {
-    let targetProfile = listMetricProfiles.filter(p => p.name === profileFromAggregation.name)
+    let targetProfile = listMetricProfiles.filter(profile => profile.name === profileFromAggregation.name)
 
     if (targetProfile.length === 0)
-      targetProfile = listMetricProfiles.filter(p => p.id === profileFromAggregation.id)
+      targetProfile = listMetricProfiles.filter(profile => profile.id === profileFromAggregation.id)
 
     if (targetProfile.length) {
-      let services = targetProfile[0].services.map(s => s.service)
+      let services = targetProfile[0].services.map(service => service.service)
       return services.sort(sortServices)
     }
     else
@@ -643,7 +646,7 @@ export const AggregationProfilesChange = (props) => {
     return groups
   }
 
-  const insertOperationFromPrevious = (index, array) => {
+  const insertOperationFromPrevious = (_, array) => {
     if (array.length) {
       let last = array.length - 1
 
@@ -653,7 +656,7 @@ export const AggregationProfilesChange = (props) => {
       return ''
   }
 
-  const onSubmitHandle = (values, action) => {
+  const onSubmitHandle = (values) => {
     let msg = undefined;
     let title = undefined;
 
@@ -681,7 +684,7 @@ export const AggregationProfilesChange = (props) => {
     queryCache.setQueryData(querykey, staleAggregationProfile)
   }
 
-  const doChange = async (values, actions) => {
+  const doChange = async (values) => {
     let valueSend = JSON.parse(JSON.stringify(values));
     removeDummyGroup(valueSend)
     removeIsNewFlag(valueSend)
@@ -719,13 +722,13 @@ export const AggregationProfilesChange = (props) => {
             endpoint_group: valueSend.endpoint_group,
             metric_operation: valueSend.metric_operation,
             profile_operation: valueSend.profile_operation,
-            metric_profile: values.metric_profile,
+            metric_profile: valueSend.metric_profile.name,
             groups: JSON.stringify(valueSend.groups)
           }
         )
         if (r_internal.ok) {
           NotifyOk({
-            msg: 'Aggregation profile succesfully changed',
+            msg: 'Aggregation profile successfully changed',
             title: 'Changed',
             callback: () => history.push('/ui/aggregationprofiles')
           })
@@ -819,7 +822,7 @@ export const AggregationProfilesChange = (props) => {
       let r = await backend.deleteObject(`/api/v2/internal/aggregations/${idProfile}`);
       if (r.ok)
         NotifyOk({
-          msg: 'Aggregation profile sucessfully deleted',
+          msg: 'Aggregation profile successfully deleted',
           title: 'Deleted',
           callback: () => history.push('/ui/aggregationprofiles')
         });
@@ -893,7 +896,7 @@ export const AggregationProfilesChange = (props) => {
 
   else if (errorAggregationProfile)
     return (
-      <ErrorComponent error={error}/>
+      <ErrorComponent error={errorAggregationProfile}/>
     )
 
   else if (!loadingAggregationProfile && !loadingUserDetails && aggregationProfile) {
@@ -1000,36 +1003,36 @@ export const AggregationProfilesChange = (props) => {
                 :
                   <FieldArray
                     name='groups'
-                    render={arrayHelpers => (
+                    render={() => (
                       <Row className='groups'>
                         {
                           props.values['groups'].map((group, i) =>
                             <FieldArray
                               key={i}
                               name='groups'
-                              render={arrayHelpers => (
+                              render={() => (
                                 <React.Fragment key={i}>
                                   <Col sm={{size: 8}} md={{size: 5}} className='mt-4 mb-2'>
-                                    <Card>
+                                    <Card data-testid={`card-${i}`}>
                                       <CardHeader className='p-1' color='primary'>
                                         <Row className='d-flex align-items-center no-gutters'>
-                                          <Col sm={{size: 10}} md={{size: 11}}>
+                                          <Col sm={{size: 10}} md={{size: 11}} data-testid='service-group'>
                                             {props.values.groups[i].name}
                                           </Col>
                                         </Row>
                                       </CardHeader>
                                       <CardBody className='p-1'>
                                         {
-                                          group.services.map((service, j) =>
+                                          group.services.map((_, j) =>
                                             <FieldArray
                                               key={j}
                                               name={`groups.${i}.services`}
-                                              render={arrayHelpers => (
+                                              render={() => (
                                                 <Row className='d-flex align-items-center service pt-1 pb-1 no-gutters' key={j}>
-                                                  <Col md={8}>
+                                                  <Col md={8} data-testid={`service-${j}`}>
                                                     {props.values.groups[i].services[j].name}
                                                   </Col>
-                                                  <Col md={2}>
+                                                  <Col md={2} data-testid={`operation-${j}`}>
                                                     {props.values.groups[i].services[j].operation}
                                                   </Col>
                                                 </Row>
@@ -1038,13 +1041,13 @@ export const AggregationProfilesChange = (props) => {
                                           )
                                         }
                                       </CardBody>
-                                      <CardFooter className='p-1 d-flex justify-content-center'>
+                                      <CardFooter className='p-1 d-flex justify-content-center' data-testid='operation'>
                                         {props.values.groups[i].operation}
                                       </CardFooter>
                                     </Card>
                                   </Col>
                                   <Col sm={{size: 4}} md={{size: 1}} className='mt-5'>
-                                    <div className='group-operation' key={i}>
+                                    <div className='group-operation' key={i} data-testid={`group-operation-${i}`}>
                                       {props.values.profile_operation}
                                     </div>
                                   </Col>
@@ -1395,14 +1398,14 @@ export const AggregationProfileVersionDetails = (props) => {
               />
               <FieldArray
                 name='groups'
-                render={arrayHelpers => (
+                render={() => (
                   <Row className='groups'>
                     {
                       props.values['groups'].map((group, i) =>
                         <FieldArray
                           key={i}
                           name='groups'
-                          render={arrayHelpers => (
+                          render={() => (
                             <React.Fragment key={i}>
                               <Col sm={{size: 8}} md={{size: 5}} className='mt-4 mb-2'>
                                 <Card>
@@ -1415,11 +1418,11 @@ export const AggregationProfileVersionDetails = (props) => {
                                   </CardHeader>
                                   <CardBody className='p-1'>
                                     {
-                                      group.services.map((service, j) =>
+                                      group.services.map((_, j) =>
                                         <FieldArray
                                           key={j}
                                           name={`groups.${i}.services`}
-                                          render={arrayHelpers => (
+                                          render={() => (
                                             <Row className='d-flex align-items-center service pt-1 pb-1 no-gutters' key={j}>
                                               <Col md={8}>
                                                 {groups[i].services[j].name}
