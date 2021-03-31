@@ -4,7 +4,7 @@ import '@testing-library/jest-dom/extend-expect';
 import { createMemoryHistory } from 'history';
 import { Route, Router } from 'react-router-dom';
 import { Backend, WebApi } from '../DataManager';
-import { AggregationProfilesChange, AggregationProfilesList } from '../AggregationProfiles';
+import { AggregationProfilesChange, AggregationProfilesList, AggregationProfileVersionDetails } from '../AggregationProfiles';
 import { queryCache } from 'react-query';
 import { NotificationManager } from 'react-notifications';
 
@@ -224,6 +224,102 @@ const mockBackendProfile = {
 };
 
 
+const mockAggregationVersions = [
+  {
+    id: '7',
+    object_repr: 'TEST_PROFILE',
+    fields: {
+      name: 'TEST_PROFILE2',
+      description: '',
+      groupname: 'TEST2',
+      apiid: '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
+      endpoint_group: 'servicegroups',
+      metric_operation: 'OR',
+      profile_operation: 'OR',
+      metric_profile: 'TEST_PROFILE2',
+      groups: [
+        {
+          'name': 'Group1a',
+          'operation': 'AND',
+          'services': [
+            {
+              'name': 'AMGA',
+              'operation': 'OR'
+            },
+            {
+              'name': 'APEL',
+              'operation': 'OR'
+            }
+          ]
+        },
+        {
+          'name': 'Group2',
+          'operation': 'OR',
+          'services': [
+            {
+              'name': 'argo.api',
+              'operation': 'OR'
+            }
+          ]
+        }
+      ]
+    },
+    user: 'testuser',
+    date_created: '2021-03-31 13:56:48',
+    comment: 'Changed endpoint_group, groupname, metric_operation, metric_profile, name and profile_operation. Deleted groups field "Group1". Added groups field "Group1a". Changed groups field "Group2".',
+    version: '20210331-135648'
+  },
+  {
+    id: '6',
+    object_repr: 'TEST_PROFILE',
+    fields: {
+      name: 'TEST_PROFILE',
+      description: '',
+      groupname: 'EGI',
+      apiid: '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
+      endpoint_group: 'sites',
+      metric_operation: 'AND',
+      profile_operation: 'AND',
+      metric_profile: 'TEST_PROFILE',
+      groups: [
+        {
+          name: 'Group1',
+          operation: 'AND',
+          services: [
+            {
+              name: 'AMGA',
+              operation: 'OR'
+            },
+            {
+              name: 'APEL',
+              operation: 'OR'
+            }
+          ]
+        },
+        {
+          name: 'Group2',
+          operation: 'AND',
+          services: [
+            {
+              name: 'VOMS',
+              operation: 'OR'
+            },
+            {
+              name: 'argo.api',
+              operation: 'OR'
+            }
+          ]
+        }
+      ]
+    },
+    user: 'testuser',
+    date_created: '2020-12-28 14:53:48',
+    comment: 'Initial version.',
+    version: '20201228-145348'
+  }
+];
+
+
 
 function renderListView(publicView=false) {
   const route = `/ui/${publicView ? 'public_' : ''}aggregationprofiles`;
@@ -309,6 +405,23 @@ function renderAddview() {
             tenantname='TENANT'
             addview={true}
           /> }
+        />
+      </Router>
+    )
+  }
+}
+
+
+function renderVersionDetailsView() {
+  const route = '/ui/aggregationprofiles/TEST_PROFILE/history/20201228-145348';
+  const history = createMemoryHistory({ initialEntries: [route] });
+
+  return {
+    ...render(
+      <Router history={history}>
+        <Route
+          path='/ui/aggregationprofiles/:name/history/:version'
+          render={ props => <AggregationProfileVersionDetails {...props} />}
         />
       </Router>
     )
@@ -2304,5 +2417,85 @@ describe('Tests for aggregation profile addview', () => {
       0,
       expect.any(Function)
     )
+  })
+})
+
+
+describe('Test for aggregation profile version detail page', () => {
+  beforeAll(() => {
+    Backend.mockImplementation(() => {
+      return {
+        fetchData: () => Promise.resolve(mockAggregationVersions)
+      }
+    })
+  })
+
+  test('Test that page renders properly', async () => {
+    renderVersionDetailsView();
+
+    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /test/i }).textContent).toBe('TEST_PROFILE (2020-12-28 14:53:48)')
+    })
+
+    const nameField = screen.getByTestId('name');
+    const groupField = screen.getByTestId('groupname');
+    const metricOperation = screen.getByTestId('metric_operation').firstChild;
+    const aggrOperation = screen.getByTestId('profile_operation').firstChild;
+    const endpointGroup = screen.getByTestId('endpoint_group').firstChild;
+    const metricProfileRow = within(screen.getByTestId('metric_profile_row'));
+    const metricProfileField = metricProfileRow.getByRole('textbox');
+
+    expect(nameField.value).toBe('TEST_PROFILE');
+    expect(nameField).toBeDisabled();
+    expect(groupField.value).toBe('EGI');
+    expect(groupField).toBeDisabled();
+
+    expect(metricOperation.value).toBe('AND');
+    expect(metricOperation).toBeDisabled();
+    expect(aggrOperation.value).toBe('AND');
+    expect(aggrOperation).toBeDisabled();
+    expect(endpointGroup.value).toBe('sites');
+    expect(endpointGroup).toBeDisabled();
+    expect(metricProfileField.value).toBe('TEST_PROFILE');
+    expect(metricProfileField).toBeDisabled();
+
+    expect(screen.getAllByTestId(/card/i)).toHaveLength(2);
+    const card0 = within(screen.getByTestId('card-0'));
+    const card1 = within(screen.getByTestId('card-1'));
+
+    expect(screen.getAllByTestId(/group-operation/i)).toHaveLength(2);
+    expect(screen.getByTestId('group-operation-0').textContent).toBe('AND');
+    expect(screen.getByTestId('group-operation-1').textContent).toBe('AND');
+
+    expect(card0.getByTestId('service-group').textContent).toBe('Group1');
+    expect(card0.getAllByTestId(/service-/i)).toHaveLength(3);
+    expect(card0.getByTestId('service-0').textContent).toBe('AMGA');
+    expect(card0.getByTestId('service-1').textContent).toBe('APEL');
+    expect(card0.getAllByTestId(/operation-/i)).toHaveLength(2);
+    expect(card0.getByTestId('operation-0').textContent).toBe('OR');
+    expect(card0.getByTestId('operation-1').textContent).toBe('OR');
+    expect(card0.queryByTestId(/remove/i)).not.toBeInTheDocument();
+    expect(card0.queryByTestId(/insert/i)).not.toBeInTheDocument();
+    expect(card0.getByTestId('operation').textContent).toBe('AND');
+
+    expect(card1.getByTestId('service-group').textContent).toBe('Group2');
+    expect(card1.getAllByTestId(/service-/i)).toHaveLength(3);
+    expect(card1.getByTestId('service-0').textContent).toBe('VOMS');
+    expect(card1.getByTestId('service-1').textContent).toBe('argo.api');
+    expect(card1.getAllByTestId(/operation-/i)).toHaveLength(2);
+    expect(card1.getByTestId('operation-0').textContent).toBe('OR');
+    expect(card1.getByTestId('operation-1').textContent).toBe('OR');
+    expect(card1.queryByTestId(/remove/i)).not.toBeInTheDocument();
+    expect(card1.queryByTestId(/insert/i)).not.toBeInTheDocument();
+    expect(card1.getByTestId('operation').textContent).toBe('AND');
+
+    expect(screen.queryByRole('button', { name: /save/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /history/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Add new group' })).not.toBeInTheDocument();
+
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   })
 })

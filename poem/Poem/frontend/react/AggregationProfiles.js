@@ -496,6 +496,68 @@ const AggregationProfilesForm = ({ values, errors, historyview=false, write_perm
 );
 
 
+const GroupsDisabledForm = ( props ) => (
+  <FieldArray
+    name='groups'
+    render={() => (
+      <Row className='groups'>
+        {
+          props.values['groups'].map((group, i) =>
+            <FieldArray
+              key={i}
+              name='groups'
+              render={() => (
+                <React.Fragment key={i}>
+                  <Col sm={{size: 8}} md={{size: 5}} className='mt-4 mb-2'>
+                    <Card data-testid={`card-${i}`}>
+                      <CardHeader className='p-1' color='primary'>
+                        <Row className='d-flex align-items-center no-gutters'>
+                          <Col sm={{size: 10}} md={{size: 11}} data-testid='service-group'>
+                            {props.values.groups[i].name}
+                          </Col>
+                        </Row>
+                      </CardHeader>
+                      <CardBody className='p-1'>
+                        {
+                          group.services.map((_, j) =>
+                            <FieldArray
+                              key={j}
+                              name={`groups.${i}.services`}
+                              render={() => (
+                                <Row className='d-flex align-items-center service pt-1 pb-1 no-gutters' key={j}>
+                                  <Col md={8} data-testid={`service-${j}`}>
+                                    {props.values.groups[i].services[j].name}
+                                  </Col>
+                                  <Col md={2} data-testid={`operation-${j}`}>
+                                    {props.values.groups[i].services[j].operation}
+                                  </Col>
+                                </Row>
+                              )}
+                            />
+                          )
+                        }
+                      </CardBody>
+                      <CardFooter className='p-1 d-flex justify-content-center' data-testid='operation'>
+                        {props.values.groups[i].operation}
+                      </CardFooter>
+                    </Card>
+                  </Col>
+                  <Col sm={{size: 4}} md={{size: 1}} className='mt-5'>
+                    <div className='group-operation' key={i} data-testid={`group-operation-${i}`}>
+                      {props.values.profile_operation}
+                    </div>
+                  </Col>
+                </React.Fragment>
+              )}
+            />
+          )
+        }
+      </Row>
+    )}
+  />
+)
+
+
 export const AggregationProfilesChange = (props) => {
   const tenant_name = props.tenantname;
   const profile_name = props.match.params.name;
@@ -1001,64 +1063,7 @@ export const AggregationProfilesChange = (props) => {
                     )}
                   />
                 :
-                  <FieldArray
-                    name='groups'
-                    render={() => (
-                      <Row className='groups'>
-                        {
-                          props.values['groups'].map((group, i) =>
-                            <FieldArray
-                              key={i}
-                              name='groups'
-                              render={() => (
-                                <React.Fragment key={i}>
-                                  <Col sm={{size: 8}} md={{size: 5}} className='mt-4 mb-2'>
-                                    <Card data-testid={`card-${i}`}>
-                                      <CardHeader className='p-1' color='primary'>
-                                        <Row className='d-flex align-items-center no-gutters'>
-                                          <Col sm={{size: 10}} md={{size: 11}} data-testid='service-group'>
-                                            {props.values.groups[i].name}
-                                          </Col>
-                                        </Row>
-                                      </CardHeader>
-                                      <CardBody className='p-1'>
-                                        {
-                                          group.services.map((_, j) =>
-                                            <FieldArray
-                                              key={j}
-                                              name={`groups.${i}.services`}
-                                              render={() => (
-                                                <Row className='d-flex align-items-center service pt-1 pb-1 no-gutters' key={j}>
-                                                  <Col md={8} data-testid={`service-${j}`}>
-                                                    {props.values.groups[i].services[j].name}
-                                                  </Col>
-                                                  <Col md={2} data-testid={`operation-${j}`}>
-                                                    {props.values.groups[i].services[j].operation}
-                                                  </Col>
-                                                </Row>
-                                              )}
-                                            />
-                                          )
-                                        }
-                                      </CardBody>
-                                      <CardFooter className='p-1 d-flex justify-content-center' data-testid='operation'>
-                                        {props.values.groups[i].operation}
-                                      </CardFooter>
-                                    </Card>
-                                  </Col>
-                                  <Col sm={{size: 4}} md={{size: 1}} className='mt-5'>
-                                    <div className='group-operation' key={i} data-testid={`group-operation-${i}`}>
-                                      {props.values.profile_operation}
-                                    </div>
-                                  </Col>
-                                </React.Fragment>
-                              )}
-                            />
-                          )
-                        }
-                      </Row>
-                    )}
-                  />
+                  <GroupsDisabledForm {...props} />
               }
               {
                 (write_perm) &&
@@ -1377,7 +1382,6 @@ export const AggregationProfileVersionDetails = (props) => {
     return (<ErrorComponent error={error}/>)
 
   else if (!loading && aggregationProfileDetails) {
-    const { groups } = aggregationProfileDetails;
 
     return (
       <BaseArgoView
@@ -1401,64 +1405,7 @@ export const AggregationProfileVersionDetails = (props) => {
                 {...props}
                 historyview={true}
               />
-              <FieldArray
-                name='groups'
-                render={() => (
-                  <Row className='groups'>
-                    {
-                      props.values['groups'].map((group, i) =>
-                        <FieldArray
-                          key={i}
-                          name='groups'
-                          render={() => (
-                            <React.Fragment key={i}>
-                              <Col sm={{size: 8}} md={{size: 5}} className='mt-4 mb-2'>
-                                <Card>
-                                  <CardHeader className='p-1' color='primary'>
-                                    <Row className='d-flex align-items-center no-gutters'>
-                                      <Col sm={{size: 10}} md={{size: 11}}>
-                                        {groups[i].name}
-                                      </Col>
-                                    </Row>
-                                  </CardHeader>
-                                  <CardBody className='p-1'>
-                                    {
-                                      group.services.map((_, j) =>
-                                        <FieldArray
-                                          key={j}
-                                          name={`groups.${i}.services`}
-                                          render={() => (
-                                            <Row className='d-flex align-items-center service pt-1 pb-1 no-gutters' key={j}>
-                                              <Col md={8}>
-                                                {groups[i].services[j].name}
-                                              </Col>
-                                              <Col md={2}>
-                                                {groups[i].services[j].operation}
-                                              </Col>
-                                            </Row>
-                                          )}
-                                        />
-                                      )
-                                    }
-                                  </CardBody>
-                                  <CardFooter className='p-1 d-flex justify-content-center'>
-                                    {groups[i].operation}
-                                  </CardFooter>
-                                </Card>
-                              </Col>
-                              <Col sm={{size: 4}} md={{size: 1}} className='mt-5'>
-                                <div className='group-operation' key={i}>
-                                  {props.values.profile_operation}
-                                </div>
-                              </Col>
-                            </React.Fragment>
-                          )}
-                        />
-                      )
-                    }
-                  </Row>
-                )}
-              />
+              <GroupsDisabledForm {...props} />
             </Form>
           )}
         </Formik>
