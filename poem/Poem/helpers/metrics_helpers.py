@@ -164,30 +164,46 @@ def get_metrics_in_profiles(schema):
             raise Exception('Error fetching WEB API data: API key not found.')
 
 
-def update_metrics(metrictemplate, name, probekey, user=''):
-    schemas = list(Tenant.objects.all().values_list('schema_name', flat=True))
-    schemas.remove(get_public_schema_name())
+def update_metric_in_schema(
+        mt_id, name, pk_id, schema, update_from_history=False, user=''
+):
+    if update_from_history:
+        mt_model = admin_models.MetricTemplateHistory
 
-    msgs = []
-    for schema in schemas:
-        with schema_context(schema):
-            try:
-                met = poem_models.Metric.objects.get(
-                    name=name, probekey=probekey
-                )
-                met.name = metrictemplate.name
-                met.probekey = metrictemplate.probekey
-                met.probeexecutable = metrictemplate.probeexecutable
-                met.description = metrictemplate.description
-                met.parent = metrictemplate.parent
-                met.attribute = metrictemplate.attribute
-                met.dependancy = metrictemplate.dependency
-                met.flags = metrictemplate.flags
-                met.files = metrictemplate.files
-                met.parameter = metrictemplate.parameter
-                met.fileparameter = metrictemplate.fileparameter
+    else:
+        mt_model = admin_models.MetricTemplate
 
-                if metrictemplate.config:
+    metrictemplate = mt_model.objects.get(pk=mt_id)
+
+    if pk_id:
+        probekey = admin_models.ProbeHistory.objects.get(pk=pk_id)
+
+    else:
+        probekey = None
+
+    msgs = ''
+    with schema_context(schema):
+        try:
+            met = poem_models.Metric.objects.get(
+                name=name, probekey=probekey
+            )
+            met.name = metrictemplate.name
+            met.probekey = metrictemplate.probekey
+            met.probeexecutable = metrictemplate.probeexecutable
+            met.description = metrictemplate.description
+            met.parent = metrictemplate.parent
+            met.attribute = metrictemplate.attribute
+            met.dependancy = metrictemplate.dependency
+            met.flags = metrictemplate.flags
+            met.files = metrictemplate.files
+            met.parameter = metrictemplate.parameter
+            met.fileparameter = metrictemplate.fileparameter
+
+            if metrictemplate.config:
+                if update_from_history:
+                    met.config = metrictemplate.config
+
+                else:
                     for item in json.loads(metrictemplate.config):
                         if item.split(' ')[0] == 'path':
                             objpath = item
@@ -201,46 +217,61 @@ def update_metrics(metrictemplate, name, probekey, user=''):
 
                     met.config = json.dumps(metconfig)
 
-                met.save()
+            met.save()
 
-                new_tags = set([tag.name for tag in metrictemplate.tags.all()])
-                old_tags = set([tag.name for tag in met.tags.all()])
-                if new_tags.difference(old_tags):
-                    for tag_name in new_tags.difference(old_tags):
-                        met.tags.add(
-                            admin_models.MetricTags.objects.get(name=tag_name)
-                        )
-
-                if old_tags.difference(new_tags):
-                    for tag_name in old_tags.difference(new_tags):
-                        met.tags.remove(
-                            admin_models.MetricTags.objects.get(name=tag_name)
-                        )
-
-                if met.probekey != probekey:
-                    create_history(met, user)
-
-                else:
-                    history = poem_models.TenantHistory.objects.filter(
-                        object_id=met.id,
-                        content_type=ContentType.objects.get_for_model(
-                            poem_models.Metric
-                        )
-                    )[0]
-                    history.serialized_data = serializers.serialize(
-                        'json', [met],
-                        use_natural_foreign_keys=True,
-                        use_natural_primary_keys=True
+            new_tags = set([tag.name for tag in metrictemplate.tags.all()])
+            old_tags = set([tag.name for tag in met.tags.all()])
+            if new_tags.difference(old_tags):
+                for tag_name in new_tags.difference(old_tags):
+                    met.tags.add(
+                        admin_models.MetricTags.objects.get(name=tag_name)
                     )
-                    history.object_repr = met.__str__()
-                    history.save()
 
-                if name != met.name:
-                    msgs = update_metrics_in_profiles(name, met.name)
+            if old_tags.difference(new_tags):
+                for tag_name in old_tags.difference(new_tags):
+                    met.tags.remove(
+                        admin_models.MetricTags.objects.get(name=tag_name)
+                    )
+
+            if update_from_history or met.probekey != probekey:
+                create_history(met, user)
+
+            else:
+                history = poem_models.TenantHistory.objects.filter(
+                    object_id=met.id,
+                    content_type=ContentType.objects.get_for_model(
+                        poem_models.Metric
+                    )
+                )[0]
+                history.serialized_data = serializers.serialize(
+                    'json', [met],
+                    use_natural_foreign_keys=True,
+                    use_natural_primary_keys=True
+                )
+                history.object_repr = met.__str__()
+                history.save()
+
+            if name != met.name:
+                msgs = update_metrics_in_profiles(name, met.name)
+
+        except poem_models.Metric.DoesNotExist:
+            pass
+
+    return msgs
 
 
-            except poem_models.Metric.DoesNotExist:
-                continue
+def update_metrics(metrictemplate, name, probekey, user=''):
+    schemas = list(Tenant.objects.all().values_list('schema_name', flat=True))
+    schemas.remove(get_public_schema_name())
+
+    msgs = []
+    for schema in schemas:
+        msg = update_metric_in_schema(
+            mt_id=metrictemplate.id, name=name, pk_id=probekey.id,
+            schema=schema, user=user
+        )
+        if msg:
+            msgs.append(msg)
 
     return msgs
 
