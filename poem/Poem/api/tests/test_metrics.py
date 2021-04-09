@@ -11,12 +11,12 @@ from Poem.tenants.models import Tenant
 from Poem.users.models import CustUser
 from django.contrib.contenttypes.models import ContentType
 from django.core import serializers
-from django.test.client import encode_multipart
 from rest_framework import status
 from rest_framework.test import force_authenticate
 from tenant_schemas.test.cases import TenantTestCase
 from tenant_schemas.test.client import TenantRequestFactory
 from tenant_schemas.utils import get_public_schema_name, schema_context
+
 from .utils_test import mocked_func, encode_data, mocked_inline_metric_for_db, \
     MockResponse
 
@@ -1266,7 +1266,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     @patch('Poem.api.internal_views.metrics.delete_metrics_from_profile')
-    @patch('Poem.api.internal_views.metrics.update_metrics')
+    @patch('Poem.api.internal_views.metrics.update_metric_in_schema')
     def test_update_metrics_versions(self, mock_update, mock_delete):
         mock_update.side_effect = mocked_func
         mock_delete.side_effect = mocked_func
@@ -1282,12 +1282,18 @@ class UpdateMetricsVersionsTests(TenantTestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertFalse(mock_delete.called)
         self.assertEqual(mock_update.call_count, 2)
-        mock_update.has_calls([
-            call(self.mt1_history2, 'argo.AMS-Check', self.probehistory1),
+        mock_update.assert_has_calls([
             call(
-                self.mt2_history2, 'argo.AMSPublisher-Check', self.probehistory3
+                mt_id=self.mt1_history2.id, name='argo.AMS-Check',
+                pk_id=self.probehistory1.id, schema='test',
+                update_from_history=True, user='testuser'
+            ),
+            call(
+                mt_id=self.mt2_history2.id, name='argo.AMSPublisher-Check',
+                pk_id=self.probehistory3.id, schema='test',
+                update_from_history=True, user='testuser'
             )
-        ])
+        ], any_order=True)
         self.assertEqual(
             response.data,
             {
@@ -1298,7 +1304,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
 
     @patch('Poem.api.internal_views.metrics.delete_metrics_from_profile')
     @patch('Poem.api.internal_views.metrics.get_metrics_in_profiles')
-    @patch('Poem.api.internal_views.metrics.update_metrics')
+    @patch('Poem.api.internal_views.metrics.update_metric_in_schema')
     def test_update_metrics_version_if_metric_template_was_renamed(
             self, mock_update, mock_get, mock_delete
     ):
@@ -1361,8 +1367,12 @@ class UpdateMetricsVersionsTests(TenantTestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertFalse(mock_delete.called)
         self.assertEqual(mock_update.call_count, 1)
-        mock_update.has_calls([
-            call(mt1_history3, 'argo.AMS-Check', self.probehistory1)
+        mock_update.assert_has_calls([
+            call(
+                mt_id=mt1_history3.id, name='argo.AMS-Check',
+                pk_id=self.probehistory1.id, schema='test',
+                update_from_history=True, user='testuser'
+            )
         ])
         self.assertEqual(
             response.data,
@@ -1376,7 +1386,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
 
     @patch('Poem.api.internal_views.metrics.delete_metrics_from_profile')
     @patch('Poem.api.internal_views.metrics.get_metrics_in_profiles')
-    @patch('Poem.api.internal_views.metrics.update_metrics')
+    @patch('Poem.api.internal_views.metrics.update_metric_in_schema')
     def test_metrics_deleted_if_their_probes_do_not_exist_in_new_package(
             self, mock_update, mock_get, mock_delete
     ):
@@ -1444,11 +1454,15 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             'PROFILE1', ['argo.AMSPublisher-Check']
         )
         self.assertEqual(mock_update.call_count, 1)
-        mock_update.has_calls([
-            call(mt1_history3, 'argo.AMS-Check', self.probehistory1)
+        mock_update.assert_has_calls([
+            call(
+                mt_id=mt1_history3.id, name='argo.AMS-Check',
+                pk_id=self.probehistory1.id, schema='test',
+                update_from_history=True, user='testuser'
+            )
         ])
 
-    @patch('Poem.api.internal_views.metrics.update_metrics')
+    @patch('Poem.api.internal_views.metrics.update_metric_in_schema')
     def test_metrics_warning_if_metric_template_history_do_not_exist(
             self, mock_update
     ):
@@ -1475,7 +1489,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
 
     @patch('Poem.api.internal_views.metrics.delete_metrics_from_profile')
     @patch('Poem.api.internal_views.metrics.get_metrics_in_profiles')
-    @patch('Poem.api.internal_views.metrics.update_metrics')
+    @patch('Poem.api.internal_views.metrics.update_metric_in_schema')
     def test_metrics_with_update_warning_and_deletion(
             self,  mock_update, mock_get, mock_delete
     ):
@@ -1563,8 +1577,12 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             }
         )
         self.assertEqual(mock_update.call_count, 1)
-        mock_update.has_calls([
-            call(mt1_history3, 'argo.AMS-Check', self.probehistory1)
+        mock_update.assert_has_calls([
+            call(
+                mt_id=mt1_history3.id, name='argo.AMS-Check',
+                pk_id=self.probehistory1.id, schema='test',
+                update_from_history=True, user='testuser'
+            )
         ])
         self.assertEqual(mock_delete.call_count, 2)
         mock_delete.assert_has_calls([
@@ -1574,7 +1592,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
 
     @patch('Poem.api.internal_views.metrics.delete_metrics_from_profile')
     @patch('Poem.api.internal_views.metrics.get_metrics_in_profiles')
-    @patch('Poem.api.internal_views.metrics.update_metrics')
+    @patch('Poem.api.internal_views.metrics.update_metric_in_schema')
     def test_metrics_with_update_warning_and_deletion_if_api_get_exception(
             self,  mock_update, mock_get, mock_delete
     ):
@@ -1662,15 +1680,19 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             }
         )
         self.assertEqual(mock_update.call_count, 1)
-        mock_update.has_calls([
-            call(mt1_history3, 'argo.AMS-Check', self.probehistory1)
+        mock_update.assert_has_calls([
+            call(
+                mt_id=mt1_history3.id, name='argo.AMS-Check',
+                pk_id=self.probehistory1.id, schema='test',
+                update_from_history=True, user='testuser'
+            )
         ])
         mock_get.assert_called_once_with(self.tenant.schema_name)
         self.assertFalse(mock_delete.called)
 
     @patch('Poem.api.internal_views.metrics.delete_metrics_from_profile')
     @patch('Poem.api.internal_views.metrics.get_metrics_in_profiles')
-    @patch('Poem.api.internal_views.metrics.update_metrics')
+    @patch('Poem.api.internal_views.metrics.update_metric_in_schema')
     def test_metrics_with_update_warning_and_deletion_if_api_put_exception(
             self,  mock_update, mock_get, mock_delete
     ):
@@ -1761,15 +1783,19 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             }
         )
         self.assertEqual(mock_update.call_count, 1)
-        mock_update.has_calls([
-            call(mt1_history3, 'argo.AMS-Check', self.probehistory1)
+        mock_update.assert_has_calls([
+            call(
+                mt_id=mt1_history3.id, name='argo.AMS-Check',
+                pk_id=self.probehistory1.id, schema='test',
+                update_from_history=True, user='testuser'
+            )
         ])
         mock_get.assert_called_once_with(self.tenant.schema_name)
         mock_delete.assert_called_once_with(
             'PROFILE1', ['argo.AMSPublisher-Check']
         )
 
-    @patch('Poem.api.internal_views.metrics.update_metrics')
+    @patch('Poem.api.internal_views.metrics.update_metric_in_schema')
     def test_update_metrics_if_package_not_found(self, mock_update):
         mock_update.side_effect = mocked_func
         data = {
@@ -1786,7 +1812,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
         self.assertFalse(mock_update.called)
 
     @patch('Poem.api.internal_views.metrics.get_metrics_in_profiles')
-    @patch('Poem.api.internal_views.metrics.update_metrics')
+    @patch('Poem.api.internal_views.metrics.update_metric_in_schema')
     def test_update_metrics_versions_dry_run(self, mock_update, mock_get):
         mock_update.side_effect = mocked_func
         mock_get.return_value = {
@@ -1809,7 +1835,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
         )
 
     @patch('Poem.api.internal_views.metrics.get_metrics_in_profiles')
-    @patch('Poem.api.internal_views.metrics.update_metrics')
+    @patch('Poem.api.internal_views.metrics.update_metric_in_schema')
     def test_update_metrics_version_if_metric_template_was_renamed_dry_run(
             self, mock_update, mock_get
     ):
@@ -1884,7 +1910,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
         )
 
     @patch('Poem.api.internal_views.metrics.get_metrics_in_profiles')
-    @patch('Poem.api.internal_views.metrics.update_metrics')
+    @patch('Poem.api.internal_views.metrics.update_metric_in_schema')
     def test_metrics_deleted_if_their_probes_do_not_exist_in_new_package_dry(
             self, mock_update, mock_get
     ):
@@ -1946,7 +1972,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
         mock_get.assert_called_once()
 
     @patch('Poem.api.internal_views.metrics.get_metrics_in_profiles')
-    @patch('Poem.api.internal_views.metrics.update_metrics')
+    @patch('Poem.api.internal_views.metrics.update_metric_in_schema')
     def test_metrics_warning_if_metric_template_history_do_not_exist_dry_run(
             self, mock_update, mock_get
     ):
@@ -1972,7 +1998,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
         )
 
     @patch('Poem.api.internal_views.metrics.get_metrics_in_profiles')
-    @patch('Poem.api.internal_views.metrics.update_metrics')
+    @patch('Poem.api.internal_views.metrics.update_metric_in_schema')
     def test_metrics_with_update_warning_and_deletion_dry(
             self,  mock_update, mock_get
     ):
@@ -2056,7 +2082,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
         mock_get.assert_called_once()
 
     @patch('Poem.api.internal_views.metrics.get_metrics_in_profiles')
-    @patch('Poem.api.internal_views.metrics.update_metrics')
+    @patch('Poem.api.internal_views.metrics.update_metric_in_schema')
     def test_update_metrics_if_metrics_in_profiles_wrong_token_dry_run(
             self, mock_update, mock_get
     ):
@@ -2089,7 +2115,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
         self.assertFalse(mock_update.called)
 
     @patch('Poem.api.internal_views.metrics.get_metrics_in_profiles')
-    @patch('Poem.api.internal_views.metrics.update_metrics')
+    @patch('Poem.api.internal_views.metrics.update_metric_in_schema')
     def test_update_metrics_if_metrics_in_profiles_page_not_found_dry_run(
             self, mock_update, mock_get
     ):
@@ -2111,7 +2137,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
         self.assertFalse(mock_update.called)
 
     @patch('Poem.api.internal_views.metrics.get_metrics_in_profiles')
-    @patch('Poem.api.internal_views.metrics.update_metrics')
+    @patch('Poem.api.internal_views.metrics.update_metric_in_schema')
     def test_update_metrics_if_metrics_in_profiles_api_key_not_found_dry_run(
             self, mock_update, mock_get
     ):
