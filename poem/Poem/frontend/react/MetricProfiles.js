@@ -128,7 +128,7 @@ const MetricProfileTupleValidate = ({view_services, name, groupname,
   }
 
   // find new empty tuples
-  for (var i of view_services) {
+  for (let i of view_services) {
     let obj = undefined
     if (!errors.view_services[i.index])
       errors.view_services[i.index] = new Object()
@@ -254,6 +254,7 @@ const ServicesList = () => {
                 <td className={service.isNew ? "bg-light align-middle pl-3" : "align-middle pl-3"}>
                   <Button size="sm" color="light"
                     type="button"
+                    data-testid={`remove-${index}`}
                     onClick={() => {
                       context.remove_handler(context.formikBag.form.values.view_services[index],
                         context.formikBag.form.values.groupname, context.formikBag.form.values.name,
@@ -266,6 +267,7 @@ const ServicesList = () => {
                     <FontAwesomeIcon icon={faTimes}/>
                   </Button>
                   <Button size="sm" color="light"
+                    data-testid={`insert-${index}`}
                     type="button"
                     onClick={() => {
                       let new_element = {index: index + 1, service: '', metric: '', isNew: true}
@@ -512,7 +514,7 @@ export const MetricProfilesComponent = (props) => {
       let r_internal = await backend.deleteObject(`/api/v2/internal/metricprofiles/${idProfile}`);
       if (r_internal.ok)
         NotifyOk({
-          msg: 'Metric profile sucessfully deleted',
+          msg: 'Metric profile successfully deleted',
           title: 'Deleted',
           callback: () => history.push('/ui/metricprofiles')
         });
@@ -600,7 +602,7 @@ export const MetricProfilesComponent = (props) => {
         tmp_list_services[i].index = element_index - 1;
       }
 
-      for (var i = index_tmp; i < tmp_view_services.length; i++) {
+      for (let i = index_tmp; i < tmp_view_services.length; i++) {
         let element_index = tmp_view_services[i].index
         tmp_view_services[i].index = element_index - 1;
       }
@@ -696,6 +698,8 @@ export const MetricProfilesComponent = (props) => {
           msg: change_msg
         });
       } else {
+        const backend_services = [];
+        formValues.view_services.forEach((service) => backend_services.push({ service: service.service, metric: service.metric }));
         let r = await backend.changeObject(
           '/api/v2/internal/metricprofiles/',
           {
@@ -703,15 +707,17 @@ export const MetricProfilesComponent = (props) => {
             name: dataToSend.name,
             description: dataToSend.description,
             groupname: formValues.groupname,
-            services: formValues.view_services
+            services: backend_services
           }
         );
-        if (r.ok)
+        if (r.ok) {
           NotifyOk({
-            msg: 'Metric profile succesfully changed',
+            msg: 'Metric profile successfully changed',
             title: 'Changed',
             callback: () => history.push('/ui/metricprofiles')
           });
+          updateCacheKey(formValues, services)
+        }
         else {
           let change_msg = '';
           try {
@@ -725,7 +731,6 @@ export const MetricProfilesComponent = (props) => {
             msg: change_msg
           });
         }
-        updateCacheKey(formValues, services)
       }
     } else {
       services = groupMetricsByServices(servicesList);
