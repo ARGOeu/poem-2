@@ -672,6 +672,8 @@ export const MetricProfilesComponent = (props) => {
   const doChange = async ({formValues, servicesList}) => {
     let services = [];
     let dataToSend = new Object()
+    const backend_services = [];
+    formValues.view_services.forEach((service) => backend_services.push({ service: service.service, metric: service.metric }));
 
     if (!addview && !cloneview) {
       const { id } = metricProfile.profile
@@ -698,8 +700,6 @@ export const MetricProfilesComponent = (props) => {
           msg: change_msg
         });
       } else {
-        const backend_services = [];
-        formValues.view_services.forEach((service) => backend_services.push({ service: service.service, metric: service.metric }));
         let r = await backend.changeObject(
           '/api/v2/internal/metricprofiles/',
           {
@@ -763,7 +763,7 @@ export const MetricProfilesComponent = (props) => {
             name: dataToSend.name,
             groupname: formValues.groupname,
             description: formValues.description,
-            services: formValues.view_services
+            services: backend_services
           }
         );
         if (r_internal.ok)
@@ -923,53 +923,54 @@ export const MetricProfilesComponent = (props) => {
         publicview={publicView}
         submitperm={write_perm}
         extra_button={
-          <ButtonDropdown className='mr-2' isOpen={dropdownOpen} toggle={() => setDropdownOpen(!dropdownOpen)}>
-            <DropdownToggle caret color='info'>CSV</DropdownToggle>
-            <DropdownMenu>
-              <DropdownItem
-                onClick={() => {
-                  let csvContent = [];
-                  viewServices.forEach((service) => {
-                    csvContent.push({service: service.service, metric: service.metric})
+          !addview &&
+            <ButtonDropdown className='mr-2' isOpen={dropdownOpen} toggle={() => setDropdownOpen(!dropdownOpen)}>
+              <DropdownToggle caret color='info'>CSV</DropdownToggle>
+              <DropdownMenu>
+                <DropdownItem
+                  onClick={() => {
+                    let csvContent = [];
+                    viewServices.forEach((service) => {
+                      csvContent.push({service: service.service, metric: service.metric})
+                    })
+                    const link = document.createElement('a');
+                    link.setAttribute('href', encodeURI(`data:text/csv;charset=utf8,\ufeff${PapaParse.unparse(csvContent)}`));
+                    link.setAttribute('download', `${profile_name}.csv`);
+                    link.click();
+                    link.remove();
+                  }}
+                  disabled={addview}
+                >
+                  Export
+                </DropdownItem>
+                <DropdownItem
+                  onClick={() => {hiddenFileInput.current.click()}}
+                >
+                  Import
+                </DropdownItem>
+              </DropdownMenu>
+              <input
+                type='file'
+                ref={hiddenFileInput}
+                onChange={(e) => {
+                  PapaParse.parse(e.target.files[0], {
+                    header: true,
+                    complete: (results) => {
+                      var imported = results.data;
+                      // remove entries without keys if there is any
+                      imported = imported.filter(
+                        obj => {
+                          return 'service' in obj && 'metric' in obj
+                        }
+                      )
+                      setViewServices(ensureAlignedIndexes(imported).sort(sortServices));
+                      setListServices(ensureAlignedIndexes(imported).sort(sortServices));
+                    }
                   })
-                  const link = document.createElement('a');
-                  link.setAttribute('href', encodeURI(`data:text/csv;charset=utf8,\ufeff${PapaParse.unparse(csvContent)}`));
-                  link.setAttribute('download', `${profile_name}.csv`);
-                  link.click();
-                  link.remove();
                 }}
-                disabled={addview}
-              >
-                Export
-              </DropdownItem>
-              <DropdownItem
-                onClick={() => {hiddenFileInput.current.click()}}
-              >
-                Import
-              </DropdownItem>
-            </DropdownMenu>
-            <input
-              type='file'
-              ref={hiddenFileInput}
-              onChange={(e) => {
-                PapaParse.parse(e.target.files[0], {
-                  header: true,
-                  complete: (results) => {
-                    var imported = results.data;
-                    // remove entries without keys if there is any
-                    imported = imported.filter(
-                      obj => {
-                        return 'service' in obj && 'metric' in obj
-                      }
-                    )
-                    setViewServices(ensureAlignedIndexes(imported).sort(sortServices));
-                    setListServices(ensureAlignedIndexes(imported).sort(sortServices));
-                  }
-                })
-              }}
-              style={{display: 'none'}}
-            />
-          </ButtonDropdown>
+                style={{display: 'none'}}
+              />
+            </ButtonDropdown>
         }
       >
         <Formik
@@ -1087,17 +1088,23 @@ export const MetricProfilesComponent = (props) => {
               {
                 (write_perm) &&
                   <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
-                    <Button
-                      color="danger"
-                      onClick={() => {
-                        setModalMsg('Are you sure you want to delete Metric profile?')
-                        setModalTitle('Delete metric profile')
-                        setAreYouSureModal(!areYouSureModal);
-                        setFormikValues(props.values)
-                        setOnYes('delete')
-                      }}>
-                      Delete
-                    </Button>
+                    {
+                      !addview ?
+                        <Button
+                          color="danger"
+                          onClick={() => {
+                            setModalMsg('Are you sure you want to delete Metric profile?')
+                            setModalTitle('Delete metric profile')
+                            setAreYouSureModal(!areYouSureModal);
+                            setFormikValues(props.values)
+                            setOnYes('delete')
+                          }}
+                        >
+                          Delete
+                        </Button>
+                      :
+                        <div></div>
+                    }
                     <Button color="success" id="submit-button" type="submit">Save</Button>
                   </div>
               }

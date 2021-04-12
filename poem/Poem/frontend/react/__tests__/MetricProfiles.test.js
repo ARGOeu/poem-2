@@ -20,6 +20,8 @@ const mockChangeObject = jest.fn();
 const mockChangeMetricProfile = jest.fn();
 const mockDeleteObject = jest.fn();
 const mockDeleteMetricProfile = jest.fn();
+const mockAddObject = jest.fn();
+const mockAddMetricProfile = jest.fn();
 
 
 beforeEach(() => {
@@ -191,6 +193,29 @@ function renderChangeView(publicView=false) {
         </Router>
       )
     }
+}
+
+
+function renderAddView() {
+  const route = '/ui/metricprofiles/add';
+  const history = createMemoryHistory({ initialEntries: [route] });
+
+  return {
+    ...render(
+      <Router history={history}>
+        <Route
+          path='/ui/metricprofiles/add'
+          render={props => <MetricProfilesChange
+            {...props}
+            webapimetric='https://mock.metrics.com'
+            webapitoken='token'
+            tenantname='TENANT'
+            addview={true}
+          /> }
+        />
+      </Router>
+    )
+  }
 }
 
 
@@ -1286,6 +1311,712 @@ describe('Tests for metric profiles changeview', () => {
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
         <p>Internal API error deleting metric profile</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Internal API error: 500 SERVER ERROR',
+      0,
+      expect.any(Function)
+    )
+  })
+})
+
+
+describe('Tests for metric profile addview', () => {
+  jest.spyOn(NotificationManager, 'success');
+  jest.spyOn(NotificationManager, 'error');
+
+  beforeAll(() => {
+    WebApi.mockImplementation(() => {
+      return {
+        addMetricProfile: mockAddMetricProfile
+      }
+    })
+    Backend.mockImplementation(() => {
+      return {
+        isActiveSession: () => Promise.resolve(mockActiveSession),
+        fetchListOfNames: (path) => {
+          switch (path) {
+            case '/api/v2/internal/metricsall':
+              return Promise.resolve(mockMetrics)
+
+            case '/api/v2/internal/serviceflavoursall':
+              return Promise.resolve(mockServiceTypes)
+          }
+        },
+        addObject: mockAddObject
+      }
+    })
+  })
+
+  test('Test that page renders properly', async () => {
+    renderAddView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Add metric profile');
+    })
+
+    const nameField = screen.getByTestId('name');
+    const descriptionField = screen.getByLabelText(/description/i);
+    const groupField = screen.getByTestId('groupname');
+
+    expect(nameField.value).toBe('');
+    expect(nameField).toBeEnabled();
+    expect(descriptionField.value).toBe('');
+    expect(descriptionField).toBeEnabled();
+    expect(groupField.value).toBe('');
+    expect(groupField).toBeEnabled();
+
+    const metricInstances = within(screen.getByRole('table'));
+    expect(metricInstances.getAllByRole('row')).toHaveLength(3);
+    expect(metricInstances.getAllByRole('row', { name: '' })).toHaveLength(1);
+
+    expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /csv/i })).not.toBeInTheDocument();
+  })
+
+  test('Test successfully adding a metric profile', async () => {
+    mockAddMetricProfile.mockReturnValueOnce(
+      Promise.resolve({
+        json: () => Promise.resolve({
+          status: {
+            message: 'Metric profile Created',
+            code: '200'
+          },
+          data: {
+            id: 'va0ahsh6-6rs0-14ho-xlh9-wahso4hie7iv',
+            links: {
+              self: 'string'
+            }
+          }
+        }),
+        ok: true,
+        status: 200,
+        statusText: 'Metric profile Created'
+      })
+    )
+    mockAddObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 201, statusText: 'CREATED' })
+    )
+
+    renderAddView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Add metric profile');
+    })
+
+    fireEvent.change(screen.getByTestId('name'), { target: { value: 'NEW_PROFILE' } });
+    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'ARGO' } })
+    fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'New central ARGO_MON profile.' } });
+
+    const metricInstances = within(screen.getByRole('table'));
+    var rows = metricInstances.getAllByRole('row');
+
+    const row1 = within(rows[2]).getAllByRole('textbox');
+    await waitFor(() => {
+      fireEvent.change(row1[0], { target: { value: 'eu.argo.ams' } });
+    })
+
+    await waitFor(() => {
+      fireEvent.change(row1[1], { target: { value: 'argo.AMS-Check' } });
+    })
+
+    await waitFor(() => {
+      fireEvent.click(metricInstances.getByTestId('insert-0'));
+    })
+
+    rows = metricInstances.getAllByRole('row');
+    const row2 = within(rows[3]).getAllByRole('textbox');
+    await waitFor(() => {
+      fireEvent.change(row2[0], { target: { value: 'egi.AppDB' } });
+    })
+
+    await waitFor(() => {
+      fireEvent.change(row2[1], { target: { value: 'org.nagiosexchange.AppDB-WebCheck' } });
+    })
+
+    fireEvent.click(metricInstances.getByTestId('insert-1'));
+    rows = metricInstances.getAllByRole('row');
+    const row3 = within(rows[4]).getAllByRole('textbox');
+    await waitFor(() => {
+      fireEvent.change(row3[0], { target: { value: 'eu.argo.ams' } });
+    })
+
+    await waitFor(() => {
+      fireEvent.change(row3[1], { target: { value: 'argo.AMSPublisher-Check' } });
+    })
+
+    fireEvent.click(metricInstances.getByTestId('insert-2'));
+    rows = metricInstances.getAllByRole('row');
+    const row4 = within(rows[5]).getAllByRole('textbox');
+    await waitFor(() => {
+      fireEvent.change(row4[0], { target: { value: 'argo.mon' } });
+    })
+
+    await waitFor(() => {
+      fireEvent.change(row4[1], { target: { value: 'eu.egi.CertValidity' } });
+    })
+
+    fireEvent.click(metricInstances.getByTestId('remove-3'));
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /add/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddMetricProfile).toHaveBeenCalledWith({
+        description: 'New central ARGO_MON profile.',
+        name: 'NEW_PROFILE',
+        services: [
+          {
+            service: 'eu.argo.ams',
+            metrics: [
+              'argo.AMS-Check',
+              'argo.AMSPublisher-Check'
+            ]
+          },
+          {
+            service: 'egi.AppDB',
+            metrics: [
+              'org.nagiosexchange.AppDB-WebCheck'
+            ]
+          }
+        ]
+      })
+    })
+
+    await waitFor(() => {
+      expect(mockAddObject).toHaveBeenCalledWith(
+        '/api/v2/internal/metricprofiles/',
+        {
+          apiid: 'va0ahsh6-6rs0-14ho-xlh9-wahso4hie7iv',
+          name: 'NEW_PROFILE',
+          groupname: 'ARGO',
+          description: 'New central ARGO_MON profile.',
+          services: [
+            { service: 'eu.argo.ams', metric: 'argo.AMS-Check' },
+            { service: 'egi.AppDB', metric: 'org.nagiosexchange.AppDB-WebCheck' },
+            { service: 'eu.argo.ams', metric: 'argo.AMSPublisher-Check' }
+          ]
+        }
+      )
+    })
+
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'Metric profile successfully added', 'Added', 2000
+    )
+  })
+
+  test('Test error adding a metric profile in web api with error message', async () => {
+    mockAddMetricProfile.mockReturnValueOnce(
+      Promise.resolve({
+        json: () => Promise.resolve({
+          code: '406',
+          message: 'Content Not acceptable',
+          errors: [
+            {
+              message: 'Content Not acceptable',
+              code: '406',
+              details: 'There has been an error.'
+            }
+          ],
+          details: 'There has been an error.'
+        }),
+        status: 406,
+        statusText: 'Content Not acceptable'
+      })
+    )
+
+    renderAddView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Add metric profile');
+    })
+
+    fireEvent.change(screen.getByTestId('name'), { target: { value: 'NEW_PROFILE' } });
+    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'ARGO' } })
+    fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'New central ARGO_MON profile.' } });
+
+    const metricInstances = within(screen.getByRole('table'));
+    var rows = metricInstances.getAllByRole('row');
+
+    const row1 = within(rows[2]).getAllByRole('textbox');
+    await waitFor(() => {
+      fireEvent.change(row1[0], { target: { value: 'eu.argo.ams' } });
+    })
+
+    await waitFor(() => {
+      fireEvent.change(row1[1], { target: { value: 'argo.AMS-Check' } });
+    })
+
+    await waitFor(() => {
+      fireEvent.click(metricInstances.getByTestId('insert-0'));
+    })
+
+    rows = metricInstances.getAllByRole('row');
+    const row2 = within(rows[3]).getAllByRole('textbox');
+    await waitFor(() => {
+      fireEvent.change(row2[0], { target: { value: 'egi.AppDB' } });
+    })
+
+    await waitFor(() => {
+      fireEvent.change(row2[1], { target: { value: 'org.nagiosexchange.AppDB-WebCheck' } });
+    })
+
+    fireEvent.click(metricInstances.getByTestId('insert-1'));
+    rows = metricInstances.getAllByRole('row');
+    const row3 = within(rows[4]).getAllByRole('textbox');
+    await waitFor(() => {
+      fireEvent.change(row3[0], { target: { value: 'eu.argo.ams' } });
+    })
+
+    await waitFor(() => {
+      fireEvent.change(row3[1], { target: { value: 'argo.AMSPublisher-Check' } });
+    })
+
+    fireEvent.click(metricInstances.getByTestId('insert-2'));
+    rows = metricInstances.getAllByRole('row');
+    const row4 = within(rows[5]).getAllByRole('textbox');
+    await waitFor(() => {
+      fireEvent.change(row4[0], { target: { value: 'argo.mon' } });
+    })
+
+    await waitFor(() => {
+      fireEvent.change(row4[1], { target: { value: 'eu.egi.CertValidity' } });
+    })
+
+    fireEvent.click(metricInstances.getByTestId('remove-3'));
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /add/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddMetricProfile).toHaveBeenCalledWith({
+        description: 'New central ARGO_MON profile.',
+        name: 'NEW_PROFILE',
+        services: [
+          {
+            service: 'eu.argo.ams',
+            metrics: [
+              'argo.AMS-Check',
+              'argo.AMSPublisher-Check'
+            ]
+          },
+          {
+            service: 'egi.AppDB',
+            metrics: [
+              'org.nagiosexchange.AppDB-WebCheck'
+            ]
+          }
+        ]
+      })
+    })
+
+    await waitFor(() => {
+      expect(mockAddObject).not.toHaveBeenCalled()
+    })
+
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>There has been an error.</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Web API error: 406 Content Not acceptable',
+      0,
+      expect.any(Function)
+    )
+  })
+
+  test('Test error adding a metric profile in web api without error message', async () => {
+    mockAddMetricProfile.mockReturnValueOnce(
+      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
+    )
+
+    renderAddView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Add metric profile');
+    })
+
+    fireEvent.change(screen.getByTestId('name'), { target: { value: 'NEW_PROFILE' } });
+    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'ARGO' } })
+    fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'New central ARGO_MON profile.' } });
+
+    const metricInstances = within(screen.getByRole('table'));
+    var rows = metricInstances.getAllByRole('row');
+
+    const row1 = within(rows[2]).getAllByRole('textbox');
+    await waitFor(() => {
+      fireEvent.change(row1[0], { target: { value: 'eu.argo.ams' } });
+    })
+
+    await waitFor(() => {
+      fireEvent.change(row1[1], { target: { value: 'argo.AMS-Check' } });
+    })
+
+    await waitFor(() => {
+      fireEvent.click(metricInstances.getByTestId('insert-0'));
+    })
+
+    rows = metricInstances.getAllByRole('row');
+    const row2 = within(rows[3]).getAllByRole('textbox');
+    await waitFor(() => {
+      fireEvent.change(row2[0], { target: { value: 'egi.AppDB' } });
+    })
+
+    await waitFor(() => {
+      fireEvent.change(row2[1], { target: { value: 'org.nagiosexchange.AppDB-WebCheck' } });
+    })
+
+    fireEvent.click(metricInstances.getByTestId('insert-1'));
+    rows = metricInstances.getAllByRole('row');
+    const row3 = within(rows[4]).getAllByRole('textbox');
+    await waitFor(() => {
+      fireEvent.change(row3[0], { target: { value: 'eu.argo.ams' } });
+    })
+
+    await waitFor(() => {
+      fireEvent.change(row3[1], { target: { value: 'argo.AMSPublisher-Check' } });
+    })
+
+    fireEvent.click(metricInstances.getByTestId('insert-2'));
+    rows = metricInstances.getAllByRole('row');
+    const row4 = within(rows[5]).getAllByRole('textbox');
+    await waitFor(() => {
+      fireEvent.change(row4[0], { target: { value: 'argo.mon' } });
+    })
+
+    await waitFor(() => {
+      fireEvent.change(row4[1], { target: { value: 'eu.egi.CertValidity' } });
+    })
+
+    fireEvent.click(metricInstances.getByTestId('remove-3'));
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /add/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddMetricProfile).toHaveBeenCalledWith({
+        description: 'New central ARGO_MON profile.',
+        name: 'NEW_PROFILE',
+        services: [
+          {
+            service: 'eu.argo.ams',
+            metrics: [
+              'argo.AMS-Check',
+              'argo.AMSPublisher-Check'
+            ]
+          },
+          {
+            service: 'egi.AppDB',
+            metrics: [
+              'org.nagiosexchange.AppDB-WebCheck'
+            ]
+          }
+        ]
+      })
+    })
+
+    await waitFor(() => {
+      expect(mockAddObject).not.toHaveBeenCalled()
+    })
+
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>Web API error adding metric profile</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Web API error: 500 SERVER ERROR',
+      0,
+      expect.any(Function)
+    )
+  })
+
+  test('Test error adding a metric profile in backend with error message', async () => {
+    mockAddMetricProfile.mockReturnValueOnce(
+      Promise.resolve({
+        json: () => Promise.resolve({
+          status: {
+            message: 'Metric profile Created',
+            code: '200'
+          },
+          data: {
+            id: 'va0ahsh6-6rs0-14ho-xlh9-wahso4hie7iv',
+            links: {
+              self: 'string'
+            }
+          }
+        }),
+        ok: true,
+        status: 200,
+        statusText: 'Metric profile Created'
+      })
+    )
+    mockAddObject.mockReturnValueOnce(
+      Promise.resolve({
+        json: () => Promise.resolve({ detail: 'There has been an internal error.' }),
+        status: 400,
+        statusText: 'BAD REQUEST'
+      })
+    )
+
+    renderAddView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Add metric profile');
+    })
+
+    fireEvent.change(screen.getByTestId('name'), { target: { value: 'NEW_PROFILE' } });
+    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'ARGO' } })
+    fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'New central ARGO_MON profile.' } });
+
+    const metricInstances = within(screen.getByRole('table'));
+    var rows = metricInstances.getAllByRole('row');
+
+    const row1 = within(rows[2]).getAllByRole('textbox');
+    await waitFor(() => {
+      fireEvent.change(row1[0], { target: { value: 'eu.argo.ams' } });
+    })
+
+    await waitFor(() => {
+      fireEvent.change(row1[1], { target: { value: 'argo.AMS-Check' } });
+    })
+
+    await waitFor(() => {
+      fireEvent.click(metricInstances.getByTestId('insert-0'));
+    })
+
+    rows = metricInstances.getAllByRole('row');
+    const row2 = within(rows[3]).getAllByRole('textbox');
+    await waitFor(() => {
+      fireEvent.change(row2[0], { target: { value: 'egi.AppDB' } });
+    })
+
+    await waitFor(() => {
+      fireEvent.change(row2[1], { target: { value: 'org.nagiosexchange.AppDB-WebCheck' } });
+    })
+
+    fireEvent.click(metricInstances.getByTestId('insert-1'));
+    rows = metricInstances.getAllByRole('row');
+    const row3 = within(rows[4]).getAllByRole('textbox');
+    await waitFor(() => {
+      fireEvent.change(row3[0], { target: { value: 'eu.argo.ams' } });
+    })
+
+    await waitFor(() => {
+      fireEvent.change(row3[1], { target: { value: 'argo.AMSPublisher-Check' } });
+    })
+
+    fireEvent.click(metricInstances.getByTestId('insert-2'));
+    rows = metricInstances.getAllByRole('row');
+    const row4 = within(rows[5]).getAllByRole('textbox');
+    await waitFor(() => {
+      fireEvent.change(row4[0], { target: { value: 'argo.mon' } });
+    })
+
+    await waitFor(() => {
+      fireEvent.change(row4[1], { target: { value: 'eu.egi.CertValidity' } });
+    })
+
+    fireEvent.click(metricInstances.getByTestId('remove-3'));
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /add/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddMetricProfile).toHaveBeenCalledWith({
+        description: 'New central ARGO_MON profile.',
+        name: 'NEW_PROFILE',
+        services: [
+          {
+            service: 'eu.argo.ams',
+            metrics: [
+              'argo.AMS-Check',
+              'argo.AMSPublisher-Check'
+            ]
+          },
+          {
+            service: 'egi.AppDB',
+            metrics: [
+              'org.nagiosexchange.AppDB-WebCheck'
+            ]
+          }
+        ]
+      })
+    })
+
+    await waitFor(() => {
+      expect(mockAddObject).toHaveBeenCalledWith(
+        '/api/v2/internal/metricprofiles/',
+        {
+          apiid: 'va0ahsh6-6rs0-14ho-xlh9-wahso4hie7iv',
+          name: 'NEW_PROFILE',
+          groupname: 'ARGO',
+          description: 'New central ARGO_MON profile.',
+          services: [
+            { service: 'eu.argo.ams', metric: 'argo.AMS-Check' },
+            { service: 'egi.AppDB', metric: 'org.nagiosexchange.AppDB-WebCheck' },
+            { service: 'eu.argo.ams', metric: 'argo.AMSPublisher-Check' }
+          ]
+        }
+      )
+    })
+
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>There has been an internal error.</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Internal API error: 400 BAD REQUEST',
+      0,
+      expect.any(Function)
+    )
+  })
+
+  test('Test error adding a metric profile in backend without error message', async () => {
+    mockAddMetricProfile.mockReturnValueOnce(
+      Promise.resolve({
+        json: () => Promise.resolve({
+          status: {
+            message: 'Metric profile Created',
+            code: '200'
+          },
+          data: {
+            id: 'va0ahsh6-6rs0-14ho-xlh9-wahso4hie7iv',
+            links: {
+              self: 'string'
+            }
+          }
+        }),
+        ok: true,
+        status: 200,
+        statusText: 'Metric profile Created'
+      })
+    )
+    mockAddObject.mockReturnValueOnce(
+      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
+    )
+
+    renderAddView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Add metric profile');
+    })
+
+    fireEvent.change(screen.getByTestId('name'), { target: { value: 'NEW_PROFILE' } });
+    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'ARGO' } })
+    fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'New central ARGO_MON profile.' } });
+
+    const metricInstances = within(screen.getByRole('table'));
+    var rows = metricInstances.getAllByRole('row');
+
+    const row1 = within(rows[2]).getAllByRole('textbox');
+    await waitFor(() => {
+      fireEvent.change(row1[0], { target: { value: 'eu.argo.ams' } });
+    })
+
+    await waitFor(() => {
+      fireEvent.change(row1[1], { target: { value: 'argo.AMS-Check' } });
+    })
+
+    await waitFor(() => {
+      fireEvent.click(metricInstances.getByTestId('insert-0'));
+    })
+
+    rows = metricInstances.getAllByRole('row');
+    const row2 = within(rows[3]).getAllByRole('textbox');
+    await waitFor(() => {
+      fireEvent.change(row2[0], { target: { value: 'egi.AppDB' } });
+    })
+
+    await waitFor(() => {
+      fireEvent.change(row2[1], { target: { value: 'org.nagiosexchange.AppDB-WebCheck' } });
+    })
+
+    fireEvent.click(metricInstances.getByTestId('insert-1'));
+    rows = metricInstances.getAllByRole('row');
+    const row3 = within(rows[4]).getAllByRole('textbox');
+    await waitFor(() => {
+      fireEvent.change(row3[0], { target: { value: 'eu.argo.ams' } });
+    })
+
+    await waitFor(() => {
+      fireEvent.change(row3[1], { target: { value: 'argo.AMSPublisher-Check' } });
+    })
+
+    fireEvent.click(metricInstances.getByTestId('insert-2'));
+    rows = metricInstances.getAllByRole('row');
+    const row4 = within(rows[5]).getAllByRole('textbox');
+    await waitFor(() => {
+      fireEvent.change(row4[0], { target: { value: 'argo.mon' } });
+    })
+
+    await waitFor(() => {
+      fireEvent.change(row4[1], { target: { value: 'eu.egi.CertValidity' } });
+    })
+
+    fireEvent.click(metricInstances.getByTestId('remove-3'));
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /add/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddMetricProfile).toHaveBeenCalledWith({
+        description: 'New central ARGO_MON profile.',
+        name: 'NEW_PROFILE',
+        services: [
+          {
+            service: 'eu.argo.ams',
+            metrics: [
+              'argo.AMS-Check',
+              'argo.AMSPublisher-Check'
+            ]
+          },
+          {
+            service: 'egi.AppDB',
+            metrics: [
+              'org.nagiosexchange.AppDB-WebCheck'
+            ]
+          }
+        ]
+      })
+    })
+
+    await waitFor(() => {
+      expect(mockAddObject).toHaveBeenCalledWith(
+        '/api/v2/internal/metricprofiles/',
+        {
+          apiid: 'va0ahsh6-6rs0-14ho-xlh9-wahso4hie7iv',
+          name: 'NEW_PROFILE',
+          groupname: 'ARGO',
+          description: 'New central ARGO_MON profile.',
+          services: [
+            { service: 'eu.argo.ams', metric: 'argo.AMS-Check' },
+            { service: 'egi.AppDB', metric: 'org.nagiosexchange.AppDB-WebCheck' },
+            { service: 'eu.argo.ams', metric: 'argo.AMSPublisher-Check' }
+          ]
+        }
+      )
+    })
+
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>Internal API error adding metric profile</p>
         <p>Click to dismiss.</p>
       </div>,
       'Internal API error: 500 SERVER ERROR',
