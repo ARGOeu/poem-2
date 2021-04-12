@@ -79,6 +79,7 @@ const CommonUser = ({add, ...props}) =>
                 <Field
                   type="text"
                   name="username"
+                  data-testid="username"
                   className={`form-control ${props.errors.username && props.touched.username && 'border-danger'}`}
                   id="userUsername"
                 />
@@ -91,11 +92,12 @@ const CommonUser = ({add, ...props}) =>
               <InputGroup>
                 <InputGroupAddon addonType='prepend'>Password</InputGroupAddon>
                 <Field
-                type="password"
-                name="password"
-                className={`form-control ${props.errors.password && props.touched.password && 'border-danger'}`}
-                id="password"
-              />
+                  type="password"
+                  name="password"
+                  data-testid="password"
+                  className={`form-control ${props.errors.password && props.touched.password && 'border-danger'}`}
+                  id="password"
+                />
               </InputGroup>
               <CustomErrorMessage name='password' />
             </Col>
@@ -107,6 +109,7 @@ const CommonUser = ({add, ...props}) =>
                 <Field
                   type='password'
                   name='confirm_password'
+                  data-testid='confirm_password'
                   className={`form-control ${props.errors.confirm_password && props.touched.confirm_password && 'border-danger'}`}
                   id='confirm_password'
                 />
@@ -124,6 +127,7 @@ const CommonUser = ({add, ...props}) =>
                 <Field
                   type="text"
                   name='username'
+                  data-testid='username'
                   className={`form-control ${props.errors.username && props.touched.username && 'border-danger'}`}
                   id='userUsername'
                 />
@@ -142,6 +146,7 @@ const CommonUser = ({add, ...props}) =>
             <Field
               type="text"
               name="first_name"
+              data-testid="first_name"
               className="form-control"
               id="userFirstName"
             />
@@ -155,6 +160,7 @@ const CommonUser = ({add, ...props}) =>
             <Field
               type="text"
               name="last_name"
+              data-testid="last_name"
               className="form-control"
               id="userLastName"
             />
@@ -168,6 +174,7 @@ const CommonUser = ({add, ...props}) =>
             <Field
               type="text"
               name="email"
+              data-testid="email"
               className={`form-control ${props.errors.email && props.touched.email && 'border-danger'}`}
               id="userEmail"
             />
@@ -185,6 +192,7 @@ const CommonUser = ({add, ...props}) =>
                   <Field
                     type='text'
                     name='last_login'
+                    data-testid='last_login'
                     className='form-control'
                     readOnly
                   />
@@ -198,6 +206,7 @@ const CommonUser = ({add, ...props}) =>
                   <Field
                     type='text'
                     name='date_joined'
+                    data-testid='date_joined'
                     className='form-control'
                     readOnly
                   />
@@ -335,7 +344,7 @@ export const UsersList = (props) => {
   else if (!loading && listUsers) {
     return (
       <BaseArgoView
-        resourcename='users'
+        resourcename='user'
         location={location}
         listview={true}>
         <BaseArgoTable
@@ -620,7 +629,7 @@ export const UserChange = (props) => {
     if (isTenantSchema) {
       return (
         <BaseArgoView
-          resourcename="users"
+          resourcename="user"
           location={location}
           addview={addview}
           history={false}
@@ -682,7 +691,7 @@ export const UserChange = (props) => {
                             <Field
                               component="select"
                               name="groupsofmetrics"
-                              id='select-field'
+                              id='groupsofmetrics'
                               onChange={evt =>
                                 props.setFieldValue(
                                   "groupsofmetrics",
@@ -693,7 +702,7 @@ export const UserChange = (props) => {
                               multiple={true}
                             >
                               {allGroups.metrics.map( grp => (
-                                <option key={grp} value={grp}>
+                                <option data-testid='groupsofmetrics-option' key={grp} value={grp}>
                                   {grp}
                                 </option>
                               ))}
@@ -709,7 +718,7 @@ export const UserChange = (props) => {
                             <Field
                               component="select"
                               name="groupsofmetricprofiles"
-                              id='select-field'
+                              id='groupsofmetricprofiles'
                               onChange={evt =>
                                 props.setFieldValue(
                                   "groupsofmetricprofiles",
@@ -720,7 +729,7 @@ export const UserChange = (props) => {
                               multiple={true}
                             >
                               {allGroups.metricprofiles.map( grp => (
-                                <option key={grp} value={grp}>
+                                <option data-testid='groupsofmetricprofiles-option' key={grp} value={grp}>
                                   {grp}
                                 </option>
                               ))}
@@ -736,7 +745,7 @@ export const UserChange = (props) => {
                             <Field
                               component="select"
                               name="groupsofaggregations"
-                              id='select-field'
+                              id='groupsofaggregations'
                               onChange={evt =>
                                 props.setFieldValue(
                                   "groupsofaggregations",
@@ -747,7 +756,7 @@ export const UserChange = (props) => {
                               multiple={true}
                             >
                               {allGroups.aggregations.map( grp => (
-                                <option key={grp} value={grp}>
+                                <option data-testid='groupsofaggregations-option' key={grp} value={grp}>
                                   {grp}
                                 </option>
                               ))}
@@ -763,7 +772,7 @@ export const UserChange = (props) => {
                             <Field
                               component="select"
                               name="groupsofthresholdsprofiles"
-                              id='select-field'
+                              id='groupsofthresholdsprofiles'
                               onChange={evt =>
                                 props.setFieldValue(
                                   "groupsofthresholdsprofiles",
@@ -774,7 +783,7 @@ export const UserChange = (props) => {
                               multiple={true}
                             >
                               {allGroups.thresholdsprofiles.map( grp => (
-                                <option key={grp} value={grp}>
+                                <option data-testid='groupsofthresholdsprofiles-option' key={grp} value={grp}>
                                   {grp}
                                 </option>
                               ))}
@@ -797,6 +806,7 @@ export const UserChange = (props) => {
                                 required={false}
                                 className="form-control"
                                 id="distinguishedname"
+                                data-testid="subject"
                               />
                             </InputGroup>
                           </Col>
@@ -813,6 +823,7 @@ export const UserChange = (props) => {
                                 required={false}
                                 className="form-control"
                                 id='eduid'
+                                data-testid="egiid"
                               />
                             </InputGroup>
                           </Col>
@@ -829,6 +840,7 @@ export const UserChange = (props) => {
                                 required={false}
                                 className="form-control"
                                 id="displayname"
+                                data-testid="displayname"
                               />
                             </InputGroup>
                           </Col>
@@ -1065,11 +1077,12 @@ export const ChangePassword = (props) => {
                   <InputGroup>
                     <InputGroupAddon addonType='prepend'>New password</InputGroupAddon>
                     <Field
-                    type="password"
-                    name="password"
-                    className={`form-control ${props.errors.password && props.touched.password && 'border-danger'}`}
-                    id="password"
-                  />
+                      type="password"
+                      name="password"
+                      className={`form-control ${props.errors.password && props.touched.password && 'border-danger'}`}
+                      id="password"
+                      data-testid="password"
+                    />
                   </InputGroup>
                   <CustomErrorMessage name='password' />
                 </Col>
@@ -1083,6 +1096,7 @@ export const ChangePassword = (props) => {
                       name='confirm_password'
                       className={`form-control ${props.errors.confirm_password && props.touched.confirm_password && 'border-danger'}`}
                       id='confirm_password'
+                      data-testid='confirm_password'
                     />
                   </InputGroup>
                   <CustomErrorMessage name='confirm_password' />

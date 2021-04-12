@@ -16,7 +16,7 @@ def get_files(install_prefix, directory):
 
 
 setup(name=NAME,
-      version='3.3.7',
+      version='3.3.8',
       description='Reports, Profiles, Probes and Metric Configuration Management (POEM) for ARGO Monitoring framework.',
       author='SRCE',
       author_email='dvrcic@srce.hr, kzailac@srce.hr',
@@ -38,6 +38,7 @@ setup(name=NAME,
           ('etc/logrotate.d/', ['logrotate.d/poem-db_backup']),
           ('etc/httpd/conf.d', ['poem/apache/poem.conf']),
           ('usr/share/poem/apache', ['poem/apache/poem.wsgi']),
+          ('', ['requirements.txt']),
           ('var/log/poem', ['helpers/empty']),
           ('var/lib/poem', ['helpers/empty']),
           ('var/db_backups', ['helpers/empty']),

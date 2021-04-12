@@ -22,6 +22,8 @@ class ListMetricTemplates(APIView):
     authentication_classes = (SessionAuthentication,)
 
     def get(self, request, name=None):
+        public_tenant = None
+        importable = None
         if name:
             metrictemplates = admin_models.MetricTemplate.objects.filter(
                 name=name
@@ -29,7 +31,20 @@ class ListMetricTemplates(APIView):
             if metrictemplates.count() == 0:
                 raise NotFound(status=404, detail='Metric template not found')
         else:
+            public_tenant = Tenant.objects.get(
+                schema_name=get_public_schema_name()
+            )
             metrictemplates = admin_models.MetricTemplate.objects.all()
+            if request.tenant != public_tenant:
+                avail_metrics = Metric.objects.all().values_list(
+                    'name', flat=True
+                )
+                importable = dict()
+                for metrictemplate in metrictemplates:
+                    if metrictemplate.name in avail_metrics:
+                        importable[metrictemplate.name] = False
+                    else:
+                        importable[metrictemplate.name] = True
 
         results = []
         for metrictemplate in metrictemplates:
@@ -57,24 +72,45 @@ class ListMetricTemplates(APIView):
             else:
                 probeversion = ''
 
-            results.append(dict(
-                id=metrictemplate.id,
-                name=metrictemplate.name,
-                mtype=metrictemplate.mtype.name,
-                ostag=ostag,
-                tags=sorted(tags),
-                probeversion=probeversion,
-                description=metrictemplate.description,
-                parent=parent,
-                probeexecutable=probeexecutable,
-                config=config,
-                attribute=attribute,
-                dependency=dependency,
-                flags=flags,
-                files=files,
-                parameter=parameter,
-                fileparameter=fileparameter
-            ))
+            if not name and request.tenant != public_tenant:
+                results.append(dict(
+                    id=metrictemplate.id,
+                    name=metrictemplate.name,
+                    importable=importable[metrictemplate.name],
+                    mtype=metrictemplate.mtype.name,
+                    ostag=ostag,
+                    tags=sorted(tags),
+                    probeversion=probeversion,
+                    description=metrictemplate.description,
+                    parent=parent,
+                    probeexecutable=probeexecutable,
+                    config=config,
+                    attribute=attribute,
+                    dependency=dependency,
+                    flags=flags,
+                    files=files,
+                    parameter=parameter,
+                    fileparameter=fileparameter
+                ))
+            else:
+                results.append(dict(
+                    id=metrictemplate.id,
+                    name=metrictemplate.name,
+                    mtype=metrictemplate.mtype.name,
+                    ostag=ostag,
+                    tags=sorted(tags),
+                    probeversion=probeversion,
+                    description=metrictemplate.description,
+                    parent=parent,
+                    probeexecutable=probeexecutable,
+                    config=config,
+                    attribute=attribute,
+                    dependency=dependency,
+                    flags=flags,
+                    files=files,
+                    parameter=parameter,
+                    fileparameter=fileparameter
+                ))
 
         results = sorted(results, key=lambda k: k['name'])
 
