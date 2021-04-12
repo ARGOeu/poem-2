@@ -1,6 +1,29 @@
 # Changelog
 
-## [3.3.7] - 2020-02-01
+## [3.3.8] - 2021-04-12
+
+### Added
+
+* ARGO-2709 Create tests for Agregation profiles
+* ARGO-2715 Create tests for operation profiles
+* ARGO-2716 Create tests for packages
+* ARGO-2719 Create tests for service types
+* ARGO-2720 Create tests for tenants
+* ARGO-2721 Create tests for thresholds profiles
+* ARGO-2722 Create tests for users
+* ARGO-2723 Create tests for YUM repos
+
+### Changed
+
+* ARGO-2947 Package requirements.txt
+* ARGO-2977 Show only metric templates which are not already imported in listview on tenant POEM
+
+### Fixed
+
+* ARGO-2946 Point default poem.conf Apache configuration to OS CA bundle
+* ARGO-3067 djangosaml2 upgrade breaks POEM
+
+## [3.3.7] - 2021-02-01
 
 ### Added
 
