@@ -1089,7 +1089,7 @@ export const MetricProfilesComponent = (props) => {
                 (write_perm) &&
                   <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
                     {
-                      !addview ?
+                      !addview && !cloneview ?
                         <Button
                           color="danger"
                           onClick={() => {
