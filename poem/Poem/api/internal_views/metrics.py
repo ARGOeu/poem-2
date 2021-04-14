@@ -5,8 +5,9 @@ from Poem.api.internal_views.utils import one_value_inline, two_value_inline, \
     inline_metric_for_db
 from Poem.api.views import NotFound
 from Poem.helpers.history_helpers import create_history
-from Poem.helpers.metrics_helpers import import_metrics, update_metrics, \
-    get_metrics_in_profiles, delete_metrics_from_profile
+from Poem.helpers.metrics_helpers import import_metrics, \
+    update_metric_in_schema, get_metrics_in_profiles, \
+    delete_metrics_from_profile
 from Poem.poem import models as poem_models
 from Poem.poem_super_admin import models as admin_models
 from django.contrib.contenttypes.models import ContentType
@@ -291,7 +292,9 @@ class UpdateMetricsVersions(APIView):
     """
     authentication_classes = (SessionAuthentication,)
 
-    def _handle_metrics(self, name, version, user, dry_run=False, metrics=None):
+    def _handle_metrics(
+            self, name, version, user, schema, dry_run=False, metrics=None
+    ):
         try:
             package = admin_models.Package.objects.get(
                 name=name, version=version
@@ -325,9 +328,12 @@ class UpdateMetricsVersions(APIView):
 
                         if metrictemplate:
                             if not dry_run:
-                                update_metrics(
-                                    metrictemplate, metric.name,
-                                    metric.probekey,
+                                update_metric_in_schema(
+                                    mt_id=metrictemplate.id,
+                                    name=metric.name,
+                                    pk_id=metric.probekey.id,
+                                    schema=schema,
+                                    update_from_history=True,
                                     user=user
                                 )
                             updated.append(metric.name)
@@ -481,7 +487,8 @@ class UpdateMetricsVersions(APIView):
 
         msg, status_code = self._handle_metrics(
             name=name, version=version, user=request.user.username,
-            dry_run=True, metrics=metrics_in_profiles
+            schema=request.tenant.schema_name, dry_run=True,
+            metrics=metrics_in_profiles
         )
 
         return Response(msg, status=status_code)
@@ -489,7 +496,7 @@ class UpdateMetricsVersions(APIView):
     def put(self, request):
         msg, status_code, deleted = self._handle_metrics(
             name=request.data['name'], version=request.data['version'],
-            user=request.user.username
+            schema=request.tenant.schema_name, user=request.user.username
         )
 
         warn_msg = []
