@@ -42,10 +42,14 @@ export class Backend {
   }
 
   async fetchConfigOptions() {
-    let response = await fetch('/api/v2/internal/config_options');
-    if (response.ok) {
-      let json = await response.json();
-      return json;
+    try {
+      let response = await fetch('/api/v2/internal/config_options');
+      if (response.ok) {
+        let json = await response.json();
+        return json;
+      }
+    } catch(err) {
+      throw Error(`Something went wrong: ${err}`)
     }
   }
 
@@ -247,9 +251,9 @@ export class WebApi {
   async fetchOperationProfile(name) {
     const profiles = await this.fetchOperationsProfiles();
     let profile = {};
-    profiles.forEach(p => {
-      if (p.name === name)
-        profile = p;
+    profiles.forEach(prof => {
+      if (prof.name === name)
+        profile = prof;
     });
     return profile;
   }
@@ -257,9 +261,9 @@ export class WebApi {
   async fetchReport(name) {
     const reports = await this.fetchReports();
     let report = {};
-    reports.forEach(r => {
-      if (r.info.name === name)
-        report = r;
+    reports.forEach(rep => {
+      if (rep.info.name === name)
+        report = rep;
     });
     return report;
   }
