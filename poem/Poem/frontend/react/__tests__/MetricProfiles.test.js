@@ -8,7 +8,8 @@ import { queryCache } from 'react-query';
 import {
   MetricProfilesChange,
   MetricProfilesList,
-  MetricProfilesClone
+  MetricProfilesClone,
+  MetricProfileVersionDetails
 } from '../MetricProfiles';
 import { NotificationManager } from 'react-notifications'
 
@@ -167,7 +168,47 @@ const mockServiceTypes = [
   "Central-LFC",
   "egi.AppDB",
   "eu.argo.ams"
-]
+];
+
+const mockMetricProfileVersions = [
+  {
+    id: '8',
+    object_repr: 'TEST_PROFILE2',
+    fields: {
+      name: 'TEST_PROFILE2',
+      groupname: 'NEW_GROUP',
+      description: '',
+      apiid: '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
+      metricinstances: [
+        { service: 'AMGA', metric: 'org.nagios.SAML-SP' },
+        { service: 'APEL', metric: 'org.apel.APEL-Pub' }
+      ]
+    },
+    user: 'testuser',
+    date_created: '2021-04-13 09:50:48',
+    comment: 'Deleted service-metric instance tuple (APEL, org.apel.APEL-Sync). Changed groupname and name.',
+    version: '20210413-095048'
+  },
+  {
+    id: '3',
+    object_repr: 'TEST_PROFILE',
+    fields: {
+      name: 'TEST_PROFILE',
+      groupname: 'EGI',
+      description: '',
+      apiid: '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
+      metricinstances: [
+        { service: 'AMGA', metric: 'org.nagios.SAML-SP' },
+        { service: 'APEL', metric: 'org.apel.APEL-Pub' },
+        { service: 'APEL', metric: 'org.apel.APEL-Sync' }
+      ]
+    },
+    user: 'testuser',
+    date_created: '2020-12-14 08:53:23',
+    comment: 'Initial version.',
+    version: '20201214-085323'
+  }
+];
 
 
 function renderListView(publicView=false) {
@@ -276,6 +317,23 @@ function renderCloneView() {
             webapitoken='token'
             tenantname='TENANT'
           /> }
+        />
+      </Router>
+    )
+  }
+}
+
+
+function renderVersionDetailsView() {
+  const route = '/ui/metricprofiles/TEST_PROFILE/history/20201214-085323';
+  const history = createMemoryHistory({ initialEntries: [route] });
+
+  return {
+    ...render(
+      <Router history={history}>
+        <Route
+          path='/ui/metricprofiles/:name/history/:version'
+          render={ props => <MetricProfileVersionDetails {...props} /> }
         />
       </Router>
     )
@@ -2853,5 +2911,56 @@ describe('Tests for metric profile cloneview', () => {
       0,
       expect.any(Function)
     )
+  })
+})
+
+
+describe('Test for metric profile version detail page', () => {
+  beforeAll(() => {
+    Backend.mockImplementation(() => {
+      return {
+        fetchData: () => Promise.resolve(mockMetricProfileVersions)
+      }
+    })
+  })
+
+  test('Test that page renders properly', async () => {
+    renderVersionDetailsView();
+
+    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /test/i }).textContent).toBe('TEST_PROFILE (2020-12-14 08:53:23)')
+    })
+
+    const nameField = screen.getByTestId('name');
+    const descriptionField = screen.getByLabelText(/description/i);
+    const groupField = screen.getByTestId('groupname');
+
+    expect(nameField.value).toBe('TEST_PROFILE');
+    expect(nameField).toBeDisabled();
+    expect(descriptionField.value).toBe('');
+    expect(descriptionField).toBeDisabled();
+    expect(groupField.value).toBe('EGI');
+    expect(groupField).toBeDisabled();
+
+    const metricInstances = within(screen.getByRole('table'));
+    const rows = metricInstances.getAllByRole('row');
+    expect(rows).toHaveLength(4);
+
+    expect(within(rows[1]).queryAllByRole('textbox')).toHaveLength(0);
+    expect(within(rows[2]).queryAllByRole('textbox')).toHaveLength(0);
+    expect(within(rows[3]).queryAllByRole('textbox')).toHaveLength(0);
+    expect(metricInstances.queryAllByTestId(/remove-/i)).toHaveLength(0);
+    expect(metricInstances.queryAllByTestId(/insert-/i)).toHaveLength(0);
+
+    expect(rows[1].textContent).toBe('1AMGAorg.nagios.SAML-SP');
+    expect(rows[2].textContent).toBe('2APELorg.apel.APEL-Pub');
+    expect(rows[3].textContent).toBe('3APELorg.apel.APEL-Sync')
+
+    expect(screen.queryByRole('button', { name: /save/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /csv/i })).not.toBeInTheDocument();
   })
 })
