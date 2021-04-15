@@ -1225,7 +1225,7 @@ export const DiffElement = ({title, item1, item2}) => {
 
 
 export const ProfileMainInfo = ({errors, grouplist=undefined, description=undefined,
-  fieldsdisable=false, profiletype=undefined }) => (
+  fieldsdisable=false, profiletype=undefined, addview=false }) => (
     <FormGroup>
       <Row>
         <Col md={6}>
@@ -1236,7 +1236,7 @@ export const ProfileMainInfo = ({errors, grouplist=undefined, description=undefi
             name='name'
             data-testid='name'
             className={`form-control form-control-lg ${errors.name && 'border-danger'}`}
-            disabled={fieldsdisable}
+            disabled={!addview}
           />
           </InputGroup>
           {
