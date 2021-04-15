@@ -370,7 +370,7 @@ describe('Tests for threshols profile changeview', () => {
     const table2 = within(screen.getByTestId('rules.1.thresholds'));
 
     expect(nameField.value).toBe('TEST_PROFILE');
-    expect(nameField).toBeEnabled();
+    expect(nameField).toBeDisabled();
     expect(groupField.value).toBe('TEST');
     expect(groupField).toBeEnabled();
 
