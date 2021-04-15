@@ -1,5 +1,6 @@
 import React from 'react';
-import { WebApi } from './DataManager';
+import { Backend, WebApi } from './DataManager';
+
 import { useQuery } from 'react-query';
 import {
   LoadingAnim,
@@ -26,11 +27,21 @@ import {
 
 export const ReportsList = (props) => {
   const location = props.location;
+  const backend = new Backend();
 
   const webapi = new WebApi({
     token: props.webapitoken,
     reportsConfigurations: props.webapireports
   });
+
+  const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails } = useQuery(
+    `session_userdetails`, async () => {
+      const sessionActive = await backend.isActiveSession()
+      if (sessionActive.active) {
+        return sessionActive.userdetails
+      }
+    }
+  );
 
   const { data: listReports, error: error, isLoading: loading } = useQuery(
     'reports_listview', async () => {
@@ -43,6 +54,9 @@ export const ReportsList = (props) => {
       }))
 
       return reports;
+    },
+    {
+      enabled: userDetails
     }
   );
 
@@ -93,7 +107,7 @@ export const ReportsList = (props) => {
   else if (error)
     return (<ErrorComponent error={error}/>);
 
-  else {
+  else if (!loadingUserDetails && listReports) {
     return (
       <BaseArgoView
         resourcename='report'
@@ -110,6 +124,8 @@ export const ReportsList = (props) => {
       </BaseArgoView>
     )
   }
+  else
+    return null
 };
 
 
