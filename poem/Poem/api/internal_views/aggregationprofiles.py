@@ -1,6 +1,3 @@
-from django.conf import settings
-from django.contrib.contenttypes.models import ContentType
-
 import json
 
 from Poem.api import serializers
@@ -8,7 +5,8 @@ from Poem.api.internal_views.utils import sync_webapi
 from Poem.api.views import NotFound
 from Poem.helpers.history_helpers import create_profile_history
 from Poem.poem import models as poem_models
-
+from django.conf import settings
+from django.contrib.contenttypes.models import ContentType
 from rest_framework import status
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
@@ -61,7 +59,6 @@ class ListAggregations(APIView):
             aggr = poem_models.Aggregation.objects.get(
                 apiid=request.data['apiid']
             )
-            aggr.name = request.data['name']
             aggr.groupname = request.data['groupname']
             aggr.save()
 
