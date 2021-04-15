@@ -680,7 +680,7 @@ export const MetricProfilesComponent = (props) => {
       services = groupMetricsByServices(servicesList);
       dataToSend = {
         id,
-        name: formValues.name,
+        name: profile_name,
         description: formValues.description,
         services
       };
@@ -704,7 +704,7 @@ export const MetricProfilesComponent = (props) => {
           '/api/v2/internal/metricprofiles/',
           {
             apiid: dataToSend.id,
-            name: dataToSend.name,
+            name: profile_name,
             description: dataToSend.description,
             groupname: formValues.groupname,
             services: backend_services
@@ -1003,6 +1003,7 @@ export const MetricProfilesComponent = (props) => {
                 }
                 profiletype='metric'
                 fieldsdisable={publicView}
+                addview={addview || cloneview}
               />
               <ParagraphTitle title='Metric instances'/>
               {
@@ -1387,7 +1388,7 @@ export const MetricProfileVersionDetails = (props) => {
               <ParagraphTitle title='Metric instances'/>
               <FieldArray
                 name='metricinstances'
-                render={arrayHelpers => (
+                render={() => (
                   <table className='table table-bordered table-sm'>
                     <thead className='table-active'>
                       <tr>
