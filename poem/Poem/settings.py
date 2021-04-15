@@ -49,9 +49,9 @@ try:
     WEBAPI_THRESHOLDS = config.get('WEBAPI', 'ThresholdsProfile')
     WEBAPI_OPERATIONS = config.get('WEBAPI', 'OperationsProfile')
     WEBAPI_REPORTS = config.get('WEBAPI', 'Reports')
-    WEBAPI_REPORTSTAGS = config.get('WEBAPI', 'ReportsTopologyGroups')
-    WEBAPI_REPORTSTOPOLOGYGROUPS = config.get('WEBAPI', 'ReportsTopologyEndpoints')
-    WEBAPI_REPORTSTOPOLOGYENDPOINTS = config.get('WEBAPI', 'ReportsTopologyTags')
+    WEBAPI_REPORTSTAGS = config.get('WEBAPI', 'ReportsTopologyTags')
+    WEBAPI_REPORTSTOPOLOGYGROUPS = config.get('WEBAPI', 'ReportsTopologyGroups')
+    WEBAPI_REPORTSTOPOLOGYENDPOINTS = config.get('WEBAPI', 'ReportsTopologyEndpoints')
 
 
 except NoSectionError as e:

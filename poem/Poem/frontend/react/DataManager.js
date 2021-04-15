@@ -225,7 +225,11 @@ export class WebApi {
   }
 
   async fetchReports() {
-    return this.fetchProfiles(this.reports);
+    return this.fetchProfiles(this.reports['main']);
+  }
+
+  async fetchReportsToplogyTags() {
+    return this.fetchProfiles(this.reports['tags']);
   }
 
   fetchMetricProfile(id) {

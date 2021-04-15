@@ -133,6 +133,7 @@ export const ReportsComponent = (props) => {
   const name = props.match.params.name;
   const location = props.location;
   const querykey = `report_${name}_changeview`;
+  const backend = new Backend();
 
   const webapi = new WebApi({
     token: props.webapitoken,
@@ -142,10 +143,22 @@ export const ReportsComponent = (props) => {
     operationsProfiles: props.webapioperations
   });
 
+  const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails } = useQuery(
+    `session_userdetails`, async () => {
+      const sessionActive = await backend.isActiveSession()
+      if (sessionActive.active) {
+        return sessionActive.userdetails
+      }
+    }
+  );
+
   const { data: report, error: reportError, isLoading: reportLoading } = useQuery(
     `${querykey}_report`, async () => {
       let report = webapi.fetchReport(name);
       return report;
+    },
+    {
+      enabled: userDetails
     }
   );
 
@@ -155,6 +168,9 @@ export const ReportsComponent = (props) => {
       let metricprofiles = [];
       mp.forEach(profile => metricprofiles.push(profile.name));
       return metricprofiles;
+    },
+    {
+      enabled: userDetails
     }
   );
 
@@ -164,6 +180,9 @@ export const ReportsComponent = (props) => {
       let aggregations = [];
       ap.forEach(profile => aggregations.push(profile.name));
       return aggregations;
+    },
+    {
+      enabled: userDetails
     }
   );
 
@@ -173,6 +192,19 @@ export const ReportsComponent = (props) => {
       let operations = [];
       op.forEach(profile => operations.push(profile.name));
       return operations;
+    },
+    {
+      enabled: userDetails
+    }
+  );
+
+  const { data: topologyTags, error: topologyTagsError, isLoading: isLoadingTopologyTags} = useQuery(
+    `${querykey}_topologytags`, async () => {
+      let tags = await webapi.fetchReportsToplogyTags();
+      return tags
+    },
+    {
+      enabled: report
     }
   );
 
@@ -191,7 +223,7 @@ export const ReportsComponent = (props) => {
   else if (listOperationsProfilesError)
     return (<ErrorComponent error={listOperationsProfilesError}/>);
 
-  else {
+  else if (report)  {
     let metricProfile = '';
     let aggregationProfile = '';
     let operationsProfile = '';
@@ -374,4 +406,7 @@ export const ReportsComponent = (props) => {
       </BaseArgoView>
     )
   }
+
+  else
+    return null
 };
