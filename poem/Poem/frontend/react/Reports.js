@@ -7,7 +7,8 @@ import {
   ErrorComponent,
   BaseArgoView,
   ParagraphTitle,
-  BaseArgoTable
+  BaseArgoTable,
+  DropDown,
  } from './UIElements';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -18,9 +19,15 @@ import {
   FormGroup,
   Row,
   Col,
+  Card,
+  CardBody,
+  CardText,
+  CardTitle,
+  CardSubtitle,
   InputGroup,
   InputGroupAddon,
   FormText,
+  Button,
   Label
 } from 'reactstrap';
 
@@ -134,6 +141,7 @@ export const ReportsComponent = (props) => {
   const location = props.location;
   const querykey = `report_${name}_changeview`;
   const backend = new Backend();
+  const topologyTypes = ['Sites', 'ServiceGroups']
 
   const webapi = new WebApi({
     token: props.webapitoken,
@@ -208,6 +216,13 @@ export const ReportsComponent = (props) => {
     }
   );
 
+  const whichTopologyType = (schema) => {
+    if (schema.group.group.type.toLowerCase() === topologyTypes[0].toLowerCase())
+      return topologyTypes[0]
+    else
+      return topologyTypes[1]
+  }
+
   if (reportLoading || listMetricProfilesLoading || listAggregationProfilesLoading || listOperationsProfilesLoading)
     return (<LoadingAnim/>);
 
@@ -256,7 +271,8 @@ export const ReportsComponent = (props) => {
             reliabilityThreshold: report.thresholds.reliability,
             uptimeThreshold: report.thresholds.uptime,
             unknownThreshold: report.thresholds.unknown,
-            downtimeThreshold: report.thresholds.downtime
+            downtimeThreshold: report.thresholds.downtime,
+            topologyType: whichTopologyType(report.topology_schema)
           }}
         >
           {() => (
@@ -397,6 +413,21 @@ export const ReportsComponent = (props) => {
                       name='downtimeThreshold'
                       className='form-control'
                     />
+                  </Col>
+                </Row>
+              </FormGroup>
+              <FormGroup className='mt-4'>
+                <ParagraphTitle title='Topology configuration'/>
+                <Row>
+                  <Col md={2}>
+                    <Label for='topologyType'>Topology type:</Label>
+                    <Field
+                        name='topologyType'
+                        component={DropDown}
+                        data={['Select one', ...topologyTypes]}
+                        required={true}
+                        class_name='custom-select'
+                      />
                   </Col>
                 </Row>
               </FormGroup>
