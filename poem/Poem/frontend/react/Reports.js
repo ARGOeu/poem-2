@@ -27,9 +27,9 @@ import {
   InputGroup,
   InputGroupAddon,
   FormText,
-  Button,
   Label
 } from 'reactstrap';
+import Select, { components } from 'react-select';
 
 
 export const ReportsList = (props) => {
@@ -223,6 +223,11 @@ export const ReportsComponent = (props) => {
       return topologyTypes[1]
   }
 
+  const extractTags = (which, tags) => {
+    let found = tags.filter(element => element.name === which)
+    return found[0].values
+  }
+
   if (reportLoading || listMetricProfilesLoading || listAggregationProfilesLoading || listOperationsProfilesLoading)
     return (<LoadingAnim/>);
 
@@ -238,7 +243,7 @@ export const ReportsComponent = (props) => {
   else if (listOperationsProfilesError)
     return (<ErrorComponent error={listOperationsProfilesError}/>);
 
-  else if (report)  {
+  else if (report && topologyTags)  {
     let metricProfile = '';
     let aggregationProfile = '';
     let operationsProfile = '';
@@ -428,6 +433,56 @@ export const ReportsComponent = (props) => {
                         required={true}
                         class_name='custom-select'
                       />
+                  </Col>
+                </Row>
+                <Row>
+                  <Col md={6}>
+                    <Card className="mt-3">
+                      <CardBody>
+                        <CardTitle tag="h5">Group of groups</CardTitle>
+                        <CardSubtitle tag="h6" className="mb-2 text-muted">Tags</CardSubtitle>
+                        <CardText>
+                          {
+                            extractTags('endpoints', topologyTags).map((e, i) => (
+                              <React.Fragment key={i}>
+                                <span key={i}>
+                                  { e.name }
+                                </span>
+                                <Select
+                                  closeMenuOnSelect={false}
+                                  components={components.MultiValueContainer}
+                                  key={i}
+                                  isMulti
+                                  options={e.values.map(item => new Object({
+                                    'label': item,
+                                    'value': item
+                                  }))}
+                                />
+                              </React.Fragment>
+                            ))
+                          }
+                        </CardText>
+                        <CardSubtitle tag="h6" className="mb-2 text-muted">Entities</CardSubtitle>
+                        <CardText>
+                          Bar
+                        </CardText>
+                      </CardBody>
+                    </Card>
+                  </Col>
+                  <Col md={6}>
+                    <Card className="mt-3">
+                      <CardBody>
+                        <CardTitle tag="h5">Group of endpoints</CardTitle>
+                        <CardSubtitle tag="h6" className="mb-2 mt-2 text-muted">Tags</CardSubtitle>
+                        <CardText>
+                          Foo
+                        </CardText>
+                        <CardSubtitle tag="h6" className="mb-2 mt-2 text-muted">Entities</CardSubtitle>
+                        <CardText>
+                          Bar
+                        </CardText>
+                      </CardBody>
+                    </Card>
                   </Col>
                 </Row>
               </FormGroup>
