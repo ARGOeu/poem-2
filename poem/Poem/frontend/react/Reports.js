@@ -137,23 +137,39 @@ export const ReportsList = (props) => {
     return null
 };
 
-const TopologyTag = ({ push, form, remove }) => {
+const TopologyTag = ({ tagsAll, extract, push, form, remove }) => {
   return (
     <React.Fragment>
       {
         form.values.topologyTags.map((tags, index) => (
           <React.Fragment key={index}>
-            <Row key={index}>
-              <Col>
-                <span>
-                  {tags[0]}
-                </span>
-                <span>
-                  {tags[1]}
-                </span>
+            <Row key={index} className="no-gutters">
+              <Col md={4}>
+                <Select
+                  closeMenuOnSelect={true}
+                  components={components.MultiValueContainer}
+                  options={extract('endpoints', tagsAll).map((e) => new Object({
+                    'label': e.name,
+                    'value': e.name
+                  }))}
+                  onChange={(e) => form.setFieldValue(`topologyTags.${index}.name`, e.value)}
+                />
+              </Col>
+              <Col md={4}>
+                <Select
+                  closeMenuOnSelect={false}
+                  isMulti
+                  components={components.MultiValueContainer}
+                  options={extract('endpoints', tagsAll).map((e) => new Object({
+                    'label': e.values,
+                    'value': e.values
+                  }))}
+                />
+              </Col>
+              <Col md={4}>
                 <Button size="sm" color="light"
-                type="button"
-                onClick={() => remove(index)}>
+                  type="button"
+                  onClick={() => remove(index)}>
                   <FontAwesomeIcon icon={faTimes}/>
                 </Button>
               </Col>
@@ -163,7 +179,7 @@ const TopologyTag = ({ push, form, remove }) => {
       }
       <Button color="success"
         type="button"
-        onClick={() => {push(['foo', 'bar'])}}>
+        onClick={() => { push({'name': '', 'value': ''})}}>
         Add new tag
       </Button>
     </React.Fragment>
@@ -483,7 +499,7 @@ export const ReportsComponent = (props) => {
                           <FieldArray
                             name="topologyTags"
                             render={props => (
-                              <TopologyTag {...props}/>
+                              <TopologyTag tagsAll={topologyTags} extract={extractTags} {...props}/>
                             )}
                           />
                         </CardText>
