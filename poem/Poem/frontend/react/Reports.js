@@ -12,7 +12,7 @@ import {
  } from './UIElements';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTimesCircle, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
+import { faTimesCircle, faTimes, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
 import { Formik, Field, FieldArray } from 'formik';
 import {
   Button,
@@ -137,18 +137,27 @@ export const ReportsList = (props) => {
     return null
 };
 
-const TopologyTag = ({ push, form }) => {
+const TopologyTag = ({ push, form, remove }) => {
   return (
     <React.Fragment>
       {
-        form.values.topologyTags.map((tags, i) => (
-          <React.Fragment key={i}>
-            <span>
-              {tags[0]}
-            </span>
-            <span>
-              {tags[1]}
-            </span>
+        form.values.topologyTags.map((tags, index) => (
+          <React.Fragment key={index}>
+            <Row key={index}>
+              <Col>
+                <span>
+                  {tags[0]}
+                </span>
+                <span>
+                  {tags[1]}
+                </span>
+                <Button size="sm" color="light"
+                type="button"
+                onClick={() => remove(index)}>
+                  <FontAwesomeIcon icon={faTimes}/>
+                </Button>
+              </Col>
+            </Row>
           </React.Fragment>
         ))
       }
