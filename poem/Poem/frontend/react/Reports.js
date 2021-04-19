@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Backend, WebApi } from './DataManager';
 
 import { useQuery } from 'react-query';
@@ -137,7 +137,22 @@ export const ReportsList = (props) => {
     return null
 };
 
-const TopologyTag = ({ tagsAll, extract, push, form, remove }) => {
+const TopologyTag = ({ tagsState, setTagsState, tagsAll, extract, push, form, remove }) => {
+  const extractValuesTags = (index) => {
+    if (tagsState[index] !== '') {
+      let interestTags = extract('groups', tagsAll)
+      interestTags = interestTags.filter((e) => e.name === tagsState[index])
+      if (interestTags.length > 0) {
+        interestTags = interestTags[0].values.map((e) => new Object({
+          'label': e,
+          'value': e
+        }))
+        return interestTags
+      }
+    }
+    return []
+  }
+
   return (
     <React.Fragment>
       {
@@ -148,26 +163,39 @@ const TopologyTag = ({ tagsAll, extract, push, form, remove }) => {
                 <Select
                   closeMenuOnSelect={true}
                   components={components.MultiValueContainer}
-                  options={extract('endpoints', tagsAll).map((e) => new Object({
+                  options={extract('groups', tagsAll).map((e) => new Object({
                     'label': e.name,
                     'value': e.name
                   }))}
-                  onChange={(e) => form.setFieldValue(`topologyTags.${index}.name`, e.value)}
+                  onChange={(e) => {
+                    form.setFieldValue(`topologyTags.${index}.name`, e.value)
+                    let newState = JSON.parse(JSON.stringify(tagsState))
+                    newState[index] = e.value
+                    setTagsState(newState)
+                  }}
                 />
               </Col>
-              <Col md={4}>
+              <Col md={7}>
                 <Select
                   closeMenuOnSelect={false}
                   isMulti
                   components={components.MultiValueContainer}
-                  options={extract('endpoints', tagsAll).map((e) => new Object({
-                    'label': e.values,
-                    'value': e.values
-                  }))}
+                  onChange={(e) => {
+                    if (Array.isArray(e)) {
+                      let joinedValues = ''
+                      e.forEach((e) => {
+                        joinedValues += e.value + ' '
+                      })
+                      form.setFieldValue(`topologyTags.${index}.value`, joinedValues.trim())
+                    }
+                    else
+                      form.setFieldValue(`topologyTags.${index}.value`, e.value.trim())
+                  }}
+                  options={extractValuesTags(index)}
                 />
               </Col>
-              <Col md={4}>
-                <Button size="sm" color="light"
+              <Col md={1}>
+                <Button size="sm" color="danger"
                   type="button"
                   onClick={() => remove(index)}>
                   <FontAwesomeIcon icon={faTimes}/>
@@ -193,6 +221,7 @@ export const ReportsComponent = (props) => {
   const querykey = `report_${name}_changeview`;
   const backend = new Backend();
   const topologyTypes = ['Sites', 'ServiceGroups']
+  const [tagsState, setTagsState] = useState(new Object())
 
   const webapi = new WebApi({
     token: props.webapitoken,
@@ -495,18 +524,14 @@ export const ReportsComponent = (props) => {
                       </CardHeader>
                       <CardBody>
                         <CardTitle tag="h5" className="mb-2">Tags</CardTitle>
-                        <CardText>
-                          <FieldArray
-                            name="topologyTags"
-                            render={props => (
-                              <TopologyTag tagsAll={topologyTags} extract={extractTags} {...props}/>
-                            )}
-                          />
-                        </CardText>
+                        <FieldArray
+                          name="topologyTags"
+                          render={props => (
+                            <TopologyTag tagsState={tagsState} setTagsState={setTagsState} tagsAll={topologyTags} extract={extractTags} {...props}/>
+                          )}
+                        />
                         <CardTitle tag="h5" className="mb-2">Entities</CardTitle>
-                        <CardText>
                           Bar
-                        </CardText>
                       </CardBody>
                     </Card>
                   </Col>
