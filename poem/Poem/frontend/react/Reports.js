@@ -13,14 +13,16 @@ import {
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
-import { Formik, Field } from 'formik';
+import { Formik, Field, FieldArray } from 'formik';
 import {
+  Button,
   Form,
   FormGroup,
   Row,
   Col,
   Card,
   CardBody,
+  CardHeader,
   CardText,
   CardTitle,
   CardSubtitle,
@@ -134,6 +136,30 @@ export const ReportsList = (props) => {
   else
     return null
 };
+
+const TopologyTag = ({ push, form }) => {
+  return (
+    <React.Fragment>
+      {
+        form.values.topologyTags.map((tags, i) => (
+          <React.Fragment key={i}>
+            <span>
+              {tags[0]}
+            </span>
+            <span>
+              {tags[1]}
+            </span>
+          </React.Fragment>
+        ))
+      }
+      <Button color="success"
+        type="button"
+        onClick={() => {push(['foo', 'bar'])}}>
+        Add new tag
+      </Button>
+    </React.Fragment>
+  )
+}
 
 
 export const ReportsComponent = (props) => {
@@ -277,10 +303,11 @@ export const ReportsComponent = (props) => {
             uptimeThreshold: report.thresholds.uptime,
             unknownThreshold: report.thresholds.unknown,
             downtimeThreshold: report.thresholds.downtime,
-            topologyType: whichTopologyType(report.topology_schema)
+            topologyType: whichTopologyType(report.topology_schema),
+            topologyTags: new Array()
           }}
         >
-          {() => (
+          {(props) => (
             <Form>
               <FormGroup>
                 <Row className='align-items-center'>
@@ -438,31 +465,20 @@ export const ReportsComponent = (props) => {
                 <Row>
                   <Col md={6}>
                     <Card className="mt-3">
+                      <CardHeader>
+                        <strong>Group of groups</strong>
+                      </CardHeader>
                       <CardBody>
-                        <CardTitle tag="h5">Group of groups</CardTitle>
-                        <CardSubtitle tag="h6" className="mb-2 text-muted">Tags</CardSubtitle>
+                        <CardTitle tag="h5" className="mb-2">Tags</CardTitle>
                         <CardText>
-                          {
-                            extractTags('endpoints', topologyTags).map((e, i) => (
-                              <React.Fragment key={i}>
-                                <span key={i}>
-                                  { e.name }
-                                </span>
-                                <Select
-                                  closeMenuOnSelect={false}
-                                  components={components.MultiValueContainer}
-                                  key={i}
-                                  isMulti
-                                  options={e.values.map(item => new Object({
-                                    'label': item,
-                                    'value': item
-                                  }))}
-                                />
-                              </React.Fragment>
-                            ))
-                          }
+                          <FieldArray
+                            name="topologyTags"
+                            render={props => (
+                              <TopologyTag {...props}/>
+                            )}
+                          />
                         </CardText>
-                        <CardSubtitle tag="h6" className="mb-2 text-muted">Entities</CardSubtitle>
+                        <CardTitle tag="h5" className="mb-2">Entities</CardTitle>
                         <CardText>
                           Bar
                         </CardText>
