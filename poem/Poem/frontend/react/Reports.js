@@ -144,15 +144,34 @@ const TopologyTag = ({ part, tagsState, setTagsState, tagsAll, push, form, remov
     return found[0].values
   }
 
+  const isMultiValuesTags = (data) => {
+    if (data.length === 2) {
+      if (data[0].value === 'yes' ||
+        data[0].value === 'no')
+      return false
+    }
+    else
+      return true
+  }
+
   const extractValuesTags = (index) => {
     if (tagsState[index] !== '') {
       let interestTags = extractTags(part, tagsAll)
       interestTags = interestTags.filter((e) => e.name === tagsState[index])
       if (interestTags.length > 0) {
-        interestTags = interestTags[0].values.map((e) => new Object({
-          'label': e,
-          'value': e
-        }))
+        if (interestTags[0].values[0] === '0' ||
+          interestTags[0].values[0] === '1') {
+          interestTags = interestTags[0].values.map((e) => new Object({
+            'label': e === '1' ? 'yes' : 'no',
+            'value': e === '1' ? 'yes' : 'no'
+          }))
+        }
+        else {
+          interestTags = interestTags[0].values.map((e) => new Object({
+            'label': e,
+            'value': e
+          }))
+        }
         return interestTags
       }
     }
@@ -183,8 +202,8 @@ const TopologyTag = ({ part, tagsState, setTagsState, tagsAll, push, form, remov
               </Col>
               <Col md={7}>
                 <Select
-                  closeMenuOnSelect={false}
-                  isMulti
+                  closeMenuOnSelect={!isMultiValuesTags(extractValuesTags(index))}
+                  isMulti={isMultiValuesTags(extractValuesTags(index))}
                   components={components.MultiValueContainer}
                   onChange={(e) => {
                     if (Array.isArray(e)) {
@@ -533,7 +552,7 @@ export const ReportsComponent = (props) => {
                           )}
                         />
                         <CardTitle tag="h5" className="mb-2">Entities</CardTitle>
-                          Bar
+                          FooBar
                       </CardBody>
                     </Card>
                   </Col>
