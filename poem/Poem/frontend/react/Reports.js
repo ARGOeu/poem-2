@@ -219,7 +219,7 @@ const TopologyTag = ({ part, tagsState, setTagsState, tagsAll, push, form, remov
                   options={extractValuesTags(index)}
                 />
               </Col>
-              <Col md={1}>
+              <Col md={1} className="pl-2 pt-1">
                 <Button size="sm" color="danger"
                   type="button"
                   onClick={() => remove(index)}>
@@ -230,11 +230,15 @@ const TopologyTag = ({ part, tagsState, setTagsState, tagsAll, push, form, remov
           </React.Fragment>
         ))
       }
-      <Button color="success"
-        type="button"
-        onClick={() => { push({'name': '', 'value': ''})}}>
-        Add new tag
-      </Button>
+      <Row>
+        <Col className="pt-4 d-flex justify-content-center">
+          <Button color="success"
+            type="button"
+            onClick={() => { push({'name': '', 'value': ''})}}>
+            Add new tag
+          </Button>
+        </Col>
+      </Row>
     </React.Fragment>
   )
 }
@@ -544,14 +548,21 @@ export const ReportsComponent = (props) => {
                         <strong>Group of groups</strong>
                       </CardHeader>
                       <CardBody>
-                        <CardTitle tag="h5" className="mb-2">Tags</CardTitle>
+                        <CardTitle className="mb-2">
+                          <strong>Tags</strong>
+                        </CardTitle>
                         <FieldArray
                           name="groups"
                           render={props => (
                             <TopologyTag part="groups" tagsState={tagsState} setTagsState={setTagsState} tagsAll={topologyTags} {...props}/>
                           )}
                         />
-                        <CardTitle tag="h5" className="mb-2">Entities</CardTitle>
+                        <div>
+                          <hr style={{'borderTop': '1px solid #b5c4d1'}}/>
+                        </div>
+                        <CardTitle className="mb-2">
+                          <strong>Entities</strong>
+                        </CardTitle>
                           FooBar
                       </CardBody>
                     </Card>
@@ -562,7 +573,9 @@ export const ReportsComponent = (props) => {
                         <strong>Group of endpoints</strong>
                       </CardHeader>
                       <CardBody>
-                        <CardTitle tag="h5" className="mb-2">Tags</CardTitle>
+                        <CardTitle className="mb-2">
+                          <strong>Tags</strong>
+                        </CardTitle>
                         <FieldArray
                           name="endpoints"
                           render={props => (
