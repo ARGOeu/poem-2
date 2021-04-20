@@ -137,13 +137,15 @@ export const ReportsList = (props) => {
     return null
 };
 
-const TagSelect = ({field, form, tagOptions, onChangeHandler, isMulti, closeMenuOnSelect}) => {
+
+const TagSelect = ({field, tagOptions, onChangeHandler, isMulti, closeMenuOnSelect}) => {
   return (
     <Select
       name={field.name}
       closeMenuOnSelect={closeMenuOnSelect}
       isMulti={isMulti}
-      components={components.MultiValueContainer}
+      isClearable={false}
+      components={isMulti ? components.MultiValueContainer : components.SingleValue}
       onChange={(e) => onChangeHandler(e)}
       options={tagOptions}
     />
