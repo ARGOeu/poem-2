@@ -193,7 +193,7 @@ const TopologyTag = ({ part, tagsState, setTagsState, tagsAll, push, form, remov
                     'value': e.name
                   }))}
                   onChange={(e) => {
-                    form.setFieldValue(`topologyTags.${index}.name`, e.value)
+                    form.setFieldValue(`${part}.${index}.name`, e.value)
                     let newState = JSON.parse(JSON.stringify(tagsState))
                     newState[index] = e.value
                     setTagsState(newState)
@@ -211,10 +211,10 @@ const TopologyTag = ({ part, tagsState, setTagsState, tagsAll, push, form, remov
                       e.forEach((e) => {
                         joinedValues += e.value + ' '
                       })
-                      form.setFieldValue(`topologyTags.${index}.value`, joinedValues.trim())
+                      form.setFieldValue(`${part}.${index}.value`, joinedValues.trim())
                     }
                     else
-                      form.setFieldValue(`topologyTags.${index}.value`, e.value.trim())
+                      form.setFieldValue(`${part}.${index}.value`, e.value.trim())
                   }}
                   options={extractValuesTags(index)}
                 />
