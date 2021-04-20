@@ -153,9 +153,22 @@ const TagSelect = ({field, tagOptions, onChangeHandler, isMulti, closeMenuOnSele
 }
 
 const TopologyTag = ({ part, tagsState, setTagsState, tagsAll, push, form, remove }) => {
-  const extractTags = (which) => {
+  const extractTags = (which, filter=false) => {
+    let selected = new Array()
+
+    if (filter)
+      if (tagsState[part])
+        Object.keys(tagsState[part]).forEach((e) =>
+          selected.push(tagsState[part][e])
+        )
+
     let found = tagsAll.filter(element => element.name === which)
-    return found[0].values
+    found = found[0].values
+
+    if (filter)
+      found = found.filter(element => selected.indexOf(element.name) === -1)
+
+    return found
   }
 
   const recordSelectedTagKeys = (index, value) => {
@@ -213,7 +226,7 @@ const TopologyTag = ({ part, tagsState, setTagsState, tagsAll, push, form, remov
                 <Field
                   name={`${part}.${index}.name`}
                   component={TagSelect}
-                  tagOptions={extractTags(part).map((e) => new Object({
+                  tagOptions={extractTags(part, true).map((e) => new Object({
                     'label': e.name,
                     'value': e.name
                   }))}
