@@ -153,8 +153,8 @@ const TagSelect = ({field, tagOptions, onChangeHandler, isMulti, closeMenuOnSele
 }
 
 const TopologyTag = ({ part, tagsState, setTagsState, tagsAll, push, form, remove }) => {
-  const extractTags = (which, tags) => {
-    let found = tags.filter(element => element.name === which)
+  const extractTags = (which) => {
+    let found = tagsAll.filter(element => element.name === which)
     return found[0].values
   }
 
@@ -181,7 +181,7 @@ const TopologyTag = ({ part, tagsState, setTagsState, tagsAll, push, form, remov
 
   const extractValuesTags = (index) => {
     if (tagsState[part] !== undefined) {
-      let interestTags = extractTags(part, tagsAll)
+      let interestTags = extractTags(part)
       interestTags = interestTags.filter((e) => e.name === tagsState[part][index])
       if (interestTags.length > 0) {
         if (interestTags[0].values[0] === '0' ||
@@ -213,7 +213,7 @@ const TopologyTag = ({ part, tagsState, setTagsState, tagsAll, push, form, remov
                 <Field
                   name={`${part}.${index}.name`}
                   component={TagSelect}
-                  tagOptions={extractTags(part, tagsAll).map((e) => new Object({
+                  tagOptions={extractTags(part).map((e) => new Object({
                     'label': e.name,
                     'value': e.name
                   }))}
