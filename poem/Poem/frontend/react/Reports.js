@@ -245,15 +245,18 @@ const TopologyTag = ({ part, tagsState, setTagsState, tagsAll, push, form, remov
                   closeMenuOnSelect={!isMultiValuesTags(extractValuesTags(index))}
                 />
               </Col>
-              <Col md={1} className="pl-2 pt-1">
-                <Button size="sm" color="danger"
-                  type="button"
-                  onClick={() => {
-                    remove(index)
-                  }}>
-                  <FontAwesomeIcon icon={faTimes}/>
-                </Button>
-              </Col>
+              {
+                index === form.values[part].length - 1 &&
+                <Col md={1} className="pl-2 pt-1">
+                  <Button size="sm" color="danger"
+                    type="button"
+                    onClick={() => {
+                      remove(index)
+                    }}>
+                    <FontAwesomeIcon icon={faTimes}/>
+                  </Button>
+                </Col>
+              }
             </Row>
           </React.Fragment>
         ))
