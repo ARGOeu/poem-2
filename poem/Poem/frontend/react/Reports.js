@@ -154,10 +154,21 @@ const TopologyTag = ({ part, tagsState, setTagsState, tagsAll, push, form, remov
       return true
   }
 
+  const recordSelectedTagKeys = (index, value) => {
+    let newState = JSON.parse(JSON.stringify(tagsState))
+    if (newState[part])
+      newState[part][index] = value
+    else {
+      newState[part] = new Object()
+      newState[part][index] = value
+    }
+    setTagsState(newState)
+  }
+
   const extractValuesTags = (index) => {
-    if (tagsState[index] !== '') {
+    if (tagsState[part] !== undefined) {
       let interestTags = extractTags(part, tagsAll)
-      interestTags = interestTags.filter((e) => e.name === tagsState[index])
+      interestTags = interestTags.filter((e) => e.name === tagsState[part][index])
       if (interestTags.length > 0) {
         if (interestTags[0].values[0] === '0' ||
           interestTags[0].values[0] === '1') {
@@ -194,9 +205,7 @@ const TopologyTag = ({ part, tagsState, setTagsState, tagsAll, push, form, remov
                   }))}
                   onChange={(e) => {
                     form.setFieldValue(`${part}.${index}.name`, e.value)
-                    let newState = JSON.parse(JSON.stringify(tagsState))
-                    newState[index] = e.value
-                    setTagsState(newState)
+                    recordSelectedTagKeys(index, e.value)
                   }}
                 />
               </Col>
@@ -250,7 +259,10 @@ export const ReportsComponent = (props) => {
   const querykey = `report_${name}_changeview`;
   const backend = new Backend();
   const topologyTypes = ['Sites', 'ServiceGroups']
-  const [tagsState, setTagsState] = useState(new Object())
+  const [tagsState, setTagsState] = useState(new Object({
+    'groups': undefined,
+    'endpoints': undefined
+  }))
 
   const webapi = new WebApi({
     token: props.webapitoken,
