@@ -137,21 +137,23 @@ export const ReportsList = (props) => {
     return null
 };
 
+const TagSelect = ({field, form, tagOptions, onChangeHandler, isMulti, closeMenuOnSelect}) => {
+  return (
+    <Select
+      name={field.name}
+      closeMenuOnSelect={closeMenuOnSelect}
+      isMulti={isMulti}
+      components={components.MultiValueContainer}
+      onChange={(e) => onChangeHandler(e)}
+      options={tagOptions}
+    />
+  )
+}
 
 const TopologyTag = ({ part, tagsState, setTagsState, tagsAll, push, form, remove }) => {
   const extractTags = (which, tags) => {
     let found = tags.filter(element => element.name === which)
     return found[0].values
-  }
-
-  const isMultiValuesTags = (data) => {
-    if (data.length === 2) {
-      if (data[0].value === 'yes' ||
-        data[0].value === 'no')
-      return false
-    }
-    else
-      return true
   }
 
   const recordSelectedTagKeys = (index, value) => {
@@ -163,6 +165,16 @@ const TopologyTag = ({ part, tagsState, setTagsState, tagsAll, push, form, remov
       newState[part][index] = value
     }
     setTagsState(newState)
+  }
+
+  const isMultiValuesTags = (data) => {
+    if (data.length === 2) {
+      if (data[0].value === 'yes' ||
+        data[0].value === 'no')
+      return false
+    }
+    else
+      return true
   }
 
   const extractValuesTags = (index) => {
@@ -196,25 +208,27 @@ const TopologyTag = ({ part, tagsState, setTagsState, tagsAll, push, form, remov
           <React.Fragment key={index}>
             <Row key={index} className="no-gutters">
               <Col md={4}>
-                <Select
-                  closeMenuOnSelect={true}
-                  components={components.MultiValueContainer}
-                  options={extractTags(part, tagsAll).map((e) => new Object({
+                <Field
+                  name={`${part}.${index}.name`}
+                  component={TagSelect}
+                  tagOptions={extractTags(part, tagsAll).map((e) => new Object({
                     'label': e.name,
                     'value': e.name
                   }))}
-                  onChange={(e) => {
+                  onChangeHandler={(e) => {
                     form.setFieldValue(`${part}.${index}.name`, e.value)
                     recordSelectedTagKeys(index, e.value)
                   }}
+                  isMulti={false}
+                  closeMenuOnSelect={true}
                 />
               </Col>
               <Col md={7}>
-                <Select
-                  closeMenuOnSelect={!isMultiValuesTags(extractValuesTags(index))}
-                  isMulti={isMultiValuesTags(extractValuesTags(index))}
-                  components={components.MultiValueContainer}
-                  onChange={(e) => {
+                <Field
+                  name={`${part}.${index}.value`}
+                  component={TagSelect}
+                  tagOptions={extractValuesTags(index)}
+                  onChangeHandler={(e) => {
                     if (Array.isArray(e)) {
                       let joinedValues = ''
                       e.forEach((e) => {
@@ -225,13 +239,16 @@ const TopologyTag = ({ part, tagsState, setTagsState, tagsAll, push, form, remov
                     else
                       form.setFieldValue(`${part}.${index}.value`, e.value.trim())
                   }}
-                  options={extractValuesTags(index)}
+                  isMulti={isMultiValuesTags(extractValuesTags(index))}
+                  closeMenuOnSelect={!isMultiValuesTags(extractValuesTags(index))}
                 />
               </Col>
               <Col md={1} className="pl-2 pt-1">
                 <Button size="sm" color="danger"
                   type="button"
-                  onClick={() => remove(index)}>
+                  onClick={() => {
+                    remove(index)
+                  }}>
                   <FontAwesomeIcon icon={faTimes}/>
                 </Button>
               </Col>
@@ -243,7 +260,7 @@ const TopologyTag = ({ part, tagsState, setTagsState, tagsAll, push, form, remov
         <Col className="pt-4 d-flex justify-content-center">
           <Button color="success"
             type="button"
-            onClick={() => { push({'name': '', 'value': ''})}}>
+            onClick={() => {push({'name': '', 'value': ''})}}>
             Add new tag
           </Button>
         </Col>
@@ -380,6 +397,7 @@ export const ReportsComponent = (props) => {
         history={false}
       >
         <Formik
+          enableReinitialize={true}
           initialValues = {{
             id: report.id,
             disabled: report.disabled,
