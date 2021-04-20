@@ -137,10 +137,16 @@ export const ReportsList = (props) => {
     return null
 };
 
-const TopologyTag = ({ tagsState, setTagsState, tagsAll, extract, push, form, remove }) => {
+
+const TopologyTag = ({ part, tagsState, setTagsState, tagsAll, push, form, remove }) => {
+  const extractTags = (which, tags) => {
+    let found = tags.filter(element => element.name === which)
+    return found[0].values
+  }
+
   const extractValuesTags = (index) => {
     if (tagsState[index] !== '') {
-      let interestTags = extract('groups', tagsAll)
+      let interestTags = extractTags(part, tagsAll)
       interestTags = interestTags.filter((e) => e.name === tagsState[index])
       if (interestTags.length > 0) {
         interestTags = interestTags[0].values.map((e) => new Object({
@@ -156,14 +162,14 @@ const TopologyTag = ({ tagsState, setTagsState, tagsAll, extract, push, form, re
   return (
     <React.Fragment>
       {
-        form.values.topologyTags.map((tags, index) => (
+        form.values[part].map((tags, index) => (
           <React.Fragment key={index}>
             <Row key={index} className="no-gutters">
               <Col md={4}>
                 <Select
                   closeMenuOnSelect={true}
                   components={components.MultiValueContainer}
-                  options={extract('groups', tagsAll).map((e) => new Object({
+                  options={extractTags(part, tagsAll).map((e) => new Object({
                     'label': e.name,
                     'value': e.name
                   }))}
@@ -303,11 +309,6 @@ export const ReportsComponent = (props) => {
       return topologyTypes[1]
   }
 
-  const extractTags = (which, tags) => {
-    let found = tags.filter(element => element.name === which)
-    return found[0].values
-  }
-
   if (reportLoading || listMetricProfilesLoading || listAggregationProfilesLoading || listOperationsProfilesLoading)
     return (<LoadingAnim/>);
 
@@ -358,7 +359,8 @@ export const ReportsComponent = (props) => {
             unknownThreshold: report.thresholds.unknown,
             downtimeThreshold: report.thresholds.downtime,
             topologyType: whichTopologyType(report.topology_schema),
-            topologyTags: new Array()
+            groups: new Array(),
+            endpoints: new Array()
           }}
         >
           {(props) => (
@@ -510,7 +512,7 @@ export const ReportsComponent = (props) => {
                     <Field
                         name='topologyType'
                         component={DropDown}
-                        data={['Select one', ...topologyTypes]}
+                        data={['Select...', ...topologyTypes]}
                         required={true}
                         class_name='custom-select'
                       />
@@ -525,9 +527,9 @@ export const ReportsComponent = (props) => {
                       <CardBody>
                         <CardTitle tag="h5" className="mb-2">Tags</CardTitle>
                         <FieldArray
-                          name="topologyTags"
+                          name="groups"
                           render={props => (
-                            <TopologyTag tagsState={tagsState} setTagsState={setTagsState} tagsAll={topologyTags} extract={extractTags} {...props}/>
+                            <TopologyTag part="groups" tagsState={tagsState} setTagsState={setTagsState} tagsAll={topologyTags} {...props}/>
                           )}
                         />
                         <CardTitle tag="h5" className="mb-2">Entities</CardTitle>
@@ -537,16 +539,17 @@ export const ReportsComponent = (props) => {
                   </Col>
                   <Col md={6}>
                     <Card className="mt-3">
+                      <CardHeader>
+                        <strong>Group of endpoints</strong>
+                      </CardHeader>
                       <CardBody>
-                        <CardTitle tag="h5">Group of endpoints</CardTitle>
-                        <CardSubtitle tag="h6" className="mb-2 mt-2 text-muted">Tags</CardSubtitle>
-                        <CardText>
-                          Foo
-                        </CardText>
-                        <CardSubtitle tag="h6" className="mb-2 mt-2 text-muted">Entities</CardSubtitle>
-                        <CardText>
-                          Bar
-                        </CardText>
+                        <CardTitle tag="h5" className="mb-2">Tags</CardTitle>
+                        <FieldArray
+                          name="endpoints"
+                          render={props => (
+                            <TopologyTag part="endpoints" tagsState={tagsState} setTagsState={setTagsState} tagsAll={topologyTags} {...props}/>
+                          )}
+                        />
                       </CardBody>
                     </Card>
                   </Col>
