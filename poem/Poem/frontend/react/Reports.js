@@ -152,7 +152,7 @@ const TagSelect = ({field, tagOptions, onChangeHandler, isMulti, closeMenuOnSele
   )
 }
 
-const TopologyTag = ({ part, tagsState, setTagsState, tagsAll, push, form, remove }) => {
+const TopologyTagList = ({ part, tagsState, setTagsState, tagsAll, push, form, remove }) => {
   const extractTags = (which, filter=false) => {
     let selected = new Array()
 
@@ -602,7 +602,7 @@ export const ReportsComponent = (props) => {
                         <FieldArray
                           name="groups"
                           render={props => (
-                            <TopologyTag part="groups" tagsState={tagsState} setTagsState={setTagsState} tagsAll={topologyTags} {...props}/>
+                            <TopologyTagList part="groups" tagsState={tagsState} setTagsState={setTagsState} tagsAll={topologyTags} {...props}/>
                           )}
                         />
                         <div>
@@ -627,7 +627,7 @@ export const ReportsComponent = (props) => {
                         <FieldArray
                           name="endpoints"
                           render={props => (
-                            <TopologyTag part="endpoints" tagsState={tagsState} setTagsState={setTagsState} tagsAll={topologyTags} {...props}/>
+                            <TopologyTagList part="endpoints" tagsState={tagsState} setTagsState={setTagsState} tagsAll={topologyTags} {...props}/>
                           )}
                         />
                       </CardBody>
@@ -635,6 +635,23 @@ export const ReportsComponent = (props) => {
                   </Col>
                 </Row>
               </FormGroup>
+              {
+                //(write_perm) &&
+                  //<div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
+                    //<Button
+                      //color="danger"
+                      //onClick={() => {
+                        //setModalMsg('Are you sure you want to delete Metric profile?')
+                        //setModalTitle('Delete metric profile')
+                        //setAreYouSureModal(!areYouSureModal);
+                        //setFormikValues(props.values)
+                        //setOnYes('delete')
+                      //}}>
+                      //Delete
+                    //</Button>
+                    //<Button color="success" id="submit-button" type="submit">Save</Button>
+                  //</div>
+              }
             </Form>
           )}
         </Formik>
