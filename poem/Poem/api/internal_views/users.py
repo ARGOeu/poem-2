@@ -39,6 +39,13 @@ def get_groups_for_user(user):
     )
     results.update({'thresholdsprofiles': groupsofthresholdsprofiles})
 
+    groupsofreports = list(
+        user.userprofile.groupsofreports.all().values_list(
+            'name', flat=True
+        )
+    )
+    results.update({'reports': groupsofreports})
+
     return results
 
 
@@ -68,6 +75,13 @@ def get_all_groups():
         )
     )
     results.update({'thresholdsprofiles': groupsofthresholdsprofiles})
+
+    groupsofreports = list(
+        poem_models.GroupOfReports.objects.all().values_list(
+            'name', flat=True
+        )
+    )
+    results.update({'reports': groupsofreports})
 
     return results
 
