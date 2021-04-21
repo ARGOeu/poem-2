@@ -22,7 +22,7 @@ class GroupOfReports(models.Model):
     name = models.CharField(_('name'), max_length=80, unique=True)
     permissions = models.ManyToManyField(Permission,
                                          verbose_name=_('permissions'), blank=True)
-    metricprofiles = models.ManyToManyField(Reports, blank=True)
+    reports = models.ManyToManyField(Reports, blank=True)
     objects = GroupManager()
 
     class Meta:
