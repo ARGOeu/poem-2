@@ -84,10 +84,16 @@ def sync_webapi(api, model):
     new_entries = []
     for p in data:
         if p['id'] in entries_not_indb:
-            new_entries.append(
-                dict(name=p['name'], description=p.get('description', ''),
-                     apiid=p['id'], groupname='')
-            )
+            if p.get('info', False):
+                new_entries.append(
+                    dict(name=p['info']['name'], description=p['info'].get('description', ''),
+                        apiid=p['id'], groupname='')
+                )
+            else:
+                new_entries.append(
+                    dict(name=p['name'], description=p.get('description', ''),
+                        apiid=p['id'], groupname='')
+                )
 
     if new_entries:
         for entry in new_entries:
@@ -138,8 +144,12 @@ def sync_webapi(api, model):
     for p in data:
         if p['id'] in entries_indb:
             instance = model.objects.get(apiid=p['id'])
-            instance.name = p['name']
-            instance.description = p.get('description', '')
+            if p.get('info', False):
+                instance.name = p['info']['name']
+                instance.description = p['info'].get('description', '')
+            else:
+                instance.name = p['name']
+                instance.description = p.get('description', '')
             instance.save()
 
 

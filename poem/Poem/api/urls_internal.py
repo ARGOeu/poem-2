@@ -11,8 +11,6 @@ urlpatterns = [
     path('public_aggregations/<str:aggregation_name>', views_internal.ListPublicAggregations.as_view(), name='aggregations'),
     path('aggregationsgroup/', views_internal.ListAggregationsInGroup.as_view(), name='aggregationprofiles'),
     path('aggregationsgroup/<str:group>', views_internal.ListAggregationsInGroup.as_view(), name='aggregationprofiles'),
-    path('reportsgroup/', views_internal.ListReportsInGroup.as_view(), name='reports'),
-    path('reportsgroup/<str:group>', views_internal.ListReportsInGroup.as_view(), name='reports'),
     path('apikeys/', views_internal.ListAPIKeys.as_view(), name='tokens'),
     path('public_apikey/', views_internal.ListPublicAPIKey.as_view(), name='tokens'),
     path('apikeys/<str:name>', views_internal.ListAPIKeys.as_view(), name='tokens'),
@@ -90,4 +88,8 @@ urlpatterns = [
     path('tenants/<str:name>', views_internal.ListTenants.as_view(), name='tenants'),
     path('metrictags/', views_internal.ListMetricTags.as_view(), name='metrictags'),
     path('public_metrictags/', views_internal.ListPublicMetricTags.as_view(), name='metrictags'),
+    path('reports/', views_internal.ListReports.as_view(), name='reports'),
+    path('reports/<str:report_name>', views_internal.ListReports.as_view(), name='reports'),
+    path('reportsgroup/', views_internal.ListReportsInGroup.as_view(), name='reports'),
+    path('reportsgroup/<str:group>', views_internal.ListReportsInGroup.as_view(), name='reports')
 ]

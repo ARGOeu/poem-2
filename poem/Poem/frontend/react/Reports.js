@@ -37,6 +37,8 @@ import Select, { components } from 'react-select';
 export const ReportsList = (props) => {
   const location = props.location;
   const backend = new Backend();
+  // TODO: add public API endpoints
+  let apiUrl = '/api/v2/internal/reports'
 
   const webapi = new WebApi({
     token: props.webapitoken,
@@ -54,12 +56,13 @@ export const ReportsList = (props) => {
 
   const { data: listReports, error: error, isLoading: loading } = useQuery(
     'reports_listview', async () => {
-      let json = await webapi.fetchReports();
+      let json = await backend.fetchData(apiUrl);
       let reports = [];
       json.forEach(e => reports.push({
-        'name': e.info.name,
-        'description': e.info.description,
-        'disabled': e.disabled
+        'name': e.name,
+        'description': e.description,
+        'disabled': e.disabled,
+        'group': e.group
       }))
 
       return reports;
