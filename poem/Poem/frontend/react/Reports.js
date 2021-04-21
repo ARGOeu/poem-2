@@ -264,7 +264,10 @@ const TopologyTagList = ({ part, tagsState, setTagsState, tagsAll, push, form, r
                   <Button size="sm" color="danger"
                     type="button"
                     onClick={() => {
+                      let newState = JSON.parse(JSON.stringify(tagsState))
+                      delete newState[part][index]
                       remove(index)
+                      setTagsState(newState)
                     }}>
                     <FontAwesomeIcon icon={faTimes}/>
                   </Button>
