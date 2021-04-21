@@ -30,7 +30,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('name', models.CharField(max_length=80, unique=True, verbose_name='name')),
-                ('metricprofiles', models.ManyToManyField(blank=True, to='poem.Reports')),
+                ('reports', models.ManyToManyField(blank=True, to='poem.Reports')),
                 ('permissions', models.ManyToManyField(blank=True, to='auth.Permission', verbose_name='permissions')),
             ],
             options={
