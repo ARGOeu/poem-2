@@ -88,6 +88,7 @@ var link_title = new Map();
 link_title.set('administration', 'Administration');
 link_title.set('aggregationprofiles', 'Aggregation profiles');
 link_title.set('apikey', 'API key');
+link_title.set('groupofreports', 'Groups of reports');
 link_title.set('groupofaggregations', 'Groups of aggregations');
 link_title.set('groupofmetricprofiles', 'Groups of metric profiles');
 link_title.set('groupofmetrics', 'Groups of metrics');

@@ -243,6 +243,24 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, w
     <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/users/:user_name"
       render={props => <UserChange {...props} isTenantSchema={true}/>}
     />
+    <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/groupofreports"
+      render={props => <GroupList {...props} group='reports' id='groupofreports' name='group of reports'/>}
+    />
+    <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/groupofreports/add"
+      render={props => <GroupChange
+        {...props}
+        group='reports'
+        id='groupofreports'
+        title='reports'
+        addview={true}/>}
+    />
+    <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/groupofreports/:name"
+      render={props => <GroupChange
+        {...props}
+        group='reports'
+        id='groupofreports'
+        title='reports'/>}
+    />
     <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/groupofmetrics"
       render={props => <GroupList {...props} group='metrics' id='groupofmetrics' name='group of metrics'/>}
     />
@@ -578,7 +596,7 @@ const App = () => {
       }
 
       getAndSetReferrer()
-    };
+    }
   }, [])
 
   if (publicView && isTenantSchema !== undefined) {
