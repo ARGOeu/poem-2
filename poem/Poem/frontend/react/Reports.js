@@ -130,6 +130,14 @@ export const ReportsList = (props) => {
 };
 
 
+function insertSelectPlaceholder(data, text) {
+  if (data)
+    return [text, ...data]
+  else
+    return [text]
+}
+
+
 const TagSelect = ({field, tagOptions, onChangeHandler, isMulti, closeMenuOnSelect}) => {
   return (
     <Select
@@ -570,46 +578,34 @@ export const ReportsComponent = (props) => {
                     <Label to='metricProfile'>Metric profile:</Label>
                     <Field
                       id='metricProfile'
-                      component='select'
-                      className='form-control custom-select'
                       name='metricProfile'
-                    >
-                      {
-                        listMetricProfiles.map((name, i) =>
-                          <option key={i} value={name}>{name}</option>
-                        )
-                      }
-                    </Field>
+                      component={DropDown}
+                      data={insertSelectPlaceholder(listMetricProfiles, 'Select')}
+                      required={true}
+                      className='custom-select'
+                    />
                   </Col>
                   <Col md={4}>
                     <Label to='aggregationProfile'>Aggregation profile:</Label>
                     <Field
-                        component='select'
-                        id='aggregationProfile'
-                        className='form-control custom-select'
-                        name='aggregationProfile'
-                      >
-                      {
-                          listAggregationProfiles.map((name, i) =>
-                            <option key={i} value={name}>{name}</option>
-                          )
-                        }
-                    </Field>
+                      id='aggregationProfile'
+                      name='aggregationProfile'
+                      component={DropDown}
+                      data={insertSelectPlaceholder(listAggregationProfiles, 'Select')}
+                      required={true}
+                      className='custom-select'
+                    />
                   </Col>
                   <Col md={4}>
                     <Label to='operationsProfile'>Operations profile:</Label>
                     <Field
-                      component='select'
-                      id='operationsProfile'
-                      className='form-control custom-select'
                       name='operationsProfile'
-                    >
-                      {
-                        listOperationsProfiles.map((name, i) =>
-                          <option key={i} value={name}>{name}</option>
-                        )
-                      }
-                    </Field>
+                      id='operationsProfile'
+                      component={DropDown}
+                      data={insertSelectPlaceholder(listOperationsProfiles, 'Select')}
+                      required={true}
+                      className='custom-select'
+                    />
                   </Col>
                 </Row>
               </FormGroup>
@@ -619,12 +615,13 @@ export const ReportsComponent = (props) => {
                   <Col md={2}>
                     <Label for='topologyType'>Topology type:</Label>
                     <Field
-                        name='topologyType'
-                        component={DropDown}
-                        data={['Select...', ...topologyTypes]}
-                        required={true}
-                        class_name='custom-select'
-                      />
+                      id='topologyType'
+                      name='topologyType'
+                      component={DropDown}
+                      data={insertSelectPlaceholder(topologyTypes, 'Select')}
+                      required={true}
+                      class_name='custom-select'
+                    />
                   </Col>
                 </Row>
                 <Row>
