@@ -113,7 +113,8 @@ export const ReportsList = (props) => {
         resourcename='report'
         location={location}
         listview={true}
-        addnew={false}
+        addnew={true}
+        addperm={userDetails.is_superuser || userDetails.groups.reports.length > 0}
       >
         <BaseArgoTable
           data={listReports}
@@ -446,6 +447,7 @@ export const ReportsComponent = (props) => {
         state={{areYouSureModal, 'modalFunc': onYesCallback, modalTitle, modalMsg}}
         toggle={() => setAreYouSureModal(!areYouSureModal)}
         submitperm={write_perm}
+        addview={addview}
         history={false}
       >
         <Formik
@@ -589,51 +591,6 @@ export const ReportsComponent = (props) => {
                 </Row>
               </FormGroup>
               <FormGroup className='mt-4'>
-                <ParagraphTitle title='Thresholds'/>
-                <Row>
-                  <Col md={2} className='mr-4'>
-                    <Label to='availabilityThreshold'>Availability:</Label>
-                    <Field
-                      id='availabilityThreshold'
-                      name='availabilityThreshold'
-                      className='form-control'
-                    />
-                  </Col>
-                  <Col md={2} className='mr-4'>
-                    <Label to='reliabilityThreshold'>Reliability:</Label>
-                    <Field
-                      id='reliabilityThreshold'
-                      name='reliabilityThreshold'
-                      className='form-control'
-                    />
-                  </Col>
-                  <Col md={2} className='mr-4'>
-                    <Label to='uptimeThreshold'>Uptime:</Label>
-                    <Field
-                      id='uptimeThreshold'
-                      name='uptimeThreshold'
-                      className='form-control'
-                    />
-                  </Col>
-                  <Col md={2} className='mr-4'>
-                    <Label to='unknownThreshold'>Unknown:</Label>
-                    <Field
-                      id='unknownThreshold'
-                      name='unknownThreshold'
-                      className='form-control'
-                    />
-                  </Col>
-                  <Col md={2} className='mr-4'>
-                    <Label to='downtimeThreshold'>Downtime:</Label>
-                    <Field
-                      id='downtimeThreshold'
-                      name='downtimeThreshold'
-                      className='form-control'
-                    />
-                  </Col>
-                </Row>
-              </FormGroup>
-              <FormGroup className='mt-4'>
                 <ParagraphTitle title='Topology configuration'/>
                 <Row>
                   <Col md={2}>
@@ -690,6 +647,51 @@ export const ReportsComponent = (props) => {
                         />
                       </CardBody>
                     </Card>
+                  </Col>
+                </Row>
+              </FormGroup>
+              <FormGroup className='mt-4'>
+                <ParagraphTitle title='Thresholds'/>
+                <Row>
+                  <Col md={2} className='mr-4'>
+                    <Label to='availabilityThreshold'>Availability:</Label>
+                    <Field
+                      id='availabilityThreshold'
+                      name='availabilityThreshold'
+                      className='form-control'
+                    />
+                  </Col>
+                  <Col md={2} className='mr-4'>
+                    <Label to='reliabilityThreshold'>Reliability:</Label>
+                    <Field
+                      id='reliabilityThreshold'
+                      name='reliabilityThreshold'
+                      className='form-control'
+                    />
+                  </Col>
+                  <Col md={2} className='mr-4'>
+                    <Label to='uptimeThreshold'>Uptime:</Label>
+                    <Field
+                      id='uptimeThreshold'
+                      name='uptimeThreshold'
+                      className='form-control'
+                    />
+                  </Col>
+                  <Col md={2} className='mr-4'>
+                    <Label to='unknownThreshold'>Unknown:</Label>
+                    <Field
+                      id='unknownThreshold'
+                      name='unknownThreshold'
+                      className='form-control'
+                    />
+                  </Col>
+                  <Col md={2} className='mr-4'>
+                    <Label to='downtimeThreshold'>Downtime:</Label>
+                    <Field
+                      id='downtimeThreshold'
+                      name='downtimeThreshold'
+                      className='form-control'
+                    />
                   </Col>
                 </Row>
               </FormGroup>
