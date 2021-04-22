@@ -288,6 +288,11 @@ export const ReportsComponent = (props) => {
   const location = props.location;
   const querykey = `report_${name}_changeview`;
   const backend = new Backend();
+  const [areYouSureModal, setAreYouSureModal] = useState(false)
+  const [modalMsg, setModalMsg] = useState(undefined);
+  const [modalTitle, setModalTitle] = useState(undefined);
+  const [onYes, setOnYes] = useState('')
+  const [formikValues, setFormikValues] = useState({})
   const topologyTypes = ['Sites', 'ServiceGroups']
   let apiUrl = '/api/v2/internal/reports'
   const [tagsState, setTagsState] = useState(new Object({
@@ -377,6 +382,16 @@ export const ReportsComponent = (props) => {
       return topologyTypes[1]
   }
 
+  const onYesCallback = () => {
+    if (onYes === 'delete')
+      doDelete(formikValues.id);
+    else if (onYes === 'change')
+      doChange({
+          formValues: formikValues,
+        }
+      );
+  }
+
   if (reportLoading || listMetricProfilesLoading || listAggregationProfilesLoading || listOperationsProfilesLoading)
     return (<LoadingAnim/>);
 
@@ -427,6 +442,10 @@ export const ReportsComponent = (props) => {
       <BaseArgoView
         resourcename='report'
         location={location}
+        modal={true}
+        state={{areYouSureModal, 'modalFunc': onYesCallback, modalTitle, modalMsg}}
+        toggle={() => setAreYouSureModal(!areYouSureModal)}
+        submitperm={write_perm}
         history={false}
       >
         <Formik
@@ -675,21 +694,21 @@ export const ReportsComponent = (props) => {
                 </Row>
               </FormGroup>
               {
-                //(write_perm) &&
-                  //<div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
-                    //<Button
-                      //color="danger"
-                      //onClick={() => {
-                        //setModalMsg('Are you sure you want to delete Metric profile?')
-                        //setModalTitle('Delete metric profile')
-                        //setAreYouSureModal(!areYouSureModal);
-                        //setFormikValues(props.values)
-                        //setOnYes('delete')
-                      //}}>
-                      //Delete
-                    //</Button>
-                    //<Button color="success" id="submit-button" type="submit">Save</Button>
-                  //</div>
+                (write_perm) &&
+                  <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
+                    <Button
+                      color="danger"
+                      onClick={() => {
+                        setModalMsg('Are you sure you want to delete Report?')
+                        setModalTitle('Delete report')
+                        setAreYouSureModal(!areYouSureModal);
+                        setFormikValues(props.values)
+                        setOnYes('delete')
+                      }}>
+                      Delete
+                    </Button>
+                    <Button color="success" id="submit-button" type="submit">Save</Button>
+                  </div>
               }
             </Form>
           )}
