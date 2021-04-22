@@ -62,7 +62,7 @@ export const ReportsList = (props) => {
         'name': e.name,
         'description': e.description,
         'disabled': e.disabled,
-        'group': e.group
+        'group': e.groupname
       }))
 
       return reports;
@@ -94,20 +94,13 @@ export const ReportsList = (props) => {
         column_width: '70%'
       },
       {
-        Header: 'Enabled',
-        id: 'disabled',
+        Header: 'Group',
+        accessor: 'group',
+        className: 'text-center',
         Cell: row =>
           <div style={{textAlign: 'center'}}>
             {row.value}
           </div>,
-        accessor: e =>
-          e.disabled === '' ?
-            ''
-          :
-            e.disabled ?
-              <FontAwesomeIcon icon={faTimesCircle} style={{color: '#CC0000'}}/>
-            :
-              <FontAwesomeIcon icon={faCheckCircle} style={{color: '#339900'}}/>,
         column_width: '8%'
       }
     ], []
