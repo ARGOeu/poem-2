@@ -411,6 +411,19 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, w
         />
       }
     />
+    <AddRoute
+      exact path="/ui/reports/add"
+      usergroups={userGroups.reports}
+      render={props => <ReportsComponent
+        {...props}
+        webapitoken={token}
+        webapireports={webApiReports}
+        webapimetric={webApiMetric}
+        webapiaggregation={webApiAggregation}
+        webapioperations={webApiOperations}
+        addview={true}
+      />}
+    />
     <Route
       exact path="/ui/reports/:name"
       render={props => <ReportsComponent

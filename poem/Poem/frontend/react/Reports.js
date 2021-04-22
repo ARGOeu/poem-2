@@ -320,10 +320,29 @@ export const ReportsComponent = (props) => {
 
   const { data: report, error: reportError, isLoading: reportLoading } = useQuery(
     `${querykey}_report`, async () => {
-      let backendReport = await backend.fetchData(`${apiUrl}/${report_name}`)
-      let report = await webapi.fetchReport(report_name);
-      report['groupname'] = backendReport.groupname
-      return report;
+      if (!addview) {
+        let backendReport = await backend.fetchData(`${apiUrl}/${report_name}`)
+        let report = await webapi.fetchReport(report_name);
+        report['groupname'] = backendReport.groupname
+
+        return report;
+      }
+      else {
+        return {
+            tenant: '',
+            disabled: false,
+            info: {
+                name: '',
+                description: '',
+                created: '',
+                updated: ''
+            },
+            thresholds: {},
+            topology_schema: {},
+            profiles: [],
+            filter_tags: []
+        }
+      }
     },
     {
       enabled: userDetails
@@ -377,10 +396,14 @@ export const ReportsComponent = (props) => {
   );
 
   const whichTopologyType = (schema) => {
-    if (schema.group.group.type.toLowerCase() === topologyTypes[0].toLowerCase())
-      return topologyTypes[0]
+    if (!addview) {
+      if (schema.group.group.type.toLowerCase() === topologyTypes[0].toLowerCase())
+        return topologyTypes[0]
+      else
+        return topologyTypes[1]
+    }
     else
-      return topologyTypes[1]
+      return ''
   }
 
   const onYesCallback = () => {
