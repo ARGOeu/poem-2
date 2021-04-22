@@ -13,10 +13,9 @@ import {
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle, faTimes, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
-import { Formik, Field, FieldArray } from 'formik';
+import { Formik, Field, FieldArray, Form } from 'formik';
 import {
   Button,
-  Form,
   FormGroup,
   Row,
   Col,
@@ -345,7 +344,13 @@ export const ReportsComponent = (props) => {
                 created: '',
                 updated: ''
             },
-            thresholds: {},
+            thresholds: {
+              uptime: '',
+              unknown: '',
+              downtime: '',
+              availability: '',
+              reliability: ''
+            },
             topology_schema: {},
             profiles: [],
             filter_tags: []
@@ -414,14 +419,30 @@ export const ReportsComponent = (props) => {
       return ''
   }
 
+  const onSubmitHandle = async (formValues) => {
+    let msg = undefined;
+    let title = undefined;
+
+    if (addview) {
+      msg = 'Are you sure you want to add Report?'
+      title = 'Add report'
+    }
+    else {
+      msg = 'Are you sure you want to change Report?'
+      title = 'Change report'
+    }
+    setAreYouSureModal(!areYouSureModal);
+    setModalMsg(msg)
+    setModalTitle(title)
+    setOnYes('change')
+    setFormikValues(formValues)
+  }
+
   const onYesCallback = () => {
     if (onYes === 'delete')
-      doDelete(formikValues.id);
+      console.log(onYes)
     else if (onYes === 'change')
-      doChange({
-          formValues: formikValues,
-        }
-      );
+      console.log(onYes)
   }
 
   if (reportLoading || listMetricProfilesLoading || listAggregationProfilesLoading || listOperationsProfilesLoading)
@@ -482,7 +503,6 @@ export const ReportsComponent = (props) => {
         history={false}
       >
         <Formik
-          enableReinitialize={true}
           initialValues = {{
             id: report.id,
             disabled: report.disabled,
@@ -501,6 +521,7 @@ export const ReportsComponent = (props) => {
             groups: new Array(),
             endpoints: new Array()
           }}
+          onSubmit = {(values) => onSubmitHandle(values)}
         >
           {(props) => (
             <Form>
