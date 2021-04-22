@@ -1181,6 +1181,7 @@ export const ProfileMainInfo = ({errors, grouplist=undefined, description=undefi
               id="profileDescription"
               className="form-control"
               component="textarea"
+              rows={4}
               name={description}
               disabled={fieldsdisable}/>
             <FormText color='muted'>

@@ -40,11 +40,6 @@ export const ReportsList = (props) => {
   // TODO: add public API endpoints
   let apiUrl = '/api/v2/internal/reports'
 
-  const webapi = new WebApi({
-    token: props.webapitoken,
-    reportsConfigurations: props.webapireports
-  });
-
   const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails } = useQuery(
     `session_userdetails`, async () => {
       const sessionActive = await backend.isActiveSession()
@@ -288,11 +283,13 @@ const TopologyTagList = ({ part, tagsState, setTagsState, tagsAll, push, form, r
 
 
 export const ReportsComponent = (props) => {
-  const name = props.match.params.name;
+  const report_name = props.match.params.name;
+  const addview = props.addview
   const location = props.location;
   const querykey = `report_${name}_changeview`;
   const backend = new Backend();
   const topologyTypes = ['Sites', 'ServiceGroups']
+  let apiUrl = '/api/v2/internal/reports'
   const [tagsState, setTagsState] = useState(new Object({
     'groups': undefined,
     'endpoints': undefined
@@ -317,7 +314,9 @@ export const ReportsComponent = (props) => {
 
   const { data: report, error: reportError, isLoading: reportLoading } = useQuery(
     `${querykey}_report`, async () => {
-      let report = webapi.fetchReport(name);
+      let backendReport = await backend.fetchData(`${apiUrl}/${report_name}`)
+      let report = await webapi.fetchReport(report_name);
+      report['groupname'] = backendReport.groupname
       return report;
     },
     {
@@ -397,6 +396,7 @@ export const ReportsComponent = (props) => {
     let metricProfile = '';
     let aggregationProfile = '';
     let operationsProfile = '';
+
     report.profiles.forEach(profile => {
       if (profile.type === 'metric')
         metricProfile = profile.name;
@@ -407,6 +407,22 @@ export const ReportsComponent = (props) => {
       if (profile.type === 'operations')
         operationsProfile = profile.name;
     })
+
+    let write_perm = undefined;
+    let grouplist = undefined;
+    if (!addview) {
+      write_perm = userDetails.is_superuser ||
+            userDetails.groups.reports.indexOf(report.groupname) >= 0;
+    }
+    else {
+      write_perm = userDetails.is_superuser ||
+        userDetails.groups.reports.length > 0;
+    }
+    if (write_perm)
+      grouplist = userDetails.groups.reports
+    else
+      grouplist = [report.groupname]
+
     return (
       <BaseArgoView
         resourcename='report'
@@ -429,6 +445,7 @@ export const ReportsComponent = (props) => {
             unknownThreshold: report.thresholds.unknown,
             downtimeThreshold: report.thresholds.downtime,
             topologyType: whichTopologyType(report.topology_schema),
+            groupname: report.groupname,
             groups: new Array(),
             endpoints: new Array()
           }}
@@ -471,6 +488,7 @@ export const ReportsComponent = (props) => {
                       id='description'
                       className='form-control'
                       component='textarea'
+                      rows={4}
                       name='description'
                     />
                     <FormText color='muted'>
@@ -478,9 +496,31 @@ export const ReportsComponent = (props) => {
                     </FormText>
                   </Col>
                 </Row>
+                <Row className='mt-4'>
+                  <Col md={3}>
+                    <InputGroup>
+                      <InputGroupAddon addonType='prepend'>Group</InputGroupAddon>
+                      <Field
+                        name='groupname'
+                        component='select'
+                        className={`form-control custom-select`}
+                      >
+                        <option key={0} value='' hidden color='text-muted'>Select group</option>
+                        {
+                          grouplist.map((group, i) =>
+                            <option key={i + 1} value={group}>{group}</option>
+                          )
+                        }
+                      </Field>
+                    </InputGroup>
+                    <FormText color='muted'>
+                      Report is member of given group
+                    </FormText>
+                  </Col>
+                </Row>
               </FormGroup>
               <FormGroup className='mt-4'>
-                <ParagraphTitle title='profiles'/>
+                <ParagraphTitle title='Profiles'/>
                 <Row className='mt-2'>
                   <Col md={4}>
                     <Label to='metricProfile'>Metric profile:</Label>
