@@ -12,7 +12,7 @@ import {
  } from './UIElements';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTimesCircle, faTimes, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
+import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import { Formik, Field, FieldArray, Form } from 'formik';
 import {
   Button,
@@ -31,6 +31,10 @@ import {
   Label
 } from 'reactstrap';
 import Select, { components } from 'react-select';
+
+
+export const ReportsAdd = (props) => <ReportsComponent addview={true} {...props}/>;
+export const ReportsChange = (props) => <ReportsComponent {...props}/>;
 
 
 export const ReportsList = (props) => {
@@ -294,7 +298,6 @@ export const ReportsComponent = (props) => {
   const report_name = props.match.params.name;
   const addview = props.addview
   const location = props.location;
-  const querykey = `report_${name}_changeview`;
   const backend = new Backend();
   const [areYouSureModal, setAreYouSureModal] = useState(false)
   const [modalMsg, setModalMsg] = useState(undefined);
@@ -307,6 +310,12 @@ export const ReportsComponent = (props) => {
     'groups': undefined,
     'endpoints': undefined
   }))
+
+  let querykey = undefined;
+  if (addview)
+    querykey = `report_addview`;
+  else
+    querykey = `report_${report_name}_changeview`;
 
   const webapi = new WebApi({
     token: props.webapitoken,
