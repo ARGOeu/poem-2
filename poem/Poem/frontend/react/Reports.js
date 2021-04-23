@@ -373,10 +373,7 @@ export const ReportsComponent = (props) => {
 
   const { data: listMetricProfiles, error: listMetricProfilesError, isLoading: listMetricProfilesLoading } = useQuery(
     `${querykey}_metricprofiles`, async () => {
-      let mp = await webapi.fetchMetricProfiles();
-      let metricprofiles = [];
-      mp.forEach(profile => metricprofiles.push(profile.name));
-      return metricprofiles;
+      return await webapi.fetchMetricProfiles();
     },
     {
       enabled: userDetails
@@ -385,10 +382,7 @@ export const ReportsComponent = (props) => {
 
   const { data: listAggregationProfiles, error: listAggregationProfilesError, isLoading: listAggregationProfilesLoading } = useQuery(
     `${querykey}_aggregationprofiles`, async () => {
-      let ap = await webapi.fetchAggregationProfiles();
-      let aggregations = [];
-      ap.forEach(profile => aggregations.push(profile.name));
-      return aggregations;
+      return await webapi.fetchAggregationProfiles();
     },
     {
       enabled: userDetails
@@ -397,15 +391,18 @@ export const ReportsComponent = (props) => {
 
   const { data: listOperationsProfiles, error: listOperationsProfilesError, isLoading: listOperationsProfilesLoading } = useQuery(
     `${querykey}_operationsprofiles`, async () => {
-      let op = await webapi.fetchOperationsProfiles();
-      let operations = [];
-      op.forEach(profile => operations.push(profile.name));
-      return operations;
+      return await webapi.fetchOperationsProfiles();
     },
     {
       enabled: userDetails
     }
   );
+
+  const extractProfileNames = (profiles) => {
+    let tmp = new Array();
+    profiles.forEach(profile => tmp.push(profile.name));
+    return tmp;
+  }
 
   const { data: topologyTags, error: topologyTagsError, isLoading: isLoadingTopologyTags} = useQuery(
     `${querykey}_topologytags`, async () => {
@@ -447,11 +444,73 @@ export const ReportsComponent = (props) => {
     setFormikValues(formValues)
   }
 
+  const extractProfileMetadata = (profiletype, name) => {
+    let profile = undefined
+    if (profiletype === 'metric') {
+      profile = listMetricProfiles.filter(
+        profile => profile.name === name
+      )
+      profile = profile[0]
+    }
+
+    if (profiletype === 'aggregation') {
+      profile = listAggregationProfiles.filter(
+        profile => profile.name === name
+      )
+      profile = profile[0]
+    }
+
+    if (profiletype === 'operations') {
+      profile = listOperationsProfiles.filter(
+        profile => profile.name === name
+      )
+      profile = profile[0]
+    }
+
+    if (profile) {
+      return new Object({
+        id: profile.id,
+        name: profile.name,
+        type: profiletype
+      })
+    }
+    else
+      new Object({})
+  }
+
+  const doChange = async (formValues) => {
+    let dataToSend = new Object()
+    dataToSend.info = {
+      name: formValues.name,
+      description: formValues.description,
+      //TODO: created, updated
+    }
+    dataToSend.thresholds = {
+      availability: formValues.availabilityThreshold,
+      reliability: formValues.reliabilityThreshold,
+      uptime: formValues.uptimeThreshold,
+      unknown: formValues.unknownThreshold,
+      downtime: formValues.downtimeThreshold
+    }
+    dataToSend.disabled = formValues.disabled
+    let extractedMetricProfile = extractProfileMetadata('metric',
+      formValues.metricProfile)
+    let extractedAggregationProfile = extractProfileMetadata('aggregation',
+      formValues.aggregationProfile)
+    let extractedOperationProfile = extractProfileMetadata('operations',
+      formValues.operationsProfile)
+    dataToSend.profiles = new Array()
+    dataToSend['profiles'].push(extractedMetricProfile)
+    dataToSend['profiles'].push(extractedAggregationProfile)
+    dataToSend['profiles'].push(extractedOperationProfile)
+    console.log(dataToSend)
+  }
+
   const onYesCallback = () => {
     if (onYes === 'delete')
       console.log(onYes)
     else if (onYes === 'change')
-      console.log(onYes)
+      doChange(formikValues)
   }
 
   if (reportLoading || listMetricProfilesLoading || listAggregationProfilesLoading || listOperationsProfilesLoading)
@@ -610,7 +669,9 @@ export const ReportsComponent = (props) => {
                       id='metricProfile'
                       name='metricProfile'
                       component={DropDown}
-                      data={insertSelectPlaceholder(listMetricProfiles, 'Select')}
+                      data={insertSelectPlaceholder(extractProfileNames(
+                        listMetricProfiles),
+                        'Select')}
                       required={true}
                       className='custom-select'
                     />
@@ -621,7 +682,9 @@ export const ReportsComponent = (props) => {
                       id='aggregationProfile'
                       name='aggregationProfile'
                       component={DropDown}
-                      data={insertSelectPlaceholder(listAggregationProfiles, 'Select')}
+                      data={insertSelectPlaceholder(
+                        extractProfileNames(listAggregationProfiles),
+                        'Select')}
                       required={true}
                       className='custom-select'
                     />
@@ -632,7 +695,9 @@ export const ReportsComponent = (props) => {
                       name='operationsProfile'
                       id='operationsProfile'
                       component={DropDown}
-                      data={insertSelectPlaceholder(listOperationsProfiles, 'Select')}
+                      data={insertSelectPlaceholder(
+                        extractProfileNames(listOperationsProfiles),
+                        'Select')}
                       required={true}
                       className='custom-select'
                     />
