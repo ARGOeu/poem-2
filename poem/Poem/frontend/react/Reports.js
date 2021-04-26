@@ -298,6 +298,7 @@ export const ReportsComponent = (props) => {
   const report_name = props.match.params.name;
   const addview = props.addview
   const location = props.location;
+  const history = props.history;
   const backend = new Backend();
   const [areYouSureModal, setAreYouSureModal] = useState(false)
   const [modalMsg, setModalMsg] = useState(undefined);
@@ -536,6 +537,46 @@ export const ReportsComponent = (props) => {
       new Object({})
   }
 
+  const doDelete = async (idReport) => {
+    let response = await webapi.deleteReport(idReport);
+    if (!response.ok) {
+      let msg = '';
+      try {
+        let json = await response.json();
+        let msg_list = [];
+        json.errors.forEach(e => msg_list.push(e.details));
+        msg = msg_list.join(' ');
+      } catch(err) {
+        msg = 'Web API error deleting report';
+      }
+      NotifyError({
+        title: `Web API error: ${response.status} ${response.statusText}`,
+        msg: msg
+      });
+    } else {
+      let r_internal = await backend.deleteObject(`/api/v2/internal/reports/${idReport}`);
+      if (r_internal.ok)
+        NotifyOk({
+          msg: 'Report sucessfully deleted',
+          title: 'Deleted',
+          callback: () => history.push('/ui/reports')
+        });
+      else {
+        let msg = '';
+        try {
+          let json = await r_internal.json();
+          msg = json.detail;
+        } catch(err) {
+          msg = 'Internal API error deleting report';
+        }
+        NotifyError({
+          title: `Internal API error: ${r_internal.status} ${r_internal.statusText}`,
+          msg: msg
+        });
+      }
+    }
+  }
+
   const doChange = async (formValues) => {
     let dataToSend = new Object()
     dataToSend.info = {
@@ -619,7 +660,7 @@ export const ReportsComponent = (props) => {
 
   const onYesCallback = () => {
     if (onYes === 'delete')
-      console.log(onYes)
+      doDelete(formikValues.id)
     else if (onYes === 'change')
       doChange(formikValues)
   }

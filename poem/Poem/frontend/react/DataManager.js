@@ -304,6 +304,10 @@ export class WebApi {
     return this.deleteProfile(`${this.thresholdsprofiles}/${id}`);
   }
 
+  deleteReport(id) {
+    return this.deleteProfile(`${this.reports['main']}/${id}`);
+  }
+
   async fetchProfile(url) {
     let err_msg = '';
     try {
