@@ -630,7 +630,7 @@ export const ReportsComponent = (props) => {
           '/api/v2/internal/reports/',
           {
             apiid: r_json.data.id,
-            name: dataToSend.name,
+            name: dataToSend.info.name,
             groupname: formValues.groupname,
             description: formValues.description,
           }

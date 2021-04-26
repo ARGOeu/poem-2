@@ -25,10 +25,10 @@ class ListReports(APIView):
             groupreports = poem_models.GroupOfReports.objects.get(
                 name=request.data['groupname']
             )
-            report = poem_models.GroupOfReports.objects.get(
+            report = poem_models.Reports.objects.get(
                 apiid=request.data['apiid']
             )
-            groupreports.reports.add(profile)
+            groupreports.reports.add(report)
 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
