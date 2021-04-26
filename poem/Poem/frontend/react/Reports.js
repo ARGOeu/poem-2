@@ -449,9 +449,9 @@ export const ReportsComponent = (props) => {
     let typeString = undefined
 
     if (tagtype === 'groups')
-      typeString = 'TopoSelectGroupOfGroups'
+      typeString = 'argo.group.filter.tags'
     else if (tagtype == 'endpoints')
-      typeString = 'TopoSelectGroupOfEndpoints'
+      typeString = 'argo.endpoint.filter.tags'
 
     formikTags.forEach(e => {
       let tmpTag = new Object()
