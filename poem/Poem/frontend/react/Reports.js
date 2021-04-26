@@ -544,11 +544,11 @@ export const ReportsComponent = (props) => {
       //TODO: created, updated
     }
     dataToSend.thresholds = {
-      availability: formValues.availabilityThreshold,
-      reliability: formValues.reliabilityThreshold,
-      uptime: formValues.uptimeThreshold,
-      unknown: formValues.unknownThreshold,
-      downtime: formValues.downtimeThreshold
+      availability: Number.parseFloat(formValues.availabilityThreshold),
+      reliability: Number.parseFloat(formValues.reliabilityThreshold),
+      uptime: Number.parseFloat(formValues.uptimeThreshold),
+      unknown: Number.parseFloat(formValues.unknownThreshold),
+      downtime: Number.parseFloat(formValues.downtimeThreshold)
     }
     dataToSend.disabled = formValues.disabled
     let extractedMetricProfile = extractProfileMetadata('metric',
