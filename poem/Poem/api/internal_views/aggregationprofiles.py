@@ -30,7 +30,7 @@ class ListAggregations(APIView):
                         {'detail': 'You must provide a group of aggregations.'},
                         status=status.HTTP_400_BAD_REQUEST
                     )
-                
+
                 userprofile = poem_models.UserProfile.objects.get(
                     user=request.user
                 )
@@ -94,28 +94,136 @@ class ListAggregations(APIView):
 
     def put(self, request):
         if request.data['apiid']:
-            aggr = poem_models.Aggregation.objects.get(
-                apiid=request.data['apiid']
-            )
-            aggr.groupname = request.data['groupname']
-            aggr.save()
+            try:
+                aggr = poem_models.Aggregation.objects.get(
+                    apiid=request.data['apiid']
+                )
 
-            groupaggr = poem_models.GroupOfAggregations.objects.get(
-                name=request.data['groupname']
-            )
-            groupaggr.aggregations.add(aggr)
+                if aggr.groupname:
+                    init_groupaggr = \
+                        poem_models.GroupOfAggregations.objects.get(
+                            name=aggr.groupname
+                        )
 
-            data = {
-                'endpoint_group': request.data['endpoint_group'],
-                'metric_operation': request.data['metric_operation'],
-                'profile_operation': request.data['profile_operation'],
-                'metric_profile': request.data['metric_profile'],
-                'groups': json.loads(request.data['groups'])
-            }
+                else:
+                    if not request.user.is_superuser:
+                        return Response(
+                            {
+                                'detail': 'You do not have permission to '
+                                          'change resources in the given group.'
+                            },
+                            status=status.HTTP_401_UNAUTHORIZED
+                        )
 
-            create_profile_history(aggr, data, request.user)
+                    else:
+                        init_groupaggr = None
 
-            return Response(status=status.HTTP_201_CREATED)
+                userprofile = poem_models.UserProfile.objects.get(
+                    user=request.user
+                )
+
+            except poem_models.Aggregation.DoesNotExist:
+                return Response(
+                    {
+                        'detail': 'Aggregation profile with given apiid does '
+                                  'not exist.'
+                    },
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+            except poem_models.GroupOfAggregations.DoesNotExist:
+                return Response(
+                    {
+                        "detail": "Initial profile's group of aggregations "
+                                  "does not exist."
+                    },
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+            except poem_models.UserProfile.DoesNotExist:
+                return Response(
+                    {
+                        'detail': 'User profile for the given user does not '
+                                  'exist.'
+                    },
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+            else:
+                if init_groupaggr in userprofile.groupsofaggregations.all() or \
+                        request.user.is_superuser:
+                    try:
+                        if request.data['groupname']:
+                            groupaggr = \
+                                poem_models.GroupOfAggregations.objects.get(
+                                    name=request.data['groupname']
+                                )
+
+                        else:
+                            return Response(
+                                {
+                                    'detail': 'Please provide group of '
+                                              'aggregations.'
+                                },
+                                status=status.HTTP_400_BAD_REQUEST
+                            )
+
+                    except poem_models.GroupOfAggregations.DoesNotExist:
+                        return Response(
+                            {
+                                'detail': 'Given group of aggregations does '
+                                          'not exist.'
+                            },
+                            status=status.HTTP_404_NOT_FOUND
+                        )
+
+                    else:
+                        if groupaggr in userprofile.groupsofaggregations.all() \
+                                or request.user.is_superuser:
+                            aggr.name = request.data['name']
+                            aggr.groupname = request.data['groupname']
+                            aggr.save()
+
+                            groupaggr.aggregations.add(aggr)
+
+                            data = {
+                                'endpoint_group': request.data[
+                                    'endpoint_group'
+                                ],
+                                'metric_operation': request.data[
+                                    'metric_operation'
+                                ],
+                                'profile_operation': request.data[
+                                    'profile_operation'
+                                ],
+                                'metric_profile': request.data[
+                                    'metric_profile'
+                                ],
+                                'groups': json.loads(request.data['groups'])
+                            }
+
+                            create_profile_history(aggr, data, request.user)
+
+                            return Response(status=status.HTTP_201_CREATED)
+
+                        else:
+                            return Response(
+                                {
+                                    'detail': 'You do not have permission to '
+                                              'change resources in the given '
+                                              'group.'
+                                },
+                                status=status.HTTP_401_UNAUTHORIZED
+                            )
+
+                else:
+                    return Response(
+                        {
+                            'detail': 'You do not have permission to change '
+                                      'resources in the given group.'
+                        },
+                        status=status.HTTP_401_UNAUTHORIZED
+                    )
 
         else:
             return Response(

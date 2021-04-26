@@ -41,9 +41,11 @@ class ListAggregationsAPIViewTests(TenantTestCase):
 
         self.group = poem_models.GroupOfAggregations.objects.create(name='EGI')
         poem_models.GroupOfAggregations.objects.create(name='new-group')
+        group2 = poem_models.GroupOfAggregations.objects.create(name='ARGO')
 
         userprofile = poem_models.UserProfile.objects.create(user=self.user)
         userprofile.groupsofaggregations.add(self.group)
+        userprofile.groupsofaggregations.add(group2)
 
         self.ct = ContentType.objects.get_for_model(poem_models.Aggregation)
 
@@ -401,7 +403,7 @@ class ListAggregationsAPIViewTests(TenantTestCase):
         data = {
             'name': 'TEST_PROFILE2',
             'apiid': '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
-            'groupname': 'new-group',
+            'groupname': 'ARGO',
             'endpoint_group': 'servicegroups',
             'metric_operation': 'OR',
             'profile_operation': 'AND',
@@ -427,7 +429,7 @@ class ListAggregationsAPIViewTests(TenantTestCase):
         profile = poem_models.Aggregation.objects.get(id=self.aggr1.id)
         self.assertEqual(profile.name, 'TEST_PROFILE')
         self.assertEqual(profile.apiid, '00000000-oooo-kkkk-aaaa-aaeekkccnnee')
-        self.assertEqual(profile.groupname, 'new-group')
+        self.assertEqual(profile.groupname, 'ARGO')
         history = poem_models.TenantHistory.objects.filter(
             object_id=profile.id, content_type=self.ct
         ).order_by('-date_created')
@@ -486,6 +488,251 @@ class ListAggregationsAPIViewTests(TenantTestCase):
         self.assertEqual(
             response.data, {'detail': 'Apiid field undefined!'}
         )
+
+    def test_put_aggregations_nonexisting_apiid(self):
+        data = {
+            'name': 'TEST_PROFILE',
+            'apiid': '00000000-0000-0000-0000-000000000000',
+            'groupname': 'new-group',
+            'endpoint_group': 'servicegroups',
+            'metric_operation': 'OR',
+            'profile_operation': 'AND',
+            'metric_profile': 'PROFILE2',
+            'groups': json.dumps([
+                {
+                    'name': 'Group3',
+                    'operation': 'OR',
+                    'services': [
+                        {
+                            'name': 'VOMS',
+                            'operation': 'AND'
+                        }
+                    ]
+                }
+            ])
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(
+            response.data,
+            {'detail': 'Aggregation profile with given apiid does not exist.'}
+        )
+
+    def test_put_aggregations_nonexisting_groupname(self):
+        data = {
+            'name': 'TEST_PROFILE',
+            'apiid': '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
+            'groupname': 'nonexisting-group',
+            'endpoint_group': 'servicegroups',
+            'metric_operation': 'OR',
+            'profile_operation': 'AND',
+            'metric_profile': 'PROFILE2',
+            'groups': json.dumps([
+                {
+                    'name': 'Group3',
+                    'operation': 'OR',
+                    'services': [
+                        {
+                            'name': 'VOMS',
+                            'operation': 'AND'
+                        }
+                    ]
+                }
+            ])
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(
+            response.data,
+            {
+                'detail': 'Given group of aggregations does not exist.'
+            }
+        )
+
+    def test_put_aggregations_nonexisting_initial_groupname(self):
+        aggr4 = poem_models.Aggregation.objects.create(
+            name='TEST_PROFILE3',
+            apiid='iv5beeth-v9db-64lw-ak3s-cohjo6ies2da',
+            groupname='NONEXISTING'
+        )
+        history_data = json.loads(
+            serializers.serialize(
+                'json', [aggr4],
+                use_natural_foreign_keys=True,
+                use_natural_primary_keys=True
+            )
+        )
+        history_data[0]['fields'].update({
+            'endpoint_group': 'sites',
+            'metric_operation': 'AND',
+            'profile_operation': 'AND',
+            'metric_profile': 'TEST_PROFILE',
+            'groups': [
+                {
+                    'name': 'Group4',
+                    'operation': 'AND',
+                    'services': [
+                        {
+                            'name': 'VOMS',
+                            'operation': 'OR'
+                        }
+                    ]
+                }
+            ]
+        })
+
+        poem_models.TenantHistory.objects.create(
+            object_id=aggr4.id,
+            serialized_data=json.dumps(history_data),
+            object_repr=aggr4.__str__(),
+            comment='Initial version.',
+            user='testuser',
+            content_type=self.ct
+        )
+
+        data = {
+            'name': 'TEST_PROFILE3',
+            'apiid': 'iv5beeth-v9db-64lw-ak3s-cohjo6ies2da',
+            'groupname': 'ARGO',
+            'endpoint_group': 'servicegroups',
+            'metric_operation': 'OR',
+            'profile_operation': 'AND',
+            'metric_profile': 'PROFILE2',
+            'groups': json.dumps([
+                {
+                    'name': 'Group3',
+                    'operation': 'OR',
+                    'services': [
+                        {
+                            'name': 'VOMS',
+                            'operation': 'AND'
+                        }
+                    ]
+                }
+            ])
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(
+            response.data,
+            {
+                "detail": "Initial profile's group of aggregations does not "
+                          "exist."
+            }
+        )
+
+    def test_put_aggregations_no_group_permission(self):
+        data = {
+            'name': 'TEST_PROFILE2',
+            'apiid': 'eemie0le-k7zg-6iyq-38t5-wohngoh9hoey',
+            'groupname': 'ARGO',
+            'endpoint_group': 'servicegroups',
+            'metric_operation': 'OR',
+            'profile_operation': 'AND',
+            'metric_profile': 'PROFILE2',
+            'groups': json.dumps([
+                {
+                    'name': 'Group3',
+                    'operation': 'OR',
+                    'services': [
+                        {
+                            'name': 'VOMS',
+                            'operation': 'AND'
+                        }
+                    ]
+                }
+            ])
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data,
+            {
+                'detail': 'You do not have permission to change resources in '
+                          'the given group.'
+            }
+        )
+
+    def test_put_aggregations_without_groupname(self):
+        data = {
+            'name': 'ANOTHER-PROFILE',
+            'apiid': '12341234-oooo-kkkk-aaaa-aaeekkccnnee',
+            'groupname': 'ARGO',
+            'endpoint_group': 'servicegroups',
+            'metric_operation': 'OR',
+            'profile_operation': 'AND',
+            'metric_profile': 'PROFILE2',
+            'groups': json.dumps([
+                {
+                    'name': 'Group3',
+                    'operation': 'OR',
+                    'services': [
+                        {
+                            'name': 'VOMS',
+                            'operation': 'AND'
+                        }
+                    ]
+                }
+            ])
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data,
+            {
+                'detail': 'You do not have permission to change resources in '
+                          'the given group.'
+            }
+        )
+
+    def test_put_aggregations_without_setting_groupname(self):
+        data = {
+            'name': 'TEST_PROFILE',
+            'apiid': '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
+            'groupname': '',
+            'endpoint_group': 'servicegroups',
+            'metric_operation': 'OR',
+            'profile_operation': 'AND',
+            'metric_profile': 'PROFILE2',
+            'groups': json.dumps([
+                {
+                    'name': 'Group3',
+                    'operation': 'OR',
+                    'services': [
+                        {
+                            'name': 'VOMS',
+                            'operation': 'AND'
+                        }
+                    ]
+                }
+            ])
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(
+            response.data,
+            {
+                'detail': 'Please provide group of aggregations.'
+            }
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_delete_aggregation(self):
         self.assertEqual(
