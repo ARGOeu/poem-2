@@ -476,6 +476,32 @@ export const ReportsComponent = (props) => {
     return tags
   }
 
+  const formatTopologySchema = (toposchema) => {
+    let tmpTopoSchema = new Object()
+    if (toposchema.toLowerCase() === 'ServiceGroups'.toLowerCase()) {
+      tmpTopoSchema = {
+        'group': {
+          'type': 'PROJECT',
+          'group': {
+            'type': 'SERVICEGROUPS'
+          }
+        }
+      }
+      return tmpTopoSchema
+    }
+    else if (toposchema.toLowerCase() === 'Sites'.toLowerCase()) {
+      tmpTopoSchema = {
+        'group': {
+          'type': 'NGI',
+          'group': {
+            'type': 'SITES'
+          }
+        }
+      }
+      return tmpTopoSchema
+    }
+  }
+
   const extractProfileMetadata = (profiletype, name) => {
     let profile = undefined
     if (profiletype === 'metric') {
@@ -538,6 +564,8 @@ export const ReportsComponent = (props) => {
     let groupTagsFormatted = formatFilterTags('groups', formValues.groups)
     let endpointTagsFormatted = formatFilterTags('endpoints', formValues.endpoints)
     dataToSend['filter_tags'] = [...groupTagsFormatted, ...endpointTagsFormatted]
+    dataToSend['topology_schema'] = formatTopologySchema(formValues.topologyType)
+    console.log(dataToSend)
 
     if (addview) {
       let response = await webapi.addReport(dataToSend);
@@ -587,7 +615,6 @@ export const ReportsComponent = (props) => {
         }
       }
     }
-
   }
 
   const onYesCallback = () => {
