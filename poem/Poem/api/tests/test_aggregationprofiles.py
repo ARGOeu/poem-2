@@ -737,22 +737,22 @@ class ListAggregationsAPIViewTests(TenantTestCase):
     def test_delete_aggregation(self):
         self.assertEqual(
             poem_models.TenantHistory.objects.filter(
-                object_id=self.aggr2.id, content_type=self.ct
+                object_id=self.aggr1.id, content_type=self.ct
             ).count(), 1
         )
         request = self.factory.delete(
-            self.url + '12341234-oooo-kkkk-aaaa-aaeekkccnnee'
+            self.url + '00000000-oooo-kkkk-aaaa-aaeekkccnnee'
         )
         force_authenticate(request, user=self.user)
-        response = self.view(request, '12341234-oooo-kkkk-aaaa-aaeekkccnnee')
+        response = self.view(request, '00000000-oooo-kkkk-aaaa-aaeekkccnnee')
         profiles = poem_models.Aggregation.objects.all().values_list(
             'name', flat=True
         )
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-        self.assertFalse('ANOTHER-PROFILE' in profiles)
+        self.assertFalse('TEST_PROFILE' in profiles)
         self.assertEqual(
             poem_models.TenantHistory.objects.filter(
-                object_id=self.aggr2.id, content_type=self.ct
+                object_id=self.aggr1.id, content_type=self.ct
             ).count(), 0
         )
 
@@ -772,4 +772,89 @@ class ListAggregationsAPIViewTests(TenantTestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(
             response.data, {'detail': 'Aggregation profile not specified!'}
+        )
+
+    def test_delete_aggregation_without_group_permission(self):
+        request = self.factory.delete(
+            self.url + 'eemie0le-k7zg-6iyq-38t5-wohngoh9hoey'
+        )
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'eemie0le-k7zg-6iyq-38t5-wohngoh9hoey')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data,
+            {
+                'detail': 'You do not have group permission to delete this '
+                          'aggregation profile.'
+            }
+        )
+
+    def test_delete_aggregation_without_initial_group(self):
+        request = self.factory.delete(
+            self.url + '12341234-oooo-kkkk-aaaa-aaeekkccnnee'
+        )
+        force_authenticate(request, user=self.user)
+        response = self.view(request, '12341234-oooo-kkkk-aaaa-aaeekkccnnee')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data,
+            {
+                'detail': 'You do not have group permission to delete this '
+                          'aggregation profile.'
+            }
+        )
+
+    def test_delete_aggregation_with_nonexisting_initial_group(self):
+        aggr4 = poem_models.Aggregation.objects.create(
+            name='TEST_PROFILE3',
+            apiid='iv5beeth-v9db-64lw-ak3s-cohjo6ies2da',
+            groupname='NONEXISTING'
+        )
+        history_data = json.loads(
+            serializers.serialize(
+                'json', [aggr4],
+                use_natural_foreign_keys=True,
+                use_natural_primary_keys=True
+            )
+        )
+        history_data[0]['fields'].update({
+            'endpoint_group': 'sites',
+            'metric_operation': 'AND',
+            'profile_operation': 'AND',
+            'metric_profile': 'TEST_PROFILE',
+            'groups': [
+                {
+                    'name': 'Group4',
+                    'operation': 'AND',
+                    'services': [
+                        {
+                            'name': 'VOMS',
+                            'operation': 'OR'
+                        }
+                    ]
+                }
+            ]
+        })
+
+        poem_models.TenantHistory.objects.create(
+            object_id=aggr4.id,
+            serialized_data=json.dumps(history_data),
+            object_repr=aggr4.__str__(),
+            comment='Initial version.',
+            user='testuser',
+            content_type=self.ct
+        )
+
+        request = self.factory.delete(
+            self.url + 'iv5beeth-v9db-64lw-ak3s-cohjo6ies2da'
+        )
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'iv5beeth-v9db-64lw-ak3s-cohjo6ies2da')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data,
+            {
+                'detail': 'You do not have group permission to delete this '
+                          'aggregation profile.'
+            }
         )

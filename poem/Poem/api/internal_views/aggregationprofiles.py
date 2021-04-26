@@ -261,16 +261,52 @@ class ListAggregations(APIView):
                 aggregation = poem_models.Aggregation.objects.get(
                     apiid=aggregation_name
                 )
-                poem_models.TenantHistory.objects.filter(
-                    object_id=aggregation.id,
-                    content_type=ContentType.objects.get_for_model(aggregation)
-                ).delete()
-                aggregation.delete()
-                return Response(status=status.HTTP_204_NO_CONTENT)
+                groupname = None
+                if aggregation.groupname:
+                    try:
+                        groupname = poem_models.GroupOfAggregations.objects.get(
+                            name=aggregation.groupname
+                        )
+
+                    except poem_models.GroupOfAggregations.DoesNotExist:
+                        pass
+                    
+                userprofile = poem_models.UserProfile.objects.get(
+                    user=request.user
+                )
+
+                if (
+                        groupname and groupname in
+                        userprofile.groupsofaggregations.all()
+                ) or request.user.is_superuser:
+                    poem_models.TenantHistory.objects.filter(
+                        object_id=aggregation.id,
+                        content_type=ContentType.objects.get_for_model(
+                            aggregation
+                        )
+                    ).delete()
+                    aggregation.delete()
+                    return Response(status=status.HTTP_204_NO_CONTENT)
+
+                else:
+                    return Response(
+                        {
+                            'detail': 'You do not have group permission to '
+                                      'delete this aggregation profile.'
+                        },
+                        status=status.HTTP_401_UNAUTHORIZED
+                    )
 
             except poem_models.Aggregation.DoesNotExist:
-                raise NotFound(status=404,
-                               detail='Aggregation not found')
+                raise NotFound(
+                    status=404, detail='Aggregation not found'
+                )
+
+            except poem_models.UserProfile.DoesNotExist:
+                return Response(
+                    {'detail': 'No user profile for authenticated user.'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
 
         else:
             return Response(
