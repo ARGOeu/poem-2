@@ -20,27 +20,65 @@ class ListAggregations(APIView):
         serializer = serializers.AggregationProfileSerializer(data=request.data)
 
         if serializer.is_valid():
-            serializer.save()
+            try:
+                if request.data['groupname']:
+                    groupaggr = poem_models.GroupOfAggregations.objects.get(
+                        name=request.data['groupname']
+                    )
+                else:
+                    return Response(
+                        {'detail': 'You must provide a group of aggregations.'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                
+                userprofile = poem_models.UserProfile.objects.get(
+                    user=request.user
+                )
 
-            groupaggr = poem_models.GroupOfAggregations.objects.get(
-                name=request.data['groupname']
-            )
-            aggr = poem_models.Aggregation.objects.get(
-                apiid=request.data['apiid']
-            )
-            groupaggr.aggregations.add(aggr)
+            except poem_models.GroupOfAggregations.DoesNotExist:
+                return Response(
+                    {'detail': 'Given group of aggregations does not exist!'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
 
-            data = {
-                'endpoint_group': request.data['endpoint_group'],
-                'metric_operation': request.data['metric_operation'],
-                'profile_operation': request.data['profile_operation'],
-                'metric_profile': request.data['metric_profile'],
-                'groups': json.loads(request.data['groups'])
-            }
+            except poem_models.UserProfile.DoesNotExist:
+                return Response(
+                    {'detail': 'No userprofile for given username!'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
 
-            create_profile_history(aggr, data, request.user)
+            else:
+                if groupaggr in userprofile.groupsofaggregations.all() or \
+                        request.user.is_superuser:
+                    serializer.save()
 
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+                    aggr = poem_models.Aggregation.objects.get(
+                        apiid=request.data['apiid']
+                    )
+                    groupaggr.aggregations.add(aggr)
+
+                    data = {
+                        'endpoint_group': request.data['endpoint_group'],
+                        'metric_operation': request.data['metric_operation'],
+                        'profile_operation': request.data['profile_operation'],
+                        'metric_profile': request.data['metric_profile'],
+                        'groups': json.loads(request.data['groups'])
+                    }
+
+                    create_profile_history(aggr, data, request.user)
+
+                    return Response(
+                        serializer.data, status=status.HTTP_201_CREATED
+                    )
+
+                else:
+                    return Response(
+                        {
+                            'detail': 'You do not have permission to add '
+                                      'resources to the given group.'
+                        },
+                        status=status.HTTP_401_UNAUTHORIZED
+                    )
 
         else:
             details = []

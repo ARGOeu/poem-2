@@ -33,8 +33,17 @@ class ListAggregationsAPIViewTests(TenantTestCase):
             apiid='12341234-oooo-kkkk-aaaa-aaeekkccnnee'
         )
 
+        self.aggr3 = poem_models.Aggregation.objects.create(
+            name='TEST_PROFILE2',
+            apiid='eemie0le-k7zg-6iyq-38t5-wohngoh9hoey',
+            groupname='new-group'
+        )
+
         self.group = poem_models.GroupOfAggregations.objects.create(name='EGI')
         poem_models.GroupOfAggregations.objects.create(name='new-group')
+
+        userprofile = poem_models.UserProfile.objects.create(user=self.user)
+        userprofile.groupsofaggregations.add(self.group)
 
         self.ct = ContentType.objects.get_for_model(poem_models.Aggregation)
 
@@ -112,6 +121,41 @@ class ListAggregationsAPIViewTests(TenantTestCase):
             content_type=self.ct
         )
 
+        data = json.loads(
+            serializers.serialize(
+                'json', [self.aggr3],
+                use_natural_foreign_keys=True,
+                use_natural_primary_keys=True
+            )
+        )
+        data[0]['fields'].update({
+            'endpoint_group': 'sites',
+            'metric_operation': 'AND',
+            'profile_operation': 'AND',
+            'metric_profile': 'TEST_PROFILE',
+            'groups': [
+                {
+                    'name': 'Group4',
+                    'operation': 'AND',
+                    'services': [
+                        {
+                            'name': 'VOMS',
+                            'operation': 'OR'
+                        }
+                    ]
+                }
+            ]
+        })
+
+        poem_models.TenantHistory.objects.create(
+            object_id=self.aggr3.id,
+            serialized_data=json.dumps(data),
+            object_repr=self.aggr3.__str__(),
+            comment='Initial version.',
+            user='testuser',
+            content_type=self.ct
+        )
+
     @patch('Poem.api.internal_views.aggregationprofiles.sync_webapi',
            side_effect=mocked_func)
     def test_get_all_aggregations(self, func):
@@ -133,6 +177,12 @@ class ListAggregationsAPIViewTests(TenantTestCase):
                     ('apiid', '00000000-oooo-kkkk-aaaa-aaeekkccnnee'),
                     ('groupname', 'EGI')
                 ]),
+                OrderedDict([
+                    ('name', 'TEST_PROFILE2'),
+                    ('description', ''),
+                    ('apiid', 'eemie0le-k7zg-6iyq-38t5-wohngoh9hoey'),
+                    ('groupname', 'new-group')
+                ])
             ]
         )
 
@@ -233,6 +283,118 @@ class ListAggregationsAPIViewTests(TenantTestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(
             response.data, {'detail': 'apiid: This field is required.'}
+        )
+
+    def test_post_aggregations_no_group_permission(self):
+        data = {
+            'apiid': '12341234-aaaa-kkkk-aaaa-aaeekkccnnee',
+            'name': 'new-profile',
+            'groupname': 'new-group',
+            'endpoint_group': 'sites',
+            'metric_operation': 'AND',
+            'profile_operation': 'AND',
+            'metric_profile': 'TEST_PROFILE',
+            'groups': json.dumps([
+                {
+                    'name': 'Group1',
+                    'operation': 'AND',
+                    'services': [
+                        {
+                            'name': 'AMGA',
+                            'operation': 'OR'
+                        },
+                        {
+                            'name': 'APEL',
+                            'operation': 'OR'
+                        }
+                    ]
+                }
+            ])
+        }
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data,
+            {
+                'detail': 'You do not have permission to add resources to the '
+                          'given group.'
+            }
+        )
+
+    def test_post_aggregations_nonexisting_group(self):
+        data = {
+            'apiid': '12341234-aaaa-kkkk-aaaa-aaeekkccnnee',
+            'name': 'new-profile',
+            'groupname': 'nonexisting-group',
+            'endpoint_group': 'sites',
+            'metric_operation': 'AND',
+            'profile_operation': 'AND',
+            'metric_profile': 'TEST_PROFILE',
+            'groups': json.dumps([
+                {
+                    'name': 'Group1',
+                    'operation': 'AND',
+                    'services': [
+                        {
+                            'name': 'AMGA',
+                            'operation': 'OR'
+                        },
+                        {
+                            'name': 'APEL',
+                            'operation': 'OR'
+                        }
+                    ]
+                }
+            ])
+        }
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(
+            response.data,
+            {
+                'detail': 'Given group of aggregations does not exist!'
+            }
+        )
+
+    def test_post_aggregations_without_groupname(self):
+        data = {
+            'apiid': '12341234-aaaa-kkkk-aaaa-aaeekkccnnee',
+            'name': 'new-profile',
+            'groupname': '',
+            'endpoint_group': 'sites',
+            'metric_operation': 'AND',
+            'profile_operation': 'AND',
+            'metric_profile': 'TEST_PROFILE',
+            'groups': json.dumps([
+                {
+                    'name': 'Group1',
+                    'operation': 'AND',
+                    'services': [
+                        {
+                            'name': 'AMGA',
+                            'operation': 'OR'
+                        },
+                        {
+                            'name': 'APEL',
+                            'operation': 'OR'
+                        }
+                    ]
+                }
+            ])
+        }
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data,
+            {
+                'detail': 'You must provide a group of aggregations.'
+            }
         )
 
     def test_put_aggregations(self):
