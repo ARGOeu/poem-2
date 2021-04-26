@@ -444,6 +444,39 @@ export const ReportsComponent = (props) => {
     setFormikValues(formValues)
   }
 
+  const formatFilterTags = (tagtype, formikTags) => {
+    let tags = new Array()
+    let typeString = undefined
+
+    if (tagtype === 'groups')
+      typeString = 'TopoSelectGroupOfGroups'
+    else if (tagtype == 'endpoints')
+      typeString = 'TopoSelectGroupOfEndpoints'
+
+    formikTags.forEach(e => {
+      let tmpTag = new Object()
+      let tmpTags = new Array()
+      if (e.value.indexOf(' ') !== -1) {
+        let values = e.value.split(' ')
+        for (var tag of values)
+          tmpTags.push(new Object({
+            name: e.name,
+            value: tag,
+            context: typeString
+          }))
+        tags = [...tags, ...tmpTags]
+      }
+      else {
+        tmpTag['name'] = e.name
+        tmpTag['value'] = e.value
+        tmpTag['context'] = typeString
+        tags.push(tmpTag)
+      }
+    })
+
+    return tags
+  }
+
   const extractProfileMetadata = (profiletype, name) => {
     let profile = undefined
     if (profiletype === 'metric') {
@@ -503,6 +536,9 @@ export const ReportsComponent = (props) => {
     dataToSend['profiles'].push(extractedMetricProfile)
     dataToSend['profiles'].push(extractedAggregationProfile)
     dataToSend['profiles'].push(extractedOperationProfile)
+    let groupTagsFormatted = formatFilterTags('groups', formValues.groups)
+    let endpointTagsFormatted = formatFilterTags('endpoints', formValues.endpoints)
+    dataToSend['filter_tags'] = [...groupTagsFormatted, ...endpointTagsFormatted]
     console.log(dataToSend)
   }
 
