@@ -288,6 +288,10 @@ export class WebApi {
     return this.addProfile(this.thresholdsprofiles, profile);
   }
 
+  addReport(report) {
+    return this.addProfile(this.reports['main'], report);
+  }
+
   deleteMetricProfile(id) {
     return this.deleteProfile(`${this.metricprofiles}/${id}`);
   }

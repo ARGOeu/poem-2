@@ -9,6 +9,8 @@ import {
   ParagraphTitle,
   BaseArgoTable,
   DropDown,
+  NotifyOk,
+  NotifyError,
  } from './UIElements';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -22,9 +24,7 @@ import {
   Card,
   CardBody,
   CardHeader,
-  CardText,
   CardTitle,
-  CardSubtitle,
   InputGroup,
   InputGroupAddon,
   FormText,
@@ -473,7 +473,6 @@ export const ReportsComponent = (props) => {
         tags.push(tmpTag)
       }
     })
-
     return tags
   }
 
@@ -539,7 +538,56 @@ export const ReportsComponent = (props) => {
     let groupTagsFormatted = formatFilterTags('groups', formValues.groups)
     let endpointTagsFormatted = formatFilterTags('endpoints', formValues.endpoints)
     dataToSend['filter_tags'] = [...groupTagsFormatted, ...endpointTagsFormatted]
-    console.log(dataToSend)
+
+    if (addview) {
+      let response = await webapi.addReport(dataToSend);
+      if (!response.ok) {
+        let add_msg = '';
+        try {
+          let json = await response.json();
+          let msg_list = [];
+          json.errors.forEach(e => msg_list.push(e.details));
+          add_msg = msg_list.join(' ');
+        } catch(err) {
+          add_msg = 'Web API error adding report';
+        }
+        NotifyError({
+          title: `Web API error: ${response.status} ${response.statusText}`,
+          msg: add_msg
+        });
+      } else {
+        let r_json = await response.json();
+        let r_internal = await backend.addObject(
+          '/api/v2/internal/reports/',
+          {
+            apiid: r_json.data.id,
+            name: dataToSend.name,
+            groupname: formValues.groupname,
+            description: formValues.description,
+          }
+        );
+        if (r_internal.ok)
+          NotifyOk({
+            msg: 'Report successfully added',
+            title: 'Added',
+            callback: () => history.push('/ui/reports')
+          });
+        else {
+          let add_msg = '';
+          try {
+            let json = await r_internal.json();
+            add_msg = json.detail;
+          } catch(err) {
+            add_msg = 'Internal API error adding report';
+          }
+          NotifyError({
+            title: `Internal API error: ${r_internal.status} ${r_internal.statusText}`,
+            msg: add_msg
+          });
+        }
+      }
+    }
+
   }
 
   const onYesCallback = () => {
