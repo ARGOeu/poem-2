@@ -85,26 +85,33 @@ class ListAPIKeys(APIView):
         return Response(api_format)
 
     def put(self, request):
-        try:
-            names = MyAPIKey.objects.filter(
-                ~Q(id=request.data['id'])
-            ).values_list('name', flat=True)
-            if request.data['name'] not in names:
-                obj = MyAPIKey.objects.get(id=request.data['id'])
-                obj.name = request.data['name']
-                obj.revoked = request.data['revoked']
-                obj.save()
+        if request.user.is_superuser:
+            try:
+                names = MyAPIKey.objects.filter(
+                    ~Q(id=request.data['id'])
+                ).values_list('name', flat=True)
+                if request.data['name'] not in names:
+                    obj = MyAPIKey.objects.get(id=request.data['id'])
+                    obj.name = request.data['name']
+                    obj.revoked = request.data['revoked']
+                    obj.save()
 
-            else:
-                return Response(
-                    {'detail': 'API key with this name already exists'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
+                else:
+                    return Response(
+                        {'detail': 'API key with this name already exists'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
 
-            return Response(status=status.HTTP_201_CREATED)
+                return Response(status=status.HTTP_201_CREATED)
 
-        except MyAPIKey.DoesNotExist:
-            raise NotFound(status=404, detail='API key not found')
+            except MyAPIKey.DoesNotExist:
+                raise NotFound(status=404, detail='API key not found')
+
+        else:
+            return Response(
+                {'detail': 'You do not have permission to change API keys.'},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
 
     def post(self, request):
         names = MyAPIKey.objects.get_usable_keys().values_list('name',
