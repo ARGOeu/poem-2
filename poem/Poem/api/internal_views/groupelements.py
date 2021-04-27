@@ -6,6 +6,7 @@ from rest_framework import status
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
 from .utils import error_response
 
 
@@ -173,29 +174,35 @@ class ListAggregationsInGroup(APIView):
             )
 
     def post(self, request):
-        try:
-            group = poem_models.GroupOfAggregations.objects.create(
-                name=request.data['name']
-            )
+        if request.user.is_superuser:
+            try:
+                group = poem_models.GroupOfAggregations.objects.create(
+                    name=request.data['name']
+                )
 
-            if 'items' in dict(request.data):
-                for aggr in dict(request.data)['items']:
-                    ag = poem_models.Aggregation.objects.get(name=aggr)
-                    group.aggregations.add(ag)
-                    ag.groupname = group.name
-                    ag.save()
+                if 'items' in dict(request.data):
+                    for aggr in dict(request.data)['items']:
+                        ag = poem_models.Aggregation.objects.get(name=aggr)
+                        group.aggregations.add(ag)
+                        ag.groupname = group.name
+                        ag.save()
 
-        except IntegrityError:
-            return Response(
-                {
-                    'detail':
-                        'Group of aggregations with this name already exists.'
-                },
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            except IntegrityError:
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail='Group of aggregations with this name already '
+                           'exists.'
+                )
+
+            else:
+                return Response(status=status.HTTP_201_CREATED)
 
         else:
-            return Response(status=status.HTTP_201_CREATED)
+            return error_response(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='You do not have permission to add groups of '
+                       'aggregations.'
+            )
 
     def delete(self, request, group=None):
         if group:

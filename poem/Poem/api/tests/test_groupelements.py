@@ -711,6 +711,29 @@ class ListAggregationsInGroupAPIViewTests(TenantTestCase):
         group = poem_models.GroupOfAggregations.objects.get(name='new_name')
         self.assertEqual(group.aggregations.count(), 0)
 
+    def test_post_aggregation_group_without_aggregation_regular_user(self):
+        self.assertEqual(
+            poem_models.GroupOfAggregations.objects.all().count(), 2
+        )
+        data = {'name': 'new_name',
+                'items': []}
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to add groups of aggregations.'
+        )
+        self.assertEqual(
+            poem_models.GroupOfAggregations.objects.all().count(), 2
+        )
+        self.assertRaises(
+            poem_models.GroupOfAggregations.DoesNotExist,
+            poem_models.GroupOfAggregations.objects.get,
+            name='new_name'
+        )
+
     def test_post_aggregation_group_with_aggregation(self):
         self.assertEqual(
             poem_models.GroupOfAggregations.objects.all().count(), 2
@@ -731,6 +754,33 @@ class ListAggregationsInGroupAPIViewTests(TenantTestCase):
         self.assertEqual(aggr1.groupname, 'EGI')
         self.assertEqual(aggr2.groupname, 'new_name')
 
+    def test_post_aggregation_group_with_aggregation_regular_user(self):
+        self.assertEqual(
+            poem_models.GroupOfAggregations.objects.all().count(), 2
+        )
+        data = {'name': 'new_name',
+                'items': ['ANOTHER-PROFILE']}
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to add groups of aggregations.'
+        )
+        self.assertEqual(
+            poem_models.GroupOfAggregations.objects.all().count(), 2
+        )
+        self.assertRaises(
+            poem_models.GroupOfAggregations.DoesNotExist,
+            poem_models.GroupOfAggregations.objects.get,
+            name='new_name'
+        )
+        aggr1 = poem_models.Aggregation.objects.get(name='TEST_PROFILE')
+        aggr2 = poem_models.Aggregation.objects.get(name='ANOTHER-PROFILE')
+        self.assertEqual(aggr1.groupname, 'EGI')
+        self.assertEqual(aggr2.groupname, '')
+
     def test_post_aggregation_group_with_name_that_already_exists(self):
         data = {'name': 'EGI',
                 'items': [self.aggr1.name]}
@@ -741,6 +791,18 @@ class ListAggregationsInGroupAPIViewTests(TenantTestCase):
         self.assertEqual(
             response.data,
             {'detail': 'Group of aggregations with this name already exists.'}
+        )
+
+    def test_post_aggregation_group_with_name_that_already_exists_regular(self):
+        data = {'name': 'EGI',
+                'items': [self.aggr1.name]}
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to add groups of aggregations.'
         )
 
     def test_delete_aggregation_group(self):
