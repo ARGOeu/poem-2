@@ -141,24 +141,36 @@ function insertSelectPlaceholder(data, text) {
 }
 
 
-const TagSelect = ({field, tagOptions, onChangeHandler, isMulti, closeMenuOnSelect}) => {
-  console.log(tagOptions)
-
-  return (
-    <Select
-      name={field.name}
-      closeMenuOnSelect={closeMenuOnSelect}
-      isMulti={isMulti}
-      isClearable={false}
-      components={isMulti ? components.MultiValueContainer : components.SingleValue}
-      onChange={(e) => onChangeHandler(e)}
-      options={tagOptions}
-    />
-  )
+const TagSelect = ({field, tagOptions, onChangeHandler, isMulti, closeMenuOnSelect, tagInitials}) => {
+    if (tagInitials)
+      return (
+        <Select
+          name={field.name}
+          closeMenuOnSelect={closeMenuOnSelect}
+          isMulti={isMulti}
+          isClearable={false}
+          components={isMulti ? components.MultiValueContainer : components.SingleValue}
+          onChange={(e) => onChangeHandler(e)}
+          options={tagOptions}
+          value={tagInitials}
+        />
+      )
+    else
+      return (
+        <Select
+          name={field.name}
+          closeMenuOnSelect={closeMenuOnSelect}
+          isMulti={isMulti}
+          isClearable={false}
+          components={isMulti ? components.MultiValueContainer : components.SingleValue}
+          onChange={(e) => onChangeHandler(e)}
+          options={tagOptions}
+        />
+      )
 }
 
 
-const TopologyTagList = ({ part, tagsState, setTagsState, tagsAll, push, form, remove }) => {
+const TopologyTagList = ({ part, tagsState, setTagsState, tagsAll, addview, push, form, remove }) => {
   const extractTags = (which, filter=false) => {
     let selected = new Array()
 
@@ -196,6 +208,21 @@ const TopologyTagList = ({ part, tagsState, setTagsState, tagsAll, push, form, r
     }
     else
       return true
+  }
+
+  const tagsInitValues = (key, data) => {
+    if (data[key].indexOf(' ') === -1)
+      return new Object({
+        'label': data[key],
+        'value': data[key]
+      })
+    else {
+      let tmp = data[key].split(' ').map(e => new Object({
+        'label': e,
+        'value': e
+      }))
+      return tmp
+    }
   }
 
   const extractValuesTags = (index) => {
@@ -242,6 +269,7 @@ const TopologyTagList = ({ part, tagsState, setTagsState, tagsAll, push, form, r
                   }}
                   isMulti={false}
                   closeMenuOnSelect={true}
+                  tagInitials={!addview ? tagsInitValues('name', tags) : undefined}
                 />
               </Col>
               <Col md={7}>
@@ -262,6 +290,7 @@ const TopologyTagList = ({ part, tagsState, setTagsState, tagsAll, push, form, r
                   }}
                   isMulti={isMultiValuesTags(extractValuesTags(index))}
                   closeMenuOnSelect={!isMultiValuesTags(extractValuesTags(index))}
+                  tagInitials={!addview ? tagsInitValues('value', tags) : undefined}
                 />
               </Col>
               {
@@ -933,7 +962,7 @@ export const ReportsComponent = (props) => {
                         <FieldArray
                           name="endpoints"
                           render={props => (
-                            <TopologyTagList part="endpoints" tagsState={tagsState} setTagsState={setTagsState} tagsAll={topologyTags} {...props}/>
+                            <TopologyTagList part="endpoints" tagsState={tagsState} setTagsState={setTagsState} tagsAll={topologyTags} addview={addview} {...props}/>
                           )}
                         />
                       </CardBody>
