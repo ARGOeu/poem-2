@@ -145,19 +145,26 @@ class ListAPIKeys(APIView):
             )
 
     def delete(self, request, name=None):
-        if name:
-            try:
-                apikey = MyAPIKey.objects.get(name=name)
-                apikey.delete()
-                return Response(status=status.HTTP_204_NO_CONTENT)
+        if request.user.is_superuser:
+            if name:
+                try:
+                    apikey = MyAPIKey.objects.get(name=name)
+                    apikey.delete()
+                    return Response(status=status.HTTP_204_NO_CONTENT)
 
-            except MyAPIKey.DoesNotExist:
-                raise NotFound(status=404, detail='API key not found')
+                except MyAPIKey.DoesNotExist:
+                    raise NotFound(status=404, detail='API key not found')
+
+            else:
+                return Response(
+                    {'detail': 'API key name must be defined'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
 
         else:
             return Response(
-                {'detail': 'API key name must be defined'},
-                status=status.HTTP_400_BAD_REQUEST
+                {'detail': 'You do not have permission to delete API keys.'},
+                status=status.HTTP_401_UNAUTHORIZED
             )
 
 

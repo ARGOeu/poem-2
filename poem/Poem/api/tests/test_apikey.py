@@ -355,6 +355,22 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
         force_authenticate(request, user=self.user)
         response = self.view(request, 'DELETABLE')
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        keys = MyAPIKey.objects.all().values_list('name', flat=True)
+        self.assertEqual(len(keys), 4)
+        self.assertFalse('DELETABLE' in keys)
+
+    def test_delete_apikey_regular_user(self):
+        request = self.factory.delete(self.url + 'DELETABLE')
+        force_authenticate(request, user=self.regular_user)
+        response = self.view(request, 'DELETABLE')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete API keys.'
+        )
+        keys = MyAPIKey.objects.all().values_list('name', flat=True)
+        self.assertEqual(len(keys), 5)
+        self.assertTrue('DELETABLE' in keys)
 
     def test_delete_nonexisting_apikey(self):
         request = self.factory.delete(self.url + 'nonexisting')
@@ -362,6 +378,20 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
         response = self.view(request, 'nonexisting')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(response.data['detail'], 'API key not found')
+        keys = MyAPIKey.objects.all().values_list('name', flat=True)
+        self.assertEqual(len(keys), 5)
+
+    def test_delete_nonexisting_apikey_regular_user(self):
+        request = self.factory.delete(self.url + 'nonexisting')
+        force_authenticate(request, user=self.regular_user)
+        response = self.view(request, 'nonexisting')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete API keys.'
+        )
+        keys = MyAPIKey.objects.all().values_list('name', flat=True)
+        self.assertEqual(len(keys), 5)
 
     def test_delete_no_apikey_name(self):
         request = self.factory.delete(self.url)
@@ -370,4 +400,14 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(
             response.data['detail'], 'API key name must be defined'
+        )
+
+    def test_delete_no_apikey_name_regular_user(self):
+        request = self.factory.delete(self.url)
+        force_authenticate(request, user=self.regular_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete API keys.'
         )
