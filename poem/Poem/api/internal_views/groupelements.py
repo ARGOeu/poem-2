@@ -255,24 +255,39 @@ class ListMetricProfilesInGroup(APIView):
         return Response({'result': sorted(results)})
 
     def put(self, request):
-        group = poem_models.GroupOfMetricProfiles.objects.get(
-            name=request.data['name']
-        )
+        if request.user.is_superuser:
+            try:
+                group = poem_models.GroupOfMetricProfiles.objects.get(
+                    name=request.data['name']
+                )
 
-        for item in dict(request.data)['items']:
-            mp = poem_models.MetricProfiles.objects.get(name=item)
-            group.metricprofiles.add(mp)
-            mp.groupname = group.name
-            mp.save()
+                for item in dict(request.data)['items']:
+                    mp = poem_models.MetricProfiles.objects.get(name=item)
+                    group.metricprofiles.add(mp)
+                    mp.groupname = group.name
+                    mp.save()
 
-        # remove removed metric profiles
-        for mp in group.metricprofiles.all():
-            if mp.name not in dict(request.data)['items']:
-                group.metricprofiles.remove(mp)
-                mp.groupname = ''
-                mp.save()
+                # remove removed metric profiles
+                for mp in group.metricprofiles.all():
+                    if mp.name not in dict(request.data)['items']:
+                        group.metricprofiles.remove(mp)
+                        mp.groupname = ''
+                        mp.save()
 
-        return Response(status=status.HTTP_201_CREATED)
+                return Response(status=status.HTTP_201_CREATED)
+
+            except poem_models.GroupOfMetricProfiles.DoesNotExist:
+                raise NotFound(
+                    status=404,
+                    detail='Group of metric profiles does not exist.'
+                )
+
+        else:
+            return error_response(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='You do not have permission to change groups of metric '
+                       'profiles.'
+            )
 
     def post(self, request):
         try:

@@ -890,7 +890,10 @@ class ListMetricProfilesInGroupAPIViewTests(TenantTestCase):
         self.factory = TenantRequestFactory(self.tenant)
         self.view = views.ListMetricProfilesInGroup.as_view()
         self.url = '/api/v2/internal/metricprofilesgroup/'
-        self.user = CustUser.objects.create(username='testuser')
+        self.user = CustUser.objects.create_user(username='testuser')
+        self.superuser = CustUser.objects.create_user(
+            username='poem', is_superuser=True
+        )
 
         self.mp1 = poem_models.MetricProfiles.objects.create(
             name='TEST_PROFILE',
@@ -919,6 +922,12 @@ class ListMetricProfilesInGroupAPIViewTests(TenantTestCase):
 
     def test_get_metric_profiles_in_group(self):
         request = self.factory.get(self.url + 'EGI')
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request, 'EGI')
+        self.assertEqual(response.data, {'result': ['TEST_PROFILE']})
+
+    def test_get_metric_profiles_in_group_regular_user(self):
+        request = self.factory.get(self.url + 'EGI')
         force_authenticate(request, user=self.user)
         response = self.view(request, 'EGI')
         self.assertEqual(response.data, {'result': ['TEST_PROFILE']})
@@ -930,6 +939,12 @@ class ListMetricProfilesInGroupAPIViewTests(TenantTestCase):
 
     def test_get_metric_profiles_without_group(self):
         request = self.factory.get(self.url)
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.data, {'result': ['ANOTHER-PROFILE']})
+
+    def test_get_metric_profiles_without_group_regular_user(self):
+        request = self.factory.get(self.url)
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(response.data, {'result': ['ANOTHER-PROFILE']})
@@ -940,7 +955,7 @@ class ListMetricProfilesInGroupAPIViewTests(TenantTestCase):
                 'items': ['TEST_PROFILE', 'ANOTHER-PROFILE']}
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
-        force_authenticate(request, user=self.user)
+        force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         mp1 = poem_models.MetricProfiles.objects.get(name='TEST_PROFILE')
@@ -949,8 +964,49 @@ class ListMetricProfilesInGroupAPIViewTests(TenantTestCase):
         self.assertEqual(mp2.groupname, 'EGI')
         self.assertEqual(self.group.metricprofiles.count(), 2)
 
+    def test_add_metric_profile_in_group_regular_user(self):
+        self.assertEqual(self.group.metricprofiles.count(), 1)
+        data = {'name': 'EGI',
+                'items': ['TEST_PROFILE', 'ANOTHER-PROFILE']}
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change groups of metric profiles.'
+        )
+        mp1 = poem_models.MetricProfiles.objects.get(name='TEST_PROFILE')
+        mp2 = poem_models.MetricProfiles.objects.get(name='ANOTHER-PROFILE')
+        self.assertEqual(mp1.groupname, 'EGI')
+        self.assertEqual(mp2.groupname, '')
+        self.assertEqual(self.group.metricprofiles.count(), 1)
+
     def test_remove_metric_profile_from_group(self):
         self.group.metricprofiles.add(self.mp2)
+        self.mp2.groupname='EGI'
+        self.mp2.save()
+        self.assertEqual(self.group.metricprofiles.all().count(), 2)
+        data = {
+            'name': 'EGI',
+            'items': ['ANOTHER-PROFILE']
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        mp1 = poem_models.MetricProfiles.objects.get(name='TEST_PROFILE')
+        mp2 = poem_models.MetricProfiles.objects.get(name='ANOTHER-PROFILE')
+        self.assertEqual(mp1.groupname, '')
+        self.assertEqual(mp2.groupname, 'EGI')
+        self.assertEqual(self.group.metricprofiles.count(), 1)
+
+    def test_remove_metric_profile_from_group_regular_user(self):
+        self.group.metricprofiles.add(self.mp2)
+        self.mp2.groupname = 'EGI'
+        self.mp2.save()
         self.assertEqual(self.group.metricprofiles.all().count(), 2)
         data = {
             'name': 'EGI',
@@ -960,11 +1016,52 @@ class ListMetricProfilesInGroupAPIViewTests(TenantTestCase):
         request = self.factory.put(self.url, content, content_type=content_type)
         force_authenticate(request, user=self.user)
         response = self.view(request)
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change groups of metric profiles.'
+        )
         mp1 = poem_models.MetricProfiles.objects.get(name='TEST_PROFILE')
         mp2 = poem_models.MetricProfiles.objects.get(name='ANOTHER-PROFILE')
-        self.assertEqual(mp1.groupname, '')
+        self.assertEqual(mp1.groupname, 'EGI')
         self.assertEqual(mp2.groupname, 'EGI')
+        self.assertEqual(self.group.metricprofiles.count(), 2)
+
+    def test_change_nonexisting_group_of_metric_profiles(self):
+        self.assertEqual(self.group.metricprofiles.count(), 1)
+        data = {'name': 'nonexisting',
+                'items': ['TEST_PROFILE', 'ANOTHER-PROFILE']}
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(
+            response.data['detail'], 'Group of metric profiles does not exist.'
+        )
+        mp1 = poem_models.MetricProfiles.objects.get(name='TEST_PROFILE')
+        mp2 = poem_models.MetricProfiles.objects.get(name='ANOTHER-PROFILE')
+        self.assertEqual(mp1.groupname, 'EGI')
+        self.assertEqual(mp2.groupname, '')
+        self.assertEqual(self.group.metricprofiles.count(), 1)
+
+    def test_change_nonexisting_group_of_metric_profiles_regular_user(self):
+        self.assertEqual(self.group.metricprofiles.count(), 1)
+        data = {'name': 'nonexisting',
+                'items': ['TEST_PROFILE', 'ANOTHER-PROFILE']}
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change groups of metric profiles.'
+        )
+        mp1 = poem_models.MetricProfiles.objects.get(name='TEST_PROFILE')
+        mp2 = poem_models.MetricProfiles.objects.get(name='ANOTHER-PROFILE')
+        self.assertEqual(mp1.groupname, 'EGI')
+        self.assertEqual(mp2.groupname, '')
         self.assertEqual(self.group.metricprofiles.count(), 1)
 
     def test_post_metric_profile_group_without_metric_profile(self):
