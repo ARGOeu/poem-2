@@ -32,26 +32,42 @@ class ListMetricsInGroup(APIView):
         return Response({'result': sorted(results)})
 
     def put(self, request):
-        group = poem_models.GroupOfMetrics.objects.get(
-            name=request.data['name']
-        )
+        if request.user.is_superuser:
+            try:
+                group = poem_models.GroupOfMetrics.objects.get(
+                    name=request.data['name']
+                )
 
-        for name in dict(request.data)['items']:
-            metric = poem_models.Metric.objects.get(name=name)
-            if metric.group != group:
-                metric.group = group
-                metric.save()
-                create_history(metric, request.user.username)
+                for name in dict(request.data)['items']:
+                    metric = poem_models.Metric.objects.get(name=name)
+                    if metric.group != group:
+                        metric.group = group
+                        metric.save()
+                        create_history(metric, request.user.username)
 
-        # remove the metrics that existed before, and now were removed
-        metrics = poem_models.Metric.objects.filter(group=group)
-        for metric in metrics:
-            if metric.name not in dict(request.data)['items']:
-                metric.group = None
-                metric.save()
-                create_history(metric, request.user.username)
+                # remove the metrics that existed before, and now were removed
+                metrics = poem_models.Metric.objects.filter(group=group)
+                for metric in metrics:
+                    if metric.name not in dict(request.data)['items']:
+                        metric.group = None
+                        metric.save()
+                        create_history(metric, request.user.username)
 
-        return Response(status=status.HTTP_201_CREATED)
+                return Response(status=status.HTTP_201_CREATED)
+
+            except poem_models.GroupOfMetrics.DoesNotExist:
+                raise NotFound(
+                    status=404, detail='Group of metrics does not exist.'
+                )
+
+        else:
+            return Response(
+                {
+                    'detail': 'You do not have permission to change groups of '
+                              'metrics.'
+                },
+                status=status.HTTP_401_UNAUTHORIZED
+            )
 
     def post(self, request):
         try:

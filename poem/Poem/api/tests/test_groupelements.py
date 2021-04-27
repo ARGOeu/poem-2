@@ -21,6 +21,9 @@ class ListMetricsInGroupAPIViewTests(TenantTestCase):
         self.view = views.ListMetricsInGroup.as_view()
         self.url = '/api/v2/internal/metricsgroup/'
         self.user = CustUser.objects.create_user(username='testuser')
+        self.superuser = CustUser.objects.create_user(
+            username='poem', is_superuser=True
+        )
 
         self.group = poem_models.GroupOfMetrics.objects.create(name='EGI')
         group2 = poem_models.GroupOfMetrics.objects.create(name='delete')
@@ -175,6 +178,15 @@ class ListMetricsInGroupAPIViewTests(TenantTestCase):
 
     def test_get_metrics_in_group(self):
         request = self.factory.get(self.url + 'EGI')
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request, 'EGI')
+        self.assertEqual(
+            response.data,
+            {'result': ['argo.AMS-Check', 'org.apel.APEL-Pub']}
+        )
+
+    def test_get_metrics_in_group_regular_user(self):
+        request = self.factory.get(self.url + 'EGI')
         force_authenticate(request, user=self.user)
         response = self.view(request, 'EGI')
         self.assertEqual(
@@ -183,6 +195,14 @@ class ListMetricsInGroupAPIViewTests(TenantTestCase):
         )
 
     def test_get_metric_without_group(self):
+        request = self.factory.get(self.url)
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(
+            response.data, {'result': ['eu.egi.CertValidity']}
+        )
+
+    def test_get_metric_without_group_regular_user(self):
         request = self.factory.get(self.url)
         force_authenticate(request, user=self.user)
         response = self.view(request)
@@ -197,6 +217,12 @@ class ListMetricsInGroupAPIViewTests(TenantTestCase):
 
     def test_get_metrics_with_nonexisting_group(self):
         request = self.factory.get(self.url + 'bla')
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request, 'bla')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_get_metrics_with_nonexisting_group_regular_user(self):
+        request = self.factory.get(self.url + 'bla')
         force_authenticate(request, user=self.user)
         response = self.view(request, 'bla')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
@@ -206,7 +232,7 @@ class ListMetricsInGroupAPIViewTests(TenantTestCase):
                 'items': ['argo.AMS-Check', 'eu.egi.CertValidity']}
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
-        force_authenticate(request, user=self.user)
+        force_authenticate(request, user=self.superuser)
         response = self.view(request)
         metric1 = poem_models.Metric.objects.get(name='argo.AMS-Check')
         metric2 = poem_models.Metric.objects.get(name='eu.egi.CertValidity')
@@ -234,7 +260,49 @@ class ListMetricsInGroupAPIViewTests(TenantTestCase):
             'EGI'
         )
 
+    def test_add_metrics_in_group_regular_user(self):
+        data = {'name': 'EGI',
+                'items': ['argo.AMS-Check', 'eu.egi.CertValidity']}
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        metric1 = poem_models.Metric.objects.get(name='argo.AMS-Check')
+        metric2 = poem_models.Metric.objects.get(name='eu.egi.CertValidity')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change groups of metrics.'
+        )
+        ver1 = poem_models.TenantHistory.objects.filter(
+            object_id=metric1.id,
+            content_type=self.ct
+        )
+        ver2 = poem_models.TenantHistory.objects.filter(
+            object_id=metric2.id,
+            content_type=self.ct
+        )
+        self.assertEqual(ver1.count(), 1)
+        self.assertEqual(ver2.count(), 1)
+        self.assertEqual(metric1.group.name, 'EGI')
+        self.assertEqual(metric2.group, None)
+
     def test_remove_metric_from_group(self):
+        self.metric3.group = self.group
+        self.metric3.save()
+        data = {'name': 'EGI',
+                'items': ['eu.egi.CertValidity']}
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        metric1 = poem_models.Metric.objects.get(name='argo.AMS-Check')
+        metric2 = poem_models.Metric.objects.get(name='eu.egi.CertValidity')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(metric1.group, None)
+        self.assertEqual(metric2.group.name, 'EGI')
+
+    def test_remove_metric_from_group_regular_user(self):
         self.metric3.group = self.group
         self.metric3.save()
         data = {'name': 'EGI',
@@ -245,16 +313,73 @@ class ListMetricsInGroupAPIViewTests(TenantTestCase):
         response = self.view(request)
         metric1 = poem_models.Metric.objects.get(name='argo.AMS-Check')
         metric2 = poem_models.Metric.objects.get(name='eu.egi.CertValidity')
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(metric1.group, None)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change groups of metrics.'
+        )
+        self.assertEqual(metric1.group.name, 'EGI')
         self.assertEqual(metric2.group.name, 'EGI')
+
+    def test_change_nonexisting_group(self):
+        data = {'name': 'nonexisting',
+                'items': ['argo.AMS-Check', 'eu.egi.CertValidity']}
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        metric1 = poem_models.Metric.objects.get(name='argo.AMS-Check')
+        metric2 = poem_models.Metric.objects.get(name='eu.egi.CertValidity')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(
+            response.data['detail'], 'Group of metrics does not exist.'
+        )
+        ver1 = poem_models.TenantHistory.objects.filter(
+            object_id=metric1.id,
+            content_type=self.ct
+        )
+        ver2 = poem_models.TenantHistory.objects.filter(
+            object_id=metric2.id,
+            content_type=self.ct
+        )
+        self.assertEqual(ver1.count(), 1)
+        self.assertEqual(ver2.count(), 1)
+        self.assertEqual(metric1.group.name, 'EGI')
+        self.assertEqual(metric2.group, None)
+
+    def test_change_nonexisting_group_regular_user(self):
+        data = {'name': 'nonexisting',
+                'items': ['argo.AMS-Check', 'eu.egi.CertValidity']}
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        metric1 = poem_models.Metric.objects.get(name='argo.AMS-Check')
+        metric2 = poem_models.Metric.objects.get(name='eu.egi.CertValidity')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change groups of metrics.'
+        )
+        ver1 = poem_models.TenantHistory.objects.filter(
+            object_id=metric1.id,
+            content_type=self.ct
+        )
+        ver2 = poem_models.TenantHistory.objects.filter(
+            object_id=metric2.id,
+            content_type=self.ct
+        )
+        self.assertEqual(ver1.count(), 1)
+        self.assertEqual(ver2.count(), 1)
+        self.assertEqual(metric1.group.name, 'EGI')
+        self.assertEqual(metric2.group, None)
 
     def test_post_metric_group_without_metrics(self):
         self.assertEqual(poem_models.GroupOfMetrics.objects.all().count(), 2)
         data = {'name': 'new_name',
                 'items': []}
         request = self.factory.post(self.url, data, format='json')
-        force_authenticate(request, user=self.user)
+        force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(poem_models.GroupOfMetrics.objects.all().count(), 3)
@@ -264,7 +389,7 @@ class ListMetricsInGroupAPIViewTests(TenantTestCase):
         data = {'name': 'new_name',
                 'items': ['eu.egi.CertValidity']}
         request = self.factory.post(self.url, data, format='json')
-        force_authenticate(request, user=self.user)
+        force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(poem_models.GroupOfMetrics.objects.all().count(), 3)
@@ -275,7 +400,7 @@ class ListMetricsInGroupAPIViewTests(TenantTestCase):
         data = {'name': 'EGI',
                 'items': [self.metric1.name]}
         request = self.factory.post(self.url, data, format='json')
-        force_authenticate(request, user=self.user)
+        force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(
@@ -286,7 +411,7 @@ class ListMetricsInGroupAPIViewTests(TenantTestCase):
     def test_delete_metric_group(self):
         self.assertEqual(poem_models.GroupOfMetrics.objects.all().count(), 2)
         request = self.factory.delete(self.url + 'delete')
-        force_authenticate(request, user=self.user)
+        force_authenticate(request, user=self.superuser)
         response = self.view(request, 'delete')
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(poem_models.GroupOfMetrics.objects.all().count(), 1)
@@ -300,13 +425,13 @@ class ListMetricsInGroupAPIViewTests(TenantTestCase):
 
     def test_delete_nonexisting_metric_group(self):
         request = self.factory.delete(self.url + 'nonexisting')
-        force_authenticate(request, user=self.user)
+        force_authenticate(request, user=self.superuser)
         response = self.view(request, 'nonexisting')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_delete_metric_group_without_specifying_name(self):
         request = self.factory.delete(self.url)
-        force_authenticate(request, user=self.user)
+        force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
