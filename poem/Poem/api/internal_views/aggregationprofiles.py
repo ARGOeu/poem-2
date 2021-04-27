@@ -25,6 +25,7 @@ class ListAggregations(APIView):
                     groupaggr = poem_models.GroupOfAggregations.objects.get(
                         name=request.data['groupname']
                     )
+
                 else:
                     return Response(
                         {'detail': 'You must provide a group of aggregations.'},
@@ -37,13 +38,16 @@ class ListAggregations(APIView):
 
             except poem_models.GroupOfAggregations.DoesNotExist:
                 return Response(
-                    {'detail': 'Given group of aggregations does not exist!'},
+                    {
+                        'detail': 'Given group of aggregations does not '
+                                  'exist.'
+                    },
                     status=status.HTTP_404_NOT_FOUND
                 )
 
             except poem_models.UserProfile.DoesNotExist:
                 return Response(
-                    {'detail': 'No userprofile for given username!'},
+                    {'detail': 'No user profile for authenticated user.'},
                     status=status.HTTP_404_NOT_FOUND
                 )
 
@@ -99,24 +103,22 @@ class ListAggregations(APIView):
                     apiid=request.data['apiid']
                 )
 
-                if aggr.groupname:
-                    init_groupaggr = \
-                        poem_models.GroupOfAggregations.objects.get(
-                            name=aggr.groupname
-                        )
+                init_groupaggr = None
+                if aggr.groupname and not request.user.is_superuser:
+                    try:
+                        init_groupaggr = \
+                            poem_models.GroupOfAggregations.objects.get(
+                                name=aggr.groupname
+                            )
 
-                else:
-                    if not request.user.is_superuser:
+                    except poem_models.GroupOfAggregations.DoesNotExist:
                         return Response(
                             {
-                                'detail': 'You do not have permission to '
-                                          'change resources in the given group.'
+                                "detail": "Initial profile's group of "
+                                          "aggregations does not exist."
                             },
-                            status=status.HTTP_401_UNAUTHORIZED
+                            status=status.HTTP_404_NOT_FOUND
                         )
-
-                    else:
-                        init_groupaggr = None
 
                 userprofile = poem_models.UserProfile.objects.get(
                     user=request.user
@@ -127,15 +129,6 @@ class ListAggregations(APIView):
                     {
                         'detail': 'Aggregation profile with given apiid does '
                                   'not exist.'
-                    },
-                    status=status.HTTP_404_NOT_FOUND
-                )
-
-            except poem_models.GroupOfAggregations.DoesNotExist:
-                return Response(
-                    {
-                        "detail": "Initial profile's group of aggregations "
-                                  "does not exist."
                     },
                     status=status.HTTP_404_NOT_FOUND
                 )
@@ -270,7 +263,7 @@ class ListAggregations(APIView):
 
                     except poem_models.GroupOfAggregations.DoesNotExist:
                         pass
-                    
+
                 userprofile = poem_models.UserProfile.objects.get(
                     user=request.user
                 )
