@@ -1071,7 +1071,7 @@ class ListMetricProfilesInGroupAPIViewTests(TenantTestCase):
         data = {'name': 'new_name',
                 'items': []}
         request = self.factory.post(self.url, data, format='json')
-        force_authenticate(request, user=self.user)
+        force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(
@@ -1080,6 +1080,29 @@ class ListMetricProfilesInGroupAPIViewTests(TenantTestCase):
         group = poem_models.GroupOfMetricProfiles.objects.get(name='new_name')
         self.assertEqual(group.metricprofiles.count(), 0)
 
+    def test_post_metric_profile_group_without_metric_profile_regular_usr(self):
+        self.assertEqual(
+            poem_models.GroupOfMetricProfiles.objects.all().count(), 2
+        )
+        data = {'name': 'new_name',
+                'items': []}
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to add groups of metric profiles.'
+        )
+        self.assertEqual(
+            poem_models.GroupOfMetricProfiles.objects.all().count(), 2
+        )
+        self.assertRaises(
+            poem_models.GroupOfMetricProfiles.DoesNotExist,
+            poem_models.GroupOfMetricProfiles.objects.get,
+            name='new_name'
+        )
+
     def test_post_metric_profile_group_with_metric_profile(self):
         self.assertEqual(
             poem_models.GroupOfMetricProfiles.objects.all().count(), 2
@@ -1087,7 +1110,7 @@ class ListMetricProfilesInGroupAPIViewTests(TenantTestCase):
         data = {'name': 'new_name',
                 'items': ['ANOTHER-PROFILE']}
         request = self.factory.post(self.url, data, format='json')
-        force_authenticate(request, user=self.user)
+        force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(
@@ -1100,16 +1123,58 @@ class ListMetricProfilesInGroupAPIViewTests(TenantTestCase):
         self.assertEqual(mp1.groupname, 'EGI')
         self.assertEqual(mp2.groupname, 'new_name')
 
+    def test_post_metric_profile_group_with_metric_profile_regular_user(self):
+        self.assertEqual(
+            poem_models.GroupOfMetricProfiles.objects.all().count(), 2
+        )
+        data = {'name': 'new_name',
+                'items': ['ANOTHER-PROFILE']}
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to add groups of metric profiles.'
+        )
+        self.assertEqual(
+            poem_models.GroupOfMetricProfiles.objects.all().count(), 2
+        )
+        self.assertRaises(
+            poem_models.GroupOfMetricProfiles.DoesNotExist,
+            poem_models.GroupOfMetricProfiles.objects.get,
+            name='new_name'
+        )
+        mp1 = poem_models.MetricProfiles.objects.get(name='TEST_PROFILE')
+        mp2 = poem_models.MetricProfiles.objects.get(name='ANOTHER-PROFILE')
+        self.assertEqual(mp1.groupname, 'EGI')
+        self.assertEqual(mp2.groupname, '')
+
     def test_post_metric_profile_group_with_name_that_already_exists(self):
         data = {'name': 'EGI',
                 'items': [self.mp1.name]}
         request = self.factory.post(self.url, data, format='json')
-        force_authenticate(request, user=self.user)
+        force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(
             response.data,
             {'detail': 'Metric profiles group with this name already exists.'}
+        )
+
+    def test_post_metric_profile_group_with_name_that_already_exists_rglr(self):
+        data = {'name': 'EGI',
+                'items': [self.mp1.name]}
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to add groups of metric profiles.'
+        )
+        self.assertEqual(
+            len(poem_models.GroupOfMetricProfiles.objects.all()), 2
         )
 
     def test_delete_metric_profile_group(self):

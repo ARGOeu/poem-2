@@ -290,29 +290,35 @@ class ListMetricProfilesInGroup(APIView):
             )
 
     def post(self, request):
-        try:
-            group = poem_models.GroupOfMetricProfiles.objects.create(
-                name=request.data['name']
-            )
+        if request.user.is_superuser:
+            try:
+                group = poem_models.GroupOfMetricProfiles.objects.create(
+                    name=request.data['name']
+                )
 
-            if 'items' in dict(request.data):
-                for item in dict(request.data)['items']:
-                    mp = poem_models.MetricProfiles.objects.get(name=item)
-                    group.metricprofiles.add(mp)
-                    mp.groupname = group.name
-                    mp.save()
+                if 'items' in dict(request.data):
+                    for item in dict(request.data)['items']:
+                        mp = poem_models.MetricProfiles.objects.get(name=item)
+                        group.metricprofiles.add(mp)
+                        mp.groupname = group.name
+                        mp.save()
 
-        except IntegrityError:
-            return Response(
-                {
-                    'detail':
-                        'Metric profiles group with this name already exists.'
-                },
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            except IntegrityError:
+                return error_response(
+                    detail='Metric profiles group with this name already '
+                           'exists.',
+                    status_code=status.HTTP_400_BAD_REQUEST
+                )
+
+            else:
+                return Response(status=status.HTTP_201_CREATED)
 
         else:
-            return Response(status=status.HTTP_201_CREATED)
+            return error_response(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='You do not have permission to add groups of metric '
+                       'profiles.'
+            )
 
     def delete(self, request, group=None):
         if group:
