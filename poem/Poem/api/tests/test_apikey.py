@@ -312,6 +312,19 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(len(MyAPIKey.objects.all()), 6)
+
+    def test_post_apikey_regular_user(self):
+        data = {'name': 'test', 'revoked': False}
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.regular_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to add API keys.'
+        )
+        self.assertEqual(len(MyAPIKey.objects.all()), 5)
 
     def test_post_apikey_name_already_exists(self):
         data = {'name': 'EUDAT', 'revoked': False}
@@ -323,6 +336,19 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
             response.data['detail'],
             'API key with this name already exists'
         )
+        self.assertEqual(len(MyAPIKey.objects.all()), 5)
+
+    def test_post_apikey_name_already_exists_regular_user(self):
+        data = {'name': 'EUDAT', 'revoked': False}
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.regular_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to add API keys.'
+        )
+        self.assertEqual(len(MyAPIKey.objects.all()), 5)
 
     def test_delete_apikey(self):
         request = self.factory.delete(self.url + 'DELETABLE')

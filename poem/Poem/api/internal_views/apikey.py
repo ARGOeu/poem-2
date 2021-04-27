@@ -114,26 +114,34 @@ class ListAPIKeys(APIView):
             )
 
     def post(self, request):
-        names = MyAPIKey.objects.get_usable_keys().values_list('name',
-                                                               flat=True)
-        if request.data['name'] not in names:
-            token = request.data.get('token', False)
-            if token:
-                MyAPIKey.objects.create_key(
-                    name=request.data['name'],
-                    token=token
-                )
-            else:
-                MyAPIKey.objects.create_key(
-                    name=request.data['name']
-                )
+        if request.user.is_superuser:
+            names = MyAPIKey.objects.get_usable_keys().values_list(
+                'name', flat=True
+            )
+            if request.data['name'] not in names:
+                token = request.data.get('token', False)
+                if token:
+                    MyAPIKey.objects.create_key(
+                        name=request.data['name'],
+                        token=token
+                    )
+                else:
+                    MyAPIKey.objects.create_key(
+                        name=request.data['name']
+                    )
 
-            return Response(status=status.HTTP_201_CREATED)
+                return Response(status=status.HTTP_201_CREATED)
+
+            else:
+                return Response(
+                    {'detail': 'API key with this name already exists'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
 
         else:
             return Response(
-                {'detail': 'API key with this name already exists'},
-                status=status.HTTP_400_BAD_REQUEST
+                {'detail': 'You do not have permission to add API keys.'},
+                status=status.HTTP_401_UNAUTHORIZED
             )
 
     def delete(self, request, name=None):
