@@ -6,6 +6,7 @@ from rest_framework import status
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from .utils import error_response
 
 
 class ListMetricsInGroup(APIView):
@@ -61,12 +62,9 @@ class ListMetricsInGroup(APIView):
                 )
 
         else:
-            return Response(
-                {
-                    'detail': 'You do not have permission to change groups of '
-                              'metrics.'
-                },
-                status=status.HTTP_401_UNAUTHORIZED
+            return error_response(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='You do not have permission to change groups of metrics.'
             )
 
     def post(self, request):
@@ -84,38 +82,41 @@ class ListMetricsInGroup(APIView):
                         create_history(metric, request.user.username)
 
             except IntegrityError:
-                return Response(
-                    {
-                        'detail': 'Group of metrics with this name already '
-                                  'exists.'
-                    },
-                    status=status.HTTP_400_BAD_REQUEST
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail='Group of metrics with this name already exists.'
                 )
 
             else:
                 return Response(status=status.HTTP_201_CREATED)
 
         else:
-            return Response(
-                {
-                    'detail': 'You do not have permission to add groups of '
-                              'metrics.'
-                },
-                status=status.HTTP_401_UNAUTHORIZED
+            return error_response(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='You do not have permission to add groups of metrics.'
             )
 
     def delete(self, request, group=None):
-        if group:
-            try:
-                group = poem_models.GroupOfMetrics.objects.get(name=group)
-                group.delete()
-                return Response(status=status.HTTP_204_NO_CONTENT)
+        if request.user.is_superuser:
+            if group:
+                try:
+                    group = poem_models.GroupOfMetrics.objects.get(name=group)
+                    group.delete()
+                    return Response(status=status.HTTP_204_NO_CONTENT)
 
-            except poem_models.GroupOfMetrics.DoesNotExist:
-                raise(NotFound(status=404, detail='Group of metrics not found'))
+                except poem_models.GroupOfMetrics.DoesNotExist:
+                    raise NotFound(
+                        status=404, detail='Group of metrics not found'
+                    )
+
+            else:
+                return Response(status=status.HTTP_400_BAD_REQUEST)
 
         else:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+            return error_response(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='You do not have permission to delete groups of metrics.'
+            )
 
 
 class ListAggregationsInGroup(APIView):

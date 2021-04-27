@@ -465,17 +465,60 @@ class ListMetricsInGroupAPIViewTests(TenantTestCase):
         metric = poem_models.Metric.objects.get(name='delete.metric')
         self.assertEqual(metric.group, None)
 
+    def test_delete_metric_group_regular_user(self):
+        self.assertEqual(poem_models.GroupOfMetrics.objects.all().count(), 2)
+        request = self.factory.delete(self.url + 'delete')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'delete')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete groups of metrics.'
+        )
+        self.assertEqual(poem_models.GroupOfMetrics.objects.all().count(), 2)
+        self.assertTrue(
+            'delete' in poem_models.GroupOfMetrics.objects.all().values_list(
+                'name', flat=True
+            )
+        )
+        metric = poem_models.Metric.objects.get(name='delete.metric')
+        self.assertEqual(metric.group.name, 'delete')
+
     def test_delete_nonexisting_metric_group(self):
         request = self.factory.delete(self.url + 'nonexisting')
         force_authenticate(request, user=self.superuser)
         response = self.view(request, 'nonexisting')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(len(poem_models.GroupOfMetrics.objects.all()), 2)
+
+    def test_delete_nonexisting_metric_group_regular_user(self):
+        request = self.factory.delete(self.url + 'nonexisting')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'nonexisting')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete groups of metrics.'
+        )
+        self.assertEqual(len(poem_models.GroupOfMetrics.objects.all()), 2)
 
     def test_delete_metric_group_without_specifying_name(self):
         request = self.factory.delete(self.url)
         force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(len(poem_models.GroupOfMetrics.objects.all()), 2)
+
+    def test_delete_metric_group_without_specifying_name_regular_user(self):
+        request = self.factory.delete(self.url)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete groups of metrics.'
+        )
+        self.assertEqual(len(poem_models.GroupOfMetrics.objects.all()), 2)
 
 
 class ListAggregationsInGroupAPIViewTests(TenantTestCase):

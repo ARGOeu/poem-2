@@ -12,6 +12,8 @@ from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from .utils import error_response
+
 
 class ListAggregations(APIView):
     authentication_classes = (SessionAuthentication,)
@@ -27,9 +29,9 @@ class ListAggregations(APIView):
                     )
 
                 else:
-                    return Response(
-                        {'detail': 'You must provide a group of aggregations.'},
-                        status=status.HTTP_400_BAD_REQUEST
+                    return error_response(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail='You must provide a group of aggregations.'
                     )
 
                 userprofile = poem_models.UserProfile.objects.get(
@@ -37,18 +39,15 @@ class ListAggregations(APIView):
                 )
 
             except poem_models.GroupOfAggregations.DoesNotExist:
-                return Response(
-                    {
-                        'detail': 'Given group of aggregations does not '
-                                  'exist.'
-                    },
-                    status=status.HTTP_404_NOT_FOUND
+                return error_response(
+                    detail='Given group of aggregations does not exist.',
+                    status_code=status.HTTP_404_NOT_FOUND
                 )
 
             except poem_models.UserProfile.DoesNotExist:
-                return Response(
-                    {'detail': 'No user profile for authenticated user.'},
-                    status=status.HTTP_404_NOT_FOUND
+                return error_response(
+                    details='No user profile for authenticated user.',
+                    status_code=status.HTTP_404_NOT_FOUND
                 )
 
             else:
@@ -76,12 +75,10 @@ class ListAggregations(APIView):
                     )
 
                 else:
-                    return Response(
-                        {
-                            'detail': 'You do not have permission to add '
-                                      'resources to the given group.'
-                        },
-                        status=status.HTTP_401_UNAUTHORIZED
+                    return error_response(
+                        detail='You do not have permission to add resources to '
+                               'the given group.',
+                        status_code=status.HTTP_401_UNAUTHORIZED
                     )
 
         else:
@@ -91,9 +88,9 @@ class ListAggregations(APIView):
                     '{}: {}'.format(error, serializer.errors[error][0])
                 )
 
-            return Response(
-                {'detail': ' '.join(details)},
-                status=status.HTTP_400_BAD_REQUEST
+            return error_response(
+                detail=' '.join(details),
+                status_code=status.HTTP_400_BAD_REQUEST
             )
 
     def put(self, request):
@@ -112,12 +109,10 @@ class ListAggregations(APIView):
                             )
 
                     except poem_models.GroupOfAggregations.DoesNotExist:
-                        return Response(
-                            {
-                                "detail": "Initial profile's group of "
-                                          "aggregations does not exist."
-                            },
-                            status=status.HTTP_404_NOT_FOUND
+                        return error_response(
+                            detail="Initial profile's group of aggregations "
+                                   "does not exist.",
+                            status_code=status.HTTP_404_NOT_FOUND
                         )
 
                 userprofile = poem_models.UserProfile.objects.get(
@@ -125,21 +120,16 @@ class ListAggregations(APIView):
                 )
 
             except poem_models.Aggregation.DoesNotExist:
-                return Response(
-                    {
-                        'detail': 'Aggregation profile with given apiid does '
-                                  'not exist.'
-                    },
-                    status=status.HTTP_404_NOT_FOUND
+                return error_response(
+                    detail='Aggregation profile with given apiid does not '
+                           'exist.',
+                    status_code=status.HTTP_404_NOT_FOUND
                 )
 
             except poem_models.UserProfile.DoesNotExist:
-                return Response(
-                    {
-                        'detail': 'User profile for the given user does not '
-                                  'exist.'
-                    },
-                    status=status.HTTP_404_NOT_FOUND
+                return error_response(
+                    detail='User profile for the given user does not exist.',
+                    status_code=status.HTTP_404_NOT_FOUND
                 )
 
             else:
@@ -153,21 +143,15 @@ class ListAggregations(APIView):
                                 )
 
                         else:
-                            return Response(
-                                {
-                                    'detail': 'Please provide group of '
-                                              'aggregations.'
-                                },
-                                status=status.HTTP_400_BAD_REQUEST
+                            return error_response(
+                                detail='Please provide group of aggregations.',
+                                status_code=status.HTTP_400_BAD_REQUEST
                             )
 
                     except poem_models.GroupOfAggregations.DoesNotExist:
-                        return Response(
-                            {
-                                'detail': 'Given group of aggregations does '
-                                          'not exist.'
-                            },
-                            status=status.HTTP_404_NOT_FOUND
+                        return error_response(
+                            status_code=status.HTTP_404_NOT_FOUND,
+                            detail='Given group of aggregations does not exist.'
                         )
 
                     else:
@@ -200,28 +184,23 @@ class ListAggregations(APIView):
                             return Response(status=status.HTTP_201_CREATED)
 
                         else:
-                            return Response(
-                                {
-                                    'detail': 'You do not have permission to '
-                                              'change resources in the given '
-                                              'group.'
-                                },
-                                status=status.HTTP_401_UNAUTHORIZED
+                            return error_response(
+                                detail='You do not have permission to change '
+                                       'resources in the given group.',
+                                status_code=status.HTTP_401_UNAUTHORIZED
                             )
 
                 else:
-                    return Response(
-                        {
-                            'detail': 'You do not have permission to change '
-                                      'resources in the given group.'
-                        },
-                        status=status.HTTP_401_UNAUTHORIZED
+                    return error_response(
+                        detail='You do not have permission to change resources '
+                               'in the given group.',
+                        status_code=status.HTTP_401_UNAUTHORIZED
                     )
 
         else:
-            return Response(
-                {'detail': 'Apiid field undefined!'},
-                status=status.HTTP_400_BAD_REQUEST
+            return error_response(
+                detail='Apiid field undefined!',
+                status_code=status.HTTP_400_BAD_REQUEST
             )
 
     def get(self, request, aggregation_name=None):
@@ -238,11 +217,14 @@ class ListAggregations(APIView):
                 return Response(serializer.data)
 
             except poem_models.Aggregation.DoesNotExist:
-                raise NotFound(status=404,
-                               detail='Aggregation not found')
+                raise NotFound(
+                    status=404, detail='Aggregation not found'
+                )
 
         else:
-            aggregations = poem_models.Aggregation.objects.all().order_by('name')
+            aggregations = poem_models.Aggregation.objects.all().order_by(
+                'name'
+            )
             serializer = serializers.AggregationProfileSerializer(
                 aggregations, many=True
             )
@@ -282,12 +264,10 @@ class ListAggregations(APIView):
                     return Response(status=status.HTTP_204_NO_CONTENT)
 
                 else:
-                    return Response(
-                        {
-                            'detail': 'You do not have group permission to '
-                                      'delete this aggregation profile.'
-                        },
-                        status=status.HTTP_401_UNAUTHORIZED
+                    return error_response(
+                        detail='You do not have group permission to delete this'
+                               ' aggregation profile.',
+                        status_code=status.HTTP_401_UNAUTHORIZED
                     )
 
             except poem_models.Aggregation.DoesNotExist:
@@ -296,15 +276,15 @@ class ListAggregations(APIView):
                 )
 
             except poem_models.UserProfile.DoesNotExist:
-                return Response(
-                    {'detail': 'No user profile for authenticated user.'},
-                    status=status.HTTP_404_NOT_FOUND
+                return error_response(
+                    detail='No user profile for authenticated user.',
+                    status_code=status.HTTP_404_NOT_FOUND
                 )
 
         else:
-            return Response(
-                {'detail': 'Aggregation profile not specified!'},
-                status=status.HTTP_400_BAD_REQUEST
+            return error_response(
+                detail='Aggregation profile not specified!',
+                status_code=status.HTTP_400_BAD_REQUEST
             )
 
 

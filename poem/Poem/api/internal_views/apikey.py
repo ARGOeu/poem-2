@@ -9,6 +9,8 @@ from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from .utils import error_response
+
 
 class ListAPIKeys(APIView):
     authentication_classes = (SessionAuthentication,)
@@ -46,12 +48,10 @@ class ListAPIKeys(APIView):
                     )
 
                 else:
-                    return Response(
-                        {
-                            'detail': 'You do not have permission for fetching '
-                                      'this API key.'
-                        },
-                        status=status.HTTP_401_UNAUTHORIZED
+                    return error_response(
+                        detail='You do not have permission for fetching this '
+                               'API key.',
+                        status_code=status.HTTP_401_UNAUTHORIZED
                     )
 
             except MyAPIKey.DoesNotExist:
@@ -97,9 +97,9 @@ class ListAPIKeys(APIView):
                     obj.save()
 
                 else:
-                    return Response(
-                        {'detail': 'API key with this name already exists'},
-                        status=status.HTTP_400_BAD_REQUEST
+                    return error_response(
+                        detail='API key with this name already exists',
+                        status_code=status.HTTP_400_BAD_REQUEST
                     )
 
                 return Response(status=status.HTTP_201_CREATED)
@@ -108,9 +108,9 @@ class ListAPIKeys(APIView):
                 raise NotFound(status=404, detail='API key not found')
 
         else:
-            return Response(
-                {'detail': 'You do not have permission to change API keys.'},
-                status=status.HTTP_401_UNAUTHORIZED
+            return error_response(
+                detail='You do not have permission to change API keys.',
+                status_code=status.HTTP_401_UNAUTHORIZED
             )
 
     def post(self, request):
@@ -133,15 +133,15 @@ class ListAPIKeys(APIView):
                 return Response(status=status.HTTP_201_CREATED)
 
             else:
-                return Response(
-                    {'detail': 'API key with this name already exists'},
-                    status=status.HTTP_400_BAD_REQUEST
+                return error_response(
+                    detail='API key with this name already exists',
+                    status_code=status.HTTP_400_BAD_REQUEST
                 )
 
         else:
-            return Response(
-                {'detail': 'You do not have permission to add API keys.'},
-                status=status.HTTP_401_UNAUTHORIZED
+            return error_response(
+                detail='You do not have permission to add API keys.',
+                status_code=status.HTTP_401_UNAUTHORIZED
             )
 
     def delete(self, request, name=None):
@@ -156,15 +156,15 @@ class ListAPIKeys(APIView):
                     raise NotFound(status=404, detail='API key not found')
 
             else:
-                return Response(
-                    {'detail': 'API key name must be defined'},
-                    status=status.HTTP_400_BAD_REQUEST
+                return error_response(
+                    detail='API key name must be defined',
+                    status_code=status.HTTP_400_BAD_REQUEST
                 )
 
         else:
-            return Response(
-                {'detail': 'You do not have permission to delete API keys.'},
-                status=status.HTTP_401_UNAUTHORIZED
+            return error_response(
+                detail='You do not have permission to delete API keys.',
+                status_code=status.HTTP_401_UNAUTHORIZED
             )
 
 
