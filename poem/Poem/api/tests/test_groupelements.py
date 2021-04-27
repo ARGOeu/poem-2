@@ -527,6 +527,9 @@ class ListAggregationsInGroupAPIViewTests(TenantTestCase):
         self.view = views.ListAggregationsInGroup.as_view()
         self.url = '/api/v2/internal/aggregationsgroup/'
         self.user = CustUser.objects.create_user(username='testuser')
+        self.superuser = CustUser.objects.create_user(
+            username='poem', is_superuser=True
+        )
 
         self.aggr1 = poem_models.Aggregation.objects.create(
             name='TEST_PROFILE',
@@ -552,6 +555,12 @@ class ListAggregationsInGroupAPIViewTests(TenantTestCase):
 
     def test_get_aggregations_in_group(self):
         request = self.factory.get(self.url + 'EGI')
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request, 'EGI')
+        self.assertEqual(response.data, {'result': ['TEST_PROFILE']})
+
+    def test_get_aggregations_in_group_regular_user(self):
+        request = self.factory.get(self.url + 'EGI')
         force_authenticate(request, user=self.user)
         response = self.view(request, 'EGI')
         self.assertEqual(response.data, {'result': ['TEST_PROFILE']})
@@ -562,6 +571,13 @@ class ListAggregationsInGroupAPIViewTests(TenantTestCase):
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_get_aggregation_without_group(self):
+        request = self.factory.get(self.url)
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(
+            response.data, {'result': ['ANOTHER-PROFILE']})
+
+    def test_get_aggregation_without_group_regular_user(self):
         request = self.factory.get(self.url)
         force_authenticate(request, user=self.user)
         response = self.view(request)
@@ -574,7 +590,7 @@ class ListAggregationsInGroupAPIViewTests(TenantTestCase):
                 'items': ['TEST_PROFILE', 'ANOTHER-PROFILE']}
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
-        force_authenticate(request, user=self.user)
+        force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         aggr1 = poem_models.Aggregation.objects.get(name='TEST_PROFILE')
@@ -582,6 +598,25 @@ class ListAggregationsInGroupAPIViewTests(TenantTestCase):
         self.assertEqual(aggr1.groupname, 'EGI')
         self.assertEqual(aggr2.groupname, 'EGI')
         self.assertEqual(self.group.aggregations.count(), 2)
+
+    def test_add_aggregation_profile_in_group_regular_user(self):
+        self.assertEqual(self.group.aggregations.count(), 1)
+        data = {'name': 'EGI',
+                'items': ['TEST_PROFILE', 'ANOTHER-PROFILE']}
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change groups of aggregations.'
+        )
+        aggr1 = poem_models.Aggregation.objects.get(name='TEST_PROFILE')
+        aggr2 = poem_models.Aggregation.objects.get(name='ANOTHER-PROFILE')
+        self.assertEqual(aggr1.groupname, 'EGI')
+        self.assertEqual(aggr2.groupname, '')
+        self.assertEqual(self.group.aggregations.count(), 1)
 
     def test_remove_aggregation_profile_from_group(self):
         self.group.aggregations.add(self.aggr2)
@@ -592,13 +627,72 @@ class ListAggregationsInGroupAPIViewTests(TenantTestCase):
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
-        force_authenticate(request, user=self.user)
+        force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         aggr1 = poem_models.Aggregation.objects.get(name='TEST_PROFILE')
         aggr2 = poem_models.Aggregation.objects.get(name='ANOTHER-PROFILE')
         self.assertEqual(aggr1.groupname, '')
         self.assertEqual(aggr2.groupname, 'EGI')
+        self.assertEqual(self.group.aggregations.count(), 1)
+
+    def test_remove_aggregation_profile_from_group_regular_user(self):
+        self.group.aggregations.add(self.aggr2)
+        self.assertEqual(self.group.aggregations.count(), 2)
+        data = {
+            'name': 'EGI',
+            'items': ['ANOTHER-PROFILE']
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change groups of aggregations.'
+        )
+        aggr1 = poem_models.Aggregation.objects.get(name='TEST_PROFILE')
+        aggr2 = poem_models.Aggregation.objects.get(name='ANOTHER-PROFILE')
+        self.assertEqual(aggr1.groupname, 'EGI')
+        self.assertEqual(aggr2.groupname, '')
+        self.assertEqual(self.group.aggregations.count(), 2)
+
+    def test_change_nonexisting_group_of_aggregations(self):
+        self.assertEqual(self.group.aggregations.count(), 1)
+        data = {'name': 'nonexisting',
+                'items': ['TEST_PROFILE', 'ANOTHER-PROFILE']}
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(
+            response.data['detail'], 'Group of aggregations does not exist.'
+        )
+        aggr1 = poem_models.Aggregation.objects.get(name='TEST_PROFILE')
+        aggr2 = poem_models.Aggregation.objects.get(name='ANOTHER-PROFILE')
+        self.assertEqual(aggr1.groupname, 'EGI')
+        self.assertEqual(aggr2.groupname, '')
+        self.assertEqual(self.group.aggregations.count(), 1)
+
+    def test_change_nonexisting_group_of_aggregations_regular_user(self):
+        self.assertEqual(self.group.aggregations.count(), 1)
+        data = {'name': 'nonexisting',
+                'items': ['TEST_PROFILE', 'ANOTHER-PROFILE']}
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change groups of aggregations.'
+        )
+        aggr1 = poem_models.Aggregation.objects.get(name='TEST_PROFILE')
+        aggr2 = poem_models.Aggregation.objects.get(name='ANOTHER-PROFILE')
+        self.assertEqual(aggr1.groupname, 'EGI')
+        self.assertEqual(aggr2.groupname, '')
         self.assertEqual(self.group.aggregations.count(), 1)
 
     def test_post_aggregation_group_without_aggregation(self):
@@ -608,7 +702,7 @@ class ListAggregationsInGroupAPIViewTests(TenantTestCase):
         data = {'name': 'new_name',
                 'items': []}
         request = self.factory.post(self.url, data, format='json')
-        force_authenticate(request, user=self.user)
+        force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(
@@ -624,7 +718,7 @@ class ListAggregationsInGroupAPIViewTests(TenantTestCase):
         data = {'name': 'new_name',
                 'items': ['ANOTHER-PROFILE']}
         request = self.factory.post(self.url, data, format='json')
-        force_authenticate(request, user=self.user)
+        force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(
@@ -641,7 +735,7 @@ class ListAggregationsInGroupAPIViewTests(TenantTestCase):
         data = {'name': 'EGI',
                 'items': [self.aggr1.name]}
         request = self.factory.post(self.url, data, format='json')
-        force_authenticate(request, user=self.user)
+        force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(
@@ -653,7 +747,7 @@ class ListAggregationsInGroupAPIViewTests(TenantTestCase):
         self.assertEqual(poem_models.GroupOfAggregations.objects.all().count(),
                          2)
         request = self.factory.delete(self.url + 'delete')
-        force_authenticate(request, user=self.user)
+        force_authenticate(request, user=self.superuser)
         response = self.view(request, 'delete')
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(poem_models.GroupOfAggregations.objects.all().count(),
@@ -668,13 +762,13 @@ class ListAggregationsInGroupAPIViewTests(TenantTestCase):
 
     def test_delete_nonexisting_aggregation_group(self):
         request = self.factory.delete(self.url + 'nonexisting')
-        force_authenticate(request, user=self.user)
+        force_authenticate(request, user=self.superuser)
         response = self.view(request, 'nonexisting')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_delete_aggregation_group_without_specifying_name(self):
         request = self.factory.delete(self.url)
-        force_authenticate(request, user=self.user)
+        force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 

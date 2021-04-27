@@ -139,24 +139,38 @@ class ListAggregationsInGroup(APIView):
         return Response({'result': sorted(results)})
 
     def put(self, request):
-        group = poem_models.GroupOfAggregations.objects.get(
-            name=request.data['name']
-        )
+        if request.user.is_superuser:
+            try:
+                group = poem_models.GroupOfAggregations.objects.get(
+                    name=request.data['name']
+                )
 
-        for aggr in dict(request.data)['items']:
-            ag = poem_models.Aggregation.objects.get(name=aggr)
-            group.aggregations.add(ag)
-            ag.groupname = group.name
-            ag.save()
+                for aggr in dict(request.data)['items']:
+                    ag = poem_models.Aggregation.objects.get(name=aggr)
+                    group.aggregations.add(ag)
+                    ag.groupname = group.name
+                    ag.save()
 
-        # remove removed aggregations:
-        for aggr in group.aggregations.all():
-            if aggr.name not in dict(request.data)['items']:
-                group.aggregations.remove(aggr)
-                aggr.groupname = ''
-                aggr.save()
+                # remove removed aggregations:
+                for aggr in group.aggregations.all():
+                    if aggr.name not in dict(request.data)['items']:
+                        group.aggregations.remove(aggr)
+                        aggr.groupname = ''
+                        aggr.save()
 
-        return Response(status=status.HTTP_201_CREATED)
+                return Response(status=status.HTTP_201_CREATED)
+
+            except poem_models.GroupOfAggregations.DoesNotExist:
+                raise NotFound(
+                    status=404, detail='Group of aggregations does not exist.'
+                )
+
+        else:
+            return error_response(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='You do not have permission to change groups of '
+                       'aggregations.'
+            )
 
     def post(self, request):
         try:
