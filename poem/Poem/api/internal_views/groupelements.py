@@ -70,26 +70,39 @@ class ListMetricsInGroup(APIView):
             )
 
     def post(self, request):
-        try:
-            group = poem_models.GroupOfMetrics.objects.create(
-                name=request.data['name']
-            )
+        if request.user.is_superuser:
+            try:
+                group = poem_models.GroupOfMetrics.objects.create(
+                    name=request.data['name']
+                )
 
-            if 'items' in dict(request.data):
-                for name in dict(request.data)['items']:
-                    metric = poem_models.Metric.objects.get(name=name)
-                    metric.group = group
-                    metric.save()
-                    create_history(metric, request.user.username)
+                if 'items' in dict(request.data):
+                    for name in dict(request.data)['items']:
+                        metric = poem_models.Metric.objects.get(name=name)
+                        metric.group = group
+                        metric.save()
+                        create_history(metric, request.user.username)
 
-        except IntegrityError:
-            return Response(
-                {'detail': 'Group of metrics with this name already exists.'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            except IntegrityError:
+                return Response(
+                    {
+                        'detail': 'Group of metrics with this name already '
+                                  'exists.'
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            else:
+                return Response(status=status.HTTP_201_CREATED)
 
         else:
-            return Response(status=status.HTTP_201_CREATED)
+            return Response(
+                {
+                    'detail': 'You do not have permission to add groups of '
+                              'metrics.'
+                },
+                status=status.HTTP_401_UNAUTHORIZED
+            )
 
     def delete(self, request, group=None):
         if group:

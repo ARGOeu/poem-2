@@ -384,6 +384,20 @@ class ListMetricsInGroupAPIViewTests(TenantTestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(poem_models.GroupOfMetrics.objects.all().count(), 3)
 
+    def test_post_metric_group_without_metrics_regular_user(self):
+        self.assertEqual(poem_models.GroupOfMetrics.objects.all().count(), 2)
+        data = {'name': 'new_name',
+                'items': []}
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to add groups of metrics.'
+        )
+        self.assertEqual(poem_models.GroupOfMetrics.objects.all().count(), 2)
+
     def test_post_metric_group_with_metrics(self):
         self.assertEqual(poem_models.GroupOfMetrics.objects.all().count(), 2)
         data = {'name': 'new_name',
@@ -396,6 +410,22 @@ class ListMetricsInGroupAPIViewTests(TenantTestCase):
         metric = poem_models.Metric.objects.get(name='eu.egi.CertValidity')
         self.assertEqual(metric.group.name, 'new_name')
 
+    def test_post_metric_group_with_metrics_regular_user(self):
+        self.assertEqual(poem_models.GroupOfMetrics.objects.all().count(), 2)
+        data = {'name': 'new_name',
+                'items': ['eu.egi.CertValidity']}
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to add groups of metrics.'
+        )
+        self.assertEqual(poem_models.GroupOfMetrics.objects.all().count(), 2)
+        metric = poem_models.Metric.objects.get(name='eu.egi.CertValidity')
+        self.assertEqual(metric.group, None)
+
     def test_post_metrics_group_with_name_that_already_exists(self):
         data = {'name': 'EGI',
                 'items': [self.metric1.name]}
@@ -406,6 +436,18 @@ class ListMetricsInGroupAPIViewTests(TenantTestCase):
         self.assertEqual(
             response.data,
             {'detail': 'Group of metrics with this name already exists.'}
+        )
+
+    def test_post_metrics_group_with_name_that_already_exists_regular_usr(self):
+        data = {'name': 'EGI',
+                'items': [self.metric1.name]}
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to add groups of metrics.'
         )
 
     def test_delete_metric_group(self):
