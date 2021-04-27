@@ -449,15 +449,15 @@ export const ReportsComponent = (props) => {
   const formatToReportTags = (tagsContext, formikTags) => {
     let tags = new Array()
 
-    for (tag of formikTags) {
+    for (let tag of formikTags) {
       let tmpTag = new Object()
       let tmpTags = new Array()
       if (tag.value.indexOf(' ') !== -1) {
         let values = tag.value.split(' ')
-        for (var tag of values)
+        for (var val of values)
           tmpTags.push(new Object({
             name: tag.name,
-            value: tag,
+            value: val,
             context: tagsContext
           }))
         tags = [...tags, ...tmpTags]
@@ -473,20 +473,24 @@ export const ReportsComponent = (props) => {
   }
 
   const formatFromReportTags = (tagsContext, formikTags) => {
-    let tagsJoint = new Object()
+    let tmpTagsJoint = new Object()
+    let tags = new Array()
 
     for (let tag of formikTags) {
       if (tag.context === tagsContext) {
-        if (tagsJoint[tag.name] === undefined)
-          tagsJoint[tag.name] = new Array()
-        tagsJoint[tag.name].push(tag.value)
+        if (tmpTagsJoint[tag.name] === undefined)
+          tmpTagsJoint[tag.name] = new Array()
+        tmpTagsJoint[tag.name].push(tag.value)
       }
     }
 
-    for (let tag in tagsJoint)
-      tagsJoint[tag] = tagsJoint[tag].join(' ')
+    for (let tag in tmpTagsJoint)
+      tags.push(new Object({
+        'name': tag,
+        'value': tmpTagsJoint[tag].join(' ')
+      }))
 
-    return tagsJoint
+    return tags
   }
 
   const formatTopologySchema = (toposchema) => {
@@ -709,10 +713,14 @@ export const ReportsComponent = (props) => {
 
     let write_perm = undefined;
     let grouplist = undefined;
+    let groupsTags = undefined;
+    let endpointsTags = undefined;
     if (!addview) {
       write_perm = userDetails.is_superuser ||
             userDetails.groups.reports.indexOf(report.groupname) >= 0;
-      formatFromReportTags('argo.group.filter.tags', report['filter_tags'])
+      groupsTags = formatFromReportTags('argo.group.filter.tags', report['filter_tags'])
+      endpointsTags = formatFromReportTags('argo.endpoint.filter.tags', report['filter_tags'])
+      console.log(groupsTags, endpointsTags)
     }
     else {
       write_perm = userDetails.is_superuser ||
@@ -750,8 +758,10 @@ export const ReportsComponent = (props) => {
             downtimeThreshold: report.thresholds.downtime,
             topologyType: whichTopologyType(report.topology_schema),
             groupname: report.groupname,
+            // groups: addview ? new Array() : groupsTags,
+            // endpoints: addview ? new Array() : endpointsTags,
             groups: new Array(),
-            endpoints: new Array()
+            endpoints: new Array(),
           }}
           onSubmit = {(values) => onSubmitHandle(values)}
         >
