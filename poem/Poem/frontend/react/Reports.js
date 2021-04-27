@@ -825,7 +825,7 @@ export const ReportsComponent = (props) => {
                         listMetricProfiles),
                         'Select')}
                       required={true}
-                      className='custom-select'
+                      class_name='custom-select'
                     />
                   </Col>
                   <Col md={4}>
@@ -838,7 +838,7 @@ export const ReportsComponent = (props) => {
                         extractProfileNames(listAggregationProfiles),
                         'Select')}
                       required={true}
-                      className='custom-select'
+                      class_name='custom-select'
                     />
                   </Col>
                   <Col md={4}>
@@ -851,7 +851,7 @@ export const ReportsComponent = (props) => {
                         extractProfileNames(listOperationsProfiles),
                         'Select')}
                       required={true}
-                      className='custom-select'
+                      class_name='custom-select'
                     />
                   </Col>
                 </Row>
