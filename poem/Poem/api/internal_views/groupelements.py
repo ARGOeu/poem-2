@@ -205,25 +205,34 @@ class ListAggregationsInGroup(APIView):
             )
 
     def delete(self, request, group=None):
-        if group:
-            try:
-                gr = poem_models.GroupOfAggregations.objects.get(name=group)
-                gr.delete()
+        if request.user.is_superuser:
+            if group:
+                try:
+                    gr = poem_models.GroupOfAggregations.objects.get(name=group)
+                    gr.delete()
 
-                for aggr in poem_models.Aggregation.objects.filter(
-                        groupname=group
-                ):
-                    aggr.groupname = ''
-                    aggr.save()
+                    for aggr in poem_models.Aggregation.objects.filter(
+                            groupname=group
+                    ):
+                        aggr.groupname = ''
+                        aggr.save()
 
-                return Response(status=status.HTTP_204_NO_CONTENT)
+                    return Response(status=status.HTTP_204_NO_CONTENT)
 
-            except poem_models.GroupOfAggregations.DoesNotExist:
-                raise NotFound(status=404,
-                               detail='Group of aggregations not found')
+                except poem_models.GroupOfAggregations.DoesNotExist:
+                    raise NotFound(
+                        status=404, detail='Group of aggregations not found'
+                    )
+
+            else:
+                return Response(status=status.HTTP_400_BAD_REQUEST)
 
         else:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+            return error_response(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='You do not have permission to delete groups of '
+                       'aggregations.'
+            )
 
 
 class ListMetricProfilesInGroup(APIView):

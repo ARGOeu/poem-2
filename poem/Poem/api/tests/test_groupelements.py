@@ -806,14 +806,16 @@ class ListAggregationsInGroupAPIViewTests(TenantTestCase):
         )
 
     def test_delete_aggregation_group(self):
-        self.assertEqual(poem_models.GroupOfAggregations.objects.all().count(),
-                         2)
+        self.assertEqual(
+            poem_models.GroupOfAggregations.objects.all().count(), 2
+        )
         request = self.factory.delete(self.url + 'delete')
         force_authenticate(request, user=self.superuser)
         response = self.view(request, 'delete')
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-        self.assertEqual(poem_models.GroupOfAggregations.objects.all().count(),
-                         1)
+        self.assertEqual(
+            poem_models.GroupOfAggregations.objects.all().count(), 1
+        )
         self.assertRaises(
             poem_models.GroupOfAggregations.DoesNotExist,
             poem_models.GroupOfAggregations.objects.get,
@@ -822,17 +824,65 @@ class ListAggregationsInGroupAPIViewTests(TenantTestCase):
         aggr = poem_models.Aggregation.objects.get(name='DELETE_PROFILE')
         self.assertEqual(aggr.groupname, '')
 
+    def test_delete_aggregation_group_regular_user(self):
+        self.assertEqual(
+            poem_models.GroupOfAggregations.objects.all().count(), 2
+        )
+        request = self.factory.delete(self.url + 'delete')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'delete')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete groups of aggregations.'
+        )
+        self.assertEqual(
+            poem_models.GroupOfAggregations.objects.all().count(), 2
+        )
+        self.assertTrue(
+            'delete' in
+            poem_models.GroupOfAggregations.objects.all().values_list(
+                'name', flat=True
+            )
+        )
+        aggr = poem_models.Aggregation.objects.get(name='DELETE_PROFILE')
+        self.assertEqual(aggr.groupname, 'delete')
+
     def test_delete_nonexisting_aggregation_group(self):
         request = self.factory.delete(self.url + 'nonexisting')
         force_authenticate(request, user=self.superuser)
         response = self.view(request, 'nonexisting')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(len(poem_models.GroupOfAggregations.objects.all()), 2)
+
+    def test_delete_nonexisting_aggregation_group_regular_user(self):
+        request = self.factory.delete(self.url + 'nonexisting')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'nonexisting')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete groups of aggregations.'
+        )
+        self.assertEqual(len(poem_models.GroupOfAggregations.objects.all()), 2)
 
     def test_delete_aggregation_group_without_specifying_name(self):
         request = self.factory.delete(self.url)
         force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(len(poem_models.GroupOfAggregations.objects.all()), 2)
+
+    def test_delete_aggregation_group_without_specifying_name_regular_usr(self):
+        request = self.factory.delete(self.url)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete groups of aggregations.'
+        )
+        self.assertEqual(len(poem_models.GroupOfAggregations.objects.all()), 2)
 
 
 class ListMetricProfilesInGroupAPIViewTests(TenantTestCase):
