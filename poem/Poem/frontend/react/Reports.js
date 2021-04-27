@@ -401,7 +401,8 @@ export const ReportsComponent = (props) => {
 
   const extractProfileNames = (profiles) => {
     let tmp = new Array();
-    profiles.forEach(profile => tmp.push(profile.name));
+    for (let profile of profiles)
+      tmp.push(profile.name)
     return tmp;
   }
 
@@ -448,27 +449,44 @@ export const ReportsComponent = (props) => {
   const formatToReportTags = (tagsContext, formikTags) => {
     let tags = new Array()
 
-    formikTags.forEach(e => {
+    for (tag of formikTags) {
       let tmpTag = new Object()
       let tmpTags = new Array()
-      if (e.value.indexOf(' ') !== -1) {
-        let values = e.value.split(' ')
+      if (tag.value.indexOf(' ') !== -1) {
+        let values = tag.value.split(' ')
         for (var tag of values)
           tmpTags.push(new Object({
-            name: e.name,
+            name: tag.name,
             value: tag,
             context: tagsContext
           }))
         tags = [...tags, ...tmpTags]
       }
       else {
-        tmpTag['name'] = e.name
-        tmpTag['value'] = e.value
+        tmpTag['name'] = tag.name
+        tmpTag['value'] = tag.value
         tmpTag['context'] = tagsContext
         tags.push(tmpTag)
       }
-    })
+    }
     return tags
+  }
+
+  const formatFromReportTags = (tagsContext, formikTags) => {
+    let tagsJoint = new Object()
+
+    for (let tag of formikTags) {
+      if (tag.context === tagsContext) {
+        if (tagsJoint[tag.name] === undefined)
+          tagsJoint[tag.name] = new Array()
+        tagsJoint[tag.name].push(tag.value)
+      }
+    }
+
+    for (let tag in tagsJoint)
+      tagsJoint[tag] = tagsJoint[tag].join(' ')
+
+    return tagsJoint
   }
 
   const formatTopologySchema = (toposchema) => {
@@ -694,6 +712,7 @@ export const ReportsComponent = (props) => {
     if (!addview) {
       write_perm = userDetails.is_superuser ||
             userDetails.groups.reports.indexOf(report.groupname) >= 0;
+      formatFromReportTags('argo.group.filter.tags', report['filter_tags'])
     }
     else {
       write_perm = userDetails.is_superuser ||
