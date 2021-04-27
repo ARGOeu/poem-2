@@ -142,6 +142,8 @@ function insertSelectPlaceholder(data, text) {
 
 
 const TagSelect = ({field, tagOptions, onChangeHandler, isMulti, closeMenuOnSelect}) => {
+  console.log(tagOptions)
+
   return (
     <Select
       name={field.name}
@@ -154,6 +156,7 @@ const TagSelect = ({field, tagOptions, onChangeHandler, isMulti, closeMenuOnSele
     />
   )
 }
+
 
 const TopologyTagList = ({ part, tagsState, setTagsState, tagsAll, push, form, remove }) => {
   const extractTags = (which, filter=false) => {
@@ -720,11 +723,12 @@ export const ReportsComponent = (props) => {
             userDetails.groups.reports.indexOf(report.groupname) >= 0;
       groupsTags = formatFromReportTags('argo.group.filter.tags', report['filter_tags'])
       endpointsTags = formatFromReportTags('argo.endpoint.filter.tags', report['filter_tags'])
-      console.log(groupsTags, endpointsTags)
     }
     else {
       write_perm = userDetails.is_superuser ||
         userDetails.groups.reports.length > 0;
+      groupsTags = new Array()
+      endpointsTags = new Array()
     }
     if (write_perm)
       grouplist = userDetails.groups.reports
@@ -758,10 +762,8 @@ export const ReportsComponent = (props) => {
             downtimeThreshold: report.thresholds.downtime,
             topologyType: whichTopologyType(report.topology_schema),
             groupname: report.groupname,
-            // groups: addview ? new Array() : groupsTags,
-            // endpoints: addview ? new Array() : endpointsTags,
-            groups: new Array(),
-            endpoints: new Array(),
+            groups: groupsTags,
+            endpoints: endpointsTags,
           }}
           onSubmit = {(values) => onSubmitHandle(values)}
         >
