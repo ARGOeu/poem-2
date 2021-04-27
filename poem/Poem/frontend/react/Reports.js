@@ -445,14 +445,8 @@ export const ReportsComponent = (props) => {
     setFormikValues(formValues)
   }
 
-  const formatFilterTags = (tagtype, formikTags) => {
+  const formatToReportTags = (tagsContext, formikTags) => {
     let tags = new Array()
-    let typeString = undefined
-
-    if (tagtype === 'groups')
-      typeString = 'argo.group.filter.tags'
-    else if (tagtype == 'endpoints')
-      typeString = 'argo.endpoint.filter.tags'
 
     formikTags.forEach(e => {
       let tmpTag = new Object()
@@ -463,14 +457,14 @@ export const ReportsComponent = (props) => {
           tmpTags.push(new Object({
             name: e.name,
             value: tag,
-            context: typeString
+            context: tagsContext
           }))
         tags = [...tags, ...tmpTags]
       }
       else {
         tmpTag['name'] = e.name
         tmpTag['value'] = e.value
-        tmpTag['context'] = typeString
+        tmpTag['context'] = tagsContext
         tags.push(tmpTag)
       }
     })
@@ -602,11 +596,10 @@ export const ReportsComponent = (props) => {
     dataToSend['profiles'].push(extractedMetricProfile)
     dataToSend['profiles'].push(extractedAggregationProfile)
     dataToSend['profiles'].push(extractedOperationProfile)
-    let groupTagsFormatted = formatFilterTags('groups', formValues.groups)
-    let endpointTagsFormatted = formatFilterTags('endpoints', formValues.endpoints)
+    let groupTagsFormatted = formatToReportTags('argo.group.filter.tags', formValues.groups)
+    let endpointTagsFormatted = formatToReportTags('argo.endpoint.filter.tags', formValues.endpoints)
     dataToSend['filter_tags'] = [...groupTagsFormatted, ...endpointTagsFormatted]
     dataToSend['topology_schema'] = formatTopologySchema(formValues.topologyType)
-    console.log(dataToSend)
 
     if (addview) {
       let response = await webapi.addReport(dataToSend);
