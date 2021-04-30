@@ -1182,7 +1182,7 @@ class ListMetricProfilesInGroupAPIViewTests(TenantTestCase):
             poem_models.GroupOfMetricProfiles.objects.all().count(), 2
         )
         request = self.factory.delete(self.url + 'delete')
-        force_authenticate(request, user=self.user)
+        force_authenticate(request, user=self.superuser)
         response = self.view(request, 'delete')
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(
@@ -1196,17 +1196,55 @@ class ListMetricProfilesInGroupAPIViewTests(TenantTestCase):
         mp = poem_models.MetricProfiles.objects.get(name='DELETE_PROFILE')
         self.assertEqual(mp.groupname, '')
 
+    def test_delete_metric_profile_group_regular_user(self):
+        self.assertEqual(
+            poem_models.GroupOfMetricProfiles.objects.all().count(), 2
+        )
+        request = self.factory.delete(self.url + 'delete')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'delete')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete groups of metric profiles.'
+        )
+        self.assertEqual(
+            poem_models.GroupOfMetricProfiles.objects.all().count(), 2
+        )
+        mp = poem_models.MetricProfiles.objects.get(name='DELETE_PROFILE')
+        self.assertEqual(mp.groupname, 'delete')
+
     def test_delete_nonexisting_metric_profile_group(self):
         request = self.factory.delete(self.url + 'nonexisting')
-        force_authenticate(request, user=self.user)
+        force_authenticate(request, user=self.superuser)
         response = self.view(request, 'nonexisting')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
+    def test_delete_nonexisting_metric_profile_group_regular_user(self):
+        request = self.factory.delete(self.url + 'nonexisting')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'nonexisting')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete groups of metric profiles.'
+        )
+
     def test_delete_metric_profile_group_without_specifying_name(self):
+        request = self.factory.delete(self.url)
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_delete_metric_profile_group_without_specifying_name_rglr_usr(self):
         request = self.factory.delete(self.url)
         force_authenticate(request, user=self.user)
         response = self.view(request)
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete groups of metric profiles.'
+        )
 
 
 class ListThresholdsProfilesInGroupAPIViewTests(TenantTestCase):

@@ -321,27 +321,36 @@ class ListMetricProfilesInGroup(APIView):
             )
 
     def delete(self, request, group=None):
-        if group:
-            try:
-                gr = poem_models.GroupOfMetricProfiles.objects.get(
-                    name=group
-                )
-                gr.delete()
+        if request.user.is_superuser:
+            if group:
+                try:
+                    gr = poem_models.GroupOfMetricProfiles.objects.get(
+                        name=group
+                    )
+                    gr.delete()
 
-                for mp in poem_models.MetricProfiles.objects.filter(
-                    groupname=group
-                ):
-                    mp.groupname = ''
-                    mp.save()
+                    for mp in poem_models.MetricProfiles.objects.filter(
+                        groupname=group
+                    ):
+                        mp.groupname = ''
+                        mp.save()
 
-                return Response(status=status.HTTP_204_NO_CONTENT)
+                    return Response(status=status.HTTP_204_NO_CONTENT)
 
-            except poem_models.GroupOfMetricProfiles.DoesNotExist:
-                raise NotFound(status=404,
-                               detail='Group of metric profiles not found')
+                except poem_models.GroupOfMetricProfiles.DoesNotExist:
+                    raise NotFound(
+                        status=404, detail='Group of metric profiles not found'
+                    )
+
+            else:
+                return Response(status=status.HTTP_400_BAD_REQUEST)
 
         else:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+            return error_response(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='You do not have permission to delete groups of metric '
+                       'profiles.'
+            )
 
 
 class ListReportsInGroup(APIView):
