@@ -129,31 +129,89 @@ class ListMetricProfiles(APIView):
             return Response(serializer.data)
 
     def put(self, request):
-        if request.data['apiid']:
-            profile = poem_models.MetricProfiles.objects.get(
-                apiid=request.data['apiid']
-            )
-            profile.description = request.data['description']
-            profile.groupname = request.data['groupname']
-            profile.save()
-
-            groupprofile = poem_models.GroupOfMetricProfiles.objects.get(
-                name=request.data['groupname']
-            )
-            groupprofile.metricprofiles.add(profile)
-
-            create_profile_history(
-                profile, dict(request.data)['services'],
-                request.user, request.data['description']
+        try:
+            userprofile = poem_models.UserProfile.objects.get(
+                user=request.user
             )
 
-            return Response(status=status.HTTP_201_CREATED)
+            if len(userprofile.groupsofmetricprofiles.all()) == 0 and \
+                    not request.user.is_superuser:
+                return error_response(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail='You do not have permission to change metric '
+                           'profiles.'
+                )
+
+        except poem_models.UserProfile.DoesNotExist:
+            return error_response(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail='No user profile for authenticated user.'
+            )
 
         else:
-            return Response(
-                {'detail': 'Apiid field undefined!'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            try:
+                groupprofile = poem_models.GroupOfMetricProfiles.objects.get(
+                    name=request.data['groupname']
+                )
+
+                change_permission = request.user.is_superuser or \
+                    groupprofile in userprofile.groupsofmetricprofiles.all()
+
+                if request.data['apiid']:
+                    try:
+                        profile = poem_models.MetricProfiles.objects.get(
+                            apiid=request.data['apiid']
+                        )
+
+                    except poem_models.MetricProfiles.DoesNotExist:
+                        return error_response(
+                            status_code=status.HTTP_404_NOT_FOUND,
+                            detail='Metric profile does not exist.'
+                        )
+
+                    else:
+                        profile.name = request.data['name']
+                        profile.description = request.data['description']
+                        profile.groupname = request.data['groupname']
+
+                        if change_permission:
+                            profile.save()
+
+                            groupprofile.metricprofiles.add(profile)
+
+                            create_profile_history(
+                                profile, dict(request.data)['services'],
+                                request.user, request.data['description']
+                            )
+
+                            return Response(status=status.HTTP_201_CREATED)
+
+                        else:
+                            return error_response(
+                                status_code=status.HTTP_401_UNAUTHORIZED,
+                                detail='You do not have permission to assign '
+                                       'metric profiles to the given group.'
+                            )
+
+                else:
+                    if change_permission:
+                        return error_response(
+                            detail='Apiid field undefined!',
+                            status_code=status.HTTP_400_BAD_REQUEST
+                        )
+
+                    else:
+                        return error_response(
+                            status_code=status.HTTP_401_UNAUTHORIZED,
+                            detail='You do not have permission to assign '
+                                   'metric profiles to the given group.'
+                        )
+
+            except poem_models.GroupOfMetricProfiles.DoesNotExist:
+                return error_response(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail='Given group of metric profiles does not exist.'
+                )
 
     def delete(self, request, profile_name=None):
         if profile_name:
