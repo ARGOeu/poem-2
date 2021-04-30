@@ -1253,6 +1253,9 @@ class ListThresholdsProfilesInGroupAPIViewTests(TenantTestCase):
         self.view = views.ListThresholdsProfilesInGroup.as_view()
         self.url = '/api/v2/internal/thresholdsprofilesgroup/'
         self.user = CustUser.objects.create_user(username='testuser')
+        self.superuser = CustUser.objects.create_user(
+            username='poem', is_superuser=True
+        )
 
         self.tp1 = poem_models.ThresholdsProfiles.objects.create(
             name='TEST_PROFILE',
@@ -1282,6 +1285,12 @@ class ListThresholdsProfilesInGroupAPIViewTests(TenantTestCase):
 
     def test_get_thresholds_profiles_in_group(self):
         request = self.factory.get(self.url + 'EGI')
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request, 'EGI')
+        self.assertEqual(response.data, {'result': ['TEST_PROFILE']})
+
+    def test_get_thresholds_profiles_in_group_regular_user(self):
+        request = self.factory.get(self.url + 'EGI')
         force_authenticate(request, user=self.user)
         response = self.view(request, 'EGI')
         self.assertEqual(response.data, {'result': ['TEST_PROFILE']})
@@ -1292,6 +1301,12 @@ class ListThresholdsProfilesInGroupAPIViewTests(TenantTestCase):
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_get_thresholds_profiles_without_group(self):
+        request = self.factory.get(self.url)
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.data, {'result': ['ANOTHER_PROFILE']})
+
+    def test_get_thresholds_profiles_without_group_regular_user(self):
         request = self.factory.get(self.url)
         force_authenticate(request, user=self.user)
         response = self.view(request)
@@ -1305,7 +1320,7 @@ class ListThresholdsProfilesInGroupAPIViewTests(TenantTestCase):
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
-        force_authenticate(request, user=self.user)
+        force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         tp1 = poem_models.ThresholdsProfiles.objects.get(name='TEST_PROFILE')
@@ -1313,6 +1328,28 @@ class ListThresholdsProfilesInGroupAPIViewTests(TenantTestCase):
         self.assertEqual(tp1.groupname, 'EGI')
         self.assertEqual(tp2.groupname, 'EGI')
         self.assertEqual(self.group.thresholdsprofiles.count(), 2)
+
+    def test_add_thresholds_profile_in_group_regular_user(self):
+        self.assertEqual(self.group.thresholdsprofiles.count(), 1)
+        data = {
+            'name': 'EGI',
+            'items': ['TEST_PROFILE', 'ANOTHER_PROFILE']
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change groups of thresholds '
+            'profiles.'
+        )
+        tp1 = poem_models.ThresholdsProfiles.objects.get(name='TEST_PROFILE')
+        tp2 = poem_models.ThresholdsProfiles.objects.get(name='ANOTHER_PROFILE')
+        self.assertEqual(tp1.groupname, 'EGI')
+        self.assertEqual(tp2.groupname, '')
+        self.assertEqual(self.group.thresholdsprofiles.count(), 1)
 
     def test_remove_thresholds_profile_from_group(self):
         self.group.thresholdsprofiles.add(self.tp2)
@@ -1323,7 +1360,7 @@ class ListThresholdsProfilesInGroupAPIViewTests(TenantTestCase):
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
-        force_authenticate(request, user=self.user)
+        force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         tp1 = poem_models.ThresholdsProfiles.objects.get(name='TEST_PROFILE')
@@ -1331,6 +1368,31 @@ class ListThresholdsProfilesInGroupAPIViewTests(TenantTestCase):
         self.assertEqual(tp1.groupname, '')
         self.assertEqual(tp2.groupname, 'EGI')
         self.assertEqual(self.group.thresholdsprofiles.count(), 1)
+
+    def test_remove_thresholds_profile_from_group_regular_user(self):
+        self.tp2.groupname = 'EGI'
+        self.tp2.save()
+        self.group.thresholdsprofiles.add(self.tp2)
+        self.assertEqual(self.group.thresholdsprofiles.all().count(), 2)
+        data = {
+            'name': 'EGI',
+            'items': ['ANOTHER_PROFILE']
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change groups of thresholds '
+            'profiles.'
+        )
+        tp1 = poem_models.ThresholdsProfiles.objects.get(name='TEST_PROFILE')
+        tp2 = poem_models.ThresholdsProfiles.objects.get(name='ANOTHER_PROFILE')
+        self.assertEqual(tp1.groupname, 'EGI')
+        self.assertEqual(tp2.groupname, 'EGI')
+        self.assertEqual(self.group.thresholdsprofiles.count(), 2)
 
     def test_post_thresholds_profile_group_without_tp(self):
         self.assertEqual(

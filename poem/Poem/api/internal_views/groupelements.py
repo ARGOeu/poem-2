@@ -461,24 +461,32 @@ class ListThresholdsProfilesInGroup(APIView):
         return Response({'result': sorted(results)})
 
     def put(self, request):
-        group = poem_models.GroupOfThresholdsProfiles.objects.get(
-            name=request.data['name']
-        )
+        if request.user.is_superuser:
+            group = poem_models.GroupOfThresholdsProfiles.objects.get(
+                name=request.data['name']
+            )
 
-        for item in dict(request.data)['items']:
-            tp = poem_models.ThresholdsProfiles.objects.get(name=item)
-            group.thresholdsprofiles.add(tp)
-            tp.groupname = group.name
-            tp.save()
-
-        # remove removed metric profiles
-        for tp in group.thresholdsprofiles.all():
-            if tp.name not in dict(request.data)['items']:
-                group.thresholdsprofiles.remove(tp)
-                tp.groupname = ''
+            for item in dict(request.data)['items']:
+                tp = poem_models.ThresholdsProfiles.objects.get(name=item)
+                group.thresholdsprofiles.add(tp)
+                tp.groupname = group.name
                 tp.save()
 
-        return Response(status=status.HTTP_201_CREATED)
+            # remove removed metric profiles
+            for tp in group.thresholdsprofiles.all():
+                if tp.name not in dict(request.data)['items']:
+                    group.thresholdsprofiles.remove(tp)
+                    tp.groupname = ''
+                    tp.save()
+
+            return Response(status=status.HTTP_201_CREATED)
+
+        else:
+            return error_response(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='You do not have permission to change groups of '
+                       'thresholds profiles.'
+            )
 
     def post(self, request):
         try:
