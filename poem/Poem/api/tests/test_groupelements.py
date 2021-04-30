@@ -1403,7 +1403,7 @@ class ListThresholdsProfilesInGroupAPIViewTests(TenantTestCase):
             'items': []
         }
         request = self.factory.post(self.url, data, format='json')
-        force_authenticate(request, user=self.user)
+        force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(
@@ -1415,6 +1415,31 @@ class ListThresholdsProfilesInGroupAPIViewTests(TenantTestCase):
         self.assertEqual(group.name, 'new_group')
         self.assertEqual(group.thresholdsprofiles.count(), 0)
 
+    def test_post_thresholds_profile_group_without_tp_regular_user(self):
+        self.assertEqual(
+            poem_models.GroupOfThresholdsProfiles.objects.all().count(), 2
+        )
+        data = {
+            'name': 'new_group',
+            'items': []
+        }
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to add groups of thresholds profiles.'
+        )
+        self.assertEqual(
+            poem_models.GroupOfThresholdsProfiles.objects.all().count(), 2
+        )
+        self.assertRaises(
+            poem_models.GroupOfThresholdsProfiles.DoesNotExist,
+            poem_models.GroupOfThresholdsProfiles.objects.get,
+            name='new_group'
+        )
+
     def test_post_thresholds_profile_group_with_tp(self):
         self.assertEqual(
             poem_models.GroupOfThresholdsProfiles.objects.all().count(), 2
@@ -1424,7 +1449,7 @@ class ListThresholdsProfilesInGroupAPIViewTests(TenantTestCase):
             'items': ['ANOTHER_PROFILE']
         }
         request = self.factory.post(self.url, data, format='json')
-        force_authenticate(request, user=self.user)
+        force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(
@@ -1440,7 +1465,50 @@ class ListThresholdsProfilesInGroupAPIViewTests(TenantTestCase):
         self.assertEqual(tp1.groupname, 'EGI')
         self.assertEqual(tp2.groupname, 'new_group')
 
+    def test_post_thresholds_profile_group_with_tp_regular_user(self):
+        self.assertEqual(
+            poem_models.GroupOfThresholdsProfiles.objects.all().count(), 2
+        )
+        data = {
+            'name': 'new_group',
+            'items': ['ANOTHER_PROFILE']
+        }
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to add groups of thresholds profiles.'
+        )
+        self.assertEqual(
+            poem_models.GroupOfThresholdsProfiles.objects.all().count(), 2
+        )
+        self.assertRaises(
+            poem_models.GroupOfThresholdsProfiles.DoesNotExist,
+            poem_models.GroupOfThresholdsProfiles.objects.get,
+            name='new_group'
+        )
+        tp1 = poem_models.ThresholdsProfiles.objects.get(name='TEST_PROFILE')
+        tp2 = poem_models.ThresholdsProfiles.objects.get(name='ANOTHER_PROFILE')
+        self.assertEqual(tp1.groupname, 'EGI')
+        self.assertEqual(tp2.groupname, '')
+
     def test_post_thresholds_profile_group_with_name_that_already_exists(self):
+        data = {
+            'name': 'EGI',
+            'items': ['TEST_PROFILE']
+        }
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data['detail'],
+            'Thresholds profiles group with this name already exists.'
+        )
+
+    def test_post_thresholds_profile_group_wh_name_that_already_exists_ru(self):
         data = {
             'name': 'EGI',
             'items': ['TEST_PROFILE']
@@ -1448,13 +1516,10 @@ class ListThresholdsProfilesInGroupAPIViewTests(TenantTestCase):
         request = self.factory.post(self.url, data, format='json')
         force_authenticate(request, user=self.user)
         response = self.view(request)
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(
-            response.data,
-            {
-                'detail':
-                    'Thresholds profiles group with this name already exists.'
-            }
+            response.data['detail'],
+            'You do not have permission to add groups of thresholds profiles.'
         )
 
     def test_delete_thresholds_profile_group(self):
