@@ -10,6 +10,8 @@ from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from .utils import error_response
+
 
 class ListAllServiceFlavours(APIView):
     authentication_classes = (SessionAuthentication,)
@@ -33,34 +35,77 @@ class ListMetricProfiles(APIView):
     def post(self, request):
         serializer = serializers.MetricProfileSerializer(data=request.data)
 
-        if serializer.is_valid():
-            serializer.save()
-
-            groupprofile = poem_models.GroupOfMetricProfiles.objects.get(
-                name=request.data['groupname']
-            )
-            profile = poem_models.MetricProfiles.objects.get(
-                apiid=request.data['apiid']
-            )
-            groupprofile.metricprofiles.add(profile)
-
-            create_profile_history(
-                profile, dict(request.data)['services'],
-                request.user, request.data['description']
+        try:
+            userprofile = poem_models.UserProfile.objects.get(
+                user=request.user
             )
 
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            if len(userprofile.groupsofmetricprofiles.all()) == 0 and \
+                    not request.user.is_superuser:
+                return error_response(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail='You do not have permission to add metric '
+                           'profiles.'
+                )
+
+        except poem_models.UserProfile.DoesNotExist:
+            return error_response(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail='No user profile for authenticated user.'
+            )
 
         else:
-            details = []
-            for error in serializer.errors:
-                details.append(
-                    '{}: {}'.format(error, serializer.errors[error][0])
+            if serializer.is_valid():
+                try:
+                    groupprofile = \
+                        poem_models.GroupOfMetricProfiles.objects.get(
+                            name=request.data['groupname']
+                        )
+
+                    add_permission = \
+                        request.user.is_superuser or \
+                        groupprofile in userprofile.groupsofmetricprofiles.all()
+
+                    if add_permission:
+                        serializer.save()
+
+                        profile = poem_models.MetricProfiles.objects.get(
+                            apiid=request.data['apiid']
+                        )
+                        groupprofile.metricprofiles.add(profile)
+
+                        create_profile_history(
+                            profile, dict(request.data)['services'],
+                            request.user, request.data['description']
+                        )
+
+                        return Response(
+                            serializer.data, status=status.HTTP_201_CREATED
+                        )
+
+                    else:
+                        return error_response(
+                            status_code=status.HTTP_401_UNAUTHORIZED,
+                            detail='You do not have permission to assign '
+                                   'metric profiles to the given group.'
+                        )
+
+                except poem_models.GroupOfMetricProfiles.DoesNotExist:
+                    return error_response(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail='Group of metric profiles not found.'
+                    )
+
+            else:
+                details = []
+                for error in serializer.errors:
+                    details.append(
+                        '{}: {}'.format(error, serializer.errors[error][0])
+                    )
+                return Response(
+                    {'detail': ' '.join(details)},
+                    status=status.HTTP_400_BAD_REQUEST
                 )
-            return Response(
-                {'detail': ' '.join(details)},
-                status=status.HTTP_400_BAD_REQUEST
-            )
 
     def get(self, request, profile_name=None):
         sync_webapi(settings.WEBAPI_METRIC, poem_models.MetricProfiles)
