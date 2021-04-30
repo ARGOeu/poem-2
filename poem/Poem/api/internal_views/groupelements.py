@@ -522,24 +522,34 @@ class ListThresholdsProfilesInGroup(APIView):
             )
 
     def delete(self, request, group=None):
-        if group:
-            try:
-                gr = poem_models.GroupOfThresholdsProfiles.objects.get(
-                    name=group
-                )
-                gr.delete()
+        if request.user.is_superuser:
+            if group:
+                try:
+                    gr = poem_models.GroupOfThresholdsProfiles.objects.get(
+                        name=group
+                    )
+                    gr.delete()
 
-                for tp in poem_models.ThresholdsProfiles.objects.filter(
-                        groupname=group
-                ):
-                    tp.groupname = ''
-                    tp.save()
+                    for tp in poem_models.ThresholdsProfiles.objects.filter(
+                            groupname=group
+                    ):
+                        tp.groupname = ''
+                        tp.save()
 
-                return Response(status=status.HTTP_204_NO_CONTENT)
+                    return Response(status=status.HTTP_204_NO_CONTENT)
 
-            except poem_models.GroupOfThresholdsProfiles.DoesNotExist:
-                raise NotFound(status=404,
-                               detail='Group of threshold profiles not found')
+                except poem_models.GroupOfThresholdsProfiles.DoesNotExist:
+                    raise NotFound(
+                        status=404,
+                        detail='Group of threshold profiles not found'
+                    )
+
+            else:
+                return Response(status=status.HTTP_400_BAD_REQUEST)
 
         else:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+            return error_response(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='You do not have permission to delete groups of '
+                       'thresholds profiles.'
+            )
