@@ -293,21 +293,18 @@ const TopologyTagList = ({ part, tagsState, setTagsState, tagsAll, addview, push
                   tagInitials={!addview ? tagsInitValues('value', tags) : undefined}
                 />
               </Col>
-              {
-                index === form.values[part].length - 1 &&
-                <Col md={1} className="pl-2 pt-1">
-                  <Button size="sm" color="danger"
-                    type="button"
-                    onClick={() => {
-                      let newState = JSON.parse(JSON.stringify(tagsState))
-                      delete newState[part][index]
-                      remove(index)
-                      setTagsState(newState)
-                    }}>
-                    <FontAwesomeIcon icon={faTimes}/>
-                  </Button>
-                </Col>
-              }
+              <Col md={1} className="pl-2 pt-1">
+                <Button size="sm" color="danger"
+                  type="button"
+                  onClick={() => {
+                    let newState = JSON.parse(JSON.stringify(tagsState))
+                    delete newState[part][index]
+                    remove(index)
+                    setTagsState(newState)
+                  }}>
+                  <FontAwesomeIcon icon={faTimes}/>
+                </Button>
+              </Col>
             </Row>
           </React.Fragment>
         ))
@@ -715,6 +712,54 @@ export const ReportsComponent = (props) => {
             add_msg = json.detail;
           } catch(err) {
             add_msg = 'Internal API error adding report';
+          }
+          NotifyError({
+            title: `Internal API error: ${r_internal.status} ${r_internal.statusText}`,
+            msg: add_msg
+          });
+        }
+      }
+    }
+    else {
+      dataToSend.id = report.id
+      let response = await webapi.changeReport(dataToSend, dataToSend.id);
+      if (!response.ok) {
+        let change_msg = '';
+        try {
+          let json = await response.json();
+          let msg_list = [];
+          json.errors.forEach(e => msg_list.push(e.details));
+          change_msg = msg_list.join(' ');
+        } catch(err) {
+          change_msg = 'Web API error changing report';
+        }
+        NotifyError({
+          title: `Web API error: ${response.status} ${response.statusText}`,
+          msg: change_msg
+        });
+      } else {
+        let r_internal = await backend.changeObject(
+          '/api/v2/internal/reports/',
+          {
+            apiid: dataToSend.id,
+            name: dataToSend.info.name,
+            groupname: formValues.groupname,
+            description: formValues.description,
+          }
+        );
+        if (r_internal.ok)
+          NotifyOk({
+            msg: 'Report successfully changed',
+            title: 'Changed',
+            callback: () => history.push('/ui/reports')
+          });
+        else {
+          let add_msg = '';
+          try {
+            let json = await r_internal.json();
+            add_msg = json.detail;
+          } catch(err) {
+            add_msg = 'Internal API error changing report';
           }
           NotifyError({
             title: `Internal API error: ${r_internal.status} ${r_internal.statusText}`,
