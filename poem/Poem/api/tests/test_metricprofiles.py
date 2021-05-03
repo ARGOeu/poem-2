@@ -76,7 +76,7 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
 
         self.ct = ContentType.objects.get_for_model(poem_models.MetricProfiles)
 
-        mp1 = poem_models.MetricProfiles.objects.create(
+        self.mp1 = poem_models.MetricProfiles.objects.create(
             name='TEST_PROFILE',
             apiid='00000000-oooo-kkkk-aaaa-aaeekkccnnee',
             groupname='EGI'
@@ -89,7 +89,9 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
 
         group1 = poem_models.GroupOfMetricProfiles.objects.create(name='EGI')
         group2 = poem_models.GroupOfMetricProfiles.objects.create(name='ARGO')
-        poem_models.GroupOfMetricProfiles.objects.create(name='new-group')
+        self.group = poem_models.GroupOfMetricProfiles.objects.create(
+            name='new-group'
+        )
 
         userprofile = poem_models.UserProfile.objects.create(user=self.user)
         userprofile.groupsofmetricprofiles.add(group1)
@@ -100,7 +102,7 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
 
         data1 = json.loads(
             serializers.serialize(
-                'json', [mp1],
+                'json', [self.mp1],
                 use_natural_foreign_keys=True,
                 use_natural_primary_keys=True
             )
@@ -125,9 +127,9 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
         })
 
         poem_models.TenantHistory.objects.create(
-            object_id=mp1.id,
+            object_id=self.mp1.id,
             serialized_data=json.dumps(data1),
-            object_repr=mp1.__str__(),
+            object_repr=self.mp1.__str__(),
             comment='Initial version.',
             user='testuser',
             content_type=self.ct
@@ -744,6 +746,87 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
         self.assertEqual(history[0].comment, 'Initial version.')
         self.assertFalse(profile in group.metricprofiles.all())
 
+    def test_put_metric_profile_regular_user_wrong_initial_group(self):
+        mp3 = poem_models.MetricProfiles.objects.create(
+            name='ARGO_MON',
+            apiid='quaoqu7a-0nkd-09po-2ymk-aelitoch7ahz',
+            groupname='new-group'
+        )
+        self.group.metricprofiles.add(mp3)
+        mp_data = json.loads(
+            serializers.serialize(
+                'json', [mp3],
+                use_natural_foreign_keys=True,
+                use_natural_primary_keys=True
+            )
+        )
+        mp_data[0]['fields'].update({
+            'metricinstances': [
+                [
+                    'org.opensciencegrid.htcondorce',
+                    'ch.cern.HTCondorCE-JobState'
+                ],
+                [
+                    'org.opensciencegrid.htcondorce',
+                    'ch.cern.HTCondorCE-JobSubmit'
+                ]
+            ]
+        })
+        poem_models.TenantHistory.objects.create(
+            object_id=mp3.id,
+            serialized_data=json.dumps(mp_data),
+            object_repr=mp3.__str__(),
+            comment='Initial version.',
+            user='testuser',
+            content_type=self.ct
+        )
+        data = {
+            "name": "ARGO_MON_CRITICAL",
+            "apiid": "quaoqu7a-0nkd-09po-2ymk-aelitoch7ahz",
+            "groupname": "EGI",
+            "description": "New profile description.",
+            "services": [
+                {"service": "AMGA", "metric": "org.nagios.SAML-SP"},
+                {"service": "APEL", "metric": "org.apel.APEL-Pub"},
+                {"service": "APEL", "metric": "org.apel.APEL-Sync"}
+            ]
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change metric profiles in the given '
+            'group.'
+        )
+        profile = poem_models.MetricProfiles.objects.get(name='ARGO_MON')
+        history = poem_models.TenantHistory.objects.filter(
+            object_id=profile.id, content_type=self.ct
+        ).order_by('-date_created')
+        self.assertEqual(profile.apiid, 'quaoqu7a-0nkd-09po-2ymk-aelitoch7ahz')
+        self.assertEqual(profile.groupname, 'new-group')
+        self.assertEqual(history.count(), 1)
+        serialized_data = json.loads(history[0].serialized_data)[0]['fields']
+        self.assertEqual(serialized_data['name'], profile.name)
+        self.assertEqual(serialized_data['apiid'], profile.apiid)
+        self.assertEqual(serialized_data['groupname'], profile.groupname)
+        self.assertEqual(
+            serialized_data['metricinstances'],
+            [
+                [
+                    'org.opensciencegrid.htcondorce',
+                    'ch.cern.HTCondorCE-JobState'
+                ],
+                [
+                    'org.opensciencegrid.htcondorce',
+                    'ch.cern.HTCondorCE-JobSubmit'
+                ]
+            ]
+        )
+        self.assertEqual(history[0].comment, 'Initial version.')
+
     def test_put_metric_profile_limited_user(self):
         data = {
             "name": "TEST_PROFILE",
@@ -1184,23 +1267,75 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
             'You do not have permission to change metric profiles.'
         )
 
-    def test_delete_metric_profile(self):
+    def test_delete_metric_profile_superuser(self):
         request = self.factory.delete(
             self.url + '12341234-oooo-kkkk-aaaa-aaeekkccnnee'
         )
-        force_authenticate(request, user=self.user)
+        force_authenticate(request, user=self.superuser)
         response = self.view(request, '12341234-oooo-kkkk-aaaa-aaeekkccnnee')
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         all_profiles = poem_models.MetricProfiles.objects.all().values_list(
             'name', flat=True
         )
-        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse('ANOTHER-PROFILE' in all_profiles)
         history = poem_models.TenantHistory.objects.filter(
             object_id=self.mp2.id, content_type=self.ct
         )
         self.assertEqual(history.count(), 0)
 
-    def test_delete_metric_profile_with_wrong_id(self):
+    def test_delete_metric_profile_regular_user(self):
+        request = self.factory.delete(
+            self.url + '00000000-oooo-kkkk-aaaa-aaeekkccnnee'
+        )
+        force_authenticate(request, user=self.user)
+        response = self.view(request, '00000000-oooo-kkkk-aaaa-aaeekkccnnee')
+        all_profiles = poem_models.MetricProfiles.objects.all().values_list(
+            'name', flat=True
+        )
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse('TEST_PROFILE' in all_profiles)
+        history = poem_models.TenantHistory.objects.filter(
+            object_id=self.mp1.id, content_type=self.ct
+        )
+        self.assertEqual(history.count(), 0)
+
+    def test_delete_metric_profile_regular_user_wrong_group(self):
+        request = self.factory.delete(
+            self.url + '12341234-oooo-kkkk-aaaa-aaeekkccnnee'
+        )
+        force_authenticate(request, user=self.user)
+        response = self.view(request, '12341234-oooo-kkkk-aaaa-aaeekkccnnee')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete metric profiles assigned to '
+            'this group.'
+        )
+        self.assertEqual(poem_models.MetricProfiles.objects.all().count(), 2)
+
+    def test_delete_metric_profile_limited_user(self):
+        request = self.factory.delete(
+            self.url + '00000000-oooo-kkkk-aaaa-aaeekkccnnee'
+        )
+        force_authenticate(request, user=self.limited_user)
+        response = self.view(request, '00000000-oooo-kkkk-aaaa-aaeekkccnnee')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete metric profiles.'
+        )
+        self.assertEqual(poem_models.MetricProfiles.objects.all().count(), 2)
+
+    def test_delete_metric_profile_with_wrong_id_superuser(self):
+        request = self.factory.delete(self.url + 'wrong_id')
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request, 'wrong_id')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(
+            response.data, {'detail': 'Metric profile not found'}
+        )
+
+    def test_delete_metric_profile_with_wrong_id_regular_user(self):
         request = self.factory.delete(self.url + 'wrong_id')
         force_authenticate(request, user=self.user)
         response = self.view(request, 'wrong_id')
@@ -1209,9 +1344,37 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
             response.data, {'detail': 'Metric profile not found'}
         )
 
-    def test_delete_metric_profile_without_specifying_apiid(self):
+    def test_delete_metric_profile_with_wrong_id_limited_user(self):
+        request = self.factory.delete(self.url + 'wrong_id')
+        force_authenticate(request, user=self.limited_user)
+        response = self.view(request, 'wrong_id')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete metric profiles.'
+        )
+
+    def test_delete_metric_profile_without_specifying_apiid_superuser(self):
+        request = self.factory.delete(self.url)
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data, {'detail': 'Metric profile not specified!'}
+        )
+
+    def test_delete_metric_profile_without_specifying_apiid_regular_user(self):
         request = self.factory.delete(self.url)
         force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data, {'detail': 'Metric profile not specified!'}
+        )
+
+    def test_delete_metric_profile_without_specifying_apiid_limited_user(self):
+        request = self.factory.delete(self.url)
+        force_authenticate(request, user=self.limited_user)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(
