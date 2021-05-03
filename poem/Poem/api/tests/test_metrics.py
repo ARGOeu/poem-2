@@ -1794,7 +1794,15 @@ class ListMetricAPIViewTests(TenantTestCase):
         self.assertEqual(serialized_data['parameter'], metric.parameter)
         self.assertEqual(serialized_data['fileparameter'], metric.fileparameter)
 
-    def test_delete_metric(self):
+    def test_delete_metric_superuser(self):
+        self.assertEqual(poem_models.Metric.objects.all().count(), 3)
+        request = self.factory.delete(self.url + 'org.apel.APEL-Pub')
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request, 'org.apel.APEL-Pub')
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(poem_models.Metric.objects.all().count(), 2)
+
+    def test_delete_metric_regular_user(self):
         self.assertEqual(poem_models.Metric.objects.all().count(), 3)
         request = self.factory.delete(self.url + 'org.apel.APEL-Pub')
         force_authenticate(request, user=self.user)
@@ -1802,15 +1810,67 @@ class ListMetricAPIViewTests(TenantTestCase):
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(poem_models.Metric.objects.all().count(), 2)
 
-    def test_delete_nonexisting_metric(self):
+    def test_delete_metric_regular_user_wrong_group(self):
+        self.assertEqual(poem_models.Metric.objects.all().count(), 3)
+        request = self.factory.delete(self.url + 'argo.AMSPublisher-Check')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'argo.AMSPublisher-Check')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete metrics in this group.'
+        )
+        self.assertEqual(poem_models.Metric.objects.all().count(), 3)
+
+    def test_delete_metric_limited_user(self):
+        self.assertEqual(poem_models.Metric.objects.all().count(), 3)
+        request = self.factory.delete(self.url + 'argo.AMSPublisher-Check')
+        force_authenticate(request, user=self.limited_user)
+        response = self.view(request, 'argo.AMSPublisher-Check')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete metrics.'
+        )
+        self.assertEqual(poem_models.Metric.objects.all().count(), 3)
+
+    def test_delete_nonexisting_metric_superuser(self):
+        request = self.factory.delete(self.url + 'nonexisting')
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request, 'nonexisting')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_delete_nonexisting_metric_regular_user(self):
         request = self.factory.delete(self.url + 'nonexisting')
         force_authenticate(request, user=self.user)
         response = self.view(request, 'nonexisting')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
-    def test_delete_metric_without_specifying_name(self):
+    def test_delete_nonexisting_metric_limited_user(self):
+        request = self.factory.delete(self.url + 'nonexisting')
+        force_authenticate(request, user=self.limited_user)
+        response = self.view(request, 'nonexisting')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete metrics.'
+        )
+
+    def test_delete_metric_without_specifying_name_superuser(self):
+        request = self.factory.delete(self.url)
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_delete_metric_without_specifying_name_regular_user(self):
         request = self.factory.delete(self.url)
         force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_delete_metric_without_specifying_name_limited_user(self):
+        request = self.factory.delete(self.url)
+        force_authenticate(request, user=self.limited_user)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 

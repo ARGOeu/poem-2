@@ -227,15 +227,43 @@ class ListMetric(APIView):
     def delete(self, request, name=None):
         if name:
             try:
-                metric = poem_models.Metric.objects.get(name=name)
-                poem_models.TenantHistory.objects.filter(
-                    object_id=metric.id,
-                    content_type=ContentType.objects.get_for_model(
-                        poem_models.Metric
+                userprofile = poem_models.UserProfile.objects.get(
+                    user=request.user
+                )
+
+                if not request.user.is_superuser and \
+                        userprofile.groupsofmetrics.all().count() == 0:
+                    return error_response(
+                        status_code=status.HTTP_401_UNAUTHORIZED,
+                        detail='You do not have permission to delete metrics.'
                     )
-                ).delete()
-                metric.delete()
-                return Response(status=status.HTTP_204_NO_CONTENT)
+
+                else:
+                    metric = poem_models.Metric.objects.get(name=name)
+
+                    if request.user.is_superuser or \
+                            metric.group in userprofile.groupsofmetrics.all():
+                        poem_models.TenantHistory.objects.filter(
+                            object_id=metric.id,
+                            content_type=ContentType.objects.get_for_model(
+                                poem_models.Metric
+                            )
+                        ).delete()
+                        metric.delete()
+                        return Response(status=status.HTTP_204_NO_CONTENT)
+
+                    else:
+                        return error_response(
+                            status_code=status.HTTP_401_UNAUTHORIZED,
+                            detail='You do not have permission to delete '
+                                   'metrics in this group.'
+                        )
+
+            except poem_models.UserProfile.DoesNotExist:
+                return error_response(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail='No user profile for authenticated user.'
+                )
 
             except poem_models.Metric.DoesNotExist:
                 raise NotFound(status=404, detail='Metric not found')
