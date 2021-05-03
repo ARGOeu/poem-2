@@ -343,6 +343,8 @@ export const ReportsComponent = (props) => {
     'groups': undefined,
     'endpoints': undefined
   }))
+  const [groupsTags, setGroupsTags] = useState(undefined)
+  const [endpointsTags, setEndpointsTags] = useState(undefined)
 
   let querykey = undefined;
   if (addview)
@@ -373,6 +375,21 @@ export const ReportsComponent = (props) => {
         let backendReport = await backend.fetchData(`${apiUrl}/${report_name}`)
         let report = await webapi.fetchReport(report_name);
         report['groupname'] = backendReport.groupname
+
+        let groupstags = formatFromReportTags('argo.group.filter.tags', report['filter_tags'])
+        let endpointstags = formatFromReportTags('argo.endpoint.filter.tags', report['filter_tags'])
+        let preselectedtags = JSON.parse(JSON.stringify(tagsState))
+        groupstags.forEach((e, i) => {
+          preselectedTags['groups'] = new Object()
+          preselectedTags['groups'][i] = e.name
+        })
+        endpointstags.forEach((e, i) => {
+          preselectedtags['endpoints'] = new Object()
+          preselectedtags['endpoints'][i] = e.name
+        })
+        setTagsState(preselectedtags)
+        setGroupsTags(groupstags)
+        setEndpointsTags(endpointstags)
 
         return report;
       }
@@ -727,7 +744,7 @@ export const ReportsComponent = (props) => {
   else if (listOperationsProfilesError)
     return (<ErrorComponent error={listOperationsProfilesError}/>);
 
-  else if (report && topologyTags)  {
+  else if (report && topologyTags && groupsTags !== undefined && endpointsTags !== undefined)  {
     let metricProfile = '';
     let aggregationProfile = '';
     let operationsProfile = '';
@@ -745,19 +762,13 @@ export const ReportsComponent = (props) => {
 
     let write_perm = undefined;
     let grouplist = undefined;
-    let groupsTags = undefined;
-    let endpointsTags = undefined;
     if (!addview) {
       write_perm = userDetails.is_superuser ||
             userDetails.groups.reports.indexOf(report.groupname) >= 0;
-      groupsTags = formatFromReportTags('argo.group.filter.tags', report['filter_tags'])
-      endpointsTags = formatFromReportTags('argo.endpoint.filter.tags', report['filter_tags'])
     }
     else {
       write_perm = userDetails.is_superuser ||
         userDetails.groups.reports.length > 0;
-      groupsTags = new Array()
-      endpointsTags = new Array()
     }
     if (write_perm)
       grouplist = userDetails.groups.reports
