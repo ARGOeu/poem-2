@@ -308,88 +308,99 @@ class ImportMetrics(APIView):
     authentication_classes = (SessionAuthentication,)
 
     def post(self, request):
-        imported, warn, err, unavailable = import_metrics(
-            metrictemplates=dict(request.data)['metrictemplates'],
-            tenant=request.tenant, user=request.user
-        )
+        if request.user.is_superuser:
+            imported, warn, err, unavailable = import_metrics(
+                metrictemplates=dict(request.data)['metrictemplates'],
+                tenant=request.tenant, user=request.user
+            )
 
-        message_bit = ''
-        warn_bit = ''
-        error_bit = ''
-        error_bit2 = ''
-        unavailable_bit = ''
-        if imported:
-            if len(imported) == 1:
-                message_bit = '{} has'.format(imported[0])
-            else:
-                message_bit = ', '.join(msg for msg in imported) + ' have'
+            message_bit = ''
+            warn_bit = ''
+            error_bit = ''
+            error_bit2 = ''
+            unavailable_bit = ''
+            if imported:
+                if len(imported) == 1:
+                    message_bit = '{} has'.format(imported[0])
+                else:
+                    message_bit = ', '.join(msg for msg in imported) + ' have'
 
-        if warn:
-            if len(warn) == 1:
-                warn_bit = '{} has been imported with older probe version. ' \
-                           'If you wish to use more recent probe version, ' \
-                           'you should update package version you use.'.format(
-                                warn[0]
-                            )
+            if warn:
+                if len(warn) == 1:
+                    warn_bit = \
+                        '{} has been imported with older probe version. ' \
+                        'If you wish to use more recent probe version, ' \
+                        'you should update package version you use.'.format(
+                            warn[0]
+                        )
 
-            else:
-                warn_bit = "{} have been imported with older probes' " \
-                           "versions. If you wish to use more recent " \
-                           "versions of probes, you should update packages' " \
-                           "versions you use.".format(
-                                ', '.join(msg for msg in warn)
-                            )
+                else:
+                    warn_bit = \
+                        "{} have been imported with older probes' " \
+                        "versions. If you wish to use more recent " \
+                        "versions of probes, you should update packages' " \
+                        "versions you use.".format(
+                            ', '.join(msg for msg in warn)
+                        )
 
-        if err:
-            if len(err) == 1:
-                error_bit = '{} has'.format(err[0])
-                error_bit2 = 'it already exists'
-            else:
-                error_bit = ', '.join(msg for msg in err) + ' have'
-                error_bit2 = 'they already exist'
+            if err:
+                if len(err) == 1:
+                    error_bit = '{} has'.format(err[0])
+                    error_bit2 = 'it already exists'
+                else:
+                    error_bit = ', '.join(msg for msg in err) + ' have'
+                    error_bit2 = 'they already exist'
 
-        if unavailable:
-            if len(unavailable) == 1:
-                unavailable_bit = '{} has not been imported, since it is not ' \
-                                  'available for the package version you ' \
-                                  'use. If you wish to use the metric, you ' \
-                                  'should change the package version, and try' \
-                                  ' to import again.'.format(unavailable[0])
-            else:
-                unavailable_bit = "{} have not been imported, since they are " \
-                                  "not available for the packages' versions " \
-                                  "you use. If you wish to use the metrics, " \
-                                  "you should change the packages' versions, " \
-                                  "and try to import again.".format(
-                                    ', '.join(ua for ua in unavailable)
-                )
+            if unavailable:
+                if len(unavailable) == 1:
+                    unavailable_bit = \
+                        '{} has not been imported, since it is not ' \
+                        'available for the package version you ' \
+                        'use. If you wish to use the metric, you ' \
+                        'should change the package version, and try' \
+                        ' to import again.'.format(unavailable[0])
+                else:
+                    unavailable_bit = \
+                        "{} have not been imported, since they are " \
+                        "not available for the packages' versions " \
+                        "you use. If you wish to use the metrics, " \
+                        "you should change the packages' versions, " \
+                        "and try to import again.".format(
+                            ', '.join(ua for ua in unavailable)
+                        )
 
-        data = dict()
-        if message_bit:
-            data.update({
-                'imported':
-                    '{} been successfully imported.'.format(message_bit)
-            })
+            data = dict()
+            if message_bit:
+                data.update({
+                    'imported':
+                        '{} been successfully imported.'.format(message_bit)
+                })
 
-        if warn_bit:
-            data.update({
-                'warn': warn_bit
-            })
+            if warn_bit:
+                data.update({
+                    'warn': warn_bit
+                })
 
-        if error_bit:
-            data.update({
-                'err':
-                    '{} not been imported since {} in the database.'.format(
-                        error_bit, error_bit2
-                    )
-            })
+            if error_bit:
+                data.update({
+                    'err':
+                        '{} not been imported since {} in the database.'.format(
+                            error_bit, error_bit2
+                        )
+                })
 
-        if unavailable_bit:
-            data.update({
-                'unavailable': unavailable_bit
-            })
+            if unavailable_bit:
+                data.update({
+                    'unavailable': unavailable_bit
+                })
 
-        return Response(status=status.HTTP_200_OK, data=data)
+            return Response(status=status.HTTP_200_OK, data=data)
+
+        else:
+            return error_response(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='You do not have permission to import metrics.'
+            )
 
 
 class UpdateMetricsVersions(APIView):

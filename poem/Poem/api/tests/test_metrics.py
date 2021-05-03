@@ -1903,7 +1903,26 @@ class ImportMetricsAPIViewTests(TenantTestCase):
         self.factory = TenantRequestFactory(self.tenant)
         self.view = views.ImportMetrics.as_view()
         self.url = '/api/v2/internal/importmetrics/'
-        self.user = CustUser.objects.create_user(username='testuser')
+        self.user = CustUser.objects.create_user(
+            username='poem', is_superuser=True
+        )
+        self.regular_user = CustUser.objects.create_user(username='test')
+
+    @patch('Poem.api.internal_views.metrics.import_metrics')
+    def test_importing_metrics_when_not_superuser(self, mock_import):
+        data = {
+            'metrictemplates': ['metric1', 'metric2', 'metric3']
+        }
+        request = self.factory.post(self.url, data, format='json')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.regular_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to import metrics.'
+        )
+        self.assertFalse(mock_import.called)
 
     @patch('Poem.api.internal_views.metrics.import_metrics')
     def test_import_one_metric_successfully(self, mock_import):
