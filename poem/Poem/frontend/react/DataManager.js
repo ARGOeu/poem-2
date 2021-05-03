@@ -292,6 +292,10 @@ export class WebApi {
     return this.addProfile(this.reports['main'], report);
   }
 
+  changeReport(report) {
+    return this.changeProfile(`${this.reports['main']}`, report);
+  }
+
   deleteMetricProfile(id) {
     return this.deleteProfile(`${this.metricprofiles}/${id}`);
   }
