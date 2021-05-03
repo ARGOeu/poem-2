@@ -16,6 +16,8 @@ from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from .utils import error_response
+
 
 class ListAllMetrics(APIView):
     authentication_classes = (SessionAuthentication,)
@@ -96,54 +98,131 @@ class ListMetric(APIView):
             return Response(results)
 
     def put(self, request):
-        metric = poem_models.Metric.objects.get(name=request.data['name'])
+        try:
+            userprofile = poem_models.UserProfile.objects.get(user=request.user)
 
-        if request.data['parent']:
-            parent = json.dumps([request.data['parent']])
-        else:
-            parent = ''
+            metric = poem_models.Metric.objects.get(name=request.data['name'])
+            init_group = metric.group
 
-        if request.data['probeexecutable']:
-            probeexecutable = json.dumps([request.data['probeexecutable']])
-        else:
-            probeexecutable = ''
+            if not request.user.is_superuser and \
+                    userprofile.groupsofmetrics.all().count() == 0:
+                return error_response(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail='You do not have permission to change metrics.'
+                )
 
-        if request.data['description']:
-            description = request.data['description']
-        else:
-            description = ''
+            if not request.user.is_superuser and \
+                    init_group not in userprofile.groupsofmetrics.all():
+                return error_response(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail='You do not have permission to change metrics '
+                           'in this group.'
+                )
 
-        metric.name = request.data['name']
-        metric.mtype = poem_models.MetricType.objects.get(
-            name=request.data['mtype']
-        )
-        metric.group = poem_models.GroupOfMetrics.objects.get(
-            name=request.data['group']
-        )
-        metric.description = description
-        metric.parent = parent
-        metric.flags = inline_metric_for_db(request.data['flags'])
+            else:
+                if request.data['parent']:
+                    parent = json.dumps([request.data['parent']])
+                else:
+                    parent = ''
 
-        if request.data['mtype'] == 'Active':
-            metric.probekey = admin_models.ProbeHistory.objects.get(
-                name=request.data['probeversion'].split(' ')[0],
-                package__version=request.data['probeversion'].split(' ')[1][
-                                 1:-1]
+                if request.data['probeexecutable']:
+                    probeexecutable = json.dumps(
+                        [request.data['probeexecutable']]
+                    )
+                else:
+                    probeexecutable = ''
+
+                if request.data['description']:
+                    description = request.data['description']
+                else:
+                    description = ''
+
+                metric_group = poem_models.GroupOfMetrics.objects.get(
+                    name=request.data['group']
+                )
+
+                metric_type = poem_models.MetricType.objects.get(
+                    name=request.data['mtype']
+                )
+
+                user_perm = request.user.is_superuser or \
+                    metric_group in userprofile.groupsofmetrics.all()
+
+                if user_perm:
+                    metric.name = request.data['name']
+                    metric.mtype = metric_type
+                    metric.group = poem_models.GroupOfMetrics.objects.get(
+                        name=request.data['group']
+                    )
+                    metric.description = description
+                    metric.parent = parent
+                    metric.flags = inline_metric_for_db(request.data['flags'])
+
+                    if request.data['mtype'] == 'Active':
+                        metric.probekey = admin_models.ProbeHistory.objects.get(
+                            name=request.data['probeversion'].split(' ')[0],
+                            package__version=request.data[
+                                                 'probeversion'
+                                             ].split(' ')[1][1:-1]
+                        )
+                        metric.probeexecutable = probeexecutable
+                        metric.config = inline_metric_for_db(
+                            request.data['config']
+                        )
+                        metric.attribute = inline_metric_for_db(
+                            request.data['attribute'])
+                        metric.dependancy = inline_metric_for_db(
+                            request.data['dependancy'])
+                        metric.files = inline_metric_for_db(
+                            request.data['files']
+                        )
+                        metric.parameter = inline_metric_for_db(
+                            request.data['parameter'])
+                        metric.fileparameter = inline_metric_for_db(
+                            request.data['fileparameter']
+                        )
+
+                    metric.save()
+                    create_history(metric, request.user.username)
+
+                    return Response(status=status.HTTP_201_CREATED)
+
+                else:
+                    return error_response(
+                        status_code=status.HTTP_401_UNAUTHORIZED,
+                        detail='You do not have permission to assign metrics '
+                               'to the given group.'
+                    )
+
+        except poem_models.UserProfile.DoesNotExist:
+            return error_response(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail='No user profile for authenticated user.'
             )
-            metric.probeexecutable = probeexecutable
-            metric.config = inline_metric_for_db(request.data['config'])
-            metric.attribute = inline_metric_for_db(request.data['attribute'])
-            metric.dependancy = inline_metric_for_db(request.data['dependancy'])
-            metric.files = inline_metric_for_db(request.data['files'])
-            metric.parameter = inline_metric_for_db(request.data['parameter'])
-            metric.fileparameter = inline_metric_for_db(
-                request.data['fileparameter']
+
+        except poem_models.Metric.DoesNotExist:
+            return error_response(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail='Metric does not exist.'
             )
 
-        metric.save()
-        create_history(metric, request.user.username)
+        except poem_models.GroupOfMetrics.DoesNotExist:
+            return error_response(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail='Group of metrics does not exist.'
+            )
 
-        return Response(status=status.HTTP_201_CREATED)
+        except poem_models.MetricType.DoesNotExist:
+            return error_response(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail='Metric type does not exist.'
+            )
+
+        except KeyError as e:
+            return error_response(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail='Missing data key: {}'.format(e.args[0])
+            )
 
     def delete(self, request, name=None):
         if name:
