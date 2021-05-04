@@ -347,7 +347,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             user=self.tenant_superuser.username
         )
 
-    def test_get_metric_template_list_public_tenant(self):
+    def test_get_metric_template_list_super_tenant(self):
         request = self.factory.get(self.url)
         request.tenant = self.public_tenant
         force_authenticate(request, user=self.user)
@@ -650,7 +650,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             ]
         )
 
-    def test_get_metrictemplate_by_name_public_tenant(self):
+    def test_get_metrictemplate_by_name_super_tenant(self):
         request = self.factory.get(self.url + 'argo.AMS-Check')
         request.tenant = self.public_tenant
         force_authenticate(request, user=self.user)
@@ -775,7 +775,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             }
         )
 
-    def test_get_metric_template_by_nonexisting_name_public_tenant(self):
+    def test_get_metric_template_by_nonexisting_name_super_tenant(self):
         request = self.factory.get(self.url + 'nonexisting')
         request.tenant = self.public_tenant
         force_authenticate(request, user=self.user)
@@ -791,7 +791,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(response.data, {'detail': 'Metric template not found'})
 
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
-    def test_post_metric_template_public_superuser(self, mocked_inline):
+    def test_post_metric_template_sp_superuser(self, mocked_inline):
         mocked_inline.side_effect = mocked_inline_metric_for_db
         conf = [
             {'key': 'maxCheckAttempts', 'value': '4'},
@@ -867,7 +867,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].version_comment, 'Initial version.')
 
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
-    def test_post_metric_template_public_regular_user(self, mocked_inline):
+    def test_post_metric_template_sp_user(self, mocked_inline):
         mocked_inline.side_effect = mocked_inline_metric_for_db
         conf = [
             {'key': 'maxCheckAttempts', 'value': '4'},
@@ -915,7 +915,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 3)
 
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
-    def test_post_metric_template_regular_tenant_superusr(self, mocked_inline):
+    def test_post_metric_template_tenant_superuser(self, mocked_inline):
         mocked_inline.side_effect = mocked_inline_metric_for_db
         conf = [
             {'key': 'maxCheckAttempts', 'value': '4'},
@@ -963,7 +963,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 3)
 
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
-    def test_post_metric_template_regular_tenant_rglr_usr(self, mocked_inline):
+    def test_post_metric_template_tenant_user(self, mocked_inline):
         mocked_inline.side_effect = mocked_inline_metric_for_db
         conf = [
             {'key': 'maxCheckAttempts', 'value': '4'},
@@ -1011,7 +1011,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 3)
 
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
-    def test_post_metric_template_with_nonexisting_tag_public_superusr(
+    def test_post_metric_template_with_nonexisting_tag_sp_superuser(
             self, mocked_inline
     ):
         mocked_inline.side_effect = mocked_inline_metric_for_db
@@ -1095,7 +1095,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].version_comment, 'Initial version.')
 
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
-    def test_post_metric_template_with_nonexisting_tag_public_regular_usr(
+    def test_post_metric_template_with_nonexisting_tag_sp_user(
             self, mocked_inline
     ):
         mocked_inline.side_effect = mocked_inline_metric_for_db
@@ -1155,7 +1155,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 3)
 
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
-    def test_post_metric_template_with_nonexisting_tag_regular_tenant_superusr(
+    def test_post_metric_template_with_nonexisting_tag_tenant_superuser(
             self, mocked_inline
     ):
         mocked_inline.side_effect = mocked_inline_metric_for_db
@@ -1215,7 +1215,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 3)
 
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
-    def test_post_metric_template_with_nonexisting_tag_regular_tenant_reg_usr(
+    def test_post_metric_template_with_nonexisting_tag_tenant_user(
             self, mocked_inline
     ):
         mocked_inline.side_effect = mocked_inline_metric_for_db
@@ -1275,7 +1275,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 3)
 
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
-    def test_post_metric_template_without_tag_public_superuser(
+    def test_post_metric_template_without_tag_sp_superuser(
             self, mocked_inline
     ):
         mocked_inline.side_effect = mocked_inline_metric_for_db
@@ -1351,9 +1351,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].version_comment, 'Initial version.')
 
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
-    def test_post_metric_template_without_tag_public_regular_user(
-            self, mocked_inline
-    ):
+    def test_post_metric_template_without_tag_sp_user(self, mocked_inline):
         mocked_inline.side_effect = mocked_inline_metric_for_db
         conf = [
             {'key': 'maxCheckAttempts', 'value': '4'},
@@ -1401,7 +1399,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 3)
 
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
-    def test_post_metric_template_without_tag_regular_tenant_superuser(
+    def test_post_metric_template_without_tag_tenant_superuser(
             self, mocked_inline
     ):
         mocked_inline.side_effect = mocked_inline_metric_for_db
@@ -1451,9 +1449,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 3)
 
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
-    def test_post_metric_template_without_tag_regular_tenant_regular_user(
-            self, mocked_inline
-    ):
+    def test_post_metric_template_without_tag_tenant_user(self, mocked_inline):
         mocked_inline.side_effect = mocked_inline_metric_for_db
         conf = [
             {'key': 'maxCheckAttempts', 'value': '4'},
@@ -1501,7 +1497,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 3)
 
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
-    def test_post_metric_template_with_existing_name_public_superuser(
+    def test_post_metric_template_with_existing_name_sp_superuser(
             self, mocked_inline
     ):
         mocked_inline.side_effect = mocked_inline_metric_for_db
@@ -1540,7 +1536,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         )
 
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
-    def test_post_metric_template_with_existing_name_public_regular_user(
+    def test_post_metric_template_with_existing_name_sp_user(
             self, mocked_inline
     ):
         mocked_inline.side_effect = mocked_inline_metric_for_db
@@ -1580,7 +1576,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 3)
 
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
-    def test_post_metric_template_with_existing_name_regular_tenant_superuser(
+    def test_post_metric_template_with_existing_name_tenant_superuser(
             self, mocked_inline
     ):
         mocked_inline.side_effect = mocked_inline_metric_for_db
@@ -1620,7 +1616,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 3)
 
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
-    def test_post_metric_template_with_existing_name_regular_tenant_reg_usr(
+    def test_post_metric_template_with_existing_name_tenant_user(
             self, mocked_inline
     ):
         mocked_inline.side_effect = mocked_inline_metric_for_db
@@ -1660,7 +1656,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 3)
 
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
-    def test_post_metric_template_with_nonexisting_probeversion_public_sprusr(
+    def test_post_metric_template_with_nonexisting_probeversion_sp_superuser(
             self, mock_inline
     ):
         mock_inline.side_effect = mocked_inline_metric_for_db
@@ -1699,7 +1695,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 3)
 
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
-    def test_post_metric_template_with_nonexisting_probeversion_public_regular(
+    def test_post_metric_template_with_nonexisting_probeversion_sp_user(
             self, mock_inline
     ):
         mock_inline.side_effect = mocked_inline_metric_for_db
@@ -1739,7 +1735,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 3)
 
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
-    def test_post_metric_template_with_nonexisting_probeversion_regular_su(
+    def test_post_metric_template_with_nonexisting_probeversion_tenant_sprusr(
             self, mock_inline
     ):
         mock_inline.side_effect = mocked_inline_metric_for_db
@@ -1779,7 +1775,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 3)
 
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
-    def test_post_metric_template_with_nonexisting_probeversion_regular_user(
+    def test_post_metric_template_with_nonexisting_probeversion_tenant_user(
             self, mock_inline
     ):
         mock_inline.side_effect = mocked_inline_metric_for_db
@@ -1819,7 +1815,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 3)
 
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
-    def test_post_metric_template_without_specifying_probes_version_public_su(
+    def test_post_metric_template_without_specifying_probes_version_sp_suprusr(
             self, mock_inline
     ):
         mock_inline.side_effect = mocked_inline_metric_for_db
@@ -1858,7 +1854,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 3)
 
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
-    def test_post_metric_template_without_specifying_probes_version_public_usr(
+    def test_post_metric_template_without_specifying_probes_version_sp_user(
             self, mock_inline
     ):
         mock_inline.side_effect = mocked_inline_metric_for_db
@@ -1898,7 +1894,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 3)
 
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
-    def test_post_metric_template_without_specifying_probes_version_regular_su(
+    def test_post_metric_template_without_specifying_probes_version_tenant_spu(
             self, mock_inline
     ):
         mock_inline.side_effect = mocked_inline_metric_for_db
@@ -1938,7 +1934,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 3)
 
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
-    def test_post_metric_template_without_specifying_probes_version_reglr_usr(
+    def test_post_metric_template_without_specifying_probes_version_tenant_usr(
             self, mock_inline
     ):
         mock_inline.side_effect = mocked_inline_metric_for_db
@@ -1978,7 +1974,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 3)
 
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
-    def test_post_metric_template_with_missing_data_key_public_superuser(
+    def test_post_metric_template_with_missing_data_key_sp_superuser(
             self, mock_inline
     ):
         mock_inline.side_effect = mocked_inline_metric_for_db
@@ -2016,7 +2012,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 3)
 
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
-    def test_post_metric_template_with_missing_data_key_public_regular_usr(
+    def test_post_metric_template_with_missing_data_key_sp_user(
             self, mock_inline
     ):
         mock_inline.side_effect = mocked_inline_metric_for_db
@@ -2055,7 +2051,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 3)
 
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
-    def test_post_metric_template_with_missing_data_key_regular_tenant_su(
+    def test_post_metric_template_with_missing_data_key_tenant_superuser(
             self, mock_inline
     ):
         mock_inline.side_effect = mocked_inline_metric_for_db
@@ -2094,7 +2090,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 3)
 
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
-    def test_post_metric_template_with_missing_data_key_regular_tenant_usr(
+    def test_post_metric_template_with_missing_data_key_tenant_user(
             self, mock_inline
     ):
         mock_inline.side_effect = mocked_inline_metric_for_db
@@ -2134,7 +2130,9 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
 
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
-    def test_put_metrictemplate_without_changing_probekey(self, inline, update):
+    def test_put_metrictemplate_without_changing_probekey_sp_superuser(
+            self, inline, update
+    ):
         inline.side_effect = mocked_inline_metric_for_db
         update.side_effect = mocked_func
         attr = [
@@ -2167,7 +2165,8 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
-        force_authenticate(request, user=self.user)
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
@@ -2244,7 +2243,307 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
 
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
-    def test_put_metrictemplate_without_changing_probekey_with_nonexisting_tag(
+    def test_put_metrictemplate_without_changing_probekey_sp_user(
+            self, inline, update
+    ):
+        inline.side_effect = mocked_inline_metric_for_db
+        update.side_effect = mocked_func
+        attr = [
+            {'key': 'argo.ams_TOKEN2', 'value': '--token'}
+        ]
+        conf = [
+            {'key': 'maxCheckAttempts', 'value': '4'},
+            {'key': 'timeout', 'value': '70'},
+            {'key': 'path', 'value':
+                '/usr/libexec/argo-monitoring/probes/argo'},
+            {'key': 'interval', 'value': '6'},
+            {'key': 'retryInterval', 'value': '4'}
+        ]
+        data = {
+            'id': self.metrictemplate1.id,
+            'name': 'argo.AMS-Check-new',
+            'mtype': 'Active',
+            'tags': ['internal', 'test_tag2'],
+            'description': 'New description for the metric template.',
+            'probeversion': 'ams-probe (0.1.8)',
+            'parent': 'argo.AMS-Check',
+            'probeexecutable': 'ams-probe',
+            'config': json.dumps(conf),
+            'attribute': json.dumps(attr),
+            'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
+            'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
+            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
+            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change metric templates.'
+        )
+        mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
+        self.assertFalse(update.called)
+        versions = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=mt
+        ).order_by('-date_created')
+        self.assertEqual(versions.count(), 2)
+        self.assertEqual(versions[1].version_comment, 'Initial version.')
+        comment_set = set()
+        for item in json.loads(versions[0].version_comment):
+            comment_set.add(json.dumps(item))
+        self.assertEqual(
+            comment_set,
+            {
+                '{"changed": {"fields": ["config"], '
+                '"object": ["maxCheckAttempts", "path", "timeout"]}}',
+                '{"changed": {"fields": ["probekey"]}}'
+            }
+        )
+        self.assertEqual(mt.name, 'argo.AMS-Check')
+        self.assertEqual(mt.mtype.name, 'Active')
+        self.assertEqual(len(mt.tags.all()), 2)
+        self.assertTrue(self.tag3 in mt.tags.all())
+        self.assertTrue(self.tag4 in mt.tags.all())
+        self.assertEqual(
+            mt.description,
+            'Some description of argo.AMS-Check metric template.'
+        )
+        self.assertEqual(mt.parent, '')
+        self.assertEqual(mt.probeexecutable, '["ams-probe"]')
+        self.assertEqual(
+            mt.config,
+            '["maxCheckAttempts 4", "timeout 70", '
+            '"path /usr/libexec/argo-monitoring/", '
+            '"interval 5", "retryInterval 3"]'
+        )
+        self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
+        self.assertEqual(mt.dependency, '')
+        self.assertEqual(mt.flags, '["OBSESS 1"]')
+        self.assertEqual(mt.files, '')
+        self.assertEqual(mt.parameter, '["--project EGI"]')
+        self.assertEqual(mt.fileparameter, '')
+        self.assertEqual(versions[0].name, mt.name)
+        self.assertEqual(versions[0].mtype, mt.mtype)
+        self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
+        self.assertEqual(versions[0].probekey, mt.probekey)
+        self.assertEqual(versions[0].parent, mt.parent)
+        self.assertEqual(versions[0].probeexecutable, mt.probeexecutable)
+        self.assertEqual(versions[0].config, mt.config)
+        self.assertEqual(versions[0].attribute, mt.attribute)
+        self.assertEqual(versions[0].dependency, mt.dependency)
+        self.assertEqual(versions[0].flags, mt.flags)
+        self.assertEqual(versions[0].files, mt.files)
+        self.assertEqual(versions[0].parameter, mt.parameter)
+        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
+
+    @patch('Poem.api.internal_views.metrictemplates.update_metrics')
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    def test_put_metrictemplate_without_changing_probekey_tenant_superuser(
+            self, inline, update
+    ):
+        inline.side_effect = mocked_inline_metric_for_db
+        update.side_effect = mocked_func
+        attr = [
+            {'key': 'argo.ams_TOKEN2', 'value': '--token'}
+        ]
+        conf = [
+            {'key': 'maxCheckAttempts', 'value': '4'},
+            {'key': 'timeout', 'value': '70'},
+            {'key': 'path', 'value':
+                '/usr/libexec/argo-monitoring/probes/argo'},
+            {'key': 'interval', 'value': '6'},
+            {'key': 'retryInterval', 'value': '4'}
+        ]
+        data = {
+            'id': self.metrictemplate1.id,
+            'name': 'argo.AMS-Check-new',
+            'mtype': 'Active',
+            'tags': ['internal', 'test_tag2'],
+            'description': 'New description for the metric template.',
+            'probeversion': 'ams-probe (0.1.8)',
+            'parent': 'argo.AMS-Check',
+            'probeexecutable': 'ams-probe',
+            'config': json.dumps(conf),
+            'attribute': json.dumps(attr),
+            'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
+            'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
+            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
+            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change metric templates.'
+        )
+        mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
+        self.assertFalse(update.called)
+        versions = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=mt
+        ).order_by('-date_created')
+        self.assertEqual(versions.count(), 2)
+        self.assertEqual(versions[1].version_comment, 'Initial version.')
+        comment_set = set()
+        for item in json.loads(versions[0].version_comment):
+            comment_set.add(json.dumps(item))
+        self.assertEqual(
+            comment_set,
+            {
+                '{"changed": {"fields": ["config"], '
+                '"object": ["maxCheckAttempts", "path", "timeout"]}}',
+                '{"changed": {"fields": ["probekey"]}}'
+            }
+        )
+        self.assertEqual(mt.name, 'argo.AMS-Check')
+        self.assertEqual(mt.mtype.name, 'Active')
+        self.assertEqual(len(mt.tags.all()), 2)
+        self.assertTrue(self.tag3 in mt.tags.all())
+        self.assertTrue(self.tag4 in mt.tags.all())
+        self.assertEqual(
+            mt.description,
+            'Some description of argo.AMS-Check metric template.'
+        )
+        self.assertEqual(mt.parent, '')
+        self.assertEqual(mt.probeexecutable, '["ams-probe"]')
+        self.assertEqual(
+            mt.config,
+            '["maxCheckAttempts 4", "timeout 70", '
+            '"path /usr/libexec/argo-monitoring/", '
+            '"interval 5", "retryInterval 3"]'
+        )
+        self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
+        self.assertEqual(mt.dependency, '')
+        self.assertEqual(mt.flags, '["OBSESS 1"]')
+        self.assertEqual(mt.files, '')
+        self.assertEqual(mt.parameter, '["--project EGI"]')
+        self.assertEqual(mt.fileparameter, '')
+        self.assertEqual(versions[0].name, mt.name)
+        self.assertEqual(versions[0].mtype, mt.mtype)
+        self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
+        self.assertEqual(versions[0].probekey, mt.probekey)
+        self.assertEqual(versions[0].parent, mt.parent)
+        self.assertEqual(versions[0].probeexecutable, mt.probeexecutable)
+        self.assertEqual(versions[0].config, mt.config)
+        self.assertEqual(versions[0].attribute, mt.attribute)
+        self.assertEqual(versions[0].dependency, mt.dependency)
+        self.assertEqual(versions[0].flags, mt.flags)
+        self.assertEqual(versions[0].files, mt.files)
+        self.assertEqual(versions[0].parameter, mt.parameter)
+        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
+
+    @patch('Poem.api.internal_views.metrictemplates.update_metrics')
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    def test_put_metrictemplate_without_changing_probekey_tenant_user(
+            self, inline, update
+    ):
+        inline.side_effect = mocked_inline_metric_for_db
+        update.side_effect = mocked_func
+        attr = [
+            {'key': 'argo.ams_TOKEN2', 'value': '--token'}
+        ]
+        conf = [
+            {'key': 'maxCheckAttempts', 'value': '4'},
+            {'key': 'timeout', 'value': '70'},
+            {'key': 'path', 'value':
+                '/usr/libexec/argo-monitoring/probes/argo'},
+            {'key': 'interval', 'value': '6'},
+            {'key': 'retryInterval', 'value': '4'}
+        ]
+        data = {
+            'id': self.metrictemplate1.id,
+            'name': 'argo.AMS-Check-new',
+            'mtype': 'Active',
+            'tags': ['internal', 'test_tag2'],
+            'description': 'New description for the metric template.',
+            'probeversion': 'ams-probe (0.1.8)',
+            'parent': 'argo.AMS-Check',
+            'probeexecutable': 'ams-probe',
+            'config': json.dumps(conf),
+            'attribute': json.dumps(attr),
+            'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
+            'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
+            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
+            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change metric templates.'
+        )
+        mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
+        self.assertFalse(update.called)
+        versions = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=mt
+        ).order_by('-date_created')
+        self.assertEqual(versions.count(), 2)
+        self.assertEqual(versions[1].version_comment, 'Initial version.')
+        comment_set = set()
+        for item in json.loads(versions[0].version_comment):
+            comment_set.add(json.dumps(item))
+        self.assertEqual(
+            comment_set,
+            {
+                '{"changed": {"fields": ["config"], '
+                '"object": ["maxCheckAttempts", "path", "timeout"]}}',
+                '{"changed": {"fields": ["probekey"]}}'
+            }
+        )
+        self.assertEqual(mt.name, 'argo.AMS-Check')
+        self.assertEqual(mt.mtype.name, 'Active')
+        self.assertEqual(len(mt.tags.all()), 2)
+        self.assertTrue(self.tag3 in mt.tags.all())
+        self.assertTrue(self.tag4 in mt.tags.all())
+        self.assertEqual(
+            mt.description,
+            'Some description of argo.AMS-Check metric template.'
+        )
+        self.assertEqual(mt.parent, '')
+        self.assertEqual(mt.probeexecutable, '["ams-probe"]')
+        self.assertEqual(
+            mt.config,
+            '["maxCheckAttempts 4", "timeout 70", '
+            '"path /usr/libexec/argo-monitoring/", '
+            '"interval 5", "retryInterval 3"]'
+        )
+        self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
+        self.assertEqual(mt.dependency, '')
+        self.assertEqual(mt.flags, '["OBSESS 1"]')
+        self.assertEqual(mt.files, '')
+        self.assertEqual(mt.parameter, '["--project EGI"]')
+        self.assertEqual(mt.fileparameter, '')
+        self.assertEqual(versions[0].name, mt.name)
+        self.assertEqual(versions[0].mtype, mt.mtype)
+        self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
+        self.assertEqual(versions[0].probekey, mt.probekey)
+        self.assertEqual(versions[0].parent, mt.parent)
+        self.assertEqual(versions[0].probeexecutable, mt.probeexecutable)
+        self.assertEqual(versions[0].config, mt.config)
+        self.assertEqual(versions[0].attribute, mt.attribute)
+        self.assertEqual(versions[0].dependency, mt.dependency)
+        self.assertEqual(versions[0].flags, mt.flags)
+        self.assertEqual(versions[0].files, mt.files)
+        self.assertEqual(versions[0].parameter, mt.parameter)
+        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
+
+    @patch('Poem.api.internal_views.metrictemplates.update_metrics')
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    def test_put_mttemplate_without_changing_prbkey_with_nonexist_tag_sp_spusr(
             self, inline, update
     ):
         inline.side_effect = mocked_inline_metric_for_db
@@ -2284,7 +2583,8 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             name='new_tag'
         )
         request = self.factory.put(self.url, content, content_type=content_type)
-        force_authenticate(request, user=self.user)
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
@@ -2362,7 +2662,329 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
 
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
-    def test_put_metrictemplate_without_changing_probekey_with_no_tag(
+    def test_put_mttemplate_without_changing_prbkey_with_nonexist_tag_sp_user(
+            self, inline, update
+    ):
+        inline.side_effect = mocked_inline_metric_for_db
+        update.side_effect = mocked_func
+        attr = [
+            {'key': 'argo.ams_TOKEN2', 'value': '--token'}
+        ]
+        conf = [
+            {'key': 'maxCheckAttempts', 'value': '4'},
+            {'key': 'timeout', 'value': '70'},
+            {'key': 'path', 'value':
+                '/usr/libexec/argo-monitoring/probes/argo'},
+            {'key': 'interval', 'value': '6'},
+            {'key': 'retryInterval', 'value': '4'}
+        ]
+        data = {
+            'id': self.metrictemplate1.id,
+            'name': 'argo.AMS-Check-new',
+            'mtype': 'Active',
+            'tags': ['test_tag1', 'new_tag'],
+            'description': 'New description for the metric template.',
+            'probeversion': 'ams-probe (0.1.8)',
+            'parent': 'argo.AMS-Check',
+            'probeexecutable': 'ams-probe',
+            'config': json.dumps(conf),
+            'attribute': json.dumps(attr),
+            'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
+            'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
+            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
+            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+        }
+        content, content_type = encode_data(data)
+        self.assertRaises(
+            admin_models.MetricTags.DoesNotExist,
+            admin_models.MetricTags.objects.get,
+            name='new_tag'
+        )
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
+        self.assertRaises(
+            admin_models.MetricTags.DoesNotExist,
+            admin_models.MetricTags.objects.get,
+            name='new_tag'
+        )
+        self.assertFalse(update.called)
+        versions = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=mt
+        ).order_by('-date_created')
+        self.assertEqual(versions.count(), 2)
+        self.assertEqual(versions[1].version_comment, 'Initial version.')
+        comment_set = set()
+        for item in json.loads(versions[0].version_comment):
+            comment_set.add(json.dumps(item))
+        self.assertEqual(
+            comment_set,
+            {
+                '{"changed": {"fields": ["config"], '
+                '"object": ["maxCheckAttempts", "path", "timeout"]}}',
+                '{"changed": {"fields": ["probekey"]}}'
+            }
+        )
+        self.assertEqual(mt.name, 'argo.AMS-Check')
+        self.assertEqual(mt.mtype.name, 'Active')
+        self.assertEqual(len(mt.tags.all()), 2)
+        self.assertTrue(self.tag3 in mt.tags.all())
+        self.assertTrue(self.tag4 in mt.tags.all())
+        self.assertEqual(
+            mt.description,
+            'Some description of argo.AMS-Check metric template.'
+        )
+        self.assertEqual(mt.parent, '')
+        self.assertEqual(mt.probeexecutable, '["ams-probe"]')
+        self.assertEqual(
+            mt.config,
+            '["maxCheckAttempts 4", "timeout 70", '
+            '"path /usr/libexec/argo-monitoring/", '
+            '"interval 5", "retryInterval 3"]'
+        )
+        self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
+        self.assertEqual(mt.dependency, '')
+        self.assertEqual(mt.flags, '["OBSESS 1"]')
+        self.assertEqual(mt.files, '')
+        self.assertEqual(mt.parameter, '["--project EGI"]')
+        self.assertEqual(mt.fileparameter, '')
+        self.assertEqual(versions[0].name, mt.name)
+        self.assertEqual(versions[0].mtype, mt.mtype)
+        self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
+        self.assertEqual(versions[0].probekey, mt.probekey)
+        self.assertEqual(versions[0].parent, mt.parent)
+        self.assertEqual(versions[0].probeexecutable, mt.probeexecutable)
+        self.assertEqual(versions[0].config, mt.config)
+        self.assertEqual(versions[0].attribute, mt.attribute)
+        self.assertEqual(versions[0].dependency, mt.dependency)
+        self.assertEqual(versions[0].flags, mt.flags)
+        self.assertEqual(versions[0].files, mt.files)
+        self.assertEqual(versions[0].parameter, mt.parameter)
+        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
+
+    @patch('Poem.api.internal_views.metrictemplates.update_metrics')
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    def test_put_mttemplate_without_changing_prbkey_with_nonexist_tag_ten_susr(
+            self, inline, update
+    ):
+        inline.side_effect = mocked_inline_metric_for_db
+        update.side_effect = mocked_func
+        attr = [
+            {'key': 'argo.ams_TOKEN2', 'value': '--token'}
+        ]
+        conf = [
+            {'key': 'maxCheckAttempts', 'value': '4'},
+            {'key': 'timeout', 'value': '70'},
+            {'key': 'path', 'value':
+                '/usr/libexec/argo-monitoring/probes/argo'},
+            {'key': 'interval', 'value': '6'},
+            {'key': 'retryInterval', 'value': '4'}
+        ]
+        data = {
+            'id': self.metrictemplate1.id,
+            'name': 'argo.AMS-Check-new',
+            'mtype': 'Active',
+            'tags': ['test_tag1', 'new_tag'],
+            'description': 'New description for the metric template.',
+            'probeversion': 'ams-probe (0.1.8)',
+            'parent': 'argo.AMS-Check',
+            'probeexecutable': 'ams-probe',
+            'config': json.dumps(conf),
+            'attribute': json.dumps(attr),
+            'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
+            'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
+            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
+            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+        }
+        content, content_type = encode_data(data)
+        self.assertRaises(
+            admin_models.MetricTags.DoesNotExist,
+            admin_models.MetricTags.objects.get,
+            name='new_tag'
+        )
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
+        self.assertRaises(
+            admin_models.MetricTags.DoesNotExist,
+            admin_models.MetricTags.objects.get,
+            name='new_tag'
+        )
+        self.assertFalse(update.called)
+        versions = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=mt
+        ).order_by('-date_created')
+        self.assertEqual(versions.count(), 2)
+        self.assertEqual(versions[1].version_comment, 'Initial version.')
+        comment_set = set()
+        for item in json.loads(versions[0].version_comment):
+            comment_set.add(json.dumps(item))
+        self.assertEqual(
+            comment_set,
+            {
+                '{"changed": {"fields": ["config"], '
+                '"object": ["maxCheckAttempts", "path", "timeout"]}}',
+                '{"changed": {"fields": ["probekey"]}}'
+            }
+        )
+        self.assertEqual(mt.name, 'argo.AMS-Check')
+        self.assertEqual(mt.mtype.name, 'Active')
+        self.assertEqual(len(mt.tags.all()), 2)
+        self.assertTrue(self.tag3 in mt.tags.all())
+        self.assertTrue(self.tag4 in mt.tags.all())
+        self.assertEqual(
+            mt.description,
+            'Some description of argo.AMS-Check metric template.'
+        )
+        self.assertEqual(mt.parent, '')
+        self.assertEqual(mt.probeexecutable, '["ams-probe"]')
+        self.assertEqual(
+            mt.config,
+            '["maxCheckAttempts 4", "timeout 70", '
+            '"path /usr/libexec/argo-monitoring/", '
+            '"interval 5", "retryInterval 3"]'
+        )
+        self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
+        self.assertEqual(mt.dependency, '')
+        self.assertEqual(mt.flags, '["OBSESS 1"]')
+        self.assertEqual(mt.files, '')
+        self.assertEqual(mt.parameter, '["--project EGI"]')
+        self.assertEqual(mt.fileparameter, '')
+        self.assertEqual(versions[0].name, mt.name)
+        self.assertEqual(versions[0].mtype, mt.mtype)
+        self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
+        self.assertEqual(versions[0].probekey, mt.probekey)
+        self.assertEqual(versions[0].parent, mt.parent)
+        self.assertEqual(versions[0].probeexecutable, mt.probeexecutable)
+        self.assertEqual(versions[0].config, mt.config)
+        self.assertEqual(versions[0].attribute, mt.attribute)
+        self.assertEqual(versions[0].dependency, mt.dependency)
+        self.assertEqual(versions[0].flags, mt.flags)
+        self.assertEqual(versions[0].files, mt.files)
+        self.assertEqual(versions[0].parameter, mt.parameter)
+        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
+
+    @patch('Poem.api.internal_views.metrictemplates.update_metrics')
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    def test_put_mttemplate_without_changing_prbkey_with_nonexist_tag_tenn_usr(
+            self, inline, update
+    ):
+        inline.side_effect = mocked_inline_metric_for_db
+        update.side_effect = mocked_func
+        attr = [
+            {'key': 'argo.ams_TOKEN2', 'value': '--token'}
+        ]
+        conf = [
+            {'key': 'maxCheckAttempts', 'value': '4'},
+            {'key': 'timeout', 'value': '70'},
+            {'key': 'path', 'value':
+                '/usr/libexec/argo-monitoring/probes/argo'},
+            {'key': 'interval', 'value': '6'},
+            {'key': 'retryInterval', 'value': '4'}
+        ]
+        data = {
+            'id': self.metrictemplate1.id,
+            'name': 'argo.AMS-Check-new',
+            'mtype': 'Active',
+            'tags': ['test_tag1', 'new_tag'],
+            'description': 'New description for the metric template.',
+            'probeversion': 'ams-probe (0.1.8)',
+            'parent': 'argo.AMS-Check',
+            'probeexecutable': 'ams-probe',
+            'config': json.dumps(conf),
+            'attribute': json.dumps(attr),
+            'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
+            'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
+            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
+            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+        }
+        content, content_type = encode_data(data)
+        self.assertRaises(
+            admin_models.MetricTags.DoesNotExist,
+            admin_models.MetricTags.objects.get,
+            name='new_tag'
+        )
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change metric templates.'
+        )
+        mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
+        self.assertRaises(
+            admin_models.MetricTags.DoesNotExist,
+            admin_models.MetricTags.objects.get,
+            name='new_tag'
+        )
+        self.assertFalse(update.called)
+        versions = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=mt
+        ).order_by('-date_created')
+        self.assertEqual(versions.count(), 2)
+        self.assertEqual(versions[1].version_comment, 'Initial version.')
+        comment_set = set()
+        for item in json.loads(versions[0].version_comment):
+            comment_set.add(json.dumps(item))
+        self.assertEqual(
+            comment_set,
+            {
+                '{"changed": {"fields": ["config"], '
+                '"object": ["maxCheckAttempts", "path", "timeout"]}}',
+                '{"changed": {"fields": ["probekey"]}}'
+            }
+        )
+        self.assertEqual(mt.name, 'argo.AMS-Check')
+        self.assertEqual(mt.mtype.name, 'Active')
+        self.assertEqual(len(mt.tags.all()), 2)
+        self.assertTrue(self.tag3 in mt.tags.all())
+        self.assertTrue(self.tag4 in mt.tags.all())
+        self.assertEqual(
+            mt.description,
+            'Some description of argo.AMS-Check metric template.'
+        )
+        self.assertEqual(mt.parent, '')
+        self.assertEqual(mt.probeexecutable, '["ams-probe"]')
+        self.assertEqual(
+            mt.config,
+            '["maxCheckAttempts 4", "timeout 70", '
+            '"path /usr/libexec/argo-monitoring/", '
+            '"interval 5", "retryInterval 3"]'
+        )
+        self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
+        self.assertEqual(mt.dependency, '')
+        self.assertEqual(mt.flags, '["OBSESS 1"]')
+        self.assertEqual(mt.files, '')
+        self.assertEqual(mt.parameter, '["--project EGI"]')
+        self.assertEqual(mt.fileparameter, '')
+        self.assertEqual(versions[0].name, mt.name)
+        self.assertEqual(versions[0].mtype, mt.mtype)
+        self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
+        self.assertEqual(versions[0].probekey, mt.probekey)
+        self.assertEqual(versions[0].parent, mt.parent)
+        self.assertEqual(versions[0].probeexecutable, mt.probeexecutable)
+        self.assertEqual(versions[0].config, mt.config)
+        self.assertEqual(versions[0].attribute, mt.attribute)
+        self.assertEqual(versions[0].dependency, mt.dependency)
+        self.assertEqual(versions[0].flags, mt.flags)
+        self.assertEqual(versions[0].files, mt.files)
+        self.assertEqual(versions[0].parameter, mt.parameter)
+        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
+
+    @patch('Poem.api.internal_views.metrictemplates.update_metrics')
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    def test_put_metrictemplate_without_changing_probekey_with_no_tag_sp_spusr(
             self, inline, update
     ):
         inline.side_effect = mocked_inline_metric_for_db
@@ -2397,7 +3019,8 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
-        force_authenticate(request, user=self.user)
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
@@ -2472,7 +3095,307 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
 
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
-    def test_put_metrictemplate_with_new_probekey(self, inline, update):
+    def test_put_metrictemplate_without_changing_probekey_with_no_tag_sp_usr(
+            self, inline, update
+    ):
+        inline.side_effect = mocked_inline_metric_for_db
+        update.side_effect = mocked_func
+        attr = [
+            {'key': 'argo.ams_TOKEN2', 'value': '--token'}
+        ]
+        conf = [
+            {'key': 'maxCheckAttempts', 'value': '4'},
+            {'key': 'timeout', 'value': '70'},
+            {'key': 'path', 'value':
+                '/usr/libexec/argo-monitoring/probes/argo'},
+            {'key': 'interval', 'value': '6'},
+            {'key': 'retryInterval', 'value': '4'}
+        ]
+        data = {
+            'id': self.metrictemplate1.id,
+            'name': 'argo.AMS-Check-new',
+            'mtype': 'Active',
+            'tags': [],
+            'description': 'New description for the metric template.',
+            'probeversion': 'ams-probe (0.1.8)',
+            'parent': 'argo.AMS-Check',
+            'probeexecutable': 'ams-probe',
+            'config': json.dumps(conf),
+            'attribute': json.dumps(attr),
+            'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
+            'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
+            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
+            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change metric templates.'
+        )
+        mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
+        self.assertFalse(update.called)
+        versions = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=mt
+        ).order_by('-date_created')
+        self.assertEqual(versions.count(), 2)
+        self.assertEqual(versions[1].version_comment, 'Initial version.')
+        comment_set = set()
+        for item in json.loads(versions[0].version_comment):
+            comment_set.add(json.dumps(item))
+        self.assertEqual(
+            comment_set,
+            {
+                '{"changed": {"fields": ["config"], '
+                '"object": ["maxCheckAttempts", "path", "timeout"]}}',
+                '{"changed": {"fields": ["probekey"]}}'
+            }
+        )
+        self.assertEqual(mt.name, 'argo.AMS-Check')
+        self.assertEqual(mt.mtype.name, 'Active')
+        self.assertEqual(len(mt.tags.all()), 2)
+        self.assertTrue(self.tag3 in mt.tags.all())
+        self.assertTrue(self.tag4 in mt.tags.all())
+        self.assertEqual(
+            mt.description,
+            'Some description of argo.AMS-Check metric template.'
+        )
+        self.assertEqual(mt.parent, '')
+        self.assertEqual(mt.probeexecutable, '["ams-probe"]')
+        self.assertEqual(
+            mt.config,
+            '["maxCheckAttempts 4", "timeout 70", '
+            '"path /usr/libexec/argo-monitoring/", '
+            '"interval 5", "retryInterval 3"]'
+        )
+        self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
+        self.assertEqual(mt.dependency, '')
+        self.assertEqual(mt.flags, '["OBSESS 1"]')
+        self.assertEqual(mt.files, '')
+        self.assertEqual(mt.parameter, '["--project EGI"]')
+        self.assertEqual(mt.fileparameter, '')
+        self.assertEqual(versions[0].name, mt.name)
+        self.assertEqual(versions[0].mtype, mt.mtype)
+        self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
+        self.assertEqual(versions[0].probekey, mt.probekey)
+        self.assertEqual(versions[0].parent, mt.parent)
+        self.assertEqual(versions[0].probeexecutable, mt.probeexecutable)
+        self.assertEqual(versions[0].config, mt.config)
+        self.assertEqual(versions[0].attribute, mt.attribute)
+        self.assertEqual(versions[0].dependency, mt.dependency)
+        self.assertEqual(versions[0].flags, mt.flags)
+        self.assertEqual(versions[0].files, mt.files)
+        self.assertEqual(versions[0].parameter, mt.parameter)
+        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
+
+    @patch('Poem.api.internal_views.metrictemplates.update_metrics')
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    def test_put_metrictemplate_without_changing_probekey_with_no_tag_tenn_sus(
+            self, inline, update
+    ):
+        inline.side_effect = mocked_inline_metric_for_db
+        update.side_effect = mocked_func
+        attr = [
+            {'key': 'argo.ams_TOKEN2', 'value': '--token'}
+        ]
+        conf = [
+            {'key': 'maxCheckAttempts', 'value': '4'},
+            {'key': 'timeout', 'value': '70'},
+            {'key': 'path', 'value':
+                '/usr/libexec/argo-monitoring/probes/argo'},
+            {'key': 'interval', 'value': '6'},
+            {'key': 'retryInterval', 'value': '4'}
+        ]
+        data = {
+            'id': self.metrictemplate1.id,
+            'name': 'argo.AMS-Check-new',
+            'mtype': 'Active',
+            'tags': [],
+            'description': 'New description for the metric template.',
+            'probeversion': 'ams-probe (0.1.8)',
+            'parent': 'argo.AMS-Check',
+            'probeexecutable': 'ams-probe',
+            'config': json.dumps(conf),
+            'attribute': json.dumps(attr),
+            'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
+            'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
+            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
+            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change metric templates.'
+        )
+        mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
+        self.assertFalse(update.called)
+        versions = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=mt
+        ).order_by('-date_created')
+        self.assertEqual(versions.count(), 2)
+        self.assertEqual(versions[1].version_comment, 'Initial version.')
+        comment_set = set()
+        for item in json.loads(versions[0].version_comment):
+            comment_set.add(json.dumps(item))
+        self.assertEqual(
+            comment_set,
+            {
+                '{"changed": {"fields": ["config"], '
+                '"object": ["maxCheckAttempts", "path", "timeout"]}}',
+                '{"changed": {"fields": ["probekey"]}}'
+            }
+        )
+        self.assertEqual(mt.name, 'argo.AMS-Check')
+        self.assertEqual(mt.mtype.name, 'Active')
+        self.assertEqual(len(mt.tags.all()), 2)
+        self.assertTrue(self.tag3 in mt.tags.all())
+        self.assertTrue(self.tag4 in mt.tags.all())
+        self.assertEqual(
+            mt.description,
+            'Some description of argo.AMS-Check metric template.'
+        )
+        self.assertEqual(mt.parent, '')
+        self.assertEqual(mt.probeexecutable, '["ams-probe"]')
+        self.assertEqual(
+            mt.config,
+            '["maxCheckAttempts 4", "timeout 70", '
+            '"path /usr/libexec/argo-monitoring/", '
+            '"interval 5", "retryInterval 3"]'
+        )
+        self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
+        self.assertEqual(mt.dependency, '')
+        self.assertEqual(mt.flags, '["OBSESS 1"]')
+        self.assertEqual(mt.files, '')
+        self.assertEqual(mt.parameter, '["--project EGI"]')
+        self.assertEqual(mt.fileparameter, '')
+        self.assertEqual(versions[0].name, mt.name)
+        self.assertEqual(versions[0].mtype, mt.mtype)
+        self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
+        self.assertEqual(versions[0].probekey, mt.probekey)
+        self.assertEqual(versions[0].parent, mt.parent)
+        self.assertEqual(versions[0].probeexecutable, mt.probeexecutable)
+        self.assertEqual(versions[0].config, mt.config)
+        self.assertEqual(versions[0].attribute, mt.attribute)
+        self.assertEqual(versions[0].dependency, mt.dependency)
+        self.assertEqual(versions[0].flags, mt.flags)
+        self.assertEqual(versions[0].files, mt.files)
+        self.assertEqual(versions[0].parameter, mt.parameter)
+        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
+
+    @patch('Poem.api.internal_views.metrictemplates.update_metrics')
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    def test_put_metrictemplate_without_changing_probekey_with_no_tag_tenn_usr(
+            self, inline, update
+    ):
+        inline.side_effect = mocked_inline_metric_for_db
+        update.side_effect = mocked_func
+        attr = [
+            {'key': 'argo.ams_TOKEN2', 'value': '--token'}
+        ]
+        conf = [
+            {'key': 'maxCheckAttempts', 'value': '4'},
+            {'key': 'timeout', 'value': '70'},
+            {'key': 'path', 'value':
+                '/usr/libexec/argo-monitoring/probes/argo'},
+            {'key': 'interval', 'value': '6'},
+            {'key': 'retryInterval', 'value': '4'}
+        ]
+        data = {
+            'id': self.metrictemplate1.id,
+            'name': 'argo.AMS-Check-new',
+            'mtype': 'Active',
+            'tags': [],
+            'description': 'New description for the metric template.',
+            'probeversion': 'ams-probe (0.1.8)',
+            'parent': 'argo.AMS-Check',
+            'probeexecutable': 'ams-probe',
+            'config': json.dumps(conf),
+            'attribute': json.dumps(attr),
+            'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
+            'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
+            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
+            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change metric templates.'
+        )
+        mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
+        self.assertFalse(update.called)
+        versions = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=mt
+        ).order_by('-date_created')
+        self.assertEqual(versions.count(), 2)
+        self.assertEqual(versions[1].version_comment, 'Initial version.')
+        comment_set = set()
+        for item in json.loads(versions[0].version_comment):
+            comment_set.add(json.dumps(item))
+        self.assertEqual(
+            comment_set,
+            {
+                '{"changed": {"fields": ["config"], '
+                '"object": ["maxCheckAttempts", "path", "timeout"]}}',
+                '{"changed": {"fields": ["probekey"]}}'
+            }
+        )
+        self.assertEqual(mt.name, 'argo.AMS-Check')
+        self.assertEqual(mt.mtype.name, 'Active')
+        self.assertEqual(len(mt.tags.all()), 2)
+        self.assertEqual(
+            mt.description,
+            'Some description of argo.AMS-Check metric template.'
+        )
+        self.assertEqual(mt.parent, '')
+        self.assertEqual(mt.probeexecutable, '["ams-probe"]')
+        self.assertEqual(
+            mt.config,
+            '["maxCheckAttempts 4", "timeout 70", '
+            '"path /usr/libexec/argo-monitoring/", '
+            '"interval 5", "retryInterval 3"]'
+        )
+        self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
+        self.assertEqual(mt.dependency, '')
+        self.assertEqual(mt.flags, '["OBSESS 1"]')
+        self.assertEqual(mt.files, '')
+        self.assertEqual(mt.parameter, '["--project EGI"]')
+        self.assertEqual(mt.fileparameter, '')
+        self.assertEqual(versions[0].name, mt.name)
+        self.assertEqual(versions[0].mtype, mt.mtype)
+        self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
+        self.assertEqual(versions[0].probekey, mt.probekey)
+        self.assertEqual(versions[0].parent, mt.parent)
+        self.assertEqual(versions[0].probeexecutable, mt.probeexecutable)
+        self.assertEqual(versions[0].config, mt.config)
+        self.assertEqual(versions[0].attribute, mt.attribute)
+        self.assertEqual(versions[0].dependency, mt.dependency)
+        self.assertEqual(versions[0].flags, mt.flags)
+        self.assertEqual(versions[0].files, mt.files)
+        self.assertEqual(versions[0].parameter, mt.parameter)
+        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
+
+    @patch('Poem.api.internal_views.metrictemplates.update_metrics')
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    def test_put_metrictemplate_with_new_probekey_sp_superuser(
+            self, inline, update
+    ):
         inline.side_effect = mocked_inline_metric_for_db
         update.side_effect = mocked_func
         attr = [
@@ -2505,7 +3428,8 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
-        force_authenticate(request, user=self.user)
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertFalse(update.called)
@@ -2577,7 +3501,307 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
 
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
-    def test_put_metrictemplate_with_new_probekey_nonexisting_tag(
+    def test_put_metrictemplate_with_new_probekey_sp_user(
+            self, inline, update
+    ):
+        inline.side_effect = mocked_inline_metric_for_db
+        update.side_effect = mocked_func
+        attr = [
+            {'key': 'argo.ams_TOKEN2', 'value': '--token'}
+        ]
+        conf = [
+            {'key': 'maxCheckAttempts', 'value': '4'},
+            {'key': 'timeout', 'value': '70'},
+            {'key': 'path', 'value':
+                '/usr/libexec/argo-monitoring/probes/argo'},
+            {'key': 'interval', 'value': '6'},
+            {'key': 'retryInterval', 'value': '4'}
+        ]
+        data = {
+            'id': self.metrictemplate1.id,
+            'name': 'argo.AMS-Check-new',
+            'mtype': 'Active',
+            'tags': ['test_tag1', 'test_tag2'],
+            'description': 'New description.',
+            'probeversion': 'ams-probe (0.1.11)',
+            'parent': 'argo.AMS-Check',
+            'probeexecutable': 'ams-probe-new',
+            'config': json.dumps(conf),
+            'attribute': json.dumps(attr),
+            'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
+            'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
+            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
+            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change metric templates.'
+        )
+        self.assertFalse(update.called)
+        mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
+        versions = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=mt
+        )
+        self.assertEqual(versions.count(), 2)
+        comment_set = set()
+        for item in json.loads(versions[0].version_comment):
+            comment_set.add(json.dumps(item))
+        self.assertEqual(
+            comment_set,
+            {
+                '{"changed": {"fields": ["config"], '
+                '"object": ["maxCheckAttempts", "path", "timeout"]}}',
+                '{"changed": {"fields": ["probekey"]}}'
+            }
+        )
+        self.assertEqual(mt.name, 'argo.AMS-Check')
+        self.assertEqual(mt.mtype.name, 'Active')
+        self.assertEqual(len(mt.tags.all()), 2)
+        self.assertTrue(self.tag3 in mt.tags.all())
+        self.assertTrue(self.tag4 in mt.tags.all())
+        self.assertEqual(mt.probeexecutable, '["ams-probe"]')
+        self.assertEqual(
+            mt.description,
+            'Some description of argo.AMS-Check metric template.'
+        )
+        self.assertEqual(mt.parent, '')
+        self.assertEqual(
+            mt.config,
+            '["maxCheckAttempts 4", "timeout 70", '
+            '"path /usr/libexec/argo-monitoring/", '
+            '"interval 5", "retryInterval 3"]'
+        )
+        self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
+        self.assertEqual(mt.dependency, '')
+        self.assertEqual(mt.flags, '["OBSESS 1"]')
+        self.assertEqual(mt.files, '')
+        self.assertEqual(mt.parameter, '["--project EGI"]')
+        self.assertEqual(mt.fileparameter, '')
+        self.assertEqual(versions[0].name, mt.name)
+        self.assertEqual(versions[0].mtype, mt.mtype)
+        self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
+        self.assertEqual(versions[0].probekey, mt.probekey)
+        self.assertEqual(versions[0].description, mt.description)
+        self.assertEqual(versions[0].parent, mt.parent)
+        self.assertEqual(versions[0].probeexecutable, mt.probeexecutable)
+        self.assertEqual(versions[0].config, mt.config)
+        self.assertEqual(versions[0].attribute, mt.attribute)
+        self.assertEqual(versions[0].dependency, mt.dependency)
+        self.assertEqual(versions[0].flags, mt.flags)
+        self.assertEqual(versions[0].files, mt.files)
+        self.assertEqual(versions[0].parameter, mt.parameter)
+        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
+
+    @patch('Poem.api.internal_views.metrictemplates.update_metrics')
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    def test_put_metrictemplate_with_new_probekey_tenant_superuser(
+            self, inline, update
+    ):
+        inline.side_effect = mocked_inline_metric_for_db
+        update.side_effect = mocked_func
+        attr = [
+            {'key': 'argo.ams_TOKEN2', 'value': '--token'}
+        ]
+        conf = [
+            {'key': 'maxCheckAttempts', 'value': '4'},
+            {'key': 'timeout', 'value': '70'},
+            {'key': 'path', 'value':
+                '/usr/libexec/argo-monitoring/probes/argo'},
+            {'key': 'interval', 'value': '6'},
+            {'key': 'retryInterval', 'value': '4'}
+        ]
+        data = {
+            'id': self.metrictemplate1.id,
+            'name': 'argo.AMS-Check-new',
+            'mtype': 'Active',
+            'tags': ['test_tag1', 'test_tag2'],
+            'description': 'New description.',
+            'probeversion': 'ams-probe (0.1.11)',
+            'parent': 'argo.AMS-Check',
+            'probeexecutable': 'ams-probe-new',
+            'config': json.dumps(conf),
+            'attribute': json.dumps(attr),
+            'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
+            'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
+            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
+            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change metric templates.'
+        )
+        self.assertFalse(update.called)
+        mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
+        versions = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=mt
+        )
+        self.assertEqual(versions.count(), 2)
+        comment_set = set()
+        for item in json.loads(versions[0].version_comment):
+            comment_set.add(json.dumps(item))
+        self.assertEqual(
+            comment_set,
+            {
+                '{"changed": {"fields": ["config"], '
+                '"object": ["maxCheckAttempts", "path", "timeout"]}}',
+                '{"changed": {"fields": ["probekey"]}}'
+            }
+        )
+        self.assertEqual(mt.name, 'argo.AMS-Check')
+        self.assertEqual(mt.mtype.name, 'Active')
+        self.assertEqual(len(mt.tags.all()), 2)
+        self.assertTrue(self.tag3 in mt.tags.all())
+        self.assertTrue(self.tag4 in mt.tags.all())
+        self.assertEqual(mt.probeexecutable, '["ams-probe"]')
+        self.assertEqual(
+            mt.description,
+            'Some description of argo.AMS-Check metric template.'
+        )
+        self.assertEqual(mt.parent, '')
+        self.assertEqual(
+            mt.config,
+            '["maxCheckAttempts 4", "timeout 70", '
+            '"path /usr/libexec/argo-monitoring/", '
+            '"interval 5", "retryInterval 3"]'
+        )
+        self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
+        self.assertEqual(mt.dependency, '')
+        self.assertEqual(mt.flags, '["OBSESS 1"]')
+        self.assertEqual(mt.files, '')
+        self.assertEqual(mt.parameter, '["--project EGI"]')
+        self.assertEqual(mt.fileparameter, '')
+        self.assertEqual(versions[0].name, mt.name)
+        self.assertEqual(versions[0].mtype, mt.mtype)
+        self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
+        self.assertEqual(versions[0].probekey, mt.probekey)
+        self.assertEqual(versions[0].description, mt.description)
+        self.assertEqual(versions[0].parent, mt.parent)
+        self.assertEqual(versions[0].probeexecutable, mt.probeexecutable)
+        self.assertEqual(versions[0].config, mt.config)
+        self.assertEqual(versions[0].attribute, mt.attribute)
+        self.assertEqual(versions[0].dependency, mt.dependency)
+        self.assertEqual(versions[0].flags, mt.flags)
+        self.assertEqual(versions[0].files, mt.files)
+        self.assertEqual(versions[0].parameter, mt.parameter)
+        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
+
+    @patch('Poem.api.internal_views.metrictemplates.update_metrics')
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    def test_put_metrictemplate_with_new_probekey_tenant_user(
+            self, inline, update
+    ):
+        inline.side_effect = mocked_inline_metric_for_db
+        update.side_effect = mocked_func
+        attr = [
+            {'key': 'argo.ams_TOKEN2', 'value': '--token'}
+        ]
+        conf = [
+            {'key': 'maxCheckAttempts', 'value': '4'},
+            {'key': 'timeout', 'value': '70'},
+            {'key': 'path', 'value':
+                '/usr/libexec/argo-monitoring/probes/argo'},
+            {'key': 'interval', 'value': '6'},
+            {'key': 'retryInterval', 'value': '4'}
+        ]
+        data = {
+            'id': self.metrictemplate1.id,
+            'name': 'argo.AMS-Check-new',
+            'mtype': 'Active',
+            'tags': ['test_tag1', 'test_tag2'],
+            'description': 'New description.',
+            'probeversion': 'ams-probe (0.1.11)',
+            'parent': 'argo.AMS-Check',
+            'probeexecutable': 'ams-probe-new',
+            'config': json.dumps(conf),
+            'attribute': json.dumps(attr),
+            'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
+            'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
+            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
+            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change metric templates.'
+        )
+        self.assertFalse(update.called)
+        mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
+        versions = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=mt
+        )
+        self.assertEqual(versions.count(), 2)
+        comment_set = set()
+        for item in json.loads(versions[0].version_comment):
+            comment_set.add(json.dumps(item))
+        self.assertEqual(
+            comment_set,
+            {
+                '{"changed": {"fields": ["config"], '
+                '"object": ["maxCheckAttempts", "path", "timeout"]}}',
+                '{"changed": {"fields": ["probekey"]}}'
+            }
+        )
+        self.assertEqual(mt.name, 'argo.AMS-Check')
+        self.assertEqual(mt.mtype.name, 'Active')
+        self.assertEqual(len(mt.tags.all()), 2)
+        self.assertTrue(self.tag3 in mt.tags.all())
+        self.assertTrue(self.tag4 in mt.tags.all())
+        self.assertEqual(mt.probeexecutable, '["ams-probe"]')
+        self.assertEqual(
+            mt.description,
+            'Some description of argo.AMS-Check metric template.'
+        )
+        self.assertEqual(mt.parent, '')
+        self.assertEqual(
+            mt.config,
+            '["maxCheckAttempts 4", "timeout 70", '
+            '"path /usr/libexec/argo-monitoring/", '
+            '"interval 5", "retryInterval 3"]'
+        )
+        self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
+        self.assertEqual(mt.dependency, '')
+        self.assertEqual(mt.flags, '["OBSESS 1"]')
+        self.assertEqual(mt.files, '')
+        self.assertEqual(mt.parameter, '["--project EGI"]')
+        self.assertEqual(mt.fileparameter, '')
+        self.assertEqual(versions[0].name, mt.name)
+        self.assertEqual(versions[0].mtype, mt.mtype)
+        self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
+        self.assertEqual(versions[0].probekey, mt.probekey)
+        self.assertEqual(versions[0].description, mt.description)
+        self.assertEqual(versions[0].parent, mt.parent)
+        self.assertEqual(versions[0].probeexecutable, mt.probeexecutable)
+        self.assertEqual(versions[0].config, mt.config)
+        self.assertEqual(versions[0].attribute, mt.attribute)
+        self.assertEqual(versions[0].dependency, mt.dependency)
+        self.assertEqual(versions[0].flags, mt.flags)
+        self.assertEqual(versions[0].files, mt.files)
+        self.assertEqual(versions[0].parameter, mt.parameter)
+        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
+
+    @patch('Poem.api.internal_views.metrictemplates.update_metrics')
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    def test_put_metrictemplate_with_new_probekey_nonexisting_tag_sp_superusr(
             self, inline, update
     ):
         inline.side_effect = mocked_inline_metric_for_db
@@ -2617,7 +3841,8 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             name='new_tag'
         )
         request = self.factory.put(self.url, content, content_type=content_type)
-        force_authenticate(request, user=self.user)
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertFalse(update.called)
@@ -2692,7 +3917,339 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
 
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
-    def test_put_metrictemplate_with_new_probekey_no_tag(self, inline, update):
+    def test_put_metrictemplate_with_new_probekey_nonexisting_tag_sp_user(
+            self, inline, update
+    ):
+        inline.side_effect = mocked_inline_metric_for_db
+        update.side_effect = mocked_func
+        attr = [
+            {'key': 'argo.ams_TOKEN2', 'value': '--token'}
+        ]
+        conf = [
+            {'key': 'maxCheckAttempts', 'value': '4'},
+            {'key': 'timeout', 'value': '70'},
+            {'key': 'path', 'value':
+                '/usr/libexec/argo-monitoring/probes/argo'},
+            {'key': 'interval', 'value': '6'},
+            {'key': 'retryInterval', 'value': '4'}
+        ]
+        data = {
+            'id': self.metrictemplate1.id,
+            'name': 'argo.AMS-Check-new',
+            'mtype': 'Active',
+            'tags': ['test_tag1', 'new_tag'],
+            'description': 'New description.',
+            'probeversion': 'ams-probe (0.1.11)',
+            'parent': 'argo.AMS-Check',
+            'probeexecutable': 'ams-probe-new',
+            'config': json.dumps(conf),
+            'attribute': json.dumps(attr),
+            'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
+            'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
+            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
+            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+        }
+        content, content_type = encode_data(data)
+        self.assertRaises(
+            admin_models.MetricTags.DoesNotExist,
+            admin_models.MetricTags.objects.get,
+            name='new_tag'
+        )
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change metric templates.'
+        )
+        self.assertFalse(update.called)
+        mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
+        self.assertRaises(
+            admin_models.MetricTags.DoesNotExist,
+            admin_models.MetricTags.objects.get,
+            name='new_tag'
+        )
+        versions = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=mt
+        )
+        self.assertEqual(versions.count(), 2)
+        comment_set = set()
+        for item in json.loads(versions[0].version_comment):
+            comment_set.add(json.dumps(item))
+        self.assertEqual(
+            comment_set,
+            {
+                '{"changed": {"fields": ["config"], '
+                '"object": ["maxCheckAttempts", "path", "timeout"]}}',
+                '{"changed": {"fields": ["probekey"]}}'
+            }
+        )
+        self.assertEqual(mt.name, 'argo.AMS-Check')
+        self.assertEqual(mt.mtype.name, 'Active')
+        self.assertEqual(len(mt.tags.all()), 2)
+        self.assertTrue(self.tag3 in mt.tags.all())
+        self.assertTrue(self.tag4 in mt.tags.all())
+        self.assertEqual(mt.probeexecutable, '["ams-probe"]')
+        self.assertEqual(
+            mt.description,
+            'Some description of argo.AMS-Check metric template.'
+        )
+        self.assertEqual(mt.parent, '')
+        self.assertEqual(
+            mt.config,
+            '["maxCheckAttempts 4", "timeout 70", '
+            '"path /usr/libexec/argo-monitoring/", '
+            '"interval 5", "retryInterval 3"]'
+        )
+        self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
+        self.assertEqual(mt.dependency, '')
+        self.assertEqual(mt.flags, '["OBSESS 1"]')
+        self.assertEqual(mt.files, '')
+        self.assertEqual(mt.parameter, '["--project EGI"]')
+        self.assertEqual(mt.fileparameter, '')
+        self.assertEqual(versions[0].name, mt.name)
+        self.assertEqual(versions[0].mtype, mt.mtype)
+        self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
+        self.assertEqual(versions[0].probekey, mt.probekey)
+        self.assertEqual(versions[0].description, mt.description)
+        self.assertEqual(versions[0].parent, mt.parent)
+        self.assertEqual(versions[0].probeexecutable, mt.probeexecutable)
+        self.assertEqual(versions[0].config, mt.config)
+        self.assertEqual(versions[0].attribute, mt.attribute)
+        self.assertEqual(versions[0].dependency, mt.dependency)
+        self.assertEqual(versions[0].flags, mt.flags)
+        self.assertEqual(versions[0].files, mt.files)
+        self.assertEqual(versions[0].parameter, mt.parameter)
+        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
+
+    @patch('Poem.api.internal_views.metrictemplates.update_metrics')
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    def test_put_metrictemplate_with_new_probekey_nonexisting_tag_tenant_susr(
+            self, inline, update
+    ):
+        inline.side_effect = mocked_inline_metric_for_db
+        update.side_effect = mocked_func
+        attr = [
+            {'key': 'argo.ams_TOKEN2', 'value': '--token'}
+        ]
+        conf = [
+            {'key': 'maxCheckAttempts', 'value': '4'},
+            {'key': 'timeout', 'value': '70'},
+            {'key': 'path', 'value':
+                '/usr/libexec/argo-monitoring/probes/argo'},
+            {'key': 'interval', 'value': '6'},
+            {'key': 'retryInterval', 'value': '4'}
+        ]
+        data = {
+            'id': self.metrictemplate1.id,
+            'name': 'argo.AMS-Check-new',
+            'mtype': 'Active',
+            'tags': ['test_tag1', 'new_tag'],
+            'description': 'New description.',
+            'probeversion': 'ams-probe (0.1.11)',
+            'parent': 'argo.AMS-Check',
+            'probeexecutable': 'ams-probe-new',
+            'config': json.dumps(conf),
+            'attribute': json.dumps(attr),
+            'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
+            'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
+            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
+            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+        }
+        content, content_type = encode_data(data)
+        self.assertRaises(
+            admin_models.MetricTags.DoesNotExist,
+            admin_models.MetricTags.objects.get,
+            name='new_tag'
+        )
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change metric templates.'
+        )
+        self.assertFalse(update.called)
+        mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
+        self.assertRaises(
+            admin_models.MetricTags.DoesNotExist,
+            admin_models.MetricTags.objects.get,
+            name='new_tag'
+        )
+        versions = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=mt
+        )
+        self.assertEqual(versions.count(), 2)
+        comment_set = set()
+        for item in json.loads(versions[0].version_comment):
+            comment_set.add(json.dumps(item))
+        self.assertEqual(
+            comment_set,
+            {
+                '{"changed": {"fields": ["config"], '
+                '"object": ["maxCheckAttempts", "path", "timeout"]}}',
+                '{"changed": {"fields": ["probekey"]}}'
+            }
+        )
+        self.assertEqual(mt.name, 'argo.AMS-Check')
+        self.assertEqual(mt.mtype.name, 'Active')
+        self.assertEqual(len(mt.tags.all()), 2)
+        self.assertTrue(self.tag3 in mt.tags.all())
+        self.assertTrue(self.tag4 in mt.tags.all())
+        self.assertEqual(mt.probeexecutable, '["ams-probe"]')
+        self.assertEqual(
+            mt.description,
+            'Some description of argo.AMS-Check metric template.'
+        )
+        self.assertEqual(mt.parent, '')
+        self.assertEqual(
+            mt.config,
+            '["maxCheckAttempts 4", "timeout 70", '
+            '"path /usr/libexec/argo-monitoring/", '
+            '"interval 5", "retryInterval 3"]'
+        )
+        self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
+        self.assertEqual(mt.dependency, '')
+        self.assertEqual(mt.flags, '["OBSESS 1"]')
+        self.assertEqual(mt.files, '')
+        self.assertEqual(mt.parameter, '["--project EGI"]')
+        self.assertEqual(mt.fileparameter, '')
+        self.assertEqual(versions[0].name, mt.name)
+        self.assertEqual(versions[0].mtype, mt.mtype)
+        self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
+        self.assertEqual(versions[0].probekey, mt.probekey)
+        self.assertEqual(versions[0].description, mt.description)
+        self.assertEqual(versions[0].parent, mt.parent)
+        self.assertEqual(versions[0].probeexecutable, mt.probeexecutable)
+        self.assertEqual(versions[0].config, mt.config)
+        self.assertEqual(versions[0].attribute, mt.attribute)
+        self.assertEqual(versions[0].dependency, mt.dependency)
+        self.assertEqual(versions[0].flags, mt.flags)
+        self.assertEqual(versions[0].files, mt.files)
+        self.assertEqual(versions[0].parameter, mt.parameter)
+        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
+
+    @patch('Poem.api.internal_views.metrictemplates.update_metrics')
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    def test_put_metrictemplate_with_new_probekey_nonexisting_tag_tenant_usr(
+            self, inline, update
+    ):
+        inline.side_effect = mocked_inline_metric_for_db
+        update.side_effect = mocked_func
+        attr = [
+            {'key': 'argo.ams_TOKEN2', 'value': '--token'}
+        ]
+        conf = [
+            {'key': 'maxCheckAttempts', 'value': '4'},
+            {'key': 'timeout', 'value': '70'},
+            {'key': 'path', 'value':
+                '/usr/libexec/argo-monitoring/probes/argo'},
+            {'key': 'interval', 'value': '6'},
+            {'key': 'retryInterval', 'value': '4'}
+        ]
+        data = {
+            'id': self.metrictemplate1.id,
+            'name': 'argo.AMS-Check-new',
+            'mtype': 'Active',
+            'tags': ['test_tag1', 'new_tag'],
+            'description': 'New description.',
+            'probeversion': 'ams-probe (0.1.11)',
+            'parent': 'argo.AMS-Check',
+            'probeexecutable': 'ams-probe-new',
+            'config': json.dumps(conf),
+            'attribute': json.dumps(attr),
+            'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
+            'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
+            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
+            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+        }
+        content, content_type = encode_data(data)
+        self.assertRaises(
+            admin_models.MetricTags.DoesNotExist,
+            admin_models.MetricTags.objects.get,
+            name='new_tag'
+        )
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change metric templates.'
+        )
+        self.assertFalse(update.called)
+        mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
+        self.assertRaises(
+            admin_models.MetricTags.DoesNotExist,
+            admin_models.MetricTags.objects.get,
+            name='new_tag'
+        )
+        versions = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=mt
+        )
+        self.assertEqual(versions.count(), 2)
+        comment_set = set()
+        for item in json.loads(versions[0].version_comment):
+            comment_set.add(json.dumps(item))
+        self.assertEqual(
+            comment_set,
+            {
+                '{"changed": {"fields": ["config"], '
+                '"object": ["maxCheckAttempts", "path", "timeout"]}}',
+                '{"changed": {"fields": ["probekey"]}}'
+            }
+        )
+        self.assertEqual(mt.name, 'argo.AMS-Check')
+        self.assertEqual(mt.mtype.name, 'Active')
+        self.assertEqual(len(mt.tags.all()), 2)
+        self.assertTrue(self.tag3 in mt.tags.all())
+        self.assertTrue(self.tag4 in mt.tags.all())
+        self.assertEqual(mt.probeexecutable, '["ams-probe"]')
+        self.assertEqual(
+            mt.description,
+            'Some description of argo.AMS-Check metric template.'
+        )
+        self.assertEqual(mt.parent, '')
+        self.assertEqual(
+            mt.config,
+            '["maxCheckAttempts 4", "timeout 70", '
+            '"path /usr/libexec/argo-monitoring/", '
+            '"interval 5", "retryInterval 3"]'
+        )
+        self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
+        self.assertEqual(mt.dependency, '')
+        self.assertEqual(mt.flags, '["OBSESS 1"]')
+        self.assertEqual(mt.files, '')
+        self.assertEqual(mt.parameter, '["--project EGI"]')
+        self.assertEqual(mt.fileparameter, '')
+        self.assertEqual(versions[0].name, mt.name)
+        self.assertEqual(versions[0].mtype, mt.mtype)
+        self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
+        self.assertEqual(versions[0].probekey, mt.probekey)
+        self.assertEqual(versions[0].description, mt.description)
+        self.assertEqual(versions[0].parent, mt.parent)
+        self.assertEqual(versions[0].probeexecutable, mt.probeexecutable)
+        self.assertEqual(versions[0].config, mt.config)
+        self.assertEqual(versions[0].attribute, mt.attribute)
+        self.assertEqual(versions[0].dependency, mt.dependency)
+        self.assertEqual(versions[0].flags, mt.flags)
+        self.assertEqual(versions[0].files, mt.files)
+        self.assertEqual(versions[0].parameter, mt.parameter)
+        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
+
+    @patch('Poem.api.internal_views.metrictemplates.update_metrics')
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    def test_put_metrictemplate_with_new_probekey_no_tag_sp_superuser(
+            self, inline, update
+    ):
         inline.side_effect = mocked_inline_metric_for_db
         update.side_effect = mocked_func
         attr = [
@@ -2725,7 +4282,8 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
-        force_authenticate(request, user=self.user)
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertFalse(update.called)
@@ -2797,7 +4355,407 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
 
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
-    def test_put_passive_metric_template(self, inline, update):
+    def test_put_metrictemplate_with_new_probekey_no_tag_sp_user(
+            self, inline, update
+    ):
+        inline.side_effect = mocked_inline_metric_for_db
+        update.side_effect = mocked_func
+        attr = [
+            {'key': 'argo.ams_TOKEN2', 'value': '--token'}
+        ]
+        conf = [
+            {'key': 'maxCheckAttempts', 'value': '4'},
+            {'key': 'timeout', 'value': '70'},
+            {'key': 'path', 'value':
+                '/usr/libexec/argo-monitoring/probes/argo'},
+            {'key': 'interval', 'value': '6'},
+            {'key': 'retryInterval', 'value': '4'}
+        ]
+        data = {
+            'id': self.metrictemplate1.id,
+            'name': 'argo.AMS-Check-new',
+            'mtype': 'Active',
+            'tags': [],
+            'description': 'New description.',
+            'probeversion': 'ams-probe (0.1.11)',
+            'parent': 'argo.AMS-Check',
+            'probeexecutable': 'ams-probe-new',
+            'config': json.dumps(conf),
+            'attribute': json.dumps(attr),
+            'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
+            'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
+            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
+            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change metric templates.'
+        )
+        self.assertFalse(update.called)
+        mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
+        versions = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=mt
+        )
+        self.assertEqual(versions.count(), 2)
+        comment_set = set()
+        for item in json.loads(versions[0].version_comment):
+            comment_set.add(json.dumps(item))
+        self.assertEqual(
+            comment_set,
+            {
+                '{"changed": {"fields": ["config"], '
+                '"object": ["maxCheckAttempts", "path", "timeout"]}}',
+                '{"changed": {"fields": ["probekey"]}}'
+            }
+        )
+        self.assertEqual(mt.name, 'argo.AMS-Check')
+        self.assertEqual(mt.mtype.name, 'Active')
+        self.assertEqual(len(mt.tags.all()), 2)
+        self.assertTrue(self.tag3 in mt.tags.all())
+        self.assertTrue(self.tag4 in mt.tags.all())
+        self.assertEqual(mt.probeexecutable, '["ams-probe"]')
+        self.assertEqual(
+            mt.description,
+            'Some description of argo.AMS-Check metric template.'
+        )
+        self.assertEqual(mt.parent, '')
+        self.assertEqual(
+            mt.config,
+            '["maxCheckAttempts 4", "timeout 70", '
+            '"path /usr/libexec/argo-monitoring/", '
+            '"interval 5", "retryInterval 3"]'
+        )
+        self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
+        self.assertEqual(mt.dependency, '')
+        self.assertEqual(mt.flags, '["OBSESS 1"]')
+        self.assertEqual(mt.files, '')
+        self.assertEqual(mt.parameter, '["--project EGI"]')
+        self.assertEqual(mt.fileparameter, '')
+        self.assertEqual(versions[0].name, mt.name)
+        self.assertEqual(versions[0].mtype, mt.mtype)
+        self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
+        self.assertEqual(versions[0].probekey, mt.probekey)
+        self.assertEqual(versions[0].description, mt.description)
+        self.assertEqual(versions[0].parent, mt.parent)
+        self.assertEqual(versions[0].probeexecutable, mt.probeexecutable)
+        self.assertEqual(versions[0].config, mt.config)
+        self.assertEqual(versions[0].attribute, mt.attribute)
+        self.assertEqual(versions[0].dependency, mt.dependency)
+        self.assertEqual(versions[0].flags, mt.flags)
+        self.assertEqual(versions[0].files, mt.files)
+        self.assertEqual(versions[0].parameter, mt.parameter)
+        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
+
+    @patch('Poem.api.internal_views.metrictemplates.update_metrics')
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    def test_put_metrictemplate_with_new_probekey_no_tag_tenant_superuser(
+            self, inline, update
+    ):
+        inline.side_effect = mocked_inline_metric_for_db
+        update.side_effect = mocked_func
+        attr = [
+            {'key': 'argo.ams_TOKEN2', 'value': '--token'}
+        ]
+        conf = [
+            {'key': 'maxCheckAttempts', 'value': '4'},
+            {'key': 'timeout', 'value': '70'},
+            {'key': 'path', 'value':
+                '/usr/libexec/argo-monitoring/probes/argo'},
+            {'key': 'interval', 'value': '6'},
+            {'key': 'retryInterval', 'value': '4'}
+        ]
+        data = {
+            'id': self.metrictemplate1.id,
+            'name': 'argo.AMS-Check-new',
+            'mtype': 'Active',
+            'tags': [],
+            'description': 'New description.',
+            'probeversion': 'ams-probe (0.1.11)',
+            'parent': 'argo.AMS-Check',
+            'probeexecutable': 'ams-probe-new',
+            'config': json.dumps(conf),
+            'attribute': json.dumps(attr),
+            'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
+            'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
+            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
+            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change metric templates.'
+        )
+        self.assertFalse(update.called)
+        mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
+        versions = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=mt
+        )
+        self.assertEqual(versions.count(), 2)
+        comment_set = set()
+        for item in json.loads(versions[0].version_comment):
+            comment_set.add(json.dumps(item))
+        self.assertEqual(
+            comment_set,
+            {
+                '{"changed": {"fields": ["config"], '
+                '"object": ["maxCheckAttempts", "path", "timeout"]}}',
+                '{"changed": {"fields": ["probekey"]}}'
+            }
+        )
+        self.assertEqual(mt.name, 'argo.AMS-Check')
+        self.assertEqual(mt.mtype.name, 'Active')
+        self.assertEqual(len(mt.tags.all()), 2)
+        self.assertTrue(self.tag3 in mt.tags.all())
+        self.assertTrue(self.tag4 in mt.tags.all())
+        self.assertEqual(mt.probeexecutable, '["ams-probe"]')
+        self.assertEqual(
+            mt.description,
+            'Some description of argo.AMS-Check metric template.'
+        )
+        self.assertEqual(mt.parent, '')
+        self.assertEqual(
+            mt.config,
+            '["maxCheckAttempts 4", "timeout 70", '
+            '"path /usr/libexec/argo-monitoring/", '
+            '"interval 5", "retryInterval 3"]'
+        )
+        self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
+        self.assertEqual(mt.dependency, '')
+        self.assertEqual(mt.flags, '["OBSESS 1"]')
+        self.assertEqual(mt.files, '')
+        self.assertEqual(mt.parameter, '["--project EGI"]')
+        self.assertEqual(mt.fileparameter, '')
+        self.assertEqual(versions[0].name, mt.name)
+        self.assertEqual(versions[0].mtype, mt.mtype)
+        self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
+        self.assertEqual(versions[0].probekey, mt.probekey)
+        self.assertEqual(versions[0].description, mt.description)
+        self.assertEqual(versions[0].parent, mt.parent)
+        self.assertEqual(versions[0].probeexecutable, mt.probeexecutable)
+        self.assertEqual(versions[0].config, mt.config)
+        self.assertEqual(versions[0].attribute, mt.attribute)
+        self.assertEqual(versions[0].dependency, mt.dependency)
+        self.assertEqual(versions[0].flags, mt.flags)
+        self.assertEqual(versions[0].files, mt.files)
+        self.assertEqual(versions[0].parameter, mt.parameter)
+        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
+
+    @patch('Poem.api.internal_views.metrictemplates.update_metrics')
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    def test_put_metrictemplate_with_new_probekey_no_tag_tenant_user(
+            self, inline, update
+    ):
+        inline.side_effect = mocked_inline_metric_for_db
+        update.side_effect = mocked_func
+        attr = [
+            {'key': 'argo.ams_TOKEN2', 'value': '--token'}
+        ]
+        conf = [
+            {'key': 'maxCheckAttempts', 'value': '4'},
+            {'key': 'timeout', 'value': '70'},
+            {'key': 'path', 'value':
+                '/usr/libexec/argo-monitoring/probes/argo'},
+            {'key': 'interval', 'value': '6'},
+            {'key': 'retryInterval', 'value': '4'}
+        ]
+        data = {
+            'id': self.metrictemplate1.id,
+            'name': 'argo.AMS-Check-new',
+            'mtype': 'Active',
+            'tags': [],
+            'description': 'New description.',
+            'probeversion': 'ams-probe (0.1.11)',
+            'parent': 'argo.AMS-Check',
+            'probeexecutable': 'ams-probe-new',
+            'config': json.dumps(conf),
+            'attribute': json.dumps(attr),
+            'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
+            'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
+            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
+            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change metric templates.'
+        )
+        self.assertFalse(update.called)
+        mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
+        versions = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=mt
+        )
+        self.assertEqual(versions.count(), 2)
+        comment_set = set()
+        for item in json.loads(versions[0].version_comment):
+            comment_set.add(json.dumps(item))
+        self.assertEqual(
+            comment_set,
+            {
+                '{"changed": {"fields": ["config"], '
+                '"object": ["maxCheckAttempts", "path", "timeout"]}}',
+                '{"changed": {"fields": ["probekey"]}}'
+            }
+        )
+        self.assertEqual(mt.name, 'argo.AMS-Check')
+        self.assertEqual(mt.mtype.name, 'Active')
+        self.assertEqual(len(mt.tags.all()), 2)
+        self.assertTrue(self.tag3 in mt.tags.all())
+        self.assertTrue(self.tag4 in mt.tags.all())
+        self.assertEqual(mt.probeexecutable, '["ams-probe"]')
+        self.assertEqual(
+            mt.description,
+            'Some description of argo.AMS-Check metric template.'
+        )
+        self.assertEqual(mt.parent, '')
+        self.assertEqual(
+            mt.config,
+            '["maxCheckAttempts 4", "timeout 70", '
+            '"path /usr/libexec/argo-monitoring/", '
+            '"interval 5", "retryInterval 3"]'
+        )
+        self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
+        self.assertEqual(mt.dependency, '')
+        self.assertEqual(mt.flags, '["OBSESS 1"]')
+        self.assertEqual(mt.files, '')
+        self.assertEqual(mt.parameter, '["--project EGI"]')
+        self.assertEqual(mt.fileparameter, '')
+        self.assertEqual(versions[0].name, mt.name)
+        self.assertEqual(versions[0].mtype, mt.mtype)
+        self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
+        self.assertEqual(versions[0].probekey, mt.probekey)
+        self.assertEqual(versions[0].description, mt.description)
+        self.assertEqual(versions[0].parent, mt.parent)
+        self.assertEqual(versions[0].probeexecutable, mt.probeexecutable)
+        self.assertEqual(versions[0].config, mt.config)
+        self.assertEqual(versions[0].attribute, mt.attribute)
+        self.assertEqual(versions[0].dependency, mt.dependency)
+        self.assertEqual(versions[0].flags, mt.flags)
+        self.assertEqual(versions[0].files, mt.files)
+        self.assertEqual(versions[0].parameter, mt.parameter)
+        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
+
+    @patch('Poem.api.internal_views.metrictemplates.update_metrics')
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    def test_put_metrictemplate_with_new_probekey_no_tag_tenant_superuser(
+            self, inline, update
+    ):
+        inline.side_effect = mocked_inline_metric_for_db
+        update.side_effect = mocked_func
+        attr = [
+            {'key': 'argo.ams_TOKEN2', 'value': '--token'}
+        ]
+        conf = [
+            {'key': 'maxCheckAttempts', 'value': '4'},
+            {'key': 'timeout', 'value': '70'},
+            {'key': 'path', 'value':
+                '/usr/libexec/argo-monitoring/probes/argo'},
+            {'key': 'interval', 'value': '6'},
+            {'key': 'retryInterval', 'value': '4'}
+        ]
+        data = {
+            'id': self.metrictemplate1.id,
+            'name': 'argo.AMS-Check-new',
+            'mtype': 'Active',
+            'tags': [],
+            'description': 'New description.',
+            'probeversion': 'ams-probe (0.1.11)',
+            'parent': 'argo.AMS-Check',
+            'probeexecutable': 'ams-probe-new',
+            'config': json.dumps(conf),
+            'attribute': json.dumps(attr),
+            'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
+            'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
+            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
+            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change metric templates.'
+        )
+        self.assertFalse(update.called)
+        mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
+        versions = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=mt
+        )
+        self.assertEqual(versions.count(), 2)
+        comment_set = set()
+        for item in json.loads(versions[0].version_comment):
+            comment_set.add(json.dumps(item))
+        self.assertEqual(
+            comment_set,
+            {
+                '{"changed": {"fields": ["config"], '
+                '"object": ["maxCheckAttempts", "path", "timeout"]}}',
+                '{"changed": {"fields": ["probekey"]}}'
+            }
+        )
+        self.assertEqual(mt.name, 'argo.AMS-Check')
+        self.assertEqual(mt.mtype.name, 'Active')
+        self.assertEqual(len(mt.tags.all()), 2)
+        self.assertTrue(self.tag3 in mt.tags.all())
+        self.assertTrue(self.tag4 in mt.tags.all())
+        self.assertEqual(mt.probeexecutable, '["ams-probe"]')
+        self.assertEqual(
+            mt.description,
+            'Some description of argo.AMS-Check metric template.'
+        )
+        self.assertEqual(mt.parent, '')
+        self.assertEqual(
+            mt.config,
+            '["maxCheckAttempts 4", "timeout 70", '
+            '"path /usr/libexec/argo-monitoring/", '
+            '"interval 5", "retryInterval 3"]'
+        )
+        self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
+        self.assertEqual(mt.dependency, '')
+        self.assertEqual(mt.flags, '["OBSESS 1"]')
+        self.assertEqual(mt.files, '')
+        self.assertEqual(mt.parameter, '["--project EGI"]')
+        self.assertEqual(mt.fileparameter, '')
+        self.assertEqual(versions[0].name, mt.name)
+        self.assertEqual(versions[0].mtype, mt.mtype)
+        self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
+        self.assertEqual(versions[0].probekey, mt.probekey)
+        self.assertEqual(versions[0].description, mt.description)
+        self.assertEqual(versions[0].parent, mt.parent)
+        self.assertEqual(versions[0].probeexecutable, mt.probeexecutable)
+        self.assertEqual(versions[0].config, mt.config)
+        self.assertEqual(versions[0].attribute, mt.attribute)
+        self.assertEqual(versions[0].dependency, mt.dependency)
+        self.assertEqual(versions[0].flags, mt.flags)
+        self.assertEqual(versions[0].files, mt.files)
+        self.assertEqual(versions[0].parameter, mt.parameter)
+        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
+
+    @patch('Poem.api.internal_views.metrictemplates.update_metrics')
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    def test_put_passive_metric_template_sp_superusr(self, inline, update):
         inline.side_effect = mocked_inline_metric_for_db
         update.side_effect = mocked_func
         data = {
@@ -2819,7 +4777,8 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
-        force_authenticate(request, user=self.user)
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate2.id)
@@ -2862,7 +4821,212 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
 
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
-    def test_put_metrictemplate_with_existing_name(self, inline, update):
+    def test_put_passive_metric_template_sp_user(self, inline, update):
+        inline.side_effect = mocked_inline_metric_for_db
+        update.side_effect = mocked_func
+        data = {
+            'id': self.metrictemplate2.id,
+            'name': 'org.apel.APEL-Pub-new',
+            'probeversion': '',
+            'description': 'Added description for org.apel.APEL-Pub-new.',
+            'mtype': 'Passive',
+            'tags': ['test_tag1'],
+            'probeexecutable': '',
+            'parent': '',
+            'config': json.dumps([{'key': '', 'value': ''}]),
+            'attribute': json.dumps([{'key': '', 'value': ''}]),
+            'dependency': json.dumps([{'key': '', 'value': ''}]),
+            'parameter': json.dumps([{'key': '', 'value': ''}]),
+            'flags': json.dumps([{'key': 'PASSIVE', 'value': '1'}]),
+            'files': json.dumps([{'key': '', 'value': ''}]),
+            'fileparameter': json.dumps([{'key': '', 'value': ''}]),
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change metric templates.'
+        )
+        mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate2.id)
+        self.assertFalse(update.called)
+        versions = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=mt
+        )
+        self.assertEqual(versions.count(), 1)
+        self.assertEqual(mt.name, 'org.apel.APEL-Pub')
+        self.assertEqual(mt.mtype.name, 'Passive')
+        self.assertEqual(len(mt.tags.all()), 1)
+        self.assertTrue(self.tag2 in mt.tags.all())
+        self.assertEqual(mt.description, '')
+        self.assertEqual(mt.probeexecutable, '')
+        self.assertEqual(mt.parent, '')
+        self.assertEqual(mt.config, '')
+        self.assertEqual(mt.attribute, '')
+        self.assertEqual(mt.dependency, '')
+        self.assertEqual(mt.flags, '["OBSESS 1", "PASSIVE 1"]')
+        self.assertEqual(mt.files, '')
+        self.assertEqual(mt.parameter, '')
+        self.assertEqual(mt.fileparameter, '')
+        self.assertEqual(versions[0].name, mt.name)
+        self.assertEqual(versions[0].mtype, mt.mtype)
+        self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
+        self.assertEqual(versions[0].probekey, mt.probekey)
+        self.assertEqual(versions[0].description, mt.description)
+        self.assertEqual(versions[0].parent, mt.parent)
+        self.assertEqual(versions[0].probeexecutable, mt.probeexecutable)
+        self.assertEqual(versions[0].config, mt.config)
+        self.assertEqual(versions[0].attribute, mt.attribute)
+        self.assertEqual(versions[0].dependency, mt.dependency)
+        self.assertEqual(versions[0].flags, mt.flags)
+        self.assertEqual(versions[0].files, mt.files)
+        self.assertEqual(versions[0].parameter, mt.parameter)
+        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
+
+    @patch('Poem.api.internal_views.metrictemplates.update_metrics')
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    def test_put_passive_metric_template_tenant_superuser(
+            self, inline, update
+    ):
+        inline.side_effect = mocked_inline_metric_for_db
+        update.side_effect = mocked_func
+        data = {
+            'id': self.metrictemplate2.id,
+            'name': 'org.apel.APEL-Pub-new',
+            'probeversion': '',
+            'description': 'Added description for org.apel.APEL-Pub-new.',
+            'mtype': 'Passive',
+            'tags': ['test_tag1'],
+            'probeexecutable': '',
+            'parent': '',
+            'config': json.dumps([{'key': '', 'value': ''}]),
+            'attribute': json.dumps([{'key': '', 'value': ''}]),
+            'dependency': json.dumps([{'key': '', 'value': ''}]),
+            'parameter': json.dumps([{'key': '', 'value': ''}]),
+            'flags': json.dumps([{'key': 'PASSIVE', 'value': '1'}]),
+            'files': json.dumps([{'key': '', 'value': ''}]),
+            'fileparameter': json.dumps([{'key': '', 'value': ''}]),
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change metric templates.'
+        )
+        mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate2.id)
+        self.assertFalse(update.called)
+        versions = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=mt
+        )
+        self.assertEqual(versions.count(), 1)
+        self.assertEqual(mt.name, 'org.apel.APEL-Pub')
+        self.assertEqual(mt.mtype.name, 'Passive')
+        self.assertEqual(len(mt.tags.all()), 1)
+        self.assertTrue(self.tag2 in mt.tags.all())
+        self.assertEqual(mt.description, '')
+        self.assertEqual(mt.probeexecutable, '')
+        self.assertEqual(mt.parent, '')
+        self.assertEqual(mt.config, '')
+        self.assertEqual(mt.attribute, '')
+        self.assertEqual(mt.dependency, '')
+        self.assertEqual(mt.flags, '["OBSESS 1", "PASSIVE 1"]')
+        self.assertEqual(mt.files, '')
+        self.assertEqual(mt.parameter, '')
+        self.assertEqual(mt.fileparameter, '')
+        self.assertEqual(versions[0].name, mt.name)
+        self.assertEqual(versions[0].mtype, mt.mtype)
+        self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
+        self.assertEqual(versions[0].probekey, mt.probekey)
+        self.assertEqual(versions[0].description, mt.description)
+        self.assertEqual(versions[0].parent, mt.parent)
+        self.assertEqual(versions[0].probeexecutable, mt.probeexecutable)
+        self.assertEqual(versions[0].config, mt.config)
+        self.assertEqual(versions[0].attribute, mt.attribute)
+        self.assertEqual(versions[0].dependency, mt.dependency)
+        self.assertEqual(versions[0].flags, mt.flags)
+        self.assertEqual(versions[0].files, mt.files)
+        self.assertEqual(versions[0].parameter, mt.parameter)
+        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
+
+    @patch('Poem.api.internal_views.metrictemplates.update_metrics')
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    def test_put_passive_metric_template_tenant_user(self, inline, update):
+        inline.side_effect = mocked_inline_metric_for_db
+        update.side_effect = mocked_func
+        data = {
+            'id': self.metrictemplate2.id,
+            'name': 'org.apel.APEL-Pub-new',
+            'probeversion': '',
+            'description': 'Added description for org.apel.APEL-Pub-new.',
+            'mtype': 'Passive',
+            'tags': ['test_tag1'],
+            'probeexecutable': '',
+            'parent': '',
+            'config': json.dumps([{'key': '', 'value': ''}]),
+            'attribute': json.dumps([{'key': '', 'value': ''}]),
+            'dependency': json.dumps([{'key': '', 'value': ''}]),
+            'parameter': json.dumps([{'key': '', 'value': ''}]),
+            'flags': json.dumps([{'key': 'PASSIVE', 'value': '1'}]),
+            'files': json.dumps([{'key': '', 'value': ''}]),
+            'fileparameter': json.dumps([{'key': '', 'value': ''}]),
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change metric templates.'
+        )
+        mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate2.id)
+        self.assertFalse(update.called)
+        versions = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=mt
+        )
+        self.assertEqual(versions.count(), 1)
+        self.assertEqual(mt.name, 'org.apel.APEL-Pub')
+        self.assertEqual(mt.mtype.name, 'Passive')
+        self.assertEqual(len(mt.tags.all()), 1)
+        self.assertTrue(self.tag2 in mt.tags.all())
+        self.assertEqual(mt.description, '')
+        self.assertEqual(mt.probeexecutable, '')
+        self.assertEqual(mt.parent, '')
+        self.assertEqual(mt.config, '')
+        self.assertEqual(mt.attribute, '')
+        self.assertEqual(mt.dependency, '')
+        self.assertEqual(mt.flags, '["OBSESS 1", "PASSIVE 1"]')
+        self.assertEqual(mt.files, '')
+        self.assertEqual(mt.parameter, '')
+        self.assertEqual(mt.fileparameter, '')
+        self.assertEqual(versions[0].name, mt.name)
+        self.assertEqual(versions[0].mtype, mt.mtype)
+        self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
+        self.assertEqual(versions[0].probekey, mt.probekey)
+        self.assertEqual(versions[0].description, mt.description)
+        self.assertEqual(versions[0].parent, mt.parent)
+        self.assertEqual(versions[0].probeexecutable, mt.probeexecutable)
+        self.assertEqual(versions[0].config, mt.config)
+        self.assertEqual(versions[0].attribute, mt.attribute)
+        self.assertEqual(versions[0].dependency, mt.dependency)
+        self.assertEqual(versions[0].flags, mt.flags)
+        self.assertEqual(versions[0].files, mt.files)
+        self.assertEqual(versions[0].parameter, mt.parameter)
+        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
+
+    @patch('Poem.api.internal_views.metrictemplates.update_metrics')
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    def test_put_metrictemplate_with_existing_name_sp_superuser(
+            self, inline, update
+    ):
         inline.side_effect = mocked_inline_metric_for_db
         update.side_effect = mocked_func
         attr = [
@@ -2895,18 +5059,322 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
-        force_authenticate(request, user=self.user)
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(
-            response.data,
-            {'detail': 'Metric template with this name already exists.'}
+            response.data['detail'],
+            'Metric template with this name already exists.'
         )
         self.assertFalse(update.called)
 
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
-    def test_put_metrictemplate_with_nonexisting_probeversion(
+    def test_put_metrictemplate_with_existing_name_sp_user(
+            self, inline, update
+    ):
+        inline.side_effect = mocked_inline_metric_for_db
+        update.side_effect = mocked_func
+        attr = [
+            {'key': 'argo.ams_TOKEN', 'value': '--token'}
+        ]
+        conf = [
+            {'key': 'maxCheckAttempts', 'value': '3'},
+            {'key': 'timeout', 'value': '60'},
+            {'key': 'path', 'value':
+                '/usr/libexec/argo-monitoring/probes/argo'},
+            {'key': 'interval', 'value': '5'},
+            {'key': 'retryInterval', 'value': '3'}
+        ]
+        data = {
+            'id': self.metrictemplate1.id,
+            'name': 'org.apel.APEL-Pub',
+            'mtype': self.template_active,
+            'tags': ['test_tag1', 'test_tag2'],
+            'probeversion': 'ams-probe (0.1.7)',
+            'description': self.metrictemplate1.description,
+            'parent': '',
+            'probeexecutable': 'ams-probe',
+            'config': json.dumps(conf),
+            'attribute': json.dumps(attr),
+            'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
+            'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
+            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
+            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change metric templates.'
+        )
+        self.assertFalse(update.called)
+        mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
+        self.assertFalse(update.called)
+        versions = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=mt
+        ).order_by('-date_created')
+        self.assertEqual(versions.count(), 2)
+        self.assertEqual(versions[1].version_comment, 'Initial version.')
+        comment_set = set()
+        for item in json.loads(versions[0].version_comment):
+            comment_set.add(json.dumps(item))
+        self.assertEqual(
+            comment_set,
+            {
+                '{"changed": {"fields": ["config"], '
+                '"object": ["maxCheckAttempts", "path", "timeout"]}}',
+                '{"changed": {"fields": ["probekey"]}}'
+            }
+        )
+        self.assertEqual(mt.name, 'argo.AMS-Check')
+        self.assertEqual(mt.mtype.name, 'Active')
+        self.assertEqual(len(mt.tags.all()), 2)
+        self.assertTrue(self.tag3 in mt.tags.all())
+        self.assertTrue(self.tag4 in mt.tags.all())
+        self.assertEqual(
+            mt.description,
+            'Some description of argo.AMS-Check metric template.'
+        )
+        self.assertEqual(mt.parent, '')
+        self.assertEqual(mt.probeexecutable, '["ams-probe"]')
+        self.assertEqual(
+            mt.config,
+            '["maxCheckAttempts 4", "timeout 70", '
+            '"path /usr/libexec/argo-monitoring/", '
+            '"interval 5", "retryInterval 3"]'
+        )
+        self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
+        self.assertEqual(mt.dependency, '')
+        self.assertEqual(mt.flags, '["OBSESS 1"]')
+        self.assertEqual(mt.files, '')
+        self.assertEqual(mt.parameter, '["--project EGI"]')
+        self.assertEqual(mt.fileparameter, '')
+        self.assertEqual(versions[0].name, mt.name)
+        self.assertEqual(versions[0].mtype, mt.mtype)
+        self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
+        self.assertEqual(versions[0].probekey, mt.probekey)
+        self.assertEqual(versions[0].parent, mt.parent)
+        self.assertEqual(versions[0].probeexecutable, mt.probeexecutable)
+        self.assertEqual(versions[0].config, mt.config)
+        self.assertEqual(versions[0].attribute, mt.attribute)
+        self.assertEqual(versions[0].dependency, mt.dependency)
+        self.assertEqual(versions[0].flags, mt.flags)
+        self.assertEqual(versions[0].files, mt.files)
+        self.assertEqual(versions[0].parameter, mt.parameter)
+        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
+
+    @patch('Poem.api.internal_views.metrictemplates.update_metrics')
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    def test_put_metrictemplate_with_existing_name_tenant_superuser(
+            self, inline, update
+    ):
+        inline.side_effect = mocked_inline_metric_for_db
+        update.side_effect = mocked_func
+        attr = [
+            {'key': 'argo.ams_TOKEN', 'value': '--token'}
+        ]
+        conf = [
+            {'key': 'maxCheckAttempts', 'value': '3'},
+            {'key': 'timeout', 'value': '60'},
+            {'key': 'path', 'value':
+                '/usr/libexec/argo-monitoring/probes/argo'},
+            {'key': 'interval', 'value': '5'},
+            {'key': 'retryInterval', 'value': '3'}
+        ]
+        data = {
+            'id': self.metrictemplate1.id,
+            'name': 'org.apel.APEL-Pub',
+            'mtype': self.template_active,
+            'tags': ['test_tag1', 'test_tag2'],
+            'probeversion': 'ams-probe (0.1.7)',
+            'description': self.metrictemplate1.description,
+            'parent': '',
+            'probeexecutable': 'ams-probe',
+            'config': json.dumps(conf),
+            'attribute': json.dumps(attr),
+            'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
+            'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
+            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
+            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change metric templates.'
+        )
+        self.assertFalse(update.called)
+        mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
+        self.assertFalse(update.called)
+        versions = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=mt
+        ).order_by('-date_created')
+        self.assertEqual(versions.count(), 2)
+        self.assertEqual(versions[1].version_comment, 'Initial version.')
+        comment_set = set()
+        for item in json.loads(versions[0].version_comment):
+            comment_set.add(json.dumps(item))
+        self.assertEqual(
+            comment_set,
+            {
+                '{"changed": {"fields": ["config"], '
+                '"object": ["maxCheckAttempts", "path", "timeout"]}}',
+                '{"changed": {"fields": ["probekey"]}}'
+            }
+        )
+        self.assertEqual(mt.name, 'argo.AMS-Check')
+        self.assertEqual(mt.mtype.name, 'Active')
+        self.assertEqual(len(mt.tags.all()), 2)
+        self.assertTrue(self.tag3 in mt.tags.all())
+        self.assertTrue(self.tag4 in mt.tags.all())
+        self.assertEqual(
+            mt.description,
+            'Some description of argo.AMS-Check metric template.'
+        )
+        self.assertEqual(mt.parent, '')
+        self.assertEqual(mt.probeexecutable, '["ams-probe"]')
+        self.assertEqual(
+            mt.config,
+            '["maxCheckAttempts 4", "timeout 70", '
+            '"path /usr/libexec/argo-monitoring/", '
+            '"interval 5", "retryInterval 3"]'
+        )
+        self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
+        self.assertEqual(mt.dependency, '')
+        self.assertEqual(mt.flags, '["OBSESS 1"]')
+        self.assertEqual(mt.files, '')
+        self.assertEqual(mt.parameter, '["--project EGI"]')
+        self.assertEqual(mt.fileparameter, '')
+        self.assertEqual(versions[0].name, mt.name)
+        self.assertEqual(versions[0].mtype, mt.mtype)
+        self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
+        self.assertEqual(versions[0].probekey, mt.probekey)
+        self.assertEqual(versions[0].parent, mt.parent)
+        self.assertEqual(versions[0].probeexecutable, mt.probeexecutable)
+        self.assertEqual(versions[0].config, mt.config)
+        self.assertEqual(versions[0].attribute, mt.attribute)
+        self.assertEqual(versions[0].dependency, mt.dependency)
+        self.assertEqual(versions[0].flags, mt.flags)
+        self.assertEqual(versions[0].files, mt.files)
+        self.assertEqual(versions[0].parameter, mt.parameter)
+        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
+
+    @patch('Poem.api.internal_views.metrictemplates.update_metrics')
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    def test_put_metrictemplate_with_existing_name_tenant_user(
+            self, inline, update
+    ):
+        inline.side_effect = mocked_inline_metric_for_db
+        update.side_effect = mocked_func
+        attr = [
+            {'key': 'argo.ams_TOKEN', 'value': '--token'}
+        ]
+        conf = [
+            {'key': 'maxCheckAttempts', 'value': '3'},
+            {'key': 'timeout', 'value': '60'},
+            {'key': 'path', 'value':
+                '/usr/libexec/argo-monitoring/probes/argo'},
+            {'key': 'interval', 'value': '5'},
+            {'key': 'retryInterval', 'value': '3'}
+        ]
+        data = {
+            'id': self.metrictemplate1.id,
+            'name': 'org.apel.APEL-Pub',
+            'mtype': self.template_active,
+            'tags': ['test_tag1', 'test_tag2'],
+            'probeversion': 'ams-probe (0.1.7)',
+            'description': self.metrictemplate1.description,
+            'parent': '',
+            'probeexecutable': 'ams-probe',
+            'config': json.dumps(conf),
+            'attribute': json.dumps(attr),
+            'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
+            'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
+            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
+            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change metric templates.'
+        )
+        self.assertFalse(update.called)
+        mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
+        self.assertFalse(update.called)
+        versions = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=mt
+        ).order_by('-date_created')
+        self.assertEqual(versions.count(), 2)
+        self.assertEqual(versions[1].version_comment, 'Initial version.')
+        comment_set = set()
+        for item in json.loads(versions[0].version_comment):
+            comment_set.add(json.dumps(item))
+        self.assertEqual(
+            comment_set,
+            {
+                '{"changed": {"fields": ["config"], '
+                '"object": ["maxCheckAttempts", "path", "timeout"]}}',
+                '{"changed": {"fields": ["probekey"]}}'
+            }
+        )
+        self.assertEqual(mt.name, 'argo.AMS-Check')
+        self.assertEqual(mt.mtype.name, 'Active')
+        self.assertEqual(len(mt.tags.all()), 2)
+        self.assertTrue(self.tag3 in mt.tags.all())
+        self.assertTrue(self.tag4 in mt.tags.all())
+        self.assertEqual(
+            mt.description,
+            'Some description of argo.AMS-Check metric template.'
+        )
+        self.assertEqual(mt.parent, '')
+        self.assertEqual(mt.probeexecutable, '["ams-probe"]')
+        self.assertEqual(
+            mt.config,
+            '["maxCheckAttempts 4", "timeout 70", '
+            '"path /usr/libexec/argo-monitoring/", '
+            '"interval 5", "retryInterval 3"]'
+        )
+        self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
+        self.assertEqual(mt.dependency, '')
+        self.assertEqual(mt.flags, '["OBSESS 1"]')
+        self.assertEqual(mt.files, '')
+        self.assertEqual(mt.parameter, '["--project EGI"]')
+        self.assertEqual(mt.fileparameter, '')
+        self.assertEqual(versions[0].name, mt.name)
+        self.assertEqual(versions[0].mtype, mt.mtype)
+        self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
+        self.assertEqual(versions[0].probekey, mt.probekey)
+        self.assertEqual(versions[0].parent, mt.parent)
+        self.assertEqual(versions[0].probeexecutable, mt.probeexecutable)
+        self.assertEqual(versions[0].config, mt.config)
+        self.assertEqual(versions[0].attribute, mt.attribute)
+        self.assertEqual(versions[0].dependency, mt.dependency)
+        self.assertEqual(versions[0].flags, mt.flags)
+        self.assertEqual(versions[0].files, mt.files)
+        self.assertEqual(versions[0].parameter, mt.parameter)
+        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
+
+    @patch('Poem.api.internal_views.metrictemplates.update_metrics')
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    def test_put_metrictemplate_with_nonexisting_probeversion_sp_superuser(
             self, inline, update
     ):
         inline.side_effect = mocked_inline_metric_for_db
@@ -2941,18 +5409,375 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
-        force_authenticate(request, user=self.user)
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(
-            response.data,
-            {'detail': 'You should choose existing probe version!'}
+            response.data['detail'], 'Probe version does not exist.'
         )
         self.assertFalse(update.called)
+        mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
+        self.assertFalse(update.called)
+        versions = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=mt
+        ).order_by('-date_created')
+        self.assertEqual(versions.count(), 2)
+        self.assertEqual(versions[1].version_comment, 'Initial version.')
+        comment_set = set()
+        for item in json.loads(versions[0].version_comment):
+            comment_set.add(json.dumps(item))
+        self.assertEqual(
+            comment_set,
+            {
+                '{"changed": {"fields": ["config"], '
+                '"object": ["maxCheckAttempts", "path", "timeout"]}}',
+                '{"changed": {"fields": ["probekey"]}}'
+            }
+        )
+        self.assertEqual(mt.name, 'argo.AMS-Check')
+        self.assertEqual(mt.mtype.name, 'Active')
+        self.assertEqual(len(mt.tags.all()), 2)
+        self.assertTrue(self.tag3 in mt.tags.all())
+        self.assertTrue(self.tag4 in mt.tags.all())
+        self.assertEqual(
+            mt.description,
+            'Some description of argo.AMS-Check metric template.'
+        )
+        self.assertEqual(mt.parent, '')
+        self.assertEqual(mt.probeexecutable, '["ams-probe"]')
+        self.assertEqual(
+            mt.config,
+            '["maxCheckAttempts 4", "timeout 70", '
+            '"path /usr/libexec/argo-monitoring/", '
+            '"interval 5", "retryInterval 3"]'
+        )
+        self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
+        self.assertEqual(mt.dependency, '')
+        self.assertEqual(mt.flags, '["OBSESS 1"]')
+        self.assertEqual(mt.files, '')
+        self.assertEqual(mt.parameter, '["--project EGI"]')
+        self.assertEqual(mt.fileparameter, '')
+        self.assertEqual(versions[0].name, mt.name)
+        self.assertEqual(versions[0].mtype, mt.mtype)
+        self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
+        self.assertEqual(versions[0].probekey, mt.probekey)
+        self.assertEqual(versions[0].parent, mt.parent)
+        self.assertEqual(versions[0].probeexecutable, mt.probeexecutable)
+        self.assertEqual(versions[0].config, mt.config)
+        self.assertEqual(versions[0].attribute, mt.attribute)
+        self.assertEqual(versions[0].dependency, mt.dependency)
+        self.assertEqual(versions[0].flags, mt.flags)
+        self.assertEqual(versions[0].files, mt.files)
+        self.assertEqual(versions[0].parameter, mt.parameter)
+        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
-    def test_put_metrictemplate_without_specifying_probes_version(
+    def test_put_metrictemplate_with_nonexisting_probeversion_sp_user(
+            self, inline, update
+    ):
+        inline.side_effect = mocked_inline_metric_for_db
+        update.side_effect = mocked_func
+        attr = [
+            {'key': 'argo.ams_TOKEN', 'value': '--token'}
+        ]
+        conf = [
+            {'key': 'maxCheckAttempts', 'value': '3'},
+            {'key': 'timeout', 'value': '60'},
+            {'key': 'path', 'value':
+                '/usr/libexec/argo-monitoring/probes/argo'},
+            {'key': 'interval', 'value': '5'},
+            {'key': 'retryInterval', 'value': '3'}
+        ]
+        data = {
+            'id': self.metrictemplate1.id,
+            'name': 'test.apel.APEL-Pub',
+            'mtype': self.template_active,
+            'tags': ['test_tag1', 'test_tag2'],
+            'probeversion': 'nonexisting (1.0.0)',
+            'description': self.metrictemplate1.description,
+            'parent': '',
+            'probeexecutable': 'ams-probe',
+            'config': json.dumps(conf),
+            'attribute': json.dumps(attr),
+            'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
+            'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
+            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
+            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change metric templates.'
+        )
+        self.assertFalse(update.called)
+        mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
+        self.assertFalse(update.called)
+        versions = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=mt
+        ).order_by('-date_created')
+        self.assertEqual(versions.count(), 2)
+        self.assertEqual(versions[1].version_comment, 'Initial version.')
+        comment_set = set()
+        for item in json.loads(versions[0].version_comment):
+            comment_set.add(json.dumps(item))
+        self.assertEqual(
+            comment_set,
+            {
+                '{"changed": {"fields": ["config"], '
+                '"object": ["maxCheckAttempts", "path", "timeout"]}}',
+                '{"changed": {"fields": ["probekey"]}}'
+            }
+        )
+        self.assertEqual(mt.name, 'argo.AMS-Check')
+        self.assertEqual(mt.mtype.name, 'Active')
+        self.assertEqual(len(mt.tags.all()), 2)
+        self.assertTrue(self.tag3 in mt.tags.all())
+        self.assertTrue(self.tag4 in mt.tags.all())
+        self.assertEqual(
+            mt.description,
+            'Some description of argo.AMS-Check metric template.'
+        )
+        self.assertEqual(mt.parent, '')
+        self.assertEqual(mt.probeexecutable, '["ams-probe"]')
+        self.assertEqual(
+            mt.config,
+            '["maxCheckAttempts 4", "timeout 70", '
+            '"path /usr/libexec/argo-monitoring/", '
+            '"interval 5", "retryInterval 3"]'
+        )
+        self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
+        self.assertEqual(mt.dependency, '')
+        self.assertEqual(mt.flags, '["OBSESS 1"]')
+        self.assertEqual(mt.files, '')
+        self.assertEqual(mt.parameter, '["--project EGI"]')
+        self.assertEqual(mt.fileparameter, '')
+        self.assertEqual(versions[0].name, mt.name)
+        self.assertEqual(versions[0].mtype, mt.mtype)
+        self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
+        self.assertEqual(versions[0].probekey, mt.probekey)
+        self.assertEqual(versions[0].parent, mt.parent)
+        self.assertEqual(versions[0].probeexecutable, mt.probeexecutable)
+        self.assertEqual(versions[0].config, mt.config)
+        self.assertEqual(versions[0].attribute, mt.attribute)
+        self.assertEqual(versions[0].dependency, mt.dependency)
+        self.assertEqual(versions[0].flags, mt.flags)
+        self.assertEqual(versions[0].files, mt.files)
+        self.assertEqual(versions[0].parameter, mt.parameter)
+        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
+
+    @patch('Poem.api.internal_views.metrictemplates.update_metrics')
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    def test_put_metrictemplate_with_nonexisting_probeversion_tenant_superusr(
+            self, inline, update
+    ):
+        inline.side_effect = mocked_inline_metric_for_db
+        update.side_effect = mocked_func
+        attr = [
+            {'key': 'argo.ams_TOKEN', 'value': '--token'}
+        ]
+        conf = [
+            {'key': 'maxCheckAttempts', 'value': '3'},
+            {'key': 'timeout', 'value': '60'},
+            {'key': 'path', 'value':
+                '/usr/libexec/argo-monitoring/probes/argo'},
+            {'key': 'interval', 'value': '5'},
+            {'key': 'retryInterval', 'value': '3'}
+        ]
+        data = {
+            'id': self.metrictemplate1.id,
+            'name': 'test.apel.APEL-Pub',
+            'mtype': self.template_active,
+            'tags': ['test_tag1', 'test_tag2'],
+            'probeversion': 'nonexisting (1.0.0)',
+            'description': self.metrictemplate1.description,
+            'parent': '',
+            'probeexecutable': 'ams-probe',
+            'config': json.dumps(conf),
+            'attribute': json.dumps(attr),
+            'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
+            'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
+            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
+            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change metric templates.'
+        )
+        self.assertFalse(update.called)
+        mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
+        self.assertFalse(update.called)
+        versions = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=mt
+        ).order_by('-date_created')
+        self.assertEqual(versions.count(), 2)
+        self.assertEqual(versions[1].version_comment, 'Initial version.')
+        comment_set = set()
+        for item in json.loads(versions[0].version_comment):
+            comment_set.add(json.dumps(item))
+        self.assertEqual(
+            comment_set,
+            {
+                '{"changed": {"fields": ["config"], '
+                '"object": ["maxCheckAttempts", "path", "timeout"]}}',
+                '{"changed": {"fields": ["probekey"]}}'
+            }
+        )
+        self.assertEqual(mt.name, 'argo.AMS-Check')
+        self.assertEqual(mt.mtype.name, 'Active')
+        self.assertEqual(len(mt.tags.all()), 2)
+        self.assertTrue(self.tag3 in mt.tags.all())
+        self.assertTrue(self.tag4 in mt.tags.all())
+        self.assertEqual(
+            mt.description,
+            'Some description of argo.AMS-Check metric template.'
+        )
+        self.assertEqual(mt.parent, '')
+        self.assertEqual(mt.probeexecutable, '["ams-probe"]')
+        self.assertEqual(
+            mt.config,
+            '["maxCheckAttempts 4", "timeout 70", '
+            '"path /usr/libexec/argo-monitoring/", '
+            '"interval 5", "retryInterval 3"]'
+        )
+        self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
+        self.assertEqual(mt.dependency, '')
+        self.assertEqual(mt.flags, '["OBSESS 1"]')
+        self.assertEqual(mt.files, '')
+        self.assertEqual(mt.parameter, '["--project EGI"]')
+        self.assertEqual(mt.fileparameter, '')
+        self.assertEqual(versions[0].name, mt.name)
+        self.assertEqual(versions[0].mtype, mt.mtype)
+        self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
+        self.assertEqual(versions[0].probekey, mt.probekey)
+        self.assertEqual(versions[0].parent, mt.parent)
+        self.assertEqual(versions[0].probeexecutable, mt.probeexecutable)
+        self.assertEqual(versions[0].config, mt.config)
+        self.assertEqual(versions[0].attribute, mt.attribute)
+        self.assertEqual(versions[0].dependency, mt.dependency)
+        self.assertEqual(versions[0].flags, mt.flags)
+        self.assertEqual(versions[0].files, mt.files)
+        self.assertEqual(versions[0].parameter, mt.parameter)
+        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
+
+    @patch('Poem.api.internal_views.metrictemplates.update_metrics')
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    def test_put_metrictemplate_with_nonexisting_probeversion_tenant_user(
+            self, inline, update
+    ):
+        inline.side_effect = mocked_inline_metric_for_db
+        update.side_effect = mocked_func
+        attr = [
+            {'key': 'argo.ams_TOKEN', 'value': '--token'}
+        ]
+        conf = [
+            {'key': 'maxCheckAttempts', 'value': '3'},
+            {'key': 'timeout', 'value': '60'},
+            {'key': 'path', 'value':
+                '/usr/libexec/argo-monitoring/probes/argo'},
+            {'key': 'interval', 'value': '5'},
+            {'key': 'retryInterval', 'value': '3'}
+        ]
+        data = {
+            'id': self.metrictemplate1.id,
+            'name': 'test.apel.APEL-Pub',
+            'mtype': self.template_active,
+            'tags': ['test_tag1', 'test_tag2'],
+            'probeversion': 'nonexisting (1.0.0)',
+            'description': self.metrictemplate1.description,
+            'parent': '',
+            'probeexecutable': 'ams-probe',
+            'config': json.dumps(conf),
+            'attribute': json.dumps(attr),
+            'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
+            'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
+            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
+            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change metric templates.'
+        )
+        self.assertFalse(update.called)
+        mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
+        self.assertFalse(update.called)
+        versions = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=mt
+        ).order_by('-date_created')
+        self.assertEqual(versions.count(), 2)
+        self.assertEqual(versions[1].version_comment, 'Initial version.')
+        comment_set = set()
+        for item in json.loads(versions[0].version_comment):
+            comment_set.add(json.dumps(item))
+        self.assertEqual(
+            comment_set,
+            {
+                '{"changed": {"fields": ["config"], '
+                '"object": ["maxCheckAttempts", "path", "timeout"]}}',
+                '{"changed": {"fields": ["probekey"]}}'
+            }
+        )
+        self.assertEqual(mt.name, 'argo.AMS-Check')
+        self.assertEqual(mt.mtype.name, 'Active')
+        self.assertEqual(len(mt.tags.all()), 2)
+        self.assertTrue(self.tag3 in mt.tags.all())
+        self.assertTrue(self.tag4 in mt.tags.all())
+        self.assertEqual(
+            mt.description,
+            'Some description of argo.AMS-Check metric template.'
+        )
+        self.assertEqual(mt.parent, '')
+        self.assertEqual(mt.probeexecutable, '["ams-probe"]')
+        self.assertEqual(
+            mt.config,
+            '["maxCheckAttempts 4", "timeout 70", '
+            '"path /usr/libexec/argo-monitoring/", '
+            '"interval 5", "retryInterval 3"]'
+        )
+        self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
+        self.assertEqual(mt.dependency, '')
+        self.assertEqual(mt.flags, '["OBSESS 1"]')
+        self.assertEqual(mt.files, '')
+        self.assertEqual(mt.parameter, '["--project EGI"]')
+        self.assertEqual(mt.fileparameter, '')
+        self.assertEqual(versions[0].name, mt.name)
+        self.assertEqual(versions[0].mtype, mt.mtype)
+        self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
+        self.assertEqual(versions[0].probekey, mt.probekey)
+        self.assertEqual(versions[0].parent, mt.parent)
+        self.assertEqual(versions[0].probeexecutable, mt.probeexecutable)
+        self.assertEqual(versions[0].config, mt.config)
+        self.assertEqual(versions[0].attribute, mt.attribute)
+        self.assertEqual(versions[0].dependency, mt.dependency)
+        self.assertEqual(versions[0].flags, mt.flags)
+        self.assertEqual(versions[0].files, mt.files)
+        self.assertEqual(versions[0].parameter, mt.parameter)
+        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
+
+    @patch('Poem.api.internal_views.metrictemplates.update_metrics')
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    def test_put_metrictemplate_without_specifying_probes_version_sp_superuser(
             self, inline, update
     ):
         inline.side_effect = mocked_inline_metric_for_db
@@ -2987,14 +5812,371 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
-        force_authenticate(request, user=self.user)
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(
-            response.data,
-            {'detail': 'You should specify the version of the probe!'}
+            response.data['detail'], 'Probe version not specified.'
         )
         self.assertFalse(update.called)
+        mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
+        self.assertFalse(update.called)
+        versions = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=mt
+        ).order_by('-date_created')
+        self.assertEqual(versions.count(), 2)
+        self.assertEqual(versions[1].version_comment, 'Initial version.')
+        comment_set = set()
+        for item in json.loads(versions[0].version_comment):
+            comment_set.add(json.dumps(item))
+        self.assertEqual(
+            comment_set,
+            {
+                '{"changed": {"fields": ["config"], '
+                '"object": ["maxCheckAttempts", "path", "timeout"]}}',
+                '{"changed": {"fields": ["probekey"]}}'
+            }
+        )
+        self.assertEqual(mt.name, 'argo.AMS-Check')
+        self.assertEqual(mt.mtype.name, 'Active')
+        self.assertEqual(len(mt.tags.all()), 2)
+        self.assertTrue(self.tag3 in mt.tags.all())
+        self.assertTrue(self.tag4 in mt.tags.all())
+        self.assertEqual(
+            mt.description,
+            'Some description of argo.AMS-Check metric template.'
+        )
+        self.assertEqual(mt.parent, '')
+        self.assertEqual(mt.probeexecutable, '["ams-probe"]')
+        self.assertEqual(
+            mt.config,
+            '["maxCheckAttempts 4", "timeout 70", '
+            '"path /usr/libexec/argo-monitoring/", '
+            '"interval 5", "retryInterval 3"]'
+        )
+        self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
+        self.assertEqual(mt.dependency, '')
+        self.assertEqual(mt.flags, '["OBSESS 1"]')
+        self.assertEqual(mt.files, '')
+        self.assertEqual(mt.parameter, '["--project EGI"]')
+        self.assertEqual(mt.fileparameter, '')
+        self.assertEqual(versions[0].name, mt.name)
+        self.assertEqual(versions[0].mtype, mt.mtype)
+        self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
+        self.assertEqual(versions[0].probekey, mt.probekey)
+        self.assertEqual(versions[0].parent, mt.parent)
+        self.assertEqual(versions[0].probeexecutable, mt.probeexecutable)
+        self.assertEqual(versions[0].config, mt.config)
+        self.assertEqual(versions[0].attribute, mt.attribute)
+        self.assertEqual(versions[0].dependency, mt.dependency)
+        self.assertEqual(versions[0].flags, mt.flags)
+        self.assertEqual(versions[0].files, mt.files)
+        self.assertEqual(versions[0].parameter, mt.parameter)
+        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
+
+    @patch('Poem.api.internal_views.metrictemplates.update_metrics')
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    def test_put_metrictemplate_without_specifying_probes_version_sp_user(
+            self, inline, update
+    ):
+        inline.side_effect = mocked_inline_metric_for_db
+        update.side_effect = mocked_func
+        attr = [
+            {'key': 'argo.ams_TOKEN', 'value': '--token'}
+        ]
+        conf = [
+            {'key': 'maxCheckAttempts', 'value': '3'},
+            {'key': 'timeout', 'value': '60'},
+            {'key': 'path', 'value':
+                '/usr/libexec/argo-monitoring/probes/argo'},
+            {'key': 'interval', 'value': '5'},
+            {'key': 'retryInterval', 'value': '3'}
+        ]
+        data = {
+            'id': self.metrictemplate1.id,
+            'name': 'test.apel.APEL-Pub',
+            'mtype': self.template_active,
+            'tags': ['test_tag1', 'test_tag2'],
+            'probeversion': 'nonexisting',
+            'description': self.metrictemplate1.description,
+            'parent': '',
+            'probeexecutable': 'ams-probe',
+            'config': json.dumps(conf),
+            'attribute': json.dumps(attr),
+            'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
+            'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
+            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
+            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change metric templates.'
+        )
+        self.assertFalse(update.called)
+        mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
+        self.assertFalse(update.called)
+        versions = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=mt
+        ).order_by('-date_created')
+        self.assertEqual(versions.count(), 2)
+        self.assertEqual(versions[1].version_comment, 'Initial version.')
+        comment_set = set()
+        for item in json.loads(versions[0].version_comment):
+            comment_set.add(json.dumps(item))
+        self.assertEqual(
+            comment_set,
+            {
+                '{"changed": {"fields": ["config"], '
+                '"object": ["maxCheckAttempts", "path", "timeout"]}}',
+                '{"changed": {"fields": ["probekey"]}}'
+            }
+        )
+        self.assertEqual(mt.name, 'argo.AMS-Check')
+        self.assertEqual(mt.mtype.name, 'Active')
+        self.assertEqual(len(mt.tags.all()), 2)
+        self.assertTrue(self.tag3 in mt.tags.all())
+        self.assertTrue(self.tag4 in mt.tags.all())
+        self.assertEqual(
+            mt.description,
+            'Some description of argo.AMS-Check metric template.'
+        )
+        self.assertEqual(mt.parent, '')
+        self.assertEqual(mt.probeexecutable, '["ams-probe"]')
+        self.assertEqual(
+            mt.config,
+            '["maxCheckAttempts 4", "timeout 70", '
+            '"path /usr/libexec/argo-monitoring/", '
+            '"interval 5", "retryInterval 3"]'
+        )
+        self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
+        self.assertEqual(mt.dependency, '')
+        self.assertEqual(mt.flags, '["OBSESS 1"]')
+        self.assertEqual(mt.files, '')
+        self.assertEqual(mt.parameter, '["--project EGI"]')
+        self.assertEqual(mt.fileparameter, '')
+        self.assertEqual(versions[0].name, mt.name)
+        self.assertEqual(versions[0].mtype, mt.mtype)
+        self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
+        self.assertEqual(versions[0].probekey, mt.probekey)
+        self.assertEqual(versions[0].parent, mt.parent)
+        self.assertEqual(versions[0].probeexecutable, mt.probeexecutable)
+        self.assertEqual(versions[0].config, mt.config)
+        self.assertEqual(versions[0].attribute, mt.attribute)
+        self.assertEqual(versions[0].dependency, mt.dependency)
+        self.assertEqual(versions[0].flags, mt.flags)
+        self.assertEqual(versions[0].files, mt.files)
+        self.assertEqual(versions[0].parameter, mt.parameter)
+        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
+
+    @patch('Poem.api.internal_views.metrictemplates.update_metrics')
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    def test_put_metrictemplate_without_specifying_probes_version_tenn_suprusr(
+            self, inline, update
+    ):
+        inline.side_effect = mocked_inline_metric_for_db
+        update.side_effect = mocked_func
+        attr = [
+            {'key': 'argo.ams_TOKEN', 'value': '--token'}
+        ]
+        conf = [
+            {'key': 'maxCheckAttempts', 'value': '3'},
+            {'key': 'timeout', 'value': '60'},
+            {'key': 'path', 'value':
+                '/usr/libexec/argo-monitoring/probes/argo'},
+            {'key': 'interval', 'value': '5'},
+            {'key': 'retryInterval', 'value': '3'}
+        ]
+        data = {
+            'id': self.metrictemplate1.id,
+            'name': 'test.apel.APEL-Pub',
+            'mtype': self.template_active,
+            'tags': ['test_tag1', 'test_tag2'],
+            'probeversion': 'nonexisting',
+            'description': self.metrictemplate1.description,
+            'parent': '',
+            'probeexecutable': 'ams-probe',
+            'config': json.dumps(conf),
+            'attribute': json.dumps(attr),
+            'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
+            'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
+            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
+            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change metric templates.'
+        )
+        self.assertFalse(update.called)
+        mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
+        self.assertFalse(update.called)
+        versions = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=mt
+        ).order_by('-date_created')
+        self.assertEqual(versions.count(), 2)
+        self.assertEqual(versions[1].version_comment, 'Initial version.')
+        comment_set = set()
+        for item in json.loads(versions[0].version_comment):
+            comment_set.add(json.dumps(item))
+        self.assertEqual(
+            comment_set,
+            {
+                '{"changed": {"fields": ["config"], '
+                '"object": ["maxCheckAttempts", "path", "timeout"]}}',
+                '{"changed": {"fields": ["probekey"]}}'
+            }
+        )
+        self.assertEqual(mt.name, 'argo.AMS-Check')
+        self.assertEqual(mt.mtype.name, 'Active')
+        self.assertEqual(len(mt.tags.all()), 2)
+        self.assertTrue(self.tag3 in mt.tags.all())
+        self.assertTrue(self.tag4 in mt.tags.all())
+        self.assertEqual(
+            mt.description,
+            'Some description of argo.AMS-Check metric template.'
+        )
+        self.assertEqual(mt.parent, '')
+        self.assertEqual(mt.probeexecutable, '["ams-probe"]')
+        self.assertEqual(
+            mt.config,
+            '["maxCheckAttempts 4", "timeout 70", '
+            '"path /usr/libexec/argo-monitoring/", '
+            '"interval 5", "retryInterval 3"]'
+        )
+        self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
+        self.assertEqual(mt.dependency, '')
+        self.assertEqual(mt.flags, '["OBSESS 1"]')
+        self.assertEqual(mt.files, '')
+        self.assertEqual(mt.parameter, '["--project EGI"]')
+        self.assertEqual(mt.fileparameter, '')
+        self.assertEqual(versions[0].name, mt.name)
+        self.assertEqual(versions[0].mtype, mt.mtype)
+        self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
+        self.assertEqual(versions[0].probekey, mt.probekey)
+        self.assertEqual(versions[0].parent, mt.parent)
+        self.assertEqual(versions[0].probeexecutable, mt.probeexecutable)
+        self.assertEqual(versions[0].config, mt.config)
+        self.assertEqual(versions[0].attribute, mt.attribute)
+        self.assertEqual(versions[0].dependency, mt.dependency)
+        self.assertEqual(versions[0].flags, mt.flags)
+        self.assertEqual(versions[0].files, mt.files)
+        self.assertEqual(versions[0].parameter, mt.parameter)
+        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
+
+    @patch('Poem.api.internal_views.metrictemplates.update_metrics')
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    def test_put_metrictemplate_without_specifying_probes_version_tenn_user(
+            self, inline, update
+    ):
+        inline.side_effect = mocked_inline_metric_for_db
+        update.side_effect = mocked_func
+        attr = [
+            {'key': 'argo.ams_TOKEN', 'value': '--token'}
+        ]
+        conf = [
+            {'key': 'maxCheckAttempts', 'value': '3'},
+            {'key': 'timeout', 'value': '60'},
+            {'key': 'path', 'value':
+                '/usr/libexec/argo-monitoring/probes/argo'},
+            {'key': 'interval', 'value': '5'},
+            {'key': 'retryInterval', 'value': '3'}
+        ]
+        data = {
+            'id': self.metrictemplate1.id,
+            'name': 'test.apel.APEL-Pub',
+            'mtype': self.template_active,
+            'tags': ['test_tag1', 'test_tag2'],
+            'probeversion': 'nonexisting',
+            'description': self.metrictemplate1.description,
+            'parent': '',
+            'probeexecutable': 'ams-probe',
+            'config': json.dumps(conf),
+            'attribute': json.dumps(attr),
+            'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
+            'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
+            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
+            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change metric templates.'
+        )
+        self.assertFalse(update.called)
+        mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
+        self.assertFalse(update.called)
+        versions = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=mt
+        ).order_by('-date_created')
+        self.assertEqual(versions.count(), 2)
+        self.assertEqual(versions[1].version_comment, 'Initial version.')
+        comment_set = set()
+        for item in json.loads(versions[0].version_comment):
+            comment_set.add(json.dumps(item))
+        self.assertEqual(
+            comment_set,
+            {
+                '{"changed": {"fields": ["config"], '
+                '"object": ["maxCheckAttempts", "path", "timeout"]}}',
+                '{"changed": {"fields": ["probekey"]}}'
+            }
+        )
+        self.assertEqual(mt.name, 'argo.AMS-Check')
+        self.assertEqual(mt.mtype.name, 'Active')
+        self.assertEqual(len(mt.tags.all()), 2)
+        self.assertTrue(self.tag3 in mt.tags.all())
+        self.assertTrue(self.tag4 in mt.tags.all())
+        self.assertEqual(
+            mt.description,
+            'Some description of argo.AMS-Check metric template.'
+        )
+        self.assertEqual(mt.parent, '')
+        self.assertEqual(mt.probeexecutable, '["ams-probe"]')
+        self.assertEqual(
+            mt.config,
+            '["maxCheckAttempts 4", "timeout 70", '
+            '"path /usr/libexec/argo-monitoring/", '
+            '"interval 5", "retryInterval 3"]'
+        )
+        self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
+        self.assertEqual(mt.dependency, '')
+        self.assertEqual(mt.flags, '["OBSESS 1"]')
+        self.assertEqual(mt.files, '')
+        self.assertEqual(mt.parameter, '["--project EGI"]')
+        self.assertEqual(mt.fileparameter, '')
+        self.assertEqual(versions[0].name, mt.name)
+        self.assertEqual(versions[0].mtype, mt.mtype)
+        self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
+        self.assertEqual(versions[0].probekey, mt.probekey)
+        self.assertEqual(versions[0].parent, mt.parent)
+        self.assertEqual(versions[0].probeexecutable, mt.probeexecutable)
+        self.assertEqual(versions[0].config, mt.config)
+        self.assertEqual(versions[0].attribute, mt.attribute)
+        self.assertEqual(versions[0].dependency, mt.dependency)
+        self.assertEqual(versions[0].flags, mt.flags)
+        self.assertEqual(versions[0].files, mt.files)
+        self.assertEqual(versions[0].parameter, mt.parameter)
+        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
@@ -3036,7 +6218,8 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
-        force_authenticate(request, user=self.user)
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_418_IM_A_TEAPOT)
         self.assertEqual(
@@ -3104,6 +6287,399 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.files, '["file-key file-val"]')
         self.assertEqual(mt.parameter, '["par-key par-val"]')
         self.assertEqual(mt.fileparameter, '["fp-key fp-val"]')
+        self.assertEqual(versions[0].name, mt.name)
+        self.assertEqual(versions[0].mtype, mt.mtype)
+        self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
+        self.assertEqual(versions[0].probekey, mt.probekey)
+        self.assertEqual(versions[0].parent, mt.parent)
+        self.assertEqual(versions[0].probeexecutable, mt.probeexecutable)
+        self.assertEqual(versions[0].config, mt.config)
+        self.assertEqual(versions[0].attribute, mt.attribute)
+        self.assertEqual(versions[0].dependency, mt.dependency)
+        self.assertEqual(versions[0].flags, mt.flags)
+        self.assertEqual(versions[0].files, mt.files)
+        self.assertEqual(versions[0].parameter, mt.parameter)
+        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
+
+    @patch('Poem.api.internal_views.metrictemplates.update_metrics')
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    def test_put_metrictemplate_missing_data_key_sp_superuser(
+            self, inline, update
+    ):
+        inline.side_effect = mocked_inline_metric_for_db
+        update.side_effect = mocked_func
+        attr = [
+            {'key': 'argo.ams_TOKEN2', 'value': '--token'}
+        ]
+        conf = [
+            {'key': 'maxCheckAttempts', 'value': '4'},
+            {'key': 'timeout', 'value': '70'},
+            {'key': 'path', 'value':
+                '/usr/libexec/argo-monitoring/probes/argo'},
+            {'key': 'interval', 'value': '6'},
+            {'key': 'retryInterval', 'value': '4'}
+        ]
+        data = {
+            'id': self.metrictemplate1.id,
+            'name': 'argo.AMS-Check-new',
+            'mtype': 'Active',
+            'tags': ['internal', 'test_tag2'],
+            'description': 'New description for the metric template.',
+            'probeversion': 'ams-probe (0.1.8)',
+            'parent': 'argo.AMS-Check',
+            'probeexecutable': 'ams-probe',
+            'config': json.dumps(conf),
+            'attribute': json.dumps(attr),
+            'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
+            'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
+            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
+            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['detail'], 'Missing data key: flags')
+        mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
+        self.assertFalse(update.called)
+        versions = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=mt
+        ).order_by('-date_created')
+        self.assertEqual(versions.count(), 2)
+        self.assertEqual(versions[1].version_comment, 'Initial version.')
+        comment_set = set()
+        for item in json.loads(versions[0].version_comment):
+            comment_set.add(json.dumps(item))
+        self.assertEqual(
+            comment_set,
+            {
+                '{"changed": {"fields": ["config"], '
+                '"object": ["maxCheckAttempts", "path", "timeout"]}}',
+                '{"changed": {"fields": ["probekey"]}}'
+            }
+        )
+        self.assertEqual(mt.name, 'argo.AMS-Check')
+        self.assertEqual(mt.mtype.name, 'Active')
+        self.assertEqual(len(mt.tags.all()), 2)
+        self.assertTrue(self.tag3 in mt.tags.all())
+        self.assertTrue(self.tag4 in mt.tags.all())
+        self.assertEqual(
+            mt.description,
+            'Some description of argo.AMS-Check metric template.'
+        )
+        self.assertEqual(mt.parent, '')
+        self.assertEqual(mt.probeexecutable, '["ams-probe"]')
+        self.assertEqual(
+            mt.config,
+            '["maxCheckAttempts 4", "timeout 70", '
+            '"path /usr/libexec/argo-monitoring/", '
+            '"interval 5", "retryInterval 3"]'
+        )
+        self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
+        self.assertEqual(mt.dependency, '')
+        self.assertEqual(mt.flags, '["OBSESS 1"]')
+        self.assertEqual(mt.files, '')
+        self.assertEqual(mt.parameter, '["--project EGI"]')
+        self.assertEqual(mt.fileparameter, '')
+        self.assertEqual(versions[0].name, mt.name)
+        self.assertEqual(versions[0].mtype, mt.mtype)
+        self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
+        self.assertEqual(versions[0].probekey, mt.probekey)
+        self.assertEqual(versions[0].parent, mt.parent)
+        self.assertEqual(versions[0].probeexecutable, mt.probeexecutable)
+        self.assertEqual(versions[0].config, mt.config)
+        self.assertEqual(versions[0].attribute, mt.attribute)
+        self.assertEqual(versions[0].dependency, mt.dependency)
+        self.assertEqual(versions[0].flags, mt.flags)
+        self.assertEqual(versions[0].files, mt.files)
+        self.assertEqual(versions[0].parameter, mt.parameter)
+        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
+
+    @patch('Poem.api.internal_views.metrictemplates.update_metrics')
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    def test_put_metrictemplate_missing_data_key_sp_user(
+            self, inline, update
+    ):
+        inline.side_effect = mocked_inline_metric_for_db
+        update.side_effect = mocked_func
+        attr = [
+            {'key': 'argo.ams_TOKEN2', 'value': '--token'}
+        ]
+        conf = [
+            {'key': 'maxCheckAttempts', 'value': '4'},
+            {'key': 'timeout', 'value': '70'},
+            {'key': 'path', 'value':
+                '/usr/libexec/argo-monitoring/probes/argo'},
+            {'key': 'interval', 'value': '6'},
+            {'key': 'retryInterval', 'value': '4'}
+        ]
+        data = {
+            'id': self.metrictemplate1.id,
+            'name': 'argo.AMS-Check-new',
+            'mtype': 'Active',
+            'tags': ['internal', 'test_tag2'],
+            'description': 'New description for the metric template.',
+            'probeversion': 'ams-probe (0.1.8)',
+            'parent': 'argo.AMS-Check',
+            'probeexecutable': 'ams-probe',
+            'config': json.dumps(conf),
+            'attribute': json.dumps(attr),
+            'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
+            'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
+            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
+            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change metric templates.'
+        )
+        mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
+        self.assertFalse(update.called)
+        versions = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=mt
+        ).order_by('-date_created')
+        self.assertEqual(versions.count(), 2)
+        self.assertEqual(versions[1].version_comment, 'Initial version.')
+        comment_set = set()
+        for item in json.loads(versions[0].version_comment):
+            comment_set.add(json.dumps(item))
+        self.assertEqual(
+            comment_set,
+            {
+                '{"changed": {"fields": ["config"], '
+                '"object": ["maxCheckAttempts", "path", "timeout"]}}',
+                '{"changed": {"fields": ["probekey"]}}'
+            }
+        )
+        self.assertEqual(mt.name, 'argo.AMS-Check')
+        self.assertEqual(mt.mtype.name, 'Active')
+        self.assertEqual(len(mt.tags.all()), 2)
+        self.assertTrue(self.tag3 in mt.tags.all())
+        self.assertTrue(self.tag4 in mt.tags.all())
+        self.assertEqual(
+            mt.description,
+            'Some description of argo.AMS-Check metric template.'
+        )
+        self.assertEqual(mt.parent, '')
+        self.assertEqual(mt.probeexecutable, '["ams-probe"]')
+        self.assertEqual(
+            mt.config,
+            '["maxCheckAttempts 4", "timeout 70", '
+            '"path /usr/libexec/argo-monitoring/", '
+            '"interval 5", "retryInterval 3"]'
+        )
+        self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
+        self.assertEqual(mt.dependency, '')
+        self.assertEqual(mt.flags, '["OBSESS 1"]')
+        self.assertEqual(mt.files, '')
+        self.assertEqual(mt.parameter, '["--project EGI"]')
+        self.assertEqual(mt.fileparameter, '')
+        self.assertEqual(versions[0].name, mt.name)
+        self.assertEqual(versions[0].mtype, mt.mtype)
+        self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
+        self.assertEqual(versions[0].probekey, mt.probekey)
+        self.assertEqual(versions[0].parent, mt.parent)
+        self.assertEqual(versions[0].probeexecutable, mt.probeexecutable)
+        self.assertEqual(versions[0].config, mt.config)
+        self.assertEqual(versions[0].attribute, mt.attribute)
+        self.assertEqual(versions[0].dependency, mt.dependency)
+        self.assertEqual(versions[0].flags, mt.flags)
+        self.assertEqual(versions[0].files, mt.files)
+        self.assertEqual(versions[0].parameter, mt.parameter)
+        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
+
+    @patch('Poem.api.internal_views.metrictemplates.update_metrics')
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    def test_put_metrictemplate_missing_data_key_tenant_superuser(
+            self, inline, update
+    ):
+        inline.side_effect = mocked_inline_metric_for_db
+        update.side_effect = mocked_func
+        attr = [
+            {'key': 'argo.ams_TOKEN2', 'value': '--token'}
+        ]
+        conf = [
+            {'key': 'maxCheckAttempts', 'value': '4'},
+            {'key': 'timeout', 'value': '70'},
+            {'key': 'path', 'value':
+                '/usr/libexec/argo-monitoring/probes/argo'},
+            {'key': 'interval', 'value': '6'},
+            {'key': 'retryInterval', 'value': '4'}
+        ]
+        data = {
+            'id': self.metrictemplate1.id,
+            'name': 'argo.AMS-Check-new',
+            'mtype': 'Active',
+            'tags': ['internal', 'test_tag2'],
+            'description': 'New description for the metric template.',
+            'probeversion': 'ams-probe (0.1.8)',
+            'parent': 'argo.AMS-Check',
+            'probeexecutable': 'ams-probe',
+            'config': json.dumps(conf),
+            'attribute': json.dumps(attr),
+            'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
+            'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
+            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
+            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change metric templates.'
+        )
+        mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
+        self.assertFalse(update.called)
+        versions = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=mt
+        ).order_by('-date_created')
+        self.assertEqual(versions.count(), 2)
+        self.assertEqual(versions[1].version_comment, 'Initial version.')
+        comment_set = set()
+        for item in json.loads(versions[0].version_comment):
+            comment_set.add(json.dumps(item))
+        self.assertEqual(
+            comment_set,
+            {
+                '{"changed": {"fields": ["config"], '
+                '"object": ["maxCheckAttempts", "path", "timeout"]}}',
+                '{"changed": {"fields": ["probekey"]}}'
+            }
+        )
+        self.assertEqual(mt.name, 'argo.AMS-Check')
+        self.assertEqual(mt.mtype.name, 'Active')
+        self.assertEqual(len(mt.tags.all()), 2)
+        self.assertTrue(self.tag3 in mt.tags.all())
+        self.assertTrue(self.tag4 in mt.tags.all())
+        self.assertEqual(
+            mt.description,
+            'Some description of argo.AMS-Check metric template.'
+        )
+        self.assertEqual(mt.parent, '')
+        self.assertEqual(mt.probeexecutable, '["ams-probe"]')
+        self.assertEqual(
+            mt.config,
+            '["maxCheckAttempts 4", "timeout 70", '
+            '"path /usr/libexec/argo-monitoring/", '
+            '"interval 5", "retryInterval 3"]'
+        )
+        self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
+        self.assertEqual(mt.dependency, '')
+        self.assertEqual(mt.flags, '["OBSESS 1"]')
+        self.assertEqual(mt.files, '')
+        self.assertEqual(mt.parameter, '["--project EGI"]')
+        self.assertEqual(mt.fileparameter, '')
+        self.assertEqual(versions[0].name, mt.name)
+        self.assertEqual(versions[0].mtype, mt.mtype)
+        self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
+        self.assertEqual(versions[0].probekey, mt.probekey)
+        self.assertEqual(versions[0].parent, mt.parent)
+        self.assertEqual(versions[0].probeexecutable, mt.probeexecutable)
+        self.assertEqual(versions[0].config, mt.config)
+        self.assertEqual(versions[0].attribute, mt.attribute)
+        self.assertEqual(versions[0].dependency, mt.dependency)
+        self.assertEqual(versions[0].flags, mt.flags)
+        self.assertEqual(versions[0].files, mt.files)
+        self.assertEqual(versions[0].parameter, mt.parameter)
+        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
+
+    @patch('Poem.api.internal_views.metrictemplates.update_metrics')
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    def test_put_metrictemplate_missing_data_key_tenant_user(
+            self, inline, update
+    ):
+        inline.side_effect = mocked_inline_metric_for_db
+        update.side_effect = mocked_func
+        attr = [
+            {'key': 'argo.ams_TOKEN2', 'value': '--token'}
+        ]
+        conf = [
+            {'key': 'maxCheckAttempts', 'value': '4'},
+            {'key': 'timeout', 'value': '70'},
+            {'key': 'path', 'value':
+                '/usr/libexec/argo-monitoring/probes/argo'},
+            {'key': 'interval', 'value': '6'},
+            {'key': 'retryInterval', 'value': '4'}
+        ]
+        data = {
+            'id': self.metrictemplate1.id,
+            'name': 'argo.AMS-Check-new',
+            'mtype': 'Active',
+            'tags': ['internal', 'test_tag2'],
+            'description': 'New description for the metric template.',
+            'probeversion': 'ams-probe (0.1.8)',
+            'parent': 'argo.AMS-Check',
+            'probeexecutable': 'ams-probe',
+            'config': json.dumps(conf),
+            'attribute': json.dumps(attr),
+            'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
+            'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
+            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
+            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change metric templates.'
+        )
+        mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
+        self.assertFalse(update.called)
+        versions = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=mt
+        ).order_by('-date_created')
+        self.assertEqual(versions.count(), 2)
+        self.assertEqual(versions[1].version_comment, 'Initial version.')
+        comment_set = set()
+        for item in json.loads(versions[0].version_comment):
+            comment_set.add(json.dumps(item))
+        self.assertEqual(
+            comment_set,
+            {
+                '{"changed": {"fields": ["config"], '
+                '"object": ["maxCheckAttempts", "path", "timeout"]}}',
+                '{"changed": {"fields": ["probekey"]}}'
+            }
+        )
+        self.assertEqual(mt.name, 'argo.AMS-Check')
+        self.assertEqual(mt.mtype.name, 'Active')
+        self.assertEqual(len(mt.tags.all()), 2)
+        self.assertTrue(self.tag3 in mt.tags.all())
+        self.assertTrue(self.tag4 in mt.tags.all())
+        self.assertEqual(
+            mt.description,
+            'Some description of argo.AMS-Check metric template.'
+        )
+        self.assertEqual(mt.parent, '')
+        self.assertEqual(mt.probeexecutable, '["ams-probe"]')
+        self.assertEqual(
+            mt.config,
+            '["maxCheckAttempts 4", "timeout 70", '
+            '"path /usr/libexec/argo-monitoring/", '
+            '"interval 5", "retryInterval 3"]'
+        )
+        self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
+        self.assertEqual(mt.dependency, '')
+        self.assertEqual(mt.flags, '["OBSESS 1"]')
+        self.assertEqual(mt.files, '')
+        self.assertEqual(mt.parameter, '["--project EGI"]')
+        self.assertEqual(mt.fileparameter, '')
         self.assertEqual(versions[0].name, mt.name)
         self.assertEqual(versions[0].mtype, mt.mtype)
         self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
