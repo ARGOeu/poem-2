@@ -7443,13 +7443,20 @@ class BulkDeleteMetricTemplatesTests(TenantTestCase):
         self.factory = TenantRequestFactory(self.tenant)
         self.view = views.BulkDeleteMetricTemplates.as_view()
         self.url = '/api/v2/internal/deletetemplates/'
-        self.user = CustUser.objects.create_user(username='testuser')
+        self.tenant_superuser = CustUser.objects.create_user(
+            username='poem', is_superuser=True
+        )
+        self.tenant_user = CustUser.objects.create_user(username='testuser')
 
         with schema_context(get_public_schema_name()):
-            Tenant.objects.create(
+            self.sp_tenant = Tenant.objects.create(
                 name='public', domain_url='public',
                 schema_name=get_public_schema_name()
             )
+            self.superuser = CustUser.objects.create_user(
+                username='poem', is_superuser=True
+            )
+            self.user = CustUser.objects.create_user(username='testuser')
 
         mttype1 = admin_models.MetricTemplateType.objects.create(name='Active')
         mttype2 = admin_models.MetricTemplateType.objects.create(name='Passive')
@@ -7667,7 +7674,9 @@ class BulkDeleteMetricTemplatesTests(TenantTestCase):
     @patch(
         'Poem.api.internal_views.metrictemplates.delete_metrics_from_profile')
     @patch('Poem.api.internal_views.metrictemplates.get_metrics_in_profiles')
-    def test_bulk_delete_metric_templates(self, mock_get, mock_delete):
+    def test_bulk_delete_metric_templates_sp_superuser(
+            self, mock_get, mock_delete
+    ):
         mock_get.return_value = {'test.AMS-Check': ['PROFILE1', 'PROFILE2']}
         mock_delete.side_effect = mocked_func
         data = {
@@ -7677,7 +7686,8 @@ class BulkDeleteMetricTemplatesTests(TenantTestCase):
         metric_id = self.metric.id
         self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 4)
         request = self.factory.post(self.url, data, format='json')
-        force_authenticate(request, user=self.user)
+        request.tenant = self.sp_tenant
+        force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(
@@ -7716,7 +7726,97 @@ class BulkDeleteMetricTemplatesTests(TenantTestCase):
     @patch(
         'Poem.api.internal_views.metrictemplates.delete_metrics_from_profile')
     @patch('Poem.api.internal_views.metrictemplates.get_metrics_in_profiles')
-    def test_bulk_delete_one_metric_templates(self, mock_get, mock_delete):
+    def test_bulk_delete_metric_templates_sp_user(self, mock_get, mock_delete):
+        mock_get.return_value = {'test.AMS-Check': ['PROFILE1', 'PROFILE2']}
+        mock_delete.side_effect = mocked_func
+        data = {
+            'metrictemplates': ['argo.AMS-Check', 'test.AMS-Check']
+        }
+        assert self.metric
+        metric_id = self.metric.id
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 4)
+        request = self.factory.post(self.url, data, format='json')
+        request.tenant = self.sp_tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete metric templates.'
+        )
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 4)
+        self.assertEqual(
+            len(poem_models.TenantHistory.objects.filter(object_id=metric_id)),
+            1
+        )
+        self.assertFalse(mock_delete.called)
+
+    @patch(
+        'Poem.api.internal_views.metrictemplates.delete_metrics_from_profile')
+    @patch('Poem.api.internal_views.metrictemplates.get_metrics_in_profiles')
+    def test_bulk_delete_metric_templates_tenant_superuser(
+            self, mock_get, mock_delete
+    ):
+        mock_get.return_value = {'test.AMS-Check': ['PROFILE1', 'PROFILE2']}
+        mock_delete.side_effect = mocked_func
+        data = {
+            'metrictemplates': ['argo.AMS-Check', 'test.AMS-Check']
+        }
+        assert self.metric
+        metric_id = self.metric.id
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 4)
+        request = self.factory.post(self.url, data, format='json')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete metric templates.'
+        )
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 4)
+        self.assertEqual(
+            len(poem_models.TenantHistory.objects.filter(object_id=metric_id)),
+            1
+        )
+        self.assertFalse(mock_delete.called)
+
+    @patch(
+        'Poem.api.internal_views.metrictemplates.delete_metrics_from_profile')
+    @patch('Poem.api.internal_views.metrictemplates.get_metrics_in_profiles')
+    def test_bulk_delete_metric_templates_tenant_user(
+            self, mock_get, mock_delete
+    ):
+        mock_get.return_value = {'test.AMS-Check': ['PROFILE1', 'PROFILE2']}
+        mock_delete.side_effect = mocked_func
+        data = {
+            'metrictemplates': ['argo.AMS-Check', 'test.AMS-Check']
+        }
+        assert self.metric
+        metric_id = self.metric.id
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 4)
+        request = self.factory.post(self.url, data, format='json')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete metric templates.'
+        )
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 4)
+        self.assertEqual(
+            len(poem_models.TenantHistory.objects.filter(object_id=metric_id)),
+            1
+        )
+        self.assertFalse(mock_delete.called)
+
+    @patch(
+        'Poem.api.internal_views.metrictemplates.delete_metrics_from_profile')
+    @patch('Poem.api.internal_views.metrictemplates.get_metrics_in_profiles')
+    def test_bulk_delete_one_metric_templates_sp_superuser(
+            self, mock_get, mock_delete
+    ):
         mock_get.return_value = {'test.AMS-Check': ['PROFILE1', 'PROFILE2']}
         mock_delete.side_effect = mocked_func
         data = {'metrictemplates': ['test.AMS-Check']}
@@ -7724,7 +7824,8 @@ class BulkDeleteMetricTemplatesTests(TenantTestCase):
         metric_id = self.metric.id
         self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 4)
         request = self.factory.post(self.url, data, format='json')
-        force_authenticate(request, user=self.user)
+        request.tenant = self.sp_tenant
+        force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(
@@ -7755,7 +7856,91 @@ class BulkDeleteMetricTemplatesTests(TenantTestCase):
     @patch(
         'Poem.api.internal_views.metrictemplates.delete_metrics_from_profile')
     @patch('Poem.api.internal_views.metrictemplates.get_metrics_in_profiles')
-    def test_bulk_delete_metric_templates_if_get_exception(
+    def test_bulk_delete_one_metric_templates_sp_user(
+            self, mock_get, mock_delete
+    ):
+        mock_get.return_value = {'test.AMS-Check': ['PROFILE1', 'PROFILE2']}
+        mock_delete.side_effect = mocked_func
+        data = {'metrictemplates': ['test.AMS-Check']}
+        assert self.metric
+        metric_id = self.metric.id
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 4)
+        request = self.factory.post(self.url, data, format='json')
+        request.tenant = self.sp_tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete metric templates.'
+        )
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 4)
+        self.assertEqual(
+            len(poem_models.TenantHistory.objects.filter(object_id=metric_id)),
+            1
+        )
+        self.assertFalse(mock_delete.called)
+
+    @patch(
+        'Poem.api.internal_views.metrictemplates.delete_metrics_from_profile')
+    @patch('Poem.api.internal_views.metrictemplates.get_metrics_in_profiles')
+    def test_bulk_delete_one_metric_templates_tenant_superuser(
+            self, mock_get, mock_delete
+    ):
+        mock_get.return_value = {'test.AMS-Check': ['PROFILE1', 'PROFILE2']}
+        mock_delete.side_effect = mocked_func
+        data = {'metrictemplates': ['test.AMS-Check']}
+        assert self.metric
+        metric_id = self.metric.id
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 4)
+        request = self.factory.post(self.url, data, format='json')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete metric templates.'
+        )
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 4)
+        self.assertEqual(
+            len(poem_models.TenantHistory.objects.filter(object_id=metric_id)),
+            1
+        )
+        self.assertFalse(mock_delete.called)
+
+    @patch(
+        'Poem.api.internal_views.metrictemplates.delete_metrics_from_profile')
+    @patch('Poem.api.internal_views.metrictemplates.get_metrics_in_profiles')
+    def test_bulk_delete_one_metric_templates_tenant_user(
+            self, mock_get, mock_delete
+    ):
+        mock_get.return_value = {'test.AMS-Check': ['PROFILE1', 'PROFILE2']}
+        mock_delete.side_effect = mocked_func
+        data = {'metrictemplates': ['test.AMS-Check']}
+        assert self.metric
+        metric_id = self.metric.id
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 4)
+        request = self.factory.post(self.url, data, format='json')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete metric templates.'
+        )
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 4)
+        self.assertEqual(
+            len(poem_models.TenantHistory.objects.filter(object_id=metric_id)),
+            1
+        )
+        self.assertFalse(mock_delete.called)
+
+    @patch(
+        'Poem.api.internal_views.metrictemplates.delete_metrics_from_profile')
+    @patch('Poem.api.internal_views.metrictemplates.get_metrics_in_profiles')
+    def test_bulk_delete_metric_templates_if_get_exception_sp_superuser(
             self, mock_get, mock_delete
     ):
         mock_get.side_effect = Exception(
@@ -7766,7 +7951,8 @@ class BulkDeleteMetricTemplatesTests(TenantTestCase):
             'metrictemplates': ['argo.AMS-Check', 'test.AMS-Check']
         }
         request = self.factory.post(self.url, data, format='json')
-        force_authenticate(request, user=self.user)
+        request.tenant = self.sp_tenant
+        force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(
             response.data,
@@ -7788,7 +7974,91 @@ class BulkDeleteMetricTemplatesTests(TenantTestCase):
     @patch(
         'Poem.api.internal_views.metrictemplates.delete_metrics_from_profile')
     @patch('Poem.api.internal_views.metrictemplates.get_metrics_in_profiles')
-    def test_bulk_delete_metric_templates_if_get_requests_exception(
+    def test_bulk_delete_metric_templates_if_get_exception_sp_user(
+            self, mock_get, mock_delete
+    ):
+        mock_get.side_effect = Exception(
+            'Error fetching WEB API data: API key not found'
+        )
+        mock_delete.side_effect = mocked_func
+        data = {
+            'metrictemplates': ['argo.AMS-Check', 'test.AMS-Check']
+        }
+        request = self.factory.post(self.url, data, format='json')
+        request.tenant = self.sp_tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete metric templates.'
+        )
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 4)
+        metric_history = poem_models.TenantHistory.objects.filter(
+            object_id=self.metric.id
+        )
+        assert self.metric, metric_history
+
+    @patch(
+        'Poem.api.internal_views.metrictemplates.delete_metrics_from_profile')
+    @patch('Poem.api.internal_views.metrictemplates.get_metrics_in_profiles')
+    def test_bulk_delete_metric_templates_if_get_exception_tenant_superuser(
+            self, mock_get, mock_delete
+    ):
+        mock_get.side_effect = Exception(
+            'Error fetching WEB API data: API key not found'
+        )
+        mock_delete.side_effect = mocked_func
+        data = {
+            'metrictemplates': ['argo.AMS-Check', 'test.AMS-Check']
+        }
+        request = self.factory.post(self.url, data, format='json')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete metric templates.'
+        )
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 4)
+        metric_history = poem_models.TenantHistory.objects.filter(
+            object_id=self.metric.id
+        )
+        assert self.metric, metric_history
+
+    @patch(
+        'Poem.api.internal_views.metrictemplates.delete_metrics_from_profile')
+    @patch('Poem.api.internal_views.metrictemplates.get_metrics_in_profiles')
+    def test_bulk_delete_metric_templates_if_get_exception_tenant_user(
+            self, mock_get, mock_delete
+    ):
+        mock_get.side_effect = Exception(
+            'Error fetching WEB API data: API key not found'
+        )
+        mock_delete.side_effect = mocked_func
+        data = {
+            'metrictemplates': ['argo.AMS-Check', 'test.AMS-Check']
+        }
+        request = self.factory.post(self.url, data, format='json')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete metric templates.'
+        )
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 4)
+        metric_history = poem_models.TenantHistory.objects.filter(
+            object_id=self.metric.id
+        )
+        assert self.metric, metric_history
+
+    @patch(
+        'Poem.api.internal_views.metrictemplates.delete_metrics_from_profile')
+    @patch('Poem.api.internal_views.metrictemplates.get_metrics_in_profiles')
+    def test_bulk_delete_metric_templates_if_get_requests_exception_sp_sprusr(
             self, mock_get, mock_delete
     ):
         mock_get.side_effect = requests.exceptions.HTTPError('Exception')
@@ -7797,8 +8067,10 @@ class BulkDeleteMetricTemplatesTests(TenantTestCase):
             'metrictemplates': ['argo.AMS-Check', 'test.AMS-Check']
         }
         request = self.factory.post(self.url, data, format='json')
-        force_authenticate(request, user=self.user)
+        request.tenant = self.sp_tenant
+        force_authenticate(request, user=self.superuser)
         response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(
             response.data,
             {
@@ -7808,7 +8080,6 @@ class BulkDeleteMetricTemplatesTests(TenantTestCase):
                            " Unable to get metric profiles: Exception"
             }
         )
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
         metric_history = poem_models.TenantHistory.objects.filter(
             object_id=self.metric.id
         )
@@ -7817,7 +8088,82 @@ class BulkDeleteMetricTemplatesTests(TenantTestCase):
     @patch(
         'Poem.api.internal_views.metrictemplates.delete_metrics_from_profile')
     @patch('Poem.api.internal_views.metrictemplates.get_metrics_in_profiles')
-    def test_bulk_delete_metric_templates_if_delete_profile_exception(
+    def test_bulk_delete_metric_templates_if_get_requests_exception_sp_user(
+            self, mock_get, mock_delete
+    ):
+        mock_get.side_effect = requests.exceptions.HTTPError('Exception')
+        mock_delete.side_effect = mocked_func
+        data = {
+            'metrictemplates': ['argo.AMS-Check', 'test.AMS-Check']
+        }
+        request = self.factory.post(self.url, data, format='json')
+        request.tenant = self.sp_tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete metric templates.'
+        )
+        metric_history = poem_models.TenantHistory.objects.filter(
+            object_id=self.metric.id
+        )
+        assert self.metric, metric_history
+
+    @patch(
+        'Poem.api.internal_views.metrictemplates.delete_metrics_from_profile')
+    @patch('Poem.api.internal_views.metrictemplates.get_metrics_in_profiles')
+    def test_bulk_delete_metric_templates_if_get_requests_exception_tenant_susr(
+            self, mock_get, mock_delete
+    ):
+        mock_get.side_effect = requests.exceptions.HTTPError('Exception')
+        mock_delete.side_effect = mocked_func
+        data = {
+            'metrictemplates': ['argo.AMS-Check', 'test.AMS-Check']
+        }
+        request = self.factory.post(self.url, data, format='json')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete metric templates.'
+        )
+        metric_history = poem_models.TenantHistory.objects.filter(
+            object_id=self.metric.id
+        )
+        assert self.metric, metric_history
+
+    @patch(
+        'Poem.api.internal_views.metrictemplates.delete_metrics_from_profile')
+    @patch('Poem.api.internal_views.metrictemplates.get_metrics_in_profiles')
+    def test_bulk_delete_metric_templates_if_get_requests_exception_tenant_user(
+            self, mock_get, mock_delete
+    ):
+        mock_get.side_effect = requests.exceptions.HTTPError('Exception')
+        mock_delete.side_effect = mocked_func
+        data = {
+            'metrictemplates': ['argo.AMS-Check', 'test.AMS-Check']
+        }
+        request = self.factory.post(self.url, data, format='json')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete metric templates.'
+        )
+        metric_history = poem_models.TenantHistory.objects.filter(
+            object_id=self.metric.id
+        )
+        assert self.metric, metric_history
+
+    @patch(
+        'Poem.api.internal_views.metrictemplates.delete_metrics_from_profile')
+    @patch('Poem.api.internal_views.metrictemplates.get_metrics_in_profiles')
+    def test_bulk_delete_metric_templates_if_delete_profile_exception_sp_spusr(
             self, mock_get, mock_delete
     ):
         mock_get.return_value = {'test.AMS-Check': ['PROFILE1', 'PROFILE2']}
@@ -7829,7 +8175,8 @@ class BulkDeleteMetricTemplatesTests(TenantTestCase):
         }
         metric_id = self.metric.id
         request = self.factory.post(self.url, data, format='json')
-        force_authenticate(request, user=self.user)
+        request.tenant = self.sp_tenant
+        force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(
             response.data,
@@ -7883,7 +8230,53 @@ class BulkDeleteMetricTemplatesTests(TenantTestCase):
         }
         metric_id = self.metric.id
         request = self.factory.post(self.url, data, format='json')
-        force_authenticate(request, user=self.user)
+        request.tenant = self.sp_tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(
+            response.data,
+            {
+                "info": "Metric templates argo.AMS-Check, test.AMS-Check "
+                        "successfully deleted."
+            }
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertRaises(
+            admin_models.MetricTemplate.DoesNotExist,
+            admin_models.MetricTemplate.objects.get,
+            name='argo.AMS-Check'
+        )
+        self.assertRaises(
+            admin_models.MetricTemplate.DoesNotExist,
+            admin_models.MetricTemplate.objects.get,
+            name='test.AMS-Check'
+        )
+        self.assertRaises(
+            poem_models.Metric.DoesNotExist,
+            poem_models.Metric.objects.get,
+            name='test.AMS-Check'
+        )
+        self.assertEqual(
+            len(poem_models.TenantHistory.objects.filter(object_id=metric_id)),
+            0
+        )
+        self.assertFalse(mock_delete.called)
+
+    @patch(
+        'Poem.api.internal_views.metrictemplates.delete_metrics_from_profile')
+    @patch('Poem.api.internal_views.metrictemplates.get_metrics_in_profiles')
+    def test_bulk_delete_metric_templates_if_metric_not_in_profile(
+            self, mock_get, mock_delete
+    ):
+        mock_get.return_value = {}
+        mock_delete.side_effect = mocked_func
+        data = {
+            'metrictemplates': ['argo.AMS-Check', 'test.AMS-Check']
+        }
+        metric_id = self.metric.id
+        request = self.factory.post(self.url, data, format='json')
+        request.tenant = self.sp_tenant
+        force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(
             response.data,
