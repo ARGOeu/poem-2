@@ -376,12 +376,12 @@ export const ReportsComponent = (props) => {
         let groupstags = formatFromReportTags('argo.group.filter.tags', report['filter_tags'])
         let endpointstags = formatFromReportTags('argo.endpoint.filter.tags', report['filter_tags'])
         let preselectedtags = JSON.parse(JSON.stringify(tagsState))
+        preselectedtags['groups'] = new Object()
+        preselectedtags['endpoints'] = new Object()
         groupstags.forEach((e, i) => {
-          preselectedtags['groups'] = new Object()
           preselectedtags['groups'][i] = e.name
         })
         endpointstags.forEach((e, i) => {
-          preselectedtags['endpoints'] = new Object()
           preselectedtags['endpoints'][i] = e.name
         })
         setTagsState(preselectedtags)
