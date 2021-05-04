@@ -225,7 +225,11 @@ export class WebApi {
   }
 
   async fetchReports() {
-    return this.fetchProfiles(this.reports);
+    return this.fetchProfiles(this.reports['main']);
+  }
+
+  async fetchReportsToplogyTags() {
+    return this.fetchProfiles(this.reports['tags']);
   }
 
   fetchMetricProfile(id) {
@@ -284,6 +288,14 @@ export class WebApi {
     return this.addProfile(this.thresholdsprofiles, profile);
   }
 
+  addReport(report) {
+    return this.addProfile(this.reports['main'], report);
+  }
+
+  changeReport(report) {
+    return this.changeProfile(`${this.reports['main']}`, report);
+  }
+
   deleteMetricProfile(id) {
     return this.deleteProfile(`${this.metricprofiles}/${id}`);
   }
@@ -294,6 +306,10 @@ export class WebApi {
 
   deleteThresholdsProfile(id) {
     return this.deleteProfile(`${this.thresholdsprofiles}/${id}`);
+  }
+
+  deleteReport(id) {
+    return this.deleteProfile(`${this.reports['main']}/${id}`);
   }
 
   async fetchProfile(url) {

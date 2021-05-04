@@ -8,6 +8,7 @@ from Poem.poem.dbmodels.aggregations import GroupOfAggregations
 from Poem.poem.dbmodels.metricstags import GroupOfMetrics
 from Poem.poem.dbmodels.metricprofiles import GroupOfMetricProfiles
 from Poem.poem.dbmodels.thresholdsprofiles import GroupOfThresholdsProfiles
+from Poem.poem.dbmodels.reports import GroupOfReports
 
 from tenant_schemas.utils import get_public_schema_name
 
@@ -70,6 +71,14 @@ class UserProfile(models.Model):
         verbose_name=_('groups of thresholds profiles'),
         blank=True,
         help_text=_('The groups of thresholds profiles that user will control'),
+        related_name='user_set',
+        related_query_name='user'
+    )
+    groupsofreports = models.ManyToManyField(
+        GroupOfReports,
+        verbose_name=_('groups of reports'),
+        blank=True,
+        help_text=_('The groups of reports that user will control'),
         related_name='user_set',
         related_query_name='user'
     )

@@ -17,6 +17,12 @@ class MetricProfileSerializer(serializers.ModelSerializer):
         model = models.MetricProfiles
 
 
+class ReportsSerializer(serializers.ModelSerializer):
+    class Meta:
+        fields = ('name', 'description', 'apiid', 'groupname', )
+        model = models.Reports
+
+
 class ServiceFlavourSerializer(serializers.ModelSerializer):
     class Meta:
         fields = ('name', 'description', )
