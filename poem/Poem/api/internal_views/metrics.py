@@ -612,61 +612,73 @@ class UpdateMetricsVersions(APIView):
         return Response(msg, status=status_code)
 
     def put(self, request):
-        msg, status_code, deleted = self._handle_metrics(
-            name=request.data['name'], version=request.data['version'],
-            schema=request.tenant.schema_name, user=request.user.username
-        )
+        if request.user.is_superuser:
+            msg, status_code, deleted = self._handle_metrics(
+                name=request.data['name'], version=request.data['version'],
+                schema=request.tenant.schema_name, user=request.user.username
+            )
 
-        warn_msg = []
-        if deleted:
-            try:
-                metrics_in_profiles = get_metrics_in_profiles(
-                    request.tenant.schema_name
-                )
+            warn_msg = []
+            if deleted:
+                try:
+                    metrics_in_profiles = get_metrics_in_profiles(
+                        request.tenant.schema_name
+                    )
 
-            except Exception:
-                warn_msg.append(
-                    'Unable to get data on metrics and metric profiles. '
-                    'Please remove deleted metrics from metric profiles '
-                    'manually.'
-                )
+                except Exception:
+                    warn_msg.append(
+                        'Unable to get data on metrics and metric profiles. '
+                        'Please remove deleted metrics from metric profiles '
+                        'manually.'
+                    )
 
-            else:
-                profiles = dict()
-                for metric in deleted:
-                    for key, value in metrics_in_profiles.items():
-                        if key == metric:
-                            for p in value:
-                                if p in profiles:
-                                    profiles.update({p: profiles[p] + [key]})
+                else:
+                    profiles = dict()
+                    for metric in deleted:
+                        for key, value in metrics_in_profiles.items():
+                            if key == metric:
+                                for p in value:
+                                    if p in profiles:
+                                        profiles.update(
+                                            {p: profiles[p] + [key]}
+                                        )
+                                    else:
+                                        profiles.update({p: [key]})
+
+                    if profiles:
+                        for key, value in profiles.items():
+                            try:
+                                delete_metrics_from_profile(key, value)
+
+                            except Exception:
+                                if len(value) > 1:
+                                    message = \
+                                        'Error trying to remove metrics {} ' \
+                                        'from profile {}.'.format(
+                                            ', '.join(value), key
+                                        )
+                                    pronoun = 'them'
                                 else:
-                                    profiles.update({p: [key]})
+                                    message = \
+                                        'Error trying to remove metric {} ' \
+                                        'from profile {}.'.format(value[0], key)
+                                    pronoun = 'it'
 
-                if profiles:
-                    for key, value in profiles.items():
-                        try:
-                            delete_metrics_from_profile(key, value)
-
-                        except Exception:
-                            if len(value) > 1:
-                                message = \
-                                    'Error trying to remove metrics {} from '\
-                                    'profile {}.'.format(', '.join(value), key)
-                                pronoun = 'them'
-                            else:
-                                message = \
-                                    'Error trying to remove metric {} from '\
-                                    'profile {}.'.format(value[0], key)
-                                pronoun = 'it'
-
-                            warn_msg.append(
-                                message + ' Please remove {} manually.'.format(
-                                    pronoun
+                                warn_msg.append(
+                                    message +
+                                    ' Please remove {} manually.'.format(
+                                        pronoun
+                                    )
                                 )
-                            )
-                            continue
+                                continue
 
-        if warn_msg:
-            msg['deleted'] += ' WARNING: ' + ' '.join(warn_msg)
+            if warn_msg:
+                msg['deleted'] += ' WARNING: ' + ' '.join(warn_msg)
 
-        return Response(msg, status=status_code)
+            return Response(msg, status=status_code)
+
+        else:
+            return error_response(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="You do not have permission to update metrics' versions."
+            )

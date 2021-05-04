@@ -2158,7 +2158,10 @@ class UpdateMetricsVersionsTests(TenantTestCase):
         self.factory = TenantRequestFactory(self.tenant)
         self.view = views.UpdateMetricsVersions.as_view()
         self.url = '/api/v2/internal/updatemetricsversions'
-        self.user = CustUser.objects.create_user(username='testuser')
+        self.user = CustUser.objects.create_user(
+            username='testuser', is_superuser=True
+        )
+        self.regular_user = CustUser.objects.create_user(username='test')
 
         with schema_context(get_public_schema_name()):
             Tenant.objects.create(
@@ -2583,6 +2586,28 @@ class UpdateMetricsVersionsTests(TenantTestCase):
         request.tenant = self.tenant
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    @patch('Poem.api.internal_views.metrics.delete_metrics_from_profile')
+    @patch('Poem.api.internal_views.metrics.update_metric_in_schema')
+    def test_update_metrics_versions_when_not_superuser(
+            self, mock_update, mock_delete
+    ):
+        data = {
+            'name': self.package2.name,
+            'version': self.package2.version
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.regular_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to update metrics' versions."
+        )
+        self.assertFalse(mock_update.called)
+        self.assertFalse(mock_delete.called)
 
     @patch('Poem.api.internal_views.metrics.delete_metrics_from_profile')
     @patch('Poem.api.internal_views.metrics.update_metric_in_schema')
