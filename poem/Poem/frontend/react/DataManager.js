@@ -228,7 +228,15 @@ export class WebApi {
     return this.fetchProfiles(this.reports['main']);
   }
 
-  async fetchReportsToplogyTags() {
+  async fetchReportsTopologyEndpoints() {
+    return this.fetchProfiles(this.reports['topologyendpoints']);
+  }
+
+  async fetchReportsTopologyGroups() {
+    return this.fetchProfiles(this.reports['topologygroups']);
+  }
+
+  async fetchReportsTopologyTags() {
     return this.fetchProfiles(this.reports['tags']);
   }
 

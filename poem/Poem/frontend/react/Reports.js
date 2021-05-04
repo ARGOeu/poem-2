@@ -421,6 +421,7 @@ export const ReportsComponent = (props) => {
     }
   );
 
+
   const { data: listMetricProfiles, error: listMetricProfilesError, isLoading: listMetricProfilesLoading } = useQuery(
     `${querykey}_metricprofiles`, async () => {
       return await webapi.fetchMetricProfiles();
@@ -457,11 +458,31 @@ export const ReportsComponent = (props) => {
 
   const { data: topologyTags, error: topologyTagsError, isLoading: isLoadingTopologyTags} = useQuery(
     `${querykey}_topologytags`, async () => {
-      let tags = await webapi.fetchReportsToplogyTags();
+      let tags = await webapi.fetchReportsTopologyTags();
       return tags
     },
     {
       enabled: report
+    }
+  );
+
+  const { data: topologyEndpoints, error: topologyEndpointsErrors, isLoading: topologyEndpointsErrorsIsLoading } = useQuery(
+    `${querykey}_topologyendpoints`, async () => {
+      let endpoints = await webapi.fetchReportsTopologyEndpoints();
+      return endpoints 
+    },
+    {
+      enabled: report 
+    }
+  );
+
+  const { data: topologyGroups, error: topologyGroupsErrors, isLoading: topologyGroupsErrorsIsLoading } = useQuery(
+    `${querykey}_topologygroups`, async () => {
+      let groups = await webapi.fetchReportsTopologyGroups();
+      return groups 
+    },
+    {
+      enabled: report 
     }
   );
 
@@ -792,7 +813,8 @@ export const ReportsComponent = (props) => {
   else if (listOperationsProfilesError)
     return (<ErrorComponent error={listOperationsProfilesError}/>);
 
-  else if (report && topologyTags && groupsTags !== undefined && endpointsTags !== undefined)  {
+  else if (report && topologyTags && topologyGroups && topologyEndpoints &&
+    groupsTags !== undefined && endpointsTags !== undefined)  {
     let metricProfile = '';
     let aggregationProfile = '';
     let operationsProfile = '';
