@@ -26,7 +26,19 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.factory = TenantRequestFactory(self.tenant)
         self.view = views.ListMetricTemplates.as_view()
         self.url = '/api/v2/internal/metrictemplates/'
-        self.user = CustUser.objects.create_user(username='testuser')
+        self.tenant_superuser = CustUser.objects.create_user(
+            username='poem', is_superuser=True
+        )
+        self.tenant_user = CustUser.objects.create_user(username='testuser')
+        with schema_context(get_public_schema_name()):
+            self.public_tenant = Tenant.objects.create(
+                name='public', domain_url='public',
+                schema_name=get_public_schema_name()
+            )
+            self.superuser = CustUser.objects.create_user(
+                username='poem', is_superuser=True
+            )
+            self.user = CustUser.objects.create_user(username='testuser')
 
         self.template_active = admin_models.MetricTemplateType.objects.create(
             name='Active'
@@ -92,7 +104,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             docurl=probe1.docurl,
             date_created=datetime.datetime.now(),
             version_comment='Initial version.',
-            version_user=self.user.username,
+            version_user=self.superuser.username,
         )
 
         probe1.package = package2
@@ -109,7 +121,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             docurl=probe1.docurl,
             date_created=datetime.datetime.now(),
             version_comment='[{"changed": {"fields": ["package", "comment"]}}]',
-            version_user=self.user.username
+            version_user=self.superuser.username
         )
 
         probe1.package = package3
@@ -126,7 +138,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             docurl=probe1.docurl,
             date_created=datetime.datetime.now(),
             version_comment='[{"changed": {"fields": ["package", "comment"]}}]',
-            version_user=self.user.username
+            version_user=self.superuser.username
         )
 
         probe2 = admin_models.Probe.objects.create(
@@ -150,16 +162,8 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             docurl=probe2.docurl,
             date_created=datetime.datetime.now(),
             version_comment='Initial version.',
-            version_user=self.user.username
+            version_user=self.superuser.username
         )
-
-        for schema in [self.tenant.schema_name, get_public_schema_name()]:
-            with schema_context(schema):
-                if schema == get_public_schema_name():
-                    Tenant.objects.create(
-                        name='public', domain_url='public',
-                        schema_name=get_public_schema_name()
-                    )
 
         self.metrictemplate1 = admin_models.MetricTemplate.objects.create(
             name='argo.AMS-Check',
@@ -211,7 +215,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             parameter=self.metrictemplate1.parameter,
             fileparameter=self.metrictemplate1.fileparameter,
             date_created=datetime.datetime.now(),
-            version_user=self.user.username,
+            version_user=self.superuser.username,
             version_comment='Initial version.',
         )
         mt1_history.tags.add(self.tag3, self.tag4)
@@ -231,7 +235,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             parameter=self.metrictemplate2.parameter,
             fileparameter=self.metrictemplate2.fileparameter,
             date_created=datetime.datetime.now(),
-            version_user=self.user.username,
+            version_user=self.superuser.username,
             version_comment='Initial version.',
         )
         mt2_history.tags.add(self.tag2)
@@ -257,7 +261,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             parameter=self.metrictemplate1.parameter,
             fileparameter=self.metrictemplate1.fileparameter,
             date_created=datetime.datetime.now(),
-            version_user=self.user.username,
+            version_user=self.superuser.username,
             version_comment=create_comment(self.metrictemplate1)
         )
         mt1_history2.tags.add(self.tag3, self.tag4)
@@ -277,7 +281,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             parameter=self.metrictemplate3.parameter,
             fileparameter=self.metrictemplate3.fileparameter,
             date_created=datetime.datetime.now(),
-            version_user=self.user.username,
+            version_user=self.superuser.username,
             version_comment=create_comment(self.metrictemplate3)
         )
 
@@ -310,7 +314,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             content_type=self.ct,
             date_created=datetime.datetime.now(),
             comment='Initial version.',
-            user=self.user.username
+            user=self.tenant_superuser.username
         )
 
         self.metric2 = poem_models.Metric.objects.create(
@@ -340,13 +344,12 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             content_type=self.ct,
             date_created=datetime.datetime.now(),
             comment='Initial version.',
-            user=self.user.username
+            user=self.tenant_superuser.username
         )
 
     def test_get_metric_template_list_public_tenant(self):
-        public_tenant = Tenant.objects.get(schema_name=get_public_schema_name())
         request = self.factory.get(self.url)
-        request.tenant = public_tenant
+        request.tenant = self.public_tenant
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(
@@ -497,7 +500,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
     def test_get_metric_template_list_regular_tenant(self):
         request = self.factory.get(self.url)
         request.tenant = self.tenant
-        force_authenticate(request, user=self.user)
+        force_authenticate(request, user=self.tenant_user)
         response = self.view(request)
         self.assertEqual(
             response.data,
@@ -647,8 +650,9 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             ]
         )
 
-    def test_get_metrictemplate_by_name(self):
+    def test_get_metrictemplate_by_name_public_tenant(self):
         request = self.factory.get(self.url + 'argo.AMS-Check')
+        request.tenant = self.public_tenant
         force_authenticate(request, user=self.user)
         response = self.view(request, 'argo.AMS-Check')
         self.assertEqual(
@@ -709,15 +713,85 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             }
         )
 
-    def test_get_metric_template_by_nonexisting_name(self):
+    def test_get_metrictemplate_by_name_regular_tenant(self):
+        request = self.factory.get(self.url + 'argo.AMS-Check')
+        force_authenticate(request, user=self.tenant_user)
+        response = self.view(request, 'argo.AMS-Check')
+        self.assertEqual(
+            response.data,
+            {
+                'id': self.metrictemplate1.id,
+                'name': 'argo.AMS-Check',
+                'mtype': 'Active',
+                'tags': ['test_tag1', 'test_tag2'],
+                'description': 'Some description of argo.AMS-Check metric '
+                               'template.',
+                'probeversion': 'ams-probe (0.1.8)',
+                'parent': '',
+                'probeexecutable': 'ams-probe',
+                'config': [
+                    {
+                        'key': 'maxCheckAttempts',
+                        'value': '4'
+                    },
+                    {
+                        'key': 'timeout',
+                        'value': '70'
+                    },
+                    {
+                        'key': 'path',
+                        'value': '/usr/libexec/argo-monitoring/'
+                    },
+                    {
+                        'key': 'interval',
+                        'value': '5'
+                    },
+                    {
+                        'key': 'retryInterval',
+                        'value': '3'
+                    }
+                ],
+                'attribute': [
+                    {
+                        'key': 'argo.ams_TOKEN',
+                        'value': '--token'
+                    }
+                ],
+                'dependency': [],
+                'flags': [
+                    {
+                        'key': 'OBSESS',
+                        'value': '1'
+                    }
+                ],
+                'files': [],
+                'parameter': [
+                    {
+                        'key': '--project',
+                        'value': 'EGI'
+                    }
+                ],
+                'fileparameter': []
+            }
+        )
+
+    def test_get_metric_template_by_nonexisting_name_public_tenant(self):
         request = self.factory.get(self.url + 'nonexisting')
+        request.tenant = self.public_tenant
         force_authenticate(request, user=self.user)
         response = self.view(request, 'nonexisting')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(response.data, {'detail': 'Metric template not found'})
 
+    def test_get_metric_template_by_nonexisting_name_regular_tenant(self):
+        request = self.factory.get(self.url + 'nonexisting')
+        force_authenticate(request, user=self.tenant_user)
+        response = self.view(request, 'nonexisting')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data, {'detail': 'Metric template not found'})
+
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
-    def test_post_metric_template(self, mocked_inline):
+    def test_post_metric_template_public_superuser(self, mocked_inline):
         mocked_inline.side_effect = mocked_inline_metric_for_db
         conf = [
             {'key': 'maxCheckAttempts', 'value': '4'},
@@ -745,7 +819,8 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
         }
         request = self.factory.post(self.url, data, format='json')
-        force_authenticate(request, user=self.user)
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         mt = admin_models.MetricTemplate.objects.get(name='new-template')
@@ -788,11 +863,157 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].files, mt.files)
         self.assertEqual(versions[0].parameter, mt.parameter)
         self.assertEqual(versions[0].fileparameter, mt.fileparameter)
-        self.assertEqual(versions[0].version_user, 'testuser')
+        self.assertEqual(versions[0].version_user, 'poem')
         self.assertEqual(versions[0].version_comment, 'Initial version.')
 
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
-    def test_post_metric_template_with_nonexisting_tag(self, mocked_inline):
+    def test_post_metric_template_public_regular_user(self, mocked_inline):
+        mocked_inline.side_effect = mocked_inline_metric_for_db
+        conf = [
+            {'key': 'maxCheckAttempts', 'value': '4'},
+            {'key': 'timeout', 'value': '70'},
+            {'key': 'path',
+             'value': '/usr/libexec/argo-monitoring/probes/argo'},
+            {'key': 'interval', 'value': '6'},
+            {'key': 'retryInterval', 'value': '4'}
+        ]
+        data = {
+            'cloned_from': '',
+            'name': 'new-template',
+            'probeversion': 'ams-probe (0.1.7)',
+            'mtype': 'Active',
+            'tags': ['internal', 'test_tag1'],
+            'description': 'New description for new-template.',
+            'probeexecutable': 'ams-probe',
+            'parent': '',
+            'config': json.dumps(conf),
+            'attribute': json.dumps([{'key': 'attr-key', 'value': 'attr-val'}]),
+            'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
+            'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
+            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
+            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+        }
+        request = self.factory.post(self.url, data, format='json')
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to add metric templates.'
+        )
+        self.assertRaises(
+            admin_models.MetricTemplate.DoesNotExist,
+            admin_models.MetricTemplate.objects.get,
+            name='new-template'
+        )
+        versions = admin_models.MetricTemplateHistory.objects.filter(
+            name='new-template'
+        )
+        self.assertEqual(versions.count(), 0)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 3)
+
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    def test_post_metric_template_regular_tenant_superusr(self, mocked_inline):
+        mocked_inline.side_effect = mocked_inline_metric_for_db
+        conf = [
+            {'key': 'maxCheckAttempts', 'value': '4'},
+            {'key': 'timeout', 'value': '70'},
+            {'key': 'path',
+             'value': '/usr/libexec/argo-monitoring/probes/argo'},
+            {'key': 'interval', 'value': '6'},
+            {'key': 'retryInterval', 'value': '4'}
+        ]
+        data = {
+            'cloned_from': '',
+            'name': 'new-template',
+            'probeversion': 'ams-probe (0.1.7)',
+            'mtype': 'Active',
+            'tags': ['internal', 'test_tag1'],
+            'description': 'New description for new-template.',
+            'probeexecutable': 'ams-probe',
+            'parent': '',
+            'config': json.dumps(conf),
+            'attribute': json.dumps([{'key': 'attr-key', 'value': 'attr-val'}]),
+            'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
+            'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
+            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
+            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+        }
+        request = self.factory.post(self.url, data, format='json')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to add metric templates.'
+        )
+        self.assertRaises(
+            admin_models.MetricTemplate.DoesNotExist,
+            admin_models.MetricTemplate.objects.get,
+            name='new-template'
+        )
+        versions = admin_models.MetricTemplateHistory.objects.filter(
+            name='new-template'
+        )
+        self.assertEqual(versions.count(), 0)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 3)
+
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    def test_post_metric_template_regular_tenant_rglr_usr(self, mocked_inline):
+        mocked_inline.side_effect = mocked_inline_metric_for_db
+        conf = [
+            {'key': 'maxCheckAttempts', 'value': '4'},
+            {'key': 'timeout', 'value': '70'},
+            {'key': 'path',
+             'value': '/usr/libexec/argo-monitoring/probes/argo'},
+            {'key': 'interval', 'value': '6'},
+            {'key': 'retryInterval', 'value': '4'}
+        ]
+        data = {
+            'cloned_from': '',
+            'name': 'new-template',
+            'probeversion': 'ams-probe (0.1.7)',
+            'mtype': 'Active',
+            'tags': ['internal', 'test_tag1'],
+            'description': 'New description for new-template.',
+            'probeexecutable': 'ams-probe',
+            'parent': '',
+            'config': json.dumps(conf),
+            'attribute': json.dumps([{'key': 'attr-key', 'value': 'attr-val'}]),
+            'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
+            'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
+            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
+            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+        }
+        request = self.factory.post(self.url, data, format='json')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to add metric templates.'
+        )
+        self.assertRaises(
+            admin_models.MetricTemplate.DoesNotExist,
+            admin_models.MetricTemplate.objects.get,
+            name='new-template'
+        )
+        versions = admin_models.MetricTemplateHistory.objects.filter(
+            name='new-template'
+        )
+        self.assertEqual(versions.count(), 0)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 3)
+
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    def test_post_metric_template_with_nonexisting_tag_public_superusr(
+            self, mocked_inline
+    ):
         mocked_inline.side_effect = mocked_inline_metric_for_db
         conf = [
             {'key': 'maxCheckAttempts', 'value': '4'},
@@ -825,7 +1046,8 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             name='new_tag'
         )
         request = self.factory.post(self.url, data, format='json')
-        force_authenticate(request, user=self.user)
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         new_tag = admin_models.MetricTags.objects.get(name='new_tag')
@@ -869,11 +1091,193 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].files, mt.files)
         self.assertEqual(versions[0].parameter, mt.parameter)
         self.assertEqual(versions[0].fileparameter, mt.fileparameter)
-        self.assertEqual(versions[0].version_user, 'testuser')
+        self.assertEqual(versions[0].version_user, 'poem')
         self.assertEqual(versions[0].version_comment, 'Initial version.')
 
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
-    def test_post_metric_template_without_tag(self, mocked_inline):
+    def test_post_metric_template_with_nonexisting_tag_public_regular_usr(
+            self, mocked_inline
+    ):
+        mocked_inline.side_effect = mocked_inline_metric_for_db
+        conf = [
+            {'key': 'maxCheckAttempts', 'value': '4'},
+            {'key': 'timeout', 'value': '70'},
+            {'key': 'path',
+             'value': '/usr/libexec/argo-monitoring/probes/argo'},
+            {'key': 'interval', 'value': '6'},
+            {'key': 'retryInterval', 'value': '4'}
+        ]
+        data = {
+            'cloned_from': '',
+            'name': 'new-template',
+            'probeversion': 'ams-probe (0.1.7)',
+            'mtype': 'Active',
+            'tags': ['internal', 'new_tag'],
+            'description': 'New description for new-template.',
+            'probeexecutable': 'ams-probe',
+            'parent': '',
+            'config': json.dumps(conf),
+            'attribute': json.dumps([{'key': 'attr-key', 'value': 'attr-val'}]),
+            'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
+            'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
+            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
+            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+        }
+        self.assertRaises(
+            admin_models.MetricTags.DoesNotExist,
+            admin_models.MetricTags.objects.get,
+            name='new_tag'
+        )
+        request = self.factory.post(self.url, data, format='json')
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to add metric templates.'
+        )
+        self.assertRaises(
+            admin_models.MetricTags.DoesNotExist,
+            admin_models.MetricTags.objects.get,
+            name='new_tag'
+        )
+        self.assertRaises(
+            admin_models.MetricTemplate.DoesNotExist,
+            admin_models.MetricTemplate.objects.get,
+            name='new-template'
+        )
+        versions = admin_models.MetricTemplateHistory.objects.filter(
+            name='new-template'
+        )
+        self.assertEqual(versions.count(), 0)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 3)
+
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    def test_post_metric_template_with_nonexisting_tag_regular_tenant_superusr(
+            self, mocked_inline
+    ):
+        mocked_inline.side_effect = mocked_inline_metric_for_db
+        conf = [
+            {'key': 'maxCheckAttempts', 'value': '4'},
+            {'key': 'timeout', 'value': '70'},
+            {'key': 'path',
+             'value': '/usr/libexec/argo-monitoring/probes/argo'},
+            {'key': 'interval', 'value': '6'},
+            {'key': 'retryInterval', 'value': '4'}
+        ]
+        data = {
+            'cloned_from': '',
+            'name': 'new-template',
+            'probeversion': 'ams-probe (0.1.7)',
+            'mtype': 'Active',
+            'tags': ['internal', 'new_tag'],
+            'description': 'New description for new-template.',
+            'probeexecutable': 'ams-probe',
+            'parent': '',
+            'config': json.dumps(conf),
+            'attribute': json.dumps([{'key': 'attr-key', 'value': 'attr-val'}]),
+            'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
+            'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
+            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
+            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+        }
+        self.assertRaises(
+            admin_models.MetricTags.DoesNotExist,
+            admin_models.MetricTags.objects.get,
+            name='new_tag'
+        )
+        request = self.factory.post(self.url, data, format='json')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to add metric templates.'
+        )
+        self.assertRaises(
+            admin_models.MetricTags.DoesNotExist,
+            admin_models.MetricTags.objects.get,
+            name='new_tag'
+        )
+        self.assertRaises(
+            admin_models.MetricTemplate.DoesNotExist,
+            admin_models.MetricTemplate.objects.get,
+            name='new-template'
+        )
+        versions = admin_models.MetricTemplateHistory.objects.filter(
+            name='new-template'
+        )
+        self.assertEqual(versions.count(), 0)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 3)
+
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    def test_post_metric_template_with_nonexisting_tag_regular_tenant_reg_usr(
+            self, mocked_inline
+    ):
+        mocked_inline.side_effect = mocked_inline_metric_for_db
+        conf = [
+            {'key': 'maxCheckAttempts', 'value': '4'},
+            {'key': 'timeout', 'value': '70'},
+            {'key': 'path',
+             'value': '/usr/libexec/argo-monitoring/probes/argo'},
+            {'key': 'interval', 'value': '6'},
+            {'key': 'retryInterval', 'value': '4'}
+        ]
+        data = {
+            'cloned_from': '',
+            'name': 'new-template',
+            'probeversion': 'ams-probe (0.1.7)',
+            'mtype': 'Active',
+            'tags': ['internal', 'new_tag'],
+            'description': 'New description for new-template.',
+            'probeexecutable': 'ams-probe',
+            'parent': '',
+            'config': json.dumps(conf),
+            'attribute': json.dumps([{'key': 'attr-key', 'value': 'attr-val'}]),
+            'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
+            'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
+            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
+            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+        }
+        self.assertRaises(
+            admin_models.MetricTags.DoesNotExist,
+            admin_models.MetricTags.objects.get,
+            name='new_tag'
+        )
+        request = self.factory.post(self.url, data, format='json')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to add metric templates.'
+        )
+        self.assertRaises(
+            admin_models.MetricTags.DoesNotExist,
+            admin_models.MetricTags.objects.get,
+            name='new_tag'
+        )
+        self.assertRaises(
+            admin_models.MetricTemplate.DoesNotExist,
+            admin_models.MetricTemplate.objects.get,
+            name='new-template'
+        )
+        versions = admin_models.MetricTemplateHistory.objects.filter(
+            name='new-template'
+        )
+        self.assertEqual(versions.count(), 0)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 3)
+
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    def test_post_metric_template_without_tag_public_superuser(
+            self, mocked_inline
+    ):
         mocked_inline.side_effect = mocked_inline_metric_for_db
         conf = [
             {'key': 'maxCheckAttempts', 'value': '4'},
@@ -901,7 +1305,8 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
         }
         request = self.factory.post(self.url, data, format='json')
-        force_authenticate(request, user=self.user)
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         mt = admin_models.MetricTemplate.objects.get(name='new-template')
@@ -942,11 +1347,163 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].files, mt.files)
         self.assertEqual(versions[0].parameter, mt.parameter)
         self.assertEqual(versions[0].fileparameter, mt.fileparameter)
-        self.assertEqual(versions[0].version_user, 'testuser')
+        self.assertEqual(versions[0].version_user, 'poem')
         self.assertEqual(versions[0].version_comment, 'Initial version.')
 
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
-    def test_post_metric_template_with_existing_name(self, mocked_inline):
+    def test_post_metric_template_without_tag_public_regular_user(
+            self, mocked_inline
+    ):
+        mocked_inline.side_effect = mocked_inline_metric_for_db
+        conf = [
+            {'key': 'maxCheckAttempts', 'value': '4'},
+            {'key': 'timeout', 'value': '70'},
+            {'key': 'path',
+             'value': '/usr/libexec/argo-monitoring/probes/argo'},
+            {'key': 'interval', 'value': '6'},
+            {'key': 'retryInterval', 'value': '4'}
+        ]
+        data = {
+            'cloned_from': '',
+            'name': 'new-template',
+            'probeversion': 'ams-probe (0.1.7)',
+            'mtype': 'Active',
+            'tags': [],
+            'description': 'New description for new-template.',
+            'probeexecutable': 'ams-probe',
+            'parent': '',
+            'config': json.dumps(conf),
+            'attribute': json.dumps([{'key': 'attr-key', 'value': 'attr-val'}]),
+            'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
+            'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
+            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
+            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+        }
+        request = self.factory.post(self.url, data, format='json')
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to add metric templates.'
+        )
+        self.assertRaises(
+            admin_models.MetricTemplate.DoesNotExist,
+            admin_models.MetricTemplate.objects.get,
+            name='new-template'
+        )
+        versions = admin_models.MetricTemplateHistory.objects.filter(
+            name='new-template'
+        )
+        self.assertEqual(versions.count(), 0)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 3)
+
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    def test_post_metric_template_without_tag_regular_tenant_superuser(
+            self, mocked_inline
+    ):
+        mocked_inline.side_effect = mocked_inline_metric_for_db
+        conf = [
+            {'key': 'maxCheckAttempts', 'value': '4'},
+            {'key': 'timeout', 'value': '70'},
+            {'key': 'path',
+             'value': '/usr/libexec/argo-monitoring/probes/argo'},
+            {'key': 'interval', 'value': '6'},
+            {'key': 'retryInterval', 'value': '4'}
+        ]
+        data = {
+            'cloned_from': '',
+            'name': 'new-template',
+            'probeversion': 'ams-probe (0.1.7)',
+            'mtype': 'Active',
+            'tags': [],
+            'description': 'New description for new-template.',
+            'probeexecutable': 'ams-probe',
+            'parent': '',
+            'config': json.dumps(conf),
+            'attribute': json.dumps([{'key': 'attr-key', 'value': 'attr-val'}]),
+            'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
+            'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
+            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
+            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+        }
+        request = self.factory.post(self.url, data, format='json')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to add metric templates.'
+        )
+        self.assertRaises(
+            admin_models.MetricTemplate.DoesNotExist,
+            admin_models.MetricTemplate.objects.get,
+            name='new-template'
+        )
+        versions = admin_models.MetricTemplateHistory.objects.filter(
+            name='new-template'
+        )
+        self.assertEqual(versions.count(), 0)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 3)
+
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    def test_post_metric_template_without_tag_regular_tenant_regular_user(
+            self, mocked_inline
+    ):
+        mocked_inline.side_effect = mocked_inline_metric_for_db
+        conf = [
+            {'key': 'maxCheckAttempts', 'value': '4'},
+            {'key': 'timeout', 'value': '70'},
+            {'key': 'path',
+             'value': '/usr/libexec/argo-monitoring/probes/argo'},
+            {'key': 'interval', 'value': '6'},
+            {'key': 'retryInterval', 'value': '4'}
+        ]
+        data = {
+            'cloned_from': '',
+            'name': 'new-template',
+            'probeversion': 'ams-probe (0.1.7)',
+            'mtype': 'Active',
+            'tags': [],
+            'description': 'New description for new-template.',
+            'probeexecutable': 'ams-probe',
+            'parent': '',
+            'config': json.dumps(conf),
+            'attribute': json.dumps([{'key': 'attr-key', 'value': 'attr-val'}]),
+            'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
+            'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
+            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
+            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+        }
+        request = self.factory.post(self.url, data, format='json')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to add metric templates.'
+        )
+        self.assertRaises(
+            admin_models.MetricTemplate.DoesNotExist,
+            admin_models.MetricTemplate.objects.get,
+            name='new-template'
+        )
+        versions = admin_models.MetricTemplateHistory.objects.filter(
+            name='new-template'
+        )
+        self.assertEqual(versions.count(), 0)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 3)
+
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    def test_post_metric_template_with_existing_name_public_superuser(
+            self, mocked_inline
+    ):
         mocked_inline.side_effect = mocked_inline_metric_for_db
         conf = [
             {'key': 'maxCheckAttempts', 'value': '4'},
@@ -973,18 +1530,137 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'fileparameter': json.dumps([{'key': '', 'value': ''}])
         }
         request = self.factory.post(self.url, data, format='json')
-        force_authenticate(request, user=self.user)
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(
-            response.data,
-            {
-                'detail': 'Metric template with this name already exists.'
-            }
+            response.data['detail'],
+            'Metric template with this name already exists.'
         )
 
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
-    def test_post_metric_template_with_nonexisting_probeversion(
+    def test_post_metric_template_with_existing_name_public_regular_user(
+            self, mocked_inline
+    ):
+        mocked_inline.side_effect = mocked_inline_metric_for_db
+        conf = [
+            {'key': 'maxCheckAttempts', 'value': '4'},
+            {'key': 'timeout', 'value': '70'},
+            {'key': 'path',
+             'value': '/usr/libexec/argo-monitoring/probes/argo'},
+            {'key': 'interval', 'value': '6'},
+            {'key': 'retryInterval', 'value': '4'}
+        ]
+        data = {
+            'name': 'argo.AMS-Check',
+            'probeversion': 'ams-probe (0.1.7)',
+            'mtype': 'Active',
+            'tags': ['test_tag1', 'test_tag2'],
+            'description': 'Description of argo.AMS-Check metric template.',
+            'probeexecutable': 'ams-probe',
+            'parent': '',
+            'config': json.dumps(conf),
+            'attribute': json.dumps([{'key': '', 'value': ''}]),
+            'dependency': json.dumps([{'key': '', 'value': ''}]),
+            'parameter': json.dumps([{'key': '', 'value': ''}]),
+            'flags': json.dumps([{'key': '', 'value': ''}]),
+            'files': json.dumps([{'key': '', 'value': ''}]),
+            'fileparameter': json.dumps([{'key': '', 'value': ''}])
+        }
+        request = self.factory.post(self.url, data, format='json')
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to add metric templates.'
+        )
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 3)
+
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    def test_post_metric_template_with_existing_name_regular_tenant_superuser(
+            self, mocked_inline
+    ):
+        mocked_inline.side_effect = mocked_inline_metric_for_db
+        conf = [
+            {'key': 'maxCheckAttempts', 'value': '4'},
+            {'key': 'timeout', 'value': '70'},
+            {'key': 'path',
+             'value': '/usr/libexec/argo-monitoring/probes/argo'},
+            {'key': 'interval', 'value': '6'},
+            {'key': 'retryInterval', 'value': '4'}
+        ]
+        data = {
+            'name': 'argo.AMS-Check',
+            'probeversion': 'ams-probe (0.1.7)',
+            'mtype': 'Active',
+            'tags': ['test_tag1', 'test_tag2'],
+            'description': 'Description of argo.AMS-Check metric template.',
+            'probeexecutable': 'ams-probe',
+            'parent': '',
+            'config': json.dumps(conf),
+            'attribute': json.dumps([{'key': '', 'value': ''}]),
+            'dependency': json.dumps([{'key': '', 'value': ''}]),
+            'parameter': json.dumps([{'key': '', 'value': ''}]),
+            'flags': json.dumps([{'key': '', 'value': ''}]),
+            'files': json.dumps([{'key': '', 'value': ''}]),
+            'fileparameter': json.dumps([{'key': '', 'value': ''}])
+        }
+        request = self.factory.post(self.url, data, format='json')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to add metric templates.'
+        )
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 3)
+
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    def test_post_metric_template_with_existing_name_regular_tenant_reg_usr(
+            self, mocked_inline
+    ):
+        mocked_inline.side_effect = mocked_inline_metric_for_db
+        conf = [
+            {'key': 'maxCheckAttempts', 'value': '4'},
+            {'key': 'timeout', 'value': '70'},
+            {'key': 'path',
+             'value': '/usr/libexec/argo-monitoring/probes/argo'},
+            {'key': 'interval', 'value': '6'},
+            {'key': 'retryInterval', 'value': '4'}
+        ]
+        data = {
+            'name': 'argo.AMS-Check',
+            'probeversion': 'ams-probe (0.1.7)',
+            'mtype': 'Active',
+            'tags': ['test_tag1', 'test_tag2'],
+            'description': 'Description of argo.AMS-Check metric template.',
+            'probeexecutable': 'ams-probe',
+            'parent': '',
+            'config': json.dumps(conf),
+            'attribute': json.dumps([{'key': '', 'value': ''}]),
+            'dependency': json.dumps([{'key': '', 'value': ''}]),
+            'parameter': json.dumps([{'key': '', 'value': ''}]),
+            'flags': json.dumps([{'key': '', 'value': ''}]),
+            'files': json.dumps([{'key': '', 'value': ''}]),
+            'fileparameter': json.dumps([{'key': '', 'value': ''}])
+        }
+        request = self.factory.post(self.url, data, format='json')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to add metric templates.'
+        )
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 3)
+
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    def test_post_metric_template_with_nonexisting_probeversion_public_sprusr(
             self, mock_inline
     ):
         mock_inline.side_effect = mocked_inline_metric_for_db
@@ -1013,18 +1689,137 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'fileparameter': json.dumps([{'key': '', 'value': ''}])
         }
         request = self.factory.post(self.url, data, format='json')
-        force_authenticate(request, user=self.user)
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(
-            response.data,
-            {
-                'detail': 'You should choose existing probe version!'
-            }
+            response.data['detail'], 'Probe version does not exist.'
         )
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 3)
 
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
-    def test_post_metric_template_without_specifying_probes_version(
+    def test_post_metric_template_with_nonexisting_probeversion_public_regular(
+            self, mock_inline
+    ):
+        mock_inline.side_effect = mocked_inline_metric_for_db
+        conf = [
+            {'key': 'maxCheckAttempts', 'value': '4'},
+            {'key': 'timeout', 'value': '70'},
+            {'key': 'path',
+             'value': '/usr/libexec/argo-monitoring/probes/argo'},
+            {'key': 'interval', 'value': '6'},
+            {'key': 'retryInterval', 'value': '4'}
+        ]
+        data = {
+            'name': 'test.AMS-Check',
+            'probeversion': 'nonexisting (0.1.1)',
+            'mtype': 'Active',
+            'tags': ['test_tag1', 'test_tag2'],
+            'description': 'Description of argo.AMS-Check metric template.',
+            'probeexecutable': 'ams-probe',
+            'parent': '',
+            'config': json.dumps(conf),
+            'attribute': json.dumps([{'key': '', 'value': ''}]),
+            'dependency': json.dumps([{'key': '', 'value': ''}]),
+            'parameter': json.dumps([{'key': '', 'value': ''}]),
+            'flags': json.dumps([{'key': '', 'value': ''}]),
+            'files': json.dumps([{'key': '', 'value': ''}]),
+            'fileparameter': json.dumps([{'key': '', 'value': ''}])
+        }
+        request = self.factory.post(self.url, data, format='json')
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to add metric templates.'
+        )
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 3)
+
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    def test_post_metric_template_with_nonexisting_probeversion_regular_su(
+            self, mock_inline
+    ):
+        mock_inline.side_effect = mocked_inline_metric_for_db
+        conf = [
+            {'key': 'maxCheckAttempts', 'value': '4'},
+            {'key': 'timeout', 'value': '70'},
+            {'key': 'path',
+             'value': '/usr/libexec/argo-monitoring/probes/argo'},
+            {'key': 'interval', 'value': '6'},
+            {'key': 'retryInterval', 'value': '4'}
+        ]
+        data = {
+            'name': 'test.AMS-Check',
+            'probeversion': 'nonexisting (0.1.1)',
+            'mtype': 'Active',
+            'tags': ['test_tag1', 'test_tag2'],
+            'description': 'Description of argo.AMS-Check metric template.',
+            'probeexecutable': 'ams-probe',
+            'parent': '',
+            'config': json.dumps(conf),
+            'attribute': json.dumps([{'key': '', 'value': ''}]),
+            'dependency': json.dumps([{'key': '', 'value': ''}]),
+            'parameter': json.dumps([{'key': '', 'value': ''}]),
+            'flags': json.dumps([{'key': '', 'value': ''}]),
+            'files': json.dumps([{'key': '', 'value': ''}]),
+            'fileparameter': json.dumps([{'key': '', 'value': ''}])
+        }
+        request = self.factory.post(self.url, data, format='json')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to add metric templates.'
+        )
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 3)
+
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    def test_post_metric_template_with_nonexisting_probeversion_regular_user(
+            self, mock_inline
+    ):
+        mock_inline.side_effect = mocked_inline_metric_for_db
+        conf = [
+            {'key': 'maxCheckAttempts', 'value': '4'},
+            {'key': 'timeout', 'value': '70'},
+            {'key': 'path',
+             'value': '/usr/libexec/argo-monitoring/probes/argo'},
+            {'key': 'interval', 'value': '6'},
+            {'key': 'retryInterval', 'value': '4'}
+        ]
+        data = {
+            'name': 'test.AMS-Check',
+            'probeversion': 'nonexisting (0.1.1)',
+            'mtype': 'Active',
+            'tags': ['test_tag1', 'test_tag2'],
+            'description': 'Description of argo.AMS-Check metric template.',
+            'probeexecutable': 'ams-probe',
+            'parent': '',
+            'config': json.dumps(conf),
+            'attribute': json.dumps([{'key': '', 'value': ''}]),
+            'dependency': json.dumps([{'key': '', 'value': ''}]),
+            'parameter': json.dumps([{'key': '', 'value': ''}]),
+            'flags': json.dumps([{'key': '', 'value': ''}]),
+            'files': json.dumps([{'key': '', 'value': ''}]),
+            'fileparameter': json.dumps([{'key': '', 'value': ''}])
+        }
+        request = self.factory.post(self.url, data, format='json')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to add metric templates.'
+        )
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 3)
+
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    def test_post_metric_template_without_specifying_probes_version_public_su(
             self, mock_inline
     ):
         mock_inline.side_effect = mocked_inline_metric_for_db
@@ -1053,15 +1848,289 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'fileparameter': json.dumps([{'key': '', 'value': ''}])
         }
         request = self.factory.post(self.url, data, format='json')
-        force_authenticate(request, user=self.user)
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(
-            response.data,
-            {
-                'detail': 'You should specify the version of the probe!'
-            }
+            response.data['detail'], 'Probe version not specified.'
         )
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 3)
+
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    def test_post_metric_template_without_specifying_probes_version_public_usr(
+            self, mock_inline
+    ):
+        mock_inline.side_effect = mocked_inline_metric_for_db
+        conf = [
+            {'key': 'maxCheckAttempts', 'value': '4'},
+            {'key': 'timeout', 'value': '70'},
+            {'key': 'path',
+             'value': '/usr/libexec/argo-monitoring/probes/argo'},
+            {'key': 'interval', 'value': '6'},
+            {'key': 'retryInterval', 'value': '4'}
+        ]
+        data = {
+            'name': 'test.AMS-Check',
+            'probeversion': 'nonexisting',
+            'mtype': 'Active',
+            'tags': ['test_tag1', 'test_tag2'],
+            'description': 'Description of argo.AMS-Check metric template.',
+            'probeexecutable': 'ams-probe',
+            'parent': '',
+            'config': json.dumps(conf),
+            'attribute': json.dumps([{'key': '', 'value': ''}]),
+            'dependency': json.dumps([{'key': '', 'value': ''}]),
+            'parameter': json.dumps([{'key': '', 'value': ''}]),
+            'flags': json.dumps([{'key': '', 'value': ''}]),
+            'files': json.dumps([{'key': '', 'value': ''}]),
+            'fileparameter': json.dumps([{'key': '', 'value': ''}])
+        }
+        request = self.factory.post(self.url, data, format='json')
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to add metric templates.'
+        )
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 3)
+
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    def test_post_metric_template_without_specifying_probes_version_regular_su(
+            self, mock_inline
+    ):
+        mock_inline.side_effect = mocked_inline_metric_for_db
+        conf = [
+            {'key': 'maxCheckAttempts', 'value': '4'},
+            {'key': 'timeout', 'value': '70'},
+            {'key': 'path',
+             'value': '/usr/libexec/argo-monitoring/probes/argo'},
+            {'key': 'interval', 'value': '6'},
+            {'key': 'retryInterval', 'value': '4'}
+        ]
+        data = {
+            'name': 'test.AMS-Check',
+            'probeversion': 'nonexisting',
+            'mtype': 'Active',
+            'tags': ['test_tag1', 'test_tag2'],
+            'description': 'Description of argo.AMS-Check metric template.',
+            'probeexecutable': 'ams-probe',
+            'parent': '',
+            'config': json.dumps(conf),
+            'attribute': json.dumps([{'key': '', 'value': ''}]),
+            'dependency': json.dumps([{'key': '', 'value': ''}]),
+            'parameter': json.dumps([{'key': '', 'value': ''}]),
+            'flags': json.dumps([{'key': '', 'value': ''}]),
+            'files': json.dumps([{'key': '', 'value': ''}]),
+            'fileparameter': json.dumps([{'key': '', 'value': ''}])
+        }
+        request = self.factory.post(self.url, data, format='json')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to add metric templates.'
+        )
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 3)
+
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    def test_post_metric_template_without_specifying_probes_version_reglr_usr(
+            self, mock_inline
+    ):
+        mock_inline.side_effect = mocked_inline_metric_for_db
+        conf = [
+            {'key': 'maxCheckAttempts', 'value': '4'},
+            {'key': 'timeout', 'value': '70'},
+            {'key': 'path',
+             'value': '/usr/libexec/argo-monitoring/probes/argo'},
+            {'key': 'interval', 'value': '6'},
+            {'key': 'retryInterval', 'value': '4'}
+        ]
+        data = {
+            'name': 'test.AMS-Check',
+            'probeversion': 'nonexisting',
+            'mtype': 'Active',
+            'tags': ['test_tag1', 'test_tag2'],
+            'description': 'Description of argo.AMS-Check metric template.',
+            'probeexecutable': 'ams-probe',
+            'parent': '',
+            'config': json.dumps(conf),
+            'attribute': json.dumps([{'key': '', 'value': ''}]),
+            'dependency': json.dumps([{'key': '', 'value': ''}]),
+            'parameter': json.dumps([{'key': '', 'value': ''}]),
+            'flags': json.dumps([{'key': '', 'value': ''}]),
+            'files': json.dumps([{'key': '', 'value': ''}]),
+            'fileparameter': json.dumps([{'key': '', 'value': ''}])
+        }
+        request = self.factory.post(self.url, data, format='json')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to add metric templates.'
+        )
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 3)
+
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    def test_post_metric_template_with_missing_data_key_public_superuser(
+            self, mock_inline
+    ):
+        mock_inline.side_effect = mocked_inline_metric_for_db
+        conf = [
+            {'key': 'maxCheckAttempts', 'value': '4'},
+            {'key': 'timeout', 'value': '70'},
+            {'key': 'path',
+             'value': '/usr/libexec/argo-monitoring/probes/argo'},
+            {'key': 'interval', 'value': '6'},
+            {'key': 'retryInterval', 'value': '4'}
+        ]
+        data = {
+            'name': 'test.AMS-Check',
+            'probeversion': 'ams-probe (0.1.7)',
+            'mtype': 'Active',
+            'tags': ['test_tag1', 'test_tag2'],
+            'description': 'Description of argo.AMS-Check metric template.',
+            'probeexecutable': 'ams-probe',
+            'parent': '',
+            'config': json.dumps(conf),
+            'attribute': json.dumps([{'key': '', 'value': ''}]),
+            'dependency': json.dumps([{'key': '', 'value': ''}]),
+            'parameter': json.dumps([{'key': '', 'value': ''}]),
+            'files': json.dumps([{'key': '', 'value': ''}]),
+            'fileparameter': json.dumps([{'key': '', 'value': ''}])
+        }
+        request = self.factory.post(self.url, data, format='json')
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data['detail'], 'Missing data key: flags'
+        )
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 3)
+
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    def test_post_metric_template_with_missing_data_key_public_regular_usr(
+            self, mock_inline
+    ):
+        mock_inline.side_effect = mocked_inline_metric_for_db
+        conf = [
+            {'key': 'maxCheckAttempts', 'value': '4'},
+            {'key': 'timeout', 'value': '70'},
+            {'key': 'path',
+             'value': '/usr/libexec/argo-monitoring/probes/argo'},
+            {'key': 'interval', 'value': '6'},
+            {'key': 'retryInterval', 'value': '4'}
+        ]
+        data = {
+            'name': 'test.AMS-Check',
+            'probeversion': 'ams-probe (0.1.7)',
+            'mtype': 'Active',
+            'tags': ['test_tag1', 'test_tag2'],
+            'description': 'Description of argo.AMS-Check metric template.',
+            'probeexecutable': 'ams-probe',
+            'parent': '',
+            'config': json.dumps(conf),
+            'attribute': json.dumps([{'key': '', 'value': ''}]),
+            'dependency': json.dumps([{'key': '', 'value': ''}]),
+            'parameter': json.dumps([{'key': '', 'value': ''}]),
+            'files': json.dumps([{'key': '', 'value': ''}]),
+            'fileparameter': json.dumps([{'key': '', 'value': ''}])
+        }
+        request = self.factory.post(self.url, data, format='json')
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to add metric templates.'
+        )
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 3)
+
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    def test_post_metric_template_with_missing_data_key_regular_tenant_su(
+            self, mock_inline
+    ):
+        mock_inline.side_effect = mocked_inline_metric_for_db
+        conf = [
+            {'key': 'maxCheckAttempts', 'value': '4'},
+            {'key': 'timeout', 'value': '70'},
+            {'key': 'path',
+             'value': '/usr/libexec/argo-monitoring/probes/argo'},
+            {'key': 'interval', 'value': '6'},
+            {'key': 'retryInterval', 'value': '4'}
+        ]
+        data = {
+            'name': 'test.AMS-Check',
+            'probeversion': 'ams-probe (0.1.7)',
+            'mtype': 'Active',
+            'tags': ['test_tag1', 'test_tag2'],
+            'description': 'Description of argo.AMS-Check metric template.',
+            'probeexecutable': 'ams-probe',
+            'parent': '',
+            'config': json.dumps(conf),
+            'attribute': json.dumps([{'key': '', 'value': ''}]),
+            'dependency': json.dumps([{'key': '', 'value': ''}]),
+            'parameter': json.dumps([{'key': '', 'value': ''}]),
+            'files': json.dumps([{'key': '', 'value': ''}]),
+            'fileparameter': json.dumps([{'key': '', 'value': ''}])
+        }
+        request = self.factory.post(self.url, data, format='json')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to add metric templates.'
+        )
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 3)
+
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    def test_post_metric_template_with_missing_data_key_regular_tenant_usr(
+            self, mock_inline
+    ):
+        mock_inline.side_effect = mocked_inline_metric_for_db
+        conf = [
+            {'key': 'maxCheckAttempts', 'value': '4'},
+            {'key': 'timeout', 'value': '70'},
+            {'key': 'path',
+             'value': '/usr/libexec/argo-monitoring/probes/argo'},
+            {'key': 'interval', 'value': '6'},
+            {'key': 'retryInterval', 'value': '4'}
+        ]
+        data = {
+            'name': 'test.AMS-Check',
+            'probeversion': 'ams-probe (0.1.7)',
+            'mtype': 'Active',
+            'tags': ['test_tag1', 'test_tag2'],
+            'description': 'Description of argo.AMS-Check metric template.',
+            'probeexecutable': 'ams-probe',
+            'parent': '',
+            'config': json.dumps(conf),
+            'attribute': json.dumps([{'key': '', 'value': ''}]),
+            'dependency': json.dumps([{'key': '', 'value': ''}]),
+            'parameter': json.dumps([{'key': '', 'value': ''}]),
+            'files': json.dumps([{'key': '', 'value': ''}]),
+            'fileparameter': json.dumps([{'key': '', 'value': ''}])
+        }
+        request = self.factory.post(self.url, data, format='json')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to add metric templates.'
+        )
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 3)
 
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')

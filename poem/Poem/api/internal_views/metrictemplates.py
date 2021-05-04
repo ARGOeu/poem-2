@@ -17,6 +17,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from tenant_schemas.utils import get_public_schema_name, schema_context
 
+from .utils import error_response
+
 
 class ListMetricTemplates(APIView):
     authentication_classes = (SessionAuthentication,)
@@ -121,91 +123,115 @@ class ListMetricTemplates(APIView):
             return Response(results)
 
     def post(self, request):
-        if request.data['parent']:
-            parent = json.dumps([request.data['parent']])
-        else:
-            parent = ''
+        if request.tenant.schema_name == get_public_schema_name() and \
+                request.user.is_superuser:
+            try:
+                if request.data['parent']:
+                    parent = json.dumps([request.data['parent']])
+                else:
+                    parent = ''
 
-        if request.data['probeexecutable']:
-            probeexecutable = json.dumps([request.data['probeexecutable']])
-        else:
-            probeexecutable = ''
-
-        try:
-            if request.data['mtype'] == 'Active':
-                probe_name = request.data['probeversion'].split(' ')[0]
-                probe_version = request.data['probeversion'].split(' ')[1][1:-1]
-                mt = admin_models.MetricTemplate.objects.create(
-                    name=request.data['name'],
-                    mtype=admin_models.MetricTemplateType.objects.get(
-                        name=request.data['mtype']
-                    ),
-                    probekey=admin_models.ProbeHistory.objects.get(
-                        name=probe_name,  package__version=probe_version
-                    ),
-                    description=request.data['description'],
-                    parent=parent,
-                    probeexecutable=probeexecutable,
-                    config=inline_metric_for_db(request.data['config']),
-                    attribute=inline_metric_for_db(request.data['attribute']),
-                    dependency=inline_metric_for_db(request.data['dependency']),
-                    flags=inline_metric_for_db(request.data['flags']),
-                    files=inline_metric_for_db(request.data['files']),
-                    parameter=inline_metric_for_db(request.data['parameter']),
-                    fileparameter=inline_metric_for_db(
-                        request.data['fileparameter']
+                if request.data['probeexecutable']:
+                    probeexecutable = json.dumps(
+                        [request.data['probeexecutable']]
                     )
+                else:
+                    probeexecutable = ''
+
+                if request.data['mtype'] == 'Active':
+                    probe_name = request.data['probeversion'].split(' ')[0]
+                    probe_version = request.data[
+                                        'probeversion'
+                                    ].split(' ')[1][1:-1]
+                    mt = admin_models.MetricTemplate.objects.create(
+                        name=request.data['name'],
+                        mtype=admin_models.MetricTemplateType.objects.get(
+                            name=request.data['mtype']
+                        ),
+                        probekey=admin_models.ProbeHistory.objects.get(
+                            name=probe_name,  package__version=probe_version
+                        ),
+                        description=request.data['description'],
+                        parent=parent,
+                        probeexecutable=probeexecutable,
+                        config=inline_metric_for_db(request.data['config']),
+                        attribute=inline_metric_for_db(
+                            request.data['attribute']
+                        ),
+                        dependency=inline_metric_for_db(
+                            request.data['dependency']
+                        ),
+                        flags=inline_metric_for_db(request.data['flags']),
+                        files=inline_metric_for_db(request.data['files']),
+                        parameter=inline_metric_for_db(
+                            request.data['parameter']
+                        ),
+                        fileparameter=inline_metric_for_db(
+                            request.data['fileparameter']
+                        )
+                    )
+                    if 'tags' in dict(request.data):
+                        for tag_name in dict(request.data)['tags']:
+                            try:
+                                tag = admin_models.MetricTags.objects.get(
+                                    name=tag_name
+                                )
+
+                            except admin_models.MetricTags.DoesNotExist:
+                                tag = admin_models.MetricTags.objects.create(
+                                    name=tag_name
+                                )
+                            mt.tags.add(tag)
+                else:
+                    mt = admin_models.MetricTemplate.objects.create(
+                        name=request.data['name'],
+                        mtype=admin_models.MetricTemplateType.objects.get(
+                            name=request.data['mtype']
+                        ),
+                        description=request.data['description'],
+                        parent=parent,
+                        flags=inline_metric_for_db(request.data['flags'])
+                    )
+
+                if request.data['cloned_from']:
+                    clone = admin_models.MetricTemplate.objects.get(
+                        id=request.data['cloned_from']
+                    )
+                    comment = 'Derived from ' + clone.name
+                    create_history(mt, request.user.username, comment=comment)
+                else:
+                    create_history(mt, request.user.username)
+
+                return Response(status=status.HTTP_201_CREATED)
+
+            except IntegrityError:
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail='Metric template with this name already exists.'
                 )
-                if 'tags' in dict(request.data):
-                    for tag_name in dict(request.data)['tags']:
-                        try:
-                            tag = admin_models.MetricTags.objects.get(
-                                name=tag_name
-                            )
-                        except admin_models.MetricTags.DoesNotExist:
-                            tag = admin_models.MetricTags.objects.create(
-                                name=tag_name
-                            )
-                        mt.tags.add(tag)
-            else:
-                mt = admin_models.MetricTemplate.objects.create(
-                    name=request.data['name'],
-                    mtype=admin_models.MetricTemplateType.objects.get(
-                        name=request.data['mtype']
-                    ),
-                    description=request.data['description'],
-                    parent=parent,
-                    flags=inline_metric_for_db(request.data['flags'])
+
+            except admin_models.ProbeHistory.DoesNotExist:
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail='Probe version does not exist.'
                 )
 
-            if request.data['cloned_from']:
-                clone = admin_models.MetricTemplate.objects.get(
-                    id=request.data['cloned_from']
+            except IndexError:
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail='Probe version not specified.'
                 )
-                comment = 'Derived from ' + clone.name
-                create_history(mt, request.user.username, comment=comment)
-            else:
-                create_history(mt, request.user.username)
 
-            return Response(status=status.HTTP_201_CREATED)
+            except KeyError as e:
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail='Missing data key: {}'.format(e.args[0])
+                )
 
-        except IntegrityError:
-            return Response(
-                {'detail':
-                 'Metric template with this name already exists.'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        except admin_models.ProbeHistory.DoesNotExist:
-            return Response(
-                {'detail': 'You should choose existing probe version!'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        except IndexError:
-            return Response(
-                {'detail': 'You should specify the version of the probe!'},
-                status=status.HTTP_400_BAD_REQUEST
+        else:
+            return error_response(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='You do not have permission to add metric templates.'
             )
 
     def put(self, request):
