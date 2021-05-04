@@ -6694,25 +6694,149 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].parameter, mt.parameter)
         self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
-    def test_delete_metric_template(self):
+    def test_delete_metric_template_sp_superuser(self):
         self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 3)
         request = self.factory.delete(self.url + 'argo.AMS-Check')
-        force_authenticate(request, user=self.user)
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superuser)
         response = self.view(request, 'argo.AMS-Check')
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 2)
 
-    def test_delete_nonexisting_metric_template(self):
-        request = self.factory.delete(self.url + 'nonexisting')
+    def test_delete_metric_template_sp_user(self):
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 3)
+        request = self.factory.delete(self.url + 'argo.AMS-Check')
+        request.tenant = self.public_tenant
         force_authenticate(request, user=self.user)
+        response = self.view(request, 'argo.AMS-Check')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete metric templates.'
+        )
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 3)
+
+    def test_delete_metric_template_tenant_superuser(self):
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 3)
+        request = self.factory.delete(self.url + 'argo.AMS-Check')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_superuser)
+        response = self.view(request, 'argo.AMS-Check')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete metric templates.'
+        )
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 3)
+
+    def test_delete_metric_template_tenant_user(self):
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 3)
+        request = self.factory.delete(self.url + 'argo.AMS-Check')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_user)
+        response = self.view(request, 'argo.AMS-Check')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete metric templates.'
+        )
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 3)
+
+    def test_delete_nonexisting_metric_template_sp_superuser(self):
+        request = self.factory.delete(self.url + 'nonexisting')
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superuser)
         response = self.view(request, 'nonexisting')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(
+            response.data['detail'], 'Metric template does not exist.'
+        )
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 3)
 
-    def test_delete_metric_template_without_specifying_name(self):
-        request = self.factory.delete(self.url)
+    def test_delete_nonexisting_metric_template_sp_user(self):
+        request = self.factory.delete(self.url + 'nonexisting')
+        request.tenant = self.public_tenant
         force_authenticate(request, user=self.user)
+        response = self.view(request, 'nonexisting')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete metric templates.'
+        )
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 3)
+
+    def test_delete_nonexisting_metric_template_tenant_superuser(self):
+        request = self.factory.delete(self.url + 'nonexisting')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_superuser)
+        response = self.view(request, 'nonexisting')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete metric templates.'
+        )
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 3)
+
+    def test_delete_nonexisting_metric_template_tenant_user(self):
+        request = self.factory.delete(self.url + 'nonexisting')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_user)
+        response = self.view(request, 'nonexisting')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete metric templates.'
+        )
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 3)
+
+    def test_delete_metric_template_without_specifying_name_sp_superuser(self):
+        request = self.factory.delete(self.url)
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data['detail'], 'Metric template name not specified.'
+        )
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 3)
+
+    def test_delete_metric_template_without_specifying_name_sp_user(self):
+        request = self.factory.delete(self.url)
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete metric templates.'
+        )
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 3)
+
+    def test_delete_metric_template_without_specifying_name_tenant_superuser(
+            self
+    ):
+        request = self.factory.delete(self.url)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete metric templates.'
+        )
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 3)
+
+    def test_delete_metric_template_without_specifying_name_tenant_user(self):
+        request = self.factory.delete(self.url)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete metric templates.'
+        )
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 3)
 
 
 class ListMetricTemplateTypesAPIViewTests(TenantTestCase):

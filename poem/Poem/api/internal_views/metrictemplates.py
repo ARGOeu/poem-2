@@ -454,39 +454,56 @@ class ListMetricTemplates(APIView):
             )
 
     def delete(self, request, name=None):
-        schemas = list(Tenant.objects.all().values_list('schema_name',
-                                                        flat=True))
+        schemas = list(
+            Tenant.objects.all().values_list('schema_name', flat=True)
+        )
         schemas.remove(get_public_schema_name())
-        if name:
-            try:
-                mt = admin_models.MetricTemplate.objects.get(name=name)
-                for schema in schemas:
-                    with schema_context(schema):
-                        try:
-                            admin_models.History.objects.filter(
-                                object_id=mt.id,
-                                content_type=ContentType.objects.get_for_model(
-                                    mt)
-                            ).delete()
-                            m = Metric.objects.get(name=name)
-                            TenantHistory.objects.filter(
-                                object_id=m.id,
-                                content_type=ContentType.objects.get_for_model(
-                                    m
-                                )
-                            ).delete()
-                            m.delete()
-                        except Metric.DoesNotExist:
-                            pass
+        metric_ct = ContentType.objects.get_for_model(Metric)
+        template_ct = ContentType.objects.get_for_model(
+            admin_models.MetricTemplate
+        )
 
-                mt.delete()
-                return Response(status=status.HTTP_204_NO_CONTENT)
+        if request.tenant.schema_name == get_public_schema_name() and \
+                request.user.is_superuser:
+            if name:
+                try:
+                    mt = admin_models.MetricTemplate.objects.get(name=name)
+                    for schema in schemas:
+                        with schema_context(schema):
+                            try:
+                                admin_models.History.objects.filter(
+                                    object_id=mt.id,
+                                    content_type=template_ct
+                                ).delete()
+                                m = Metric.objects.get(name=name)
+                                TenantHistory.objects.filter(
+                                    object_id=m.id,
+                                    content_type=metric_ct
+                                ).delete()
+                                m.delete()
+                            except Metric.DoesNotExist:
+                                pass
 
-            except admin_models.MetricTemplate.DoesNotExist:
-                raise NotFound(status=404, detail='Metric template not found')
+                    mt.delete()
+                    return Response(status=status.HTTP_204_NO_CONTENT)
+
+                except admin_models.MetricTemplate.DoesNotExist:
+                    return error_response(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail='Metric template does not exist.'
+                    )
+
+            else:
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail='Metric template name not specified.'
+                )
 
         else:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+            return error_response(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='You do not have permission to delete metric templates.'
+            )
 
 
 class ListPublicMetricTemplates(ListMetricTemplates):
