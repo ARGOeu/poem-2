@@ -163,63 +163,103 @@ class ListPackages(APIView):
             )
 
     def put(self, request):
-        package = admin_models.Package.objects.get(id=request.data['id'])
-        old_version = package.version
-        try:
-            package.name = request.data['name']
-            if request.data['use_present_version'] in [True, 'true', 'True']:
-                use_present_version = True
-            else:
-                use_present_version = False
-            package.use_present_version = use_present_version
-            package.version = request.data['version']
-            package.save()
-
-            repos = dict(request.data)['repos']
-
-            for r in repos:
-                repo_name = r.split(' ')[0]
-                repo_tag = admin_models.OSTag.objects.get(
-                    name=r.split('(')[1][0:-1]
+        if request.tenant.schema_name == get_public_schema_name() and \
+                request.user.is_superuser:
+            try:
+                package = admin_models.Package.objects.get(
+                    id=request.data['id']
                 )
-                repo = admin_models.YumRepo.objects.get(
-                    name=repo_name, tag=repo_tag
+                old_version = package.version
+
+                package.name = request.data['name']
+                if request.data['use_present_version'] in [
+                    True, 'true', 'True'
+                ]:
+                    use_present_version = True
+                else:
+                    use_present_version = False
+
+                repos = dict(request.data)['repos']
+                # check repos and OS tags
+                for r in repos:
+                    repo_name = r.split(' ')[0]
+                    repo_tag = admin_models.OSTag.objects.get(
+                        name=r.split('(')[1][0:-1]
+                    )
+                    admin_models.YumRepo.objects.get(
+                        name=repo_name, tag=repo_tag
+                    )
+
+                package.use_present_version = use_present_version
+                package.version = request.data['version']
+                package.save()
+
+                for r in repos:
+                    repo_name = r.split(' ')[0]
+                    repo_tag = admin_models.OSTag.objects.get(
+                        name=r.split('(')[1][0:-1]
+                    )
+                    repo = admin_models.YumRepo.objects.get(
+                        name=repo_name, tag=repo_tag
+                    )
+                    if repo not in package.repos.all():
+                        package.repos.add(repo)
+
+                for repo in package.repos.all():
+                    r = '{} ({})'.format(repo.name, repo.tag.name)
+                    if r not in repos:
+                        package.repos.remove(repo)
+
+                if old_version != request.data['version']:
+                    probe_history = admin_models.ProbeHistory.objects.filter(
+                        package=package
+                    )
+                    for ph in probe_history:
+                        ph.version = package.version
+                        ph.save()
+
+                return Response(status=status.HTTP_201_CREATED)
+
+            except IntegrityError:
+                return error_response(
+                    detail='Package with this name and version already exists.',
+                    status_code=status.HTTP_400_BAD_REQUEST
                 )
-                if repo not in package.repos.all():
-                    package.repos.add(repo)
 
-            for repo in package.repos.all():
-                r = '{} ({})'.format(repo.name, repo.tag.name)
-                if r not in repos:
-                    package.repos.remove(repo)
-
-            if old_version != request.data['version']:
-                probe_history = admin_models.ProbeHistory.objects.filter(
-                    package=package
+            except admin_models.YumRepo.DoesNotExist:
+                return error_response(
+                    detail='YUM repo does not exist.',
+                    status_code=status.HTTP_404_NOT_FOUND
                 )
-                for ph in probe_history:
-                    ph.version = package.version
-                    ph.save()
 
-            return Response(status=status.HTTP_201_CREATED)
+            except IndexError:
+                return error_response(
+                    detail='YUM repo tag should be specified.',
+                    status_code=status.HTTP_400_BAD_REQUEST
+                )
 
-        except IntegrityError:
-            return Response(
-                {'detail':
-                     'Package with this name and version already exists.'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            except admin_models.Package.DoesNotExist:
+                return error_response(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail='Package does not exist.'
+                )
 
-        except admin_models.YumRepo.DoesNotExist:
-            return Response(
-                {'detail': 'YUM repo not found.'},
-                status=status.HTTP_404_NOT_FOUND
-            )
+            except admin_models.OSTag.DoesNotExist:
+                return error_response(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail='OS tag does not exist.'
+                )
 
-        except IndexError:
-            return Response(
-                {'detail': 'You should specify YUM repo tag!'},
-                status=status.HTTP_400_BAD_REQUEST
+            except KeyError as e:
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail='Missing data key: {}'.format(e.args[0])
+                )
+
+        else:
+            return error_response(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='You do not have permission to change packages.'
             )
 
     def delete(self, request, nameversion):

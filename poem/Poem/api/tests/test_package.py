@@ -52,11 +52,11 @@ class ListPackagesAPIViewTests(TenantTestCase):
         )
         self.package1.repos.add(self.repo1, self.repo2)
 
-        package2 = admin_models.Package.objects.create(
+        self.package2 = admin_models.Package.objects.create(
             name='nagios-plugins-globus',
             version='0.1.5'
         )
-        package2.repos.add(self.repo2)
+        self.package2.repos.add(self.repo2)
 
         package3 = admin_models.Package.objects.create(
             name='nagios-plugins-fedcloud',
@@ -915,7 +915,7 @@ class ListPackagesAPIViewTests(TenantTestCase):
             'You do not have permission to add packages.'
         )
 
-    def test_put_package(self):
+    def test_put_package_sp_superuser(self):
         data = {
             'id': self.package1.id,
             'name': 'nagios-plugins-argo2',
@@ -925,7 +925,8 @@ class ListPackagesAPIViewTests(TenantTestCase):
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
-        force_authenticate(request, user=self.user)
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         package = admin_models.Package.objects.get(id=self.package1.id)
@@ -957,7 +958,151 @@ class ListPackagesAPIViewTests(TenantTestCase):
             json.loads(metric_history[0].serialized_data)[0]['fields']
         self.assertEqual(serialized_data['probekey'], ['ams-probe', '0.1.7'])
 
-    def test_put_package_with_present_version(self):
+    def test_put_package_sp_user(self):
+        data = {
+            'id': self.package1.id,
+            'name': 'nagios-plugins-argo2',
+            'version': '0.1.7',
+            'use_present_version': False,
+            'repos': ['repo-2 (CentOS 7)']
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change packages.'
+        )
+        package = admin_models.Package.objects.get(id=self.package1.id)
+        self.assertEqual(package.name, 'nagios-plugins-argo')
+        self.assertEqual(package.version, '0.1.11')
+        self.assertEqual(package.repos.all().count(), 2)
+        self.assertTrue(self.repo1 in package.repos.all())
+        self.assertTrue(self.repo2 in package.repos.all())
+        probe = admin_models.Probe.objects.get(name='ams-probe')
+        self.assertEqual(probe.package, package)
+        probe_history = admin_models.ProbeHistory.objects.filter(
+            object_id=probe
+        ).order_by('-date_created')
+        self.assertEqual(probe_history.count(), 1)
+        self.assertEqual(probe_history[0].package, probe.package)
+        mt = admin_models.MetricTemplate.objects.get(name='argo.AMS-Check')
+        self.assertEqual(mt.probekey, probe_history[0])
+        mt_history = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=mt
+        ).order_by('-date_created')
+        self.assertEqual(mt_history.count(), 1)
+        self.assertEqual(mt_history[0].probekey, probe_history[0])
+        metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
+        self.assertEqual(metric.probekey, probe_history[0])
+        metric_history = poem_models.TenantHistory.objects.filter(
+            object_repr=metric.__str__()
+        ).order_by('-date_created')
+        self.assertEqual(metric_history.count(), 1)
+        serialized_data = \
+            json.loads(metric_history[0].serialized_data)[0]['fields']
+        self.assertEqual(serialized_data['probekey'], ['ams-probe', '0.1.11'])
+
+    def test_put_package_tenant_superuser(self):
+        data = {
+            'id': self.package1.id,
+            'name': 'nagios-plugins-argo2',
+            'version': '0.1.7',
+            'use_present_version': False,
+            'repos': ['repo-2 (CentOS 7)']
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change packages.'
+        )
+        package = admin_models.Package.objects.get(id=self.package1.id)
+        self.assertEqual(package.name, 'nagios-plugins-argo')
+        self.assertEqual(package.version, '0.1.11')
+        self.assertEqual(package.repos.all().count(), 2)
+        self.assertTrue(self.repo1 in package.repos.all())
+        self.assertTrue(self.repo2 in package.repos.all())
+        probe = admin_models.Probe.objects.get(name='ams-probe')
+        self.assertEqual(probe.package, package)
+        probe_history = admin_models.ProbeHistory.objects.filter(
+            object_id=probe
+        ).order_by('-date_created')
+        self.assertEqual(probe_history.count(), 1)
+        self.assertEqual(probe_history[0].package, probe.package)
+        mt = admin_models.MetricTemplate.objects.get(name='argo.AMS-Check')
+        self.assertEqual(mt.probekey, probe_history[0])
+        mt_history = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=mt
+        ).order_by('-date_created')
+        self.assertEqual(mt_history.count(), 1)
+        self.assertEqual(mt_history[0].probekey, probe_history[0])
+        metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
+        self.assertEqual(metric.probekey, probe_history[0])
+        metric_history = poem_models.TenantHistory.objects.filter(
+            object_repr=metric.__str__()
+        ).order_by('-date_created')
+        self.assertEqual(metric_history.count(), 1)
+        serialized_data = \
+            json.loads(metric_history[0].serialized_data)[0]['fields']
+        self.assertEqual(serialized_data['probekey'], ['ams-probe', '0.1.11'])
+
+    def test_put_package_tenant_user(self):
+        data = {
+            'id': self.package1.id,
+            'name': 'nagios-plugins-argo2',
+            'version': '0.1.7',
+            'use_present_version': False,
+            'repos': ['repo-2 (CentOS 7)']
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change packages.'
+        )
+        package = admin_models.Package.objects.get(id=self.package1.id)
+        self.assertEqual(package.name, 'nagios-plugins-argo')
+        self.assertEqual(package.version, '0.1.11')
+        self.assertEqual(package.repos.all().count(), 2)
+        self.assertTrue(self.repo1 in package.repos.all())
+        self.assertTrue(self.repo2 in package.repos.all())
+        probe = admin_models.Probe.objects.get(name='ams-probe')
+        self.assertEqual(probe.package, package)
+        probe_history = admin_models.ProbeHistory.objects.filter(
+            object_id=probe
+        ).order_by('-date_created')
+        self.assertEqual(probe_history.count(), 1)
+        self.assertEqual(probe_history[0].package, probe.package)
+        mt = admin_models.MetricTemplate.objects.get(name='argo.AMS-Check')
+        self.assertEqual(mt.probekey, probe_history[0])
+        mt_history = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=mt
+        ).order_by('-date_created')
+        self.assertEqual(mt_history.count(), 1)
+        self.assertEqual(mt_history[0].probekey, probe_history[0])
+        metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
+        self.assertEqual(metric.probekey, probe_history[0])
+        metric_history = poem_models.TenantHistory.objects.filter(
+            object_repr=metric.__str__()
+        ).order_by('-date_created')
+        self.assertEqual(metric_history.count(), 1)
+        serialized_data = \
+            json.loads(metric_history[0].serialized_data)[0]['fields']
+        self.assertEqual(serialized_data['probekey'], ['ams-probe', '0.1.11'])
+
+    def test_put_package_with_present_version_sp_superuser(self):
         data = {
             'id': self.package1.id,
             'name': 'nagios-plugins-argo2',
@@ -967,7 +1112,8 @@ class ListPackagesAPIViewTests(TenantTestCase):
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
-        force_authenticate(request, user=self.user)
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         package = admin_models.Package.objects.get(id=self.package1.id)
@@ -999,7 +1145,151 @@ class ListPackagesAPIViewTests(TenantTestCase):
             json.loads(metric_history[0].serialized_data)[0]['fields']
         self.assertEqual(serialized_data['probekey'], ['ams-probe', 'present'])
 
-    def test_put_package_with_new_repo(self):
+    def test_put_package_with_present_version_sp_user(self):
+        data = {
+            'id': self.package1.id,
+            'name': 'nagios-plugins-argo2',
+            'version': '0.1.7',
+            'use_present_version': True,
+            'repos': ['repo-2 (CentOS 7)']
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change packages.'
+        )
+        package = admin_models.Package.objects.get(id=self.package1.id)
+        self.assertEqual(package.name, 'nagios-plugins-argo')
+        self.assertEqual(package.version, '0.1.11')
+        self.assertEqual(package.repos.all().count(), 2)
+        self.assertTrue(self.repo1 in package.repos.all())
+        self.assertTrue(self.repo2 in package.repos.all())
+        probe = admin_models.Probe.objects.get(name='ams-probe')
+        self.assertEqual(probe.package, package)
+        probe_history = admin_models.ProbeHistory.objects.filter(
+            object_id=probe
+        ).order_by('-date_created')
+        self.assertEqual(probe_history.count(), 1)
+        self.assertEqual(probe_history[0].package, probe.package)
+        mt = admin_models.MetricTemplate.objects.get(name='argo.AMS-Check')
+        self.assertEqual(mt.probekey, probe_history[0])
+        mt_history = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=mt
+        ).order_by('-date_created')
+        self.assertEqual(mt_history.count(), 1)
+        self.assertEqual(mt_history[0].probekey, probe_history[0])
+        metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
+        self.assertEqual(metric.probekey, probe_history[0])
+        metric_history = poem_models.TenantHistory.objects.filter(
+            object_repr=metric.__str__()
+        ).order_by('-date_created')
+        self.assertEqual(metric_history.count(), 1)
+        serialized_data = \
+            json.loads(metric_history[0].serialized_data)[0]['fields']
+        self.assertEqual(serialized_data['probekey'], ['ams-probe', '0.1.11'])
+
+    def test_put_package_with_present_version_tenant_superuser(self):
+        data = {
+            'id': self.package1.id,
+            'name': 'nagios-plugins-argo2',
+            'version': '0.1.7',
+            'use_present_version': True,
+            'repos': ['repo-2 (CentOS 7)']
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change packages.'
+        )
+        package = admin_models.Package.objects.get(id=self.package1.id)
+        self.assertEqual(package.name, 'nagios-plugins-argo')
+        self.assertEqual(package.version, '0.1.11')
+        self.assertEqual(package.repos.all().count(), 2)
+        self.assertTrue(self.repo1 in package.repos.all())
+        self.assertTrue(self.repo2 in package.repos.all())
+        probe = admin_models.Probe.objects.get(name='ams-probe')
+        self.assertEqual(probe.package, package)
+        probe_history = admin_models.ProbeHistory.objects.filter(
+            object_id=probe
+        ).order_by('-date_created')
+        self.assertEqual(probe_history.count(), 1)
+        self.assertEqual(probe_history[0].package, probe.package)
+        mt = admin_models.MetricTemplate.objects.get(name='argo.AMS-Check')
+        self.assertEqual(mt.probekey, probe_history[0])
+        mt_history = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=mt
+        ).order_by('-date_created')
+        self.assertEqual(mt_history.count(), 1)
+        self.assertEqual(mt_history[0].probekey, probe_history[0])
+        metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
+        self.assertEqual(metric.probekey, probe_history[0])
+        metric_history = poem_models.TenantHistory.objects.filter(
+            object_repr=metric.__str__()
+        ).order_by('-date_created')
+        self.assertEqual(metric_history.count(), 1)
+        serialized_data = \
+            json.loads(metric_history[0].serialized_data)[0]['fields']
+        self.assertEqual(serialized_data['probekey'], ['ams-probe', '0.1.11'])
+
+    def test_put_package_with_present_version_tenant_user(self):
+        data = {
+            'id': self.package1.id,
+            'name': 'nagios-plugins-argo2',
+            'version': '0.1.7',
+            'use_present_version': True,
+            'repos': ['repo-2 (CentOS 7)']
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change packages.'
+        )
+        package = admin_models.Package.objects.get(id=self.package1.id)
+        self.assertEqual(package.name, 'nagios-plugins-argo')
+        self.assertEqual(package.version, '0.1.11')
+        self.assertEqual(package.repos.all().count(), 2)
+        self.assertTrue(self.repo1 in package.repos.all())
+        self.assertTrue(self.repo2 in package.repos.all())
+        probe = admin_models.Probe.objects.get(name='ams-probe')
+        self.assertEqual(probe.package, package)
+        probe_history = admin_models.ProbeHistory.objects.filter(
+            object_id=probe
+        ).order_by('-date_created')
+        self.assertEqual(probe_history.count(), 1)
+        self.assertEqual(probe_history[0].package, probe.package)
+        mt = admin_models.MetricTemplate.objects.get(name='argo.AMS-Check')
+        self.assertEqual(mt.probekey, probe_history[0])
+        mt_history = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=mt
+        ).order_by('-date_created')
+        self.assertEqual(mt_history.count(), 1)
+        self.assertEqual(mt_history[0].probekey, probe_history[0])
+        metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
+        self.assertEqual(metric.probekey, probe_history[0])
+        metric_history = poem_models.TenantHistory.objects.filter(
+            object_repr=metric.__str__()
+        ).order_by('-date_created')
+        self.assertEqual(metric_history.count(), 1)
+        serialized_data = \
+            json.loads(metric_history[0].serialized_data)[0]['fields']
+        self.assertEqual(serialized_data['probekey'], ['ams-probe', '0.1.11'])
+
+    def test_put_package_with_new_repo_sp_superuser(self):
         repo = admin_models.YumRepo.objects.create(name='repo-3', tag=self.tag1)
         data = {
             'id': self.package1.id,
@@ -1010,7 +1300,8 @@ class ListPackagesAPIViewTests(TenantTestCase):
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
-        force_authenticate(request, user=self.user)
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         package = admin_models.Package.objects.get(id=self.package1.id)
@@ -1043,25 +1334,242 @@ class ListPackagesAPIViewTests(TenantTestCase):
             json.loads(metric_history[0].serialized_data)[0]['fields']
         self.assertEqual(serialized_data['probekey'], ['ams-probe', '0.1.7'])
 
-    def test_put_package_with_already_existing_name_and_version(self):
+    def test_put_package_with_new_repo_sp_user(self):
+        data = {
+            'id': self.package1.id,
+            'name': 'nagios-plugins-argo2',
+            'version': '0.1.7',
+            'use_present_version': False,
+            'repos': ['repo-2 (CentOS 7)', 'repo-3 (CentOS 6)']
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change packages.'
+        )
+        package = admin_models.Package.objects.get(id=self.package1.id)
+        self.assertEqual(package.name, 'nagios-plugins-argo')
+        self.assertEqual(package.version, '0.1.11')
+        self.assertEqual(package.repos.all().count(), 2)
+        self.assertTrue(self.repo1 in package.repos.all())
+        self.assertTrue(self.repo2 in package.repos.all())
+        probe = admin_models.Probe.objects.get(name='ams-probe')
+        self.assertEqual(probe.package, package)
+        probe_history = admin_models.ProbeHistory.objects.filter(
+            object_id=probe
+        ).order_by('-date_created')
+        self.assertEqual(probe_history.count(), 1)
+        self.assertEqual(probe_history[0].package, probe.package)
+        mt = admin_models.MetricTemplate.objects.get(name='argo.AMS-Check')
+        self.assertEqual(mt.probekey, probe_history[0])
+        mt_history = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=mt
+        ).order_by('-date_created')
+        self.assertEqual(mt_history.count(), 1)
+        self.assertEqual(mt_history[0].probekey, probe_history[0])
+        metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
+        self.assertEqual(metric.probekey, probe_history[0])
+        metric_history = poem_models.TenantHistory.objects.filter(
+            object_repr=metric.__str__()
+        ).order_by('-date_created')
+        self.assertEqual(metric_history.count(), 1)
+        serialized_data = \
+            json.loads(metric_history[0].serialized_data)[0]['fields']
+        self.assertEqual(serialized_data['probekey'], ['ams-probe', '0.1.11'])
+
+    def test_put_package_with_new_repo_tenant_superuser(self):
+        data = {
+            'id': self.package1.id,
+            'name': 'nagios-plugins-argo2',
+            'version': '0.1.7',
+            'use_present_version': False,
+            'repos': ['repo-2 (CentOS 7)', 'repo-3 (CentOS 6)']
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change packages.'
+        )
+        package = admin_models.Package.objects.get(id=self.package1.id)
+        self.assertEqual(package.name, 'nagios-plugins-argo')
+        self.assertEqual(package.version, '0.1.11')
+        self.assertEqual(package.repos.all().count(), 2)
+        self.assertTrue(self.repo1 in package.repos.all())
+        self.assertTrue(self.repo2 in package.repos.all())
+        probe = admin_models.Probe.objects.get(name='ams-probe')
+        self.assertEqual(probe.package, package)
+        probe_history = admin_models.ProbeHistory.objects.filter(
+            object_id=probe
+        ).order_by('-date_created')
+        self.assertEqual(probe_history.count(), 1)
+        self.assertEqual(probe_history[0].package, probe.package)
+        mt = admin_models.MetricTemplate.objects.get(name='argo.AMS-Check')
+        self.assertEqual(mt.probekey, probe_history[0])
+        mt_history = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=mt
+        ).order_by('-date_created')
+        self.assertEqual(mt_history.count(), 1)
+        self.assertEqual(mt_history[0].probekey, probe_history[0])
+        metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
+        self.assertEqual(metric.probekey, probe_history[0])
+        metric_history = poem_models.TenantHistory.objects.filter(
+            object_repr=metric.__str__()
+        ).order_by('-date_created')
+        self.assertEqual(metric_history.count(), 1)
+        serialized_data = \
+            json.loads(metric_history[0].serialized_data)[0]['fields']
+        self.assertEqual(serialized_data['probekey'], ['ams-probe', '0.1.11'])
+
+    def test_put_package_with_new_repo_tenant_user(self):
+        data = {
+            'id': self.package1.id,
+            'name': 'nagios-plugins-argo2',
+            'version': '0.1.7',
+            'use_present_version': False,
+            'repos': ['repo-2 (CentOS 7)', 'repo-3 (CentOS 6)']
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change packages.'
+        )
+        package = admin_models.Package.objects.get(id=self.package1.id)
+        self.assertEqual(package.name, 'nagios-plugins-argo')
+        self.assertEqual(package.version, '0.1.11')
+        self.assertEqual(package.repos.all().count(), 2)
+        self.assertTrue(self.repo1 in package.repos.all())
+        self.assertTrue(self.repo2 in package.repos.all())
+        probe = admin_models.Probe.objects.get(name='ams-probe')
+        self.assertEqual(probe.package, package)
+        probe_history = admin_models.ProbeHistory.objects.filter(
+            object_id=probe
+        ).order_by('-date_created')
+        self.assertEqual(probe_history.count(), 1)
+        self.assertEqual(probe_history[0].package, probe.package)
+        mt = admin_models.MetricTemplate.objects.get(name='argo.AMS-Check')
+        self.assertEqual(mt.probekey, probe_history[0])
+        mt_history = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=mt
+        ).order_by('-date_created')
+        self.assertEqual(mt_history.count(), 1)
+        self.assertEqual(mt_history[0].probekey, probe_history[0])
+        metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
+        self.assertEqual(metric.probekey, probe_history[0])
+        metric_history = poem_models.TenantHistory.objects.filter(
+            object_repr=metric.__str__()
+        ).order_by('-date_created')
+        self.assertEqual(metric_history.count(), 1)
+        serialized_data = \
+            json.loads(metric_history[0].serialized_data)[0]['fields']
+        self.assertEqual(serialized_data['probekey'], ['ams-probe', '0.1.11'])
+
+    def test_put_package_with_already_existing_name_and_version_sp_sprusr(self):
         data = {
             'id': self.package1.id,
             'name': 'nagios-plugins-globus',
             'version': '0.1.5',
             'use_present_version': False,
-            'repos': ['repo-1 (CentOS 7)']
+            'repos': ['repo-2 (CentOS 7)']
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
-        force_authenticate(request, user=self.user)
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(
-            response.data,
-            {'detail': 'Package with this name and version already exists.'}
+            response.data['detail'],
+            'Package with this name and version already exists.'
         )
 
-    def test_put_package_with_with_repo_without_tag(self):
+    def test_put_package_with_already_existing_name_and_version_sp_user(self):
+        data = {
+            'id': self.package1.id,
+            'name': 'nagios-plugins-globus',
+            'version': '0.1.5',
+            'use_present_version': False,
+            'repos': ['repo-2 (CentOS 7)']
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change packages.'
+        )
+        package = admin_models.Package.objects.get(id=self.package2.id)
+        self.assertEqual(package.name, 'nagios-plugins-globus')
+        self.assertEqual(package.version, '0.1.5')
+        self.assertEqual(package.repos.all().count(), 1)
+        self.assertTrue(self.repo2 in package.repos.all())
+
+    def test_put_package_with_already_existing_name_and_version_ten_spusr(self):
+        data = {
+            'id': self.package1.id,
+            'name': 'nagios-plugins-globus',
+            'version': '0.1.5',
+            'use_present_version': False,
+            'repos': ['repo-2 (CentOS 7)']
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change packages.'
+        )
+        package = admin_models.Package.objects.get(id=self.package2.id)
+        self.assertEqual(package.name, 'nagios-plugins-globus')
+        self.assertEqual(package.version, '0.1.5')
+        self.assertEqual(package.repos.all().count(), 1)
+        self.assertTrue(self.repo2 in package.repos.all())
+
+    def test_put_package_with_already_existing_name_and_version_ten_user(self):
+        data = {
+            'id': self.package1.id,
+            'name': 'nagios-plugins-globus',
+            'version': '0.1.5',
+            'use_present_version': False,
+            'repos': ['repo-2 (CentOS 7)']
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change packages.'
+        )
+        package = admin_models.Package.objects.get(id=self.package2.id)
+        self.assertEqual(package.name, 'nagios-plugins-globus')
+        self.assertEqual(package.version, '0.1.5')
+        self.assertEqual(package.repos.all().count(), 1)
+        self.assertTrue(self.repo2 in package.repos.all())
+
+    def test_put_package_with_repo_without_tag_sp_superuser(self):
         data = {
             'id': self.package1.id,
             'name': 'nagios-plugins-argo',
@@ -1071,14 +1579,188 @@ class ListPackagesAPIViewTests(TenantTestCase):
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
-        force_authenticate(request, user=self.user)
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(
-            response.data, {'detail': 'You should specify YUM repo tag!'}
+            response.data, {'detail': 'YUM repo tag should be specified.'}
         )
+        package = admin_models.Package.objects.get(id=self.package1.id)
+        self.assertEqual(package.name, 'nagios-plugins-argo')
+        self.assertEqual(package.version, '0.1.11')
+        self.assertEqual(package.repos.all().count(), 2)
+        self.assertTrue(self.repo1 in package.repos.all())
+        self.assertTrue(self.repo2 in package.repos.all())
+        probe = admin_models.Probe.objects.get(name='ams-probe')
+        self.assertEqual(probe.package, package)
+        probe_history = admin_models.ProbeHistory.objects.filter(
+            object_id=probe
+        ).order_by('-date_created')
+        self.assertEqual(probe_history.count(), 1)
+        self.assertEqual(probe_history[0].package, probe.package)
+        mt = admin_models.MetricTemplate.objects.get(name='argo.AMS-Check')
+        self.assertEqual(mt.probekey, probe_history[0])
+        mt_history = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=mt
+        ).order_by('-date_created')
+        self.assertEqual(mt_history.count(), 1)
+        self.assertEqual(mt_history[0].probekey, probe_history[0])
+        metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
+        self.assertEqual(metric.probekey, probe_history[0])
+        metric_history = poem_models.TenantHistory.objects.filter(
+            object_repr=metric.__str__()
+        ).order_by('-date_created')
+        self.assertEqual(metric_history.count(), 1)
+        serialized_data = \
+            json.loads(metric_history[0].serialized_data)[0]['fields']
+        self.assertEqual(serialized_data['probekey'], ['ams-probe', '0.1.11'])
 
-    def test_put_package_with_with_nonexisting_repo(self):
+    def test_put_package_with_repo_without_tag_sp_user(self):
+        data = {
+            'id': self.package1.id,
+            'name': 'nagios-plugins-argo',
+            'version': '0.1.12',
+            'use_present_version': False,
+            'repos': ['repo-1']
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change packages.'
+        )
+        package = admin_models.Package.objects.get(id=self.package1.id)
+        self.assertEqual(package.name, 'nagios-plugins-argo')
+        self.assertEqual(package.version, '0.1.11')
+        self.assertEqual(package.repos.all().count(), 2)
+        self.assertTrue(self.repo1 in package.repos.all())
+        self.assertTrue(self.repo2 in package.repos.all())
+        probe = admin_models.Probe.objects.get(name='ams-probe')
+        self.assertEqual(probe.package, package)
+        probe_history = admin_models.ProbeHistory.objects.filter(
+            object_id=probe
+        ).order_by('-date_created')
+        self.assertEqual(probe_history.count(), 1)
+        self.assertEqual(probe_history[0].package, probe.package)
+        mt = admin_models.MetricTemplate.objects.get(name='argo.AMS-Check')
+        self.assertEqual(mt.probekey, probe_history[0])
+        mt_history = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=mt
+        ).order_by('-date_created')
+        self.assertEqual(mt_history.count(), 1)
+        self.assertEqual(mt_history[0].probekey, probe_history[0])
+        metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
+        self.assertEqual(metric.probekey, probe_history[0])
+        metric_history = poem_models.TenantHistory.objects.filter(
+            object_repr=metric.__str__()
+        ).order_by('-date_created')
+        self.assertEqual(metric_history.count(), 1)
+        serialized_data = \
+            json.loads(metric_history[0].serialized_data)[0]['fields']
+        self.assertEqual(serialized_data['probekey'], ['ams-probe', '0.1.11'])
+
+    def test_put_package_with_repo_without_tag_tenant_superuser(self):
+        data = {
+            'id': self.package1.id,
+            'name': 'nagios-plugins-argo',
+            'version': '0.1.12',
+            'use_present_version': False,
+            'repos': ['repo-1']
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change packages.'
+        )
+        package = admin_models.Package.objects.get(id=self.package1.id)
+        self.assertEqual(package.name, 'nagios-plugins-argo')
+        self.assertEqual(package.version, '0.1.11')
+        self.assertEqual(package.repos.all().count(), 2)
+        self.assertTrue(self.repo1 in package.repos.all())
+        self.assertTrue(self.repo2 in package.repos.all())
+        probe = admin_models.Probe.objects.get(name='ams-probe')
+        self.assertEqual(probe.package, package)
+        probe_history = admin_models.ProbeHistory.objects.filter(
+            object_id=probe
+        ).order_by('-date_created')
+        self.assertEqual(probe_history.count(), 1)
+        self.assertEqual(probe_history[0].package, probe.package)
+        mt = admin_models.MetricTemplate.objects.get(name='argo.AMS-Check')
+        self.assertEqual(mt.probekey, probe_history[0])
+        mt_history = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=mt
+        ).order_by('-date_created')
+        self.assertEqual(mt_history.count(), 1)
+        self.assertEqual(mt_history[0].probekey, probe_history[0])
+        metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
+        self.assertEqual(metric.probekey, probe_history[0])
+        metric_history = poem_models.TenantHistory.objects.filter(
+            object_repr=metric.__str__()
+        ).order_by('-date_created')
+        self.assertEqual(metric_history.count(), 1)
+        serialized_data = \
+            json.loads(metric_history[0].serialized_data)[0]['fields']
+        self.assertEqual(serialized_data['probekey'], ['ams-probe', '0.1.11'])
+
+    def test_put_package_with_repo_without_tag_tenant_user(self):
+        data = {
+            'id': self.package1.id,
+            'name': 'nagios-plugins-argo',
+            'version': '0.1.12',
+            'use_present_version': False,
+            'repos': ['repo-1']
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change packages.'
+        )
+        package = admin_models.Package.objects.get(id=self.package1.id)
+        self.assertEqual(package.name, 'nagios-plugins-argo')
+        self.assertEqual(package.version, '0.1.11')
+        self.assertEqual(package.repos.all().count(), 2)
+        self.assertTrue(self.repo1 in package.repos.all())
+        self.assertTrue(self.repo2 in package.repos.all())
+        probe = admin_models.Probe.objects.get(name='ams-probe')
+        self.assertEqual(probe.package, package)
+        probe_history = admin_models.ProbeHistory.objects.filter(
+            object_id=probe
+        ).order_by('-date_created')
+        self.assertEqual(probe_history.count(), 1)
+        self.assertEqual(probe_history[0].package, probe.package)
+        mt = admin_models.MetricTemplate.objects.get(name='argo.AMS-Check')
+        self.assertEqual(mt.probekey, probe_history[0])
+        mt_history = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=mt
+        ).order_by('-date_created')
+        self.assertEqual(mt_history.count(), 1)
+        self.assertEqual(mt_history[0].probekey, probe_history[0])
+        metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
+        self.assertEqual(metric.probekey, probe_history[0])
+        metric_history = poem_models.TenantHistory.objects.filter(
+            object_repr=metric.__str__()
+        ).order_by('-date_created')
+        self.assertEqual(metric_history.count(), 1)
+        serialized_data = \
+            json.loads(metric_history[0].serialized_data)[0]['fields']
+        self.assertEqual(serialized_data['probekey'], ['ams-probe', '0.1.11'])
+
+    def test_put_package_with_nonexisting_repo_sp_superuser(self):
         data = {
             'id': self.package1.id,
             'name': 'nagios-plugins-argo',
@@ -1088,11 +1770,630 @@ class ListPackagesAPIViewTests(TenantTestCase):
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
-        force_authenticate(request, user=self.user)
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data['detail'], 'YUM repo does not exist.')
+        package = admin_models.Package.objects.get(id=self.package1.id)
+        self.assertEqual(package.name, 'nagios-plugins-argo')
+        self.assertEqual(package.version, '0.1.11')
+        self.assertEqual(package.repos.all().count(), 2)
+        self.assertTrue(self.repo1 in package.repos.all())
+        self.assertTrue(self.repo2 in package.repos.all())
+        probe = admin_models.Probe.objects.get(name='ams-probe')
+        self.assertEqual(probe.package, package)
+        probe_history = admin_models.ProbeHistory.objects.filter(
+            object_id=probe
+        ).order_by('-date_created')
+        self.assertEqual(probe_history.count(), 1)
+        self.assertEqual(probe_history[0].package, probe.package)
+        mt = admin_models.MetricTemplate.objects.get(name='argo.AMS-Check')
+        self.assertEqual(mt.probekey, probe_history[0])
+        mt_history = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=mt
+        ).order_by('-date_created')
+        self.assertEqual(mt_history.count(), 1)
+        self.assertEqual(mt_history[0].probekey, probe_history[0])
+        metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
+        self.assertEqual(metric.probekey, probe_history[0])
+        metric_history = poem_models.TenantHistory.objects.filter(
+            object_repr=metric.__str__()
+        ).order_by('-date_created')
+        self.assertEqual(metric_history.count(), 1)
+        serialized_data = \
+            json.loads(metric_history[0].serialized_data)[0]['fields']
+        self.assertEqual(serialized_data['probekey'], ['ams-probe', '0.1.11'])
+
+    def test_put_packageh_with_nonexisting_repo_sp_user(self):
+        data = {
+            'id': self.package1.id,
+            'name': 'nagios-plugins-argo',
+            'version': '0.1.12',
+            'use_present_version': False,
+            'repos': ['nonexisting (CentOS 7)']
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(
-            response.data, {'detail': 'YUM repo not found.'}
+            response.data['detail'],
+            'You do not have permission to change packages.'
+        )
+        package = admin_models.Package.objects.get(id=self.package1.id)
+        self.assertEqual(package.name, 'nagios-plugins-argo')
+        self.assertEqual(package.version, '0.1.11')
+        self.assertEqual(package.repos.all().count(), 2)
+        self.assertTrue(self.repo1 in package.repos.all())
+        self.assertTrue(self.repo2 in package.repos.all())
+        probe = admin_models.Probe.objects.get(name='ams-probe')
+        self.assertEqual(probe.package, package)
+        probe_history = admin_models.ProbeHistory.objects.filter(
+            object_id=probe
+        ).order_by('-date_created')
+        self.assertEqual(probe_history.count(), 1)
+        self.assertEqual(probe_history[0].package, probe.package)
+        mt = admin_models.MetricTemplate.objects.get(name='argo.AMS-Check')
+        self.assertEqual(mt.probekey, probe_history[0])
+        mt_history = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=mt
+        ).order_by('-date_created')
+        self.assertEqual(mt_history.count(), 1)
+        self.assertEqual(mt_history[0].probekey, probe_history[0])
+        metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
+        self.assertEqual(metric.probekey, probe_history[0])
+        metric_history = poem_models.TenantHistory.objects.filter(
+            object_repr=metric.__str__()
+        ).order_by('-date_created')
+        self.assertEqual(metric_history.count(), 1)
+        serialized_data = \
+            json.loads(metric_history[0].serialized_data)[0]['fields']
+        self.assertEqual(serialized_data['probekey'], ['ams-probe', '0.1.11'])
+
+    def test_put_package_with_nonexisting_repo_tenant_superuser(self):
+        data = {
+            'id': self.package1.id,
+            'name': 'nagios-plugins-argo',
+            'version': '0.1.12',
+            'use_present_version': False,
+            'repos': ['nonexisting (CentOS 7)']
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change packages.'
+        )
+        package = admin_models.Package.objects.get(id=self.package1.id)
+        self.assertEqual(package.name, 'nagios-plugins-argo')
+        self.assertEqual(package.version, '0.1.11')
+        self.assertEqual(package.repos.all().count(), 2)
+        self.assertTrue(self.repo1 in package.repos.all())
+        self.assertTrue(self.repo2 in package.repos.all())
+        probe = admin_models.Probe.objects.get(name='ams-probe')
+        self.assertEqual(probe.package, package)
+        probe_history = admin_models.ProbeHistory.objects.filter(
+            object_id=probe
+        ).order_by('-date_created')
+        self.assertEqual(probe_history.count(), 1)
+        self.assertEqual(probe_history[0].package, probe.package)
+        mt = admin_models.MetricTemplate.objects.get(name='argo.AMS-Check')
+        self.assertEqual(mt.probekey, probe_history[0])
+        mt_history = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=mt
+        ).order_by('-date_created')
+        self.assertEqual(mt_history.count(), 1)
+        self.assertEqual(mt_history[0].probekey, probe_history[0])
+        metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
+        self.assertEqual(metric.probekey, probe_history[0])
+        metric_history = poem_models.TenantHistory.objects.filter(
+            object_repr=metric.__str__()
+        ).order_by('-date_created')
+        self.assertEqual(metric_history.count(), 1)
+        serialized_data = \
+            json.loads(metric_history[0].serialized_data)[0]['fields']
+        self.assertEqual(serialized_data['probekey'], ['ams-probe', '0.1.11'])
+
+    def test_put_package_with_nonexisting_repo_tenant_user(self):
+        data = {
+            'id': self.package1.id,
+            'name': 'nagios-plugins-argo',
+            'version': '0.1.12',
+            'use_present_version': False,
+            'repos': ['nonexisting (CentOS 7)']
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change packages.'
+        )
+        package = admin_models.Package.objects.get(id=self.package1.id)
+        self.assertEqual(package.name, 'nagios-plugins-argo')
+        self.assertEqual(package.version, '0.1.11')
+        self.assertEqual(package.repos.all().count(), 2)
+        self.assertTrue(self.repo1 in package.repos.all())
+        self.assertTrue(self.repo2 in package.repos.all())
+        probe = admin_models.Probe.objects.get(name='ams-probe')
+        self.assertEqual(probe.package, package)
+        probe_history = admin_models.ProbeHistory.objects.filter(
+            object_id=probe
+        ).order_by('-date_created')
+        self.assertEqual(probe_history.count(), 1)
+        self.assertEqual(probe_history[0].package, probe.package)
+        mt = admin_models.MetricTemplate.objects.get(name='argo.AMS-Check')
+        self.assertEqual(mt.probekey, probe_history[0])
+        mt_history = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=mt
+        ).order_by('-date_created')
+        self.assertEqual(mt_history.count(), 1)
+        self.assertEqual(mt_history[0].probekey, probe_history[0])
+        metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
+        self.assertEqual(metric.probekey, probe_history[0])
+        metric_history = poem_models.TenantHistory.objects.filter(
+            object_repr=metric.__str__()
+        ).order_by('-date_created')
+        self.assertEqual(metric_history.count(), 1)
+        serialized_data = \
+            json.loads(metric_history[0].serialized_data)[0]['fields']
+        self.assertEqual(serialized_data['probekey'], ['ams-probe', '0.1.11'])
+
+    def test_put_package_with_nonexisting_tag_sp_superuser(self):
+        data = {
+            'id': self.package1.id,
+            'name': 'nagios-plugins-argo',
+            'version': '0.1.12',
+            'use_present_version': False,
+            'repos': ['repo-1 (nonexisting)']
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data['detail'], 'OS tag does not exist.')
+        package = admin_models.Package.objects.get(id=self.package1.id)
+        self.assertEqual(package.name, 'nagios-plugins-argo')
+        self.assertEqual(package.version, '0.1.11')
+        self.assertEqual(package.repos.all().count(), 2)
+        self.assertTrue(self.repo1 in package.repos.all())
+        self.assertTrue(self.repo2 in package.repos.all())
+        probe = admin_models.Probe.objects.get(name='ams-probe')
+        self.assertEqual(probe.package, package)
+        probe_history = admin_models.ProbeHistory.objects.filter(
+            object_id=probe
+        ).order_by('-date_created')
+        self.assertEqual(probe_history.count(), 1)
+        self.assertEqual(probe_history[0].package, probe.package)
+        mt = admin_models.MetricTemplate.objects.get(name='argo.AMS-Check')
+        self.assertEqual(mt.probekey, probe_history[0])
+        mt_history = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=mt
+        ).order_by('-date_created')
+        self.assertEqual(mt_history.count(), 1)
+        self.assertEqual(mt_history[0].probekey, probe_history[0])
+        metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
+        self.assertEqual(metric.probekey, probe_history[0])
+        metric_history = poem_models.TenantHistory.objects.filter(
+            object_repr=metric.__str__()
+        ).order_by('-date_created')
+        self.assertEqual(metric_history.count(), 1)
+        serialized_data = \
+            json.loads(metric_history[0].serialized_data)[0]['fields']
+        self.assertEqual(serialized_data['probekey'], ['ams-probe', '0.1.11'])
+
+    def test_put_package_with_nonexisting_tag_sp_user(self):
+        data = {
+            'id': self.package1.id,
+            'name': 'nagios-plugins-argo',
+            'version': '0.1.12',
+            'use_present_version': False,
+            'repos': ['repo-1 (nonexisting)']
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change packages.'
+        )
+        package = admin_models.Package.objects.get(id=self.package1.id)
+        self.assertEqual(package.name, 'nagios-plugins-argo')
+        self.assertEqual(package.version, '0.1.11')
+        self.assertEqual(package.repos.all().count(), 2)
+        self.assertTrue(self.repo1 in package.repos.all())
+        self.assertTrue(self.repo2 in package.repos.all())
+        probe = admin_models.Probe.objects.get(name='ams-probe')
+        self.assertEqual(probe.package, package)
+        probe_history = admin_models.ProbeHistory.objects.filter(
+            object_id=probe
+        ).order_by('-date_created')
+        self.assertEqual(probe_history.count(), 1)
+        self.assertEqual(probe_history[0].package, probe.package)
+        mt = admin_models.MetricTemplate.objects.get(name='argo.AMS-Check')
+        self.assertEqual(mt.probekey, probe_history[0])
+        mt_history = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=mt
+        ).order_by('-date_created')
+        self.assertEqual(mt_history.count(), 1)
+        self.assertEqual(mt_history[0].probekey, probe_history[0])
+        metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
+        self.assertEqual(metric.probekey, probe_history[0])
+        metric_history = poem_models.TenantHistory.objects.filter(
+            object_repr=metric.__str__()
+        ).order_by('-date_created')
+        self.assertEqual(metric_history.count(), 1)
+        serialized_data = \
+            json.loads(metric_history[0].serialized_data)[0]['fields']
+        self.assertEqual(serialized_data['probekey'], ['ams-probe', '0.1.11'])
+
+    def test_put_package_with_nonexisting_tag_tenant_superuser(self):
+        data = {
+            'id': self.package1.id,
+            'name': 'nagios-plugins-argo',
+            'version': '0.1.12',
+            'use_present_version': False,
+            'repos': ['repo-1 (nonexisting)']
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change packages.'
+        )
+        package = admin_models.Package.objects.get(id=self.package1.id)
+        self.assertEqual(package.name, 'nagios-plugins-argo')
+        self.assertEqual(package.version, '0.1.11')
+        self.assertEqual(package.repos.all().count(), 2)
+        self.assertTrue(self.repo1 in package.repos.all())
+        self.assertTrue(self.repo2 in package.repos.all())
+        probe = admin_models.Probe.objects.get(name='ams-probe')
+        self.assertEqual(probe.package, package)
+        probe_history = admin_models.ProbeHistory.objects.filter(
+            object_id=probe
+        ).order_by('-date_created')
+        self.assertEqual(probe_history.count(), 1)
+        self.assertEqual(probe_history[0].package, probe.package)
+        mt = admin_models.MetricTemplate.objects.get(name='argo.AMS-Check')
+        self.assertEqual(mt.probekey, probe_history[0])
+        mt_history = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=mt
+        ).order_by('-date_created')
+        self.assertEqual(mt_history.count(), 1)
+        self.assertEqual(mt_history[0].probekey, probe_history[0])
+        metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
+        self.assertEqual(metric.probekey, probe_history[0])
+        metric_history = poem_models.TenantHistory.objects.filter(
+            object_repr=metric.__str__()
+        ).order_by('-date_created')
+        self.assertEqual(metric_history.count(), 1)
+        serialized_data = \
+            json.loads(metric_history[0].serialized_data)[0]['fields']
+        self.assertEqual(serialized_data['probekey'], ['ams-probe', '0.1.11'])
+
+    def test_put_package_with_nonexisting_tag_tenant_user(self):
+        data = {
+            'id': self.package1.id,
+            'name': 'nagios-plugins-argo',
+            'version': '0.1.12',
+            'use_present_version': False,
+            'repos': ['repo-1 (nonexisting)']
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change packages.'
+        )
+        package = admin_models.Package.objects.get(id=self.package1.id)
+        self.assertEqual(package.name, 'nagios-plugins-argo')
+        self.assertEqual(package.version, '0.1.11')
+        self.assertEqual(package.repos.all().count(), 2)
+        self.assertTrue(self.repo1 in package.repos.all())
+        self.assertTrue(self.repo2 in package.repos.all())
+        probe = admin_models.Probe.objects.get(name='ams-probe')
+        self.assertEqual(probe.package, package)
+        probe_history = admin_models.ProbeHistory.objects.filter(
+            object_id=probe
+        ).order_by('-date_created')
+        self.assertEqual(probe_history.count(), 1)
+        self.assertEqual(probe_history[0].package, probe.package)
+        mt = admin_models.MetricTemplate.objects.get(name='argo.AMS-Check')
+        self.assertEqual(mt.probekey, probe_history[0])
+        mt_history = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=mt
+        ).order_by('-date_created')
+        self.assertEqual(mt_history.count(), 1)
+        self.assertEqual(mt_history[0].probekey, probe_history[0])
+        metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
+        self.assertEqual(metric.probekey, probe_history[0])
+        metric_history = poem_models.TenantHistory.objects.filter(
+            object_repr=metric.__str__()
+        ).order_by('-date_created')
+        self.assertEqual(metric_history.count(), 1)
+        serialized_data = \
+            json.loads(metric_history[0].serialized_data)[0]['fields']
+        self.assertEqual(serialized_data['probekey'], ['ams-probe', '0.1.11'])
+
+    def test_put_package_with_missing_data_key_sp_superuser(self):
+        data = {
+            'id': self.package1.id,
+            'name': 'nagios-plugins-argo',
+            'use_present_version': False,
+            'repos': ['repo-2 (CentOS 7)']
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['detail'], 'Missing data key: version')
+        package = admin_models.Package.objects.get(id=self.package1.id)
+        self.assertEqual(package.name, 'nagios-plugins-argo')
+        self.assertEqual(package.version, '0.1.11')
+        self.assertEqual(package.repos.all().count(), 2)
+        self.assertTrue(self.repo1 in package.repos.all())
+        self.assertTrue(self.repo2 in package.repos.all())
+        probe = admin_models.Probe.objects.get(name='ams-probe')
+        self.assertEqual(probe.package, package)
+        probe_history = admin_models.ProbeHistory.objects.filter(
+            object_id=probe
+        ).order_by('-date_created')
+        self.assertEqual(probe_history.count(), 1)
+        self.assertEqual(probe_history[0].package, probe.package)
+        mt = admin_models.MetricTemplate.objects.get(name='argo.AMS-Check')
+        self.assertEqual(mt.probekey, probe_history[0])
+        mt_history = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=mt
+        ).order_by('-date_created')
+        self.assertEqual(mt_history.count(), 1)
+        self.assertEqual(mt_history[0].probekey, probe_history[0])
+        metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
+        self.assertEqual(metric.probekey, probe_history[0])
+        metric_history = poem_models.TenantHistory.objects.filter(
+            object_repr=metric.__str__()
+        ).order_by('-date_created')
+        self.assertEqual(metric_history.count(), 1)
+        serialized_data = \
+            json.loads(metric_history[0].serialized_data)[0]['fields']
+        self.assertEqual(serialized_data['probekey'], ['ams-probe', '0.1.11'])
+
+    def test_put_package_with_missing_data_key_sp_user(self):
+        data = {
+            'id': self.package1.id,
+            'name': 'nagios-plugins-argo',
+            'use_present_version': False,
+            'repos': ['repo-2 (CentOS 7)']
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change packages.'
+        )
+        package = admin_models.Package.objects.get(id=self.package1.id)
+        self.assertEqual(package.name, 'nagios-plugins-argo')
+        self.assertEqual(package.version, '0.1.11')
+        self.assertEqual(package.repos.all().count(), 2)
+        self.assertTrue(self.repo1 in package.repos.all())
+        self.assertTrue(self.repo2 in package.repos.all())
+        probe = admin_models.Probe.objects.get(name='ams-probe')
+        self.assertEqual(probe.package, package)
+        probe_history = admin_models.ProbeHistory.objects.filter(
+            object_id=probe
+        ).order_by('-date_created')
+        self.assertEqual(probe_history.count(), 1)
+        self.assertEqual(probe_history[0].package, probe.package)
+        mt = admin_models.MetricTemplate.objects.get(name='argo.AMS-Check')
+        self.assertEqual(mt.probekey, probe_history[0])
+        mt_history = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=mt
+        ).order_by('-date_created')
+        self.assertEqual(mt_history.count(), 1)
+        self.assertEqual(mt_history[0].probekey, probe_history[0])
+        metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
+        self.assertEqual(metric.probekey, probe_history[0])
+        metric_history = poem_models.TenantHistory.objects.filter(
+            object_repr=metric.__str__()
+        ).order_by('-date_created')
+        self.assertEqual(metric_history.count(), 1)
+        serialized_data = \
+            json.loads(metric_history[0].serialized_data)[0]['fields']
+        self.assertEqual(serialized_data['probekey'], ['ams-probe', '0.1.11'])
+
+    def test_put_package_with_missing_data_key_tenant_superuser(self):
+        data = {
+            'id': self.package1.id,
+            'name': 'nagios-plugins-argo',
+            'use_present_version': False,
+            'repos': ['repo-2 (CentOS 7)']
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change packages.'
+        )
+        package = admin_models.Package.objects.get(id=self.package1.id)
+        self.assertEqual(package.name, 'nagios-plugins-argo')
+        self.assertEqual(package.version, '0.1.11')
+        self.assertEqual(package.repos.all().count(), 2)
+        self.assertTrue(self.repo1 in package.repos.all())
+        self.assertTrue(self.repo2 in package.repos.all())
+        probe = admin_models.Probe.objects.get(name='ams-probe')
+        self.assertEqual(probe.package, package)
+        probe_history = admin_models.ProbeHistory.objects.filter(
+            object_id=probe
+        ).order_by('-date_created')
+        self.assertEqual(probe_history.count(), 1)
+        self.assertEqual(probe_history[0].package, probe.package)
+        mt = admin_models.MetricTemplate.objects.get(name='argo.AMS-Check')
+        self.assertEqual(mt.probekey, probe_history[0])
+        mt_history = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=mt
+        ).order_by('-date_created')
+        self.assertEqual(mt_history.count(), 1)
+        self.assertEqual(mt_history[0].probekey, probe_history[0])
+        metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
+        self.assertEqual(metric.probekey, probe_history[0])
+        metric_history = poem_models.TenantHistory.objects.filter(
+            object_repr=metric.__str__()
+        ).order_by('-date_created')
+        self.assertEqual(metric_history.count(), 1)
+        serialized_data = \
+            json.loads(metric_history[0].serialized_data)[0]['fields']
+        self.assertEqual(serialized_data['probekey'], ['ams-probe', '0.1.11'])
+
+    def test_put_package_with_missing_data_key_tenant_user(self):
+        data = {
+            'id': self.package1.id,
+            'name': 'nagios-plugins-argo',
+            'use_present_version': False,
+            'repos': ['repo-2 (CentOS 7)']
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change packages.'
+        )
+        package = admin_models.Package.objects.get(id=self.package1.id)
+        self.assertEqual(package.name, 'nagios-plugins-argo')
+        self.assertEqual(package.version, '0.1.11')
+        self.assertEqual(package.repos.all().count(), 2)
+        self.assertTrue(self.repo1 in package.repos.all())
+        self.assertTrue(self.repo2 in package.repos.all())
+        probe = admin_models.Probe.objects.get(name='ams-probe')
+        self.assertEqual(probe.package, package)
+        probe_history = admin_models.ProbeHistory.objects.filter(
+            object_id=probe
+        ).order_by('-date_created')
+        self.assertEqual(probe_history.count(), 1)
+        self.assertEqual(probe_history[0].package, probe.package)
+        mt = admin_models.MetricTemplate.objects.get(name='argo.AMS-Check')
+        self.assertEqual(mt.probekey, probe_history[0])
+        mt_history = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=mt
+        ).order_by('-date_created')
+        self.assertEqual(mt_history.count(), 1)
+        self.assertEqual(mt_history[0].probekey, probe_history[0])
+        metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
+        self.assertEqual(metric.probekey, probe_history[0])
+        metric_history = poem_models.TenantHistory.objects.filter(
+            object_repr=metric.__str__()
+        ).order_by('-date_created')
+        self.assertEqual(metric_history.count(), 1)
+        serialized_data = \
+            json.loads(metric_history[0].serialized_data)[0]['fields']
+        self.assertEqual(serialized_data['probekey'], ['ams-probe', '0.1.11'])
+
+    def test_put_package_with_nonexisting_package_sp_superuser(self):
+        data = {
+            'id': '999',
+            'name': 'nagios-plugins-argo',
+            'version': '0.1.12',
+            'use_present_version': False,
+            'repos': ['repo-2 (CentOS 7)']
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data['detail'], 'Package does not exist.')
+
+    def test_put_package_with_nonexisting_package_sp_user(self):
+        data = {
+            'id': '999',
+            'name': 'nagios-plugins-argo',
+            'version': '0.1.12',
+            'use_present_version': False,
+            'repos': ['repo-2 (CentOS 7)']
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change packages.'
+        )
+
+    def test_put_package_with_nonexisting_package_tenant_superuser(self):
+        data = {
+            'id': '999',
+            'name': 'nagios-plugins-argo',
+            'version': '0.1.12',
+            'use_present_version': False,
+            'repos': ['repo-2 (CentOS 7)']
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change packages.'
+        )
+
+    def test_put_package_with_nonexisting_package_tenant_user(self):
+        data = {
+            'id': '999',
+            'name': 'nagios-plugins-argo',
+            'version': '0.1.12',
+            'use_present_version': False,
+            'repos': ['repo-2 (CentOS 7)']
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change packages.'
         )
 
     def test_delete_package(self):
