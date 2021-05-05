@@ -2396,10 +2396,11 @@ class ListPackagesAPIViewTests(TenantTestCase):
             'You do not have permission to change packages.'
         )
 
-    def test_delete_package(self):
+    def test_delete_package_sp_superuser(self):
         self.assertEqual(admin_models.Package.objects.all().count(), 4)
         request = self.factory.delete(self.url + 'nagios-plugins-globus-0.1.5')
-        force_authenticate(request, user=self.user)
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superuser)
         response = self.view(request, 'nagios-plugins-globus-0.1.5')
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertRaises(
@@ -2409,25 +2410,151 @@ class ListPackagesAPIViewTests(TenantTestCase):
         )
         self.assertEqual(admin_models.Package.objects.all().count(), 3)
 
-    def test_delete_package_with_associated_probe(self):
-        request = self.factory.delete(self.url + 'nagios-plugins-argo-0.1.11')
+    def test_delete_package_sp_user(self):
+        self.assertEqual(admin_models.Package.objects.all().count(), 4)
+        request = self.factory.delete(self.url + 'nagios-plugins-globus-0.1.5')
+        request.tenant = self.public_tenant
         force_authenticate(request, user=self.user)
+        response = self.view(request, 'nagios-plugins-globus-0.1.5')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete packages.'
+        )
+        package = admin_models.Package.objects.get(name='nagios-plugins-globus')
+        assert package
+        self.assertEqual(admin_models.Package.objects.all().count(), 4)
+
+    def test_delete_package_tenant_superuser(self):
+        self.assertEqual(admin_models.Package.objects.all().count(), 4)
+        request = self.factory.delete(self.url + 'nagios-plugins-globus-0.1.5')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_superuser)
+        response = self.view(request, 'nagios-plugins-globus-0.1.5')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete packages.'
+        )
+        package = admin_models.Package.objects.get(name='nagios-plugins-globus')
+        assert package
+        self.assertEqual(admin_models.Package.objects.all().count(), 4)
+
+    def test_delete_package_tenant_user(self):
+        self.assertEqual(admin_models.Package.objects.all().count(), 4)
+        request = self.factory.delete(self.url + 'nagios-plugins-globus-0.1.5')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_user)
+        response = self.view(request, 'nagios-plugins-globus-0.1.5')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete packages.'
+        )
+        package = admin_models.Package.objects.get(name='nagios-plugins-globus')
+        assert package
+        self.assertEqual(admin_models.Package.objects.all().count(), 4)
+
+    def test_delete_package_with_associated_probe_sp_superuser(self):
+        self.assertEqual(admin_models.Package.objects.all().count(), 4)
+        request = self.factory.delete(self.url + 'nagios-plugins-argo-0.1.11')
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superuser)
         response = self.view(request, 'nagios-plugins-argo-0.1.11')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(
-            response.data,
-            {'detail': 'You cannot delete package with associated probes!'}
+            response.data['detail'],
+            'You cannot delete package with associated probes.'
         )
+        self.assertEqual(admin_models.Package.objects.all().count(), 4)
 
-    def test_delete_nonexisting_package(self):
-        request = self.factory.delete(self.url + 'nonexisting-0.1.1')
+    def test_delete_package_with_associated_probe_sp_user(self):
+        self.assertEqual(admin_models.Package.objects.all().count(), 4)
+        request = self.factory.delete(self.url + 'nagios-plugins-argo-0.1.11')
+        request.tenant = self.public_tenant
         force_authenticate(request, user=self.user)
+        response = self.view(request, 'nagios-plugins-argo-0.1.11')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete packages.'
+        )
+        self.assertEqual(admin_models.Package.objects.all().count(), 4)
+
+    def test_delete_package_with_associated_probe_tenant_superuser(self):
+        self.assertEqual(admin_models.Package.objects.all().count(), 4)
+        request = self.factory.delete(self.url + 'nagios-plugins-argo-0.1.11')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_superuser)
+        response = self.view(request, 'nagios-plugins-argo-0.1.11')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete packages.'
+        )
+        self.assertEqual(admin_models.Package.objects.all().count(), 4)
+
+    def test_delete_package_with_associated_probe_tenant_user(self):
+        self.assertEqual(admin_models.Package.objects.all().count(), 4)
+        request = self.factory.delete(self.url + 'nagios-plugins-argo-0.1.11')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_user)
+        response = self.view(request, 'nagios-plugins-argo-0.1.11')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete packages.'
+        )
+        self.assertEqual(admin_models.Package.objects.all().count(), 4)
+
+    def test_delete_nonexisting_package_sp_superuser(self):
+        self.assertEqual(admin_models.Package.objects.all().count(), 4)
+        request = self.factory.delete(self.url + 'nonexisting-0.1.1')
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superuser)
         response = self.view(request, 'nonexisting-0.1.1')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data['detail'], 'Package does not exist.')
+        self.assertEqual(admin_models.Package.objects.all().count(), 4)
+
+    def test_delete_nonexisting_package_sp_user(self):
+        self.assertEqual(admin_models.Package.objects.all().count(), 4)
+        request = self.factory.delete(self.url + 'nonexisting-0.1.1')
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'nonexisting-0.1.1')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(
-            response.data,
-            {'detail': 'Package not found.'}
+            response.data['detail'],
+            'You do not have permission to delete packages.'
         )
+        self.assertEqual(admin_models.Package.objects.all().count(), 4)
+
+    def test_delete_nonexisting_package_tenant_superuser(self):
+        self.assertEqual(admin_models.Package.objects.all().count(), 4)
+        request = self.factory.delete(self.url + 'nonexisting-0.1.1')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_superuser)
+        response = self.view(request, 'nonexisting-0.1.1')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete packages.'
+        )
+        self.assertEqual(admin_models.Package.objects.all().count(), 4)
+
+    def test_delete_nonexisting_package_tenant_user(self):
+        self.assertEqual(admin_models.Package.objects.all().count(), 4)
+        request = self.factory.delete(self.url + 'nonexisting-0.1.1')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_user)
+        response = self.view(request, 'nonexisting-0.1.1')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete packages.'
+        )
+        self.assertEqual(admin_models.Package.objects.all().count(), 4)
 
 
 class ListPackagesVersionsTests(TenantTestCase):

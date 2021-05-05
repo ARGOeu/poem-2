@@ -263,21 +263,30 @@ class ListPackages(APIView):
             )
 
     def delete(self, request, nameversion):
-        package_name, package_version = get_package_version(nameversion)
-        try:
-            admin_models.Package.objects.get(
-                name=package_name, version=package_version
-            ).delete()
+        if request.tenant.schema_name == get_public_schema_name() and \
+                request.user.is_superuser:
+            try:
+                package_name, package_version = get_package_version(nameversion)
 
-            return Response(status=status.HTTP_204_NO_CONTENT)
+                admin_models.Package.objects.get(
+                    name=package_name, version=package_version
+                ).delete()
 
-        except admin_models.Package.DoesNotExist:
-            raise NotFound(status=404, detail='Package not found.')
+                return Response(status=status.HTTP_204_NO_CONTENT)
 
-        except ProtectedError:
-            return Response(
-                {'detail': 'You cannot delete package with associated probes!'},
-                status=status.HTTP_400_BAD_REQUEST
+            except admin_models.Package.DoesNotExist:
+                raise NotFound(status=404, detail='Package does not exist.')
+
+            except ProtectedError:
+                return error_response(
+                    detail='You cannot delete package with associated probes.',
+                    status_code=status.HTTP_400_BAD_REQUEST
+                )
+
+        else:
+            return error_response(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='You do not have permission to delete packages.'
             )
 
 
