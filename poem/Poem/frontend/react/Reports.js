@@ -342,6 +342,8 @@ export const ReportsComponent = (props) => {
   }))
   const [groupsTags, setGroupsTags] = useState(undefined)
   const [endpointsTags, setEndpointsTags] = useState(undefined)
+  const [entityGroups1, setEntityGroups1] = useState(undefined)
+  const [entityGroups2, setEntityGroups2] = useState(undefined)
 
   let querykey = undefined;
   if (addview)
@@ -466,23 +468,13 @@ export const ReportsComponent = (props) => {
     }
   );
 
-  const { data: topologyEndpoints, error: topologyEndpointsErrors, isLoading: topologyEndpointsErrorsIsLoading } = useQuery(
-    `${querykey}_topologyendpoints`, async () => {
-      let endpoints = await webapi.fetchReportsTopologyEndpoints();
-      return endpoints 
-    },
-    {
-      enabled: report 
-    }
-  );
-
   const { data: topologyGroups, error: topologyGroupsErrors, isLoading: topologyGroupsErrorsIsLoading } = useQuery(
     `${querykey}_topologygroups`, async () => {
       let groups = await webapi.fetchReportsTopologyGroups();
-      return groups 
+      return groups
     },
     {
-      enabled: report 
+      enabled: report
     }
   );
 
@@ -813,7 +805,7 @@ export const ReportsComponent = (props) => {
   else if (listOperationsProfilesError)
     return (<ErrorComponent error={listOperationsProfilesError}/>);
 
-  else if (report && topologyTags && topologyGroups && topologyEndpoints &&
+  else if (report && topologyTags && topologyGroups &&
     groupsTags !== undefined && endpointsTags !== undefined)  {
     let metricProfile = '';
     let aggregationProfile = '';
