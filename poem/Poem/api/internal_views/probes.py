@@ -212,6 +212,12 @@ class ListProbes(APIView):
                     detail='Probe with this name already exists.'
                 )
 
+            except KeyError as e:
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail='Missing data key: {}'.format(e.args[0])
+                )
+
         else:
             return error_response(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -219,50 +225,76 @@ class ListProbes(APIView):
             )
 
     def post(self, request):
-        try:
-            package_name = request.data['package'].split(' ')[0]
-            package_version = request.data['package'].split(' ')[1][1:-1]
-            probe = admin_models.Probe.objects.create(
-                name=request.data['name'],
-                package=admin_models.Package.objects.get(
-                    name=package_name, version=package_version
-                ),
-                repository=request.data['repository'],
-                docurl=request.data['docurl'],
-                description=request.data['description'],
-                comment=request.data['comment'],
-                user=request.user.username,
-                datetime=datetime.datetime.now()
-            )
-
-            if request.data['cloned_from']:
-                clone = admin_models.Probe.objects.get(
-                    id=request.data['cloned_from']
+        if request.tenant.schema_name == get_public_schema_name() and \
+                request.user.is_superuser:
+            try:
+                package_name = request.data['package'].split(' ')[0]
+                package_version = request.data['package'].split(' ')[1][1:-1]
+                probe = admin_models.Probe(
+                    name=request.data['name'],
+                    package=admin_models.Package.objects.get(
+                        name=package_name, version=package_version
+                    ),
+                    repository=request.data['repository'],
+                    docurl=request.data['docurl'],
+                    description=request.data['description'],
+                    comment=request.data['comment'],
+                    user=request.user.username,
+                    datetime=datetime.datetime.now()
                 )
-                comment = 'Derived from {} ({}).'.format(
-                    clone.name, clone.package.version
+
+                if 'cloned_from' in request.data and \
+                        request.data['cloned_from']:
+                    try:
+                        clone = admin_models.Probe.objects.get(
+                            id=request.data['cloned_from']
+                        )
+                        comment = 'Derived from {} ({}).'.format(
+                            clone.name, clone.package.version
+                        )
+                        probe.save()
+                        create_history(probe, probe.user, comment=comment)
+
+                    except admin_models.Probe.DoesNotExist:
+                        return error_response(
+                            status_code=status.HTTP_404_NOT_FOUND,
+                            detail='Probe from which to clone does not exist.'
+                        )
+
+                else:
+                    probe.save()
+                    create_history(probe, probe.user)
+
+                return Response(status=status.HTTP_201_CREATED)
+
+            except IntegrityError:
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail='Probe with this name already exists.'
                 )
-                create_history(probe, probe.user, comment=comment)
 
-            else:
-                create_history(probe, probe.user)
+            except admin_models.Package.DoesNotExist:
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail='Package does not exist.'
+                )
 
-            return Response(status=status.HTTP_201_CREATED)
+            except IndexError:
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail='Package version should be specified.'
+                )
 
-        except IntegrityError:
-            return Response({'detail': 'Probe with this name already exists.'},
-                            status=status.HTTP_400_BAD_REQUEST)
+            except KeyError as e:
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail='Missing data key: {}'.format(e.args[0])
+                )
 
-        except admin_models.Package.DoesNotExist:
-            return Response(
-                {'detail': 'You should choose existing package.'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        except IndexError:
-            return Response(
-                {'detail': 'You should specify package version.'},
-                status=status.HTTP_400_BAD_REQUEST
+        else:
+            return error_response(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='You do not have permission to add probes.'
             )
 
     def delete(self, request, name=None):
