@@ -16,6 +16,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from tenant_schemas.utils import schema_context, get_public_schema_name
+from .utils import error_response
 
 
 class ListProbes(APIView):
@@ -84,119 +85,137 @@ class ListProbes(APIView):
         )
         schemas.remove(get_public_schema_name())
 
-        probe = admin_models.Probe.objects.get(id=request.data['id'])
-        old_name = probe.name
-        try:
-            package_name = request.data['package'].split(' ')[0]
-            package_version = request.data['package'].split(' ')[1][1:-1]
-            package = admin_models.Package.objects.get(
-                name=package_name, version=package_version
-            )
+        if request.tenant.schema_name == get_public_schema_name() and \
+                request.user.is_superuser:
+            try:
+                probe = admin_models.Probe.objects.get(id=request.data['id'])
+                old_name = probe.name
+                package_name = request.data['package'].split(' ')[0]
+                package_version = request.data['package'].split(' ')[1][1:-1]
+                package = admin_models.Package.objects.get(
+                    name=package_name, version=package_version
+                )
 
-        except IndexError:
-            return Response(
-                {'detail': 'You should specify package version.'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+                old_version = probe.package.version
 
-        except admin_models.Package.DoesNotExist:
-            return Response(
-                {'detail': 'You should choose existing package.'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+                if package.version != old_version:
+                    probe.name = request.data['name']
+                    probe.package = package
+                    probe.repository = request.data['repository']
+                    probe.docurl = request.data['docurl']
+                    probe.description = request.data['description']
+                    probe.comment = request.data['comment']
+                    probe.user = request.user.username
 
-        old_version = probe.package.version
+                    probe.save()
+                    create_history(probe, probe.user)
 
-        try:
-            if package.version != old_version:
-                probe.name = request.data['name']
-                probe.package = package
-                probe.repository = request.data['repository']
-                probe.docurl = request.data['docurl']
-                probe.description = request.data['description']
-                probe.comment = request.data['comment']
-                probe.user = request.user.username
-
-                probe.save()
-                create_history(probe, probe.user)
-
-                if request.data['update_metrics'] in [True, 'true', 'True']:
-                    metrictemplates = \
-                        admin_models.MetricTemplate.objects.filter(
-                            probekey__name=old_name,
-                            probekey__package__version=old_version
-                        )
-
-                    for metrictemplate in metrictemplates:
-                        metrictemplate.probekey = \
-                            admin_models.ProbeHistory.objects.get(
-                                name=probe.name,
-                                package__version=probe.package.version
+                    if request.data['update_metrics'] in [True, 'true', 'True']:
+                        metrictemplates = \
+                            admin_models.MetricTemplate.objects.filter(
+                                probekey__name=old_name,
+                                probekey__package__version=old_version
                             )
-                        metrictemplate.save()
-                        create_history(metrictemplate, request.user.username)
 
-            else:
-                history = admin_models.ProbeHistory.objects.filter(
-                    name=old_name, package__version=old_version
-                )
-                probekey = history[0]
-                new_data = {
-                            'name': request.data['name'],
-                            'package': package,
-                            'description': request.data['description'],
-                            'comment': request.data['comment'],
-                            'repository': request.data['repository'],
-                            'docurl': request.data['docurl'],
-                            'user': request.user.username
-                        }
-                admin_models.Probe.objects.filter(pk=probe.id).update(
-                    **new_data
-                )
+                        for metrictemplate in metrictemplates:
+                            metrictemplate.probekey = \
+                                admin_models.ProbeHistory.objects.get(
+                                    name=probe.name,
+                                    package__version=probe.package.version
+                                )
+                            metrictemplate.save()
+                            create_history(
+                                metrictemplate, request.user.username
+                            )
 
-                del new_data['user']
-                new_data.update({
-                    'version_comment': update_comment(
-                        admin_models.Probe.objects.get(
-                            id=request.data['id']
-                        )
+                else:
+                    history = admin_models.ProbeHistory.objects.filter(
+                        name=old_name, package__version=old_version
                     )
-                })
-                history.update(**new_data)
+                    probekey = history[0]
+                    new_data = {
+                        'name': request.data['name'],
+                        'package': package,
+                        'description': request.data['description'],
+                        'comment': request.data['comment'],
+                        'repository': request.data['repository'],
+                        'docurl': request.data['docurl'],
+                        'user': request.user.username
+                    }
+                    admin_models.Probe.objects.filter(pk=probe.id).update(
+                        **new_data
+                    )
 
-                # update Metric history in case probekey name has changed:
-                if request.data['name'] != old_name:
-                    for schema in schemas:
-                        with schema_context(schema):
-                            metrics = poem_models.Metric.objects.filter(
-                                probekey=probekey
+                    del new_data['user']
+                    new_data.update({
+                        'version_comment': update_comment(
+                            admin_models.Probe.objects.get(
+                                id=request.data['id']
                             )
+                        )
+                    })
+                    history.update(**new_data)
 
-                            for metric in metrics:
-                                vers = poem_models.TenantHistory.objects.filter(
-                                    object_id=metric.id
+                    # update Metric history in case probekey name has changed:
+                    if request.data['name'] != old_name:
+                        for schema in schemas:
+                            with schema_context(schema):
+                                metrics = poem_models.Metric.objects.filter(
+                                    probekey=probekey
                                 )
 
-                                for ver in vers:
-                                    serialized_data = json.loads(
-                                        ver.serialized_data
-                                    )
+                                for metric in metrics:
+                                    vers = \
+                                        poem_models.TenantHistory.objects.filter(
+                                            object_id=metric.id
+                                        )
 
-                                    serialized_data[0]['fields']['probekey'] = \
-                                        [request.data['name'],
-                                         package.version]
+                                    for ver in vers:
+                                        serialized_data = json.loads(
+                                            ver.serialized_data
+                                        )
 
-                                    ver.serialized_data = json.dumps(
-                                        serialized_data
-                                    )
-                                    ver.save()
+                                        serialized_data[0]['fields'][
+                                            'probekey'
+                                        ] = \
+                                            [request.data['name'],
+                                             package.version]
 
-            return Response(status=status.HTTP_201_CREATED)
+                                        ver.serialized_data = json.dumps(
+                                            serialized_data
+                                        )
+                                        ver.save()
 
-        except IntegrityError:
-            return Response(
-                {'detail': 'Probe with this name already exists.'},
-                status=status.HTTP_400_BAD_REQUEST
+                return Response(status=status.HTTP_201_CREATED)
+
+            except admin_models.Probe.DoesNotExist:
+                return error_response(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail='Probe does not exist.'
+                )
+
+            except IndexError:
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail='Package version should be specified.'
+                )
+
+            except admin_models.Package.DoesNotExist:
+                return error_response(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail='Package does not exist.'
+                )
+
+            except IntegrityError:
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail='Probe with this name already exists.'
+                )
+
+        else:
+            return error_response(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='You do not have permission to change probes.'
             )
 
     def post(self, request):
