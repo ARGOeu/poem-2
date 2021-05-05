@@ -11,6 +11,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from tenant_schemas.utils import get_public_schema_name
 
+from .utils import error_response
+
 
 def get_package_version(nameversion):
     version = nameversion.split('-')[-1]
@@ -82,19 +84,22 @@ class ListPackages(APIView):
             return Response(results)
 
     def post(self, request):
-        try:
-            if request.data['use_present_version'] in [True, 'true', 'True']:
-                version = 'present'
-                use_present_version = True
-
-            else:
-                version = request.data['version']
-                use_present_version = False
-
-            # check if repos exist
-            repos = dict(request.data)['repos']
-
+        if request.tenant.schema_name == get_public_schema_name() and \
+                request.user.is_superuser:
             try:
+                if request.data['use_present_version'] in [
+                    True, 'true', 'True'
+                ]:
+                    version = 'present'
+                    use_present_version = True
+
+                else:
+                    version = request.data['version']
+                    use_present_version = False
+
+                # check if repos exist
+                repos = dict(request.data)['repos']
+
                 for repo in repos:
                     repo_name = repo.split(' ')[0]
                     repo_tag = admin_models.OSTag.objects.get(
@@ -104,40 +109,57 @@ class ListPackages(APIView):
                         name=repo_name, tag=repo_tag
                     )
 
+                package = admin_models.Package.objects.create(
+                    name=request.data['name'],
+                    version=version,
+                    use_present_version=use_present_version
+                )
+
+                for repo in repos:
+                    repo_name = repo.split(' ')[0]
+                    repo_tag = admin_models.OSTag.objects.get(
+                        name=repo.split('(')[1][0:-1]
+                    )
+                    package.repos.add(admin_models.YumRepo.objects.get(
+                        name=repo_name, tag=repo_tag
+                    ))
+
+                return Response(status=status.HTTP_201_CREATED)
+
             except admin_models.YumRepo.DoesNotExist:
-                return Response(
-                    {'detail': 'YUM repo not found.'},
-                    status=status.HTTP_404_NOT_FOUND
+                return error_response(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail='YUM repo does not exist.'
                 )
 
             except IndexError:
-                return Response(
-                    {'detail': 'You should specify YUM repo tag!'},
-                    status=status.HTTP_400_BAD_REQUEST
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail='YUM repo tag should be specified.'
                 )
 
-            package = admin_models.Package.objects.create(
-                name=request.data['name'],
-                version=version,
-                use_present_version=use_present_version
-            )
-
-            for repo in repos:
-                repo_name = repo.split(' ')[0]
-                repo_tag = admin_models.OSTag.objects.get(
-                    name=repo.split('(')[1][0:-1]
+            except IntegrityError:
+                return error_response(
+                    detail='Package with this name and version already exists.',
+                    status_code=status.HTTP_400_BAD_REQUEST
                 )
-                package.repos.add(admin_models.YumRepo.objects.get(
-                    name=repo_name, tag=repo_tag
-                ))
 
-            return Response(status=status.HTTP_201_CREATED)
+            except admin_models.OSTag.DoesNotExist:
+                return error_response(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail='OS tag does not exist.'
+                )
 
-        except IntegrityError:
-            return Response(
-                {'detail':
-                     'Package with this name and version already exists.'},
-                status=status.HTTP_400_BAD_REQUEST
+            except KeyError as e:
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail='Missing data key: {}'.format(e.args[0])
+                )
+
+        else:
+            return error_response(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='You do not have permission to add packages.'
             )
 
     def put(self, request):
