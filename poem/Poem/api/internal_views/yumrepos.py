@@ -140,21 +140,41 @@ class ListYumRepos(APIView):
             )
 
     def delete(self, request, name=None, tag=None):
-        if name and tag:
-            if tag == 'centos6':
-                ostag = admin_models.OSTag.objects.get(name='CentOS 6')
+        if request.tenant.schema_name == get_public_schema_name() and \
+                request.user.is_superuser:
+            if name and tag:
+                if tag == 'centos6':
+                    ostag = admin_models.OSTag.objects.get(name='CentOS 6')
+
+                elif tag == 'centos7':
+                    ostag = admin_models.OSTag.objects.get(name='CentOS 7')
+
+                else:
+                    raise NotFound(status=404, detail='OS tag does not exist.')
+
+                try:
+                    admin_models.YumRepo.objects.get(
+                        name=name, tag=ostag
+                    ).delete()
+
+                    return Response(status=status.HTTP_204_NO_CONTENT)
+
+                except admin_models.YumRepo.DoesNotExist:
+                    raise NotFound(
+                        status=404, detail='YUM repo does not exist.'
+                    )
+
             else:
-                ostag = admin_models.OSTag.objects.get(name='CentOS 7')
-
-            try:
-                admin_models.YumRepo.objects.get(name=name, tag=ostag).delete()
-                return Response(status=status.HTTP_204_NO_CONTENT)
-
-            except admin_models.YumRepo.DoesNotExist:
-                raise NotFound(status=404, detail='YUM repo not found.')
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail='YUM repo name and/or tag should be specified.'
+                )
 
         else:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+            return error_response(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='You do not have permission to delete YUM repos.'
+            )
 
 
 class ListOSTags(APIView):

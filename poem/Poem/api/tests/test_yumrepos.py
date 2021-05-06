@@ -1086,10 +1086,11 @@ class ListYumReposAPIViewTests(TenantTestCase):
         self.assertEqual(repo.content, 'content1=content1\ncontent2=content2')
         self.assertEqual(repo.description, 'Repo 1 description.')
 
-    def test_delete_yum_repo(self):
+    def test_delete_yum_repo_sp_superuser(self):
         self.assertEqual(admin_models.YumRepo.objects.all().count(), 2)
         request = self.factory.delete(self.url + 'repo-1/centos6')
-        force_authenticate(request, user=self.user)
+        request.tenant = self.super_tenant
+        force_authenticate(request, user=self.superuser)
         response = self.view(request, 'repo-1', 'centos6')
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(admin_models.YumRepo.objects.all().count(), 1)
@@ -1099,18 +1100,151 @@ class ListYumReposAPIViewTests(TenantTestCase):
             name='repo-1'
         )
 
-    def test_delete_yum_repo_without_name(self):
-        request = self.factory.delete(self.url)
+    def test_delete_yum_repo_sp_user(self):
+        self.assertEqual(admin_models.YumRepo.objects.all().count(), 2)
+        request = self.factory.delete(self.url + 'repo-1/centos6')
+        request.tenant = self.super_tenant
         force_authenticate(request, user=self.user)
+        response = self.view(request, 'repo-1', 'centos6')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete YUM repos.'
+        )
+        self.assertEqual(admin_models.YumRepo.objects.all().count(), 2)
+        repo = admin_models.YumRepo.objects.get(name='repo-1')
+        assert repo
+
+    def test_delete_yum_repo_tenant_superuser(self):
+        self.assertEqual(admin_models.YumRepo.objects.all().count(), 2)
+        request = self.factory.delete(self.url + 'repo-1/centos6')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_superuser)
+        response = self.view(request, 'repo-1', 'centos6')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete YUM repos.'
+        )
+        self.assertEqual(admin_models.YumRepo.objects.all().count(), 2)
+        repo = admin_models.YumRepo.objects.get(name='repo-1')
+        assert repo
+
+    def test_delete_yum_repo_tenant_user(self):
+        self.assertEqual(admin_models.YumRepo.objects.all().count(), 2)
+        request = self.factory.delete(self.url + 'repo-1/centos6')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_user)
+        response = self.view(request, 'repo-1', 'centos6')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete YUM repos.'
+        )
+        self.assertEqual(admin_models.YumRepo.objects.all().count(), 2)
+        repo = admin_models.YumRepo.objects.get(name='repo-1')
+        assert repo
+
+    def test_delete_yum_repo_without_name_sp_superuser(self):
+        self.assertEqual(admin_models.YumRepo.objects.all().count(), 2)
+        request = self.factory.delete(self.url)
+        request.tenant = self.super_tenant
+        force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data['detail'],
+            'YUM repo name and/or tag should be specified.'
+        )
+        self.assertEqual(admin_models.YumRepo.objects.all().count(), 2)
 
-    def test_delete_yum_repo_nonexisting_name(self):
-        request = self.factory.delete(self.url + 'nonexisting/centos7')
+    def test_delete_yum_repo_without_name_sp_user(self):
+        self.assertEqual(admin_models.YumRepo.objects.all().count(), 2)
+        request = self.factory.delete(self.url)
+        request.tenant = self.super_tenant
         force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete YUM repos.'
+        )
+        self.assertEqual(admin_models.YumRepo.objects.all().count(), 2)
+
+    def test_delete_yum_repo_without_name_tenant_superuser(self):
+        self.assertEqual(admin_models.YumRepo.objects.all().count(), 2)
+        request = self.factory.delete(self.url)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete YUM repos.'
+        )
+        self.assertEqual(admin_models.YumRepo.objects.all().count(), 2)
+
+    def test_delete_yum_repo_without_name_tenant_user(self):
+        self.assertEqual(admin_models.YumRepo.objects.all().count(), 2)
+        request = self.factory.delete(self.url)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete YUM repos.'
+        )
+        self.assertEqual(admin_models.YumRepo.objects.all().count(), 2)
+
+    def test_delete_yum_repo_nonexisting_name_sp_superuser(self):
+        self.assertEqual(admin_models.YumRepo.objects.all().count(), 2)
+        request = self.factory.delete(self.url + 'nonexisting/centos7')
+        request.tenant = self.super_tenant
+        force_authenticate(request, user=self.superuser)
         response = self.view(request, 'nonexisting', 'centos7')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertEqual(response.data, {'detail': 'YUM repo not found.'})
+        self.assertEqual(response.data['detail'], 'YUM repo does not exist.')
+        self.assertEqual(admin_models.YumRepo.objects.all().count(), 2)
+
+    def test_delete_yum_repo_nonexisting_name_sp_user(self):
+        self.assertEqual(admin_models.YumRepo.objects.all().count(), 2)
+        request = self.factory.delete(self.url + 'nonexisting/centos7')
+        request.tenant = self.super_tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'nonexisting', 'centos7')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete YUM repos.'
+        )
+        self.assertEqual(admin_models.YumRepo.objects.all().count(), 2)
+
+    def test_delete_yum_repo_nonexisting_name_tenant_superuser(self):
+        self.assertEqual(admin_models.YumRepo.objects.all().count(), 2)
+        request = self.factory.delete(self.url + 'nonexisting/centos7')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_superuser)
+        response = self.view(request, 'nonexisting', 'centos7')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete YUM repos.'
+        )
+        self.assertEqual(admin_models.YumRepo.objects.all().count(), 2)
+
+    def test_delete_yum_repo_nonexisting_name_tenant_user(self):
+        self.assertEqual(admin_models.YumRepo.objects.all().count(), 2)
+        request = self.factory.delete(self.url + 'nonexisting/centos7')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_user)
+        response = self.view(request, 'nonexisting', 'centos7')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete YUM repos.'
+        )
+        self.assertEqual(admin_models.YumRepo.objects.all().count(), 2)
 
 
 class ListOSTagsAPIViewTests(TenantTestCase):
