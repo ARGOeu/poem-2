@@ -401,7 +401,7 @@ class ListYumReposAPIViewTests(TenantTestCase):
             'You do not have permission to add YUM repos.'
         )
 
-    def test_put_yum_repo(self):
+    def test_put_yum_repo_sp_superuser(self):
         data = {
             'id': self.repo1.id,
             'name': 'repo-new-1',
@@ -411,15 +411,87 @@ class ListYumReposAPIViewTests(TenantTestCase):
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
-        force_authenticate(request, user=self.user)
+        request.tenant = self.super_tenant
+        force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         repo = admin_models.YumRepo.objects.get(id=self.repo1.id)
         self.assertEqual(repo.name, 'repo-new-1')
         self.assertEqual(repo.tag, self.tag2)
-        self.assertEqual(repo.name, 'repo-new-1')
         self.assertEqual(repo.content, 'content3=content3\ncontent4=content4')
         self.assertEqual(repo.description, 'Another description.')
+
+    def test_put_yum_repo_sp_user(self):
+        data = {
+            'id': self.repo1.id,
+            'name': 'repo-new-1',
+            'tag': 'CentOS 7',
+            'content': 'content3=content3\ncontent4=content4',
+            'description': 'Another description.'
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.super_tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change YUM repos.'
+        )
+        repo = admin_models.YumRepo.objects.get(id=self.repo1.id)
+        self.assertEqual(repo.name, 'repo-1')
+        self.assertEqual(repo.tag, self.tag1)
+        self.assertEqual(repo.content, 'content1=content1\ncontent2=content2')
+        self.assertEqual(repo.description, 'Repo 1 description.')
+
+    def test_put_yum_repo_tenant_superuser(self):
+        data = {
+            'id': self.repo1.id,
+            'name': 'repo-new-1',
+            'tag': 'CentOS 7',
+            'content': 'content3=content3\ncontent4=content4',
+            'description': 'Another description.'
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change YUM repos.'
+        )
+        repo = admin_models.YumRepo.objects.get(id=self.repo1.id)
+        self.assertEqual(repo.name, 'repo-1')
+        self.assertEqual(repo.tag, self.tag1)
+        self.assertEqual(repo.content, 'content1=content1\ncontent2=content2')
+        self.assertEqual(repo.description, 'Repo 1 description.')
+
+    def test_put_yum_repo_tenant_user(self):
+        data = {
+            'id': self.repo1.id,
+            'name': 'repo-new-1',
+            'tag': 'CentOS 7',
+            'content': 'content3=content3\ncontent4=content4',
+            'description': 'Another description.'
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change YUM repos.'
+        )
+        repo = admin_models.YumRepo.objects.get(id=self.repo1.id)
+        self.assertEqual(repo.name, 'repo-1')
+        self.assertEqual(repo.tag, self.tag1)
+        self.assertEqual(repo.content, 'content1=content1\ncontent2=content2')
+        self.assertEqual(repo.description, 'Repo 1 description.')
 
     def test_post_yum_repo_with_nonexisting_tag_sp_superuser(self):
         data = {
@@ -595,7 +667,7 @@ class ListYumReposAPIViewTests(TenantTestCase):
             name='repo-3'
         )
 
-    def test_put_yum_repo_with_existing_name_and_tag(self):
+    def test_put_yum_repo_with_existing_name_and_tag_sp_superuser(self):
         data = {
             'id': self.repo1.id,
             'name': 'repo-2',
@@ -605,15 +677,73 @@ class ListYumReposAPIViewTests(TenantTestCase):
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
-        force_authenticate(request, user=self.user)
+        request.tenant = self.super_tenant
+        force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(
-            response.data,
-            {'detail': 'YUM repo with this name and tag already exists.'}
+            response.data['detail'],
+            'YUM repo with this name and tag already exists.'
         )
 
-    def test_put_yum_repo_with_existing_name_but_different_tag(self):
+    def test_put_yum_repo_with_existing_name_and_tag_sp_user(self):
+        data = {
+            'id': self.repo1.id,
+            'name': 'repo-2',
+            'tag': 'CentOS 7',
+            'content': 'content1=content1\ncontent2=content2',
+            'description': 'Existing repo-2'
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.super_tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change YUM repos.'
+        )
+
+    def test_put_yum_repo_with_existing_name_and_tag_tenant_superuser(self):
+        data = {
+            'id': self.repo1.id,
+            'name': 'repo-2',
+            'tag': 'CentOS 7',
+            'content': 'content1=content1\ncontent2=content2',
+            'description': 'Existing repo-2'
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change YUM repos.'
+        )
+
+    def test_put_yum_repo_with_existing_name_and_tag_tenant_user(self):
+        data = {
+            'id': self.repo1.id,
+            'name': 'repo-2',
+            'tag': 'CentOS 7',
+            'content': 'content1=content1\ncontent2=content2',
+            'description': 'Existing repo-2'
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change YUM repos.'
+        )
+
+    def test_put_yum_repo_with_existing_name_but_different_tag_sp_sprusr(self):
         data = {
             'id': self.repo1.id,
             'name': 'repo-2',
@@ -623,7 +753,8 @@ class ListYumReposAPIViewTests(TenantTestCase):
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
-        force_authenticate(request, user=self.user)
+        request.tenant = self.super_tenant
+        force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         repo = admin_models.YumRepo.objects.get(id=self.repo1.id)
@@ -631,6 +762,329 @@ class ListYumReposAPIViewTests(TenantTestCase):
         self.assertEqual(repo.tag, self.tag1)
         self.assertEqual(repo.content, 'content1=content1\ncontent2=content2')
         self.assertEqual(repo.description, 'Existing repo-2')
+
+    def test_put_yum_repo_with_existing_name_but_different_tag_sp_user(self):
+        data = {
+            'id': self.repo1.id,
+            'name': 'repo-2',
+            'tag': 'CentOS 6',
+            'content': 'content1=content1\ncontent2=content2',
+            'description': 'Existing repo-2'
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.super_tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change YUM repos.'
+        )
+        repo = admin_models.YumRepo.objects.get(id=self.repo1.id)
+        self.assertEqual(repo.name, 'repo-1')
+        self.assertEqual(repo.tag, self.tag1)
+        self.assertEqual(repo.content, 'content1=content1\ncontent2=content2')
+        self.assertEqual(repo.description, 'Repo 1 description.')
+
+    def test_put_yum_repo_with_existing_name_but_different_tag_tn_spruser(self):
+        data = {
+            'id': self.repo1.id,
+            'name': 'repo-2',
+            'tag': 'CentOS 6',
+            'content': 'content1=content1\ncontent2=content2',
+            'description': 'Existing repo-2'
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change YUM repos.'
+        )
+        repo = admin_models.YumRepo.objects.get(id=self.repo1.id)
+        self.assertEqual(repo.name, 'repo-1')
+        self.assertEqual(repo.tag, self.tag1)
+        self.assertEqual(repo.content, 'content1=content1\ncontent2=content2')
+        self.assertEqual(repo.description, 'Repo 1 description.')
+
+    def test_put_yum_repo_with_existing_name_but_different_tag_tn_user(self):
+        data = {
+            'id': self.repo1.id,
+            'name': 'repo-2',
+            'tag': 'CentOS 6',
+            'content': 'content1=content1\ncontent2=content2',
+            'description': 'Existing repo-2'
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change YUM repos.'
+        )
+        repo = admin_models.YumRepo.objects.get(id=self.repo1.id)
+        self.assertEqual(repo.name, 'repo-1')
+        self.assertEqual(repo.tag, self.tag1)
+        self.assertEqual(repo.content, 'content1=content1\ncontent2=content2')
+        self.assertEqual(repo.description, 'Repo 1 description.')
+
+    def test_put_yum_repo_with_nonexisting_tag_sp_superuser(self):
+        data = {
+            'id': self.repo1.id,
+            'name': 'repo-3',
+            'tag': 'nonexisting',
+            'content': 'content3=content3\ncontent3=content3',
+            'description': 'New repo description.'
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.super_tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data['detail'], 'OS tag does not exist.')
+        repo = admin_models.YumRepo.objects.get(id=self.repo1.id)
+        self.assertEqual(repo.name, 'repo-1')
+        self.assertEqual(repo.tag, self.tag1)
+        self.assertEqual(repo.content, 'content1=content1\ncontent2=content2')
+        self.assertEqual(repo.description, 'Repo 1 description.')
+
+    def test_put_yum_repo_with_nonexisting_tag_sp_user(self):
+        data = {
+            'id': self.repo1.id,
+            'name': 'repo-3',
+            'tag': 'nonexisting',
+            'content': 'content3=content3\ncontent3=content3',
+            'description': 'New repo description.'
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.super_tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change YUM repos.'
+        )
+        repo = admin_models.YumRepo.objects.get(id=self.repo1.id)
+        self.assertEqual(repo.name, 'repo-1')
+        self.assertEqual(repo.tag, self.tag1)
+        self.assertEqual(repo.content, 'content1=content1\ncontent2=content2')
+        self.assertEqual(repo.description, 'Repo 1 description.')
+
+    def test_put_yum_repo_with_nonexisting_tag_tenant_superuser(self):
+        data = {
+            'id': self.repo1.id,
+            'name': 'repo-3',
+            'tag': 'nonexisting',
+            'content': 'content3=content3\ncontent3=content3',
+            'description': 'New repo description.'
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change YUM repos.'
+        )
+        repo = admin_models.YumRepo.objects.get(id=self.repo1.id)
+        self.assertEqual(repo.name, 'repo-1')
+        self.assertEqual(repo.tag, self.tag1)
+        self.assertEqual(repo.content, 'content1=content1\ncontent2=content2')
+        self.assertEqual(repo.description, 'Repo 1 description.')
+
+    def test_put_yum_repo_with_nonexisting_tag_tenant_user(self):
+        data = {
+            'id': self.repo1.id,
+            'name': 'repo-3',
+            'tag': 'nonexisting',
+            'content': 'content3=content3\ncontent3=content3',
+            'description': 'New repo description.'
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change YUM repos.'
+        )
+        repo = admin_models.YumRepo.objects.get(id=self.repo1.id)
+        self.assertEqual(repo.name, 'repo-1')
+        self.assertEqual(repo.tag, self.tag1)
+        self.assertEqual(repo.content, 'content1=content1\ncontent2=content2')
+        self.assertEqual(repo.description, 'Repo 1 description.')
+
+    def test_put_yum_repo_with_nonexisting_repo_sp_superuser(self):
+        data = {
+            'id': 999,
+            'name': 'repo-3',
+            'tag': 'CentOS 6',
+            'description': 'New repo description.'
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.super_tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data['detail'], 'YUM repo does not exist.')
+
+    def test_put_yum_repo_with_nonexisting_repo_sp_user(self):
+        data = {
+            'id': 999,
+            'name': 'repo-3',
+            'tag': 'CentOS 6',
+            'description': 'New repo description.'
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.super_tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change YUM repos.'
+        )
+
+    def test_put_yum_repo_with_nonexisting_repo_tenant_superuser(self):
+        data = {
+            'id': 999,
+            'name': 'repo-3',
+            'tag': 'CentOS 6',
+            'description': 'New repo description.'
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change YUM repos.'
+        )
+
+    def test_put_yum_repo_with_nonexisting_repo_tenant_user(self):
+        data = {
+            'id': 999,
+            'name': 'repo-3',
+            'tag': 'CentOS 6',
+            'description': 'New repo description.'
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change YUM repos.'
+        )
+
+    def test_put_yum_repo_with_missing_data_key_sp_superuser(self):
+        data = {
+            'id': self.repo1.id,
+            'name': 'repo-3',
+            'tag': 'CentOS 6',
+            'description': 'New repo description.'
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.super_tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['detail'], 'Missing data key: content')
+        repo = admin_models.YumRepo.objects.get(id=self.repo1.id)
+        self.assertEqual(repo.name, 'repo-1')
+        self.assertEqual(repo.tag, self.tag1)
+        self.assertEqual(repo.content, 'content1=content1\ncontent2=content2')
+        self.assertEqual(repo.description, 'Repo 1 description.')
+
+    def test_put_yum_repo_with_missing_data_key_sp_user(self):
+        data = {
+            'id': self.repo1.id,
+            'name': 'repo-3',
+            'tag': 'CentOS 6',
+            'description': 'New repo description.'
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.super_tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change YUM repos.'
+        )
+        repo = admin_models.YumRepo.objects.get(id=self.repo1.id)
+        self.assertEqual(repo.name, 'repo-1')
+        self.assertEqual(repo.tag, self.tag1)
+        self.assertEqual(repo.content, 'content1=content1\ncontent2=content2')
+        self.assertEqual(repo.description, 'Repo 1 description.')
+
+    def test_put_yum_repo_with_missing_data_key_tenant_superuser(self):
+        data = {
+            'id': self.repo1.id,
+            'name': 'repo-3',
+            'tag': 'CentOS 6',
+            'description': 'New repo description.'
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change YUM repos.'
+        )
+        repo = admin_models.YumRepo.objects.get(id=self.repo1.id)
+        self.assertEqual(repo.name, 'repo-1')
+        self.assertEqual(repo.tag, self.tag1)
+        self.assertEqual(repo.content, 'content1=content1\ncontent2=content2')
+        self.assertEqual(repo.description, 'Repo 1 description.')
+
+    def test_put_yum_repo_with_missing_data_key_tenant_user(self):
+        data = {
+            'id': self.repo1.id,
+            'name': 'repo-3',
+            'tag': 'CentOS 6',
+            'description': 'New repo description.'
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change YUM repos.'
+        )
+        repo = admin_models.YumRepo.objects.get(id=self.repo1.id)
+        self.assertEqual(repo.name, 'repo-1')
+        self.assertEqual(repo.tag, self.tag1)
+        self.assertEqual(repo.content, 'content1=content1\ncontent2=content2')
+        self.assertEqual(repo.description, 'Repo 1 description.')
 
     def test_delete_yum_repo(self):
         self.assertEqual(admin_models.YumRepo.objects.all().count(), 2)

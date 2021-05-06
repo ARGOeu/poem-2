@@ -96,21 +96,47 @@ class ListYumRepos(APIView):
             )
 
     def put(self, request):
-        repo = admin_models.YumRepo.objects.get(id=request.data['id'])
+        if request.tenant.schema_name == get_public_schema_name() and \
+                request.user.is_superuser:
+            try:
+                repo = admin_models.YumRepo.objects.get(id=request.data['id'])
 
-        try:
-            repo.name = request.data['name']
-            repo.tag = admin_models.OSTag.objects.get(name=request.data['tag'])
-            repo.content = request.data['content']
-            repo.description = request.data['description']
-            repo.save()
+                repo.name = request.data['name']
+                repo.tag = admin_models.OSTag.objects.get(name=request.data['tag'])
+                repo.content = request.data['content']
+                repo.description = request.data['description']
+                repo.save()
 
-            return Response(status=status.HTTP_201_CREATED)
+                return Response(status=status.HTTP_201_CREATED)
 
-        except IntegrityError:
-            return Response(
-                {'detail': 'YUM repo with this name and tag already exists.'},
-                status=status.HTTP_400_BAD_REQUEST
+            except admin_models.YumRepo.DoesNotExist:
+                return error_response(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail='YUM repo does not exist.'
+                )
+
+            except admin_models.OSTag.DoesNotExist:
+                return error_response(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail='OS tag does not exist.'
+                )
+
+            except IntegrityError:
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail='YUM repo with this name and tag already exists.'
+                )
+
+            except KeyError as e:
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail='Missing data key: {}'.format(e.args[0])
+                )
+
+        else:
+            return error_response(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='You do not have permission to change YUM repos.'
             )
 
     def delete(self, request, name=None, tag=None):
