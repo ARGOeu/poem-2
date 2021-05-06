@@ -214,25 +214,70 @@ class ListThresholdsProfiles(APIView):
             )
 
     def delete(self, request, apiid=None):
-        if apiid:
-            try:
-                tp = poem_models.ThresholdsProfiles.objects.get(apiid=apiid)
-                poem_models.TenantHistory.objects.filter(
-                    object_id=tp.id,
-                    content_type=ContentType.objects.get_for_model(tp)
-                ).delete()
-                tp.delete()
+        try:
+            userprofile = poem_models.UserProfile.objects.get(user=request.user)
+            groups = userprofile.groupsofthresholdsprofiles.all()
 
-                return Response(status=status.HTTP_204_NO_CONTENT)
+            if groups.count() == 0 and not request.user.is_superuser:
+                return error_response(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail='You do not have permission to delete thresholds '
+                           'profiles.'
+                )
 
-            except poem_models.ThresholdsProfiles.DoesNotExist:
-                raise NotFound(status=404,
-                               detail='Thresholds profile not found.')
+            else:
+                if apiid:
+                    tp = poem_models.ThresholdsProfiles.objects.get(apiid=apiid)
 
-        else:
-            return Response(
-                {'detail': 'Thresholds profile not specified!'},
-                status=status.HTTP_400_BAD_REQUEST
+                    delete_perm = request.user.is_superuser
+                    if tp.groupname:
+                        group = \
+                            poem_models.GroupOfThresholdsProfiles.objects.get(
+                                name=tp.groupname
+                            )
+                        delete_perm = request.user.is_superuser or \
+                            group in groups
+
+                    else:
+                        if not request.user.is_superuser:
+                            return error_response(
+                                status_code=status.HTTP_401_UNAUTHORIZED,
+                                detail='You do not have permission to delete '
+                                       'thresholds profiles without assigned '
+                                       'group.'
+                            )
+
+                    if delete_perm:
+                        poem_models.TenantHistory.objects.filter(
+                            object_id=tp.id,
+                            content_type=ContentType.objects.get_for_model(tp)
+                        ).delete()
+                        tp.delete()
+
+                        return Response(status=status.HTTP_204_NO_CONTENT)
+
+                    else:
+                        return error_response(
+                            status_code=status.HTTP_401_UNAUTHORIZED,
+                            detail='You do not have permission to delete '
+                                   'thresholds profiles assigned to this group.'
+                        )
+
+                else:
+                    return error_response(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail='Thresholds profile not specified.'
+                    )
+
+        except poem_models.UserProfile.DoesNotExist:
+            return error_response(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail='No userprofile for authenticated user.'
+            )
+
+        except poem_models.ThresholdsProfiles.DoesNotExist:
+            raise NotFound(
+                status=404, detail='Thresholds profile not found.'
             )
 
 

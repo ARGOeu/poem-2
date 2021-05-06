@@ -1733,7 +1733,36 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
             'You do not have permission to add thresholds profiles.'
         )
 
-    def test_delete_thresholds_profile(self):
+    def test_delete_thresholds_profile_superuser(self):
+        self.assertEqual(
+            poem_models.ThresholdsProfiles.objects.all().count(), 3
+        )
+        self.assertEqual(
+            poem_models.TenantHistory.objects.filter(
+                object_id=self.tp1.id, content_type=self.ct
+            ).count(), 1
+        )
+        request = self.factory.delete(
+            self.url + '00000000-oooo-kkkk-aaaa-aaeekkccnnee'
+        )
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request, '00000000-oooo-kkkk-aaaa-aaeekkccnnee')
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(
+            poem_models.ThresholdsProfiles.objects.all().count(), 2
+        )
+        self.assertRaises(
+            poem_models.ThresholdsProfiles.DoesNotExist,
+            poem_models.ThresholdsProfiles.objects.get,
+            id=self.tp1.id
+        )
+        self.assertEqual(
+            poem_models.TenantHistory.objects.filter(
+                object_id=self.tp1.id, content_type=self.ct
+            ).count(), 0
+        )
+
+    def test_delete_thresholds_profile_user(self):
         self.assertEqual(
             poem_models.ThresholdsProfiles.objects.all().count(), 3
         )
@@ -1748,6 +1777,9 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
         force_authenticate(request, user=self.user)
         response = self.view(request, '00000000-oooo-kkkk-aaaa-aaeekkccnnee')
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(
+            poem_models.ThresholdsProfiles.objects.all().count(), 2
+        )
         self.assertRaises(
             poem_models.ThresholdsProfiles.DoesNotExist,
             poem_models.ThresholdsProfiles.objects.get,
@@ -1759,20 +1791,218 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
             ).count(), 0
         )
 
-    def test_delete_nonexisting_thresholds_profile(self):
+    def test_delete_thresholds_profile_user_wrong_group(self):
+        self.assertEqual(
+            poem_models.ThresholdsProfiles.objects.all().count(), 3
+        )
+        self.assertEqual(
+            poem_models.TenantHistory.objects.filter(
+                object_id=self.tp3.id, content_type=self.ct
+            ).count(), 1
+        )
+        request = self.factory.delete(
+            self.url + 'piequ8ja-gj3z-9tai-2rlt-uuroth4lis1a'
+        )
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'piequ8ja-gj3z-9tai-2rlt-uuroth4lis1a')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete thresholds profiles assigned '
+            'to this group.'
+        )
+        self.assertEqual(
+            poem_models.ThresholdsProfiles.objects.all().count(), 3
+        )
+        profile = poem_models.ThresholdsProfiles.objects.get(id=self.tp3.id)
+        assert profile
+        self.assertEqual(
+            poem_models.TenantHistory.objects.filter(
+                object_id=self.tp3.id, content_type=self.ct
+            ).count(), 1
+        )
+
+    def test_delete_thresholds_profile_limited_user(self):
+        self.assertEqual(
+            poem_models.ThresholdsProfiles.objects.all().count(), 3
+        )
+        self.assertEqual(
+            poem_models.TenantHistory.objects.filter(
+                object_id=self.tp3.id, content_type=self.ct
+            ).count(), 1
+        )
+        request = self.factory.delete(
+            self.url + 'piequ8ja-gj3z-9tai-2rlt-uuroth4lis1a'
+        )
+        force_authenticate(request, user=self.limited_user)
+        response = self.view(request, 'piequ8ja-gj3z-9tai-2rlt-uuroth4lis1a')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete thresholds profiles.'
+        )
+        self.assertEqual(
+            poem_models.ThresholdsProfiles.objects.all().count(), 3
+        )
+        profile = poem_models.ThresholdsProfiles.objects.get(id=self.tp3.id)
+        assert profile
+        self.assertEqual(
+            poem_models.TenantHistory.objects.filter(
+                object_id=self.tp3.id, content_type=self.ct
+            ).count(), 1
+        )
+
+    def test_delete_thresholds_profile_with_empty_group_superuser(self):
+        self.assertEqual(
+            poem_models.ThresholdsProfiles.objects.all().count(), 3
+        )
+        self.assertEqual(
+            poem_models.TenantHistory.objects.filter(
+                object_id=self.tp2.id, content_type=self.ct
+            ).count(), 1
+        )
+        request = self.factory.delete(
+            self.url + '12341234-oooo-kkkk-aaaa-aaeekkccnnee'
+        )
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request, '12341234-oooo-kkkk-aaaa-aaeekkccnnee')
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(
+            poem_models.ThresholdsProfiles.objects.all().count(), 2
+        )
+        self.assertRaises(
+            poem_models.ThresholdsProfiles.DoesNotExist,
+            poem_models.ThresholdsProfiles.objects.get,
+            id=self.tp2.id
+        )
+        self.assertEqual(
+            poem_models.TenantHistory.objects.filter(
+                object_id=self.tp2.id, content_type=self.ct
+            ).count(), 0
+        )
+
+    def test_delete_thresholds_profile_with_empty_group_user(self):
+        self.assertEqual(
+            poem_models.ThresholdsProfiles.objects.all().count(), 3
+        )
+        self.assertEqual(
+            poem_models.TenantHistory.objects.filter(
+                object_id=self.tp2.id, content_type=self.ct
+            ).count(), 1
+        )
+        request = self.factory.delete(
+            self.url + '12341234-oooo-kkkk-aaaa-aaeekkccnnee'
+        )
+        force_authenticate(request, user=self.user)
+        response = self.view(request, '12341234-oooo-kkkk-aaaa-aaeekkccnnee')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete thresholds profiles without '
+            'assigned group.'
+        )
+        self.assertEqual(
+            poem_models.ThresholdsProfiles.objects.all().count(), 3
+        )
+        profile = poem_models.ThresholdsProfiles.objects.get(id=self.tp2.id)
+        assert profile
+        self.assertEqual(
+            poem_models.TenantHistory.objects.filter(
+                object_id=self.tp2.id, content_type=self.ct
+            ).count(), 1
+        )
+
+    def test_delete_thresholds_profile_with_empty_group_limited_user(self):
+        self.assertEqual(
+            poem_models.ThresholdsProfiles.objects.all().count(), 3
+        )
+        self.assertEqual(
+            poem_models.TenantHistory.objects.filter(
+                object_id=self.tp2.id, content_type=self.ct
+            ).count(), 1
+        )
+        request = self.factory.delete(
+            self.url + '12341234-oooo-kkkk-aaaa-aaeekkccnnee'
+        )
+        force_authenticate(request, user=self.limited_user)
+        response = self.view(request, '12341234-oooo-kkkk-aaaa-aaeekkccnnee')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete thresholds profiles.'
+        )
+        self.assertEqual(
+            poem_models.ThresholdsProfiles.objects.all().count(), 3
+        )
+        profile = poem_models.ThresholdsProfiles.objects.get(id=self.tp2.id)
+        assert profile
+        self.assertEqual(
+            poem_models.TenantHistory.objects.filter(
+                object_id=self.tp2.id, content_type=self.ct
+            ).count(), 1
+        )
+
+    def test_delete_nonexisting_thresholds_profile_superuser(self):
+        request = self.factory.delete(self.url + 'nonexisting')
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request, 'nonexisting')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(
+            response.data['detail'], 'Thresholds profile not found.'
+        )
+        self.assertEqual(
+            poem_models.ThresholdsProfiles.objects.all().count(), 3
+        )
+
+    def test_delete_nonexisting_thresholds_profile_user(self):
         request = self.factory.delete(self.url + 'nonexisting')
         force_authenticate(request, user=self.user)
         response = self.view(request, 'nonexisting')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(
-            response.data, {'detail': 'Thresholds profile not found.'}
+            response.data['detail'], 'Thresholds profile not found.'
+        )
+        self.assertEqual(
+            poem_models.ThresholdsProfiles.objects.all().count(), 3
         )
 
-    def test_delete_thresholds_profile_without_specifying_apiid(self):
+    def test_delete_nonexisting_thresholds_profile_limited_user(self):
+        request = self.factory.delete(self.url + 'nonexisting')
+        force_authenticate(request, user=self.limited_user)
+        response = self.view(request, 'nonexisting')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete thresholds profiles.'
+        )
+        self.assertEqual(
+            poem_models.ThresholdsProfiles.objects.all().count(), 3
+        )
+
+    def test_delete_thresholds_profile_without_specifying_apiid_superuser(self):
+        request = self.factory.delete(self.url)
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data['detail'], 'Thresholds profile not specified.'
+        )
+
+    def test_delete_thresholds_profile_without_specifying_apiid_user(self):
         request = self.factory.delete(self.url)
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(
-            response.data, {'detail': 'Thresholds profile not specified!'}
+            response.data['detail'], 'Thresholds profile not specified.'
+        )
+
+    def test_delete_thresholds_profile_without_specifying_apiid_limtd_usr(self):
+        request = self.factory.delete(self.url)
+        force_authenticate(request, user=self.limited_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete thresholds profiles.'
         )
