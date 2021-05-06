@@ -78,7 +78,7 @@ class ListProbesAPIViewTests(TenantTestCase):
                    'README.md'
         )
 
-        probe3 = admin_models.Probe.objects.create(
+        self.probe3 = admin_models.Probe.objects.create(
             name='ams-publisher-probe',
             package=self.package2,
             description='Probe is inspecting AMS publisher running on Nagios '
@@ -132,13 +132,13 @@ class ListProbesAPIViewTests(TenantTestCase):
         )
 
         admin_models.ProbeHistory.objects.create(
-            object_id=probe3,
-            name=probe3.name,
-            package=probe3.package,
-            description=probe3.description,
-            comment=probe3.comment,
-            repository=probe3.repository,
-            docurl=probe3.docurl,
+            object_id=self.probe3,
+            name=self.probe3.name,
+            package=self.probe3.package,
+            description=self.probe3.description,
+            comment=self.probe3.comment,
+            repository=self.probe3.repository,
+            docurl=self.probe3.docurl,
             version_comment='Initial version.',
             version_user=self.superuser.username
         )
@@ -3860,36 +3860,6 @@ class ListProbesAPIViewTests(TenantTestCase):
             admin_models.ProbeHistory.objects.filter(name='poem-probe').count(),
             0
         )
-    def test_post_cloned_probe_from_nonexisting_probe_sp_user(self):
-        data = {
-            'name': 'poem-probe',
-            'package': 'nagios-plugins-argo (0.1.11)',
-            'description': 'Probe inspects POEM service.',
-            'comment': 'Initial version.',
-            'repository': 'https://github.com/ARGOeu/nagios-plugins-argo',
-            'docurl': 'https://github.com/ARGOeu/nagios-plugins-argo/blob/'
-                      'master/README.md',
-            'user': 'testuser',
-            'datetime': datetime.datetime.now(),
-            'cloned_from': 999
-        }
-        request = self.factory.post(self.url, data, format='json')
-        request.tenant = self.super_tenant
-        force_authenticate(request, user=self.user)
-        response = self.view(request)
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-        self.assertEqual(
-            response.data['detail'], 'You do not have permission to add probes.'
-        )
-        self.assertRaises(
-            admin_models.Probe.DoesNotExist,
-            admin_models.Probe.objects.get,
-            name='poem-probe'
-        )
-        self.assertEqual(
-            admin_models.ProbeHistory.objects.filter(name='poem-probe').count(),
-            0
-        )
 
     def test_post_cloned_probe_from_nonexisting_probe_tenant_user(self):
         data = {
@@ -3907,37 +3877,6 @@ class ListProbesAPIViewTests(TenantTestCase):
         request = self.factory.post(self.url, data, format='json')
         request.tenant = self.tenant
         force_authenticate(request, user=self.tenant_user)
-        response = self.view(request)
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-        self.assertEqual(
-            response.data['detail'], 'You do not have permission to add probes.'
-        )
-        self.assertRaises(
-            admin_models.Probe.DoesNotExist,
-            admin_models.Probe.objects.get,
-            name='poem-probe'
-        )
-        self.assertEqual(
-            admin_models.ProbeHistory.objects.filter(name='poem-probe').count(),
-            0
-        )
-
-    def test_post_cloned_probe_from_nonexisting_probe_sp_user(self):
-        data = {
-            'name': 'poem-probe',
-            'package': 'nagios-plugins-argo (0.1.11)',
-            'description': 'Probe inspects POEM service.',
-            'comment': 'Initial version.',
-            'repository': 'https://github.com/ARGOeu/nagios-plugins-argo',
-            'docurl': 'https://github.com/ARGOeu/nagios-plugins-argo/blob/'
-                      'master/README.md',
-            'user': 'testuser',
-            'datetime': datetime.datetime.now(),
-            'cloned_from': 999
-        }
-        request = self.factory.post(self.url, data, format='json')
-        request.tenant = self.super_tenant
-        force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(
@@ -4299,36 +4238,251 @@ class ListProbesAPIViewTests(TenantTestCase):
             0
         )
 
-    def test_delete_probe(self):
+    def test_delete_probe_sp_superuser(self):
         self.assertEqual(admin_models.Probe.objects.all().count(), 3)
         request = self.factory.delete(self.url + 'ams-publisher-probe')
-        force_authenticate(request, user=self.user)
+        request.tenant = self.super_tenant
+        force_authenticate(request, user=self.superuser)
         response = self.view(request, 'ams-publisher-probe')
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(admin_models.Probe.objects.all().count(), 2)
+        self.assertRaises(
+            admin_models.Probe.DoesNotExist,
+            admin_models.Probe.objects.get,
+            name='ams-publisher-probe'
+        )
+        self.assertEqual(
+            admin_models.ProbeHistory.objects.filter(
+                object_id=self.probe3
+            ).count(), 0
+        )
 
-    def test_delete_probe_associated_to_metric_template(self):
-        request = self.factory.delete(self.url + 'argo-web-api')
+    def test_delete_probe_sp_user(self):
+        self.assertEqual(admin_models.Probe.objects.all().count(), 3)
+        request = self.factory.delete(self.url + 'ams-publisher-probe')
+        request.tenant = self.super_tenant
         force_authenticate(request, user=self.user)
+        response = self.view(request, 'ams-publisher-probe')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete probes.'
+        )
+        self.assertEqual(admin_models.Probe.objects.all().count(), 3)
+        probe = admin_models.Probe.objects.get(name='ams-publisher-probe')
+        assert probe
+        self.assertEqual(
+            admin_models.ProbeHistory.objects.filter(
+                object_id=self.probe3
+            ).count(), 1
+        )
+
+    def test_delete_probe_tenant_superuser(self):
+        self.assertEqual(admin_models.Probe.objects.all().count(), 3)
+        request = self.factory.delete(self.url + 'ams-publisher-probe')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_superuser)
+        response = self.view(request, 'ams-publisher-probe')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete probes.'
+        )
+        self.assertEqual(admin_models.Probe.objects.all().count(), 3)
+        probe = admin_models.Probe.objects.get(name='ams-publisher-probe')
+        assert probe
+        self.assertEqual(
+            admin_models.ProbeHistory.objects.filter(
+                object_id=self.probe3
+            ).count(), 1
+        )
+
+    def test_delete_probe_tenant_user(self):
+        self.assertEqual(admin_models.Probe.objects.all().count(), 3)
+        request = self.factory.delete(self.url + 'ams-publisher-probe')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_user)
+        response = self.view(request, 'ams-publisher-probe')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete probes.'
+        )
+        self.assertEqual(admin_models.Probe.objects.all().count(), 3)
+        probe = admin_models.Probe.objects.get(name='ams-publisher-probe')
+        assert probe
+        self.assertEqual(
+            admin_models.ProbeHistory.objects.filter(
+                object_id=self.probe3
+            ).count(), 1
+        )
+
+    def test_delete_probe_associated_to_metric_template_sp_superuser(self):
+        self.assertEqual(admin_models.Probe.objects.all().count(), 3)
+        request = self.factory.delete(self.url + 'argo-web-api')
+        request.tenant = self.super_tenant
+        force_authenticate(request, user=self.superuser)
         response = self.view(request, 'argo-web-api')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(
-            response.data,
-            {
-                'detail': 'You cannot delete Probe that is associated to metric'
-                          ' templates!'
-            }
+            response.data['detail'],
+            'You cannot delete probe that is associated to metric templates.'
+        )
+        self.assertEqual(admin_models.Probe.objects.all().count(), 3)
+        probe = admin_models.Probe.objects.get(id=self.probe2.id)
+        assert probe
+        self.assertEqual(
+            admin_models.ProbeHistory.objects.filter(object_id=probe).count(), 1
         )
 
-    def test_delete_probe_without_name(self):
-        request = self.factory.delete(self.url)
+    def test_delete_probe_associated_to_metric_template_sp_user(self):
+        self.assertEqual(admin_models.Probe.objects.all().count(), 3)
+        request = self.factory.delete(self.url + 'argo-web-api')
+        request.tenant = self.super_tenant
         force_authenticate(request, user=self.user)
+        response = self.view(request, 'argo-web-api')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete probes.'
+        )
+        self.assertEqual(admin_models.Probe.objects.all().count(), 3)
+        probe = admin_models.Probe.objects.get(id=self.probe2.id)
+        assert probe
+        self.assertEqual(
+            admin_models.ProbeHistory.objects.filter(object_id=probe).count(), 1
+        )
+
+    def test_delete_probe_associated_to_metric_template_tenant_superuser(self):
+        self.assertEqual(admin_models.Probe.objects.all().count(), 3)
+        request = self.factory.delete(self.url + 'argo-web-api')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_superuser)
+        response = self.view(request, 'argo-web-api')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete probes.'
+        )
+        self.assertEqual(admin_models.Probe.objects.all().count(), 3)
+        probe = admin_models.Probe.objects.get(id=self.probe2.id)
+        assert probe
+        self.assertEqual(
+            admin_models.ProbeHistory.objects.filter(object_id=probe).count(), 1
+        )
+
+    def test_delete_probe_associated_to_metric_template_tenant_user(self):
+        self.assertEqual(admin_models.Probe.objects.all().count(), 3)
+        request = self.factory.delete(self.url + 'argo-web-api')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_user)
+        response = self.view(request, 'argo-web-api')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete probes.'
+        )
+        self.assertEqual(admin_models.Probe.objects.all().count(), 3)
+        probe = admin_models.Probe.objects.get(id=self.probe2.id)
+        assert probe
+        self.assertEqual(
+            admin_models.ProbeHistory.objects.filter(object_id=probe).count(), 1
+        )
+
+    def test_delete_probe_without_name_sp_superuser(self):
+        self.assertEqual(admin_models.Probe.objects.all().count(), 3)
+        request = self.factory.delete(self.url)
+        request.tenant = self.super_tenant
+        force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['detail'], 'Probe name not specified.')
+        self.assertEqual(admin_models.Probe.objects.all().count(), 3)
 
-    def test_trying_to_delete_nonexisting_probe(self):
-        request = self.factory.delete(self.url + 'nonexisting')
+    def test_delete_probe_without_name_sp_user(self):
+        self.assertEqual(admin_models.Probe.objects.all().count(), 3)
+        request = self.factory.delete(self.url)
+        request.tenant = self.super_tenant
         force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete probes.'
+        )
+        self.assertEqual(admin_models.Probe.objects.all().count(), 3)
+
+    def test_delete_probe_without_name_tenant_superuser(self):
+        self.assertEqual(admin_models.Probe.objects.all().count(), 3)
+        request = self.factory.delete(self.url)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete probes.'
+        )
+        self.assertEqual(admin_models.Probe.objects.all().count(), 3)
+
+    def test_delete_probe_without_name_tenant_user(self):
+        self.assertEqual(admin_models.Probe.objects.all().count(), 3)
+        request = self.factory.delete(self.url)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete probes.'
+        )
+        self.assertEqual(admin_models.Probe.objects.all().count(), 3)
+
+    def test_trying_to_delete_nonexisting_probe_sp_superuser(self):
+        self.assertEqual(admin_models.Probe.objects.all().count(), 3)
+        request = self.factory.delete(self.url + 'nonexisting')
+        request.tenant = self.super_tenant
+        force_authenticate(request, user=self.superuser)
         response = self.view(request, 'nonexisting')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertEqual(response.data, {'detail': 'Probe not found'})
+        self.assertEqual(response.data['detail'], 'Probe does not exist.')
+        self.assertEqual(admin_models.Probe.objects.all().count(), 3)
+
+    def test_trying_to_delete_nonexisting_probe_sp_user(self):
+        self.assertEqual(admin_models.Probe.objects.all().count(), 3)
+        request = self.factory.delete(self.url + 'nonexisting')
+        request.tenant = self.super_tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'nonexisting')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete probes.'
+        )
+        self.assertEqual(admin_models.Probe.objects.all().count(), 3)
+
+    def test_trying_to_delete_nonexisting_probe_tenant_superuser(self):
+        self.assertEqual(admin_models.Probe.objects.all().count(), 3)
+        request = self.factory.delete(self.url + 'nonexisting')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_superuser)
+        response = self.view(request, 'nonexisting')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete probes.'
+        )
+        self.assertEqual(admin_models.Probe.objects.all().count(), 3)
+
+    def test_trying_to_delete_nonexisting_probe_tenant_user(self):
+        self.assertEqual(admin_models.Probe.objects.all().count(), 3)
+        request = self.factory.delete(self.url + 'nonexisting')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_user)
+        response = self.view(request, 'nonexisting')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete probes.'
+        )
+        self.assertEqual(admin_models.Probe.objects.all().count(), 3)

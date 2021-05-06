@@ -302,36 +302,48 @@ class ListProbes(APIView):
             Tenant.objects.all().values_list('schema_name', flat=True)
         )
         schemas.remove(get_public_schema_name())
-        if name:
-            try:
-                probe = admin_models.Probe.objects.get(name=name)
-                mt = admin_models.MetricTemplate.objects.filter(
-                    probekey=admin_models.ProbeHistory.objects.get(
-                        name=probe.name, package__version=probe.package.version
+        if request.tenant.schema_name == get_public_schema_name() and \
+                request.user.is_superuser:
+            if name:
+                try:
+                    probe = admin_models.Probe.objects.get(name=name)
+                    mt = admin_models.MetricTemplate.objects.filter(
+                        probekey=admin_models.ProbeHistory.objects.get(
+                            name=probe.name,
+                            package__version=probe.package.version
+                        )
                     )
-                )
-                if len(mt) == 0:
-                    for schema in schemas:
-                        # need to iterate through schemas because of foreign
-                        # key in Metric model
-                        with schema_context(schema):
-                            admin_models.ProbeHistory.objects.filter(
-                                object_id=probe
-                            ).delete()
-                    probe.delete()
-                    return Response(status=status.HTTP_204_NO_CONTENT)
-                else:
-                    return Response(
-                        {'detail': 'You cannot delete Probe that is associated '
-                                   'to metric templates!'},
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
+                    if len(mt) == 0:
+                        for schema in schemas:
+                            # need to iterate through schemas because of foreign
+                            # key in Metric model
+                            with schema_context(schema):
+                                admin_models.ProbeHistory.objects.filter(
+                                    object_id=probe
+                                ).delete()
+                        probe.delete()
+                        return Response(status=status.HTTP_204_NO_CONTENT)
+                    else:
+                        return error_response(
+                            status_code=status.HTTP_400_BAD_REQUEST,
+                            detail='You cannot delete probe that is associated '
+                                   'to metric templates.'
+                        )
 
-            except admin_models.Probe.DoesNotExist:
-                raise NotFound(status=404, detail='Probe not found')
+                except admin_models.Probe.DoesNotExist:
+                    raise NotFound(status=404, detail='Probe does not exist.')
+
+            else:
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail='Probe name not specified.'
+                )
 
         else:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+            return error_response(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='You do not have permission to delete probes.'
+            )
 
 
 class ListPublicProbes(ListProbes):
