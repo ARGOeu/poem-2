@@ -484,7 +484,8 @@ export const UserChange = (props) => {
               groupsofaggregations: formValues.groupsofaggregations,
               groupsofmetrics: formValues.groupsofmetrics,
               groupsofmetricprofiles: formValues.groupsofmetricprofiles,
-              groupsofthresholdsprofiles: formValues.groupsofthresholdsprofiles
+              groupsofthresholdsprofiles: formValues.groupsofthresholdsprofiles,
+              groupsofreports: formValues.groupsofreports
             }
           );
           if (profile_response.ok) {
@@ -551,7 +552,8 @@ export const UserChange = (props) => {
               groupsofaggregations: formValues.groupsofaggregations,
               groupsofmetrics: formValues.groupsofmetrics,
               groupsofmetricprofiles: formValues.groupsofmetricprofiles,
-              groupsofthresholdsprofiles: formValues.groupsofthresholdsprofiles
+              groupsofthresholdsprofiles: formValues.groupsofthresholdsprofiles,
+              groupsofreports: formValues.groupsofreports
             }
           );
           if (profile_response.ok) {
@@ -666,6 +668,7 @@ export const UserChange = (props) => {
               groupsofmetrics: userGroups ? userGroups.metrics : [],
               groupsofmetricprofiles: userGroups ? userGroups.metricprofiles : [],
               groupsofthresholdsprofiles: userGroups ? userGroups.thresholdsprofiles : [],
+              groupsofreports: userGroups ? userGroups.reports : [],
               displayname: userProfile ? userProfile.displayname : '',
               subject: userProfile ? userProfile.subject : '',
               egiid: userProfile ? userProfile.egiid : ''
@@ -685,6 +688,33 @@ export const UserChange = (props) => {
                     <>
                       <FormGroup>
                         <ParagraphTitle title='POEM user permissions'/>
+                        <Row>
+                          <Col md={6}>
+                            <Label for="groupsofreports" className="grouplabel">Groups of reports</Label>
+                            <Field
+                              component="select"
+                              name="groupsofreports"
+                              id='groupsofreports'
+                              onChange={evt =>
+                                props.setFieldValue(
+                                  "groupsofreports",
+                                  [].slice
+                                    .call(evt.target.selectedOptions)
+                                    .map(option => option.value)
+                              )}
+                              multiple={true}
+                            >
+                              {allGroups.reports.map( grp => (
+                                <option data-testid='groupsofreports-option' key={grp} value={grp}>
+                                  {grp}
+                                </option>
+                              ))}
+                            </Field>
+                            <FormText color="muted">
+                              The groups of reports that user will control. Hold down &quot;Control&quot; or &quot;Command&quot; on a Mac to select more than one.
+                            </FormText>
+                          </Col>
+                        </Row>
                         <Row>
                           <Col md={6}>
                             <Label for="groupsofmetrics" className="grouplabel">Groups of metrics</Label>

@@ -263,6 +263,94 @@ class ListMetricProfilesInGroup(APIView):
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
+class ListReportsInGroup(APIView):
+    authentication_classes = (SessionAuthentication,)
+
+    def get(self, request, group=None):
+        if group:
+            reports = poem_models.Reports.objects.filter(
+                groupname=group
+            )
+        else:
+            reports = poem_models.Reports.objects.filter(
+                groupname=''
+            )
+
+        results = []
+        for item in reports:
+            results.append(item.name)
+
+        return Response({'result': sorted(results)})
+
+    def put(self, request):
+        group = poem_models.GroupOfReports.objects.get(
+            name=request.data['name']
+        )
+
+        for item in dict(request.data)['items']:
+            report = poem_models.Reports.objects.get(name=item)
+            group.reports.add(report)
+            report.groupname = group.name
+            report.save()
+
+        # remove removed reports
+        for report in group.reports.all():
+            if report.name not in dict(request.data)['items']:
+                group.reports.remove(report)
+                report.groupname = ''
+                report.save()
+
+        return Response(status=status.HTTP_201_CREATED)
+
+    def post(self, request):
+        try:
+            group = poem_models.GroupOfReports.objects.create(
+                name=request.data['name']
+            )
+
+            if 'items' in dict(request.data):
+                for item in dict(request.data)['items']:
+                    report = poem_models.Reports.objects.get(name=item)
+                    group.reports.add(report)
+                    report.groupname = group.name
+                    report.save()
+
+        except IntegrityError:
+            return Response(
+                {
+                    'detail':
+                        'Reports group with this name already exists.'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        else:
+            return Response(status=status.HTTP_201_CREATED)
+
+    def delete(self, request, group=None):
+        if group:
+            try:
+                gr = poem_models.GroupOfReports.objects.get(
+                    name=group
+                )
+                gr.delete()
+
+                for report in poem_models.Reports.objects.filter(
+                    groupname=group
+                ):
+                    report.groupname = ''
+                    report.save()
+
+                return Response(status=status.HTTP_204_NO_CONTENT)
+
+            except poem_models.GroupOfReports.DoesNotExist:
+                raise NotFound(status=404,
+                               detail='Group of reports not found')
+
+        else:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
 class ListThresholdsProfilesInGroup(APIView):
     authentication_classes = (SessionAuthentication,)
 

@@ -47,6 +47,9 @@ export const TenantAdministration = () =>
       <CustomCardHeader title='Authentication and authorization'/>
       <CardBody>
         <Row className="p-1 align-items-center">
+          <Icon i="groupofreports"/> <Link to={'/ui/administration/groupofreports'}>Groups of reports</Link>
+        </Row>
+        <Row className="p-1 align-items-center">
           <Icon i="groupofaggregationprofiles"/> <Link to={'/ui/administration/groupofaggregations'}>Groups of aggregations</Link>
         </Row>
         <Row className="p-1 align-items-center">

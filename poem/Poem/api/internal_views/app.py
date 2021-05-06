@@ -106,7 +106,12 @@ class GetConfigOptions(APIView):
         options.update(webapithresholds=settings.WEBAPI_THRESHOLDS)
         options.update(webapioperations=settings.WEBAPI_OPERATIONS)
         options.update(version=version)
-        options.update(webapireports=settings.WEBAPI_REPORTS)
+        options.update(webapireports=dict(
+            main=settings.WEBAPI_REPORTS,
+            tags=settings.WEBAPI_REPORTSTAGS,
+            topologygroups=settings.WEBAPI_REPORTSTOPOLOGYGROUPS,
+            topologyendpoints=settings.WEBAPI_REPORTSTOPOLOGYENDPOINTS,
+        ))
         options.update(tenant_name=tenant)
 
         return Response({'result': options})
