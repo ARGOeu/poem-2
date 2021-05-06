@@ -337,6 +337,7 @@ const EntitySelect = ({field, topologyGroups}) => {
       name={field.name}
       closeMenuOnSelect={false}
       components={components.Input}
+      placeholder="Search..."
       isClearable={false}
       isMulti
       onChange={(e) => console.log(e)}
