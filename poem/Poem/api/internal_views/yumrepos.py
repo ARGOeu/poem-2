@@ -1,12 +1,13 @@
-from django.db import IntegrityError
-
 from Poem.api.views import NotFound
 from Poem.poem_super_admin import models as admin_models
-
+from django.db import IntegrityError
 from rest_framework import status
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from tenant_schemas.utils import get_public_schema_name
+
+from .utils import error_response
 
 
 class ListYumRepos(APIView):
@@ -56,20 +57,42 @@ class ListYumRepos(APIView):
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
     def post(self, request):
-        try:
-            admin_models.YumRepo.objects.create(
-                name=request.data['name'],
-                tag=admin_models.OSTag.objects.get(name=request.data['tag']),
-                content=request.data['content'],
-                description=request.data['description']
-            )
+        if request.tenant.schema_name == get_public_schema_name() and \
+                request.user.is_superuser:
+            try:
+                admin_models.YumRepo.objects.create(
+                    name=request.data['name'],
+                    tag=admin_models.OSTag.objects.get(
+                        name=request.data['tag']
+                    ),
+                    content=request.data['content'],
+                    description=request.data['description']
+                )
 
-            return Response(status=status.HTTP_201_CREATED)
+                return Response(status=status.HTTP_201_CREATED)
 
-        except IntegrityError:
-            return Response(
-                {'detail': 'YUM repo with this name and tag already exists.'},
-                status=status.HTTP_400_BAD_REQUEST
+            except IntegrityError:
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail='YUM repo with this name and tag already exists.'
+                )
+
+            except admin_models.OSTag.DoesNotExist:
+                return error_response(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail='OS tag does not exist.'
+                )
+
+            except KeyError as e:
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail='Missing data key: {}'.format(e.args[0])
+                )
+
+        else:
+            return error_response(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='You do not have permission to add YUM repos.'
             )
 
     def put(self, request):
