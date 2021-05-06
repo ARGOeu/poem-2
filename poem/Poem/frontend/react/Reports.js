@@ -471,19 +471,19 @@ export const ReportsComponent = (props) => {
   const { data: topologyGroups, error: topologyGroupsErrors, isLoading: topologyGroupsErrorsIsLoading } = useQuery(
     `${querykey}_topologygroups`, async () => {
       let groups = await webapi.fetchReportsTopologyGroups();
-      let ngis = new Array()
-      let sites = new Array()
-      let projects = new Array()
-      let servicegroups = new Array()
+      let ngis = new Set()
+      let sites = new Set()
+      let projects = new Set()
+      let servicegroups = new Set()
 
       for (var entity of groups) {
         if (entity['type'].toLowerCase() === 'project') {
-          projects.push(entity['group'])
-          servicegroups.push(entity['subgroup'])
+          projects.add(entity['group'])
+          servicegroups.add(entity['subgroup'])
         }
         else if (entity['type'].toLowerCase() === 'ngi') {
-          ngis.push(entity['group'])
-          sites.push(entity['subgroup'])
+          ngis.add(entity['group'])
+          sites.add(entity['subgroup'])
         }
       }
 
