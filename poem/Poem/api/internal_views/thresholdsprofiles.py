@@ -145,29 +145,72 @@ class ListThresholdsProfiles(APIView):
     def post(self, request):
         serializer = serializers.ThresholdsProfileSerializer(data=request.data)
 
-        if serializer.is_valid():
-            tp = serializer.save()
+        try:
+            userprofile = poem_models.UserProfile.objects.get(user=request.user)
+            userprofile_groups = userprofile.groupsofthresholdsprofiles.all()
 
-            group = poem_models.GroupOfThresholdsProfiles.objects.get(
-                name=request.data['groupname']
-            )
-            group.thresholdsprofiles.add(tp)
-
-            data = {'rules': request.data['rules']}
-
-            create_profile_history(tp, data, request.user)
-
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-        else:
-            details = []
-            for error in serializer.errors:
-                details.append(
-                    '{}: {}'.format(error, serializer.errors[error][0])
+            if userprofile_groups.count() == 0 and \
+                    not request.user.is_superuser:
+                return error_response(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail='You do not have permission to add thresholds '
+                           'profiles.'
                 )
-            return Response(
-                {'detail': ' '.join(details)},
-                status=status.HTTP_400_BAD_REQUEST
+
+            else:
+                group = None
+                if 'groupname' in request.data and request.data['groupname']:
+                    group = poem_models.GroupOfThresholdsProfiles.objects.get(
+                        name=request.data['groupname']
+                    )
+
+                add_perm = request.user.is_superuser or \
+                    group and group in userprofile_groups
+
+                if add_perm:
+                    if serializer.is_valid():
+                        tp = serializer.save()
+
+                        if group:
+                            group.thresholdsprofiles.add(tp)
+
+                        data = {'rules': request.data['rules']}
+
+                        create_profile_history(tp, data, request.user)
+
+                        return Response(
+                            serializer.data, status=status.HTTP_201_CREATED
+                        )
+
+                    else:
+                        details = []
+                        for error in serializer.errors:
+                            details.append(
+                                '{}: {}'.format(error,
+                                                serializer.errors[error][0])
+                            )
+                        return error_response(
+                            status_code=status.HTTP_400_BAD_REQUEST,
+                            detail=' '.join(details)
+                        )
+
+                else:
+                    return error_response(
+                        status_code=status.HTTP_401_UNAUTHORIZED,
+                        detail='You do not have permission to assign '
+                               'thresholds profiles to the given group.'
+                    )
+
+        except poem_models.UserProfile.DoesNotExist:
+            return error_response(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail='No user profile for authenticated user.'
+            )
+
+        except poem_models.GroupOfThresholdsProfiles.DoesNotExist:
+            return error_response(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail='Group of thresholds profiles does not exist.'
             )
 
     def delete(self, request, apiid=None):

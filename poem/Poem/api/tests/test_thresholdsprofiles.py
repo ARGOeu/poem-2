@@ -1271,7 +1271,56 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
             poem_models.ThresholdsProfiles.objects.all().count(), 3
         )
 
-    def test_post_thresholds_profile(self):
+    def test_post_thresholds_profile_superuser(self):
+        self.assertEqual(
+            poem_models.ThresholdsProfiles.objects.all().count(), 3
+        )
+        data = {
+            'name': 'NEW_PROFILE',
+            'apiid': '12341234-aaaa-kkkk-aaaa-aaeekkccnnee',
+            'groupname': 'GROUP',
+            'rules': json.dumps([
+                {
+                    'host': 'newHost',
+                    'metric': 'newMetric',
+                    'thresholds': 'entries=1;3;0:2;10'
+                }
+            ])
+        }
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(
+            poem_models.ThresholdsProfiles.objects.all().count(), 4
+        )
+        profile = poem_models.ThresholdsProfiles.objects.get(
+            apiid='12341234-aaaa-kkkk-aaaa-aaeekkccnnee'
+        )
+        self.assertEqual(profile.name, 'NEW_PROFILE')
+        self.assertEqual(profile.groupname, 'GROUP')
+        group = poem_models.GroupOfThresholdsProfiles.objects.get(name='GROUP')
+        self.assertTrue(
+            group.thresholdsprofiles.filter(
+                apiid='12341234-aaaa-kkkk-aaaa-aaeekkccnnee'
+            ).exists()
+        )
+        history = poem_models.TenantHistory.objects.filter(
+            object_id=profile.id, content_type=self.ct
+        ).order_by('-date_created')
+        self.assertEqual(history.count(), 1)
+        self.assertEqual(history[0].comment, 'Initial version.')
+        serialized_data = json.loads(history[0].serialized_data)[0]['fields']
+        self.assertEqual(serialized_data['name'], profile.name)
+        self.assertEqual(serialized_data['apiid'], profile.apiid)
+        self.assertEqual(serialized_data['groupname'], profile.groupname)
+        self.assertEqual(
+            serialized_data['rules'],
+            '[{"host": "newHost", "metric": "newMetric", '
+            '"thresholds": "entries=1;3;0:2;10"}]'
+        )
+
+    def test_post_thresholds_profile_user(self):
         self.assertEqual(
             poem_models.ThresholdsProfiles.objects.all().count(), 3
         )
@@ -1320,7 +1369,316 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
             '"thresholds": "entries=1;3;0:2;10"}]'
         )
 
-    def test_post_thresholds_profile_with_invalid_data(self):
+    def test_post_thresholds_profile_user_wrong_group(self):
+        self.assertEqual(
+            poem_models.ThresholdsProfiles.objects.all().count(), 3
+        )
+        data = {
+            'name': 'NEW_PROFILE',
+            'apiid': '12341234-aaaa-kkkk-aaaa-aaeekkccnnee',
+            'groupname': 'GROUP2',
+            'rules': json.dumps([
+                {
+                    'host': 'newHost',
+                    'metric': 'newMetric',
+                    'thresholds': 'entries=1;3;0:2;10'
+                }
+            ])
+        }
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to assign thresholds profiles to the '
+            'given group.'
+        )
+        self.assertEqual(
+            poem_models.ThresholdsProfiles.objects.all().count(), 3
+        )
+        self.assertRaises(
+            poem_models.ThresholdsProfiles.DoesNotExist,
+            poem_models.ThresholdsProfiles.objects.get,
+            apiid='12341234-aaaa-kkkk-aaaa-aaeekkccnnee'
+        )
+
+    def test_post_thresholds_profile_limited_user(self):
+        self.assertEqual(
+            poem_models.ThresholdsProfiles.objects.all().count(), 3
+        )
+        data = {
+            'name': 'NEW_PROFILE',
+            'apiid': '12341234-aaaa-kkkk-aaaa-aaeekkccnnee',
+            'groupname': 'GROUP2',
+            'rules': json.dumps([
+                {
+                    'host': 'newHost',
+                    'metric': 'newMetric',
+                    'thresholds': 'entries=1;3;0:2;10'
+                }
+            ])
+        }
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.limited_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to add thresholds profiles.'
+        )
+        self.assertEqual(
+            poem_models.ThresholdsProfiles.objects.all().count(), 3
+        )
+        self.assertRaises(
+            poem_models.ThresholdsProfiles.DoesNotExist,
+            poem_models.ThresholdsProfiles.objects.get,
+            apiid='12341234-aaaa-kkkk-aaaa-aaeekkccnnee'
+        )
+
+    def test_post_thresholds_profile_with_nonexisting_group_superuser(self):
+        self.assertEqual(
+            poem_models.ThresholdsProfiles.objects.all().count(), 3
+        )
+        data = {
+            'name': 'NEW_PROFILE',
+            'apiid': '12341234-aaaa-kkkk-aaaa-aaeekkccnnee',
+            'groupname': 'nonexisting',
+            'rules': json.dumps([
+                {
+                    'host': 'newHost',
+                    'metric': 'newMetric',
+                    'thresholds': 'entries=1;3;0:2;10'
+                }
+            ])
+        }
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(
+            response.data['detail'],
+            'Group of thresholds profiles does not exist.'
+        )
+        self.assertEqual(
+            poem_models.ThresholdsProfiles.objects.all().count(), 3
+        )
+        self.assertRaises(
+            poem_models.ThresholdsProfiles.DoesNotExist,
+            poem_models.ThresholdsProfiles.objects.get,
+            apiid='12341234-aaaa-kkkk-aaaa-aaeekkccnnee'
+        )
+
+    def test_post_thresholds_profile_with_nonexisting_group_user(self):
+        self.assertEqual(
+            poem_models.ThresholdsProfiles.objects.all().count(), 3
+        )
+        data = {
+            'name': 'NEW_PROFILE',
+            'apiid': '12341234-aaaa-kkkk-aaaa-aaeekkccnnee',
+            'groupname': 'nonexisting',
+            'rules': json.dumps([
+                {
+                    'host': 'newHost',
+                    'metric': 'newMetric',
+                    'thresholds': 'entries=1;3;0:2;10'
+                }
+            ])
+        }
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(
+            response.data['detail'],
+            'Group of thresholds profiles does not exist.'
+        )
+        self.assertEqual(
+            poem_models.ThresholdsProfiles.objects.all().count(), 3
+        )
+        self.assertRaises(
+            poem_models.ThresholdsProfiles.DoesNotExist,
+            poem_models.ThresholdsProfiles.objects.get,
+            apiid='12341234-aaaa-kkkk-aaaa-aaeekkccnnee'
+        )
+
+    def test_post_thresholds_profile_with_nonexisting_group_limited_user(self):
+        self.assertEqual(
+            poem_models.ThresholdsProfiles.objects.all().count(), 3
+        )
+        data = {
+            'name': 'NEW_PROFILE',
+            'apiid': '12341234-aaaa-kkkk-aaaa-aaeekkccnnee',
+            'groupname': 'nonexisting',
+            'rules': json.dumps([
+                {
+                    'host': 'newHost',
+                    'metric': 'newMetric',
+                    'thresholds': 'entries=1;3;0:2;10'
+                }
+            ])
+        }
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.limited_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to add thresholds profiles.'
+        )
+        self.assertEqual(
+            poem_models.ThresholdsProfiles.objects.all().count(), 3
+        )
+        self.assertRaises(
+            poem_models.ThresholdsProfiles.DoesNotExist,
+            poem_models.ThresholdsProfiles.objects.get,
+            apiid='12341234-aaaa-kkkk-aaaa-aaeekkccnnee'
+        )
+
+    def test_post_thresholds_profile_with_empty_group_superuser(self):
+        self.assertEqual(
+            poem_models.ThresholdsProfiles.objects.all().count(), 3
+        )
+        data = {
+            'name': 'NEW_PROFILE',
+            'apiid': '12341234-aaaa-kkkk-aaaa-aaeekkccnnee',
+            'groupname': '',
+            'rules': json.dumps([
+                {
+                    'host': 'newHost',
+                    'metric': 'newMetric',
+                    'thresholds': 'entries=1;3;0:2;10'
+                }
+            ])
+        }
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(
+            poem_models.ThresholdsProfiles.objects.all().count(), 4
+        )
+        profile = poem_models.ThresholdsProfiles.objects.get(
+            apiid='12341234-aaaa-kkkk-aaaa-aaeekkccnnee'
+        )
+        self.assertEqual(profile.name, 'NEW_PROFILE')
+        self.assertEqual(profile.groupname, '')
+        group = poem_models.GroupOfThresholdsProfiles.objects.get(name='GROUP')
+        self.assertFalse(
+            group.thresholdsprofiles.filter(
+                apiid='12341234-aaaa-kkkk-aaaa-aaeekkccnnee'
+            ).exists()
+        )
+        history = poem_models.TenantHistory.objects.filter(
+            object_id=profile.id, content_type=self.ct
+        ).order_by('-date_created')
+        self.assertEqual(history.count(), 1)
+        self.assertEqual(history[0].comment, 'Initial version.')
+        serialized_data = json.loads(history[0].serialized_data)[0]['fields']
+        self.assertEqual(serialized_data['name'], profile.name)
+        self.assertEqual(serialized_data['apiid'], profile.apiid)
+        self.assertEqual(serialized_data['groupname'], profile.groupname)
+        self.assertEqual(
+            serialized_data['rules'],
+            '[{"host": "newHost", "metric": "newMetric", '
+            '"thresholds": "entries=1;3;0:2;10"}]'
+        )
+
+    def test_post_thresholds_profile_with_empty_group_user(self):
+        self.assertEqual(
+            poem_models.ThresholdsProfiles.objects.all().count(), 3
+        )
+        data = {
+            'name': 'NEW_PROFILE',
+            'apiid': '12341234-aaaa-kkkk-aaaa-aaeekkccnnee',
+            'groupname': '',
+            'rules': json.dumps([
+                {
+                    'host': 'newHost',
+                    'metric': 'newMetric',
+                    'thresholds': 'entries=1;3;0:2;10'
+                }
+            ])
+        }
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to assign thresholds profiles to the '
+            'given group.'
+        )
+        self.assertEqual(
+            poem_models.ThresholdsProfiles.objects.all().count(), 3
+        )
+        self.assertRaises(
+            poem_models.ThresholdsProfiles.DoesNotExist,
+            poem_models.ThresholdsProfiles.objects.get,
+            apiid='12341234-aaaa-kkkk-aaaa-aaeekkccnnee'
+        )
+
+    def test_post_thresholds_profile_with_empty_group_limited_user(self):
+        self.assertEqual(
+            poem_models.ThresholdsProfiles.objects.all().count(), 3
+        )
+        data = {
+            'name': 'NEW_PROFILE',
+            'apiid': '12341234-aaaa-kkkk-aaaa-aaeekkccnnee',
+            'groupname': '',
+            'rules': json.dumps([
+                {
+                    'host': 'newHost',
+                    'metric': 'newMetric',
+                    'thresholds': 'entries=1;3;0:2;10'
+                }
+            ])
+        }
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.limited_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to add thresholds profiles.'
+        )
+        self.assertEqual(
+            poem_models.ThresholdsProfiles.objects.all().count(), 3
+        )
+        self.assertRaises(
+            poem_models.ThresholdsProfiles.DoesNotExist,
+            poem_models.ThresholdsProfiles.objects.get,
+            apiid='12341234-aaaa-kkkk-aaaa-aaeekkccnnee'
+        )
+
+    def test_post_thresholds_profile_with_invalid_data_superuser(self):
+        self.assertEqual(
+            poem_models.ThresholdsProfiles.objects.all().count(), 3
+        )
+        data = {
+            'name': 'NEW_PROFILE',
+            'apiid': '',
+            'groupname': 'GROUP',
+            'rules': json.dumps([
+                {
+                    'host': 'newHost',
+                    'metric': 'newMetric',
+                    'thresholds': 'entries=1;3;0:2;10'
+                }
+            ])
+        }
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(
+            poem_models.ThresholdsProfiles.objects.all().count(), 3
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data['detail'], 'apiid: This field may not be blank.'
+        )
+
+    def test_post_thresholds_profile_with_invalid_data_user(self):
         self.assertEqual(
             poem_models.ThresholdsProfiles.objects.all().count(), 3
         )
@@ -1344,10 +1702,35 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(
-            response.data,
-            {
-                'detail': 'apiid: This field may not be blank.'
-            }
+            response.data['detail'], 'apiid: This field may not be blank.'
+        )
+
+    def test_post_thresholds_profile_with_invalid_data_limited_user(self):
+        self.assertEqual(
+            poem_models.ThresholdsProfiles.objects.all().count(), 3
+        )
+        data = {
+            'name': 'NEW_PROFILE',
+            'apiid': '',
+            'groupname': 'GROUP',
+            'rules': json.dumps([
+                {
+                    'host': 'newHost',
+                    'metric': 'newMetric',
+                    'thresholds': 'entries=1;3;0:2;10'
+                }
+            ])
+        }
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.limited_user)
+        response = self.view(request)
+        self.assertEqual(
+            poem_models.ThresholdsProfiles.objects.all().count(), 3
+        )
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to add thresholds profiles.'
         )
 
     def test_delete_thresholds_profile(self):
