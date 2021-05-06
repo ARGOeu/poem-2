@@ -233,8 +233,7 @@ export class WebApi {
   }
 
   async fetchReportsTopologyGroups() {
-    let topogroups = await this.fetchProfiles(this.reports['topologygroups'])
-    return topogroups;
+    return this.fetchProfiles(this.reports['topologygroups'])
   }
 
   async fetchReportsTopologyTags() {
