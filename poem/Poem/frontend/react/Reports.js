@@ -323,6 +323,29 @@ const TopologyTagList = ({ part, tagsState, setTagsState, tagsAll, addview, push
 }
 
 
+const EntitySelect = ({field, topologyGroups}) => {
+  let formatted = new Array()
+
+  for (var e of [...topologyGroups['ngis']]) 
+    formatted.push(new Object({
+      'label': e,
+      'value': e
+    }))
+
+  return (
+    <Select
+      name={field.name}
+      closeMenuOnSelect={false}
+      components={components.Input}
+      isClearable={false}
+      isMulti
+      onChange={(e) => console.log(e)}
+      options={formatted}
+    />
+  )
+}
+
+
 export const ReportsComponent = (props) => {
   const report_name = props.match.params.name;
   const addview = props.addview
@@ -887,6 +910,7 @@ export const ReportsComponent = (props) => {
             groupname: report.groupname,
             groups: groupsTags,
             endpoints: endpointsTags,
+            entities: topologyGroups
           }}
           onSubmit = {(values) => onSubmitHandle(values)}
         >
@@ -1040,7 +1064,11 @@ export const ReportsComponent = (props) => {
                         <CardTitle className="mb-2">
                           <strong>Entities</strong>
                         </CardTitle>
-                          FooBar
+                        <Field
+                          name="entities"
+                          component={EntitySelect}
+                          topologyGroups={topologyGroups}
+                        />
                       </CardBody>
                     </Card>
                   </Col>
