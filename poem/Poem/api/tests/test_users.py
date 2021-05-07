@@ -2474,12 +2474,21 @@ class ChangePasswordTests(TenantTestCase):
             date_joined=datetime.datetime(2015, 1, 1, 0, 0, 0)
         )
 
-        self.user2 = CustUser.objects.create(
+        self.user2 = CustUser.objects.create_user(
             username='anotheruser',
             first_name='Another',
             last_name='Test',
             email='anotheruser@example.com',
             date_joined=datetime.datetime(2015, 1, 1, 0, 0, 0)
+        )
+
+        self.user3 = CustUser.objects.create_user(
+            username='testuser3',
+            first_name='John',
+            last_name='Doe',
+            email='testuser3@example.com',
+            date_joined=datetime.datetime(2015, 1, 1, 0, 0, 0),
+            is_superuser=True
         )
 
     def test_change_password(self):
@@ -2504,10 +2513,25 @@ class ChangePasswordTests(TenantTestCase):
         request = self.factory.put(self.url, content, content_type=content_type)
         force_authenticate(request, user=self.user1)
         response = self.view(request)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(
             response.data['detail'],
-            'Trying to change password for another user.'
+            'You do not have permission to change password for another user.'
+        )
+
+    def test_try_change_password_for_different_user_superuser(self):
+        data = {
+            'username': 'anotheruser',
+            'new_password': 'extra-cool-passwd'
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user3)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change password for another user.'
         )
 
     def test_change_password_for_nonexisting_user(self):
@@ -2519,5 +2543,34 @@ class ChangePasswordTests(TenantTestCase):
         request = self.factory.put(self.url, content, content_type=content_type)
         force_authenticate(request, user=self.user1)
         response = self.view(request)
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertEqual(response.data['detail'], 'User not found.')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change password for another user.'
+        )
+
+    def test_change_password_for_nonexisting_user_superuser(self):
+        data = {
+            'username': 'nonexisting',
+            'new_password': 'extra-cool-passwd'
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user3)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change password for another user.'
+        )
+
+    def test_change_password_missing_data_key(self):
+        data = {
+            'new_password': 'extra-cool-passwd'
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user1)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['detail'], 'Missing data key: username')

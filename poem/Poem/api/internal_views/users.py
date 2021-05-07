@@ -550,17 +550,24 @@ class ChangePassword(APIView):
 
     def put(self, request):
         try:
-            user = CustUser.objects.get(username=request.data['username'])
-            if user == request.user:
+            if request.user.username == request.data['username']:
+                user = CustUser.objects.get(username=request.data['username'])
                 user.set_password(request.data['new_password'])
                 user.save()
                 return Response(status=status.HTTP_201_CREATED)
 
-            else:
-                return Response(
-                    {'detail': 'Trying to change password for another user.'},
-                    status=status.HTTP_403_FORBIDDEN
-                )
-
         except CustUser.DoesNotExist:
-            raise NotFound(status=404, detail='User not found.')
+            raise NotFound(status=404, detail='User does not exist.')
+
+        except KeyError as e:
+            return error_response(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail='Missing data key: {}'.format(e.args[0])
+            )
+
+        else:
+            return error_response(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='You do not have permission to change password for '
+                       'another user.'
+            )
