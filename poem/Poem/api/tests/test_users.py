@@ -317,29 +317,159 @@ class ListUsersAPIViewTests(TenantTestCase):
             'You do not have permission to fetch users other than yourself.'
         )
 
-    def test_put_user(self):
+    def test_put_user_sp_superuser(self):
+        with schema_context(get_public_schema_name()):
+            data = {
+                'pk': self.user1.pk,
+                'username': 'testuser2',
+                'first_name': 'Testing',
+                'last_name': 'Newuser',
+                'email': 'testuser@test.com',
+                'is_superuser': True,
+                'is_active': True
+            }
+            content, content_type = encode_data(data)
+            request = self.factory.put(
+                self.url, content, content_type=content_type
+            )
+            force_authenticate(request, user=self.user2)
+            response = self.view(request)
+            self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+            user = CustUser.objects.get(id=self.user1.id)
+            self.assertEqual(user.username, 'testuser2')
+            self.assertEqual(user.first_name, 'Testing')
+            self.assertEqual(user.last_name, 'Newuser')
+            self.assertEqual(user.email, 'testuser@test.com')
+            self.assertTrue(user.is_superuser)
+            self.assertTrue(user.is_active)
+
+    def test_put_user_sp_user(self):
+        with schema_context(get_public_schema_name()):
+            data = {
+                'pk': self.user1.pk,
+                'username': 'testuser2',
+                'first_name': 'Testing',
+                'last_name': 'Newuser',
+                'email': 'testuser@test.com',
+                'is_superuser': True,
+                'is_active': True
+            }
+            content, content_type = encode_data(data)
+            request = self.factory.put(
+                self.url, content, content_type=content_type
+            )
+            force_authenticate(request, user=self.user1)
+            response = self.view(request)
+            self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+            self.assertEqual(
+                response.data['detail'],
+                'You do not have permission to change users.'
+            )
+            user = CustUser.objects.get(id=self.user1.id)
+            self.assertEqual(user.username, 'Alan_Ford')
+            self.assertEqual(user.first_name, 'Alan')
+            self.assertEqual(user.last_name, 'Ford')
+            self.assertEqual(user.email, 'alan.ford@tnt.com')
+            self.assertFalse(user.is_superuser)
+            self.assertTrue(user.is_active)
+
+    def test_put_user_tenant_superuser(self):
         data = {
             'pk': self.tenant_user1.pk,
-            'username': 'testuser',
-            'first_name': 'Test',
+            'username': 'testuser2',
+            'first_name': 'Testing',
             'last_name': 'Newuser',
-            'email': 'testuser@example.com',
-            'is_superuser': False,
+            'email': 'testuser@test.com',
+            'is_superuser': True,
             'is_active': True
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
         force_authenticate(request, user=self.tenant_user2)
         response = self.view(request)
-        user = CustUser.objects.get(username='testuser')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        user = CustUser.objects.get(id=self.tenant_user1.pk)
+        self.assertEqual(user.username, 'testuser2')
+        self.assertEqual(user.first_name, 'Testing')
+        self.assertEqual(user.last_name, 'Newuser')
+        self.assertEqual(user.email, 'testuser@test.com')
+        self.assertTrue(user.is_superuser)
+        self.assertTrue(user.is_active)
+
+    def test_put_user_tenant_user(self):
+        data = {
+            'pk': self.tenant_user1.pk,
+            'username': 'testuser2',
+            'first_name': 'Testing',
+            'last_name': 'Newuser',
+            'email': 'testuser@test.com',
+            'is_superuser': True,
+            'is_active': True
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.tenant_user1)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change users.'
+        )
+        user = CustUser.objects.get(id=self.tenant_user1.pk)
         self.assertEqual(user.username, 'testuser')
         self.assertEqual(user.first_name, 'Test')
-        self.assertEqual(user.last_name, 'Newuser')
+        self.assertEqual(user.last_name, 'User')
+        self.assertEqual(user.email, 'testuser@example.com')
         self.assertFalse(user.is_superuser)
         self.assertTrue(user.is_active)
 
-    def test_put_user_with_already_existing_name(self):
+    def test_put_user_with_already_existing_name_sp_superuser(self):
+        with schema_context(get_public_schema_name()):
+            data = {
+                'pk': self.user1.pk,
+                'username': 'Number1',
+                'first_name': 'Test',
+                'last_name': 'Newuser',
+                'email': 'testuser@example.com',
+                'is_superuser': False,
+                'is_active': True
+            }
+            content, content_type = encode_data(data)
+            request = self.factory.put(
+                self.url, content, content_type=content_type
+            )
+            force_authenticate(request, user=self.user2)
+            response = self.view(request)
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+            self.assertEqual(
+                response.data['detail'],
+                'User with this username already exists.'
+            )
+
+    def test_put_user_with_already_existing_name_sp_user(self):
+        with schema_context(get_public_schema_name()):
+            data = {
+                'pk': self.user1.pk,
+                'username': 'Number1',
+                'first_name': 'Test',
+                'last_name': 'Newuser',
+                'email': 'testuser@example.com',
+                'is_superuser': False,
+                'is_active': True
+            }
+            content, content_type = encode_data(data)
+            request = self.factory.put(
+                self.url, content, content_type=content_type
+            )
+            force_authenticate(request, user=self.user1)
+            response = self.view(request)
+            self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+            self.assertEqual(
+                response.data['detail'],
+                'You do not have permission to change users.'
+            )
+
+    def test_put_user_with_already_existing_name_tenant_superuser(self):
         data = {
             'pk': self.tenant_user1.pk,
             'username': 'another_user',
@@ -355,9 +485,216 @@ class ListUsersAPIViewTests(TenantTestCase):
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(
-            response.data,
-            {'detail': 'User with this username already exists.'}
+            response.data['detail'], 'User with this username already exists.'
         )
+
+    def test_put_user_with_already_existing_name_tenant_user(self):
+        data = {
+            'pk': self.tenant_user1.pk,
+            'username': 'another_user',
+            'first_name': 'Test',
+            'last_name': 'Newuser',
+            'email': 'testuser@example.com',
+            'is_superuser': False,
+            'is_active': True
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.tenant_user1)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change users.'
+        )
+
+    def test_put_nonexisting_user_sp_superuser(self):
+        with schema_context(get_public_schema_name()):
+            data = {
+                'pk': 999,
+                'username': 'testuser2',
+                'first_name': 'Test',
+                'last_name': 'Newuser',
+                'email': 'testuser@example.com',
+                'is_superuser': False,
+                'is_active': True
+            }
+            content, content_type = encode_data(data)
+            request = self.factory.put(
+                self.url, content, content_type=content_type
+            )
+            force_authenticate(request, user=self.user2)
+            response = self.view(request)
+            self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+            self.assertEqual(response.data['detail'], 'User does not exist.')
+
+    def test_put_nonexisting_user_sp_user(self):
+        with schema_context(get_public_schema_name()):
+            data = {
+                'pk': 999,
+                'username': 'testuser2',
+                'first_name': 'Test',
+                'last_name': 'Newuser',
+                'email': 'testuser@example.com',
+                'is_superuser': False,
+                'is_active': True
+            }
+            content, content_type = encode_data(data)
+            request = self.factory.put(
+                self.url, content, content_type=content_type
+            )
+            force_authenticate(request, user=self.user1)
+            response = self.view(request)
+            self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+            self.assertEqual(
+                response.data['detail'],
+                'You do not have permission to change users.'
+            )
+
+    def test_put_nonexisting_user_tenant_superuser(self):
+        data = {
+            'pk': 999,
+            'username': 'testuser2',
+            'first_name': 'Test',
+            'last_name': 'Newuser',
+            'email': 'testuser@example.com',
+            'is_superuser': False,
+            'is_active': True
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.tenant_user2)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data['detail'], 'User does not exist.')
+
+    def test_put_nonexisting_user_tenant_user(self):
+        data = {
+            'pk': 999,
+            'username': 'testuser2',
+            'first_name': 'Test',
+            'last_name': 'Newuser',
+            'email': 'testuser@example.com',
+            'is_superuser': False,
+            'is_active': True
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.tenant_user1)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change users.'
+        )
+
+    def test_put_user_missing_data_key_sp_superuser(self):
+        with schema_context(get_public_schema_name()):
+            data = {
+                'pk': self.user1.pk,
+                'username': 'testuser2',
+                'last_name': 'Newuser',
+                'email': 'testuser@example.com',
+                'is_superuser': False,
+                'is_active': True
+            }
+            content, content_type = encode_data(data)
+            request = self.factory.put(
+                self.url, content, content_type=content_type
+            )
+            force_authenticate(request, user=self.user2)
+            response = self.view(request)
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+            self.assertEqual(
+                response.data['detail'], 'Missing data key: first_name'
+            )
+            user = CustUser.objects.get(id=self.user1.id)
+            self.assertEqual(user.username, 'Alan_Ford')
+            self.assertEqual(user.first_name, 'Alan')
+            self.assertEqual(user.last_name, 'Ford')
+            self.assertEqual(user.email, 'alan.ford@tnt.com')
+            self.assertFalse(user.is_superuser)
+            self.assertTrue(user.is_active)
+
+    def test_put_user_missing_data_key_sp_user(self):
+        with schema_context(get_public_schema_name()):
+            data = {
+                'pk': self.user1.pk,
+                'username': 'testuser2',
+                'last_name': 'Newuser',
+                'email': 'testuser@example.com',
+                'is_superuser': False,
+                'is_active': True
+            }
+            content, content_type = encode_data(data)
+            request = self.factory.put(
+                self.url, content, content_type=content_type
+            )
+            force_authenticate(request, user=self.user1)
+            response = self.view(request)
+            self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+            self.assertEqual(
+                response.data['detail'],
+                'You do not have permission to change users.'
+            )
+            user = CustUser.objects.get(id=self.user1.id)
+            self.assertEqual(user.username, 'Alan_Ford')
+            self.assertEqual(user.first_name, 'Alan')
+            self.assertEqual(user.last_name, 'Ford')
+            self.assertEqual(user.email, 'alan.ford@tnt.com')
+            self.assertFalse(user.is_superuser)
+            self.assertTrue(user.is_active)
+
+    def test_put_user_missing_data_key_tenant_superuser(self):
+        data = {
+            'pk': self.tenant_user1.pk,
+            'username': 'testuser2',
+            'last_name': 'Newuser',
+            'email': 'testuser@example.com',
+            'is_superuser': False,
+            'is_active': True
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.tenant_user2)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data['detail'], 'Missing data key: first_name'
+        )
+        user = CustUser.objects.get(id=self.tenant_user1.id)
+        self.assertEqual(user.username, 'testuser')
+        self.assertEqual(user.first_name, 'Test')
+        self.assertEqual(user.last_name, 'User')
+        self.assertEqual(user.email, 'testuser@example.com')
+        self.assertFalse(user.is_superuser)
+        self.assertTrue(user.is_active)
+
+    def test_put_user_missing_data_key_tenant_user(self):
+        data = {
+            'pk': self.tenant_user1.pk,
+            'username': 'testuser2',
+            'last_name': 'Newuser',
+            'email': 'testuser@example.com',
+            'is_superuser': False,
+            'is_active': True
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.tenant_user1)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change users.'
+        )
+        user = CustUser.objects.get(id=self.tenant_user1.id)
+        self.assertEqual(user.username, 'testuser')
+        self.assertEqual(user.first_name, 'Test')
+        self.assertEqual(user.last_name, 'User')
+        self.assertEqual(user.email, 'testuser@example.com')
+        self.assertFalse(user.is_superuser)
+        self.assertTrue(user.is_active)
 
     def test_post_user(self):
         data = {

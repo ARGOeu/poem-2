@@ -144,22 +144,41 @@ class ListUsers(APIView):
             return Response(results)
 
     def put(self, request):
-        try:
-            user = CustUser.objects.get(pk=request.data['pk'])
-            user.username = request.data['username']
-            user.first_name = request.data['first_name']
-            user.last_name = request.data['last_name']
-            user.email = request.data['email']
-            user.is_superuser = request.data['is_superuser']
-            user.is_active = request.data['is_active']
-            user.save()
+        if request.user.is_superuser:
+            try:
+                user = CustUser.objects.get(pk=request.data['pk'])
+                user.username = request.data['username']
+                user.first_name = request.data['first_name']
+                user.last_name = request.data['last_name']
+                user.email = request.data['email']
+                user.is_superuser = request.data['is_superuser']
+                user.is_active = request.data['is_active']
+                user.save()
 
-            return Response(status=status.HTTP_201_CREATED)
+                return Response(status=status.HTTP_201_CREATED)
 
-        except IntegrityError:
-            return Response(
-                {'detail': 'User with this username already exists.'},
-                status=status.HTTP_400_BAD_REQUEST
+            except CustUser.DoesNotExist:
+                return error_response(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail='User does not exist.'
+                )
+
+            except IntegrityError:
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail='User with this username already exists.'
+                )
+
+            except KeyError as e:
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail='Missing data key: {}'.format(e.args[0])
+                )
+
+        else:
+            return error_response(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='You do not have permission to change users.'
             )
 
     def post(self, request):
