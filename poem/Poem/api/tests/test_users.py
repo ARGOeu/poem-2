@@ -1908,7 +1908,7 @@ class GetUserProfileForUsernameAPIViewTests(TenantTestCase):
             ).exists()
         )
 
-    def test_post_userprofile(self):
+    def test_post_userprofile_superuser(self):
         self.assertEqual(poem_models.UserProfile.objects.all().count(), 1)
         user = CustUser.objects.create_user(
             username='username3',
@@ -1927,12 +1927,13 @@ class GetUserProfileForUsernameAPIViewTests(TenantTestCase):
                                      'GROUP2-aggregations'],
             'groupsofmetrics': ['GROUP-metrics'],
             'groupsofthresholdsprofiles': [],
-            'groupofmetricprofiles': []
+            'groupsofmetricprofiles': []
         }
         request = self.factory.post(self.url, data, format='json')
-        force_authenticate(request, user=self.user)
+        force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(poem_models.UserProfile.objects.all().count(), 2)
         userprofile = poem_models.UserProfile.objects.get(user=user)
         self.assertEqual(userprofile.displayname, 'Second_User')
         self.assertEqual(userprofile.egiid, 'bla')
@@ -1956,6 +1957,434 @@ class GetUserProfileForUsernameAPIViewTests(TenantTestCase):
         )
         self.assertEqual(userprofile.groupsofmetricprofiles.count(), 0)
         self.assertEqual(userprofile.groupsofthresholdsprofiles.count(), 0)
+
+    def test_post_userprofile_user(self):
+        self.assertEqual(poem_models.UserProfile.objects.all().count(), 1)
+        user = CustUser.objects.create_user(
+            username='username3',
+            first_name='Second',
+            last_name='User',
+            email='suser@example.com',
+            is_active=True,
+            is_superuser=False
+        )
+        data = {
+            'username': 'username3',
+            'displayname': 'Second_User',
+            'subject': 'secondsubject',
+            'egiid': 'bla',
+            'groupsofaggregations': ['GROUP-aggregations',
+                                     'GROUP2-aggregations'],
+            'groupsofmetrics': ['GROUP-metrics'],
+            'groupsofthresholdsprofiles': [],
+            'groupsofmetricprofiles': []
+        }
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to add user profiles.'
+        )
+        self.assertEqual(poem_models.UserProfile.objects.all().count(), 1)
+        self.assertRaises(
+            poem_models.UserProfile.DoesNotExist,
+            poem_models.UserProfile.objects.get,
+            user=user
+        )
+
+    def test_post_userprofile_nonexisting_user_superuser(self):
+        self.assertEqual(poem_models.UserProfile.objects.all().count(), 1)
+        data = {
+            'username': 'username3',
+            'displayname': 'Second_User',
+            'subject': 'secondsubject',
+            'egiid': 'bla',
+            'groupsofaggregations': ['GROUP-aggregations',
+                                     'GROUP2-aggregations'],
+            'groupsofmetrics': ['GROUP-metrics'],
+            'groupsofthresholdsprofiles': [],
+            'groupsofmetricprofiles': []
+        }
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data['detail'], 'User does not exist.')
+        self.assertEqual(poem_models.UserProfile.objects.all().count(), 1)
+
+    def test_post_userprofile_nonexisting_user_user(self):
+        self.assertEqual(poem_models.UserProfile.objects.all().count(), 1)
+        data = {
+            'username': 'username3',
+            'displayname': 'Second_User',
+            'subject': 'secondsubject',
+            'egiid': 'bla',
+            'groupsofaggregations': ['GROUP-aggregations',
+                                     'GROUP2-aggregations'],
+            'groupsofmetrics': ['GROUP-metrics'],
+            'groupsofthresholdsprofiles': [],
+            'groupsofmetricprofiles': []
+        }
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to add user profiles.'
+        )
+        self.assertEqual(poem_models.UserProfile.objects.all().count(), 1)
+
+    def test_post_userprofile_nonexisting_groupofaggr_superuser(self):
+        self.assertEqual(poem_models.UserProfile.objects.all().count(), 1)
+        user = CustUser.objects.create_user(
+            username='username3',
+            first_name='Second',
+            last_name='User',
+            email='suser@example.com',
+            is_active=True,
+            is_superuser=False
+        )
+        data = {
+            'username': 'username3',
+            'displayname': 'Second_User',
+            'subject': 'secondsubject',
+            'egiid': 'bla',
+            'groupsofaggregations': ['GROUP-aggregations',
+                                     'GROUP3-aggregations'],
+            'groupsofmetrics': ['GROUP-metrics'],
+            'groupsofthresholdsprofiles': [],
+            'groupsofmetricprofiles': []
+        }
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(
+            response.data['detail'], 'Group of aggregations does not exist.'
+        )
+        self.assertEqual(poem_models.UserProfile.objects.all().count(), 1)
+        self.assertRaises(
+            poem_models.UserProfile.DoesNotExist,
+            poem_models.UserProfile.objects.get,
+            user=user
+        )
+
+    def test_post_userprofile_nonexisting_groupofaggr_user(self):
+        self.assertEqual(poem_models.UserProfile.objects.all().count(), 1)
+        user = CustUser.objects.create_user(
+            username='username3',
+            first_name='Second',
+            last_name='User',
+            email='suser@example.com',
+            is_active=True,
+            is_superuser=False
+        )
+        data = {
+            'username': 'username3',
+            'displayname': 'Second_User',
+            'subject': 'secondsubject',
+            'egiid': 'bla',
+            'groupsofaggregations': ['GROUP-aggregations',
+                                     'GROUP3-aggregations'],
+            'groupsofmetrics': ['GROUP-metrics'],
+            'groupsofthresholdsprofiles': [],
+            'groupsofmetricprofiles': []
+        }
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to add user profiles.'
+        )
+        self.assertEqual(poem_models.UserProfile.objects.all().count(), 1)
+        self.assertRaises(
+            poem_models.UserProfile.DoesNotExist,
+            poem_models.UserProfile.objects.get,
+            user=user
+        )
+
+    def test_post_userprofile_nonexisting_groupofmetrics_superuser(self):
+        self.assertEqual(poem_models.UserProfile.objects.all().count(), 1)
+        user = CustUser.objects.create_user(
+            username='username3',
+            first_name='Second',
+            last_name='User',
+            email='suser@example.com',
+            is_active=True,
+            is_superuser=False
+        )
+        data = {
+            'username': 'username3',
+            'displayname': 'Second_User',
+            'subject': 'secondsubject',
+            'egiid': 'bla',
+            'groupsofaggregations': ['GROUP-aggregations',
+                                     'GROUP2-aggregations'],
+            'groupsofmetrics': ['GROUP3-metrics'],
+            'groupsofthresholdsprofiles': [],
+            'groupsofmetricprofiles': []
+        }
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(
+            response.data['detail'], 'Group of metrics does not exist.'
+        )
+        self.assertEqual(poem_models.UserProfile.objects.all().count(), 1)
+        self.assertRaises(
+            poem_models.UserProfile.DoesNotExist,
+            poem_models.UserProfile.objects.get,
+            user=user
+        )
+
+    def test_post_userprofile_nonexisting_groupofmetrics_user(self):
+        self.assertEqual(poem_models.UserProfile.objects.all().count(), 1)
+        user = CustUser.objects.create_user(
+            username='username3',
+            first_name='Second',
+            last_name='User',
+            email='suser@example.com',
+            is_active=True,
+            is_superuser=False
+        )
+        data = {
+            'username': 'username3',
+            'displayname': 'Second_User',
+            'subject': 'secondsubject',
+            'egiid': 'bla',
+            'groupsofaggregations': ['GROUP-aggregations',
+                                     'GROUP2-aggregations'],
+            'groupsofmetrics': ['GROUP2-metrics'],
+            'groupsofthresholdsprofiles': [],
+            'groupsofmetricprofiles': []
+        }
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to add user profiles.'
+        )
+        self.assertEqual(poem_models.UserProfile.objects.all().count(), 1)
+        self.assertRaises(
+            poem_models.UserProfile.DoesNotExist,
+            poem_models.UserProfile.objects.get,
+            user=user
+        )
+
+    def test_post_userprofile_nonexisting_groupofmetricprofiles_supruser(self):
+        self.assertEqual(poem_models.UserProfile.objects.all().count(), 1)
+        user = CustUser.objects.create_user(
+            username='username3',
+            first_name='Second',
+            last_name='User',
+            email='suser@example.com',
+            is_active=True,
+            is_superuser=False
+        )
+        data = {
+            'username': 'username3',
+            'displayname': 'Second_User',
+            'subject': 'secondsubject',
+            'egiid': 'bla',
+            'groupsofaggregations': ['GROUP-aggregations',
+                                     'GROUP2-aggregations'],
+            'groupsofmetrics': ['GROUP-metrics'],
+            'groupsofthresholdsprofiles': [],
+            'groupsofmetricprofiles': ['GROUP1-metricprofiles']
+        }
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(
+            response.data['detail'],
+            'Group of metric profiles does not exist.'
+        )
+        self.assertEqual(poem_models.UserProfile.objects.all().count(), 1)
+        self.assertRaises(
+            poem_models.UserProfile.DoesNotExist,
+            poem_models.UserProfile.objects.get,
+            user=user
+        )
+
+    def test_post_userprofile_nonexisting_groupofmetricprofiles_user(self):
+        self.assertEqual(poem_models.UserProfile.objects.all().count(), 1)
+        user = CustUser.objects.create_user(
+            username='username3',
+            first_name='Second',
+            last_name='User',
+            email='suser@example.com',
+            is_active=True,
+            is_superuser=False
+        )
+        data = {
+            'username': 'username3',
+            'displayname': 'Second_User',
+            'subject': 'secondsubject',
+            'egiid': 'bla',
+            'groupsofaggregations': ['GROUP-aggregations',
+                                     'GROUP2-aggregations'],
+            'groupsofmetrics': ['GROUP-metrics'],
+            'groupsofthresholdsprofiles': [],
+            'groupsofmetricprofiles': ['GROUP1-metricprofiles']
+        }
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to add user profiles.'
+        )
+        self.assertEqual(poem_models.UserProfile.objects.all().count(), 1)
+        self.assertRaises(
+            poem_models.UserProfile.DoesNotExist,
+            poem_models.UserProfile.objects.get,
+            user=user
+        )
+
+    def test_post_userprofile_nonexisting_groupofthreshprofiles_superuser(self):
+        self.assertEqual(poem_models.UserProfile.objects.all().count(), 1)
+        user = CustUser.objects.create_user(
+            username='username3',
+            first_name='Second',
+            last_name='User',
+            email='suser@example.com',
+            is_active=True,
+            is_superuser=False
+        )
+        data = {
+            'username': 'username3',
+            'displayname': 'Second_User',
+            'subject': 'secondsubject',
+            'egiid': 'bla',
+            'groupsofaggregations': ['GROUP-aggregations',
+                                     'GROUP2-aggregations'],
+            'groupsofmetrics': ['GROUP-metrics'],
+            'groupsofthresholdsprofiles': ['GROUP3-thresholds'],
+            'groupsofmetricprofiles': ['GROUP-metricprofiles']
+        }
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(
+            response.data['detail'],
+            'Group of thresholds profiles does not exist.'
+        )
+        self.assertEqual(poem_models.UserProfile.objects.all().count(), 1)
+        self.assertRaises(
+            poem_models.UserProfile.DoesNotExist,
+            poem_models.UserProfile.objects.get,
+            user=user
+        )
+
+    def test_post_userprofile_nonexisting_groupofthreshprofiles_user(self):
+        self.assertEqual(poem_models.UserProfile.objects.all().count(), 1)
+        user = CustUser.objects.create_user(
+            username='username3',
+            first_name='Second',
+            last_name='User',
+            email='suser@example.com',
+            is_active=True,
+            is_superuser=False
+        )
+        data = {
+            'username': 'username3',
+            'displayname': 'Second_User',
+            'subject': 'secondsubject',
+            'egiid': 'bla',
+            'groupsofaggregations': ['GROUP-aggregations',
+                                     'GROUP2-aggregations'],
+            'groupsofmetrics': ['GROUP-metrics'],
+            'groupsofthresholdsprofiles': ['GROUP3-thresholds'],
+            'groupsofmetricprofiles': ['GROUP-metricprofiles']
+        }
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to add user profiles.'
+        )
+        self.assertEqual(poem_models.UserProfile.objects.all().count(), 1)
+        self.assertRaises(
+            poem_models.UserProfile.DoesNotExist,
+            poem_models.UserProfile.objects.get,
+            user=user
+        )
+
+    def test_post_userprofile_missing_data_key_superuser(self):
+        self.assertEqual(poem_models.UserProfile.objects.all().count(), 1)
+        user = CustUser.objects.create_user(
+            username='username3',
+            first_name='Second',
+            last_name='User',
+            email='suser@example.com',
+            is_active=True,
+            is_superuser=False
+        )
+        data = {
+            'username': 'username3',
+            'displayname': 'Second_User',
+            'subject': 'secondsubject',
+            'groupsofmetrics': ['GROUP-metrics'],
+            'groupsofthresholdsprofiles': [],
+            'groupsofmetricprofiles': []
+        }
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['detail'], 'Missing data key: egiid')
+        self.assertEqual(poem_models.UserProfile.objects.all().count(), 1)
+        self.assertRaises(
+            poem_models.UserProfile.DoesNotExist,
+            poem_models.UserProfile.objects.get,
+            user=user
+        )
+
+    def test_post_userprofile_missing_data_key_user(self):
+        self.assertEqual(poem_models.UserProfile.objects.all().count(), 1)
+        user = CustUser.objects.create_user(
+            username='username3',
+            first_name='Second',
+            last_name='User',
+            email='suser@example.com',
+            is_active=True,
+            is_superuser=False
+        )
+        data = {
+            'username': 'username3',
+            'displayname': 'Second_User',
+            'subject': 'secondsubject',
+            'groupsofmetrics': ['GROUP-metrics'],
+            'groupsofthresholdsprofiles': [],
+            'groupsofmetricprofiles': []
+        }
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to add user profiles.'
+        )
+        self.assertEqual(poem_models.UserProfile.objects.all().count(), 1)
+        self.assertRaises(
+            poem_models.UserProfile.DoesNotExist,
+            poem_models.UserProfile.objects.get,
+            user=user
+        )
 
 
 class ListGroupsForGivenUserAPIViewTests(TenantTestCase):

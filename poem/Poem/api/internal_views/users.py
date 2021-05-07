@@ -409,42 +409,112 @@ class GetUserprofileForUsername(APIView):
             )
 
     def post(self, request):
-        user = CustUser.objects.get(username=request.data['username'])
+        if request.user.is_superuser:
+            try:
+                user = CustUser.objects.get(username=request.data['username'])
 
-        userprofile = poem_models.UserProfile.objects.create(
-            user=user,
-            displayname=request.data['displayname'],
-            subject=request.data['subject'],
-            egiid=request.data['egiid']
-        )
+                groupsofaggregations = []
+                if 'groupsofaggregations' in dict(request.data):
+                    for group in dict(request.data)['groupsofaggregations']:
+                        groupsofaggregations.append(
+                            poem_models.GroupOfAggregations.objects.get(
+                                name=group
+                            )
+                        )
 
-        if 'groupsofaggregations' in dict(request.data):
-            for group in dict(request.data)['groupsofaggregations']:
-                userprofile.groupsofaggregations.add(
-                    poem_models.GroupOfAggregations.objects.get(name=group)
+                groupsofmetrics = []
+                if 'groupsofmetrics' in dict(request.data):
+                    for group in dict(request.data)['groupsofmetrics']:
+                        groupsofmetrics.append(
+                            poem_models.GroupOfMetrics.objects.get(name=group)
+                        )
+
+                groupsofmetricprofiles = []
+                if 'groupsofmetricprofiles' in dict(request.data):
+                    for group in dict(request.data)['groupsofmetricprofiles']:
+                        groupsofmetricprofiles.append(
+                            poem_models.GroupOfMetricProfiles.objects.get(
+                                name=group
+                            )
+                        )
+
+                groupsofthreholdsprofiles = []
+                if 'groupsofthresholdsprofiles' in dict(request.data):
+                    for group in dict(request.data)[
+                        'groupsofthresholdsprofiles'
+                    ]:
+                        groupsofthreholdsprofiles.append(
+                            poem_models.GroupOfThresholdsProfiles.objects.get(
+                                name=group
+                            )
+                        )
+
+                userprofile = poem_models.UserProfile.objects.create(
+                    user=user,
+                    displayname=request.data['displayname'],
+                    subject=request.data['subject'],
+                    egiid=request.data['egiid']
                 )
 
-        if 'groupsofmetrics' in dict(request.data):
-            for group in dict(request.data)['groupsofmetrics']:
-                userprofile.groupsofmetrics.add(
-                    poem_models.GroupOfMetrics.objects.get(name=group)
-                )
+                if len(groupsofaggregations) > 0:
+                    userprofile.groupsofaggregations.add(*groupsofaggregations)
 
-        if 'groupsofmetricprofiles' in dict(request.data):
-            for group in dict(request.data)['groupsofmetricprofiles']:
-                userprofile.groupsofmetricprofiles.add(
-                    poem_models.GroupOfMetricProfiles.objects.get(name=group)
-                )
+                if len(groupsofmetrics) > 0:
+                    userprofile.groupsofmetrics.add(*groupsofmetrics)
 
-        if 'groupsofthresholdsprofiles' in dict(request.data):
-            for group in dict(request.data)['groupsofthresholdsprofiles']:
-                userprofile.groupsofthresholdsprofiles.add(
-                    poem_models.GroupOfThresholdsProfiles.objects.get(
-                        name=group
+                if len(groupsofmetricprofiles) > 0:
+                    userprofile.groupsofmetricprofiles.add(
+                        *groupsofmetricprofiles
                     )
+
+                if len(groupsofthreholdsprofiles) > 0:
+                    userprofile.groupsofthresholdsprofiles.add(
+                        *groupsofthreholdsprofiles
+                    )
+
+                return Response(status=status.HTTP_201_CREATED)
+
+            except CustUser.DoesNotExist:
+                return error_response(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail='User does not exist.'
                 )
 
-        return Response(status=status.HTTP_201_CREATED)
+            except poem_models.GroupOfAggregations.DoesNotExist:
+                return error_response(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail='Group of aggregations does not exist.'
+                )
+
+            except poem_models.GroupOfMetrics.DoesNotExist:
+                return error_response(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail='Group of metrics does not exist.'
+                )
+
+            except poem_models.GroupOfMetricProfiles.DoesNotExist:
+                return error_response(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail='Group of metric profiles does not exist.'
+                )
+
+            except poem_models.GroupOfThresholdsProfiles.DoesNotExist:
+                return error_response(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail='Group of thresholds profiles does not exist.'
+                )
+
+            except KeyError as e:
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail='Missing data key: {}'.format(e.args[0])
+                )
+
+        else:
+            return error_response(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='You do not have permission to add user profiles.'
+            )
 
 
 class ListGroupsForGivenUser(APIView):
