@@ -10,6 +10,7 @@ from rest_framework import status
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from .utils import error_response
 
 
 def get_groups_for_user(user):
@@ -91,9 +92,20 @@ class ListUsers(APIView):
 
     def get(self, request, username=None):
         if username:
-            users = CustUser.objects.filter(username=username)
-            if users.count() == 0:
-                raise NotFound(status=404, detail='User not found')
+            if request.user.is_superuser or (
+                    not request.user.is_superuser and
+                    request.user.username == username
+            ):
+                users = CustUser.objects.filter(username=username)
+                if users.count() == 0:
+                    raise NotFound(status=404, detail='User does not exist.')
+
+            else:
+                return error_response(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail='You do not have permission to fetch users other '
+                           'than yourself.'
+                )
 
         else:
             if request.user.is_superuser:

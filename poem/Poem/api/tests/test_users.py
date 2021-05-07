@@ -10,6 +10,8 @@ from tenant_schemas.test.cases import TenantTestCase
 from tenant_schemas.test.client import TenantRequestFactory
 
 from .utils_test import encode_data
+from tenant_schemas.utils import schema_context, get_public_schema_name
+from Poem.tenants.models import Tenant
 
 
 class ListUsersAPIViewTests(TenantTestCase):
@@ -17,7 +19,7 @@ class ListUsersAPIViewTests(TenantTestCase):
         self.factory = TenantRequestFactory(self.tenant)
         self.view = views.ListUsers.as_view()
         self.url = '/api/v2/internal/users/'
-        self.user = CustUser.objects.create_user(
+        self.tenant_user1 = CustUser.objects.create_user(
             username='testuser',
             first_name='Test',
             last_name='User',
@@ -25,7 +27,7 @@ class ListUsersAPIViewTests(TenantTestCase):
             date_joined=datetime.datetime(2015, 1, 1, 0, 0, 0),
         )
 
-        self.user2 = CustUser.objects.create_user(
+        self.tenant_user2 = CustUser.objects.create_user(
             username='another_user',
             first_name='Another',
             last_name='User',
@@ -34,7 +36,29 @@ class ListUsersAPIViewTests(TenantTestCase):
             date_joined=datetime.datetime(2015, 1, 2, 0, 0, 0)
         )
 
-        poem_models.UserProfile.objects.create(user=self.user2)
+        poem_models.UserProfile.objects.create(user=self.tenant_user1)
+        poem_models.UserProfile.objects.create(user=self.tenant_user2)
+
+        with schema_context(get_public_schema_name()):
+            self.super_tenant = Tenant.objects.create(
+                name='public', domain_url='public',
+                schema_name=get_public_schema_name()
+            )
+            self.user1 = CustUser.objects.create_user(
+                username='Alan_Ford',
+                first_name='Alan',
+                last_name='Ford',
+                email='alan.ford@tnt.com',
+                date_joined=datetime.datetime(2019, 1, 1, 0, 0, 0)
+            )
+            self.user2 = CustUser.objects.create_user(
+                username='Number1',
+                first_name='Number',
+                last_name='One',
+                email='num1@tnt.com',
+                is_superuser=True,
+                date_joined=datetime.datetime(1970, 1, 1, 0, 0, 0)
+            )
 
         self.groupofmetrics = poem_models.GroupOfMetrics.objects.create(
             name='Metric1'
@@ -44,9 +68,65 @@ class ListUsersAPIViewTests(TenantTestCase):
         self.groupofaggregations = \
             poem_models.GroupOfAggregations.objects.create(name='Aggr1')
 
-    def test_get_users(self):
+    def test_get_users_sp_superuser(self):
+        with schema_context(get_public_schema_name()):
+            request = self.factory.get(self.url)
+            force_authenticate(request, user=self.user2)
+            response = self.view(request)
+            self.assertEqual(
+                response.data,
+                [
+                    {
+                        'first_name': 'Alan',
+                        'last_name': 'Ford',
+                        'username': 'Alan_Ford',
+                        'is_active': True,
+                        'is_superuser': False,
+                        'email': 'alan.ford@tnt.com',
+                        'date_joined': '2019-01-01 00:00:00',
+                        'last_login': '',
+                        'pk': self.user1.pk
+                    },
+                    {
+                        'first_name': 'Number',
+                        'last_name': 'One',
+                        'username': 'Number1',
+                        'is_active': True,
+                        'is_superuser': True,
+                        'email': 'num1@tnt.com',
+                        'date_joined': '1970-01-01 00:00:00',
+                        'last_login': '',
+                        'pk': self.user2.pk
+                    }
+                ]
+            )
+
+    def test_get_users_sp_user(self):
+        with schema_context(get_public_schema_name()):
+            request = self.factory.get(self.url)
+            request.tenant = self.super_tenant
+            force_authenticate(request, user=self.user1)
+            response = self.view(request)
+            self.assertEqual(
+                response.data,
+                [
+                    {
+                        'first_name': 'Alan',
+                        'last_name': 'Ford',
+                        'username': 'Alan_Ford',
+                        'is_active': True,
+                        'is_superuser': False,
+                        'email': 'alan.ford@tnt.com',
+                        'date_joined': '2019-01-01 00:00:00',
+                        'last_login': '',
+                        'pk': self.user1.pk
+                    }
+                ]
+            )
+
+    def test_get_users_tenant_superuser(self):
         request = self.factory.get(self.url)
-        force_authenticate(request, user=self.user2)
+        force_authenticate(request, user=self.tenant_user2)
         response = self.view(request)
         self.assertEqual(
             response.data,
@@ -60,7 +140,7 @@ class ListUsersAPIViewTests(TenantTestCase):
                     'email': 'otheruser@example.com',
                     'date_joined': '2015-01-02 00:00:00',
                     'last_login': '',
-                    'pk': self.user2.pk
+                    'pk': self.tenant_user2.pk
                 },
                 {
                     'first_name': 'Test',
@@ -71,7 +151,28 @@ class ListUsersAPIViewTests(TenantTestCase):
                     'email': 'testuser@example.com',
                     'date_joined': '2015-01-01 00:00:00',
                     'last_login': '',
-                    'pk': self.user.pk
+                    'pk': self.tenant_user1.pk
+                }
+            ]
+        )
+
+    def test_get_users_tenant_user(self):
+        request = self.factory.get(self.url)
+        force_authenticate(request, user=self.tenant_user1)
+        response = self.view(request)
+        self.assertEqual(
+            response.data,
+            [
+                {
+                    'first_name': 'Test',
+                    'last_name': 'User',
+                    'username': 'testuser',
+                    'is_active': True,
+                    'is_superuser': False,
+                    'email': 'testuser@example.com',
+                    'date_joined': '2015-01-01 00:00:00',
+                    'last_login': '',
+                    'pk': self.tenant_user1.pk
                 }
             ]
         )
@@ -81,9 +182,60 @@ class ListUsersAPIViewTests(TenantTestCase):
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
-    def test_get_user_by_username(self):
+    def test_get_user_by_username_sp_superuser(self):
+        with schema_context(get_public_schema_name()):
+            request = self.factory.get(self.url + 'Alan_Ford')
+            force_authenticate(request, user=self.user2)
+            response = self.view(request, 'Alan_Ford')
+            self.assertEqual(
+                response.data,
+                {
+                    'first_name': 'Alan',
+                    'last_name': 'Ford',
+                    'username': 'Alan_Ford',
+                    'is_active': True,
+                    'is_superuser': False,
+                    'email': 'alan.ford@tnt.com',
+                    'date_joined': '2019-01-01 00:00:00',
+                    'last_login': '',
+                    'pk': self.user1.pk
+                }
+            )
+
+    def test_get_user_by_username_sp_user(self):
+        with schema_context(get_public_schema_name()):
+            request = self.factory.get(self.url + 'Alan_Ford')
+            force_authenticate(request, user=self.user1)
+            response = self.view(request, 'Alan_Ford')
+            self.assertEqual(
+                response.data,
+                {
+                    'first_name': 'Alan',
+                    'last_name': 'Ford',
+                    'username': 'Alan_Ford',
+                    'is_active': True,
+                    'is_superuser': False,
+                    'email': 'alan.ford@tnt.com',
+                    'date_joined': '2019-01-01 00:00:00',
+                    'last_login': '',
+                    'pk': self.user1.pk
+                }
+            )
+
+    def test_get_user_by_username_sp_user_another_username(self):
+        with schema_context(get_public_schema_name()):
+            request = self.factory.get(self.url + 'Number1')
+            force_authenticate(request, user=self.user1)
+            response = self.view(request, 'Number1')
+            self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+            self.assertEqual(
+                response.data['detail'],
+                'You do not have permission to fetch users other than yourself.'
+            )
+
+    def test_get_user_by_username_tenant_superuser(self):
         request = self.factory.get(self.url + 'testuser')
-        force_authenticate(request, user=self.user2)
+        force_authenticate(request, user=self.tenant_user2)
         response = self.view(request, 'testuser')
         self.assertEqual(
             response.data,
@@ -96,19 +248,78 @@ class ListUsersAPIViewTests(TenantTestCase):
                 'email': 'testuser@example.com',
                 'date_joined': '2015-01-01 00:00:00',
                 'last_login': '',
-                'pk': self.user.pk
+                'pk': self.tenant_user1.pk
             }
         )
 
-    def test_get_user_by_username_if_username_does_not_exist(self):
-        request = self.factory.get(self.url + 'nonexisting')
-        force_authenticate(request, user=self.user)
-        response = self.view(request, 'nonexisting')
+    def test_get_user_by_username_tenant_user(self):
+        request = self.factory.get(self.url + 'testuser')
+        force_authenticate(request, user=self.tenant_user1)
+        response = self.view(request, 'testuser')
+        self.assertEqual(
+            response.data,
+            {
+                'first_name': 'Test',
+                'last_name': 'User',
+                'username': 'testuser',
+                'is_active': True,
+                'is_superuser': False,
+                'email': 'testuser@example.com',
+                'date_joined': '2015-01-01 00:00:00',
+                'last_login': '',
+                'pk': self.tenant_user1.pk
+            }
+        )
+
+    def test_get_user_by_username_tenant_user_another_username(self):
+        request = self.factory.get(self.url + 'another_user')
+        force_authenticate(request, user=self.tenant_user1)
+        response = self.view(request, 'another_user')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to fetch users other than yourself.'
+        )
+
+    def test_get_user_by_username_if_username_does_not_exist_sp_superuser(self):
+        with schema_context(get_public_schema_name()):
+            request = self.factory.get(self.url + 'testuser')
+            force_authenticate(request, user=self.user2)
+            response = self.view(request, 'testuser')
+            self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+            self.assertEqual(response.data['detail'], 'User does not exist.')
+
+    def test_get_user_by_username_if_username_does_not_exist_sp_user(self):
+        with schema_context(get_public_schema_name()):
+            request = self.factory.get(self.url + 'testuser')
+            force_authenticate(request, user=self.user1)
+            response = self.view(request, 'testuser')
+            self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+            self.assertEqual(
+                response.data['detail'],
+                'You do not have permission to fetch users other than yourself.'
+            )
+
+    def test_get_user_by_username_if_username_does_not_exist_tnant_sprusr(self):
+        request = self.factory.get(self.url + 'Alan_Ford')
+        force_authenticate(request, user=self.tenant_user2)
+        response = self.view(request, 'Alan_Ford')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data['detail'], 'User does not exist.')
+
+    def test_get_user_by_username_if_username_does_not_exist_tenant_user(self):
+        request = self.factory.get(self.url + 'Alan_Ford')
+        force_authenticate(request, user=self.tenant_user1)
+        response = self.view(request, 'Alan_Ford')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to fetch users other than yourself.'
+        )
 
     def test_put_user(self):
         data = {
-            'pk': self.user.pk,
+            'pk': self.tenant_user1.pk,
             'username': 'testuser',
             'first_name': 'Test',
             'last_name': 'Newuser',
@@ -118,7 +329,7 @@ class ListUsersAPIViewTests(TenantTestCase):
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
-        force_authenticate(request, user=self.user2)
+        force_authenticate(request, user=self.tenant_user2)
         response = self.view(request)
         user = CustUser.objects.get(username='testuser')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -130,7 +341,7 @@ class ListUsersAPIViewTests(TenantTestCase):
 
     def test_put_user_with_already_existing_name(self):
         data = {
-            'pk': self.user.pk,
+            'pk': self.tenant_user1.pk,
             'username': 'another_user',
             'first_name': 'Test',
             'last_name': 'Newuser',
@@ -140,7 +351,7 @@ class ListUsersAPIViewTests(TenantTestCase):
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
-        force_authenticate(request, user=self.user2)
+        force_authenticate(request, user=self.tenant_user2)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(
@@ -159,7 +370,7 @@ class ListUsersAPIViewTests(TenantTestCase):
             'password': 'blablabla',
         }
         request = self.factory.post(self.url, data, format='json')
-        force_authenticate(request, user=self.user2)
+        force_authenticate(request, user=self.tenant_user2)
         response = self.view(request)
         user = CustUser.objects.get(username='newuser')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -181,7 +392,7 @@ class ListUsersAPIViewTests(TenantTestCase):
             'password': 'blablabla',
         }
         request = self.factory.post(self.url, data, format='json')
-        force_authenticate(request, user=self.user2)
+        force_authenticate(request, user=self.tenant_user2)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(
@@ -191,19 +402,19 @@ class ListUsersAPIViewTests(TenantTestCase):
 
     def test_delete_user(self):
         request = self.factory.delete(self.url + 'another_user')
-        force_authenticate(request, user=self.user2)
+        force_authenticate(request, user=self.tenant_user2)
         response = self.view(request, 'another_user')
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
     def test_delete_nonexisting_user(self):
         request = self.factory.delete(self.url + 'nonexisting')
-        force_authenticate(request, user=self.user2)
+        force_authenticate(request, user=self.tenant_user2)
         response = self.view(request, 'nonexisting')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_delete_user_without_specifying_username(self):
         request = self.factory.delete(self.url)
-        force_authenticate(request, user=self.user2)
+        force_authenticate(request, user=self.tenant_user2)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
