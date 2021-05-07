@@ -3,15 +3,15 @@ from collections import OrderedDict
 
 from Poem.api import views_internal as views
 from Poem.poem import models as poem_models
+from Poem.tenants.models import Tenant
 from Poem.users.models import CustUser
 from rest_framework import status
 from rest_framework.test import force_authenticate
 from tenant_schemas.test.cases import TenantTestCase
 from tenant_schemas.test.client import TenantRequestFactory
+from tenant_schemas.utils import schema_context, get_public_schema_name
 
 from .utils_test import encode_data
-from tenant_schemas.utils import schema_context, get_public_schema_name
-from Poem.tenants.models import Tenant
 
 
 class ListUsersAPIViewTests(TenantTestCase):
@@ -696,7 +696,60 @@ class ListUsersAPIViewTests(TenantTestCase):
         self.assertFalse(user.is_superuser)
         self.assertTrue(user.is_active)
 
-    def test_post_user(self):
+    def test_post_user_sp_superuser(self):
+        with schema_context(get_public_schema_name()):
+            self.assertEqual(CustUser.objects.all().count(), 2)
+            data = {
+                'username': 'newuser',
+                'first_name': 'New',
+                'last_name': 'User',
+                'email': 'newuser@example.com',
+                'is_superuser': True,
+                'is_active': True,
+                'password': 'blablabla',
+            }
+            request = self.factory.post(self.url, data, format='json')
+            force_authenticate(request, user=self.user2)
+            response = self.view(request)
+            self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+            self.assertEqual(CustUser.objects.all().count(), 3)
+            user = CustUser.objects.get(username='newuser')
+            self.assertEqual(user.username, 'newuser')
+            self.assertEqual(user.first_name, 'New')
+            self.assertEqual(user.last_name, 'User')
+            self.assertEqual(user.email, 'newuser@example.com')
+            self.assertTrue(user.is_superuser)
+            self.assertTrue(user.is_active)
+
+    def test_post_user_sp_user(self):
+        with schema_context(get_public_schema_name()):
+            self.assertEqual(CustUser.objects.all().count(), 2)
+            data = {
+                'username': 'newuser',
+                'first_name': 'New',
+                'last_name': 'User',
+                'email': 'newuser@example.com',
+                'is_superuser': True,
+                'is_active': True,
+                'password': 'blablabla',
+            }
+            request = self.factory.post(self.url, data, format='json')
+            force_authenticate(request, user=self.user1)
+            response = self.view(request)
+            self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+            self.assertEqual(
+                response.data['detail'],
+                'You do not have permission to add users.'
+            )
+            self.assertEqual(CustUser.objects.all().count(), 2)
+            self.assertRaises(
+                CustUser.DoesNotExist,
+                CustUser.objects.get,
+                username='newuser'
+            )
+
+    def test_post_user_tenant_superuser(self):
+        self.assertEqual(CustUser.objects.all().count(), 2)
         data = {
             'username': 'newuser',
             'first_name': 'New',
@@ -709,8 +762,9 @@ class ListUsersAPIViewTests(TenantTestCase):
         request = self.factory.post(self.url, data, format='json')
         force_authenticate(request, user=self.tenant_user2)
         response = self.view(request)
-        user = CustUser.objects.get(username='newuser')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(CustUser.objects.all().count(), 3)
+        user = CustUser.objects.get(username='newuser')
         self.assertEqual(user.username, 'newuser')
         self.assertEqual(user.first_name, 'New')
         self.assertEqual(user.last_name, 'User')
@@ -718,7 +772,73 @@ class ListUsersAPIViewTests(TenantTestCase):
         self.assertTrue(user.is_superuser)
         self.assertTrue(user.is_active)
 
-    def test_post_user_with_already_existing_username(self):
+    def test_post_user_tenant_user(self):
+        self.assertEqual(CustUser.objects.all().count(), 2)
+        data = {
+            'username': 'newuser',
+            'first_name': 'New',
+            'last_name': 'User',
+            'email': 'newuser@example.com',
+            'is_superuser': True,
+            'is_active': True,
+            'password': 'blablabla',
+        }
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.tenant_user1)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'], 'You do not have permission to add users.'
+        )
+        self.assertEqual(CustUser.objects.all().count(), 2)
+        self.assertRaises(
+            CustUser.DoesNotExist,
+            CustUser.objects.get,
+            username='newuser'
+        )
+
+    def test_post_user_with_already_existing_username_sp_superuser(self):
+        with schema_context(get_public_schema_name()):
+            data = {
+                'username': 'Number1',
+                'first_name': 'New',
+                'last_name': 'User',
+                'email': 'newuser@example.com',
+                'is_superuser': True,
+                'is_active': True,
+                'password': 'blablabla',
+            }
+            request = self.factory.post(self.url, data, format='json')
+            force_authenticate(request, user=self.user2)
+            response = self.view(request)
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+            self.assertEqual(
+                response.data['detail'],
+                'User with this username already exists.'
+            )
+
+    def test_post_user_with_already_existing_username_sp_user(self):
+        with schema_context(get_public_schema_name()):
+            data = {
+                'username': 'Number1',
+                'first_name': 'New',
+                'last_name': 'User',
+                'email': 'newuser@example.com',
+                'is_superuser': True,
+                'is_active': True,
+                'password': 'blablabla',
+            }
+            request = self.factory.post(self.url, data, format='json')
+            force_authenticate(request, user=self.user1)
+            response = self.view(request)
+            self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+            self.assertEqual(CustUser.objects.all().count(), 2)
+            self.assertEqual(
+                response.data['detail'],
+                'You do not have permission to add users.'
+            )
+
+    def test_post_user_with_already_existing_username_tenant_superuser(self):
         data = {
             'username': 'testuser',
             'first_name': 'New',
@@ -733,9 +853,98 @@ class ListUsersAPIViewTests(TenantTestCase):
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(
-            response.data,
-            {'detail': 'User with this username already exists.'}
+            response.data['detail'], 'User with this username already exists.'
         )
+
+    def test_post_user_with_already_existing_username_tenant_user(self):
+        data = {
+            'username': 'testuser',
+            'first_name': 'New',
+            'last_name': 'User',
+            'email': 'newuser@example.com',
+            'is_superuser': True,
+            'is_active': True,
+            'password': 'blablabla',
+        }
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.tenant_user1)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'], 'You do not have permission to add users.'
+        )
+        self.assertEqual(CustUser.objects.all().count(), 2)
+
+    def test_post_user_with_missing_data_key_sp_superuser(self):
+        with schema_context(get_public_schema_name()):
+            data = {
+                'username': 'newuser',
+                'first_name': 'New',
+                'last_name': 'User',
+                'is_superuser': True,
+                'is_active': True,
+                'password': 'blablabla',
+            }
+            request = self.factory.post(self.url, data, format='json')
+            force_authenticate(request, user=self.user2)
+            response = self.view(request)
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+            self.assertEqual(response.data['detail'], 'Missing data key: email')
+            self.assertEqual(CustUser.objects.all().count(), 2)
+
+    def test_post_user_with_missing_data_key_sp_user(self):
+        with schema_context(get_public_schema_name()):
+            data = {
+                'username': 'newuser',
+                'first_name': 'New',
+                'last_name': 'User',
+                'is_superuser': True,
+                'is_active': True,
+                'password': 'blablabla',
+            }
+            request = self.factory.post(self.url, data, format='json')
+            force_authenticate(request, user=self.user1)
+            response = self.view(request)
+            self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+            self.assertEqual(
+                response.data['detail'],
+                'You do not have permission to add users.'
+            )
+            self.assertEqual(CustUser.objects.all().count(), 2)
+
+    def test_post_user_with_missing_data_key_tenant_superuser(self):
+        data = {
+            'username': 'newuser',
+            'first_name': 'New',
+            'last_name': 'User',
+            'is_superuser': True,
+            'is_active': True,
+            'password': 'blablabla',
+        }
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.tenant_user2)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['detail'], 'Missing data key: email')
+        self.assertEqual(CustUser.objects.all().count(), 2)
+
+    def test_post_user_with_missing_data_key_tenant_user(self):
+        data = {
+            'username': 'newuser',
+            'first_name': 'New',
+            'last_name': 'User',
+            'is_superuser': True,
+            'is_active': True,
+            'password': 'blablabla',
+        }
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.tenant_user1)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'], 'You do not have permission to add users.'
+        )
+        self.assertEqual(CustUser.objects.all().count(), 2)
 
     def test_delete_user(self):
         request = self.factory.delete(self.url + 'another_user')

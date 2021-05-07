@@ -1,15 +1,15 @@
-from django.db import IntegrityError
 import datetime
 
 from Poem.api import serializers
 from Poem.api.views import NotFound
 from Poem.poem import models as poem_models
 from Poem.users.models import CustUser
-
+from django.db import IntegrityError
 from rest_framework import status
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
 from .utils import error_response
 
 
@@ -182,23 +182,36 @@ class ListUsers(APIView):
             )
 
     def post(self, request):
-        try:
-            CustUser.objects.create_user(
-                username=request.data['username'],
-                password=request.data['password'],
-                email=request.data['email'],
-                first_name=request.data['first_name'],
-                last_name=request.data['last_name'],
-                is_superuser=request.data['is_superuser'],
-                is_active=request.data['is_active']
-            )
+        if request.user.is_superuser:
+            try:
+                CustUser.objects.create_user(
+                    username=request.data['username'],
+                    password=request.data['password'],
+                    email=request.data['email'],
+                    first_name=request.data['first_name'],
+                    last_name=request.data['last_name'],
+                    is_superuser=request.data['is_superuser'],
+                    is_active=request.data['is_active']
+                )
 
-            return Response(status=status.HTTP_201_CREATED)
+                return Response(status=status.HTTP_201_CREATED)
 
-        except IntegrityError:
-            return Response(
-                {'detail': 'User with this username already exists.'},
-                status=status.HTTP_400_BAD_REQUEST
+            except IntegrityError:
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail='User with this username already exists.'
+                )
+
+            except KeyError as e:
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail='Missing data key: {}'.format(e.args[0])
+                )
+
+        else:
+            return error_response(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='You do not have permission to add users.'
             )
 
     def delete(self, request, username=None):
