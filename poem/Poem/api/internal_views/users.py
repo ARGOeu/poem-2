@@ -215,17 +215,36 @@ class ListUsers(APIView):
             )
 
     def delete(self, request, username=None):
-        if username:
-            try:
-                user = CustUser.objects.get(username=username)
-                user.delete()
-                return Response(status=status.HTTP_204_NO_CONTENT)
+        if request.user.is_superuser:
+            if username:
+                if request.user.username == username:
+                    return error_response(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail='You cannot delete yourself.'
+                    )
 
-            except CustUser.DoesNotExist:
-                raise(NotFound(status=404, detail='User not found'))
+                else:
+                    try:
+                        user = CustUser.objects.get(username=username)
+                        user.delete()
+                        return Response(status=status.HTTP_204_NO_CONTENT)
+
+                    except CustUser.DoesNotExist:
+                        raise NotFound(
+                            status=404, detail='User does not exist.'
+                        )
+
+            else:
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail='Username should be specified.'
+                )
 
         else:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+            return error_response(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='You do not have permission to delete users.'
+            )
 
 
 class GetUserprofileForUsername(APIView):

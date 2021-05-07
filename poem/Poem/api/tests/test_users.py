@@ -946,23 +946,156 @@ class ListUsersAPIViewTests(TenantTestCase):
         )
         self.assertEqual(CustUser.objects.all().count(), 2)
 
-    def test_delete_user(self):
+    def test_delete_user_sp_superuser(self):
+        with schema_context(get_public_schema_name()):
+            request = self.factory.delete(self.url + 'Alan_Ford')
+            force_authenticate(request, user=self.user2)
+            response = self.view(request, 'Alan_Ford')
+            self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+            self.assertEqual(CustUser.objects.all().count(), 1)
+            self.assertRaises(
+                CustUser.DoesNotExist,
+                CustUser.objects.get,
+                username='Alan_Ford'
+            )
+
+    def test_delete_yourself_sp_superuser(self):
+        with schema_context(get_public_schema_name()):
+            request = self.factory.delete(self.url + 'Number1')
+            force_authenticate(request, user=self.user2)
+            response = self.view(request, 'Number1')
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+            self.assertEqual(
+                response.data['detail'], 'You cannot delete yourself.'
+            )
+            self.assertEqual(CustUser.objects.all().count(), 2)
+
+    def test_delete_user_sp_user(self):
+        with schema_context(get_public_schema_name()):
+            request = self.factory.delete(self.url + 'Alan_Ford')
+            force_authenticate(request, user=self.user1)
+            response = self.view(request, 'Alan_Ford')
+            self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+            self.assertEqual(
+                response.data['detail'],
+                'You do not have permission to delete users.'
+            )
+            self.assertEqual(CustUser.objects.all().count(), 2)
+
+    def test_delete_user_tenant_superuser(self):
+        request = self.factory.delete(self.url + 'testuser')
+        force_authenticate(request, user=self.tenant_user2)
+        response = self.view(request, 'testuser')
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(CustUser.objects.all().count(), 1)
+        self.assertRaises(
+            CustUser.DoesNotExist,
+            CustUser.objects.get,
+            username='testuser'
+        )
+
+    def test_delete_yourself_tenant_superuser(self):
         request = self.factory.delete(self.url + 'another_user')
         force_authenticate(request, user=self.tenant_user2)
         response = self.view(request, 'another_user')
-        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['detail'], 'You cannot delete yourself.')
+        self.assertEqual(CustUser.objects.all().count(), 2)
 
-    def test_delete_nonexisting_user(self):
+    def test_delete_user_tenant_user(self):
+        request = self.factory.delete(self.url + 'testuser')
+        force_authenticate(request, user=self.tenant_user1)
+        response = self.view(request, 'testuser')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete users.'
+        )
+        self.assertEqual(CustUser.objects.all().count(), 2)
+
+    def test_delete_nonexisting_user_sp_superuser(self):
+        with schema_context(get_public_schema_name()):
+            request = self.factory.delete(self.url + 'nonexisting')
+            force_authenticate(request, user=self.user2)
+            response = self.view(request, 'nonexisting')
+            self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+            self.assertEqual(response.data['detail'], 'User does not exist.')
+            self.assertEqual(CustUser.objects.all().count(), 2)
+
+    def test_delete_nonexisting_user_sp_user(self):
+        with schema_context(get_public_schema_name()):
+            request = self.factory.delete(self.url + 'nonexisting')
+            force_authenticate(request, user=self.user1)
+            response = self.view(request, 'nonexisting')
+            self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+            self.assertEqual(
+                response.data['detail'],
+                'You do not have permission to delete users.'
+            )
+            self.assertEqual(CustUser.objects.all().count(), 2)
+
+    def test_delete_nonexisting_user_tenant_superuser(self):
         request = self.factory.delete(self.url + 'nonexisting')
         force_authenticate(request, user=self.tenant_user2)
         response = self.view(request, 'nonexisting')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data['detail'], 'User does not exist.')
+        self.assertEqual(CustUser.objects.all().count(), 2)
 
-    def test_delete_user_without_specifying_username(self):
+    def test_delete_nonexisting_user_tenant_user(self):
+        request = self.factory.delete(self.url + 'nonexisting')
+        force_authenticate(request, user=self.tenant_user1)
+        response = self.view(request, 'nonexisting')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete users.'
+        )
+        self.assertEqual(CustUser.objects.all().count(), 2)
+
+    def test_delete_user_without_specifying_username_sp_superuser(self):
+        with schema_context(get_public_schema_name()):
+            request = self.factory.delete(self.url)
+            force_authenticate(request, user=self.user2)
+            response = self.view(request)
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+            self.assertEqual(
+                response.data['detail'], 'Username should be specified.'
+            )
+            self.assertEqual(CustUser.objects.all().count(), 2)
+
+    def test_delete_user_without_specifying_username_sp_user(self):
+        with schema_context(get_public_schema_name()):
+            request = self.factory.delete(self.url)
+            force_authenticate(request, user=self.user1)
+            response = self.view(request)
+            self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+            self.assertEqual(
+                response.data['detail'],
+                'You do not have permission to delete users.'
+            )
+            self.assertEqual(CustUser.objects.all().count(), 2)
+
+    def test_delete_user_without_specifying_username_tenant_superuser(self):
         request = self.factory.delete(self.url)
         force_authenticate(request, user=self.tenant_user2)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data['detail'], 'Username should be specified.'
+        )
+        self.assertEqual(CustUser.objects.all().count(), 2)
+
+    def test_delete_user_without_specifying_username_tenant_user(self):
+        request = self.factory.delete(self.url)
+        force_authenticate(request, user=self.tenant_user1)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete users.'
+        )
+        self.assertEqual(CustUser.objects.all().count(), 2)
 
 
 class GetUserProfileForUsernameAPIViewTests(TenantTestCase):
