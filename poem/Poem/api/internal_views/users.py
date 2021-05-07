@@ -254,7 +254,7 @@ class GetUserprofileForUsername(APIView):
         try:
             user = CustUser.objects.get(username=username)
         except CustUser.DoesNotExist:
-            raise NotFound(status=404, detail='User not found')
+            raise NotFound(status=404, detail='User does not exist.')
         else:
             try:
                 user_profile = poem_models.UserProfile.objects.get(user=user)
@@ -262,68 +262,151 @@ class GetUserprofileForUsername(APIView):
                 return Response(serializer.data)
 
             except poem_models.UserProfile.DoesNotExist:
-                raise NotFound(status=404, detail='User profile not found')
+                raise NotFound(
+                    status=404, detail='User profile does not exist.'
+                )
 
     def put(self, request):
-        user = CustUser.objects.get(username=request.data['username'])
-        userprofile = poem_models.UserProfile.objects.get(user=user)
-        userprofile.displayname = request.data['displayname']
-        userprofile.subject = request.data['subject']
-        userprofile.egiid = request.data['egiid']
-        userprofile.save()
+        if request.user.is_superuser:
+            try:
+                user = CustUser.objects.get(username=request.data['username'])
+                userprofile = poem_models.UserProfile.objects.get(user=user)
 
-        if 'groupsofaggregations' in dict(request.data):
-            for group in dict(request.data)['groupsofaggregations']:
-                userprofile.groupsofaggregations.add(
-                    poem_models.GroupOfAggregations.objects.get(name=group)
-                )
+                groupsofaggregations = []
+                if 'groupsofaggregations' in dict(request.data):
+                    for group in dict(request.data)['groupsofaggregations']:
+                        groupsofaggregations.append(
+                            poem_models.GroupOfAggregations.objects.get(
+                                name=group
+                            )
+                        )
 
-        if 'groupsofmetrics' in dict(request.data):
-            for group in dict(request.data)['groupsofmetrics']:
-                userprofile.groupsofmetrics.add(
-                    poem_models.GroupOfMetrics.objects.get(name=group)
-                )
+                groupsofmetrics = []
+                if 'groupsofmetrics' in dict(request.data):
+                    for group in dict(request.data)['groupsofmetrics']:
+                        groupsofmetrics.append(
+                            poem_models.GroupOfMetrics.objects.get(name=group)
+                        )
 
-        if 'groupsofmetricprofiles' in dict(request.data):
-            for group in dict(request.data)['groupsofmetricprofiles']:
-                userprofile.groupsofmetricprofiles.add(
-                    poem_models.GroupOfMetricProfiles.objects.get(name=group)
-                )
+                groupsofmetricprofiles = []
+                if 'groupsofmetricprofiles' in dict(request.data):
+                    for group in dict(request.data)['groupsofmetricprofiles']:
+                        groupsofmetricprofiles.append(
+                            poem_models.GroupOfMetricProfiles.objects.get(
+                                name=group
+                            )
+                        )
 
-        if 'groupsofthresholdsprofiles' in dict(request.data):
-            for group in dict(request.data)['groupsofthresholdsprofiles']:
-                userprofile.groupsofthresholdsprofiles.add(
-                    poem_models.GroupOfThresholdsProfiles.objects.get(
-                        name=group
+                groupsofthresholdsprofiles = []
+                if 'groupsofthresholdsprofiles' in dict(request.data):
+                    for group in dict(request.data)[
+                        'groupsofthresholdsprofiles'
+                    ]:
+                        groupsofthresholdsprofiles.append(
+                            poem_models.GroupOfThresholdsProfiles.objects.get(
+                                name=group
+                            )
+                        )
+
+                userprofile.displayname = request.data['displayname']
+                userprofile.subject = request.data['subject']
+                userprofile.egiid = request.data['egiid']
+                userprofile.save()
+
+                if len(groupsofaggregations) > 0:
+                    userprofile.groupsofaggregations.add(*groupsofaggregations)
+
+                if len(groupsofmetrics) > 0:
+                    userprofile.groupsofmetrics.add(*groupsofmetrics)
+
+                if len(groupsofmetricprofiles) > 0:
+                    userprofile.groupsofmetricprofiles.add(
+                        *groupsofmetricprofiles
                     )
+
+                if len(groupsofthresholdsprofiles) > 0:
+                    userprofile.groupsofthresholdsprofiles.add(
+                        *groupsofthresholdsprofiles
+                    )
+
+                # remove the groups that existed before, and now were removed:
+                if 'groupsofaggregations' in dict(request.data):
+                    for group in userprofile.groupsofaggregations.all():
+                        if group.name not in dict(request.data)[
+                            'groupsofaggregations'
+                        ]:
+                            userprofile.groupsofaggregations.remove(group)
+
+                if 'groupsofmetrics' in dict(request.data):
+                    for group in userprofile.groupsofmetrics.all():
+                        if group.name not in dict(request.data)[
+                            'groupsofmetrics'
+                        ]:
+                            userprofile.groupsofmetrics.remove(group)
+
+                if 'groupsofmetricprofiles' in dict(request.data):
+                    for group in userprofile.groupsofmetricprofiles.all():
+                        if group.name not in dict(request.data)[
+                            'groupsofmetricprofiles'
+                        ]:
+                            userprofile.groupsofmetricprofiles.remove(group)
+
+                if 'groupsofthresholdsprofiles' in dict(request.data):
+                    for group in userprofile.groupsofthresholdsprofiles.all():
+                        if group.name not in dict(request.data)[
+                            'groupsofthresholdsprofiles'
+                        ]:
+                            userprofile.groupsofthresholdsprofiles.remove(group)
+
+                return Response(status=status.HTTP_201_CREATED)
+
+            except CustUser.DoesNotExist:
+                return error_response(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail='User does not exist.'
                 )
 
-        # remove the groups that existed before, and now were removed:
-        if 'groupsofaggregations' in dict(request.data):
-            for group in userprofile.groupsofaggregations.all():
-                if group.name not in dict(request.data)['groupsofaggregations']:
-                    userprofile.groupsofaggregations.remove(group)
+            except poem_models.UserProfile.DoesNotExist:
+                return error_response(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail='User profile does not exist.'
+                )
 
-        if 'groupsofmetrics' in dict(request.data):
-            for group in userprofile.groupsofmetrics.all():
-                if group.name not in dict(request.data)['groupsofmetrics']:
-                    userprofile.groupsofmetrics.remove(group)
+            except poem_models.GroupOfAggregations.DoesNotExist:
+                return error_response(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail='Group of aggregations does not exist.'
+                )
 
-        if 'groupsofmetricprofiles' in dict(request.data):
-            for group in userprofile.groupsofmetricprofiles.all():
-                if group.name not in dict(request.data)[
-                    'groupsofmetricprofiles'
-                ]:
-                    userprofile.groupsofmetricprofiles.remove(group)
+            except poem_models.GroupOfMetrics.DoesNotExist:
+                return error_response(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail='Group of metrics does not exist.'
+                )
 
-        if 'groupsofthresholdsprofiles' in dict(request.data):
-            for group in userprofile.groupsofthresholdsprofiles.all():
-                if group.name not in dict(request.data)[
-                    'groupsofthresholdsprofiles'
-                ]:
-                    userprofile.groupsofthresholdsprofiles.remove(group)
+            except poem_models.GroupOfMetricProfiles.DoesNotExist:
+                return error_response(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail='Group of metric profiles does not exist.'
+                )
 
-        return Response(status=status.HTTP_201_CREATED)
+            except poem_models.GroupOfThresholdsProfiles.DoesNotExist:
+                return error_response(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail='Group of thresholds profiles does not exist.'
+                )
+
+            except KeyError as e:
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail='Missing data key: {}'.format(e.args[0])
+                )
+
+        else:
+            return error_response(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='You do not have permission to change user profiles.'
+            )
 
     def post(self, request):
         user = CustUser.objects.get(username=request.data['username'])

@@ -1104,12 +1104,24 @@ class GetUserProfileForUsernameAPIViewTests(TenantTestCase):
         self.view = views.GetUserprofileForUsername.as_view()
         self.url = '/api/v2/internal/userprofile/'
         self.user = CustUser.objects.create(username='testuser')
+        self.superuser = CustUser.objects.create(
+            username='poem', is_superuser=True
+        )
 
         user1 = CustUser.objects.create_user(
             username='username1',
             first_name='First',
             last_name='User',
             email='fuser@example.com',
+            is_active=True,
+            is_superuser=False
+        )
+
+        CustUser.objects.create_user(
+            username='username2',
+            first_name='Second',
+            last_name='user',
+            email='user@example.com',
             is_active=True,
             is_superuser=False
         )
@@ -1145,7 +1157,20 @@ class GetUserProfileForUsernameAPIViewTests(TenantTestCase):
         self.userprofile.groupsofmetricprofiles.add(self.gmp)
         self.userprofile.groupsofthresholdsprofiles.add(self.gtp)
 
-    def test_get_user_profile_for_given_username(self):
+    def test_get_user_profile_for_given_username_superuser(self):
+        request = self.factory.get(self.url + 'username1')
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request, 'username1')
+        self.assertEqual(
+            response.data,
+            OrderedDict([
+                ('subject', 'bla'),
+                ('egiid', 'blablabla'),
+                ('displayname', 'First_User')
+            ])
+        )
+
+    def test_get_user_profile_for_given_username_user(self):
         request = self.factory.get(self.url + 'username1')
         force_authenticate(request, user=self.user)
         response = self.view(request, 'username1')
@@ -1158,21 +1183,39 @@ class GetUserProfileForUsernameAPIViewTests(TenantTestCase):
             ])
         )
 
-    def test_get_user_profile_if_username_does_not_exist(self):
+    def test_get_user_profile_if_username_does_not_exist_superuser(self):
+        request = self.factory.get(self.url + 'nonexisting')
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request, 'nonexisting')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data['detail'], 'User does not exist.')
+
+    def test_get_user_profile_if_username_does_not_exist_user(self):
         request = self.factory.get(self.url + 'nonexisting')
         force_authenticate(request, user=self.user)
         response = self.view(request, 'nonexisting')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertEqual(response.data, {'detail': 'User not found'})
+        self.assertEqual(response.data['detail'], 'User does not exist.')
 
-    def test_get_user_profile_if_user_profile_does_not_exist(self):
+    def test_get_user_profile_if_user_profile_does_not_exist_superuser(self):
+        request = self.factory.get(self.url + 'testuser')
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request, 'testuser')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(
+            response.data['detail'], 'User profile does not exist.'
+        )
+
+    def test_get_user_profile_if_user_profile_does_not_exist_user(self):
         request = self.factory.get(self.url + 'testuser')
         force_authenticate(request, user=self.user)
         response = self.view(request, 'testuser')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertEqual(response.data, {'detail': 'User profile not found'})
+        self.assertEqual(
+            response.data['detail'], 'User profile does not exist.'
+        )
 
-    def test_put_userprofile(self):
+    def test_put_userprofile_superuser(self):
         self.assertEqual(self.userprofile.groupsofmetrics.count(), 1)
         self.assertEqual(self.userprofile.groupsofmetricprofiles.count(), 1)
         self.assertEqual(self.userprofile.groupsofaggregations.count(), 1)
@@ -1189,7 +1232,7 @@ class GetUserProfileForUsernameAPIViewTests(TenantTestCase):
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
-        force_authenticate(request, user=self.user)
+        force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         userprofile = poem_models.UserProfile.objects.get(
@@ -1202,11 +1245,6 @@ class GetUserProfileForUsernameAPIViewTests(TenantTestCase):
         self.assertTrue(
             userprofile.groupsofaggregations.filter(
                 name='GROUP2-aggregations'
-            ).exists()
-        )
-        self.assertFalse(
-            userprofile.groupsofaggregations.filter(
-                name='GROUP-aggregations'
             ).exists()
         )
         self.assertEqual(userprofile.groupsofmetrics.count(), 2)
@@ -1232,7 +1270,639 @@ class GetUserProfileForUsernameAPIViewTests(TenantTestCase):
                 name='GROUP2-thresholds'
             ).exists()
         )
-        self.assertFalse(
+
+    def test_put_userprofile_user(self):
+        self.assertEqual(self.userprofile.groupsofmetrics.count(), 1)
+        self.assertEqual(self.userprofile.groupsofmetricprofiles.count(), 1)
+        self.assertEqual(self.userprofile.groupsofaggregations.count(), 1)
+        self.assertEqual(self.userprofile.groupsofthresholdsprofiles.count(), 1)
+        data = {
+            'username': 'username1',
+            'displayname': 'Username_1',
+            'egiid': 'newegiid',
+            'subject': 'newsubject',
+            'groupsofaggregations': ['GROUP2-aggregations'],
+            'groupsofmetrics': ['GROUP-metrics', 'GROUP2-metrics'],
+            'groupsofmetricprofiles': ['GROUP-metricprofiles'],
+            'groupsofthresholdsprofiles': ['GROUP2-thresholds']
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change user profiles.'
+        )
+        userprofile = poem_models.UserProfile.objects.get(
+            id=self.userprofile.id
+        )
+        self.assertEqual(userprofile.displayname, 'First_User')
+        self.assertEqual(userprofile.egiid, 'blablabla')
+        self.assertEqual(userprofile.subject, 'bla')
+        self.assertEqual(userprofile.groupsofaggregations.count(), 1)
+        self.assertTrue(
+            userprofile.groupsofaggregations.filter(
+                name='GROUP-aggregations'
+            ).exists()
+        )
+        self.assertEqual(userprofile.groupsofmetrics.count(), 1)
+        self.assertTrue(
+            userprofile.groupsofmetrics.filter(
+                name='GROUP-metrics'
+            ).exists()
+        )
+        self.assertEqual(userprofile.groupsofmetricprofiles.count(), 1)
+        self.assertTrue(
+            userprofile.groupsofmetricprofiles.filter(
+                name='GROUP-metricprofiles'
+            ).exists()
+        )
+        self.assertEqual(userprofile.groupsofthresholdsprofiles.count(), 1)
+        self.assertTrue(
+            userprofile.groupsofthresholdsprofiles.filter(
+                name='GROUP-thresholds'
+            ).exists()
+        )
+
+    def test_put_userprofile_nonexisting_user_superuser(self):
+        data = {
+            'username': 'nonexisting',
+            'displayname': 'Username_1',
+            'egiid': 'newegiid',
+            'subject': 'newsubject',
+            'groupsofaggregations': ['GROUP2-aggregations'],
+            'groupsofmetrics': ['GROUP-metrics', 'GROUP2-metrics'],
+            'groupsofmetricprofiles': ['GROUP-metricprofiles'],
+            'groupsofthresholdsprofiles': ['GROUP2-thresholds']
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data['detail'], 'User does not exist.')
+
+    def test_put_userprofile_nonexisting_user_user(self):
+        data = {
+            'username': 'nonexisting',
+            'displayname': 'Username_1',
+            'egiid': 'newegiid',
+            'subject': 'newsubject',
+            'groupsofaggregations': ['GROUP2-aggregations'],
+            'groupsofmetrics': ['GROUP-metrics', 'GROUP2-metrics'],
+            'groupsofmetricprofiles': ['GROUP-metricprofiles'],
+            'groupsofthresholdsprofiles': ['GROUP2-thresholds']
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change user profiles.'
+        )
+
+    def test_put_userprofile_nonexisting_userprofile_superuser(self):
+        data = {
+            'username': 'username2',
+            'displayname': 'Username_2',
+            'egiid': 'newegiid',
+            'subject': 'newsubject',
+            'groupsofaggregations': ['GROUP2-aggregations'],
+            'groupsofmetrics': ['GROUP-metrics', 'GROUP2-metrics'],
+            'groupsofmetricprofiles': ['GROUP-metricprofiles'],
+            'groupsofthresholdsprofiles': ['GROUP2-thresholds']
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(
+            response.data['detail'], 'User profile does not exist.'
+        )
+
+    def test_put_userprofile_nonexisting_userprofile_user(self):
+        data = {
+            'username': 'username2',
+            'displayname': 'Username_2',
+            'egiid': 'newegiid',
+            'subject': 'newsubject',
+            'groupsofaggregations': ['GROUP2-aggregations'],
+            'groupsofmetrics': ['GROUP-metrics', 'GROUP2-metrics'],
+            'groupsofmetricprofiles': ['GROUP-metricprofiles'],
+            'groupsofthresholdsprofiles': ['GROUP2-thresholds']
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change user profiles.'
+        )
+
+    def test_put_userprofile_nonexisting_group_of_aggr_superuser(self):
+        data = {
+            'username': 'username1',
+            'displayname': 'Username_1',
+            'egiid': 'newegiid',
+            'subject': 'newsubject',
+            'groupsofaggregations': ['GROUP3-aggregations'],
+            'groupsofmetrics': ['GROUP-metrics', 'GROUP2-metrics'],
+            'groupsofmetricprofiles': ['GROUP-metricprofiles'],
+            'groupsofthresholdsprofiles': ['GROUP2-thresholds']
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(
+            response.data['detail'], 'Group of aggregations does not exist.'
+        )
+        userprofile = poem_models.UserProfile.objects.get(
+            id=self.userprofile.id
+        )
+        self.assertEqual(userprofile.displayname, 'First_User')
+        self.assertEqual(userprofile.egiid, 'blablabla')
+        self.assertEqual(userprofile.subject, 'bla')
+        self.assertEqual(userprofile.groupsofaggregations.count(), 1)
+        self.assertTrue(
+            userprofile.groupsofaggregations.filter(
+                name='GROUP-aggregations'
+            ).exists()
+        )
+        self.assertEqual(userprofile.groupsofmetrics.count(), 1)
+        self.assertTrue(
+            userprofile.groupsofmetrics.filter(
+                name='GROUP-metrics'
+            ).exists()
+        )
+        self.assertEqual(userprofile.groupsofmetricprofiles.count(), 1)
+        self.assertTrue(
+            userprofile.groupsofmetricprofiles.filter(
+                name='GROUP-metricprofiles'
+            ).exists()
+        )
+        self.assertEqual(userprofile.groupsofthresholdsprofiles.count(), 1)
+        self.assertTrue(
+            userprofile.groupsofthresholdsprofiles.filter(
+                name='GROUP-thresholds'
+            ).exists()
+        )
+
+    def test_put_userprofile_nonexisting_group_of_aggr_user(self):
+        data = {
+            'username': 'username1',
+            'displayname': 'Username_1',
+            'egiid': 'newegiid',
+            'subject': 'newsubject',
+            'groupsofaggregations': ['GROUP3-aggregations'],
+            'groupsofmetrics': ['GROUP-metrics', 'GROUP2-metrics'],
+            'groupsofmetricprofiles': ['GROUP-metricprofiles'],
+            'groupsofthresholdsprofiles': ['GROUP2-thresholds']
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change user profiles.'
+        )
+        userprofile = poem_models.UserProfile.objects.get(
+            id=self.userprofile.id
+        )
+        self.assertEqual(userprofile.displayname, 'First_User')
+        self.assertEqual(userprofile.egiid, 'blablabla')
+        self.assertEqual(userprofile.subject, 'bla')
+        self.assertEqual(userprofile.groupsofaggregations.count(), 1)
+        self.assertTrue(
+            userprofile.groupsofaggregations.filter(
+                name='GROUP-aggregations'
+            ).exists()
+        )
+        self.assertEqual(userprofile.groupsofmetrics.count(), 1)
+        self.assertTrue(
+            userprofile.groupsofmetrics.filter(
+                name='GROUP-metrics'
+            ).exists()
+        )
+        self.assertEqual(userprofile.groupsofmetricprofiles.count(), 1)
+        self.assertTrue(
+            userprofile.groupsofmetricprofiles.filter(
+                name='GROUP-metricprofiles'
+            ).exists()
+        )
+        self.assertEqual(userprofile.groupsofthresholdsprofiles.count(), 1)
+        self.assertTrue(
+            userprofile.groupsofthresholdsprofiles.filter(
+                name='GROUP-thresholds'
+            ).exists()
+        )
+
+    def test_put_userprofile_nonexisting_group_of_metrics_superuser(self):
+        data = {
+            'username': 'username1',
+            'displayname': 'Username_1',
+            'egiid': 'newegiid',
+            'subject': 'newsubject',
+            'groupsofaggregations': ['GROUP2-aggregations'],
+            'groupsofmetrics': ['GROUP-metrics', 'GROUP3-metrics'],
+            'groupsofmetricprofiles': ['GROUP-metricprofiles'],
+            'groupsofthresholdsprofiles': ['GROUP2-thresholds']
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(
+            response.data['detail'], 'Group of metrics does not exist.'
+        )
+        userprofile = poem_models.UserProfile.objects.get(
+            id=self.userprofile.id
+        )
+        self.assertEqual(userprofile.displayname, 'First_User')
+        self.assertEqual(userprofile.egiid, 'blablabla')
+        self.assertEqual(userprofile.subject, 'bla')
+        self.assertEqual(userprofile.groupsofaggregations.count(), 1)
+        self.assertTrue(
+            userprofile.groupsofaggregations.filter(
+                name='GROUP-aggregations'
+            ).exists()
+        )
+        self.assertEqual(userprofile.groupsofmetrics.count(), 1)
+        self.assertTrue(
+            userprofile.groupsofmetrics.filter(
+                name='GROUP-metrics'
+            ).exists()
+        )
+        self.assertEqual(userprofile.groupsofmetricprofiles.count(), 1)
+        self.assertTrue(
+            userprofile.groupsofmetricprofiles.filter(
+                name='GROUP-metricprofiles'
+            ).exists()
+        )
+        self.assertEqual(userprofile.groupsofthresholdsprofiles.count(), 1)
+        self.assertTrue(
+            userprofile.groupsofthresholdsprofiles.filter(
+                name='GROUP-thresholds'
+            ).exists()
+        )
+
+    def test_put_userprofile_nonexisting_group_of_metrics_user(self):
+        data = {
+            'username': 'username1',
+            'displayname': 'Username_1',
+            'egiid': 'newegiid',
+            'subject': 'newsubject',
+            'groupsofaggregations': ['GROUP2-aggregations'],
+            'groupsofmetrics': ['GROUP-metrics', 'GROUP3-metrics'],
+            'groupsofmetricprofiles': ['GROUP-metricprofiles'],
+            'groupsofthresholdsprofiles': ['GROUP2-thresholds']
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change user profiles.'
+        )
+        userprofile = poem_models.UserProfile.objects.get(
+            id=self.userprofile.id
+        )
+        self.assertEqual(userprofile.displayname, 'First_User')
+        self.assertEqual(userprofile.egiid, 'blablabla')
+        self.assertEqual(userprofile.subject, 'bla')
+        self.assertEqual(userprofile.groupsofaggregations.count(), 1)
+        self.assertTrue(
+            userprofile.groupsofaggregations.filter(
+                name='GROUP-aggregations'
+            ).exists()
+        )
+        self.assertEqual(userprofile.groupsofmetrics.count(), 1)
+        self.assertTrue(
+            userprofile.groupsofmetrics.filter(
+                name='GROUP-metrics'
+            ).exists()
+        )
+        self.assertEqual(userprofile.groupsofmetricprofiles.count(), 1)
+        self.assertTrue(
+            userprofile.groupsofmetricprofiles.filter(
+                name='GROUP-metricprofiles'
+            ).exists()
+        )
+        self.assertEqual(userprofile.groupsofthresholdsprofiles.count(), 1)
+        self.assertTrue(
+            userprofile.groupsofthresholdsprofiles.filter(
+                name='GROUP-thresholds'
+            ).exists()
+        )
+
+    def test_put_userprofile_nonexisting_group_of_metric_profiles_suprusr(self):
+        data = {
+            'username': 'username1',
+            'displayname': 'Username_1',
+            'egiid': 'newegiid',
+            'subject': 'newsubject',
+            'groupsofaggregations': ['GROUP2-aggregations'],
+            'groupsofmetrics': ['GROUP-metrics', 'GROUP2-metrics'],
+            'groupsofmetricprofiles': ['GROUP2-metricprofiles'],
+            'groupsofthresholdsprofiles': ['GROUP2-thresholds']
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(
+            response.data['detail'], 'Group of metric profiles does not exist.'
+        )
+        userprofile = poem_models.UserProfile.objects.get(
+            id=self.userprofile.id
+        )
+        self.assertEqual(userprofile.displayname, 'First_User')
+        self.assertEqual(userprofile.egiid, 'blablabla')
+        self.assertEqual(userprofile.subject, 'bla')
+        self.assertEqual(userprofile.groupsofaggregations.count(), 1)
+        self.assertTrue(
+            userprofile.groupsofaggregations.filter(
+                name='GROUP-aggregations'
+            ).exists()
+        )
+        self.assertEqual(userprofile.groupsofmetrics.count(), 1)
+        self.assertTrue(
+            userprofile.groupsofmetrics.filter(
+                name='GROUP-metrics'
+            ).exists()
+        )
+        self.assertEqual(userprofile.groupsofmetricprofiles.count(), 1)
+        self.assertTrue(
+            userprofile.groupsofmetricprofiles.filter(
+                name='GROUP-metricprofiles'
+            ).exists()
+        )
+        self.assertEqual(userprofile.groupsofthresholdsprofiles.count(), 1)
+        self.assertTrue(
+            userprofile.groupsofthresholdsprofiles.filter(
+                name='GROUP-thresholds'
+            ).exists()
+        )
+
+    def test_put_userprofile_nonexisting_group_of_metric_profiles_user(self):
+        data = {
+            'username': 'username1',
+            'displayname': 'Username_1',
+            'egiid': 'newegiid',
+            'subject': 'newsubject',
+            'groupsofaggregations': ['GROUP2-aggregations'],
+            'groupsofmetrics': ['GROUP-metrics', 'GROUP2-metrics'],
+            'groupsofmetricprofiles': ['GROUP2-metricprofiles'],
+            'groupsofthresholdsprofiles': ['GROUP2-thresholds']
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change user profiles.'
+        )
+        userprofile = poem_models.UserProfile.objects.get(
+            id=self.userprofile.id
+        )
+        self.assertEqual(userprofile.displayname, 'First_User')
+        self.assertEqual(userprofile.egiid, 'blablabla')
+        self.assertEqual(userprofile.subject, 'bla')
+        self.assertEqual(userprofile.groupsofaggregations.count(), 1)
+        self.assertTrue(
+            userprofile.groupsofaggregations.filter(
+                name='GROUP-aggregations'
+            ).exists()
+        )
+        self.assertEqual(userprofile.groupsofmetrics.count(), 1)
+        self.assertTrue(
+            userprofile.groupsofmetrics.filter(
+                name='GROUP-metrics'
+            ).exists()
+        )
+        self.assertEqual(userprofile.groupsofmetricprofiles.count(), 1)
+        self.assertTrue(
+            userprofile.groupsofmetricprofiles.filter(
+                name='GROUP-metricprofiles'
+            ).exists()
+        )
+        self.assertEqual(userprofile.groupsofthresholdsprofiles.count(), 1)
+        self.assertTrue(
+            userprofile.groupsofthresholdsprofiles.filter(
+                name='GROUP-thresholds'
+            ).exists()
+        )
+
+    def test_put_userprofile_nonexisting_group_of_thresh_profiles_suprusr(self):
+        data = {
+            'username': 'username1',
+            'displayname': 'Username_1',
+            'egiid': 'newegiid',
+            'subject': 'newsubject',
+            'groupsofaggregations': ['GROUP2-aggregations'],
+            'groupsofmetrics': ['GROUP-metrics', 'GROUP2-metrics'],
+            'groupsofmetricprofiles': ['GROUP-metricprofiles'],
+            'groupsofthresholdsprofiles': ['GROUP3-thresholds']
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(
+            response.data['detail'],
+            'Group of thresholds profiles does not exist.'
+        )
+        userprofile = poem_models.UserProfile.objects.get(
+            id=self.userprofile.id
+        )
+        self.assertEqual(userprofile.displayname, 'First_User')
+        self.assertEqual(userprofile.egiid, 'blablabla')
+        self.assertEqual(userprofile.subject, 'bla')
+        self.assertEqual(userprofile.groupsofaggregations.count(), 1)
+        self.assertTrue(
+            userprofile.groupsofaggregations.filter(
+                name='GROUP-aggregations'
+            ).exists()
+        )
+        self.assertEqual(userprofile.groupsofmetrics.count(), 1)
+        self.assertTrue(
+            userprofile.groupsofmetrics.filter(
+                name='GROUP-metrics'
+            ).exists()
+        )
+        self.assertEqual(userprofile.groupsofmetricprofiles.count(), 1)
+        self.assertTrue(
+            userprofile.groupsofmetricprofiles.filter(
+                name='GROUP-metricprofiles'
+            ).exists()
+        )
+        self.assertEqual(userprofile.groupsofthresholdsprofiles.count(), 1)
+        self.assertTrue(
+            userprofile.groupsofthresholdsprofiles.filter(
+                name='GROUP-thresholds'
+            ).exists()
+        )
+
+    def test_put_userprofile_nonexisting_group_of_thresh_profiles_user(self):
+        data = {
+            'username': 'username1',
+            'displayname': 'Username_1',
+            'egiid': 'newegiid',
+            'subject': 'newsubject',
+            'groupsofaggregations': ['GROUP2-aggregations'],
+            'groupsofmetrics': ['GROUP-metrics', 'GROUP2-metrics'],
+            'groupsofmetricprofiles': ['GROUP-metricprofiles'],
+            'groupsofthresholdsprofiles': ['GROUP3-thresholds']
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change user profiles.'
+        )
+        userprofile = poem_models.UserProfile.objects.get(
+            id=self.userprofile.id
+        )
+        self.assertEqual(userprofile.displayname, 'First_User')
+        self.assertEqual(userprofile.egiid, 'blablabla')
+        self.assertEqual(userprofile.subject, 'bla')
+        self.assertEqual(userprofile.groupsofaggregations.count(), 1)
+        self.assertTrue(
+            userprofile.groupsofaggregations.filter(
+                name='GROUP-aggregations'
+            ).exists()
+        )
+        self.assertEqual(userprofile.groupsofmetrics.count(), 1)
+        self.assertTrue(
+            userprofile.groupsofmetrics.filter(
+                name='GROUP-metrics'
+            ).exists()
+        )
+        self.assertEqual(userprofile.groupsofmetricprofiles.count(), 1)
+        self.assertTrue(
+            userprofile.groupsofmetricprofiles.filter(
+                name='GROUP-metricprofiles'
+            ).exists()
+        )
+        self.assertEqual(userprofile.groupsofthresholdsprofiles.count(), 1)
+        self.assertTrue(
+            userprofile.groupsofthresholdsprofiles.filter(
+                name='GROUP-thresholds'
+            ).exists()
+        )
+
+    def test_put_userprofile_missing_data_key_superuser(self):
+        data = {
+            'username': 'username1',
+            'displayname': 'Username_1',
+            'egiid': 'newegiid',
+            'groupsofaggregations': ['GROUP2-aggregations'],
+            'groupsofmetrics': ['GROUP-metrics', 'GROUP2-metrics'],
+            'groupsofmetricprofiles': ['GROUP-metricprofiles'],
+            'groupsofthresholdsprofiles': ['GROUP-thresholds']
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['detail'], 'Missing data key: subject')
+        userprofile = poem_models.UserProfile.objects.get(
+            id=self.userprofile.id
+        )
+        self.assertEqual(userprofile.displayname, 'First_User')
+        self.assertEqual(userprofile.egiid, 'blablabla')
+        self.assertEqual(userprofile.subject, 'bla')
+        self.assertEqual(userprofile.groupsofaggregations.count(), 1)
+        self.assertTrue(
+            userprofile.groupsofaggregations.filter(
+                name='GROUP-aggregations'
+            ).exists()
+        )
+        self.assertEqual(userprofile.groupsofmetrics.count(), 1)
+        self.assertTrue(
+            userprofile.groupsofmetrics.filter(
+                name='GROUP-metrics'
+            ).exists()
+        )
+        self.assertEqual(userprofile.groupsofmetricprofiles.count(), 1)
+        self.assertTrue(
+            userprofile.groupsofmetricprofiles.filter(
+                name='GROUP-metricprofiles'
+            ).exists()
+        )
+        self.assertEqual(userprofile.groupsofthresholdsprofiles.count(), 1)
+        self.assertTrue(
+            userprofile.groupsofthresholdsprofiles.filter(
+                name='GROUP-thresholds'
+            ).exists()
+        )
+
+    def test_put_userprofile_missing_data_key_user(self):
+        data = {
+            'username': 'username1',
+            'displayname': 'Username_1',
+            'egiid': 'newegiid',
+            'groupsofaggregations': ['GROUP2-aggregations'],
+            'groupsofmetrics': ['GROUP-metrics', 'GROUP2-metrics'],
+            'groupsofmetricprofiles': ['GROUP-metricprofiles'],
+            'groupsofthresholdsprofiles': ['GROUP-thresholds']
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change user profiles.'
+        )
+        userprofile = poem_models.UserProfile.objects.get(
+            id=self.userprofile.id
+        )
+        self.assertEqual(userprofile.displayname, 'First_User')
+        self.assertEqual(userprofile.egiid, 'blablabla')
+        self.assertEqual(userprofile.subject, 'bla')
+        self.assertEqual(userprofile.groupsofaggregations.count(), 1)
+        self.assertTrue(
+            userprofile.groupsofaggregations.filter(
+                name='GROUP-aggregations'
+            ).exists()
+        )
+        self.assertEqual(userprofile.groupsofmetrics.count(), 1)
+        self.assertTrue(
+            userprofile.groupsofmetrics.filter(
+                name='GROUP-metrics'
+            ).exists()
+        )
+        self.assertEqual(userprofile.groupsofmetricprofiles.count(), 1)
+        self.assertTrue(
+            userprofile.groupsofmetricprofiles.filter(
+                name='GROUP-metricprofiles'
+            ).exists()
+        )
+        self.assertEqual(userprofile.groupsofthresholdsprofiles.count(), 1)
+        self.assertTrue(
             userprofile.groupsofthresholdsprofiles.filter(
                 name='GROUP-thresholds'
             ).exists()
@@ -1241,7 +1911,7 @@ class GetUserProfileForUsernameAPIViewTests(TenantTestCase):
     def test_post_userprofile(self):
         self.assertEqual(poem_models.UserProfile.objects.all().count(), 1)
         user = CustUser.objects.create_user(
-            username='username2',
+            username='username3',
             first_name='Second',
             last_name='User',
             email='suser@example.com',
@@ -1249,7 +1919,7 @@ class GetUserProfileForUsernameAPIViewTests(TenantTestCase):
             is_superuser=False
         )
         data = {
-            'username': 'username2',
+            'username': 'username3',
             'displayname': 'Second_User',
             'subject': 'secondsubject',
             'egiid': 'bla',
