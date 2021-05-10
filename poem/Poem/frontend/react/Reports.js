@@ -323,8 +323,10 @@ const TopologyTagList = ({ part, tagsState, setTagsState, tagsAll, addview, push
 }
 
 
-const EntitySelect = ({field, topologyGroups}) => {
+const EntitySelect = ({field, topologyGroups, form}) => {
   let formatted = new Array()
+  let new1 = JSON.parse(JSON.stringify(form.values.topoEntity1))
+  let new2 = JSON.parse(JSON.stringify(form.values.topoEntity2))
 
   for (var e of [...topologyGroups])
     formatted.push(new Object({
@@ -340,7 +342,9 @@ const EntitySelect = ({field, topologyGroups}) => {
       placeholder="Search..."
       isClearable={false}
       isMulti
-      onChange={(e) => console.log(e)}
+      onChange={(e) => {
+        console.log(e.value)
+      }}
       options={formatted}
     />
   )
@@ -1117,7 +1121,10 @@ export const ReportsComponent = (props) => {
                         <CardTitle className="mb-2">
                           <strong>Entities</strong>
                         </CardTitle>
-                        <TopologyEntityFields topoType={props.values.topologyType} topoGroups={topologyGroups} />
+                        <TopologyEntityFields
+                          topoType={props.values.topologyType}
+                          topoGroups={topologyGroups}
+                        />
                       </CardBody>
                     </Card>
                   </Col>
