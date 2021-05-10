@@ -347,6 +347,56 @@ const EntitySelect = ({field, topologyGroups}) => {
 }
 
 
+const TopologyEntityFields = ({topoType, topoGroups}) => {
+  let label1 = undefined
+  let label2 = undefined
+  let key1 = undefined
+  let key2 = undefined
+
+  if (topoType === 'Sites') {
+    label1 = 'NGIs:'
+    label2 = 'Sites:'
+    key1 = 'ngis'
+    key2 = 'sites'
+  }
+  else if (topoType === 'ServiceGroups'){
+    label1 = 'Projects:'
+    label2 = 'Service groups:'
+    key1 = 'projects'
+    key2 = 'servicegroups'
+  }
+  else {
+    label1 = 'Upper group:'
+    label2 = 'Lower group:'
+    key1 = 'ngis'
+    key2 = 'sites'
+  }
+
+  return (
+    <React.Fragment>
+      <Label to='topoEntity1'>
+        {label1}
+      </Label>
+      <Field
+        name="topoEntity1"
+        id="topoEntity1"
+        component={EntitySelect}
+        topologyGroups={topoGroups[key1]}
+      />
+      <Label to='topoEntity2'>
+        {label2}
+      </Label>
+      <Field
+        name="topoEntity2"
+        id="topoEntity2"
+        component={EntitySelect}
+        topologyGroups={topoGroups[key2]}
+      />
+    </React.Fragment>
+  )
+}
+
+
 export const ReportsComponent = (props) => {
   const report_name = props.match.params.name;
   const addview = props.addview
@@ -835,6 +885,7 @@ export const ReportsComponent = (props) => {
       doChange(formikValues)
   }
 
+
   if (reportLoading || listMetricProfilesLoading || listAggregationProfilesLoading || listOperationsProfilesLoading)
     return (<LoadingAnim/>);
 
@@ -1066,42 +1117,7 @@ export const ReportsComponent = (props) => {
                         <CardTitle className="mb-2">
                           <strong>Entities</strong>
                         </CardTitle>
-                        {
-                          props.values.topologyType === 'Sites' ?
-                            <React.Fragment>
-                              <Label to='topoEntity1'>NGIs:</Label>
-                              <Field
-                                name="topoEntity1"
-                                id="topoEntity1"
-                                component={EntitySelect}
-                                topologyGroups={topologyGroups["ngis"]}
-                              />
-                              <Label to='topoEntity2'>Sites:</Label>
-                              <Field
-                                name="topoEntity2"
-                                id="topoEntity2"
-                                component={EntitySelect}
-                                topologyGroups={topologyGroups["sites"]}
-                              />
-                            </React.Fragment>
-                          :
-                            <React.Fragment>
-                              <Label to='topoEntity1'>Projects:</Label>
-                              <Field
-                                name="topoEntity1"
-                                id="topoEntity1"
-                                component={EntitySelect}
-                                topologyGroups={topologyGroups["projects"]}
-                              />
-                              <Label className='pt-2' to='topoEntity1'>Service groups:</Label>
-                              <Field
-                                name="topoEntity2"
-                                id="topoEntity2"
-                                component={EntitySelect}
-                                topologyGroups={topologyGroups["servicegroups"]}
-                              />
-                            </React.Fragment>
-                        }
+                        <TopologyEntityFields topoType={props.values.topologyType} topoGroups={topologyGroups} />
                       </CardBody>
                     </Card>
                   </Col>
