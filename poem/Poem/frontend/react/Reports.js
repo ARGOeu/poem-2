@@ -1069,28 +1069,34 @@ export const ReportsComponent = (props) => {
                         {
                           props.values.topologyType === 'Sites' ?
                             <React.Fragment>
-                              Sites 
+                              <Label to='topoEntity1'>NGIs:</Label>
                               <Field
                                 name="topoEntity1"
+                                id="topoEntity1"
                                 component={EntitySelect}
                                 topologyGroups={topologyGroups["ngis"]}
                               />
+                              <Label to='topoEntity2'>Sites:</Label>
                               <Field
                                 name="topoEntity2"
+                                id="topoEntity2"
                                 component={EntitySelect}
                                 topologyGroups={topologyGroups["sites"]}
                               />
                             </React.Fragment>
                           :
                             <React.Fragment>
-                              ServiceGroups
+                              <Label to='topoEntity1'>Projects:</Label>
                               <Field
                                 name="topoEntity1"
+                                id="topoEntity1"
                                 component={EntitySelect}
                                 topologyGroups={topologyGroups["projects"]}
                               />
+                              <Label className='pt-2' to='topoEntity1'>Service groups:</Label>
                               <Field
                                 name="topoEntity2"
+                                id="topoEntity2"
                                 component={EntitySelect}
                                 topologyGroups={topologyGroups["servicegroups"]}
                               />
