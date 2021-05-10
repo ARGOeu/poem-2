@@ -326,7 +326,7 @@ const TopologyTagList = ({ part, tagsState, setTagsState, tagsAll, addview, push
 const EntitySelect = ({field, topologyGroups}) => {
   let formatted = new Array()
 
-  for (var e of [...topologyGroups['ngis']]) 
+  for (var e of [...topologyGroups])
     formatted.push(new Object({
       'label': e,
       'value': e
@@ -911,7 +911,8 @@ export const ReportsComponent = (props) => {
             groupname: report.groupname,
             groups: groupsTags,
             endpoints: endpointsTags,
-            entities: topologyGroups
+            topoEntity1: topologyGroups,
+            topoEntity2: topologyGroups
           }}
           onSubmit = {(values) => onSubmitHandle(values)}
         >
@@ -1065,11 +1066,36 @@ export const ReportsComponent = (props) => {
                         <CardTitle className="mb-2">
                           <strong>Entities</strong>
                         </CardTitle>
-                        <Field
-                          name="entities"
-                          component={EntitySelect}
-                          topologyGroups={topologyGroups}
-                        />
+                        {
+                          props.values.topologyType === 'Sites' ?
+                            <React.Fragment>
+                              Sites 
+                              <Field
+                                name="topoEntity1"
+                                component={EntitySelect}
+                                topologyGroups={topologyGroups["ngis"]}
+                              />
+                              <Field
+                                name="topoEntity2"
+                                component={EntitySelect}
+                                topologyGroups={topologyGroups["sites"]}
+                              />
+                            </React.Fragment>
+                          :
+                            <React.Fragment>
+                              ServiceGroups
+                              <Field
+                                name="topoEntity1"
+                                component={EntitySelect}
+                                topologyGroups={topologyGroups["projects"]}
+                              />
+                              <Field
+                                name="topoEntity2"
+                                component={EntitySelect}
+                                topologyGroups={topologyGroups["servicegroups"]}
+                              />
+                            </React.Fragment>
+                        }
                       </CardBody>
                     </Card>
                   </Col>
