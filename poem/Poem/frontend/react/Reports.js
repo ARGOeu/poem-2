@@ -323,10 +323,10 @@ const TopologyTagList = ({ part, tagsState, setTagsState, tagsAll, addview, push
 }
 
 
-const EntitySelect = ({field, topologyGroups, form}) => {
+const EntitySelect = ({field, form, topologyGroups, ...propsRest}) => {
   let formatted = new Array()
-  let new1 = JSON.parse(JSON.stringify(form.values.topoEntity1))
-  let new2 = JSON.parse(JSON.stringify(form.values.topoEntity2))
+  //let new1 = JSON.parse(JSON.stringify(form.values.topoEntity1))
+  //let new2 = JSON.parse(JSON.stringify(form.values.topoEntity2))
 
   for (var e of [...topologyGroups])
     formatted.push(new Object({
@@ -343,7 +343,9 @@ const EntitySelect = ({field, topologyGroups, form}) => {
       isClearable={false}
       isMulti
       onChange={(e) => {
-        console.log(e.value)
+        console.log(form.values)
+        form.setFieldValue(field.name, e.value)
+        console.log(form.values)
       }}
       options={formatted}
     />
@@ -351,7 +353,7 @@ const EntitySelect = ({field, topologyGroups, form}) => {
 }
 
 
-const TopologyEntityFields = ({topoType, topoGroups}) => {
+const TopologyEntityFields = ({ topoType, topoGroups, form}) => {
   let label1 = undefined
   let label2 = undefined
   let key1 = undefined
@@ -382,7 +384,7 @@ const TopologyEntityFields = ({topoType, topoGroups}) => {
         {label1}
       </Label>
       <Field
-        name="topoEntity1"
+        name="topoEntity.0.values"
         id="topoEntity1"
         component={EntitySelect}
         topologyGroups={topoGroups[key1]}
@@ -391,7 +393,7 @@ const TopologyEntityFields = ({topoType, topoGroups}) => {
         {label2}
       </Label>
       <Field
-        name="topoEntity2"
+        name="topoEntity.1.values"
         id="topoEntity2"
         component={EntitySelect}
         topologyGroups={topoGroups[key2]}
@@ -885,8 +887,10 @@ export const ReportsComponent = (props) => {
   const onYesCallback = () => {
     if (onYes === 'delete')
       doDelete(formikValues.id)
-    else if (onYes === 'change')
+    else if (onYes === 'change') {
+      console.log(formikValues)
       doChange(formikValues)
+    }
   }
 
 
@@ -966,8 +970,10 @@ export const ReportsComponent = (props) => {
             groupname: report.groupname,
             groups: groupsTags,
             endpoints: endpointsTags,
-            topoEntity1: topologyGroups,
-            topoEntity2: topologyGroups
+            topoEntity: new Array(
+              {values: ["foo"]},
+              {values: ["bar"]}
+            )
           }}
           onSubmit = {(values) => onSubmitHandle(values)}
         >
@@ -1112,7 +1118,12 @@ export const ReportsComponent = (props) => {
                         <FieldArray
                           name="groups"
                           render={props => (
-                            <TopologyTagList part="groups" tagsState={tagsState} setTagsState={setTagsState} tagsAll={topologyTags} {...props}/>
+                            <TopologyTagList 
+                              part="groups"
+                              tagsState={tagsState} 
+                              setTagsState={setTagsState}
+                              tagsAll={topologyTags} 
+                              {...props}/>
                           )}
                         />
                         <div>
@@ -1121,9 +1132,15 @@ export const ReportsComponent = (props) => {
                         <CardTitle className="mb-2">
                           <strong>Entities</strong>
                         </CardTitle>
-                        <TopologyEntityFields
-                          topoType={props.values.topologyType}
-                          topoGroups={topologyGroups}
+                        <FieldArray
+                          name="topoEntity"
+                          render={propsLocal => (
+                            <TopologyEntityFields
+                              topoType={props.values.topologyType}
+                              topoGroups={topologyGroups}
+                              {...propsLocal}
+                            />
+                          )}
                         />
                       </CardBody>
                     </Card>
