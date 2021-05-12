@@ -142,31 +142,31 @@ function insertSelectPlaceholder(data, text) {
 
 
 const TagSelect = ({field, tagOptions, onChangeHandler, isMulti, closeMenuOnSelect, tagInitials}) => {
-    if (tagInitials)
-      return (
-        <Select
-          name={field.name}
-          closeMenuOnSelect={closeMenuOnSelect}
-          isMulti={isMulti}
-          isClearable={false}
-          components={isMulti ? components.MultiValueContainer : components.SingleValue}
-          onChange={(e) => onChangeHandler(e)}
-          options={tagOptions}
-          value={tagInitials}
-        />
-      )
-    else
-      return (
-        <Select
-          name={field.name}
-          closeMenuOnSelect={closeMenuOnSelect}
-          isMulti={isMulti}
-          isClearable={false}
-          components={isMulti ? components.MultiValueContainer : components.SingleValue}
-          onChange={(e) => onChangeHandler(e)}
-          options={tagOptions}
-        />
-      )
+  if (tagInitials)
+    return (
+      <Select
+        name={field.name}
+        closeMenuOnSelect={closeMenuOnSelect}
+        isMulti={isMulti}
+        isClearable={false}
+        components={isMulti ? components.MultiValueContainer : components.SingleValue}
+        onChange={(e) => onChangeHandler(e)}
+        options={tagOptions}
+        value={tagInitials}
+      />
+    )
+  else
+    return (
+      <Select
+        name={field.name}
+        closeMenuOnSelect={closeMenuOnSelect}
+        isMulti={isMulti}
+        isClearable={false}
+        components={isMulti ? components.MultiValueContainer : components.SingleValue}
+        onChange={(e) => onChangeHandler(e)}
+        options={tagOptions}
+      />
+    )
 }
 
 
@@ -323,7 +323,7 @@ const TopologyTagList = ({ part, tagsState, setTagsState, tagsAll, addview, push
 }
 
 
-const EntitySelect = ({field, form, topologyGroups, ...propsRest}) => {
+const EntitySelect = ({field, topologyGroups, onChangeHandler, ...propsRest}) => {
   let formatted = new Array()
   //let new1 = JSON.parse(JSON.stringify(form.values.topoEntity1))
   //let new2 = JSON.parse(JSON.stringify(form.values.topoEntity2))
@@ -342,11 +342,7 @@ const EntitySelect = ({field, form, topologyGroups, ...propsRest}) => {
       placeholder="Search..."
       isClearable={false}
       isMulti
-      onChange={(e) => {
-        console.log(form.values)
-        form.setFieldValue(field.name, e.value)
-        console.log(form.values)
-      }}
+      onChange={(e) => onChangeHandler(e)}
       options={formatted}
     />
   )
@@ -388,6 +384,16 @@ const TopologyEntityFields = ({ topoType, topoGroups, form}) => {
         id="topoEntity1"
         component={EntitySelect}
         topologyGroups={topoGroups[key1]}
+        onChangeHandler={(e) => {
+          let joinedValues = ''
+          for (let event of e)
+            joinedValues += event.value + ' '
+          joinedValues = joinedValues.trim()
+          form.setFieldValue("topoEntity.0", new Object({
+            'name': 'groups1',
+            'value': joinedValues
+          }))
+        }}
       />
       <Label to='topoEntity2'>
         {label2}
@@ -397,6 +403,16 @@ const TopologyEntityFields = ({ topoType, topoGroups, form}) => {
         id="topoEntity2"
         component={EntitySelect}
         topologyGroups={topoGroups[key2]}
+        onChangeHandler={(e) => {
+          let joinedValues = ''
+          for (let event of e)
+            joinedValues += event.value + ' '
+          joinedValues = joinedValues.trim()
+          form.setFieldValue("topoEntity.1", new Object({
+            'name': 'groups2',
+            'value': joinedValues
+          }))
+        }}
       />
     </React.Fragment>
   )
@@ -970,10 +986,7 @@ export const ReportsComponent = (props) => {
             groupname: report.groupname,
             groups: groupsTags,
             endpoints: endpointsTags,
-            topoEntity: new Array(
-              {values: ["foo"]},
-              {values: ["bar"]}
-            )
+            topoEntity: new Array()
           }}
           onSubmit = {(values) => onSubmitHandle(values)}
         >
