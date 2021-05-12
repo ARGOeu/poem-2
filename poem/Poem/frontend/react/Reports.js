@@ -1012,8 +1012,8 @@ export const ReportsComponent = (props) => {
   else if (listOperationsProfilesError)
     return (<ErrorComponent error={listOperationsProfilesError}/>);
 
-  else if (report && topologyTags && topologyGroups &&
-    groupsTags !== undefined && endpointsTags !== undefined)  {
+  else if (report && topologyTags && topologyGroups && groupsTags !== undefined
+    && endpointsTags !== undefined && entitiesState !== undefined)  {
     let metricProfile = '';
     let aggregationProfile = '';
     let operationsProfile = '';
