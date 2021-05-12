@@ -355,9 +355,9 @@ const EntitySelect = ({field, entitiesOptions, onChangeHandler, entitiesInitials
 
 
 const TopologyEntityFields = ({ topoType, topoGroups, entitiesInitial, addview, form}) => {
-  const entityInitValues = (matchWhat, data) => {
+  const entityInitValues = (matchWhat) => {
     let tmp = new Array()
-    for (let entity of data) {
+    for (let entity of entitiesInitial) {
       if (matchWhat.indexOf(entity.name) > -1) {
         if (entity.value.indexOf(' ') > -1) {
           tmp = entity.value.split(' ').map(e => new Object({
@@ -366,10 +366,11 @@ const TopologyEntityFields = ({ topoType, topoGroups, entitiesInitial, addview, 
           }))
         }
         else
-          tmp = new Object({
-            'label': entity.value,
-            'value': entity.value
-          })
+          tmp.push(
+            new Object({
+              'label': entity.value,
+              'value': entity.value
+            }))
       }
     }
     return tmp
@@ -415,7 +416,7 @@ const TopologyEntityFields = ({ topoType, topoGroups, entitiesInitial, addview, 
         {label1}
       </Label>
       <Field
-        name="topoEntity.0.values"
+        name="topoEntity.0"
         id="topoEntity1"
         component={EntitySelect}
         entitiesOptions={formatSelectEntities(topoGroups[key1])}
@@ -429,13 +430,13 @@ const TopologyEntityFields = ({ topoType, topoGroups, entitiesInitial, addview, 
             'value': joinedValues
           }))
         }}
-        entitiesInitials={!addview ? entityInitValues(["NGI", "PROJECT"], entitiesInitial) : undefined}
+        entitiesInitials={!addview ? entityInitValues(["NGI", "PROJECT"]) : undefined}
       />
       <Label to='topoEntity2'>
         {label2}
       </Label>
       <Field
-        name="topoEntity.1.values"
+        name="topoEntity.1"
         id="topoEntity2"
         component={EntitySelect}
         entitiesOptions={formatSelectEntities(topoGroups[key2])}
@@ -449,7 +450,7 @@ const TopologyEntityFields = ({ topoType, topoGroups, entitiesInitial, addview, 
             'value': joinedValues
           }))
         }}
-        entitiesInitials={!addview ? entityInitValues(["SITES", "SERVICEGROUPS"], entitiesInitial) : undefined}
+        entitiesInitials={!addview ? entityInitValues(["SITES", "SERVICEGROUPS"]) : undefined}
       />
     </React.Fragment>
   )
@@ -1217,11 +1218,11 @@ export const ReportsComponent = (props) => {
                         <FieldArray
                           name="groups"
                           render={props => (
-                            <TopologyTagList 
+                            <TopologyTagList
                               part="groups"
-                              tagsState={tagsState} 
+                              tagsState={tagsState}
                               setTagsState={setTagsState}
-                              tagsAll={topologyTags} 
+                              tagsAll={topologyTags}
                               {...props}/>
                           )}
                         />
@@ -1238,6 +1239,7 @@ export const ReportsComponent = (props) => {
                               topoType={props.values.topologyType}
                               topoGroups={topologyGroups}
                               entitiesInitial={entitiesState}
+                              addview={addview}
                               {...propsLocal}
                             />
                           )}
@@ -1256,8 +1258,14 @@ export const ReportsComponent = (props) => {
                         </CardTitle>
                         <FieldArray
                           name="endpoints"
-                          render={props => (
-                            <TopologyTagList part="endpoints" tagsState={tagsState} setTagsState={setTagsState} tagsAll={topologyTags} addview={addview} {...props}/>
+                          render={propsLocal => (
+                            <TopologyTagList
+                              part="endpoints"
+                              tagsState={tagsState}
+                              setTagsState={setTagsState}
+                              tagsAll={topologyTags}
+                              addview={addview}
+                              {...propsLocal}/>
                           )}
                         />
                       </CardBody>
