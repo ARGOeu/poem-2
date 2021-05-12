@@ -323,33 +323,68 @@ const TopologyTagList = ({ part, tagsState, setTagsState, tagsAll, addview, push
 }
 
 
-const EntitySelect = ({field, topologyGroups, onChangeHandler, ...propsRest}) => {
-  let formatted = new Array()
-  //let new1 = JSON.parse(JSON.stringify(form.values.topoEntity1))
-  //let new2 = JSON.parse(JSON.stringify(form.values.topoEntity2))
-
-  for (var e of [...topologyGroups])
-    formatted.push(new Object({
-      'label': e,
-      'value': e
-    }))
-
-  return (
-    <Select
-      name={field.name}
-      closeMenuOnSelect={false}
-      components={components.Input}
-      placeholder="Search..."
-      isClearable={false}
-      isMulti
-      onChange={(e) => onChangeHandler(e)}
-      options={formatted}
-    />
-  )
+const EntitySelect = ({field, entitiesOptions, onChangeHandler, entitiesInitials}) => {
+  if (entitiesInitials)
+    return (
+      <Select
+        name={field.name}
+        closeMenuOnSelect={false}
+        components={components.Input}
+        placeholder="Search..."
+        isClearable={false}
+        isMulti
+        onChange={(e) => onChangeHandler(e)}
+        options={entitiesOptions}
+        value={entitiesInitials}
+      />
+    )
+  else
+    return (
+      <Select
+        name={field.name}
+        closeMenuOnSelect={false}
+        components={components.Input}
+        placeholder="Search..."
+        isClearable={false}
+        isMulti
+        onChange={(e) => onChangeHandler(e)}
+        options={entitiesOptions}
+      />
+    )
 }
 
 
-const TopologyEntityFields = ({ topoType, topoGroups, form}) => {
+const TopologyEntityFields = ({ topoType, topoGroups, entitiesInitial, addview, form}) => {
+  const entityInitValues = (matchWhat, data) => {
+    let tmp = new Array()
+    for (let entity of data) {
+      if (matchWhat.indexOf(entity.name) > -1) {
+        if (entity.value.indexOf(' ') > -1) {
+          tmp = entity.value.split(' ').map(e => new Object({
+            'label': e,
+            'value': e
+          }))
+        }
+        else
+          tmp = new Object({
+            'label': entity.value,
+            'value': entity.value
+          })
+      }
+    }
+    return tmp
+  }
+
+  const formatSelectEntities = (data) => {
+    let formatted = new Array()
+    for (var e of [...data])
+      formatted.push(new Object({
+        'label': e,
+        'value': e
+      }))
+    return formatted
+  }
+
   let label1 = undefined
   let label2 = undefined
   let key1 = undefined
@@ -383,7 +418,7 @@ const TopologyEntityFields = ({ topoType, topoGroups, form}) => {
         name="topoEntity.0.values"
         id="topoEntity1"
         component={EntitySelect}
-        topologyGroups={topoGroups[key1]}
+        entitiesOptions={formatSelectEntities(topoGroups[key1])}
         onChangeHandler={(e) => {
           let joinedValues = ''
           for (let event of e)
@@ -394,6 +429,7 @@ const TopologyEntityFields = ({ topoType, topoGroups, form}) => {
             'value': joinedValues
           }))
         }}
+        entitiesInitials={!addview ? entityInitValues(["NGI", "PROJECT"], entitiesInitial) : undefined}
       />
       <Label to='topoEntity2'>
         {label2}
@@ -402,7 +438,7 @@ const TopologyEntityFields = ({ topoType, topoGroups, form}) => {
         name="topoEntity.1.values"
         id="topoEntity2"
         component={EntitySelect}
-        topologyGroups={topoGroups[key2]}
+        entitiesOptions={formatSelectEntities(topoGroups[key2])}
         onChangeHandler={(e) => {
           let joinedValues = ''
           for (let event of e)
@@ -413,6 +449,7 @@ const TopologyEntityFields = ({ topoType, topoGroups, form}) => {
             'value': joinedValues
           }))
         }}
+        entitiesInitials={!addview ? entityInitValues(["SITES", "SERVICEGROUPS"], entitiesInitial) : undefined}
       />
     </React.Fragment>
   )
@@ -438,8 +475,7 @@ export const ReportsComponent = (props) => {
   }))
   const [groupsTags, setGroupsTags] = useState(undefined)
   const [endpointsTags, setEndpointsTags] = useState(undefined)
-  const [entityGroups1, setEntityGroups1] = useState(undefined)
-  const [entityGroups2, setEntityGroups2] = useState(undefined)
+  const [entitiesState, setEntitiesState] = useState(undefined)
 
   let querykey = undefined;
   if (addview)
@@ -473,6 +509,7 @@ export const ReportsComponent = (props) => {
 
         let groupstags = formatFromReportTags('argo.group.filter.tags', report['filter_tags'])
         let endpointstags = formatFromReportTags('argo.endpoint.filter.tags', report['filter_tags'])
+        let entities = formatFromReportEntities('argo.group.filter.fields', report['filter_tags'])
         let preselectedtags = JSON.parse(JSON.stringify(tagsState))
         preselectedtags['groups'] = new Object()
         preselectedtags['endpoints'] = new Object()
@@ -485,12 +522,14 @@ export const ReportsComponent = (props) => {
         setTagsState(preselectedtags)
         setGroupsTags(groupstags)
         setEndpointsTags(endpointstags)
+        setEntitiesState(entities)
 
         return report;
       }
       else {
         setGroupsTags(new Array())
         setEndpointsTags(new Array())
+        setEntitiesState(new Array())
 
         return {
             tenant: '',
@@ -696,6 +735,27 @@ export const ReportsComponent = (props) => {
       }))
 
     return tags
+  }
+
+  const formatFromReportEntities = (context, formikEntities) => {
+    let tmpEntityJoint = new Object()
+    let entities = new Array()
+
+    for (let entity of formikEntities) {
+      if (entity.context === context) {
+        if (tmpEntityJoint[entity.name] === undefined)
+          tmpEntityJoint[entity.name] = new Array()
+        tmpEntityJoint[entity.name].push(entity.value)
+      }
+    }
+
+    for (let entity in tmpEntityJoint)
+      entities.push(new Object({
+        'name': entity,
+        'value': tmpEntityJoint[entity].join(' ')
+      }))
+
+    return entities
   }
 
   const formatTopologySchema = (toposchema) => {
@@ -931,10 +991,8 @@ export const ReportsComponent = (props) => {
   const onYesCallback = () => {
     if (onYes === 'delete')
       doDelete(formikValues.id)
-    else if (onYes === 'change') {
-      console.log(formikValues)
+    else if (onYes === 'change')
       doChange(formikValues)
-    }
   }
 
 
@@ -1014,7 +1072,7 @@ export const ReportsComponent = (props) => {
             groupname: report.groupname,
             groups: groupsTags,
             endpoints: endpointsTags,
-            topoEntity: new Array()
+            topoEntity: entitiesState
           }}
           onSubmit = {(values) => onSubmitHandle(values)}
         >
@@ -1179,6 +1237,7 @@ export const ReportsComponent = (props) => {
                             <TopologyEntityFields
                               topoType={props.values.topologyType}
                               topoGroups={topologyGroups}
+                              entitiesInitial={entitiesState}
                               {...propsLocal}
                             />
                           )}
