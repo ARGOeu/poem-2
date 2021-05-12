@@ -390,7 +390,7 @@ const TopologyEntityFields = ({ topoType, topoGroups, form}) => {
             joinedValues += event.value + ' '
           joinedValues = joinedValues.trim()
           form.setFieldValue("topoEntity.0", new Object({
-            'name': 'groups1',
+            'name': key1.toUpperCase().slice(0, -1),
             'value': joinedValues
           }))
         }}
@@ -409,7 +409,7 @@ const TopologyEntityFields = ({ topoType, topoGroups, form}) => {
             joinedValues += event.value + ' '
           joinedValues = joinedValues.trim()
           form.setFieldValue("topoEntity.1", new Object({
-            'name': 'groups2',
+            'name': key2.toUpperCase(),
             'value': joinedValues
           }))
         }}
@@ -651,6 +651,32 @@ export const ReportsComponent = (props) => {
     return tags
   }
 
+  const formatToReportEntities = (context, formikEntities) => {
+    let entities = new Array()
+
+    for (let entity of formikEntities) {
+      let tmpEntity = new Object()
+      let tmpEntites = new Array()
+      if (entity.value.indexOf(' ') !== -1) {
+        let values = entity.value.split(' ')
+        for (var val of values)
+          tmpEntites.push(new Object({
+            name: entity.name,
+            value: val,
+            context: context 
+          }))
+        entities = [...entities, ...tmpEntites]
+      }
+      else {
+        tmpEntity['name'] = entity.name
+        tmpEntity['value'] = entity.value
+        tmpEntity['context'] = context
+        entities.push(tmpEntity)
+      }
+    }
+    return entities
+  }
+
   const formatFromReportTags = (tagsContext, formikTags) => {
     let tmpTagsJoint = new Object()
     let tags = new Array()
@@ -799,7 +825,9 @@ export const ReportsComponent = (props) => {
     dataToSend['profiles'].push(extractedOperationProfile)
     let groupTagsFormatted = formatToReportTags('argo.group.filter.tags', formValues.groups)
     let endpointTagsFormatted = formatToReportTags('argo.endpoint.filter.tags', formValues.endpoints)
-    dataToSend['filter_tags'] = [...groupTagsFormatted, ...endpointTagsFormatted]
+    let groupEntitiesFormatted = formatToReportEntities('argo.group.filter.fields', formValues.topoEntity)
+    dataToSend['filter_tags'] = [...groupTagsFormatted,
+      ...endpointTagsFormatted, ...groupEntitiesFormatted]
     dataToSend['topology_schema'] = formatTopologySchema(formValues.topologyType)
 
     if (addview) {
