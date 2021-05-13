@@ -141,8 +141,9 @@ function insertSelectPlaceholder(data, text) {
 }
 
 
-const TagSelect = ({field, tagOptions, onChangeHandler, isMulti, closeMenuOnSelect, tagInitials}) => {
-  if (tagInitials)
+const TagSelect = ({field, tagOptions, onChangeHandler, isMulti,
+  closeMenuOnSelect, tagInitials}) => {
+  if (tagInitials) {
     return (
       <Select
         name={field.name}
@@ -152,9 +153,10 @@ const TagSelect = ({field, tagOptions, onChangeHandler, isMulti, closeMenuOnSele
         components={isMulti ? components.MultiValueContainer : components.SingleValue}
         onChange={(e) => onChangeHandler(e)}
         options={tagOptions}
-        value={tagInitials}
+        defaultValue={tagInitials}
       />
     )
+  }
   else
     return (
       <Select
@@ -324,26 +326,27 @@ const TopologyTagList = ({ part, tagsState, setTagsState, tagsAll, addview, push
 
 
 const EntitySelect = ({field, entitiesOptions, onChangeHandler, entitiesInitials}) => {
-  if (entitiesInitials)
+  if (entitiesInitials) {
     return (
       <Select
         name={field.name}
         closeMenuOnSelect={false}
-        components={components.Input}
+        components={components.MultiValueContainer}
         placeholder="Search..."
         isClearable={false}
         isMulti
         onChange={(e) => onChangeHandler(e)}
         options={entitiesOptions}
-        value={entitiesInitials}
+        defaultValue={entitiesInitials}
       />
     )
+  }
   else
     return (
       <Select
         name={field.name}
         closeMenuOnSelect={false}
-        components={components.Input}
+        components={components.MultiValueContainer}
         placeholder="Search..."
         isClearable={false}
         isMulti
@@ -354,10 +357,10 @@ const EntitySelect = ({field, entitiesOptions, onChangeHandler, entitiesInitials
 }
 
 
-const TopologyEntityFields = ({ topoType, topoGroups, entitiesInitial, addview, form}) => {
+const TopologyEntityFields = ({topoGroups, addview, form}) => {
   const entityInitValues = (matchWhat) => {
     let tmp = new Array()
-    for (let entity of entitiesInitial) {
+    for (let entity of form.values.entities) {
       if (matchWhat.indexOf(entity.name) > -1) {
         if (entity.value.indexOf(' ') > -1) {
           tmp = entity.value.split(' ').map(e => new Object({
@@ -386,6 +389,7 @@ const TopologyEntityFields = ({ topoType, topoGroups, entitiesInitial, addview, 
     return formatted
   }
 
+  let topoType = form.values.topologyType
   let label1 = undefined
   let label2 = undefined
   let key1 = undefined
@@ -416,7 +420,7 @@ const TopologyEntityFields = ({ topoType, topoGroups, entitiesInitial, addview, 
         {label1}
       </Label>
       <Field
-        name="topoEntity.0"
+        name="entities.0.value"
         id="topoEntity1"
         component={EntitySelect}
         entitiesOptions={formatSelectEntities(topoGroups[key1])}
@@ -425,10 +429,8 @@ const TopologyEntityFields = ({ topoType, topoGroups, entitiesInitial, addview, 
           for (let event of e)
             joinedValues += event.value + ' '
           joinedValues = joinedValues.trim()
-          form.setFieldValue("topoEntity.0", new Object({
-            'name': key1.toUpperCase().slice(0, -1),
-            'value': joinedValues
-          }))
+          form.setFieldValue("topoEntity.0.value", joinedValues)
+          form.setFieldValue("topoEntity.0.name", key1.toUpperCase().slice(0, -1))
         }}
         entitiesInitials={!addview ? entityInitValues(["NGI", "PROJECT"]) : undefined}
       />
@@ -436,7 +438,7 @@ const TopologyEntityFields = ({ topoType, topoGroups, entitiesInitial, addview, 
         {label2}
       </Label>
       <Field
-        name="topoEntity.1"
+        name="entities.1.value"
         id="topoEntity2"
         component={EntitySelect}
         entitiesOptions={formatSelectEntities(topoGroups[key2])}
@@ -445,10 +447,8 @@ const TopologyEntityFields = ({ topoType, topoGroups, entitiesInitial, addview, 
           for (let event of e)
             joinedValues += event.value + ' '
           joinedValues = joinedValues.trim()
-          form.setFieldValue("topoEntity.1", new Object({
-            'name': key2.toUpperCase(),
-            'value': joinedValues
-          }))
+          form.setFieldValue("topoEntity.1.name", key2.toUpperCase())
+          form.setFieldValue("topoEntity.1.value", joinedValues)
         }}
         entitiesInitials={!addview ? entityInitValues(["SITES", "SERVICEGROUPS"]) : undefined}
       />
@@ -1012,8 +1012,9 @@ export const ReportsComponent = (props) => {
   else if (listOperationsProfilesError)
     return (<ErrorComponent error={listOperationsProfilesError}/>);
 
-  else if (report && topologyTags && topologyGroups && groupsTags !== undefined
-    && endpointsTags !== undefined && entitiesState !== undefined)  {
+  else if (report && userDetails && topologyTags && topologyGroups &&
+    groupsTags !== undefined && endpointsTags !== undefined
+    && entitiesState !== undefined)  {
     let metricProfile = '';
     let aggregationProfile = '';
     let operationsProfile = '';
@@ -1073,7 +1074,7 @@ export const ReportsComponent = (props) => {
             groupname: report.groupname,
             groups: groupsTags,
             endpoints: endpointsTags,
-            topoEntity: entitiesState
+            entities: entitiesState
           }}
           onSubmit = {(values) => onSubmitHandle(values)}
         >
@@ -1233,14 +1234,12 @@ export const ReportsComponent = (props) => {
                           <strong>Entities</strong>
                         </CardTitle>
                         <FieldArray
-                          name="topoEntity"
-                          render={propsLocal => (
+                          name="entities"
+                          render={props => (
                             <TopologyEntityFields
-                              topoType={props.values.topologyType}
                               topoGroups={topologyGroups}
-                              entitiesInitial={entitiesState}
                               addview={addview}
-                              {...propsLocal}
+                              {...props}
                             />
                           )}
                         />
