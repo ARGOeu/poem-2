@@ -429,8 +429,8 @@ const TopologyEntityFields = ({topoGroups, addview, form}) => {
           for (let event of e)
             joinedValues += event.value + ' '
           joinedValues = joinedValues.trim()
-          form.setFieldValue("topoEntity.0.value", joinedValues)
-          form.setFieldValue("topoEntity.0.name", key1.toUpperCase().slice(0, -1))
+          form.setFieldValue("entities.0.value", joinedValues)
+          form.setFieldValue("entities.0.name", key1.toUpperCase().slice(0, -1))
         }}
         entitiesInitials={!addview ? entityInitValues(["NGI", "PROJECT"]) : undefined}
       />
@@ -447,8 +447,8 @@ const TopologyEntityFields = ({topoGroups, addview, form}) => {
           for (let event of e)
             joinedValues += event.value + ' '
           joinedValues = joinedValues.trim()
-          form.setFieldValue("topoEntity.1.name", key2.toUpperCase())
-          form.setFieldValue("topoEntity.1.value", joinedValues)
+          form.setFieldValue("entities.1.name", key2.toUpperCase())
+          form.setFieldValue("entities.1.value", joinedValues)
         }}
         entitiesInitials={!addview ? entityInitValues(["SITES", "SERVICEGROUPS"]) : undefined}
       />
@@ -886,7 +886,7 @@ export const ReportsComponent = (props) => {
     dataToSend['profiles'].push(extractedOperationProfile)
     let groupTagsFormatted = formatToReportTags('argo.group.filter.tags', formValues.groups)
     let endpointTagsFormatted = formatToReportTags('argo.endpoint.filter.tags', formValues.endpoints)
-    let groupEntitiesFormatted = formatToReportEntities('argo.group.filter.fields', formValues.topoEntity)
+    let groupEntitiesFormatted = formatToReportEntities('argo.group.filter.fields', formValues.entities)
     dataToSend['filter_tags'] = [...groupTagsFormatted,
       ...endpointTagsFormatted, ...groupEntitiesFormatted]
     dataToSend['topology_schema'] = formatTopologySchema(formValues.topologyType)
