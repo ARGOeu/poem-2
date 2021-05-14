@@ -589,10 +589,24 @@ export const ReportsComponent = (props) => {
     }
   );
 
+  const sortProfiles = (a, b) => {
+    if (a.toLowerCase() < b.toLowerCase()) return -1;
+    if (a.toLowerCase() > b.toLowerCase()) return 1;
+    if (a.toLowerCase() === b.toLowerCase()) {
+      if (a.toLowerCase() < b.toLowerCase()) return -1;
+      if (a.toLowerCase() > b.toLowerCase()) return 1;
+      if (a.toLowerCase() === b.toLowerCase()) return 0;
+    }
+  }
+
   const extractProfileNames = (profiles) => {
     let tmp = new Array();
+
     for (let profile of profiles)
       tmp.push(profile.name)
+
+    tmp = tmp.sort(sortProfiles)
+
     return tmp;
   }
 
@@ -1172,7 +1186,7 @@ export const ReportsComponent = (props) => {
                       name='aggregationProfile'
                       component={DropDown}
                       data={insertSelectPlaceholder(
-                        extractProfileNames(listAggregationProfiles),
+                        extractProfileNames(listAggregationProfiles).sort(sortProfiles),
                         'Select')}
                       required={true}
                       class_name='custom-select'
