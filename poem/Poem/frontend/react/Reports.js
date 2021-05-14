@@ -213,6 +213,8 @@ const TopologyTagList = ({ part, tagsState, setTagsState, tagsAll, addview, push
   }
 
   const tagsInitValues = (key, data) => {
+    if (data[key] === '')
+      return undefined
     if (data[key].indexOf(' ') === -1)
       return new Object({
         'label': data[key],
