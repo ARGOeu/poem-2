@@ -141,32 +141,34 @@ function insertSelectPlaceholder(data, text) {
 }
 
 
-const TagSelect = ({field, tagOptions, onChangeHandler, isMulti, closeMenuOnSelect, tagInitials}) => {
-    if (tagInitials)
-      return (
-        <Select
-          name={field.name}
-          closeMenuOnSelect={closeMenuOnSelect}
-          isMulti={isMulti}
-          isClearable={false}
-          components={isMulti ? components.MultiValueContainer : components.SingleValue}
-          onChange={(e) => onChangeHandler(e)}
-          options={tagOptions}
-          value={tagInitials}
-        />
-      )
-    else
-      return (
-        <Select
-          name={field.name}
-          closeMenuOnSelect={closeMenuOnSelect}
-          isMulti={isMulti}
-          isClearable={false}
-          components={isMulti ? components.MultiValueContainer : components.SingleValue}
-          onChange={(e) => onChangeHandler(e)}
-          options={tagOptions}
-        />
-      )
+const TagSelect = ({field, tagOptions, onChangeHandler, isMulti,
+  closeMenuOnSelect, tagInitials}) => {
+  if (tagInitials) {
+    return (
+      <Select
+        name={field.name}
+        closeMenuOnSelect={closeMenuOnSelect}
+        isMulti={isMulti}
+        isClearable={false}
+        components={isMulti ? components.MultiValueContainer : components.SingleValue}
+        onChange={(e) => onChangeHandler(e)}
+        options={tagOptions}
+        defaultValue={tagInitials}
+      />
+    )
+  }
+  else
+    return (
+      <Select
+        name={field.name}
+        closeMenuOnSelect={closeMenuOnSelect}
+        isMulti={isMulti}
+        isClearable={false}
+        components={isMulti ? components.MultiValueContainer : components.SingleValue}
+        onChange={(e) => onChangeHandler(e)}
+        options={tagOptions}
+      />
+    )
 }
 
 
@@ -211,6 +213,8 @@ const TopologyTagList = ({ part, tagsState, setTagsState, tagsAll, addview, push
   }
 
   const tagsInitValues = (key, data) => {
+    if (data[key] === '')
+      return undefined
     if (data[key].indexOf(' ') === -1)
       return new Object({
         'label': data[key],
@@ -323,6 +327,138 @@ const TopologyTagList = ({ part, tagsState, setTagsState, tagsAll, addview, push
 }
 
 
+const EntitySelect = ({field, entitiesOptions, onChangeHandler, entitiesInitials}) => {
+  if (entitiesInitials) {
+    return (
+      <Select
+        name={field.name}
+        closeMenuOnSelect={false}
+        components={components.MultiValueContainer}
+        placeholder="Search..."
+        isClearable={false}
+        isMulti
+        onChange={(e) => onChangeHandler(e)}
+        options={entitiesOptions}
+        defaultValue={entitiesInitials}
+      />
+    )
+  }
+  else
+    return (
+      <Select
+        name={field.name}
+        closeMenuOnSelect={false}
+        components={components.MultiValueContainer}
+        placeholder="Search..."
+        isClearable={false}
+        isMulti
+        onChange={(e) => onChangeHandler(e)}
+        options={entitiesOptions}
+      />
+    )
+}
+
+
+const TopologyEntityFields = ({topoGroups, addview, form}) => {
+  const entityInitValues = (matchWhat) => {
+    let tmp = new Array()
+    for (let entity of form.values.entities) {
+      if (matchWhat.indexOf(entity.name) > -1) {
+        if (entity.value.indexOf(' ') > -1) {
+          tmp = entity.value.split(' ').map(e => new Object({
+            'label': e,
+            'value': e
+          }))
+        }
+        else
+          tmp.push(
+            new Object({
+              'label': entity.value,
+              'value': entity.value
+            }))
+      }
+    }
+    return tmp
+  }
+
+  const formatSelectEntities = (data) => {
+    let formatted = new Array()
+    for (var e of [...data])
+      formatted.push(new Object({
+        'label': e,
+        'value': e
+      }))
+    return formatted
+  }
+
+  let topoType = form.values.topologyType
+  let label1 = undefined
+  let label2 = undefined
+  let key1 = undefined
+  let key2 = undefined
+
+  if (topoType === 'Sites') {
+    label1 = 'NGIs:'
+    label2 = 'Sites:'
+    key1 = 'ngis'
+    key2 = 'sites'
+  }
+  else if (topoType === 'ServiceGroups'){
+    label1 = 'Projects:'
+    label2 = 'Service groups:'
+    key1 = 'projects'
+    key2 = 'servicegroups'
+  }
+  else {
+    label1 = 'Upper group:'
+    label2 = 'Lower group:'
+    key1 = 'ngis'
+    key2 = 'sites'
+  }
+
+  return (
+    <React.Fragment>
+      <Label to='topoEntity1'>
+        {label1}
+      </Label>
+      <Field
+        name="entities.0.value"
+        id="topoEntity1"
+        component={EntitySelect}
+        entitiesOptions={formatSelectEntities(topoGroups[key1])}
+        onChangeHandler={(e) => {
+          let joinedValues = ''
+          for (let event of e)
+            joinedValues += event.value + ' '
+          joinedValues = joinedValues.trim()
+          form.setFieldValue("entities.0.value", joinedValues)
+          form.setFieldValue("entities.0.name", key1.toUpperCase().slice(0, -1))
+        }}
+        entitiesInitials={!addview ? entityInitValues(["NGI", "PROJECT"]) : undefined}
+      />
+      <Label to='topoEntity2'>
+        {label2}
+      </Label>
+      <Field
+        name="entities.1.value"
+        id="topoEntity2"
+        component={EntitySelect}
+        entitiesOptions={formatSelectEntities(topoGroups[key2])}
+        onChangeHandler={(e) => {
+          let joinedValues = ''
+          for (let event of e)
+            joinedValues += event.value + ' '
+          joinedValues = joinedValues.trim()
+          form.setFieldValue("entities.1.name", key2.toUpperCase())
+          form.setFieldValue("entities.1.value", joinedValues)
+        }}
+        entitiesInitials={!addview ? entityInitValues(["SITES", "SERVICEGROUPS"]) : undefined}
+      />
+    </React.Fragment>
+  )
+}
+
+
 export const ReportsComponent = (props) => {
   const report_name = props.match.params.name;
   const addview = props.addview
@@ -342,6 +478,7 @@ export const ReportsComponent = (props) => {
   }))
   const [groupsTags, setGroupsTags] = useState(undefined)
   const [endpointsTags, setEndpointsTags] = useState(undefined)
+  const [entitiesState, setEntitiesState] = useState(undefined)
 
   let querykey = undefined;
   if (addview)
@@ -375,6 +512,7 @@ export const ReportsComponent = (props) => {
 
         let groupstags = formatFromReportTags('argo.group.filter.tags', report['filter_tags'])
         let endpointstags = formatFromReportTags('argo.endpoint.filter.tags', report['filter_tags'])
+        let entities = formatFromReportEntities('argo.group.filter.fields', report['filter_tags'])
         let preselectedtags = JSON.parse(JSON.stringify(tagsState))
         preselectedtags['groups'] = new Object()
         preselectedtags['endpoints'] = new Object()
@@ -387,12 +525,14 @@ export const ReportsComponent = (props) => {
         setTagsState(preselectedtags)
         setGroupsTags(groupstags)
         setEndpointsTags(endpointstags)
+        setEntitiesState(entities)
 
         return report;
       }
       else {
         setGroupsTags(new Array())
         setEndpointsTags(new Array())
+        setEntitiesState(new Array())
 
         return {
             tenant: '',
@@ -421,6 +561,7 @@ export const ReportsComponent = (props) => {
     }
   );
 
+
   const { data: listMetricProfiles, error: listMetricProfilesError, isLoading: listMetricProfilesLoading } = useQuery(
     `${querykey}_metricprofiles`, async () => {
       return await webapi.fetchMetricProfiles();
@@ -448,17 +589,62 @@ export const ReportsComponent = (props) => {
     }
   );
 
+  const sortProfiles = (a, b) => {
+    if (a.toLowerCase() < b.toLowerCase()) return -1;
+    if (a.toLowerCase() > b.toLowerCase()) return 1;
+    if (a.toLowerCase() === b.toLowerCase()) {
+      if (a.toLowerCase() < b.toLowerCase()) return -1;
+      if (a.toLowerCase() > b.toLowerCase()) return 1;
+      if (a.toLowerCase() === b.toLowerCase()) return 0;
+    }
+  }
+
   const extractProfileNames = (profiles) => {
     let tmp = new Array();
+
     for (let profile of profiles)
       tmp.push(profile.name)
+
+    tmp = tmp.sort(sortProfiles)
+
     return tmp;
   }
 
   const { data: topologyTags, error: topologyTagsError, isLoading: isLoadingTopologyTags} = useQuery(
     `${querykey}_topologytags`, async () => {
-      let tags = await webapi.fetchReportsToplogyTags();
+      let tags = await webapi.fetchReportsTopologyTags();
       return tags
+    },
+    {
+      enabled: report
+    }
+  );
+
+  const { data: topologyGroups, error: topologyGroupsErrors, isLoading: topologyGroupsErrorsIsLoading } = useQuery(
+    `${querykey}_topologygroups`, async () => {
+      let groups = await webapi.fetchReportsTopologyGroups();
+      let ngis = new Set()
+      let sites = new Set()
+      let projects = new Set()
+      let servicegroups = new Set()
+
+      for (var entity of groups) {
+        if (entity['type'].toLowerCase() === 'project') {
+          projects.add(entity['group'])
+          servicegroups.add(entity['subgroup'])
+        }
+        else if (entity['type'].toLowerCase() === 'ngi') {
+          ngis.add(entity['group'])
+          sites.add(entity['subgroup'])
+        }
+      }
+
+      return new Object({
+        ngis,
+        sites,
+        projects,
+        servicegroups
+      })
     },
     {
       enabled: report
@@ -521,6 +707,32 @@ export const ReportsComponent = (props) => {
     return tags
   }
 
+  const formatToReportEntities = (context, formikEntities) => {
+    let entities = new Array()
+
+    for (let entity of formikEntities) {
+      let tmpEntity = new Object()
+      let tmpEntites = new Array()
+      if (entity.value.indexOf(' ') !== -1) {
+        let values = entity.value.split(' ')
+        for (var val of values)
+          tmpEntites.push(new Object({
+            name: entity.name,
+            value: val,
+            context: context 
+          }))
+        entities = [...entities, ...tmpEntites]
+      }
+      else {
+        tmpEntity['name'] = entity.name
+        tmpEntity['value'] = entity.value
+        tmpEntity['context'] = context
+        entities.push(tmpEntity)
+      }
+    }
+    return entities
+  }
+
   const formatFromReportTags = (tagsContext, formikTags) => {
     let tmpTagsJoint = new Object()
     let tags = new Array()
@@ -540,6 +752,27 @@ export const ReportsComponent = (props) => {
       }))
 
     return tags
+  }
+
+  const formatFromReportEntities = (context, formikEntities) => {
+    let tmpEntityJoint = new Object()
+    let entities = new Array()
+
+    for (let entity of formikEntities) {
+      if (entity.context === context) {
+        if (tmpEntityJoint[entity.name] === undefined)
+          tmpEntityJoint[entity.name] = new Array()
+        tmpEntityJoint[entity.name].push(entity.value)
+      }
+    }
+
+    for (let entity in tmpEntityJoint)
+      entities.push(new Object({
+        'name': entity,
+        'value': tmpEntityJoint[entity].join(' ')
+      }))
+
+    return entities
   }
 
   const formatTopologySchema = (toposchema) => {
@@ -669,7 +902,9 @@ export const ReportsComponent = (props) => {
     dataToSend['profiles'].push(extractedOperationProfile)
     let groupTagsFormatted = formatToReportTags('argo.group.filter.tags', formValues.groups)
     let endpointTagsFormatted = formatToReportTags('argo.endpoint.filter.tags', formValues.endpoints)
-    dataToSend['filter_tags'] = [...groupTagsFormatted, ...endpointTagsFormatted]
+    let groupEntitiesFormatted = formatToReportEntities('argo.group.filter.fields', formValues.entities)
+    dataToSend['filter_tags'] = [...groupTagsFormatted,
+      ...endpointTagsFormatted, ...groupEntitiesFormatted]
     dataToSend['topology_schema'] = formatTopologySchema(formValues.topologyType)
 
     if (addview) {
@@ -777,6 +1012,7 @@ export const ReportsComponent = (props) => {
       doChange(formikValues)
   }
 
+
   if (reportLoading || listMetricProfilesLoading || listAggregationProfilesLoading || listOperationsProfilesLoading)
     return (<LoadingAnim/>);
 
@@ -792,7 +1028,9 @@ export const ReportsComponent = (props) => {
   else if (listOperationsProfilesError)
     return (<ErrorComponent error={listOperationsProfilesError}/>);
 
-  else if (report && topologyTags && groupsTags !== undefined && endpointsTags !== undefined)  {
+  else if (report && userDetails && topologyTags && topologyGroups &&
+    groupsTags !== undefined && endpointsTags !== undefined
+    && entitiesState !== undefined)  {
     let metricProfile = '';
     let aggregationProfile = '';
     let operationsProfile = '';
@@ -852,6 +1090,7 @@ export const ReportsComponent = (props) => {
             groupname: report.groupname,
             groups: groupsTags,
             endpoints: endpointsTags,
+            entities: entitiesState
           }}
           onSubmit = {(values) => onSubmitHandle(values)}
         >
@@ -947,7 +1186,7 @@ export const ReportsComponent = (props) => {
                       name='aggregationProfile'
                       component={DropDown}
                       data={insertSelectPlaceholder(
-                        extractProfileNames(listAggregationProfiles),
+                        extractProfileNames(listAggregationProfiles).sort(sortProfiles),
                         'Select')}
                       required={true}
                       class_name='custom-select'
@@ -996,7 +1235,12 @@ export const ReportsComponent = (props) => {
                         <FieldArray
                           name="groups"
                           render={props => (
-                            <TopologyTagList part="groups" tagsState={tagsState} setTagsState={setTagsState} tagsAll={topologyTags} {...props}/>
+                            <TopologyTagList
+                              part="groups"
+                              tagsState={tagsState}
+                              setTagsState={setTagsState}
+                              tagsAll={topologyTags}
+                              {...props}/>
                           )}
                         />
                         <div>
@@ -1005,7 +1249,16 @@ export const ReportsComponent = (props) => {
                         <CardTitle className="mb-2">
                           <strong>Entities</strong>
                         </CardTitle>
-                          FooBar
+                        <FieldArray
+                          name="entities"
+                          render={props => (
+                            <TopologyEntityFields
+                              topoGroups={topologyGroups}
+                              addview={addview}
+                              {...props}
+                            />
+                          )}
+                        />
                       </CardBody>
                     </Card>
                   </Col>
@@ -1020,8 +1273,14 @@ export const ReportsComponent = (props) => {
                         </CardTitle>
                         <FieldArray
                           name="endpoints"
-                          render={props => (
-                            <TopologyTagList part="endpoints" tagsState={tagsState} setTagsState={setTagsState} tagsAll={topologyTags} addview={addview} {...props}/>
+                          render={propsLocal => (
+                            <TopologyTagList
+                              part="endpoints"
+                              tagsState={tagsState}
+                              setTagsState={setTagsState}
+                              tagsAll={topologyTags}
+                              addview={addview}
+                              {...propsLocal}/>
                           )}
                         />
                       </CardBody>

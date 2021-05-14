@@ -109,7 +109,7 @@ class GetConfigOptions(APIView):
         options.update(webapireports=dict(
             main=settings.WEBAPI_REPORTS,
             tags=settings.WEBAPI_REPORTSTAGS,
-            toplogygroups=settings.WEBAPI_REPORTSTOPOLOGYGROUPS,
+            topologygroups=settings.WEBAPI_REPORTSTOPOLOGYGROUPS,
             topologyendpoints=settings.WEBAPI_REPORTSTOPOLOGYENDPOINTS,
         ))
         options.update(tenant_name=tenant)
