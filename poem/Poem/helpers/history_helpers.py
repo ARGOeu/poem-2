@@ -424,7 +424,7 @@ def create_profile_history(instance, data, user, description=None):
         })
 
     elif isinstance(
-            instance, (poem_models.Aggregation, poem_models.ThresholdsProfiles)
+            instance, (poem_models.Aggregation, poem_models.ThresholdsProfiles, poem_models.Reports)
     ):
         serialized_data[0]['fields'].update(**data)
 
