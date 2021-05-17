@@ -75,7 +75,7 @@ import Autosuggest from 'react-autosuggest';
 import { CookiePolicy } from './CookiePolicy';
 import { useTable, usePagination, useFilters } from 'react-table';
 import { Helmet } from 'react-helmet';
-import Select, {components} from 'react-select';
+import Select from 'react-select';
 
 
 export const CustomSelect = ({...props}) => {
@@ -183,20 +183,18 @@ export const CustomSelect = ({...props}) => {
     }
   };
 
-  const customDropdownIndicator = ({ innerRef, innerProps }) => (
-    <components.DropdownIndicator {...innerProps}>
-      <div aria-haspopup="true" aria-expanded="true"
-        className='form-control custom-select'
-        style={customDropdownIndicatorStyle} ref={innerRef} {...innerProps}>
-        <span className="sr-only">Toggle Dropdown</span>
-      </div>
-    </components.DropdownIndicator>
+  const DropdownIndicator = ({ innerRef, innerProps }) => (
+    <div aria-haspopup="true" aria-expanded="true"
+      className='form-control custom-select'
+      style={customDropdownIndicatorStyle} ref={innerRef} {...innerProps}>
+      <span className="sr-only">Toggle Dropdown</span>
+    </div>
   );
 
   return (
     <Select
       {...props}
-      components={{customDropdownIndicator}}
+      components={{DropdownIndicator}}
       styles={customStyles}
     />
   )
