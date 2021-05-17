@@ -233,20 +233,6 @@ export const CustomSelect = ({...props}) => {
     //})
   }
 
-  const customDropdownIndicatorStyle = {
-    border: 0,
-  };
-
-  const DropdownIndicator = ({ innerRef, innerProps }) => (
-    <div aria-haspopup="true" aria-expanded="true"
-      className='custom-select'
-      style={customDropdownIndicatorStyle} ref={innerRef} {...innerProps}>
-      <span className="sr-only">Toggle Dropdown</span>
-    </div>
-  );
-
-  const IndicatorSeparator = ({ innerRef, innerProps }) => ('');
-
   return (
     <Select
       {...props}
