@@ -75,134 +75,132 @@ import Autosuggest from 'react-autosuggest';
 import { CookiePolicy } from './CookiePolicy';
 import { useTable, usePagination, useFilters } from 'react-table';
 import { Helmet } from 'react-helmet';
+import Select, {components} from 'react-select';
 
-//if (color === 'primary') {
-let backgroundColor = '#0069d9';
-// border = '#0062cc';
-let textColor = '#fff';
-//}
 
-const customSelectDropdownIndicatorStyle = {
-  pointer: '',
-  color: '#495057',
-  marginLeft: -1,
-  border: '1px solid #ced4da',
-  borderRadius: '.25em',
-  borderTopLeftRadius: '.25em',
-  borderBottomLeftRadius: '.25em',
-  padding: '.375rem .75rem',
-  display: 'inline-block',
-  // textTransform: 'none',
-  // position: 'relative',
-  zIndex: 2,
-  // textShadow: 'none',
-  // textIndent: 0,
-  // alignItems: 'flex-start',
-  // overflow: 'visible',
-  // fontWeight: 400,
-  // fontSize: '1rem',
-  // lineHeight: 1.5,
-  // textAlign: 'center',
-  // verticalAlign: 'middle',
-  transition: 'color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out,box-shadow .15s ease-in-out',
-  ':hover': {
-    textDecoration: 'none'
-  },
-  '::after': {
-    display: 'inline-block',
-    marginLeft: '.255em',
-    verticalAlign: '.255em',
-    content: '',
-    borderTop: '.3em solid',
-    borderRight: '.3em solid transparent',
-    borderBottom: 0,
-    borderLeft: '.3em solid transparent'
-  }
-};
+export const CustomSelect = ({...props}) => {
+  let backgroundColor = '#0069d9';
+  let textColor = '#fff';
 
-const customSelectDropdownIndicator = ({ innerRef, innerProps }) => (
-  <div aria-haspopup="true" aria-expanded="true"
-    className='form-control custom-select'
-    style={dropdownIndicatorStyle} ref={innerRef} {...innerProps}>
-    <span className="sr-only">Toggle Dropdown</span>
-  </div>
-);
-
-const customSelectStyles = {
-  control: (provided) => ({
-    ...provided,
-    margin: 0,
-    borderWidth: 0,
-    boxShadow: 'none',
-    backgroundColor: '#fff',
-    overflow: 'visible',
-    height: 'calc(1.5em + .75rem + 2px)',
-    borderRadius: '.25rem',
-    cursor: 'text',
-    lineHeight: 1.5,
-    fontWeight: 400,
-    backgroundClip: 'padding-box',
-    textShadow: 'none',
-    borderTopRightRadius: 0,
-    borderBottomLeftRadius: 0,
-    textAlign: 'start',
-    textIndent: 0
-  }),
-  valueContainer: (provided, state) => ({
-    ...provided,
-    borderWidth: 1,
-    borderStyle: 'solid',
-    borderColor: state.selectProps.menuIsOpen ? '#66afe9' : '#ced4da',
-    borderTopLeftRadius: 4,
-    borderBottomLeftRadius: 4,
-    transition: 'border-color .15s ease-in-out, box-shadow .15s ease-in-out',
-    boxShadow: state.selectProps.menuIsOpen ? '0 0 0 .2rem rgba(0, 123, 255, .25)' : 'none',
-    ':focus': {
-      outline: 0,
-    }
-  }),
-  placeholder: () => ({
-    color: '#6c757d'
-    // textAlign: 'start'
-  }),
-  indicatorSeparator: () => ({
-    display: 'none',
-  }),
-  menu: (provided) => ({
-    ...provided,
-    zIndex: 1000,
-    padding: '.5rem 0',
-    margin: '.375rem 0 0',
-    border: '1px solid rgba(0, 0, 0, .15)',
-    boxShadow: '0 .25rem .75rem rgba(0, 0, 0, .1)'
-  }),
-  menuList: (provided) => ({
-    ...provided,
-    padding: 0
-  }),
-  option: (provided, state) => ({
-    ...provided,
-    padding: '.25rem 1.5rem',
-    cursor: 'pointer',
-    whiteSpace: 'nowrap',
-    clear: 'both',
-    color: state.isSelected ? '#fff' : '#16181b',
-    backgroundColor: state.isSelected ? backgroundColor : 'transparent',
-    ':hover:not(:active)': {
+  const customStyles = {
+    control: (provided) => ({
+      ...provided,
+      margin: 0,
+      borderWidth: 0,
+      boxShadow: 'none',
+      backgroundColor: '#fff',
+      overflow: 'visible',
+      height: 'calc(1.5em + .75rem + 2px)',
+      borderRadius: '.25rem',
+      cursor: 'text',
+      lineHeight: 1.5,
+      fontWeight: 400,
+      backgroundClip: 'padding-box',
+      textShadow: 'none',
+      borderTopRightRadius: 0,
+      borderBottomLeftRadius: 0,
+      textAlign: 'start',
+      textIndent: 0
+    }),
+    valueContainer: (provided, state) => ({
+      ...provided,
+      borderWidth: 1,
+      borderStyle: 'solid',
+      borderColor: state.selectProps.menuIsOpen ? '#66afe9' : '#ced4da',
+      borderTopLeftRadius: 4,
+      borderBottomLeftRadius: 4,
+      transition: 'border-color .15s ease-in-out, box-shadow .15s ease-in-out',
+      boxShadow: state.selectProps.menuIsOpen ? '0 0 0 .2rem rgba(0, 123, 255, .25)' : 'none',
+      ':focus': {
+        outline: 0,
+      }
+    }),
+    placeholder: () => ({
+      color: '#6c757d'
+      // textAlign: 'start'
+    }),
+    indicatorSeparator: () => ({
+      display: 'none',
+    }),
+    menu: (provided) => ({
+      ...provided,
+      zIndex: 1000,
+      padding: '.5rem 0',
+      margin: '.375rem 0 0',
+      border: '1px solid rgba(0, 0, 0, .15)',
+      boxShadow: '0 .25rem .75rem rgba(0, 0, 0, .1)'
+    }),
+    menuList: (provided) => ({
+      ...provided,
+      padding: 0
+    }),
+    option: (provided, state) => ({
+      ...provided,
+      padding: '.25rem 1.5rem',
+      cursor: 'pointer',
+      whiteSpace: 'nowrap',
+      clear: 'both',
       color: state.isSelected ? '#fff' : '#16181b',
-      backgroundColor: state.isSelected ? backgroundColor : '#f8f9fa'
-    },
-    ':active': {
-      color: '#fff',
-      textDecoration: 'none',
-      backgroundColor
-    },
-    ':focus': {
-      outline: '5px auto -webkit-focus-ring-color'
-    }
-  }),
-}
+      backgroundColor: state.isSelected ? backgroundColor : 'transparent',
+      ':hover:not(:active)': {
+        color: state.isSelected ? '#fff' : '#16181b',
+        backgroundColor: state.isSelected ? backgroundColor : '#f8f9fa'
+      },
+      ':active': {
+        color: '#fff',
+        textDecoration: 'none',
+        backgroundColor
+      },
+      ':focus': {
+        outline: '5px auto -webkit-focus-ring-color'
+      }
+    })
+  }
 
+  const customDropdownIndicatorStyle = {
+    color: '#495057',
+    marginLeft: -1,
+    border: '1px solid #ced4da',
+    borderRadius: '.25em',
+    borderTopLeftRadius: '.25em',
+    borderBottomLeftRadius: '.25em',
+    padding: '.375rem .75rem',
+    display: 'inline-block',
+    zIndex: 2,
+    transition: 'color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out,box-shadow .15s ease-in-out',
+    ':hover': {
+      textDecoration: 'none'
+    },
+    '::after': {
+      display: 'inline-block',
+      marginLeft: '.255em',
+      verticalAlign: '.255em',
+      content: '',
+      borderTop: '.3em solid',
+      borderRight: '.3em solid transparent',
+      borderBottom: 0,
+      borderLeft: '.3em solid transparent'
+    }
+  };
+
+  const customDropdownIndicator = ({ innerRef, innerProps }) => (
+    <components.DropdownIndicator {...innerProps}>
+      <div aria-haspopup="true" aria-expanded="true"
+        className='form-control custom-select'
+        style={customDropdownIndicatorStyle} ref={innerRef} {...innerProps}>
+        <span className="sr-only">Toggle Dropdown</span>
+      </div>
+    </components.DropdownIndicator>
+  );
+
+  return (
+    <Select
+      {...props}
+      components={{customDropdownIndicator}}
+      styles={customStyles}
+    />
+  )
+}
 
 
 var list_pages = ['administration', 'probes',
