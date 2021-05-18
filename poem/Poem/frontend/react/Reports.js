@@ -146,7 +146,7 @@ const TagSelect = ({field, tagOptions, onChangeHandler, isMulti,
   closeMenuOnSelect, tagInitials}) => {
   if (tagInitials) {
     return (
-      <Select
+      <CustomReactSelect
         name={field.name}
         closeMenuOnSelect={closeMenuOnSelect}
         isMulti={isMulti}
@@ -160,7 +160,7 @@ const TagSelect = ({field, tagOptions, onChangeHandler, isMulti,
   }
   else
     return (
-      <Select
+      <CustomReactSelect
         name={field.name}
         closeMenuOnSelect={closeMenuOnSelect}
         isMulti={isMulti}
