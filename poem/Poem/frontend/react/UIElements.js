@@ -172,7 +172,6 @@ export const CustomReactSelect = ({...props}) => {
       backgroundColor: '#fff',
       overflow: 'visible',
       borderRadius: '.25rem',
-      cursor: 'pointer',
       fontWeight: 400,
       backgroundClip: 'padding-box',
       textShadow: 'none',
@@ -185,6 +184,26 @@ export const CustomReactSelect = ({...props}) => {
         outline: 0,
       }
     }),
+    option: (provided) => ({
+      ...provided,
+      padding: '.25rem 1.5rem',
+      cursor: 'pointer',
+      whiteSpace: 'nowrap',
+      clear: 'both',
+      color: '#16181b',
+      backgroundColor: 'transparent',
+      ':hover:not(:active)': {
+        color: '#fff',
+        backgroundColor: '#4a90d9'
+      },
+      ':active': {
+        color: '#fff',
+        backgroundColor: '#5a6268'
+      },
+      ':focus': {
+        outline: '5px auto -webkit-focus-ring-color',
+      }
+    })
   }
   const DropdownIndicator = ({ ...props }) => (
     <components.DropdownIndicator {...props}>
