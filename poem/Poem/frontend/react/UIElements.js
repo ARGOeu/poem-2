@@ -195,9 +195,6 @@ export const CustomSelect = ({...props}) => {
       //color: '#6c757d'
       //// textAlign: 'start'
     //}),
-    indicatorSeparator: () => ({
-      display: 'none',
-    }),
     //menu: (provided) => ({
       //...provided,
       //zIndex: 1000,
@@ -236,6 +233,7 @@ export const CustomSelect = ({...props}) => {
   return (
     <Select
       {...props}
+      components={{IndicatorSeparator: null}}
       styles={customStyles}
     />
   )
