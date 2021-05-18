@@ -30,7 +30,6 @@ import {
   FormText,
   Label
 } from 'reactstrap';
-import Select, { components } from 'react-select';
 import { CustomReactSelect } from './UIElements';
 
 
@@ -151,7 +150,6 @@ const TagSelect = ({field, tagOptions, onChangeHandler, isMulti,
         closeMenuOnSelect={closeMenuOnSelect}
         isMulti={isMulti}
         isClearable={false}
-        components={isMulti ? components.MultiValueContainer : components.SingleValue}
         onChange={(e) => onChangeHandler(e)}
         options={tagOptions}
         defaultValue={tagInitials}
@@ -165,7 +163,6 @@ const TagSelect = ({field, tagOptions, onChangeHandler, isMulti,
         closeMenuOnSelect={closeMenuOnSelect}
         isMulti={isMulti}
         isClearable={false}
-        components={isMulti ? components.MultiValueContainer : components.SingleValue}
         onChange={(e) => onChangeHandler(e)}
         options={tagOptions}
       />
