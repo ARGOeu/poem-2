@@ -30,7 +30,7 @@ import {
   FormText,
   Label
 } from 'reactstrap';
-import Select, { components } from 'react-select';
+import { CustomReactSelect } from './UIElements';
 
 
 export const ReportsAdd = (props) => <ReportsComponent addview={true} {...props}/>;
@@ -145,12 +145,11 @@ const TagSelect = ({field, tagOptions, onChangeHandler, isMulti,
   closeMenuOnSelect, tagInitials}) => {
   if (tagInitials) {
     return (
-      <Select
+      <CustomReactSelect
         name={field.name}
         closeMenuOnSelect={closeMenuOnSelect}
         isMulti={isMulti}
         isClearable={false}
-        components={isMulti ? components.MultiValueContainer : components.SingleValue}
         onChange={(e) => onChangeHandler(e)}
         options={tagOptions}
         defaultValue={tagInitials}
@@ -159,12 +158,11 @@ const TagSelect = ({field, tagOptions, onChangeHandler, isMulti,
   }
   else
     return (
-      <Select
+      <CustomReactSelect
         name={field.name}
         closeMenuOnSelect={closeMenuOnSelect}
         isMulti={isMulti}
         isClearable={false}
-        components={isMulti ? components.MultiValueContainer : components.SingleValue}
         onChange={(e) => onChangeHandler(e)}
         options={tagOptions}
       />
@@ -330,10 +328,9 @@ const TopologyTagList = ({ part, tagsState, setTagsState, tagsAll, addview, push
 const EntitySelect = ({field, entitiesOptions, onChangeHandler, entitiesInitials}) => {
   if (entitiesInitials) {
     return (
-      <Select
+      <CustomReactSelect
         name={field.name}
         closeMenuOnSelect={false}
-        components={components.MultiValueContainer}
         placeholder="Search..."
         isClearable={false}
         isMulti
@@ -345,10 +342,9 @@ const EntitySelect = ({field, entitiesOptions, onChangeHandler, entitiesInitials
   }
   else
     return (
-      <Select
+      <CustomReactSelect
         name={field.name}
         closeMenuOnSelect={false}
-        components={components.MultiValueContainer}
         placeholder="Search..."
         isClearable={false}
         isMulti

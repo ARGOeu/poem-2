@@ -75,6 +75,9 @@ import Autosuggest from 'react-autosuggest';
 import { CookiePolicy } from './CookiePolicy';
 import { useTable, usePagination, useFilters } from 'react-table';
 import { Helmet } from 'react-helmet';
+import Select, { components } from 'react-select';
+
+
 
 
 var list_pages = ['administration', 'probes',
@@ -158,6 +161,79 @@ export const Icon = props =>
     )
   else
     return <FontAwesomeIcon icon={link_icon.get(props.i)} size={props.i === 'yumrepos' || props.i === 'metricprofiles' ? 'sm' : '1x'} fixedWidth/>
+}
+
+
+export const CustomReactSelect = ({...props}) => {
+  const customStyles = {
+    control: (provided,  state) => ({
+      ...provided,
+      margin: 0,
+      backgroundColor: '#fff',
+      overflow: 'visible',
+      borderRadius: '.25rem',
+      fontWeight: 400,
+      backgroundClip: 'padding-box',
+      textShadow: 'none',
+      textAlign: 'start',
+      textIndent: 0,
+      borderColor: state.selectProps.menuIsOpen ? '#66afe9' : '#ced4da',
+      transition: 'border-color .15s ease-in-out, box-shadow .15s ease-in-out',
+      boxShadow: state.selectProps.menuIsOpen ? '0 0 0 .2rem rgba(0, 123, 255, .25)' : 'none',
+      ':focus': {
+        outline: 0,
+      }
+    }),
+    option: (provided) => ({
+      ...provided,
+      padding: '.25rem 1.5rem',
+      cursor: 'pointer',
+      whiteSpace: 'nowrap',
+      clear: 'both',
+      color: '#16181b',
+      backgroundColor: 'transparent',
+      ':hover:not(:active)': {
+        color: '#fff',
+        backgroundColor: '#4a90d9'
+      },
+      ':active': {
+        color: '#fff',
+        backgroundColor: '#5a6268'
+      },
+      ':focus': {
+        outline: '5px auto -webkit-focus-ring-color',
+      }
+    })
+  }
+  const DropdownIndicator = ({ ...props }) => (
+    <components.DropdownIndicator {...props}>
+      <svg
+        height='10'
+        width='10'
+        viewBox='0 0 4 5'
+        aria-hidden="true"
+        focusable="false"
+        style={{
+          display: 'inline-block',
+          fill: 'currentColor',
+          lineHeight: 1,
+          stroke: 'currentColor',
+          strokeWidth: 0,
+        }}
+      >
+        <path fill='#343a40' d='M2 0L0 2h4zm0 5L0 3h4z'/>
+      </svg>
+    </components.DropdownIndicator>
+  )
+
+
+  return (
+    <Select
+      {...props}
+      components={{IndicatorSeparator: null, DropdownIndicator}}
+      styles={customStyles}
+    />
+  )
 }
 
 
