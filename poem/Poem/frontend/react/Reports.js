@@ -31,7 +31,7 @@ import {
   Label
 } from 'reactstrap';
 import Select, { components } from 'react-select';
-import { CustomSelect } from './UIElements';
+import { CustomReactSelect } from './UIElements';
 
 
 export const ReportsAdd = (props) => <ReportsComponent addview={true} {...props}/>;
@@ -331,7 +331,7 @@ const TopologyTagList = ({ part, tagsState, setTagsState, tagsAll, addview, push
 const EntitySelect = ({field, entitiesOptions, onChangeHandler, entitiesInitials}) => {
   if (entitiesInitials) {
     return (
-      <CustomSelect
+      <CustomReactSelect
         name={field.name}
         closeMenuOnSelect={false}
         placeholder="Search..."
@@ -345,7 +345,7 @@ const EntitySelect = ({field, entitiesOptions, onChangeHandler, entitiesInitials
   }
   else
     return (
-      <CustomSelect
+      <CustomReactSelect
         name={field.name}
         closeMenuOnSelect={false}
         placeholder="Search..."

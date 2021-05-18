@@ -75,7 +75,7 @@ import Autosuggest from 'react-autosuggest';
 import { CookiePolicy } from './CookiePolicy';
 import { useTable, usePagination, useFilters } from 'react-table';
 import { Helmet } from 'react-helmet';
-import Select from 'react-select';
+import Select, { components } from 'react-select';
 
 
 
@@ -164,21 +164,15 @@ export const Icon = props =>
 }
 
 
-export const CustomSelect = ({...props}) => {
-  let backgroundColor = '#0069d9';
-  let textColor = '#fff';
-
+export const CustomReactSelect = ({...props}) => {
   const customStyles = {
     control: (provided,  state) => ({
       ...provided,
       margin: 0,
-      //borderWidth: 0,
       backgroundColor: '#fff',
       overflow: 'visible',
-      //height: 'calc(1.5em + .75rem + 2px)',
       borderRadius: '.25rem',
       cursor: 'pointer',
-      //lineHeight: 1.5,
       fontWeight: 400,
       backgroundClip: 'padding-box',
       textShadow: 'none',
@@ -191,49 +185,33 @@ export const CustomSelect = ({...props}) => {
         outline: 0,
       }
     }),
-    //placeholder: () => ({
-      //color: '#6c757d'
-      //// textAlign: 'start'
-    //}),
-    //menu: (provided) => ({
-      //...provided,
-      //zIndex: 1000,
-      //padding: '.5rem 0',
-      //margin: '.375rem 0 0',
-      //border: '1px solid rgba(0, 0, 0, .15)',
-      //boxShadow: '0 .25rem .75rem rgba(0, 0, 0, .1)'
-    //}),
-    //menuList: (provided) => ({
-      //...provided,
-      //padding: 0
-    //}),
-    //option: (provided, state) => ({
-      //...provided,
-      //padding: '.25rem 1.5rem',
-      //cursor: 'pointer',
-      //whiteSpace: 'nowrap',
-      //clear: 'both',
-      //color: state.isSelected ? '#fff' : '#16181b',
-      //backgroundColor: state.isSelected ? backgroundColor : 'transparent',
-      //':hover:not(:active)': {
-        //color: state.isSelected ? '#fff' : '#16181b',
-        //backgroundColor: state.isSelected ? backgroundColor : '#f8f9fa'
-      //},
-      //':active': {
-        //color: '#fff',
-        //textDecoration: 'none',
-        //backgroundColor
-      //},
-      //':focus': {
-        //outline: '5px auto -webkit-focus-ring-color'
-      //}
-    //})
   }
+  const DropdownIndicator = ({ ...props }) => (
+    <components.DropdownIndicator {...props}>
+      <svg
+        height='10'
+        width='10'
+        viewBox='0 0 4 5'
+        aria-hidden="true"
+        focusable="false"
+        style={{
+          display: 'inline-block',
+          fill: 'currentColor',
+          lineHeight: 1,
+          stroke: 'currentColor',
+          strokeWidth: 0,
+        }}
+      >
+        <path fill='#343a40' d='M2 0L0 2h4zm0 5L0 3h4z'/>
+      </svg>
+    </components.DropdownIndicator>
+  )
+
 
   return (
     <Select
       {...props}
-      components={{IndicatorSeparator: null}}
+      components={{IndicatorSeparator: null, DropdownIndicator}}
       styles={customStyles}
     />
   )
