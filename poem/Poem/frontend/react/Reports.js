@@ -518,7 +518,9 @@ export const ReportsComponent = (props) => {
         endpointstags.forEach((e, i) => {
           preselectedtags['endpoints'][i] = e.name
         })
-        setTagsState(preselectedtags)
+        if (tagsState['groups'] === undefined
+          && tagsState['endpoints'] === undefined)
+          setTagsState(preselectedtags)
         setGroupsTags(groupstags)
         setEndpointsTags(endpointstags)
         setEntitiesState(entities)
@@ -553,7 +555,7 @@ export const ReportsComponent = (props) => {
       }
     },
     {
-      enabled: userDetails
+      enabled: userDetails,
     }
   );
 
