@@ -39,6 +39,11 @@ const ReportsSchema = Yup.object().shape({
   name: Yup.string().required('Required'),
   groupname: Yup.string().required('Required'),
   topologyType: Yup.string().required('Required'),
+  availabilityThreshold: Yup.string().required('Required'),
+  reliabilityThreshold: Yup.string().required('Required'),
+  downtimeThreshold: Yup.string().required('Required'),
+  unknownThreshold: Yup.string().required('Required'),
+  uptimeThreshold: Yup.string().required('Required'),
 })
 
 export const ReportsAdd = (props) => <ReportsComponent addview={true} {...props}/>;
@@ -1317,6 +1322,10 @@ export const ReportsComponent = (props) => {
                       name='availabilityThreshold'
                       className='form-control'
                     />
+                    {
+                      props.errors && props.errors.availabilityThreshold &&
+                        FancyErrorMessage(props.errors.availabilityThreshold)
+                    }
                   </Col>
                   <Col md={2} className='mr-4'>
                     <Label to='reliabilityThreshold'>Reliability:</Label>
@@ -1325,6 +1334,10 @@ export const ReportsComponent = (props) => {
                       name='reliabilityThreshold'
                       className='form-control'
                     />
+                    {
+                      props.errors && props.errors.reliabilityThreshold &&
+                        FancyErrorMessage(props.errors.reliabilityThreshold)
+                    }
                   </Col>
                   <Col md={2} className='mr-4'>
                     <Label to='uptimeThreshold'>Uptime:</Label>
@@ -1333,6 +1346,10 @@ export const ReportsComponent = (props) => {
                       name='uptimeThreshold'
                       className='form-control'
                     />
+                    {
+                      props.errors && props.errors.uptimeThreshold &&
+                        FancyErrorMessage(props.errors.uptimeThreshold)
+                    }
                   </Col>
                   <Col md={2} className='mr-4'>
                     <Label to='unknownThreshold'>Unknown:</Label>
@@ -1341,6 +1358,10 @@ export const ReportsComponent = (props) => {
                       name='unknownThreshold'
                       className='form-control'
                     />
+                    {
+                      props.errors && props.errors.unknownThreshold &&
+                        FancyErrorMessage(props.errors.unknownThreshold)
+                    }
                   </Col>
                   <Col md={2} className='mr-4'>
                     <Label to='downtimeThreshold'>Downtime:</Label>
@@ -1349,6 +1370,10 @@ export const ReportsComponent = (props) => {
                       name='downtimeThreshold'
                       className='form-control'
                     />
+                    {
+                      props.errors && props.errors.downtimeThreshold &&
+                        FancyErrorMessage(props.errors.downtimeThreshold)
+                    }
                   </Col>
                 </Row>
               </FormGroup>
