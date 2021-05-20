@@ -3,14 +3,15 @@ import { Backend, WebApi } from './DataManager';
 
 import { useQuery } from 'react-query';
 import {
-  LoadingAnim,
-  ErrorComponent,
-  BaseArgoView,
-  ParagraphTitle,
   BaseArgoTable,
+  BaseArgoView,
   DropDown,
-  NotifyOk,
+  ErrorComponent,
+  FancyErrorMessage,
+  LoadingAnim,
   NotifyError,
+  NotifyOk,
+  ParagraphTitle,
  } from './UIElements';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -1162,6 +1163,10 @@ export const ReportsComponent = (props) => {
                         }
                       </Field>
                     </InputGroup>
+                    {
+                      props.errors && props.errors.groupname &&
+                        FancyErrorMessage(props.errors.groupname)
+                    }
                     <FormText color='muted'>
                       Report is member of given group
                     </FormText>
