@@ -31,7 +31,13 @@ import {
   Label
 } from 'reactstrap';
 import { CustomReactSelect } from './UIElements';
+import * as Yup from 'yup';
 
+
+const ReportsSchema = Yup.object().shape({
+  name: Yup.string().required('Required'),
+  groupname: Yup.string().required('Required'),
+})
 
 export const ReportsAdd = (props) => <ReportsComponent addview={true} {...props}/>;
 export const ReportsChange = (props) => <ReportsComponent {...props}/>;
@@ -1071,6 +1077,7 @@ export const ReportsComponent = (props) => {
         history={false}
       >
         <Formik
+          validationSchema={ReportsSchema}
           initialValues = {{
             id: report.id,
             disabled: report.disabled,
