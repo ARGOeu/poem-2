@@ -1113,6 +1113,10 @@ export const ReportsComponent = (props) => {
                         className='form-control form-control-lg'
                       />
                     </InputGroup>
+                    {
+                      props.errors && props.errors.name &&
+                        FancyErrorMessage(props.errors.name)
+                    }
                     <FormText color='muted'>
                       Report name
                     </FormText>
