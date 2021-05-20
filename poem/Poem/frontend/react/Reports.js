@@ -44,6 +44,9 @@ const ReportsSchema = Yup.object().shape({
   downtimeThreshold: Yup.string().required('Required'),
   unknownThreshold: Yup.string().required('Required'),
   uptimeThreshold: Yup.string().required('Required'),
+  metricProfile: Yup.string().required('Required'),
+  aggregationProfile: Yup.string().required('Required'),
+  operationsProfile: Yup.string().required('Required'),
 })
 
 export const ReportsAdd = (props) => <ReportsComponent addview={true} {...props}/>;
@@ -1198,6 +1201,10 @@ export const ReportsComponent = (props) => {
                       required={true}
                       class_name='custom-select'
                     />
+                    {
+                      props.errors && props.errors.metricProfile &&
+                        FancyErrorMessage(props.errors.metricProfile)
+                    }
                   </Col>
                   <Col md={4}>
                     <Label to='aggregationProfile'>Aggregation profile:</Label>
@@ -1211,6 +1218,10 @@ export const ReportsComponent = (props) => {
                       required={true}
                       class_name='custom-select'
                     />
+                    {
+                      props.errors && props.errors.aggregationProfile &&
+                        FancyErrorMessage(props.errors.aggregationProfile)
+                    }
                   </Col>
                   <Col md={4}>
                     <Label to='operationsProfile'>Operations profile:</Label>
@@ -1224,6 +1235,10 @@ export const ReportsComponent = (props) => {
                       required={true}
                       class_name='custom-select'
                     />
+                    {
+                      props.errors && props.errors.operationsProfile &&
+                        FancyErrorMessage(props.errors.operationsProfile)
+                    }
                   </Col>
                 </Row>
               </FormGroup>
