@@ -3,14 +3,15 @@ import { Backend, WebApi } from './DataManager';
 
 import { useQuery } from 'react-query';
 import {
-  LoadingAnim,
-  ErrorComponent,
-  BaseArgoView,
-  ParagraphTitle,
   BaseArgoTable,
+  BaseArgoView,
   DropDown,
-  NotifyOk,
+  ErrorComponent,
+  FancyErrorMessage,
+  LoadingAnim,
   NotifyError,
+  NotifyOk,
+  ParagraphTitle,
  } from './UIElements';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -31,7 +32,22 @@ import {
   Label
 } from 'reactstrap';
 import { CustomReactSelect } from './UIElements';
+import * as Yup from 'yup';
 
+
+const ReportsSchema = Yup.object().shape({
+  name: Yup.string().required('Required'),
+  groupname: Yup.string().required('Required'),
+  topologyType: Yup.string().required('Required'),
+  availabilityThreshold: Yup.string().required('Required'),
+  reliabilityThreshold: Yup.string().required('Required'),
+  downtimeThreshold: Yup.string().required('Required'),
+  unknownThreshold: Yup.string().required('Required'),
+  uptimeThreshold: Yup.string().required('Required'),
+  metricProfile: Yup.string().required('Required'),
+  aggregationProfile: Yup.string().required('Required'),
+  operationsProfile: Yup.string().required('Required'),
+})
 
 export const ReportsAdd = (props) => <ReportsComponent addview={true} {...props}/>;
 export const ReportsChange = (props) => <ReportsComponent {...props}/>;
@@ -1071,6 +1087,7 @@ export const ReportsComponent = (props) => {
         history={false}
       >
         <Formik
+          validationSchema={ReportsSchema}
           initialValues = {{
             id: report.id,
             disabled: report.disabled,
@@ -1105,6 +1122,10 @@ export const ReportsComponent = (props) => {
                         className='form-control form-control-lg'
                       />
                     </InputGroup>
+                    {
+                      props.errors && props.errors.name &&
+                        FancyErrorMessage(props.errors.name)
+                    }
                     <FormText color='muted'>
                       Report name
                     </FormText>
@@ -1155,6 +1176,10 @@ export const ReportsComponent = (props) => {
                         }
                       </Field>
                     </InputGroup>
+                    {
+                      props.errors && props.errors.groupname &&
+                        FancyErrorMessage(props.errors.groupname)
+                    }
                     <FormText color='muted'>
                       Report is member of given group
                     </FormText>
@@ -1176,6 +1201,10 @@ export const ReportsComponent = (props) => {
                       required={true}
                       class_name='custom-select'
                     />
+                    {
+                      props.errors && props.errors.metricProfile &&
+                        FancyErrorMessage(props.errors.metricProfile)
+                    }
                   </Col>
                   <Col md={4}>
                     <Label to='aggregationProfile'>Aggregation profile:</Label>
@@ -1189,6 +1218,10 @@ export const ReportsComponent = (props) => {
                       required={true}
                       class_name='custom-select'
                     />
+                    {
+                      props.errors && props.errors.aggregationProfile &&
+                        FancyErrorMessage(props.errors.aggregationProfile)
+                    }
                   </Col>
                   <Col md={4}>
                     <Label to='operationsProfile'>Operations profile:</Label>
@@ -1202,6 +1235,10 @@ export const ReportsComponent = (props) => {
                       required={true}
                       class_name='custom-select'
                     />
+                    {
+                      props.errors && props.errors.operationsProfile &&
+                        FancyErrorMessage(props.errors.operationsProfile)
+                    }
                   </Col>
                 </Row>
               </FormGroup>
@@ -1218,6 +1255,10 @@ export const ReportsComponent = (props) => {
                       required={true}
                       class_name='custom-select'
                     />
+                    {
+                      props.errors && props.errors.topologyType &&
+                        FancyErrorMessage(props.errors.topologyType)
+                    }
                   </Col>
                 </Row>
                 <Row>
@@ -1296,6 +1337,10 @@ export const ReportsComponent = (props) => {
                       name='availabilityThreshold'
                       className='form-control'
                     />
+                    {
+                      props.errors && props.errors.availabilityThreshold &&
+                        FancyErrorMessage(props.errors.availabilityThreshold)
+                    }
                   </Col>
                   <Col md={2} className='mr-4'>
                     <Label to='reliabilityThreshold'>Reliability:</Label>
@@ -1304,6 +1349,10 @@ export const ReportsComponent = (props) => {
                       name='reliabilityThreshold'
                       className='form-control'
                     />
+                    {
+                      props.errors && props.errors.reliabilityThreshold &&
+                        FancyErrorMessage(props.errors.reliabilityThreshold)
+                    }
                   </Col>
                   <Col md={2} className='mr-4'>
                     <Label to='uptimeThreshold'>Uptime:</Label>
@@ -1312,6 +1361,10 @@ export const ReportsComponent = (props) => {
                       name='uptimeThreshold'
                       className='form-control'
                     />
+                    {
+                      props.errors && props.errors.uptimeThreshold &&
+                        FancyErrorMessage(props.errors.uptimeThreshold)
+                    }
                   </Col>
                   <Col md={2} className='mr-4'>
                     <Label to='unknownThreshold'>Unknown:</Label>
@@ -1320,6 +1373,10 @@ export const ReportsComponent = (props) => {
                       name='unknownThreshold'
                       className='form-control'
                     />
+                    {
+                      props.errors && props.errors.unknownThreshold &&
+                        FancyErrorMessage(props.errors.unknownThreshold)
+                    }
                   </Col>
                   <Col md={2} className='mr-4'>
                     <Label to='downtimeThreshold'>Downtime:</Label>
@@ -1328,6 +1385,10 @@ export const ReportsComponent = (props) => {
                       name='downtimeThreshold'
                       className='form-control'
                     />
+                    {
+                      props.errors && props.errors.downtimeThreshold &&
+                        FancyErrorMessage(props.errors.downtimeThreshold)
+                    }
                   </Col>
                 </Row>
               </FormGroup>
