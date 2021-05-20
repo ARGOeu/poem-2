@@ -38,6 +38,7 @@ import * as Yup from 'yup';
 const ReportsSchema = Yup.object().shape({
   name: Yup.string().required('Required'),
   groupname: Yup.string().required('Required'),
+  topologyType: Yup.string().required('Required'),
 })
 
 export const ReportsAdd = (props) => <ReportsComponent addview={true} {...props}/>;
@@ -1234,6 +1235,10 @@ export const ReportsComponent = (props) => {
                       required={true}
                       class_name='custom-select'
                     />
+                    {
+                      props.errors && props.errors.topologyType &&
+                        FancyErrorMessage(props.errors.topologyType)
+                    }
                   </Col>
                 </Row>
                 <Row>
