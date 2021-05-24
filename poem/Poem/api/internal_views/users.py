@@ -396,6 +396,7 @@ class GetUserprofileForUsername(APIView):
                     detail='Group of thresholds profiles does not exist.'
                 )
 
+<<<<<<< HEAD
             except KeyError as e:
                 return error_response(
                     status_code=status.HTTP_400_BAD_REQUEST,
@@ -407,6 +408,49 @@ class GetUserprofileForUsername(APIView):
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail='You do not have permission to change user profiles.'
             )
+=======
+        if 'groupsofreports' in dict(request.data):
+            for group in dict(request.data)['groupsofreports']:
+                userprofile.groupsofreports.add(
+                    poem_models.GroupOfReports.objects.get(
+                        name=group
+                    )
+                )
+
+        # remove the groups that existed before, and now were removed:
+        if 'groupsofaggregations' in dict(request.data):
+            for group in userprofile.groupsofaggregations.all():
+                if group.name not in dict(request.data)['groupsofaggregations']:
+                    userprofile.groupsofaggregations.remove(group)
+
+        if 'groupsofmetrics' in dict(request.data):
+            for group in userprofile.groupsofmetrics.all():
+                if group.name not in dict(request.data)['groupsofmetrics']:
+                    userprofile.groupsofmetrics.remove(group)
+
+        if 'groupsofmetricprofiles' in dict(request.data):
+            for group in userprofile.groupsofmetricprofiles.all():
+                if group.name not in dict(request.data)[
+                    'groupsofmetricprofiles'
+                ]:
+                    userprofile.groupsofmetricprofiles.remove(group)
+
+        if 'groupsofthresholdsprofiles' in dict(request.data):
+            for group in userprofile.groupsofthresholdsprofiles.all():
+                if group.name not in dict(request.data)[
+                    'groupsofthresholdsprofiles'
+                ]:
+                    userprofile.groupsofthresholdsprofiles.remove(group)
+
+        if 'groupsofreports' in dict(request.data):
+            for group in userprofile.groupsofreports.all():
+                if group.name not in dict(request.data)[
+                    'groupsofreports'
+                ]:
+                    userprofile.groupsofreports.remove(group)
+
+        return Response(status=status.HTTP_201_CREATED)
+>>>>>>> reflect assignment of reports group to user
 
     def post(self, request):
         if request.user.is_superuser:
