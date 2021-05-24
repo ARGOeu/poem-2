@@ -91,6 +91,7 @@ const mockUsersGroups = {
   aggregations: ['aggr-group1'],
   metrics: ['metric-group1', 'metric-group2'],
   metricprofiles: ['mp-group1'],
+  reports: ['report-group2'],
   thresholdsprofiles: ['threshold-group3']
 }
 
@@ -98,6 +99,7 @@ const mockAllUserGroups = {
   aggregations: ['aggr-group1', 'aggr-group2'],
   metrics: ['metric-group1', 'metric-group2', 'metric-group3'],
   metricprofiles: ['mp-group1'],
+  reports: ['report-group1', 'report-group2'],
   thresholdsprofiles: ['threshold-group2', 'threshold-group3']
 }
 
@@ -897,6 +899,8 @@ describe('Tests for user changeview on tenant POEM', () => {
     const groupsOfAggregationsOptions = screen.getAllByTestId('groupsofaggregations-option');
     const groupsOfThresholdsField = screen.getByLabelText(/groups of threshold/i)
     const groupsOfThresholdsOptions = screen.getAllByTestId('groupsofthresholdsprofiles-option');
+    const groupsOfReportsField = screen.getByLabelText(/groups of reports/i);
+    const groupsOfReportsOptions = screen.getAllByTestId('groupsofreports-option');
     const subjectField = screen.getByTestId('subject');
     const egiidField = screen.getByTestId('egiid');
     const displayNameField = screen.getByTestId('displayname');
@@ -932,6 +936,10 @@ describe('Tests for user changeview on tenant POEM', () => {
     expect(groupsOfThresholdsField).toBeInTheDocument();
     expect(groupsOfThresholdsOptions).toHaveLength(2);
     expect(groupsOfThresholdsOptions[0].selected).toBeFalsy();
+    expect(groupsOfReportsField).toBeInTheDocument();
+    expect(groupsOfReportsOptions).toHaveLength(2);
+    expect(groupsOfReportsOptions[0].selected).toBeFalsy();
+    expect(groupsOfReportsOptions[1].selected).toBeTruthy();
     expect(groupsOfThresholdsOptions[1].selected).toBeTruthy();
     expect(subjectField.value).toBe('some subject');
     expect(subjectField).toBeEnabled();
@@ -1007,6 +1015,7 @@ describe('Tests for user changeview on tenant POEM', () => {
             groupsofaggregations: ['aggr-group1'],
             groupsofmetrics: ['metric-group2', 'metric-group3'],
             groupsofmetricprofiles: ['mp-group1'],
+            groupsofreports: ['report-group2'],
             groupsofthresholdsprofiles: ['threshold-group3']
           }
         ]
@@ -1170,6 +1179,7 @@ describe('Tests for user changeview on tenant POEM', () => {
             groupsofaggregations: ['aggr-group1'],
             groupsofmetrics: ['metric-group2', 'metric-group3'],
             groupsofmetricprofiles: ['mp-group1'],
+            groupsofreports: ['report-group2'],
             groupsofthresholdsprofiles: ['threshold-group3']
           }
       ]
@@ -1311,6 +1321,7 @@ describe('Tests for user changeview on tenant POEM', () => {
             groupsofaggregations: ['aggr-group1'],
             groupsofmetrics: ['metric-group2', 'metric-group3'],
             groupsofmetricprofiles: ['mp-group1'],
+            groupsofreports: ['report-group2'],
             groupsofthresholdsprofiles: ['threshold-group3']
           }
       ]
@@ -1475,6 +1486,8 @@ describe('Tests for user addview on tenant POEM', () => {
     const groupsOfAggregationsOptions = screen.getAllByTestId('groupsofaggregations-option');
     const groupsOfThresholdsField = screen.getByLabelText(/groups of threshold/i)
     const groupsOfThresholdsOptions = screen.getAllByTestId('groupsofthresholdsprofiles-option');
+    const groupsOfReportsField = screen.getByLabelText(/groups of reports/i);
+    const groupsOfReportsOptions = screen.getAllByTestId('groupsofreports-option');
     const subjectField = screen.getByTestId('subject');
     const egiidField = screen.getByTestId('egiid');
     const displayNameField = screen.getByTestId('displayname');
@@ -1511,6 +1524,10 @@ describe('Tests for user addview on tenant POEM', () => {
     expect(groupsOfThresholdsOptions).toHaveLength(2);
     expect(groupsOfThresholdsOptions[0].selected).toBeFalsy();
     expect(groupsOfThresholdsOptions[1].selected).toBeFalsy();
+    expect(groupsOfReportsField).toBeInTheDocument();
+    expect(groupsOfReportsOptions).toHaveLength(2);
+    expect(groupsOfReportsOptions[0].selected).toBeFalsy();
+    expect(groupsOfReportsOptions[1].selected).toBeFalsy();
     expect(subjectField.value).toBe('');
     expect(subjectField).toBeEnabled();
     expect(egiidField.value).toBe('');
@@ -1599,6 +1616,7 @@ describe('Tests for user addview on tenant POEM', () => {
             groupsofaggregations: ['aggr-group2'],
             groupsofmetrics: ['metric-group1'],
             groupsofmetricprofiles: ['mp-group1'],
+            groupsofreports: [],
             groupsofthresholdsprofiles: ['threshold-group3']
           }
         ]
@@ -1861,6 +1879,7 @@ describe('Tests for user addview on tenant POEM', () => {
           groupsofaggregations: ['aggr-group2'],
           groupsofmetrics: ['metric-group1'],
           groupsofmetricprofiles: ['mp-group1'],
+          groupsofreports: [],
           groupsofthresholdsprofiles: ['threshold-group3']
         }
       ]
@@ -1955,6 +1974,7 @@ describe('Tests for user addview on tenant POEM', () => {
           groupsofaggregations: ['aggr-group2'],
           groupsofmetrics: ['metric-group1'],
           groupsofmetricprofiles: ['mp-group1'],
+          groupsofreports: [],
           groupsofthresholdsprofiles: ['threshold-group3']
         }
       ]

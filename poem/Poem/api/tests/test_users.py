@@ -425,6 +425,8 @@ class ListGroupsForGivenUserAPIViewTests(TenantTestCase):
         gtp = poem_models.GroupOfThresholdsProfiles.objects.create(
             name='GROUP-thresholds'
         )
+        poem_models.GroupOfReports.objects.create(name='GROUP1-reports')
+        gr = poem_models.GroupOfReports.objects.create(name='GROUP2-reports')
 
         userprofile = poem_models.UserProfile.objects.create(
             user=user1
@@ -433,6 +435,7 @@ class ListGroupsForGivenUserAPIViewTests(TenantTestCase):
         userprofile.groupsofaggregations.add(ga)
         userprofile.groupsofmetricprofiles.add(gmp)
         userprofile.groupsofthresholdsprofiles.add(gtp)
+        userprofile.groupsofreports.add(gr)
 
     def test_get_groups_for_given_user(self):
         request = self.factory.get(self.url + 'username1')
@@ -445,6 +448,7 @@ class ListGroupsForGivenUserAPIViewTests(TenantTestCase):
                     'aggregations': ['GROUP-aggregations'],
                     'metrics': ['GROUP-metrics'],
                     'metricprofiles': ['GROUP-metricprofiles'],
+                    'reports': ['GROUP2-reports'],
                     'thresholdsprofiles': ['GROUP-thresholds']
                 }
             }
@@ -461,6 +465,7 @@ class ListGroupsForGivenUserAPIViewTests(TenantTestCase):
                     'aggregations': ['GROUP-aggregations'],
                     'metrics': ['GROUP-metrics', 'GROUP2-metrics'],
                     'metricprofiles': ['GROUP-metricprofiles'],
+                    'reports': ['GROUP1-reports', 'GROUP2-reports'],
                     'thresholdsprofiles': ['GROUP-thresholds']
                 }
             }
