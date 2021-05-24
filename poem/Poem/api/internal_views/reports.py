@@ -3,6 +3,7 @@ from django.contrib.contenttypes.models import ContentType
 
 from Poem.api import serializers
 from Poem.api.internal_views.utils import sync_webapi
+from Poem.api.internal_views.users import get_all_groups, get_groups_for_user
 from Poem.api.views import NotFound
 from Poem.helpers.history_helpers import create_profile_history
 from Poem.poem import models as poem_models
@@ -11,12 +12,21 @@ from rest_framework import status
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from Poem.users.models import CustUser
+
+
+def user_groups(username):
+    user = CustUser.objects.get(username=username)
+    groups = get_groups_for_user(user)
+    return groups
 
 
 class ListReports(APIView):
     authentication_classes = (SessionAuthentication,)
 
     def post(self, request):
+        user = request.user
+
         serializer = serializers.ReportsSerializer(data=request.data)
 
         if serializer.is_valid():
@@ -64,6 +74,13 @@ class ListReports(APIView):
             return Response(serializer.data)
 
     def put(self, request):
+        user = request.user
+
+        groups = user_groups(user)
+        if (not user.is_superuser and
+            request.data['groupname'] not in groups['reports']):
+            return Response(data=None, status=status.HTTP_401_UNAUTHORIZED)
+
         if request.data['apiid']:
             report = poem_models.Reports.objects.get(
                 apiid=request.data['apiid']
