@@ -24,8 +24,18 @@ def user_groups(username):
 class ListReports(APIView):
     authentication_classes = (SessionAuthentication,)
 
+    def _check_group_perm(self, groupname, user):
+        groups = user_groups(user)
+        if (not user.is_superuser and
+            groupname not in groups['reports']):
+            return False
+        return True
+
     def post(self, request):
         user = request.user
+
+        if not self._check_group_perm(request.data['groupname'], user):
+            return Response(data=None, status=status.HTTP_401_UNAUTHORIZED)
 
         serializer = serializers.ReportsSerializer(data=request.data)
 
@@ -76,9 +86,7 @@ class ListReports(APIView):
     def put(self, request):
         user = request.user
 
-        groups = user_groups(user)
-        if (not user.is_superuser and
-            request.data['groupname'] not in groups['reports']):
+        if not self._check_group_perm(request.data['groupname'], user):
             return Response(data=None, status=status.HTTP_401_UNAUTHORIZED)
 
         if request.data['apiid']:
@@ -104,6 +112,8 @@ class ListReports(APIView):
             )
 
     def delete(self, request, report_name=None):
+        user = request.user
+
         if report_name:
             try:
                 report = poem_models.Reports.objects.get(
