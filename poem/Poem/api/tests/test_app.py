@@ -42,11 +42,15 @@ class ListGroupsForUserAPIViewTests(TenantTestCase):
             name='thresholdsgroup2'
         )
 
+        poem_models.GroupOfReports.objects.create(name='reportsgroup1')
+        gr = poem_models.GroupOfReports.objects.create(name='reportsgroup2')
+
         userprofile = poem_models.UserProfile.objects.create(user=self.user)
         userprofile.groupsofmetrics.add(gm1)
         userprofile.groupsofmetricprofiles.add(gmp1)
         userprofile.groupsofaggregations.add(ga1)
         userprofile.groupsofthresholdsprofiles.add(gtp1)
+        userprofile.groupsofreports.add(gr)
 
     def test_list_all_groups(self):
         request = self.factory.get(self.url)
@@ -60,6 +64,7 @@ class ListGroupsForUserAPIViewTests(TenantTestCase):
                     'metrics': ['metricgroup1', 'metricgroup2'],
                     'metricprofiles': ['metricprofilegroup1',
                                        'metricprofilegroup2'],
+                    'reports': ['reportsgroup1', 'reportsgroup2'],
                     'thresholdsprofiles': ['thresholdsgroup1',
                                            'thresholdsgroup2']
                 }
@@ -77,6 +82,7 @@ class ListGroupsForUserAPIViewTests(TenantTestCase):
                     'aggregations': ['aggrgroup2'],
                     'metrics': ['metricgroup2'],
                     'metricprofiles': ['metricprofilegroup2'],
+                    'reports': ['reportsgroup2'],
                     'thresholdsprofiles': ['thresholdsgroup2']
                 }
             }
@@ -167,11 +173,16 @@ class GetConfigOptionsAPIViewTests(TenantTestCase):
     @patch('Poem.api.internal_views.app.tenant_from_request',
            return_value='Tenant')
     def test_get_config_options(self, *args):
-        with self.settings(WEBAPI_METRIC='https://metric.profile.com',
-                           WEBAPI_AGGREGATION='https://aggregations.com',
-                           WEBAPI_THRESHOLDS='https://thresholds.com',
-                           WEBAPI_OPERATIONS='https://operations.com',
-                           WEBAPI_REPORTS='https://reports.com'):
+        with self.settings(
+                WEBAPI_METRIC='https://metric.profile.com',
+                WEBAPI_AGGREGATION='https://aggregations.com',
+                WEBAPI_THRESHOLDS='https://thresholds.com',
+                WEBAPI_OPERATIONS='https://operations.com',
+                WEBAPI_REPORTS='https://reports.com',
+                WEBAPI_REPORTSTAGS='https://reports-tags.com',
+                WEBAPI_REPORTSTOPOLOGYGROUPS='https://topology-groups.com',
+                WEBAPI_REPORTSTOPOLOGYENDPOINTS='https://endpoints.com'
+        ):
             request = self.factory.get(self.url)
             response = self.view(request)
             self.assertEqual(
@@ -183,8 +194,15 @@ class GetConfigOptionsAPIViewTests(TenantTestCase):
                         'webapiaggregation': 'https://aggregations.com',
                         'webapithresholds': 'https://thresholds.com',
                         'webapioperations': 'https://operations.com',
-                        'version': pkg_resources.get_distribution('poem').version,
-                        'webapireports': 'https://reports.com',
+                        'version': pkg_resources.get_distribution(
+                            'poem'
+                        ).version,
+                        'webapireports': {
+                            'main': 'https://reports.com',
+                            'tags': 'https://reports-tags.com',
+                            'topologygroups': 'https://topology-groups.com',
+                            'topologyendpoints': 'https://endpoints.com'
+                        },
                         'tenant_name': 'Tenant'
                     }
                 }
@@ -235,11 +253,13 @@ class GetSessionDetailsAPIViewTests(TenantTestCase):
         gtp = poem_models.GroupOfThresholdsProfiles.objects.create(
             name='GROUP-thresholds'
         )
+        gr = poem_models.GroupOfReports.objects.create(name='GROUP-reports')
 
         self.userprofile.groupsofmetrics.add(gm)
         self.userprofile.groupsofaggregations.add(ga)
         self.userprofile.groupsofmetricprofiles.add(gmp)
         self.userprofile.groupsofthresholdsprofiles.add(gtp)
+        self.userprofile.groupsofreports.add(gr)
 
         request = self.factory.get(self.url + 'true')
         force_authenticate(request, user=self.user)
@@ -252,15 +272,20 @@ class GetSessionDetailsAPIViewTests(TenantTestCase):
             ('aggregations', ['GROUP-aggregations']),
             ('metricprofiles', ['GROUP-metricprofiles']),
             ('metrics', ['GROUP-metrics']),
+            ('reports', ['GROUP-reports']),
             ('thresholdsprofiles', ['GROUP-thresholds'])]
         ))
-        self.assertEqual(response.data['userdetails']['token'], 'mocked_token_rw')
+        self.assertEqual(
+            response.data['userdetails']['token'], 'mocked_token_rw'
+        )
 
     def test_auth_readonly(self):
         request = self.factory.get(self.url + 'true')
         force_authenticate(request, user=self.user)
         response = self.view(request, 'true')
-        self.assertEqual(response.data['userdetails']['token'], 'mocked_token_ro')
+        self.assertEqual(
+            response.data['userdetails']['token'], 'mocked_token_ro'
+        )
 
 
 class GetIsTenantSchemaAPIViewTests(TenantTestCase):
