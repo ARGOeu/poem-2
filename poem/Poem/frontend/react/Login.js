@@ -31,11 +31,10 @@ const Login = (props) => {
 
   async function fetchSamlButtonString() {
     try {
-      let response = await fetch('/api/v2/internal/config_options');
-      let json = await response.json();
+      let json = await backend.fetchConfigOptions();
       return json;
     } catch(err) {
-      alert(`Something went wrong: ${err}`);
+      alert(err)
     }
   }
 
@@ -117,11 +116,11 @@ const Login = (props) => {
                   <Form>
                     <FormGroup>
                       <Label for="username">Username: </Label>
-                      <Field name="username" className="form-control"/>
+                      <Field name="username" id="username" className="form-control"/>
                     </FormGroup>
                     <FormGroup>
                       <Label for="password">Password: </Label>
-                      <Field name="password" className="form-control" type="password"/>
+                      <Field name="password" id="password" className="form-control" type="password"/>
                     </FormGroup>
                     <FormGroup>
                       <Alert color="danger" isOpen={loginFailedVisible} toggle={dismissLoginAlert} fade={false}>
