@@ -512,6 +512,17 @@ class GetUserprofileForUsername(APIView):
                             )
                         )
 
+                groupsofreports = []
+                if 'groupsofreports' in dict(request.data):
+                    for group in dict(request.data)[
+                        'groupsofreports'
+                    ]:
+                        groupsofreports.append(
+                            poem_models.GroupOfReports.objects.get(
+                                name=group
+                            )
+                        )
+
                 userprofile = poem_models.UserProfile.objects.create(
                     user=user,
                     displayname=request.data['displayname'],
