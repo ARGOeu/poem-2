@@ -320,7 +320,7 @@ const Service = ({service, operation, groupindex, groupnew, index, isnew,
 }
 
 
-const AggregationProfilesForm = ({ values, errors, historyview=false, write_perm=false,
+const AggregationProfilesForm = ({ values, errors, historyview=false, addview=false, write_perm=false,
   list_user_groups, logic_operations, endpoint_groups, list_id_metric_profiles }) =>
 (
   <>
@@ -338,6 +338,7 @@ const AggregationProfilesForm = ({ values, errors, historyview=false, write_perm
             [values.groupname]
       }
       profiletype='aggregation'
+      addview={addview}
   />
     <ParagraphTitle title='Operations, endpoint group and metric profile'/>
     <Row className='mt-4'>
@@ -751,7 +752,9 @@ export const AggregationProfilesChange = (props) => {
     removeDummyGroup(valueSend)
     removeIsNewFlag(valueSend)
 
-    valueSend.namespace = tenant_name
+    valueSend.namespace = tenant_name;
+    if (!addview)
+      valueSend.name = profile_name;
 
     let match_profile = aggregationProfile.listidmetricprofiles.filter((e) =>
       valueSend.metric_profile === e.name)
@@ -1041,6 +1044,7 @@ export const AggregationProfilesChange = (props) => {
                 list_id_metric_profiles={aggregationProfile.listidmetricprofiles}
                 write_perm={write_perm}
                 historyview={publicView}
+                addview={addview}
               />
               {
                 !publicView ?

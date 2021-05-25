@@ -449,7 +449,7 @@ describe('Tests for metric profiles changeview', () => {
     const groupField = screen.getByTestId('groupname');
 
     expect(nameField.value).toBe('ARGO_MON');
-    expect(nameField).toBeEnabled();
+    expect(nameField).toBeDisabled();
     expect(descriptionField.value).toBe('Central ARGO-MON profile');
     expect(descriptionField).toBeEnabled();
     expect(groupField.value).toBe('ARGO');

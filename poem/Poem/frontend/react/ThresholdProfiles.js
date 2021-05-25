@@ -263,6 +263,7 @@ const ThresholdsProfilesForm = ({
   groups_list=undefined,
   metrics_list=undefined,
   write_perm=false,
+  addview=false,
   popoverWarningOpen,
   popoverCriticalOpen,
   toggleWarningPopOver,
@@ -281,6 +282,7 @@ const ThresholdsProfilesForm = ({
       }
       fieldsdisable={historyview}
       profiletype='thresholds'
+      addview={addview}
     />
     <FormGroup>
       <ParagraphTitle title='Thresholds rules'/>
@@ -1149,7 +1151,7 @@ export const ThresholdsProfilesChange = (props) => {
     } else {
       let response = await webapi.changeThresholdsProfile({
         id: values_send.id,
-        name: values_send.name,
+        name: name,
         rules: thresholdsToString(values_send.rules)
       });
       if (!response.ok) {
@@ -1171,7 +1173,7 @@ export const ThresholdsProfilesChange = (props) => {
           '/api/v2/internal/thresholdsprofiles/',
           {
             apiid: values_send.id,
-            name: values_send.name,
+            name: name,
             groupname: formValues.groupname,
             rules: values_send.rules
           }
@@ -1309,6 +1311,7 @@ export const ThresholdsProfilesChange = (props) => {
                 toggleWarningPopOver={toggleWarningPopOver}
                 toggleCriticalPopOver={toggleCriticalPopOver}
                 historyview={publicView}
+                addview={addview}
               />
               {
                 (write_perm && !publicView) &&

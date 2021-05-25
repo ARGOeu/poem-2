@@ -535,7 +535,7 @@ describe('Tests for aggregation profiles changeview', () => {
     const metricProfileField = metricProfileRow.getByRole('combobox');
 
     expect(nameField.value).toBe('TEST_PROFILE');
-    expect(nameField).toBeEnabled();
+    expect(nameField).toBeDisabled();
     expect(groupField.value).toBe('EGI');
     expect(groupField).toBeEnabled();
 

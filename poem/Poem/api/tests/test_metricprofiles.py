@@ -243,7 +243,7 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
 
     def test_put_metric_profile(self):
         data = {
-            "name": "TEST_PROFILE",
+            "name": "TEST_PROFILE2",
             "apiid": "00000000-oooo-kkkk-aaaa-aaeekkccnnee",
             "groupname": "new-group",
             "description": "New profile description.",
@@ -286,7 +286,7 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
 
     def test_put_metric_profile_without_description(self):
         data = {
-            "name": "TEST_PROFILE",
+            "name": "TEST_PROFILE2",
             "apiid": "00000000-oooo-kkkk-aaaa-aaeekkccnnee",
             "groupname": "new-group",
             "description": "",

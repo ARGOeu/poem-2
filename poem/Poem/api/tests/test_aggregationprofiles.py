@@ -237,7 +237,7 @@ class ListAggregationsAPIViewTests(TenantTestCase):
 
     def test_put_aggregations(self):
         data = {
-            'name': 'TEST_PROFILE',
+            'name': 'TEST_PROFILE2',
             'apiid': '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
             'groupname': 'new-group',
             'endpoint_group': 'servicegroups',
@@ -296,7 +296,7 @@ class ListAggregationsAPIViewTests(TenantTestCase):
 
     def test_put_aggregations_no_apiid(self):
         data = {
-            'name': 'TEST_PROFILE',
+            'name': 'TEST_PROFILE2',
             'apiid': '',
             'groupname': 'new-group',
             'endpoint_group': 'servicegroups',

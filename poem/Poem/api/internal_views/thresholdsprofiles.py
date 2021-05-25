@@ -1,13 +1,11 @@
-from django.conf import settings
-from django.contrib.contenttypes.models import ContentType
-
 from Poem.api import serializers
 from Poem.api.internal_views.utils import sync_webapi
 from Poem.api.views import NotFound
 from Poem.helpers.history_helpers import create_profile_history
 from Poem.poem.models import ThresholdsProfiles, GroupOfThresholdsProfiles, \
     TenantHistory
-
+from django.conf import settings
+from django.contrib.contenttypes.models import ContentType
 from rest_framework import status
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
@@ -42,7 +40,6 @@ class ListThresholdsProfiles(APIView):
             profile = ThresholdsProfiles.objects.get(
                 apiid=request.data['apiid']
             )
-            profile.name = request.data['name']
             profile.groupname = request.data['groupname']
             profile.save()
 
