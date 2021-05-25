@@ -1,15 +1,16 @@
-from django.db import IntegrityError
 import datetime
 
 from Poem.api import serializers
 from Poem.api.views import NotFound
 from Poem.poem import models as poem_models
 from Poem.users.models import CustUser
-
+from django.db import IntegrityError
 from rest_framework import status
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
+from .utils import error_response
 
 
 def get_groups_for_user(user):
@@ -91,9 +92,20 @@ class ListUsers(APIView):
 
     def get(self, request, username=None):
         if username:
-            users = CustUser.objects.filter(username=username)
-            if users.count() == 0:
-                raise NotFound(status=404, detail='User not found')
+            if request.user.is_superuser or (
+                    not request.user.is_superuser and
+                    request.user.username == username
+            ):
+                users = CustUser.objects.filter(username=username)
+                if users.count() == 0:
+                    raise NotFound(status=404, detail='User does not exist.')
+
+            else:
+                return error_response(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail='You do not have permission to fetch users other '
+                           'than yourself.'
+                )
 
         else:
             if request.user.is_superuser:
@@ -132,56 +144,107 @@ class ListUsers(APIView):
             return Response(results)
 
     def put(self, request):
-        try:
-            user = CustUser.objects.get(pk=request.data['pk'])
-            user.username = request.data['username']
-            user.first_name = request.data['first_name']
-            user.last_name = request.data['last_name']
-            user.email = request.data['email']
-            user.is_superuser = request.data['is_superuser']
-            user.is_active = request.data['is_active']
-            user.save()
+        if request.user.is_superuser:
+            try:
+                user = CustUser.objects.get(pk=request.data['pk'])
+                user.username = request.data['username']
+                user.first_name = request.data['first_name']
+                user.last_name = request.data['last_name']
+                user.email = request.data['email']
+                user.is_superuser = request.data['is_superuser']
+                user.is_active = request.data['is_active']
+                user.save()
 
-            return Response(status=status.HTTP_201_CREATED)
+                return Response(status=status.HTTP_201_CREATED)
 
-        except IntegrityError:
-            return Response(
-                {'detail': 'User with this username already exists.'},
-                status=status.HTTP_400_BAD_REQUEST
+            except CustUser.DoesNotExist:
+                return error_response(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail='User does not exist.'
+                )
+
+            except IntegrityError:
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail='User with this username already exists.'
+                )
+
+            except KeyError as e:
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail='Missing data key: {}'.format(e.args[0])
+                )
+
+        else:
+            return error_response(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='You do not have permission to change users.'
             )
 
     def post(self, request):
-        try:
-            CustUser.objects.create_user(
-                username=request.data['username'],
-                password=request.data['password'],
-                email=request.data['email'],
-                first_name=request.data['first_name'],
-                last_name=request.data['last_name'],
-                is_superuser=request.data['is_superuser'],
-                is_active=request.data['is_active']
-            )
+        if request.user.is_superuser:
+            try:
+                CustUser.objects.create_user(
+                    username=request.data['username'],
+                    password=request.data['password'],
+                    email=request.data['email'],
+                    first_name=request.data['first_name'],
+                    last_name=request.data['last_name'],
+                    is_superuser=request.data['is_superuser'],
+                    is_active=request.data['is_active']
+                )
 
-            return Response(status=status.HTTP_201_CREATED)
+                return Response(status=status.HTTP_201_CREATED)
 
-        except IntegrityError:
-            return Response(
-                {'detail': 'User with this username already exists.'},
-                status=status.HTTP_400_BAD_REQUEST
+            except IntegrityError:
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail='User with this username already exists.'
+                )
+
+            except KeyError as e:
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail='Missing data key: {}'.format(e.args[0])
+                )
+
+        else:
+            return error_response(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='You do not have permission to add users.'
             )
 
     def delete(self, request, username=None):
-        if username:
-            try:
-                user = CustUser.objects.get(username=username)
-                user.delete()
-                return Response(status=status.HTTP_204_NO_CONTENT)
+        if request.user.is_superuser:
+            if username:
+                if request.user.username == username:
+                    return error_response(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail='You cannot delete yourself.'
+                    )
 
-            except CustUser.DoesNotExist:
-                raise(NotFound(status=404, detail='User not found'))
+                else:
+                    try:
+                        user = CustUser.objects.get(username=username)
+                        user.delete()
+                        return Response(status=status.HTTP_204_NO_CONTENT)
+
+                    except CustUser.DoesNotExist:
+                        raise NotFound(
+                            status=404, detail='User does not exist.'
+                        )
+
+            else:
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail='Username should be specified.'
+                )
 
         else:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+            return error_response(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='You do not have permission to delete users.'
+            )
 
 
 class GetUserprofileForUsername(APIView):
@@ -191,7 +254,7 @@ class GetUserprofileForUsername(APIView):
         try:
             user = CustUser.objects.get(username=username)
         except CustUser.DoesNotExist:
-            raise NotFound(status=404, detail='User not found')
+            raise NotFound(status=404, detail='User does not exist.')
         else:
             try:
                 user_profile = poem_models.UserProfile.objects.get(user=user)
@@ -199,106 +262,259 @@ class GetUserprofileForUsername(APIView):
                 return Response(serializer.data)
 
             except poem_models.UserProfile.DoesNotExist:
-                raise NotFound(status=404, detail='User profile not found')
+                raise NotFound(
+                    status=404, detail='User profile does not exist.'
+                )
 
     def put(self, request):
-        user = CustUser.objects.get(username=request.data['username'])
-        userprofile = poem_models.UserProfile.objects.get(user=user)
-        userprofile.displayname = request.data['displayname']
-        userprofile.subject = request.data['subject']
-        userprofile.egiid = request.data['egiid']
-        userprofile.save()
+        if request.user.is_superuser:
+            try:
+                user = CustUser.objects.get(username=request.data['username'])
+                userprofile = poem_models.UserProfile.objects.get(user=user)
 
-        if 'groupsofaggregations' in dict(request.data):
-            for group in dict(request.data)['groupsofaggregations']:
-                userprofile.groupsofaggregations.add(
-                    poem_models.GroupOfAggregations.objects.get(name=group)
-                )
+                groupsofaggregations = []
+                if 'groupsofaggregations' in dict(request.data):
+                    for group in dict(request.data)['groupsofaggregations']:
+                        groupsofaggregations.append(
+                            poem_models.GroupOfAggregations.objects.get(
+                                name=group
+                            )
+                        )
 
-        if 'groupsofmetrics' in dict(request.data):
-            for group in dict(request.data)['groupsofmetrics']:
-                userprofile.groupsofmetrics.add(
-                    poem_models.GroupOfMetrics.objects.get(name=group)
-                )
+                groupsofmetrics = []
+                if 'groupsofmetrics' in dict(request.data):
+                    for group in dict(request.data)['groupsofmetrics']:
+                        groupsofmetrics.append(
+                            poem_models.GroupOfMetrics.objects.get(name=group)
+                        )
 
-        if 'groupsofmetricprofiles' in dict(request.data):
-            for group in dict(request.data)['groupsofmetricprofiles']:
-                userprofile.groupsofmetricprofiles.add(
-                    poem_models.GroupOfMetricProfiles.objects.get(name=group)
-                )
+                groupsofmetricprofiles = []
+                if 'groupsofmetricprofiles' in dict(request.data):
+                    for group in dict(request.data)['groupsofmetricprofiles']:
+                        groupsofmetricprofiles.append(
+                            poem_models.GroupOfMetricProfiles.objects.get(
+                                name=group
+                            )
+                        )
 
-        if 'groupsofthresholdsprofiles' in dict(request.data):
-            for group in dict(request.data)['groupsofthresholdsprofiles']:
-                userprofile.groupsofthresholdsprofiles.add(
-                    poem_models.GroupOfThresholdsProfiles.objects.get(
-                        name=group
+                groupsofthresholdsprofiles = []
+                if 'groupsofthresholdsprofiles' in dict(request.data):
+                    for group in dict(request.data)[
+                        'groupsofthresholdsprofiles'
+                    ]:
+                        groupsofthresholdsprofiles.append(
+                            poem_models.GroupOfThresholdsProfiles.objects.get(
+                                name=group
+                            )
+                        )
+
+                userprofile.displayname = request.data['displayname']
+                userprofile.subject = request.data['subject']
+                userprofile.egiid = request.data['egiid']
+                userprofile.save()
+
+                if len(groupsofaggregations) > 0:
+                    userprofile.groupsofaggregations.add(*groupsofaggregations)
+
+                if len(groupsofmetrics) > 0:
+                    userprofile.groupsofmetrics.add(*groupsofmetrics)
+
+                if len(groupsofmetricprofiles) > 0:
+                    userprofile.groupsofmetricprofiles.add(
+                        *groupsofmetricprofiles
                     )
+
+                if len(groupsofthresholdsprofiles) > 0:
+                    userprofile.groupsofthresholdsprofiles.add(
+                        *groupsofthresholdsprofiles
+                    )
+
+                # remove the groups that existed before, and now were removed:
+                if 'groupsofaggregations' in dict(request.data):
+                    for group in userprofile.groupsofaggregations.all():
+                        if group.name not in dict(request.data)[
+                            'groupsofaggregations'
+                        ]:
+                            userprofile.groupsofaggregations.remove(group)
+
+                if 'groupsofmetrics' in dict(request.data):
+                    for group in userprofile.groupsofmetrics.all():
+                        if group.name not in dict(request.data)[
+                            'groupsofmetrics'
+                        ]:
+                            userprofile.groupsofmetrics.remove(group)
+
+                if 'groupsofmetricprofiles' in dict(request.data):
+                    for group in userprofile.groupsofmetricprofiles.all():
+                        if group.name not in dict(request.data)[
+                            'groupsofmetricprofiles'
+                        ]:
+                            userprofile.groupsofmetricprofiles.remove(group)
+
+                if 'groupsofthresholdsprofiles' in dict(request.data):
+                    for group in userprofile.groupsofthresholdsprofiles.all():
+                        if group.name not in dict(request.data)[
+                            'groupsofthresholdsprofiles'
+                        ]:
+                            userprofile.groupsofthresholdsprofiles.remove(group)
+
+                return Response(status=status.HTTP_201_CREATED)
+
+            except CustUser.DoesNotExist:
+                return error_response(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail='User does not exist.'
                 )
 
-        # remove the groups that existed before, and now were removed:
-        if 'groupsofaggregations' in dict(request.data):
-            for group in userprofile.groupsofaggregations.all():
-                if group.name not in dict(request.data)['groupsofaggregations']:
-                    userprofile.groupsofaggregations.remove(group)
+            except poem_models.UserProfile.DoesNotExist:
+                return error_response(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail='User profile does not exist.'
+                )
 
-        if 'groupsofmetrics' in dict(request.data):
-            for group in userprofile.groupsofmetrics.all():
-                if group.name not in dict(request.data)['groupsofmetrics']:
-                    userprofile.groupsofmetrics.remove(group)
+            except poem_models.GroupOfAggregations.DoesNotExist:
+                return error_response(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail='Group of aggregations does not exist.'
+                )
 
-        if 'groupsofmetricprofiles' in dict(request.data):
-            for group in userprofile.groupsofmetricprofiles.all():
-                if group.name not in dict(request.data)[
-                    'groupsofmetricprofiles'
-                ]:
-                    userprofile.groupsofmetricprofiles.remove(group)
+            except poem_models.GroupOfMetrics.DoesNotExist:
+                return error_response(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail='Group of metrics does not exist.'
+                )
 
-        if 'groupsofthresholdsprofiles' in dict(request.data):
-            for group in userprofile.groupsofthresholdsprofiles.all():
-                if group.name not in dict(request.data)[
-                    'groupsofthresholdsprofiles'
-                ]:
-                    userprofile.groupsofthresholdsprofiles.remove(group)
+            except poem_models.GroupOfMetricProfiles.DoesNotExist:
+                return error_response(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail='Group of metric profiles does not exist.'
+                )
 
-        return Response(status=status.HTTP_201_CREATED)
+            except poem_models.GroupOfThresholdsProfiles.DoesNotExist:
+                return error_response(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail='Group of thresholds profiles does not exist.'
+                )
+
+            except KeyError as e:
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail='Missing data key: {}'.format(e.args[0])
+                )
+
+        else:
+            return error_response(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='You do not have permission to change user profiles.'
+            )
 
     def post(self, request):
-        user = CustUser.objects.get(username=request.data['username'])
+        if request.user.is_superuser:
+            try:
+                user = CustUser.objects.get(username=request.data['username'])
 
-        userprofile = poem_models.UserProfile.objects.create(
-            user=user,
-            displayname=request.data['displayname'],
-            subject=request.data['subject'],
-            egiid=request.data['egiid']
-        )
+                groupsofaggregations = []
+                if 'groupsofaggregations' in dict(request.data):
+                    for group in dict(request.data)['groupsofaggregations']:
+                        groupsofaggregations.append(
+                            poem_models.GroupOfAggregations.objects.get(
+                                name=group
+                            )
+                        )
 
-        if 'groupsofaggregations' in dict(request.data):
-            for group in dict(request.data)['groupsofaggregations']:
-                userprofile.groupsofaggregations.add(
-                    poem_models.GroupOfAggregations.objects.get(name=group)
+                groupsofmetrics = []
+                if 'groupsofmetrics' in dict(request.data):
+                    for group in dict(request.data)['groupsofmetrics']:
+                        groupsofmetrics.append(
+                            poem_models.GroupOfMetrics.objects.get(name=group)
+                        )
+
+                groupsofmetricprofiles = []
+                if 'groupsofmetricprofiles' in dict(request.data):
+                    for group in dict(request.data)['groupsofmetricprofiles']:
+                        groupsofmetricprofiles.append(
+                            poem_models.GroupOfMetricProfiles.objects.get(
+                                name=group
+                            )
+                        )
+
+                groupsofthreholdsprofiles = []
+                if 'groupsofthresholdsprofiles' in dict(request.data):
+                    for group in dict(request.data)[
+                        'groupsofthresholdsprofiles'
+                    ]:
+                        groupsofthreholdsprofiles.append(
+                            poem_models.GroupOfThresholdsProfiles.objects.get(
+                                name=group
+                            )
+                        )
+
+                userprofile = poem_models.UserProfile.objects.create(
+                    user=user,
+                    displayname=request.data['displayname'],
+                    subject=request.data['subject'],
+                    egiid=request.data['egiid']
                 )
 
-        if 'groupsofmetrics' in dict(request.data):
-            for group in dict(request.data)['groupsofmetrics']:
-                userprofile.groupsofmetrics.add(
-                    poem_models.GroupOfMetrics.objects.get(name=group)
-                )
+                if len(groupsofaggregations) > 0:
+                    userprofile.groupsofaggregations.add(*groupsofaggregations)
 
-        if 'groupsofmetricprofiles' in dict(request.data):
-            for group in dict(request.data)['groupsofmetricprofiles']:
-                userprofile.groupsofmetricprofiles.add(
-                    poem_models.GroupOfMetricProfiles.objects.get(name=group)
-                )
+                if len(groupsofmetrics) > 0:
+                    userprofile.groupsofmetrics.add(*groupsofmetrics)
 
-        if 'groupsofthresholdsprofiles' in dict(request.data):
-            for group in dict(request.data)['groupsofthresholdsprofiles']:
-                userprofile.groupsofthresholdsprofiles.add(
-                    poem_models.GroupOfThresholdsProfiles.objects.get(
-                        name=group
+                if len(groupsofmetricprofiles) > 0:
+                    userprofile.groupsofmetricprofiles.add(
+                        *groupsofmetricprofiles
                     )
+
+                if len(groupsofthreholdsprofiles) > 0:
+                    userprofile.groupsofthresholdsprofiles.add(
+                        *groupsofthreholdsprofiles
+                    )
+
+                return Response(status=status.HTTP_201_CREATED)
+
+            except CustUser.DoesNotExist:
+                return error_response(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail='User does not exist.'
                 )
 
-        return Response(status=status.HTTP_201_CREATED)
+            except poem_models.GroupOfAggregations.DoesNotExist:
+                return error_response(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail='Group of aggregations does not exist.'
+                )
+
+            except poem_models.GroupOfMetrics.DoesNotExist:
+                return error_response(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail='Group of metrics does not exist.'
+                )
+
+            except poem_models.GroupOfMetricProfiles.DoesNotExist:
+                return error_response(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail='Group of metric profiles does not exist.'
+                )
+
+            except poem_models.GroupOfThresholdsProfiles.DoesNotExist:
+                return error_response(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail='Group of thresholds profiles does not exist.'
+                )
+
+            except KeyError as e:
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail='Missing data key: {}'.format(e.args[0])
+                )
+
+        else:
+            return error_response(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='You do not have permission to add user profiles.'
+            )
 
 
 class ListGroupsForGivenUser(APIView):
@@ -334,17 +550,24 @@ class ChangePassword(APIView):
 
     def put(self, request):
         try:
-            user = CustUser.objects.get(username=request.data['username'])
-            if user == request.user:
+            if request.user.username == request.data['username']:
+                user = CustUser.objects.get(username=request.data['username'])
                 user.set_password(request.data['new_password'])
                 user.save()
                 return Response(status=status.HTTP_201_CREATED)
 
-            else:
-                return Response(
-                    {'detail': 'Trying to change password for another user.'},
-                    status=status.HTTP_403_FORBIDDEN
-                )
-
         except CustUser.DoesNotExist:
-            raise NotFound(status=404, detail='User not found.')
+            raise NotFound(status=404, detail='User does not exist.')
+
+        except KeyError as e:
+            return error_response(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail='Missing data key: {}'.format(e.args[0])
+            )
+
+        else:
+            return error_response(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='You do not have permission to change password for '
+                       'another user.'
+            )

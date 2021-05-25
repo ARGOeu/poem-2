@@ -41,14 +41,12 @@ const mockAPIKeys = [
   {
     id: 1,
     name: 'FIRST_TOKEN',
-    token: '123456',
     created: '2020-11-09 13:00:00',
     revoked: false
   },
   {
     id: 2,
     name: 'SECOND_TOKEN',
-    token: 'abcdef',
     created: '2020-11-09 13:10:01',
     revoked: false
   }

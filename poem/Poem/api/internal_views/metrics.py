@@ -16,6 +16,8 @@ from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from .utils import error_response
+
 
 class ListAllMetrics(APIView):
     authentication_classes = (SessionAuthentication,)
@@ -96,67 +98,172 @@ class ListMetric(APIView):
             return Response(results)
 
     def put(self, request):
-        metric = poem_models.Metric.objects.get(name=request.data['name'])
+        try:
+            userprofile = poem_models.UserProfile.objects.get(user=request.user)
 
-        if request.data['parent']:
-            parent = json.dumps([request.data['parent']])
-        else:
-            parent = ''
+            metric = poem_models.Metric.objects.get(name=request.data['name'])
+            init_group = metric.group
 
-        if request.data['probeexecutable']:
-            probeexecutable = json.dumps([request.data['probeexecutable']])
-        else:
-            probeexecutable = ''
+            if not request.user.is_superuser and \
+                    userprofile.groupsofmetrics.all().count() == 0:
+                return error_response(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail='You do not have permission to change metrics.'
+                )
 
-        if request.data['description']:
-            description = request.data['description']
-        else:
-            description = ''
+            if not request.user.is_superuser and \
+                    init_group not in userprofile.groupsofmetrics.all():
+                return error_response(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail='You do not have permission to change metrics '
+                           'in this group.'
+                )
 
-        metric.name = request.data['name']
-        metric.mtype = poem_models.MetricType.objects.get(
-            name=request.data['mtype']
-        )
-        metric.group = poem_models.GroupOfMetrics.objects.get(
-            name=request.data['group']
-        )
-        metric.description = description
-        metric.parent = parent
-        metric.flags = inline_metric_for_db(request.data['flags'])
+            else:
+                if request.data['parent']:
+                    parent = json.dumps([request.data['parent']])
+                else:
+                    parent = ''
 
-        if request.data['mtype'] == 'Active':
-            metric.probekey = admin_models.ProbeHistory.objects.get(
-                name=request.data['probeversion'].split(' ')[0],
-                package__version=request.data['probeversion'].split(' ')[1][
-                                 1:-1]
+                if request.data['probeexecutable']:
+                    probeexecutable = json.dumps(
+                        [request.data['probeexecutable']]
+                    )
+                else:
+                    probeexecutable = ''
+
+                if request.data['description']:
+                    description = request.data['description']
+                else:
+                    description = ''
+
+                metric_group = poem_models.GroupOfMetrics.objects.get(
+                    name=request.data['group']
+                )
+
+                metric_type = poem_models.MetricType.objects.get(
+                    name=request.data['mtype']
+                )
+
+                user_perm = request.user.is_superuser or \
+                    metric_group in userprofile.groupsofmetrics.all()
+
+                if user_perm:
+                    metric.name = request.data['name']
+                    metric.mtype = metric_type
+                    metric.group = poem_models.GroupOfMetrics.objects.get(
+                        name=request.data['group']
+                    )
+                    metric.description = description
+                    metric.parent = parent
+                    metric.flags = inline_metric_for_db(request.data['flags'])
+
+                    if request.data['mtype'] == 'Active':
+                        metric.probekey = admin_models.ProbeHistory.objects.get(
+                            name=request.data['probeversion'].split(' ')[0],
+                            package__version=request.data[
+                                                 'probeversion'
+                                             ].split(' ')[1][1:-1]
+                        )
+                        metric.probeexecutable = probeexecutable
+                        metric.config = inline_metric_for_db(
+                            request.data['config']
+                        )
+                        metric.attribute = inline_metric_for_db(
+                            request.data['attribute'])
+                        metric.dependancy = inline_metric_for_db(
+                            request.data['dependancy'])
+                        metric.files = inline_metric_for_db(
+                            request.data['files']
+                        )
+                        metric.parameter = inline_metric_for_db(
+                            request.data['parameter'])
+                        metric.fileparameter = inline_metric_for_db(
+                            request.data['fileparameter']
+                        )
+
+                    metric.save()
+                    create_history(metric, request.user.username)
+
+                    return Response(status=status.HTTP_201_CREATED)
+
+                else:
+                    return error_response(
+                        status_code=status.HTTP_401_UNAUTHORIZED,
+                        detail='You do not have permission to assign metrics '
+                               'to the given group.'
+                    )
+
+        except poem_models.UserProfile.DoesNotExist:
+            return error_response(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail='No user profile for authenticated user.'
             )
-            metric.probeexecutable = probeexecutable
-            metric.config = inline_metric_for_db(request.data['config'])
-            metric.attribute = inline_metric_for_db(request.data['attribute'])
-            metric.dependancy = inline_metric_for_db(request.data['dependancy'])
-            metric.files = inline_metric_for_db(request.data['files'])
-            metric.parameter = inline_metric_for_db(request.data['parameter'])
-            metric.fileparameter = inline_metric_for_db(
-                request.data['fileparameter']
+
+        except poem_models.Metric.DoesNotExist:
+            return error_response(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail='Metric does not exist.'
             )
 
-        metric.save()
-        create_history(metric, request.user.username)
+        except poem_models.GroupOfMetrics.DoesNotExist:
+            return error_response(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail='Group of metrics does not exist.'
+            )
 
-        return Response(status=status.HTTP_201_CREATED)
+        except poem_models.MetricType.DoesNotExist:
+            return error_response(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail='Metric type does not exist.'
+            )
+
+        except KeyError as e:
+            return error_response(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail='Missing data key: {}'.format(e.args[0])
+            )
 
     def delete(self, request, name=None):
         if name:
             try:
-                metric = poem_models.Metric.objects.get(name=name)
-                poem_models.TenantHistory.objects.filter(
-                    object_id=metric.id,
-                    content_type=ContentType.objects.get_for_model(
-                        poem_models.Metric
+                userprofile = poem_models.UserProfile.objects.get(
+                    user=request.user
+                )
+
+                if not request.user.is_superuser and \
+                        userprofile.groupsofmetrics.all().count() == 0:
+                    return error_response(
+                        status_code=status.HTTP_401_UNAUTHORIZED,
+                        detail='You do not have permission to delete metrics.'
                     )
-                ).delete()
-                metric.delete()
-                return Response(status=status.HTTP_204_NO_CONTENT)
+
+                else:
+                    metric = poem_models.Metric.objects.get(name=name)
+
+                    if request.user.is_superuser or \
+                            metric.group in userprofile.groupsofmetrics.all():
+                        poem_models.TenantHistory.objects.filter(
+                            object_id=metric.id,
+                            content_type=ContentType.objects.get_for_model(
+                                poem_models.Metric
+                            )
+                        ).delete()
+                        metric.delete()
+                        return Response(status=status.HTTP_204_NO_CONTENT)
+
+                    else:
+                        return error_response(
+                            status_code=status.HTTP_401_UNAUTHORIZED,
+                            detail='You do not have permission to delete '
+                                   'metrics in this group.'
+                        )
+
+            except poem_models.UserProfile.DoesNotExist:
+                return error_response(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail='No user profile for authenticated user.'
+                )
 
             except poem_models.Metric.DoesNotExist:
                 raise NotFound(status=404, detail='Metric not found')
@@ -201,88 +308,99 @@ class ImportMetrics(APIView):
     authentication_classes = (SessionAuthentication,)
 
     def post(self, request):
-        imported, warn, err, unavailable = import_metrics(
-            metrictemplates=dict(request.data)['metrictemplates'],
-            tenant=request.tenant, user=request.user
-        )
+        if request.user.is_superuser:
+            imported, warn, err, unavailable = import_metrics(
+                metrictemplates=dict(request.data)['metrictemplates'],
+                tenant=request.tenant, user=request.user
+            )
 
-        message_bit = ''
-        warn_bit = ''
-        error_bit = ''
-        error_bit2 = ''
-        unavailable_bit = ''
-        if imported:
-            if len(imported) == 1:
-                message_bit = '{} has'.format(imported[0])
-            else:
-                message_bit = ', '.join(msg for msg in imported) + ' have'
+            message_bit = ''
+            warn_bit = ''
+            error_bit = ''
+            error_bit2 = ''
+            unavailable_bit = ''
+            if imported:
+                if len(imported) == 1:
+                    message_bit = '{} has'.format(imported[0])
+                else:
+                    message_bit = ', '.join(msg for msg in imported) + ' have'
 
-        if warn:
-            if len(warn) == 1:
-                warn_bit = '{} has been imported with older probe version. ' \
-                           'If you wish to use more recent probe version, ' \
-                           'you should update package version you use.'.format(
-                                warn[0]
-                            )
+            if warn:
+                if len(warn) == 1:
+                    warn_bit = \
+                        '{} has been imported with older probe version. ' \
+                        'If you wish to use more recent probe version, ' \
+                        'you should update package version you use.'.format(
+                            warn[0]
+                        )
 
-            else:
-                warn_bit = "{} have been imported with older probes' " \
-                           "versions. If you wish to use more recent " \
-                           "versions of probes, you should update packages' " \
-                           "versions you use.".format(
-                                ', '.join(msg for msg in warn)
-                            )
+                else:
+                    warn_bit = \
+                        "{} have been imported with older probes' " \
+                        "versions. If you wish to use more recent " \
+                        "versions of probes, you should update packages' " \
+                        "versions you use.".format(
+                            ', '.join(msg for msg in warn)
+                        )
 
-        if err:
-            if len(err) == 1:
-                error_bit = '{} has'.format(err[0])
-                error_bit2 = 'it already exists'
-            else:
-                error_bit = ', '.join(msg for msg in err) + ' have'
-                error_bit2 = 'they already exist'
+            if err:
+                if len(err) == 1:
+                    error_bit = '{} has'.format(err[0])
+                    error_bit2 = 'it already exists'
+                else:
+                    error_bit = ', '.join(msg for msg in err) + ' have'
+                    error_bit2 = 'they already exist'
 
-        if unavailable:
-            if len(unavailable) == 1:
-                unavailable_bit = '{} has not been imported, since it is not ' \
-                                  'available for the package version you ' \
-                                  'use. If you wish to use the metric, you ' \
-                                  'should change the package version, and try' \
-                                  ' to import again.'.format(unavailable[0])
-            else:
-                unavailable_bit = "{} have not been imported, since they are " \
-                                  "not available for the packages' versions " \
-                                  "you use. If you wish to use the metrics, " \
-                                  "you should change the packages' versions, " \
-                                  "and try to import again.".format(
-                                    ', '.join(ua for ua in unavailable)
-                )
+            if unavailable:
+                if len(unavailable) == 1:
+                    unavailable_bit = \
+                        '{} has not been imported, since it is not ' \
+                        'available for the package version you ' \
+                        'use. If you wish to use the metric, you ' \
+                        'should change the package version, and try' \
+                        ' to import again.'.format(unavailable[0])
+                else:
+                    unavailable_bit = \
+                        "{} have not been imported, since they are " \
+                        "not available for the packages' versions " \
+                        "you use. If you wish to use the metrics, " \
+                        "you should change the packages' versions, " \
+                        "and try to import again.".format(
+                            ', '.join(ua for ua in unavailable)
+                        )
 
-        data = dict()
-        if message_bit:
-            data.update({
-                'imported':
-                    '{} been successfully imported.'.format(message_bit)
-            })
+            data = dict()
+            if message_bit:
+                data.update({
+                    'imported':
+                        '{} been successfully imported.'.format(message_bit)
+                })
 
-        if warn_bit:
-            data.update({
-                'warn': warn_bit
-            })
+            if warn_bit:
+                data.update({
+                    'warn': warn_bit
+                })
 
-        if error_bit:
-            data.update({
-                'err':
-                    '{} not been imported since {} in the database.'.format(
-                        error_bit, error_bit2
-                    )
-            })
+            if error_bit:
+                data.update({
+                    'err':
+                        '{} not been imported since {} in the database.'.format(
+                            error_bit, error_bit2
+                        )
+                })
 
-        if unavailable_bit:
-            data.update({
-                'unavailable': unavailable_bit
-            })
+            if unavailable_bit:
+                data.update({
+                    'unavailable': unavailable_bit
+                })
 
-        return Response(status=status.HTTP_200_OK, data=data)
+            return Response(status=status.HTTP_200_OK, data=data)
+
+        else:
+            return error_response(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='You do not have permission to import metrics.'
+            )
 
 
 class UpdateMetricsVersions(APIView):
@@ -494,61 +612,73 @@ class UpdateMetricsVersions(APIView):
         return Response(msg, status=status_code)
 
     def put(self, request):
-        msg, status_code, deleted = self._handle_metrics(
-            name=request.data['name'], version=request.data['version'],
-            schema=request.tenant.schema_name, user=request.user.username
-        )
+        if request.user.is_superuser:
+            msg, status_code, deleted = self._handle_metrics(
+                name=request.data['name'], version=request.data['version'],
+                schema=request.tenant.schema_name, user=request.user.username
+            )
 
-        warn_msg = []
-        if deleted:
-            try:
-                metrics_in_profiles = get_metrics_in_profiles(
-                    request.tenant.schema_name
-                )
+            warn_msg = []
+            if deleted:
+                try:
+                    metrics_in_profiles = get_metrics_in_profiles(
+                        request.tenant.schema_name
+                    )
 
-            except Exception:
-                warn_msg.append(
-                    'Unable to get data on metrics and metric profiles. '
-                    'Please remove deleted metrics from metric profiles '
-                    'manually.'
-                )
+                except Exception:
+                    warn_msg.append(
+                        'Unable to get data on metrics and metric profiles. '
+                        'Please remove deleted metrics from metric profiles '
+                        'manually.'
+                    )
 
-            else:
-                profiles = dict()
-                for metric in deleted:
-                    for key, value in metrics_in_profiles.items():
-                        if key == metric:
-                            for p in value:
-                                if p in profiles:
-                                    profiles.update({p: profiles[p] + [key]})
+                else:
+                    profiles = dict()
+                    for metric in deleted:
+                        for key, value in metrics_in_profiles.items():
+                            if key == metric:
+                                for p in value:
+                                    if p in profiles:
+                                        profiles.update(
+                                            {p: profiles[p] + [key]}
+                                        )
+                                    else:
+                                        profiles.update({p: [key]})
+
+                    if profiles:
+                        for key, value in profiles.items():
+                            try:
+                                delete_metrics_from_profile(key, value)
+
+                            except Exception:
+                                if len(value) > 1:
+                                    message = \
+                                        'Error trying to remove metrics {} ' \
+                                        'from profile {}.'.format(
+                                            ', '.join(value), key
+                                        )
+                                    pronoun = 'them'
                                 else:
-                                    profiles.update({p: [key]})
+                                    message = \
+                                        'Error trying to remove metric {} ' \
+                                        'from profile {}.'.format(value[0], key)
+                                    pronoun = 'it'
 
-                if profiles:
-                    for key, value in profiles.items():
-                        try:
-                            delete_metrics_from_profile(key, value)
-
-                        except Exception:
-                            if len(value) > 1:
-                                message = \
-                                    'Error trying to remove metrics {} from '\
-                                    'profile {}.'.format(', '.join(value), key)
-                                pronoun = 'them'
-                            else:
-                                message = \
-                                    'Error trying to remove metric {} from '\
-                                    'profile {}.'.format(value[0], key)
-                                pronoun = 'it'
-
-                            warn_msg.append(
-                                message + ' Please remove {} manually.'.format(
-                                    pronoun
+                                warn_msg.append(
+                                    message +
+                                    ' Please remove {} manually.'.format(
+                                        pronoun
+                                    )
                                 )
-                            )
-                            continue
+                                continue
 
-        if warn_msg:
-            msg['deleted'] += ' WARNING: ' + ' '.join(warn_msg)
+            if warn_msg:
+                msg['deleted'] += ' WARNING: ' + ' '.join(warn_msg)
 
-        return Response(msg, status=status_code)
+            return Response(msg, status=status_code)
+
+        else:
+            return error_response(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="You do not have permission to update metrics' versions."
+            )
