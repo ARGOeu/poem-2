@@ -120,6 +120,9 @@ class ListReports(APIView):
                     apiid=report_name
                 )
 
+                if report.groupname not in user_groups(user)['reports']:
+                    return Response(data=None, status=status.HTTP_401_UNAUTHORIZED)
+
                 report.delete()
 
                 return Response(status=status.HTTP_204_NO_CONTENT)
