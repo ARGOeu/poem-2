@@ -190,7 +190,6 @@ class ListMetricProfiles(APIView):
                             )
 
                         else:
-                            profile.name = request.data['name']
                             profile.description = request.data['description']
                             profile.groupname = request.data['groupname']
 

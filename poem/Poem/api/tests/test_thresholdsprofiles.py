@@ -414,7 +414,7 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
             poem_models.ThresholdsProfiles.objects.all().count(), 3
         )
         tp = poem_models.ThresholdsProfiles.objects.get(id=self.tp1.id)
-        self.assertEqual(tp.name, 'NEW_TEST_PROFILE')
+        self.assertEqual(tp.name, 'TEST_PROFILE')
         self.assertEqual(tp.groupname, 'NEWGROUP')
         group1 = poem_models.GroupOfThresholdsProfiles.objects.get(
             name='NEWGROUP'
@@ -441,7 +441,7 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
             comment_set.add(json.dumps(item))
         self.assertEqual(
             comment_set,
-            {'{"changed": {"fields": ["groupname", "name", "rules"]}}'}
+            {'{"changed": {"fields": ["groupname", "rules"]}}'}
         )
         serialized_data = json.loads(history[0].serialized_data)[0]['fields']
         self.assertEqual(serialized_data['name'], tp.name)
@@ -686,7 +686,7 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
             poem_models.ThresholdsProfiles.objects.all().count(), 3
         )
         tp = poem_models.ThresholdsProfiles.objects.get(id=self.tp2.id)
-        self.assertEqual(tp.name, 'NEW_TEST_PROFILE')
+        self.assertEqual(tp.name, 'ANOTHER_PROFILE')
         self.assertEqual(tp.groupname, 'NEWGROUP')
         group1 = poem_models.GroupOfThresholdsProfiles.objects.get(
             name='NEWGROUP'
@@ -706,7 +706,7 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
         self.assertEqual(
             comment_set,
             {
-                '{"changed": {"fields": ["name", "rules"]}}',
+                '{"changed": {"fields": ["rules"]}}',
                 '{"added": {"fields": ["groupname"]}}'
             }
         )

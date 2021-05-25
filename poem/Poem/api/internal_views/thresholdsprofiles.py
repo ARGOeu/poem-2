@@ -91,7 +91,6 @@ class ListThresholdsProfiles(APIView):
                         group in userprofile_groups
 
                     if change_perm:
-                        profile.name = request.data['name']
                         profile.groupname = request.data['groupname']
                         profile.save()
 

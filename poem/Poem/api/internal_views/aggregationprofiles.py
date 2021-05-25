@@ -157,7 +157,6 @@ class ListAggregations(APIView):
                     else:
                         if groupaggr in userprofile.groupsofaggregations.all() \
                                 or request.user.is_superuser:
-                            aggr.name = request.data['name']
                             aggr.groupname = request.data['groupname']
                             aggr.save()
 
