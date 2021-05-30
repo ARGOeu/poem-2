@@ -13,6 +13,7 @@ from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from Poem.users.models import CustUser
+from .utils import error_response
 
 
 def user_groups(username):
@@ -35,7 +36,11 @@ class ListReports(APIView):
         user = request.user
 
         if not self._check_onchange_groupperm(request.data['groupname'], user):
-            return Response(data=None, status=status.HTTP_401_UNAUTHORIZED)
+            return error_response(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='You do not have permission to add '
+                        'report.'
+            )
 
         serializer = serializers.ReportsSerializer(data=request.data)
 
@@ -87,7 +92,11 @@ class ListReports(APIView):
         user = request.user
 
         if not self._check_onchange_groupperm(request.data['groupname'], user):
-            return Response(data=None, status=status.HTTP_401_UNAUTHORIZED)
+            return error_response(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='You do not have permission to change'
+                        'report.'
+            )
 
         if request.data['apiid']:
             report = poem_models.Reports.objects.get(
