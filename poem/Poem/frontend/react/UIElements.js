@@ -459,6 +459,19 @@ const UserDetailsToolTip = ({userDetails, isTenantSchema, publicView}) =>
               <div>
                 <WhiteRuler/>
                 <div className="text-left">
+                  Reports:
+                  <br/>
+                  {
+                    userDetails.groups.reports.length > 0
+                      ?
+                        userDetails.groups.reports.map((group, index) => (
+                          <GroupBadge name={group} key={index}/>
+                        ))
+                      :
+                        <NoPermBadge/>
+                  }
+                </div>
+                <div className="text-left">
                   Aggregation profiles:
                   <br/>
                   {
