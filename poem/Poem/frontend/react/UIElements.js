@@ -560,8 +560,7 @@ export const NavigationBar = ({history, onLogout, isOpenModal, toggle,
           <Nav navbar >
             <NavItem className='m-2 ml-5 text-light'>
               Welcome,&nbsp;
-              <span onMouseEnter={() => setTooltipOpen(true)}
-                onMouseLeave={() => setTooltipOpen(false)}
+              <span onClick={() => setTooltipOpen(!tooltipOpen)}
                 className='font-weight-bold' href="#" id="userToolTip">
                 <Badge href="#" color="dark" style={{fontSize: '100%'}}>
                   {userDetails.first_name ? userDetails.first_name : userDetails.username}
