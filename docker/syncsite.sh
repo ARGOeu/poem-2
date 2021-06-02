@@ -1,6 +1,6 @@
 #!/bin/bash
 
-SITEPACK=$(python -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")
+SITEPACK=$(python3 -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")
 
 printf "**** sync sitepkg64\n"
 rsync -avz --exclude='*node_modules*' $(echo $SITEPACK/ | sed "s/lib\//lib64\//" ) /home/user/pysitepkg/sitepkg64

@@ -308,6 +308,17 @@ class GetUserprofileForUsername(APIView):
                             )
                         )
 
+                groupsofreports = []
+                if 'groupsofreports' in dict(request.data):
+                    for group in dict(request.data)[
+                        'groupsofreports'
+                    ]:
+                        groupsofreports.append(
+                            poem_models.GroupOfReports.objects.get(
+                                name=group
+                            )
+                        )
+
                 userprofile.displayname = request.data['displayname']
                 userprofile.subject = request.data['subject']
                 userprofile.egiid = request.data['egiid']
@@ -327,6 +338,11 @@ class GetUserprofileForUsername(APIView):
                 if len(groupsofthresholdsprofiles) > 0:
                     userprofile.groupsofthresholdsprofiles.add(
                         *groupsofthresholdsprofiles
+                    )
+
+                if len(groupsofreports) > 0:
+                    userprofile.groupsofreports.add(
+                        *groupsofreports
                     )
 
                 # remove the groups that existed before, and now were removed:
@@ -357,6 +373,13 @@ class GetUserprofileForUsername(APIView):
                             'groupsofthresholdsprofiles'
                         ]:
                             userprofile.groupsofthresholdsprofiles.remove(group)
+
+                if 'groupsofreports' in dict(request.data):
+                    for group in userprofile.groupsofreports.all():
+                        if group.name not in dict(request.data)[
+                            'groupsofreports'
+                        ]:
+                            userprofile.groupsofreports.remove(group)
 
                 return Response(status=status.HTTP_201_CREATED)
 
@@ -396,6 +419,12 @@ class GetUserprofileForUsername(APIView):
                     detail='Group of thresholds profiles does not exist.'
                 )
 
+            except poem_models.GroupOfReports.DoesNotExist:
+                return error_response(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail='Group of reports does not exist.'
+                )
+
             except KeyError as e:
                 return error_response(
                     status_code=status.HTTP_400_BAD_REQUEST,
@@ -407,6 +436,40 @@ class GetUserprofileForUsername(APIView):
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail='You do not have permission to change user profiles.'
             )
+
+        # remove the groups that existed before, and now were removed:
+        if 'groupsofaggregations' in dict(request.data):
+            for group in userprofile.groupsofaggregations.all():
+                if group.name not in dict(request.data)['groupsofaggregations']:
+                    userprofile.groupsofaggregations.remove(group)
+
+        if 'groupsofmetrics' in dict(request.data):
+            for group in userprofile.groupsofmetrics.all():
+                if group.name not in dict(request.data)['groupsofmetrics']:
+                    userprofile.groupsofmetrics.remove(group)
+
+        if 'groupsofmetricprofiles' in dict(request.data):
+            for group in userprofile.groupsofmetricprofiles.all():
+                if group.name not in dict(request.data)[
+                    'groupsofmetricprofiles'
+                ]:
+                    userprofile.groupsofmetricprofiles.remove(group)
+
+        if 'groupsofthresholdsprofiles' in dict(request.data):
+            for group in userprofile.groupsofthresholdsprofiles.all():
+                if group.name not in dict(request.data)[
+                    'groupsofthresholdsprofiles'
+                ]:
+                    userprofile.groupsofthresholdsprofiles.remove(group)
+
+        if 'groupsofreports' in dict(request.data):
+            for group in userprofile.groupsofreports.all():
+                if group.name not in dict(request.data)[
+                    'groupsofreports'
+                ]:
+                    userprofile.groupsofreports.remove(group)
+
+        return Response(status=status.HTTP_201_CREATED)
 
     def post(self, request):
         if request.user.is_superuser:
@@ -449,6 +512,17 @@ class GetUserprofileForUsername(APIView):
                             )
                         )
 
+                groupsofreports = []
+                if 'groupsofreports' in dict(request.data):
+                    for group in dict(request.data)[
+                        'groupsofreports'
+                    ]:
+                        groupsofreports.append(
+                            poem_models.GroupOfReports.objects.get(
+                                name=group
+                            )
+                        )
+
                 userprofile = poem_models.UserProfile.objects.create(
                     user=user,
                     displayname=request.data['displayname'],
@@ -465,6 +539,11 @@ class GetUserprofileForUsername(APIView):
                 if len(groupsofmetricprofiles) > 0:
                     userprofile.groupsofmetricprofiles.add(
                         *groupsofmetricprofiles
+                    )
+
+                if len(groupsofreports) > 0:
+                    userprofile.groupsofreports.add(
+                        *groupsofreports
                     )
 
                 if len(groupsofthreholdsprofiles) > 0:
@@ -496,6 +575,12 @@ class GetUserprofileForUsername(APIView):
                 return error_response(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail='Group of metric profiles does not exist.'
+                )
+
+            except poem_models.GroupOfReports.DoesNotExist:
+                return error_response(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail='Group of reports does not exist.'
                 )
 
             except poem_models.GroupOfThresholdsProfiles.DoesNotExist:
