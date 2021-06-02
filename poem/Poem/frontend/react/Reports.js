@@ -448,7 +448,7 @@ const TopologyEntityFields = ({topoGroups, addview, form}) => {
         }}
         entitiesInitials={!addview ? entityInitValues(["NGI", "PROJECT"]) : undefined}
       />
-      <Label to='topoEntity2'>
+      <Label to='topoEntity2' className="pt-2">
         {label2}
       </Label>
       <Field
