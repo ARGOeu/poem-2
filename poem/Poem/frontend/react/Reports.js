@@ -712,6 +712,10 @@ export const ReportsComponent = (props) => {
         tags = [...tags, ...tmpTags]
       }
       else {
+        if (tag.value.toLowerCase() === 'yes')
+          tag.value = '1'
+        else if (tag.value === 'no')
+          tag.value = '0'
         tmpTag['name'] = tag.name
         tmpTag['value'] = tag.value
         tmpTag['context'] = tagsContext
