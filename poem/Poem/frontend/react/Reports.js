@@ -712,12 +712,13 @@ export const ReportsComponent = (props) => {
         tags = [...tags, ...tmpTags]
       }
       else {
+        let tmpTagValue = ''
         if (tag.value.toLowerCase() === 'yes')
-          tag.value = '1'
+          tmpTagValue = '1'
         else if (tag.value === 'no')
-          tag.value = '0'
+          tmpTagValue = '0'
         tmpTag['name'] = tag.name
-        tmpTag['value'] = tag.value
+        tmpTag['value'] = tmpTagValue 
         tmpTag['context'] = tagsContext
         tags.push(tmpTag)
       }
