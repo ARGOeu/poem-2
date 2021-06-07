@@ -129,7 +129,8 @@ class ListReports(APIView):
                     apiid=report_name
                 )
 
-                if report.groupname not in user_groups(user)['reports']:
+                if (not user.is_superuser and report.groupname not in
+                    user_groups(user)['reports']):
                     return Response(data=None, status=status.HTTP_401_UNAUTHORIZED)
 
                 report.delete()
