@@ -157,6 +157,16 @@ function insertSelectPlaceholder(data, text) {
 }
 
 
+function preProcessTagValue(data) {
+  if (data === '1')
+    return 'yes'
+  else if (data === '0')
+    return 'no'
+
+  return data
+}
+
+
 const TagSelect = ({field, tagOptions, onChangeHandler, isMulti,
   closeMenuOnSelect, tagInitials}) => {
   if (tagInitials) {
@@ -226,41 +236,32 @@ const TopologyTagList = ({ part, tagsState, setTagsState, tagsAll, addview, push
       return true
   }
 
-  const tagsInitValues = (key, data) => {
+  const tagsInitValues = (key, data, preprocess=false) => {
     if (data[key] === '')
       return undefined
     if (data[key].indexOf(' ') === -1)
       return new Object({
-        'label': data[key],
-        'value': data[key]
+        'label': preprocess ? preProcessTagValue(data[key]) : data[key],
+        'value': preprocess ? preProcessTagValue(data[key]) : data[key]
       })
     else {
       let tmp = data[key].split(' ').map(e => new Object({
-        'label': e,
-        'value': e
+        'label': preprocess ? preProcessTagValue(e) : e,
+        'value': preprocess ? preProcessTagValue(e) : e
       }))
       return tmp
     }
   }
 
-  const extractValuesTags = (index) => {
+  const extractValuesTags = (index, preprocess=false) => {
     if (tagsState[part] !== undefined) {
       let interestTags = extractTags(part)
       interestTags = interestTags.filter((e) => e.name === tagsState[part][index])
       if (interestTags.length > 0) {
-        if (interestTags[0].values[0] === '0' ||
-          interestTags[0].values[0] === '1') {
-          interestTags = interestTags[0].values.map((e) => new Object({
-            'label': e === '1' ? 'yes' : 'no',
-            'value': e === '1' ? 'yes' : 'no'
-          }))
-        }
-        else {
-          interestTags = interestTags[0].values.map((e) => new Object({
-            'label': e,
-            'value': e
-          }))
-        }
+        interestTags = interestTags[0].values.map((e) => new Object({
+          'label': preprocess ? preProcessTagValue(e) : e,
+          'value': preprocess ? preProcessTagValue(e) : e
+        }))
         return interestTags
       }
     }
@@ -294,7 +295,7 @@ const TopologyTagList = ({ part, tagsState, setTagsState, tagsAll, addview, push
                 <Field
                   name={`${part}.${index}.value`}
                   component={TagSelect}
-                  tagOptions={extractValuesTags(index)}
+                  tagOptions={extractValuesTags(index, true)}
                   onChangeHandler={(e) => {
                     if (Array.isArray(e)) {
                       let joinedValues = ''
@@ -308,7 +309,7 @@ const TopologyTagList = ({ part, tagsState, setTagsState, tagsAll, addview, push
                   }}
                   isMulti={isMultiValuesTags(extractValuesTags(index))}
                   closeMenuOnSelect={!isMultiValuesTags(extractValuesTags(index))}
-                  tagInitials={!addview ? tagsInitValues('value', tags) : undefined}
+                  tagInitials={!addview ? tagsInitValues('value', tags, true) : undefined}
                 />
               </Col>
               <Col md={1} className="pl-2 pt-1">
@@ -712,13 +713,13 @@ export const ReportsComponent = (props) => {
         tags = [...tags, ...tmpTags]
       }
       else {
-        let tmpTagValue = ''
+        let tmpTagValue = tag.value
         if (tag.value.toLowerCase() === 'yes')
           tmpTagValue = '1'
         else if (tag.value === 'no')
           tmpTagValue = '0'
         tmpTag['name'] = tag.name
-        tmpTag['value'] = tmpTagValue 
+        tmpTag['value'] = tmpTagValue
         tmpTag['context'] = tagsContext
         tags.push(tmpTag)
       }
