@@ -131,7 +131,11 @@ class ListReports(APIView):
 
                 if (not user.is_superuser and report.groupname not in
                     user_groups(user)['reports']):
-                    return Response(data=None, status=status.HTTP_401_UNAUTHORIZED)
+                    return error_response(
+                        status_code=status.HTTP_401_UNAUTHORIZED,
+                        detail='You do not have permission to delete'
+                                'report.'
+                    )
 
                 report.delete()
 
