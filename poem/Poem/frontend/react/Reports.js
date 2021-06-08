@@ -312,18 +312,21 @@ const TopologyTagList = ({ part, tagsState, setTagsState, tagsAll, addview, push
                   tagInitials={!addview ? tagsInitValues('value', tags, true) : undefined}
                 />
               </Col>
-              <Col md={1} className="pl-2 pt-1">
-                <Button size="sm" color="danger"
-                  type="button"
-                  onClick={() => {
-                    let newState = JSON.parse(JSON.stringify(tagsState))
-                    delete newState[part][index]
-                    remove(index)
-                    setTagsState(newState)
-                  }}>
-                  <FontAwesomeIcon icon={faTimes}/>
-                </Button>
-              </Col>
+              {
+                index === form.values[part].length - 1 &&
+                <Col md={1} className="pl-2 pt-1">
+                  <Button size="sm" color="danger"
+                    type="button"
+                    onClick={() => {
+                      let newState = JSON.parse(JSON.stringify(tagsState))
+                      delete newState[part][index]
+                      remove(index)
+                      setTagsState(newState)
+                    }}>
+                    <FontAwesomeIcon icon={faTimes}/>
+                  </Button>
+                </Col>
+              }
             </Row>
           </React.Fragment>
         ))
@@ -739,7 +742,7 @@ export const ReportsComponent = (props) => {
           tmpEntites.push(new Object({
             name: entity.name,
             value: val,
-            context: context 
+            context: context
           }))
         entities = [...entities, ...tmpEntites]
       }
