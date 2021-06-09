@@ -1125,6 +1125,7 @@ export const ReportsComponent = (props) => {
             endpoints: endpointsTags,
             entities: entitiesState
           }}
+          enableReinitialize={true}
           onSubmit = {(values) => onSubmitHandle(values)}
         >
           {(props) => (
