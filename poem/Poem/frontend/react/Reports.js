@@ -666,10 +666,10 @@ export const ReportsComponent = (props) => {
       }
 
       return new Object({
-        ngis,
-        sites,
-        projects,
-        servicegroups
+        'ngis': Array.from(ngis).sort(sortProfiles),
+        'sites': Array.from(sites).sort(sortProfiles),
+        'projects': Array.from(projects).sort(sortProfiles),
+        'servicegroups': Array.from(servicegroups).sort(sortProfiles)
       })
     },
     {
