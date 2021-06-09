@@ -33,7 +33,6 @@ import {
 } from 'reactstrap';
 import { CustomReactSelect } from './UIElements';
 import * as Yup from 'yup';
-import Select, { components } from 'react-select';
 
 
 const ReportsSchema = Yup.object().shape({
@@ -179,7 +178,7 @@ const TagSelect = ({field, tagOptions, onChangeHandler, isMulti,
         isClearable={false}
         onChange={(e) => onChangeHandler(e)}
         options={tagOptions}
-        defaultValue={tagInitials}
+        value={tagInitials}
       />
     )
   }
