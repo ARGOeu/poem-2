@@ -33,6 +33,7 @@ import {
 } from 'reactstrap';
 import { CustomReactSelect } from './UIElements';
 import * as Yup from 'yup';
+import Select, { components } from 'react-select';
 
 
 const ReportsSchema = Yup.object().shape({
@@ -312,21 +313,29 @@ const TopologyTagList = ({ part, tagsState, setTagsState, tagsAll, addview, push
                   tagInitials={!addview ? tagsInitValues('value', tags, true) : undefined}
                 />
               </Col>
-              {
-                index === form.values[part].length - 1 &&
-                <Col md={1} className="pl-2 pt-1">
-                  <Button size="sm" color="danger"
-                    type="button"
-                    onClick={() => {
-                      let newState = JSON.parse(JSON.stringify(tagsState))
-                      delete newState[part][index]
-                      remove(index)
-                      setTagsState(newState)
-                    }}>
-                    <FontAwesomeIcon icon={faTimes}/>
-                  </Button>
-                </Col>
-              }
+              <Col md={1} className="pl-2 pt-1">
+                <Button size="sm" color="danger"
+                  type="button"
+                  onClick={() => {
+                    let newState = JSON.parse(JSON.stringify(tagsState))
+                    let renumNewState = JSON.parse(JSON.stringify(tagsState))
+
+                    delete newState[part][index]
+                    delete renumNewState[part]
+                    renumNewState[part] = new Object()
+
+                    let i = 0
+                    for (var tag in newState[part]) {
+                      renumNewState[part][i] = newState[part][tag]
+                      i += 1
+                    }
+
+                    remove(index)
+                    setTagsState(renumNewState)
+                  }}>
+                  <FontAwesomeIcon icon={faTimes}/>
+                </Button>
+              </Col>
             </Row>
           </React.Fragment>
         ))
