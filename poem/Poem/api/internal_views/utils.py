@@ -6,7 +6,12 @@ from Poem.helpers.history_helpers import create_profile_history
 from Poem.poem import models as poem_models
 from Poem.poem_super_admin import models as admin_models
 from django.contrib.contenttypes.models import ContentType
+from rest_framework.response import Response
 from tenant_schemas.utils import schema_context, get_public_schema_name
+
+
+def error_response(status_code=None, detail=''):
+    return Response({'detail': detail}, status=status_code)
 
 
 def one_value_inline(input):
@@ -84,10 +89,16 @@ def sync_webapi(api, model):
     new_entries = []
     for p in data:
         if p['id'] in entries_not_indb:
-            new_entries.append(
-                dict(name=p['name'], description=p.get('description', ''),
-                     apiid=p['id'], groupname='')
-            )
+            if p.get('info', False):
+                new_entries.append(
+                    dict(name=p['info']['name'], description=p['info'].get('description', ''),
+                        apiid=p['id'], groupname='')
+                )
+            else:
+                new_entries.append(
+                    dict(name=p['name'], description=p.get('description', ''),
+                        apiid=p['id'], groupname='')
+                )
 
     if new_entries:
         for entry in new_entries:
@@ -138,8 +149,12 @@ def sync_webapi(api, model):
     for p in data:
         if p['id'] in entries_indb:
             instance = model.objects.get(apiid=p['id'])
-            instance.name = p['name']
-            instance.description = p.get('description', '')
+            if p.get('info', False):
+                instance.name = p['info']['name']
+                instance.description = p['info'].get('description', '')
+            else:
+                instance.name = p['name']
+                instance.description = p.get('description', '')
             instance.save()
 
 

@@ -17,6 +17,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from tenant_schemas.utils import get_public_schema_name, schema_context
 
+from .utils import error_response
+
 
 class ListMetricTemplates(APIView):
     authentication_classes = (SessionAuthentication,)
@@ -121,318 +123,387 @@ class ListMetricTemplates(APIView):
             return Response(results)
 
     def post(self, request):
-        if request.data['parent']:
-            parent = json.dumps([request.data['parent']])
-        else:
-            parent = ''
-
-        if request.data['probeexecutable']:
-            probeexecutable = json.dumps([request.data['probeexecutable']])
-        else:
-            probeexecutable = ''
-
-        try:
-            if request.data['mtype'] == 'Active':
-                probe_name = request.data['probeversion'].split(' ')[0]
-                probe_version = request.data['probeversion'].split(' ')[1][1:-1]
-                mt = admin_models.MetricTemplate.objects.create(
-                    name=request.data['name'],
-                    mtype=admin_models.MetricTemplateType.objects.get(
-                        name=request.data['mtype']
-                    ),
-                    probekey=admin_models.ProbeHistory.objects.get(
-                        name=probe_name,  package__version=probe_version
-                    ),
-                    description=request.data['description'],
-                    parent=parent,
-                    probeexecutable=probeexecutable,
-                    config=inline_metric_for_db(request.data['config']),
-                    attribute=inline_metric_for_db(request.data['attribute']),
-                    dependency=inline_metric_for_db(request.data['dependency']),
-                    flags=inline_metric_for_db(request.data['flags']),
-                    files=inline_metric_for_db(request.data['files']),
-                    parameter=inline_metric_for_db(request.data['parameter']),
-                    fileparameter=inline_metric_for_db(
-                        request.data['fileparameter']
-                    )
-                )
-                if 'tags' in dict(request.data):
-                    for tag_name in dict(request.data)['tags']:
-                        try:
-                            tag = admin_models.MetricTags.objects.get(
-                                name=tag_name
-                            )
-                        except admin_models.MetricTags.DoesNotExist:
-                            tag = admin_models.MetricTags.objects.create(
-                                name=tag_name
-                            )
-                        mt.tags.add(tag)
-            else:
-                mt = admin_models.MetricTemplate.objects.create(
-                    name=request.data['name'],
-                    mtype=admin_models.MetricTemplateType.objects.get(
-                        name=request.data['mtype']
-                    ),
-                    description=request.data['description'],
-                    parent=parent,
-                    flags=inline_metric_for_db(request.data['flags'])
-                )
-
-            if request.data['cloned_from']:
-                clone = admin_models.MetricTemplate.objects.get(
-                    id=request.data['cloned_from']
-                )
-                comment = 'Derived from ' + clone.name
-                create_history(mt, request.user.username, comment=comment)
-            else:
-                create_history(mt, request.user.username)
-
-            return Response(status=status.HTTP_201_CREATED)
-
-        except IntegrityError:
-            return Response(
-                {'detail':
-                 'Metric template with this name already exists.'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        except admin_models.ProbeHistory.DoesNotExist:
-            return Response(
-                {'detail': 'You should choose existing probe version!'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        except IndexError:
-            return Response(
-                {'detail': 'You should specify the version of the probe!'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-    def put(self, request):
-        metrictemplate = admin_models.MetricTemplate.objects.get(
-            id=request.data['id']
-        )
-        old_name = metrictemplate.name
-        old_probekey = metrictemplate.probekey
-        old_tags = set([tag.name for tag in metrictemplate.tags.all()])
-
-        if request.data['parent']:
-            parent = json.dumps([request.data['parent']])
-        else:
-            parent = ''
-
-        if request.data['probeexecutable']:
-            probeexecutable = json.dumps([request.data['probeexecutable']])
-        else:
-            probeexecutable = ''
-
-        new_tags = set()
-        if 'tags' in dict(request.data):
-            new_tags = set(dict(request.data)['tags'])
-
-        if request.data['probeversion']:
+        if request.tenant.schema_name == get_public_schema_name() and \
+                request.user.is_superuser:
             try:
-                probe_name = request.data['probeversion'].split(' ')[0]
-                probe_version = request.data['probeversion'].split(' ')[1][1:-1]
-                new_probekey = admin_models.ProbeHistory.objects.get(
-                    name=probe_name,
-                    package__version=probe_version
+                if request.data['parent']:
+                    parent = json.dumps([request.data['parent']])
+                else:
+                    parent = ''
+
+                if request.data['probeexecutable']:
+                    probeexecutable = json.dumps(
+                        [request.data['probeexecutable']]
+                    )
+                else:
+                    probeexecutable = ''
+
+                if request.data['mtype'] == 'Active':
+                    probe_name = request.data['probeversion'].split(' ')[0]
+                    probe_version = request.data[
+                                        'probeversion'
+                                    ].split(' ')[1][1:-1]
+                    mt = admin_models.MetricTemplate.objects.create(
+                        name=request.data['name'],
+                        mtype=admin_models.MetricTemplateType.objects.get(
+                            name=request.data['mtype']
+                        ),
+                        probekey=admin_models.ProbeHistory.objects.get(
+                            name=probe_name,  package__version=probe_version
+                        ),
+                        description=request.data['description'],
+                        parent=parent,
+                        probeexecutable=probeexecutable,
+                        config=inline_metric_for_db(request.data['config']),
+                        attribute=inline_metric_for_db(
+                            request.data['attribute']
+                        ),
+                        dependency=inline_metric_for_db(
+                            request.data['dependency']
+                        ),
+                        flags=inline_metric_for_db(request.data['flags']),
+                        files=inline_metric_for_db(request.data['files']),
+                        parameter=inline_metric_for_db(
+                            request.data['parameter']
+                        ),
+                        fileparameter=inline_metric_for_db(
+                            request.data['fileparameter']
+                        )
+                    )
+                    if 'tags' in dict(request.data):
+                        for tag_name in dict(request.data)['tags']:
+                            try:
+                                tag = admin_models.MetricTags.objects.get(
+                                    name=tag_name
+                                )
+
+                            except admin_models.MetricTags.DoesNotExist:
+                                tag = admin_models.MetricTags.objects.create(
+                                    name=tag_name
+                                )
+                            mt.tags.add(tag)
+                else:
+                    mt = admin_models.MetricTemplate.objects.create(
+                        name=request.data['name'],
+                        mtype=admin_models.MetricTemplateType.objects.get(
+                            name=request.data['mtype']
+                        ),
+                        description=request.data['description'],
+                        parent=parent,
+                        flags=inline_metric_for_db(request.data['flags'])
+                    )
+
+                if request.data['cloned_from']:
+                    clone = admin_models.MetricTemplate.objects.get(
+                        id=request.data['cloned_from']
+                    )
+                    comment = 'Derived from ' + clone.name
+                    create_history(mt, request.user.username, comment=comment)
+                else:
+                    create_history(mt, request.user.username)
+
+                return Response(status=status.HTTP_201_CREATED)
+
+            except IntegrityError:
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail='Metric template with this name already exists.'
                 )
 
             except admin_models.ProbeHistory.DoesNotExist:
-                return Response(
-                    {'detail': 'You should choose existing probe version!'},
-                    status=status.HTTP_400_BAD_REQUEST
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail='Probe version does not exist.'
                 )
 
             except IndexError:
-                return Response(
-                    {'detail': 'You should specify the version of the probe!'},
-                    status=status.HTTP_400_BAD_REQUEST
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail='Probe version not specified.'
                 )
+
+            except KeyError as e:
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail='Missing data key: {}'.format(e.args[0])
+                )
+
         else:
-            new_probekey = None
+            return error_response(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='You do not have permission to add metric templates.'
+            )
 
-        try:
-            if request.data['mtype'] == 'Active' and \
-                    old_probekey != new_probekey:
-                metrictemplate.name = request.data['name']
-                metrictemplate.probekey = new_probekey
-                metrictemplate.description = request.data['description']
-                metrictemplate.parent = parent
-                metrictemplate.probeexecutable = probeexecutable
-                metrictemplate.config = inline_metric_for_db(
-                    request.data['config']
+    def put(self, request):
+        if request.tenant.schema_name == get_public_schema_name() and \
+                request.user.is_superuser:
+            try:
+                metrictemplate = admin_models.MetricTemplate.objects.get(
+                    id=request.data['id']
                 )
-                metrictemplate.attribute = inline_metric_for_db(
-                    request.data['attribute']
-                )
-                metrictemplate.dependency = inline_metric_for_db(
-                    request.data['dependency']
-                )
-                metrictemplate.flags = inline_metric_for_db(
-                    request.data['flags']
-                )
-                metrictemplate.files = inline_metric_for_db(
-                    request.data['files']
-                )
-                metrictemplate.parameter = inline_metric_for_db(
-                    request.data['parameter']
-                )
-                metrictemplate.fileparameter = inline_metric_for_db(
-                    request.data['fileparameter']
-                )
-                metrictemplate.save()
+                old_name = metrictemplate.name
+                old_probekey = metrictemplate.probekey
+                old_tags = set([tag.name for tag in metrictemplate.tags.all()])
 
-                if old_tags.difference(new_tags):
-                    for tag in old_tags.difference(new_tags):
-                        metrictemplate.tags.remove(
-                            admin_models.MetricTags.objects.get(name=tag)
-                        )
+                if request.data['parent']:
+                    parent = json.dumps([request.data['parent']])
+                else:
+                    parent = ''
 
-                if new_tags.difference(old_tags):
-                    for tag in new_tags.difference(old_tags):
-                        try:
-                            mtag = admin_models.MetricTags.objects.get(name=tag)
+                if request.data['probeexecutable']:
+                    probeexecutable = json.dumps(
+                        [request.data['probeexecutable']]
+                    )
+                else:
+                    probeexecutable = ''
 
-                        except admin_models.MetricTags.DoesNotExist:
-                            mtag = admin_models.MetricTags.objects.create(
-                                name=tag
-                            )
-                        metrictemplate.tags.add(mtag)
+                new_tags = set()
+                if 'tags' in dict(request.data):
+                    new_tags = set(dict(request.data)['tags'])
 
-                create_history(metrictemplate, request.user.username)
+                if request.data['probeversion']:
+                    probe_name = request.data['probeversion'].split(' ')[0]
+                    probe_version = request.data[
+                                        'probeversion'
+                                    ].split(' ')[1][1:-1]
+                    new_probekey = admin_models.ProbeHistory.objects.get(
+                        name=probe_name,
+                        package__version=probe_version
+                    )
 
-            else:
-                new_data = {
-                    'name': request.data['name'],
-                    'probekey': new_probekey,
-                    'mtype': admin_models.MetricTemplateType.objects.get(
-                        name=request.data['mtype']
-                    ),
-                    'description': request.data['description'],
-                    'parent': parent,
-                    'probeexecutable': probeexecutable,
-                    'config': inline_metric_for_db(request.data['config']),
-                    'attribute': inline_metric_for_db(
+                else:
+                    new_probekey = None
+
+                if request.data['mtype'] == 'Active' and \
+                        old_probekey != new_probekey:
+                    metrictemplate.name = request.data['name']
+                    metrictemplate.probekey = new_probekey
+                    metrictemplate.description = request.data['description']
+                    metrictemplate.parent = parent
+                    metrictemplate.probeexecutable = probeexecutable
+                    metrictemplate.config = inline_metric_for_db(
+                        request.data['config']
+                    )
+                    metrictemplate.attribute = inline_metric_for_db(
                         request.data['attribute']
-                    ),
-                    'dependency': inline_metric_for_db(
+                    )
+                    metrictemplate.dependency = inline_metric_for_db(
                         request.data['dependency']
-                    ),
-                    'flags': inline_metric_for_db(request.data['flags']),
-                    'files': inline_metric_for_db(request.data['files']),
-                    'parameter': inline_metric_for_db(
+                    )
+                    metrictemplate.flags = inline_metric_for_db(
+                        request.data['flags']
+                    )
+                    metrictemplate.files = inline_metric_for_db(
+                        request.data['files']
+                    )
+                    metrictemplate.parameter = inline_metric_for_db(
                         request.data['parameter']
-                    ),
-                    'fileparameter': inline_metric_for_db(
+                    )
+                    metrictemplate.fileparameter = inline_metric_for_db(
                         request.data['fileparameter']
                     )
-                }
-                admin_models.MetricTemplate.objects.filter(
-                    id=request.data['id']
-                ).update(**new_data)
+                    metrictemplate.save()
 
-                mt = admin_models.MetricTemplate.objects.get(
-                    pk=request.data['id']
-                )
-
-                tags_to_remove = None
-                if old_tags.difference(new_tags):
-                    tags_to_remove = admin_models.MetricTags.objects.filter(
-                        name__in=old_tags.difference(new_tags)
-                    )
-                    for tag in tags_to_remove:
-                        mt.tags.remove(tag)
-
-                tags_to_add = None
-                if new_tags.difference(old_tags):
-                    tags_to_add = []
-                    for tag in new_tags.difference(old_tags):
-                        try:
-                            mtag = admin_models.MetricTags.objects.get(name=tag)
-
-                        except admin_models.MetricTags.DoesNotExist:
-                            mtag = admin_models.MetricTags.objects.create(
-                                name=tag
+                    if old_tags.difference(new_tags):
+                        for tag in old_tags.difference(new_tags):
+                            metrictemplate.tags.remove(
+                                admin_models.MetricTags.objects.get(name=tag)
                             )
-                        tags_to_add.append(mtag)
-                        mt.tags.add(mtag)
 
-                new_data.update({
-                    'version_comment': update_comment(
-                        admin_models.MetricTemplate.objects.get(
-                            id=request.data['id']
+                    if new_tags.difference(old_tags):
+                        for tag in new_tags.difference(old_tags):
+                            try:
+                                mtag = admin_models.MetricTags.objects.get(
+                                    name=tag
+                                )
+
+                            except admin_models.MetricTags.DoesNotExist:
+                                mtag = admin_models.MetricTags.objects.create(
+                                    name=tag
+                                )
+                            metrictemplate.tags.add(mtag)
+
+                    create_history(metrictemplate, request.user.username)
+
+                else:
+                    new_data = {
+                        'name': request.data['name'],
+                        'probekey': new_probekey,
+                        'mtype': admin_models.MetricTemplateType.objects.get(
+                            name=request.data['mtype']
+                        ),
+                        'description': request.data['description'],
+                        'parent': parent,
+                        'probeexecutable': probeexecutable,
+                        'config': inline_metric_for_db(request.data['config']),
+                        'attribute': inline_metric_for_db(
+                            request.data['attribute']
+                        ),
+                        'dependency': inline_metric_for_db(
+                            request.data['dependency']
+                        ),
+                        'flags': inline_metric_for_db(request.data['flags']),
+                        'files': inline_metric_for_db(request.data['files']),
+                        'parameter': inline_metric_for_db(
+                            request.data['parameter']
+                        ),
+                        'fileparameter': inline_metric_for_db(
+                            request.data['fileparameter']
                         )
+                    }
+                    admin_models.MetricTemplate.objects.filter(
+                        id=request.data['id']
+                    ).update(**new_data)
+
+                    mt = admin_models.MetricTemplate.objects.get(
+                        pk=request.data['id']
                     )
-                })
 
-                admin_models.MetricTemplateHistory.objects.filter(
-                    name=old_name, probekey=old_probekey
-                ).update(**new_data)
+                    tags_to_remove = None
+                    if old_tags.difference(new_tags):
+                        tags_to_remove = admin_models.MetricTags.objects.filter(
+                            name__in=old_tags.difference(new_tags)
+                        )
+                        for tag in tags_to_remove:
+                            mt.tags.remove(tag)
 
-                history = admin_models.MetricTemplateHistory.objects.get(
-                    name=request.data['name'], probekey=new_probekey
+                    tags_to_add = None
+                    if new_tags.difference(old_tags):
+                        tags_to_add = []
+                        for tag in new_tags.difference(old_tags):
+                            try:
+                                mtag = admin_models.MetricTags.objects.get(
+                                    name=tag
+                                )
+
+                            except admin_models.MetricTags.DoesNotExist:
+                                mtag = admin_models.MetricTags.objects.create(
+                                    name=tag
+                                )
+                            tags_to_add.append(mtag)
+                            mt.tags.add(mtag)
+
+                    new_data.update({
+                        'version_comment': update_comment(
+                            admin_models.MetricTemplate.objects.get(
+                                id=request.data['id']
+                            )
+                        )
+                    })
+
+                    admin_models.MetricTemplateHistory.objects.filter(
+                        name=old_name, probekey=old_probekey
+                    ).update(**new_data)
+
+                    history = admin_models.MetricTemplateHistory.objects.get(
+                        name=request.data['name'], probekey=new_probekey
+                    )
+
+                    if tags_to_remove:
+                        for tag in tags_to_remove:
+                            history.tags.remove(tag)
+
+                    if tags_to_add:
+                        for tag in tags_to_add:
+                            history.tags.add(tag)
+
+                    msgs = update_metrics(mt, old_name, old_probekey)
+
+                    if msgs:
+                        return error_response(
+                            detail='\n'.join(msgs),
+                            status_code=status.HTTP_418_IM_A_TEAPOT
+                        )
+
+                return Response(status=status.HTTP_201_CREATED)
+
+            except admin_models.MetricTemplate.DoesNotExist:
+                return error_response(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail='Metric template does not exist.'
                 )
 
-                if tags_to_remove:
-                    for tag in tags_to_remove:
-                        history.tags.remove(tag)
+            except KeyError as e:
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail='Missing data key: {}'.format(e.args[0])
+                )
 
-                if tags_to_add:
-                    for tag in tags_to_add:
-                        history.tags.add(tag)
+            except admin_models.ProbeHistory.DoesNotExist:
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail='Probe version does not exist.'
+                )
 
-                msgs = update_metrics(mt, old_name, old_probekey)
+            except IndexError:
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail='Probe version not specified.'
+                )
 
-                if msgs:
-                    return Response(
-                        {'detail': '\n'.join(msgs)},
-                        status=status.HTTP_418_IM_A_TEAPOT
-                    )
+            except IntegrityError:
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail='Metric template with this name already exists.'
+                )
 
-            return Response(status=status.HTTP_201_CREATED)
-
-        except IntegrityError:
-            return Response(
-                {'detail': 'Metric template with this name already exists.'},
-                status=status.HTTP_400_BAD_REQUEST
+        else:
+            return error_response(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='You do not have permission to change metric templates.'
             )
 
     def delete(self, request, name=None):
-        schemas = list(Tenant.objects.all().values_list('schema_name',
-                                                        flat=True))
+        schemas = list(
+            Tenant.objects.all().values_list('schema_name', flat=True)
+        )
         schemas.remove(get_public_schema_name())
-        if name:
-            try:
-                mt = admin_models.MetricTemplate.objects.get(name=name)
-                for schema in schemas:
-                    with schema_context(schema):
-                        try:
-                            admin_models.History.objects.filter(
-                                object_id=mt.id,
-                                content_type=ContentType.objects.get_for_model(
-                                    mt)
-                            ).delete()
-                            m = Metric.objects.get(name=name)
-                            TenantHistory.objects.filter(
-                                object_id=m.id,
-                                content_type=ContentType.objects.get_for_model(
-                                    m
-                                )
-                            ).delete()
-                            m.delete()
-                        except Metric.DoesNotExist:
-                            pass
+        metric_ct = ContentType.objects.get_for_model(Metric)
+        template_ct = ContentType.objects.get_for_model(
+            admin_models.MetricTemplate
+        )
 
-                mt.delete()
-                return Response(status=status.HTTP_204_NO_CONTENT)
+        if request.tenant.schema_name == get_public_schema_name() and \
+                request.user.is_superuser:
+            if name:
+                try:
+                    mt = admin_models.MetricTemplate.objects.get(name=name)
+                    for schema in schemas:
+                        with schema_context(schema):
+                            try:
+                                admin_models.History.objects.filter(
+                                    object_id=mt.id,
+                                    content_type=template_ct
+                                ).delete()
+                                m = Metric.objects.get(name=name)
+                                TenantHistory.objects.filter(
+                                    object_id=m.id,
+                                    content_type=metric_ct
+                                ).delete()
+                                m.delete()
+                            except Metric.DoesNotExist:
+                                pass
 
-            except admin_models.MetricTemplate.DoesNotExist:
-                raise NotFound(status=404, detail='Metric template not found')
+                    mt.delete()
+                    return Response(status=status.HTTP_204_NO_CONTENT)
+
+                except admin_models.MetricTemplate.DoesNotExist:
+                    return error_response(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail='Metric template does not exist.'
+                    )
+
+            else:
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail='Metric template name not specified.'
+                )
 
         else:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+            return error_response(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='You do not have permission to delete metric templates.'
+            )
 
 
 class ListPublicMetricTemplates(ListMetricTemplates):
@@ -534,88 +605,101 @@ class BulkDeleteMetricTemplates(APIView):
     authentication_classes = (SessionAuthentication,)
 
     def post(self, request):
-        metrictemplates = dict(request.data)['metrictemplates']
+        if request.tenant.schema_name == get_public_schema_name() and \
+                request.user.is_superuser:
+            metrictemplates = dict(request.data)['metrictemplates']
 
-        schemas = list(
-            Tenant.objects.all().values_list('schema_name', flat=True)
-        )
-        schemas.remove(get_public_schema_name())
+            schemas = list(
+                Tenant.objects.all().values_list('schema_name', flat=True)
+            )
+            schemas.remove(get_public_schema_name())
 
-        warning_message = []
-        for schema in schemas:
-            with schema_context(schema):
-                try:
-                    mip = get_metrics_in_profiles(schema)
-                except Exception as e:
-                    warning_message.append(
-                        '{}: Metrics are not removed from metric profiles. '
-                        'Unable to get metric profiles: {}'.format(
-                            schema, str(e)
-                        )
-                    )
-                    continue
-
-                inter = set(metrictemplates).intersection(set(list(mip.keys())))
-                profiles = dict()
-                for metric in metrictemplates:
+            warning_message = []
+            for schema in schemas:
+                with schema_context(schema):
                     try:
-                        instance = Metric.objects.get(name=metric)
-                        TenantHistory.objects.filter(
-                            object_id=instance.id
-                        ).delete()
-                        instance.delete()
-
-                    except Metric.DoesNotExist:
+                        mip = get_metrics_in_profiles(schema)
+                    except Exception as e:
+                        warning_message.append(
+                            '{}: Metrics are not removed from metric profiles. '
+                            'Unable to get metric profiles: {}'.format(
+                                schema, str(e)
+                            )
+                        )
                         continue
 
-                    for key, value in mip.items():
-                        if metric in inter and key == metric:
-                            for p in value:
-                                if p in profiles:
-                                    profiles.update({p: profiles[p] + [key]})
-                                else:
-                                    profiles.update({p: [key]})
-
-                if profiles:
-                    for key, value in profiles.items():
+                    inter = set(metrictemplates).intersection(
+                        set(list(mip.keys()))
+                    )
+                    profiles = dict()
+                    for metric in metrictemplates:
                         try:
-                            delete_metrics_from_profile(key, value)
+                            instance = Metric.objects.get(name=metric)
+                            TenantHistory.objects.filter(
+                                object_id=instance.id
+                            ).delete()
+                            instance.delete()
 
-                        except Exception as e:
-                            if len(value) > 1:
-                                noun = 'Metrics {}'.format(', '.join(value))
-                            else:
-                                noun = 'Metric {}'.format(value[0])
+                        except Metric.DoesNotExist:
+                            continue
 
-                            warning_message.append(
-                                '{}: {} not deleted from profile {}: {}'.format(
-                                    schema, noun, key, str(e)
+                        for key, value in mip.items():
+                            if metric in inter and key == metric:
+                                for p in value:
+                                    if p in profiles:
+                                        profiles.update(
+                                            {p: profiles[p] + [key]}
+                                        )
+                                    else:
+                                        profiles.update({p: [key]})
+
+                    if profiles:
+                        for key, value in profiles.items():
+                            try:
+                                delete_metrics_from_profile(key, value)
+
+                            except Exception as e:
+                                if len(value) > 1:
+                                    noun = 'Metrics {}'.format(', '.join(value))
+                                else:
+                                    noun = 'Metric {}'.format(value[0])
+
+                                warning_message.append(
+                                    '{}: {} not deleted from '
+                                    'profile {}: {}'.format(
+                                        schema, noun, key, str(e)
+                                    )
                                 )
-                            )
 
-        response_message = dict()
-        mt = admin_models.MetricTemplate.objects.filter(
-            name__in=metrictemplates
-        )
+            response_message = dict()
+            mt = admin_models.MetricTemplate.objects.filter(
+                name__in=metrictemplates
+            )
 
-        mt.delete()
+            mt.delete()
 
-        if len(metrictemplates) > 1:
-            msg = 'Metric templates {}'.format(', '.join(metrictemplates))
+            if len(metrictemplates) > 1:
+                msg = 'Metric templates {}'.format(', '.join(metrictemplates))
+
+            else:
+                msg = 'Metric template {}'.format(metrictemplates[0])
+
+            response_message.update({
+                'info': '{} successfully deleted.'.format(msg)
+            })
+
+            if warning_message:
+                response_message.update({'warning': '; '.join(warning_message)})
+
+            return Response(
+                data=response_message, status=status.HTTP_200_OK
+            )
 
         else:
-            msg = 'Metric template {}'.format(metrictemplates[0])
-
-        response_message.update({
-            'info': '{} successfully deleted.'.format(msg)
-        })
-
-        if warning_message:
-            response_message.update({'warning': '; '.join(warning_message)})
-
-        return Response(
-            data=response_message, status=status.HTTP_200_OK
-        )
+            return error_response(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='You do not have permission to delete metric templates.'
+            )
 
 
 class ListPublicMetricTemplatesForProbeVersion(ListMetricTemplatesForProbeVersion):
