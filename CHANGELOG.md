@@ -1,5 +1,32 @@
 # Changelog
 
+## [3.3.9] - 2021-06-10
+
+### Added
+
+* ARGO-2712 Create tests for metric profiles
+* ARGO-2563 Introduce topology tags/filters handling in Reports page
+* ARGO-3066 Fetch sites and NGIs needed for reports filtering from /topology WEB-API methods
+* ARGO-2711 Create tests for Login page
+* ARGO-3137 Sorted topology entities
+* ARGO-3147 Update documentation regarding reports
+* ARGO-3130 Display group of reports permissions on userdetails
+
+### Changed
+
+* ARGO-3133 Use custom react-select component on Reports
+* ARGO-3145 Reports internal POEM API methods tighten
+* ARGO-3134 Do not reset tags form state to initials
+* ARGO-3135 Ensure topology type and group selected
+* ARGO-3068 Do not allow profile renaming
+* ARGO-3097 Tighten up PUT and POST on the backend API
+* ARGO-3162 Postprocess binary tags value in onChange handler
+
+### Fixed
+
+* ARGO-3174 Fix tuple remove for all tag tuples not just last
+* ARGO-3143 Fix failing tests
+
 ## [3.3.8] - 2021-04-12
 
 ### Added
