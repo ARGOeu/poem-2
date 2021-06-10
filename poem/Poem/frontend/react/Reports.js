@@ -1231,7 +1231,7 @@ export const ReportsComponent = (props) => {
                       name='aggregationProfile'
                       component={DropDown}
                       data={insertSelectPlaceholder(
-                        extractProfileNames(listAggregationProfiles).sort(sortProfiles),
+                        extractProfileNames(listAggregationProfiles).sort(sortStr),
                         'Select')}
                       required={true}
                       class_name='custom-select'
