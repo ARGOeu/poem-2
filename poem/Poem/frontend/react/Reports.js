@@ -615,7 +615,7 @@ export const ReportsComponent = (props) => {
     }
   );
 
-  const sortProfiles = (a, b) => {
+  const sortStr = (a, b) => {
     if (a.toLowerCase() < b.toLowerCase()) return -1;
     if (a.toLowerCase() > b.toLowerCase()) return 1;
     if (a.toLowerCase() === b.toLowerCase()) {
@@ -631,7 +631,7 @@ export const ReportsComponent = (props) => {
     for (let profile of profiles)
       tmp.push(profile.name)
 
-    tmp = tmp.sort(sortProfiles)
+    tmp = tmp.sort(sortStr)
 
     return tmp;
   }
@@ -666,10 +666,10 @@ export const ReportsComponent = (props) => {
       }
 
       return new Object({
-        ngis,
-        sites,
-        projects,
-        servicegroups
+        'ngis': Array.from(ngis).sort(sortStr),
+        'sites': Array.from(sites).sort(sortStr),
+        'projects': Array.from(projects).sort(sortStr),
+        'servicegroups': Array.from(servicegroups).sort(sortStr)
       })
     },
     {
