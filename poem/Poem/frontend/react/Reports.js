@@ -489,6 +489,7 @@ export const ReportsComponent = (props) => {
   const location = props.location;
   const history = props.history;
   const backend = new Backend();
+  const crud = props.webapireports ? props.webapireports.crud : undefined
   const [areYouSureModal, setAreYouSureModal] = useState(false)
   const [modalMsg, setModalMsg] = useState(undefined);
   const [modalTitle, setModalTitle] = useState(undefined);
@@ -587,7 +588,6 @@ export const ReportsComponent = (props) => {
     }
   );
 
-
   const { data: listMetricProfiles, error: listMetricProfilesError, isLoading: listMetricProfilesLoading } = useQuery(
     `${querykey}_metricprofiles`, async () => {
       return await webapi.fetchMetricProfiles();
@@ -638,8 +638,12 @@ export const ReportsComponent = (props) => {
 
   const { data: topologyTags, error: topologyTagsError, isLoading: isLoadingTopologyTags} = useQuery(
     `${querykey}_topologytags`, async () => {
-      let tags = await webapi.fetchReportsTopologyTags();
-      return tags
+      if (crud) {
+        let tags = await webapi.fetchReportsTopologyTags();
+        return tags
+      }
+      else
+        return new Array()
     },
     {
       enabled: report
@@ -648,29 +652,33 @@ export const ReportsComponent = (props) => {
 
   const { data: topologyGroups, error: topologyGroupsErrors, isLoading: topologyGroupsErrorsIsLoading } = useQuery(
     `${querykey}_topologygroups`, async () => {
-      let groups = await webapi.fetchReportsTopologyGroups();
-      let ngis = new Set()
-      let sites = new Set()
-      let projects = new Set()
-      let servicegroups = new Set()
+      if (crud) {
+        let groups = await webapi.fetchReportsTopologyGroups();
+        let ngis = new Set()
+        let sites = new Set()
+        let projects = new Set()
+        let servicegroups = new Set()
 
-      for (var entity of groups) {
-        if (entity['type'].toLowerCase() === 'project') {
-          projects.add(entity['group'])
-          servicegroups.add(entity['subgroup'])
+        for (var entity of groups) {
+          if (entity['type'].toLowerCase() === 'project') {
+            projects.add(entity['group'])
+            servicegroups.add(entity['subgroup'])
+          }
+          else if (entity['type'].toLowerCase() === 'ngi') {
+            ngis.add(entity['group'])
+            sites.add(entity['subgroup'])
+          }
         }
-        else if (entity['type'].toLowerCase() === 'ngi') {
-          ngis.add(entity['group'])
-          sites.add(entity['subgroup'])
-        }
+
+        return new Object({
+          'ngis': Array.from(ngis).sort(sortStr),
+          'sites': Array.from(sites).sort(sortStr),
+          'projects': Array.from(projects).sort(sortStr),
+          'servicegroups': Array.from(servicegroups).sort(sortStr)
+        })
       }
-
-      return new Object({
-        'ngis': Array.from(ngis).sort(sortStr),
-        'sites': Array.from(sites).sort(sortStr),
-        'projects': Array.from(projects).sort(sortStr),
-        'servicegroups': Array.from(servicegroups).sort(sortStr)
-      })
+      else
+        return new Object()
     },
     {
       enabled: report
@@ -1042,7 +1050,6 @@ export const ReportsComponent = (props) => {
     else if (onYes === 'change')
       doChange(formikValues)
   }
-
 
   if (reportLoading || listMetricProfilesLoading || listAggregationProfilesLoading || listOperationsProfilesLoading)
     return (<LoadingAnim/>);
