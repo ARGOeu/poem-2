@@ -49,6 +49,7 @@ try:
     WEBAPI_THRESHOLDS = config.get('WEBAPI', 'ThresholdsProfile')
     WEBAPI_OPERATIONS = config.get('WEBAPI', 'OperationsProfile')
     WEBAPI_REPORTS = config.get('WEBAPI', 'Reports')
+    WEBAPI_REPORTSCRUD = config.getboolean('WEBAPI', 'ReportsCRUD')
     WEBAPI_REPORTSTAGS = config.get('WEBAPI', 'ReportsTopologyTags')
     WEBAPI_REPORTSTOPOLOGYGROUPS = config.get('WEBAPI', 'ReportsTopologyGroups')
     WEBAPI_REPORTSTOPOLOGYENDPOINTS = config.get('WEBAPI', 'ReportsTopologyEndpoints')
