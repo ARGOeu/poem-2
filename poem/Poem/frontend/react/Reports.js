@@ -489,6 +489,7 @@ export const ReportsComponent = (props) => {
   const location = props.location;
   const history = props.history;
   const backend = new Backend();
+  const crud = props.webapireports ? props.webapireports.crud : undefined
   const [areYouSureModal, setAreYouSureModal] = useState(false)
   const [modalMsg, setModalMsg] = useState(undefined);
   const [modalTitle, setModalTitle] = useState(undefined);
@@ -587,7 +588,6 @@ export const ReportsComponent = (props) => {
     }
   );
 
-
   const { data: listMetricProfiles, error: listMetricProfilesError, isLoading: listMetricProfilesLoading } = useQuery(
     `${querykey}_metricprofiles`, async () => {
       return await webapi.fetchMetricProfiles();
@@ -638,8 +638,12 @@ export const ReportsComponent = (props) => {
 
   const { data: topologyTags, error: topologyTagsError, isLoading: isLoadingTopologyTags} = useQuery(
     `${querykey}_topologytags`, async () => {
-      let tags = await webapi.fetchReportsTopologyTags();
-      return tags
+      if (crud) {
+        let tags = await webapi.fetchReportsTopologyTags();
+        return tags
+      }
+      else
+        return new Array()
     },
     {
       enabled: report
@@ -648,29 +652,33 @@ export const ReportsComponent = (props) => {
 
   const { data: topologyGroups, error: topologyGroupsErrors, isLoading: topologyGroupsErrorsIsLoading } = useQuery(
     `${querykey}_topologygroups`, async () => {
-      let groups = await webapi.fetchReportsTopologyGroups();
-      let ngis = new Set()
-      let sites = new Set()
-      let projects = new Set()
-      let servicegroups = new Set()
+      if (crud) {
+        let groups = await webapi.fetchReportsTopologyGroups();
+        let ngis = new Set()
+        let sites = new Set()
+        let projects = new Set()
+        let servicegroups = new Set()
 
-      for (var entity of groups) {
-        if (entity['type'].toLowerCase() === 'project') {
-          projects.add(entity['group'])
-          servicegroups.add(entity['subgroup'])
+        for (var entity of groups) {
+          if (entity['type'].toLowerCase() === 'project') {
+            projects.add(entity['group'])
+            servicegroups.add(entity['subgroup'])
+          }
+          else if (entity['type'].toLowerCase() === 'ngi') {
+            ngis.add(entity['group'])
+            sites.add(entity['subgroup'])
+          }
         }
-        else if (entity['type'].toLowerCase() === 'ngi') {
-          ngis.add(entity['group'])
-          sites.add(entity['subgroup'])
-        }
+
+        return new Object({
+          'ngis': Array.from(ngis).sort(sortStr),
+          'sites': Array.from(sites).sort(sortStr),
+          'projects': Array.from(projects).sort(sortStr),
+          'servicegroups': Array.from(servicegroups).sort(sortStr)
+        })
       }
-
-      return new Object({
-        'ngis': Array.from(ngis).sort(sortStr),
-        'sites': Array.from(sites).sort(sortStr),
-        'projects': Array.from(projects).sort(sortStr),
-        'servicegroups': Array.from(servicegroups).sort(sortStr)
-      })
+      else
+        return new Object()
     },
     {
       enabled: report
@@ -1043,7 +1051,6 @@ export const ReportsComponent = (props) => {
       doChange(formikValues)
   }
 
-
   if (reportLoading || listMetricProfilesLoading || listAggregationProfilesLoading || listOperationsProfilesLoading)
     return (<LoadingAnim/>);
 
@@ -1059,9 +1066,9 @@ export const ReportsComponent = (props) => {
   else if (listOperationsProfilesError)
     return (<ErrorComponent error={listOperationsProfilesError}/>);
 
-  else if (report && userDetails && topologyTags && topologyGroups &&
-    groupsTags !== undefined && endpointsTags !== undefined
-    && entitiesState !== undefined)  {
+  else if (report && userDetails && topologyTags !== undefined &&
+    topologyGroups !== undefined && groupsTags !== undefined && endpointsTags
+    !== undefined && entitiesState !== undefined && crud !== undefined) {
     let metricProfile = '';
     let aggregationProfile = '';
     let operationsProfile = '';
@@ -1260,91 +1267,94 @@ export const ReportsComponent = (props) => {
                   </Col>
                 </Row>
               </FormGroup>
-              <FormGroup className='mt-4'>
-                <ParagraphTitle title='Topology configuration'/>
-                <Row>
-                  <Col md={2}>
-                    <Label for='topologyType'>Topology type:</Label>
-                    <Field
-                      id='topologyType'
-                      name='topologyType'
-                      component={DropDown}
-                      data={insertSelectPlaceholder(topologyTypes, 'Select')}
-                      required={true}
-                      class_name='custom-select'
-                    />
-                    {
-                      props.errors && props.errors.topologyType &&
-                        FancyErrorMessage(props.errors.topologyType)
-                    }
-                  </Col>
-                </Row>
-                <Row>
-                  <Col md={6}>
-                    <Card className="mt-3">
-                      <CardHeader>
-                        <strong>Group of groups</strong>
-                      </CardHeader>
-                      <CardBody>
-                        <CardTitle className="mb-2">
-                          <strong>Tags</strong>
-                        </CardTitle>
-                        <FieldArray
-                          name="groups"
-                          render={props => (
-                            <TopologyTagList
-                              part="groups"
-                              tagsState={tagsState}
-                              setTagsState={setTagsState}
-                              tagsAll={topologyTags}
-                              {...props}/>
-                          )}
-                        />
-                        <div>
-                          <hr style={{'borderTop': '1px solid #b5c4d1'}}/>
-                        </div>
-                        <CardTitle className="mb-2">
-                          <strong>Entities</strong>
-                        </CardTitle>
-                        <FieldArray
-                          name="entities"
-                          render={props => (
-                            <TopologyEntityFields
-                              topoGroups={topologyGroups}
-                              addview={addview}
-                              {...props}
-                            />
-                          )}
-                        />
-                      </CardBody>
-                    </Card>
-                  </Col>
-                  <Col md={6}>
-                    <Card className="mt-3">
-                      <CardHeader>
-                        <strong>Group of endpoints</strong>
-                      </CardHeader>
-                      <CardBody>
-                        <CardTitle className="mb-2">
-                          <strong>Tags</strong>
-                        </CardTitle>
-                        <FieldArray
-                          name="endpoints"
-                          render={propsLocal => (
-                            <TopologyTagList
-                              part="endpoints"
-                              tagsState={tagsState}
-                              setTagsState={setTagsState}
-                              tagsAll={topologyTags}
-                              addview={addview}
-                              {...propsLocal}/>
-                          )}
-                        />
-                      </CardBody>
-                    </Card>
-                  </Col>
-                </Row>
-              </FormGroup>
+              {
+                (crud) &&
+                <FormGroup className='mt-4'>
+                  <ParagraphTitle title='Topology configuration'/>
+                  <Row>
+                    <Col md={2}>
+                      <Label for='topologyType'>Topology type:</Label>
+                      <Field
+                        id='topologyType'
+                        name='topologyType'
+                        component={DropDown}
+                        data={insertSelectPlaceholder(topologyTypes, 'Select')}
+                        required={true}
+                        class_name='custom-select'
+                      />
+                      {
+                        props.errors && props.errors.topologyType &&
+                          FancyErrorMessage(props.errors.topologyType)
+                      }
+                    </Col>
+                  </Row>
+                  <Row>
+                    <Col md={6}>
+                      <Card className="mt-3">
+                        <CardHeader>
+                          <strong>Group of groups</strong>
+                        </CardHeader>
+                        <CardBody>
+                          <CardTitle className="mb-2">
+                            <strong>Tags</strong>
+                          </CardTitle>
+                          <FieldArray
+                            name="groups"
+                            render={props => (
+                              <TopologyTagList
+                                part="groups"
+                                tagsState={tagsState}
+                                setTagsState={setTagsState}
+                                tagsAll={topologyTags}
+                                {...props}/>
+                            )}
+                          />
+                          <div>
+                            <hr style={{'borderTop': '1px solid #b5c4d1'}}/>
+                          </div>
+                          <CardTitle className="mb-2">
+                            <strong>Entities</strong>
+                          </CardTitle>
+                          <FieldArray
+                            name="entities"
+                            render={props => (
+                              <TopologyEntityFields
+                                topoGroups={topologyGroups}
+                                addview={addview}
+                                {...props}
+                              />
+                            )}
+                          />
+                        </CardBody>
+                      </Card>
+                    </Col>
+                    <Col md={6}>
+                      <Card className="mt-3">
+                        <CardHeader>
+                          <strong>Group of endpoints</strong>
+                        </CardHeader>
+                        <CardBody>
+                          <CardTitle className="mb-2">
+                            <strong>Tags</strong>
+                          </CardTitle>
+                          <FieldArray
+                            name="endpoints"
+                            render={propsLocal => (
+                              <TopologyTagList
+                                part="endpoints"
+                                tagsState={tagsState}
+                                setTagsState={setTagsState}
+                                tagsAll={topologyTags}
+                                addview={addview}
+                                {...propsLocal}/>
+                            )}
+                          />
+                        </CardBody>
+                      </Card>
+                    </Col>
+                  </Row>
+                </FormGroup>
+              }
               <FormGroup className='mt-4'>
                 <ParagraphTitle title='Thresholds'/>
                 <Row>
@@ -1411,21 +1421,21 @@ export const ReportsComponent = (props) => {
                 </Row>
               </FormGroup>
               {
-                (write_perm) &&
-                  <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
-                    <Button
-                      color="danger"
-                      onClick={() => {
-                        setModalMsg('Are you sure you want to delete Report?')
-                        setModalTitle('Delete report')
-                        setAreYouSureModal(!areYouSureModal);
-                        setFormikValues(props.values)
-                        setOnYes('delete')
-                      }}>
-                      Delete
-                    </Button>
-                    <Button color="success" id="submit-button" type="submit">Save</Button>
-                  </div>
+                (write_perm && crud) &&
+                <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
+                  <Button
+                    color="danger"
+                    onClick={() => {
+                      setModalMsg('Are you sure you want to delete Report?')
+                      setModalTitle('Delete report')
+                      setAreYouSureModal(!areYouSureModal);
+                      setFormikValues(props.values)
+                      setOnYes('delete')
+                    }}>
+                    Delete
+                  </Button>
+                  <Button color="success" id="submit-button" type="submit">Save</Button>
+                </div>
               }
             </Form>
           )}
