@@ -4,6 +4,7 @@ from unittest.mock import patch
 from Poem.api import views_internal as views
 from Poem.poem import models as poem_models
 from Poem.users.models import CustUser
+from rest_framework import status
 from rest_framework.test import force_authenticate
 from tenant_schemas.test.cases import TenantTestCase
 from tenant_schemas.test.client import TenantRequestFactory
@@ -161,3 +162,27 @@ class ListReportsAPIViewTests(TenantTestCase):
 				('groupname', 'TENANT')
 			])
 		)
+
+	@patch('Poem.api.internal_views.reports.sync_webapi')
+	def test_get_report_if_wrong_name_superuser(self, func):
+		func.side_effect = mocked_func
+		request = self.factory.get(self.url + 'nonexisting')
+		force_authenticate(request, user=self.superuser)
+		response = self.view(request, 'nonexisting')
+		self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+	@patch('Poem.api.internal_views.reports.sync_webapi')
+	def test_get_report_if_wrong_name_regular_user(self, func):
+		func.side_effect = mocked_func
+		request = self.factory.get(self.url + 'nonexisting')
+		force_authenticate(request, user=self.user)
+		response = self.view(request, 'nonexisting')
+		self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+	@patch('Poem.api.internal_views.reports.sync_webapi')
+	def test_get_report_if_wrong_name_limited_user(self, func):
+		func.side_effect = mocked_func
+		request = self.factory.get(self.url + 'nonexisting')
+		force_authenticate(request, user=self.limited_user)
+		response = self.view(request, 'nonexisting')
+		self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
