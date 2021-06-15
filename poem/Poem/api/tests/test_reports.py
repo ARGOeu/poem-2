@@ -113,3 +113,51 @@ class ListReportsAPIViewTests(TenantTestCase):
 				])
 			]
 		)
+
+	@patch('Poem.api.internal_views.reports.sync_webapi')
+	def test_get_report_by_name_superuser(self, func):
+		func.side_effect = mocked_func
+		request = self.factory.get(self.url + 'Critical')
+		force_authenticate(request, user=self.superuser)
+		response = self.view(request, 'Critical')
+		self.assertEqual(
+			response.data,
+			OrderedDict([
+				('name', 'Critical'),
+				('description', 'Critical report'),
+				('apiid', 'yee9chel-5o4u-l4j4-410b-eipi3ohrah5i'),
+				('groupname', 'TENANT')
+			])
+		)
+
+	@patch('Poem.api.internal_views.reports.sync_webapi')
+	def test_get_report_by_name_regular_user(self, func):
+		func.side_effect = mocked_func
+		request = self.factory.get(self.url + 'Critical')
+		force_authenticate(request, user=self.user)
+		response = self.view(request, 'Critical')
+		self.assertEqual(
+			response.data,
+			OrderedDict([
+				('name', 'Critical'),
+				('description', 'Critical report'),
+				('apiid', 'yee9chel-5o4u-l4j4-410b-eipi3ohrah5i'),
+				('groupname', 'TENANT')
+			])
+		)
+
+	@patch('Poem.api.internal_views.reports.sync_webapi')
+	def test_get_report_by_name_limited_user(self, func):
+		func.side_effect = mocked_func
+		request = self.factory.get(self.url + 'Critical')
+		force_authenticate(request, user=self.limited_user)
+		response = self.view(request, 'Critical')
+		self.assertEqual(
+			response.data,
+			OrderedDict([
+				('name', 'Critical'),
+				('description', 'Critical report'),
+				('apiid', 'yee9chel-5o4u-l4j4-410b-eipi3ohrah5i'),
+				('groupname', 'TENANT')
+			])
+		)
