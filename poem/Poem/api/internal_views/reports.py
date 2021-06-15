@@ -31,17 +31,16 @@ class ListReports(APIView):
     def post(self, request):
         user = request.user
 
-        serializer = serializers.ReportsSerializer(data=request.data)
+        if not user.is_superuser and \
+                len(user_groups(user)['reports']) == 0:
+            return error_response(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='You do not have permission to add reports.'
+            )
 
+        serializer = serializers.ReportsSerializer(data=request.data)
         if serializer.is_valid():
             try:
-                if not user.is_superuser and \
-                        len(user_groups(user)['reports']) == 0:
-                    return error_response(
-                        status_code=status.HTTP_401_UNAUTHORIZED,
-                        detail='You do not have permission to add reports.'
-                    )
-
                 groupreports = poem_models.GroupOfReports.objects.get(
                     name=request.data['groupname']
                 )

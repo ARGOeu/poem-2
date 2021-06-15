@@ -442,3 +442,37 @@ class ListReportsAPIViewTests(TenantTestCase):
         )
         group = poem_models.GroupOfReports.objects.get(name='ARGO')
         self.assertEqual(group.reports.all().count(), 0)
+
+    def test_post_report_invalid_data_superuser(self):
+        data = {'name': 'sla'}
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data['detail'], 'apiid: This field is required.'
+        )
+        self.assertEqual(poem_models.Reports.objects.all().count(), 2)
+
+    def test_post_report_invalid_data_regular_user(self):
+        data = {'name': 'sla'}
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data['detail'], 'apiid: This field is required.'
+        )
+        self.assertEqual(poem_models.Reports.objects.all().count(), 2)
+
+    def test_post_report_invalid_data_limited_user(self):
+        data = {'name': 'sla'}
+        request = self.factory.post(self.url, data, format='json')
+        force_authenticate(request, user=self.limited_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to add reports.'
+        )
+        self.assertEqual(poem_models.Reports.objects.all().count(), 2)
