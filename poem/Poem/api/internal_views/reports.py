@@ -31,33 +31,43 @@ class ListReports(APIView):
     def post(self, request):
         user = request.user
 
-        if not user.is_superuser and len(user_groups(user)['reports']) == 0:
-            return error_response(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail='You do not have permission to add reports.'
-            )
-
-        if not self._check_onchange_groupperm(request.data['groupname'], user):
-            return error_response(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail='You do not have permission to assign reports to the '
-                       'given group.'
-            )
-
         serializer = serializers.ReportsSerializer(data=request.data)
 
         if serializer.is_valid():
-            serializer.save()
+            try:
+                if not user.is_superuser and \
+                        len(user_groups(user)['reports']) == 0:
+                    return error_response(
+                        status_code=status.HTTP_401_UNAUTHORIZED,
+                        detail='You do not have permission to add reports.'
+                    )
 
-            groupreports = poem_models.GroupOfReports.objects.get(
-                name=request.data['groupname']
-            )
-            report = poem_models.Reports.objects.get(
-                apiid=request.data['apiid']
-            )
-            groupreports.reports.add(report)
+                groupreports = poem_models.GroupOfReports.objects.get(
+                    name=request.data['groupname']
+                )
 
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+                if not self._check_onchange_groupperm(
+                        request.data['groupname'], user
+                ):
+                    return error_response(
+                        status_code=status.HTTP_401_UNAUTHORIZED,
+                        detail='You do not have permission to assign reports '
+                               'to the given group.'
+                    )
+
+                serializer.save()
+                report = poem_models.Reports.objects.get(
+                    apiid=request.data['apiid']
+                )
+                groupreports.reports.add(report)
+
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+            except poem_models.GroupOfReports.DoesNotExist:
+                return error_response(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail='Group of reports not found.'
+                )
 
         else:
             details = []
@@ -97,7 +107,7 @@ class ListReports(APIView):
             return error_response(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail='You do not have permission to change'
-                        'report.'
+                       'report.'
             )
 
         if request.data['apiid']:
@@ -132,11 +142,11 @@ class ListReports(APIView):
                 )
 
                 if (not user.is_superuser and report.groupname not in
-                    user_groups(user)['reports']):
+                        user_groups(user)['reports']):
                     return error_response(
                         status_code=status.HTTP_401_UNAUTHORIZED,
                         detail='You do not have permission to delete'
-                                'report.'
+                               'report.'
                     )
 
                 report.delete()

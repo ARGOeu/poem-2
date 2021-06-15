@@ -286,3 +286,63 @@ class ListReportsAPIViewTests(TenantTestCase):
 		self.assertEqual(poem_models.Reports.objects.all().count(), 2)
 		group = poem_models.GroupOfReports.objects.get(name='ARGO')
 		self.assertEqual(group.reports.all().count(), 0)
+
+	def test_post_report_nonexisting_group_superuser(self):
+		data = {
+			'apiid': 'yoohoo6t-1fwt-nf98-uem6-uc1zie9ahk8u',
+			'name': 'sla',
+			'groupname': 'nonexisting',
+			'description': 'Some description.'
+		}
+		request = self.factory.post(self.url, data, format='json')
+		force_authenticate(request, user=self.superuser)
+		response = self.view(request)
+		self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+		self.assertEqual(response.data['detail'], 'Group of reports not found.')
+		self.assertEqual(poem_models.Reports.objects.all().count(), 2)
+		self.assertRaises(
+			poem_models.Reports.DoesNotExist,
+			poem_models.Reports.objects.get,
+			name='sla'
+		)
+
+	def test_post_report_nonexisting_group_regular_user(self):
+		data = {
+			'apiid': 'yoohoo6t-1fwt-nf98-uem6-uc1zie9ahk8u',
+			'name': 'sla',
+			'groupname': 'nonexisting',
+			'description': 'Some description.'
+		}
+		request = self.factory.post(self.url, data, format='json')
+		force_authenticate(request, user=self.user)
+		response = self.view(request)
+		self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+		self.assertEqual(response.data['detail'], 'Group of reports not found.')
+		self.assertEqual(poem_models.Reports.objects.all().count(), 2)
+		self.assertRaises(
+			poem_models.Reports.DoesNotExist,
+			poem_models.Reports.objects.get,
+			name='sla'
+		)
+
+	def test_post_report_nonexisting_group_limited_user(self):
+		data = {
+			'apiid': 'yoohoo6t-1fwt-nf98-uem6-uc1zie9ahk8u',
+			'name': 'sla',
+			'groupname': 'nonexisting',
+			'description': 'Some description.'
+		}
+		request = self.factory.post(self.url, data, format='json')
+		force_authenticate(request, user=self.limited_user)
+		response = self.view(request)
+		self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+		self.assertEqual(
+			response.data['detail'],
+			'You do not have permission to add reports.'
+		)
+		self.assertEqual(poem_models.Reports.objects.all().count(), 2)
+		self.assertRaises(
+			poem_models.Reports.DoesNotExist,
+			poem_models.Reports.objects.get,
+			name='sla'
+		)
