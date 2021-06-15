@@ -1,18 +1,15 @@
-from django.conf import settings
-from django.contrib.contenttypes.models import ContentType
-
 from Poem.api import serializers
+from Poem.api.internal_views.users import get_groups_for_user
 from Poem.api.internal_views.utils import sync_webapi
-from Poem.api.internal_views.users import get_all_groups, get_groups_for_user
 from Poem.api.views import NotFound
-from Poem.helpers.history_helpers import create_profile_history
 from Poem.poem import models as poem_models
-
+from Poem.users.models import CustUser
+from django.conf import settings
 from rest_framework import status
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from Poem.users.models import CustUser
+
 from .utils import error_response
 
 
@@ -27,19 +24,24 @@ class ListReports(APIView):
 
     def _check_onchange_groupperm(self, groupname, user):
         groups = user_groups(user)
-        if (not user.is_superuser and
-            groupname not in groups['reports']):
+        if not user.is_superuser and groupname not in groups['reports']:
             return False
         return True
 
     def post(self, request):
         user = request.user
 
+        if not user.is_superuser and len(user_groups(user)['reports']) == 0:
+            return error_response(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='You do not have permission to add reports.'
+            )
+
         if not self._check_onchange_groupperm(request.data['groupname'], user):
             return error_response(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail='You do not have permission to add '
-                        'report.'
+                detail='You do not have permission to assign reports to the '
+                       'given group.'
             )
 
         serializer = serializers.ReportsSerializer(data=request.data)

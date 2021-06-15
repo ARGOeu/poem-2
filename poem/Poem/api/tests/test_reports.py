@@ -36,6 +36,8 @@ class ListReportsAPIViewTests(TenantTestCase):
 		group2 = poem_models.GroupOfReports.objects.create(name='ARGO')
 		self.group = poem_models.GroupOfReports.objects.create(name='TEST')
 
+		group1.reports.add(self.report1)
+
 		userprofile = poem_models.UserProfile.objects.create(user=self.user)
 		userprofile.groupsofreports.add(group1)
 		userprofile.groupsofreports.add(group2)
@@ -186,3 +188,101 @@ class ListReportsAPIViewTests(TenantTestCase):
 		force_authenticate(request, user=self.limited_user)
 		response = self.view(request, 'nonexisting')
 		self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+	def test_post_report_superuser(self):
+		data = {
+			'apiid': 'yoohoo6t-1fwt-nf98-uem6-uc1zie9ahk8u',
+			'name': 'sla',
+			'groupname': 'ARGO',
+			'description': 'Some description.'
+		}
+		request = self.factory.post(self.url, data, format='json')
+		force_authenticate(request, user=self.superuser)
+		response = self.view(request)
+		self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+		self.assertEqual(poem_models.Reports.objects.all().count(), 3)
+		report = poem_models.Reports.objects.get(name='sla')
+		self.assertEqual(report.name, 'sla')
+		self.assertEqual(report.apiid, 'yoohoo6t-1fwt-nf98-uem6-uc1zie9ahk8u')
+		self.assertEqual(report.description, 'Some description.')
+		self.assertEqual(report.groupname, 'ARGO')
+		group = poem_models.GroupOfReports.objects.get(name='ARGO')
+		self.assertEqual(group.reports.all().count(), 1)
+		self.assertTrue(
+			group.reports.filter(
+				apiid='yoohoo6t-1fwt-nf98-uem6-uc1zie9ahk8u'
+			).exists()
+		)
+
+	def test_post_report_regular_user(self):
+		data = {
+			'apiid': 'yoohoo6t-1fwt-nf98-uem6-uc1zie9ahk8u',
+			'name': 'sla',
+			'groupname': 'ARGO',
+			'description': 'Some description.'
+		}
+		request = self.factory.post(self.url, data, format='json')
+		force_authenticate(request, user=self.user)
+		response = self.view(request)
+		self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+		self.assertEqual(poem_models.Reports.objects.all().count(), 3)
+		report = poem_models.Reports.objects.get(name='sla')
+		self.assertEqual(report.name, 'sla')
+		self.assertEqual(report.apiid, 'yoohoo6t-1fwt-nf98-uem6-uc1zie9ahk8u')
+		self.assertEqual(report.description, 'Some description.')
+		self.assertEqual(report.groupname, 'ARGO')
+		group = poem_models.GroupOfReports.objects.get(name='ARGO')
+		self.assertEqual(group.reports.all().count(), 1)
+		self.assertTrue(
+			group.reports.filter(
+				apiid='yoohoo6t-1fwt-nf98-uem6-uc1zie9ahk8u'
+			).exists()
+		)
+
+	def test_post_report_regular_user_wrong_group(self):
+		data = {
+			'apiid': 'yoohoo6t-1fwt-nf98-uem6-uc1zie9ahk8u',
+			'name': 'sla',
+			'groupname': 'TEST',
+			'description': 'Some description.'
+		}
+		request = self.factory.post(self.url, data, format='json')
+		force_authenticate(request, user=self.user)
+		response = self.view(request)
+		self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+		self.assertEqual(
+			response.data['detail'],
+			'You do not have permission to assign reports to the given group.'
+		)
+		self.assertEqual(poem_models.Reports.objects.all().count(), 2)
+		self.assertRaises(
+			poem_models.Reports.DoesNotExist,
+			poem_models.Reports.objects.get,
+			name='sla'
+		)
+		group = poem_models.GroupOfReports.objects.get(name='TEST')
+		self.assertEqual(group.reports.all().count(), 0)
+
+	def test_post_report_limited_user(self):
+		data = {
+			'apiid': 'yoohoo6t-1fwt-nf98-uem6-uc1zie9ahk8u',
+			'name': 'sla',
+			'groupname': 'ARGO',
+			'description': 'Some description.'
+		}
+		request = self.factory.post(self.url, data, format='json')
+		force_authenticate(request, user=self.limited_user)
+		response = self.view(request)
+		self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+		self.assertEqual(
+			response.data['detail'],
+			'You do not have permission to add reports.'
+		)
+		self.assertRaises(
+			poem_models.Reports.DoesNotExist,
+			poem_models.Reports.objects.get,
+			name='sla'
+		)
+		self.assertEqual(poem_models.Reports.objects.all().count(), 2)
+		group = poem_models.GroupOfReports.objects.get(name='ARGO')
+		self.assertEqual(group.reports.all().count(), 0)
