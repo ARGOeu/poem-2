@@ -842,3 +842,62 @@ class ListReportsAPIViewTests(TenantTestCase):
                 apiid='yee9chel-5o4u-l4j4-410b-eipi3ohrah5i'
             ).exists()
         )
+
+    def test_put_report_without_apiid_superuser(self):
+        data = {
+            'name': 'Critical',
+            'apiid': '',
+            'groupname': 'ARGO',
+            'description': 'Testing critical report.'
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['detail'], 'Apiid field undefined!')
+
+    def test_put_report_without_apiid_regular_user(self):
+        data = {
+            'name': 'Critical',
+            'apiid': '',
+            'groupname': 'ARGO',
+            'description': 'Testing critical report.'
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['detail'], 'Apiid field undefined!')
+
+    def test_put_report_without_apiid_regular_user_wrong_group(self):
+        data = {
+            'name': 'Critical',
+            'apiid': '',
+            'groupname': 'TEST',
+            'description': 'Testing critical report.'
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['detail'], 'Apiid field undefined!')
+
+    def test_put_report_without_apiid_limited_user(self):
+        data = {
+            'name': 'Critical',
+            'apiid': '',
+            'groupname': 'TEST',
+            'description': 'Testing critical report.'
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.limited_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change reports.'
+        )
