@@ -109,8 +109,8 @@ class ListReports(APIView):
                 detail='You do not have permission to change reports.'
             )
 
-        if request.data['apiid']:
-            try:
+        try:
+            if request.data['apiid']:
                 report = poem_models.Reports.objects.get(
                     apiid=request.data['apiid']
                 )
@@ -154,16 +154,22 @@ class ListReports(APIView):
 
                 return Response(status=status.HTTP_201_CREATED)
 
-            except poem_models.GroupOfReports.DoesNotExist:
-                return error_response(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail='Given group of reports does not exist.'
+            else:
+                return Response(
+                    {'detail': 'Apiid field undefined!'},
+                    status=status.HTTP_400_BAD_REQUEST
                 )
 
-        else:
-            return Response(
-                {'detail': 'Apiid field undefined!'},
-                status=status.HTTP_400_BAD_REQUEST
+        except poem_models.GroupOfReports.DoesNotExist:
+            return error_response(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail='Given group of reports does not exist.'
+            )
+
+        except KeyError as e:
+            return error_response(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail='Missing data key: {}'.format(e.args[0])
             )
 
     def delete(self, request, report_name=None):

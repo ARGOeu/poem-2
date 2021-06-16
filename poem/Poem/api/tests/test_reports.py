@@ -901,3 +901,84 @@ class ListReportsAPIViewTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to change reports.'
         )
+
+    def test_put_report_with_missing_key_in_request_data_superuser(self):
+        data = {
+            'name': 'Critical',
+            'apiid': 'yee9chel-5o4u-l4j4-410b-eipi3ohrah5i',
+            'description': 'Testing critical report.'
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['detail'], 'Missing data key: groupname')
+        report = poem_models.Reports.objects.get(
+            apiid='yee9chel-5o4u-l4j4-410b-eipi3ohrah5i'
+        )
+        self.assertEqual(report.name, 'Critical')
+        self.assertEqual(report.groupname, 'TENANT')
+        self.assertEqual(report.description, 'Critical report')
+        group = poem_models.GroupOfReports.objects.get(name='TENANT')
+        self.assertEqual(group.reports.all().count(), 1)
+        self.assertTrue(
+            group.reports.filter(
+                apiid='yee9chel-5o4u-l4j4-410b-eipi3ohrah5i'
+            ).exists()
+        )
+
+    def test_put_report_with_missing_key_in_request_data_regular_user(self):
+        data = {
+            'name': 'Critical',
+            'apiid': 'yee9chel-5o4u-l4j4-410b-eipi3ohrah5i',
+            'description': 'Testing critical report.'
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['detail'], 'Missing data key: groupname')
+        report = poem_models.Reports.objects.get(
+            apiid='yee9chel-5o4u-l4j4-410b-eipi3ohrah5i'
+        )
+        self.assertEqual(report.name, 'Critical')
+        self.assertEqual(report.groupname, 'TENANT')
+        self.assertEqual(report.description, 'Critical report')
+        group = poem_models.GroupOfReports.objects.get(name='TENANT')
+        self.assertEqual(group.reports.all().count(), 1)
+        self.assertTrue(
+            group.reports.filter(
+                apiid='yee9chel-5o4u-l4j4-410b-eipi3ohrah5i'
+            ).exists()
+        )
+
+    def test_put_report_with_missing_key_in_request_data_limited_user(self):
+        data = {
+            'name': 'Critical',
+            'apiid': 'yee9chel-5o4u-l4j4-410b-eipi3ohrah5i',
+            'description': 'Testing critical report.'
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.limited_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change reports.'
+        )
+        report = poem_models.Reports.objects.get(
+            apiid='yee9chel-5o4u-l4j4-410b-eipi3ohrah5i'
+        )
+        self.assertEqual(report.name, 'Critical')
+        self.assertEqual(report.groupname, 'TENANT')
+        self.assertEqual(report.description, 'Critical report')
+        group = poem_models.GroupOfReports.objects.get(name='TENANT')
+        self.assertEqual(group.reports.all().count(), 1)
+        self.assertTrue(
+            group.reports.filter(
+                apiid='yee9chel-5o4u-l4j4-410b-eipi3ohrah5i'
+            ).exists()
+        )
