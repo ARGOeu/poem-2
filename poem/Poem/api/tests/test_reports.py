@@ -1037,3 +1037,57 @@ class ListReportsAPIViewTests(TenantTestCase):
             'You do not have permission to delete reports.'
         )
         self.assertEqual(poem_models.Reports.objects.all().count(), 2)
+
+    def test_delete_report_with_wrong_apiid_superuser(self):
+        request = self.factory.delete(self.url + 'wrong_id')
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request, 'wrong_id')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data['detail'], 'Report not found')
+        self.assertEqual(poem_models.Reports.objects.all().count(), 2)
+
+    def test_delete_report_with_wrong_apiid_regular_user(self):
+        request = self.factory.delete(self.url + 'wrong_id')
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'wrong_id')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data['detail'], 'Report not found')
+        self.assertEqual(poem_models.Reports.objects.all().count(), 2)
+
+    def test_delete_report_with_wrong_apiid_limited_user(self):
+        request = self.factory.delete(self.url + 'wrong_id')
+        force_authenticate(request, user=self.limited_user)
+        response = self.view(request, 'wrong_id')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete reports.'
+        )
+        self.assertEqual(poem_models.Reports.objects.all().count(), 2)
+
+    def test_delete_report_without_specifying_apiid_superuser(self):
+        request = self.factory.delete(self.url)
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['detail'], 'Report not specified!')
+        self.assertEqual(poem_models.Reports.objects.all().count(), 2)
+
+    def test_delete_report_without_specifying_apiid_regular_user(self):
+        request = self.factory.delete(self.url)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['detail'], 'Report not specified!')
+        self.assertEqual(poem_models.Reports.objects.all().count(), 2)
+
+    def test_delete_report_without_specifying_apiid_limited_user(self):
+        request = self.factory.delete(self.url)
+        force_authenticate(request, user=self.limited_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete reports.'
+        )
+        self.assertEqual(poem_models.Reports.objects.all().count(), 2)
