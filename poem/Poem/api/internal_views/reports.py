@@ -175,6 +175,13 @@ class ListReports(APIView):
     def delete(self, request, report_name=None):
         user = request.user
 
+        if not user.is_superuser and \
+                len(user_groups(user)['reports']) == 0:
+            return error_response(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='You do not have permission to delete reports.'
+            )
+
         if report_name:
             try:
                 report = poem_models.Reports.objects.get(
@@ -185,8 +192,8 @@ class ListReports(APIView):
                         user_groups(user)['reports']):
                     return error_response(
                         status_code=status.HTTP_401_UNAUTHORIZED,
-                        detail='You do not have permission to delete'
-                               'report.'
+                        detail='You do not have permission to delete '
+                               'reports assigned to this group.'
                     )
 
                 report.delete()
