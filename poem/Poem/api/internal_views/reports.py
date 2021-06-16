@@ -102,17 +102,37 @@ class ListReports(APIView):
     def put(self, request):
         user = request.user
 
+        if not user.is_superuser and \
+                len(user_groups(user)['reports']) == 0:
+            return error_response(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='You do not have permission to change reports.'
+            )
+
         if not self._check_onchange_groupperm(request.data['groupname'], user):
             return error_response(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail='You do not have permission to change'
-                       'report.'
+                detail='You do not have permission to assign reports to the '
+                       'given group.'
             )
 
         if request.data['apiid']:
             report = poem_models.Reports.objects.get(
                 apiid=request.data['apiid']
             )
+            old_groupreport = None
+            if report.groupname:
+                if not self._check_onchange_groupperm(report.groupname, user):
+                    return error_response(
+                        status_code=status.HTTP_401_UNAUTHORIZED,
+                        detail='You do not have permission to change reports in'
+                               ' this group.'
+                    )
+
+                old_groupreport = poem_models.GroupOfReports.objects.get(
+                    name=report.groupname
+                )
+
             report.name = request.data['name']
             report.description = request.data['description']
             report.groupname = request.data['groupname']
@@ -121,6 +141,10 @@ class ListReports(APIView):
             groupreport = poem_models.GroupOfReports.objects.get(
                 name=request.data['groupname']
             )
+
+            if old_groupreport and old_groupreport != groupreport:
+                old_groupreport.reports.remove(report)
+
             groupreport.reports.add(report)
 
             return Response(status=status.HTTP_201_CREATED)

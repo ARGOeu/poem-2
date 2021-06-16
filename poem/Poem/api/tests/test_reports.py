@@ -9,7 +9,7 @@ from rest_framework.test import force_authenticate
 from tenant_schemas.test.cases import TenantTestCase
 from tenant_schemas.test.client import TenantRequestFactory
 
-from .utils_test import mocked_func
+from .utils_test import mocked_func, encode_data
 
 
 class ListReportsAPIViewTests(TenantTestCase):
@@ -476,3 +476,161 @@ class ListReportsAPIViewTests(TenantTestCase):
             'You do not have permission to add reports.'
         )
         self.assertEqual(poem_models.Reports.objects.all().count(), 2)
+
+    def test_put_report_superuser(self):
+        data = {
+            'name': 'CriticalTest',
+            'apiid': 'yee9chel-5o4u-l4j4-410b-eipi3ohrah5i',
+            'groupname': 'ARGO',
+            'description': 'Testing critical report.'
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        report = poem_models.Reports.objects.get(
+            apiid='yee9chel-5o4u-l4j4-410b-eipi3ohrah5i'
+        )
+        self.assertEqual(report.name, 'CriticalTest')
+        self.assertEqual(report.groupname, 'ARGO')
+        self.assertEqual(report.description, 'Testing critical report.')
+        group1 = poem_models.GroupOfReports.objects.get(name='TENANT')
+        group2 = poem_models.GroupOfReports.objects.get(name='ARGO')
+        self.assertEqual(group1.reports.all().count(), 0)
+        self.assertEqual(group2.reports.all().count(), 1)
+        self.assertTrue(
+            group2.reports.filter(
+                apiid='yee9chel-5o4u-l4j4-410b-eipi3ohrah5i'
+            ).exists()
+        )
+
+    def test_put_report_regular_user(self):
+        data = {
+            'name': 'CriticalTest',
+            'apiid': 'yee9chel-5o4u-l4j4-410b-eipi3ohrah5i',
+            'groupname': 'ARGO',
+            'description': 'Testing critical report.'
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        report = poem_models.Reports.objects.get(
+            apiid='yee9chel-5o4u-l4j4-410b-eipi3ohrah5i'
+        )
+        self.assertEqual(report.name, 'CriticalTest')
+        self.assertEqual(report.groupname, 'ARGO')
+        self.assertEqual(report.description, 'Testing critical report.')
+        group1 = poem_models.GroupOfReports.objects.get(name='TENANT')
+        group2 = poem_models.GroupOfReports.objects.get(name='ARGO')
+        self.assertEqual(group1.reports.all().count(), 0)
+        self.assertEqual(group2.reports.all().count(), 1)
+        self.assertTrue(
+            group2.reports.filter(
+                apiid='yee9chel-5o4u-l4j4-410b-eipi3ohrah5i'
+            ).exists()
+        )
+
+    def test_put_report_regular_user_wrong_group(self):
+        data = {
+            'name': 'CriticalTest',
+            'apiid': 'yee9chel-5o4u-l4j4-410b-eipi3ohrah5i',
+            'groupname': 'TEST',
+            'description': 'Testing critical report.'
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to assign reports to the given group.'
+        )
+        report = poem_models.Reports.objects.get(
+            apiid='yee9chel-5o4u-l4j4-410b-eipi3ohrah5i'
+        )
+        self.assertEqual(report.name, 'Critical')
+        self.assertEqual(report.groupname, 'TENANT')
+        self.assertEqual(report.description, 'Critical report')
+        group1 = poem_models.GroupOfReports.objects.get(name='TENANT')
+        group2 = poem_models.GroupOfReports.objects.get(name='ARGO')
+        self.assertEqual(group1.reports.all().count(), 1)
+        self.assertEqual(group2.reports.all().count(), 0)
+        self.assertTrue(
+            group1.reports.filter(
+                apiid='yee9chel-5o4u-l4j4-410b-eipi3ohrah5i'
+            ).exists()
+        )
+
+    def test_put_report_regular_user_wrong_initial_group(self):
+        report3 = poem_models.Reports.objects.create(
+            name='ops-monitor-critical',
+            apiid='juashu3i-533c-z9zi-lm6s-lei0ahlocei5',
+            groupname='TEST'
+        )
+        self.group.reports.add(report3)
+        data = {
+            'name': 'CriticalTest',
+            'apiid': 'juashu3i-533c-z9zi-lm6s-lei0ahlocei5',
+            'groupname': 'ARGO',
+            'description': 'Testing critical report.'
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change reports in this group.'
+        )
+        report = poem_models.Reports.objects.get(
+            apiid='juashu3i-533c-z9zi-lm6s-lei0ahlocei5'
+        )
+        self.assertEqual(report.name, 'ops-monitor-critical')
+        self.assertEqual(report.groupname, 'TEST')
+        self.assertEqual(report.description, '')
+        group1 = poem_models.GroupOfReports.objects.get(name='TEST')
+        group2 = poem_models.GroupOfReports.objects.get(name='ARGO')
+        self.assertEqual(group1.reports.all().count(), 1)
+        self.assertEqual(group2.reports.all().count(), 0)
+        self.assertTrue(
+            group1.reports.filter(
+                apiid='juashu3i-533c-z9zi-lm6s-lei0ahlocei5'
+            ).exists()
+        )
+
+    def test_put_report_limited_user(self):
+        data = {
+            'name': 'CriticalTest',
+            'apiid': 'yee9chel-5o4u-l4j4-410b-eipi3ohrah5i',
+            'groupname': 'ARGO',
+            'description': 'Testing critical report.'
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.limited_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change reports.'
+        )
+        report = poem_models.Reports.objects.get(
+            apiid='yee9chel-5o4u-l4j4-410b-eipi3ohrah5i'
+        )
+        self.assertEqual(report.name, 'Critical')
+        self.assertEqual(report.groupname, 'TENANT')
+        self.assertEqual(report.description, 'Critical report')
+        group1 = poem_models.GroupOfReports.objects.get(name='TENANT')
+        group2 = poem_models.GroupOfReports.objects.get(name='ARGO')
+        self.assertEqual(group1.reports.all().count(), 1)
+        self.assertEqual(group2.reports.all().count(), 0)
+        self.assertTrue(
+            group1.reports.filter(
+                apiid='yee9chel-5o4u-l4j4-410b-eipi3ohrah5i'
+            ).exists()
+        )
