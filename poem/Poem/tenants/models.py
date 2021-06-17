@@ -1,5 +1,5 @@
 from django.db import models
-from tenant_schemas.models import TenantMixin
+from django_tenants.models import TenantMixin, DomainMixin
 
 
 class Tenant(TenantMixin):
@@ -10,3 +10,7 @@ class Tenant(TenantMixin):
 
     class Meta:
         app_label = 'tenants'
+
+
+class Domain(DomainMixin):
+    pass
