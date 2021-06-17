@@ -29,7 +29,7 @@ try:
 
     DATABASES = {
         'default': {
-            'ENGINE': 'tenant_schemas.postgresql_backend',
+            'ENGINE': 'django_tenants.postgresql_backend',
             'NAME': DBNAME,
             'USER': DBUSER,
             'PASSWORD': DBPASSWORD,
@@ -38,7 +38,7 @@ try:
         }
     }
 
-    DATABASE_ROUTERS = ('tenant_schemas.routers.TenantSyncRouter',)
+    DATABASE_ROUTERS = ('django_tenants.routers.TenantSyncRouter',)
 
     ALLOWED_HOSTS = config.get('SECURITY', 'AllowedHosts')
     HOST_CERT = config.get('SECURITY', 'HostCert')
@@ -87,7 +87,7 @@ ROOT_URLCONF = 'Poem.urls'
 APPEND_SLASH = True
 
 SHARED_APPS = (
-    'tenant_schemas',
+    'django_tenants',
     'Poem.tenants',
     'django.contrib.contenttypes',
     'django.contrib.admin',
@@ -126,9 +126,10 @@ INSTALLED_APPS = list(SHARED_APPS) + \
     [app for app in TENANT_APPS if app not in SHARED_APPS]
 
 TENANT_MODEL = 'tenants.Tenant'
+TENANT_DOMAIN_MODEL = 'tenants.Domain'
 
 MIDDLEWARE = [
-    'tenant_schemas.middleware.TenantMiddleware',
+    'django_tenants.middleware.main.TenantMainMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -193,7 +194,7 @@ API_KEY_CUSTOM_HEADER = 'HTTP_X_API_KEY'
 # MEDIA_URL = '/poem_media/'
 # MEDIA_ROOT = '{}/usr/share/poem/media/'.format(VENV)
 # STATIC_URL = '/static/'
-DEFAULT_FILE_STORAGE = 'tenant_schemas.storage.TenantFileSystemStorage'
+#DEFAULT_FILE_STORAGE = 'tenant_schemas.storage.TenantFileSystemStorage'
 
 STATICFILES_DIRS = [os.path.join(APP_PATH, 'frontend/bundles/')]
 
