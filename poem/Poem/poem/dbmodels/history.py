@@ -9,7 +9,7 @@ from Poem.poem.models import Metric
 from Poem.poem_super_admin import models as admin_models
 from Poem.tenants.models import Tenant
 
-from tenant_schemas.utils import schema_context, get_public_schema_name
+from django_tenants.utils import schema_context, get_public_schema_name
 
 
 class TenantHistoryManager(models.Manager):

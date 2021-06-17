@@ -7,7 +7,7 @@ from Poem.poem import models as poem_models
 from Poem.poem_super_admin import models as admin_models
 from django.contrib.contenttypes.models import ContentType
 from rest_framework.response import Response
-from tenant_schemas.utils import schema_context, get_public_schema_name
+from django_tenants.utils import schema_context, get_public_schema_name
 
 
 def error_response(status_code=None, detail=''):

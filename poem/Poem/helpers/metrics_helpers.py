@@ -10,7 +10,7 @@ from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.core import serializers
 from django.db import IntegrityError
-from tenant_schemas.utils import schema_context, get_public_schema_name
+from django_tenants.utils import schema_context, get_public_schema_name
 
 
 def import_metrics(metrictemplates, tenant, user):

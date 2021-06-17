@@ -7,7 +7,7 @@ from saml2.config import SPConfig
 from django.conf import settings
 from django.db import connection
 
-from tenant_schemas.utils import remove_www, get_tenant_model
+from django_tenants.utils import remove_www, get_tenant_model
 
 
 def tenant_from_request(request):
