@@ -181,7 +181,8 @@ class GetConfigOptionsAPIViewTests(TenantTestCase):
                 WEBAPI_REPORTS='https://reports.com',
                 WEBAPI_REPORTSTAGS='https://reports-tags.com',
                 WEBAPI_REPORTSTOPOLOGYGROUPS='https://topology-groups.com',
-                WEBAPI_REPORTSTOPOLOGYENDPOINTS='https://endpoints.com'
+                WEBAPI_REPORTSTOPOLOGYENDPOINTS='https://endpoints.com',
+                WEBAPI_REPORTSCRUD=True
         ):
             request = self.factory.get(self.url)
             response = self.view(request)
@@ -199,6 +200,7 @@ class GetConfigOptionsAPIViewTests(TenantTestCase):
                         ).version,
                         'webapireports': {
                             'main': 'https://reports.com',
+                            'crud': True,
                             'tags': 'https://reports-tags.com',
                             'topologygroups': 'https://topology-groups.com',
                             'topologyendpoints': 'https://endpoints.com'
