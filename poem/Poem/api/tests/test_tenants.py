@@ -4,11 +4,12 @@ from unittest.mock import patch
 from Poem.api import views_internal as views
 from Poem.tenants.models import Tenant
 from Poem.users.models import CustUser
+from django_tenants.test.cases import TenantTestCase
+from django_tenants.test.client import TenantRequestFactory
+from django_tenants.utils import schema_context, get_public_schema_name, \
+    get_tenant_domain_model
 from rest_framework import status
 from rest_framework.test import force_authenticate
-from tenant_schemas.test.cases import TenantTestCase
-from tenant_schemas.test.client import TenantRequestFactory
-from tenant_schemas.utils import schema_context, get_public_schema_name
 
 
 def mock_tenant_resources(*args, **kwargs):
@@ -31,29 +32,34 @@ class ListTenantsTests(TenantTestCase):
         self.view = views.ListTenants.as_view()
         self.url = '/api/v2/internal/tenants/'
         self.user = CustUser.objects.create_user(username='testuser')
+        # get_tenant_domain_model().objects.create(
+        #     domain='test.domain.url', tenant=self.tenant, is_primary=True
+        # )
 
         with schema_context(get_public_schema_name()):
-            self.tenant1 = Tenant(
-                name='TEST1', schema_name='test1',
-                domain_url='test1.domain.url'
-            )
+            self.tenant1 = Tenant(name='TEST1', schema_name='test1')
             self.tenant1.auto_create_schema = False
 
-            self.tenant2 = Tenant(
-                name='TEST2', schema_name='test2',
-                domain_url='test2.domain.url'
-            )
+            self.tenant2 = Tenant(name='TEST2', schema_name='test2')
             self.tenant2.auto_create_schema = False
 
             self.tenant3 = Tenant(
                 name='all', schema_name=get_public_schema_name(),
-                domain_url='domain.url'
             )
             self.tenant3.auto_create_schema = False
 
             self.tenant1.save()
             self.tenant2.save()
             self.tenant3.save()
+            get_tenant_domain_model().objects.create(
+                domain='test1.domain.url', tenant=self.tenant1, is_primary=True
+            )
+            get_tenant_domain_model().objects.create(
+                domain='test2.domain.url', tenant=self.tenant2, is_primary=True
+            )
+            get_tenant_domain_model().objects.create(
+                domain='domain.url', tenant=self.tenant3, is_primary=True
+            )
 
     def test_get_tenants_no_auth(self):
         request = self.factory.get(self.url)
@@ -73,7 +79,7 @@ class ListTenantsTests(TenantTestCase):
                 {
                     'name': self.tenant.name,
                     'schema_name': self.tenant.schema_name,
-                    'domain_url': self.tenant.domain_url,
+                    'domain_url': 'tenant.test.com',
                     'created_on': datetime.date.strftime(
                         self.tenant.created_on, '%Y-%m-%d'
                     ),
