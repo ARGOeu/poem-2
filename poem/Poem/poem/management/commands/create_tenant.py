@@ -4,7 +4,8 @@ from Poem.poem import models as poem_models
 from Poem.tenants.models import Tenant
 from django.conf import settings
 from django.core.management.base import BaseCommand
-from tenant_schemas.utils import schema_context, get_public_schema_name
+from django_tenants.utils import schema_context, get_public_schema_name, \
+    get_tenant_domain_model
 
 
 def create_groups_of_resources(tenant_name):
@@ -15,6 +16,7 @@ def create_groups_of_resources(tenant_name):
         poem_models.GroupOfMetrics.objects.create(name=group)
         poem_models.GroupOfMetricProfiles.objects.create(name=group)
         poem_models.GroupOfThresholdsProfiles.objects.create(name=group)
+        poem_models.GroupOfReports.objects.create(name=group)
 
 
 def create_tenant(name, hostname):
@@ -26,6 +28,11 @@ def create_tenant(name, hostname):
         schema = name.lower()
     tenant = Tenant(domain_url=hostname, schema_name=schema, name=name)
     tenant.save()
+    domain = get_tenant_domain_model()
+    domain.domain = hostname
+    domain.tenant = tenant
+    domain.is_primary = True
+    domain.save()
 
     if schema != get_public_schema_name():
         create_groups_of_resources(name)

@@ -6,7 +6,7 @@ from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand
 from django.db import DEFAULT_DB_ALIAS, connection
 from django.db.utils import IntegrityError
-from tenant_schemas.utils import get_public_schema_name
+from django_tenants.utils import get_public_schema_name
 
 
 def tenant_superuser():
