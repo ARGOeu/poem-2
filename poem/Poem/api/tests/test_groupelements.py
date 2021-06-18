@@ -7,10 +7,10 @@ from Poem.poem_super_admin import models as admin_models
 from Poem.users.models import CustUser
 from django.contrib.contenttypes.models import ContentType
 from django.core import serializers
+from django_tenants.test.cases import TenantTestCase
+from django_tenants.test.client import TenantRequestFactory
 from rest_framework import status
 from rest_framework.test import force_authenticate
-from tenant_schemas.test.cases import TenantTestCase
-from tenant_schemas.test.client import TenantRequestFactory
 
 from .utils_test import encode_data
 

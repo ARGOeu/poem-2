@@ -5,11 +5,12 @@ from Poem.api import views_internal as views
 from Poem.poem import models as poem_models
 from Poem.tenants.models import Tenant
 from Poem.users.models import CustUser
+from django_tenants.test.cases import TenantTestCase
+from django_tenants.test.client import TenantRequestFactory
+from django_tenants.utils import schema_context, get_public_schema_name, \
+    get_tenant_domain_model
 from rest_framework import status
 from rest_framework.test import force_authenticate
-from tenant_schemas.test.cases import TenantTestCase
-from tenant_schemas.test.client import TenantRequestFactory
-from tenant_schemas.utils import schema_context, get_public_schema_name
 
 from .utils_test import encode_data
 
@@ -41,8 +42,10 @@ class ListUsersAPIViewTests(TenantTestCase):
 
         with schema_context(get_public_schema_name()):
             self.super_tenant = Tenant.objects.create(
-                name='public', domain_url='public',
-                schema_name=get_public_schema_name()
+                name='public', schema_name=get_public_schema_name()
+            )
+            get_tenant_domain_model().objects.create(
+                domain='public', tenant=self.super_tenant, is_primary=True
             )
             self.user1 = CustUser.objects.create_user(
                 username='Alan_Ford',
