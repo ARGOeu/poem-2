@@ -6,7 +6,6 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'Poem.settings')
 django.setup()
 
 import logging
-import os
 import requests
 
 from django.conf import settings
@@ -15,7 +14,7 @@ from Poem.tenants.models import Tenant
 from xml.etree import ElementTree
 from configparser import ConfigParser
 
-from tenant_schemas.utils import schema_context, get_public_schema_name
+from django_tenants.utils import schema_context, get_public_schema_name
 
 logging.basicConfig(
     format='%(filename)s[%(process)s]: %(levelname)s %(message)s',
