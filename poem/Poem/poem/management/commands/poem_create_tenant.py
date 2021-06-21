@@ -26,9 +26,10 @@ def create_tenant(name, hostname):
         schema = 'public'
     else:
         schema = name.lower()
-    tenant = Tenant(domain_url=hostname, schema_name=schema, name=name)
+    tenant = Tenant(schema_name=schema, name=name)
     tenant.save()
-    domain = get_tenant_domain_model()
+    domain_model = get_tenant_domain_model()
+    domain = domain_model()
     domain.domain = hostname
     domain.tenant = tenant
     domain.is_primary = True
