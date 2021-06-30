@@ -1,16 +1,17 @@
 import React from 'react';
-import { render, waitFor, screen } from '@testing-library/react';
+import { render, waitFor, screen, within } from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
 import { createMemoryHistory } from 'history';
 import { Route, Router } from 'react-router-dom';
-import { Backend } from '../DataManager';
-import { ReportsList } from '../Reports';
+import { Backend, WebApi } from '../DataManager';
+import { ReportsList, ReportsChange } from '../Reports';
 import { queryCache } from 'react-query';
 
 
 jest.mock('../DataManager', () => {
   return {
-    Backend: jest.fn()
+    Backend: jest.fn(),
+    WebApi: jest.fn()
   }
 })
 
@@ -59,6 +60,422 @@ const mockActiveSession = {
 };
 
 
+const mockReport = {
+  id: "yee9chel-5o4u-l4j4-410b-eipi3ohrah5i",
+  tenant: "EGI",
+  disabled: false,
+  info: {
+    name: "Critical",
+    description: "Critical report",
+    created: "2018-07-10 14:23:00",
+    updated: "2021-05-21 13:56:22"
+  },
+  thresholds: {
+    availability: 80,
+    reliability: 85,
+    uptime: 0.8,
+    unknown: 0.1,
+    downtime: 0.1
+  },
+  topology_schema: {
+    group: {
+      type: "NGI",
+      group: {
+        type: "SITES"
+      }
+    }
+  },
+  profiles: [
+    {
+      id: "iethai8e-5nv4-urd2-6frc-eequ1saifoon",
+      name: "ARGO_MON_CRITICAL",
+      type: "metric"
+    },
+    {
+      id: "goo4nohb-lc8y-l5bj-v991-ohzah8xethie",
+      name: "critical",
+      type: "aggregation"
+    },
+    {
+      id: "gahjohf1-xx39-e0c9-p0rj-choh6ahziz9e",
+      name: "egi_ops",
+      type: "operations"
+    }
+  ],
+  filter_tags: [
+    {
+      name: "certification",
+      value: "Certified",
+      context: "argo.group.filter.tags"
+    },
+    {
+      name: "infrastructure",
+      value: "Production",
+      context: "argo.group.filter.tags"
+    },
+    {
+      name: "scope",
+      value: "EGI*",
+      context: "argo.group.filter.tags"
+    },
+    {
+      name: "production",
+      value: "1",
+      context: "argo.endpoint.filter.tags"
+    },
+    {
+      name: "monitored",
+      value: "1",
+      context: "argo.endpoint.filter.tags"
+    },
+    {
+      name: "scope",
+      value: "EGI*",
+      context: "argo.endpoint.filter.tags"
+    }
+  ]
+};
+
+
+const mockBackendReport = {
+  name: 'Critical',
+  description: 'Critical report',
+  apiid: 'yee9chel-5o4u-l4j4-410b-eipi3ohrah5i',
+  groupname: 'ARGO'
+};
+
+
+const mockMetricProfiles = [
+  {
+    id: "ohs9chu6-kyw3-01gz-6mpl-aso0eish6pek",
+    date: "2021-02-03",
+    name: "FEDCLOUD",
+    description: "Profile for Fedcloud CentOS 7 instance",
+    services: [
+      {
+        service: "org.opensciencegrid.htcondorce",
+        metrics: [
+          "ch.cern.HTCondorCE-JobState",
+          "ch.cern.HTCondorCE-JobSubmit"
+        ]
+      }
+    ]
+  },
+  {
+    id: "il8aimoh-r2ov-05aq-z4l2-uko2moophi9s",
+    date: "2021-01-26",
+    name: "OPS_MONITOR_RHEL7",
+    description: "Profile for monitoring operational tools for RHEL 7",
+    services: [
+      {
+        service: "argo.mon",
+        metrics: [
+          "eu.egi.CertValidity",
+          "org.nagios.NagiosWebInterface"
+        ]
+      },
+      {
+       service: "argo.webui",
+       metrics: [
+         "org.nagios.ARGOWeb-AR",
+         "org.nagios.ARGOWeb-Status"
+        ]
+      }
+    ]
+  },
+  {
+    id: "iethai8e-5nv4-urd2-6frc-eequ1saifoon",
+    date: "2021-03-01",
+    name: "ARGO_MON_CRITICAL",
+    description: "Central ARGO-MON_CRITICAL profile",
+    services: [
+      {
+        service: "ARC-CE",
+        metrics: [
+          "org.nordugrid.ARC-CE-ARIS",
+          "org.nordugrid.ARC-CE-IGTF",
+          "org.nordugrid.ARC-CE-result",
+          "org.nordugrid.ARC-CE-srm"
+        ]
+      },
+      {
+        service: "GRAM5",
+        metrics: [
+          "eu.egi.GRAM-CertValidity",
+          "hr.srce.GRAM-Auth",
+          "hr.srce.GRAM-Command"
+        ]
+      }
+    ]
+  }
+];
+
+
+const mockAggregationProfiles = [
+  {
+  id: "goo4nohb-lc8y-l5bj-v991-ohzah8xethie",
+  date: "2021-03-01",
+  name: "critical",
+  namespace: "",
+  endpoint_group: "sites",
+  metric_operation: "AND",
+  profile_operation: "AND",
+  metric_profile: {
+    name: "ARGO_MON_CRITICAL",
+    id: "iethai8e-5nv4-urd2-6frc-eequ1saifoon"
+  },
+  groups: [
+    {
+      name: "compute",
+      operation: "OR",
+      services: [
+        {
+          name: "ARC-CE",
+          operation: "OR"
+        },
+        {
+          name: "GRAM5",
+          operation: "OR"
+        },
+        {
+          name: "QCG.Computing",
+          operation: "OR"
+        },
+        {
+          name: "org.opensciencegrid.htcondorce",
+          operation: "OR"
+        }
+      ]
+    },
+    {
+      name: "storage",
+      operation: "OR",
+      services: [
+        {
+          name: "SRM",
+          operation: "OR"
+        }
+      ]
+    }
+  ]
+  },
+  {
+    id: "ye3ioph5-1ryg-k4ea-e6eb-nei6zoupain2",
+    date: "2021-04-20",
+    name: "ops-mon-critical",
+    namespace: "egi",
+    endpoint_group: "sites",
+    metric_operation: "AND",
+    profile_operation: "AND",
+    metric_profile: {
+      name: "OPS_MONITOR_RHEL7",
+      id: "il8aimoh-r2ov-05aq-z4l2-uko2moophi9s"
+    },
+    groups: [
+      {
+        name: "gstat",
+        operation: "OR",
+        services: [
+          {
+            name: "egi.GSTAT",
+            operation: "OR"
+          }
+        ]
+      },
+      {
+        name: "vosam",
+        operation: "OR",
+        services: [
+          {
+            name: "vo.SAM",
+            operation: "OR"
+          }
+        ]
+      }
+    ]
+  }
+];
+
+
+const mockOperationsProfiles = [
+  {
+    id: "gahjohf1-xx39-e0c9-p0rj-choh6ahziz9e",
+    date: "2015-01-01",
+    name: "egi_ops",
+    available_states: [
+      "OK",
+      "WARNING",
+      "UNKNOWN",
+      "MISSING",
+      "CRITICAL",
+      "DOWNTIME"
+    ],
+    defaults: {
+      down: "DOWNTIME",
+      missing: "MISSING",
+      unknown: "UNKNOWN"
+    },
+    operations: [
+      {
+        name: "AND",
+        truth_table: []
+     },
+     {
+       name: "OR",
+       truth_table: []
+     }
+    ]
+  }
+];
+
+
+const mockReportsTopologyTags = [
+  {
+    name: "endpoints",
+    values: [
+      {
+        name: "monitored",
+        values: [
+          "0",
+          "1"
+        ]
+      },
+      {
+        name: "production",
+        values: [
+          "0",
+          "1"
+        ]
+      },
+      {
+        name: "scope",
+        values: [
+          "EGI",
+          "EOSC-hub",
+          "EOSCCore",
+          "FedCloud"
+        ]
+      }
+    ]
+  },
+  {
+    name: "groups",
+    values: [
+      {
+        name: "certification",
+        values: [
+          "Candidate",
+          "Certified",
+          "Closed",
+          "Suspended",
+          "Uncertified"
+        ]
+      },
+      {
+        name: "infrastructure",
+        values: [
+          "PPS",
+          "Production",
+          "Test"
+        ]
+      },
+      {
+        name: "monitored",
+        values: [
+          "0",
+          "1"
+        ]
+      },
+      {
+        name: "scope",
+        values: [
+          "EGI",
+          "EOSC-hub",
+          "EOSCCore",
+          "FedCloud"
+        ]
+      }
+    ]
+  }
+];
+
+
+const mockReportsTopologyGroups = [
+  {
+    date: "2021-06-29",
+    group: "EGI",
+    type: "PROJECT",
+    subgroup: "DAVETESTSG",
+    tags: {
+      monitored: "0",
+      scope: "Local"
+    }
+  },
+  {
+    date: "2021-06-29",
+    group: "EGI",
+    type: "PROJECT",
+    subgroup: "NGI_AEGIS_SERVICES",
+    tags: {
+      monitored: "1",
+      scope: "EGI"
+    }
+  },
+  {
+    date: "2021-06-29",
+    group: "EGI",
+    type: "PROJECT",
+    subgroup: "NGI_ARMGRID_SERVICES",
+    tags: {
+      monitored: "1",
+      scope: "EGI"
+    }
+  },
+  {
+    date: "2021-06-29",
+    group: "Russia",
+    type: "NGI",
+    subgroup: "RU-SARFTI",
+    tags: {
+      certification: "Certified",
+      infrastructure: "Production",
+      scope: "EGI"
+    }
+  },
+  {
+    date: "2021-06-29",
+    group: "iris.ac.uk",
+    type: "NGI",
+    subgroup: "IRISOPS-IAM",
+    tags: {
+      certification: "Certified",
+      infrastructure: "Production",
+      scope: "iris.ac.uk"
+    }
+  },
+  {
+    date: "2021-06-29",
+    group: "iris.ac.uk",
+    type: "NGI",
+    subgroup: "dirac-durham",
+    tags: {
+      certification: "Certified",
+      infrastructure: "Production",
+      scope: "iris.ac.uk"
+    }
+  }
+];
+
+
+const webapireports = {
+  main: 'https://reports.com',
+  crud: true,
+  tags: 'https://reports-tags.com',
+  topologygroups: 'https://topology-groups.com',
+  topologyendpoints: 'https://endpoints.com'
+};
+
+
 function renderListView() {
   const route = '/ui/reports';
   const history = createMemoryHistory({ initialEntries: [route] });
@@ -71,7 +488,31 @@ function renderListView() {
           render={ props => <ReportsList
             {...props}
             webapitoken='token'
-            webapireports='https://mock.reports.com'
+            webapireports={webapireports}
+          /> }
+        />
+      </Router>
+    )
+  }
+}
+
+
+function renderChangeView() {
+  const route = '/ui/reports/Critical';
+  const history = createMemoryHistory({ initialEntries: [route] });
+
+  return {
+    ...render(
+      <Router history={history}>
+        <Route
+          path='/ui/reports/:name'
+          render={ props => <ReportsChange
+            {...props}
+            webapitoken='token'
+            webapireports={webapireports}
+            webapimetric='https://mock.metric.com'
+            webapiaggregation='https://mock.aggr.com'
+            webapioperations='https://mock.operations.com'
           /> }
         />
       </Router>
@@ -110,5 +551,97 @@ describe('Tests for reports listview', () => {
 
     expect(screen.getByRole('button', { name: /add/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /add/i }).closest('a')).toHaveAttribute('href', '/ui/reports/add');
+  })
+})
+
+describe('Tests for reports changeview', () => {
+  beforeAll(() => {
+    WebApi.mockImplementation(() => {
+      return {
+        fetchReport: () => Promise.resolve(mockReport),
+        fetchMetricProfiles: () => Promise.resolve(mockMetricProfiles),
+        fetchAggregationProfiles: () => Promise.resolve(mockAggregationProfiles),
+        fetchOperationsProfiles: () => Promise.resolve(mockOperationsProfiles),
+        fetchReportsTopologyTags: () => Promise.resolve(mockReportsTopologyTags),
+        fetchReportsTopologyGroups: () => Promise.resolve(mockReportsTopologyGroups)
+      }
+    })
+    Backend.mockImplementation(() => {
+      return {
+        isActiveSession: () => Promise.resolve(mockActiveSession),
+        fetchData: () => Promise.resolve(mockBackendReport)
+      }
+    })
+  })
+
+  test('Test that page renders properly', async () => {
+    renderChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /report/i }).textContent).toBe('Change report');
+    })
+
+    const nameField = screen.getByTestId('name');
+    const disabledField = screen.getByLabelText(/disabled/i);
+    const descriptionField = screen.getByLabelText(/description/i);
+    const groupField = screen.getByTestId('groupname');
+    const metricProfileField = screen.getByTestId('metricProfile')
+    const aggrProfileField = screen.getByTestId('aggregationProfile');
+    const operationsProfileField = screen.getByTestId('operationsProfile')
+    const topologyTypeField = screen.getByTestId('topologyType');
+    const availabilityThresholdField = screen.getByLabelText(/availability/i);
+    const reliabilityThresholdField = screen.getByLabelText(/reliability/i);
+    const uptimeThresholdField = screen.getByLabelText(/uptime/i);
+    const unknownThresholdField = screen.getByLabelText(/unknown/i);
+    const downtimeThresholdField = screen.getByLabelText(/downtime/i);
+
+    expect(nameField.value).toBe('Critical');
+    expect(nameField).toBeEnabled();
+    expect(disabledField.checked).toBeFalsy();
+    expect(descriptionField.value).toBe('Critical report');
+    expect(descriptionField).toBeEnabled();
+    expect(groupField.value).toBe('ARGO')
+    expect(groupField).toBeEnabled();
+
+    expect(metricProfileField.value).toBe('ARGO_MON_CRITICAL');
+    expect(metricProfileField).toBeEnabled();
+    expect(aggrProfileField.value).toBe('critical');
+    expect(aggrProfileField).toBeEnabled();
+    expect(operationsProfileField.value).toBe('egi_ops');
+    expect(operationsProfileField).toBeEnabled();
+
+    expect(topologyTypeField.value).toBe('Sites');
+
+    expect(screen.getAllByTestId(/card/i)).toHaveLength(2);
+    const card_groups = within(screen.getByTestId('card-group-of-groups'));
+    const card_endpoints = within(screen.getByTestId('card-group-of-endpoints'));
+
+    expect(card_groups.getByText('certification')).toBeInTheDocument();
+    expect(card_groups.getByText('Certified')).toBeInTheDocument();
+    expect(card_groups.getByText('infrastructure')).toBeInTheDocument();
+    expect(card_groups.getByText('Production')).toBeInTheDocument();
+    expect(card_groups.getByText('scope')).toBeInTheDocument();
+    expect(card_groups.getByText('EGI*')).toBeInTheDocument();
+    expect(card_groups.getAllByTestId(/remove/i)).toHaveLength(3);
+    expect(card_groups.getByRole('button', { name: /add new/i })).toBeInTheDocument();
+
+    expect(card_endpoints.getByText('production')).toBeInTheDocument();
+    expect(card_endpoints.getByText('monitored')).toBeInTheDocument();
+    expect(card_endpoints.getByText('scope')).toBeInTheDocument();
+    expect(card_endpoints.getAllByText('yes')).toHaveLength(2);
+    expect(card_endpoints.getByText('EGI*')).toBeInTheDocument();
+    expect(card_groups.getAllByTestId(/remove/i)).toHaveLength(3);
+    expect(card_groups.getByRole('button', { name: /add new/i })).toBeInTheDocument();
+
+    expect(availabilityThresholdField.value).toBe('80');
+    expect(availabilityThresholdField).toBeEnabled();
+    expect(reliabilityThresholdField.value).toBe('85');
+    expect(reliabilityThresholdField).toBeEnabled();
+    expect(uptimeThresholdField.value).toBe('0.8');
+    expect(uptimeThresholdField).toBeEnabled();
+    expect(unknownThresholdField.value).toBe('0.1');
+    expect(unknownThresholdField).toBeEnabled();
+    expect(downtimeThresholdField.value).toBe('0.1');
+    expect(downtimeThresholdField).toBeEnabled();
   })
 })

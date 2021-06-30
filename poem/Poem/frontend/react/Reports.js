@@ -277,6 +277,7 @@ const TopologyTagList = ({ part, tagsState, setTagsState, tagsAll, addview, push
               <Col md={4}>
                 <Field
                   name={`${part}.${index}.name`}
+                  data-testid={`${part}.${index}.name`}
                   component={TagSelect}
                   tagOptions={extractTags(part, true).map((e) => new Object({
                     'label': e.name,
@@ -294,6 +295,7 @@ const TopologyTagList = ({ part, tagsState, setTagsState, tagsAll, addview, push
               <Col md={7}>
                 <Field
                   name={`${part}.${index}.value`}
+                  data-testid={`${part}.${index}.value`}
                   component={TagSelect}
                   tagOptions={extractValuesTags(index, true)}
                   onChangeHandler={(e) => {
@@ -315,6 +317,7 @@ const TopologyTagList = ({ part, tagsState, setTagsState, tagsAll, addview, push
               <Col md={1} className="pl-2 pt-1">
                 <Button size="sm" color="danger"
                   type="button"
+                  data-testid={`remove-${index}`}
                   onClick={() => {
                     let newState = JSON.parse(JSON.stringify(tagsState))
                     let renumNewState = JSON.parse(JSON.stringify(tagsState))
@@ -1158,6 +1161,7 @@ export const ReportsComponent = (props) => {
                       <Field
                         type='text'
                         name='name'
+                        data-testid='name'
                         className='form-control form-control-lg'
                       />
                     </InputGroup>
@@ -1204,6 +1208,7 @@ export const ReportsComponent = (props) => {
                       <InputGroupAddon addonType='prepend'>Group</InputGroupAddon>
                       <Field
                         name='groupname'
+                        data-testid='groupname'
                         component='select'
                         className={`form-control custom-select`}
                       >
@@ -1304,7 +1309,7 @@ export const ReportsComponent = (props) => {
                   </Row>
                   <Row>
                     <Col md={6}>
-                      <Card className="mt-3">
+                      <Card className="mt-3" data-testid="card-group-of-groups">
                         <CardHeader>
                           <strong>Group of groups</strong>
                         </CardHeader>
@@ -1343,7 +1348,7 @@ export const ReportsComponent = (props) => {
                       </Card>
                     </Col>
                     <Col md={6}>
-                      <Card className="mt-3">
+                      <Card className="mt-3" data-testid='card-group-of-endpoints'>
                         <CardHeader>
                           <strong>Group of endpoints</strong>
                         </CardHeader>
@@ -1373,7 +1378,7 @@ export const ReportsComponent = (props) => {
                 <ParagraphTitle title='Thresholds'/>
                 <Row>
                   <Col md={2} className='mr-4'>
-                    <Label to='availabilityThreshold'>Availability:</Label>
+                    <Label for='availabilityThreshold'>Availability:</Label>
                     <Field
                       id='availabilityThreshold'
                       name='availabilityThreshold'
@@ -1385,7 +1390,7 @@ export const ReportsComponent = (props) => {
                     }
                   </Col>
                   <Col md={2} className='mr-4'>
-                    <Label to='reliabilityThreshold'>Reliability:</Label>
+                    <Label for='reliabilityThreshold'>Reliability:</Label>
                     <Field
                       id='reliabilityThreshold'
                       name='reliabilityThreshold'
@@ -1397,7 +1402,7 @@ export const ReportsComponent = (props) => {
                     }
                   </Col>
                   <Col md={2} className='mr-4'>
-                    <Label to='uptimeThreshold'>Uptime:</Label>
+                    <Label for='uptimeThreshold'>Uptime:</Label>
                     <Field
                       id='uptimeThreshold'
                       name='uptimeThreshold'
@@ -1409,7 +1414,7 @@ export const ReportsComponent = (props) => {
                     }
                   </Col>
                   <Col md={2} className='mr-4'>
-                    <Label to='unknownThreshold'>Unknown:</Label>
+                    <Label for='unknownThreshold'>Unknown:</Label>
                     <Field
                       id='unknownThreshold'
                       name='unknownThreshold'
@@ -1421,7 +1426,7 @@ export const ReportsComponent = (props) => {
                     }
                   </Col>
                   <Col md={2} className='mr-4'>
-                    <Label to='downtimeThreshold'>Downtime:</Label>
+                    <Label for='downtimeThreshold'>Downtime:</Label>
                     <Field
                       id='downtimeThreshold'
                       name='downtimeThreshold'
