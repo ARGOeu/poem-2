@@ -720,16 +720,14 @@ export const ReportsComponent = (props) => {
 
     for (let tag of formikTags) {
       let tmpTag = new Object()
-      let tmpTags = new Array()
       if (tag.value.indexOf(' ') !== -1) {
-        let values = tag.value.split(' ')
-        for (var val of values)
-          tmpTags.push(new Object({
-            name: tag.name,
-            value: val,
-            context: tagsContext
-          }))
-        tags = [...tags, ...tmpTags]
+        let values = tag.value.replace(' ', ', ')
+        tmpTag = new Object({
+          name: tag.name,
+          value: values,
+          context: tagsContext.replace(".filter.tags", ".filter.tags.array")
+        })
+        tags = [...tags, tmpTag]
       }
       else {
         let tmpTagValue = tag.value
