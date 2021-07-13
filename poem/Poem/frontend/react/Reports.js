@@ -535,8 +535,12 @@ export const ReportsComponent = (props) => {
         let report = await webapi.fetchReport(report_name);
         report['groupname'] = backendReport.groupname
 
-        let groupstags = formatFromReportTags('argo.group.filter.tags', report['filter_tags'])
-        let endpointstags = formatFromReportTags('argo.endpoint.filter.tags', report['filter_tags'])
+        let groupstags = formatFromReportTags([
+          'argo.group.filter.tags', 'argo.group.filter.tags.array'],
+          report['filter_tags'])
+        let endpointstags = formatFromReportTags([
+          'argo.endpoint.filter.tags', 'argo.endpoint.filter.tags.array'],
+          report['filter_tags'])
         let entities = formatFromReportEntities('argo.group.filter.fields', report['filter_tags'])
         let preselectedtags = JSON.parse(JSON.stringify(tagsState))
         preselectedtags['groups'] = new Object()
@@ -775,10 +779,12 @@ export const ReportsComponent = (props) => {
     let tags = new Array()
 
     for (let tag of formikTags) {
-      if (tag.context === tagsContext) {
-        if (tmpTagsJoint[tag.name] === undefined)
-          tmpTagsJoint[tag.name] = new Array()
-        tmpTagsJoint[tag.name].push(tag.value)
+      for (let tagContext of tagsContext) {
+        if (tag.context === tagContext) {
+          if (tmpTagsJoint[tag.name] === undefined)
+            tmpTagsJoint[tag.name] = new Array()
+          tmpTagsJoint[tag.name].push(tag.value)
+        }
       }
     }
 
