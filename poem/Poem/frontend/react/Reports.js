@@ -791,7 +791,7 @@ export const ReportsComponent = (props) => {
     for (let tag in tmpTagsJoint)
       tags.push(new Object({
         'name': tag,
-        'value': tmpTagsJoint[tag].join(' ')
+        'value': tmpTagsJoint[tag].join(' ').trim().replace(',', '')
       }))
 
     return tags
