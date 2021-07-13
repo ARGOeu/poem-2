@@ -725,7 +725,9 @@ export const ReportsComponent = (props) => {
     for (let tag of formikTags) {
       let tmpTag = new Object()
       if (tag.value.indexOf(' ') !== -1) {
-        let values = tag.value.replace(' ', ', ')
+        if (tag.value.indexOf(',') !== -1)
+          tag.value = tag.value.replace(',', '')
+        let values = tag.value.replace(/ /g, ', ')
         tmpTag = new Object({
           name: tag.name,
           value: values,
@@ -791,7 +793,7 @@ export const ReportsComponent = (props) => {
     for (let tag in tmpTagsJoint)
       tags.push(new Object({
         'name': tag,
-        'value': tmpTagsJoint[tag].join(' ').trim().replace(',', '')
+        'value': tmpTagsJoint[tag].join(' ').trim().replace(/,/g, '')
       }))
 
     return tags
