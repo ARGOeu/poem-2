@@ -535,8 +535,12 @@ export const ReportsComponent = (props) => {
         let report = await webapi.fetchReport(report_name);
         report['groupname'] = backendReport.groupname
 
-        let groupstags = formatFromReportTags('argo.group.filter.tags', report['filter_tags'])
-        let endpointstags = formatFromReportTags('argo.endpoint.filter.tags', report['filter_tags'])
+        let groupstags = formatFromReportTags([
+          'argo.group.filter.tags', 'argo.group.filter.tags.array'],
+          report['filter_tags'])
+        let endpointstags = formatFromReportTags([
+          'argo.endpoint.filter.tags', 'argo.endpoint.filter.tags.array'],
+          report['filter_tags'])
         let entities = formatFromReportEntities('argo.group.filter.fields', report['filter_tags'])
         let preselectedtags = JSON.parse(JSON.stringify(tagsState))
         preselectedtags['groups'] = new Object()
@@ -720,16 +724,24 @@ export const ReportsComponent = (props) => {
 
     for (let tag of formikTags) {
       let tmpTag = new Object()
-      let tmpTags = new Array()
       if (tag.value.indexOf(' ') !== -1) {
-        let values = tag.value.split(' ')
-        for (var val of values)
-          tmpTags.push(new Object({
-            name: tag.name,
-            value: val,
-            context: tagsContext
-          }))
-        tags = [...tags, ...tmpTags]
+        if (tag.value.indexOf(',') !== -1)
+          tag.value = tag.value.replace(',', '')
+        let values = tag.value.replace(/ /g, ', ')
+        tmpTag = new Object({
+          name: tag.name,
+          value: values,
+          context: tagsContext.replace(".filter.tags", ".filter.tags.array")
+        })
+        tags = [...tags, tmpTag]
+      }
+      else if (tag.value.indexOf(' ') === -1
+        && tag.value.toLowerCase() !== '1'
+        && tag.value.toLowerCase() !== '0') {
+        tmpTag['name'] = tag.name
+        tmpTag['value'] = tag.value
+        tmpTag['context'] = tagsContext.replace(".filter.tags", ".filter.tags.array")
+        tags.push(tmpTag)
       }
       else {
         let tmpTagValue = tag.value
@@ -777,17 +789,19 @@ export const ReportsComponent = (props) => {
     let tags = new Array()
 
     for (let tag of formikTags) {
-      if (tag.context === tagsContext) {
-        if (tmpTagsJoint[tag.name] === undefined)
-          tmpTagsJoint[tag.name] = new Array()
-        tmpTagsJoint[tag.name].push(tag.value)
+      for (let tagContext of tagsContext) {
+        if (tag.context === tagContext) {
+          if (tmpTagsJoint[tag.name] === undefined)
+            tmpTagsJoint[tag.name] = new Array()
+          tmpTagsJoint[tag.name].push(tag.value)
+        }
       }
     }
 
     for (let tag in tmpTagsJoint)
       tags.push(new Object({
         'name': tag,
-        'value': tmpTagsJoint[tag].join(' ')
+        'value': tmpTagsJoint[tag].join(' ').trim().replace(/,/g, '')
       }))
 
     return tags
