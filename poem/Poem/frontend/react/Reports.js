@@ -735,6 +735,14 @@ export const ReportsComponent = (props) => {
         })
         tags = [...tags, tmpTag]
       }
+      else if (tag.value.indexOf(' ') === -1
+        && tag.value.toLowerCase() !== '1'
+        && tag.value.toLowerCase() !== '0') {
+        tmpTag['name'] = tag.name
+        tmpTag['value'] = tag.value
+        tmpTag['context'] = tagsContext.replace(".filter.tags", ".filter.tags.array")
+        tags.push(tmpTag)
+      }
       else {
         let tmpTagValue = tag.value
         if (tag.value.toLowerCase() === 'yes')
