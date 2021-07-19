@@ -19,6 +19,8 @@ jest.mock('../DataManager', () => {
 
 const mockChangeObject = jest.fn();
 const mockChangeReport = jest.fn();
+const mockDeleteObject = jest.fn();
+const mockDeleteReport = jest.fn();
 
 
 beforeEach(() => {
@@ -572,14 +574,16 @@ describe('Tests for reports changeview', () => {
         fetchOperationsProfiles: () => Promise.resolve(mockOperationsProfiles),
         fetchReportsTopologyTags: () => Promise.resolve(mockReportsTopologyTags),
         fetchReportsTopologyGroups: () => Promise.resolve(mockReportsTopologyGroups),
-        changeReport: mockChangeReport
+        changeReport: mockChangeReport,
+        deleteReport: mockDeleteReport
       }
     })
     Backend.mockImplementation(() => {
       return {
         isActiveSession: () => Promise.resolve(mockActiveSession),
         fetchData: () => Promise.resolve(mockBackendReport),
-        changeObject: mockChangeObject
+        changeObject: mockChangeObject,
+        deleteObject: mockDeleteObject
       }
     })
   })
@@ -1277,6 +1281,214 @@ describe('Tests for reports changeview', () => {
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
         <p>Internal API error changing report</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Internal API error: 500 SERVER ERROR',
+      0,
+      expect.any(Function)
+    )
+  })
+
+  test('Test successfully deleting report', async () => {
+    mockDeleteObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 204, statusText: 'NO CONTENT' })
+    )
+    mockDeleteReport.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
+    )
+
+    renderChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change report');
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /delete/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /delete/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockDeleteReport).toHaveBeenCalledWith('yee9chel-5o4u-l4j4-410b-eipi3ohrah5i')
+    })
+
+    await waitFor(() => {
+      expect(mockDeleteObject).toHaveBeenCalledWith(
+        '/api/v2/internal/reports/yee9chel-5o4u-l4j4-410b-eipi3ohrah5i'
+      )
+    })
+
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'Report successfully deleted', 'Deleted', 2000
+    )
+  })
+
+  test('Test error deleting report on web api with error message', async () => {
+    mockDeleteReport.mockReturnValueOnce(
+      Promise.resolve({
+        json: () => Promise.resolve({
+          code: '406',
+          message: 'Content Not acceptable',
+          errors: [
+            {
+              message: 'Content Not acceptable',
+              code: '406',
+              details: 'There has been an error.'
+            }
+          ],
+          details: 'There has been an error.'
+        }),
+        status: 406,
+        statusText: 'Content Not acceptable'
+      })
+    )
+
+    renderChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change report');
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /delete/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /delete/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockDeleteReport).toHaveBeenCalledWith('yee9chel-5o4u-l4j4-410b-eipi3ohrah5i')
+    })
+
+    await waitFor(() => {
+      expect(mockDeleteObject).not.toHaveBeenCalled();
+    })
+
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>There has been an error.</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Web API error: 406 Content Not acceptable',
+      0,
+      expect.any(Function)
+    )
+  })
+
+  test('Test error deleting report on web api without error message', async () => {
+    mockDeleteReport.mockReturnValueOnce(
+      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
+    )
+
+    renderChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change report');
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /delete/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /delete/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockDeleteReport).toHaveBeenCalledWith('yee9chel-5o4u-l4j4-410b-eipi3ohrah5i')
+    })
+
+    await waitFor(() => {
+      expect(mockDeleteObject).not.toHaveBeenCalled();
+    })
+
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>Web API error deleting report</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Web API error: 500 SERVER ERROR',
+      0,
+      expect.any(Function)
+    )
+  })
+
+  test('Test error deleting report on internal backend with error message', async () => {
+    mockDeleteObject.mockReturnValueOnce(
+      Promise.resolve({
+        json: () => Promise.resolve({ detail: 'There has been an error.' }),
+        status: 400,
+        statusText: 'BAD REQUEST'
+      })
+    )
+    mockDeleteReport.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
+    )
+
+    renderChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change report');
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /delete/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /delete/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockDeleteReport).toHaveBeenCalledWith('yee9chel-5o4u-l4j4-410b-eipi3ohrah5i')
+    })
+
+    await waitFor(() => {
+      expect(mockDeleteObject).toHaveBeenCalledWith(
+        '/api/v2/internal/reports/yee9chel-5o4u-l4j4-410b-eipi3ohrah5i'
+      )
+    })
+
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>There has been an error.</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Internal API error: 400 BAD REQUEST',
+      0,
+      expect.any(Function)
+    )
+  })
+
+  test('Test error deleting report on internal backend without error message', async () => {
+    mockDeleteObject.mockReturnValueOnce(
+      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
+    )
+    mockDeleteReport.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
+    )
+
+    renderChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change report');
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /delete/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /delete/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockDeleteReport).toHaveBeenCalledWith('yee9chel-5o4u-l4j4-410b-eipi3ohrah5i')
+    })
+
+    await waitFor(() => {
+      expect(mockDeleteObject).toHaveBeenCalledWith(
+        '/api/v2/internal/reports/yee9chel-5o4u-l4j4-410b-eipi3ohrah5i'
+      )
+    })
+
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>Internal API error deleting report</p>
         <p>Click to dismiss.</p>
       </div>,
       'Internal API error: 500 SERVER ERROR',

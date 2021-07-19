@@ -911,7 +911,7 @@ export const ReportsComponent = (props) => {
       let r_internal = await backend.deleteObject(`/api/v2/internal/reports/${idReport}`);
       if (r_internal.ok)
         NotifyOk({
-          msg: 'Report sucessfully deleted',
+          msg: 'Report successfully deleted',
           title: 'Deleted',
           callback: () => history.push('/ui/reports')
         });
